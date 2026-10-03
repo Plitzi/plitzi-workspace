@@ -85,6 +85,12 @@ describe('Link Tests', () => {
       expect(anchorHref({ mode: 'page', href: '/' })).toBe('/');
     });
 
+    it('lands on a section of the page it goes to, by the anchor of an element there', () => {
+      expect(anchorHref({ mode: 'page', href: '/arcade', hash: 'plans' })).toBe('/arcade#plans');
+      expect(anchorHref({ mode: 'internal', href: '/arcade', hash: 'plans' })).toBe('/arcade#plans');
+      expect(anchorHref({ mode: 'external', href: 'https://plitzi.com', hash: 'plans' })).toBe('https://plitzi.com');
+    });
+
     it('keeps an internal path collapsed and an external URL untouched', () => {
       expect(anchorHref({ mode: 'internal', href: '/arcade/' })).toBe('/arcade/');
       expect(anchorHref({ mode: 'external', href: 'https://plitzi.com/a//b' })).toBe('https://plitzi.com/a//b');

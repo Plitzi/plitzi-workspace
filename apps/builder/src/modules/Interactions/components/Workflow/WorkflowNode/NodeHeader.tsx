@@ -162,12 +162,14 @@ const NodeHeader = ({
       <div className="flex flex-col items-center justify-center">
         <div
           className={clsx(
-            'flex h-9 w-9 cursor-pointer items-center justify-center rounded-sm border border-gray-300 dark:border-zinc-600',
+            'flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-sm transition-colors',
+            // One hue per kind of step, tinted rather than solid: the kind is read at a glance, not shouted.
             {
-              'bg-blue-400 text-white': type === 'trigger',
-              'bg-purple-400 text-white': type === 'callback' || type === 'globalCallback',
-              'bg-orange-400 text-white': type === 'utility',
-              'bg-emerald-500 text-white': type === 'task'
+              'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300': type === 'trigger',
+              'bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300':
+                type === 'callback' || type === 'globalCallback',
+              'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300': type === 'utility',
+              'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300': type === 'task'
             }
           )}
           onClick={onClickOpen}
@@ -198,12 +200,26 @@ const NodeHeader = ({
           {(canUp || canDown) && (
             <div className="ml-2 flex grow basis-0 justify-end gap-1">
               {canUp && (
-                <Button size="custom" className="rounded-sm px-1.5 py-1 text-xs" title="Up" onClick={handleClickUp}>
+                <Button
+                  size="xs"
+                  intent="secondary"
+                  border="none"
+                  className="text-gray-400 hover:bg-gray-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                  title="Move up"
+                  onClick={handleClickUp}
+                >
                   <i className="fa-solid fa-arrow-up" />
                 </Button>
               )}
               {canDown && (
-                <Button size="custom" className="rounded-sm px-1.5 py-1 text-xs" title="Down" onClick={handleClickDown}>
+                <Button
+                  size="xs"
+                  intent="secondary"
+                  border="none"
+                  className="text-gray-400 hover:bg-gray-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                  title="Move down"
+                  onClick={handleClickDown}
+                >
                   <i className="fa-solid fa-arrow-down" />
                 </Button>
               )}
@@ -219,12 +235,26 @@ const NodeHeader = ({
           size="xs"
         />
       </div>
-      <div className="flex flex-col items-center justify-center gap-2">
-        <Button size="xs" onClick={handleClickCopyId} title="Copy ID">
+      <div className="flex flex-col items-center justify-center gap-1">
+        <Button
+          size="xs"
+          intent="secondary"
+          border="none"
+          className="text-gray-400 hover:bg-gray-100 hover:text-zinc-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          onClick={handleClickCopyId}
+          title="Copy ID"
+        >
           <Button.Icon icon="fa-solid fa-clipboard" />
         </Button>
         {canDelete && (
-          <Button intent="danger" size="xs" onClick={onClickRemove} title="Remove">
+          <Button
+            size="xs"
+            intent="secondary"
+            border="none"
+            className="text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-zinc-500 dark:hover:bg-red-500/15 dark:hover:text-red-400"
+            onClick={onClickRemove}
+            title="Remove"
+          >
             <Button.Icon icon="fas fa-trash-alt" />
           </Button>
         )}

@@ -169,6 +169,7 @@ runtime, and its files into `public/` — a draft, or any published snapshot (`-
 | `devMode` | `boolean` | `false` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). Off, the process must run with `NODE_ENV=production` or React renders with its development build; the server says so once, at `error`. |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
+| `flags` | `Record<string, boolean> \| ({ spaceId, environment }) => Record<string, boolean>` | — | This deployment's say over the spaces' feature flags: above what a space declares, below the SDK's `flags` prop and a tester's dev tools, and only for flags the space declares. A function answers per space. Server actions and RSC resolve with it too. See `docs/en/feature-flags.md` in the workspace. |
 | `loginPath` | `string \| false` | `'/auth/login'` | Path for the built-in login endpoint. Set to `false` to disable it entirely. |
 | `logoutPath` | `string \| false` | `'/auth/logout'` | Path for the built-in logout endpoint. Set to `false` to disable it entirely. |
 | `signIn` | `SSRSignInConfig` | — | Sign visitors in by redirect through an OAuth 2.1 authorization server: `GET /auth/sign-in?return=/x` registers this host as a client, sends the browser out with PKCE (state in a `__Host-` cookie), and `/auth/sign-in/callback` redeems the code server to server and hands the token to `exchangeCredential`, which makes the session here. Needs the `exchangeCredential` adapter. |
@@ -180,6 +181,7 @@ runtime, and its files into `public/` — a draft, or any published snapshot (`-
 | `allowPrivatePluginHosts` | `boolean` | `false` | Read a schema plugin from a private address (`localhost`, this server's own network). A plugin's address is typed by whoever edits a space, so leave it off anywhere but a development machine whose bucket is local. |
 | `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
+| `images` | `{ domains, cacheDir? }` | — | Pictures from other sites resized at `/_plitzi/img`, for an `image` to offer as a `srcset` (see [Images](#images)). |
 | `ssrOnly` | `boolean` | `false` | Omit client-side JS from the rendered page. Useful for verifying SSR HTML without hydration. |
 | `streaming` | `boolean` | `false` | Stream HTML to the browser incrementally to reduce TTFB. See [Streaming](#streaming). |
 | `middlewares` | `SSRMiddleware[]` | — | Array of custom middleware functions executed before the SSR renderer on every request (see [Custom middlewares](#custom-middlewares)). |
@@ -385,6 +387,21 @@ createServer({
 ```
 
 Static responses include `ETag`, `Last-Modified`, and `Cache-Control` headers. Subsequent requests with `If-None-Match` receive `304 Not Modified` when the file has not changed. JS, CSS, and font files are served with `Cache-Control: immutable`; all other assets use a 1-hour max-age.
+
+### Images
+
+```ts
+createServer({ images: { domains: ['images.example.com', '*.cdn.example.com'] }, adapters: { ... } });
+```
+
+An `image` whose `src` is another site's then offers the browser a `srcset` of widths this server makes (320 to 1920
+px) at `/_plitzi/img?url=…&w=…`, in AVIF or WebP when the browser takes them. Everything is kept on disk (`cacheDir`,
+default `.plitzi/images`): each original is downloaded once, and each size is made once from it. A week on, the kept
+files keep answering while the original is asked for with its `ETag` / `Last-Modified` — unchanged, nothing is resized
+again; changed, its sizes are made anew. A picture that could not be fetched is not asked for again for five minutes.
+Only the listed hosts are fetched, every redirect is held to the same
+list and to the rule every outbound request follows (no private network), and SVG is refused. Resizing needs `sharp`
+(an optional peer): without it pictures are passed through and kept, and the server says so once.
 
 ### Public directory
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { css } from './css';
+import { css, toResponsive } from './css';
 import { column, grid, row } from './layout';
 
 describe('css', () => {
@@ -23,8 +23,28 @@ describe('css', () => {
     expect(css(once)).toEqual(once);
   });
 
-  it('names the correct key when a camelCase property is written', () => {
-    expect(() => css({ paddingTop: '8px' })).toThrow(/"paddingTop" \(did you mean "padding-top"\?\)/);
+  // A React style object is written that way by every agent and developer: the document keeps kebab-case either way.
+  it('reads camelCase keys, and a bare number on a length as pixels', () => {
+    expect(css({ paddingTop: 8, fontWeight: 800, opacity: 0.25, WebkitLineClamp: 2, gap: 0 })).toEqual({
+      'padding-top': '8px',
+      'font-weight': 800,
+      opacity: 0.25,
+      '-webkit-line-clamp': 2,
+      'row-gap': '0',
+      'column-gap': '0'
+    });
+  });
+
+  it('refuses one property written twice under its two spellings', () => {
+    expect(() => css({ paddingTop: '8px', 'padding-top': '4px' })).toThrow(/`padding-top` is written twice/);
+  });
+
+  it('takes a value per breakpoint in place, without splitting the rule set', () => {
+    expect(toResponsive({ fontSize: { desktop: '24px', compact: '18px' }, fontWeight: 700 })).toEqual({
+      desktop: { 'font-size': '24px', 'font-weight': 700 },
+      tablet: { 'font-size': '18px' },
+      mobile: { 'font-size': '18px' }
+    });
   });
 
   it('refuses a property outside the vocabulary', () => {
@@ -32,7 +52,7 @@ describe('css', () => {
   });
 
   it('reports every unknown property at once', () => {
-    expect(() => css({ nope: '1px', alsoNope: '2px' })).toThrow(/Unknown CSS properties: "nope", "alsoNope"/);
+    expect(() => css({ nope: '1px', alsoNope: '2px' })).toThrow(/Unknown CSS properties: "nope", "also-nope"/);
   });
 
   it('allows custom properties', () => {

@@ -62,6 +62,19 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
     params: { propagateEvent: { canBind: false, defaultValue: false, type: 'boolean', label: 'Propagate Event' } }
   },
   /**
+   * Every so often while the element is on the page and the tab is in view: an autoplay, a clock, a refresh. Each flow
+   * names its own interval; the ticks it has counted travel with it.
+   */
+  onInterval: {
+    action: 'onInterval',
+    title: 'On Interval',
+    type: 'trigger',
+    preview: { interval: '', count: '' },
+    params: {
+      interval: { canBind: false, defaultValue: '5000', type: 'text', label: 'Every (milliseconds, at least 250)' }
+    }
+  },
+  /**
    * A keyboard shortcut, heard while the element is on the page — on the page itself, the whole page's.
    *
    * Not a DOM event of the element: it listens on the window, so the element need not have focus, and it is ignored
@@ -81,6 +94,17 @@ export const interactionBasicTriggers: Record<string, InteractionCallback> = {
         label: 'Keys (e.g. f, shift+f, mod+k, escape)'
       }
     }
+  },
+  /**
+   * The element's own box scrolled — a row of cards swiped, a panel read to the end. At most once a frame, and once
+   * when it mounts, so a flow can hide the arrow at the end that is already reached.
+   */
+  onScroll: {
+    action: 'onScroll',
+    title: 'On Scroll',
+    type: 'trigger',
+    preview: { x: '', y: '', atStart: '', atEnd: '' },
+    params: {}
   },
   /**
    * The end of a server action this element started.

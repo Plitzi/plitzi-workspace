@@ -1,0 +1,102 @@
+@mixin styles {
+  .plitzi-component__carousel {
+    position: relative;
+  }
+
+  // Slides take their width and gap from the carousel's class — custom properties inherit:
+  // `--plitzi-carousel-slide-width: 280px` and `--plitzi-carousel-gap: 16px` show several at once.
+  .plitzi-component__carousel-track {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .carousel__slide {
+    min-width: 0;
+  }
+
+  .carousel__slide--slide-next {
+    animation: plitzi-carousel-in-next 400ms ease both;
+  }
+
+  .carousel__slide--slide-previous {
+    animation: plitzi-carousel-in-previous 400ms ease both;
+  }
+
+  .carousel__slide--fade-next,
+  .carousel__slide--fade-previous {
+    animation: plitzi-carousel-fade-in 400ms ease both;
+  }
+
+  .carousel__scroller {
+    display: flex;
+    gap: var(--plitzi-carousel-gap, 0px);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+
+    > .carousel__slide {
+      flex: 0 0 var(--plitzi-carousel-slide-width, 100%);
+      scroll-snap-align: start;
+    }
+  }
+
+  .carousel__marquee {
+    display: flex;
+    gap: var(--plitzi-carousel-gap, 0px);
+    width: max-content;
+
+    > .carousel__slide {
+      flex: 0 0 var(--plitzi-carousel-slide-width, auto);
+    }
+
+    &.carousel__marquee--running {
+      animation: plitzi-carousel-marquee var(--plitzi-marquee-duration) linear infinite;
+    }
+
+    &.carousel__marquee--pause-on-hover:hover {
+      animation-play-state: paused;
+    }
+  }
+
+  .carousel__slide--empty {
+    padding: 24px;
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  @keyframes plitzi-carousel-in-next {
+    from {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes plitzi-carousel-in-previous {
+    from {
+      transform: translateX(-100%);
+    }
+  }
+
+  @keyframes plitzi-carousel-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  // Half its length is one copy of the items: the second copy is where the first was, so the loop has no seam.
+  @keyframes plitzi-carousel-marquee {
+    to {
+      transform: translateX(calc(-50% - var(--plitzi-carousel-gap, 0px) / 2));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carousel__slide--slide-next,
+    .carousel__slide--slide-previous,
+    .carousel__slide--fade-next,
+    .carousel__slide--fade-previous,
+    .carousel__marquee--running {
+      animation: none;
+    }
+  }
+}

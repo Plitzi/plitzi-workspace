@@ -1,4 +1,5 @@
 import { BUILTIN_GLOBAL_CALLBACKS } from './globalCallbacks';
+import { AuthoringError } from '../schema/codes';
 
 import type { StepSpec } from '../schema/types';
 import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
@@ -21,7 +22,8 @@ const globalStep = (action: string, params: Record<string, unknown> = {}): StepS
   // A builder naming an action no source declares would otherwise write a step that resolves to nothing at run
   // time, which is the exact failure this module exists to remove — so it is refused where it is written.
   if (!declared) {
-    throw new Error(
+    throw new AuthoringError(
+      'global-callback-undeclared',
       `No source declares the global callback "${action}". Declared: ${Object.keys(BUILTIN_GLOBAL_CALLBACKS).sort().join(', ')}.`
     );
   }
@@ -50,6 +52,43 @@ export const SET_STATE_TYPES = ['boolean', 'number', 'text', 'json'] as const;
  */
 export const setState = (params: { key: string; type: (typeof SET_STATE_TYPES)[number]; value: unknown }): StepSpec =>
   globalStep('setState', params);
+
+/** A number a step adds or ends at: written as is, or a template expression (`'apiContainer_site.data.products|length'`). */
+type StepNumber = number | string;
+
+const operand = (value: StepNumber): string => (typeof value === 'number' ? String(value) : `(${value})`);
+
+/** A state key's name as a template reads it — a key with a dash or a dot in it is read by index. */
+const stateRead = (key: string): string =>
+  /^[A-Za-z_]\w*$/.test(key) ? `state.${key}` : `state[${JSON.stringify(key)}]`;
+
+/**
+ * Moves a number in state round a cycle of `length` — the slide after the last is the first, the one before the first
+ * the last: `cycleState({ key: 'slide', length: 3 })` is "next", `by: -1` "previous". `length` is a number, or an
+ * expression for one (`'apiContainer_site.data.slides|length'`). The same `setState` written out, without the
+ * arithmetic in a template.
+ */
+export const cycleState = (params: { key: string; length: StepNumber; by?: StepNumber }): StepSpec => {
+  const length = operand(params.length);
+
+  return setState({
+    key: params.key,
+    type: 'number',
+    value: `{{ (((${stateRead(params.key)} ?? 0) + ${operand(params.by ?? 1)}) % ${length} + ${length}) % ${length} }}`
+  });
+};
+
+/**
+ * Moves a number in state by `by`, stopping at `min` and `max` rather than going round — "show 40 more" up to the
+ * total. Each bound a number or an expression for one, as in {@link cycleState}.
+ */
+export const stepState = (params: { key: string; by: StepNumber; min?: StepNumber; max?: StepNumber }): StepSpec => {
+  const moved = `(${stateRead(params.key)} ?? 0) + ${operand(params.by)}`;
+  const floored = params.min === undefined ? moved : `max(${operand(params.min)}, ${moved})`;
+  const bounded = params.max === undefined ? floored : `min(${operand(params.max)}, ${floored})`;
+
+  return setState({ key: params.key, type: 'number', value: `{{ ${bounded} }}` });
+};
 
 /**
  * Flips `runtime.state.<key>` — expand and collapse, open and close, from ONE step on ONE trigger.

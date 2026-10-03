@@ -14,6 +14,7 @@ import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
 import { isEmptyAnswer } from './helpers/isEmptyAnswer';
+import { childrenWhile } from './helpers/loadingSlot';
 import providerOutcome from './helpers/providerOutcome';
 import { queryInputOf } from './helpers/queryInput';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
@@ -76,6 +77,11 @@ export type ApiContainerProps = {
   /** Renders children while the first client-side request is still in flight, so a loading state can be bound. */
   renderWhileLoading?: boolean;
   /**
+   * The id of a child shown in place of the others until the first answer arrives — a skeleton of what is coming — and
+   * gone after it. In the builder every child shows, so the slot can be edited beside what it stands for.
+   */
+  loadingSlot?: string;
+  /**
    * Keep a browser request's answer in the page's query cache, shared with every provider asking the same thing.
    * Off by default: an author opts in knowing the page may show an answer up to `staleTime` old.
    */
@@ -121,6 +127,7 @@ const ApiContainer = ({
   pagination = 'none',
   pageParam = 'page',
   renderWhileLoading = false,
+  loadingSlot = '',
   cache = false,
   staleTime = DEFAULT_STALE_TIME,
   gcTime = DEFAULT_GC_TIME,
@@ -394,6 +401,11 @@ const ApiContainer = ({
     return callbacks;
   }, [label, performQuery, loadMore, goToPage, serverMode, writeRecord]);
 
+  const shown = useMemo(
+    () => (loadingSlot && previewMode ? childrenWhile(children, loadingSlot, isInitialLoad) : children),
+    [children, isInitialLoad, loadingSlot, previewMode]
+  );
+
   const storeContext = useMemo(
     () => (sourceName ? { runtime: { sources: { [sourceName]: publishedData } } } : emptyObject),
     [publishedData, sourceName]
@@ -407,9 +419,9 @@ const ApiContainer = ({
       interactionTriggers={declaration.triggers}
       interactionCallbacks={interactionCallbacks}
     >
-      {(!isInitialLoad || renderWhileLoading) && (
+      {(!isInitialLoad || renderWhileLoading || loadingSlot) && (
         <StoreProvider inherit="live" name={`Api:${id}`} value={storeContext}>
-          {children}
+          {shown}
         </StoreProvider>
       )}
     </RootElement>

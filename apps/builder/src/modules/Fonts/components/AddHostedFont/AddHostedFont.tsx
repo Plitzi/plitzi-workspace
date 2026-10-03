@@ -3,10 +3,10 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import { use, useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { FontValidationError, parseSpaceFont } from '@plitzi/sdk-shared/style';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { FontStyle, SpaceFont } from '@plitzi/sdk-shared';
 
@@ -30,7 +30,7 @@ const WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
  * `font-family` could not tell two entries of one name apart anyway.
  */
 const AddHostedFont = ({ fonts, onAdd, onUpdate }: AddHostedFontProps) => {
-  const { server, userKey, webId } = use(NetworkContext);
+  const { server, userKey, webId } = useBuilderNetwork();
   const inputRef = useRef<HTMLInputElement>(null);
   const [family, setFamily] = useState('');
   const [fallback, setFallback] = useState('system-ui, sans-serif');

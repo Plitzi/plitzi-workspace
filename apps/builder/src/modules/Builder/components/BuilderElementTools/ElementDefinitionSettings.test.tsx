@@ -60,13 +60,14 @@ describe('ElementDefinitionSettings', () => {
 
   it('keeps the free label text behind its toggle', async () => {
     const { container, getByTitle } = await renderSettings();
+    const labelField = () => container.querySelector<HTMLInputElement>('input[placeholder="Hero section"]');
 
-    expect(container.querySelectorAll('input')).toHaveLength(1);
+    expect(labelField()).toBeNull();
 
     fireEvent.click(getByTitle('Label'));
     await flushStorageSync();
 
-    expect(container.querySelectorAll('input')[1].value).toBe('Hero section');
+    expect(labelField()?.value).toBe('Hero section');
   });
 
   it('does not rename when the field is only focused and left', async () => {
@@ -178,5 +179,48 @@ describe('ElementDefinitionSettings / load strategy', () => {
 
     fireEvent.change(select ?? document.body, { target: { value: '' } });
     expect(onUpdate).toHaveBeenLastCalledWith('loadStrategy', undefined, true);
+  });
+
+  describe('feature flag', () => {
+    const renderGate = async (flagNames: string[], flag?: Element['definition']['flag']) => {
+      const onUpdate = vi.fn();
+      const { container, queryByText } = render(
+        <ElementDefinitionSettings
+          definition={{ ...definition, ...(flag ? { flag } : {}) }}
+          id="hero"
+          flagNames={flagNames}
+          getNameConflict={getNameConflict}
+          onUpdate={onUpdate}
+          onRename={vi.fn()}
+        />
+      );
+      await flushStorageSync();
+      const selects = [...container.querySelectorAll('select')];
+
+      return { onUpdate, queryByText, gate: selects.find(select => select.querySelector('option[value="beta"]')) };
+    };
+
+    it('is not offered while the space declares no flag', async () => {
+      const { gate, queryByText } = await renderGate([]);
+
+      expect(gate).toBeUndefined();
+      expect(queryByText('Always rendered')).toBeNull();
+    });
+
+    it('gates the element on a declared flag, and removes the gate', async () => {
+      const { gate, onUpdate } = await renderGate(['beta']);
+
+      fireEvent.change(gate ?? document.body, { target: { value: 'beta' } });
+      expect(onUpdate).toHaveBeenLastCalledWith('flag', { name: 'beta', is: true }, true);
+
+      fireEvent.change(gate ?? document.body, { target: { value: '' } });
+      expect(onUpdate).toHaveBeenLastCalledWith('flag', undefined, true);
+    });
+
+    it('keeps showing a gate on a flag the space no longer declares, and says why it is gone', async () => {
+      const { queryByText } = await renderGate([], { name: 'beta', is: true });
+
+      expect(queryByText('The space does not declare this flag, so it reads as off.')).not.toBeNull();
+    });
   });
 });

@@ -26,6 +26,8 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import { createStoreDevToolsLogger, type SdkState } from '@plitzi/sdk-shared';
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
+import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
+import { documentCookies } from '@plitzi/sdk-shared/helpers/cookies';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
 import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
@@ -92,6 +94,19 @@ export type AppProps = {
   /** The theme the host already settled — from the cookie a server read before it rendered the document. */
   theme?: Theme;
   state?: Record<string, unknown>;
+  /**
+   * The feature flags this embedding decides, by name: `{ newCheckout: true }`. Above whatever the space and the server
+   * rendering it say, below a tester with the dev tools. Only for flags the space declares — anything else is ignored,
+   * with a warning in the console.
+   */
+  flags?: Record<string, boolean>;
+  /** Set by the server that rendered this page: the flags its deployment decides (`createServer({ flags })`). */
+  serverFlags?: Record<string, boolean>;
+  /**
+   * Set by the server that rendered this page for somebody allowed to debug it: the flags a tester forced, read from
+   * the cookie the dev tools write — so the page hydrates drawn the way the server drew it.
+   */
+  forcedFlags?: Record<string, boolean>;
   onInitStateManager?: (instance: RuntimeStateInstance) => void;
   onInitEventBridge?: (instance: EventBridgeContextValue) => void;
 };
@@ -122,6 +137,7 @@ const App = ({
   themeScope = 'document',
   theme,
   state,
+  forcedFlags,
   ...sdkProps
 }: AppProps) => {
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
@@ -156,6 +172,21 @@ const App = ({
   );
   const [debugPreference, setDebugPreference] = useState(() => readDebugPreference(debugCookie));
   const debugMode = debugModeProp && debugPreference;
+  /**
+   * The flags a tester forced — the `qa` layer — and, like the debug panel, only where debugging is authorized: a
+   * published page's visitors could otherwise switch on whatever is still behind a flag.
+   *
+   * A server-rendered page is handed what the server read, which the server only reads for a page allowed to debug —
+   * so it is taken as it comes, and both halves draw the same. A client-only render reads the cookie itself. Settled
+   * once: from then on the dev tools write the layer directly.
+   */
+  const [qaFlags] = useState(() => {
+    if (forcedFlags || !debugModeProp || typeof window === 'undefined') {
+      return forcedFlags;
+    }
+
+    return forcedFlagsFromCookies(documentCookies(), window.location.host);
+  });
   const finalServer = useMemo(() => getEnvironmentServer(server), [server]);
 
   useEffect(() => {
@@ -272,10 +303,14 @@ const App = ({
           ? [
               tracingMiddleware<SdkState>(),
               // None of these is document state: time-travelling `rsc` would replay a stale server response as if
-              // it were an edit, and the theme mirror would make Undo flip the lights.
+              // it were an edit, the theme mirror would make Undo flip the lights, and the flags are what decided
+              // them plus what they resolved to.
               historyMw<SdkState>({
                 shouldRecord: p =>
-                  !p?.startsWith('runtime.elements') && !p?.startsWith('rsc') && !p?.startsWith('theme')
+                  !p?.startsWith('runtime.elements') &&
+                  !p?.startsWith('rsc') &&
+                  !p?.startsWith('theme') &&
+                  !p?.startsWith('flags')
               })
             ]
           : [])
@@ -296,6 +331,7 @@ const App = ({
                     renderMode={renderMode}
                     debugMode={debugMode}
                     webId={webId}
+                    forcedFlags={qaFlags}
                     {...sdkProps}
                   />
                 </ComponentProvider>

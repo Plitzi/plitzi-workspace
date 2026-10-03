@@ -1,3 +1,5 @@
+import { isSvgMarkup } from '@plitzi/sdk-elements/elements/media/Svg/sanitizeSvg';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { BINDING_CATEGORIES, LOAD_STRATEGIES, RUNTIMES, paramIssue } from '../guard';
@@ -49,6 +51,38 @@ const checkAncestor = (ctx: LintContext, element: Element, where: string): void 
   ctx.error(
     'outside-ancestor',
     `${where} only works inside a "${ancestor}": it reads that element's state. Nest it in one.`,
+    element.id
+  );
+};
+
+/** A compound element shows what it holds through its parts — anywhere inside it: without one, nothing in it shows. */
+const checkParts = (ctx: LintContext, element: Element, where: string): void => {
+  const type = element.definition.type;
+  const parts =
+    ctx.catalogs.partTypes && Object.hasOwn(ctx.catalogs.partTypes, type) ? ctx.catalogs.partTypes[type] : [];
+  if (parts.length === 0) {
+    return;
+  }
+
+  const inside = new Set<string>();
+  const pending = [...(element.definition.items ?? [])];
+  for (let id = pending.pop(); id !== undefined; id = pending.pop()) {
+    const child = ctx.element(id);
+    if (child) {
+      inside.add(child.definition.type);
+      pending.push(...(child.definition.items ?? []));
+    }
+  }
+
+  const missing = parts.filter(part => !inside.has(part));
+  if (missing.length === 0) {
+    return;
+  }
+
+  const named = missing.map(part => `"${part}"`).join(' and ');
+  ctx.error(
+    'part-missing',
+    `${where} has no ${named} inside it — a "${type}" shows what it holds through ${missing.length === 1 ? 'that part' : 'those parts'}, so nothing in it shows. Add ${missing.length === 1 ? 'one' : 'them'} inside it.`,
     element.id
   );
 };
@@ -140,6 +174,37 @@ const checkChildren = (ctx: LintContext, element: Element, where: string): void 
   ctx.error(
     'children-in-leaf',
     `${where} has ${count} ${count === 1 ? 'child' : 'children'}, but a "${type}" holds none: it renders its own attributes and drops anything nested in it.${hint}`,
+    element.id
+  );
+};
+
+/**
+ * What is a block by what it means, not by its styles: a heading, a paragraph, a list, a form, or prose that renders
+ * paragraphs of its own. A `text` or a `container` renders a `div` too, but one styled inline is what a span holds.
+ */
+const BLOCK_TYPES = new Set(['heading', 'paragraph', 'list', 'form', 'markdown', 'richText']);
+
+/**
+ * A `span` container is for a run of text — a dot before a title, a word dressed apart. A heading or a paragraph
+ * inside it breaks that line in two, and no class on the span makes it otherwise.
+ */
+const warnSpanHoldsBlock = (ctx: LintContext, element: Element, where: string): void => {
+  if (element.definition.type !== 'container' || element.attributes.subType !== 'span') {
+    return;
+  }
+
+  const blocks = (element.definition.items ?? []).flatMap(id => {
+    const child = ctx.element(id);
+
+    return child && BLOCK_TYPES.has(child.definition.type) ? [child] : [];
+  });
+  if (!blocks.length) {
+    return;
+  }
+
+  ctx.warn(
+    'span-holds-block',
+    `${where} is a \`span\` but holds ${blocks.map(child => ctx.describe(child.id)).join(', ')}, which ${blocks.length === 1 ? 'is a block' : 'are blocks'}: a span sits in a line of text, and a block breaks it in two. Make it a \`div\` (leave \`subType\` out), or put words there instead — a \`text\` with \`display: inline\` in its class.`,
     element.id
   );
 };
@@ -277,6 +342,35 @@ const checkAttributeTemplates = (ctx: LintContext, element: Element, where: stri
   }
 };
 
+/** A value at a dotted path of a record, as the list reads its `itemKey`. */
+const fieldOf = (item: unknown, path: string): unknown =>
+  path.split('.').reduce<unknown>((value, key) => (isRecord(value) ? value[key] : undefined), item);
+
+/**
+ * A list's `itemKey` that does not name each of its fixed items once. The list falls back to the items' `id`, then to
+ * their position, so the rows do not stay with their items as the author meant. Bound items arrive at run time and
+ * are not read here.
+ */
+const warnItemKey = (ctx: LintContext, element: Element, where: string): void => {
+  const { itemKey, items } = element.attributes;
+  if (typeof itemKey !== 'string' || itemKey === '' || !Array.isArray(items) || items.length === 0) {
+    return;
+  }
+
+  const keys = items.map(item => fieldOf(item, itemKey));
+  const missing = keys.filter(key => typeof key !== 'string' && typeof key !== 'number').length;
+  const shared = new Set(keys).size !== keys.length;
+  if (missing === 0 && !shared) {
+    return;
+  }
+
+  ctx.warn(
+    'list-item-key-missing',
+    `${where} names its rows by "${itemKey}", but ${missing > 0 ? `${String(missing)} of its ${String(items.length)} items have no "${itemKey}"` : `two of its items share one "${itemKey}"`}: the rows fall back to the items' \`id\`, then to their position. Give every item its own "${itemKey}", or name a field that has one.`,
+    element.id
+  );
+};
+
 /**
  * What renders, and renders something other than what it plainly means. Refused where there is no other reading — a
  * controlled list with nothing to render — and warned where there is a rare legitimate one.
@@ -292,6 +386,22 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
       ctx.error(
         'list-without-items',
         `${where} is a controlled list with no items: it renders one row per item and would render none. Write \`items: [ … ]\`, or bind them: \`bind: { items: 'catalog.data.games' }\`.`,
+        element.id
+      );
+    }
+  }
+
+  if (type === 'list' && !bound('items')) {
+    warnItemKey(ctx, element, where);
+  }
+
+  const { loadingSlot } = attributes;
+  if (type === 'apiContainer' && typeof loadingSlot === 'string' && loadingSlot !== '') {
+    const children = element.definition.items ?? [];
+    if (!children.includes(loadingSlot)) {
+      ctx.error(
+        'loading-slot-unknown',
+        `${where} shows "${loadingSlot}" while it loads, which is not one of its children${didYouMean(loadingSlot, children) || '.'} The loading slot is a child of the provider — a skeleton beside what it stands for: give that child the id.`,
         element.id
       );
     }
@@ -466,6 +576,20 @@ const warnFormControls = (ctx: LintContext): void => {
   }
 };
 
+/** An `svg` draws one `<svg>…</svg>`; anything else renders nothing at all. */
+const checkSvgMarkup = (ctx: LintContext, element: Element, where: string): void => {
+  const { content } = element.attributes;
+  if (element.definition.type !== 'svg' || typeof content !== 'string' || content === '' || isSvgMarkup(content)) {
+    return;
+  }
+
+  ctx.error(
+    'svg-not-svg',
+    `${where} is an \`svg\` whose \`content\` is not one \`<svg>…</svg>\` (${JSON.stringify(shorten(content))}), so it draws nothing. Give it the SVG markup alone; HTML around it belongs in a \`blockHtml\`.`,
+    element.id
+  );
+};
+
 export const lintElements = (ctx: LintContext): void => {
   const catalog = ctx.catalogs.attributeNames;
   const unknownTypes = new Set<string>();
@@ -494,10 +618,13 @@ export const lintElements = (ctx: LintContext): void => {
     }
 
     checkAncestor(ctx, element, where);
+    checkParts(ctx, element, where);
     checkAttributes(ctx, element, where);
     checkChildren(ctx, element, where);
+    warnSpanHoldsBlock(ctx, element, where);
     checkAttributeTemplates(ctx, element, where);
     checkIntent(ctx, element, where);
+    checkSvgMarkup(ctx, element, where);
     warnRouteParams(ctx, element, where);
   }
 

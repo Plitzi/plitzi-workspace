@@ -82,7 +82,10 @@ export const refreshRsc = async (
   const pageId = location
     ? matchRscPageId(schema, location, Boolean(auth?.details))
     : store.get('navigation.currentPageId');
-  if (!schema || !hasServerElements(schema, pageId)) {
+  // The flags as they resolved for the page on screen, so a server element gated off asks for nothing. Not for a page
+  // being navigated to: a flag's rule may read the route, and the server — which decides anyway — resolves them there.
+  const flags = location ? undefined : store.get('runtime.sources.flags');
+  if (!schema || !hasServerElements(schema, pageId, flags)) {
     return;
   }
 

@@ -104,6 +104,18 @@ const useQueueManager = ({
           return mutate('SpaceRemoveVariable', { name });
         }
 
+        case SchemaActions.SCHEMA_SET_FLAG: {
+          const { name, flag } = item.action;
+
+          return mutate('SpaceSetFlag', { name, flag });
+        }
+
+        case SchemaActions.SCHEMA_REMOVE_FLAG: {
+          const { name } = item.action;
+
+          return mutate('SpaceRemoveFlag', { name });
+        }
+
         case SchemaActions.SCHEMA_ADD_ELEMENT: {
           const { data, to, dropPosition, initialItems, variables } = item.action;
 
@@ -283,10 +295,10 @@ const useQueueManager = ({
           return mutate('StyleUpdateSettings', { path, value });
         }
 
-        case SchemaActions.SCHEMA_ADD_TEMPLATE: {
+        case SchemaActions.SCHEMA_ADD_SNIPPET: {
           const { data, dropPosition, initialItems, to, variables, style } = item.action;
 
-          return mutate('SpaceAddTemplate', {
+          return mutate('SpaceAddSnippet', {
             element: data,
             style,
             to,

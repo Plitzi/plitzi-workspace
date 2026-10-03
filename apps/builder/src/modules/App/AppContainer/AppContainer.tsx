@@ -12,25 +12,28 @@ import FontPreviews from '@pmodules/Fonts/FontPreviews';
 
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
-import ContainerActions from './containers/ContainerActions';
-import ContainerConnectors from './containers/ContainerConnectors';
-import ContainerCredentials from './containers/ContainerCredentials';
 import ContainerDefault from './containers/ContainerDefault';
-import ContainerFunctions from './containers/ContainerFunctions';
-import ContainerRuntime from './containers/ContainerRuntime';
+import ContainerServer from './containers/ContainerServer';
 import ContainerSettings from './containers/ContainerSettings';
 import ContainerSitemap from './containers/ContainerSitemap';
-import ContainerVisitors from './containers/ContainerVisitors';
-import { getPopups } from '../helpers/utils';
+import { getPopups, isFullViewId } from '../helpers/utils';
+import useSitemapOpen from '../hooks/useSitemapOpen';
 
+import type { FullViewId } from '../helpers/utils';
 import type { PopupInstance, PopupPlacement, PopupUpdateState } from '@plitzi/plitzi-ui/Popup';
 import type { EventBridgeEvent } from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
 
 export type AppContainerProps = {
   externalStyle?: string;
 };
 
-const separatorsBefore = ['layerManager', 'settings'];
+const separatorsBefore = ['layerManager', 'server'];
+
+const FULL_VIEWS: Record<FullViewId, ReactNode> = {
+  server: <ContainerServer />,
+  settings: <ContainerSettings />
+};
 
 const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
   const { previewMode } = use(AppContext);
@@ -47,6 +50,11 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
     []
   );
   const [, setPopupsActiveRight] = useStorage<string[]>('builder-state.popupSidePanel.popupsActive.right', []);
+  const [sitemapOpen] = useSitemapOpen();
+  // What replaces the canvas: an entry of the sidebar that is a whole view, or else the pages' map. An id kept from
+  // an older builder names nothing here, and the canvas is drawn.
+  const activeView = popupsActiveLeft[0];
+  const fullView = isFullViewId(activeView) ? FULL_VIEWS[activeView] : undefined;
 
   const handleChangePopups = useCallback(
     (placement: PopupPlacement, _state: PopupUpdateState, popups: Record<PopupPlacement, PopupInstance[]>) => {
@@ -65,10 +73,13 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
     [eventBridge]
   );
 
+  const [platformFlags] = useBuilderStore('platformFlags');
+  // The active ids are read once, as the panels open; the platform's flags are kept, because they arrive with the
+  // editor's first query and decide which panels exist at all.
   const popups = useMemo(
-    () => getPopups({ activeIds: popupsActiveLeft }),
+    () => getPopups({ activeIds: popupsActiveLeft, platformFlags }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [platformFlags]
   );
 
   return (
@@ -103,26 +114,11 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
                   />
                 )}
                 <div className="flex grow basis-0 flex-col overflow-hidden">
-                  {![
-                    'actions',
-                    'functions',
-                    'runtime',
-                    'connectors',
-                    'credentials',
-                    'visitors',
-                    'settings',
-                    'sitemap'
-                  ].includes(popupsActiveLeft[0]) && (
+                  {fullView}
+                  {!fullView && sitemapOpen && <ContainerSitemap />}
+                  {!fullView && !sitemapOpen && (
                     <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
                   )}
-                  {popupsActiveLeft[0] === 'actions' && <ContainerActions />}
-                  {popupsActiveLeft[0] === 'functions' && <ContainerFunctions />}
-                  {popupsActiveLeft[0] === 'runtime' && <ContainerRuntime />}
-                  {popupsActiveLeft[0] === 'connectors' && <ContainerConnectors />}
-                  {popupsActiveLeft[0] === 'credentials' && <ContainerCredentials />}
-                  {popupsActiveLeft[0] === 'visitors' && <ContainerVisitors />}
-                  {popupsActiveLeft[0] === 'sitemap' && <ContainerSitemap />}
-                  {popupsActiveLeft[0] === 'settings' && <ContainerSettings />}
                 </div>
               </div>
             </PopupProvider>

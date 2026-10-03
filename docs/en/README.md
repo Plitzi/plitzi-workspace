@@ -13,11 +13,13 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Releases](./releases.md) | Versioning and publishing with Changesets |
 | [Components](./components.md) | Reusable subtrees: where they live in the schema, how an instance renders, the operations every writer shares, and what is left open |
 | [Authoring spaces](./authoring-spaces.md) | Writing a space — or a publishable template — as TypeScript instead of exported JSON: elements, style, bindings and flows |
+| [Tools for building with an agent](./agent-tooling.md) | The project's loop — author, check, fix, look, import — what each tool answers, and why each is shaped the way it is |
 | [Connectors](./connectors.md) | Reading from (and writing to) a CMS or any REST API: the manifest, the provider element, paging and SSR preloading |
 | [Server actions](./server-actions.md) | Work a page cannot do in the browser: authoring flows the server runs, and calling them from a page |
 | [Functions](./functions.md) | A space's own server code: TypeScript tasks and `/fn/` routes the platform runs in a sandbox, written in the builder, a project or by an agent |
 | [A space as a project](./projects-from-spaces.md) | Taking a space on Plitzi out as a self-hosted project of its own (`plitzi create --from`), and keeping it in step (`plitzi pull`) |
 | [Space runtimes](./runtimes.md) | A space's own server code as a process of its own beside the platform: Node and its packages, open connections, endpoints that stream |
+| [Feature flags](./feature-flags.md) | Switching parts of a space on or off: the model, who decides each flag (space, server, SDK, tester), gating elements and pages, server actions, and publishing flags alone |
 | [Realtime channels](./realtime.md) | Pages that see each other: declaring channels, the `channel` element and `useChannel`, publishing from a server action, and the pub/sub adapter a deployment picks |
 | [Accessibility and browser agents](./accessibility.md) | Pages screen readers and browser agents (Claude in Chrome) can use: what the elements do, what an author says, the linter's rules, canvases, and checking a page |
 | [AI agents (MCP)](./mcp.md) | Connecting Claude or any MCP client to a space: what an agent can do, how it works a space, and what the server guarantees |

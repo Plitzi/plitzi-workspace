@@ -57,6 +57,13 @@ for it; over `max`, `problems` says so. It reads the SDK's render tracing, which
 the space with it (the e2e harness: `renderSpace(page, space, { debugMode: true })`). What to do with the answer is in
 [performance](performance.md).
 
+## Asking the page what it holds
+
+`plitzi check` lists every flow that failed while the page loaded; `--state` adds the state and every source by its
+full name, `--element <id>` one element — what it reads, its own state, whether it is on screen. They come from the
+page's dev tools (debug mode, any development server). In a test, `readDevTools(page, { state: true })` from
+`@plitzi/sdk-authoring` answers the same.
+
 ## Spaces written for a test
 
 Author them like any space — never as JSON: the validator is what tells a fixture that tests something from one that
@@ -111,6 +118,10 @@ expect(await page.evaluate(() => (window as unknown as { __painted: string[] }).
 - **Console errors are failures.** Collect them and assert the list is empty.
 
 ## Screenshots and scrolling
+
+A browser holds back CSS animations and transitions in a tab that is not in view, and `onInterval` stops ticking there:
+check motion with `getComputedStyle(element).animationName` (and `animationPlayState`), or two screenshots taken
+apart, in a page that is in front — not a background tab.
 
 The page scrolls the document in development exactly as in production while the dev-tools panel is folded away (the
 badge). With the panel OPEN, the page shares the window with it and scrolls inside its own pane — close the panel, or

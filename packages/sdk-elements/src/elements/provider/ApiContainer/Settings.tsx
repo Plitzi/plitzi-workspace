@@ -42,6 +42,7 @@ type SettingsProps = {
   pagination?: 'none' | 'url' | 'append';
   pageParam?: string;
   renderWhileLoading?: boolean;
+  loadingSlot?: string;
   cache?: boolean;
   staleTime?: number | string;
   gcTime?: number | string;
@@ -69,6 +70,7 @@ const Settings = ({
   pagination = 'none',
   pageParam = 'page',
   renderWhileLoading = false,
+  loadingSlot = '',
   cache = false,
   staleTime = 30,
   gcTime = 300,
@@ -102,7 +104,7 @@ const Settings = ({
   const handleChangeMockData = useCallback((value: string) => onUpdate?.('mockData', value), [onUpdate]);
 
   const handleChangeEnabled = useCallback(
-    (e: ChangeEvent) => setAdvancedSettings((e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => setAdvancedSettings(e.target.checked),
     []
   );
 
@@ -133,17 +135,19 @@ const Settings = ({
   );
 
   const handleChangeSingleRecord = useCallback(
-    (e: ChangeEvent) => onUpdate?.('singleRecord', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('singleRecord', e.target.checked),
     [onUpdate]
   );
 
+  const handleChangeLoadingSlot = useCallback((value: string) => onUpdate?.('loadingSlot', value), [onUpdate]);
+
   const handleChangeRenderWhileLoading = useCallback(
-    (e: ChangeEvent) => onUpdate?.('renderWhileLoading', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('renderWhileLoading', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeCache = useCallback(
-    (e: ChangeEvent) => onUpdate?.('cache', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('cache', e.target.checked),
     [onUpdate]
   );
 
@@ -284,7 +288,7 @@ const Settings = ({
           <div className="flex flex-col">
             <label>Query</label>
             <CodeMirror
-              className="font-rubik min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
+              className="min-h-6.5 basis-auto rounded-sm border border-gray-300 px-1 text-xs"
               value={query}
               theme={resolvedTheme}
               mode="text"
@@ -341,6 +345,14 @@ const Settings = ({
             size="sm"
             label="Render children while loading"
             onChange={handleChangeRenderWhileLoading}
+          />
+          <Input
+            value={loadingSlot}
+            label="Loading slot"
+            placeholder="catalog-skeleton"
+            title="The id of a child shown instead of the others until the first answer arrives — a skeleton — and gone after it."
+            size="xs"
+            onChange={handleChangeLoadingSlot}
           />
         </>
       )}

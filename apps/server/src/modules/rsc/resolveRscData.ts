@@ -1,9 +1,10 @@
+import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { collectServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 
 import { matchRscPage } from './matchRscPage';
 import { serverLog } from '../../helpers/serverLog';
 
-import type { Element, Environment, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
+import type { Element, Environment, FlagOverrides, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
 
 /** Everything an element resolver needs to turn one `runtime: 'server'` element into its data slice. */
 export type RscResolveContext = {
@@ -38,6 +39,8 @@ export type ResolveRscDataOptions = {
   /** Restricts resolution to these element ids (partial refresh). Undefined resolves every server element. */
   ids?: string[];
   resolveElement: RscElementResolver;
+  /** The layers above the space that decide its flags for this request — see `SSRRscContext.flagOverrides`. */
+  flagOverrides?: FlagOverrides;
   /**
    * Per-element budget: one slow provider must not hold the whole payload, and must not go on working once it
    * has. It is the PAGE's ceiling and it wins over the producer's own — an action allowed ten seconds of its own
@@ -95,6 +98,7 @@ export const resolveRscData = async ({
   user,
   ids,
   resolveElement,
+  flagOverrides,
   timeoutMs = DEFAULT_ELEMENT_TIMEOUT_MS
 }: ResolveRscDataOptions): Promise<SSRRscData> => {
   if (schema.rsc?.enabled === false) {
@@ -107,7 +111,16 @@ export const resolveRscData = async ({
   }
 
   const { pageId, routeParams } = match;
-  const targets = collectServerElements(schema, pageId, ids);
+  // Against the page just matched, as the browser resolves them for it: an element a flag switched off is not drawn,
+  // and its data must not travel in the payload regardless.
+  const flags = flagValues(
+    resolveFlags(
+      schema.flags,
+      { environment, hostname: req.hostname, routeParams, queryParams: req.query, user: flagUserFromSSR(user) },
+      flagOverrides
+    )
+  );
+  const targets = collectServerElements(schema, pageId, ids, flags);
   if (targets.length === 0) {
     return { serverData: {} };
   }

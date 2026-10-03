@@ -14,7 +14,7 @@ const CdnBucketFields = ({ provider, visibility }: CdnBucketFieldsProps) => (
     <Form.Input name="bucketName" label="Bucket Name" size="xs" />
     {provider === 's3' && <Form.Input name="region" label="Bucket Region" size="xs" />}
     <Form.Select name="visibility" label="Visibility" size="xs">
-      <option value="public">Public — plugins, images and templates, served at its domain</option>
+      <option value="public">Public — plugins, images and snippets, served at its domain</option>
       <option value="private">Private — the space’s server code, read only by Plitzi</option>
     </Form.Select>
     {visibility === 'private' && (

@@ -7,8 +7,8 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useState, use, useCallback } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import { mainPluginOf, pluginUsage } from '../../helpers';
 import ResourceContent from '../ResourceContent';
@@ -17,7 +17,7 @@ import ResourceFile from './subTypes/ResourceFile';
 import ResourceMedia from './subTypes/ResourceMedia';
 import ResourcePlugin from './subTypes/ResourcePlugin/ResourcePlugin';
 import ResourceServerCode from './subTypes/ResourceServerCode';
-import ResourceTemplate from './subTypes/ResourceTemplate';
+import ResourceSnippet from './subTypes/ResourceSnippet';
 
 import type { PluginManifest, ResourceType as TResourceType } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -52,7 +52,7 @@ const Resource = ({
   isLoading = false,
   onRemove
 }: ResourceProps) => {
-  const { mutate } = use(NetworkContext);
+  const { mutate } = useBuilderNetwork();
   const { plugins } = use(PluginsContext);
   // Read when a removal is asked for, not subscribed to: every card in the list would re-render on every edit.
   const getSchemaFlat = useBuilderStoreGetter('schema.flat');
@@ -179,8 +179,8 @@ const Resource = ({
   };
 
   switch (type) {
-    case 'template':
-      return <ResourceTemplate {...sharedProps} src={src} />;
+    case 'snippet':
+      return <ResourceSnippet {...sharedProps} src={src} />;
 
     case 'image':
     case 'video':

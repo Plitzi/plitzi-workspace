@@ -1,6 +1,8 @@
 import { tsString } from './quote';
+import { shapedComponent, shapedDeclaration, shapedSettings } from './shape';
 
 import type { PluginNames } from './names';
+import type { ElementShape } from './shape';
 import type { ProjectFiles } from '../types';
 
 /**
@@ -63,7 +65,7 @@ const declaration = {
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },
@@ -364,10 +366,10 @@ export default main;
 `;
 
 /** The element alone: its folder's files, by their path inside it. */
-export const elementFiles = (names: PluginNames, text: ElementText): ProjectFiles => ({
-  [`${names.component}.tsx`]: component(names),
-  'declaration.ts': declarationFile(names, text),
-  'Settings.tsx': settings(names),
+export const elementFiles = (names: PluginNames, text: ElementText, shape?: ElementShape): ProjectFiles => ({
+  [`${names.component}.tsx`]: shape ? shapedComponent(names, shape) : component(names),
+  'declaration.ts': shape ? shapedDeclaration(names, text, shape) : declarationFile(names, text),
+  'Settings.tsx': shape ? shapedSettings(names, shape) : settings(names),
   'index.ts': elementIndex(names)
 });
 

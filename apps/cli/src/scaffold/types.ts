@@ -21,6 +21,13 @@ export interface CreateAnswers {
    */
   packageManager: PackageManager;
   /**
+   * What a local space starts as: `welcome` (the default), a tour of the platform with a plugin of the project's own;
+   * `blank` — tokens, a layout and one empty page, for a project about to be something specific; or `catalog` — a
+   * shop to read and change: a layout, a card component, data in `public/data`, a filtered list and a page per item,
+   * a file per part.
+   */
+  template?: CreateTemplate;
+  /**
    * The version of that manager this machine runs, when it could be asked.
    *
    * Only one file depends on it: Yarn refuses a `.yarnrc.yml` naming a setting it does not know, so the release-age
@@ -28,6 +35,10 @@ export interface CreateAnswers {
    */
   managerVersion?: string;
 }
+
+export const CREATE_TEMPLATES = ['welcome', 'blank', 'catalog'] as const;
+
+export type CreateTemplate = (typeof CREATE_TEMPLATES)[number];
 
 /** Every file of the generated project, by the path it is written to. */
 export type ProjectFiles = Record<string, string>;

@@ -10,12 +10,31 @@ import type { CreateAnswers, ProjectFiles } from './types';
  * rather than as an exception, and nobody writes the first test for a project that already looks fine.
  */
 
-const playwrightConfig = ({
-  mode,
-  packageManager
-}: CreateAnswers): string => `import { defineConfig } from '@playwright/test';
+const RECORDED = `/** What \`npm start\` wrote down when it took a port: the port, and the name its \`/health\` answers with. */
+const recorded = (): { port?: number; name?: string } => {
+  try {
+    const value: unknown = JSON.parse(readFileSync('.plitzi/dev-server.json', 'utf8'));
+    if (typeof value !== 'object' || value === null) {
+      return {};
+    }
 
-const PORT = ${mode === 'server' ? '8080' : '5173'};
+    return {
+      ...('port' in value && typeof value.port === 'number' ? { port: value.port } : {}),
+      ...('name' in value && typeof value.name === 'string' ? { name: value.name } : {})
+    };
+  } catch {
+    return {};
+  }
+};`;
+
+const playwrightConfig = ({ mode, packageManager }: CreateAnswers): string => `import { readFileSync } from 'node:fs';
+
+import { defineConfig } from '@playwright/test';
+
+${RECORDED}
+
+// \`PORT\` when set; otherwise the port \`npm start\` took; otherwise the default.
+const PORT = Number(process.env.PORT ?? recorded().port ?? ${mode === 'server' ? '8080' : '5173'});
 
 export default defineConfig({
   testDir: './visual',
@@ -26,6 +45,7 @@ export default defineConfig({
   webServer: {
     command: '${runCommand(packageManager, 'start')}',
     url: \`http://127.0.0.1:\${PORT}\`,
+    env: { PORT: String(PORT) },
     reuseExistingServer: true,
     timeout: 120_000
   }
@@ -94,53 +114,7 @@ test('renders the space without errors', async ({ page }) => {
 });
 `;
 
-const shotScript = ({ mode }: CreateAnswers): string => `import { mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
-
-import { chromium } from '@playwright/test';
-
-/**
- * A screenshot of one page, to look at a change without writing a test for it.
- *
- *   npm run shot -- /about --width 390 --scheme dark
- *   npm run shot -- / --out shots/home.png --height 900
- *
- * The whole page, not one screen of it. The dev server has to be running (npm start).
- */
-const PORT = ${mode === 'server' ? '8080' : '5173'};
-
-const args = process.argv.slice(2);
-const option = (name: string, fallback: string): string => {
-  const index = args.indexOf('--' + name);
-
-  return index === -1 ? fallback : (args[index + 1] ?? fallback);
-};
-
-const path = args.find(arg => arg.startsWith('/')) ?? '/';
-const width = Number(option('width', '1280'));
-const height = Number(option('height', '800'));
-const scheme = option('scheme', 'light') === 'dark' ? 'dark' : 'light';
-const name = path === '/' ? 'home' : path.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
-const out = option('out', 'visual/.shots/' + name + '-' + width + '-' + scheme + '.png');
-
-const browser = await chromium.launch();
-try {
-  const page = await browser.newPage({ viewport: { width, height }, colorScheme: scheme });
-  const response = await page.goto('http://127.0.0.1:' + PORT + path, { waitUntil: 'networkidle' }).catch(() => null);
-  if (!response) {
-    throw new Error('Nothing answers on port ' + PORT + '. Start the project first: npm start');
-  }
-
-  await mkdir(dirname(out), { recursive: true });
-  await page.screenshot({ path: out, fullPage: true });
-  console.log(out);
-} finally {
-  await browser.close();
-}
-`;
-
 export const visualFiles = (answers: CreateAnswers): ProjectFiles => ({
   'playwright.config.ts': playwrightConfig(answers),
-  'scripts/shot.ts': shotScript(answers),
   'visual/home.spec.ts': answers.source === 'local' ? authoredSpec() : documentSpec()
 });

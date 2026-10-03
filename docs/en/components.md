@@ -7,6 +7,24 @@ copied by templates and exported by `plitzi create --from`, with no code of its 
 This is how the platform implements them. For authoring one, see the `plitzi-authoring` skill
 (`packages/sdk-authoring/skills/plitzi-authoring/reference/components.md`) and the website's `/docs/components`.
 
+## Components and snippets
+
+Both keep a block to use again; they differ in what a placement is.
+
+| | Component | Snippet |
+| --- | --- | --- |
+| Kept | in the space document, `schema.components` | a JSON file on a space's CDN (`snippets/`, resource type `snippet`) — no document holds it |
+| Shape | `SpaceComponent`: its own `flat`, `props`, `slots` | `Snippet` (`@plitzi/sdk-shared`): a definition, `schema.flat` + `schema.variables`, a style |
+| Placed as | a `reference` element naming it (`referenceId`) | a copy of its elements, inserted by `SCHEMA_ADD_SNIPPET` / `SpaceAddSnippet` |
+| An edit to it | renders in every instance | reaches nothing already placed |
+| Versioned | with the space's snapshots | not at all: a file, replaced by uploading another |
+| Reaches | its own space | any space whose CDN holds the file |
+| Written by | *Save as component*, `ComponentSpec`, MCP `upsertComponent` | *Save as snippet* (`FlatMap.flatAsSnippet`), `authorSnippet` |
+
+A snippet entering a space is fitted to it once, where it is dropped (`fitSnippet`): ids and classes whose names are
+taken come in renamed, and the space keeps its own element-type rules and tokens (`mergeSnippetStyle`) — see
+`docs/en/authoring-spaces.md` §9. An instance becomes the snippet-like copy by **Detach** (`detachInstance`).
+
 ## Where a component lives
 
 ```ts
@@ -105,8 +123,8 @@ declared. The authoring gate (`authorSpace`) refuses both, with the fix in the m
 
 ## The builder
 
-- **Components** panel (`apps/builder/src/modules/Components`): list with instance counts, drag to place, create,
-  edit the declaration, remove.
+- **Components**, at the foot of the Elements panel (`apps/builder/src/modules/Components`), searched with the
+  elements: list with instance counts, drag to place like an element, create, edit the declaration, remove.
 - **Open in canvas**: `componentOpen` in the builder store. `AppContainer` draws the builder inside a scope holding the
   component's tree (`useOpenComponent`), keyed by the component, so the canvas, the layers and the element tools find
   its elements by id. A banner says the canvas is a component.
@@ -129,8 +147,8 @@ A component's elements are `element` entries like a page's, and its declaration 
 
 - **A workspace library**: sharing components across spaces. The intended shape is a library space whose components
   are COPIED into another space with `source: { spaceId, revision, componentId }`, updated on demand, never linked
-  live — a live link would make a revision depend on another space's state. The element-template manifest
-  (`TemplateSpec`) already carries a subtree with the style it reads.
+  live — a live link would make a revision depend on another space's state. The snippet manifest
+  (`SnippetSpec`) already carries a subtree with the style it reads.
 - **Outward events**: a component declaring callbacks an instance binds flows to (`onSelect`). Today a component writes
   `runtime.state`.
 - **Per-instance style** beyond a class on the instance: variants are driven by props.

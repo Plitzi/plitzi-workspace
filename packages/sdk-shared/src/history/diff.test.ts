@@ -78,6 +78,18 @@ describe('diffSchema', () => {
       'update setting pages'
     ]);
   });
+
+  it('keys feature flags by name, and reads a schema with none as one with an empty set', () => {
+    const before = schema({}, { flags: { beta: { value: false, rules: [] }, legacy: { value: true, rules: [] } } });
+    const after = schema({}, { flags: { beta: { value: true, rules: [] }, labs: { value: false, rules: [] } } });
+
+    expect(diffSchema(before, after).map(({ kind, id, op }) => `${op} ${kind} ${id}`)).toEqual([
+      'update flag beta',
+      'add flag labs',
+      'remove flag legacy'
+    ]);
+    expect(diffSchema(schema({}), schema({}, { flags: {} }))).toEqual([]);
+  });
 });
 
 describe('diffStyle', () => {

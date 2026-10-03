@@ -13,13 +13,18 @@ export type ListProps<T = unknown> = {
   children?: ReactNode;
   items?: T[];
   source?: 'none' | 'controlled';
+  /**
+   * The field of each item that names it — `'slug'`, `'sku'` — so a row stays with its item when the items are
+   * filtered or reordered, and mounts again when its item changes. Left out: the item's `id`, else its position.
+   */
+  itemKey?: string;
 };
 
-const List = ({ ref, className = '', subType = 'ul', children, items = [], source = 'none' }: ListProps) => {
+const List = ({ ref, className = '', subType = 'ul', children, items = [], source = 'none', itemKey }: ListProps) => {
   switch (source) {
     case 'controlled':
       return (
-        <ListControlled ref={ref} className={className} items={items}>
+        <ListControlled ref={ref} className={className} items={items} itemKey={itemKey}>
           {children}
         </ListControlled>
       );

@@ -17,7 +17,6 @@ export type ActionsContextValue = {
   credentials: SpaceCredential[];
   isLoading: boolean;
   error: string;
-  hasServerRendering: boolean;
   /** One origin per deployment, for building webhook URLs. */
   deployments: { environment: string; domain: string; isDefault: boolean }[];
   addAction: (name: string, document: ActionDocument) => Promise<SpaceAction | undefined>;
@@ -37,7 +36,6 @@ const ActionsContext = createContext<ActionsContextValue>({
   credentials: [],
   isLoading: false,
   error: '',
-  hasServerRendering: false,
   deployments: [],
   addAction: () => Promise.resolve(undefined),
   updateAction: () => Promise.resolve(undefined),

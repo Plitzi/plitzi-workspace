@@ -10,11 +10,11 @@ import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 import useCollaboratorElements from '@pmodules/Collaboration/hooks/useCollaboratorElements';
 import { getInitialItems, makeIdMinter } from '@pmodules/Elements/ElementHelper';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import { isInRoot } from './helpers/elementChain';
 
@@ -27,15 +27,13 @@ import type {
   Schema,
   Style,
   DropPosition,
-  BuilderNetworkContextValue,
-  BuilderQueriesMap,
-  BuilderMutationsMap
+  Snippet
 } from '@plitzi/sdk-shared';
 
 export type BuilderProviderProps = {
   children: React.ReactNode;
   baseElementId: string;
-  mode?: 'normal' | 'template';
+  mode?: 'normal' | 'snippet';
   schemaName?: string;
 
   onHandler?: (event: EventBridgeEvent, data: unknown[]) => void;
@@ -50,7 +48,7 @@ const BuilderProvider = ({
   onHandler,
   onBaseElementChange
 }: BuilderProviderProps) => {
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate } = useBuilderNetwork();
   const [baseContext, setBaseContext] = useStateMemo(() => ({ baseElementId: baseElementIdProp }), [baseElementIdProp]);
   const { componentDefinitions, getComponent } = use(ComponentContext);
   const { baseElementId } = baseContext;
@@ -60,10 +58,11 @@ const BuilderProvider = ({
     'elementHovered',
     'elementSelected'
   ]);
-  const [getElement, getElementSelected, getSchema] = useBuilderStoreGetter([
+  const [getElement, getElementSelected, getSchema, getStyle] = useBuilderStoreGetter([
     'schema.flat',
     'elementSelected',
-    'schema'
+    'schema',
+    'style'
   ]);
 
   // Builder Methods
@@ -94,12 +93,12 @@ const BuilderProvider = ({
 
       let permissions = get(componentDefinitions.current, `${type}.content.builder`, {}) as PluginBuilder;
       if (!path && element.id === baseElementId) {
-        permissions = { ...permissions, canDelete: false, canTemplate: false, canMove: false };
+        permissions = { ...permissions, canDelete: false, canSnippet: false, canMove: false };
       }
 
       if (mode !== 'normal' && !path) {
-        permissions.canTemplate = false;
-      } else if (mode === 'normal' && path === 'canTemplate') {
+        permissions.canSnippet = false;
+      } else if (mode === 'normal' && path === 'canSnippet') {
         return false;
       }
 
@@ -253,7 +252,7 @@ const BuilderProvider = ({
         return false;
       }
 
-      if (typeArr[1] === 'plitzi-template') {
+      if (typeArr[1] === 'plitzi-snippet') {
         const dataParsed = data as {
           elements: Record<string, Element>;
           baseElement?: Element;
@@ -265,9 +264,9 @@ const BuilderProvider = ({
           return false;
         }
 
-        // The payload is a throwaway copy of the template document, so nothing here has to be detached from an
-        // original — the names it brought are kept, and `SCHEMA_ADD_TEMPLATE` renames only the ones this space
-        // already holds. Re-cloning first would have renamed all of them and thrown the authored names away.
+        // The payload is a throwaway copy of the snippet document, so nothing here has to be detached from an
+        // original — the names it brought are kept, and `schemaAddSnippet` renames only the ones this space already
+        // holds (`fitSnippet`). Re-cloning first would have renamed all of them and thrown the authored names away.
         const baseElement = {
           ...pick(dataParsed.baseElement, ['id', 'attributes', 'definition']),
           definition: { ...dataParsed.baseElement.definition, rootId: baseElementId, parentId: toElementId }
@@ -280,7 +279,7 @@ const BuilderProvider = ({
         );
 
         builderHandler(
-          'schemaAddTemplate',
+          'schemaAddSnippet',
           toElementId,
           baseElement,
           dropPosition,
@@ -362,39 +361,36 @@ const BuilderProvider = ({
     [getElement, getSchema, baseElementId, builderHandler, setHovered, componentDefinitions, setSelected]
   );
 
-  const elementAsTemplate = useCallback(
-    async (
-      { cdnIdentifier, bucketIdentifier }: { cdnIdentifier: string; bucketIdentifier: string },
-      schema: Schema,
-      style: Style,
-      name: string,
-      description: string,
-      element: Element
-    ) => {
-      const { elements, elementsStyle, variables } = FlatMap.flatAsTemplate(schema, style, element.id);
+  const elementAsSnippet = useCallback<BuilderContextValue['elementAsSnippet']>(
+    async ({ cdnIdentifier, bucketIdentifier }, { name, description }, element) => {
+      const { elements, elementsStyle, variables } = FlatMap.flatAsSnippet(getSchema(), getStyle(), element.id);
       if (!elements.item) {
-        return;
+        return { saved: false, reason: `"${element.definition.label}" is no longer on the page.` };
       }
 
-      const jsonData = {
+      const snippet: Snippet = {
         definition: { name, description, baseElementId: elements.item.id },
         schema: { flat: elements.acum, variables },
         style: { ...elementsStyle, cache: generateCache(elementsStyle) }
       };
-
-      const file = new File([JSON.stringify(jsonData, null, 2)], `${name}.json`, {
+      const file = new File([JSON.stringify(snippet, null, 2)], `${name}.json`, {
         type: 'application/json',
         lastModified: Date.now()
       });
-      await mutate(
+      const { error } = await mutate(
         'SpaceAddResource',
-        { cdnIdentifier, bucketIdentifier, resource: file, type: 'template', compression: undefined },
+        { cdnIdentifier, bucketIdentifier, resource: file, type: 'snippet', compression: undefined },
         false,
         false,
         { customFetch: true }
       );
+      if (error) {
+        return { saved: false, reason: error instanceof Error ? error.message : error };
+      }
+
+      return { saved: true };
     },
-    [mutate]
+    [getSchema, getStyle, mutate]
   );
 
   const setVisibility = useCallback(
@@ -504,7 +500,7 @@ const BuilderProvider = ({
       builderElementPermissions,
       builderHandler,
       updateElement,
-      elementAsTemplate,
+      elementAsSnippet,
       builderGetBaseElement: getBaseElement,
       builderDropElement: drop,
       builderSetElementVisibility: setVisibility
@@ -520,7 +516,7 @@ const BuilderProvider = ({
       builderElementPermissions,
       builderHandler,
       updateElement,
-      elementAsTemplate,
+      elementAsSnippet,
       getBaseElement,
       drop,
       setVisibility

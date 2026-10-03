@@ -1,8 +1,8 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
-import Input from '@plitzi/plitzi-ui/Input';
+import Heading from '@plitzi/plitzi-ui/Heading';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import { useCallback, use, useMemo, useState } from 'react';
+import { useCallback, use, useMemo } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
@@ -14,12 +14,17 @@ import { componentLabel, emptyComponent, instanceCounts } from './helpers';
 
 import type { SpaceComponentDeclaration } from '@plitzi/sdk-shared';
 
+export type ComponentsProps = {
+  /** What the catalog is searched for: the elements above and these alike. */
+  filter: string;
+};
+
 /**
- * The space's components: what each is called and how many places render it. A component is placed by dragging it
- * onto a page, and edited by opening it in the canvas, where its tree is edited like a page's.
+ * The space's components, at the foot of the element catalog: placed the way an element is, by dragging it onto a
+ * page — with what each is called and how many places render it. Edited by opening it in the canvas, where its tree is
+ * edited like a page's.
  */
-const Components = () => {
-  const [filter, setFilter] = useState('');
+const Components = ({ filter }: ComponentsProps) => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
   const { componentDefinitions } = use(ComponentContext);
@@ -64,18 +69,20 @@ const Components = () => {
     }
   }, [showModal, pageFolders, getSchema, componentDefinitions, eventBridge, setBuilderStore]);
 
+  const emptyMessage = filter.trim()
+    ? 'No component matches the search.'
+    : 'No components yet. Make one with New, or from an element: right click → Save as component.';
+
   return (
-    <Flex direction="column" gap={2} className="w-full p-2">
-      <Flex gap={2} direction="column">
-        <Button size="sm" onClick={handleAdd} iconPlacement="before">
+    <Flex direction="column" gap={2}>
+      <div className="border-t border-gray-200 dark:border-zinc-700" />
+      <Flex items="center" justify="between" gap={2}>
+        <Heading as="h6">Components</Heading>
+        <Button size="xs" title="New component" onClick={handleAdd} iconPlacement="before">
           <Button.Icon icon="fa-solid fa-plus" />
-          New Component
+          New
         </Button>
-        <Input placeholder="Search" value={filter} onChange={setFilter} size="sm">
-          <Input.Icon icon="fa-solid fa-magnifying-glass" />
-        </Input>
       </Flex>
-      <div className="mt-2 h-px bg-gray-200 dark:bg-zinc-700" />
       <Flex direction="column">
         {listed.map(({ component, instances }) => (
           <ComponentItem
@@ -86,11 +93,7 @@ const Components = () => {
             pageFolders={pageFolders}
           />
         ))}
-        {listed.length === 0 && (
-          <span className="text-sm text-gray-500 dark:text-zinc-400">
-            No components yet. Make one with New Component, or from an element: right click → Save as component.
-          </span>
-        )}
+        {listed.length === 0 && <span className="text-sm text-gray-500 dark:text-zinc-400">{emptyMessage}</span>}
       </Flex>
     </Flex>
   );

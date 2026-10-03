@@ -4,7 +4,8 @@ import Modal from '@plitzi/plitzi-ui/Modal';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import KeyboardKey from '@pmodules/AI/components/KeyboardKey';
+import { nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+import KeyboardKey from '@pmodules/Keyboard';
 
 import ModelOption from './components/ModelOption';
 
@@ -59,7 +60,7 @@ const ModelSelector = ({
     }
 
     const handler = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) {
+      if (!rootRef.current?.contains(nodeOf(e.target))) {
         onOpen();
       }
     };

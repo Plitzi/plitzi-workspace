@@ -1,8 +1,8 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import useAiErrors from './useAiErrors';
 import useAiUsage from './useAiUsage';
@@ -12,6 +12,7 @@ import { parseAiStream } from '../helpers/parseAiStream';
 
 import type { AiAttachment, AiContext, AiMessage, AiProviderSettings, ConversationSummary } from '../types';
 import type { AiEffort, AiMode } from '@plitzi/sdk-shared';
+import type { Dispatch, SetStateAction } from 'react';
 
 type QueueEntry = {
   localId: string;
@@ -22,10 +23,14 @@ type QueueEntry = {
 };
 
 const useAiChat = (providerSettings?: AiProviderSettings) => {
-  const { server, webKey } = use(NetworkContext);
+  const { server, webKey } = useBuilderNetwork();
   const { networkQuery } = useNetwork({ initLoading: false, server, webKey, baseUrl: server.serverUrl });
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
-  const [mode, setMode] = useStorage<AiMode>('builder-state.aiChat.mode', 'build');
+  // Typed here, not inferred: this hook hands the setter on, and its type must name this package's React.
+  const [mode, setMode]: readonly [AiMode, Dispatch<SetStateAction<AiMode>>] = useStorage<AiMode>(
+    'builder-state.aiChat.mode',
+    'build'
+  );
   const [messages, setMessages] = useState<AiMessage[]>([]);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);

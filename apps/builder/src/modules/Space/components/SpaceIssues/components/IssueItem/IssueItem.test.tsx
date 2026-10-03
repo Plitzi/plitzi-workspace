@@ -31,7 +31,13 @@ describe('IssueItem', () => {
     const onDismiss = vi.fn();
     const { getByText } = render(
       <IssueItem
-        issue={{ code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'hello', fixable: false }}
+        issue={{
+          code: 'binding-target-unknown',
+          message: 'Lands on nothing',
+          elementId: 'hello',
+          fixable: false,
+          fix: null
+        }}
         severity="error"
         onDismiss={onDismiss}
       />
@@ -47,7 +53,13 @@ describe('IssueItem', () => {
   it('names an element that is gone without linking it', () => {
     const { getByText, queryByRole } = render(
       <IssueItem
-        issue={{ code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'gone', fixable: false }}
+        issue={{
+          code: 'binding-target-unknown',
+          message: 'Lands on nothing',
+          elementId: 'gone',
+          fixable: false,
+          fix: null
+        }}
         severity="error"
         onDismiss={vi.fn()}
       />
@@ -60,7 +72,7 @@ describe('IssueItem', () => {
   it('shows an issue about the whole space with no element at all', () => {
     const { getByText, queryByRole } = render(
       <IssueItem
-        issue={{ code: 'colour-without-dark', message: 'No dark value', elementId: null, fixable: false }}
+        issue={{ code: 'colour-without-dark', message: 'No dark value', elementId: null, fixable: false, fix: null }}
         severity="warning"
         onDismiss={vi.fn()}
       />
@@ -68,5 +80,25 @@ describe('IssueItem', () => {
 
     expect(getByText('No dark value')).toBeTruthy();
     expect(queryByRole('button')).toBeNull();
+  });
+
+  // The fix the code's row says — the same one authoring and an agent over MCP are told — with its code set apart.
+  it('says what to write instead, with the code in it set apart', () => {
+    const { getByText, container } = render(
+      <IssueItem
+        issue={{
+          code: 'click-on-static-element',
+          message: 'A click on a box',
+          elementId: null,
+          fixable: false,
+          fix: 'the flow on a `button` (it holds children)'
+        }}
+        severity="error"
+        onDismiss={vi.fn()}
+      />
+    );
+
+    expect(getByText('Write instead:')).toBeDefined();
+    expect(container.querySelector('code')?.textContent).toBe('button');
   });
 });

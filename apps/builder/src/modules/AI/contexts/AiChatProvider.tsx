@@ -1,8 +1,8 @@
-import { use, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import AiChatContext from './AiChatContext';
 import { getPendingQuestion } from '../components/ChatInput/components/QuestionInput';
@@ -10,7 +10,6 @@ import useAiChat from '../hooks/useAiChat';
 
 import type { AiAttachment, AiProviderSettings } from '../types';
 import type { AiEffort } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 
 export type AiChatProviderProps = {
@@ -22,7 +21,7 @@ export type AiChatProviderProps = {
 const AiChatProvider = ({ children, providerSettings, prefillInput }: AiChatProviderProps) => {
   const [[elementSelected, currentPageId]] = useBuilderStore(['elementSelected', 'navigation.currentPageId']);
   const { resolvedTheme } = useTheme();
-  const { environment } = use(NetworkContext) as BuilderNetworkContextValue;
+  const { environment } = useBuilderNetwork();
 
   const {
     messages,

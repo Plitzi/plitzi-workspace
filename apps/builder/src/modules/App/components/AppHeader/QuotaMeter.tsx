@@ -1,9 +1,9 @@
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { memo, use, useCallback, useEffect, useRef } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useSpaceQuota, { format } from '@pmodules/Space/hooks/useSpaceQuota';
 
 import QuotaBreakdown from './QuotaBreakdown';
@@ -50,7 +50,7 @@ const QuotaMeter = () => {
   const { readings, enforced, worst, featured, liveElements } = useSpaceQuota();
   const { addToast } = useToast();
   const { showModal } = useModal();
-  const { webId } = use(NetworkContext);
+  const { webId } = useBuilderNetwork();
   // Warn on the CROSSING, not on the state: the element count moves with every drag, and a toast per drag past 90%
   // is noise that teaches people to dismiss the one that matters.
   const announced = useRef<Record<string, QuotaLevel>>({});

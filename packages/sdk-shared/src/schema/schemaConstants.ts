@@ -18,5 +18,5 @@ export const EMPTY_SCHEMA: { schema: Schema; style: Style; definition: { rootId:
     components: {}
   },
   style: EMPTY_STYLE_SCHEMA,
-  definition: { rootId: '' } // for templates
+  definition: { rootId: '' } // for snippets
 };

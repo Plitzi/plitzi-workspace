@@ -86,12 +86,12 @@ const Inspector = ({
   );
 
   const handleChangeShowAllOptions = useCallback(
-    (e: ChangeEvent) => setShowAllOptions((e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => setShowAllOptions(e.target.checked),
     [setShowAllOptions]
   );
 
   const handleChangeReplaceTokens = useCallback(
-    (e: ChangeEvent) => setReplaceTokens((e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => setReplaceTokens(e.target.checked),
     [setReplaceTokens]
   );
 

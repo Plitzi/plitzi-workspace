@@ -26,7 +26,7 @@ const ActionCheck = ({ actionId = '' }: ActionCheckProps) => {
   const errors = issues.filter(issue => issue.level === 'error');
 
   return (
-    <div className="flex flex-col gap-2 rounded-sm border border-gray-300 p-3 dark:border-zinc-600">
+    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4 dark:border-zinc-800">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Check against this server</span>
         <Button size="xs" disabled={isLoading} onClick={handleRecheck}>

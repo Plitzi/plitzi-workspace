@@ -43,7 +43,8 @@ const ListControlledItem = ({
    * person counting rows starts at one and an array does not.
    */
   const storeContextValue = useMemo(
-    () => (source ? { runtime: { sources: { [source]: { item: record, index: `${index}` } } } } : emptyObject),
+    // A number, so a template counts with it (`index + 1`); `==` reads `'2'` and `2` alike, so text compares as before.
+    () => (source ? { runtime: { sources: { [source]: { item: record, index } } } } : emptyObject),
     [source, record, index]
   );
 

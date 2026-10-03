@@ -1,7 +1,15 @@
 import { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
 
-import type { BindingsSpec, ElementSpec, SpecMeta, StepSpec, VisibleCondition } from '../schema';
-import type { ClassList, CssSpec, StatesSpec } from '../style';
+import { scoped } from './scope';
+import { isSourcePath, sourceName } from './source';
+import { toBindingSpecs } from '../schema/bindings';
+import { AuthoringError } from '../schema/codes';
+import { MAIN_ATTRIBUTES } from '../schema/mainAttributes';
+import { markWrittenAt } from '../schema/writtenAt';
+
+import type { BindingSpec, BindingsSpec, ElementSpec, SpecMeta, StepSpec, VisibleCondition } from '../schema';
+import type { SourceName } from './source';
+import type { ClassList, CssSpec, ElementClassList, StatesSpec } from '../style';
 import type { ElementLoadStrategy, ElementRuntime } from '@plitzi/sdk-shared';
 import type {
   AttributesOf,
@@ -30,10 +38,10 @@ export interface AuthoringProps {
    */
   id?: string;
   /**
-   * A shared class — a name from the space's `classes`, or a `styles()` declaration — or a list of them. Exclusive
-   * with {@link AuthoringProps.css}.
+   * A shared class — a name from the space's `classes`, or a `styles()` declaration — or a list of them, which may end
+   * with rules of this element's own on top: `[cover, { opacity: '0.25' }]`. Exclusive with {@link AuthoringProps.css}.
    */
-  class?: ClassList;
+  class?: ElementClassList;
   /** Rules of this element's own: one set, or one per breakpoint. Shorthands are expanded when the space is written. */
   css?: CssSpec;
   /** How the element's own rules react — `hover`, `focus` — beside {@link AuthoringProps.css}. */
@@ -45,22 +53,61 @@ export interface AuthoringProps {
   /** A class for one of the element's other selectors — a form control's `input`, `label`, `error`. */
   slots?: Record<string, ClassList>;
   /** `{ content: 'posts.title' }`, or the full form for state, transformers and conditions. */
-  bind?: BindingsSpec;
+  bind?: BindingsInput;
+  /** The source the element's main attribute shows — see {@link ElementSpec.from}. */
+  from?: SourceName;
+  /** How `from` is shown: a name of the space's `formats`, or a template of its own. */
+  as?: string;
+  /**
+   * A list's row — what it renders once per item: a component's id, placed with the row bound to its `item` prop, or
+   * a function handed the row's names (`r.item`, `r.index`, and `r.inTemplate` for a template) returning the elements.
+   */
+  row?: string | RowWriter<ListRow>;
   /**
    * Show this element only while the value at this source is true. `!source` shows it while the value is false,
    * `{ source, template }` while a template over it says `true`, and `false` starts it hidden for a flow to reveal.
    */
-  visible?: string | false | VisibleCondition;
+  visible?: SourceName | false | VisibleInput;
   /** One flow per entry; steps are chained in the order written. */
   flows?: StepSpec[][];
   /** `server` resolves this element's data on the server rather than in the browser. */
   runtime?: ElementRuntime;
   /** When the element's contents mount relative to its visibility. Left out, the element type decides. */
   loadStrategy?: ElementLoadStrategy;
+  /** Its `id` in the DOM, so `/page#anchor` lands on it. One per page; not inside a list row or a component. */
+  anchor?: string;
+  /** The feature flag it exists under: `'newCheckout'` while on, `'!newCheckout'` while off. Not a visibility. */
+  flag?: string;
   children?: ElementSpec[];
   /** What the builder shows, not what the runtime reads. */
   meta?: SpecMeta;
 }
+
+/** A visibility condition whose source may be a typed source's path as well as a name. */
+export type VisibleInput = Omit<VisibleCondition, 'source'> & { source: SourceName };
+
+const visibleOf = (visible: SourceName | false | VisibleInput): string | false | VisibleCondition => {
+  if (visible === false || typeof visible === 'string') {
+    return visible;
+  }
+
+  if (isSourcePath(visible)) {
+    return sourceName(visible);
+  }
+
+  return { ...visible, source: sourceName(visible.source) };
+};
+
+/** What a list's `row` function is: handed the row's names, it writes what the row renders. */
+export type RowWriter<Row> = (row: Row) => ElementSpec | ElementSpec[];
+
+/** A binding whose source may be a typed source's path as well as a name. */
+export type BindingsInput = Record<string, SourceName> | (Omit<BindingSpec, 'source'> & { source: SourceName })[];
+
+const bindingsOf = (bind: BindingsInput): BindingsSpec =>
+  Array.isArray(bind)
+    ? bind.map(binding => ({ ...binding, source: sourceName(binding.source) }))
+    : Object.fromEntries(Object.entries(bind).map(([to, source]) => [to, sourceName(source)]));
 
 /** Attributes and authoring fields, flat. Attributes win a name they share with anything here. */
 export type ElementProps<A> = A & AuthoringProps;
@@ -78,6 +125,131 @@ export type ElementFactory<A> = ContentShorthand<A> & {
   (children: ElementSpec[], props?: ElementProps<A>): ElementSpec;
 };
 
+/** A target with a scheme of its own — `https:`, `mailto:`, `tel:` — is somewhere outside the space. */
+const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+
+/**
+ * What a link's `href` says it is when the author did not say: a path is a route of this space, a URL is somewhere
+ * else, anything else is a page's id. `mode` stays for the rare link that means otherwise.
+ */
+export const inferredLinkMode = (href: unknown): 'page' | 'internal' | 'external' => {
+  if (typeof href !== 'string') {
+    return 'page';
+  }
+
+  if (SCHEME.test(href) || href.startsWith('//')) {
+    return 'external';
+  }
+
+  return href.startsWith('/') ? 'internal' : 'page';
+};
+
+/**
+ * The main attribute empty, for an element whose content comes from its data: its default ("Text", "Button") would
+ * show until the data answers.
+ */
+const unfilled = (type: string, attributes: Record<string, unknown>): Record<string, unknown> => {
+  const main = Object.hasOwn(MAIN_ATTRIBUTES, type) ? MAIN_ATTRIBUTES[type] : undefined;
+  if (!main || Object.hasOwn(attributes, main)) {
+    return {};
+  }
+
+  return { [main]: main === 'items' ? [] : '' };
+};
+
+/** Attributes a type works out from the others, when the author left them out — written as if they had been. */
+const inferred = (type: string, attributes: Record<string, unknown>): Record<string, unknown> =>
+  type === 'link' && !Object.hasOwn(attributes, 'mode') ? { mode: inferredLinkMode(attributes.href) } : {};
+
+/** A list's row by its names: short in a binding or `from`, spelled in full in a template or an attribute's token. */
+export interface ListRow {
+  /** The list's own name, as the space knows it. */
+  list: string;
+  /** The source its rows publish, in full: `list_rows`, `carousel_hero`. */
+  source: string;
+  /** The row's item: `rows.item`, and a field of it `` `${r.item}.title` ``. */
+  item: string;
+  /** Its position: `rows.index`. */
+  index: string;
+  /** The same names in full, for a template or an attribute token: `{{ list_rows.item.slug }}`. */
+  inTemplate: { item: string; index: string };
+}
+
+/** What repeats its children once per item: a list, and a carousel's slides. */
+type Repeater = 'list' | 'carousel';
+
+const listRow = (id: string, kind: Repeater): ListRow => ({
+  list: id,
+  source: `${kind}_${id}`,
+  item: `${id}.item`,
+  index: `${id}.index`,
+  inTemplate: { item: `${kind}_${id}.item`, index: `${kind}_${id}.index` }
+});
+
+/**
+ * A list as it reads shortest: `items` or `from` makes it controlled — an array of its own, or a source's name, bound — and a
+ * `row` function writes its children with the row's names in hand. A row that names a component is the space's to
+ * resolve, which knows the component's props.
+ */
+const listShape = (
+  kind: Repeater,
+  id: string | undefined,
+  attributes: Record<string, unknown>,
+  bind: BindingsSpec | undefined,
+  row: AuthoringProps['row'],
+  children: ElementSpec[] | undefined,
+  fed: boolean
+): { attributes: Record<string, unknown>; bind?: BindingsSpec; children?: ElementSpec[]; row?: string } => {
+  const { items, ...rest } = attributes;
+  const sourced = typeof items === 'string' || isSourcePath(items);
+  const shaped = {
+    attributes: {
+      ...rest,
+      ...(items === undefined || sourced ? {} : { items }),
+      ...(kind === 'list' && (items !== undefined || fed) && !Object.hasOwn(attributes, 'source')
+        ? { source: 'controlled' }
+        : {})
+    },
+    ...(sourced
+      ? { bind: [...(bind === undefined ? [] : toBindingSpecs(bind)), { to: 'items', source: sourceName(items) }] }
+      : bind === undefined
+        ? {}
+        : { bind })
+  };
+  if (row === undefined) {
+    return { ...shaped, ...(children === undefined ? {} : { children }) };
+  }
+
+  // A carousel's other children are its controls, beside the track its slides go in; a list's row IS its children.
+  if (kind === 'list' && children !== undefined) {
+    throw new AuthoringError(
+      'row-and-children',
+      'A list with a `row` takes no `children`: the row IS what it renders.'
+    );
+  }
+
+  if (typeof row === 'string') {
+    return { ...shaped, row, ...(children === undefined ? {} : { children }) };
+  }
+
+  if (id === undefined) {
+    throw new AuthoringError(
+      'row-without-id',
+      `A ${kind} whose \`row\` is a function needs an \`id\`, which names the sources of its rows: give the ${kind} one.`
+    );
+  }
+
+  const written = row(listRow(id, kind));
+  const rows = Array.isArray(written) ? written : [written];
+  if (kind === 'list') {
+    return { ...shaped, children: rows };
+  }
+
+  const track = callFactory('carouselTrack', declarationsByType.get('carouselTrack'), { children: rows });
+
+  return { ...shaped, children: [track, ...(children ?? [])] };
+};
+
 const buildSpec = (
   type: string,
   declaration: ElementDeclarationData | undefined,
@@ -86,24 +258,41 @@ const buildSpec = (
   // The authoring fields, named once. Everything left over is an attribute — including `label`, which is why it
   // is not in this list.
   const {
-    id,
+    id: givenId,
     class: shared,
     css,
     states,
     selector,
     variant,
     slots,
-    bind,
-    visible,
+    bind: givenBind,
+    from: givenFrom,
+    as,
+    row,
+    visible: givenVisible,
     flows,
     runtime,
     loadStrategy,
+    anchor,
+    flag,
     children,
     meta,
     ...attributes
   } = props;
+  const id = givenId === undefined ? undefined : scoped(givenId);
+  const bind = givenBind === undefined ? undefined : bindingsOf(givenBind);
+  const from = givenFrom === undefined ? undefined : sourceName(givenFrom);
+  const visible = givenVisible === undefined ? undefined : visibleOf(givenVisible);
 
-  return {
+  const list =
+    type === 'list' || type === 'carousel'
+      ? listShape(type, id, attributes, bind, row, children, from !== undefined)
+      : undefined;
+  if (row !== undefined && !list) {
+    throw new AuthoringError('row-outside-list', `A "${type}" has no rows: \`row\` is a list's or a carousel's.`);
+  }
+
+  return markWrittenAt({
     type,
     ...(id === undefined ? {} : { id }),
     ...(shared === undefined ? {} : { class: shared }),
@@ -112,19 +301,35 @@ const buildSpec = (
     ...(selector === undefined ? {} : { selector }),
     ...(variant === undefined ? {} : { variant }),
     ...(slots === undefined ? {} : { slots }),
-    ...(bind === undefined ? {} : { bind }),
+    ...(list ? (list.bind === undefined ? {} : { bind: list.bind }) : bind === undefined ? {} : { bind }),
+    ...(list?.row === undefined ? {} : { row: list.row }),
+    ...(from === undefined ? {} : { from }),
+    ...(as === undefined ? {} : { as }),
     ...(visible === undefined ? {} : { visible }),
     ...(flows === undefined ? {} : { flows }),
     ...(runtime === undefined ? {} : { runtime }),
     ...(loadStrategy === undefined ? {} : { loadStrategy }),
-    ...(children === undefined ? {} : { children }),
+    ...(anchor === undefined ? {} : { anchor }),
+    ...(flag === undefined ? {} : { flag }),
+    ...(list
+      ? list.children === undefined
+        ? {}
+        : { children: list.children }
+      : children === undefined
+        ? {}
+        : { children }),
     // The element's own defaults, with the author's values on top. Attributes MERGE rather than replace: a
     // declaration's defaults are what the element needs to render at all — a heading's `subType`, a list's
     // `source` — and dropping them because the author only set the text is how an authored element ends up
     // subtly unlike one the builder created.
-    attributes: { ...declaration?.content?.attributes, ...attributes },
+    attributes: {
+      ...declaration?.content?.attributes,
+      ...inferred(type, attributes),
+      ...(from === undefined ? {} : unfilled(type, attributes)),
+      ...(list ? list.attributes : attributes)
+    },
     meta: { label: declaration?.content?.definition?.label ?? type, ...meta }
-  };
+  });
 };
 
 const callFactory = (

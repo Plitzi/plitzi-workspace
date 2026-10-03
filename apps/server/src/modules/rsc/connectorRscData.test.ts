@@ -64,7 +64,7 @@ const req = { method: 'GET', path: '/', query: {}, ctx: {} } as unknown as SSRRe
 
 const resolve = (attributes: Record<string, unknown>) => {
   const lookups = { getAction: () => Promise.resolve(entry) };
-  const getRscData = connectorRscData(undefined, { lookups, module: createActionsModule({ lookups }) });
+  const getRscData = connectorRscData({ actions: { lookups, module: createActionsModule({ lookups }) } });
 
   return getRscData({
     req,
@@ -86,7 +86,10 @@ describe('connectorRscData', () => {
           // Never answers, so the only thing that can end this render is the budget.
         })
     };
-    const getRscData = connectorRscData(undefined, { lookups, module: createActionsModule({ lookups }) }, 20);
+    const getRscData = connectorRscData({
+      actions: { lookups, module: createActionsModule({ lookups }) },
+      elementTimeoutMs: 20
+    });
 
     const startedAt = Date.now();
     const payload = await getRscData({

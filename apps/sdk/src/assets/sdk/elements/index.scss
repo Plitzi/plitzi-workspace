@@ -1,5 +1,8 @@
 @use './image' as image;
 @use './video' as video;
+@use './embed' as embed;
+@use './svg' as svg;
+@use './carousel' as carousel;
 @use './button' as button;
 @use './heading' as heading;
 @use './link' as link;
@@ -31,6 +34,9 @@
   @include image.styles;
   @include image.styles;
   @include video.styles;
+  @include embed.styles;
+  @include svg.styles;
+  @include carousel.styles;
   @include button.styles;
   @include heading.styles;
   @include link.styles;

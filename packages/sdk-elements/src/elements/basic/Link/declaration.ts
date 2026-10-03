@@ -18,6 +18,7 @@ const declaration = elementDeclaration<LinkAttributes>()({
       href: '#',
       target: 'self',
       mode: 'page',
+      hash: '',
       label: ''
     },
     definition: {
@@ -40,7 +41,7 @@ const declaration = elementDeclaration<LinkAttributes>()({
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: ['link']
     },

@@ -1,3 +1,4 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 /**
  * What the workers of one server say to their primary, and it to them — with nothing here that knows about
  * `node:cluster`, so the rules can be held by tests in one process.
@@ -21,8 +22,6 @@ export type FleetReply =
 export type FleetBroadcast = { sdkFleet: 'broadcast'; channel: string; payload: unknown };
 
 export type FleetMessage = FleetCall | FleetReply | FleetBroadcast;
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 /** The channel is shared with `node:cluster` and anything else the deployment sends: only these are ours. */
 export const isFleetMessage = (value: unknown): value is FleetMessage => {

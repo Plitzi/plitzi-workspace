@@ -1,3 +1,5 @@
+import { AuthoringError } from './codes';
+
 /**
  * How a space's notifications look — the toasts an `addNotification` step shows.
  *
@@ -43,7 +45,10 @@ export const notificationsCss = (spec: NotificationsSpec | undefined): string =>
   const declarations: string[] = [];
   for (const [key, value] of Object.entries(spec ?? {})) {
     if (!isField(key)) {
-      throw new Error(`\`notifications\` has no "${key}". It takes ${FIELDS.join(', ')}.`);
+      throw new AuthoringError(
+        'notifications-shape',
+        `\`notifications\` has no "${key}". It takes ${FIELDS.join(', ')}.`
+      );
     }
 
     if (value === undefined) {
@@ -51,7 +56,8 @@ export const notificationsCss = (spec: NotificationsSpec | undefined): string =>
     }
 
     if (typeof value !== 'string' || value.trim() === '' || /[;{}]/.test(value)) {
-      throw new Error(
+      throw new AuthoringError(
+        'notifications-shape',
         `\`notifications.${key}\` is ${JSON.stringify(value)}, which is not one CSS value. Write a colour or a length, like 'var(--card)' or '12px'.`
       );
     }

@@ -13,6 +13,9 @@ type SettingsProps = {
   decorative?: boolean;
   fetchPriority?: 'high' | 'low' | 'auto';
   loadMode?: 'auto' | 'lazy' | 'eager';
+  sizes?: string;
+  width?: number;
+  height?: number;
   variables?: Record<string, string>;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
@@ -24,14 +27,23 @@ const Settings = ({
   variables,
   fetchPriority = 'auto',
   loadMode = 'auto',
+  sizes = '100vw',
+  width,
+  height,
   onUpdate
 }: SettingsProps) => {
   const urlPreview = useMemo(() => processTwig(src, variables, true) as string, [variables, src]);
 
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
 
+  // An empty field is no size at all: 0 is what the element reads as "not given".
+  const handleChangeNumber = useCallback(
+    (key: string) => (value: string) => onUpdate?.(key, Math.max(0, Math.round(Number(value) || 0))),
+    [onUpdate]
+  );
+
   const handleChangeDecorative = useCallback(
-    (e: ChangeEvent) => onUpdate?.('decorative', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('decorative', e.target.checked),
     [onUpdate]
   );
 
@@ -73,6 +85,29 @@ const Settings = ({
         <option value="lazy">Lazy</option>
         <option value="eager">Eager</option>
       </Select>
+      <Input
+        value={sizes}
+        label="Sizes"
+        placeholder="(max-width: 48rem) 100vw, 360px"
+        onChange={handleChange('sizes')}
+        size="xs"
+      />
+      <div className="flex gap-2">
+        <Input
+          type="number"
+          value={width ? String(width) : ''}
+          label="Width (px)"
+          onChange={handleChangeNumber('width')}
+          size="xs"
+        />
+        <Input
+          type="number"
+          value={height ? String(height) : ''}
+          label="Height (px)"
+          onChange={handleChangeNumber('height')}
+          size="xs"
+        />
+      </div>
     </div>
   );
 };

@@ -12,7 +12,7 @@ export type SlotChoiceProps = {
 
 const SlotChoice = ({ id, label, checked, onToggle }: SlotChoiceProps) => {
   const handleChange = useCallback(
-    (event: ChangeEvent) => onToggle(id, (event.target as HTMLInputElement).checked),
+    (event: ChangeEvent<HTMLInputElement>) => onToggle(id, event.target.checked),
     [id, onToggle]
   );
 

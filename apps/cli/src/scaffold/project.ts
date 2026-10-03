@@ -63,6 +63,8 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
 /** A server-mode project runs no bundler of its own: the page server builds the plugins, and Node runs the rest. */
 const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
   ...SHARED_DEV_DEPENDENCIES,
+  // `shot`, `check`, `explain`, `data describe` and `skills update` run from the project, at the version of the SDK.
+  '@plitzi/cli': SDK_VERSION,
   ...(mode === 'server' ? {} : { vite: VITE_VERSION })
 });
 
@@ -109,11 +111,14 @@ const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
         preview: 'vite preview'
       }),
   ...(source === 'local' ? { author: 'node src/author.ts' } : {}),
-  typecheck: 'tsc -p tsconfig.json --noEmit',
+  // One line per error — file(line,col) and the message — rather than a framed excerpt of each.
+  typecheck: 'tsc -p tsconfig.json --noEmit --pretty false',
   lint: 'eslint .',
   format: 'prettier --write .',
   visual: 'playwright test',
-  shot: 'node scripts/shot.ts'
+  // The CLI's, on the project's own Playwright: a picture of a page, and whether a page is whole — in text.
+  shot: 'plitzi shot',
+  check: 'plitzi check'
 });
 
 /**
@@ -186,7 +191,7 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
         lib: ['ES2023', 'DOM', 'DOM.Iterable'],
         jsx: 'react-jsx'
       },
-      include: ['src', 'scripts', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])]
+      include: ['src', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])]
     },
     null,
     2
@@ -199,7 +204,7 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
 const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases\n!.yarn/versions\n';
 
 /** Where the page server writes the plugin bundles it builds. A build output, and rebuilt whenever it is missing. */
-const SERVER_IGNORES = '.sdk-plugins\n';
+const SERVER_IGNORES = '.sdk-plugins\n.plitzi\n';
 
 export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
   `node_modules\ndist\n.env\nvisual/.results\nvisual/screenshots\n${mode === 'server' ? SERVER_IGNORES : ''}${
@@ -208,7 +213,7 @@ export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
 
 const startLine = ({ mode, packageManager }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080. \`${runCommand(packageManager, 'start:dev')}\` restarts on save. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`.plitzi/dev-server.json\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on save. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
     : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
 
 const spaceSection = (answers: CreateAnswers): string => {
@@ -283,6 +288,28 @@ export const agentsFile = (answers: CreateAnswers): string => {
     `| ${run('visual')} | open the page in a browser and check it rendered |`
   ];
   const zeroWarnings = local ? `Zero warnings from ${run('author')}.` : 'Zero warnings from authoring.';
+  const port =
+    answers.mode === 'server'
+      ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code('.plitzi/dev-server.json')}, where ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one.`
+      : `${run('start')} runs Vite on 5173.`;
+  const pictures =
+    answers.mode === 'server'
+      ? `- **Pictures from other sites** are resized by this server once ${code('src/main.ts')} names their hosts — ${code('images: { domains }')} in ${code('createServer')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
+      : '';
+  const serverData =
+    answers.mode === 'server'
+      ? `; one whose ${code('runtime')} is ${code('server')} is read by the server, and the page arrives with it`
+      : '';
+  const generated = [
+    ...(local
+      ? [
+          `- ${code('space/offline-data.json')} — what ${run('author')} writes out; the space is ${code('src/space.ts')}.`
+        ]
+      : []),
+    ...(answers.mode === 'server'
+      ? [`- ${code('.sdk-plugins/')} and ${code('.plitzi/')} — built and written by the server.`]
+      : [])
+  ];
 
   return `# ${answers.name} — notes for agents
 
@@ -295,6 +322,21 @@ ${where}
 | --- | --- |
 ${commands.join('\n')}
 
+## This project
+
+- **Port.** ${port}
+- **Data with no backend** goes in ${code('public/data/*.json')}, served as it is and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}${serverData}.
+${pictures}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site, by section). ${run('visual')} runs the checks as tests.
+- **What the page holds, in text:** ${code(`${runCommand(answers.packageManager, 'check')} -- /products --state --element <id>`)} adds its state, every source by name and one element (what it reads, its own state, whether it is on screen); every check already lists the flows that failed. Read it instead of guessing from classes in the DOM.
+
+## Do not read
+
+${[
+  ...generated,
+  `- A large ${code('public/data/*.json')} — ${code('npx plitzi data describe public/data/<file>.json')} prints its fields, their types and one row.`,
+  `- The bundles in ${code('node_modules/@plitzi/*/dist/*.js')}. ${code('npx plitzi explain <name>')} says what an element, a step or a problem's code is; the ${code('.d.ts')} beside them documents the rest — search it, never read it whole.`
+].join('\n')}
+
 ## Before anything else
 
 Read ${code('.claude/skills/plitzi-authoring/SKILL.md')} — how a space is written, and the references it links to for
@@ -304,10 +346,12 @@ ${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi add plugin')
 
 ## The rules that go wrong most
 
-- Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration.
+- Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration; ${code('npx plitzi fix --write')} writes the ones with a single reading.
 - ${zeroWarnings}
 - Chrome shared by pages is a layout; a look used twice is a class; a repeated block is a function or a ${code('map')}.
-- Ids are one namespace for the whole space: name what is referred to, prefix ids made by a helper.
+- Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.
+- A file per part — the tokens, the layout, each component, each page — short enough to read whole; ${code('src/space.ts')} assembles them. ${code('npx plitzi create <dir> --template catalog')} is a complete example of the shape.
+- Rebuilding a page the user owns: ${code('npx plitzi import <url>')} writes its tokens, outline and lists as a start — then split it into parts and write the content. It reads only a site whose domain the user verified on one of their spaces.
 - Elements are visible by default. One the logic REVEALS starts hidden (${code('visible')}, or ${code('visible: false')} plus a computed binding) so nothing flashes while loading; one a flag HIDES stays shown while the flag is unset.
 - Inside a template a source is spelled in full (${code('apiContainer_stats')}); an attribute only resolves ${code('{{ name|filter }}')}.
 - Colours are tokens with light and dark values; times carry an explicit zone and say it.

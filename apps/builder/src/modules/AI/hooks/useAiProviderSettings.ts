@@ -1,6 +1,6 @@
-import { use, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { AiModelInfo, AiProviderSettings } from '../types';
 
@@ -15,7 +15,7 @@ const readStorage = (): AiProviderSettings => {
 };
 
 const useAiProviderSettings = (enabled = false) => {
-  const { server, webKey } = use(NetworkContext);
+  const { server, webKey } = useBuilderNetwork();
   const [settings, setSettings] = useState<AiProviderSettings>(readStorage);
   const [models, setModels] = useState<AiModelInfo[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);

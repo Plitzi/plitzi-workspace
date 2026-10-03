@@ -1,6 +1,9 @@
+import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
+
 import { readDraftToken } from '../../core/previewToken';
 import { buildRscCacheKey, DEFAULT_TTL_MS } from '../../helpers/cache';
 import { resolveDebugAuthorization } from '../../helpers/debugAuthorization';
+import { requestFlagOverrides } from '../../helpers/flagOverrides';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { serverLog } from '../../helpers/serverLog';
 
@@ -147,11 +150,17 @@ export const handleRsc = async (
    * refresh that arrives a second after it expired is still part of the same preview.
    */
   const previewing = readDraftToken(req) !== undefined;
+  /**
+   * A tester forcing flags from the dev tools sees data for features nobody else has on — and must never be handed a
+   * slice resolved without them. Their refreshes go around the cache both ways, like a draft's.
+   */
+  const forcingFlags = Object.keys(forcedFlagsFromCookies(req.headers.cookie, req.headers.host)).length > 0;
+  const uncached = previewing || forcingFlags;
 
   const ttlMs = config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc;
   const isAuthenticated = !!req.ctx.user;
   const cacheControl =
-    environment === 'main' || previewing
+    environment === 'main' || uncached
       ? 'no-store'
       : isAuthenticated
         ? `private, max-age=${Math.floor(ttlMs / 1000)}`
@@ -159,7 +168,7 @@ export const handleRsc = async (
 
   // main is the development environment — never cache it.
   const cacheKey =
-    environment !== 'main' && !previewing
+    environment !== 'main' && !uncached
       ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam, req)
       : undefined;
   const cached = cacheKey ? cache?.get(cacheKey) : undefined;
@@ -185,6 +194,11 @@ export const handleRsc = async (
   // on both paths, and so the debugging check below reads the space the adapter already fetched rather than again.
   const loadOfflineData = createOfflineDataLoader(() => config.adapters.getOfflineData(spaceId, environment, revision));
 
+  const settings = async () => (await loadOfflineData())?.schema.settings;
+  const flagOverrides = await requestFlagOverrides(config, req, { spaceId, environment }, () =>
+    resolveDebugAuthorization(config, settings)
+  );
+
   let rscData: SSRRscData;
   try {
     rscData = await config.adapters.getRscData({
@@ -194,7 +208,8 @@ export const handleRsc = async (
       revision,
       user: req.ctx.user,
       ids,
-      loadOfflineData
+      loadOfflineData,
+      flagOverrides
     });
   } catch (err) {
     serverLog.error('RSC', 'getRscData error', err);
@@ -207,9 +222,7 @@ export const handleRsc = async (
   // The runs this refresh started, for a page whose debugging this deployment authorized — a dev server, or a space
   // that switched dev tools on for its own site. An answer carrying them is this request's alone, so it is never
   // kept for the next visitor.
-  const debuggable =
-    Boolean(req.ctx.actionRuns?.length) &&
-    (await resolveDebugAuthorization(config, async () => (await loadOfflineData())?.schema.settings));
+  const debuggable = Boolean(req.ctx.actionRuns?.length) && (await resolveDebugAuthorization(config, settings));
   const actionRuns = debuggable ? req.ctx.actionRuns : undefined;
 
   const payload: RscPayload = {

@@ -8,33 +8,31 @@ import { useMemo, useCallback, use, useEffect } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
 import { flatMapOf } from '@plitzi/sdk-schema/helpers/components';
+import fitSnippet from '@plitzi/sdk-schema/helpers/fitSnippet';
 import SchemaReducer, { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { schemaFromWire } from '@plitzi/sdk-shared/network/spaceEvents';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type {
-  BuilderMutationsMap,
-  BuilderNetworkContextValue,
-  BuilderQueriesMap,
-  SpaceEventMap,
   DropPosition,
   Element,
   PageFolder,
   Schema,
+  SchemaFlag,
   SchemaRaw,
   SchemaVariable,
   SpaceComponent,
   SpaceComponentDeclaration,
-  Style
+  SnippetStyle
 } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -66,13 +64,10 @@ const SchemaContextProvider = ({
       filterCallback: isUserEdit
     }
   ]);
-  const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap,
-    SpaceEventMap
-  >;
+  const { mutate, subscriptionManager } = useBuilderNetwork();
   useBuilderStoreSync('schema', schema);
   const getSchema = useBuilderStoreGetter('schema');
+  const getStyle = useBuilderStoreGetter('style');
   const [[elementSelected, setSelectedElement]] = useBuilderStore(['elementSelected', 'setSelected']);
 
   const pageDefinitions = useValueMemo(
@@ -283,32 +278,53 @@ const SchemaContextProvider = ({
     [dispatchSchema]
   );
 
+  // Flags
+
+  const schemaSetFlag = useCallback(
+    (name: string, flag: SchemaFlag, fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_SET_FLAG, name, flag, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
+  const schemaRemoveFlag = useCallback(
+    (name: string, fromSubscriptions = false) =>
+      dispatchSchema({ type: SchemaActions.SCHEMA_REMOVE_FLAG, name, fromSubscriptions }),
+    [dispatchSchema]
+  );
+
   // Others
 
-  const schemaAddTemplate = useCallback(
+  const schemaAddSnippet = useCallback(
     (
       to: string,
       data: Element,
       dropPosition: DropPosition = 'inside',
       initialItems: Record<string, Element> = {},
-      style?: Style,
+      style?: SnippetStyle,
       variables: SchemaVariable[] = [],
       fromSubscriptions = false
     ) => {
+      // Named here, once, for the editor, the server and every collaborator alike; a broadcast already carries the
+      // names the server took, and is inserted under them.
+      const fitted = fromSubscriptions
+        ? { data, initialItems, style }
+        : fitSnippet({ schema: getSchema(), style: getStyle() }, { data, initialItems, style });
       dispatchSchema({
-        type: SchemaActions.SCHEMA_ADD_TEMPLATE,
+        type: SchemaActions.SCHEMA_ADD_SNIPPET,
         to,
-        data,
+        data: fitted.data,
         dropPosition,
-        initialItems,
+        initialItems: fitted.initialItems,
         variables,
-        style,
+        style: fitted.style,
         fromSubscriptions
       });
 
-      void eventBridge.emit('main', 'styleAddTemplate', style?.platform, true);
+      if (fitted.style) {
+        void eventBridge.emit('main', 'styleAddSnippet', fitted.style, true);
+      }
     },
-    [dispatchSchema, eventBridge]
+    [dispatchSchema, eventBridge, getSchema, getStyle]
   );
 
   const schemaUpdateSettings = useCallback(
@@ -343,6 +359,10 @@ const SchemaContextProvider = ({
     subscriptionManager.subscribe('SPACE_ADD_VARIABLE', ({ variable }) => schemaAddVariable(variable, true));
     subscriptionManager.subscribe('SPACE_UPDATE_VARIABLE', ({ variable }) => schemaUpdateVariable(variable, true));
     subscriptionManager.subscribe('SPACE_REMOVE_VARIABLE', ({ name }) => schemaRemoveVariable(name, true));
+
+    // Flags
+    subscriptionManager.subscribe('SPACE_SET_FLAG', ({ name, flag }) => schemaSetFlag(name, flag, true));
+    subscriptionManager.subscribe('SPACE_REMOVE_FLAG', ({ name }) => schemaRemoveFlag(name, true));
 
     // Elements
     subscriptionManager.subscribe(
@@ -398,9 +418,9 @@ const SchemaContextProvider = ({
       schemaUpdateSettings(value, path, true)
     );
     subscriptionManager.subscribe(
-      'SPACE_ADD_TEMPLATE',
+      'SPACE_ADD_SNIPPET',
       ({ element, style, to, dropPosition, initialItems = [], variables = [] }) =>
-        schemaAddTemplate(
+        schemaAddSnippet(
           to,
           element,
           dropPosition,
@@ -426,6 +446,8 @@ const SchemaContextProvider = ({
           'SPACE_ADD_VARIABLE',
           'SPACE_UPDATE_VARIABLE',
           'SPACE_REMOVE_VARIABLE',
+          'SPACE_SET_FLAG',
+          'SPACE_REMOVE_FLAG',
           'SPACE_ADD_ELEMENT',
           'SPACE_UPDATE_ELEMENT',
           'SPACE_UPDATE_ELEMENTS',
@@ -439,7 +461,7 @@ const SchemaContextProvider = ({
           'SPACE_DETACH_INSTANCE',
           'SPACE_UPDATED',
           'SPACE_UPDATE_SETTINGS',
-          'SPACE_ADD_TEMPLATE'
+          'SPACE_ADD_SNIPPET'
         ],
         true
       );
@@ -456,6 +478,8 @@ const SchemaContextProvider = ({
     schemaAddVariable,
     schemaUpdateVariable,
     schemaRemoveVariable,
+    schemaSetFlag,
+    schemaRemoveFlag,
     schemaUpdateSettings,
     schemaAddElement,
     schemaUpdateElement,
@@ -464,7 +488,7 @@ const SchemaContextProvider = ({
     schemaRemoveElement,
     schemaMoveElement,
     schemaUpdate,
-    schemaAddTemplate,
+    schemaAddSnippet,
     schemaAddComponent,
     schemaUpdateComponent,
     schemaRemoveComponent,
@@ -484,6 +508,8 @@ const SchemaContextProvider = ({
       schemaAddVariable,
       schemaUpdateVariable,
       schemaRemoveVariable,
+      schemaSetFlag,
+      schemaRemoveFlag,
       schemaUpdateSettings
     }),
     [
@@ -497,6 +523,8 @@ const SchemaContextProvider = ({
       schemaAddVariable,
       schemaUpdateVariable,
       schemaRemoveVariable,
+      schemaSetFlag,
+      schemaRemoveFlag,
       schemaUpdateSettings
     ]
   );
@@ -514,7 +542,7 @@ const SchemaContextProvider = ({
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
-      schemaAddTemplate,
+      schemaAddSnippet,
       schemaAddComponent,
       schemaUpdateComponent,
       schemaRemoveComponent,
@@ -529,7 +557,7 @@ const SchemaContextProvider = ({
       schemaMoveElement,
       schemaCloneElement,
       schemaRemoveElement,
-      schemaAddTemplate,
+      schemaAddSnippet,
       schemaAddComponent,
       schemaUpdateComponent,
       schemaRemoveComponent,
@@ -560,7 +588,9 @@ const SchemaContextProvider = ({
       schemaAddVariable,
       schemaUpdateVariable,
       schemaRemoveVariable,
-      schemaAddTemplate,
+      schemaSetFlag,
+      schemaRemoveFlag,
+      schemaAddSnippet,
       schemaUpdateSettings,
       schemaAddComponent,
       schemaUpdateComponent,
@@ -577,7 +607,7 @@ const SchemaContextProvider = ({
     schemaMoveElement,
     schemaCloneElement,
     schemaRemoveElement,
-    schemaAddTemplate,
+    schemaAddSnippet,
     schemaUpdateSettings,
     schemaAddPage,
     schemaHomePage,
@@ -589,6 +619,8 @@ const SchemaContextProvider = ({
     schemaAddVariable,
     schemaUpdateVariable,
     schemaRemoveVariable,
+    schemaSetFlag,
+    schemaRemoveFlag,
     schemaAddComponent,
     schemaUpdateComponent,
     schemaRemoveComponent,

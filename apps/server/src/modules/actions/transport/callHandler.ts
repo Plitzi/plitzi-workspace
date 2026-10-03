@@ -2,6 +2,7 @@ import { triggerAccess } from '@plitzi/sdk-shared/actions';
 
 import { openStream, wantsStream } from './stream';
 import { resolveDebugAuthorization } from '../../../helpers/debugAuthorization';
+import { forcedFlagsFor } from '../../../helpers/flagOverrides';
 import { onAbort } from '../../../helpers/onAbort';
 import { serverLog } from '../../../helpers/serverLog';
 import { ActionRunError } from '../runtime/errors';
@@ -231,6 +232,18 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
         async () => (await config.adapters.getOfflineData(spaceId, environment, revision))?.schema.settings
       )));
 
+  /**
+   * The flags a tester forced on the page this call came from, so the flow sees the feature the page was drawn with.
+   * Only for a page allowed to debug — the cookie is the visitor's own, and anywhere else it would let any of them
+   * switch a feature on for the server too. The authorization is asked only when there is a cookie to honour.
+   */
+  const forcedFlags = await forcedFlagsFor(req, () =>
+    resolveDebugAuthorization(
+      config,
+      async () => (await config.adapters.getOfflineData(spaceId, environment, revision))?.schema.settings
+    )
+  );
+
   let outcome;
   try {
     const result: ActionRunResult = await module.runAction({
@@ -244,6 +257,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       runId: run.runId,
       lineage,
       at: { environment, revision },
+      ...(forcedFlags ? { forcedFlags } : {}),
       signal: run.controller.signal,
       ...(stream
         ? {

@@ -1,0 +1,28 @@
+import type { Element, Schema } from './SchemaTypes';
+import type { Style, StyleVariables } from './StyleTypes';
+
+/**
+ * A published snippet: a subtree, the style that dresses it, and the element a builder instantiates.
+ *
+ * The artefact someone hosts when they are not building a space — fetched by URL, shown in the Resources panel,
+ * dragged onto a canvas — which is why it lives beside the schema and the style rather than with the builder's own
+ * types: it is a document, produced and consumed by processes that never open a builder.
+ */
+export type Snippet = {
+  id?: string;
+  definition: {
+    name: string;
+    description: string;
+    /** Root of what travels. Its subtree is the whole of `schema.flat`, and it answers to no parent. */
+    baseElementId: Element['id'];
+  };
+  /**
+   * Only what travels: the subtree and the variables its rules read. Nothing else of the space it was cut from — its
+   * pages, settings or components — comes along, and a builder showing or dropping it reads nothing else.
+   */
+  schema: Pick<Schema, 'flat' | 'variables'>;
+  style: Style;
+};
+
+/** The part of a style a snippet brings into a space: its rules, by display mode, and the tokens they read. */
+export type SnippetStyle = Pick<Style, 'platform'> & { variables?: Partial<StyleVariables> };

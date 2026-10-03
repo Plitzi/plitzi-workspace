@@ -2,7 +2,7 @@ import type { PluginManifest } from './PluginTypes';
 import type { SpaceCredential } from './SpaceTypes';
 
 /** `server`: a file of the space's server code — its functions or runtime — in a private bucket. */
-export type ResourceType = 'image' | 'video' | 'document' | 'application' | 'plugin' | 'template' | 'server';
+export type ResourceType = 'image' | 'video' | 'document' | 'application' | 'plugin' | 'snippet' | 'server';
 
 export type Resource =
   | {
@@ -38,7 +38,7 @@ export type ResourceFile = File & {
 };
 
 /**
- * Who may read a bucket's files. `public`: anybody, at its domain — plugins, images, templates. `private`: only the
+ * Who may read a bucket's files. `public`: anybody, at its domain — plugins, images, snippets. `private`: only the
  * platform, with its CDN's credential — the space's server code. A private bucket has no domain.
  */
 export type CdnVisibility = 'public' | 'private';

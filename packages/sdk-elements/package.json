@@ -134,6 +134,10 @@
       "types": "./dist/Element/hooks/useInternalItems.d.ts",
       "import": "./dist/Element/hooks/useInternalItems.mjs"
     },
+    "./Element/hooks/useIntervalTriggers": {
+      "types": "./dist/Element/hooks/useIntervalTriggers.d.ts",
+      "import": "./dist/Element/hooks/useIntervalTriggers.mjs"
+    },
     "./Element/hooks/useKeyTriggers": {
       "types": "./dist/Element/hooks/useKeyTriggers.d.ts",
       "import": "./dist/Element/hooks/useKeyTriggers.mjs"
@@ -149,6 +153,10 @@
     "./Element/hooks/useRscData": {
       "types": "./dist/Element/hooks/useRscData.d.ts",
       "import": "./dist/Element/hooks/useRscData.mjs"
+    },
+    "./Element/hooks/useScrollInteractions": {
+      "types": "./dist/Element/hooks/useScrollInteractions.d.ts",
+      "import": "./dist/Element/hooks/useScrollInteractions.mjs"
     },
     "./components/ElementAdvancedEditor": {
       "types": "./dist/components/ElementAdvancedEditor.d.ts",
@@ -173,6 +181,10 @@
     "./dataSource/pathFields": {
       "types": "./dist/dataSource/pathFields.d.ts",
       "import": "./dist/dataSource/pathFields.mjs"
+    },
+    "./dataSource/useFlag": {
+      "types": "./dist/dataSource/useFlag.d.ts",
+      "import": "./dist/dataSource/useFlag.mjs"
     },
     "./elements": {
       "types": "./dist/elements/index.d.ts",
@@ -674,6 +686,30 @@
       "types": "./dist/elements/internal/Page/index.d.ts",
       "import": "./dist/elements/internal/Page/index.mjs"
     },
+    "./elements/media/Embed": {
+      "types": "./dist/elements/media/Embed/index.d.ts",
+      "import": "./dist/elements/media/Embed/index.mjs"
+    },
+    "./elements/media/Embed/Embed": {
+      "types": "./dist/elements/media/Embed/Embed.d.ts",
+      "import": "./dist/elements/media/Embed/Embed.mjs"
+    },
+    "./elements/media/Embed/Settings": {
+      "types": "./dist/elements/media/Embed/Settings.d.ts",
+      "import": "./dist/elements/media/Embed/Settings.mjs"
+    },
+    "./elements/media/Embed/declaration": {
+      "types": "./dist/elements/media/Embed/declaration.d.ts",
+      "import": "./dist/elements/media/Embed/declaration.mjs"
+    },
+    "./elements/media/Embed/embeddableSrc": {
+      "types": "./dist/elements/media/Embed/embeddableSrc.d.ts",
+      "import": "./dist/elements/media/Embed/embeddableSrc.mjs"
+    },
+    "./elements/media/Embed/index": {
+      "types": "./dist/elements/media/Embed/index.d.ts",
+      "import": "./dist/elements/media/Embed/index.mjs"
+    },
     "./elements/media/FontAwesome": {
       "types": "./dist/elements/media/FontAwesome/index.d.ts",
       "import": "./dist/elements/media/FontAwesome/index.mjs"
@@ -717,6 +753,30 @@
     "./elements/media/Image/index": {
       "types": "./dist/elements/media/Image/index.d.ts",
       "import": "./dist/elements/media/Image/index.mjs"
+    },
+    "./elements/media/Svg": {
+      "types": "./dist/elements/media/Svg/index.d.ts",
+      "import": "./dist/elements/media/Svg/index.mjs"
+    },
+    "./elements/media/Svg/Settings": {
+      "types": "./dist/elements/media/Svg/Settings.d.ts",
+      "import": "./dist/elements/media/Svg/Settings.mjs"
+    },
+    "./elements/media/Svg/Svg": {
+      "types": "./dist/elements/media/Svg/Svg.d.ts",
+      "import": "./dist/elements/media/Svg/Svg.mjs"
+    },
+    "./elements/media/Svg/declaration": {
+      "types": "./dist/elements/media/Svg/declaration.d.ts",
+      "import": "./dist/elements/media/Svg/declaration.mjs"
+    },
+    "./elements/media/Svg/index": {
+      "types": "./dist/elements/media/Svg/index.d.ts",
+      "import": "./dist/elements/media/Svg/index.mjs"
+    },
+    "./elements/media/Svg/sanitizeSvg": {
+      "types": "./dist/elements/media/Svg/sanitizeSvg.d.ts",
+      "import": "./dist/elements/media/Svg/sanitizeSvg.mjs"
     },
     "./elements/media/Video": {
       "types": "./dist/elements/media/Video/index.d.ts",
@@ -770,6 +830,10 @@
       "types": "./dist/elements/provider/ApiContainer/helpers/isEmptyAnswer.d.ts",
       "import": "./dist/elements/provider/ApiContainer/helpers/isEmptyAnswer.mjs"
     },
+    "./elements/provider/ApiContainer/helpers/loadingSlot": {
+      "types": "./dist/elements/provider/ApiContainer/helpers/loadingSlot.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/helpers/loadingSlot.mjs"
+    },
     "./elements/provider/ApiContainer/helpers/providerOutcome": {
       "types": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.d.ts",
       "import": "./dist/elements/provider/ApiContainer/helpers/providerOutcome.mjs"
@@ -821,6 +885,94 @@
     "./elements/settings": {
       "types": "./dist/elements/settings.d.ts",
       "import": "./dist/elements/settings.mjs"
+    },
+    "./elements/structure/Carousel": {
+      "types": "./dist/elements/structure/Carousel/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/index.mjs"
+    },
+    "./elements/structure/Carousel/Carousel": {
+      "types": "./dist/elements/structure/Carousel/Carousel.d.ts",
+      "import": "./dist/elements/structure/Carousel/Carousel.mjs"
+    },
+    "./elements/structure/Carousel/CarouselContext": {
+      "types": "./dist/elements/structure/Carousel/CarouselContext.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselContext.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/index.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/CarouselTrack": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/CarouselTrack.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/CarouselTrack.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/Settings": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/Settings.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/Settings.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/CarouselSlide": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/CarouselSlide/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/CarouselSlide/index.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/CarouselSlide/CarouselSlide": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/CarouselSlide/CarouselSlide.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/CarouselSlide/CarouselSlide.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/CarouselSlide/index": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/CarouselSlide/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/CarouselSlide/index.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/MarqueeTrack": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/MarqueeTrack/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/MarqueeTrack/index.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/MarqueeTrack/MarqueeTrack": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/MarqueeTrack/MarqueeTrack.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/MarqueeTrack/MarqueeTrack.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/MarqueeTrack/index": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/MarqueeTrack/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/MarqueeTrack/index.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/ScrollTrack": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/ScrollTrack/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/ScrollTrack/index.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/ScrollTrack/ScrollTrack": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/ScrollTrack/ScrollTrack.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/ScrollTrack/ScrollTrack.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/components/ScrollTrack/index": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/components/ScrollTrack/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/components/ScrollTrack/index.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/declaration": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/declaration.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/declaration.mjs"
+    },
+    "./elements/structure/Carousel/CarouselTrack/index": {
+      "types": "./dist/elements/structure/Carousel/CarouselTrack/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/CarouselTrack/index.mjs"
+    },
+    "./elements/structure/Carousel/Settings": {
+      "types": "./dist/elements/structure/Carousel/Settings.d.ts",
+      "import": "./dist/elements/structure/Carousel/Settings.mjs"
+    },
+    "./elements/structure/Carousel/carouselIndex": {
+      "types": "./dist/elements/structure/Carousel/carouselIndex.d.ts",
+      "import": "./dist/elements/structure/Carousel/carouselIndex.mjs"
+    },
+    "./elements/structure/Carousel/declaration": {
+      "types": "./dist/elements/structure/Carousel/declaration.d.ts",
+      "import": "./dist/elements/structure/Carousel/declaration.mjs"
+    },
+    "./elements/structure/Carousel/index": {
+      "types": "./dist/elements/structure/Carousel/index.d.ts",
+      "import": "./dist/elements/structure/Carousel/index.mjs"
+    },
+    "./elements/structure/Carousel/useAutoplay": {
+      "types": "./dist/elements/structure/Carousel/useAutoplay.d.ts",
+      "import": "./dist/elements/structure/Carousel/useAutoplay.mjs"
     },
     "./elements/structure/Container": {
       "types": "./dist/elements/structure/Container/index.d.ts",
@@ -921,6 +1073,10 @@
     "./elements/structure/List/modes/ListControlled/index": {
       "types": "./dist/elements/structure/List/modes/ListControlled/index.d.ts",
       "import": "./dist/elements/structure/List/modes/ListControlled/index.mjs"
+    },
+    "./elements/structure/List/modes/ListControlled/rowKeys": {
+      "types": "./dist/elements/structure/List/modes/ListControlled/rowKeys.d.ts",
+      "import": "./dist/elements/structure/List/modes/ListControlled/rowKeys.mjs"
     },
     "./elements/structure/ModalContainer": {
       "types": "./dist/elements/structure/ModalContainer/index.d.ts",
@@ -1081,7 +1237,7 @@
   "sideEffects": false,
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.26",
+    "@plitzi/plitzi-ui": "^1.6.27",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

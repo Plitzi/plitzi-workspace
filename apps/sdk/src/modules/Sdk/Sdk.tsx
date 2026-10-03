@@ -8,6 +8,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
+import useImagesSync from '@plitzi/sdk-shared/server/actions/useImagesSync';
 import useRealtimeSync from '@plitzi/sdk-shared/server/actions/useRealtimeSync';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
@@ -49,6 +50,7 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);
   useRealtimeSync(server?.ssr);
+  useImagesSync(server?.ssr);
 
   /**
    * What the space's declared families cost the document, resolved once for all three surfaces.

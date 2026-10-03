@@ -1,6 +1,8 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { defaultAttributes } from '../elements';
 import { BREAKPOINTS, expandShorthand } from '../style';
-import { categoryOf, definitionOf, isRecord } from './documents';
+import { categoryOf, definitionOf } from './documents';
 
 import type { SpaceDocuments } from '../schema';
 import type {
@@ -298,6 +300,7 @@ class SpaceComparer {
     const variables = (schema: Schema): unknown =>
       schema.variables.map(variable => ({ ...variable, category: categoryOf(variable) }));
     this.check('schema', 'variables', variables(a.schema), variables(b.schema));
+    this.check('schema', 'flags', a.schema.flags ?? {}, b.schema.flags ?? {});
     this.check('schema', 'rsc', a.schema.rsc, b.schema.rsc);
 
     // An empty string is the builder's way of leaving a setting unset.
@@ -457,6 +460,8 @@ class SpaceComparer {
     this.check(at, 'flows', flowsOf(a), flowsOf(b));
     this.check(at, 'runtime', a.definition.runtime, b.definition.runtime);
     this.check(at, 'load strategy', a.definition.loadStrategy, b.definition.loadStrategy);
+    this.check(at, 'flag', a.definition.flag, b.definition.flag);
+    this.check(at, 'anchor', a.definition.anchor, b.definition.anchor);
 
     const childrenA = this.childrenOf(this.expected, a);
     const childrenB = this.childrenOf(this.actual, b);

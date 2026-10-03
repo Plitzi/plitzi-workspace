@@ -1,3 +1,5 @@
+import { isRecord } from '../helpers/isRecord';
+
 import type { ChannelDeclaration, ChannelDeclarations } from '../types/RealtimeTypes';
 
 /** A topic, as a page may name one: letters, digits and `:_-.`, at most 128 characters. */
@@ -42,9 +44,6 @@ export const matchChannel = (
 const PATTERN = /^(?=.)[A-Za-z0-9:_.-]*(\{[A-Za-z0-9_]+\}[A-Za-z0-9:_.-]*)*$/;
 
 const ACCESS_MODES = new Set(['public', 'session', 'role']);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * What is wrong with one channel of a space, each as a sentence that says how to write it — empty when nothing is.

@@ -1,4 +1,5 @@
 import { cookieFromHeader, documentCookies } from '../helpers/cookies';
+import { isRecord } from '../helpers/isRecord';
 
 /**
  * The kept state a space's first paint depends on, where the server can read it.
@@ -35,9 +36,6 @@ export const paintedStateCookieName = (webId: number, host: string | undefined):
 
   return port ? `plitzi_${webId}_painted_${port}` : `plitzi_${webId}_painted`;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** The keys a space declared, as a set — an empty one when it declared none. */
 export const paintedKeys = (settings: { paintedState?: unknown } | undefined): Set<string> =>

@@ -26,7 +26,7 @@ const PlitziSdk = Object.assign(BasePlitziSdk, {
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

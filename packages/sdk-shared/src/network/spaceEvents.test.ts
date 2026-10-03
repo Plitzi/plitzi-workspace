@@ -52,11 +52,11 @@ describe('what a payload has to look like', () => {
     expect(validateSpaceEvent('SPACE_UPDATED', { schema: { flat: { el1: element }, pages: ['el1'] } }).ok).toBe(false);
   });
 
-  it('pins the template events to `style`, which is the field the publisher sends', () => {
-    const template = { element, to: 'root', dropPosition: 'inside', style: { platform: {} } };
+  it('pins the snippet events to `style`, which is the field the publisher sends', () => {
+    const snippet = { element, to: 'root', dropPosition: 'inside', style: { platform: {} } };
 
-    expect(validateSpaceEvent('SPACE_ADD_TEMPLATE', template).ok).toBe(true);
-    expect(validateSpaceEvent('SPACE_ADD_TEMPLATE', { ...template, style: undefined, styles: {} }).ok).toBe(false);
+    expect(validateSpaceEvent('SPACE_ADD_SNIPPET', snippet).ok).toBe(true);
+    expect(validateSpaceEvent('SPACE_ADD_SNIPPET', { ...snippet, style: undefined, styles: {} }).ok).toBe(false);
   });
 
   it('pins STYLE_UPDATED to the three parts a style edit publishes, not a whole Style', () => {

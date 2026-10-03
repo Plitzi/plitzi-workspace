@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+
 import EffortDropdown from './components/EffortDropdown';
 import EffortTrigger from './components/EffortTrigger';
 import { OPTIONS } from './helpers';
@@ -33,7 +35,7 @@ const EffortSelector = ({ value, disabled = false, onChange }: EffortSelectorPro
     }
 
     const handler = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) {
+      if (!rootRef.current?.contains(nodeOf(e.target))) {
         setOpen(false);
       }
     };

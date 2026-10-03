@@ -33,6 +33,8 @@ const documentOps = [
   elementOps.deleteFolder,
   elementOps.upsertVariable,
   elementOps.deleteVariable,
+  elementOps.upsertFlag,
+  elementOps.deleteFlag,
   elementOps.upsertBinding,
   elementOps.patchBinding,
   elementOps.deleteBinding,

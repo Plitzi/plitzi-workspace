@@ -1,8 +1,8 @@
 import { createActionsModule } from './index';
+import { actionLookupsOf, dbDriversOf, functionsConfigOf } from '../../core/configSeam';
 import { realtimeModuleFor } from '../realtime';
 
 import type { ActionsModule } from './index';
-import type { ActionLookups, ActionsConfig } from './types';
 import type { SSRServerConfig } from '@plitzi/sdk-shared';
 
 /**
@@ -29,11 +29,10 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     return existing;
   }
 
-  // The shared config types the lookups structurally (they answer `unknown`); this is the single seam where they
-  // become this package's own contract.
   const module = createActionsModule({
-    lookups: lookups as ActionLookups,
-    functions: config.functions as ActionsConfig['functions'],
+    lookups: actionLookupsOf(lookups),
+    flags: config.flags,
+    functions: functionsConfigOf(config.functions),
     limits: config.action?.limits,
     concurrency: config.action?.concurrency,
     kv: config.action?.kv,
@@ -41,7 +40,7 @@ export const actionsModuleFor = (config: SSRServerConfig): ActionsModule | undef
     rateLimit: config.action?.rateLimit,
     idempotency: config.action?.idempotency,
     signingSecret: config.action?.signingSecret,
-    dbDrivers: config.action?.dbDrivers as ActionsConfig['dbDrivers'],
+    dbDrivers: dbDriversOf(config.action?.dbDrivers),
     email: config.action?.email,
     onRun: config.action?.onRun,
     realtime: realtimeModuleFor(config)

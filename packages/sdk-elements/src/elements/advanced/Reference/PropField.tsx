@@ -43,7 +43,7 @@ const fromJson = (text: string): string | number | boolean | object => {
 
 const BooleanField = ({ name, prop, value, onUpdate }: PropFieldProps) => {
   const handleChange = useCallback(
-    (event: ChangeEvent) => onUpdate?.(name, (event.target as HTMLInputElement).checked),
+    (event: ChangeEvent<HTMLInputElement>) => onUpdate?.(name, event.target.checked),
     [name, onUpdate]
   );
 

@@ -113,6 +113,18 @@ describe('RootElement', () => {
       expect(container.querySelector('[data-rsc-id="el1"]')).not.toBeNull();
     });
 
+    // `data-id` names an element for the platform; a URL fragment needs a real `id`, server-rendered so `/#x` lands.
+    it('carries its anchor as the id in the DOM, and no id without one', () => {
+      const anchored = renderRoot(
+        fullContext({
+          definition: { rootId: 'root', label: 'Lbl', type: 'text', anchor: 'pricing', styleSelectors: { base: '' } }
+        })
+      );
+
+      expect(anchored.container.querySelector('div')?.id).toBe('pricing');
+      expect(renderRoot(fullContext()).container.querySelector('div')?.hasAttribute('id')).toBe(false);
+    });
+
     it('merges the context style with the parsed style prop', () => {
       const { container } = renderRoot(fullContext(), { style: 'background:blue' });
       const style = container.querySelector('div')?.getAttribute('style') ?? '';
@@ -125,6 +137,16 @@ describe('RootElement', () => {
   describe('with InteractionsContext', () => {
     beforeEach(() => {
       serviceContext.contexts.InteractionsContext = InteractionsContext;
+    });
+
+    it('keeps the anchor once interactions are wired', () => {
+      const { container } = renderRoot(
+        fullContext({
+          definition: { rootId: 'root', label: 'Lbl', type: 'text', anchor: 'pricing', styleSelectors: { base: '' } }
+        })
+      );
+
+      expect(container.querySelector('div')?.id).toBe('pricing');
     });
 
     it('wires interactions and merges context + internal class names', () => {

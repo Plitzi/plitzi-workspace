@@ -8,12 +8,17 @@
 
 export * from './actions';
 export * from './bindings';
+export * from './codes';
+export { authoringCodesTable } from './codesPage';
+export { flagGateOf, flagSpecOf } from './flags';
 export * from './flows';
 export * from './handles';
 export * from './ids';
 export * from './lint';
 export * from './notifications';
+export * from './refusals';
 export * from './space';
-export * from './template';
+export * from './snippet';
 export * from './validate';
 export type * from './types';
+export type { WrittenPosition } from './writtenAt';

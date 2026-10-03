@@ -1,10 +1,12 @@
 import type { InteractionNode, InteractionStatus } from './InteractionTypes';
 import type { NavigationStatus } from './NavigationTypes';
+import type { RealtimeMessage, RealtimeTransport } from './RealtimeTypes';
 import type { ElementInteraction } from './SchemaTypes';
+import type { RealtimeStatus } from '../realtime/client';
 import type { ReactNode } from 'react';
 
 export type LogType = 'info' | 'warning' | 'danger' | 'success' | 'custom';
-export type LogCategory = 'navigation' | 'interactions' | 'store' | 'network' | 'actions';
+export type LogCategory = 'navigation' | 'interactions' | 'store' | 'network' | 'actions' | 'realtime';
 
 export type LogNavigation = { category: 'navigation'; params: { status: NavigationStatus; elementId: string } };
 export type LogEventBridge = { category: 'eventBridge'; params: Record<string, unknown> };
@@ -84,15 +86,26 @@ export type LogNetwork = {
   params: { event: string; issues: { path: string; message: string }[]; payload?: unknown };
 };
 
+/** What the page's realtime connection did: opened or dropped, a message in or out, a topic the server refused. */
+export type LogRealtime = {
+  category: 'realtime';
+  params:
+    | { event: 'status'; status: RealtimeStatus; topics: string[]; transport: RealtimeTransport }
+    | { event: 'received'; message: RealtimeMessage }
+    | { event: 'published'; topic: string; type: string; data: unknown; delivered: boolean }
+    | { event: 'refused'; topic: string; reason: string };
+};
+
 export type LogParams =
   | LogNavigation['params']
   | LogInteraction['params']
   | LogEventBridge['params']
   | LogStore['params']
   | LogNetwork['params']
-  | LogAction['params'];
-export type Log = { logType: string; message: ReactNode; time?: string } & (
-  LogInteraction | LogNavigation | LogEventBridge | LogStore | LogNetwork | LogAction
+  | LogAction['params']
+  | LogRealtime['params'];
+export type Log = { logType: LogType; message: ReactNode; time?: string } & (
+  LogInteraction | LogNavigation | LogEventBridge | LogStore | LogNetwork | LogAction | LogRealtime
 );
 
 export type ProviderCallback = (...args: unknown[]) => Record<string, unknown>;

@@ -1,8 +1,10 @@
 import { lintAccessibility } from './accessibility';
+import { lintAnchors } from './anchors';
 import { lintChannels } from './channels';
 import { lintInstances } from './components';
 import { LintContext } from './context';
 import { lintElements } from './elements';
+import { lintFlags } from './flags';
 import { lintFlows } from './flows';
 import { lintPages } from './pages';
 import { lintStyle } from './style';
@@ -13,6 +15,7 @@ import type { Schema, Style } from '@plitzi/sdk-shared';
 
 export type { LintCatalogs, LintIssue } from './context';
 export { FIXABLE_CODES, fixSpace } from './fixes';
+export type { FixChange } from './fixes';
 export type { AppliedFix, FixResult } from './fixes';
 
 export interface LintResult {
@@ -38,7 +41,9 @@ export const lintSpace = (
   const ctx = new LintContext(schema, style, catalogs);
   lintPages(ctx);
   lintComputed(ctx);
+  lintFlags(ctx);
   lintElements(ctx);
+  lintAnchors(ctx);
   lintInstances(ctx);
   lintChannels(ctx);
   lintFlows(ctx);
@@ -46,12 +51,13 @@ export const lintSpace = (
   lintAccessibility(ctx);
 
   // Each component's tree, read as what it is: closed, with nothing around it but `props` and the globals. The rules
-  // that are about the whole space — pages, computed values, channels, the stylesheet — were read above, once.
+  // that are about the whole space — pages, computed values, flags, channels, the stylesheet — were read above, once.
   const errors = [...ctx.errors];
   const warnings = [...ctx.warnings];
   for (const component of Object.values(schema.components)) {
     const own = new LintContext(schema, style, catalogs, component);
     lintElements(own);
+    lintAnchors(own);
     lintInstances(own);
     lintFlows(own);
     lintAccessibility(own);

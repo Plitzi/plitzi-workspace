@@ -104,12 +104,12 @@ const Settings = ({
   );
 
   const handleChangeSeoEnabled = useCallback(
-    (e: ChangeEvent) => onUpdate?.('seoEnabled', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('seoEnabled', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeEnabled = useCallback(
-    (e: ChangeEvent) => onUpdate?.('enabled', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('enabled', e.target.checked),
     [onUpdate]
   );
 

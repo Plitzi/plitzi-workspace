@@ -125,6 +125,20 @@ export const targets: Target[] = [
     what: 'The same published site with the space’s own dev-tools setting on — the outline, and never a step’s data'
   },
   {
+    id: 'flags-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:flags',
+    origin: 'http://127.0.0.1:5210',
+    what: 'The flags space as a published site: the server turns one flag on, and debugging is authorized'
+  },
+  {
+    id: 'flags-no-debug-server',
+    workspace: '@plitzi/e2e',
+    command: 'yarn workspace @plitzi/e2e start:flags-no-debug',
+    origin: 'http://127.0.0.1:5211',
+    what: 'The same site where nobody authorized debugging — a tester’s forced flags are ignored'
+  },
+  {
     id: 'workers-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:workers',

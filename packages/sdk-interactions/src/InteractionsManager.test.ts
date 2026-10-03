@@ -445,6 +445,58 @@ describe('InteractionsManager — what a step reads', () => {
   });
 });
 
+/** A tick of an interval is for the flows declared with that interval; each other interval keeps its own clock. */
+describe('InteractionsManager — intervals', () => {
+  const intervalFlow = (id: string, interval: number | string, action: string): Record<string, ElementInteraction> => ({
+    [`${id}-t`]: {
+      id: `${id}-t`,
+      title: 'On Interval',
+      type: 'trigger',
+      action: 'onInterval',
+      params: { interval },
+      preview: {},
+      elementId: 'el1',
+      beforeNode: '',
+      afterNode: `${id}-s`,
+      flowId: `${id}-t`,
+      enabled: true
+    },
+    [`${id}-s`]: {
+      id: `${id}-s`,
+      title: action,
+      type: 'callback',
+      action,
+      params: {},
+      preview: {},
+      elementId: 'el1',
+      beforeNode: `${id}-t`,
+      afterNode: '',
+      flowId: `${id}-t`,
+      enabled: true
+    }
+  });
+
+  it('runs only the flows declared with the interval that ticked, written as a number or as the builder’s text', async () => {
+    const slide = vi.fn();
+    const poll = vi.fn();
+    const manager = new InteractionsManager('page1');
+    manager.subscribe(
+      'el1',
+      { ...intervalFlow('a', 5000, 'slide'), ...intervalFlow('b', '1000', 'poll') },
+      { onInterval: { action: 'onInterval', title: 'On Interval', type: 'trigger', params: {} } },
+      {
+        slide: { action: 'slide', title: 'Slide', type: 'callback', params: {}, callback: slide },
+        poll: { action: 'poll', title: 'Poll', type: 'callback', params: {}, callback: poll }
+      }
+    );
+
+    await manager.interactionTrigger('el1', 'onInterval', { interval: 1000, count: 1 });
+
+    expect(poll).toHaveBeenCalledTimes(1);
+    expect(slide).not.toHaveBeenCalled();
+  });
+});
+
 /** One key press fires `onKey` once, with the shortcuts it matched; each flow on it runs only for its own. */
 describe('InteractionsManager — keyboard shortcuts', () => {
   const keyFlow = (id: string, keys: string, action: string): Record<string, ElementInteraction> => ({

@@ -1,6 +1,8 @@
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { invalidParams, missingRequiredParams, reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { AuthoringError } from './codes';
 import { didYouMean } from './suggest';
 
 import type {
@@ -36,6 +38,8 @@ export const SPACE_SPEC_KEYS = [
   'customCss',
   'notifications',
   'computed',
+  'formats',
+  'flags',
   'channels',
   'settings',
   'rsc',
@@ -72,6 +76,7 @@ export const PAGE_SPEC_KEYS = [
   'selector',
   'class',
   'flows',
+  'flag',
   'body'
 ] as const satisfies readonly (keyof PageSpec)[];
 
@@ -94,6 +99,9 @@ export const ELEMENT_SPEC_KEYS = [
   'type',
   'id',
   'attributes',
+  'from',
+  'as',
+  'row',
   'variant',
   'css',
   'selector',
@@ -105,6 +113,8 @@ export const ELEMENT_SPEC_KEYS = [
   'flows',
   'runtime',
   'loadStrategy',
+  'anchor',
+  'flag',
   'children',
   'meta'
 ] as const satisfies readonly (keyof ElementSpec)[];
@@ -152,9 +162,6 @@ export const BINDING_CATEGORIES = ['attributes', 'style', 'initialState'] as con
 export const ACCESS_LEVELS = ['public', 'authenticated'] as const;
 export const STEP_TYPES = ['trigger', 'globalCallback', 'callback', 'utility'] as const;
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 /** Refuses a field the spec does not take, naming the one it probably meant. */
 export function assertKnownKeys(
   value: unknown,
@@ -163,12 +170,13 @@ export function assertKnownKeys(
   hint = ''
 ): asserts value is Record<string, unknown> {
   if (!isRecord(value)) {
-    throw new Error(`${where} is ${value === null ? 'null' : typeof value}, not an object.`);
+    throw new AuthoringError('element-shape', `${where} is ${value === null ? 'null' : typeof value}, not an object.`);
   }
 
   for (const key of Object.keys(value)) {
     if (!keys.includes(key)) {
-      throw new Error(
+      throw new AuthoringError(
+        'unknown-field',
         `${where} has "${key}", which it does not take${didYouMean(key, keys) || '.'} It takes ${keys.join(', ')}.${hint}`
       );
     }
@@ -182,7 +190,8 @@ export const assertId = (id: unknown, where: string): void => {
   }
 
   if (typeof id !== 'string' || !isValidElementId(id)) {
-    throw new Error(
+    throw new AuthoringError(
+      'id-invalid',
       `${where}: the id ${JSON.stringify(id)} is not one a binding, a template or a test can name. Use a letter first, then letters, digits, "-" and "_" — like "hero-title".`
     );
   }
@@ -196,11 +205,17 @@ export const assertBindingShape = (binding: unknown, where: string): void => {
   assertKnownKeys(binding, BINDING_SPEC_KEYS, `${where}: a binding`);
   const { to, source } = binding;
   if (typeof to !== 'string' || to.trim() === '') {
-    throw new Error(`${where}: a binding has no \`to\` — the attribute, style property or state key it writes.`);
+    throw new AuthoringError(
+      'binding-shape',
+      `${where}: a binding has no \`to\` — the attribute, style property or state key it writes.`
+    );
   }
 
   if (typeof source !== 'string' || source.trim() === '') {
-    throw new Error(`${where}: the binding of "${to}" has no \`source\` — where its value comes from ('posts.title').`);
+    throw new AuthoringError(
+      'binding-shape',
+      `${where}: the binding of "${to}" has no \`source\` — where its value comes from ('posts.title').`
+    );
   }
 };
 

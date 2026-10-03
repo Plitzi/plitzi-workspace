@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
-import { builtinModules, createRequire } from 'node:module';
+import { builtinModules } from 'node:module';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 import { readSourceSnapshot, SOURCE_SNAPSHOT_FORMAT } from '@plitzi/sdk-shared/source';
 
 import { nearestPackage, readPackageJson } from '../commands/existingProject';
+import { loadTypeScript } from '../projectTypeScript';
 
 import type { SourceSnapshot, SourceSnapshotKind } from '@plitzi/sdk-shared/source';
 import type TypeScript from 'typescript';
@@ -36,16 +37,6 @@ const STYLES = /\.(css|scss|sass|less)$/;
 const EXTENSIONS = ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs', '.json', '.css', '.scss'];
 
 const BUILTINS = new Set(builtinModules);
-
-const loadTypeScript = (root: string): typeof TypeScript | undefined => {
-  try {
-    // The project's own TypeScript, the version its source is written for. What `require` hands back is the
-    // TypeScript module — the type is the one the project's own `import` would see.
-    return createRequire(path.join(root, 'package.json'))('typescript') as typeof TypeScript;
-  } catch {
-    return undefined;
-  }
-};
 
 const isFile = async (file: string): Promise<boolean> => {
   try {

@@ -2,11 +2,12 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import clsx from 'clsx';
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
+import { isMac } from '@pmodules/Keyboard';
+
 import VoiceVisualizer from '../VoiceVisualizer';
 import AttachmentThumbnail from './components/AttachmentThumbnail';
 import ChatInputControls from './components/ChatInputControls';
 import { DEFAULT_SKILLS, SkillsManager } from './components/SkillsManager';
-import { isMac } from './helpers';
 import useMessageHistory from './hooks/useMessageHistory';
 import { useAiChatContext } from '../../contexts/AiChatContext';
 

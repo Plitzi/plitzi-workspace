@@ -19,7 +19,7 @@ A space designed in Lato shipped in Arial, and nothing anywhere said so.
 
 Two consequences follow:
 
-- **The picker offers what the space declares.** Add a family in the Fonts panel and it appears in the element
+- **The picker offers what the space declares.** Add a family in the Fonts panel (the builder's **Assets → Fonts**) and it appears in the element
   inspector; nothing else does.
 - **The weight select offers the weights that family declares.** A weight nobody loaded used to be "available" and
   the browser drew a synthetic bold for it. Now a weight you have not asked for is visibly unavailable.

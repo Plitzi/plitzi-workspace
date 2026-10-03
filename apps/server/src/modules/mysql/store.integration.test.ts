@@ -77,11 +77,14 @@ describe.skipIf(!available)('the MySQL store, against a real database', () => {
     await dropSchema(store.pool, resolveTables('other_'), { prefix: 'other_', force: true });
     await execute(store.pool, 'DROP TABLE IF EXISTS `unrelated_role`');
     await execute(store.pool, 'DROP TABLE IF EXISTS `itest_role`');
+    // The unprefixed `role` one test creates and a later one drops: a run stopped between the two left it behind.
+    await execute(store.pool, 'DROP TABLE IF EXISTS `role`');
   });
 
   afterAll(async () => {
     await dropSchema(store.pool, resolveTables(PREFIX), { prefix: PREFIX, force: true });
     await execute(store.pool, 'DROP TABLE IF EXISTS `unrelated_role`');
+    await execute(store.pool, 'DROP TABLE IF EXISTS `role`');
     await store.close();
   });
 

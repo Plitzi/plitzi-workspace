@@ -1,4 +1,5 @@
 import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/components';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import {
   defaultAttributes,
@@ -9,9 +10,10 @@ import {
 } from '../elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../schema';
-import { css } from '../style';
+import { flagSpecOf } from '../schema/flags';
+import { css, modifierClassName } from '../style';
 import { foldCustomCss } from './customCss';
-import { categoryOf, definitionOf, isRecord, withNamedIds } from './documents';
+import { categoryOf, definitionOf, withNamedIds } from './documents';
 import { readSelector, unwritableCss } from './styles';
 
 import type {
@@ -149,7 +151,9 @@ const DEFINITION_FIELDS = new Set([
   'interactions',
   'initialState',
   'runtime',
-  'loadStrategy'
+  'loadStrategy',
+  'flag',
+  'anchor'
 ]);
 
 const PAGE_ATTRIBUTES = new Set([
@@ -435,6 +439,7 @@ class SpecReader {
       ...(schema.variables.length > 0 ? { schemaVariables: this.readSchemaVariables(schema.variables) } : {}),
       ...(isEmpty(settings) ? {} : { settings }),
       ...(computed && !isEmpty(computed) ? { computed } : {}),
+      ...(schema.flags && !isEmpty(schema.flags) ? { flags: schema.flags } : {}),
       ...(channels && !isEmpty(channels) ? { channels } : {}),
       ...(customCss ? { customCss } : {}),
       ...(schema.rsc ? { rsc: schema.rsc } : {}),
@@ -732,6 +737,25 @@ class SpecReader {
    * otherwise derive a new one from where the element sits, and the builder, a stylesheet outside the document and
    * the next export all know the element by the old one.
    */
+  /**
+   * An element's base selector as its spec writes it: what a page's or a layout's reads as, and — only an element's —
+   * `card hero-bg--own` read back as the class it wears and the rules written on top of it.
+   */
+  private elementBaseStyle(
+    selector: string | undefined,
+    elementId: string
+  ): { class?: string | (string | StyleSpec)[]; css?: CssSpec; states?: StatesSpec; selector?: string } {
+    const names = selector ? classesOf(selector) : [];
+    const modifier = names.length > 1 ? this.modifierOf(names[names.length - 1], elementId) : undefined;
+    if (!modifier) {
+      return this.baseStyle(selector, 'css-and-states');
+    }
+
+    const kept = this.keepClassList(names.slice(0, -1));
+
+    return { class: [...(kept === undefined ? [] : Array.isArray(kept) ? kept : [kept]), modifier] };
+  }
+
   private baseStyle(
     selector: string | undefined,
     inline: 'css' | 'css-and-states'
@@ -777,6 +801,29 @@ class SpecReader {
       ...(read.states ? { states: read.states } : {}),
       selector
     };
+  }
+
+  /**
+   * The rules a `<id>--own` class holds, as the inline object that wrote it — when it is that element's alone and reads
+   * back whole; otherwise nothing, and it stays a class like any other.
+   */
+  private modifierOf(name: string, ownerId: string): StyleSpec | undefined {
+    const blocks = this.classBlocks.get(name);
+    if (name !== modifierClassName(ownerId) || !blocks || (this.selectorUses.get(name) ?? 0) !== 1) {
+      return undefined;
+    }
+
+    const read = readSelector(blocks);
+    if (this.references.has(name) || read.variants || read.ancestors || !isEmpty(read.unwritable)) {
+      return undefined;
+    }
+
+    this.readReporting(name, blocks);
+    if (!read.states) {
+      return read.css ?? {};
+    }
+
+    return { ...(read.css ? { css: read.css } : {}), states: read.states };
   }
 
   /**
@@ -1049,6 +1096,7 @@ class SpecReader {
       ...(redirect ? { unauthorizedRedirect: redirect } : {}),
       ...this.pageStyle(page.definition.styleSelectors.base),
       ...this.readFlows(page),
+      ...(page.definition.flag ? { flag: flagSpecOf(page.definition.flag) } : {}),
       body: this.childrenOf(page).map(child => this.readElement(child))
     };
   }
@@ -1134,7 +1182,7 @@ class SpecReader {
     const keepId = this.options.keepIds === true || !this.derived.has(element.id);
 
     const { base: baseSelector, ...slotSelectors } = definition.styleSelectors;
-    const baseStyle = this.baseStyle(baseSelector, 'css-and-states');
+    const baseStyle = this.elementBaseStyle(baseSelector, element.id);
     const style = legacy?.css && !baseStyle.class && !baseStyle.css ? { ...baseStyle, css: legacy.css } : baseStyle;
     const slots = Object.fromEntries(
       Object.entries(slotSelectors).flatMap(([slot, selector]) => {
@@ -1171,6 +1219,8 @@ class SpecReader {
       ...this.readFlows(element),
       ...(definition.runtime ? { runtime: definition.runtime } : {}),
       ...(definition.loadStrategy ? { loadStrategy: definition.loadStrategy } : {}),
+      ...(definition.anchor ? { anchor: definition.anchor } : {}),
+      ...(definition.flag ? { flag: flagSpecOf(definition.flag) } : {}),
       meta: { label: definition.label },
       ...this.childrenSpec(element)
     };

@@ -21,6 +21,9 @@ export interface SpaceResolution {
   templateProps?: SSRTemplateProps;
   pluginNames?: string[];
   pluginSources?: Record<string, PluginSource>;
+  /** What the space's flags are at, when they change apart from its revisions — see `SSRSpaceDeployment.flagsVersion`.
+   *  Usually set by `decorate`, which runs on every request: a cached resolution would hold a stale one. */
+  flagsVersion?: string;
 }
 
 /** A resolver that has decided this request gets nothing, and that no later resolver should be asked. */

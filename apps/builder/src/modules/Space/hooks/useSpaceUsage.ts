@@ -1,6 +1,6 @@
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 /** One page of the space and what it spent of the allowance this period. */
 export interface UsagePage {
@@ -33,7 +33,7 @@ export interface SpaceUsage {
  * totals, not something that moves while somebody reads them.
  */
 const useSpaceUsage = (spaceId: number) => {
-  const { server, userKey } = use(NetworkContext);
+  const { server, userKey } = useBuilderNetwork();
   const [usage, setUsage] = useState<SpaceUsage>();
   const [error, setError] = useState<string>();
 

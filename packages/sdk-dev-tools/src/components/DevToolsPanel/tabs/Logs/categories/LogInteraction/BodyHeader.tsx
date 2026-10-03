@@ -1,8 +1,10 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { formatDate } from '@plitzi/sdk-shared/helpers';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
+
+import useHighlightElement from '../../../../../../highlight';
 
 import type { ReactNode } from 'react';
 
@@ -33,13 +35,12 @@ const BodyHeader = ({ triggerName, startTime, endTime, duration, elementId, host
     elementDOM?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
   }, [elementDOM]);
 
-  const handleMouseEnter = useCallback(() => {
-    elementDOM?.classList.add('devtools-element-hovered');
-  }, [elementDOM]);
+  const [hovered, setHovered] = useState(false);
+  useHighlightElement(hovered ? elementId : undefined);
 
-  const handleMouseLeave = useCallback(() => {
-    elementDOM?.classList.remove('devtools-element-hovered');
-  }, [elementDOM]);
+  const handleMouseEnter = useCallback(() => setHovered(true), []);
+
+  const handleMouseLeave = useCallback(() => setHovered(false), []);
 
   return (
     <div className="flex justify-around gap-3">

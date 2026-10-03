@@ -33,6 +33,7 @@ type DeclarationShape = {
   triggers?: Record<string, InteractionCallback>;
   callbacks?: Record<string, InteractionCallback>;
   ancestorType?: string;
+  initialItems?: readonly string[];
   attributeValues?: Record<string, readonly string[]>;
   content?: {
     attributes?: Readonly<Record<string, unknown>>;
@@ -46,9 +47,12 @@ type DeclarationShape = {
   };
 };
 
+/** Every declaration, read through the part of its shape this catalog uses. */
+const declarations: Record<string, DeclarationShape> = elementDeclarations;
+
 /** Keyed by the schema `type`, which is what a document and every catalog address a type by. */
 export const elementCatalog: Record<string, ElementSemantics> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+  Object.values(declarations).map(declaration => [
     declaration.type,
     {
       label: declaration.content?.definition?.label ?? declaration.type,
@@ -73,7 +77,7 @@ export const elementTypeNames: string[] = Object.keys(elementCatalog);
  * keep in step with the runtime.
  */
 export const elementSourceTypes: Record<string, string> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>)
+  Object.values(declarations)
     .filter(declaration => declaration.sourceType)
     .map(declaration => [declaration.type, declaration.sourceType as string])
 );
@@ -86,7 +90,7 @@ export const elementSourceTypes: Record<string, string> = Object.fromEntries(
  * the form, and never runs, which is how a working form reads as "forms do not work outside the builder".
  */
 export const elementTriggers: Record<string, string[]> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+  Object.values(declarations).map(declaration => [
     declaration.type,
     [...Object.keys(interactionBasicTriggers), ...Object.keys(declaration.triggers ?? {})]
   ])
@@ -94,9 +98,12 @@ export const elementTriggers: Record<string, string[]> = Object.fromEntries(
 
 /** The triggers only some types fire, by action name — for a step builder that wants the title the builder shows. */
 export const typeTriggerDefinitions: Record<string, InteractionCallback> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>).flatMap(declaration =>
-    Object.entries(declaration.triggers ?? {})
-  )
+  Object.values(declarations).flatMap(declaration => Object.entries(declaration.triggers ?? {}))
+);
+
+/** The callbacks only some types answer to, by action name — with their params, for whatever explains or checks one. */
+export const typeCallbackDefinitions: Record<string, InteractionCallback> = Object.fromEntries(
+  Object.values(declarations).flatMap(declaration => Object.entries(declaration.callbacks ?? {}))
 );
 
 /**
@@ -107,7 +114,7 @@ export const typeTriggerDefinitions: Record<string, InteractionCallback> = Objec
  * trigger on the wrong element — the builder offers `openModal` only on a modal, and a hand-written step does not.
  */
 export const elementCallbacks: Record<string, string[]> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+  Object.values(declarations).map(declaration => [
     declaration.type,
     [...Object.keys(BUILTIN_ELEMENT_CALLBACKS), ...Object.keys(declaration.callbacks ?? {})]
   ])
@@ -115,9 +122,19 @@ export const elementCallbacks: Record<string, string[]> = Object.fromEntries(
 
 /** The sub-elements that only work inside another type, and that type — see `ElementDeclarationData.ancestorType`. */
 export const elementAncestorTypes: Record<string, string> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>)
-    .filter(declaration => declaration.ancestorType)
-    .map(declaration => [declaration.type, declaration.ancestorType as string])
+  Object.values(declarations).flatMap(({ type, ancestorType }) => (ancestorType ? [[type, ancestorType]] : []))
+);
+
+/**
+ * The parts each compound type renders through — a carousel's `carouselTrack`, a tab container's header and body: the
+ * types it starts with (`initialItems`) that work only inside it. Without one it renders nothing of what it holds.
+ */
+export const elementPartTypes: Record<string, string[]> = Object.fromEntries(
+  Object.values(declarations).flatMap(({ type, initialItems = [] }) => {
+    const parts = [...new Set(initialItems.filter(item => elementAncestorTypes[item] === type))];
+
+    return parts.length > 0 ? [[type, parts]] : [];
+  })
 );
 
 /**
@@ -128,7 +145,7 @@ export const elementAncestorTypes: Record<string, string> = Object.fromEntries(
  * the space wrote for the TYPE reaches some of its elements and not others — which is a themed modal beside a white one.
  */
 export const elementSlots: Record<string, string[]> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
+  Object.values(declarations).map(declaration => [
     declaration.type,
     Object.keys(declaration.content?.definition?.styleSelectors ?? {}).filter(slot => slot !== 'base')
   ])
@@ -141,21 +158,18 @@ export const elementSlots: Record<string, string[]> = Object.fromEntries(
  * without a word: a two-tone heading authored as a heading with two texts in it renders the word "Heading". A type
  * that can hold children says so by declaring `items`, which is also what lets the builder drop into it.
  */
-export const elementLeafTypes: string[] = Object.values(elementDeclarations as Record<string, DeclarationShape>)
+export const elementLeafTypes: string[] = Object.values(declarations)
   .filter(declaration => !Array.isArray(declaration.content?.definition?.items))
   .map(declaration => declaration.type);
 
 /** The attributes each built-in type starts with — what a factory merges under the author's own. */
 export const elementDefaultAttributes: Record<string, Record<string, unknown>> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>).map(declaration => [
-    declaration.type,
-    { ...declaration.content?.attributes }
-  ])
+  Object.values(declarations).map(declaration => [declaration.type, { ...declaration.content?.attributes }])
 );
 
 /** The values each built-in type's enumerated attributes take — a heading's `subType`, a link's `mode`. */
 export const elementAttributeValues: Record<string, Record<string, readonly string[]>> = Object.fromEntries(
-  Object.values(elementDeclarations as Record<string, DeclarationShape>)
+  Object.values(declarations)
     .filter(declaration => declaration.attributeValues)
     .map(declaration => [declaration.type, { ...declaration.attributeValues }])
 );

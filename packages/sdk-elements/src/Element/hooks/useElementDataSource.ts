@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
@@ -57,9 +58,6 @@ const covering = (paths: Iterable<string>): string[] => {
 
   return kept;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** `value` at `path` inside `map`, making the objects on the way — never writing into one read from the store. */
 const place = (map: Record<string, unknown>, path: string, value: unknown): void => {

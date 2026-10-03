@@ -129,6 +129,9 @@ slugs prepend the path). A \`:name\` segment (\`"posts/:postId"\`) is a route pa
 source \`navigation.routeParams.name\` → build dynamic pages this way. To move between pages **prefer the \`Link\`
 element** (a container: \`mode\` "page"/"internal"/"external") over a \`navigate\` interaction.
 
+**Feature flags:** what a person switches on (a beta, a rollout) is \`upsertFlag\` plus \`flag: "x"\` / \`"!x"\` on the
+element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`.
+
 **Accessible by default:** screen readers and browser agents (Claude in Chrome) read the accessibility tree, so every
 button/link needs words (an icon-only button a \`title\`), every field a \`label\` (\`hideLabel: true\` hides it), every
 image an \`alt\` or \`decorative: true\`; clicks go on a \`button\`/\`link\`, never a container; headings step down one
@@ -138,7 +141,8 @@ level at a time. \`plitzi_screenshot view:"accessibility"\` shows the tree and w
 the save on any \`Pre-existing malformation in element …\` error (a broken transformer, a malformed step, an attribute
 it never reads) — even parts you did not touch. These are NOT from your change (the message says so); fix them in the
 SAME batch and re-apply (the check runs on the result, so the fix unblocks it). \`Pre-existing issue\` warnings advise
-but do not block. A broken tree your batch leaves ANYWHERE (an element orphaned by a delete) blocks it too.
+but do not block. A broken tree your batch leaves ANYWHERE (an element orphaned by a delete) blocks it too. Each
+problem leads with its \`[code]\`, and its hint says what to write instead.
 
 Read \`plitzi://guide\` before anything above is unclear.
 `;
@@ -173,6 +177,9 @@ Never download a whole tree you do not need.
   Read the descriptions to pick the right type — e.g. \`apiContainer\` fetches backend data into the frontend,
   \`link\` navigates between pages, \`list\` repeats a template over a data array. \`plugin\` types are custom elements.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
+- \`plitzi://explain/{name}\` — what a name means: an element type's attributes, triggers and callbacks; a step's
+  params; what a trigger hands its flow; a problem code's fix. \`plitzi://explain/steps\` (or elements, triggers,
+  codes, transformers) lists every one of a kind.
 - \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
 - \`plitzi://schema/{env}/layouts\` — the shared **layout shells** (header/sidebar/footer) and the pages rendered
   inside each. Read one like a page. See *Shared layouts* below.
@@ -198,6 +205,7 @@ Never download a whole tree you do not need.
 - \`plitzi://style-variables/{env}\` — design tokens by category. \`/{category}\` for one.
 - \`plitzi://fonts/{env}\` — the font **families the space loads**, with their source and fallback. \`/{family}\` for one.
 - \`plitzi://schema-variables/{env}\` — space-level values referenced in props as \`{{name}}\`.
+- \`plitzi://flags/{env}\` — the space's **feature flags**, each a default and its rules (see **Feature flags**).
 - \`plitzi://settings/{env}\` — space-level settings: the global \`customCss\` and the state/auth (user-provider) config.
 - \`plitzi://interactions/{env}\` — interaction **actions** observed in this space (grouped by node type): the
   vocabulary for interaction flows.
@@ -318,6 +326,12 @@ You do not have to rewrite them.
 - \`deleteElement { pageRef, ref }\` removes an element **and everything under it**. A binding or an interaction
   elsewhere that named one of them is left pointing at nothing, and the save reports it — delete them in the same
   batch. Destructive: confirm first.
+- \`flag\` on \`upsertElement\` / \`patchElement\` gates an element on a feature flag (\`"newCheckout"\` or
+  \`"!newCheckout"\`) — not a visibility: gated off it is not rendered at all. See **Feature flags**.
+- **A compound element is written with its parts**, as \`children\` of the same \`upsertElement\`: a \`carousel\` holds a
+  \`carouselTrack\` (the slides go in it), a \`tabContainer\` a \`tabContainerHeader\` and a \`tabContainerBody\`, a
+  \`dropdown\` a \`dropdownPopup\`. Without its part it shows nothing (\`part-missing\`); a part anywhere else breaks the
+  page (\`outside-ancestor\`).
 
 ## Styling (crosses both schemas)
 - **Mind the type's intrinsic default style.** A type renders with a base CSS *before* any class is attached — read
@@ -744,6 +758,30 @@ element binds \`grant\` to it. Without one the topic is refused however well its
 \`expected\` = only if nothing is there yet), ordered lists with \`list.put\` / \`list.range\`, and put
 \`flow.rateLimit\` first in any public action that writes.
 
+## Feature flags
+A flag turns a part of the space on or off without anyone editing it: a feature still being built, a version for
+beta users, the old checkout kept until the new one ships. **Not a visibility** — visibility hides an element that is
+still rendered; a flag decides whether it exists at all.
+
+- **Declare** with \`upsertFlag { name, description?, value, rules? }\`. \`value\` is its answer when no rule matches;
+  \`rules\` are \`[{ when, value }]\` read top to bottom, the first match deciding. A rule's \`when\` is a rule group over
+  \`environment\` (\`main\`, \`development\`, \`staging\`, \`production\`), \`hostname\`, \`routeParams.<name>\`,
+  \`queryParams.<name>\` and the visitor: \`user.authenticated\`, \`user.email\`, \`user.username\`, \`user.roles\` (with
+  \`contains\`). A group with no rules is skipped, never read as "always". \`deleteFlag { name }\` removes one.
+- **Gate** an element with \`flag\` on \`upsertElement\` / \`patchElement\`: \`"newCheckout"\` exists only while the flag is
+  on, \`"!newCheckout"\` only while it is off — put both side by side for a rollout. On \`upsertPage\` a gated-off page
+  answers 404. \`null\` on a patch removes the gate. Gated off, it is not rendered and its server data is not
+  resolved — but the space's document, gated elements included, still reaches the browser: a flag is not a secret.
+- **Read** it anywhere a source is read: \`{{ flags.newCheckout }}\` in a binding, a \`when\` of a flow step, a computed
+  value — and in a server action's steps, where it is resolved on the server.
+
+A gate or a read naming a flag the space does not declare is an error (\`flag-undeclared\`, \`flag-unknown\`): an
+undeclared flag is off. A declared flag nothing reads is a warning (\`flag-unused\`) — remove it once the feature
+ships. The draft applies flags at once. Flags are not part of a snapshot: each environment has one set, shared by every
+snapshot it serves — publishing a snapshot sends the draft's with it (and the snapshot keeps a copy, as a fallback), the
+builder's *Publish flags* sends only them, and a rollback keeps them. Above the space, the server rendering it, the SDK embedding it and a tester with the dev tools
+may each override a flag; you only ever write the space's own.
+
 ## Shared layouts — the chrome a page does NOT contain
 A page's tree is usually **not the whole page**. The header, the sidebar and the footer normally live in a **layout
 container**: a shell several pages are rendered inside, so the navigation is authored once instead of once per page.
@@ -787,6 +825,10 @@ any page as an **instance**. It is part of the space, so it is published, versio
 not inside any page: it is a root of its own, like a layout, and **editing it changes every instance** — say so
 before you touch one.
 
+It is not a **snippet**. The builder's *Save as snippet* keeps a copy of a block as a file people drop onto pages, and
+each drop is the page's own from then on. No operation here writes one: when someone wants a block that stays the same
+everywhere, that is a component.
+
 It is **closed**. Inside, a binding or a template reads **\`props\`** — what each instance hands in — and the globals
 (\`state\`, \`auth\`, \`navigation\`, \`theme\`, \`variables\`, \`computed\`), never the page an instance sits on. A
 component that needs a list row's record gets it as a prop: the INSTANCE binds it (\`item: "{{ list_rows.item }}"\`),
@@ -823,6 +865,8 @@ A required prop left out, a prop the component does not declare, a value of the 
 the component does not have is reported by \`plitzi_validate\` — fix it before applying.
 
 ## Pages & folders
+- **A page behind a feature flag**: \`upsertPage { flag: "labs" }\` answers 404 while the flag is off (see **Feature
+  flags**); \`flag: null\` removes it.
 - **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a
   clean, stable route (e.g. \`"pricing"\` or \`"posts/:postId"\`). Omit it and the page ref is used as the slug,
   and \`plitzi_validate\`/\`plitzi_apply\` warn so you remember to set a meaningful one.
@@ -842,6 +886,9 @@ the component does not have is reported by \`plitzi_validate\` — fix it before
   \`"external"\` is a full URL. \`target\` is \`self\`/\`blank\`/\`parent\`/\`top\`. Reach for the \`navigate\` globalCallback
   only when navigation must be **one step inside a larger interaction flow** (e.g. save, then go) — for a plain link,
   use \`link\`.
+- **A section of a page** is an element with an \`anchor\` (its \`id\` in the DOM: lowercase, digits, \`-\`; one per
+  page, layouts included; not inside a list row or a component). A link lands on it with \`hash\`:
+  \`{ "mode": "page", "href": "home", "hash": "plans" }\` goes to \`/#plans\` and scrolls there, from any page.
 
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`
 **is its id**, and that id is what a page and a nested folder reference.
@@ -881,7 +928,8 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   host: a \`link\` with \`mode: "external"\` to \`/auth/sign-in?return=/\` starts it, \`authLogout\` ends it.
 - \`visitorRoles\` — what each visitor role gives, \`{ "author": ["postPublish"] }\`: the permissions an action's
   \`access: { mode: "role" }\` and a page's \`can()\` ask for. A visitor holds ONLY the permissions of their roles here,
-  never their account's. Who holds a role is given by email in the builder's Visitors panel — never in settings.
+  never their account's. Who holds a role is given by email in the builder's Settings → Visitors — never in the
+  space's \`settings\`.
 - \`channels\` — the realtime channels, by topic pattern (see **Realtime channels**). Merged pattern by pattern;
   \`null\` removes one.
   Example — inject a keyframe globally:

@@ -3,14 +3,14 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { use, useState, useCallback, useMemo, memo } from 'react';
+import { useState, useCallback, useMemo, memo } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import BuilderSearchButton from '@pmodules/Builder/components/BuilderSearch/components/BuilderSearchButton';
 import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';
 import ExportSpace from '@pmodules/Export';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import { issuesFromError, PUBLISH_REFUSED } from '@pmodules/Space/helpers/spaceIssues';
 import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
@@ -28,14 +28,11 @@ import { FORM_MODAL, WIDE_MODAL } from '../../helpers/modalSizes';
 import DeployForm from '../../models/DeployForm';
 import PublishForm from '../../models/PublishForm';
 
-import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-
 const AppHeader = () => {
   const { theme, toggleTheme } = useTheme();
   const { showModal } = useModal();
   const { addToast } = useToast();
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate } = useBuilderNetwork();
   const [loadingDeployment, setLoadingDeployment] = useState(false);
   const [collaborators] = useBuilderStore('collaboration.collaborators');
   const { refresh: refreshIssues } = useSpaceIssues();
@@ -222,7 +219,7 @@ const AppHeader = () => {
           <Button
             id="header-publish"
             size="sm"
-            title="Publish: Click Publish to go live with your latest changes."
+            title="Snapshot: keep the draft as a revision you can publish, compare or roll back to."
             onClick={handleClickPublish}
             intent="secondary"
           >
@@ -231,7 +228,7 @@ const AppHeader = () => {
           <Button
             id="header-deploy"
             size="sm"
-            title="Deploy: Click Deploy to go with the environment selected."
+            title="Publish: put a revision live on an environment's domain."
             onClick={handleClickDeploy}
             disabled={loadingDeployment}
           >

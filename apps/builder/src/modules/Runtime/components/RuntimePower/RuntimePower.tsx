@@ -1,13 +1,12 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import { use, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import idleDurationOf from '../../helpers/idleDurationOf';
 import stopMomentOf from '../../helpers/stopMomentOf';
 
-import type { BuilderMutationsMap, BuilderQueriesMap, SpaceRuntimeEnvironment } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { SpaceRuntimeEnvironment } from '@plitzi/sdk-shared';
 
 export type RuntimePowerProps = {
   runtime: SpaceRuntimeEnvironment;
@@ -23,10 +22,7 @@ export type RuntimePowerProps = {
  * is stopped so it spends nothing, and stays stopped until somebody starts it again, here or with a push or a publish.
  */
 const RuntimePower = ({ runtime, idleMinutes, onChange }: RuntimePowerProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   // Only while the request is on its way: what follows it — starting, stopping — is the runtime's status to say.
   const [asking, setAsking] = useState(false);
   const passing = runtime.status === 'starting' || runtime.status === 'stopping';

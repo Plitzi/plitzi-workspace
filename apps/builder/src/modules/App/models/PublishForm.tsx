@@ -33,10 +33,14 @@ const PublishForm = ({ environment = 'development', description = '', onClose, o
   return (
     <Form form={form} onSubmit={handleSubmitInternal} className="gap-4">
       <Form.Body>
-        <Alert className="mb-4 text-white" intent="info">
+        <Alert className="mb-4" intent="info" size="sm">
           Make a snapshot and save it into an environment to later publish it
         </Alert>
         <VersionContents environment="main" title="This snapshot will freeze" />
+        <Alert intent="info" size="sm" solid={false}>
+          Feature flags are kept apart from snapshots: this one sends the draft's flags to the environment and keeps a
+          copy only as a fallback. Rolling back to an older snapshot later keeps the environment's flags as they are.
+        </Alert>
         <Form.Select name="environment" label="Environment" size="sm">
           <option value="development">Development</option>
           <option value="staging">Staging</option>

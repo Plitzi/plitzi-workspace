@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { BUILTIN_GLOBAL_CALLBACKS, FIXABLE_CODES, fixSpace, lintSpace } from '../../index';
+import {
+  authorSpace,
+  BUILTIN_GLOBAL_CALLBACKS,
+  container,
+  FIXABLE_CODES,
+  fixSpace,
+  lintSpace,
+  list,
+  text
+} from '../../index';
 import { addElement, authored, onClick, setFlow, step, withChange } from './testUtils/lintFixture';
 
 import type { Documents } from './testUtils/lintFixture';
@@ -155,5 +164,26 @@ describe('fixSpace', () => {
 
   it('has a case for every code it can fix', () => {
     expect([...FIXABLE_CODES].filter(code => !Object.hasOwn(broken, code))).toEqual([]);
+  });
+});
+
+describe('fixSpace on component instances', () => {
+  it('leaves a prop the instance is bound to: an instance reads its props as well as its type', () => {
+    const { schema, style } = authorSpace({
+      name: 'Rows',
+      permanentUrl: 'rows',
+      components: [
+        {
+          id: 'card',
+          props: { item: { type: 'json', description: 'The row' } },
+          root: container({ id: 'card-root', children: [text({ id: 'card-title', from: 'props.item.title' })] })
+        }
+      ],
+      pages: [
+        { id: 'home', name: 'Home', slug: '', body: [list({ id: 'rows', items: [{ title: 'a' }], row: 'card' })] }
+      ]
+    });
+
+    expect(fixSpace({ schema, style }).applied).toEqual([]);
   });
 });

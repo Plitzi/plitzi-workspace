@@ -4,6 +4,7 @@ import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { createEmailSender } from './email';
 import { ActionRefusal, ActionRunError } from './errors';
+import { flagsForRun } from './flags';
 import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
 import { resolveLimits } from './limits';
@@ -339,6 +340,8 @@ export const createActionRunner = (
     const scope: Record<string, unknown> = {
       input: values,
       user: projectUser(request.user),
+      // The space's feature flags as this run resolves them — read only by a flow that names them (see `flagsForRun`).
+      flags: await flagsForRun(config, request),
       spaceId: request.spaceId,
       environment: request.environment,
       trigger: request.trigger,

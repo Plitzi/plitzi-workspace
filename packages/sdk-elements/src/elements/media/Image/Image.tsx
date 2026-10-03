@@ -2,7 +2,9 @@
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
+import { imageSrcSet, imageUrl, isRemoteImage } from '@plitzi/sdk-shared/helpers/images';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import { getFallbackSVGBase64 } from './ImageHelper';
 import withElement from '../../../Element/hocs/withElement';
@@ -28,7 +30,20 @@ export type ImageProps = {
   fetchPriority?: 'high' | 'low' | 'auto';
   /** `auto` leaves the choice to the browser — what the builder offers first. */
   loadMode?: 'auto' | 'eager' | 'lazy';
+  /**
+   * How wide the picture is drawn, for the browser to pick a size by before the layout exists: `'100vw'`, or
+   * `'(max-width: 48rem) 100vw, 360px'` for a card. Read when the page server resizes pictures (`images` in its
+   * configuration) and the `src` is another site's.
+   */
+  sizes?: string;
+  /** The picture's own width and height, in pixels (0 for not given): the browser keeps its space before it arrives,
+   *  so nothing jumps. */
+  width?: number;
+  height?: number;
 };
+
+/** The size a resized picture falls back to, for a browser that reads no `srcset`. */
+const FALLBACK_WIDTH = 1280;
 
 const fallback = getFallbackSVGBase64();
 
@@ -41,7 +56,10 @@ const Image = ({
   alt: altProp = '',
   decorative = false,
   fetchPriority = 'auto',
-  loadMode
+  loadMode,
+  sizes = '100vw',
+  width,
+  height
 }: ImageProps) => {
   const {
     settings: { previewMode }
@@ -74,6 +92,15 @@ const Image = ({
   // `auto` is the browser's own choice, which is what leaving the attribute out asks for.
   const loading = loadMode === 'auto' ? undefined : loadMode;
 
+  // Another site's picture, resized by the page server when it says it does: the builder and a project with no page
+  // server publish no endpoint, and keep the picture as it is.
+  const [endpoint] = useCommonStore('images.endpoint');
+  const resized =
+    previewMode && endpoint && !broken && isRemoteImage(src)
+      ? { src: imageUrl(endpoint, src, FALLBACK_WIDTH), srcSet: imageSrcSet(endpoint, src), sizes }
+      : { src: shown };
+  const dimensions = { ...(width ? { width } : {}), ...(height ? { height } : {}) };
+
   if (!previewMode) {
     return (
       <RootElement ref={ref} className={clsx('plitzi-component__image image--edit-mode', className)}>
@@ -96,7 +123,8 @@ const Image = ({
       draggable={false}
       ref={ref}
       className={clsx('plitzi-component__image', className)}
-      src={shown}
+      {...resized}
+      {...dimensions}
       alt={alt}
       loading={loading}
       fetchPriority={fetchPriority}

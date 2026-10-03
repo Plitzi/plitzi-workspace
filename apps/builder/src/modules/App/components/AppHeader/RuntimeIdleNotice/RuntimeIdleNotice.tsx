@@ -1,13 +1,10 @@
 import clsx from 'clsx';
-import { memo, use, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import timeLeftOf from './timeLeftOf';
-
-import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 /**
  * How soon before a runtime stops for being unused the header says so: a day, for an idle time counted in days — ten
@@ -27,10 +24,7 @@ const nowSeconds = (): number => Math.floor(Date.now() / 1000);
  * somebody testing their space is not caught by its runtime stopping under them. Nothing otherwise.
  */
 const RuntimeIdleNotice = () => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const { data, mutate } = useGraphQL('SpaceRuntime', data => data?.SpaceRuntime, undefined, READ);
   const [keeping, setKeeping] = useState(false);
   // The clock, read on a timer rather than while rendering: what the countdown is counted from.

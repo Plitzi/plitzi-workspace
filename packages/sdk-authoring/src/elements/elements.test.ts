@@ -143,3 +143,14 @@ describe('the types', () => {
     expectTypeOf<Extract<EveryAttributeKey, keyof AuthoringProps>>().toEqualTypeOf<never>();
   });
 });
+
+describe('a link with no mode', () => {
+  // `mode` was written on nearly every link, and almost always said what the href already did.
+  it('is what its href says: a path a route, a URL elsewhere, a name a page', () => {
+    expect(link({ href: '/games/nebula' }).attributes?.mode).toBe('internal');
+    expect(link({ href: 'https://example.com' }).attributes?.mode).toBe('external');
+    expect(link({ href: 'mailto:hi@example.com' }).attributes?.mode).toBe('external');
+    expect(link({ href: 'about' }).attributes?.mode).toBe('page');
+    expect(link({ href: '/x', mode: 'external' }).attributes?.mode).toBe('external');
+  });
+});

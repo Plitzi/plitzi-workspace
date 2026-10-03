@@ -1,7 +1,5 @@
-import Card from '@plitzi/plitzi-ui/Card';
-import Heading from '@plitzi/plitzi-ui/Heading';
-
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import ViewPage from '@pmodules/App/components/ViewPage';
 
 import VisitorGrants from './components/VisitorGrants';
 import VisitorRoles from './components/VisitorRoles';
@@ -16,15 +14,13 @@ const Visitors = () => {
   const [[roles = {}]] = useBuilderStore(['schema.settings.visitorRoles']);
 
   return (
-    <Card className="relative flex grow basis-0" rounded="none">
-      <Card.Body grow>
-        <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-6 p-4">
-          <Heading as="h5">Visitors</Heading>
-          <VisitorRoles roles={roles} />
-          <VisitorGrants roles={Object.keys(roles)} />
-        </div>
-      </Card.Body>
-    </Card>
+    <ViewPage
+      className="gap-8"
+      description="Who may do what on the published site, signed in with their Plitzi account: the roles the space declares, and the people you give them to."
+    >
+      <VisitorRoles roles={roles} />
+      <VisitorGrants roles={Object.keys(roles)} />
+    </ViewPage>
   );
 };
 

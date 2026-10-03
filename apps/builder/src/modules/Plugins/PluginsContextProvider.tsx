@@ -4,21 +4,12 @@ import { useCallback, use, useEffect, useMemo, useRef, useState, useReducer } fr
 import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import PluginsReducer from './PluginsReducer';
 
-import type {
-  ComponentDefinition,
-  Asset,
-  ComponentPlugin,
-  BuilderQueriesMap,
-  BuilderMutationsMap,
-  PluginRaw
-} from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { SpaceEventMap } from '@plitzi/sdk-shared/network/spaceEvents';
+import type { ComponentDefinition, Asset, ComponentPlugin, PluginRaw } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type PluginsContextProviderProps = {
@@ -37,11 +28,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
   }, [internalData.plugins, pluginsProp]);
   const [plugins, dispatchPlugins] = useReducer(PluginsReducer, pluginsPropMemo);
   const [temporalCustomStyles, setTemporalCustomStyles] = useState<Record<string, Asset>>({});
-  const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap,
-    SpaceEventMap
-  >;
+  const { mutate, subscriptionManager } = useBuilderNetwork();
   const { components, registerDefinition, unregisterDefinition, unregister } = use(ComponentContext);
 
   const pluginsAdd = useCallback(

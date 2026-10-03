@@ -3,6 +3,7 @@ import { Fragment, isValidElement, use, useMemo, useRef, useSyncExternalStore } 
 
 import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { passesFlagGate } from '@plitzi/sdk-shared/flags';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';
@@ -20,6 +21,8 @@ const isServer = typeof window === 'undefined';
  */
 const LAYOUT_BODY_KEY = '#layout-body';
 const CHILDREN_KEY = '#children';
+
+const NO_FLAGS: Record<string, boolean> = {};
 
 const storeSubscriber = () => () => {};
 // Typed `boolean` rather than left to infer `true`/`false`: what these mean is "hydrating or not", and a literal
@@ -46,6 +49,9 @@ const useInternalItems = ({
   // `rsc.enabled`, not `schema.rsc.enabled`: the schema flag alone is also true on a client-only render, where there
   // is no server HTML to freeze a server element against and it would be dropped altogether.
   const [[flat, rscEnabled]] = useCommonStore(['schema.flat', 'rsc.enabled'], { mode: 'mount' });
+  // Live, unlike the two above: a tester flips a flag on a page that is already drawn, and the items it gates have to
+  // come and go with it. Published stable, so a container re-renders only when a flag actually changed.
+  const [flags = NO_FLAGS] = useCommonStore('runtime.sources.flags');
   const { components, componentDefinitions } = use(ComponentContext);
   const {
     contexts: { PluginsContext }
@@ -118,6 +124,12 @@ const useInternalItems = ({
       .filter(itemId => {
         const el = flat[itemId] as Element | undefined;
         if (!el) {
+          return false;
+        }
+
+        // A gated item whose flag says no is not built at all — in the builder too, where forcing a flag is how an
+        // author sees the other side of it. Unlike a hidden item, none of it is in the markup.
+        if (!passesFlagGate(el.definition.flag, flags)) {
           return false;
         }
 
@@ -202,6 +214,7 @@ const useInternalItems = ({
     hasItems,
     mountItems,
     items,
+    flags,
     plitziElementLayout,
     children,
     flat,

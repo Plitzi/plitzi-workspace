@@ -1,11 +1,10 @@
 import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 import useSWRInfinite from 'swr/infinite';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
-import type { BuilderMutationsMap, BuilderQueriesMap, ChangeOrigin, TSpaceChanges } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { ChangeOrigin, TSpaceChanges } from '@plitzi/sdk-shared';
 
 export type ChangeFilters = { origin?: ChangeOrigin; entityId?: string; since?: number };
 
@@ -20,7 +19,7 @@ const PAGE_SIZE = 50;
  * that is when there is something new to show — and every loaded page is revalidated, since a filter can move rows.
  */
 const useSpaceChanges = (filters: ChangeFilters) => {
-  const { query } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { query } = useBuilderNetwork();
   const processing = use(QueueStatusContext);
   const wasProcessing = useRef(processing);
 

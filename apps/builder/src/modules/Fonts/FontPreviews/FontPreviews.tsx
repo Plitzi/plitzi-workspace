@@ -1,9 +1,9 @@
-import { use, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useFontHead } from '@plitzi/sdk-shared/hooks';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontsToHead, fontUrlResolver, googleTextSubsetUrl } from '@plitzi/sdk-shared/style';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import { fontsBaseUrl } from '../fontsBaseUrl';
 
@@ -29,7 +29,7 @@ const NO_FONTS: SpaceFont[] = [];
  */
 const FontPreviews = () => {
   const [fonts = NO_FONTS] = useBuilderStore('style.fonts');
-  const { server } = use(NetworkContext);
+  const { server } = useBuilderNetwork();
 
   const head = useMemo<FontHead>(() => {
     const googleFamilies = fonts.filter(font => font.source === 'google').map(font => font.family);

@@ -3,12 +3,18 @@
 ## Bindings
 
 ```ts
-heading({ bind: { content: 'posts.title' } })                                     // short form: attributes
-text({ bind: [bindTemplate('content', 'stats.data.total', "{{ source|number_format(0, '.', ',') }} views")] })
+heading({ from: 'posts.title' })                                                  // the element's main attribute
+text({ from: 'stats.data.total', as: "{{ source|number_format(0, '.', ',') }} views" })   // through a template
+text({ from: 'products.item.price', as: 'price' })                                // a format of the space's, by name
+image({ alt: '', bind: { alt: 'posts.title' }, from: 'posts.cover' })             // `bind`: the other attributes
 container({ bind: [bindTemplate('width', 'state.xp', '{{ source / 10 }}%', { category: 'style' })] })  // a style
 text({ bind: [{ to: 'content', source: 'posts.title', when: { … } }] })             // full form: anything else
 ```
 
+`from` binds what the type shows — a text's, heading's, paragraph's or button's `content`, an image's `src`, a link's
+`href`, a list's `items` — and leaves it empty until the data answers. `as` shows it through a template (`source` is
+the value), or a format the space names once in `formats: { price: "{{ source|currency('USD') }}" }` (filters
+`currency` and `percent` are there for exactly this). `bind` is for every other attribute;
 `bindTemplate(to, source, template, { category?, returns? })` is the computed attribute — a template over the value
 at `source`. `returns: 'value'` hands over what a single `{{ expression }}` evaluates to instead of its text: a list's
 `items`, a number, a flag (see [lists](lists.md)).
@@ -62,13 +68,24 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
   `"{{ source ? apiUrl ~ '/workspaces/' ~ source ~ '/stats' : '' }}"` with `source: 'state.workspace.id'`.
 - A space with any `runtime: 'server'` provider needs `rsc: { enabled: true }`.
 
+### Typed by a sample
+
+`source('site', home)` types a provider's source from a sample of its answer, so a misspelt path is a type error —
+see [typed-sources.md](typed-sources.md).
+
 ### Data in a project with no backend
 
 An offline project (`offlineMode`) still never invents data: the content lives in JSON files the project serves
-(`public/data/games.json` with Vite) and a provider reads them like any API — `apiContainer({ id: 'catalog', query:
+(`public/data/games.json`, served in either mode) and a provider reads them like any API — `apiContainer({ id: 'catalog', query:
 '/data/games.json', cache: true, children: [ … ] })`. The page binds to `catalog.data.…` exactly as it would to a live
 backend, so swapping the file for a real endpoint later changes one `query`. `mockData` is what the BUILDER shows while
 editing; it is not a data source for the running page. Say on the page that demo content is demo content.
+
+**In a server project (`create --mode server`), put the provider on the server** — `runtime: 'server'`, with
+`rsc: { enabled: true }` on the space — and the page server reads the file from `public/` itself: the page arrives
+with those sections in it (and their anchors in place) instead of fetching them once the browser has the page. A
+browser provider leaves the server-rendered HTML without them. A `query` with `{{tokens}}` is still read in the
+browser, against the visitor's route and state.
 
 ### Live, cached, refreshed
 
@@ -84,6 +101,9 @@ editing; it is not a data source for the running page. Say on the page that demo
   goes, and skip the last step.
 
 ## Visibility
+
+What the page's own data or state shows and hides. What a person switches on — a feature in beta, the old version
+kept during a rollout — is a [feature flag](feature-flags.md): gated off, an element is not rendered at all.
 
 ```ts
 container({ visible: 'posts.hasPosts', … })     // shown while true
@@ -131,6 +151,11 @@ Rules for a condition's template:
 
 ### Loading, empty, error
 
+A provider renders nothing inside it until its first answer. A skeleton of what is coming is a child named by its
+`loadingSlot` — `apiContainer({ loadingSlot: 'catalog-skeleton', children: [container({ id: 'catalog-skeleton' }),
+…] })` — shown alone until then and gone after (`loading-slot-unknown` if no child has that id). So a provider goes
+around the section that needs it, never around a layout's slot: there every page would wait on it.
+
 Four states, and each has its own element:
 
 | State | How to tell |
@@ -152,29 +177,4 @@ Both sides of one question are `visible: 'x'` and `visible: '!x'`, not an `x` an
 
 ## State that outlives a reload
 
-`render(…, { state })` seeds `runtime.state` when the page starts — the way a host hands a space what it already knows.
-`settings: { keepState: true, stateStorage: 'localStorage' }` keeps `runtime.state` across reloads, filed under
-whoever is signed in (a guest's state is the browser's; another account never sees it). Keep only what a person would
-expect back — favourites, a chosen theme. Everything else goes in `transientState`, which is never written and never
-brought back:
-
-```ts
-settings: { keepState: true, transientState: ['filter', 'tourStep', 'panelOpen'] }
-```
-
-Do not reset kept state from `onPageLoad` instead: what was kept is restored late — after hydration, once auth knows
-who this is — and lands in the middle of that flow, so half of it is undone. A filter restored on the next visit is a
-page that looks broken. Keeping state is the SPACE's setting; a page does not take `keepState`.
-
-That lateness shows. Kept state is restored after the server's first paint, so anything kept that changes what is
-DRAWN — the tool a toolbar shows as last picked, a name in an avatar, a panel left off — is drawn with its default and
-then swapped. List those keys in `paintedState`: they are kept in a cookie too, the server renders with them, and the
-page starts from the same values.
-
-```ts
-settings: { keepState: true, paintedState: ['shapesPick', 'name', 'color'], transientState: ['panelOpen'] }
-```
-
-Only what the first paint shows, and small values: the cookie travels with every request and holds a few kilobytes
-(over that, the page falls back to the defaults and the dev tools say so). Never a secret — a key, a token — and never
-a key that is also in `transientState` (`authorSpace` refuses it).
+`keepState`, what is never kept, and what the first paint needs from it — see [kept-state.md](kept-state.md).

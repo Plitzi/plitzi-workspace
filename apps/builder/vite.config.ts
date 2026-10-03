@@ -136,7 +136,9 @@ export default defineConfig(({ mode, command }) => {
         reactDom: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
         reactDomClient: devMode ? '/src/vendor-entry.ts' : '/plitzi-builder-vendor.js',
         // The dev server serves the worker from source; a build ships it beside the builder.
-        functionsWorkerPath: devMode ? '/src/modules/Functions/editor/typescriptWorker.ts' : '/plitzi-functions-worker.js',
+        functionsWorkerPath: devMode
+          ? '/src/modules/Functions/editor/typescriptWorker.ts'
+          : '/plitzi-functions-worker.js',
         version: PACKAGE.version
       }),
       command === 'build' && ejsPlugin(devMode),
@@ -223,16 +225,29 @@ export default defineConfig(({ mode, command }) => {
           import.meta.dirname,
           '../../node_modules/decode-named-character-reference/index.js'
         ),
-        // these 2 are used due zustand depending on use-sync-external-store and it is only CJS (xyflow depends on zustand)
-        'use-sync-external-store/shim/with-selector.js': path.resolve(
-          './src/patches/useSyncExternalStoreWithSelector.ts'
-        ),
+        // swr imports `use-sync-external-store/shim`, which is CommonJS only; React 18+ ships the hook itself.
         'use-sync-external-store/shim': 'react',
         // The Functions panel's worker, which the dev server serves from source.
         ...typescriptLibAlias,
         ...(devMode ? packages : {})
       },
-      extensions: ['.js', '.mjs', '.ts', '.tsx']
+      extensions: ['.js', '.mjs', '.ts', '.tsx'],
+      // `@plitzi/nexus` and `@plitzi/plitzi-ui` may be linked through portals, each carrying its own node_modules. React and
+      // CodeMirror check identity (a hook's dispatcher, an extension's `instanceof`), so a second copy breaks them: one each.
+      dedupe: [
+        'react',
+        'react-dom',
+        '@codemirror/autocomplete',
+        '@codemirror/commands',
+        '@codemirror/language',
+        '@codemirror/lint',
+        '@codemirror/search',
+        '@codemirror/state',
+        '@codemirror/view',
+        '@lezer/common',
+        '@lezer/highlight',
+        '@lezer/lr'
+      ]
     },
     build: {
       outDir: 'dist',
@@ -304,7 +319,8 @@ export default defineConfig(({ mode, command }) => {
       },
       server: {
         deps: {
-          inline: ['@plitzi/plitzi-ui']
+          // CodeMirror with it: an inlined plitzi-ui editor and the Functions panel must load the same @codemirror/state.
+          inline: ['@plitzi/plitzi-ui', /\/@codemirror\//, /\/@lezer\//, /\/@uiw\//]
         }
       },
       reporters: ['default']

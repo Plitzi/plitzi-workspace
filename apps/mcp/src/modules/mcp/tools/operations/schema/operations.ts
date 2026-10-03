@@ -7,6 +7,8 @@ import { moveElementOp } from './elements/moveElement';
 import { patchElementOp } from './elements/patchElement';
 import { repeatElementOp } from './elements/repeatElement';
 import { upsertElementOp } from './elements/upsertElement';
+import { deleteFlagOp } from './flags/deleteFlag';
+import { upsertFlagOp } from './flags/upsertFlag';
 import { deleteFolderOp } from './folders/deleteFolder';
 import { upsertFolderOp } from './folders/upsertFolder';
 import { deleteInteractionOp } from './interactions/deleteInteraction';
@@ -35,6 +37,8 @@ export const elementOps = {
   deleteFolder: deleteFolderOp,
   upsertVariable: upsertVariableOp,
   deleteVariable: deleteVariableOp,
+  upsertFlag: upsertFlagOp,
+  deleteFlag: deleteFlagOp,
   upsertBinding: upsertBindingOp,
   patchBinding: patchBindingOp,
   deleteBinding: deleteBindingOp,

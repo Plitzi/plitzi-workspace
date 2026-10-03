@@ -61,7 +61,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     id,
     rootId,
     style,
-    definition: { type, label, runtime }
+    definition: { type, label, runtime, anchor }
   } = elementContext;
   const serverMarker = runtime === 'server' ? { 'data-rsc-id': id } : undefined;
   /**
@@ -89,6 +89,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       style: { ...style, ...styleParsed },
       className,
       otherProps,
+      anchor,
       params,
       serverMarker,
       testMarker,
@@ -97,7 +98,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { className: classNameResolved, events } = useRootElementInteractions({
+  const interactions = useRootElementInteractions({
     elementContext,
     InteractionsContext,
     previewMode,
@@ -106,19 +107,21 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     className,
     interactionTriggers,
     interactionCallbacks,
-    otherProps
+    otherProps,
+    ref
   });
 
   return renderStaticTag({
     tag,
-    refProp: ref,
+    refProp: interactions.nodeRef,
     style: { ...style, ...styleParsed },
-    className: classNameResolved,
+    className: interactions.className,
     otherProps,
+    anchor,
     params,
     serverMarker,
     testMarker,
-    events,
+    events: interactions.events,
     children
   });
 };

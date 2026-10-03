@@ -4,8 +4,19 @@ import { space as blankSpaceSpec } from './blank/spec';
 // The declaration's own source, inlined at build time — the copy `plitzi create` writes into a project. Read as
 // text rather than through the filesystem because this package is bundled for the browser too.
 import specSource from './blank/spec.ts?raw';
+import { space as emptySpaceSpec } from './empty/spec';
+import emptySpecSource from './empty/spec.ts?raw';
+import catalogProducts from '../../templates/catalog/public/data/products.json?raw';
+import catalogCard from '../../templates/catalog/src/site/components/productCard.ts?raw';
+import catalogData from '../../templates/catalog/src/site/data.ts?raw';
+import catalogLayout from '../../templates/catalog/src/site/layout.ts?raw';
+import catalogCatalogPage from '../../templates/catalog/src/site/pages/catalog.ts?raw';
+import catalogHomePage from '../../templates/catalog/src/site/pages/home.ts?raw';
+import catalogProductPage from '../../templates/catalog/src/site/pages/product.ts?raw';
+import catalogTokens from '../../templates/catalog/src/site/tokens.ts?raw';
+import catalogSpace from '../../templates/catalog/src/space.ts?raw';
 
-import type { AuthoredSpace } from '../schema';
+import type { AuthoredSpace, SpaceSpec } from '../schema';
 
 /**
  * The declaration itself, under the name the platform knows it by.
@@ -15,6 +26,7 @@ import type { AuthoredSpace } from '../schema';
  * not at Plitzi's blank one. Renamed here rather than rewritten on the way out, so the copy is the file.
  */
 export { space as blankSpaceSpec } from './blank/spec';
+export { space as emptySpaceSpec } from './empty/spec';
 
 /**
  * The space a new space starts as — one page with a hero and six guides into the docs, not an empty document.
@@ -114,6 +126,16 @@ export const blankSpaceSource = (options: BlankSpaceSourceOptions = {}): string 
   const portable = toPortableSource(plugins.length > 0 ? withPluginHost(specSource, plugins) : specSource);
 
   return name === undefined ? portable : renameSpace(portable, name);
+};
+
+/**
+ * The space `plitzi create --template blank` starts from, as a file: tokens, a layout and one empty page — for a
+ * project about to be something specific, where the welcome tour is the first thing that would be deleted.
+ */
+export const emptySpaceSource = ({ name }: { name?: string } = {}): string => {
+  const portable = toPortableSource(emptySpecSource);
+
+  return name === undefined ? portable : renameSpace(portable, name, emptySpaceSpec);
 };
 
 /** The one line in the declaration a `custom` element is hung off — the hero, so it lands under its buttons. */
@@ -224,10 +246,14 @@ const replaceLiteral = (source: string, field: string, from: string, to: string)
  * every element id and style selector in the authored documents is derived from, so a project directory called
  * `My Site` has to become `my-site` here — before the documents carry it, not after.
  */
-const renameSpace = (source: string, name: string): string => {
-  const renamed = replaceLiteral(source, 'name', blankSpaceSpec.name, name);
+const renameSpace = (
+  source: string,
+  name: string,
+  spec: Pick<SpaceSpec, 'name' | 'permanentUrl'> = blankSpaceSpec
+): string => {
+  const renamed = replaceLiteral(source, 'name', spec.name, name);
 
-  return replaceLiteral(renamed, 'permanentUrl', blankSpaceSpec.permanentUrl, slugify(name, 'space'));
+  return replaceLiteral(renamed, 'permanentUrl', spec.permanentUrl, slugify(name, 'space'));
 };
 
 /** Matches an import of this package's own modules — the only kind the copy has to be freed of. */
@@ -340,4 +366,33 @@ export const toPortableSource = (source: string): string => {
   }
 
   return portable;
+};
+
+/** The name and address the catalog template is written under — what a copy under another name replaces. */
+export const CATALOG_TEMPLATE_IDENTITY = { name: 'Catalog', permanentUrl: 'catalog' } as const;
+
+/**
+ * The catalog template as a project's files, by path: a shop with a layout, a product card, a home, a filtered
+ * catalog and a page per product, its data in `public/data/products.json` — a file per part, as a space bigger than
+ * one screen is written. The files are the template's own (`templates/catalog`), the ones its test authors; they
+ * import `@plitzi/sdk-authoring` by name already, so the copy is the file.
+ */
+export const catalogTemplateFiles = ({ name }: { name?: string } = {}): Record<string, string> => {
+  const files: Record<string, string> = {
+    'src/space.ts': name === undefined ? catalogSpace : renameSpace(catalogSpace, name, CATALOG_TEMPLATE_IDENTITY),
+    'src/site/tokens.ts': catalogTokens,
+    'src/site/data.ts': catalogData,
+    'src/site/layout.ts': catalogLayout,
+    'src/site/components/productCard.ts': catalogCard,
+    'src/site/pages/home.ts': catalogHomePage,
+    'src/site/pages/catalog.ts': catalogCatalogPage,
+    'src/site/pages/product.ts': catalogProductPage,
+    'public/data/products.json': catalogProducts
+  };
+
+  // This repository's lint wants single quotes even where a template quotes its own strings; a project's does not,
+  // and would call the directive that quiets it unused.
+  return Object.fromEntries(
+    Object.entries(files).map(([path, source]) => [path, source.replace(/^\/\* eslint-disable quotes[^\n]*\*\/\n/, '')])
+  );
 };

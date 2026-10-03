@@ -158,6 +158,10 @@
       "types": "./dist/dataSource/getBindingsDetails.d.ts",
       "import": "./dist/dataSource/getBindingsDetails.mjs"
     },
+    "./dataSource/globalSources": {
+      "types": "./dist/dataSource/globalSources.d.ts",
+      "import": "./dist/dataSource/globalSources.mjs"
+    },
     "./dataSource/helpers": {
       "types": "./dist/dataSource/helpers/index.d.ts",
       "import": "./dist/dataSource/helpers/index.mjs"
@@ -278,6 +282,30 @@
       "types": "./dist/elements/index.d.ts",
       "import": "./dist/elements/index.mjs"
     },
+    "./flags": {
+      "types": "./dist/flags/index.d.ts",
+      "import": "./dist/flags/index.mjs"
+    },
+    "./flags/flagsCookie": {
+      "types": "./dist/flags/flagsCookie.d.ts",
+      "import": "./dist/flags/flagsCookie.mjs"
+    },
+    "./flags/index": {
+      "types": "./dist/flags/index.d.ts",
+      "import": "./dist/flags/index.mjs"
+    },
+    "./flags/resolveFlags": {
+      "types": "./dist/flags/resolveFlags.d.ts",
+      "import": "./dist/flags/resolveFlags.mjs"
+    },
+    "./flags/schemaFlag": {
+      "types": "./dist/flags/schemaFlag.d.ts",
+      "import": "./dist/flags/schemaFlag.mjs"
+    },
+    "./flags/useFlagResolution": {
+      "types": "./dist/flags/useFlagResolution.d.ts",
+      "import": "./dist/flags/useFlagResolution.mjs"
+    },
     "./helpers": {
       "types": "./dist/helpers/index.d.ts",
       "import": "./dist/helpers/index.mjs"
@@ -285,6 +313,10 @@
     "./helpers/cookies": {
       "types": "./dist/helpers/cookies.d.ts",
       "import": "./dist/helpers/cookies.mjs"
+    },
+    "./helpers/eventTarget": {
+      "types": "./dist/helpers/eventTarget.d.ts",
+      "import": "./dist/helpers/eventTarget.mjs"
     },
     "./helpers/fetchManifest": {
       "types": "./dist/helpers/fetchManifest.d.ts",
@@ -298,13 +330,25 @@
       "types": "./dist/helpers/generateFacade.d.ts",
       "import": "./dist/helpers/generateFacade.mjs"
     },
+    "./helpers/images": {
+      "types": "./dist/helpers/images.d.ts",
+      "import": "./dist/helpers/images.mjs"
+    },
     "./helpers/index": {
       "types": "./dist/helpers/index.d.ts",
       "import": "./dist/helpers/index.mjs"
     },
+    "./helpers/interval": {
+      "types": "./dist/helpers/interval.d.ts",
+      "import": "./dist/helpers/interval.mjs"
+    },
     "./helpers/isDate": {
       "types": "./dist/helpers/isDate.d.ts",
       "import": "./dist/helpers/isDate.mjs"
+    },
+    "./helpers/isRecord": {
+      "types": "./dist/helpers/isRecord.d.ts",
+      "import": "./dist/helpers/isRecord.mjs"
     },
     "./helpers/keys": {
       "types": "./dist/helpers/keys.d.ts",
@@ -317,6 +361,10 @@
     "./helpers/ruleEvaluator": {
       "types": "./dist/helpers/ruleEvaluator.d.ts",
       "import": "./dist/helpers/ruleEvaluator.mjs"
+    },
+    "./helpers/scroll": {
+      "types": "./dist/helpers/scroll.d.ts",
+      "import": "./dist/helpers/scroll.mjs"
     },
     "./helpers/security": {
       "types": "./dist/helpers/security.d.ts",
@@ -571,9 +619,9 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceAddPluginMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/SpaceAddPluginMutation.mjs"
     },
-    "./network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation": {
-      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation.d.ts",
-      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceAddTemplateMutation.mjs"
+    "./network/graphql/builder/Mutations/Space/SpaceAddSnippetMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/SpaceAddSnippetMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/SpaceAddSnippetMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/SpaceCloneElementMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/SpaceCloneElementMutation.d.ts",
@@ -714,6 +762,18 @@
     "./network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/flags/SpaceRemoveFlagMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/flags/SpaceRemoveFlagMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/flags/SpaceRemoveFlagMutation.mjs"
+    },
+    "./network/graphql/builder/Mutations/Space/flags/SpaceSetFlagMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/flags/SpaceSetFlagMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/flags/SpaceSetFlagMutation.mjs"
     },
     "./network/graphql/builder/Mutations/Space/folders/SpaceAddPageFolderMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/folders/SpaceAddPageFolderMutation.d.ts",
@@ -1063,6 +1123,10 @@
       "types": "./dist/schema/SchemaContext.d.ts",
       "import": "./dist/schema/SchemaContext.mjs"
     },
+    "./schema/anchor": {
+      "types": "./dist/schema/anchor.d.ts",
+      "import": "./dist/schema/anchor.mjs"
+    },
     "./schema/index": {
       "types": "./dist/schema/index.d.ts",
       "import": "./dist/schema/index.mjs"
@@ -1079,6 +1143,14 @@
       "types": "./dist/schema/serverElements.d.ts",
       "import": "./dist/schema/serverElements.mjs"
     },
+    "./schema/snippet": {
+      "types": "./dist/schema/snippet.d.ts",
+      "import": "./dist/schema/snippet.mjs"
+    },
+    "./schema/wire": {
+      "types": "./dist/schema/wire.d.ts",
+      "import": "./dist/schema/wire.mjs"
+    },
     "./server": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.mjs"
@@ -1086,6 +1158,10 @@
     "./server/actions/useActionsSync": {
       "types": "./dist/server/actions/useActionsSync.d.ts",
       "import": "./dist/server/actions/useActionsSync.mjs"
+    },
+    "./server/actions/useImagesSync": {
+      "types": "./dist/server/actions/useImagesSync.d.ts",
+      "import": "./dist/server/actions/useImagesSync.mjs"
     },
     "./server/actions/useRealtimeSync": {
       "types": "./dist/server/actions/useRealtimeSync.d.ts",
@@ -1203,6 +1279,10 @@
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
     },
+    "./style/displayModes": {
+      "types": "./dist/style/displayModes.d.ts",
+      "import": "./dist/style/displayModes.mjs"
+    },
     "./style/fontAssets": {
       "types": "./dist/style/fontAssets.d.ts",
       "import": "./dist/style/fontAssets.mjs"
@@ -1226,6 +1306,10 @@
     "./style/runtimeStyle": {
       "types": "./dist/style/runtimeStyle.d.ts",
       "import": "./dist/style/runtimeStyle.mjs"
+    },
+    "./style/snippetStyle": {
+      "types": "./dist/style/snippetStyle.d.ts",
+      "import": "./dist/style/snippetStyle.mjs"
     },
     "./style/styleConstants": {
       "types": "./dist/style/styleConstants.d.ts",
@@ -1334,6 +1418,9 @@
     "./types/ServerTypes": {
       "types": "./dist/types/ServerTypes.d.ts"
     },
+    "./types/SnippetTypes": {
+      "types": "./dist/types/SnippetTypes.d.ts"
+    },
     "./types/SpaceTypes": {
       "types": "./dist/types/SpaceTypes.d.ts"
     },
@@ -1346,9 +1433,6 @@
     "./types/StyleTypes": {
       "types": "./dist/types/StyleTypes.d.ts",
       "import": "./dist/types/StyleTypes.mjs"
-    },
-    "./types/TemplateTypes": {
-      "types": "./dist/types/TemplateTypes.d.ts"
     },
     "./types/ThemeTypes": {
       "types": "./dist/types/ThemeTypes.d.ts"
@@ -1384,7 +1468,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.1",
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.26",
+    "@plitzi/plitzi-ui": "^1.6.27",
     "date-fns": "^4.4.0",
     "immer": "^11.1.18",
     "zod": "^4.6.5"

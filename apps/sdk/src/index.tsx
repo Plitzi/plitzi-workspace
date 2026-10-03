@@ -8,6 +8,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
+import useFlag from '@plitzi/sdk-elements/dataSource/useFlag';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
@@ -262,6 +263,19 @@ export type PlitziSdkProps = {
   /** What the server ran to build this page, for the dev-tools. Only ever sent to a page allowed to debug them. */
   actionRuns?: ActionRunSummary[];
   /**
+   * The feature flags this embedding decides, by name: `{ newCheckout: true }`. Above whatever the space and the server
+   * rendering it say, below a tester with the dev tools. Only for flags the space declares — anything else is ignored,
+   * with a warning in the console.
+   */
+  flags?: Record<string, boolean>;
+  /** Set by the server that rendered this page: the flags its deployment decides (`createServer({ flags })`). */
+  serverFlags?: Record<string, boolean>;
+  /**
+   * Set by the server that rendered this page for somebody allowed to debug it: the flags a tester forced, read from
+   * the cookie the dev tools write — so the page hydrates drawn the way the server drew it.
+   */
+  forcedFlags?: Record<string, boolean>;
+  /**
    * Set by the server that rendered this page: `offlineData.style.cache` was left out of the payload because the
    * page's own stylesheet holds it, and `render()` reads it back from there before hydrating.
    */
@@ -361,7 +375,9 @@ export {
   useRscRefresh,
   // A realtime channel, for a plugin that moves at the speed of a cursor: the `channel` element's own connection,
   // read without a flow per message.
-  useChannel
+  useChannel,
+  // One of the space's feature flags, for a plugin that ships a feature behind one: whatever every layer decided.
+  useFlag
 };
 
 export type {

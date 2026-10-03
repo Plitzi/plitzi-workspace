@@ -110,6 +110,27 @@ describe('useInternalItems', () => {
     expect(plugins[0].getAttribute('data-plugin-key')).toBe('a');
   });
 
+  it('builds a flag-gated item only while its flag agrees, in the builder too', () => {
+    const gated = (id: string, is: boolean): Element => ({
+      ...el(id, 'text'),
+      definition: { ...el(id, 'text').definition, flag: { name: 'newCheckout', is } }
+    });
+    const flat = { next: gated('next', true), legacy: gated('legacy', false), plain: el('plain', 'text') };
+    const keysFor = (flags: Record<string, boolean>, previewMode: boolean) =>
+      [
+        ...renderItems(
+          { id: 'host', definition: def(['next', 'legacy', 'plain']), children: undefined, previewMode },
+          { schema: { flat }, runtime: { sources: { flags } } }
+        ).container.querySelectorAll('[data-plugin]')
+      ].map(node => node.getAttribute('data-plugin-key'));
+
+    expect(keysFor({ newCheckout: true }, true)).toEqual(['next', 'plain']);
+    expect(keysFor({ newCheckout: false }, true)).toEqual(['legacy', 'plain']);
+    expect(keysFor({ newCheckout: true }, false)).toEqual(['next', 'plain']);
+    // A flag the space does not declare resolves off.
+    expect(keysFor({}, true)).toEqual(['legacy', 'plain']);
+  });
+
   it('renders one plugin per valid item preserving types', () => {
     const { container } = renderItems(
       { id: 'host', definition: def(['a', 'b']), children: undefined, previewMode: true },

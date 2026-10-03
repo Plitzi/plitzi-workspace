@@ -1,3 +1,5 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { taskName, taskNameProblem } from '../actions/tasks/registry';
 
 import type { FunctionLimits } from './protocol';
@@ -34,9 +36,6 @@ export const parseRouteKey = (key: string): RouteKey | undefined => {
 };
 
 const HOST = /^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const stringOf = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
 

@@ -27,11 +27,11 @@ const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
     return -1;
   }
 
-  if (a.name === 'Templates' && b.name !== 'Templates') {
+  if (a.name === 'Snippets' && b.name !== 'Snippets') {
     return 1;
   }
 
-  if (b.name === 'Templates' && a.name !== 'Templates') {
+  if (b.name === 'Snippets' && a.name !== 'Snippets') {
     return -1;
   }
 
@@ -40,66 +40,46 @@ const sortDirectories = (a: ResourceDirectory, b: ResourceDirectory) => {
 
 /** A private bucket takes no upload, so it opens on its server code alone; a public one on where uploads go. */
 const foldersShownFor = (visibility: CdnVisibility): { [key: string]: Resource[] } =>
-  visibility === 'private' ? { [serverCodeFolderName]: [] } : { [defaultFolderName]: [], Templates: [], Plugins: [] };
+  visibility === 'private' ? { [serverCodeFolderName]: [] } : { [defaultFolderName]: [], Snippets: [], Plugins: [] };
+
+/** Plugins, server code and snippets have folders of their own; anything else goes where its path puts it. */
+const FOLDER_OF_TYPE: Partial<Record<Resource['type'], string>> = {
+  plugin: 'Plugins',
+  server: serverCodeFolderName,
+  snippet: 'Snippets'
+};
 
 const getDirectories = (
   prefix: string = 'https://cdn.plitzi.com/website/assets/',
   items: Resource[] = [],
   visibility: CdnVisibility = 'public'
 ): ResourceDirectory[] => {
-  const directoriesMap = foldersShownFor(visibility);
+  const directoriesMap = new Map(Object.entries(foldersShownFor(visibility)));
+  const addTo = (folder: string, item: Resource): void => {
+    directoriesMap.set(folder, [...(directoriesMap.get(folder) ?? []), item]);
+  };
 
+  const prefixParsed = prefix && !prefix.endsWith('/') ? `${prefix}/` : prefix;
   items.forEach(item => {
-    const { id, type } = item;
-    if (type === 'plugin') {
-      if (!(directoriesMap['Plugins'] as undefined | Resource[])) {
-        directoriesMap['Plugins'] = [];
-      }
-
-      directoriesMap['Plugins'].push(item);
+    const folder = FOLDER_OF_TYPE[item.type];
+    if (folder) {
+      addTo(folder, item);
 
       return;
     }
 
-    if (type === 'server') {
-      if (!(directoriesMap[serverCodeFolderName] as undefined | Resource[])) {
-        directoriesMap[serverCodeFolderName] = [];
-      }
-
-      directoriesMap[serverCodeFolderName].push(item);
-
-      return;
-    }
-
-    if (type === 'template') {
-      if (!(directoriesMap['Templates'] as undefined | Resource[])) {
-        directoriesMap['Templates'] = [];
-      }
-
-      directoriesMap['Templates'].push(item);
-
-      return;
-    }
-
-    const prefixParsed = prefix && !prefix.endsWith('/') ? `${prefix}/` : prefix;
-    const idParsed = id.substring(prefixParsed.length);
-    const parts = idParsed.split('/');
-    const directoryName = parts.length > 1 ? parts[0] : defaultFolderName;
-    if (!(directoriesMap[directoryName] as undefined | Resource[])) {
-      directoriesMap[directoryName] = [];
-    }
-
-    directoriesMap[directoryName].push(item);
+    const parts = item.id.substring(prefixParsed.length).split('/');
+    addTo(parts.length > 1 ? parts[0] : defaultFolderName, item);
   });
 
-  return Object.entries(directoriesMap)
+  return [...directoriesMap.entries()]
     .map(([name, items]) => {
-      const isDefault = [defaultFolderName, 'Plugins', 'Templates', serverCodeFolderName].includes(name);
+      const isDefault = [defaultFolderName, 'Plugins', 'Snippets', serverCodeFolderName].includes(name);
 
       return {
         name,
         items,
-        canDrop: !['Plugins', 'Templates', serverCodeFolderName].includes(name),
+        canDrop: !['Plugins', 'Snippets', serverCodeFolderName].includes(name),
         canRemove: !isDefault,
         isDefault
       };

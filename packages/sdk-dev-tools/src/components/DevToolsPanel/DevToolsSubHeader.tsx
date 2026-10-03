@@ -2,7 +2,10 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+
 import DevToolsButton from './DevToolsButton';
+import useHighlightElement from '../../highlight';
 
 import type { ReactNode } from 'react';
 
@@ -29,18 +32,18 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      const closest = (e.target as HTMLElement).closest('.plitzi-sdk');
+      const closest = elementOf(e.target)?.closest('.plitzi-sdk');
       if (!closest) {
         return;
       }
 
-      handleElementHoveredDebounced((e.target as HTMLElement).closest('[data-id]') as HTMLElement | undefined);
+      handleElementHoveredDebounced(elementOf(e.target)?.closest<HTMLElement>('[data-id]') ?? undefined);
     },
     [handleElementHoveredDebounced]
   );
 
   const handleClick = useCallback((e: MouseEvent) => {
-    const closest = (e.target as HTMLElement).closest('.plitzi-sdk');
+    const closest = elementOf(e.target)?.closest('.plitzi-sdk');
     if (!closest) {
       return;
     }
@@ -69,18 +72,7 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
     onSelectElement('');
   }, [onSelectElement]);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return undefined;
-    }
-
-    const elementsDOM = document.querySelectorAll(`[data-id="${elementSelected}"]`);
-    elementsDOM.forEach(elementDOM => elementDOM.classList.add('devtools-element-hovered'));
-
-    return () => {
-      elementsDOM.forEach(elementDOM => elementDOM.classList.remove('devtools-element-hovered'));
-    };
-  }, [elementSelected]);
+  useHighlightElement(elementSelected);
 
   useEffect(() => {
     if (!selectorEnabled || typeof document === 'undefined') {

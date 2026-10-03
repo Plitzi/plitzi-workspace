@@ -97,7 +97,7 @@ export const ORIGIN_LABEL: Record<ChangeOrigin, string> = {
 
 export const ORIGIN_TONE: Record<ChangeOrigin, string> = {
   builder: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
-  mcp: 'bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300',
+  mcp: 'bg-primary-100 text-primary-700 dark:bg-primary-400/15 dark:text-primary-300',
   coworker: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
   autofix: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
   api: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
@@ -108,7 +108,7 @@ export const ORIGIN_TONE: Record<ChangeOrigin, string> = {
 export const ACTION_TONE: Record<ChangeAction, string> = {
   add: 'text-emerald-600 dark:text-emerald-400',
   remove: 'text-red-600 dark:text-red-400',
-  move: 'text-violet-600 dark:text-violet-400',
+  move: 'text-primary-600 dark:text-primary-300',
   update: 'text-sky-600 dark:text-sky-400',
   reorder: 'text-amber-600 dark:text-amber-400'
 };
@@ -146,6 +146,7 @@ export const KIND_LABEL: Record<ChangeKind, string> = {
   component: 'Component',
   folder: 'Folder',
   variable: 'Variable',
+  flag: 'Feature flag',
   setting: 'Setting',
   selector: 'Class',
   globalStyle: 'Global style',

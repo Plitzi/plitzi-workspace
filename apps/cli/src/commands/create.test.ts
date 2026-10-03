@@ -85,6 +85,8 @@ describe('the scaffold', () => {
     expect(server.dependencies['@plitzi/sdk-server']).toBeTruthy();
     expect(client.dependencies['@plitzi/plitzi-sdk']).toBeTruthy();
     expect(client.scripts.start).toBe('vite');
+    // One line per type error, which an agent reads whole, rather than a framed excerpt of each.
+    expect(client.scripts.typecheck).toBe('tsc -p tsconfig.json --noEmit --pretty false');
   });
 
   /** The loop the client mode exists for: a save updates the page without reloading it. */
@@ -214,13 +216,17 @@ describe('the scaffold', () => {
     expect(files['src/space.ts']).toContain("value: 'stats.data.value'");
   });
 
-  it('can take a screenshot of any page from the command line', () => {
+  it('pictures and checks a page from the command line, with the CLI it installs', () => {
     const files = scaffold(answers({ mode: 'client' }));
-    const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
+    const { scripts, devDependencies } = JSON.parse(files['package.json']) as {
+      scripts: Record<string, string>;
+      devDependencies: Record<string, string>;
+    };
 
-    expect(scripts.shot).toBe('node scripts/shot.ts');
-    expect(files['scripts/shot.ts']).toContain('fullPage: true');
-    expect(files['scripts/shot.ts']).toContain('const PORT = 5173;');
+    expect(scripts.shot).toBe('plitzi shot');
+    expect(scripts.check).toBe('plitzi check');
+    expect(devDependencies['@plitzi/cli']).toMatch(/^\^\d+\.\d+\.\d+/);
+    expect(files['scripts/shot.ts']).toBeUndefined();
   });
 
   /**
@@ -384,10 +390,69 @@ describe('the scaffold', () => {
     expect(cloud['AGENTS.md']).not.toContain('run author');
   });
 
+  /** The three facts that cost the most to find out, and the files that cost the most to read for nothing. */
+  it('tells an agent the port, where data goes, how to look, and what not to open', () => {
+    const server = scaffold(answers({ mode: 'server' }))['AGENTS.md'];
+    const client = scaffold(answers({ mode: 'client', source: 'cloud' }))['AGENTS.md'];
+
+    expect(server).toContain('.plitzi/dev-server.json');
+    expect(server).toContain('`public/data/*.json`');
+    expect(server).toContain('`npm run check -- / --width 1440,390`');
+    expect(server).toContain('`npm run shot -- / --width 390`');
+    expect(server).toMatch(/## Do not read\n\n- `space\/offline-data.json`/);
+    expect(server).toContain('data describe public/data/<file>.json');
+    expect(client).toContain('Vite on 5173');
+    expect(client).not.toContain('offline-data.json');
+    expect(client).not.toContain('.sdk-plugins');
+  });
+
+  /** A project about to be something specific: no tour to delete, no example plugin to rewrite. */
+  it('starts a blank project from an empty space, with no example plugin', () => {
+    for (const mode of ['server', 'client'] as const) {
+      const files = scaffold(answers({ mode, template: 'blank' }));
+
+      expect(files['src/space.ts']).toContain("layout: { id: 'site', slot: 'site-main' }");
+      expect(files['src/space.ts']).toContain("permanentUrl: 'demo'");
+      expect(files['public/data/.gitkeep']).toBe('');
+      expect(files['public/data/stats.json']).toBeUndefined();
+      expect(Object.keys(files).filter(file => file.startsWith('src/plugins/'))).toEqual([
+        'src/plugins/README.md',
+        'src/plugins/declarations.ts'
+      ]);
+    }
+  });
+
+  /** A complete site to read and change, a file per part — and no tour, no example plugin. */
+  it('starts a catalog project from the shop template', () => {
+    for (const mode of ['server', 'client'] as const) {
+      const files = scaffold(answers({ mode, template: 'catalog' }));
+
+      expect(files['src/space.ts']).toContain("permanentUrl: 'demo'");
+      expect(files['src/site/pages/product.ts']).toContain("slug: 'products/:slug'");
+      expect(JSON.parse(files['public/data/products.json'])).toHaveProperty('products');
+      expect(files['src/author.ts']).toContain("from './space.ts'");
+      expect(Object.keys(files).filter(file => file.startsWith('src/plugins/StatCard'))).toEqual([]);
+    }
+  });
+
+  // The skill's recipes are TypeScript outside every program of the project: type-checked lint would stop on them.
+  it('leaves the agents’ files out of its lint and its formatting', () => {
+    const files = scaffold(answers());
+
+    expect(files['eslint.config.mjs']).toContain("ignores: ['.claude', ");
+    expect(files['.prettierignore'].split('\n')).toContain('.claude');
+    expect(Object.keys(files).some(path => path.startsWith('.claude/skills/plitzi-authoring/recipes/'))).toBe(true);
+  });
+
   it('carries the authoring skill for whatever agent opens the project', () => {
     const files = scaffold(answers());
 
     expect(files['.claude/skills/plitzi-authoring/SKILL.md']).toContain('---');
+    // The version it came from, which `author` compares with the SDK installed and `skills update` brings it up to.
+    expect(files['.claude/skills/plitzi-authoring/SKILL.md']).toMatch(
+      /^name: plitzi-authoring\nversion: \d+\.\d+\.\d+$/m
+    );
+    expect(files['src/author.ts']).toContain('npx @plitzi/cli skills update');
     // The references the skill links to travel with it, or every link in it points at nothing.
     expect(files['.claude/skills/plitzi-authoring/reference/layouts.md']).toContain('activeOn');
     expect(files['.claude/skills/plitzi-authoring/reference/review-checklist.md']).toBeDefined();
@@ -428,7 +493,7 @@ describe('plitzi create', () => {
         'eslint.config.mjs',
         'package.json',
         'playwright.config.ts',
-        'scripts',
+        'public',
         'src',
         'tsconfig.build.json',
         'tsconfig.json',
@@ -496,6 +561,31 @@ describe('plitzi create', () => {
       expect(said).not.toContain('--mode server | client');
       // It used to end with "or with --yes to take the defaults", and an agent took that exit instead of asking.
       expect(said).not.toContain('--yes');
+      expect(process.exitCode).toBe(1);
+      expect(await fs.readdir(dir)).toEqual([]);
+
+      error.mockRestore();
+      process.exitCode = 0;
+    });
+  });
+
+  // A space read from Plitzi already is what it is: a template there would be ignored, so it is refused instead.
+  it('refuses a template for a space that does not live in the project', async () => {
+    await inTemp(async dir => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      await create(dir, {
+        install: false,
+        packageManager: 'npm',
+        mode: 'server',
+        source: 'cloud',
+        key: 'k',
+        template: 'blank'
+      });
+
+      expect(error.mock.calls.flat().join('\n')).toContain(
+        '--template is what a space written in the project starts as'
+      );
       expect(process.exitCode).toBe(1);
       expect(await fs.readdir(dir)).toEqual([]);
 

@@ -12,6 +12,8 @@ import LayoutForm from '@pmodules/App/models/LayoutForm';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';
 
+import useSitemapOpen from '../../hooks/useSitemapOpen';
+
 import type { PageFolder } from '@plitzi/sdk-shared';
 
 export type DirectoryHeaderProps = {
@@ -23,6 +25,7 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
   const { eventBridge } = use(EventBridgeContext);
   const { componentDefinitions } = use(ComponentContext);
   const getSchema = useBuilderStoreGetter('schema');
+  const [sitemapOpen, setSitemapOpen] = useSitemapOpen();
 
   const handleClickAddPage = useCallback(async () => {
     const response = await showModal(
@@ -88,6 +91,11 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
     }
   }, [showModal, pageFolders, eventBridge]);
 
+  const handleClickSitemap = useCallback(() => setSitemapOpen(open => !open), [setSitemapOpen]);
+
+  const sitemapIcon = sitemapOpen ? 'fa-solid fa-pen-ruler' : 'fa-solid fa-sitemap';
+  const sitemapTitle = sitemapOpen ? 'Back to the canvas' : 'See the pages as a map';
+
   return (
     <Flex items="center" justify="center" gap={2} className="border-b border-gray-200 pb-3 dark:border-zinc-700">
       <Button
@@ -125,6 +133,17 @@ const DirectoryHeader = ({ pageFolders }: DirectoryHeaderProps) => {
         <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:max-w-25 group-hover:opacity-100">
           New Folder
         </span>
+      </Button>
+      {/* A way of looking at the pages, not something made: an icon apart from the three that create, which widen to
+          their label on hover — a fourth would push the row past the panel. */}
+      <Button
+        intent="secondary"
+        size="sm"
+        className="h-8 w-8 shrink-0"
+        title={sitemapTitle}
+        onClick={handleClickSitemap}
+      >
+        <Button.Icon icon={sitemapIcon} size="md" className="text-base" />
       </Button>
     </Flex>
   );

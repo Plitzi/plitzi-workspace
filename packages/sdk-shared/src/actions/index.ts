@@ -10,7 +10,7 @@ export {
 } from './functions';
 export { triggerAccess, triggerCacheMs, triggerHasStaleVerify, triggerInput, triggerVerify } from './triggerParams';
 export { actionName, actionTriggers, isActionEnabled } from './triggers';
-export { validateActionDocument } from './validateDocument';
+export { isActionDocument, validateActionDocument } from './validateDocument';
 export { isSingleEmailAddress, readSmtpCredential, SMTP_CREDENTIAL_KEYS } from './smtp';
 
 export type { AccessCaller } from './access';

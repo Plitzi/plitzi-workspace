@@ -1,3 +1,5 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { broadcast, onBroadcast } from './link';
 import { serverLog } from '../../../helpers/serverLog';
 
@@ -12,8 +14,6 @@ import type { CacheFilter, CacheManager, PluginAction, PluginRegistry, PluginSou
  * Code that runs in every process (a pub/sub subscription made where the server is created) is told N times; what
  * is relayed is safe to apply again, and cheap: it only drops entries from memory.
  */
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 const PLUGIN_ACTIONS: readonly PluginAction[] = ['copy', 'compile', 'download', 'cdn'];
 const isPluginAction = (value: unknown): value is PluginAction => PLUGIN_ACTIONS.some(action => action === value);

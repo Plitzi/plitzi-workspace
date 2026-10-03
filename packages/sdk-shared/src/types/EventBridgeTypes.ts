@@ -2,7 +2,7 @@
 
 export type EventBridgeContextValue<T = any> = { eventBridge: T };
 
-export type EventBridgeModule = 'main' | 'builder' | 'template' | 'interaction' | 'element';
+export type EventBridgeModule = 'main' | 'builder' | 'snippet' | 'interaction' | 'element';
 
 export type EventBridgeEvent =
   // Root Schema Events
@@ -26,7 +26,9 @@ export type EventBridgeEvent =
   | 'schemaAddVariable'
   | 'schemaUpdateVariable'
   | 'schemaRemoveVariable'
-  | 'schemaAddTemplate'
+  | 'schemaSetFlag'
+  | 'schemaRemoveFlag'
+  | 'schemaAddSnippet'
   | 'schemaAddComponent'
   | 'schemaUpdateComponent'
   | 'schemaRemoveComponent'
@@ -46,7 +48,7 @@ export type EventBridgeEvent =
   | 'styleAddFont'
   | 'styleUpdateFont'
   | 'styleRemoveFont'
-  | 'styleAddTemplate'
+  | 'styleAddSnippet'
   | 'styleUpdateSettings'
   // Builder Events
   | 'builderSetBaseContext'

@@ -30,7 +30,7 @@ const declaration = elementDeclaration<BlockHtmlAttributes>()({
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

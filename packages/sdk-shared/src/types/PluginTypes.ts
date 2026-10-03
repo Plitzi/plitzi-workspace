@@ -59,7 +59,7 @@ export type PluginBuilder = {
   canDragDrop?: boolean;
   canSelect?: boolean;
   canMove?: boolean;
-  canTemplate?: boolean;
+  canSnippet?: boolean;
   itemsAllowed?: string[];
   itemsNotAllowed?: string[];
 };

@@ -19,7 +19,7 @@ button({ content: '', title: 'Close', children: [fontAwesome({ icon: 'fa-solid f
 button({ content: '', label: 'Select (V)', title: 'Select — V', children: [fontAwesome({ icon: 'fa-solid fa-arrow-pointer' }), text('V')] })
 
 // A link around a whole card: without `label` it is announced as every word inside the card.
-link({ href: '/posts/field-notes', mode: 'internal', label: 'Read “Field notes”', children: [ /* cover, topic, title, byline */ ] })
+link({ href: '/posts/field-notes', label: 'Read “Field notes”', children: [ /* cover, topic, title, byline */ ] })
 
 // A field whose design says what it is: the label stays, out of sight.
 formControl({ name: 'q', label: 'Search the docs', hideLabel: true, placeholder: 'Search…' })
@@ -100,7 +100,7 @@ toggle's pressed option.
 
 Anything drawn on a canvas is one picture to these readers. Render what it shows as elements too: a list with a
 named button per action. Keep that list visible when someone asks for it, because an agent clicks by position and
-can't click something that only appears on focus. See `docs/en/accessibility.md` and Pizarra's List view.
+can't click something that only appears on focus.
 
 ## Checking
 

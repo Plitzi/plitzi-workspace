@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { isSchemaFlag } from '../flags/schemaFlag';
+import { isRecord } from '../helpers/isRecord';
+import { DISPLAY_MODES } from '../style/displayModes';
 import { STYLE_STATES } from '../style/styleStates';
 import { StyleVariableCategory } from '../types/StyleTypes';
 
@@ -7,7 +10,7 @@ import type {
   DropPosition,
   Element,
   PageFolder,
-  Schema,
+  SchemaFlag,
   SchemaRaw,
   SchemaVariable,
   SpaceComponent,
@@ -31,25 +34,15 @@ import type {
  * a second copy of them would be one more thing to drift. They are checked structurally — enough to catch a payload
  * of the wrong shape, which is the failure that actually happens — and keep their real type through `z.custom`.
  */
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 const element = z.custom<Element>(value => isRecord(value) && typeof value.id === 'string', {
   message: 'expected an element with an id'
 });
 
 const elements = z.array(element);
 
-// `flat` as a list is the wire shape of a schema. The builder re-indexes it on arrival, so the keyed map an MCP
-// write works with is not interchangeable here — and that swap is exactly what this catches.
-/** A schema as the channel carries it: `flat` as a list. What every publisher of a whole schema sends. */
-export const schemaToWire = (schema: Schema): SchemaRaw => ({ ...schema, flat: Object.values(schema.flat) });
-
-/** A schema off the channel, keyed again by element id: what a receiver stores. */
-export const schemaFromWire = (raw: SchemaRaw): Schema => ({
-  ...raw,
-  flat: Object.fromEntries(raw.flat.map(item => [item.id, item]))
-});
+// `flat` as a list is the wire shape of a schema; the conversion both ways is `schema/wire`, beside no validator, so
+// a server can read a schema off GraphQL without loading this contract.
+export { elementFromWire, schemaFromWire, schemaToWire } from '../schema/wire';
 
 const spaceComponent = z.custom<SpaceComponent>(
   value => isRecord(value) && typeof value.id === 'string' && isRecord(value.flat),
@@ -68,6 +61,8 @@ const schemaVariable = z.custom<SchemaVariable>(value => isRecord(value) && type
   message: 'expected a variable with a name'
 });
 
+const schemaFlag = z.custom<SchemaFlag>(isSchemaFlag, { message: 'expected a flag with a value and its rules' });
+
 const styleAttributes = z.custom<StyleItem['attributes']>(isRecord, { message: 'expected a style attributes object' });
 
 const spaceFont = z.custom<SpaceFont>(
@@ -80,7 +75,7 @@ const styleVariableValue = z.custom<StyleVariableValue>(
   { message: 'expected a style variable value' }
 );
 
-const displayMode = z.enum(['desktop', 'tablet', 'mobile']);
+const displayMode = z.enum(DISPLAY_MODES);
 const dropPosition = z.custom<DropPosition>(value => typeof value === 'string', {
   message: 'expected a drop position'
 });
@@ -145,6 +140,8 @@ export const spaceEventSchemas = {
   SPACE_ADD_VARIABLE: variablePayload,
   SPACE_UPDATE_VARIABLE: variablePayload,
   SPACE_REMOVE_VARIABLE: z.object({ name: z.string() }),
+  SPACE_SET_FLAG: z.object({ name: z.string(), flag: schemaFlag }),
+  SPACE_REMOVE_FLAG: z.object({ name: z.string() }),
   SPACE_ADD_ELEMENT: z.object({
     element,
     dropPosition,
@@ -161,7 +158,7 @@ export const spaceEventSchemas = {
   SPACE_REMOVE_ELEMENT: z.object({ elementId: z.string() }),
   SPACE_MOVE_ELEMENT: z.object({ from: z.string(), to: z.string(), elementId: z.string(), dropPosition }),
   SPACE_CLONE_ELEMENT: z.object({ to: z.string(), element, dropPosition, initialItems: elements }),
-  SPACE_ADD_TEMPLATE: z.object({
+  SPACE_ADD_SNIPPET: z.object({
     element,
     style: z.custom<Style>(isRecord),
     to: z.string(),

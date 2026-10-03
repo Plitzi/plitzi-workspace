@@ -6,6 +6,8 @@ export type HarnessRenderOptions = {
   themeScope?: ThemeScope;
   /** The dev tools and the render tracing on — what `inspectRenders` reads. */
   debugMode?: boolean;
+  /** The feature flags the embedding decides — the SDK's `flags` prop, the layer above what the space declares. */
+  flags?: Record<string, boolean>;
 };
 
 /** What a spec drives the harness through. Deliberately tiny: hand it a space, get a promise that settles once

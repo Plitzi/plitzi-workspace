@@ -1,5 +1,7 @@
 import deepEqual from '@plitzi/plitzi-ui/utils/deepEqual';
 
+import { COMPUTED_GLOBALS } from './globalSources';
+import { isRecord } from '../helpers/isRecord';
 import { processTwigValue } from '../helpers/twigWrapper';
 
 /**
@@ -32,13 +34,8 @@ export const evaluateComputed = (
   return unchanged && previous ? previous : computed;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
-
 const isDefinitions = (value: unknown): value is Record<string, string> =>
   isRecord(value) && Object.values(value).every(template => typeof template === 'string');
-
-/** The globals a computed value is evaluated over — the same ones `GlobalSources` hands it on render. */
-const COMPUTED_GLOBALS = ['variables', 'navigation', 'auth', 'host', 'theme'] as const;
 
 /**
  * The sources as a flow step reads them: `state` as the store holds it this instant, and `computed` evaluated over it.

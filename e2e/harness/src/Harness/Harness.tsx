@@ -49,6 +49,7 @@ const Harness = () => {
         renderMode="raw"
         themeScope={state.options.themeScope}
         debugMode={state.options.debugMode}
+        flags={state.options.flags}
       />
     </div>
   );

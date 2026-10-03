@@ -29,8 +29,8 @@ lost, it simply stops being read as a plan.
 
 | # | Title | Status | Scope |
 |---|---|---|---|
-| [0016](./0016-space-templates.md) | Space templates | Implemented | `plitzi-sdk-server`, `sdk-mcp` preview |
 | [0017](./0017-native-mobile-apps.md) | Native mobile apps (Android / iOS) | Proposal | new `mobile/` project, `sdk-authoring`, servers |
+| [0022](./0022-sketch-to-page.md) | Sketch to page ("make it real") | Proposal | builder, `apps/mcp`, preview service, Pizarra later |
 
 ## Conventions
 

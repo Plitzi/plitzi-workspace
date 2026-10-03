@@ -1,5 +1,4 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
-import Card from '@plitzi/plitzi-ui/Card';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -301,8 +300,9 @@ const Functions = () => {
   }, [remove, showDialog, showResult]);
 
   return (
-    <Card className="relative flex grow basis-0" rounded="none">
-      <Card.Body grow className="flex flex-col">
+    <div className="flex min-h-0 grow basis-0 flex-col">
+      {/* Saving, discarding and the files' state mean nothing before there is code: the welcome is the page. */}
+      {hasFiles && (
         <FunctionsHeader
           state={saveState(modified.length, problems.length, Boolean(manifest))}
           canSave={canSave}
@@ -313,61 +313,73 @@ const Functions = () => {
           onDiscard={handleDiscard}
           onRemove={handleRemoveAll}
         />
-        {error && <Alert intent="error">{error}</Alert>}
-        {refusal && <Alert intent="warning">{refusal.error}</Alert>}
-        {!isLoading && !hasFiles && draft?.offer && (
-          <FunctionsOffer template={draft.offer.template} isInstalling={isInstalling} onInstall={handleInstall} />
-        )}
-        {!isLoading && !hasFiles && !draft?.offer && <FunctionsWelcome onStart={handleStart} />}
-        {hasFiles && (
-          <div className="flex grow basis-0 overflow-hidden">
-            <FunctionsSidebar
-              tasks={tasks}
-              sharedLimits={sharedLimits}
-              selectedTask={selectedTask ? taskNameOf(selectedTask) : ''}
-              unreadable={source?.unreadable.length ?? 0}
-              canCreateTask={typescript.ready && source?.defined === true}
-              routes={routes}
-              files={names}
-              selectedFile={selectedFile}
-              modified={modified}
-              onSelectTask={handleSelectTask}
-              onCreateTask={handleCreateTask}
-              onSelectRoute={handleSelectRoute}
-              onSelectFile={setSelectedFile}
-              onAddFile={handleAddFile}
-              onRemoveFile={handleRemoveFile}
+      )}
+      {error && (
+        <div className="px-6 pt-3">
+          <Alert intent="error" size="sm" solid={false}>
+            {error}
+          </Alert>
+        </div>
+      )}
+      {refusal && (
+        <div className="px-6 pt-3">
+          <Alert intent="warning" size="sm" solid={false}>
+            {refusal.error}
+          </Alert>
+        </div>
+      )}
+      {!isLoading && !hasFiles && draft?.offer && (
+        <FunctionsOffer template={draft.offer.template} isInstalling={isInstalling} onInstall={handleInstall} />
+      )}
+      {!isLoading && !hasFiles && !draft?.offer && <FunctionsWelcome onStart={handleStart} />}
+      {hasFiles && (
+        <div className="flex grow basis-0 overflow-hidden">
+          <FunctionsSidebar
+            tasks={tasks}
+            sharedLimits={sharedLimits}
+            selectedTask={selectedTask ? taskNameOf(selectedTask) : ''}
+            unreadable={source?.unreadable.length ?? 0}
+            canCreateTask={typescript.ready && source?.defined === true}
+            routes={routes}
+            files={names}
+            selectedFile={selectedFile}
+            modified={modified}
+            onSelectTask={handleSelectTask}
+            onCreateTask={handleCreateTask}
+            onSelectRoute={handleSelectRoute}
+            onSelectFile={setSelectedFile}
+            onAddFile={handleAddFile}
+            onRemoveFile={handleRemoveFile}
+          />
+          <div className="flex min-w-0 grow basis-0 flex-col overflow-hidden">
+            <FunctionsEditor
+              file={selectedFile}
+              value={files[selectedFile] ?? ''}
+              modified={modified.includes(selectedFile)}
+              theme={resolvedTheme}
+              extensions={extensions}
+              checking={typescript.ready}
+              target={target}
+              onChange={handleChange}
+              onCursor={handleCursor}
             />
-            <div className="flex min-w-0 grow basis-0 flex-col overflow-hidden">
-              <FunctionsEditor
-                file={selectedFile}
-                value={files[selectedFile] ?? ''}
-                modified={modified.includes(selectedFile)}
-                theme={resolvedTheme}
-                extensions={extensions}
-                checking={typescript.ready}
-                target={target}
-                onChange={handleChange}
-                onCursor={handleCursor}
-              />
-              {problems.length > 0 && <FunctionsProblems problems={problems} onSelect={handleSelectProblem} />}
-            </div>
-            {selectedTask && (
-              <FunctionInspector
-                task={selectedTask}
-                sharedLimits={sharedLimits}
-                hosts={hosts}
-                limitsDisabledReason={limitsBlockedBy(typescript.ready, selectedTask)}
-                modified={modified.length > 0}
-                onLimitsChange={handleLimitsChange}
-                onRun={handleRun}
-              />
-            )}
-            {!selectedTask && <FunctionsGuide hasTasks={tasks.length > 0} />}
+            {problems.length > 0 && <FunctionsProblems problems={problems} onSelect={handleSelectProblem} />}
           </div>
-        )}
-      </Card.Body>
-    </Card>
+          {selectedTask && (
+            <FunctionInspector
+              task={selectedTask}
+              sharedLimits={sharedLimits}
+              hosts={hosts}
+              limitsDisabledReason={limitsBlockedBy(typescript.ready, selectedTask)}
+              modified={modified.length > 0}
+              onLimitsChange={handleLimitsChange}
+              onRun={handleRun}
+            />
+          )}
+          {!selectedTask && <FunctionsGuide hasTasks={tasks.length > 0} />}
+        </div>
+      )}
+    </div>
   );
 };
 

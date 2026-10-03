@@ -1,6 +1,6 @@
 import { toBlocks } from './css';
 
-import type { ClassList, ClassRef, StyleDeclaration, StyleSpec } from './types';
+import type { ClassList, ClassRef, ElementClassList, StyleDeclaration, StyleSpec } from './types';
 
 /**
  * A named class, declared where it is used.
@@ -48,3 +48,26 @@ export const classRefs = (value: ClassList): readonly ClassRef[] => (isClassArra
 
 /** Every class a list names, as the names a selector joins with a space. */
 export const classNames = (value: ClassList): string[] => classRefs(value).map(className);
+
+/** The name of the class an element's own rules on top of its classes become. */
+export const modifierClassName = (elementId: string): string => `${elementId}--own`;
+
+/** An entry of an element's class list that is rules of its own rather than a class. */
+export const isClassModifier = (entry: ClassRef | StyleSpec): entry is StyleSpec =>
+  typeof entry === 'object' && !isStyleDeclaration(entry);
+
+/** An element's class list taken apart: the classes it wears, and the rules of its own written on top of them. */
+export const splitClassList = (value: ElementClassList): { refs: ClassRef[]; modifiers: StyleSpec[] } => {
+  const entries: readonly (ClassRef | StyleSpec)[] = Array.isArray(value) ? value : [value];
+  const refs: ClassRef[] = [];
+  const modifiers: StyleSpec[] = [];
+  entries.forEach(entry => {
+    if (isClassModifier(entry)) {
+      modifiers.push(entry);
+    } else {
+      refs.push(entry);
+    }
+  });
+
+  return { refs, modifiers };
+};

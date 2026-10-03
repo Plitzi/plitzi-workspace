@@ -31,7 +31,7 @@ describe('ResourceContent', () => {
 
     expect(container.querySelector('img')?.getAttribute('alt')).toBe('Cat');
 
-    rerender(<ResourceContent type="template" src="/t.json" />);
+    rerender(<ResourceContent type="snippet" src="/t.json" />);
 
     expect(container.querySelector('.fa-file')).not.toBeNull();
   });

@@ -29,7 +29,7 @@ const declaration = elementDeclaration<TabContainerAttributes>()({
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: ['tabContainerHeader', 'tabContainerBody'],
       itemsNotAllowed: []
     },

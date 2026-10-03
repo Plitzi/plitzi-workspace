@@ -1,6 +1,8 @@
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
+import { AuthoringError } from './codes';
+
 import type { StepSpec } from './types';
 import type { Rule, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementInteraction, WhileRunning } from '@plitzi/sdk-shared';
@@ -32,13 +34,17 @@ const assertStepIds = (ids: string[], where: string): void => {
   const seen = new Set<string>();
   for (const id of ids) {
     if (!isValidElementId(id)) {
-      throw new Error(
+      throw new AuthoringError(
+        'step-name',
         `Step "${id}" in ${where} is not a valid name: start with a letter, then letters, numbers, hyphens and underscores. A later step reads this one as {{ ${id}.field }}.`
       );
     }
 
     if (seen.has(id)) {
-      throw new Error(`${where} names the step "${id}" twice. A flow's steps are keyed by id, so the second wins.`);
+      throw new AuthoringError(
+        'step-duplicate',
+        `${where} names the step "${id}" twice. A flow's steps are keyed by id, so the second wins.`
+      );
     }
 
     seen.add(id);
@@ -46,23 +52,14 @@ const assertStepIds = (ids: string[], where: string): void => {
 };
 
 /**
- * One interaction flow, chained.
- *
- * The nodes are a linked list — each knows the one before and the one after, and they all carry the id of the
- * first as their `flowId`. Getting one of those three wrong produces a flow that half runs, which is why this is
- * derived from the order the steps were written in rather than declared.
+ * The ids a flow's steps are written under. A step's output is addressed as `{{ <id>.field }}` from every later step,
+ * so an unnamed one still gets a name worth reading — `navigate-2` — counted per action, which is what a person would
+ * have called it anyway.
  */
-export const authorFlow = (
-  steps: StepSpec[],
-  host?: string,
-  // Shared by every flow on the same element: they all land in one `interactions` record, so a counter per flow
-  // would have the second flow's `navigate` overwrite the first one's.
-  counters: Map<string, number> = new Map()
-): Record<string, ElementInteraction> => {
-  // A step's output is addressed as `{{ <id>.field }}` from every later step, so an unnamed one still gets a name
-  // worth reading — `navigate-2` — counted per action, which is what a person would have called it anyway.
+const stepIds = (steps: StepSpec[], counters: Map<string, number>): string[] => {
   const named = new Set(steps.map(step => step.id).filter(Boolean) as string[]);
-  const ids = steps.map(step => {
+
+  return steps.map(step => {
     if (step.id) {
       return step.id;
     }
@@ -79,6 +76,30 @@ export const authorFlow = (
 
     return `${base}-${next}`;
   });
+};
+
+/** Every step's id, flow by flow, as `authorFlows` writes them — where a step of the document was in the source. */
+export const flowStepIds = (flows: StepSpec[][]): string[][] => {
+  const counters = new Map<string, number>();
+
+  return flows.map(steps => stepIds(steps, counters));
+};
+
+/**
+ * One interaction flow, chained.
+ *
+ * The nodes are a linked list — each knows the one before and the one after, and they all carry the id of the
+ * first as their `flowId`. Getting one of those three wrong produces a flow that half runs, which is why this is
+ * derived from the order the steps were written in rather than declared.
+ */
+export const authorFlow = (
+  steps: StepSpec[],
+  host?: string,
+  // Shared by every flow on the same element: they all land in one `interactions` record, so a counter per flow
+  // would have the second flow's `navigate` overwrite the first one's.
+  counters: Map<string, number> = new Map()
+): Record<string, ElementInteraction> => {
+  const ids = stepIds(steps, counters);
 
   assertStepIds(ids, host ? `the flow on "${host}"` : 'this flow');
   const flowId = ids[0] ?? '';
@@ -156,13 +177,17 @@ const both = (inner: RuleGroup, outer: RuleGroup): RuleGroup =>
  */
 export const whileRunning = (mode: WhileRunning, trigger: StepSpec): StepSpec => {
   if (trigger.type !== 'trigger') {
-    throw new Error(
+    throw new AuthoringError(
+      'while-running',
       `whileRunning('${mode}', …) wraps a flow's TRIGGER — it decides what firing the trigger again does — and was given a "${trigger.type}" step (${trigger.action}). Put it around the first step: \`[whileRunning('${mode}', onClick()), …]\`.`
     );
   }
 
   if (!WHILE_RUNNING_MODES.includes(mode)) {
-    throw new Error(`whileRunning takes ${WHILE_RUNNING_MODES.map(item => `'${item}'`).join(', ')}, not '${mode}'.`);
+    throw new AuthoringError(
+      'while-running',
+      `whileRunning takes ${WHILE_RUNNING_MODES.map(item => `'${item}'`).join(', ')}, not '${mode}'.`
+    );
   }
 
   return { ...trigger, whileRunning: mode };

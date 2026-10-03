@@ -20,7 +20,8 @@ type WebHookParams = {
   invalidateElements?: string[];
 };
 
-type WebHookResponse = { status?: number; data?: string };
+/** What the endpoint answered: its status, and its body read as JSON (empty when it is not JSON). */
+type WebHookResponse = { status: number; data: unknown };
 
 /** The methods that only read: a webhook sent with any other one may have changed what the page's requests answer. */
 const READ_METHODS = new Set(['GET', 'HEAD']);
@@ -72,44 +73,43 @@ const send = async (
 ): Promise<WebHookResponse> => {
   const body = fieldsOf(given);
   const multipart = Object.values(body).some(value => value instanceof Blob);
-  try {
-    const headers: Record<string, string> = {
-      ...headersOf(extra),
-      // A form with a file carries no content type of ours: `fetch` writes `multipart/form-data` WITH the boundary the
-      // parts are split by. Setting it by hand sent the type without one, and no server could read the upload.
-      ...(multipart ? {} : { 'Content-Type': 'application/json' }),
-      ...authorizationOf(authorizationToken)
-    };
+  const headers: Record<string, string> = {
+    ...headersOf(extra),
+    // A form with a file carries no content type of ours: `fetch` writes `multipart/form-data` WITH the boundary the
+    // parts are split by. Setting it by hand sent the type without one, and no server could read the upload.
+    ...(multipart ? {} : { 'Content-Type': 'application/json' }),
+    ...authorizationOf(authorizationToken)
+  };
 
-    const fetchOptions: RequestInit = { method, headers, credentials };
-    if (!BODILESS_METHODS.has(method)) {
-      if (!multipart) {
-        fetchOptions.body = JSON.stringify(body);
-      } else {
-        const formData = new FormData();
-        Object.entries(body).forEach(([key, value]) => {
-          formData.append(key, value);
-        });
+  const fetchOptions: RequestInit = { method, headers, credentials };
+  if (!BODILESS_METHODS.has(method)) {
+    if (!multipart) {
+      fetchOptions.body = JSON.stringify(body);
+    } else {
+      const formData = new FormData();
+      Object.entries(body).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
 
-        fetchOptions.body = formData;
-      }
+      fetchOptions.body = formData;
     }
-
-    const res = await fetch(url, fetchOptions);
-
-    let data = '';
-    try {
-      data = (await res.json()) as string;
-    } catch {
-      // A body that is not JSON — or no body — answers with an empty `data`, and the status still says what happened.
-    }
-
-    return { status: res.status, data };
-  } catch (e) {
-    console.error(e);
-
-    return {};
   }
+
+  // Any answer is one — a 404 or a 401 is what the next step reads (`{{ login.response.status }}`). No answer at all
+  // (offline, refused, blocked by CORS) is the step failing: it used to report success with nothing in it, and the
+  // flow carried on as if the request had been made.
+  const res = await fetch(url, fetchOptions).catch((error: unknown) => {
+    throw new Error(`${method} ${url} got no answer: ${error instanceof Error ? error.message : String(error)}`);
+  });
+
+  let data: unknown = '';
+  try {
+    data = await res.json();
+  } catch {
+    // A body that is not JSON — or no body — answers with an empty `data`, and the status still says what happened.
+  }
+
+  return { status: res.status, data };
 };
 
 const webHook: InteractionCallback<WebHookParams> = toInteractionCallback<WebHookParams>(
@@ -134,14 +134,14 @@ const webHook: InteractionCallback<WebHookParams> = toInteractionCallback<WebHoo
         meta: { url: params.url },
         fetcher: () => send(params, method),
         staleTime: toMilliseconds(params.staleTime),
-        isCacheable: answer => answer.status !== undefined && answer.status < 400
+        isCacheable: answer => answer.status < 400
       });
 
-      return { response: response ?? {} };
+      return { response };
     }
 
     const response = await send(params, method);
-    if (response.status !== undefined && response.status >= 200 && response.status < 300) {
+    if (response.status >= 200 && response.status < 300) {
       void invalidateAfterWrite({
         mode: params.invalidateQueries,
         fallback: 'origin',

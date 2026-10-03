@@ -15,6 +15,7 @@ import Interactions from '@pmodules/Interactions/Interactions';
 import BuilderBreadcrumb from '../BuilderBreadcrumb';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
 import ElementSettings from './ElementSettings';
+import NothingSelected from './NothingSelected';
 import ToolsList from '../ToolsList';
 
 import type { ComponentDefinition, Element } from '@plitzi/sdk-shared';
@@ -44,6 +45,8 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   ]);
   const { componentDefinitions } = use(ComponentContext);
   const getSchemaFlat = useBuilderStoreGetter('schema.flat');
+  const [declaredFlags] = useBuilderStore('schema.flags');
+  const flagNames = useMemo(() => Object.keys(declaredFlags ?? {}), [declaredFlags]);
   const attributes = useMemo(() => get(element, 'attributes', {} as Element['attributes']), [element]);
   const definition = useMemo(() => get(element, 'definition', {} as Element['definition']), [element]);
   const elementRef = useRef(element);
@@ -128,11 +131,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
   );
 
   if (!element) {
-    return (
-      <div className="m-3 self-stretch rounded-sm border-2 border-dashed border-gray-300 p-3 text-center text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
-        Click on a component to select it
-      </div>
-    );
+    return <NothingSelected />;
   }
 
   const {
@@ -164,6 +163,7 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
               definition={tempDefinition}
               canHoldItems={Array.isArray(declared?.items)}
               declaredLoadStrategy={declared?.loadStrategy}
+              flagNames={flagNames}
               id={element.id}
               getNameConflict={getNameConflict}
               onUpdate={handleChange}

@@ -3,20 +3,14 @@ import Badge from '@plitzi/plitzi-ui/Badge';
 import Button from '@plitzi/plitzi-ui/Button';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import { use, useCallback } from 'react';
+import { useCallback } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import RuntimePower from '../RuntimePower';
 import RuntimeSize from '../RuntimeSize';
 
-import type {
-  BuilderMutationsMap,
-  BuilderQueriesMap,
-  SpaceRuntimeEnvironment,
-  SpaceRuntimeSizeOption
-} from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { SpaceRuntimeEnvironment, SpaceRuntimeSizeOption } from '@plitzi/sdk-shared';
 
 export type RuntimeEnvironmentsProps = {
   environments: SpaceRuntimeEnvironment[];
@@ -48,10 +42,7 @@ const clockOf = (seconds: number): string => new Date(seconds * 1000).toLocaleTi
 
 /** Every environment's runtime: which code, how it is, and what it serves — and taking the runtime away. */
 const RuntimeEnvironments = ({ environments, sizes, idleMinutes, onChange }: RuntimeEnvironmentsProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const { showDialog } = useModal();
 
   const handleRemove = useCallback(async () => {

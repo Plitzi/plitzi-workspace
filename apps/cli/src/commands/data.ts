@@ -1,0 +1,200 @@
+import fs from 'node:fs/promises';
+
+import chalk from 'chalk';
+
+/**
+ * `plitzi data describe <file>`: the shape of a JSON document, in a few lines — what an agent needs to bind to it, without reading it.
+ *
+ * A catalogue of 879 products is half a megabyte, and what anything written against it needs is the twenty field
+ * names and their types: which are always there, which only sometimes, and how long the lists are. Every value is
+ * read, so a field that appears in one row of nine hundred is still found, and said to be optional.
+ */
+
+type ObjectShape = { count: number; fields: Map<string, { count: number; shape: Shape }> };
+
+type ArrayShape = { occurrences: number; lengths: Set<number>; item: Shape };
+
+type Shape = { primitives: Set<string>; object?: ObjectShape; array?: ArrayShape };
+
+const emptyShape = (): Shape => ({ primitives: new Set() });
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const merge = (shape: Shape, value: unknown): void => {
+  if (value === null) {
+    shape.primitives.add('null');
+
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    shape.array ??= { occurrences: 0, lengths: new Set(), item: emptyShape() };
+    shape.array.occurrences += 1;
+    shape.array.lengths.add(value.length);
+    for (const item of value) {
+      merge(shape.array.item, item);
+    }
+
+    return;
+  }
+
+  if (isPlainObject(value)) {
+    shape.object ??= { count: 0, fields: new Map() };
+    shape.object.count += 1;
+    for (const [key, field] of Object.entries(value)) {
+      const entry = shape.object.fields.get(key) ?? { count: 0, shape: emptyShape() };
+      entry.count += 1;
+      merge(entry.shape, field);
+      shape.object.fields.set(key, entry);
+    }
+
+    return;
+  }
+
+  shape.primitives.add(typeof value);
+};
+
+/** Past this many fields an object is summarised: a map keyed by ids is data, not a shape. */
+const MAX_FIELDS = 40;
+
+const PAD = '  ';
+
+const KEY = /^[A-Za-z_$][\w$]*$/;
+
+const render = (shape: Shape, depth: number): string => {
+  const parts = [...shape.primitives].sort();
+  if (shape.object) {
+    parts.push(renderObject(shape.object, depth));
+  }
+
+  if (shape.array) {
+    parts.push(renderArray(shape.array, depth));
+  }
+
+  return parts.length > 0 ? parts.join(' | ') : 'never';
+};
+
+const renderArray = ({ occurrences, lengths, item }: ArrayShape, depth: number): string => {
+  const inner = render(item, depth);
+  if (occurrences === 1) {
+    const [length] = lengths;
+
+    return length === 0 ? 'Array(0)' : `Array(${String(length)}) of ${inner}`;
+  }
+
+  return inner.includes(' | ') ? `(${inner})[]` : `${inner}[]`;
+};
+
+const renderObject = ({ count, fields }: ObjectShape, depth: number): string => {
+  if (fields.size === 0) {
+    return '{}';
+  }
+
+  const indent = PAD.repeat(depth + 1);
+  const entries = [...fields].slice(0, MAX_FIELDS).map(([key, field]) => {
+    const name = KEY.test(key) ? key : JSON.stringify(key);
+    const optional = field.count < count;
+    const seen = optional && count > 1 ? `  (in ${String(field.count)} of ${String(count)})` : '';
+
+    return `${indent}${name}${optional ? '?' : ''}: ${render(field.shape, depth + 1)}${seen}`;
+  });
+  const more = fields.size > MAX_FIELDS ? [`${indent}… ${String(fields.size - MAX_FIELDS)} more keys`] : [];
+
+  return ['{', ...entries, ...more, `${PAD.repeat(depth)}}`].join('\n');
+};
+
+/** The longest list of objects in the document, and where it is — the rows a page most likely renders. */
+const rowsOf = (value: unknown): { path: string; rows: unknown[] } | undefined => {
+  const candidates: { path: string; rows: unknown[] }[] = [];
+  const visit = (node: unknown, at: string): void => {
+    if (Array.isArray(node)) {
+      if (node.some(isPlainObject)) {
+        candidates.push({ path: at, rows: node });
+      }
+
+      node.forEach((item, index) => visit(item, `${at}[${String(index)}]`));
+
+      return;
+    }
+
+    if (isPlainObject(node)) {
+      for (const [key, field] of Object.entries(node)) {
+        visit(field, at ? `${at}.${key}` : key);
+      }
+    }
+  };
+
+  visit(value, '');
+
+  return candidates.sort((a, b) => b.rows.length - a.rows.length)[0];
+};
+
+/** One row, shortened: long text cut, long lists cut to their first items. */
+const shorten = (value: unknown): unknown => {
+  if (typeof value === 'string') {
+    return value.length > 80 ? `${value.slice(0, 77)}…` : value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 3
+      ? [...value.slice(0, 3).map(shorten), `… ${String(value.length - 3)} more`]
+      : value.map(shorten);
+  }
+
+  if (isPlainObject(value)) {
+    return Object.fromEntries(Object.entries(value).map(([key, field]) => [key, shorten(field)]));
+  }
+
+  return value;
+};
+
+export type DataDescription = {
+  /** The shape, as TypeScript-like text: `{ products: Array(879) of { id: string, … } }`. */
+  shape: string;
+  /** The first row of the longest list of objects, shortened, and where that list is. */
+  example?: { path: string; row: unknown };
+};
+
+export const describeData = (value: unknown): DataDescription => {
+  const shape = emptyShape();
+  merge(shape, value);
+  const rows = rowsOf(value);
+  const first = rows?.rows.find(isPlainObject);
+
+  return {
+    shape: render(shape, 0),
+    ...(rows && first ? { example: { path: rows.path || '(the document)', row: shorten(first) } } : {})
+  };
+};
+
+export interface DataDescribeOptions {
+  json?: boolean;
+}
+
+export const dataDescribe = async (file: string, options: DataDescribeOptions): Promise<void> => {
+  let value: unknown;
+  try {
+    value = JSON.parse(await fs.readFile(file, 'utf-8'));
+  } catch (error) {
+    console.error(
+      chalk.red(`${file} is not a JSON file this can read: ${error instanceof Error ? error.message : String(error)}`)
+    );
+    process.exitCode = 1;
+
+    return;
+  }
+
+  const description = describeData(value);
+  if (options.json) {
+    console.log(JSON.stringify(description));
+
+    return;
+  }
+
+  console.log(description.shape);
+  if (description.example) {
+    console.log(`\n${chalk.dim(`One row of ${description.example.path}:`)}`);
+    console.log(JSON.stringify(description.example.row, null, 2));
+  }
+};

@@ -2,6 +2,7 @@ import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/component
 import { parentChain, renderContext } from '@plitzi/sdk-schema/helpers/elementTree';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 
+import type { RefusalCode, WarningCode } from '../codes';
 import type { AuthorSpaceOptions } from '../types';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type { Element, Schema, SpaceComponent, Style } from '@plitzi/sdk-shared';
@@ -42,6 +43,8 @@ export class LintContext {
   readonly variables: ReadonlySet<string>;
   /** The space's computed values, in the order they are declared. */
   readonly computed: readonly string[];
+  /** The feature flags the space declares, by name. */
+  readonly flags: readonly string[];
 
   constructor(
     readonly schema: Schema,
@@ -66,13 +69,14 @@ export class LintContext {
     );
     this.variables = new Set(schema.variables.map(variable => variable.name));
     this.computed = Object.keys(schema.settings.computed ?? {});
+    this.flags = Object.keys(schema.flags ?? {});
   }
 
-  error(code: string, message: string, elementId?: string): void {
+  error(code: RefusalCode, message: string, elementId?: string): void {
     this.errors.push({ code, message, ...(elementId === undefined ? {} : { elementId }), ...this.componentField() });
   }
 
-  warn(code: string, message: string, elementId?: string, details?: Record<string, unknown>): void {
+  warn(code: WarningCode, message: string, elementId?: string, details?: Record<string, unknown>): void {
     this.warnings.push({
       code,
       message,

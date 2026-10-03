@@ -1,3 +1,5 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import type {
   FunctionAnswer,
   FunctionInvocation,
@@ -14,9 +16,6 @@ const ENVIRONMENTS: Record<Environment, true> = { production: true, staging: tru
 
 const isEnvironment = (value: unknown): value is Environment =>
   typeof value === 'string' && Object.hasOwn(ENVIRONMENTS, value);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const parse = (data: string): Record<string, unknown> | undefined => {
   try {

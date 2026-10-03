@@ -13,6 +13,9 @@ import PluginsContextProvider from './PluginsContextProvider';
 import type { ComponentContextValue, ComponentDefinition, PluginsContextValue } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
+// The catalog under test is the elements': the space's components at its foot read a store these tests do not mount.
+vi.mock('@pmodules/Components', () => ({ default: () => null }));
+
 // Only what the catalog and the stylesheet map read of an installed plugin; the full type describes far more.
 const plugin = (type: string, label: string) =>
   ({

@@ -8,6 +8,7 @@ import type { Schema, Element } from './SchemaTypes';
 import type { SpaceConnector } from './SpaceTypes';
 import type { DisplayMode, Style, StyleState } from './StyleTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
+import type { FlagOverrides, FlagResolution } from '../flags/resolveFlags';
 
 // Real VALUES of the global data sources, published at runtime and read by element bindings. Grouped under
 // `runtime.sources` so all source data lives together, separate from the document state (schema/style)
@@ -24,6 +25,21 @@ export type RuntimeSourceValues = {
   // The space's theme, published by `GlobalSources` from the theme store. `resolved` is always a colour, `mode` is what
   // was chosen, `system` included — so `{{ theme.resolved }}` is the one a URL or a `when` rule wants.
   theme?: { mode: Theme; resolved: ColorScheme };
+  // The space's feature flags as they resolved for this render, by name — what `{{ flags.<name> }}` reads.
+  flags?: Record<string, boolean>;
+};
+
+/**
+ * The feature flags of this render: what each layer above the space says, and how every flag resolved.
+ *
+ * Top-level for the reason `rsc` is: the overrides are written at the root — by whoever mounts the SDK, by the builder
+ * forcing one — and an element scope owning `runtime` would keep a write from any depth to itself.
+ */
+export type FlagsState = {
+  overrides?: FlagOverrides;
+  /** Each declared flag's answer and the layer that gave it — what the dev tools show. The values alone are the
+   *  `flags` source. */
+  resolved?: Record<string, FlagResolution>;
 };
 
 export type CommonState = {
@@ -57,11 +73,14 @@ export type CommonState = {
   // an element scope that owns `runtime` would keep a delegated `runtime.rsc.*` write to itself, and nothing but the
   // root ever owns `rsc`, so every write from any depth lands where the whole tree reads it.
   rsc?: RscState;
+  flags?: FlagsState;
   // Where this origin runs server actions, seeded at the root from what the rendering server published. Top-level
   // beside `rsc` and for the same reason: nothing but the root owns it, and every depth reads it.
   actions?: ActionsState;
   /** Where this origin's realtime channels answer — absent in a render with no server, where no channel opens. */
   realtime?: { endpoint?: string; transport?: RealtimeTransport };
+  /** Where this origin resizes remote pictures — absent in a render with no server, where an image keeps its `src`. */
+  images?: { endpoint?: string };
   // How THIS render is happening. Seeded once at the root of whichever surface is mounting (the SDK, the builder) and
   // read from the store by everything below, instead of being threaded through every provider as five props.
   render?: RenderSettings;
@@ -247,6 +266,12 @@ export type BuilderState = CommonState & {
    * Editor-only and never published: `navigation` still holds the resolved values, which is what the page reads.
    */
   urlTest?: { routeParams: RouteParams; queryParams: QueryParams; hostname: string };
+  /**
+   * The builder's OWN feature flags — Plitzi's, not the space's: which parts of the editor this person is shown, as the
+   * platform resolved them for them when the editor opened (`PlatformFlags` in the builder's first query). Never
+   * authored, never published.
+   */
+  platformFlags?: Record<string, boolean>;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

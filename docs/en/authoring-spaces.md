@@ -18,7 +18,7 @@ import { authorSpace, container, css, heading, image, onClick, setState } from '
 
 One package, and it installs nothing else: `@plitzi/sdk-authoring` has an empty dependency tree, no React and
 nothing that touches a browser. A server, a seed, a migration, a build script, a browser bundle authoring its own
-space (see `browser/04-no-server`) and a project that only publishes templates all depend on that
+space (see `browser/04-no-server`) and a project that only publishes snippets all depend on that
 one name.
 
 Everything it exports is inside it — there is no second place to look:
@@ -29,7 +29,7 @@ Everything it exports is inside it — there is no second place to look:
 | the element factories | one per element, plus `element`, `defineElement`, `elementsFromManifest`, triggers |
 | the interaction vocabulary | what a step can do: `setState`, `navigate`, `runServerAction`, `delay`… |
 | the binding transformers | and the shape a declared param has |
-| assembly and validation | `authorSpace`, `authorTemplate`, `validateSpace`, `validateTemplate`, the spec types |
+| assembly and validation | `authorSpace`, `authorSnippet`, `validateSpace`, `validateSnippet`, the spec types |
 
 It used to be a `/authoring` fragment inside each of five packages, composed at the end. Each fragment read its own
 package's internals, which is what keeps a factory honest — but it also meant five places to look for one answer,
@@ -447,6 +447,36 @@ with no fields.
 Only for a real inverse. `cannotEdit: Boolean(post) && !canEdit` is three states, not two — the page shows nothing
 at all when there is no post — and a condition like that still belongs where the data is made.
 
+### Feature flags — what a person switches on
+
+Visibility is the page's own logic. What a PERSON decides is switched on — a feature still being built, a version for
+beta users, the old checkout kept during a rollout — is a feature flag, declared on the space and named by a gate:
+
+```ts
+authorSpace({
+  name: 'Shop',
+  permanentUrl: 'shop',
+  flags: {
+    newCheckout: {
+      description: 'The one-step checkout',
+      value: false,
+      rules: [{ when: { combinator: 'and', rules: [{ field: 'user.roles', operator: 'contains', value: 'beta' }] }, value: true }]
+    }
+  },
+  pages: [{ name: 'Checkout', slug: 'checkout', body: [
+    container({ id: 'checkout-new', flag: 'newCheckout', children: [ … ] }),
+    container({ id: 'checkout-old', flag: '!newCheckout', children: [ … ] })
+  ] }]
+});
+```
+
+A gated element whose flag disagrees is not rendered at all — not a hidden element, no markup and no server data — and
+a gated page answers 404. Its declaration still travels with the space's document, so a flag switches a feature off; it
+does not keep it secret. `{{ flags.newCheckout }}` reads one anywhere a source is read, a server action included, and
+`useFlag('newCheckout')` from a plugin. Above the space, the server rendering it, the SDK embedding it and a tester with
+the dev tools may each override a flag the space declares. The whole of it — layers, publishing, the builder — is in
+[Feature flags](./feature-flags.md).
+
 ---
 
 ## 6. Flows
@@ -684,7 +714,12 @@ declared pattern matches is refused here, naming the patterns (`channel-topic` i
 whether one is valid. Everything else — the style vocabulary, the element factories, the step builders — produces
 inert specs. That is what keeps every guarantee about the finished document in one place.
 
-`authorSpace` puts its own output through the same gate anything else goes through, and throws on:
+`authorSpace` puts its own output through the same gate anything else goes through. It reports everything it cannot
+write in one run — a `SpaceRefusedError` whose `refusals` each carry the line that wrote the element, the nearest named
+element and a **code**. Every refusal and warning has one: `AUTHORING_CODES` (exported) is the table they are raised
+from — whether each is refused or warned, what was wrong and what to write instead — and the skill's
+`reference/authoring-errors.md` is generated from it (`yarn generate:authoring-errors` in `sdk-authoring`), so a code
+cannot be missing from the page. It refuses:
 
 - a CSS property the style editor could not read back
 - a `class` or a `slot` naming a class the space does not declare (with the name you probably meant)
@@ -699,8 +734,11 @@ inert specs. That is what keeps every guarantee about the finished document in o
   element that publishes it (a query parameter is `navigation.queryParams.<name>`)
 - a template feeding an attribute that holds a list or an object (`items`) that renders text
 - children on a type that holds none (`heading`, `text`, `image`, `formControl`…) — a heading made of parts is a
-  `container` with an `h1`–`h6` tag
-- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `theme`)
+  `container` with an `h1`–`h6` tag, and a piece inline in it a `container` with `subType: 'span'`
+- a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `host`, `theme`, `flags`,
+  `computed`)
+- a `flag` that is not a flag name, a gate on a flag the space does not declare (`flag-undeclared`), a template reading
+  one (`flag-unknown`), and a declaration whose `value` or a rule's is not `true` or `false`
 - a step target naming an element that is not there
 - two elements answering to one name — the error says where the first one was written
 - a flow whose chain points at a node that is not there
@@ -710,7 +748,10 @@ And it returns `warnings` for what is written and will not do what it says — `
 `condition-starts-visible` (a computed visibility that would show until its data answers), `template-never-resolved` (a condition in an ATTRIBUTE, which only resolves `{{ name|filter }}` tokens — against the sources around the element; conditions
 belong in a binding's template or a step's params, where Twig is evaluated in full), `state-key-has-runtime-prefix`,
 `FORM_SUBMIT_UNMANAGED`, `STYLE_WITHOUT_TAG`, `tablet-rule-skips-mobile` (write the rule under `compact` to reach
-both), `default-content-beside-children` (a `button` whose placeholder "Button" would print beside its children).
+both; a rule the phone hides with `display: none` is left alone), `span-holds-block` (a `container` with
+`subType: 'span'` holding a heading, a paragraph, a list, a form or prose), `default-content-beside-children` (a `button` whose placeholder "Button" would print beside its children),
+`flag-unused` (a declared flag nothing gates on or reads) and `flag-rule-empty` (a flag rule with no conditions, which
+is skipped rather than read as "always").
 
 Documents you did NOT author here go through the same door:
 
@@ -744,17 +785,17 @@ is inside the packages:
 
 ---
 
-## 9. Templates
+## 9. Snippets
 
-A **template** is the other artefact this surface produces, and it is not a space: one subtree, the style that
-dresses it and a name, published as a JSON. Somebody fetches it by URL, it appears in the builder's Resources
-panel, and dragging it onto a canvas instantiates a copy of the subtree in a space you never see.
+A **snippet** is the other artefact this surface produces, and it is not a space — nor a component, which stays
+linked to every place it renders, where a dropped snippet is a copy (see `components.md`, *Components and snippets*):
+one subtree, the style that dresses it and a name, published as a JSON. Somebody fetches it by URL, it appears in the builder's **Assets → Files**, and dragging it onto a canvas instantiates a copy of the subtree in a space you never see.
 
 ```ts
-import { authorTemplate } from '@plitzi/sdk-authoring';
+import { authorSnippet } from '@plitzi/sdk-authoring';
 import { writeFile } from 'node:fs/promises';
 
-const { template, warnings } = authorTemplate({
+const { snippet, warnings } = authorSnippet({
   name: 'Pricing card',
   description: 'A price, a list of features and a call to action.',
   classes: {
@@ -767,35 +808,52 @@ const { template, warnings } = authorTemplate({
   })
 });
 
-await writeFile('pricing-card.json', JSON.stringify(template, null, 2));
+await writeFile('pricing-card.json', JSON.stringify(snippet, null, 2));
 ```
 
 That file is the whole deliverable. Host it anywhere, and add it to a space as an `application/json` resource —
-uploading it lands it in `templates/` on that space's CDN, and the Resources panel picks it up from there.
+uploading it lands it in `snippets/` on that space's CDN, and **Assets → Files** picks it up from there.
 
-`root` is a single element and its subtree: the root is the template's `baseElementId`, so nobody writes an id.
+`root` is a single element and its subtree: the root is the snippet's `baseElementId`, so nobody writes an id.
 Everything else — `classes`, `elements`, `variables`, `schemaVariables` — is declared exactly as a space declares
-it, and for the same reason it matters more here: **what the template names, the template has to carry**.
+it, and for the same reason it matters more here: **what the snippet names, the snippet has to carry**.
 
-Two checks exist only for templates, because a template leaves the space it was written in:
+Two checks exist only for snippets, because a snippet leaves the space it was written in:
 
 | Refused / warned | Why |
 | --- | --- |
-| a binding whose source is outside the subtree | the element publishing it stays behind, so the binding resolves to nothing wherever the template lands — bring the provider into the template, or bind to a global (`variables`, `navigation`, `auth`, `state`) |
+| a binding whose source is outside the subtree | the element publishing it stays behind, so the binding resolves to nothing wherever the snippet lands — bring the provider into the snippet, or bind to a global (`variables`, `navigation`, `auth`, `state`) |
 | a class named but not carried (warning) | the element keeps the class, finds no rules in the space it was dropped into and renders unstyled |
-| a page inside a template | a template is a subtree dropped onto a canvas; a page has nowhere to go |
+| a page inside a snippet | a snippet is a subtree dropped onto a canvas; a page has nowhere to go |
 | a base element with a parent | the base element is the root of what travels |
 
 For a manifest authored elsewhere — exported by the builder, edited by hand — the same gate runs on its own:
 
 ```ts
-const { valid, errors, warnings } = validateTemplate(template);
+const { valid, errors, warnings } = validateSnippet(snippet);
 ```
 
-The builder's own "save as template" is the other direction and does not go through `authorTemplate`: it starts
-from a live schema and cuts a subtree out of it (`FlatMap.flatAsTemplate`), which is a different question — which
+The builder's own "save as snippet" is the other direction and does not go through `authorSnippet`: it starts
+from a live schema and cuts a subtree out of it (`FlatMap.flatAsSnippet`), which is a different question — which
 of a space's rules and variables belong to this subtree — from the one here, where the answer is simply everything
-the declaration carries. Both produce the same artefact, and `validateTemplate` reads either.
+the declaration carries. Both produce the same artefact, and `validateSnippet` reads either: a definition, the
+elements and their variables (`schema.flat`, `schema.variables`), and the style — nothing else of a space travels.
+
+### Dropped into a space
+
+A snippet lands in a space that has names of its own, and **nothing the space already holds is changed by it**:
+
+| What the snippet brings | Where the space already has that name |
+| --- | --- |
+| an element id | the snippet's element is renamed (`hero` → `hero-2`), and everything in the snippet that pointed at it follows |
+| a class | kept and shared when it says the same; otherwise the snippet's is renamed (`card` → `card-2`), on its rule, on the elements that wear it and wherever another of its rules names it as an ancestor — the space's own `.card` is never restyled |
+| a rule for an element type | the space's is kept: how every text of the space looks is the space's |
+| a token (`variables`) | the space's is kept; one the space lacks is added |
+
+The names are fitted once, where the snippet is dropped (`fitSnippet`, `@plitzi/sdk-schema/helpers/fitSnippet`),
+and the editor, the server and every collaborator insert the same ones; the style is added by one rule on all of
+them (`mergeSnippetStyle`, `@plitzi/sdk-shared/style/snippetStyle`). A name taken by someone else in between is
+refused rather than stored under another one.
 
 ## 10. From a document back to code
 
@@ -840,5 +898,5 @@ and answers `{ exportName, files, corrections, differences }`.
 | [`examples/self-hosting/03-sessions`](../../examples/self-hosting/03-sessions) | two pages on one path, and an auth flow |
 | `plitzi-sdk-server/prisma/seeds/spaces/examples/shippingQuote` | a form that runs a server action — whose step is the space's own function — and shows the answer |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo/blog` | six pages, a custom element, visitor roles, bindings throughout |
-| `plitzi-sdk-server/prisma/seeds/spaces/demo/saasLanding/pricingCard.ts` | a template: one subtree and the style it carries, uploaded to a space's CDN |
+| `plitzi-sdk-server/prisma/seeds/spaces/demo/saasLanding/pricingCard.ts` | a snippet: one subtree and the style it carries, uploaded to a space's CDN |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo` | the demo spaces, seeded on every deployment — `website1` and `comingSoon` read back from JSON with `specFromSpace` |

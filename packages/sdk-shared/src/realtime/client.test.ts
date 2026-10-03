@@ -1,9 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createRealtimeClient } from './client';
 import { trackPresence } from './presence';
+import { pConsole } from '../devTools/utils/PlitziConsole';
 
 import type { RealtimeMember } from './presence';
+import type { LogRealtime } from '../types/DevToolsTypes';
 import type { RealtimeMessage } from '../types/RealtimeTypes';
 
 const wait = (ms = 60) => new Promise(resolve => setTimeout(resolve, ms));
@@ -67,6 +69,42 @@ const stops: (() => void)[] = [];
 afterEach(() => stops.splice(0).forEach(stop => stop()));
 
 describe('createRealtimeClient', () => {
+  it('says what the connection does in the dev tools: its status, each message in and out, every refusal', async () => {
+    const said: LogRealtime['params'][] = [];
+    const record = (_: unknown, __: unknown, params: unknown) => {
+      // Nothing but the client logs while this runs, and it logs only realtime entries.
+      said.push(params as LogRealtime['params']);
+    };
+    const spies = (['info', 'success', 'warning', 'danger'] as const).map(method =>
+      vi.spyOn(pConsole, method).mockImplementation(record)
+    );
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    stops.push(client.subscribe('board:1', () => undefined));
+    await wait();
+    server.streams[0].push('ready', {
+      connection: 'me',
+      token: 'secret',
+      topics: ['board:1'],
+      refused: [{ topic: 'room:alpha', reason: 'ungranted' }]
+    });
+    server.streams[0].push('message', message({}));
+    await wait();
+    await client.publish('board:1', 'cursor', { x: 1 });
+    spies.forEach(spy => spy.mockRestore());
+
+    expect(said.map(params => params.event)).toEqual(['status', 'refused', 'status', 'received', 'published']);
+    expect(said[0]).toEqual({ event: 'status', status: 'connecting', topics: ['board:1'], transport: 'sse' });
+    expect(said[1]).toEqual({ event: 'refused', topic: 'room:alpha', reason: 'ungranted' });
+    expect(said.at(-1)).toEqual({
+      event: 'published',
+      topic: 'board:1',
+      type: 'cursor',
+      data: { x: 1 },
+      delivered: true
+    });
+  });
+
   it('opens ONE connection for the topics a page listens to, and delivers each message to its topic', async () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });

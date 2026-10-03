@@ -23,13 +23,16 @@ import Loading from './internal/Loading';
 import NotFound from './internal/NotFound';
 import Page from './internal/Page';
 // Media
+import Embed from './media/Embed';
 import FontAwesome from './media/FontAwesome';
 import Image from './media/Image';
+import Svg from './media/Svg';
 import Video from './media/Video';
 // Provider
 import ApiContainer from './provider/ApiContainer';
 import Channel from './provider/Channel';
 // Structure
+import Carousel from './structure/Carousel';
 import Container from './structure/Container';
 import DialogContainer from './structure/DialogContainer';
 import List from './structure/List';
@@ -57,7 +60,9 @@ export * from './internal/LayoutContainer';
 export * from './internal/Loading';
 export * from './internal/Page';
 export * from './media/FontAwesome';
+export * from './media/Embed';
 export * from './media/Image';
+export * from './media/Svg';
 export * from './media/Video';
 export * from './provider/ApiContainer';
 export * from './provider/Channel';
@@ -66,6 +71,7 @@ export * from './structure/DialogContainer';
 export * from './structure/List';
 export * from './structure/ModalContainer';
 export * from './structure/Pagination';
+export * from './structure/Carousel';
 export * from './structure/TabContainer';
 
 export {
@@ -83,9 +89,12 @@ export {
   DialogContainer,
   ModalContainer,
   TabContainer,
+  Carousel,
   Heading,
   Image,
   Video,
+  Embed,
+  Svg,
   FontAwesome,
   Button,
   Paragraph,

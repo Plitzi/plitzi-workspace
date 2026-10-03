@@ -1,7 +1,9 @@
 # Structuring a space that grows
 
-A one-screen space fits in `src/space.ts`. Past a few pages, split it by what changes together — and keep every
-repeated thing in exactly one place.
+A one-screen space fits in `src/space.ts`. Past a few pages, split it by what changes together — a file per part, short
+enough to read whole — and keep every repeated thing in exactly one place. `npx @plitzi/cli create shop --template
+catalog` writes a complete small site in this shape (tokens, a layout, a card component, typed data, a page per file)
+to read before writing one.
 
 ```text
 src/space/
@@ -20,28 +22,35 @@ src/space/
 
 ## Components are functions
 
-The same block in two places is a function with parameters. Its ids come from a parameter, because ids are one
-namespace for the whole space:
+The same block in two places is a function with parameters. Ids are one namespace for the whole space, so the
+function builds inside `scope()`: every `id` given in it is prefixed by the scope's name, and `ref()` names one of them
+in full for a binding, a step's target or a template:
 
 ```ts
 export const panel = (params: { id: string; title: string; sub?: string; link?: { href: string; label: string }; children: ElementSpec[] }): ElementSpec =>
-  container({
-    id: params.id,
-    class: panelCard,
-    children: [
-      container({
-        id: `${params.id}-head`,
-        class: panelHead,
-        children: [
-          heading(params.title, { id: `${params.id}-title`, subType: 'h3', class: panelTitle }),
-          ...(params.sub ? [text(params.sub, { id: `${params.id}-sub`, class: panelSub })] : []),
-          ...(params.link ? [link({ id: `${params.id}-link`, href: params.link.href, class: panelLink, children: [text(params.link.label)] })] : [])
-        ]
-      }),
-      ...params.children
-    ]
-  });
+  scope(params.id, () =>
+    container({
+      id: 'panel',
+      class: panelCard,
+      children: [
+        container({
+          id: 'head',
+          class: panelHead,
+          children: [
+            heading(params.title, { id: 'title', subType: 'h3', class: panelTitle }),
+            ...(params.sub ? [text(params.sub, { id: 'sub', class: panelSub })] : []),
+            ...(params.link ? [link({ id: 'link', href: params.link.href, class: panelLink, children: [text(params.link.label)] })] : [])
+          ]
+        }),
+        ...params.children
+      ]
+    })
+  );
 ```
+
+`panel({ id: 'hm-traffic', … })` writes `hm-traffic-panel`, `hm-traffic-title`… Whatever names one of them from inside
+takes it from the function's argument — `scope(params.id, ref => …)`, then `scrollBy(ref('row'), …)` or
+`` `{{ list_${ref('row')}.index }}` ``. Scopes nest; a list's `row` already reads its list by its full name.
 
 A page then reads as what it shows: `panel({ id: 'hm-traffic', title: 'Traffic', link: { href: 'analytics', label:
 'Open analytics →' }, children: [chart] })`.

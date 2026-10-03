@@ -76,7 +76,14 @@ const WorkflowHeader = ({ flows, flowId = '', flowSummaries = {}, setFlowId }: W
           New Flow
         </Button>
         {flowId && (
-          <Button intent="danger" size="xs" className="rounded-full" onClick={handleClickRemove} title="Remove Flow">
+          <Button
+            size="xs"
+            intent="secondary"
+            border="none"
+            className="text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-zinc-500 dark:hover:bg-red-500/15 dark:hover:text-red-400"
+            onClick={handleClickRemove}
+            title="Remove Flow"
+          >
             <i className="fas fa-trash-alt" />
           </Button>
         )}

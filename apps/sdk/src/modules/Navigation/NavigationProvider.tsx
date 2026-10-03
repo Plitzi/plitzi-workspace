@@ -8,12 +8,16 @@ import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
 import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { flagValues, passesFlagGate, resolveFlags } from '@plitzi/sdk-shared/flags';
+import { flagUserFrom } from '@plitzi/sdk-shared/flags/useFlagResolution';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
 import { isAbsoluteUrl, navigationTarget } from '@plitzi/sdk-shared/navigation';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import refreshRsc from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
+
+import useScrollToHash from './useScrollToHash';
 
 import type { CommonState, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -50,10 +54,12 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   // The root store, for the prefetch below: `refreshRsc` writes what it fetched where every element reads it.
   const store = useStoreById<CommonState>();
   const { renderMode, previewMode, environment } = useRenderSettings();
-  const [[pageFolders, pageDefinitions, schemaVariables]] = useSdkStore([
+  const [[pageFolders, pageDefinitions, schemaVariables, schemaFlags, flagOverrides]] = useSdkStore([
     'schema.pageFolders',
     'pageDefinitions',
-    'schema.variables'
+    'schema.variables',
+    'schema.flags',
+    'flags.overrides'
   ]);
   // Written by reference during the SSR render and read back by the server to shape the response; undefined in the
   // browser, where the page has already been sent.
@@ -74,7 +80,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   pageDefinitionsRef.current = pageDefinitions;
   const pageFoldersRef = useRef(pageFolders);
   pageFoldersRef.current = pageFolders;
-  const { authenticated } = use(AuthContext);
+  const { authenticated, user } = use(AuthContext);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const routerNavigate = renderMode !== 'widget' ? useNavigate() : undefined;
   /**
@@ -106,6 +112,11 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
 
   const { action, pageId = '', pathMatch } = matchResult;
   const currentPageId = currentPageIdProp || pageId;
+  useScrollToHash({
+    hash: routerLocation?.hash ?? '',
+    navigationKey: routerLocation?.key,
+    enabled: previewMode && renderMode !== 'widget'
+  });
 
   useEffect(() => {
     pConsole.info(
@@ -196,7 +207,37 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
     { raw: true }
   );
 
-  if (action.type === 'notFound') {
+  /**
+   * A page gated on a flag that says no is a page that does not exist — the same answer, status included, as a URL
+   * nothing matches.
+   *
+   * Resolved here rather than read from the `flags` source, for the reason the variables below are: that source is
+   * published by a child of this provider, and this is where it is decided whether any child renders. With the same
+   * values that source is about to be given, so the two answer alike.
+   */
+  const pageGate = Object.hasOwn(pageDefinitions, currentPageId)
+    ? pageDefinitions[currentPageId].definition.flag
+    : undefined;
+  const pageGatedOff =
+    pageGate !== undefined &&
+    !passesFlagGate(
+      pageGate,
+      flagValues(
+        resolveFlags(
+          schemaFlags,
+          {
+            environment,
+            hostname,
+            routeParams,
+            queryParams: stableQueryParams,
+            user: flagUserFrom({ authenticated, user })
+          },
+          flagOverrides
+        )
+      )
+    );
+
+  if (action.type === 'notFound' || pageGatedOff) {
     if (ssrResult) {
       ssrResult.status = 404;
     }

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { flagGateOf } from '@plitzi/sdk-authoring';
+
 import {
   empty,
   fail,
@@ -9,6 +11,7 @@ import {
   indexAddPage,
   resolveRef
 } from '../../../../helpers';
+import { elementFlag } from '../shared';
 import { guardNewRef, layoutsUri, pageUri, pagesUri } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -58,7 +61,8 @@ export const upsertPageOp = z
       .describe(
         'false disables the page in the published SDK runtime (not routable/accessible to end users); it stays ' +
           'editable here. Defaults to true'
-      )
+      ),
+    flag: elementFlag.nullable().optional()
   })
   .describe('Create a page, or update it when ref already exists (only the fields you pass change).');
 
@@ -153,6 +157,11 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       ...(layoutValue !== undefined ? { layout: layoutValue } : {}),
       ...(slotValue !== undefined ? { layoutContainer: slotValue } : {})
     };
+    if (op.flag === null) {
+      Reflect.deleteProperty(existing.definition, 'flag');
+    } else if (op.flag !== undefined) {
+      existing.definition.flag = flagGateOf(op.flag, `Page "${op.ref}"`);
+    }
 
     return {
       ...empty(),
@@ -185,7 +194,8 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       label: op.label ?? op.ref,
       type: 'page',
       items: [],
-      styleSelectors: { base: '' }
+      styleSelectors: { base: '' },
+      ...(op.flag ? { flag: flagGateOf(op.flag, `Page "${op.ref}"`) } : {})
     }
   };
   space.schema.flat[id] = page;

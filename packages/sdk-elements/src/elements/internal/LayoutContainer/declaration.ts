@@ -45,7 +45,7 @@ const declaration = elementDeclaration<LayoutContainerAttributes>()({
       canSelect: true,
       canDragDrop: false,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

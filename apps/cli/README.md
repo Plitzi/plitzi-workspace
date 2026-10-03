@@ -104,7 +104,107 @@ when an install fails the CLI says which setting names it.
   `eslint-config-prettier` keeping the two from arguing on save. `lint` and `format` are scripts from the first
   commit, which is the only moment a repository's style is cheap to decide.
 - **The authoring skill**, in `.claude/skills/`, so an agent working in the project knows how a space is put
-  together before it touches one.
+  together before it touches one: a cheatsheet to start from, references by subject and recipes by intent — each a
+  file that authors with no warning. `.claude` is left out of the project's lint and formatting.
+- **`AGENTS.md`**: the commands, the port, where data goes, how to look at a page, and what not to read.
+- **Quiet output.** `author` prints one line when the space is fine (every problem with its code when it is not), the
+  server only what goes wrong (`npm start -- --verbose` for every request), `typecheck` one line per error.
+
+## `create --template blank` and `--template catalog`
+
+A space written in the project starts as the welcome tour, with a plugin of the project's own. `--template blank`
+starts it as tokens for both themes, a layout whose `site-main` the pages render in, and one empty page — with
+`public/data/` and no example plugin — for a project that is about to be a specific site. `--template catalog` starts
+it as a complete small shop to read and change: a layout with a menu, a product card component, the products in
+`public/data/products.json` read as a typed source, a catalog filtered by category, and a page per product — a file
+per part under `src/site/`. Both go with `--source local`.
+
+## `check` and `shot`
+
+```bash
+plitzi check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
+plitzi check /products --state --element catalog-count   # and what it holds: state, sources, one element
+plitzi shot /about --width 390 --scheme dark
+plitzi shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
+plitzi shot / --compare https://example.com --width 1440   # side by side, and how much differs by section
+```
+
+Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
+another project. `check` reports every element the space owes the page that is missing or hidden (with why), broken
+images, sideways scroll, text in the colour behind it, console errors and refused requests — a page's state in a few
+hundred tokens, where a screenshot costs thousands. `shot --compare` writes the two pictures side by side and the
+differences in red, and says the share that differs in each landmark of the page; `--frames` compares pictures taken
+one after another and names what moved. A project `create` writes has them as `npm run check` and `npm run shot`.
+
+## `fix`
+
+```bash
+plitzi fix            # what authoring would fix, as a diff of your own source
+plitzi fix --write    # written, formatted as the project formats, and checked
+```
+
+The fixes are the ones with a single reading (`fixSpace`'s: a key the element never reads, `'true'` where a boolean
+goes, a URL in page mode, a `state.` prefix on a state key…). Each is made in the call that wrote the element — found
+by the line and column the element remembers — and only where the value is written as a literal; anything else is
+listed with where it is and why it was left. `--write` authors the space again in a fresh process and keeps the edits
+only if every fix is gone and no problem was added; a fix that would add one is put back and said.
+
+## `import`
+
+```bash
+plitzi import https://example.com/pricing                 # into src/imported
+plitzi import https://example.com/ --out src/home --widths 1440,390
+```
+
+A page you own or may reuse, measured in the project's own Playwright as a place to start writing from — never a copy
+of it. The widest width is desktop, the others tablet and mobile; the page is measured once more in the dark scheme.
+What lands in `--out`:
+
+- `tokens.ts` — the page's own custom properties by their names, then the colours it shows most, each with the value
+  the same place shows in the dark (the light one again, said in `IMPORT.md`, when it has no dark scheme); the corners
+  and shadows it repeats; its Google fonts. `variables`, `fonts` and `t` to hand to the space.
+- `outline.ts` — `container()`s for its landmarks and blocks, each with its layout per breakpoint written as what the
+  narrower widths change, colours as tokens, and a block hidden at a width as `display: 'none'` there. A repeated block
+  is written once, and its rows go to `data/<name>.json`.
+- `assets.json`, `screens/<width>.png`, and `IMPORT.md`: what was not carried over (the text, states, scripts, fonts
+  not on Google) and what to do next.
+
+It reads only a site that is yours: one served from this machine (a host that resolves to loopback), or one a verified
+domain of one of your spaces covers — the `_plitzi` TXT record a custom domain is verified by, under **Domains** in the
+dashboard, asked of the platform you are signed in to (`--api`). Anything else is refused before a page is opened.
+
+It refuses an `--out` that already has files unless `--force`, and then names the files an earlier import left that it
+did not write again.
+
+## `explain`
+
+```bash
+plitzi explain container        # an element: its attributes and their values, what it fires and answers, its slots
+plitzi explain navigate         # a step: its params and the function that writes it
+plitzi explain onScroll         # a trigger: what it hands its flow, and what fires it
+plitzi explain class-and-css    # a problem's code: what was wrong, what to write instead
+plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers
+```
+
+What a name means when authoring, from the catalogues the checks themselves read — the answer to a question that would
+otherwise be a search through the SDK's types. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
+
+## `skills update`
+
+The skills `create` copies into `.claude/skills/` say the version of the package they came from (`version:` in
+`SKILL.md`), and `npm run author` says when the authoring skill is older than the `@plitzi/sdk-authoring` installed.
+`plitzi skills update` replaces each Plitzi skill there with the one of the installed package — whole, so a reference it
+no longer has goes with it — and leaves any other skill alone.
+
+## `data describe`
+
+```bash
+plitzi data describe public/data/products.json          # its shape, and one row of its longest list
+plitzi data describe public/data/products.json --json   # { shape, example }
+```
+
+The fields of a JSON file, their types and which rows have them — `price?: number  (in 812 of 879)` — so a page can
+be bound to half a megabyte of data after reading twenty lines of it.
 
 ## `pull`
 
@@ -139,6 +239,18 @@ what the builder shows, and what it is for, and checks every folder is free befo
   to register the element — for `render()`, for `<PlitziSdk>` in a React application, and for a page server.
 
 A name that would make a built-in element's type (`button`, `form`) is refused: a space could not tell the two apart.
+
+Told its shape, it writes that shape rather than the counter it writes otherwise — one element at a time:
+
+```bash
+plitzi add plugin ticker --prop interval:number=5000 --prop paused:boolean --trigger onTick:count --callback reset --headless
+```
+
+`--prop name:type=default` (string, number or boolean) is an attribute: in the props, the declaration's defaults and
+`bindingsAllowed`, and a control in `Settings.tsx`. `--trigger onTick:count,at` is an event and what a flow started by
+it reads, fired with the `useTickerEvents()` hook it gets. `--callback reset` is an action a flow can call. `--headless`
+is an element with nothing to see: hidden on a page, a badge in the builder. The files are written as the project's
+Prettier writes them.
 
 ## `create --plugin`
 

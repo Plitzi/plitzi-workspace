@@ -1,12 +1,11 @@
-import { useCallback, use, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { isRTEvent, RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
 import useCollaborators from '@pmodules/Collaboration/hooks/useCollaborators';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
 
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { RTCallback, RTMessageManagedServer } from '@plitzi/sdk-shared/websockets/RTCodec';
 import type { ReactNode } from 'react';
 
@@ -28,7 +27,7 @@ const NetworkSubscriptionsContextProvider = ({
   // A plain map, not state: registering a listener is not a render input, and several listeners per event
   // (one collaborator area each) have to coexist without re-rendering the tree that holds them.
   const callbacksRef = useRef(new Map<RTEvent, Map<string, RTCallback>>());
-  const { webKey, instanceId, server, userKey } = use(NetworkContext) as BuilderNetworkContextValue;
+  const { webKey, instanceId, server, userKey } = useBuilderNetwork();
 
   const registerCallback = useCallback(
     (type: RTEvent, callback: RTCallback, subscriberId: string = instanceId) => {

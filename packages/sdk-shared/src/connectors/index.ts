@@ -8,7 +8,7 @@ export {
 } from './constants';
 export { connectorTokens, getConnectorTokens } from './manifestTokens';
 export { connectorPresets, emptyManifest } from './presets';
-export { validateConnectorManifest } from './validateManifest';
+export { isConnectorManifestDraft, validateConnectorManifest } from './validateManifest';
 
 export type { ConnectorPreset } from './presets';
 export type { ConnectorToken, ConnectorTokenScope } from './manifestTokens';

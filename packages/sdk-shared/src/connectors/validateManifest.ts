@@ -1,7 +1,9 @@
 import { BODYLESS_METHODS, CONNECTOR_HTTP_METHODS } from './constants';
 import { connectorTokens } from './manifestTokens';
+import { isRecord } from '../helpers/isRecord';
 
 import type { ConnectorTokenScope } from './manifestTokens';
+import type { ConnectorManifestDraft } from '../types';
 
 /**
  * The one connector-manifest validator.
@@ -48,9 +50,6 @@ const FIELD_TYPES = [
 ];
 
 const TOKEN = /\{\{\s*([^}]+?)\s*\}\}/g;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value);
 
 const isFilledString = (value: unknown): value is string => typeof value === 'string' && value.trim() !== '';
 
@@ -419,3 +418,7 @@ export const validateConnectorManifest = (input: unknown): ConnectorManifestRepo
 
   return { valid: acum.errors.length === 0, errors: acum.errors, warnings: acum.warnings };
 };
+
+/** Whether a value read from outside — a deployment's store, a request — is a manifest the engine can run. */
+export const isConnectorManifestDraft = (input: unknown): input is ConnectorManifestDraft =>
+  validateConnectorManifest(input).valid;

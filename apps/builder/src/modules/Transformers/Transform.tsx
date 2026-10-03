@@ -9,11 +9,12 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import TransformActions from './TransformActions';
 import TransformLayout from './TransformLayout';
@@ -27,7 +28,7 @@ import type { ClipboardEvent } from 'react';
 const Transform = () => {
   const { resolvedTheme } = useTheme();
   const editorRef = useRef<HTMLElement | null>(null);
-  const { server, webKey } = use(NetworkContext);
+  const { server, webKey } = useBuilderNetwork();
   const { addToast } = useToast();
   const {
     builderHandler,
@@ -67,7 +68,7 @@ const Transform = () => {
 
   const handleClickImport = useCallback(() => {
     if (!elementSelected) {
-      addToast('Select an element before import the template', {
+      addToast('Select the element to import into first', {
         appeareance: 'info',
         autoDismiss: true,
         placement: 'top-right'
@@ -81,7 +82,7 @@ const Transform = () => {
     const elements = get(preview, 'schema.flat', undefined);
     const stylePlatform = get(preview, 'style.platform', undefined);
     if (!rootId || !baseElement || !elements || !stylePlatform) {
-      addToast('The template seems to be empty or something is missing', {
+      addToast('Nothing to import: the result is empty or incomplete', {
         appeareance: 'info',
         autoDismiss: true,
         placement: 'top-right'
@@ -98,7 +99,7 @@ const Transform = () => {
     set(baseElement, 'definition.parentId', elementSelected);
 
     builderHandler(
-      'schemaAddTemplate',
+      'schemaAddSnippet',
       elementSelected,
       pick(baseElement, ['id', 'definition', 'attributes']),
       'inside',
@@ -112,7 +113,7 @@ const Transform = () => {
   const handleChangeCustomStyle = useCallback((value: string) => setCustomCss(value), [setCustomCss]);
 
   const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
-    if (!editorRef.current || !editorRef.current.contains(e.target as HTMLDivElement)) {
+    if (!editorRef.current || !editorRef.current.contains(nodeOf(e.target))) {
       return;
     }
 

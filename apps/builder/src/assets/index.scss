@@ -8,15 +8,19 @@
   @import '@fortawesome/fontawesome-free/css/solid.min.css';
   @import '@fortawesome/fontawesome-free/css/regular.min.css';
   @import '@fortawesome/fontawesome-free/css/brands.min.css';
-  @import '@xyflow/react/dist/style.css';
 }
 
 @import './tailwind.css';
 
 @layer plitzi-builder-base {
   @include meta.load-css('./variables');
+  // Plitzi's typeface, as on the website and the dashboard. Declared here and not on `:root`: the builder is mounted
+  // inside a host page, whose own `--font-sans` it must neither read nor overwrite. The host loads the faces.
   .plitzi-builder {
-    font-family: 'Rubik', sans-serif;
+    --font-sans: Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    font-family: var(--font-sans);
   }
 
   body,

@@ -7,6 +7,7 @@ import {
   elementCallbacks,
   elementDefaultAttributes,
   elementLeafTypes,
+  elementPartTypes,
   elementSlots,
   elementSourceTypes,
   elementTriggers,
@@ -15,18 +16,19 @@ import {
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from './interactions';
 import {
   authorSpace as authorSpaceUnchecked,
-  authorTemplate as authorTemplateUnchecked,
+  authorSnippet as authorSnippetUnchecked,
   fixSpace as fixSpaceUnchecked,
   lintSpace as lintSpaceUnchecked,
+  planFixes as planFixesUnchecked,
   validateSpace as validateSpaceUnchecked,
-  validateTemplate as validateTemplateUnchecked
+  validateSnippet as validateSnippetUnchecked
 } from './schema';
 import { BUILTIN_TRANSFORMERS } from './transformers';
 
 import type {
   AuthorSpaceOptions,
   AuthoredSpace,
-  AuthoredTemplate,
+  AuthoredSnippet,
   FixResult,
   LintCatalogs,
   LintResult,
@@ -34,13 +36,14 @@ import type {
   SpaceValidationOptions,
   SpaceSpec,
   StepVocabulary,
-  Template,
-  TemplateSpec
+  Snippet,
+  SnippetSpec,
+  FixPlan
 } from './schema';
 import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
 
 /**
- * Authoring a space, or a template, in code — and the only place any of it lives.
+ * Authoring a space, or a snippet, in code — and the only place any of it lives.
  *
  * Every part of the surface is here: the CSS vocabulary, the element factories, the interaction catalogs and step
  * builders, the binding transformers, and the assembly and validation that turn specs into documents. It used to
@@ -53,15 +56,101 @@ import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaVa
  * points one way, always, and that is what lets this be a package rather than a folder.
  *
  * It is deliberately free of React and of anything that touches a browser: a seed, a migration, a self-hosted
- * server, a build script and a hosted template are the places a document gets authored, and none of them can load
+ * server, a build script and a hosted snippet are the places a document gets authored, and none of them can load
  * a component. That is enforced by what it holds — data and functions over data, nothing else — and by a build
  * that bundles its four workspace dependencies in and declares none at all.
  */
 
+/**
+ * The documents' own types, as this package's API names them — `SpaceSpec['fonts']` is `SpaceFont[]`, an authored space
+ * is a `Schema` and a `Style`. Re-exported so a project imports what it is handed from where it was handed it, rather
+ * than learning that they live in `@plitzi/sdk-shared` (or writing `NonNullable<SpaceSpec['fonts']>` to name one).
+ */
+export type {
+  ActionAccess,
+  ActionDocument,
+  ActionEntry,
+  ActionField,
+  ActionFieldType,
+  ActionLimits,
+  BindingCategory,
+  BindingTransformer,
+  ChannelDeclaration,
+  ChannelDeclarations,
+  ColorScheme,
+  ComponentProp,
+  DisplayMode,
+  Element,
+  ElementBinding,
+  ElementDefinition,
+  ElementFlagGate,
+  ElementInteraction,
+  ElementLoadStrategy,
+  ElementRuntime,
+  FontBase,
+  FontDisplay,
+  FontFace,
+  FontStyle,
+  GoogleFont,
+  HostedFont,
+  InteractionCallback,
+  InteractionCallbackContext,
+  InteractionCallbackParam,
+  InteractionCallbackParamValues,
+  InteractionCallbackPreview,
+  InteractionCallbackPreviews,
+  InteractionCallbackType,
+  InteractionParamType,
+  InteractionPostCallback,
+  ManifestAsset,
+  PageFolder,
+  PluginBuilder,
+  PluginManifest,
+  PluginSchema,
+  RemoteFont,
+  Schema,
+  SchemaFlag,
+  SchemaFlagRule,
+  SchemaRsc,
+  SchemaVariable,
+  SpaceComponent,
+  SpaceCredentialProvider,
+  SpaceFont,
+  Style,
+  StyleAncestor,
+  StyleAncestors,
+  StyleAttributes,
+  StyleBlock,
+  StyleCategory,
+  StyleItem,
+  StyleMode,
+  StyleObject,
+  StyleState,
+  StyleStates,
+  StyleThemeValue,
+  StyleValue,
+  StyleVariableCategory,
+  StyleVariableGroup,
+  StyleVariableValue,
+  StyleVariables,
+  StyleVariants,
+  SystemFont,
+  TagType,
+  Theme,
+  WhileRunning
+} from '@plitzi/sdk-shared';
+export type {
+  SchemaValidationError,
+  SchemaValidationOptions,
+  SchemaValidationResult
+} from '@plitzi/sdk-schema/helpers/schemaValidator';
+
 export * from './decompile';
+export * from './explain';
 export * from './elements';
 export * from './interactions';
 export * from './schema';
+export * from './import';
 export * from './spaces';
 export * from './style';
 export * from './testing';
@@ -98,6 +187,7 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
   vocabulary: STEP_VOCABULARY,
   sourceTypes: elementSourceTypes,
   ancestorTypes: elementAncestorTypes,
+  partTypes: elementPartTypes,
   slotNames: elementSlots,
   attributeNames: elementAttributeNames,
   leafTypes: elementLeafTypes,
@@ -150,15 +240,22 @@ export const fixSpace = (
 ): FixResult => fixSpaceUnchecked(space, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }), codes, elements);
 
 /**
- * `authorTemplate`, holding the same vocabularies — the artefact you publish when you are not building a space.
+ * `planFixes`, holding the same catalogs: every fix `fixSpace` would make in this declaration, each with the place in
+ * the author's code that wrote the element and the edit that makes the fix there — what `plitzi fix` shows and writes.
+ */
+export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): FixPlan =>
+  planFixesUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
+
+/**
+ * `authorSnippet`, holding the same vocabularies — the artefact you publish when you are not building a space.
  *
- * A template is a subtree hosted as a JSON and dragged onto someone else's canvas, so the checks that matter are
+ * A snippet is a subtree hosted as a JSON and dragged onto someone else's canvas, so the checks that matter are
  * the ones about what does NOT travel with it: a class it names but does not carry, a binding onto a provider that
  * stayed behind. Those are the assembly half's; what this adds is the catalog that tells a real source from a typo.
  */
-export const authorTemplate = (spec: TemplateSpec, options: AuthorSpaceOptions = {}): AuthoredTemplate =>
-  authorTemplateUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
+export const authorSnippet = (spec: SnippetSpec, options: AuthorSpaceOptions = {}): AuthoredSnippet =>
+  authorSnippetUnchecked(spec, { ...ELEMENT_CATALOGS, ...options });
 
-/** `validateTemplate`, holding this SDK's own catalogs — for a manifest authored elsewhere. */
-export const validateTemplate = (template: Template, options: SpaceValidationOptions = {}): SchemaValidationResult =>
-  validateTemplateUnchecked(template, { ...ELEMENT_CATALOGS, ...options });
+/** `validateSnippet`, holding this SDK's own catalogs — for a manifest authored elsewhere. */
+export const validateSnippet = (snippet: Snippet, options: SpaceValidationOptions = {}): SchemaValidationResult =>
+  validateSnippetUnchecked(snippet, { ...ELEMENT_CATALOGS, ...options });

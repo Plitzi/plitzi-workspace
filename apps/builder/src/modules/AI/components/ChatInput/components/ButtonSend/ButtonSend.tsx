@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-import { isMac } from '../../helpers';
+import { isMac } from '@pmodules/Keyboard';
 
 import type { AiAttachment, AiMode } from '@pmodules/AI/types';
 

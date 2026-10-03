@@ -1,22 +1,14 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
-import { useState, useEffect, useRef, useCallback, use, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import ResourceUploadStatus from './ResourceUploadStatus';
 import ResourceName from '../Resource/ResourceName';
 import ResourceContent from '../ResourceContent';
 
-import type {
-  BuilderNetworkContextValue,
-  PluginManifest,
-  ResourceFile,
-  ResourceType as TResourceType,
-  ResourceWithFile,
-  BuilderQueriesMap,
-  BuilderMutationsMap
-} from '@plitzi/sdk-shared';
+import type { PluginManifest, ResourceFile, ResourceType as TResourceType, ResourceWithFile } from '@plitzi/sdk-shared';
 
 export type TemporalResourceProps = {
   className?: string;
@@ -45,7 +37,7 @@ const TemporalResource = ({
   onError: onErrorProp,
   onUploadCancel
 }: TemporalResourceProps) => {
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate } = useBuilderNetwork();
   const [isUploaded, setIsUploaded] = useState(!!id);
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);

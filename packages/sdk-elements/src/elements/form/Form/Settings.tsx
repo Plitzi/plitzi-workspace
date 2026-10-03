@@ -25,12 +25,12 @@ const Settings = ({
   const handleChangeMethod = useCallback((value: string) => onUpdate?.('method', value), [onUpdate]);
 
   const handleChangeManageByInteractions = useCallback(
-    (e: ChangeEvent) => onUpdate?.('managedByInteractions', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('managedByInteractions', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeNoValidate = useCallback(
-    (e: ChangeEvent) => onUpdate?.('noValidate', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('noValidate', e.target.checked),
     [onUpdate]
   );
 

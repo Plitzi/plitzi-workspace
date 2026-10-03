@@ -21,9 +21,12 @@ export const defaultElements = {
   dialogContainer: elements.DialogContainer,
   modalContainer: elements.ModalContainer,
   tabContainer: elements.TabContainer,
+  carousel: elements.Carousel,
   heading: elements.Heading,
   image: elements.Image,
   video: elements.Video,
+  embed: elements.Embed,
+  svg: elements.Svg,
   fontAwesome: elements.FontAwesome,
   button: elements.Button,
   paragraph: elements.Paragraph,
@@ -42,4 +45,5 @@ export const defaultElements = {
 
 export { useRscData, elements, elementSettings, JsxManager };
 export { default as useChannel } from './realtime/useChannel';
+export { default as useFlag } from './dataSource/useFlag';
 export type { ChannelHandle, UseChannelOptions } from './realtime/useChannel';

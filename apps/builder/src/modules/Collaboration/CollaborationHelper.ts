@@ -1,3 +1,4 @@
+import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
 import { processContainer } from '@pmodules/Builder/components/BuilderOverlay/BuilderOverlayHelper';
 
 import type { SubscriptionCollaboratorElement, SubscriptionCollaboratorElementState } from '@plitzi/sdk-shared';
@@ -117,7 +118,7 @@ const readCursorAnchor = (
   event: PointerEvent,
   { selector, previous, scale = 1 }: { selector: string; previous?: HTMLElement | null; scale?: number }
 ) => {
-  const start = (event.target as HTMLElement | null)?.closest<HTMLElement>(selector);
+  const start = elementOf(event.target)?.closest<HTMLElement>(selector);
 
   // Nothing anchorable under the pointer (the overlay chrome): the frame is dropped, and holding the last valid
   // spot on the peer beats jumping to a position no shared coordinate system can express.

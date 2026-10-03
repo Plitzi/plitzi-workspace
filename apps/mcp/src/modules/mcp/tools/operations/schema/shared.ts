@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+import { FLAG_GATE_PATTERN } from '@plitzi/sdk-shared/flags';
+import { ANCHOR_PATTERN } from '@plitzi/sdk-shared/schema/anchor';
+
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementRuntime } from '@plitzi/sdk-shared';
 
@@ -80,6 +83,8 @@ export interface ElementInput {
   style?: { base?: string[]; slots?: Record<string, string[]> };
   initialState?: InitialStateInput;
   runtime?: ElementRuntime;
+  flag?: string;
+  anchor?: string;
   children?: ElementInput[];
 }
 
@@ -101,6 +106,18 @@ export const elementRuntime = z
     'Where this element renders: "shared" (default, both), "client" (browser only), or "server" (SSR only). An ' +
       'apiContainer MUST be "server" to read through a connector — a client one calls its own `query` URL instead.'
   );
+
+/** The feature flag an element exists under — `'name'` while on, `'!name'` while off. Not a visibility. */
+export const elementFlag = z
+  .string()
+  .regex(FLAG_GATE_PATTERN)
+  .describe('Feature flag: `name` renders only while on, `!name` only while off');
+
+/** The element's `id` in the DOM, so `/page#anchor` lands on it — the one pattern every writer holds it to. */
+export const elementAnchor = z
+  .string()
+  .regex(ANCHOR_PATTERN)
+  .describe('Its DOM id, for `/page#anchor` and the `hash` of a link; one per page');
 
 export const initialStateInput = z.object({
   styleVariant: styleVariantInput
@@ -131,7 +148,9 @@ export const elementShape = {
   initialState: initialStateInput
     .optional()
     .describe('Applied style variant(s) and initial visibility (see plitzi://guide styling)'),
-  runtime: elementRuntime.optional()
+  runtime: elementRuntime.optional(),
+  flag: elementFlag.optional(),
+  anchor: elementAnchor.optional()
 };
 
 export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>

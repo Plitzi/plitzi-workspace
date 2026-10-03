@@ -1,5 +1,7 @@
 import { REVOKED_TYPE } from './topics';
+import { pConsole } from '../devTools/utils/PlitziConsole';
 
+import type { LogRealtime, LogType } from '../types/DevToolsTypes';
 import type { RealtimeMessage, RealtimeTransport } from '../types/RealtimeTypes';
 
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'closed';
@@ -147,12 +149,32 @@ export const createRealtimeClient = (
   let attempt = 0;
   let socketsWork = preferred === 'websocket' && typeof WebSocketImpl === 'function';
 
+  const topicsKey = (): string => [...listeners.keys()].sort().join(',');
+
   const setStatus = (next: RealtimeStatus): void => {
     status = next;
+    const topics = topicsKey().split(',').filter(Boolean);
+    const transport = current?.transport ?? (socketsWork ? 'websocket' : 'sse');
+    say(
+      next === 'open' ? 'success' : next === 'closed' ? 'warning' : 'info',
+      `${next} · ${topics.join(', ') || 'no topics'}`,
+      {
+        event: 'status',
+        status: next,
+        topics,
+        transport
+      }
+    );
     statusListeners.forEach(listener => listener(next));
   };
 
-  const topicsKey = (): string => [...listeners.keys()].sort().join(',');
+  /** Topics the server will not carry here, and why — kept for `refusal()`, and said. */
+  const refuse = (entries: [string, string][]): void => {
+    for (const [topic, reason] of entries) {
+      refusals.set(topic, reason);
+      say('danger', `${topic} refused: ${reason}`, { event: 'refused', topic, reason });
+    }
+  };
 
   /** `topics=a,b`, and `&grants=…` for those of them a grant was given for. */
   const queryFor = (topics: string): string => {
@@ -164,15 +186,17 @@ export const createRealtimeClient = (
   const deliver = (message: RealtimeMessage): void => {
     // Let go of the topic by the server: refused from now on, so a new grant for it opens it again.
     if (message.type === REVOKED_TYPE && message.from === 'server') {
-      refusals.set(message.topic, 'revoked');
+      refuse([[message.topic, 'revoked']]);
     }
 
+    say('info', `${message.topic} ← ${message.type}`, { event: 'received', message });
     listeners.get(message.topic)?.forEach(listener => listener(message));
   };
 
   const onReady = (connection: Connection, ready: Ready): void => {
     connection.me = ready.connection;
-    refusals = new Map(ready.refused.map(entry => [entry.topic, entry.reason]));
+    refusals = new Map();
+    refuse(ready.refused.map(entry => [entry.topic, entry.reason]));
     attempt = 0;
     setStatus('open');
   };
@@ -254,7 +278,8 @@ export const createRealtimeClient = (
       .then(async response => {
         if (!response.ok) {
           // Refused — undeclared topics, no access. Asking again with the same topics would be refused again.
-          refusals = new Map(topics.split(',').map(topic => [topic, `http_${response.status}`]));
+          refusals = new Map();
+          refuse(topics.split(',').map(topic => [topic, `http_${String(response.status)}`]));
           setStatus('closed');
 
           return;
@@ -432,11 +457,16 @@ export const createRealtimeClient = (
       }
     },
     publish: async (topic, type, data) => {
-      if (!(await whenOpen(topic)) || !current) {
-        return false;
-      }
+      const delivered = (await whenOpen(topic)) && current ? await current.publish(topic, type, data) : false;
+      say(delivered ? 'info' : 'danger', `${topic} → ${type}${delivered ? '' : ' (not delivered)'}`, {
+        event: 'published',
+        topic,
+        type,
+        data,
+        delivered
+      });
 
-      return current.publish(topic, type, data);
+      return delivered;
     },
     onStatus: listener => {
       statusListeners.add(listener);
@@ -456,6 +486,19 @@ export const createRealtimeClient = (
   };
 
   return client;
+};
+
+/** What the connection does, said in the dev tools' Logs the way a request is in a browser's network panel. */
+const say = (logType: Exclude<LogType, 'custom'>, message: string, params: LogRealtime['params']): void => {
+  if (logType === 'success') {
+    pConsole.success('realtime', message, params);
+  } else if (logType === 'warning') {
+    pConsole.warning('realtime', message, params);
+  } else if (logType === 'danger') {
+    pConsole.danger('realtime', message, params);
+  } else {
+    pConsole.info('realtime', message, params);
+  }
 };
 
 const clients = new Map<string, RealtimeClient>();

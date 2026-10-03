@@ -1,22 +1,16 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import Card from '@plitzi/plitzi-ui/Card';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import { use, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import EmptyState from '@pmodules/App/components/EmptyState';
+import ViewPage from '@pmodules/App/components/ViewPage';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import SpaceCredentials from '@pmodules/Space/components/SpaceCredentials';
 import buildCredentialData from '@pmodules/Space/helpers/buildCredentialData';
 import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
 
-import type {
-  BuilderMutationsMap,
-  BuilderQueriesMap,
-  SpaceCredentialProvider,
-  SpaceCredential as TSpaceCredential
-} from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { SpaceCredentialProvider, SpaceCredential as TSpaceCredential } from '@plitzi/sdk-shared';
 import type { spaceCredentialFormSchema } from '@pmodules/Space/Models/SpaceCredentialForm';
 import type { MouseEvent } from 'react';
 import type z from 'zod';
@@ -28,11 +22,11 @@ import type z from 'zod';
  * could not be prepared before the thing that needs it existed. A connector needs exactly that ordering: the CMS
  * token has to exist before there is a manifest to reference it from.
  */
+const DESCRIPTION =
+  'Secrets are encrypted at rest and only ever resolved on the server. A connector names the credential it needs; the value itself never reaches the browser or the published page.';
+
 const Credentials = () => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const { data = [], isLoading, mutate } = useGraphQL('SpaceCredentials', data => data?.SpaceCredentials.edges);
   const { showDialog } = useModal();
   const [provider, setProvider] = useState<SpaceCredentialProvider | undefined>(undefined);
@@ -114,49 +108,47 @@ const Credentials = () => {
     [mutate, mutateNetwork, showDialog]
   );
 
+  const createButton = (
+    <Button size="sm" onClick={handleCreate} iconPlacement="before">
+      <Button.Icon icon="fa-solid fa-plus" />
+      New Credential
+    </Button>
+  );
+
   return (
-    <Card className="relative flex grow basis-0" rounded="none">
-      <Card.Body grow>
-        {isLoading && <div className="p-4 text-sm text-gray-500">Loading credentials…</div>}
-        {!isLoading && provider && (
-          <div className="mx-auto w-full max-w-3xl p-4">
-            <SpaceCredentialForm provider={provider} onSubmit={handleSubmitForm} onClose={handleCloseForm} />
-          </div>
-        )}
-        {!isLoading && editing && (
-          <div className="mx-auto w-full max-w-3xl p-4">
-            <SpaceCredentialForm
-              key={editing.identifier}
-              editing
-              name={editing.name}
-              provider={editing.provider}
-              onSubmit={handleSubmitEdit}
-              onClose={handleCloseForm}
+    <>
+      {isLoading && <ViewPage description="Loading credentials…" />}
+      {!isLoading && provider && (
+        <ViewPage onBack={handleCloseForm} backLabel="Credentials" title="New credential" description={DESCRIPTION}>
+          <SpaceCredentialForm provider={provider} onSubmit={handleSubmitForm} onClose={handleCloseForm} />
+        </ViewPage>
+      )}
+      {!isLoading && editing && (
+        <ViewPage onBack={handleCloseForm} backLabel="Credentials" title={editing.name} description={DESCRIPTION}>
+          <SpaceCredentialForm
+            key={editing.identifier}
+            editing
+            name={editing.name}
+            provider={editing.provider}
+            onSubmit={handleSubmitEdit}
+            onClose={handleCloseForm}
+          />
+        </ViewPage>
+      )}
+      {!isLoading && !provider && !editing && (
+        <ViewPage description={data.length > 0 ? DESCRIPTION : undefined} actions={data.length > 0 && createButton}>
+          {data.length === 0 && (
+            <EmptyState
+              icon="fa-solid fa-key"
+              title="No credentials yet"
+              description={`${DESCRIPTION} Add the CMS token your connector authenticates with.`}
+              action={createButton}
             />
-          </div>
-        )}
-        {!isLoading && !provider && !editing && (
-          <div className="mx-auto flex w-full max-w-4xl grow basis-0 flex-col gap-4 p-4">
-            <div className="flex w-full items-center justify-between">
-              <Heading as="h5">Credentials</Heading>
-              <Button size="sm" onClick={handleCreate}>
-                New Credential
-              </Button>
-            </div>
-            <span className="text-xs text-gray-500 dark:text-zinc-400">
-              Secrets are encrypted at rest and only ever resolved on the server. A connector names the credential it
-              needs; the value itself never reaches the browser or the published page.
-            </span>
-            {data.length === 0 && (
-              <div className="rounded-sm border-2 border-dashed border-gray-300 p-4 text-center text-sm text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
-                No credentials yet. Add the CMS token your connector authenticates with.
-              </div>
-            )}
-            <SpaceCredentials credentials={data} onEdit={handleEdit} onRemove={handleRemove} />
-          </div>
-        )}
-      </Card.Body>
-    </Card>
+          )}
+          {data.length > 0 && <SpaceCredentials credentials={data} onEdit={handleEdit} onRemove={handleRemove} />}
+        </ViewPage>
+      )}
+    </>
   );
 };
 

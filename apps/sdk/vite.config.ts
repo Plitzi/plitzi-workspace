@@ -344,7 +344,23 @@ export default defineConfig(({ mode, command }) => {
         ),
         ...(devMode ? packages : {})
       },
-      extensions: ['.js', '.mjs', '.ts', '.tsx']
+      extensions: ['.js', '.mjs', '.ts', '.tsx'],
+      // `@plitzi/nexus` and `@plitzi/plitzi-ui` may be linked through portals, each carrying its own node_modules. React and
+      // CodeMirror check identity (a hook's dispatcher, an extension's `instanceof`), so a second copy breaks them: one each.
+      dedupe: [
+        'react',
+        'react-dom',
+        '@codemirror/autocomplete',
+        '@codemirror/commands',
+        '@codemirror/language',
+        '@codemirror/lint',
+        '@codemirror/search',
+        '@codemirror/state',
+        '@codemirror/view',
+        '@lezer/common',
+        '@lezer/highlight',
+        '@lezer/lr'
+      ]
     },
     build: {
       outDir: 'dist',

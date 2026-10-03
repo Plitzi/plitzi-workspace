@@ -11,4 +11,6 @@ export * from './css';
 export * from './layout';
 export * from './properties';
 export * from './shorthand';
+export * from './tailwind';
+export * from './tokens';
 export type * from './types';

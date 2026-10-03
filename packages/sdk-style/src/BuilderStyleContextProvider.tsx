@@ -20,6 +20,7 @@ import type {
   BuilderNetworkContextValue,
   BuilderQueriesMap,
   DisplayMode,
+  SnippetStyle,
   SpaceEventMap,
   SpaceFont,
   Style,
@@ -234,9 +235,9 @@ const BuilderStyleContextProvider = ({
     [dispatchStyle]
   );
 
-  const styleAddTemplate = useCallback(
-    (platform: Style['platform'], fromSubscriptions = false) =>
-      dispatchStyle({ type: StyleActions.STYLE_ADD_TEMPLATE, platform, fromSubscriptions }),
+  const styleAddSnippet = useCallback(
+    (style: SnippetStyle, fromSubscriptions = false) =>
+      dispatchStyle({ type: StyleActions.STYLE_ADD_SNIPPET, style, fromSubscriptions }),
     [dispatchStyle]
   );
 
@@ -358,7 +359,7 @@ const BuilderStyleContextProvider = ({
       styleAddFont,
       styleUpdateFont,
       styleRemoveFont,
-      styleAddTemplate,
+      styleAddSnippet,
       styleUpdateSettings
     }),
     [
@@ -376,7 +377,7 @@ const BuilderStyleContextProvider = ({
       styleAddFont,
       styleUpdateFont,
       styleRemoveFont,
-      styleAddTemplate,
+      styleAddSnippet,
       styleUpdateSettings
     ]
   );

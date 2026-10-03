@@ -42,6 +42,10 @@ class PlitziConsole {
   listeningParams?: { category: Log['category'] };
   #deliveryQueue: Log[] = [];
   #flushScheduled = false;
+  #listeners = new Set<(log: Log) => void>();
+  /** The last logs written, for a listener that arrives after them — a page's dev tools mount after its first flows. */
+  #recent: Log[] = [];
+  recentLimit: number = 200;
 
   constructor(callback?: CallbackInternal, pendingLimit: number = 100) {
     this.callbackInternal = callback;
@@ -62,6 +66,25 @@ class PlitziConsole {
 
       this.pendingLogs = [];
     }
+  }
+
+  /**
+   * Every log as it is written, beside whatever panel takes them — what a reader in text (the agent inspector) keeps
+   * for itself. Only in a browser, as everything kept here is. `replay` hands it the last ones written first: the
+   * flows a page runs as it loads end before anything mounted later could have been listening.
+   */
+  addListener(listener: (log: Log) => void, { replay = false }: { replay?: boolean } = {}): () => void {
+    if (replay) {
+      for (const log of this.#recent) {
+        listener(log);
+      }
+    }
+
+    this.#listeners.add(listener);
+
+    return () => {
+      this.#listeners.delete(listener);
+    };
   }
 
   setCallbackAddProvider(callback?: CallbackAddProvider) {
@@ -88,6 +111,19 @@ class PlitziConsole {
     }
 
     const time = this.getTime(true);
+    if (canDeliverLater()) {
+      // The category and its params arrive as two arguments; together they are one of `Log`'s cases.
+      const log = { logType, category, message, params, time } as Log;
+      this.#recent.push(log);
+      if (this.#recent.length > this.recentLimit) {
+        this.#recent.shift();
+      }
+
+      for (const listener of this.#listeners) {
+        listener(log);
+      }
+    }
+
     if (!this.callbackInternal) {
       this.pendingLogs.push({ logType, category, message, params, time } as Log);
       if (this.pendingLogs.length > this.pendingLimit) {

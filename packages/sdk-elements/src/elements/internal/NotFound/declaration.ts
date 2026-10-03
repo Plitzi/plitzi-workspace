@@ -28,7 +28,7 @@ const declaration = elementDeclaration<NotFoundAttributes>()({
       canSelect: true,
       canDragDrop: false,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

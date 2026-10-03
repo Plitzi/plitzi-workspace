@@ -1,3 +1,5 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import type { FunctionContext, FunctionFetchInit } from './contract';
 import type { FunctionCall, WireBody, WireRequest, WireResponse } from './protocol';
 import type { KvListEntry, KvListPutOptions, KvListRange } from '../actions/runtime/kvList';
@@ -68,9 +70,6 @@ const numberArg = (value: unknown, what: string): number => {
 
 const optionalNumber = (value: unknown, what: string): number | undefined =>
   value === undefined || value === null ? undefined : numberArg(value, what);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const headerPairsOf = (value: unknown): [string, string][] =>
   Array.isArray(value)

@@ -1,23 +1,24 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { use, useCallback, useContext, useEffect, useMemo } from 'react';
+import { use, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 
 import { StoreContext } from '@plitzi/nexus/react';
 import { liveSources } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import useElementInteractions from './useElementInteractions';
 import useInternalClassName from './useInternalClassName';
+import useIntervalTriggers from './useIntervalTriggers';
 import useKeyTriggers from './useKeyTriggers';
+import useScrollInteractions from './useScrollInteractions';
 import { interactionBasicTriggers, nativeEventsList } from '../helpers/elementConstants';
 
 import type { ElementContextValue } from '../ElementContext';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
-import type { Context } from 'react';
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+import type { Context, RefObject } from 'react';
 
 /**
  * The events an element's trigger has already answered without propagating it.
@@ -46,11 +47,15 @@ export type UseRootElementInteractionsProps = {
   interactionTriggers?: Record<string, InteractionCallback>;
   interactionCallbacks?: Record<string, InteractionCallback>;
   otherProps: Record<string, unknown>;
+  /** The component's own ref to its root node, when it keeps one; the scroll steps read the same node. */
+  ref?: RefObject<HTMLElement | null>;
 };
 
 export type RootElementInteractions = {
   className: string;
   events: Record<string, unknown>;
+  /** The ref the root node is rendered with: the component's, or one of the element's own. */
+  nodeRef: RefObject<HTMLElement | null>;
 };
 
 // Interactions branch of RootElement, wires native events + the interaction rule engine and computes the element's
@@ -65,7 +70,8 @@ const useRootElementInteractions = ({
   className,
   interactionTriggers,
   interactionCallbacks,
-  otherProps
+  otherProps,
+  ref
 }: UseRootElementInteractionsProps): RootElementInteractions => {
   const {
     id,
@@ -151,14 +157,25 @@ const useRootElementInteractions = ({
   const getAdditionalParams = useCallback(() => ({ dataSource: readSources() }), [readSources]);
 
   const triggers = useMemo(() => ({ ...interactionBasicTriggers, ...interactionTriggers }), [interactionTriggers]);
+  const ownRef = useRef<HTMLElement | null>(null);
+  const nodeRef = ref ?? ownRef;
   const basicCallbacks = useElementInteractions({ attributes, definition, setElementState });
+  const scrollCallbacks = useScrollInteractions({
+    id,
+    label: definition.label,
+    nodeRef,
+    interactions,
+    previewMode,
+    interactionsManager
+  });
   const callbacks = useMemo(
-    () => ({ ...interactionCallbacks, ...basicCallbacks }),
-    [interactionCallbacks, basicCallbacks]
+    () => ({ ...interactionCallbacks, ...scrollCallbacks, ...basicCallbacks }),
+    [interactionCallbacks, scrollCallbacks, basicCallbacks]
   );
 
   useInteractions({ id, interactions, triggers, callbacks, getAdditionalParams });
   useKeyTriggers({ id, interactions, previewMode, interactionsManager });
+  useIntervalTriggers({ id, interactions, previewMode, interactionsManager });
 
   // Deferred past the commit for the reason `onPageLoad` is (see Page): the global sources register their callbacks
   // from effects ABOVE this element, which React runs after this one, so a synchronous trigger on the first mount
@@ -205,7 +222,7 @@ const useRootElementInteractions = ({
     plitziElementLayout
   });
 
-  return { className: clsx(classNameInternalProp, classNameInternal), events };
+  return { className: clsx(classNameInternalProp, classNameInternal), events, nodeRef };
 };
 
 export default useRootElementInteractions;

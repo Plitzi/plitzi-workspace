@@ -92,6 +92,21 @@ Take the topic as a prop (`bindTemplate('roomTopic', 'board.id', 'room:{{ source
 channels, and trust a message you act on only when `message.from === 'server'`. The page has one connection and is one
 member per topic, however many elements and plugins listen.
 
+## Feature flags
+
+A plugin that ships a feature behind one of the space's [feature flags](feature-flags.md) asks with `useFlag` — the
+answer every layer gave (the space's rules, the server, the SDK, a tester forcing it), and it renders again when it
+changes:
+
+```tsx
+import { useFlag } from '@plitzi/plitzi-sdk';
+
+const newChart = useFlag('newChart'); // false for a flag the space does not declare
+```
+
+Gating the whole plugin needs no code: give its element `flag: 'newChart'`. `useFlag` is for a plugin that changes
+inside — a new mode, an extra panel.
+
 ## Registering
 
 A project `plitzi create` wrote registers every folder of `src/plugins` by itself, under the folder's name in

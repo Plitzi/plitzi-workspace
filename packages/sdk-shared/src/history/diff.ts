@@ -78,7 +78,7 @@ const settingsOf = (prefix: string, value: object | undefined): Record<string, u
 /** The part of a schema a history reads: what is stored, never what the runtime derives from it. */
 export type HistorySchema = Pick<
   Schema,
-  'flat' | 'pages' | 'pageFolders' | 'variables' | 'settings' | 'definition' | 'components'
+  'flat' | 'pages' | 'pageFolders' | 'variables' | 'flags' | 'settings' | 'definition' | 'components'
 >;
 
 /**
@@ -117,6 +117,7 @@ export const diffSchema = (before: Partial<HistorySchema>, after: Partial<Histor
     byKey(before.variables, variable => variable.name),
     byKey(after.variables, variable => variable.name)
   ),
+  ...diffKeyed('flag', before.flags ?? {}, after.flags ?? {}),
   ...diffKeyed(
     'setting',
     { ...settingsOf('settings', before.settings), ...settingsOf('definition', before.definition), pages: before.pages },

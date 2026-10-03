@@ -165,7 +165,11 @@ describe('a declaration TypeScript never saw', () => {
       () => author([authoring.link({ id: 'l', href: 'nowhere' })]),
       /no page has that id/
     ],
-    ['a full URL in page mode', () => author([authoring.link({ id: 'l', href: 'mailto:a@b.c' })]), /mode: 'external'/],
+    [
+      'a full URL in page mode',
+      () => author([authoring.link({ id: 'l', href: 'mailto:a@b.c', mode: 'page' })]),
+      /mode: 'external'/
+    ],
     [
       'a CSS value that ends its declaration',
       () => author([authoring.text('x', { id: 't', css: { color: 'red; display: none' } })]),
@@ -186,7 +190,7 @@ describe('a declaration TypeScript never saw', () => {
   });
 
   it.each([
-    ['an element type nothing ships', () => author([{ type: 'carousel', id: 'c' }]), 'unknown-element-type'],
+    ['an element type nothing ships', () => author([{ type: 'kanbanBoard', id: 'c' }]), 'unknown-element-type'],
     [
       'a modal open on arrival',
       () => author([authoring.modalContainer({ id: 'm', children: [authoring.text('x')] })]),
@@ -209,11 +213,11 @@ describe('a declaration TypeScript never saw', () => {
   it('keeps a plugin type the author named quiet, a path in page mode, and a full URL in external mode', () => {
     const { warnings } = authoring.authorSpace(
       space([
-        { type: 'carousel', id: 'c' },
+        { type: 'kanbanBoard', id: 'c' },
         authoring.link({ id: 'about', href: '/about', label: 'About us' }),
         authoring.link({ id: 'mail', href: 'mailto:a@b.c', mode: 'external', label: 'Write to us' })
       ]),
-      { pluginTypes: ['carousel'] }
+      { pluginTypes: ['kanbanBoard'] }
     );
 
     expect(warnings).toEqual([]);

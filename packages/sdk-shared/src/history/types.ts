@@ -18,6 +18,7 @@ export type ChangeKind =
   | 'component'
   | 'folder'
   | 'variable'
+  | 'flag'
   | 'setting'
   | 'selector'
   | 'globalStyle'

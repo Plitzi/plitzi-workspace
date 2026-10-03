@@ -380,7 +380,7 @@ export const repointIds = (
  * Renames only the elements of an incoming set whose names this document has already taken, and repoints the set's
  * own references onto the new names.
  *
- * What a template drop and a cross-document paste both need. Renaming everything would be simpler and worse: the
+ * What a snippet drop and a cross-document paste both need. Renaming everything would be simpler and worse: the
  * names an author gave the template are the reason it is readable, and a document that had no `hero` should get
  * one called `hero`. Returns the renaming it applied, so a caller can report what it had to change.
  */

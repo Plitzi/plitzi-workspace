@@ -50,7 +50,7 @@ const declaration = elementDeclaration<ThemeToggleAttributes>()({
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

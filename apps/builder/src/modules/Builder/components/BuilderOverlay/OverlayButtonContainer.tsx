@@ -1,19 +1,17 @@
-import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
-import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { memo, useCallback, use, useMemo } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 
 import OverlayButton from './OverlayButton';
-import TemplateForm from '../../Models/TemplateForm';
+import { REUSE } from '../../helpers/reuse';
+import useSaveAsSnippet from '../../hooks/useSaveAsSnippet';
 import BuilderElementTools from '../BuilderElementTools';
 
 import type { OverlayRect } from './BuilderOverlayHelper';
-import type { TemplateFormValues } from '../../Models/TemplateForm';
 import type { Element } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
@@ -36,23 +34,20 @@ const OverlayButtonContainer = ({
   zoom = 1,
   onHoverRemove
 }: OverlayButtonContainerProps) => {
-  const [getSchema, getStyle] = useBuilderStoreGetter(['schema', 'style']);
   const [[elementSelected, setSelected, setHovered]] = useBuilderStore([
     'elementSelected',
     'setSelected',
     'setHovered'
   ]);
-  const { showModal } = useModal();
-  const { addToast } = useToast();
   const { existsPopup, addPopup } = usePopup();
-  const { builderHandler, builderElementPermissions, mode, elementAsTemplate } = use(BuilderContext);
+  const { builderHandler, builderElementPermissions, mode } = use(BuilderContext);
   const {
     definition: { items }
   } = element;
 
   const componentConfig = useMemo(() => builderElementPermissions(element), [element, builderElementPermissions]);
 
-  const { canDelete = true, canTemplate = true } = componentConfig;
+  const { canDelete = true, canSnippet = true } = componentConfig;
 
   const handleMouseRemoveEnter = useCallback(() => onHoverRemove?.(true), [onHoverRemove]);
 
@@ -84,40 +79,8 @@ const OverlayButtonContainer = ({
     }
   }, [addPopup, existsPopup, mode]);
 
-  const handleClickAsTemplate = useCallback(async () => {
-    const response = await showModal<TemplateFormValues>(
-      <Modal.Header>
-        <h4>Add Template</h4>
-      </Modal.Header>,
-      ({ onSubmit, onClose }) => (
-        <Modal.Body>
-          <TemplateForm onSubmit={onSubmit} onClose={onClose} />
-        </Modal.Body>
-      )
-    );
-
-    if (response) {
-      const { name, description, cdnIdentifier, bucketIdentifier } = response;
-      void elementAsTemplate(
-        { cdnIdentifier, bucketIdentifier },
-        getSchema(),
-        getStyle(),
-        name,
-        description ?? '',
-        element
-      );
-      addToast(
-        <div>
-          Template <b>{name}</b> Created
-        </div>,
-        {
-          appeareance: 'success',
-          autoDismiss: true,
-          placement: 'top-right'
-        }
-      );
-    }
-  }, [addToast, element, elementAsTemplate, getSchema, getStyle, showModal]);
+  const saveAsSnippet = useSaveAsSnippet();
+  const handleClickAsSnippet = useCallback(() => void saveAsSnippet(element), [saveAsSnippet, element]);
 
   const saveAsComponent = useSaveAsComponent();
   const handleClickAsComponent = useCallback(() => void saveAsComponent(element), [saveAsComponent, element]);
@@ -207,14 +170,22 @@ const OverlayButtonContainer = ({
       <OverlayButton title="Tools" isRemoving={hoverRemove} onClick={handleClickProperties}>
         <i className="fas fa-tools" />
       </OverlayButton>
-      {!!items && canTemplate && (
-        <OverlayButton title="Save as template" isRemoving={hoverRemove} onClick={handleClickAsTemplate}>
-          <i className="fas fa-cube" />
+      {!!items && canSnippet && (
+        <OverlayButton
+          title={`Save as snippet: ${REUSE.snippet.hint}`}
+          isRemoving={hoverRemove}
+          onClick={handleClickAsSnippet}
+        >
+          <i className={REUSE.snippet.icon} />
         </OverlayButton>
       )}
       {canDelete && !!element.definition.parentId && (
-        <OverlayButton title="Save as component" isRemoving={hoverRemove} onClick={handleClickAsComponent}>
-          <i className="fa-solid fa-cube" />
+        <OverlayButton
+          title={`Save as component: ${REUSE.component.hint}`}
+          isRemoving={hoverRemove}
+          onClick={handleClickAsComponent}
+        >
+          <i className={REUSE.component.icon} />
         </OverlayButton>
       )}
       {canDelete && (

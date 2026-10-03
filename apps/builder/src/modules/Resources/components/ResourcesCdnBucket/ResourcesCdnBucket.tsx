@@ -5,7 +5,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import { mainPluginOf } from '../../helpers';
@@ -15,11 +15,8 @@ import ResourcesList from '../ResourcesList';
 
 import type { ResourceCdnBucketFormValues } from '../../Models/ResourceCdnBucketForm';
 import type {
-  BuilderMutationsMap,
-  BuilderQueriesMap,
   CdnBucket,
   ComponentDefinition,
-  NetworkContextValue,
   ResourceFile,
   ResourceWithFile,
   Resource as TResource
@@ -39,7 +36,7 @@ export type ResourcesCdnBucketProps = {
 const uploadTypes = ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'mp3', 'mp4', 'webp', 'mpeg', 'svg', 'webm', 'zip', 'json'];
 
 /**
- * One bucket of a CDN and the space's files in it. A public one takes uploads — plugins, images, templates — and serves
+ * One bucket of a CDN and the space's files in it. A public one takes uploads — plugins, images, snippets — and serves
  * them at its domain; a private one keeps the space's server code, written when it is saved or pushed, and serves
  * nothing.
  */
@@ -48,7 +45,7 @@ const ResourcesCdnBucket = ({ cdnIdentifier, provider, bucket, prefix, onChange 
   const { showDialog, showModal } = useModal();
   const [removing, setRemoving] = useState(false);
   const { plugins, remove, add } = use(PluginsContext);
-  const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const isPrivate = bucket.visibility === 'private';
   const { data, error, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
     cdnIdentifier,
@@ -223,7 +220,7 @@ const ResourcesCdnBucket = ({ cdnIdentifier, provider, bucket, prefix, onChange 
       {isPrivate && (
         <p className="text-xs text-gray-500 dark:text-zinc-400">
           Where this space keeps its server code — its functions and runtime, written when they are saved or pushed. Its
-          files have no public address, so plugins, images and templates go in a public bucket.
+          files have no public address, so plugins, images and snippets go in a public bucket.
         </p>
       )}
       {!isPrivate && !removing && (

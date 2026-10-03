@@ -8,6 +8,9 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { slugifyElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
+import ElementAnchor from './ElementAnchor';
+import ElementFlagGate from './ElementFlagGate';
+
 import type { Element, ElementLoadStrategy } from '@plitzi/sdk-shared';
 
 export type ElementDefinitionSettingsProps = {
@@ -16,6 +19,8 @@ export type ElementDefinitionSettingsProps = {
   canHoldItems?: boolean;
   /** What the element's type declares, which is what an instance with no strategy of its own follows. */
   declaredLoadStrategy?: ElementLoadStrategy;
+  /** The feature flags the space declares — what the element's gate may name. */
+  flagNames?: string[];
   /** The one name this element answers to. Editing it renames the element across the whole document. */
   id: string;
   /** Why this id cannot be used here, or null when it is free. Given the slugified id, never the raw typing. */
@@ -37,12 +42,15 @@ const LOAD_STRATEGIES: Record<ElementLoadStrategy, { label: string; help: string
   }
 };
 
+const NO_FLAGS: string[] = [];
+
 const isLoadStrategy = (value: string): value is ElementLoadStrategy => Object.hasOwn(LOAD_STRATEGIES, value);
 
 const ElementDefinitionSettings = ({
   definition,
   canHoldItems = false,
   declaredLoadStrategy = 'eager',
+  flagNames = NO_FLAGS,
   id,
   getNameConflict,
   onUpdate,
@@ -173,6 +181,13 @@ const ElementDefinitionSettings = ({
           </span>
         </div>
       )}
+      {definition.type !== 'page' && <ElementAnchor key={id} anchor={definition.anchor} onUpdate={onUpdate} />}
+      <ElementFlagGate
+        gate={definition.flag}
+        flagNames={flagNames}
+        isPage={definition.type === 'page'}
+        onUpdate={onUpdate}
+      />
       {showStyleVariants && (
         <KVInput
           size="xs"

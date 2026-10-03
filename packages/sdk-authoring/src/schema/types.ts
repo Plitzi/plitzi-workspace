@@ -1,7 +1,16 @@
 import type { VisibleCondition } from './bindings';
 import type { SpaceHandles } from './handles';
 import type { NotificationsSpec } from './notifications';
-import type { AncestorSpec, ClassList, CssSpec, StatesSpec, StyleDeclaration, StyleSpec, VariantSpec } from '../style';
+import type {
+  AncestorSpec,
+  ClassList,
+  CssSpec,
+  ElementClassList,
+  StatesSpec,
+  StyleDeclaration,
+  StyleSpec,
+  VariantSpec
+} from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   BindingCategory,
@@ -16,7 +25,7 @@ import type {
   SpaceFont,
   Style,
   StyleVariables,
-  Template
+  Snippet
 } from '@plitzi/sdk-shared';
 import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
 
@@ -103,6 +112,16 @@ export interface ElementSpec {
   id?: string;
   attributes?: Record<string, unknown>;
   /**
+   * The source the element's main attribute shows — `content` of a text, a heading, a paragraph or a button; `src`
+   * of an image; `href` of a link; `items` of a list: `heading({ from: 'site.data.hero.title' })`. `bind` is for
+   * the other attributes.
+   */
+  from?: string;
+  /** How `from` is shown: a name of the space's `formats`, or a template of its own (`'{{ source }} items'`). */
+  as?: string;
+  /** A list's row, by the component placed once per item with the row bound to its `item` prop. */
+  row?: string;
+  /**
    * A style variant the element starts in, e.g. a heading's `title`.
    *
    * The element TYPE's vocabulary by default. When the element wears a class that declares a variant of this name and
@@ -136,9 +155,10 @@ export interface ElementSpec {
    * so declaring both is a question with no answer and is refused rather than silently resolved.
    *
    * Either a name from {@link SpaceSpec.classes}, or a `styles()` declaration that brings its own rules along — or a
-   * list of them, for an element that wears a shared base and a modifier (`[panelCard, quotaPanel]`).
+   * list of them, for an element that wears a shared base and a modifier (`[panelCard, quotaPanel]`). A list may end
+   * with rules of the element's own on top of its classes, `[cover, { opacity: '0.25' }]` ({@link ElementClassList}).
    */
-  class?: ClassList;
+  class?: ElementClassList;
   /**
    * A class for one of the element's OTHER style selectors, by selector name — a form control's `input`, `label`
    * and `error`.
@@ -175,6 +195,18 @@ export interface ElementSpec {
   runtime?: ElementRuntime;
   /** When this element's contents mount relative to its visibility. Left out, the element type decides. */
   loadStrategy?: ElementLoadStrategy;
+  /**
+   * The `id` this element carries in the DOM, so `/page#anchor` lands on it — `link({ href: 'home', hash: 'plans' })`.
+   * Lowercase letters, digits and `-`; one per page, layouts included; not inside a list row or a component, which
+   * would repeat it.
+   */
+  anchor?: string;
+  /**
+   * The feature flag this exists under: `'newCheckout'` exists only while the flag is on, `'!newCheckout'` only while
+   * it is off — the old version, kept until the new one ships. Not a visibility: gated off, it is not rendered at all,
+   * on the server or in the browser. The flag is one {@link SpaceSpec.flags} declares.
+   */
+  flag?: string;
   children?: ElementSpec[];
   meta?: SpecMeta;
 }
@@ -240,6 +272,8 @@ export interface PageSpec {
   /** As {@link ElementSpec.class} — a shared class instead of a selector of this page's own. */
   class?: ClassList;
   flows?: StepSpec[][];
+  /** As {@link ElementSpec.flag}: a page whose flag says no is not found. */
+  flag?: string;
   body: ElementSpec[];
 }
 
@@ -377,6 +411,35 @@ export interface SpaceSpec {
    * element's source (a list row, a provider) is not readable here: bind that on the element.
    */
   computed?: Record<string, string>;
+  /**
+   * Templates by name, for what an element shows of its data: `formats: { price: "{{ source|currency('USD') }}" }`
+   * once, then `text({ from: 'products.item.price', as: 'price' })` anywhere. `source` is the value `from` reads.
+   */
+  formats?: Record<string, string>;
+  /**
+   * The space's feature flags, by the name each is read by — `{{ flags.newCheckout }}` in a binding or a `when`, and
+   * what an element's or a page's `flag` names:
+   *
+   * ```ts
+   * flags: {
+   *   newCheckout: {
+   *     description: 'The one-step checkout',
+   *     value: false,
+   *     rules: [
+   *       { when: { combinator: 'and', rules: [{ field: 'environment', operator: '=', value: 'staging' }] }, value: true },
+   *       { when: { combinator: 'and', rules: [{ field: 'user.roles', operator: 'contains', value: 'beta' }] }, value: true }
+   *     ]
+   *   }
+   * }
+   * ```
+   *
+   * `value` is the answer when no rule matches; the first rule that matches decides otherwise. A rule sees
+   * `environment`, `hostname`, `routeParams.*`, `queryParams.*` and the visitor (`user.authenticated`, `user.email`,
+   * `user.username`, `user.roles`). Kept apart from the space's snapshots — one set per environment, turned without a
+   * new snapshot — and served with Plitzi down from a self-hosted server's cache. The server rendering it, the SDK
+   * embedding it and a tester with the dev tools may each override the answer — only for flags declared here. See `docs/en/feature-flags.md`.
+   */
+  flags?: Schema['flags'];
   /**
    * The realtime channels the space offers, by topic pattern — what a `channel` element's `topic` must match:
    *
@@ -523,6 +586,8 @@ export interface AuthorSpaceOptions {
   slotNames?: Record<string, readonly string[]>;
   /** Element type → the type it only works inside. Left out, a sub-element is placed wherever it is written. */
   ancestorTypes?: Record<string, string>;
+  /** Element type → the parts it renders through, each a child it needs. Left out, a compound type is never checked. */
+  partTypes?: Record<string, readonly string[]>;
   /**
    * Element type → the attributes its component reads, `null` for one that reads any. Left out, an attribute
    * nothing reads is written without a word.
@@ -581,21 +646,21 @@ export interface AuthoredSpace {
 }
 
 /**
- * What a template author declares: a name, a description and a subtree.
+ * What a snippet author declares: a name, a description and a subtree.
  *
  * The style half is declared exactly as a space declares it — the classes the subtree names, the element defaults
- * it relies on, the variables its rules read — because that is precisely what has to TRAVEL with it. A template
+ * it relies on, the variables its rules read — because that is precisely what has to TRAVEL with it. A snippet
  * that names a class the space it lands in happens not to declare renders unstyled, so anything the subtree reads
  * is carried in the manifest rather than assumed.
  */
-export interface TemplateSpec {
+export interface SnippetSpec {
   name: string;
   description: string;
   /**
-   * What this template's ids are derived from, as `permanentUrl` is for a space. Defaults to a slug of the name.
+   * What this snippet's ids are derived from, as `permanentUrl` is for a space. Defaults to a slug of the name.
    *
-   * Ids are re-generated when the template is dropped into a space, so this decides nothing at run time — it
-   * decides only that authoring the same template twice writes the same file.
+   * Ids are re-generated when the snippet is dropped into a space, so this decides nothing at run time — it
+   * decides only that authoring the same snippet twice writes the same file.
    */
   key?: string;
   variables?: Partial<StyleVariables>;
@@ -609,13 +674,13 @@ export interface TemplateSpec {
   root: ElementSpec;
 }
 
-export interface AuthoredTemplate {
+export interface AuthoredSnippet {
   /** The manifest as it is published: `JSON.stringify` it and host it. */
-  template: Template;
+  snippet: Snippet;
   /**
-   * What the validators had to say that was not fatal — a class the template names but does not carry, a step
+   * What the validators had to say that was not fatal — a class the snippet names but does not carry, a step
    * naming an action no built-in source declares. Beside the manifest rather than inside it: what ships is a
-   * document a builder fetches, and it carries nothing that is not part of the template.
+   * document a builder fetches, and it carries nothing that is not part of the snippet.
    */
   warnings: SchemaValidationError[];
 }

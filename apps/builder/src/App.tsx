@@ -44,6 +44,7 @@ import {
   switchTheme,
   textAreaTheme,
   textTheme,
+  treeCanvasTheme,
   treeTheme
 } from '@plitzi/plitzi-ui/components';
 import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
@@ -117,6 +118,7 @@ const components = {
   Popup: popupTheme,
   Sidebar: sidebarTheme,
   Tree: treeTheme,
+  TreeCanvas: treeCanvasTheme,
   Accordion: accordionTheme,
   QueryBuilder: queriBuilderTheme,
   Alert: alertTheme,
@@ -372,9 +374,13 @@ const App = (props: AppProps) => {
               tracingMiddleware<BuilderState>(),
               historyMw<BuilderState>({
                 // None of these is document state: time-travelling presence would replay other people's cursors
-                // as if they were edits, and the theme mirror would make Undo flip the lights.
+                // as if they were edits, the theme mirror would make Undo flip the lights, and the flags are what an
+                // author forced to preview plus what that resolved to.
                 shouldRecord: p =>
-                  !p?.startsWith('runtime.elements') && !p?.startsWith('collaboration') && !p?.startsWith('theme')
+                  !p?.startsWith('runtime.elements') &&
+                  !p?.startsWith('collaboration') &&
+                  !p?.startsWith('theme') &&
+                  !p?.startsWith('flags')
               })
             ]
           : [])

@@ -1,8 +1,8 @@
 import { handleActionCall, handleActionCancel, handleActionCatalog, handleActionWebhook } from '../../modules/actions';
 import { handleAction } from '../../modules/actions/connectorWrite';
+import { connectorLookupsOf } from '../configSeam';
 import { clientIp, readRawBody } from '../requestParser';
 
-import type { ConnectorLookups } from '../../modules/connectors/resolver';
 import type { SSRContext, Stage } from '../http/types';
 import type { SSRRequest } from '@plitzi/sdk-shared';
 
@@ -49,8 +49,8 @@ const lineageOf = (req: SSRRequest): string[] => {
 export const actionStage: Stage<SSRContext> = async ctx => {
   const { config, req, actions } = ctx;
   const actionPath = config.action?.path ?? '/_action';
-  const hasConnectors = !!config.connectors;
-  if (!hasConnectors && !actions) {
+  const { connectors } = config;
+  if (!connectors && !actions) {
     return false;
   }
 
@@ -130,7 +130,7 @@ export const actionStage: Stage<SSRContext> = async ctx => {
     return true;
   }
 
-  if (addressesAction || !hasConnectors) {
+  if (addressesAction || !connectors) {
     ctx.operation = 'action';
     ctx.res.setStatus(404);
     ctx.res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -140,9 +140,7 @@ export const actionStage: Stage<SSRContext> = async ctx => {
   }
 
   ctx.operation = 'action';
-  // The shared config types the lookups structurally (they return `unknown`) so sdk-shared stays free of the
-  // connector internals; the manifest shape is this package's contract, and this is the single seam between them.
-  await handleAction(req, ctx.res, config, config.connectors as ConnectorLookups);
+  await handleAction(req, ctx.res, config, connectorLookupsOf(connectors));
 
   return true;
 };

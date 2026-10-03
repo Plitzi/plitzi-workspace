@@ -1,6 +1,8 @@
 import { reconcileParams } from './paramSpec';
+import { SCROLL_BEHAVIORS, SCROLL_POSITIONS } from '../helpers/scroll';
 
 import type { BuiltinActionSpec } from './builder';
+import type { BuiltinParam } from './paramSpec';
 
 // Built-in `callback`-type actions that EVERY element registers on itself, beside the code that registers them
 // (`@plitzi/sdk-elements`'s `Element/helpers/getInteractions` — the default set shared by all element types). A specific element TYPE can add
@@ -19,6 +21,70 @@ import type { BuiltinActionSpec } from './builder';
 // disabled button) WITHOUT adding manual restore steps.
 
 export type BuiltinElementCallback = BuiltinActionSpec;
+
+const behavior: BuiltinParam = {
+  type: 'select',
+  description: 'How it moves: "smooth" glides there, "auto" jumps.',
+  default: 'smooth',
+  options: [...SCROLL_BEHAVIORS]
+};
+
+/**
+ * Moving what an element shows, on the element whose box scrolls (`overflow: auto` on a row of cards, a panel) — or,
+ * with `scrollIntoView`, the page to an element. Arrows over a carousel that still swipes on a phone, a "back to the
+ * top", a jump to the answer a form just showed. Its node names the element that moves; nothing happens where there is
+ * no page to move (a server render).
+ */
+export const SCROLL_CALLBACKS = {
+  scrollBy: {
+    title: 'Scroll By',
+    type: 'callback',
+    strictParams: true,
+    params: {
+      x: {
+        type: 'text',
+        description: 'How far across: pixels ("240") or a share of what the box shows ("80%"); negative goes back.',
+        default: ''
+      },
+      y: { type: 'text', description: 'How far down, the same way; negative goes up.', default: '' },
+      behavior
+    }
+  },
+  scrollTo: {
+    title: 'Scroll To',
+    type: 'callback',
+    strictParams: true,
+    params: {
+      x: {
+        type: 'text',
+        description: 'Where across: "start", "end", pixels from the start, or a share of the way ("50%"). Empty stays.',
+        default: ''
+      },
+      y: { type: 'text', description: 'Where down, the same way. Empty stays.', default: '' },
+      behavior
+    }
+  },
+  scrollIntoView: {
+    title: 'Scroll Into View',
+    type: 'callback',
+    strictParams: true,
+    params: {
+      block: {
+        type: 'select',
+        description: 'Where the element lands, top to bottom.',
+        default: 'start',
+        options: [...SCROLL_POSITIONS]
+      },
+      inline: {
+        type: 'select',
+        description: 'Where it lands, side to side.',
+        default: 'nearest',
+        options: [...SCROLL_POSITIONS]
+      },
+      behavior
+    }
+  }
+} satisfies Record<string, BuiltinElementCallback>;
 
 export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> = {
   setState: {
@@ -107,7 +173,8 @@ export const BUILTIN_ELEMENT_CALLBACKS: Record<string, BuiltinElementCallback> =
         label: 'Revert changes after interaction'
       }
     }
-  }
+  },
+  ...SCROLL_CALLBACKS
 };
 
 /** The built-in element callback for an action, or undefined when the action is not a known built-in (an

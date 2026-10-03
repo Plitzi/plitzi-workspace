@@ -4,13 +4,11 @@ import { produce } from 'immer';
 import {
   addComponent,
   detachInstance,
-  documentIds,
   flatMapOf,
   removeComponent,
   renameElement,
   updateComponent
 } from './helpers/components';
-import { remapCollidingIds } from './helpers/elementId';
 import FlatMap from './helpers/FlatMap';
 
 import type {
@@ -18,14 +16,15 @@ import type {
   PageFolder,
   ReducerActionOrigin,
   Schema,
+  SnippetStyle,
+  SchemaFlag,
   SchemaVariable,
   DropPosition,
   SpaceComponent,
-  SpaceComponentDeclaration,
-  Style
+  SpaceComponentDeclaration
 } from '@plitzi/sdk-shared';
 
-/** Variables a template brought with it, minus the ones this space already declares under the same name. */
+/** Variables a snippet brought with it, minus the ones this space already declares under the same name. */
 const appendVariables = (draft: Schema, variables: SchemaVariable[]): void => {
   if (variables.length === 0) {
     return;
@@ -51,6 +50,8 @@ export const SchemaActions = {
   SCHEMA_ADD_VARIABLE: 'SCHEMA_ADD_VARIABLE',
   SCHEMA_UPDATE_VARIABLE: 'SCHEMA_UPDATE_VARIABLE',
   SCHEMA_REMOVE_VARIABLE: 'SCHEMA_REMOVE_VARIABLE',
+  SCHEMA_SET_FLAG: 'SCHEMA_SET_FLAG',
+  SCHEMA_REMOVE_FLAG: 'SCHEMA_REMOVE_FLAG',
   SCHEMA_ADD_ELEMENT: 'SCHEMA_ADD_ELEMENT',
   SCHEMA_REMOVE_ELEMENT: 'SCHEMA_REMOVE_ELEMENT',
   SCHEMA_MOVE_ELEMENT: 'SCHEMA_MOVE_ELEMENT',
@@ -58,7 +59,7 @@ export const SchemaActions = {
   SCHEMA_UPDATE_ELEMENT: 'SCHEMA_UPDATE_ELEMENT',
   SCHEMA_RENAME_ELEMENT: 'SCHEMA_RENAME_ELEMENT',
   SCHEMA_UPDATE_ELEMENTS: 'SCHEMA_UPDATE_ELEMENTS',
-  SCHEMA_ADD_TEMPLATE: 'SCHEMA_ADD_TEMPLATE',
+  SCHEMA_ADD_SNIPPET: 'SCHEMA_ADD_SNIPPET',
   SCHEMA_UPDATE_SETTINGS: 'SCHEMA_UPDATE_SETTINGS',
   SCHEMA_ADD_COMPONENT: 'SCHEMA_ADD_COMPONENT',
   SCHEMA_UPDATE_COMPONENT: 'SCHEMA_UPDATE_COMPONENT',
@@ -82,14 +83,16 @@ export type SchemaReducerActions = SchemaReducerActionsBase &
     | { type: 'SCHEMA_ADD_VARIABLE'; variable: SchemaVariable }
     | { type: 'SCHEMA_UPDATE_VARIABLE'; variable: SchemaVariable }
     | { type: 'SCHEMA_REMOVE_VARIABLE'; name: string }
+    | { type: 'SCHEMA_SET_FLAG'; name: string; flag: SchemaFlag }
+    | { type: 'SCHEMA_REMOVE_FLAG'; name: string }
     | {
-        type: 'SCHEMA_ADD_ELEMENT' | 'SCHEMA_ADD_TEMPLATE';
+        type: 'SCHEMA_ADD_ELEMENT' | 'SCHEMA_ADD_SNIPPET';
         to: string;
         data: Element;
         dropPosition: DropPosition;
         initialItems: Record<string, Element>;
         variables?: SchemaVariable[];
-        style?: Style; // used when adding a template
+        style?: SnippetStyle; // used when adding a snippet
       }
     | { type: 'SCHEMA_REMOVE_ELEMENT'; elementId: string }
     | {
@@ -252,6 +255,27 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       });
     }
 
+    // A flag is keyed by the name it is read by, so declaring one and changing it are the same write.
+    case SchemaActions.SCHEMA_SET_FLAG: {
+      const { name, flag } = action;
+
+      return produce(state, draft => {
+        draft.flags = { ...draft.flags, [name]: flag };
+      });
+    }
+
+    case SchemaActions.SCHEMA_REMOVE_FLAG: {
+      const { name } = action;
+      if (!state.flags || !Object.hasOwn(state.flags, name)) {
+        return state;
+      }
+
+      return produce(state, draft => {
+        const { [name]: _removed, ...rest } = draft.flags ?? {};
+        draft.flags = rest;
+      });
+    }
+
     case SchemaActions.SCHEMA_ADD_ELEMENT: {
       const { to, data, dropPosition, initialItems, variables = [] } = action;
 
@@ -261,25 +285,17 @@ const SchemaReducer = (state: Schema, action: SchemaReducerActions) => {
       });
     }
 
-    case SchemaActions.SCHEMA_ADD_TEMPLATE: {
+    case SchemaActions.SCHEMA_ADD_SNIPPET: {
       const { to, data, dropPosition, initialItems, variables = [] } = action;
 
       return produce(state, draft => {
-        // A template arrives from a document nobody here has seen, and the names it brought may not be free: two
-        // elements answering to one name makes every binding onto it ambiguous, so `addElement` refuses the whole
-        // subtree — a drag that silently drops nothing, which is what an authored template hits whenever this
-        // space already holds a `hero` or a `cta`.
-        //
-        // Only the colliding names are changed, and everything that pointed at one is repointed with it. Copied
-        // first: the payload belongs to whoever dispatched the action.
-        const arriving = structuredClone({ [data.id]: data, ...initialItems });
-        const taken = documentIds(draft);
-        const renamed = remapCollidingIds(arriving, candidate => taken.has(candidate));
-        const rootId = renamed[data.id] ?? data.id;
-        const { [rootId]: element, ...items } = arriving;
+        // Inserted under the names the action carries, as the server does: `fitSnippet` chose them where the snippet
+        // was dropped, so a name taken since is refused here too. Copied: the payload is the dispatcher's.
+        const { [data.id]: element, ...items } = structuredClone({ ...initialItems, [data.id]: data });
 
-        flatMapOf(draft, to)?.addElement(element, to, dropPosition, items);
-        appendVariables(draft, variables);
+        if (flatMapOf(draft, to)?.addElement(element, to, dropPosition, items)) {
+          appendVariables(draft, variables);
+        }
       });
     }
 

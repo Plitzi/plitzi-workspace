@@ -21,6 +21,7 @@ import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu'
 import CollaboratorArea from '@pmodules/Collaboration/components/CollaboratorArea';
 import { fontsBaseUrl } from '@pmodules/Fonts/fontsBaseUrl';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import SpaceContainer from '@pmodules/Space/SpaceContainer';
 
 import BuilderAreaHeader from './BuilderAreaHeader';
@@ -62,7 +63,7 @@ const BuilderArea = ({
   const [variables] = useBuilderStore('runtime.sources.variables');
   const trackingContainerRef = useRef<HTMLDivElement | null>(null);
   const { assets } = use(PluginsContext);
-  const { server } = use(NetworkContext);
+  const { server } = useBuilderNetwork();
   const {
     multiPagesMode,
     mode,

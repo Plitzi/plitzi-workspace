@@ -47,7 +47,8 @@ const declaration = elementDeclaration<ContainerAttributes>()({
       'h3',
       'h4',
       'h5',
-      'h6'
+      'h6',
+      'span'
     ])
   },
   content: {
@@ -74,7 +75,7 @@ const declaration = elementDeclaration<ContainerAttributes>()({
       canSelect: true,
       canDragDrop: true,
       canMove: true,
-      canTemplate: true,
+      canSnippet: true,
       itemsAllowed: [],
       itemsNotAllowed: []
     },

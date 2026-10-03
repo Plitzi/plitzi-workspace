@@ -19,6 +19,7 @@ import type { SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
 import type { FontHead, Style } from './StyleTypes';
+import type { FlagOverrides } from '../flags/resolveFlags';
 import type { SpaceChange } from '../history/types';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { FC } from 'react';
@@ -182,6 +183,25 @@ export type SSRTemplateProps = {
 };
 
 /**
+ * Remote pictures this server fetches, resizes and keeps, at `/_plitzi/img`.
+ *
+ * A picture from a dozen other sites, some 1500 px wide for a 360 px card, is the heaviest part of most pages; with
+ * this on, an `image` whose `src` is another site's offers the browser a `srcset` of sizes this server makes — in
+ * AVIF or WebP when the browser takes them, and with `sharp` installed (without it the picture is passed through,
+ * still cached).
+ */
+export type SSRImagesConfig = {
+  /**
+   * The hosts a picture may come from: `images.example.com`, or `*.example.com` for every subdomain. Nothing else is
+   * fetched — the endpoint is otherwise a way to make this server download anything — and each address is also held
+   * to the rule every outbound request is (no private network, every redirect judged).
+   */
+  domains: readonly string[];
+  /** Where the resized files are kept. Default: `.plitzi/images` under the working directory. */
+  cacheDir?: string;
+};
+
+/**
  * How a store-relative font path becomes a URL a browser can fetch.
  *
  * A space's manifest stores paths, never absolute URLs: the same space is rendered by Plitzi's cloud from a CDN,
@@ -284,6 +304,13 @@ export type SSRSpaceDeployment = {
   credential?: SSRCredential;
   spaceId?: number | null;
   revision?: number;
+  /**
+   * What this space's feature flags are at, for a deployment that keeps them apart from its revisions — a hash that
+   * changes exactly when they do. Part of every cache key a render is kept under (the page, its server data, the space
+   * read for it), so a flag turned in production reaches the next request while the revision stays the same. Absent,
+   * the flags change only with the revision, and the revision alone keys the caches.
+   */
+  flagsVersion?: string;
   /**
    * This render is an author looking at their own work — the builder's preview — rather than a visitor being
    * served. Metering skips it: nobody should be billed for editing.
@@ -530,6 +557,12 @@ export interface SSRRscContext {
    * doing so. Awaiting this joins the read already under way; it never starts a second one.
    */
   loadOfflineData: () => Promise<OfflineDataRaw | undefined>;
+  /**
+   * What the layers above the space decide about its flags for this request: the server's own and, on a page allowed
+   * to debug, a tester's. An element gated off by a flag is not resolved — `resolveRscData` resolves the flags
+   * against the page it matched and skips it — so a feature that is off puts nothing in the payload.
+   */
+  flagOverrides?: FlagOverrides;
 }
 
 /**
@@ -560,6 +593,8 @@ export type ActionLookupsConfig = {
   getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
   /** The space's own functions as of that revision — `SpaceFunctions` in `@plitzi/sdk-server/functions`. */
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
+  /** The feature flags the space declares as of that revision — what a flow reads as `{{ flags.<name> }}`. */
+  getFlags?: (spaceId: number, at?: SpaceRevision) => Promise<Schema['flags']>;
 };
 
 export type SSRActionConfig = {
@@ -928,6 +963,14 @@ export type SSRServerConfig = {
    *  so does a space whose settings switched `devTools` on. Set, it decides for every space: `false` is a refusal
    *  no space can turn around. */
   debugMode?: boolean;
+  /**
+   * The feature flags this deployment decides, by name — the `server` layer: above what each space declares, below
+   * the SDK embedding a page and a tester with the dev tools. Only for flags a space declares; an override of one it
+   * does not is ignored, and the page says so in its console.
+   *
+   * A function when one server renders several spaces and they do not share their flags: it is asked per render.
+   */
+  flags?: Record<string, boolean> | ((space: { spaceId: number; environment: Environment }) => Record<string, boolean>);
   cacheTtlMs?: number;
   loginPath?: string | false;
   middlewares?: SSRMiddleware[];
@@ -957,6 +1000,8 @@ export type SSRServerConfig = {
   allowPrivatePluginHosts?: boolean;
   /** Where this deployment serves the font files a space uploaded — see {@link SSRFontsConfig}. */
   fonts?: SSRFontsConfig;
+  /** Remote pictures resized by this server — see {@link SSRImagesConfig}. Absent, images keep their own `src`. */
+  images?: SSRImagesConfig;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
   ssrOnly?: boolean;
   /** Stream HTML to the client as React renders, reducing TTFB. Default: false. */

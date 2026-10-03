@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { flagGateOf } from '@plitzi/sdk-authoring';
+
 import { empty, fail, findRootByRef, resolveRef } from '../../../../helpers';
 import { elementInput, position } from '../shared';
 import { DROP_POSITION, collectInputRefs, createElement, guardNewRef, pageUri, writeInitialState } from '../write';
@@ -60,6 +62,14 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
 
     if (op.element.runtime !== undefined) {
       existing.definition.runtime = op.element.runtime;
+    }
+
+    if (op.element.flag !== undefined) {
+      existing.definition.flag = flagGateOf(op.element.flag, `Element "${op.element.ref}"`);
+    }
+
+    if (op.element.anchor !== undefined) {
+      existing.definition.anchor = op.element.anchor;
     }
 
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };

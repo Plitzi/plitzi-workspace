@@ -6,6 +6,7 @@ import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 import { DevStoreScopeContext } from '@plitzi/nexus/react';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
+import useAgentInspector from './agentInspector/useAgentInspector';
 import DevToolsContextProvider from './DevToolsContextProvider';
 import DevToolsRoot from './DevToolsRoot';
 import { useIsSelectedInstance } from './instanceRegistry';
@@ -93,6 +94,7 @@ const DevToolsContainer = ({
   const isSelected = useIsSelectedInstance(effectiveInstanceId, enabled);
   useRegisterRootStore(enabled);
   useRegisterQueriesStore(isSelected, effectiveInstanceId);
+  useAgentInspector(isSelected);
 
   const handleChangeOrientation = useCallback(
     (orientation: Orientation) => setOrientation(orientation),

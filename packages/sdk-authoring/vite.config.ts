@@ -1,6 +1,8 @@
 /// <reference types="vite/client" />
 /// <reference types="vitest" />
 
+import { fileURLToPath } from 'node:url';
+
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
@@ -48,6 +50,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    reporters: ['default']
+    reporters: ['default'],
+    // The skill's recipes import the package by name, as a project does; in its own tests that name is its source.
+    alias: { '@plitzi/sdk-authoring': fileURLToPath(new URL('./src/index.ts', import.meta.url)) }
   }
 });

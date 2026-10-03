@@ -2,6 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 import { readFunctionsSource } from '@plitzi/sdk-shared/actions';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { buildFunctions } from './build';
 
@@ -14,9 +15,6 @@ const nodeReader: FunctionsSourceReader = {
     (await readdir(dir, { withFileTypes: true })).map(entry => ({ name: entry.name, directory: entry.isDirectory() })),
   read: file => readFile(file, 'utf8')
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** Whether a module's default export has a definition's shape: what a server can register without surprises. */
 const isFunctionsDefinition = (value: unknown): value is FunctionsDefinition => {

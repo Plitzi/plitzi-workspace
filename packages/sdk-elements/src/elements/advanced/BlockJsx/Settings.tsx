@@ -70,7 +70,7 @@ const Settings = ({ content = '', props: componentProps = '{}', onUpdate }: Sett
       />
       <div className="flex flex-col py-2">
         {error && (
-          <Alert className="mb-4 text-white" intent="error">
+          <Alert className="mb-4" intent="error" size="sm">
             <div className="flex flex-col text-xs">
               <div className="whitespace-pre">{error.message}</div>
               <div className="my-2">

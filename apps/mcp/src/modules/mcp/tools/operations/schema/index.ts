@@ -19,6 +19,8 @@ export * from './folders/upsertFolder';
 export * from './folders/deleteFolder';
 export * from './variables/upsertVariable';
 export * from './variables/deleteVariable';
+export * from './flags/upsertFlag';
+export * from './flags/deleteFlag';
 export * from './bindings/upsertBinding';
 export * from './bindings/patchBinding';
 export * from './bindings/deleteBinding';

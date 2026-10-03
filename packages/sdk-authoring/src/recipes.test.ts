@@ -1,30 +1,18 @@
 /* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
 import {
-  apiContainer,
   authorSpace,
-  bindTemplate,
   button,
   channel,
-  closeModal,
-  declaredCallback,
-  declaredTrigger,
-  defineElement,
   delay,
-  fontAwesome,
-  form,
-  formControl,
-  image,
-  link,
   list,
-  modalContainer,
   named,
   on,
   onClick,
   onKey,
-  onSubmit,
-  openModal,
   publishOn,
   runServerAction,
   setState,
@@ -33,135 +21,37 @@ import {
   whileRunning
 } from './index';
 
-/**
- * The recipes the skill hands an agent (`skills/plitzi-authoring/SKILL.md`, "Recipes"), exactly as written there.
- *
- * They are what a less capable model copies without reading anything else, so they have to author on the first try,
- * with no warning. If this fails, fix the recipe in the skill in the same change.
- */
-/** The plugin the recipes use: a declaration as `plitzi add plugin` writes one. */
-const declaration = {
-  type: 'seatPicker',
-  triggers: { onPick: { action: 'onPick', title: 'On Pick', type: 'trigger', params: {}, preview: { seat: '' } } },
-  callbacks: { reset: { action: 'reset', title: 'Reset', type: 'callback', params: {} } },
-  content: { attributes: { rows: 10 }, definition: { label: 'Seat Picker' } }
-} as const;
+import type { PluginDeclarationData, SpaceSpec } from './index';
 
-type SeatPickerAttributes = { rows?: number };
+/**
+ * The recipes the skill hands an agent (`skills/plitzi-authoring/recipes/*.ts`), each a file a project could hold.
+ *
+ * They are what a less capable model copies without reading anything else, so each has to author on the first try,
+ * with no warning. If this fails, fix the recipe in the same change: a recipe that no longer authors teaches something
+ * that no longer works.
+ */
+const recipes = import.meta.glob<{ recipe: SpaceSpec; plugins?: readonly PluginDeclarationData[] }>(
+  '../skills/plitzi-authoring/recipes/*.ts',
+  { eager: true }
+);
 
 describe('the skill’s recipes', () => {
-  it('author together, with no warning', () => {
-    const seats = defineElement<SeatPickerAttributes>(declaration);
-    const { warnings } = authorSpace(
-      {
-        name: 'Recipes',
-        permanentUrl: 'recipes',
-        computed: { xp: '{{ (state.favourites|length) * 10 }}' },
-        pages: [
-          {
-            id: 'home',
-            name: 'Home',
-            slug: '',
-            isDefault: true,
-            body: [
-              apiContainer({
-                id: 'catalog',
-                query: '/data/games.json',
-                cache: true,
-                children: [
-                  list({
-                    id: 'games',
-                    source: 'controlled',
-                    bind: { items: 'catalog.data.games' },
-                    children: [
-                      link({
-                        mode: 'internal',
-                        href: '/games/{{ list_games.item.slug }}',
-                        children: [text('', { bind: { content: 'games.item.title' } })]
-                      })
-                    ]
-                  }),
-                  list({
-                    id: 'shown',
-                    source: 'controlled',
-                    bind: [
-                      bindTemplate('items', 'catalog.data.games', '{{ source|filter(g => g.genre == state.genre) }}', {
-                        returns: 'value'
-                      })
-                    ],
-                    children: [text('row')]
-                  }),
-                  text('', { bind: [bindTemplate('content', 'catalog.data.games', '{{ source|length }} games')] }),
-                  text('Nothing here yet', {
-                    visible: {
-                      source: 'catalog.data.games',
-                      template: '{{ source is defined and source|length == 0 }}'
-                    }
-                  })
-                ]
-              }),
-              text('', { bind: [bindTemplate('content', 'computed.xp', '{{ source }} XP')] }),
-              button({
-                content: 'Save',
-                flows: [[onClick(), setState({ key: 'saved', type: 'boolean', value: true })]]
-              }),
-              form({
-                id: 'signup',
-                managedByInteractions: true,
-                flows: [
-                  [
-                    named('sent', onSubmit()),
-                    setState({ key: 'email', type: 'text', value: '{{ sent.values.email }}' })
-                  ]
-                ],
-                children: [
-                  formControl({ name: 'email', label: 'Email', subType: 'email' }),
-                  button({ content: 'Sign up', subType: 'submit' })
-                ]
-              }),
-              modalContainer({ id: 'details', visible: false, title: 'Details', children: [text('Details')] }),
-              button({ content: 'Open', flows: [[onClick(), openModal('details')]] }),
-              button({
-                content: '',
-                title: 'Close',
-                children: [fontAwesome({ icon: 'fa-solid fa-xmark' })],
-                flows: [[onClick(), closeModal('details')]]
-              }),
-              button({
-                content: '',
-                children: [text('Pro'), text('12 € a month')],
-                flows: [[onClick(), setState({ key: 'plan', type: 'text', value: 'pro' })]]
-              }),
-              formControl({ name: 'q', label: 'Search the docs', hideLabel: true, placeholder: 'Search…' }),
-              image({ src: '/team.jpg', alt: 'The team at the 2026 offsite' }),
-              image({ src: '/grain.png', decorative: true }),
-              link({ href: 'about', children: [text('About')] }),
-              link({ href: '/games/nebula', mode: 'internal', children: [text('Nebula')] }),
-              seats({
-                id: 'seats',
-                flows: [
-                  [
-                    named('picked', declaredTrigger(declaration, 'onPick')),
-                    setState({ key: 'seat', type: 'text', value: '{{ picked.seat }}' })
-                  ]
-                ]
-              }),
-              button({
-                content: 'Clear',
-                flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'seats' })]]
-              }),
-              link({ href: 'mailto:hi@example.com', mode: 'external', children: [text('Write')] })
-            ]
-          },
-          { id: 'about', name: 'About', slug: 'about', body: [] },
-          { id: 'game', name: 'Game', slug: 'games/{{slug}}', body: [] }
-        ]
-      },
-      { plugins: [declaration] }
-    );
+  // A recipe nobody can find is not one: each is a row of SKILL.md's table, by the intent it answers.
+  it('are each listed in SKILL.md', () => {
+    const skill = readFileSync(new URL('../skills/plitzi-authoring/SKILL.md', import.meta.url), 'utf-8');
+    const unlisted = Object.keys(recipes)
+      .map(path => `recipes/${path.split('/').pop() ?? path}`)
+      .filter(file => !skill.includes(`](${file})`));
 
-    expect(warnings).toEqual([]);
+    expect(unlisted).toEqual([]);
   });
+
+  it.each(Object.entries(recipes).map(([path, module]) => [path.split('/').pop() ?? path, module] as const))(
+    '%s authors with no warning',
+    (_name, { recipe, plugins }) => {
+      expect(authorSpace(recipe, { plugins }).warnings).toEqual([]);
+    }
+  );
 
   /** `docs/en/authoring-spaces.md`, "What a step reads": a flow that waits, then reads the page as it is by then. */
   it('a keyboard shortcut authors with no warning, and one that cannot fire is refused where it is written', () => {

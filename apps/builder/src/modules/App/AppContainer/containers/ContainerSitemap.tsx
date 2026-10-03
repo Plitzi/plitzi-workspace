@@ -1,24 +1,52 @@
-import Card from '@plitzi/plitzi-ui/Card';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import WorkflowDiagram from '@pmodules/App/components/WorkflowDiagram';
+import SitemapDiagram from '@pmodules/App/components/SitemapDiagram';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 import PageForm from '@pmodules/App/models/PageForm';
 
-import type { Element, PageFolder } from '@plitzi/sdk-shared';
-import type { Connection, Edge, Node } from '@pmodules/App/components/WorkflowDiagram';
+import useSitemapOpen from '../../hooks/useSitemapOpen';
+
+import type { SitemapEntry } from '@pmodules/App/components/SitemapDiagram';
 
 const ContainerSitemap = () => {
   const { showModal } = useModal();
   const { eventBridge } = use(EventBridgeContext);
-  const [[pageFolders, pageDefinitions]] = useBuilderStore(['schema.pageFolders', 'pageDefinitions']);
+  const [[pageFolders, pageDefinitions, flat, currentPageId]] = useBuilderStore([
+    'schema.pageFolders',
+    'pageDefinitions',
+    'schema.flat',
+    'navigation.currentPageId'
+  ]);
   const pages = useMemo(() => Object.values(pageDefinitions), [pageDefinitions]);
+  const layouts = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.values(flat)
+          .filter(element => element.definition.type === 'layoutContainer')
+          .map(layout => [layout.id, layout.definition.label || layout.id])
+      ),
+    [flat]
+  );
+  const [, setSitemapOpen] = useSitemapOpen();
+  const navigate = useNavigate();
+
+  const handleClose = useCallback(() => setSitemapOpen(false), [setSitemapOpen]);
+
+  // A page is a route in this editor: opening one is going to it, and the canvas comes back to show it.
+  const handleOpen = useCallback(
+    (pageId: string) => {
+      void navigate(`/${pageId}`);
+      setSitemapOpen(false);
+    },
+    [navigate, setSitemapOpen]
+  );
 
   const handleAddNode = useCallback(
-    async (nodeType: 'page' | 'folder' | 'custom') => {
+    async (nodeType: 'page' | 'folder', folderId = '') => {
       if (nodeType === 'page') {
         const response = await showModal(
           <Modal.Header>
@@ -26,7 +54,7 @@ const ContainerSitemap = () => {
           </Modal.Header>,
           ({ onSubmit, onClose }) => (
             <Modal.Body>
-              <PageForm pageFolders={pageFolders} onSubmit={onSubmit} onClose={onClose} />
+              <PageForm pageFolder={folderId} pageFolders={pageFolders} onSubmit={onSubmit} onClose={onClose} />
             </Modal.Body>
           )
         );
@@ -34,7 +62,7 @@ const ContainerSitemap = () => {
         if (response) {
           void eventBridge.emit('main', 'schemaAddPage', response);
         }
-      } else if (nodeType === 'folder') {
+      } else {
         const response = await showModal(
           <Modal.Header>
             <h4>Add Page Folder</h4>
@@ -54,80 +82,55 @@ const ContainerSitemap = () => {
     [eventBridge, pageFolders, showModal]
   );
 
-  const handleAddEdge = useCallback(
-    (connection: Connection) => {
-      const { source, target } = connection;
-      const nodeSource: PageFolder | undefined = pageFolders.find(pageFolder => pageFolder.id === source);
-      const nodeTarget = (pageDefinitions[target] as Element | undefined) ?? pageFolders.find(f => f.id === target);
-      if (!nodeSource || !nodeTarget) {
+  // A page lives in a folder by its `folder` attribute, a folder in another by its `parentId`; the top level is ''.
+  const handleMove = useCallback(
+    (entry: SitemapEntry, folderId: string | null) => {
+      const into = folderId ?? '';
+      if (entry.type === 'page') {
+        const page = Object.hasOwn(pageDefinitions, entry.id) ? pageDefinitions[entry.id] : undefined;
+        if (page) {
+          void eventBridge.emit('main', 'schemaUpdateElement', {
+            ...page,
+            attributes: { ...page.attributes, folder: into }
+          });
+        }
+
         return;
       }
 
-      if ('attributes' in nodeTarget && 'definition' in nodeTarget) {
-        // Its an element
-        void eventBridge.emit('main', 'schemaUpdateElement', {
-          ...nodeTarget,
-          attributes: { ...nodeTarget.attributes, folder: source }
-        });
-      } else {
-        // Its a folder
-        void eventBridge.emit('main', 'schemaUpdatePageFolder', { ...nodeTarget, parentId: source });
+      const folder = pageFolders.find(candidate => candidate.id === entry.id);
+      if (folder) {
+        void eventBridge.emit('main', 'schemaUpdatePageFolder', { ...folder, parentId: into });
       }
     },
     [eventBridge, pageDefinitions, pageFolders]
   );
 
-  const handleRemoveNode = useCallback(
-    (node: Node) => {
-      const nodeTarget = node.data.type === 'page' ? pageDefinitions[node.id] : pageFolders.find(f => f.id === node.id);
-      if (!nodeTarget) {
-        return;
-      }
-
-      if (node.data.type === 'page') {
-        void eventBridge.emit('main', 'schemaRemovePage', node.id);
+  const handleRemove = useCallback(
+    (entry: SitemapEntry) => {
+      if (entry.type === 'page') {
+        void eventBridge.emit('main', 'schemaRemovePage', entry.id);
       } else {
-        void eventBridge.emit('main', 'schemaRemovePageFolder', node.id);
+        void eventBridge.emit('main', 'schemaRemovePageFolder', entry.id);
       }
     },
-    [eventBridge, pageDefinitions, pageFolders]
-  );
-
-  const handleRemoveEdge = useCallback(
-    (connection: Connection | Edge) => {
-      const { target } = connection;
-      const nodeTarget = (pageDefinitions[target] as Element | undefined) ?? pageFolders.find(f => f.id === target);
-      if (!nodeTarget) {
-        return;
-      }
-
-      if ('attributes' in nodeTarget && 'definition' in nodeTarget) {
-        // Its an element
-        void eventBridge.emit('main', 'schemaUpdateElement', {
-          ...nodeTarget,
-          attributes: { ...nodeTarget.attributes, folder: '' }
-        });
-      } else {
-        // Its a folder
-        void eventBridge.emit('main', 'schemaUpdatePageFolder', { ...nodeTarget, parentId: '' });
-      }
-    },
-    [eventBridge, pageDefinitions, pageFolders]
+    [eventBridge]
   );
 
   return (
-    <Card className="relative flex grow flex-col rounded-none" size="custom">
-      <Card.Body className="overflow-hidden" grow>
-        <WorkflowDiagram
-          pages={pages}
-          pageFolders={pageFolders}
-          onAddNode={handleAddNode}
-          onAddEdge={handleAddEdge}
-          onRemoveNode={handleRemoveNode}
-          onRemoveEdge={handleRemoveEdge}
-        />
-      </Card.Body>
-    </Card>
+    <div className="flex min-h-0 grow basis-0 flex-col">
+      <SitemapDiagram
+        pages={pages}
+        pageFolders={pageFolders}
+        layouts={layouts}
+        currentPageId={currentPageId}
+        onOpen={handleOpen}
+        onAddNode={handleAddNode}
+        onMove={handleMove}
+        onRemove={handleRemove}
+        onClose={handleClose}
+      />
+    </div>
   );
 };
 

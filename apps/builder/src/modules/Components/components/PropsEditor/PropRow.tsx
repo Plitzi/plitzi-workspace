@@ -62,8 +62,8 @@ const PropRow = ({ index, entry, problem, onChange, onRemove }: PropRowProps) =>
     [index, name, prop, onChange]
   );
   const handleRequired = useCallback(
-    (event: ChangeEvent) =>
-      onChange(index, { name, prop: { ...prop, required: (event.target as HTMLInputElement).checked } }),
+    (event: ChangeEvent<HTMLInputElement>) =>
+      onChange(index, { name, prop: { ...prop, required: event.target.checked } }),
     [index, name, prop, onChange]
   );
   const handleRemove = useCallback(() => onRemove(index), [index, onRemove]);

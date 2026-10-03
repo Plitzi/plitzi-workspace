@@ -293,7 +293,7 @@ describe('repointIds', () => {
 });
 
 describe('remapCollidingIds', () => {
-  it('keeps the names a template brought and renames only the ones this document already holds', () => {
+  it('keeps the names a snippet brought and renames only the ones this document already holds', () => {
     const arriving: Schema['flat'] = { hero: element('hero', 'container'), cta: element('cta', 'button') };
 
     const renamed = remapCollidingIds(arriving, candidate => candidate === 'hero');

@@ -1,6 +1,6 @@
-import { use, useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { FontStyle } from '@plitzi/sdk-shared';
 
@@ -22,7 +22,7 @@ const DEBOUNCE_MS = 250;
  * and telling somebody "no fonts matched" when nothing was searched would send them looking for a typo.
  */
 const useFontCatalog = (query: string, enabled: boolean) => {
-  const { server, userKey } = use(NetworkContext);
+  const { server, userKey } = useBuilderNetwork();
   const [fonts, setFonts] = useState<FontCatalogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [unavailable, setUnavailable] = useState(false);

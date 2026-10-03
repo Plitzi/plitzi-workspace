@@ -526,6 +526,10 @@
       "types": "./dist/components/StyleInspector/categories/Others/OthersOutline.d.ts",
       "import": "./dist/components/StyleInspector/categories/Others/OthersOutline.mjs"
     },
+    "./components/StyleInspector/categories/Others/OthersScrollSnap": {
+      "types": "./dist/components/StyleInspector/categories/Others/OthersScrollSnap.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Others/OthersScrollSnap.mjs"
+    },
     "./components/StyleInspector/categories/Others/OthersScrollbar": {
       "types": "./dist/components/StyleInspector/categories/Others/OthersScrollbar.d.ts",
       "import": "./dist/components/StyleInspector/categories/Others/OthersScrollbar.mjs"
@@ -936,7 +940,7 @@
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.26",
+    "@plitzi/plitzi-ui": "^1.6.27",
     "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",

@@ -1,7 +1,8 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
-import Card from '@plitzi/plitzi-ui/Card';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo, useState } from 'react';
+
+import ViewPage from '@pmodules/App/components/ViewPage';
 
 import ActionsContext from './ActionsContext';
 import ActionForm from './components/ActionForm';
@@ -17,7 +18,6 @@ const Actions = () => {
     deployments,
     isLoading,
     error,
-    hasServerRendering,
     addAction,
     updateAction,
     removeAction,
@@ -76,41 +76,31 @@ const Actions = () => {
   );
 
   return (
-    <Card className="relative flex grow basis-0" rounded="none">
-      <Card.Body grow>
-        {isLoading && <div className="p-4 text-sm text-gray-500">Loading actions…</div>}
-        {!isLoading && error && <div className="p-4 text-sm text-red-600">{error}</div>}
-        {!isLoading && !error && !hasServerRendering && (
-          <div className="mx-auto w-full max-w-4xl p-4 pb-0">
-            <Alert intent="warning" size="sm" solid={false}>
-              <div className="flex flex-col gap-1 text-xs">
-                <span className="font-medium">This space has no server-rendered deployment.</span>
-                <span>
-                  A server action runs on a server or it does not run: without one, a step that calls it reports itself
-                  inert rather than doing the work in the browser.
-                </span>
-                <span>To reach visitors, deploy the space with a Plitzi SSR credential.</span>
-              </div>
-            </Alert>
-          </div>
-        )}
-        {!isLoading && !error && !isEditing && (
-          <ActionList actions={items} onSelect={setEditing} onRemove={handleRemove} onCreate={handleCreate} />
-        )}
-        {!isLoading && !error && isEditing && (
-          <ActionForm
-            key={action?.identifier ?? 'new'}
-            action={action}
-            tasks={tasks}
-            credentials={credentials}
-            deployments={deployments}
-            onRun={runAction}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-          />
-        )}
-      </Card.Body>
-    </Card>
+    <>
+      {isLoading && <ViewPage description="Loading actions…" />}
+      {!isLoading && error && (
+        <ViewPage>
+          <Alert intent="error" size="sm" solid={false}>
+            {error}
+          </Alert>
+        </ViewPage>
+      )}
+      {!isLoading && !error && !isEditing && (
+        <ActionList actions={items} onSelect={setEditing} onRemove={handleRemove} onCreate={handleCreate} />
+      )}
+      {!isLoading && !error && isEditing && (
+        <ActionForm
+          key={action?.identifier ?? 'new'}
+          action={action}
+          tasks={tasks}
+          credentials={credentials}
+          deployments={deployments}
+          onRun={runAction}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+        />
+      )}
+    </>
   );
 };
 

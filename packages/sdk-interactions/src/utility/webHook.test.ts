@@ -13,6 +13,9 @@ vi.mock('@plitzi/sdk-shared/queries', async importOriginal => ({
 
 const fetchMock = vi.fn();
 
+// An interaction callback is declared over every step's params; this one is webHook's, which these tests pass whole.
+const call = webHook.callback as (values: Record<string, unknown>) => Promise<{ response: unknown }>;
+
 const send = (params: Record<string, unknown>, status = 200) => {
   fetchMock.mockResolvedValue({
     ok: status < 400,
@@ -20,7 +23,7 @@ const send = (params: Record<string, unknown>, status = 200) => {
     json: () => Promise.resolve({ at: fetchMock.mock.calls.length })
   });
 
-  return (webHook.callback as (values: Record<string, unknown>) => Promise<{ response: unknown }>)({
+  return call({
     url: 'https://api.test/cart/items',
     method: 'get',
     body: {},
@@ -42,6 +45,21 @@ afterEach(() => {
 });
 
 describe('webHook', () => {
+  it('hands on any answer, an error status included, for the next step to read', async () => {
+    const { response } = await send({ method: 'post' }, 401);
+
+    expect(response).toEqual({ status: 401, data: { at: 1 } });
+    expect(invalidateAfterWrite).not.toHaveBeenCalled();
+  });
+
+  it('fails when no answer arrives at all, saying which request and why', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(
+      call({ url: 'https://api.test/cart', method: 'post', body: {}, authorizationToken: '', credentials: 'omit' })
+    ).rejects.toThrow('POST https://api.test/cart got no answer: Failed to fetch');
+  });
+
   it('is declared from its spec, params and all', () => {
     expect(webHook).toMatchObject({ action: 'webHook', type: 'utility' });
     expect(Object.keys(webHook.params as object)).toEqual(

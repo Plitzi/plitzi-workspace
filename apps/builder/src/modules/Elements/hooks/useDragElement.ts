@@ -1,4 +1,4 @@
-import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
+import { set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, use } from 'react';
 
@@ -6,14 +6,14 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 
-import type { ComponentDefinition, Element, Template } from '@plitzi/sdk-shared';
+import type { ComponentDefinition, Snippet } from '@plitzi/sdk-shared';
 import type { DragEvent } from 'react';
 
 export type UseDragElementProps = {
   attributes?: Record<string, unknown>;
   type: string;
   variables?: object[];
-  manifest?: Template;
+  manifest?: Snippet;
   /** What the dropped element is called in the builder's tree, instead of its type's default label. */
   label?: string;
 };
@@ -71,16 +71,15 @@ const useDragElement = ({ attributes, type, variables, manifest, label }: UseDra
     [attributes, componentDefinitions, type, variables, label]
   );
 
-  const onDragTemplate = useCallback(
+  const onDragSnippet = useCallback(
     (e: DragEvent) => {
       if (!manifest) {
         return;
       }
 
-      const flat = get(manifest, 'schema.flat', {}) as Record<string, Element>;
-      const variables = get(manifest, 'schema.variables', []);
-      const templateBaseElementId = get(manifest, 'definition.baseElementId', '');
-      const baseElement = flat[templateBaseElementId] as Element | undefined;
+      const { flat, variables } = manifest.schema;
+      const snippetBaseElementId = manifest.definition.baseElementId;
+      const baseElement = Object.hasOwn(flat, snippetBaseElementId) ? flat[snippetBaseElementId] : undefined;
       if (!baseElement) {
         return;
       }
@@ -88,11 +87,11 @@ const useDragElement = ({ attributes, type, variables, manifest, label }: UseDra
       // Carried as authored, not re-cloned: a manifest is a throwaway copy already, and cloning would rename every
       // element in it — `hero` arriving as `hero-2` in a space that has no `hero`. The document it lands in renames
       // only what actually collides there.
-      const elements = Object.fromEntries(descendants(flat, templateBaseElementId).map(id => [id, flat[id]]));
+      const elements = Object.fromEntries(descendants(flat, snippetBaseElementId).map(id => [id, flat[id]]));
 
       e.dataTransfer.setData(
-        'add##plitzi-template',
-        JSON.stringify({ elements, baseElement, style: get(manifest, 'style', {}), variables })
+        'add##plitzi-snippet',
+        JSON.stringify({ elements, baseElement, style: manifest.style, variables })
       );
     },
     [manifest]
@@ -104,13 +103,13 @@ const useDragElement = ({ attributes, type, variables, manifest, label }: UseDra
       void eventBridge.emit('builder', 'builderSetSelected', null);
       e.dataTransfer.setDragImage(e.currentTarget, -5, -5);
 
-      if (type === 'template') {
-        onDragTemplate(e);
+      if (type === 'snippet') {
+        onDragSnippet(e);
       } else {
         onDragElement(e);
       }
     },
-    [eventBridge, type, onDragTemplate, onDragElement]
+    [eventBridge, type, onDragSnippet, onDragElement]
   );
 
   return { onDragStart };

@@ -14,7 +14,7 @@ const Settings = ({ title = 'Modal Header', autoHideAfterClick = true, onUpdate 
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
 
   const handleChangeAutoHide = useCallback(
-    (e: ChangeEvent) => onUpdate?.('autoHideAfterClick', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('autoHideAfterClick', e.target.checked),
     [onUpdate]
   );
 

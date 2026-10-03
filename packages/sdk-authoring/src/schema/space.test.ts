@@ -502,9 +502,9 @@ describe('authorSpace / what it refuses', () => {
       authorSpace({
         name: 'Typo',
         permanentUrl: 'typo',
-        pages: [{ name: 'Home', slug: '', body: [text('hi', { paddingTop: '8px' })] }]
+        pages: [{ name: 'Home', slug: '', body: [text('hi', { fontSmoothing: 'antialiased' })] }]
       })
-    ).toThrow(/paddingTop.*padding-top/);
+    ).toThrow(/"font-smoothing"/);
   });
 
   it('refuses an element that asks for a shared class and rules of its own at once', () => {
@@ -689,6 +689,14 @@ describe('authorSpace / breakpoints and fonts', () => {
       minimal({
         classes: { cards: { tablet: { 'flex-direction': 'column' }, mobile: { 'flex-direction': 'column' } } }
       })
+    );
+
+    expect(warnings.filter(warning => warning.code === 'tablet-rule-skips-mobile')).toEqual([]);
+  });
+
+  it('says nothing of a rule hidden on a phone, where no tablet rule could show', () => {
+    const { warnings } = authorSpace(
+      minimal({ classes: { nav: { tablet: { gap: '8px', 'font-size': '14px' }, mobile: { display: 'none' } } } })
     );
 
     expect(warnings.filter(warning => warning.code === 'tablet-rule-skips-mobile')).toEqual([]);

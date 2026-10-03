@@ -24,7 +24,9 @@ const EventBridgeTypesPerModule: Record<EventBridgeModule, EventBridgeEvent[]> =
     'schemaAddVariable',
     'schemaUpdateVariable',
     'schemaRemoveVariable',
-    'schemaAddTemplate',
+    'schemaSetFlag',
+    'schemaRemoveFlag',
+    'schemaAddSnippet',
     'schemaAddComponent',
     'schemaUpdateComponent',
     'schemaRemoveComponent',
@@ -42,11 +44,11 @@ const EventBridgeTypesPerModule: Record<EventBridgeModule, EventBridgeEvent[]> =
     'styleAddVariable',
     'styleUpdateVariable',
     'styleRemoveVariable',
-    'styleAddTemplate',
+    'styleAddSnippet',
     'styleUpdateSettings'
   ],
   builder: ['builderSetBaseContext', 'builderSetSelected', 'builderSetHovered'],
-  template: [],
+  snippet: [],
   interaction: [],
   element: []
 };

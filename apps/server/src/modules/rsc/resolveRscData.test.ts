@@ -129,6 +129,34 @@ describe('resolveRscData', () => {
     expect(result.serverData).toHaveProperty('postNested');
   });
 
+  it('resolves nothing under an element a flag switched off, and follows the overrides', async () => {
+    const gatedSchema = (): Schema => {
+      const schema = buildSchema();
+      schema.flags = { newPost: { value: false, rules: [] } };
+      schema.flat.postBox = {
+        ...schema.flat.postBox,
+        definition: { ...schema.flat.postBox.definition, flag: { name: 'newPost', is: true } }
+      };
+
+      return schema;
+    };
+    const resolvedIds = async (flagOverrides?: { qa: Record<string, boolean> }) => {
+      const resolveElement = vi.fn<RscElementResolver>().mockResolvedValue({});
+      await resolveRscData({
+        ...base,
+        schema: gatedSchema(),
+        req: request('/blog/hello'),
+        resolveElement,
+        ...(flagOverrides ? { flagOverrides } : {})
+      });
+
+      return resolveElement.mock.calls.map(([context]) => context.element.id);
+    };
+
+    expect(await resolvedIds()).toEqual(['postApi']);
+    expect((await resolvedIds({ qa: { newPost: true } })).sort()).toEqual(['postApi', 'postNested']);
+  });
+
   it('passes the route params of the matched page to the resolver', async () => {
     const resolveElement = vi.fn<RscElementResolver>().mockResolvedValue({});
 

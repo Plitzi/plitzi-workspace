@@ -9,12 +9,15 @@ import { visualFiles } from './visual';
 import { managerFiles } from '../packageManager';
 import { qualityFilesFor } from '../quality';
 
+import type { ElementShape } from './shape';
 import type { ElementText } from './source';
 import type { PluginAnswers, ProjectFiles } from '../types';
 
 export { pluginNameProblem, pluginNames } from './names';
+export { shapeFromFlags } from './shape';
 export { declarationsRegistry, elementsRegistry } from './source';
 export type { PluginNames } from './names';
+export type { ElementShape, ShapeFlags } from './shape';
 export type { ElementText } from './source';
 
 /** What the build writes, and what is nobody's to format or lint. */
@@ -50,5 +53,5 @@ export const scaffoldPlugin = (answers: PluginAnswers): ProjectFiles => {
  * One element, for a folder of a project that already exists: paths relative to the element's own folder. `title` is
  * the label it renders until an attribute says otherwise.
  */
-export const scaffoldElement = (name: string, text: ElementText): ProjectFiles =>
-  elementFiles({ ...pluginNames(name), title: text.title }, text);
+export const scaffoldElement = (name: string, text: ElementText, shape?: ElementShape): ProjectFiles =>
+  elementFiles({ ...pluginNames(name), title: text.title }, text, shape);

@@ -2,9 +2,9 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import Heading from '@plitzi/plitzi-ui/Heading';
 import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import { use, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import SpaceCredentialSelectorModal from '@pmodules/Space/components/SpaceCredentialSelectorModal';
 
 import ResourceCdnAccountForm from '../../Models/ResourceCdnAccountForm';
@@ -13,7 +13,7 @@ import ResourcesCdnBucket from '../ResourcesCdnBucket';
 
 import type { ResourceCdnAccountFormValues } from '../../Models/ResourceCdnAccountForm';
 import type { ResourceCdnBucketFormValues } from '../../Models/ResourceCdnBucketForm';
-import type { BuilderMutationsMap, BuilderQueriesMap, Cdn, NetworkContextValue } from '@plitzi/sdk-shared';
+import type { Cdn } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
 
 export type ResourcesCdnProps = {
@@ -32,7 +32,7 @@ export type ResourcesCdnProps = {
 const ResourcesCdn = ({ cdn, isCollapsed, onCollapse, onChange, onRemove }: ResourcesCdnProps) => {
   const { showDialog, showModal } = useModal();
   const [removing, setRemoving] = useState(false);
-  const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const { identifier } = cdn;
 
   const handleChange = useCallback(() => onChange?.(identifier), [identifier, onChange]);

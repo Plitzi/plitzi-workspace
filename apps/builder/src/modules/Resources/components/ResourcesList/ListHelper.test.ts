@@ -24,7 +24,7 @@ describe('getDirectories', () => {
       file('pizarra/assets/icons/star.svg', 'image')
     ]);
 
-    expect(names(directories).toSorted()).toEqual(['All Resources', 'Plugins', 'Templates', 'icons']);
+    expect(names(directories).toSorted()).toEqual(['All Resources', 'Plugins', 'Snippets', 'icons']);
   });
 
   it('opens a private bucket on its server code alone: nothing is uploaded to it', () => {

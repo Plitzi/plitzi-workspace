@@ -4,6 +4,7 @@ import { useCallback, use } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import { REUSE } from '@pmodules/Builder/helpers/reuse';
 import { makeIdMinter } from '@pmodules/Elements/ElementHelper';
 
 import ComponentForm from './components/ComponentForm';
@@ -31,6 +32,9 @@ const useSaveAsComponent = () => {
         </Modal.Header>,
         ({ onSubmit, onClose }) => (
           <Modal.Body>
+            <p className="mb-3 text-sm text-gray-600 first-letter:uppercase dark:text-zinc-400">
+              {REUSE.component.hint}.
+            </p>
             <ComponentForm
               declaration={{ label: element.definition.label }}
               slotChoices={slotChoicesOf(getFlat(), element.id, componentDefinitions.current)}

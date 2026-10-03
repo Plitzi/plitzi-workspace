@@ -1,8 +1,8 @@
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { actionTriggers, triggerInput } from '@plitzi/sdk-shared/actions';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useCommonStoreSync } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import ActionsContext from './ActionsContext';
@@ -13,12 +13,9 @@ import type {
   ActionDocument,
   ActionTaskDescriptor,
   ActionTriggerType,
-  BuilderMutationsMap,
-  BuilderQueriesMap,
   SpaceAction,
   SpaceCredential
 } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 import type { ReactNode } from 'react';
 
 export type ActionsContextProviderProps = {
@@ -37,10 +34,7 @@ const byIdentifier = (actions: SpaceAction[]) =>
   }, {});
 
 const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const {
     data = emptyActions,
     error,
@@ -138,26 +132,13 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
       credentials,
       isLoading,
       error: error?.message ?? '',
-      hasServerRendering,
       deployments: origins,
       addAction,
       updateAction,
       removeAction,
       runAction
     }),
-    [
-      actions,
-      tasks,
-      credentials,
-      isLoading,
-      error,
-      hasServerRendering,
-      origins,
-      addAction,
-      updateAction,
-      removeAction,
-      runAction
-    ]
+    [actions, tasks, credentials, isLoading, error, origins, addAction, updateAction, removeAction, runAction]
   );
 
   return <ActionsContext value={value}>{children}</ActionsContext>;
