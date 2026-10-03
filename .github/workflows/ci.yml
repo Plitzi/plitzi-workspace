@@ -1,5 +1,6 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://help.github.com/actions/language-and-framework-guides/publishing-nodejs-packages
+# Build once, then check in parallel: the checks split three ways, the unit tests, and the browser suite split three
+# ways — every one of them on its own runner, each restoring the build from the cache rather than making it again. A
+# release publishes once the checks and the tests pass.
 
 name: ci
 
@@ -12,64 +13,23 @@ on:
       - staging
       - main # Change this to your default branch
 
+# A newer push to the same branch makes the run in progress for the older one pointless: it is cancelled. A release
+# is never cancelled — it is the one that publishes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
-  packages:
+  # Installs (when the lockfile changed) and builds, once. Every other job restores both from the cache.
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup
         with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-          scope: '@plitzi'
-          cache: 'yarn'
-
-      - name: Cache node_modules
-        id: cache-packages
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
-
-      # - name: Yarn Token
-      #   run: |
-      #     yarn config set 'npmScopes["plitzi"]["npmRegistryServer"]' "https://npm.pkg.github.com/"
-      #     yarn config set 'npmScopes["plitzi"]["npmAuthToken"]' "${{ secrets.NPM_AUTH_TOKEN }}"
-
-      - name: Yarn Install
-        if: steps.cache-packages.outputs.cache-hit != 'true'
-        run: yarn install --immutable
-
-  build-packages:
-    needs: packages
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-          scope: '@plitzi'
-          cache: 'yarn'
-
-      - name: Restore Cache node_modules
-        id: cache-packages
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
+          cache-version: ${{ secrets.CACHE_VERSION }}
+          install: 'true'
 
       # Turbo's own cache, carried from run to run: a package whose inputs did not change is replayed, not rebuilt.
       # Keyed by commit so every run saves what it produced, and restored from the latest — a release reuses what the
@@ -84,11 +44,9 @@ jobs:
 
       - name: Restore Cache build
         uses: actions/cache@v6
-        env:
-          cache-name: cache-build
         with:
           path: '**/dist'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
+          key: ${{ runner.os }}-build-cache-build-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
 
       - name: Yarn Build
         run: yarn build:prod && yarn build-vendor:dev && yarn build-vendor:prod
@@ -98,113 +56,97 @@ jobs:
       - name: Prune Cache turbo
         run: find .turbo/cache -type f -mtime +7 -delete || true
 
-  lint:
-    needs: build-packages
+  # Lint, style lint and typecheck, split three ways by package: in one job they were the pipeline's longest leg, every
+  # package's type-aware lint at once on one runner. Each part is named by what it holds, and the last is "everything
+  # else" — written as the others' exclusion, so a package added tomorrow is checked without anybody listing it.
+  #
+  # `--only` because these tasks need nothing of each other: without it `dependsOn: ^lint` in turbo.json pulls every
+  # dependency's lint into each part, and the shared packages were checked in all three.
+  checks:
+    needs: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        part:
+          - name: builder
+            filter: >-
+              --filter=@plitzi/plitzi-builder --filter=@plitzi/plitzi-desktop --filter=@plitzi/plitzi-sdk
+              --filter=@plitzi/e2e
+          - name: platform
+            filter: >-
+              --filter=@plitzi/sdk-server --filter=@plitzi/sdk-shared --filter=@plitzi/cli --filter=@plitzi/sdk-auth
+              --filter=@plitzi/sdk-schema --filter=@plitzi/sdk-interactions
+          - name: rest
+            filter: >-
+              --filter=!@plitzi/plitzi-builder --filter=!@plitzi/plitzi-desktop --filter=!@plitzi/plitzi-sdk
+              --filter=!@plitzi/e2e --filter=!@plitzi/sdk-server --filter=!@plitzi/sdk-shared --filter=!@plitzi/cli
+              --filter=!@plitzi/sdk-auth --filter=!@plitzi/sdk-schema --filter=!@plitzi/sdk-interactions
+    name: checks (${{ matrix.part.name }})
     steps:
       - uses: actions/checkout@v7
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup
         with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-          scope: '@plitzi'
-          cache: 'yarn'
+          cache-version: ${{ secrets.CACHE_VERSION }}
+          build: 'true'
 
-      - name: Restore Cache node_modules
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
-
-      - name: Restore Cache build
-        id: cache-packages
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-build
-        with:
-          path: '**/dist'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
-
-      - name: Validate Cache
-        if: steps.cache-packages.outputs.cache-hit != 'true'
-        run: exit 1
-
-      # Turbo's own cache, carried from run to run: lint, style lint and typecheck of a package whose inputs did not
-      # change are replayed. Keyed by commit so every run saves what it produced, and restored from the latest — a
-      # release reuses what the push of the same commit already did.
+      # Turbo's own cache, per part: lint, style lint and typecheck of a package whose inputs did not change are
+      # replayed.
       - name: Restore Cache turbo
         uses: actions/cache@v6
         with:
           path: .turbo/cache
-          key: ${{ runner.os }}-turbo-lint-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
+          key: ${{ runner.os }}-turbo-checks-${{ matrix.part.name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-turbo-lint-${{ secrets.CACHE_VERSION }}-
+            ${{ runner.os }}-turbo-checks-${{ matrix.part.name }}-${{ secrets.CACHE_VERSION }}-
 
-      - name: Yarn Lint
-        run: yarn lint
+      - name: Lint, style lint and typecheck
+        run: yarn turbo run lint lint-style typecheck --only ${{ matrix.part.filter }}
 
-      - name: Yarn Scss Lint
-        run: yarn lint-style
-
-      - name: Yarn Typecheck
-        run: yarn typecheck
-
-      # An entry nothing has written for a week is dropped before the cache is saved again, so it cannot grow forever.
-      # One still in use costs one rebuild a week.
       - name: Prune Cache turbo
         run: find .turbo/cache -type f -mtime +7 -delete || true
 
-  # The browser suite. Needs the build — the examples render built output, so an e2e run on an unbuilt tree tests
-  # nothing — but NOT lint: a formatting complaint says nothing about whether the app works, and waiting for one
-  # only makes the pipeline longer. Runs alongside `lint` instead.
-  #
-  # Every server it needs is started by Playwright itself (see e2e/targets.ts), so there is nothing to provision
-  # here: no database, no hosts file, no certificates. `yarn e2e:ci` is what says so — the backend is answered in
-  # the browser, which is the narrower claim this environment can honestly make.
-  e2e:
-    if: github.event_name == 'push'
-    needs: build-packages
+  # Every package's unit tests. The integration tests among them skip themselves where there is no database to reach.
+  test:
+    needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup
         with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org
-          scope: '@plitzi'
-          cache: 'yarn'
+          cache-version: ${{ secrets.CACHE_VERSION }}
+          build: 'true'
 
-      - name: Restore Cache node_modules
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-node-modules
+      - name: Yarn Test
+        run: yarn test
+
+  # The browser suite, split three ways by category. Needs the build — the examples render built output, so an e2e run
+  # on an unbuilt tree tests nothing — but not the checks: a formatting complaint says nothing about whether the app
+  # works.
+  #
+  # Split by category rather than `--shard`, because a category starts only the servers it declares (e2e/targets.ts):
+  # each runner boots its part of them, not all twenty-six. The parts are e2e/ciParts.ts's. Every server is started by the suite itself, so there is nothing to provision: no database, no hosts
+  # file, no certificates. `yarn e2e:ci` says so — the backend is answered in the browser.
+  e2e:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Which categories each part runs is e2e/ciParts.ts's: `server` is every category the other two do not name.
+        part: [apps, server, examples]
+    name: e2e (${{ matrix.part }})
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
         with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
-
-      - name: Restore Cache build
-        id: cache-build
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-build
-        with:
-          path: '**/dist'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
-
-      - name: Validate Cache
-        if: steps.cache-build.outputs.cache-hit != 'true'
-        run: exit 1
+          cache-version: ${{ secrets.CACHE_VERSION }}
+          build: 'true'
 
       # Keyed on the lockfile, so the download happens again only when the Playwright version moves.
       - name: Restore Cache browsers
@@ -223,59 +165,68 @@ jobs:
         if: steps.cache-browsers.outputs.cache-hit == 'true'
         run: yarn playwright install-deps chromium
 
-      # Every target that can run without provisioning does, the builder included. The rest — the MySQL example —
-      # skips with the reason, because the gate asks whether the thing is there rather than reading a flag.
+      # Each part writes a blob, which `e2e-report` merges into one report; failures are annotated on the run as they
+      # happen. Every target that can run without provisioning does, the builder included. The rest — the MySQL
+      # example — skips with the reason, because the gate asks whether the thing is there rather than reading a flag.
       - name: Yarn E2E
-        run: yarn e2e:ci
+        run: |
+          read -ra projects <<< "$(node --import tsx e2e/ciParts.ts ${{ matrix.part }})"
+          yarn e2e:ci "${projects[@]}" --reporter=github,blob
+        env:
+          PLAYWRIGHT_BLOB_OUTPUT_DIR: ${{ github.workspace }}/e2e/.artifacts/blob
 
-      # The report carries the trace of every failure: open it and step through the run that broke.
-      - name: Upload report
+      - name: Upload blob report
         if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: blob-report-${{ matrix.part }}
+          path: e2e/.artifacts/blob
+          retention-days: 1
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-results-${{ matrix.part }}
+          path: e2e/.artifacts/test-results
+          retention-days: 14
+
+  # One report for the three parts. It carries the trace of every failure: open it and step through the run that broke.
+  e2e-report:
+    if: ${{ !cancelled() && github.event_name == 'push' }}
+    needs: e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup
+        with:
+          cache-version: ${{ secrets.CACHE_VERSION }}
+
+      - name: Download blob reports
+        uses: actions/download-artifact@v7
+        with:
+          pattern: blob-report-*
+          path: e2e/.artifacts/all-blob
+          merge-multiple: true
+
+      - name: Merge reports
+        run: yarn playwright merge-reports --reporter=html e2e/.artifacts/all-blob
+        env:
+          PLAYWRIGHT_HTML_OUTPUT_DIR: e2e/.artifacts/report
+          PLAYWRIGHT_HTML_OPEN: never
+
+      - name: Upload report
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: e2e/.artifacts/report
           retention-days: 14
 
-      - name: Upload screenshots
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-screenshots
-          path: e2e/.artifacts/screenshots
-          retention-days: 14
-
-  # tests:
-  #   if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
-  #   needs: lint
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v7
-
-  # - name: Enable Corepack
-  # run: corepack enable
-
-  #     - uses: actions/setup-node@v7
-  #       with:
-  #         node-version: 24
-  #         registry-url: https://npm.pkg.github.com/plitzi
-  # cache: 'yarn'
-
-  #     - name: Restore Cache
-  #       uses: actions/cache@v6
-  #       env:
-  #         cache-name: cache-node-modules
-  #       with:
-  #         path: '**/node_modules'
-  #         key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
-
-  #     - name: Yarn Tests
-  #       run: yarn test:ci
-
   publish:
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
-    # Only lint: `e2e` does not run on a release event, and a job that waits on a skipped one never starts.
-    needs: lint
+    # Not `e2e`: it does not run on a release event, and a job that waits on a skipped one never starts.
+    needs: [checks, test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -292,37 +243,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup
         with:
-          node-version: 24
+          cache-version: ${{ secrets.CACHE_VERSION }}
+          build: 'true'
           registry-url: ${{ matrix.registry.url }}
-          scope: ${{ matrix.registry.scope }}
-          cache: 'yarn'
-
-      - name: Restore Cache node_modules
-        id: cache-packages
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: '**/node_modules'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('**/yarn.lock') }}
-
-      - name: Restore Cache build
-        id: cache-build
-        uses: actions/cache@v6
-        env:
-          cache-name: cache-build
-        with:
-          path: '**/dist'
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ secrets.CACHE_VERSION }}-${{ github.sha }}
-
-      - name: Validate Cache
-        if: steps.cache-packages.outputs.cache-hit != 'true' || steps.cache-build.outputs.cache-hit != 'true'
-        run: exit 1
 
       - name: Yarn Token
         run: |

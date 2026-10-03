@@ -1,0 +1,66 @@
+name: Setup
+description: >-
+  What every job starts with — Node, Yarn and the dependencies from the cache — and, asked, the build the `build` job
+  left for this commit. One definition, so a job cannot drift from the others in its Node version or its cache keys.
+
+inputs:
+  cache-version:
+    description: secrets.CACHE_VERSION — bumped to throw every cache away (a composite action cannot read secrets).
+    required: true
+  install:
+    description: Install the dependencies when the cache misses. Only the `build` job does; the rest expect the cache.
+    default: 'false'
+  build:
+    description: Restore the dist/ the `build` job produced for this commit, and fail when it is not there.
+    default: 'false'
+  registry-url:
+    description: The npm registry, for the job that publishes.
+    default: https://registry.npmjs.org
+
+runs:
+  using: composite
+  steps:
+    - name: Enable Corepack
+      shell: bash
+      run: corepack enable
+
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 24
+        registry-url: ${{ inputs.registry-url }}
+        scope: '@plitzi'
+        cache: 'yarn'
+
+    - name: Restore Cache node_modules
+      id: cache-packages
+      uses: actions/cache@v6
+      with:
+        path: '**/node_modules'
+        key: ${{ runner.os }}-build-cache-node-modules-${{ inputs.cache-version }}-${{ hashFiles('**/yarn.lock') }}
+
+    - name: Yarn Install
+      if: inputs.install == 'true' && steps.cache-packages.outputs.cache-hit != 'true'
+      shell: bash
+      run: yarn install --immutable
+
+    - name: Validate Cache node_modules
+      if: inputs.install != 'true' && steps.cache-packages.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "::error::node_modules is not cached for this lockfile: the build job installs it first"
+        exit 1
+
+    - name: Restore Cache build
+      id: cache-build
+      if: inputs.build == 'true'
+      uses: actions/cache@v6
+      with:
+        path: '**/dist'
+        key: ${{ runner.os }}-build-cache-build-${{ inputs.cache-version }}-${{ github.sha }}
+
+    - name: Validate Cache build
+      if: inputs.build == 'true' && steps.cache-build.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo "::error::dist/ is not cached for this commit: the build job produces it"
+        exit 1

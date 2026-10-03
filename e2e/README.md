@@ -307,8 +307,12 @@ test.use({ mockSpace: minimalSpace({ heading: 'just this' }) });
 
 ## In CI
 
-`.github/workflows/ci.yml` runs the suite on every push, after `lint`, on the same `node_modules` and `dist`
-caches — the examples render built output, so an e2e run on an unbuilt tree tests nothing.
+`.github/workflows/ci.yml` runs the suite on every push, beside the checks rather than after them, on the build the
+`build` job cached — the examples render built output, so an e2e run on an unbuilt tree tests nothing. It runs in
+three parts on three runners, by category (`ciParts.ts`: `apps` is sdk, desktop and builder, `examples` its own,
+`server` every other one — so a category added to `categories.ts` runs without being listed anywhere else). Each
+runner starts only the servers its categories declare; each part writes a blob report and `e2e-report` merges them
+into the one HTML report the run uploads.
 
 Nothing is provisioned for it: **no database, no hosts file, no certificates**. The suite starts every server
 itself, and the targets that would need those are gated off and skip with an explanation instead of failing. The

@@ -17,6 +17,7 @@
     "warmUp.ts",
     "launch.ts",
     "launchConfig.ts",
+    "ciParts.ts",
     "warmUp.setup.ts",
     "vite.config.ts",
     "fixtures",
