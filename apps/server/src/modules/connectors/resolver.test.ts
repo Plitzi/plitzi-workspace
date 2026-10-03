@@ -6,6 +6,12 @@ import type { ConnectorManifest } from './types';
 import type { RscResolveContext } from '../rsc/resolveRscData';
 import type { Element, SSRRequest } from '@plitzi/sdk-shared';
 
+// The outbound guard resolves every host before it sends anything to it; a unit test answers that itself, with a
+// public documentation address, instead of asking the network — which on a CI runner can take longer than the test.
+vi.mock('node:dns/promises', () => ({
+  lookup: vi.fn(() => Promise.resolve([{ address: '203.0.113.10', family: 4 }]))
+}));
+
 const manifest: ConnectorManifest = {
   id: 'cms',
   credential: 'cms-prod',

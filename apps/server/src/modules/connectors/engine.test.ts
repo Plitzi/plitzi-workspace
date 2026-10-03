@@ -4,6 +4,12 @@ import { fetchConnectorRecords, rebaseMedia } from './engine';
 
 import type { ConnectorManifest } from './types';
 
+// The outbound guard resolves every host before it sends anything to it; a unit test answers that itself, with a
+// public documentation address, instead of asking the network — which on a CI runner can take longer than the test.
+vi.mock('node:dns/promises', () => ({
+  lookup: vi.fn(() => Promise.resolve([{ address: '203.0.113.10', family: 4 }]))
+}));
+
 const strapi: ConnectorManifest = {
   id: 'cms-main',
   baseUrl: 'https://cms.example.com',

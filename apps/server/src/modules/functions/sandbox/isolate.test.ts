@@ -449,8 +449,10 @@ describe('an invocation’s limits', () => {
   });
 
   it('stops code that takes more memory than it may, and the next one runs', async () => {
+    // Chunks the size of the whole limit: it is crossed in an allocation or two. Small ones crept up on it, and the
+    // collector's fight near the limit could spend the CPU budget first on a busy CI runner.
     const hog = await spaceWith(
-      sourceOf('const keep = []; while (true) { keep.push(new Array(1e5).fill(Math.random())); }'),
+      sourceOf('const keep = []; while (true) { keep.push(new Array(2e6).fill(Math.random())); }'),
       {
         limits: { memoryMb: 16, cpuMs: 5000 }
       }

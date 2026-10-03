@@ -551,3 +551,14 @@ size, border, shadow, padding), checked as it is typed; the custom CSS editor sh
 rule they are stored as, and keeps it. The mechanism moved to `@plitzi/sdk-shared/style/notifications`
 (`notificationsCss`, `notificationsProblem`, `splitNotificationsCss`, `withNotificationsCss`); `@plitzi/sdk-authoring`
 re-exports it, refusing a spec that is not sound as before.
+
+## Motion that waits for the page to wake
+
+The SDK's root carries `data-hydrated` once the page is hydrated, so a space can hold decorative motion that runs on
+the main thread — a custom property, a `background-position`, a `top` — until then, when it would stutter behind the
+hydration's long tasks: `animation-play-state: paused` on the element, and `[data-hydrated] .x { animation-play-state:
+running }`. Opacity and transform animations run on the compositor and need no gate.
+
+Hydration is lighter on the way: the fonts' Google URLs sort their families by code point instead of `localeCompare`,
+whose first call built a collator in the middle of the page's first render, and twig's compiled-template cache holds
+1024 templates instead of a number a large space outgrew, compiling the same ones again on every render.

@@ -19,7 +19,9 @@ export type CacheStats = {
 };
 
 const cache = new Map<string, CacheEntry>();
-const MAX_CACHE_SIZE = 256;
+// A site's templates, not a page's: one space can hold several hundred distinct ones (the platform's website, ~550),
+// and a cache smaller than the space evicts on every navigation what the next page parses again.
+const MAX_CACHE_SIZE = 1024;
 const stats: CacheStats = { hits: 0, misses: 0 };
 
 export const getCacheStats = (): CacheStats => ({ hits: stats.hits, misses: stats.misses });

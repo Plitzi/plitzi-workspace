@@ -10,6 +10,10 @@
   { 'animation-play-state': 'paused' } } } }`.
 - **A stagger** — rows arriving one after another — is `animation-delay` per `:nth-child` in `customCss`, against the
   row's class.
+- **Smooth while the page loads:** animate `opacity` and `transform` — they run on the compositor. A decoration that
+  animates anything else (a custom property, `background-position`, `top`) stutters while the page hydrates: start it
+  paused and run it once the SDK's root says `data-hydrated` — `'.glow { animation: glow 8s linear infinite paused; }
+  [data-hydrated] .glow { animation-play-state: running; }'` in `customCss`.
 - Keep motion for meaning. Whoever asks their machine for less motion gets it without a word from you: the SDK cuts
   every animation and transition to an instant for them. Write a `prefers-reduced-motion` rule only for what that does
   not cover — a hover that moves a card (`transform: none`), a decoration better not shown at all.

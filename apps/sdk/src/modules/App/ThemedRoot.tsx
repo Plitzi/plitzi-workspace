@@ -2,6 +2,7 @@ import ContainerRoot from '@plitzi/plitzi-ui/ContainerRoot';
 import clsx from 'clsx';
 
 import { useTheme } from '@plitzi/sdk-shared';
+import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import type { ReactNode } from 'react';
 
@@ -22,11 +23,23 @@ export type ThemedRootProps = {
  *
  * `system` writes nothing, here as everywhere else: with no class the space inherits whatever the host document
  * settled on, which for an embedded surface is the right default.
+ *
+ * It also says when the page is interactive: `data-hydrated` appears once React has taken over the server's markup
+ * (at once for a page rendered in the browser). A space's CSS keys decorative motion that repaints every frame off it
+ * — `[data-hydrated] .glow { animation-play-state: running; }` — so the load has the main thread to itself.
  */
 const ThemedRoot = ({ className, scoped = false, children }: ThemedRootProps) => {
   const { theme } = useTheme();
+  const [[hydrated = false]] = useSdkStore(['render.hydrated']);
 
-  return <ContainerRoot className={clsx(className, scoped && theme !== 'system' && theme)}>{children}</ContainerRoot>;
+  return (
+    <ContainerRoot
+      className={clsx(className, scoped && theme !== 'system' && theme)}
+      data-hydrated={hydrated ? '' : undefined}
+    >
+      {children}
+    </ContainerRoot>
+  );
 };
 
 export default ThemedRoot;

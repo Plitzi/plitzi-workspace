@@ -340,6 +340,8 @@ describe('workers — a server on several processes', () => {
   it('keeps one action kv for every worker: a counter counts every request once', async () => {
     const run = await start({ WORKERS: '3' });
     await untilServing(run);
+    // Every worker listening before the run of requests: one still booting gets none of them, whatever the fleet does.
+    expect((await servingPids(run.port, 3)).size).toBe(3);
 
     const answers = [];
     for (let index = 0; index < 30; index += 1) {

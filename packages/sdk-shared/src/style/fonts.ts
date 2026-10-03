@@ -157,9 +157,21 @@ const familyParam = (family: string): string => encodeURIComponent(family).repla
  * is strictly better. The field stays on the manifest because mirroring (which downloads files
  * rather than linking them) does have to know which ranges to keep.
  */
+/**
+ * Code-point order, which is all a stable URL needs. Not `localeCompare`: its first call builds the ICU collator, ~10 ms
+ * of a page's first render spent on sorting two family names.
+ */
+const ordinal = (a: string, b: string): number => {
+  if (a === b) {
+    return 0;
+  }
+
+  return a < b ? -1 : 1;
+};
+
 export const googleCss2Url = (fonts: GoogleFont[]): string => {
   const families = [...fonts]
-    .sort((a, b) => a.family.localeCompare(b.family))
+    .sort((a, b) => ordinal(a.family, b.family))
     .map(font => {
       const weights = uniqueWeights(font);
       const hasItalic = font.styles.includes('italic');
@@ -188,7 +200,7 @@ export const googleCss2Url = (fonts: GoogleFont[]): string => {
  */
 export const googleTextSubsetUrl = (families: string[], text: string): string => {
   const params = [...families]
-    .sort((a, b) => a.localeCompare(b))
+    .sort(ordinal)
     .map(family => `family=${familyParam(family)}`)
     .join('&');
 
