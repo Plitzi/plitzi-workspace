@@ -7,6 +7,8 @@
 export { inspectDocument, inspectPage } from './inspect';
 export type { DocumentChecks, InspectOptions, PageEvaluator, PageReport } from './inspect';
 export { onScreen } from './onScreen';
+export { comparePictures, diffPictures, pageRegions } from './pictures';
+export type { PictureDiff, PictureDiffInput, PictureDriver, PictureRegion } from './pictures';
 export { inspectRenders, summariseRenders } from './renders';
 export type { ElementRenders, RenderEvaluator, RenderOptions, RenderReport } from './renders';
 export type { OnScreenOptions } from './onScreen';

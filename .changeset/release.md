@@ -102,3 +102,324 @@ point already goes by. It is a **snippet** now, everywhere, with no alias for th
   did not — it used to report it created before knowing, and from the context menu said nothing at all.
 
 Space templates — what a new space starts as — keep their name.
+
+## A link to a section of a page
+
+- **`anchor`** on any element is its `id` in the DOM — the element's own id only ever reached it as `data-id` — so
+  `/page#plans` has somewhere to land. Written by `authorSpace` (`anchor: 'plans'`), the builder (the element's
+  **Anchor** field), the MCP (`upsertElement` / `patchElement`) and read back by `specFromSpace`.
+- **`link` takes `hash`**: `link({ href: 'home', hash: 'plans' })` goes to `/#plans`; a flow's `navigate('home#plans')`
+  resolves the page and keeps the fragment.
+- **The router scrolls to the fragment** after every client-side navigation and on arrival, and waits up to 3 s for a
+  section that renders once its data arrives — a visitor who scrolls first is left where they are.
+- **Refused while authoring:** an anchor that is not lowercase letters, digits and `-` (`anchor-invalid`), one on an
+  element with no tag (`anchor-no-tag`), inside a list row or a component (`anchor-repeated`), twice on one page with
+  its layouts (`anchor-duplicate`), and a link to a section the page does not have (`anchor-missing`).
+
+## Every problem in one run
+
+- **`authorSpace` reports everything it cannot write at once**, as a `SpaceRefusedError` whose `refusals` list each
+  one — instead of stopping at the first. An element it cannot write is left out and its siblings carry on; a class
+  worn with `css`, `states` or a `selector` of its own is reported and written with the class, so the linter still
+  reads the rest of the space and its findings join the same report.
+- **Each problem says where:** the line of your own code that called the factory (`src/site/home.ts:417`) and the
+  nearest named element with the steps from it (`"store-footer" › container[1]`) — not a path of indices.
+- **The project's `npm run author`** prints one line on success, the numbered problems (no stack from inside the
+  package) on failure, and one JSON object with `--json`.
+
+## A class, plus one thing
+
+`class: [cover, { opacity: '0.25' }]` puts rules of the element's own on top of the classes it wears — the commonest
+shape there is, which until now took a class of its own every time. The rules become the class `<id>--own`, declared
+after every shared class so it wins over them, editable in the builder like any class; they take states and
+breakpoints as `styles()` does, need the element's `id`, and read back from a document as the same inline object.
+
+## Every few seconds, with no plugin
+
+`onInterval(ms)` is a trigger every element has: a flow that repeats every `ms` milliseconds — an autoplay, a clock, a
+refresh — while the element is mounted and the tab is in view, and never in the builder outside preview. Each flow
+names its own interval and counts its own ticks (`{{ <step>.count }}`); one below 250 ms is refused (`trigger-interval`).
+It is in the builder's flow editor beside `onKey`, and `@plitzi/sdk-shared/helpers/interval` holds the rule all of them
+read.
+
+## Data in `public/`, in the page from the first byte
+
+- **`plitzi create --mode server`** writes `public/data/` and passes `publicDir` to `createServer`: `public/data/*.json`
+  is served with no change to `src/main.ts`.
+- **A server provider reads a file of the server's own:** an `apiContainer` with `runtime: 'server'` and a `query`
+  that is a plain path in `publicDir` (`/data/home.json`) is resolved by the page server from disk — no connector or
+  action configured — so the page arrives with the section in it rather than fetching it after load. A URL, a path
+  outside `publicDir` or a `query` with `{{tokens}}` is left to the browser as before.
+
+## A project's server, findable
+
+- **`npm start` starts beside whatever holds 8080** while developing: the next free port (`freePort`, from
+  `@plitzi/sdk-server`), printed and written to `.plitzi/dev-server.json`. With `PORT` set, that port or an error.
+- **`/health` answers with the space's name**, and `npm run shot` checks it before taking a picture — another server
+  on the port is reported, instead of photographed. `playwright.config.ts` and `shot` read the port from `PORT`, else
+  from `.plitzi/dev-server.json`.
+
+## Every document type, from the package you author with
+
+`@plitzi/sdk-authoring` exports the types of what it writes — `Schema`, `Style`, `SpaceFont`, `Element` and the rest
+of the documents, plus `SchemaValidationError`, `SchemaValidationOptions` and `SchemaValidationResult` — so a project
+types its own helpers without reaching into `@plitzi/sdk-shared`.
+
+## Breakpoint warnings that read `display: none`
+
+`tablet-rule-skips-mobile` no longer warns about a tablet rule the phone hides anyway: an element with
+`display: none` under `mobile` never shows the rule it skips. When it does warn, it points to `compact`, which reaches
+both.
+
+## An inline container
+
+`container({ subType: 'span' })` renders a `<span>`: a dot before a title, a word dressed apart, a badge in a line of
+text — inline by default, and in the builder's container settings as "Span (inline)". A span holding a heading, a
+paragraph, a list, a form or prose is warned about (`span-holds-block`).
+
+## Every problem has a code, and a page that cannot miss one
+
+- **Every refusal and warning carries a code** — `[class-and-css]`, `[id-taken]`, `[tablet-rule-skips-mobile]` — in
+  the message and in `SpaceRefusedError.refusals[].code`. `AUTHORING_CODES` (exported) is the one table they are raised
+  from: whether each is refused or warned, what was wrong and what to write instead. A check raised with a code that is
+  not in it does not compile.
+- **The skill's `authoring-errors.md` is generated from that table**, as is the website's Authoring errors page
+  (`authoringCodesTable`), so neither can miss a code; a test fails when the page and the table disagree.
+- `AuthoringError` is what a factory or `authorSpace` throws for one problem on its own, with its `code` and `reason`.
+
+## The skills, packaged for a project
+
+- **A cheatsheet to start from** (`CHEATSHEET.md`): the factories, fields, steps and the problems met most, on one
+  page. `SKILL.md` starts there, says what to read for each kind of task, and what never to read whole.
+- **Recipes by intent, as files** (`recipes/*.ts`): show data from a file, filter a list, a detail page, link to a
+  section, something every few seconds (a carousel), a marquee, a link built from a row, forms and modals, a feature
+  flag, a plugin, controls usable without sight, styling, and an embed or an SVG. CI authors each one: a recipe that
+  stops authoring fails the build.
+- **Every link in a skill resolves inside a project**, and none names a file only the workspace has; a test walks them
+  as `plitzi create` copies them. Realtime channels have a reference of their own.
+- **Each skill file has a budget** — about 4k tokens for a `SKILL.md`, 3k for a reference — held by a test.
+- **When to use the MCP and when the CLI**, in both skills: the MCP for a space that lives on Plitzi, the CLI for one
+  that lives in code; a sign-in nobody can give never blocks the second.
+- New guidance: animations (keyframes, entering with `visible`, pausing on hover, staggering), a list's `index` as
+  text, rows kept by position, a provider around a layout's slot, checking motion in a test.
+
+## A project an agent finds its way around
+
+- **`AGENTS.md` says the port, where data goes, how to look at a page, and what not to read**: the generated
+  `space/offline-data.json`, `.sdk-plugins/`, a large `public/data/*.json` and the bundles in `node_modules`.
+- **`plitzi data describe <file>`** prints a JSON file's shape — every field, its type, how many rows have it — and one
+  row of its longest list; `--json` for a tool.
+- **Quiet by default:** the server prints only what goes wrong (`npm start -- --verbose` for every request), and
+  `typecheck` one line per error.
+- **The welcome space follows the skill's rules:** a box one class owns whole is a shorthand; a test holds it to that.
+- `.claude` is left out of a project's lint and formatting.
+
+
+## Problems over MCP come with their code and their fix
+
+An agent editing a space over MCP has no skill page to look a code up in: each problem a batch meets now leads with its
+`[code]` and its hint says what to write instead, from the same `AUTHORING_CODES` row `authorSpace` raises it from
+(`authoringCodeEntry(code)` looks one up).
+
+## Scrolling, as steps
+
+- **`scrollBy`, `scrollTo` and `scrollIntoView`** are callbacks every element answers: `scrollBy('cards', { x: '80%' })`
+  moves a box by most of what it shows, `scrollTo('cards', { x: 'end' })` to an end or a place, `scrollIntoView` brings
+  an element into view. In the builder's flow editor, in authoring and over MCP.
+- **`onScroll`** fires as an element's box moves — at most once a frame, and once on mount — with
+  `{ x, y, atStart, atEnd }`, so an arrow can hide at the end already reached (recipe: `recipes/scroll-a-row.ts`).
+
+## A list names its rows by the field you choose
+
+`list({ itemKey: 'slug' })` keys each row by that field of its item, so a row's state follows its item when the list is
+filtered or reordered, and a row whose item changes mounts again — a one-row list showing the current slide replays its
+entrance. Left out, rows follow the items' `id` (when every item has its own), else their position. In the builder it
+is the list's "Row key"; `list-item-key-missing` warns when fixed items lack it or share one.
+
+## A skeleton while a provider loads
+
+`apiContainer({ loadingSlot: 'catalog-skeleton' })` names one of its children to show in place of the others until the
+first answer arrives — the shape of what is coming — and to drop after it. In the builder every child shows, so the
+slot is edited beside what it stands for; `loading-slot-unknown` refuses a slot no child answers to.
+
+## `plitzi create --template blank`
+
+A space written in the project can start empty: tokens for both themes, a layout whose `site-main` the pages render in,
+one page, `public/data/` and no example plugin — for a project that is about to be a specific site, where the welcome
+tour is the first thing that would be deleted. `emptySpaceSpec` / `emptySpaceSource` in `@plitzi/sdk-authoring`.
+
+## `plitzi add plugin` writes the shape it is told
+
+`--prop interval:number=5000`, `--trigger onTick:count`, `--callback reset` and `--headless` write an element in its
+final shape — typed props with defaults, bindable and with a control each in its panel; a `use<Name>Events()` hook that
+fires its events with typed payloads; a function per action; and, headless, hidden on a page and a badge in the builder
+— instead of the counter example, which is what it writes without them. Flags that cannot make an element (a type that
+is not one, an event every element already fires, a name used twice) are refused with how to write them, and the files
+are written as the project's Prettier writes them.
+
+## Skills that say their version, and `plitzi skills update`
+
+The skills `plitzi create` copies into a project carry the version of the package they came from (`version:` in
+`SKILL.md`). `npm run author` says when the authoring skill is older than the `@plitzi/sdk-authoring` installed, and
+`plitzi skills update` replaces each Plitzi skill with the installed package's — whole, leaving any other skill alone.
+The CLI skill's references for `create --from` / `pull` and for a space's functions are files of their own now, read
+when a task names them.
+
+## `plitzi explain`
+
+What a name means when authoring, in a few lines: an element (its attributes and their values, what it fires and
+answers, its slots), a step (its params and the function that writes it), a trigger (what it hands its flow, what fires
+it), a problem's code (what was wrong, what to write instead) or a transformer. `--list steps` names every one of a
+kind, `--json` answers in one object, and over MCP it is the resource `plitzi://explain/{name}`. Read from the same
+catalogues the checks use (`explain`, `explainList`, `explanationText` in `@plitzi/sdk-authoring`).
+
+## `plitzi check` and `plitzi shot`: a page in numbers before pictures
+
+- **`plitzi check / --width 1440,390`** says whether a page of the running project is whole, in text: every element the
+  space owes it on screen (or why not), no broken image, no sideways scroll, no text in the colour behind it, no console
+  error, no refused request — per width, `--json` for a tool. A space in code is checked against what each page owes;
+  any other, against what every page does.
+- **`plitzi shot`** takes the picture, and `--compare <url>` puts the same page of another site beside it — the
+  differences in red, and the share that differs in each landmark (`section#plans 14%`); `--frames 4 --every 500` says
+  what moves; `--wait-for` and `--reduced-motion` set it up. The comparison runs in the browser
+  (`comparePictures`, `pageRegions` in `@plitzi/sdk-authoring`), so nothing is installed for it.
+- Both use the project's own Playwright and refuse a port that answers as another project. A project `create` writes
+  installs `@plitzi/cli` and runs them as `npm run check` / `npm run shot`, which replaces its `scripts/shot.ts`.
+
+## The builder's problems panel says the fix
+
+Each problem in the builder's panel shows what to write instead, from the same `AUTHORING_CODES` row `authorSpace` and
+the MCP use — `SpaceIssue.fix` over GraphQL, its code set apart.
+
+## Scroll snap, and anchors under a fixed header
+
+`scroll-snap-type`, `scroll-snap-align` and `scroll-snap-stop` — a row of cards that comes to rest on a card — and
+`scroll-padding-top` / `scroll-margin-top` — an anchor that lands below a fixed header rather than under it — are part
+of the style vocabulary, with a "Scroll snap" section in the style editor.
+
+## CSS as a React style object, and a value per breakpoint in place
+
+- **camelCase keys and numbers:** `{ paddingTop: 8, fontWeight: 800, WebkitLineClamp: 2 }` is `padding-top: 8px`,
+  `font-weight: 800`, `-webkit-line-clamp: 2` — a bare number on a length is pixels. The document keeps kebab-case; one
+  property written under both spellings is refused (`css-property-twice`).
+- **One property per breakpoint:** `{ fontSize: { desktop: '24px', compact: '18px' }, fontWeight: 700 }` changes the
+  size on tablet and phone without splitting the rule set; it mixes with the per-breakpoint form.
+
+## A link's mode follows from its href
+
+`link({ href: '/games/nebula' })` is internal, `link({ href: 'https://…' })` (or `mailto:`, `tel:`) external, and
+`link({ href: 'about' })` a page — `mode` is written only to say otherwise. A link that opens another tab gets
+`rel="noopener noreferrer"`.
+
+## `from` and `as`: an element shows its data in a line
+
+- **`from`** binds the attribute a type shows its data in — a text's or heading's `content`, an image's `src`, a link's
+  `href`, a list's `items` — and leaves it empty until the data answers: `heading({ from: 'site.data.hero.title' })`.
+  It writes the same binding `bind` does; `bind` keeps the other attributes.
+- **`as`** shows it through a template (`as: '{{ source }} left'`) or a format the space names once:
+  `formats: { price: "{{ source|currency('USD', 'en', { trimZeros: true }) }}" }`, then `as: 'price'` anywhere.
+- **New template filters:** `currency('USD', locale?, { trimZeros })` and `percent(decimals?)`, in `en` unless told,
+  so a server and a browser in different locales write the same text.
+- Refused: `from` on a type with no main attribute, the main attribute bound twice, a format nobody declared, `as`
+  without `from`.
+
+## A list in one line: `items` and `row`
+
+`list({ id: 'grid', items: 'catalog.data.products', row: 'product-card' })` is a controlled list fed by that source,
+placing the component once per item with the row bound to its `item` prop (or its only prop). `row` can also be a
+function handed the row's names — `row: r => text({ from: `${r.item}.title` })`, `r.inTemplate.item` for a template.
+`items` (an array, or a source's name) and `from` make a list controlled without saying so. Refused: a row and
+children at once, a function row on a list with no `id`, a row naming a component that cannot take it.
+
+## `activeWhen`, and a list's index is a number
+
+- **`activeWhen(dot, '{{ list_dots.index == state.slide }}')`** wears a class's `active` variant while a condition
+  holds (`idle` otherwise) — the general form of `activeOn`, without a hand-written ternary.
+- **`list_<id>.index` is a number** from 0, so a template counts with it (`index + 1`). `==` compares text and numbers
+  alike, so templates that compared it as text read the same.
+
+## `cycleState` and `stepState`
+
+`cycleState({ key: 'slide', length: 4 })` moves a number in state round a cycle — after the last the first, `by: -1`
+before the first the last — and `stepState({ key: 'shown', by: 40, max: 'apiContainer_site.data.total' })` adds and
+stops at its bounds. Both are the `setState` they stand for, with the arithmetic written once; a length or a bound is a
+number or a template expression for one.
+
+## `scope()` for what a helper builds
+
+`scope('promos', ref => container({ id: 'panel', … }))` prefixes every `id` given inside it (`promos-panel`), so a
+helper that builds the same block twice writes two sets of names instead of being refused `id-taken`. `ref('slides')` is
+the full name, for a binding, a step's target or a template; scopes nest. `id-taken` now points at it.
+
+## Typed tokens, and `unknown-variable`
+
+- **`tokens(variables)`** turns the space's variables into the values a rule writes — `t.surface === 'var(--surface)'`
+  — so a token that does not exist is a type error where it is written.
+- **`unknown-variable`** warns of a bare `var(--x)` nothing declares (a space variable, a selector's variable, a custom
+  property a rule sets, or `customCss`): the browser drops the property and the page shows what it inherits. A
+  `var(--x, fallback)` is taken as meant.
+
+## Typed sources: `source()` and `twig`
+
+`const site = source('site', home)` names a provider's source from a sample of its answer — the JSON file it reads,
+imported — so every path is completed by the editor and checked: `site.data.hero.titel` is a type error, and refused
+`source-field-unknown` where the types were not looking. A path is the full source name, so it goes in `from`, `items`,
+`bind` and `visible` as it is, and into a template through `` twig`{{ ${site.data.total} + 1 }}` ``. A list fed by a
+path hands its `row` the item typed (`row: g => text({ from: g.item.title })`). Nothing of the sample is written into
+the space; inside a `scope()` the id is the scoped one.
+
+## `tw()`: Tailwind classes as Plitzi styles
+
+`styles('pill', tw('inline-flex items-center gap-2 px-5 rounded-full bg-slate-950/90 hover:scale-105 md:text-sm'))`
+writes the rules the classes mean when the space is authored — Tailwind v4's scales and palette, arbitrary values,
+`[property:value]`. Its breakpoints become Plitzi's ranges (`md:` tablet and desktop, `lg:` desktop, `max-md:`,
+`max-lg:`), its states the class's states, `group-hover/<class>:` an ancestor's. Composed properties (transform,
+filter, gradient, ring and shadow) are put together once. `createTw({ colors: tokens(variables) })` names the space's
+tokens. What has no exact equivalent (`sm:`, `dark:`, `space-x-*`, `animate-*`) is refused with what to write instead.
+
+## `create --template catalog`, and a file per part
+
+`npx @plitzi/cli create shop --template catalog` writes a complete small site to read and change: a layout with a menu,
+a product card component, `public/data/products.json` read as a typed source, a catalog filtered by category and a page
+per product — each part a short file of its own under `src/site/`, assembled by `src/space.ts`. The template is
+authored by sdk-authoring's tests, and a generated project authors, typechecks and lints clean. The skills point to it,
+and `AGENTS.md` asks for a file per part.
+
+## `embed` and `svg` elements
+
+- **`embed({ src, title })`** puts another page in a frame — a map, a video player — lazily loaded, with `allow`,
+  `sandbox` and `referrerPolicy` when it needs them. Only a web address or a path of the site is loaded, and in the
+  builder the frame does not swallow the click that selects it. `embed-without-title` warns of one a screen reader
+  cannot describe.
+- **`svg('<svg …>…</svg>', { label })`** draws SVG markup inside a box its class colours (`currentColor`): checked to be
+  one `<svg>` (`svg-not-svg` otherwise) and sanitised as rich text is, plus what only SVG can carry (`foreignObject`,
+  animations writing a `javascript:` link). Decorative unless it has a `label`, then `role="img"`. `{{ }}` tokens
+  resolve in it like in any attribute.
+
+## Pictures resized by the page server
+
+`createServer({ images: { domains: ['images.example.com'] } })` resizes other sites' pictures at `/_plitzi/img`: an
+`image` whose `src` is one of them offers a `srcset` from 320 to 1920 px, in AVIF or WebP when the browser takes them.
+Each original is downloaded once and each size made once, both kept on disk; a week on they keep answering while the
+original is revalidated with its `ETag` / `Last-Modified`, so an unchanged picture is never resized again. Only the listed hosts (`*.example.com` for subdomains) are fetched, every redirect is
+held to the list and to the outbound guard, and SVG is refused. `sharp` is an optional peer: without it pictures are
+passed through and kept. `image` also takes `sizes`, and `width`/`height` so the browser keeps the picture's space.
+
+## `window.__plitzi`: the page in text, for an agent
+
+With the dev tools on (debug mode), the page exposes `window.__plitzi`: `state()` and `setState(key, value)`,
+`sources(name?)` — every provider's current value by its full name, from the store it lives in — `element(id)` — type,
+attributes, what it reads, its own state, copies, whether it is on screen and its box — `flows(limit?)` — the last flows
+with every step, its time and its error — and `watch()`, one console line per flow. What the panel shows a person, for
+an agent that drives the page and can only read text.
+
+## `carousel`
+
+A structure element for slides that change, a marquee and a row that swipes: `carousel({ id: 'hero', items, row,
+autoplay: 5000, children: [arrows, dots] })`. Its `row` is written into a `carouselTrack`, and its other children are
+its controls, reading `carousel_<id>.index`, `.count`, `.item` and `.items`. `mode: 'slide'` shows one at a time
+(`transition` `slide`, `fade` or `none`, back entering from the left); `'marquee'` scrolls the items past at `speed`
+px/s with no seam; `'scroll'` is a snapping row a visitor swipes. Steps `carouselNext`, `carouselPrevious`,
+`carouselGoTo`, `carouselPlay` and `carouselPause`; trigger `onChange`. Autoplay holds still under the pointer, with
+keyboard focus inside, in a hidden tab and for reduced motion, and never in the builder. Slides are announced as "2
+of 5" in a region named by `label`.

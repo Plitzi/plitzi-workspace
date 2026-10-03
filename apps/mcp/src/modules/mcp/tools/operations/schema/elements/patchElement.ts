@@ -4,7 +4,7 @@ import { flagGateOf } from '@plitzi/sdk-authoring';
 import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
 
 import { empty, fail, findRootByRef, invalidateIndex, resolveRef } from '../../../../helpers';
-import { elementFlag, elementRuntime, initialStateInput, styleRefs } from '../shared';
+import { elementAnchor, elementFlag, elementRuntime, initialStateInput, styleRefs } from '../shared';
 import { guardNewRef, pageUri, writeInitialState } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -36,7 +36,8 @@ export const patchElementOp = z
       .optional()
       .describe('Merged onto existing initialState: styleVariant overlays per class/selector, visibility overrides'),
     runtime: elementRuntime.optional(),
-    flag: elementFlag.nullable().optional()
+    flag: elementFlag.nullable().optional(),
+    anchor: elementAnchor.nullable().optional().describe('null removes it')
   })
   .describe(
     'Partially update an EXISTING element: only the fields you pass change (props/style/initialState are merged, ' +
@@ -125,6 +126,12 @@ export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult
     Reflect.deleteProperty(el.definition, 'flag');
   } else if (op.flag !== undefined) {
     el.definition.flag = flagGateOf(op.flag, `Element "${op.ref}"`);
+  }
+
+  if (op.anchor === null) {
+    Reflect.deleteProperty(el.definition, 'anchor');
+  } else if (op.anchor !== undefined) {
+    el.definition.anchor = op.anchor;
   }
 
   return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.ref] };

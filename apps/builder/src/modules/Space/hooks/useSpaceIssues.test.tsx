@@ -12,7 +12,9 @@ import type { ReactNode } from 'react';
 vi.mock('@pmodules/Network/hooks/useGraphQL', () => ({ default: vi.fn() }));
 
 const issues: TSpaceIssues = {
-  errors: [{ code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'hello', fixable: false }],
+  errors: [
+    { code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'hello', fixable: false, fix: null }
+  ],
   warnings: []
 };
 

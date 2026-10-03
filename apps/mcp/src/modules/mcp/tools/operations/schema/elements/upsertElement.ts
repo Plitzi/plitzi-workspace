@@ -68,6 +68,10 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
       existing.definition.flag = flagGateOf(op.element.flag, `Element "${op.element.ref}"`);
     }
 
+    if (op.element.anchor !== undefined) {
+      existing.definition.anchor = op.element.anchor;
+    }
+
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
   }
 

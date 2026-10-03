@@ -22,6 +22,11 @@ Two things, depending on what the connection was granted:
 
 A connection with a space can do both.
 
+**The MCP or the CLI.** The MCP edits a space that lives on Plitzi — the one the builder, collaborators and publishing
+work on — and needs a signed-in account. A space that lives in code (`plitzi create --source local`) is written with
+`@plitzi/sdk-authoring` and the CLI, with no account and no MCP; `plitzi create --from <space>` turns the first into
+the second. The skills an agent is given say the same, so an MCP waiting for a sign-in never blocks a project in code.
+
 ## 2. Connecting an agent
 
 ### Claude (desktop or claude.ai)

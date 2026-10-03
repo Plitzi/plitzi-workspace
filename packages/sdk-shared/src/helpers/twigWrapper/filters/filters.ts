@@ -268,6 +268,37 @@ const dateParts = (date: Date, timeZone: string): DateParts | undefined => {
   };
 };
 
+/** A number, or text that is one — a price read out of a JSON file is often a string. */
+const numberOf = (value: unknown): number | undefined => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+};
+
+/**
+ * A number as a locale writes it. A locale the runtime does not know falls back to `en`, and options it cannot honour —
+ * a currency code that is not one — leave the number as written: a template renders something rather than throw.
+ */
+const formatNumber = (value: number, locale: unknown, options: Intl.NumberFormatOptions): string => {
+  for (const name of [locale == null ? 'en' : toStr(locale), 'en']) {
+    try {
+      return new Intl.NumberFormat(name, options).format(value);
+    } catch {
+      continue;
+    }
+  }
+
+  return String(value);
+};
+
 export const filters: Record<string, TwigFilter> = {
   // ── Identity / HTML ──────────────────────────────────────────────────────────────
   // Outputs the value as-is, bypassing JSON serialization even in double braces.
@@ -500,6 +531,42 @@ export const filters: Record<string, TwigFilter> = {
     const parts = fixed.split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSep);
     return parts.join(decPoint);
+  },
+
+  // `| currency('USD', 'en', { trimZeros: true })` — a price in a currency, as the locale writes one: `$2,040.57`,
+  // `$440` when `trimZeros` drops the cents of a whole amount. The locale is `en` unless named, so a page rendered on a
+  // server and hydrated in a browser in another locale writes the same text.
+  currency: (value, args) => {
+    const amount = numberOf(value);
+    if (amount === undefined || args.length === 0) {
+      return value;
+    }
+
+    const options: unknown = args[2];
+    const trimZeros =
+      typeof options === 'object' && options !== null && 'trimZeros' in options && options.trimZeros === true;
+    const whole = trimZeros && Number.isInteger(amount);
+
+    return formatNumber(amount, args[1], {
+      style: 'currency',
+      currency: toStr(args[0]),
+      ...(whole ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {})
+    });
+  },
+  // `| percent(1)` — a share as a percentage: `0.256|percent(1)` is `25.6%`. Decimals 0 unless named; locale `en`.
+  percent: (value, args) => {
+    const share = numberOf(value);
+    if (share === undefined) {
+      return value;
+    }
+
+    const decimals = Number(args[0]) || 0;
+
+    return formatNumber(share, args[1], {
+      style: 'percent',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: decimals
+    });
   },
 
   // ── Array transforms ─────────────────────────────────────────────────────────────

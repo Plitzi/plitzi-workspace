@@ -17,7 +17,7 @@ test wired together; a plugin's four files in the shape Plitzi's own elements us
 a signed-in upload. **Reach for it before writing any of those yourself.**
 
 ```bash
-npx @plitzi/cli create my-site                 # a project that renders a space
+npx @plitzi/cli create my-site                 # a project that renders a space (--template blank | catalog)
 npx @plitzi/cli create my-board --from pizarra # a space on Plitzi, as a project that serves it alone
 npx @plitzi/cli pull                           # that project brought up to date with its space
 npx @plitzi/cli add plugin seat-picker legend  # elements of your own, in the project you are in
@@ -25,6 +25,9 @@ npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can 
 npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
 npx @plitzi/cli upload plugin                  # that zip, on the space you work in, and installed there
 npx @plitzi/cli whoami                         # who the CLI is signed in as, and the space it works in
+npx @plitzi/cli data describe public/data/products.json   # a JSON file's fields, types and one row — not read whole
+npx @plitzi/cli skills update                  # the skills in .claude/skills, up to the SDK installed
+npx @plitzi/cli explain navigate               # what a name means: element, step, trigger, problem code (--list steps)
 npx @plitzi/cli functions pull                 # the space's functions (its own server code) into functions/
 npx @plitzi/cli functions push                 # functions/ back as the space's draft, built and checked
 npx @plitzi/cli functions try feed.read --params '{"limit":3}'   # one task of the saved draft, in the sandbox
@@ -46,6 +49,19 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
   space as a flag, so check `whoami` before an upload.
 - **`--no-install`** writes the files without installing, **`--force`** writes into a directory that has work in it.
 
+## The Plitzi MCP or this CLI
+
+Where the space lives decides which one an agent uses — the two never take turns on one space.
+
+| The space | Use |
+| --- | --- |
+| In a project, written in code (`src/space.ts`, `--source local`) | this CLI and `@plitzi/sdk-authoring`. No account and no MCP |
+| On Plitzi — edited in the builder, with collaborators, published from there | the Plitzi MCP server: it reads and edits the live space, previews a page and checks every edit with the same linter |
+| On Plitzi, and wanted in code from now on | `create --from <space>`, then `pull` to keep the project in step |
+
+The MCP needs a signed-in account. If it asks for authentication and nobody can give it, do not wait on it: a project
+with `--source local` needs neither.
+
 ## Projects (`create`)
 
 | | `--source local` | `--source cloud` |
@@ -57,39 +73,35 @@ What a project gives you, so you use it rather than rebuild it:
 
 | Script | What it is for |
 | --- | --- |
-| `start` | serve it — in client mode Vite, which hot-replaces on save |
+| `start` | serve it — in client mode Vite, which hot-replaces on save. The server prints only what goes wrong; `-- --verbose` adds every request |
 | `start:dev` | server mode: the server, restarted on save |
-| `author` | author `src/space.ts` and print every warning — the check after each change (local projects) |
-| `shot -- /path --width 390 --scheme dark` | a picture of one page |
+| `author` | author `src/space.ts`: one line when it is fine, every problem at once (file:line, what to change) when not; `-- --json` for a tool |
+| `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests; `--json` |
+| `shot -- /path --width 390 --scheme dark` | a picture of one page — `--frames 4` says what moves, `--compare <url>` how much differs from another site by section, `--wait-for <element>`; refused when the port answers as another project |
 | `visual` | a browser asserts every element the space names is visible |
 | `typecheck`, `lint`, `format` | before calling a change done |
+
+**Which port.** `start` takes 8080, or the next free one when something else holds it — printed, and written to
+`.plitzi/dev-server.json`, where `shot` and `visual` look for it. Set `PORT` to choose one (then a taken port is an
+error). `/health` answers with the space's name: a server that answers as something else is not this project.
+
+The data a page reads with no backend goes in `public/data/*.json`, served by the project as it is; in server mode a
+provider with `runtime: 'server'` reads it on the server, so the page arrives with it. To bind to a file, learn its fields
+with `data describe` rather than reading it: a catalogue is half a megabyte, its shape twenty lines.
+
+A local space starts as a tour of the platform with a plugin of the project's own; **`--template blank`** starts it as
+tokens, a layout and one empty page instead — the one to pick when the project is about to be a specific site; and
+**`--template catalog`** as a complete small shop (layout, card component, data in `public/data`, a filtered list, a
+page per product), a file per part — the one to read when unsure how a whole site is put together.
 
 The space itself is written with `@plitzi/sdk-authoring` — see the `plitzi-authoring` skill, which `create` copies into
 `.claude/skills/` beside this one.
 
 ## A space on Plitzi, as a project (`create --from`, `pull`)
 
-`create --from <space>` (its permanent URL or id) writes a server project holding everything the space is made of, and
-serving it with nothing of Plitzi's — neither its servers nor its CDN:
+Taking a space out of Plitzi as a server project of its own, and keeping it in step: read
+[reference/from-space.md](reference/from-space.md) when the task names `--from` or `pull`.
 
-- its pages as authoring code in `src/space/` (`--source cloud` writes none: they stay on Plitzi, read with a key);
-- its actions in `src/actions/` — each a `defineAction` call where the document reads back exactly, JSON where it does
-  not (the report says why) — and its connectors as JSON;
-- its functions in `functions/`, its runtime and plugins as the source they were built from, under `src/`;
-- its files downloaded into `public/`, every CDN address rewritten to the project's own;
-- `.env` with a signing key made for it, and the names of the variables and credentials it needs — never their values.
-
-It takes a signed-in CLI and a space the person may change (owner, admin or writer). It takes out the draft unless
-`--environment production` (that environment's latest snapshot) or `--environment production --revision 3` (that one,
-pinned) says otherwise. Read the report it prints: a
-plugin or runtime uploaded before Plitzi kept sources comes across built only (`vendor/`), and a space with visitor
-roles needs sign-in of its own (the note in `src/main.ts`).
-
-`pull` brings the project up to date: what changed on the space alone is written, what changed here alone is kept,
-and when one file changed on both it writes **nothing** and names them — keep your changes aside and pull again, or
-`--force` to take the space's copy. It never touches `.env`, and only adds to `package.json`. What the project was given
-is recorded in `.plitzi/space.json`: commit it. It follows the version the project was made from; `pull --environment
-… --revision …` moves it to another, `--revision latest` lets go of a pin.
 
 ## Elements of your own (`add plugin`)
 
@@ -101,7 +113,14 @@ read.
 plitzi add plugin seat-picker                                  # one; asks what the builder calls it and what it is for
 plitzi add plugin seat-picker legend                           # several at once
 plitzi add plugin seat-picker --title "Seat Picker" --description "Pick a seat from a venue map"
+plitzi add plugin ticker --prop interval:number=5000 --prop paused:boolean --trigger onTick:count --callback reset --headless
 ```
+
+**Say its shape and it is written in it**, with nothing to delete: `--prop name:type=default` (string, number,
+boolean) for each attribute — typed, defaulted, bindable, with a control in its panel; `--trigger onTick:count` for
+each event and what a flow reads from it, fired with the `use<Name>Events()` hook it gets; `--callback reset` for
+each action a flow can call; `--headless` for one with nothing to see (hidden on a page, a badge in the builder).
+Without them it writes a counter that shows the three ways an element talks to a space — to be rewritten.
 
 Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 
@@ -162,28 +181,17 @@ themselves is the space's (`flags` in the spec; see the authoring skill's featur
 
 ## A space's functions (`functions`)
 
-A space's own server code — TypeScript tasks its actions run as steps, and routes under `/fn/` — lives in the space;
-`functions/` in a project is a **working copy** of it. The contract (`defineFunctions`, `ctx`) and every rule are in
-`docs/en/functions.md` of the workspace; what matters for the CLI:
+A space's own server code, edited in `functions/` with `pull`, `push`, `try` and `dev`: read
+[reference/functions.md](reference/functions.md) when the task names its functions.
 
-- **Pull before you edit, push when done.** `pull` refuses to overwrite what is not pushed (`--force` throws it
-  away); `push` refuses when the space changed since the pull — someone saved in the builder. Then: keep your changes
-  aside, `pull`, apply them again, `push`. Never `--force` over somebody else's work to get past it.
-- **A push is checked, not just stored.** A problem comes back as `functions/<file>:<line> <message>` and nothing is
-  saved — fix it and push again. `index.ts` must default-export `defineFunctions({ … })`; files import each other by
-  relative path and `@plitzi/sdk-server/functions`, nothing else.
-- **`try` runs the saved draft for real** (its fetches and writes happen). `dev` runs `functions/` on this machine with
-  the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
-  nothing to the space; `PLITZI_FUNCTIONS_CREDENTIALS='{"stripe":{"apiKey":"…"}}'` gives it credentials to name.
-- **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or
-  `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
-- **The live site runs what the space was last published with.** A push changes the draft; publishing is the person's.
 
 ## When something does not work
 
 | What you see | What it is |
 | --- | --- |
 | `create` printed questions and wrote nothing | nobody answered the three choices — ask the user, pass them as flags |
+| `start` says the port is in use | `PORT` is set to a taken port — unset it to take the next free one, or choose another |
+| A page that is not this project's, or `shot` refuses the port | another server answers there — `curl 127.0.0.1:<port>/health` names it; `.plitzi/dev-server.json` has this project's port |
 | An element renders "Custom Component … Not Found" | the `renderType` names no registered plugin — check the folder name's camelCase |
 | A flow on the plugin's event is refused, or never runs | the event is not in `declaration.ts`, or the plugin is missing from `src/plugins/declarations.ts` |
 | `upload` opens a browser | there is no session, or no space chosen — the person completes it there |

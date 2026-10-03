@@ -108,6 +108,12 @@ describe('navigationTarget', () => {
     expect(navigationTarget(pages, folders, 'home')).toBe('/');
     expect(navigationTarget(pages, folders, '/somewhere/else')).toBe('/somewhere/else');
   });
+
+  it('goes to a section of a page, the fragment kept for the router to scroll to', () => {
+    expect(navigationTarget(pages, folders, 'audience#plans')).toBe('/analytics/audience#plans');
+    expect(navigationTarget(pages, folders, 'home#plans')).toBe('/#plans');
+    expect(navigationTarget(pages, folders, '/somewhere#plans')).toBe('/somewhere#plans');
+  });
 });
 
 /**

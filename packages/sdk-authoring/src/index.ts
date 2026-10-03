@@ -58,7 +58,92 @@ import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaVa
  * that bundles its four workspace dependencies in and declares none at all.
  */
 
+/**
+ * The documents' own types, as this package's API names them — `SpaceSpec['fonts']` is `SpaceFont[]`, an authored space
+ * is a `Schema` and a `Style`. Re-exported so a project imports what it is handed from where it was handed it, rather
+ * than learning that they live in `@plitzi/sdk-shared` (or writing `NonNullable<SpaceSpec['fonts']>` to name one).
+ */
+export type {
+  ActionAccess,
+  ActionDocument,
+  ActionEntry,
+  ActionField,
+  ActionFieldType,
+  ActionLimits,
+  BindingCategory,
+  BindingTransformer,
+  ChannelDeclaration,
+  ChannelDeclarations,
+  ColorScheme,
+  ComponentProp,
+  DisplayMode,
+  Element,
+  ElementBinding,
+  ElementDefinition,
+  ElementFlagGate,
+  ElementInteraction,
+  ElementLoadStrategy,
+  ElementRuntime,
+  FontBase,
+  FontDisplay,
+  FontFace,
+  FontStyle,
+  GoogleFont,
+  HostedFont,
+  InteractionCallback,
+  InteractionCallbackContext,
+  InteractionCallbackParam,
+  InteractionCallbackParamValues,
+  InteractionCallbackPreview,
+  InteractionCallbackPreviews,
+  InteractionCallbackType,
+  InteractionParamType,
+  InteractionPostCallback,
+  ManifestAsset,
+  PageFolder,
+  PluginBuilder,
+  PluginManifest,
+  PluginSchema,
+  RemoteFont,
+  Schema,
+  SchemaFlag,
+  SchemaFlagRule,
+  SchemaRsc,
+  SchemaVariable,
+  SpaceComponent,
+  SpaceCredentialProvider,
+  SpaceFont,
+  Style,
+  StyleAncestor,
+  StyleAncestors,
+  StyleAttributes,
+  StyleBlock,
+  StyleCategory,
+  StyleItem,
+  StyleMode,
+  StyleObject,
+  StyleState,
+  StyleStates,
+  StyleThemeValue,
+  StyleValue,
+  StyleVariableCategory,
+  StyleVariableGroup,
+  StyleVariableValue,
+  StyleVariables,
+  StyleVariants,
+  SystemFont,
+  TagType,
+  Theme,
+  WhileRunning
+} from '@plitzi/sdk-shared';
+export type {
+  SchemaValidationError,
+  SchemaValidationOptions,
+  SchemaValidationResult
+} from '@plitzi/sdk-schema/helpers/schemaValidator';
+
 export * from './decompile';
+export * from './explain';
 export * from './elements';
 export * from './interactions';
 export * from './schema';

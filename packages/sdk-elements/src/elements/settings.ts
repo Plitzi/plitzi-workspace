@@ -16,11 +16,15 @@ import Form from './form/Form/Settings';
 import FormControl from './form/FormControl/Settings';
 import LayoutContainer from './internal/LayoutContainer/Settings';
 import Page from './internal/Page/Settings';
+import Embed from './media/Embed/Settings';
 import FontAwesome from './media/FontAwesome/Settings';
 import Image from './media/Image/Settings';
+import Svg from './media/Svg/Settings';
 import Video from './media/Video/Settings';
 import ApiContainer from './provider/ApiContainer/Settings';
 import Channel from './provider/Channel/Settings';
+import CarouselTrack from './structure/Carousel/CarouselTrack/Settings';
+import Carousel from './structure/Carousel/Settings';
 import Container from './structure/Container/Settings';
 import DialogContainer from './structure/DialogContainer/Settings';
 import ListItem from './structure/List/ListItem/Settings';
@@ -49,6 +53,8 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   layoutContainer: LayoutContainer,
   dialogContainer: DialogContainer,
   modalContainer: ModalContainer,
+  carousel: Carousel,
+  carouselTrack: CarouselTrack,
   tabContainer: TabContainer,
   tabContainerBody: TabContainerBody,
   tabContainerheader: TabContainerheader,
@@ -56,6 +62,8 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   heading: Heading,
   image: Image,
   video: Video,
+  embed: Embed,
+  svg: Svg,
   fontAwesome: FontAwesome,
   button: Button,
   paragraph: Paragraph,

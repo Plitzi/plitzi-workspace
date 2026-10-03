@@ -57,8 +57,8 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
  *  A dedicated MCP server is `createServer` from `@plitzi/sdk-mcp` — it builds none of the render template,
  *  caches or plugin manager this one does. */
 /**
- * Fills in `getRscData` from whatever can produce a server element's data — `connectors`, `action.lookups`, or
- * both — when the deployment did not write one.
+ * Fills in `getRscData` from whatever can produce a server element's data — `connectors`, `action.lookups`, the
+ * files of `publicDir` — when the deployment did not write one.
  *
  * The lookups are already here and the assembly is entirely this package's — a resolver over `resolveRscData`.
  * Leaving it out meant every deployment passed the same lookups twice: once as config, for the write endpoint,
@@ -69,11 +69,17 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
  * with no configuration missing anywhere.
  */
 const withConnectorRsc = <
-  T extends { adapters: SSRPageAdapters; connectors?: unknown; action?: SSRActionConfig; rsc?: SSRRscConfig }
+  T extends {
+    adapters: SSRPageAdapters;
+    connectors?: unknown;
+    action?: SSRActionConfig;
+    rsc?: SSRRscConfig;
+    publicDir?: string;
+  }
 >(
   config: T
 ): T => {
-  if (config.adapters.getRscData || (!config.connectors && !config.action?.lookups)) {
+  if (config.adapters.getRscData || (!config.connectors && !config.action?.lookups && !config.publicDir)) {
     return config;
   }
 
@@ -85,11 +91,12 @@ const withConnectorRsc = <
   const module = actionsModuleFor(resolved as SSRServerConfig);
   const actions =
     module && config.action?.lookups ? { lookups: config.action.lookups as ActionLookups, module } : undefined;
-  resolved.adapters.getRscData = connectorRscData(
-    config.connectors as ConnectorLookups | undefined,
+  resolved.adapters.getRscData = connectorRscData({
+    connectors: config.connectors as ConnectorLookups | undefined,
     actions,
-    config.rsc?.elementTimeoutMs
-  );
+    publicDir: config.publicDir,
+    elementTimeoutMs: config.rsc?.elementTimeoutMs
+  });
 
   return resolved;
 };

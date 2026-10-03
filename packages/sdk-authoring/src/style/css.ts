@@ -1,14 +1,17 @@
 import { STYLE_STATES as SHARED_STYLE_STATES } from '@plitzi/sdk-shared/style/styleStates';
 
-import { isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
+import { cssNumberValue, cssPropertyName, isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
 import { expandShorthand } from './shorthand';
+import { AuthoringError } from '../schema/codes';
 
 import type {
+  CssInput,
   CssProps,
   CssSpec,
   ResponsiveBlock,
   ResponsiveCss,
   ResponsiveStyle,
+  ResponsiveValue,
   RuleSetSpec,
   StatesSpec,
   StyleRules,
@@ -45,20 +48,44 @@ const assertValues = (rules: CssProps): void => {
   for (const [property, value] of Object.entries(rules)) {
     const text = typeof value === 'number' ? String(value) : value;
     if (typeof text !== 'string' || text.trim() === '' || breaksDeclaration(text)) {
-      throw new Error(
+      throw new AuthoringError(
+        'css-value',
         `\`${property}: ${String(value)}\` is not one CSS value. Write a single value — \`'${property}': '…'\` — and one property per key; leave a property out rather than writing it empty.`
       );
     }
   }
 };
 
-export const css = (rules: CssProps): StyleRules => {
+/**
+ * The rules in the spelling the document keeps: camelCase keys in kebab-case, and a bare number on a length in pixels.
+ * Two keys that are one property — `paddingTop` beside `'padding-top'` — would have one silently win, so they are refused.
+ */
+const normalise = (rules: CssProps): CssProps => {
+  const normalised: CssProps = {};
+  for (const [key, value] of Object.entries(rules)) {
+    const property = cssPropertyName(key);
+    if (Object.hasOwn(normalised, property)) {
+      throw new AuthoringError(
+        'css-property-twice',
+        `\`${property}\` is written twice in one rule set${key === property ? '' : ` (once as \`${key}\`)`}: keep one.`
+      );
+    }
+
+    normalised[property] = typeof value === 'number' ? cssNumberValue(property, value) : value;
+  }
+
+  return normalised;
+};
+
+export const css = (input: CssProps): StyleRules => {
+  const rules = normalise(input);
   assertValues(rules);
   const expanded = expandShorthand(rules);
   const unknown = Object.keys(expanded).filter(key => !isCssProperty(key) && !isCustomProperty(key));
 
   if (unknown.length > 0) {
-    throw new Error(
+    throw new AuthoringError(
+      'css-property-unknown',
       `Unknown CSS ${unknown.length === 1 ? 'property' : 'properties'}: ${unknown
         .map(key => {
           const suggestion = suggestCssProperty(key);
@@ -77,6 +104,8 @@ export const BREAKPOINTS: DisplayMode[] = ['desktop', 'tablet', 'mobile'];
 
 /** The keys a per-breakpoint rule set may use: the breakpoints, and `compact` for tablet and mobile together. */
 const BREAKPOINT_SET = new Set<string>([...BREAKPOINTS, 'compact']);
+
+const isDisplayMode = (key: string): key is DisplayMode => BREAKPOINTS.some(breakpoint => breakpoint === key);
 
 /**
  * The same door as {@link css}, for the shape that carries more than one breakpoint.
@@ -99,7 +128,9 @@ export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
     // a union by the names of its keys.
     const { compact, ...byBreakpoint } = spec as ResponsiveCss;
     const responsive: ResponsiveStyle = Object.fromEntries(
-      Object.entries(byBreakpoint).map(([breakpoint, rules]) => [breakpoint, css(rules)])
+      Object.entries(byBreakpoint).flatMap(([breakpoint, rules]) =>
+        Object.keys(rules).length > 0 ? [[breakpoint, css(rules)]] : []
+      )
     );
     if (compact) {
       const shared = css(compact);
@@ -110,7 +141,35 @@ export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
     return responsive;
   }
 
-  return { desktop: css(spec as Record<string, string | number>) };
+  return toResponsive(byProperty(spec));
+};
+
+const isBreakpointValues = (value: unknown): value is ResponsiveValue =>
+  typeof value === 'object' &&
+  value !== null &&
+  Object.keys(value).length > 0 &&
+  Object.keys(value).every(key => BREAKPOINT_SET.has(key));
+
+/**
+ * Plain rules where a property may carry a value per breakpoint — \`fontSize: { desktop: '24px', mobile: '18px' }\` —
+ * gathered into the per-breakpoint shape, so changing one property on a phone does not split the whole rule set.
+ */
+const byProperty = (rules: CssInput): ResponsiveCss => {
+  const responsive: Partial<Record<DisplayMode | 'compact', CssProps>> = { desktop: {} };
+  for (const [property, value] of Object.entries(rules)) {
+    if (!isBreakpointValues(value)) {
+      responsive.desktop = { ...responsive.desktop, [property]: value };
+      continue;
+    }
+
+    for (const [breakpoint, breakpointValue] of Object.entries(value)) {
+      if (breakpoint === 'compact' || isDisplayMode(breakpoint)) {
+        responsive[breakpoint] = { ...responsive[breakpoint], [property]: breakpointValue };
+      }
+    }
+  }
+
+  return responsive;
 };
 
 /** The states a selector can react to — the closed list the style editor offers, read from where it is declared. */
@@ -135,7 +194,8 @@ export const isRuleSetSpec = (spec: StyleSpec): spec is RuleSetSpec => {
 const toStates = (states: StatesSpec | undefined): Map<string, ResponsiveStyle> => {
   const unknown = Object.keys(states ?? {}).filter(state => !STYLE_STATE_SET.has(state));
   if (unknown.length > 0) {
-    throw new Error(
+    throw new AuthoringError(
+      'style-state-unknown',
       `Unknown style state ${unknown.map(state => `"${state}"`).join(', ')}. A selector reacts to ${STYLE_STATES.join(', ')}.`
     );
   }
@@ -148,7 +208,8 @@ const CLASS_NAME = /^-?[_a-zA-Z][\w-]*$/;
 const toAncestors = (ancestors: RuleSetSpec['ancestors']) =>
   Object.entries(ancestors ?? {}).map(([name, ancestor]) => {
     if (!CLASS_NAME.test(name)) {
-      throw new Error(
+      throw new AuthoringError(
+        'ancestor-not-class',
         `The ancestor "${name}" is not a class name. An ancestor condition is keyed by a class that ancestor wears — \`[card.name]\` for a \`styles()\` declaration.`
       );
     }

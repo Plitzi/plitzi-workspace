@@ -6,6 +6,7 @@ import { chainOf } from '@pmodules/Builder/helpers/elementChain';
 import useRevealElement from '@pmodules/Builder/hooks/useRevealElement';
 
 import { MUTED, SEVERITY_ICON, SEVERITY_TEXT } from '../../helpers';
+import IssueFix from '../IssueFix';
 
 import type { IssueSeverity } from '../../helpers';
 import type { TSpaceIssue } from '@plitzi/sdk-shared';
@@ -42,6 +43,7 @@ const IssueItem = ({ issue, severity, onDismiss }: IssueItemProps) => {
       <i className={clsx('fa-solid mt-0.5 text-xs', SEVERITY_ICON[severity], SEVERITY_TEXT[severity])} />
       <div className="flex min-w-0 flex-col gap-1">
         <p className="text-xs leading-relaxed text-zinc-700 dark:text-zinc-200">{message}</p>
+        {issue.fix && <IssueFix fix={issue.fix} />}
         {issue.fixable && (
           <span className={clsx('text-[10px] tracking-wider uppercase', MUTED)}>Fixable automatically</span>
         )}

@@ -1,4 +1,5 @@
 import { act, render } from '@testing-library/react';
+import { useEffect } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
@@ -120,5 +121,51 @@ describe('ListControlled', () => {
 
     expect(captured.b.state).toEqual({ open: true });
     expect(captured.c.state).toEqual({});
+  });
+
+  // "The current slide" as a one-row list: a row that came back under another item's key arrives anew, and an entrance
+  // animation in its class plays again.
+  it('mounts a row again when its item changes, by the field the list names', () => {
+    const mounts = vi.fn();
+    const Counted = () => {
+      useEffect(() => {
+        mounts();
+      }, []);
+
+      return null;
+    };
+    const slide = (items: { slug: string }[]) => (
+      <StoreProvider value={{}}>
+        <ListControlled className="" items={items} itemKey="slug">
+          <Counted />
+        </ListControlled>
+      </StoreProvider>
+    );
+
+    const { rerender } = render(slide([{ slug: 'one' }]));
+    rerender(slide([{ slug: 'two' }]));
+
+    expect(mounts).toHaveBeenCalledTimes(2);
+  });
+
+  // A template counts with it — `index + 1` is the next row, not "01".
+  it('publishes each row’s position as a number', () => {
+    const indexes: unknown[] = [];
+    const Position = () => {
+      const dataSource = useElementDataSource({ sources: ['list_my-list'] });
+      indexes.push((dataSource['list_my-list'] as { index?: unknown } | undefined)?.index);
+
+      return null;
+    };
+
+    render(
+      <StoreProvider value={{}}>
+        <ListControlled className="" items={[{ id: 'a' }, { id: 'b' }]}>
+          <Position />
+        </ListControlled>
+      </StoreProvider>
+    );
+
+    expect(indexes).toEqual(expect.arrayContaining([0, 1]));
   });
 });

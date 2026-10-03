@@ -31,6 +31,7 @@ lost, it simply stops being read as a plan.
 |---|---|---|---|
 | [0017](./0017-native-mobile-apps.md) | Native mobile apps (Android / iOS) | Proposal | new `mobile/` project, `sdk-authoring`, servers |
 | [0022](./0022-sketch-to-page.md) | Sketch to page ("make it real") | Proposal | builder, `apps/mcp`, preview service, Pizarra later |
+| [0023](./0023-clone-experiment-improvements.md) | Improvements from the MultiPC clone experiment | Accepted | `sdk-authoring`, `sdk-elements`, router, `apps/server`, `apps/cli`, skills |
 
 ## Conventions
 

@@ -183,6 +183,25 @@ export type SSRTemplateProps = {
 };
 
 /**
+ * Remote pictures this server fetches, resizes and keeps, at `/_plitzi/img`.
+ *
+ * A picture from a dozen other sites, some 1500 px wide for a 360 px card, is the heaviest part of most pages; with
+ * this on, an `image` whose `src` is another site's offers the browser a `srcset` of sizes this server makes — in
+ * AVIF or WebP when the browser takes them, and with `sharp` installed (without it the picture is passed through,
+ * still cached).
+ */
+export type SSRImagesConfig = {
+  /**
+   * The hosts a picture may come from: `images.example.com`, or `*.example.com` for every subdomain. Nothing else is
+   * fetched — the endpoint is otherwise a way to make this server download anything — and each address is also held
+   * to the rule every outbound request is (no private network, every redirect judged).
+   */
+  domains: readonly string[];
+  /** Where the resized files are kept. Default: `.plitzi/images` under the working directory. */
+  cacheDir?: string;
+};
+
+/**
  * How a store-relative font path becomes a URL a browser can fetch.
  *
  * A space's manifest stores paths, never absolute URLs: the same space is rendered by Plitzi's cloud from a CDN,
@@ -981,6 +1000,8 @@ export type SSRServerConfig = {
   allowPrivatePluginHosts?: boolean;
   /** Where this deployment serves the font files a space uploaded — see {@link SSRFontsConfig}. */
   fonts?: SSRFontsConfig;
+  /** Remote pictures resized by this server — see {@link SSRImagesConfig}. Absent, images keep their own `src`. */
+  images?: SSRImagesConfig;
   /** Omit client-side JS from the rendered page — useful for verifying SSR HTML without hydration. Default: false. */
   ssrOnly?: boolean;
   /** Stream HTML to the client as React renders, reducing TTFB. Default: false. */

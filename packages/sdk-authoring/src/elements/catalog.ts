@@ -99,6 +99,13 @@ export const typeTriggerDefinitions: Record<string, InteractionCallback> = Objec
   )
 );
 
+/** The callbacks only some types answer to, by action name — with their params, for whatever explains or checks one. */
+export const typeCallbackDefinitions: Record<string, InteractionCallback> = Object.fromEntries(
+  Object.values(elementDeclarations as Record<string, DeclarationShape>).flatMap(declaration =>
+    Object.entries(declaration.callbacks ?? {})
+  )
+);
+
 /**
  * Every element callback each built-in type answers to: `setState` and `toggleState`, which every element registers,
  * and the ones its declaration adds.

@@ -326,9 +326,17 @@
       "types": "./dist/helpers/generateFacade.d.ts",
       "import": "./dist/helpers/generateFacade.mjs"
     },
+    "./helpers/images": {
+      "types": "./dist/helpers/images.d.ts",
+      "import": "./dist/helpers/images.mjs"
+    },
     "./helpers/index": {
       "types": "./dist/helpers/index.d.ts",
       "import": "./dist/helpers/index.mjs"
+    },
+    "./helpers/interval": {
+      "types": "./dist/helpers/interval.d.ts",
+      "import": "./dist/helpers/interval.mjs"
     },
     "./helpers/isDate": {
       "types": "./dist/helpers/isDate.d.ts",
@@ -349,6 +357,10 @@
     "./helpers/ruleEvaluator": {
       "types": "./dist/helpers/ruleEvaluator.d.ts",
       "import": "./dist/helpers/ruleEvaluator.mjs"
+    },
+    "./helpers/scroll": {
+      "types": "./dist/helpers/scroll.d.ts",
+      "import": "./dist/helpers/scroll.mjs"
     },
     "./helpers/security": {
       "types": "./dist/helpers/security.d.ts",
@@ -1107,6 +1119,10 @@
       "types": "./dist/schema/SchemaContext.d.ts",
       "import": "./dist/schema/SchemaContext.mjs"
     },
+    "./schema/anchor": {
+      "types": "./dist/schema/anchor.d.ts",
+      "import": "./dist/schema/anchor.mjs"
+    },
     "./schema/index": {
       "types": "./dist/schema/index.d.ts",
       "import": "./dist/schema/index.mjs"
@@ -1138,6 +1154,10 @@
     "./server/actions/useActionsSync": {
       "types": "./dist/server/actions/useActionsSync.d.ts",
       "import": "./dist/server/actions/useActionsSync.mjs"
+    },
+    "./server/actions/useImagesSync": {
+      "types": "./dist/server/actions/useImagesSync.d.ts",
+      "import": "./dist/server/actions/useImagesSync.mjs"
     },
     "./server/actions/useRealtimeSync": {
       "types": "./dist/server/actions/useRealtimeSync.d.ts",

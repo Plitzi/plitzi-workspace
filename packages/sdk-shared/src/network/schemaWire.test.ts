@@ -46,6 +46,7 @@ describe('schema on the live channel', () => {
             flag: null,
             runtime: null,
             loadStrategy: null,
+            anchor: null,
             bindings: null,
             interactions: null,
             initialState: { visibility: false }

@@ -16,7 +16,7 @@ An attribute holding a condition — `href: "/x/{{ on ? 'a' : 'b' }}"` — is us
 `template-never-resolved`). Move the expression into a binding with `bindTemplate`:
 
 ```ts
-link({ href: '/', mode: 'internal', bind: [bindTemplate('href', 'state.workspace.id', "{{ source ? '/workspace/' ~ source : '/' }}")] })
+link({ href: '/', bind: [bindTemplate('href', 'state.workspace.id', "{{ source ? '/workspace/' ~ source : '/' }}")] })
 ```
 
 A value that came from a BINDING is data, never a template: a comment reading `{{ auth.accessToken }}` prints those
@@ -69,7 +69,7 @@ outside the element that publishes it — each with the name it should have been
   interpreter would read past, rather than letting a template render a value nobody wrote.
 
 Filters: `default upper lower trim capitalize title camelize kebab snake ltrim rtrim pad padRight replace slice split
-join reverse length first last contains startswith endswith number number_format round abs format sort batch chunk map
+join reverse length first last contains startswith endswith number number_format currency percent round abs format sort batch chunk map
 reduce merge keys values filter column find pluck unique flatten sum without only index_by group_by url_encode nl2br
 striptags spaceless json_encode to_json object_as_json raw date base64_encode base64_decode md5 random`.
 
@@ -93,7 +93,8 @@ A lookup across two sources — a row joined to the stats around it:
   step's params and an action's output, `"{{ text }}"` in quotes is safe too — a value inside a string literal of a
   param written as a JSON document is escaped for it. Anywhere else (an attribute, a binding's template) it is not:
   encode.
-- **Numbers**: `number_format(decimals, point, thousands)`; `round(precision)`.
+- **Numbers**: `number_format(decimals, point, thousands)`; `round(precision)`; `currency('USD', 'en', { trimZeros: true })`
+  (`$2,040.57`, `$440`); `percent(1)` (`0.256` → `25.6%`). Locale `en` unless named, so server and browser agree.
 - **A step param that is one `{{ expression }}` is that value, with its type**: a number stays a number, and a
   string stays a string however it looks — a password typed `1234` arrives as `"1234"`. Nothing is guessed from the
   text: to convert, declare the type where the value lands (`setState`'s `type`, the action's input field). Text around

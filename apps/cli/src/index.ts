@@ -2,8 +2,11 @@ import { Option, program } from 'commander';
 
 import { login, logout, space, whoami } from './commands/account';
 import addPlugin from './commands/addPlugin';
+import { check } from './commands/check';
 import create from './commands/create';
 import createPlugin from './commands/createPlugin';
+import { dataDescribe } from './commands/data';
+import { explainCommand } from './commands/explain';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
 import packPluginCommand from './commands/packPlugin';
 import packSourceCommand from './commands/packSource';
@@ -16,18 +19,24 @@ import {
   setRuntimeVariable,
   unsetRuntimeVariable
 } from './commands/runtime';
+import { shot } from './commands/shot';
+import { skillsUpdate } from './commands/skills';
 import uploadPluginCommand from './commands/uploadPlugin';
-import { PACKAGE_MANAGERS } from './scaffold';
+import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 
 import type { AccountOptions } from './commands/account';
 import type { AddPluginOptions } from './commands/addPlugin';
+import type { CheckOptions } from './commands/check';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
+import type { DataDescribeOptions } from './commands/data';
+import type { ExplainOptions } from './commands/explain';
 import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
 import type { PackPluginOptions } from './commands/packPlugin';
 import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
 import type { RuntimeOptions } from './commands/runtime';
+import type { ShotOptions } from './commands/shot';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 
 /**
@@ -40,8 +49,11 @@ import type { UploadPluginOptions } from './commands/uploadPlugin';
 
 program.name('plitzi').description('Plitzi command line');
 
+/** A flag given more than once, as the list of every value. */
+const collect = (value: string, previous: string[]): string[] => [...previous, value];
+
 /** The flags that shape a PROJECT: given with `--plugin`, they are a mistake worth saying rather than ignoring. */
-const PROJECT_ONLY = ['mode', 'source', 'key'] as const;
+const PROJECT_ONLY = ['mode', 'source', 'key', 'template'] as const;
 
 const API_OPTION = [
   '--api <url>',
@@ -93,6 +105,12 @@ program
   .option('--description <description>', 'Plugin only: what the element is for, in a sentence')
   .option('--owner <owner>', 'Plugin only: who publishes it')
   .option('--elements <names>', 'Plugin only: other elements the package holds, by name, separated by commas')
+  .addOption(
+    new Option(
+      '-t, --template <template>',
+      'What a space written here starts as: welcome (a tour, the default), blank (tokens, a layout, one empty page) or catalog (a shop: layout, card component, data, filtered list, a page per product)'
+    ).choices([...CREATE_TEMPLATES])
+  )
   .option('--no-install', 'Write the files without installing dependencies')
   .option('-f, --force', 'Write into a directory that is not empty')
   .option(
@@ -135,6 +153,15 @@ add
   .option('-d, --dir <folder>', 'The folder that holds the project’s components. Asked for, unless the project says.')
   .option('--title <title>', 'One element only: what the builder calls it')
   .option('--description <description>', 'One element only: what it is for, in a sentence')
+  .option(
+    '--prop <name:type=default>',
+    'One element only: an attribute it takes — interval:number=5000, paused:boolean, label:string=Hi. Repeat it',
+    collect,
+    []
+  )
+  .option('--trigger <name:fields>', 'An event it fires and what a flow reads — onTick:count. Repeat it', collect, [])
+  .option('--callback <name>', 'An action a flow can call on it — reset. Repeat it', collect, [])
+  .option('--headless', 'Nothing to see: hidden on a page, a badge in the builder (a clock, a listener)')
   .option('-f, --force', 'Write into a folder that is not empty')
   .action((names: string[], options: AddPluginOptions) => addPlugin(names, options));
 
@@ -187,6 +214,60 @@ program
   .description('Choose the space to work in, in your browser. One at a time: it replaces the one chosen before')
   .option(...API_OPTION)
   .action((options: AccountOptions) => space(options));
+
+program
+  .command('check')
+  .argument('[path]', 'The page: /about. The home page when left out')
+  .description(
+    'Whether a page of the running project is whole, in text: every element on screen, no broken image, no console error'
+  )
+  .option('--width <px,px>', 'The widths to check it at, separated by commas', '1440,390')
+  .option('--scheme <scheme>', 'light or dark', 'light')
+  .option('--json', 'One object per width, for a tool or an agent')
+  .action((path: string | undefined, options: CheckOptions) => check(path, options));
+
+program
+  .command('shot')
+  .argument('[path]', 'The page: /about. The home page when left out')
+  .description('A picture of one page of the running project — and, asked, how it differs from another or what moves')
+  .option('--width <px>', 'The viewport width', '1280')
+  .option('--height <px>', 'The viewport height (the picture is the whole page)', '800')
+  .option('--scheme <scheme>', 'light or dark', 'light')
+  .option('--out <file>', 'Where the picture goes. visual/.shots/<page>-<width>-<scheme>.png by default')
+  .option('--compare <url>', 'Another site: the same page there, side by side, and how much differs by section')
+  .option('--frames <n>', 'Pictures taken one after another: which sections move (a marquee, an autoplay)')
+  .option('--every <ms>', 'How far apart --frames are taken', '500')
+  .option('--wait-for <element>', 'An element to wait for first: its name (data-plitzi-el) or a CSS selector')
+  .option('--reduced-motion', 'As a visitor who asked for less motion')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((path: string | undefined, options: ShotOptions) => shot(path, options));
+
+program
+  .command('explain')
+  .argument(
+    '[name]',
+    'An element, a step, a trigger, a problem’s code or a transformer: container, navigate, class-and-css'
+  )
+  .description('What a name means when authoring a space — what it takes, fires, reads and how it is written')
+  .option('--list <kind>', 'Every name of a kind: elements, steps, triggers, codes, transformers')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((name: string | undefined, options: ExplainOptions) => explainCommand(name, options));
+
+const skills = program.command('skills').description('The Plitzi skills an agent reads in .claude/skills/');
+
+skills
+  .command('update')
+  .description('Bring them up to the Plitzi packages this project has installed, each replaced whole')
+  .action(() => skillsUpdate());
+
+const data = program.command('data').description('The JSON a project serves (public/data), without reading it whole');
+
+data
+  .command('describe')
+  .argument('<file>', 'A JSON file: public/data/products.json')
+  .description('Its shape — every field, its type, whether every row has it — and one row of its longest list')
+  .option('--json', 'One object: { shape, example }')
+  .action((file: string, options: DataDescribeOptions) => dataDescribe(file, options));
 
 const upload = program.command('upload').description('Put something of this project on the space you work in');
 

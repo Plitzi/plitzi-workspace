@@ -32,7 +32,9 @@ export type ContainerProps = {
     | 'h3'
     | 'h4'
     | 'h5'
-    | 'h6';
+    | 'h6'
+    // Inline: a dot before a title, a word dressed apart — a container that sits in a line of text instead of breaking it.
+    | 'span';
   /**
    * The name of the part of the page this is — "Main navigation", "Search results", "Your cart" — for screen readers
    * and browser agents, which list the page by its landmarks and regions and jump between them.

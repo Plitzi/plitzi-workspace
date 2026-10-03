@@ -1,0 +1,12 @@
+@mixin styles {
+  // A box its class sizes: an inline one, so a drawing sits in a line of text, and one width and height apply to.
+  .plitzi-component__svg {
+    display: inline-flex;
+    width: 24px;
+    height: 24px;
+
+    > svg {
+      flex: 1 1 auto;
+    }
+  }
+}

@@ -25,11 +25,14 @@ export {
   pluginNameProblem,
   pluginNames,
   scaffoldElement,
-  scaffoldPlugin
+  scaffoldPlugin,
+  shapeFromFlags
 } from './pluginPackage';
 
-export type { PluginNames } from './pluginPackage';
-export type { CreateAnswers, PackageManager, PluginAnswers, ProjectFiles } from './types';
+export type { ElementShape, PluginNames, ShapeFlags } from './pluginPackage';
+export { CREATE_TEMPLATES } from './types';
+
+export type { CreateAnswers, CreateTemplate, PackageManager, PluginAnswers, ProjectFiles } from './types';
 
 /**
  * Every file of a generated project, assembled from the two decisions that shape it.

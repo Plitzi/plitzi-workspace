@@ -1,4 +1,4 @@
-import { blankSpaceSource } from '@plitzi/sdk-authoring';
+import { blankSpaceSource, catalogTemplateFiles, emptySpaceSource } from '@plitzi/sdk-authoring';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { PluginHostOptions } from '@plitzi/sdk-authoring';
@@ -22,23 +22,74 @@ import type { PluginHostOptions } from '@plitzi/sdk-authoring';
  * the space has to go somewhere else: imported into Plitzi, handed to another server, or checked into a
  * repository with no TypeScript in it.
  */
-const authorScript = (): string => `import { mkdirSync, writeFileSync } from 'node:fs';
+const authorScript = (): string => `import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 
-import { authorSpace } from '@plitzi/sdk-authoring';
+import { authorSpace, refusalOf, SpaceRefusedError } from '@plitzi/sdk-authoring';
 
 import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
 
-const { schema, style, warnings } = authorSpace(space, { plugins: declarations });
+// \`--json\` answers in one object, for a tool or an agent; otherwise one line on success, the problems on failure.
+const json = process.argv.includes('--json');
 
-mkdirSync('space', { recursive: true });
-writeFileSync('space/offline-data.json', \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);
+/**
+ * The skill an agent reads was copied from the SDK at one version: a newer SDK has what the older skill never taught.
+ * Both versions, when they differ — \`npx @plitzi/cli skills update\` brings the skill up to the SDK.
+ */
+const outdatedSkill = (): { skill: string; sdk: string } | undefined => {
+  let skill: string | undefined;
+  try {
+    skill = /^version: (.+)$/m.exec(readFileSync('.claude/skills/plitzi-authoring/SKILL.md', 'utf-8'))?.[1]?.trim();
+  } catch {
+    return undefined;
+  }
 
-for (const warning of warnings) {
-  console.warn(\`[author] \${warning.message}\`);
+  const manifest: unknown = JSON.parse(
+    readFileSync(createRequire(import.meta.url).resolve('@plitzi/sdk-authoring/package.json'), 'utf-8')
+  );
+  const sdk =
+    typeof manifest === 'object' && manifest !== null && 'version' in manifest && typeof manifest.version === 'string'
+      ? manifest.version
+      : undefined;
+
+  return skill && sdk && skill !== sdk ? { skill, sdk } : undefined;
+};
+
+try {
+  const { schema, style, warnings } = authorSpace(space, { plugins: declarations });
+  mkdirSync('space', { recursive: true });
+  writeFileSync('space/offline-data.json', \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);
+
+  const outdated = outdatedSkill();
+  if (json) {
+    console.log(JSON.stringify({ ok: true, pages: schema.pages.length, warnings, ...(outdated ? { outdated } : {}) }));
+  } else {
+    for (const warning of warnings) {
+      console.warn(\`[author] \${warning.code} · \${warning.message}\`);
+    }
+
+    if (outdated) {
+      console.warn(
+        \`[skills] the authoring skill is \${outdated.skill} and @plitzi/sdk-authoring is \${outdated.sdk}: npx @plitzi/cli skills update\`
+      );
+    }
+
+    console.log(\`ok · \${schema.pages.length} pages · \${warnings.length} warnings · space/offline-data.json\`);
+  }
+} catch (error) {
+  // The message is the whole report — every problem, where it was written and what to change. The stack would only
+  // point inside @plitzi/sdk-authoring.
+  const refusals = error instanceof SpaceRefusedError ? error.refusals : undefined;
+  const message = error instanceof Error ? error.message : String(error);
+  if (json) {
+    console.log(JSON.stringify({ ok: false, refusals: refusals ?? [{ place: '', ...refusalOf(error) }] }));
+  } else {
+    console.error(message);
+  }
+
+  process.exitCode = 1;
 }
-
-console.log('space/offline-data.json');
 `;
 
 /** The numbers the example shows: in a data file where one is served, on the element where none is. */
@@ -66,11 +117,26 @@ const pluginHost = ({ mode }: CreateAnswers): PluginHostOptions =>
       }
     : { id: 'stat-card', renderType: 'statCard', attributes: { label: 'Requests today', unit: 'reqs', ...STATS } };
 
-export const spaceFiles = (answers: CreateAnswers): ProjectFiles =>
-  answers.source === 'cloud'
-    ? {}
-    : {
-        'src/space.ts': blankSpaceSource({ name: answers.name, plugin: pluginHost(answers) }),
-        'src/author.ts': authorScript(),
-        ...(answers.mode === 'client' ? { 'public/data/stats.json': `${JSON.stringify(STATS, null, 2)}\n` } : {})
-      };
+export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
+  if (answers.source === 'cloud') {
+    return {};
+  }
+
+  if (answers.template === 'catalog') {
+    return { ...catalogTemplateFiles({ name: answers.name }), 'src/author.ts': authorScript() };
+  }
+
+  if (answers.template === 'blank') {
+    return {
+      'src/space.ts': emptySpaceSource({ name: answers.name }),
+      'src/author.ts': authorScript(),
+      'public/data/.gitkeep': ''
+    };
+  }
+
+  return {
+    'src/space.ts': blankSpaceSource({ name: answers.name, plugin: pluginHost(answers) }),
+    'src/author.ts': authorScript(),
+    ...(answers.mode === 'client' ? { 'public/data/stats.json': `${JSON.stringify(STATS, null, 2)}\n` } : {})
+  };
+};

@@ -2,6 +2,7 @@ import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { resourceErrorMessage } from './canonical';
 import { envelope, jsonContents } from './envelope';
+import { EXPLAIN_URI_TEMPLATE, explainResource } from './explain';
 import { registerRenderResources } from './renderGuide';
 import { readResource } from './router';
 import { cssProperties, cssShorthands } from '../catalogs';
@@ -80,6 +81,20 @@ export const registerResources = (
       emitStatic('plitzi://css-properties', () =>
         jsonContents('plitzi://css-properties', envelope({ properties: cssProperties, shorthands: cssShorthands }))
       )
+  );
+
+  // What a name means when authoring — an element, a step, a trigger, a problem's code, a transformer — from the
+  // catalogues the checks read; a kind's plural (`steps`) lists every one of it. The CLI's `plitzi explain`, as a read.
+  server.registerResource(
+    'Explain',
+    new ResourceTemplate(EXPLAIN_URI_TEMPLATE, { list: undefined }),
+    {
+      description:
+        'What a name means when authoring: an element (container), a step (navigate), a trigger (onScroll), a problem code ' +
+        '(class-and-css) or a transformer — or every one of a kind: elements, steps, triggers, codes, transformers',
+      mimeType: 'application/json'
+    },
+    (uri: URL) => emitStatic(uri.href, () => jsonContents(uri.href, envelope(explainResource(uri.href))))
   );
 
   // How to author a plitzi_render widget (guide + usable element-type catalog) — public, so a conversational agent

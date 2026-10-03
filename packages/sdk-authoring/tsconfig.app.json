@@ -3,7 +3,10 @@
   "references": [{ "path": "../sdk-shared" }],
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    // The skill's recipes and the templates import the package by name, as a project does; typechecked here against its
+    // source.
+    "paths": { "@plitzi/sdk-authoring": ["./src/index.ts"] }
   },
-  "include": ["src", "**/*.json"]
+  "include": ["src", "skills/**/*.ts", "templates/**/*.ts", "**/*.json"]
 }

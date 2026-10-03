@@ -1,6 +1,8 @@
 import { GLOBAL_SOURCES as RUNTIME_GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource/globalSources';
+import { templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper/templateRoots';
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 
+import { AuthoringError } from './codes';
 import { didYouMean } from './suggest';
 
 import type { BindingSpec, BindingsSpec } from './types';
@@ -59,7 +61,8 @@ export const resolveSource = (
     const prefix = index.get(head);
     if (!prefix) {
       const inComponent = globals.includes(COMPONENT_PROPS_SOURCE);
-      throw new Error(
+      throw new AuthoringError(
+        'binding-source-unknown',
         `${where} binds to "${source}", but nothing ${inComponent ? 'in this component' : 'in this space'} answers to "${head}"${didYouMean(head, [...index.keys(), ...globals]) || '.'} A source names an element by its id, or one of the globals: ${globals.join(', ')}.${inComponent ? ' A component is closed: what it needs from where it is placed comes in as a prop.' : ''}`
       );
     }
@@ -70,7 +73,8 @@ export const resolveSource = (
   const ref = head.slice(separator + 1);
   const expected = index.get(ref);
   if (!expected) {
-    throw new Error(
+    throw new AuthoringError(
+      'binding-source-unknown',
       `${where} binds to "${source}", but no element answers to the name "${ref}"${didYouMean(ref, [...index.keys()])}.`
     );
   }
@@ -78,7 +82,8 @@ export const resolveSource = (
   // The half an author cannot see. Written out from the element TYPE — which is the obvious guess and wrong for a
   // form — it names a source nothing ever registers.
   if (head.slice(0, separator) !== expected) {
-    throw new Error(
+    throw new AuthoringError(
+      'binding-source-unknown',
       `${where} binds to "${source}", but "${ref}" publishes its source as "${expected}_${ref}". Name the element alone and the prefix is filled in.`
     );
   }
@@ -305,4 +310,44 @@ export const activeOn = (
     ...(options.slot ? { slot: options.slot } : {}),
     template: `{{ source in [${list}] ? '${variant}' : 'idle' }}`
   });
+};
+
+/**
+ * The source a condition is bound through: a global it reads, else the element whose source it reads first — by its
+ * id, as a binding names one (`list_dots` is `dots`). The binding follows every name its template reads, so this
+ * one only has to be one of them.
+ */
+const conditionSource = (template: string): string | undefined => {
+  const roots = templateRootNames(template);
+  const global = roots.find(root => GLOBAL_SOURCES.includes(root));
+  if (global) {
+    return global;
+  }
+
+  const element = roots.find(root => root.includes('_'));
+
+  return element?.slice(element.indexOf('_') + 1);
+};
+
+/**
+ * Wears a class's variant while a condition holds — the dot of the slide on screen, the tab whose panel is open:
+ * `activeWhen(dot, '{{ list_dots.index == state.slide }}')`. The general form of {@link activeOn}, which is this for
+ * "the current page"; the condition is written as an attribute's token is, names in full, braces optional.
+ */
+export const activeWhen = (cls: ClassRef, condition: string, options: ActiveOnOptions = {}): BindingSpec => {
+  const expression = condition
+    .trim()
+    .replace(/^\{\{([^]*)\}\}$/, '$1')
+    .trim();
+  const variant = options.variant ?? 'active';
+  const template = `{{ (${expression}) ? '${variant}' : 'idle' }}`;
+  const source = conditionSource(template);
+  if (!source) {
+    throw new AuthoringError(
+      'active-when-constant',
+      `activeWhen(${String(cls)}, '${condition}') reads nothing, so it is always or never true: name what it depends on — \`'{{ list_dots.index == state.slide }}'\`.`
+    );
+  }
+
+  return variantFrom(cls, source, { ...(options.slot ? { slot: options.slot } : {}), template });
 };

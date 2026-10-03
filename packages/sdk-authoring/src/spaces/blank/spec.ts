@@ -27,6 +27,8 @@ const DOCS = 'https://plitzi.com/docs';
 /** The same outline on everything that can be focused from the keyboard. */
 const focusRing = { outline: '2px solid var(--primary)', 'outline-offset': '3px' };
 
+// A band wears `shell` for its sides and a class of its own for its top and bottom, so both write their sides apart: a
+// `padding` shorthand in either would reset the other's. A class that owns its whole box writes the shorthand.
 const shell = styles('shell', {
   css: {
     desktop: {
@@ -53,10 +55,7 @@ const shell = styles('shell', {
  * colour is a variable, so it is faint on light and faint on dark without a second asset.
  */
 const backdrop = styles('backdrop', {
-  top: '0%',
-  left: '0%',
-  bottom: '0%',
-  right: '0%',
+  inset: '0%',
   position: 'fixed',
   'background-image':
     'linear-gradient(0deg, var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px)',
@@ -77,10 +76,7 @@ const navLink = styles('nav-link', {
     'font-weight': '500',
     'text-decoration': 'none',
     'border-radius': '8px',
-    'padding-top': '6px',
-    'padding-bottom': '6px',
-    'padding-left': '10px',
-    'padding-right': '10px'
+    padding: '6px 10px'
   },
   states: { hover: { color: 'var(--foreground)' }, 'focus-visible': focusRing }
 });
@@ -94,9 +90,7 @@ const iconButton = styles('icon-button', {
     width: '36px',
     height: '36px',
     'border-radius': '8px',
-    'border-width': '1px',
-    'border-style': 'solid',
-    'border-color': 'var(--border)',
+    border: '1px solid var(--border)',
     'background-color': 'var(--card)',
     color: 'var(--muted)',
     'font-size': '16px',
@@ -113,12 +107,9 @@ const button = styles('button', {
     'justify-content': 'center',
     gap: '8px',
     height: '44px',
-    'padding-left': '20px',
-    'padding-right': '20px',
+    padding: '0px 20px',
     'border-radius': '10px',
-    'border-width': '1px',
-    'border-style': 'solid',
-    'border-color': 'var(--border)',
+    border: '1px solid var(--border)',
     'background-color': 'var(--card)',
     color: 'var(--foreground)',
     'font-size': '15px',
@@ -151,14 +142,9 @@ const card = styles('guide-card', {
     display: 'flex',
     'flex-direction': 'column',
     gap: '12px',
-    'padding-top': '24px',
-    'padding-bottom': '24px',
-    'padding-left': '24px',
-    'padding-right': '24px',
+    padding: '24px',
     'border-radius': '16px',
-    'border-width': '1px',
-    'border-style': 'solid',
-    'border-color': 'var(--border)',
+    border: '1px solid var(--border)',
     'background-color': 'var(--card)',
     'box-shadow': 'var(--shadow-sm)',
     'text-decoration': 'none',
@@ -238,9 +224,7 @@ const footerBand = styles('footer', {
       'margin-top': 'auto',
       'padding-top': '24px',
       'padding-bottom': '32px',
-      'border-top-width': '1px',
-      'border-top-style': 'solid',
-      'border-top-color': 'var(--border)'
+      'border-top': '1px solid var(--border)'
     },
     mobile: { 'flex-direction': 'column', gap: '8px' }
   }
@@ -321,7 +305,7 @@ const guideCard = (guide: Guide): ElementSpec =>
         id: `${guide.id}-title`,
         content: guide.title,
         subType: 'h3',
-        css: { 'font-size': '17px', 'font-weight': '600', 'margin-top': '4px', 'margin-bottom': '0px' }
+        css: { 'font-size': '17px', 'font-weight': '600', margin: '4px 0px 0px' }
       }),
       paragraph({
         content: guide.body,
@@ -329,8 +313,7 @@ const guideCard = (guide: Guide): ElementSpec =>
           color: 'var(--muted)',
           'font-size': '14px',
           'line-height': '1.6',
-          'margin-top': '0px',
-          'margin-bottom': '0px'
+          margin: '0px'
         }
       })
     ]
@@ -382,14 +365,9 @@ const heroEyebrow = container({
     display: 'flex',
     'align-items': 'center',
     gap: '8px',
-    'padding-top': '6px',
-    'padding-bottom': '6px',
-    'padding-left': '12px',
-    'padding-right': '12px',
+    padding: '6px 12px',
     'border-radius': '999px',
-    'border-width': '1px',
-    'border-style': 'solid',
-    'border-color': 'var(--border)',
+    border: '1px solid var(--border)',
     'background-color': 'var(--card)',
     'font-size': '13px',
     'font-weight': '500'
@@ -413,8 +391,7 @@ const heroTitle = heading({
       'letter-spacing': '-0.03em',
       'line-height': '1.05',
       'text-align': 'center',
-      'margin-top': '0px',
-      'margin-bottom': '0px'
+      margin: '0px'
     },
     tablet: { 'font-size': '48px' },
     mobile: { 'font-size': '38px' }
@@ -433,8 +410,7 @@ const heroLede = paragraph({
       'line-height': '1.6',
       'text-align': 'center',
       'max-width': '620px',
-      'margin-top': '0px',
-      'margin-bottom': '0px'
+      margin: '0px'
     },
     mobile: { 'font-size': '16px' }
   }
@@ -593,8 +569,7 @@ export const space: SpaceSpec = {
                 'font-size': '14px',
                 'font-weight': '600',
                 color: 'var(--muted)',
-                'margin-top': '0px',
-                'margin-bottom': '0px'
+                margin: '0px'
               }
             }),
             container({

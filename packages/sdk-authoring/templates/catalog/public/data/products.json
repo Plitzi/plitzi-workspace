@@ -1,0 +1,62 @@
+{
+  "products": [
+    {
+      "slug": "desk-lamp",
+      "title": "Desk lamp",
+      "category": "lighting",
+      "price": 49,
+      "summary": "A warm, dimmable light for long evenings at the desk."
+    },
+    {
+      "slug": "floor-lamp",
+      "title": "Floor lamp",
+      "category": "lighting",
+      "price": 129,
+      "summary": "Tall, slim and bright enough for a whole corner."
+    },
+    {
+      "slug": "notebook",
+      "title": "Dotted notebook",
+      "category": "paper",
+      "price": 12,
+      "summary": "A5, 160 pages, lies flat when open.",
+      "badge": "New"
+    },
+    {
+      "slug": "planner",
+      "title": "Weekly planner",
+      "category": "paper",
+      "price": 18,
+      "summary": "A week on two pages, undated so it starts when you do."
+    },
+    {
+      "slug": "pen-set",
+      "title": "Fineliner set",
+      "category": "writing",
+      "price": 15,
+      "summary": "Six colours, 0.4 mm, quick to dry."
+    },
+    {
+      "slug": "fountain-pen",
+      "title": "Fountain pen",
+      "category": "writing",
+      "price": 64,
+      "summary": "A steel nib and a converter for any ink.",
+      "badge": "Popular"
+    },
+    {
+      "slug": "desk-mat",
+      "title": "Felt desk mat",
+      "category": "desk",
+      "price": 39,
+      "summary": "Wool felt, 90 × 40 cm, quiet under a keyboard."
+    },
+    {
+      "slug": "monitor-stand",
+      "title": "Monitor stand",
+      "category": "desk",
+      "price": 79,
+      "summary": "Oak, with room underneath for a keyboard."
+    }
+  ]
+}

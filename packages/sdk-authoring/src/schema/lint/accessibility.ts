@@ -67,6 +67,8 @@ const STATIC_TYPES = new Set([
   'image',
   'fontAwesome',
   'video',
+  'embed',
+  'svg',
   'list',
   'listItem'
 ]);
@@ -216,6 +218,19 @@ const warnImageWithoutAlt = (ctx: LintContext, element: Element, where: string):
   ctx.warn(
     'image-without-alt',
     `${where} has no \`alt\`, so to a screen reader and a browser agent it is a file with no meaning. Say what it shows, for this page — \`alt: 'Maya presenting the roadmap'\` — or, if it only decorates, \`decorative: true\`.`,
+    element.id
+  );
+};
+
+/** A frame says what it shows in `title`: without one a screen reader announces only that there is a frame. */
+const warnEmbedWithoutTitle = (ctx: LintContext, element: Element, where: string): void => {
+  if (element.definition.type !== 'embed' || says(ctx, element, 'title')) {
+    return;
+  }
+
+  ctx.warn(
+    'embed-without-title',
+    `${where} has no \`title\`, so a screen reader announces a frame and nothing about it. Say what it shows: \`title: 'Our shop on the map'\`.`,
     element.id
   );
 };
@@ -375,6 +390,7 @@ export const lintAccessibility = (ctx: LintContext): void => {
 
     warnUnnamedControl(ctx, element, where);
     warnImageWithoutAlt(ctx, element, where);
+    warnEmbedWithoutTitle(ctx, element, where);
     warnClickOnStaticElement(ctx, element, where);
     warnIgnoredRegionName(ctx, element, where);
     warnDropdownWithoutControl(ctx, element, where);

@@ -41,19 +41,46 @@ const plugins = Object.fromEntries(
  */
 const pluginNames = Object.keys(plugins);`;
 
-const localMain = (): string => `import { readdirSync } from 'node:fs';
+/**
+ * Which port the server takes. `PORT` set: that one, and a clear error if something else has it. Not set, while
+ * developing: 8080, or the next free one — so a second project, or anything else on 8080, does not stop this one.
+ */
+const PORT_SNIPPET = `// Loopback unless told otherwise: a container publishes a port only from an address it listens on (\`HOST=0.0.0.0\`).
+const HOST = process.env.HOST ?? '127.0.0.1';
+// \`PORT\` set: that port. Not set, while developing: 8080 or the next free one, written down below for the scripts.
+const PORT = process.env.PORT
+  ? Number(process.env.PORT)
+  : process.env.NODE_ENV === 'production'
+    ? 8080
+    : await freePort(8080, HOST);`;
+
+/** Where the server says it is: the port it took, for `npm run shot` and the visual tests to find. */
+const LISTEN_SNIPPET = `server.listen(PORT, HOST);
+mkdirSync(path.join(PROJECT_ROOT, '.plitzi'), { recursive: true });
+writeFileSync(
+  path.join(PROJECT_ROOT, '.plitzi/dev-server.json'),
+  \`\${JSON.stringify({ name: SERVER_NAME, port: PORT, url: \`http://127.0.0.1:\${PORT}\` }, null, 2)}\\n\`
+);
+console.log(\`pages on http://127.0.0.1:\${PORT}/\`);`;
+
+const localMain = (): string => `import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { closeOnSignals, consoleLogger, createJsonAdapters, createServer, loadFunctions } from '@plitzi/sdk-server';
+import {
+  closeOnSignals,
+  consoleLogger,
+  createJsonAdapters,
+  createServer,
+  freePort,
+  loadFunctions
+} from '@plitzi/sdk-server';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
 import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
 
-const PORT = Number(process.env.PORT ?? 8080);
-// Loopback unless told otherwise: a container publishes a port only from an address it listens on (\`HOST=0.0.0.0\`).
-const HOST = process.env.HOST ?? '127.0.0.1';
+${PORT_SNIPPET}
 
 /**
  * The space, held in this project.
@@ -86,20 +113,26 @@ const functions = await loadFunctions(new URL('../functions/', import.meta.url))
  * page server makes. A real deployment swaps this for adapters onto its own database, or for
  * \`createCloudAdapters\` to read the live space out of Plitzi — the server never learns the difference.
  */
+// What \`/health\` answers with, and \`.plitzi/dev-server.json\` records: how a tool knows it reached THIS project.
+const SERVER_NAME = schema.definition.permanentUrl;
 const server = createServer({
   port: PORT,
   devMode: process.env.NODE_ENV !== 'production',
+  health: { name: SERVER_NAME },
   adapters: createJsonAdapters({
     offlineData,
     deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames }
   }),
   plugins,
+  // \`public/\` served as it is: the data an apiContainer reads (\`/data/home.json\`), images, a favicon.
+  publicDir: path.join(PROJECT_ROOT, 'public'),
   functions: { native: functions },
+  // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
+  logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
   logger: consoleLogger
 });
 
-server.listen(PORT, HOST);
-console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
+${LISTEN_SNIPPET}
 
 /**
  * A deploy, a restart or ^C closes the server instead of dropping it: requests in flight are answered, and once the
@@ -109,14 +142,19 @@ console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
 closeOnSignals(server);
 `;
 
-const cloudMain = (): string => `import { readdirSync } from 'node:fs';
+const cloudMain = (name: string): string => `import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { closeOnSignals, consoleLogger, createCloudAdapters, createServer, loadFunctions } from '@plitzi/sdk-server';
+import {
+  closeOnSignals,
+  consoleLogger,
+  createCloudAdapters,
+  createServer,
+  freePort,
+  loadFunctions
+} from '@plitzi/sdk-server';
 
-const PORT = Number(process.env.PORT ?? 8080);
-// Loopback unless told otherwise: a container publishes a port only from an address it listens on (\`HOST=0.0.0.0\`).
-const HOST = process.env.HOST ?? '127.0.0.1';
+${PORT_SNIPPET}
 
 ${PLUGINS}
 
@@ -152,9 +190,12 @@ const functions = await loadFunctions(new URL('../functions/', import.meta.url))
  * on every request; a published environment with no \`revision\` serves the latest and releases itself; with a
  * \`revision\` it serves exactly that version, for a deployment that rolls forward on its own schedule.
  */
+// What \`/health\` answers with, and \`.plitzi/dev-server.json\` records: how a tool knows it reached THIS project.
+const SERVER_NAME = ${JSON.stringify(name)};
 const server = createServer({
   port: PORT,
   devMode: process.env.NODE_ENV !== 'production',
+  health: { name: SERVER_NAME },
   adapters: createCloudAdapters({
     webKey: HOST_KEY,
     ...(process.env.PLITZI_SERVER_URL ? { serverUrl: process.env.PLITZI_SERVER_URL } : {}),
@@ -163,12 +204,15 @@ const server = createServer({
     deployment: { pluginNames }
   }),
   plugins,
+  // \`public/\` served as it is: the data an apiContainer reads (\`/data/home.json\`), images, a favicon.
+  publicDir: path.join(PROJECT_ROOT, 'public'),
   functions: { native: functions },
+  // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
+  logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
   logger: consoleLogger
 });
 
-server.listen(PORT, HOST);
-console.log(\`pages on http://127.0.0.1:\${PORT}/\`);
+${LISTEN_SNIPPET}
 
 /**
  * A deploy, a restart or ^C closes the server instead of dropping it: requests in flight are answered, and once the
@@ -179,5 +223,7 @@ closeOnSignals(server);
 `;
 
 export const serverFiles = (answers: CreateAnswers): ProjectFiles => ({
-  'src/main.ts': answers.source === 'cloud' ? cloudMain() : localMain()
+  'src/main.ts': answers.source === 'cloud' ? cloudMain(answers.name) : localMain(),
+  // Where data with no backend goes — `public/data/*.json`, read by an apiContainer — served by `publicDir`.
+  'public/data/.gitkeep': ''
 });

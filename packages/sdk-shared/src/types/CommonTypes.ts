@@ -53,6 +53,9 @@ export type ServerSSR = {
   realtimePath?: string;
   /** How pages connect to them — a stream (`sse`, when absent) or a socket (`websocket`). */
   realtimeTransport?: RealtimeTransport;
+  /** Path where this origin resizes remote pictures. Published only by a server that mounts the endpoint: its absence
+   *  is what keeps an image on its own `src` in the builder, an embed or a project with no page server. */
+  imagePath?: string;
   /** Channel the SSR render writes its response into (status, redirect). Server-side only and by reference: it never
    *  crosses to the browser, and nothing subscribes to it. */
   renderResult?: SSRRenderResult;

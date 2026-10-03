@@ -13,6 +13,15 @@ import type { DisplayMode, StyleBlock, StyleObject, StyleState, StyleValue } fro
 /** What an author writes: kebab-case CSS, shorthands allowed, one value per key. */
 export type CssProps = Record<string, StyleValue>;
 
+/** One property's value per breakpoint — `{ desktop: '24px', mobile: '18px' }` — inside a plain rule set. */
+export type ResponsiveValue = Partial<Record<DisplayMode | 'compact', StyleValue>>;
+
+/**
+ * Plain rules as an author writes them: kebab-case or camelCase keys (`paddingTop`), a bare number for a length in
+ * pixels (`gap: 16`), and a property that changes on another breakpoint given a value per breakpoint in place.
+ */
+export type CssInput = Record<string, StyleValue | ResponsiveValue>;
+
 /** The patch flavour of {@link CssProps}: `null` clears every longhand the key controls. */
 export type CssPatch = Record<string, StyleValue | null>;
 
@@ -40,7 +49,7 @@ export type ResponsiveStyle = Partial<Record<DisplayMode, StyleRules>>;
  * properties and never will be, so a rule set that mentions one is per-breakpoint and one that does not is the
  * desktop rules.
  */
-export type CssSpec = CssProps | ResponsiveCss;
+export type CssSpec = CssInput | ResponsiveCss;
 
 /** Rules for the states a selector reacts to — `hover`, `focus`, `active` — each one plain or per breakpoint. */
 export type StatesSpec = Partial<Record<StyleState, CssSpec>>;
@@ -109,3 +118,12 @@ export type ClassRef = string | StyleDeclaration;
  * — and the SDK applies all of them, in the order the stylesheet declares them rather than the order listed here.
  */
 export type ClassList = ClassRef | readonly ClassRef[];
+
+/**
+ * An element's classes, and at most one set of rules of its own on top of them — `class: [cover, { opacity: '0.25' }]`.
+ *
+ * "This class, plus one thing" is the commonest shape there is. The rules become a class named after the element,
+ * `<id>--own`, declared after every shared one so it wins over them; it is still one class, visible and editable in the
+ * builder, and the element still has one base selector. Needs the element's `id`, which names it.
+ */
+export type ElementClassList = ClassList | readonly (ClassRef | StyleSpec)[];

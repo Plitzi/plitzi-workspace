@@ -91,6 +91,22 @@ on the page. A press while typing in a field is the field's, unless Ctrl/⌘/Alt
 `{{ <step>.key }}` is the key pressed (`shift+f`). A shortcut that cannot fire (`'ctrl+shift'`, `'arrowupp'`) is refused
 where it is written.
 
+**Something every few seconds** — an autoplay, a clock — is `onInterval(ms)`, a trigger every element has:
+`[[onInterval(5000), cycleState({ key: 'slide', length: 4 })]]`. It
+ticks while the element is mounted and the tab is in view, never in the builder outside preview, at least every 250 ms
+(`trigger-interval` otherwise). To pause it, give its steps a condition — a state that `on('onMouseEnter')` sets and
+`on('onMouseLeave')` clears. `{{ <step>.count }}` is how many times it has ticked. No plugin needed.
+
+**A number that goes round, or stops:** `cycleState({ key: 'slide', length: 4 })` is "next" — after the last the first
+— and `by: -1` "previous"; `stepState({ key: 'shown', by: 40, max: 'apiContainer_site.data.total' })` adds and stops
+at the bound. Each is the `setState` it stands for, with the arithmetic written once.
+
+**Scrolling** is a step on the element whose box scrolls (`overflow-x: auto` on a row of cards): `scrollBy('cards',
+{ x: '80%' })` moves it by most of what it shows (`'-80%'` back, `'240'` pixels), `scrollTo('cards', { x: 'end' })`
+to an end or a place, and `scrollIntoView('answer', { block: 'center' })` brings an element into view. `onScroll()`
+fires as the box moves and once on mount, with `{ x, y, atStart, atEnd }` — what an arrow that hides at the end reads
+(recipes/scroll-a-row.ts). A link to a section needs none of this: an `anchor` and a link's `hash`.
+
 **A form's flow goes on the `form`**, which hands its submit over with `managedByInteractions: true`
 (`FORM_SUBMIT_UNMANAGED` otherwise — the browser submits it natively and `onSubmit` never fires):
 
@@ -128,39 +144,7 @@ without a word.
 
 ## Realtime channels
 
-Pages that see each other — cursors, presence, a shared board — need a channel. Declare its topic pattern on the space,
-then subscribe with a `channel` element; a topic no pattern matches is refused, naming the patterns:
-
-```ts
-channels: {
-  'board:{id}': { access: { mode: 'public' }, publish: 'server' },           // only `realtime.publish` speaks
-  'room:{id}': { access: { mode: 'public' }, presence: true }                // pages speak directly
-}
-
-channel({ id: 'room', topic: 'room:{{ id }}', keep: 0, bind: { presence: 'computed.me' }, children: [...] })
-```
-
-Its descendants bind `room.members`, `room.connected`, `room.last`; flows use `on('onMessage')` (`type`, `data`,
-`from`), `onJoin`/`onLeave` (`from`, `user` and the `state` the member announced — `onJoin` only for who came after
-this page), `publishOn('room', 'reaction', data)` and `announceOn('room', state)`. State everyone must
-agree on goes through a server action whose last step is `realtime.publish` — validated and saved first, announced
-after. `docs/en/realtime.md` is the whole of it.
-
-A topic only some visitors may hear — a room behind a password, a customer's order — goes on a channel declared
-`grant: true`. The action that decides they may be there ends with `realtime.grant` and answers the grant; the
-element binds it, or the server refuses the topic every time (`channel-grant`). `realtime.revoke { topic, grant }`
-takes one back — or every grant for the topic, naming none — and lets go whoever is on it with it:
-
-```ts
-channels: { 'order:{id}': { access: { mode: 'session' }, grant: true } }
-
-// steps: [ …decide…, { id: 'let', task: 'realtime.grant', params: { topic: 'order:{{ input.order }}' } } ]
-channel({ id: 'order', topic: 'order:{{ id }}', bind: { grant: 'state.follow.grant' }, children: [...] })
-```
-
-Two people writing the same thing at once: `kv.setIf` writes only if the value is still the one the flow read (empty
-`expected` = only if nothing is there yet — claim a seat, a username), `list.put`/`list.range` keep an ordered list
-(latest first, a leaderboard), and `flow.rateLimit` first in a public action that writes.
+Pages that see each other — cursors, presence, a shared board — talk over a channel: see [realtime](realtime.md).
 
 ## Lists as state
 

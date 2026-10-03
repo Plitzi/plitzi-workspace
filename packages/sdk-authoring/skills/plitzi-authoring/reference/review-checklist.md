@@ -46,8 +46,8 @@ Screen readers and browser agents (Claude in Chrome) work a page through its acc
 - [ ] Chrome shared by pages is a layout; the current menu entry comes from `activeOn`, not per-page styling.
 - [ ] A look used twice is a class; a tree used twice is a function or a `map` over data; a list of pages, links or
       plans is ONE array everything reads.
-- [ ] No positional ids (`container-45`) in what you wrote; every referenced element is named, prefixed when a
-      helper runs more than once.
+- [ ] No positional ids (`container-45`) in what you wrote; every referenced element is named, and a helper that
+      runs more than once builds inside `scope()`.
 
 ## True, and in the right place
 

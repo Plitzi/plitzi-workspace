@@ -61,6 +61,19 @@ describe('lintDraft', () => {
     expect(result.errors[0].message).toContain('"title"');
   });
 
+  // An agent over MCP has no skill page to look a code up in: the row of the table comes with the problem.
+  it('says each problem with its code, and what to write instead', () => {
+    const before = space();
+    const draft = drafted(before, next => {
+      next.schema.flat.label.attributes.title = 'Not read';
+    });
+
+    const [error] = lintDraft(draft, [patch('label')], before).errors;
+
+    expect(error.message).toMatch(/^\[unknown-attribute\] /);
+    expect(error.hint).toMatch(/^Write instead: one it lists/);
+  });
+
   // The agent never takes it for its own change, and cannot save over it without fixing it.
   it('blocks what was already wrong in an element it touched, and says it was already there', () => {
     const broken = drafted(space(), next => {

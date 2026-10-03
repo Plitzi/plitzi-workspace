@@ -714,7 +714,12 @@ declared pattern matches is refused here, naming the patterns (`channel-topic` i
 whether one is valid. Everything else — the style vocabulary, the element factories, the step builders — produces
 inert specs. That is what keeps every guarantee about the finished document in one place.
 
-`authorSpace` puts its own output through the same gate anything else goes through, and throws on:
+`authorSpace` puts its own output through the same gate anything else goes through. It reports everything it cannot
+write in one run — a `SpaceRefusedError` whose `refusals` each carry the line that wrote the element, the nearest named
+element and a **code**. Every refusal and warning has one: `AUTHORING_CODES` (exported) is the table they are raised
+from — whether each is refused or warned, what was wrong and what to write instead — and the skill's
+`reference/authoring-errors.md` is generated from it (`yarn generate:authoring-errors` in `sdk-authoring`), so a code
+cannot be missing from the page. It refuses:
 
 - a CSS property the style editor could not read back
 - a `class` or a `slot` naming a class the space does not declare (with the name you probably meant)
@@ -729,7 +734,7 @@ inert specs. That is what keeps every guarantee about the finished document in o
   element that publishes it (a query parameter is `navigation.queryParams.<name>`)
 - a template feeding an attribute that holds a list or an object (`items`) that renders text
 - children on a type that holds none (`heading`, `text`, `image`, `formControl`…) — a heading made of parts is a
-  `container` with an `h1`–`h6` tag
+  `container` with an `h1`–`h6` tag, and a piece inline in it a `container` with `subType: 'span'`
 - a name that shadows a global data source (`variables`, `navigation`, `auth`, `state`, `host`, `theme`, `flags`,
   `computed`)
 - a `flag` that is not a flag name, a gate on a flag the space does not declare (`flag-undeclared`), a template reading
@@ -743,7 +748,8 @@ And it returns `warnings` for what is written and will not do what it says — `
 `condition-starts-visible` (a computed visibility that would show until its data answers), `template-never-resolved` (a condition in an ATTRIBUTE, which only resolves `{{ name|filter }}` tokens — against the sources around the element; conditions
 belong in a binding's template or a step's params, where Twig is evaluated in full), `state-key-has-runtime-prefix`,
 `FORM_SUBMIT_UNMANAGED`, `STYLE_WITHOUT_TAG`, `tablet-rule-skips-mobile` (write the rule under `compact` to reach
-both), `default-content-beside-children` (a `button` whose placeholder "Button" would print beside its children),
+both; a rule the phone hides with `display: none` is left alone), `span-holds-block` (a `container` with
+`subType: 'span'` holding a heading, a paragraph, a list, a form or prose), `default-content-beside-children` (a `button` whose placeholder "Button" would print beside its children),
 `flag-unused` (a declared flag nothing gates on or reads) and `flag-rule-empty` (a flag rule with no conditions, which
 is skipped rather than read as "always").
 

@@ -1,8 +1,9 @@
+/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 import { describe, expect, it } from 'vitest';
 
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
-import { activeOn, authorSpace, GLOBAL_SOURCES, resolveSource, variantFrom, withVisibility } from './index';
+import { activeOn, activeWhen, authorSpace, GLOBAL_SOURCES, resolveSource, variantFrom, withVisibility } from './index';
 import { apiContainer, list, text } from '../elements';
 import { styles } from '../style';
 
@@ -209,5 +210,20 @@ describe('activeOn', () => {
 
     expect(variantOn(binding, 'docs-data')).toBe('current');
     expect(binding.transformers?.[1].params.key).toBe('navLink.label');
+  });
+});
+
+describe('activeWhen', () => {
+  const dot = styles('dot', { css: { opacity: '0.4' }, variants: { active: { opacity: '1' } } });
+
+  it('wears the variant while the condition holds, through the source it reads', () => {
+    expect(activeWhen(dot, '{{ list_dots.index == state.slide }}')).toEqual(
+      variantFrom(dot, 'state', { template: "{{ (list_dots.index == state.slide) ? 'active' : 'idle' }}" })
+    );
+    expect(activeWhen(dot, 'list_dots.index == 0').source).toBe('dots');
+  });
+
+  it('is refused a condition that reads nothing', () => {
+    expect(() => activeWhen(dot, '1 == 1')).toThrow(/\[active-when-constant\]/);
   });
 });

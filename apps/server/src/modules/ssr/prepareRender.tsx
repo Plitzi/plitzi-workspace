@@ -9,6 +9,7 @@ import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { reportMissingPlugins } from './reportMissingPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
+import { imagesPathOf } from '../../core/http/stages/images';
 import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
 import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
@@ -175,7 +176,8 @@ export const prepareRender = async (
     rscData,
     actionPath: resolveActionEndpoint(config),
     realtimePath: realtimeModuleFor(config)?.path,
-    realtimeTransport: realtimeModuleFor(config)?.transport
+    realtimeTransport: realtimeModuleFor(config)?.transport,
+    imagePath: imagesPathOf(config)
   });
 
   if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {

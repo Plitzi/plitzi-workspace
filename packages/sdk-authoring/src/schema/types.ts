@@ -1,7 +1,16 @@
 import type { VisibleCondition } from './bindings';
 import type { SpaceHandles } from './handles';
 import type { NotificationsSpec } from './notifications';
-import type { AncestorSpec, ClassList, CssSpec, StatesSpec, StyleDeclaration, StyleSpec, VariantSpec } from '../style';
+import type {
+  AncestorSpec,
+  ClassList,
+  CssSpec,
+  ElementClassList,
+  StatesSpec,
+  StyleDeclaration,
+  StyleSpec,
+  VariantSpec
+} from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   BindingCategory,
@@ -103,6 +112,16 @@ export interface ElementSpec {
   id?: string;
   attributes?: Record<string, unknown>;
   /**
+   * The source the element's main attribute shows — `content` of a text, a heading, a paragraph or a button; `src`
+   * of an image; `href` of a link; `items` of a list: `heading({ from: 'site.data.hero.title' })`. `bind` is for
+   * the other attributes.
+   */
+  from?: string;
+  /** How `from` is shown: a name of the space's `formats`, or a template of its own (`'{{ source }} items'`). */
+  as?: string;
+  /** A list's row, by the component placed once per item with the row bound to its `item` prop. */
+  row?: string;
+  /**
    * A style variant the element starts in, e.g. a heading's `title`.
    *
    * The element TYPE's vocabulary by default. When the element wears a class that declares a variant of this name and
@@ -136,9 +155,10 @@ export interface ElementSpec {
    * so declaring both is a question with no answer and is refused rather than silently resolved.
    *
    * Either a name from {@link SpaceSpec.classes}, or a `styles()` declaration that brings its own rules along — or a
-   * list of them, for an element that wears a shared base and a modifier (`[panelCard, quotaPanel]`).
+   * list of them, for an element that wears a shared base and a modifier (`[panelCard, quotaPanel]`). A list may end
+   * with rules of the element's own on top of its classes, `[cover, { opacity: '0.25' }]` ({@link ElementClassList}).
    */
-  class?: ClassList;
+  class?: ElementClassList;
   /**
    * A class for one of the element's OTHER style selectors, by selector name — a form control's `input`, `label`
    * and `error`.
@@ -175,6 +195,12 @@ export interface ElementSpec {
   runtime?: ElementRuntime;
   /** When this element's contents mount relative to its visibility. Left out, the element type decides. */
   loadStrategy?: ElementLoadStrategy;
+  /**
+   * The `id` this element carries in the DOM, so `/page#anchor` lands on it — `link({ href: 'home', hash: 'plans' })`.
+   * Lowercase letters, digits and `-`; one per page, layouts included; not inside a list row or a component, which
+   * would repeat it.
+   */
+  anchor?: string;
   /**
    * The feature flag this exists under: `'newCheckout'` exists only while the flag is on, `'!newCheckout'` only while
    * it is off — the old version, kept until the new one ships. Not a visibility: gated off, it is not rendered at all,
@@ -385,6 +411,11 @@ export interface SpaceSpec {
    * element's source (a list row, a provider) is not readable here: bind that on the element.
    */
   computed?: Record<string, string>;
+  /**
+   * Templates by name, for what an element shows of its data: `formats: { price: "{{ source|currency('USD') }}" }`
+   * once, then `text({ from: 'products.item.price', as: 'price' })` anywhere. `source` is the value `from` reads.
+   */
+  formats?: Record<string, string>;
   /**
    * The space's feature flags, by the name each is read by — `{{ flags.newCheckout }}` in a binding or a `when`, and
    * what an element's or a page's `flag` names:

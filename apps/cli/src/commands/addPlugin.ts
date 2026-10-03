@@ -5,6 +5,7 @@ import readline from 'node:readline/promises';
 import chalk from 'chalk';
 
 import { findProject } from './existingProject';
+import { projectFormatter } from './projectFormatter';
 import { askChoice, askText, atTerminal, isEmpty, refuseWithoutTerminal, writeFiles } from './terminal';
 import {
   declarationsRegistry,
@@ -12,11 +13,12 @@ import {
   pluginNameProblem,
   pluginNames,
   projectDeclarations,
-  scaffoldElement
+  scaffoldElement,
+  shapeFromFlags
 } from '../scaffold';
 
 import type { ExistingProject, PlitziProject } from './existingProject';
-import type { PluginNames } from '../scaffold';
+import type { PluginNames, ShapeFlags } from '../scaffold';
 
 /**
  * Elements of your own, added to a project that already exists — one or several, now or one at a time as the need
@@ -31,7 +33,7 @@ import type { PluginNames } from '../scaffold';
  * - any other project is asked where its components live, and told how to register the element.
  */
 
-export interface AddPluginOptions {
+export interface AddPluginOptions extends ShapeFlags {
   dir?: string;
   title?: string;
   description?: string;
@@ -277,6 +279,18 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
     return;
   }
 
+  const { shape, problem: shapeProblem } = shapeFromFlags(options);
+  if (shapeProblem ?? (shape && namesGiven.length > 1)) {
+    console.error(
+      chalk.red(
+        shapeProblem ?? '--prop, --trigger, --callback and --headless shape one element: add them one at a time.'
+      )
+    );
+    process.exitCode = 1;
+
+    return;
+  }
+
   const givenProblem = namesGiven.length > 0 ? namesProblem(namesGiven) : undefined;
   if (givenProblem) {
     console.error(chalk.red(givenProblem));
@@ -339,6 +353,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
       }
     }
 
+    const format = await projectFormatter(project.root);
     const single = planned.length === 1;
     const answer = async (question: string, given: string | undefined, fallback: string): Promise<string> =>
       given ?? (rl ? askText(rl, question, fallback) : fallback);
@@ -355,7 +370,15 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
         single ? options.description : undefined,
         ''
       );
-      await writeFiles(target, scaffoldElement(name, { title, description, owner: '' }));
+      // Written as the project's own Prettier writes it, so the first `format` it runs changes nothing.
+      const files = scaffoldElement(name, { title, description, owner: '' }, shape);
+      const formatted = await Promise.all(
+        Object.entries(files).map(
+          async ([file, text]) =>
+            [file, await format(path.relative(project.root, path.join(target, file)), text)] as const
+        )
+      );
+      await writeFiles(target, Object.fromEntries(formatted));
       added.push({ names: { ...elementNames, title }, target });
     }
 

@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 
 import { issuesFromError, levelOf, SPACE_INVALID } from './spaceIssues';
 
-const issue = { code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'hello', fixable: false };
+const issue = {
+  code: 'binding-target-unknown',
+  message: 'Lands on nothing',
+  elementId: 'hello',
+  fixable: false,
+  fix: null
+};
 
 const refusal = (extensions: Record<string, unknown>) =>
   new CombinedGraphQLErrors({ errors: [{ message: 'Refused', extensions }] });

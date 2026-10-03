@@ -17,6 +17,8 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import refreshRsc from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useSdkStore, useSdkStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
 
+import useScrollToHash from './useScrollToHash';
+
 import type { CommonState, NavigationStatus, RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 import type { PathMatch } from 'react-router-dom';
@@ -110,6 +112,11 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
 
   const { action, pageId = '', pathMatch } = matchResult;
   const currentPageId = currentPageIdProp || pageId;
+  useScrollToHash({
+    hash: routerLocation?.hash ?? '',
+    navigationKey: routerLocation?.key,
+    enabled: previewMode && renderMode !== 'widget'
+  });
 
   useEffect(() => {
     pConsole.info(

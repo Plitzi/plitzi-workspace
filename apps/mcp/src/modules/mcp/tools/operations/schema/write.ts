@@ -112,7 +112,8 @@ export const createElement = (
       // Omitted rather than defaulted to 'shared': the element schema treats an absent runtime as shared already,
       // and stamping every element with an explicit value would make a diff of a builder-authored page noisy.
       ...(input.runtime === undefined ? {} : { runtime: input.runtime }),
-      ...(input.flag === undefined ? {} : { flag: flagGateOf(input.flag, `Element "${input.ref}"`) })
+      ...(input.flag === undefined ? {} : { flag: flagGateOf(input.flag, `Element "${input.ref}"`) }),
+      ...(input.anchor === undefined ? {} : { anchor: input.anchor })
     }
   };
   if (!new FlatMap({ flat: space.schema.flat }).addElement(el, anchorId, drop)) {

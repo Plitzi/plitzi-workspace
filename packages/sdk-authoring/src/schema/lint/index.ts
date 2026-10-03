@@ -1,4 +1,5 @@
 import { lintAccessibility } from './accessibility';
+import { lintAnchors } from './anchors';
 import { lintChannels } from './channels';
 import { lintInstances } from './components';
 import { LintContext } from './context';
@@ -41,6 +42,7 @@ export const lintSpace = (
   lintComputed(ctx);
   lintFlags(ctx);
   lintElements(ctx);
+  lintAnchors(ctx);
   lintInstances(ctx);
   lintChannels(ctx);
   lintFlows(ctx);
@@ -54,6 +56,7 @@ export const lintSpace = (
   for (const component of Object.values(schema.components)) {
     const own = new LintContext(schema, style, catalogs, component);
     lintElements(own);
+    lintAnchors(own);
     lintInstances(own);
     lintFlows(own);
     lintAccessibility(own);

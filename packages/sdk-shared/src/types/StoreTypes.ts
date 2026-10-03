@@ -79,6 +79,8 @@ export type CommonState = {
   actions?: ActionsState;
   /** Where this origin's realtime channels answer — absent in a render with no server, where no channel opens. */
   realtime?: { endpoint?: string; transport?: RealtimeTransport };
+  /** Where this origin resizes remote pictures — absent in a render with no server, where an image keeps its `src`. */
+  images?: { endpoint?: string };
   // How THIS render is happening. Seeded once at the root of whichever surface is mounting (the SDK, the builder) and
   // read from the store by everything below, instead of being threaded through every provider as five props.
   render?: RenderSettings;

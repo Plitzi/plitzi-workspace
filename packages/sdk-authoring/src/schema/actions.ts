@@ -1,5 +1,6 @@
 import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
 
+import { AuthoringError } from './codes';
 import { authorFlow } from './flows';
 
 import type { StepSpec } from './types';
@@ -173,7 +174,8 @@ const passthroughParams = (triggers: ActionTriggerSpec[], actionId: string, step
       .join(',')
   );
   if (new Set(contracts).size > 1) {
-    throw new Error(
+    throw new AuthoringError(
+      'action-step-params',
       `Step "${stepId}" of action "${actionId}" names no params, but this action's ways in declare different inputs, so there is nothing to pass through. Write the step's params.`
     );
   }
@@ -187,7 +189,10 @@ const assertUniqueIds = (ids: string[], actionId: string): void => {
     // The node map is keyed by id, so a repeat does not duplicate a step — it REPLACES one, and the flow that
     // results is shorter than the one that was written with nothing saying so.
     if (seen.has(id)) {
-      throw new Error(`Action "${actionId}" names the step "${id}" twice. A flow's steps are keyed by id.`);
+      throw new AuthoringError(
+        'step-duplicate',
+        `Action "${actionId}" names the step "${id}" twice. A flow's steps are keyed by id.`
+      );
     }
 
     seen.add(id);
@@ -234,11 +239,14 @@ const withDoors = (
 export const defineAction = (spec: ActionSpec): ActionEntry => {
   const triggers = Array.isArray(spec.trigger) ? spec.trigger : [spec.trigger];
   if (triggers.length === 0) {
-    throw new Error(`Action "${spec.id}" declares no way in, so nothing can ever start it.`);
+    throw new AuthoringError(
+      'action-without-entry',
+      `Action "${spec.id}" declares no way in, so nothing can ever start it.`
+    );
   }
 
   if (spec.steps.length === 0) {
-    throw new Error(`Action "${spec.id}" declares no steps.`);
+    throw new AuthoringError('action-without-steps', `Action "${spec.id}" declares no steps.`);
   }
 
   const triggerIds = triggers.map(trigger => trigger.id ?? (triggers.length === 1 ? 'start' : trigger.type));

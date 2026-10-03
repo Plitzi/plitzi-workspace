@@ -58,7 +58,7 @@ describe('styles()', () => {
   // The refusal is the point of normalising early: a property outside the vocabulary is an error on the line that
   // declared the class, not on whichever element happened to name it first.
   it('refuses a property the style editor could not read back', () => {
-    expect(() => styles('card', { paddingTop: '4px' })).toThrow(/did you mean "padding-top"/);
+    expect(() => styles('card', { fontSmoothing: 'antialiased' })).toThrow(/"font-smoothing"/);
   });
 
   it('reads as its own class name when turned into a string', () => {

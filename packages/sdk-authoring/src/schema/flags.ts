@@ -1,5 +1,7 @@
 import { isFlagName } from '@plitzi/sdk-shared/flags';
 
+import { AuthoringError } from './codes';
+
 import type { ElementFlagGate } from '@plitzi/sdk-shared';
 
 /**
@@ -16,7 +18,8 @@ export const flagGateOf = (flag: unknown, where: string): ElementFlagGate | unde
   const is = !text.startsWith('!');
   const name = is ? text : text.slice(1);
   if (!isFlagName(name)) {
-    throw new Error(
+    throw new AuthoringError(
+      'flag-gate',
       `${where}: \`flag\` is ${JSON.stringify(flag)}. It names a flag the space declares in \`flags\` — \`flag: 'newCheckout'\` exists while it is on — or, with a leading \`!\`, one that has to be off: \`flag: '!newCheckout'\`.`
     );
   }

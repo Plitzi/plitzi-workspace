@@ -121,6 +121,11 @@ export type ElementDefinition = {
   loadStrategy?: ElementLoadStrategy;
   /** The feature flag this element exists under. See {@link ElementFlagGate}. */
   flag?: ElementFlagGate;
+  /**
+   * The `id` this element carries in the DOM, so a link to `/page#anchor` lands on it — `data-id` names the element
+   * for the platform, this names it for the URL. One per rendered page, layouts included (`isAnchor`).
+   */
+  anchor?: string;
 };
 
 /**
@@ -374,7 +379,7 @@ export type SchemaContextValue = {
 
 /** The fields of a definition an element may go without — absent in a document, `null` from GraphQL. */
 type OptionalDefinitionKey =
-  'parentId' | 'items' | 'bindings' | 'interactions' | 'initialState' | 'runtime' | 'loadStrategy' | 'flag';
+  'parentId' | 'items' | 'bindings' | 'interactions' | 'initialState' | 'runtime' | 'loadStrategy' | 'flag' | 'anchor';
 
 /**
  * An element as it arrives on the wire. GraphQL answers every field a query names, so one the element does not have

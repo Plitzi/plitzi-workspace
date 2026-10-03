@@ -27,11 +27,15 @@ import LayoutContainerDeclaration from '../internal/LayoutContainer/declaration'
 import LoadingDeclaration from '../internal/Loading/declaration';
 import NotFoundDeclaration from '../internal/NotFound/declaration';
 import PageDeclaration from '../internal/Page/declaration';
+import EmbedDeclaration from '../media/Embed/declaration';
 import FontAwesomeDeclaration from '../media/FontAwesome/declaration';
 import ImageDeclaration from '../media/Image/declaration';
+import SvgDeclaration from '../media/Svg/declaration';
 import VideoDeclaration from '../media/Video/declaration';
 import ApiContainerDeclaration from '../provider/ApiContainer/declaration';
 import ChannelDeclaration from '../provider/Channel/declaration';
+import CarouselTrackDeclaration from '../structure/Carousel/CarouselTrack/declaration';
+import CarouselDeclaration from '../structure/Carousel/declaration';
 import ContainerDeclaration from '../structure/Container/declaration';
 import DialogContainerDeclaration from '../structure/DialogContainer/declaration';
 import ListDeclaration from '../structure/List/declaration';
@@ -48,12 +52,15 @@ export const elementDeclarations = {
   BlockHtml: BlockHtmlDeclaration,
   BlockJsx: BlockJsxDeclaration,
   Button: ButtonDeclaration,
+  Carousel: CarouselDeclaration,
+  CarouselTrack: CarouselTrackDeclaration,
   Channel: ChannelDeclaration,
   Container: ContainerDeclaration,
   Custom: CustomDeclaration,
   DialogContainer: DialogContainerDeclaration,
   Dropdown: DropdownDeclaration,
   DropdownPopup: DropdownPopupDeclaration,
+  Embed: EmbedDeclaration,
   FontAwesome: FontAwesomeDeclaration,
   Form: FormDeclaration,
   FormControl: FormControlDeclaration,
@@ -73,6 +80,7 @@ export const elementDeclarations = {
   Paragraph: ParagraphDeclaration,
   Reference: ReferenceDeclaration,
   RichText: RichTextDeclaration,
+  Svg: SvgDeclaration,
   TabContainer: TabContainerDeclaration,
   TabContainerBody: TabContainerBodyDeclaration,
   TabContainerHeader: TabContainerHeaderDeclaration,
@@ -89,12 +97,15 @@ export {
   BlockHtmlDeclaration,
   BlockJsxDeclaration,
   ButtonDeclaration,
+  CarouselDeclaration,
+  CarouselTrackDeclaration,
   ChannelDeclaration,
   ContainerDeclaration,
   CustomDeclaration,
   DialogContainerDeclaration,
   DropdownDeclaration,
   DropdownPopupDeclaration,
+  EmbedDeclaration,
   FontAwesomeDeclaration,
   FormControlDeclaration,
   FormDeclaration,
@@ -114,6 +125,7 @@ export {
   ParagraphDeclaration,
   ReferenceDeclaration,
   RichTextDeclaration,
+  SvgDeclaration,
   TabContainerBodyDeclaration,
   TabContainerDeclaration,
   TabContainerHeaderDeclaration,

@@ -7,6 +7,7 @@ One factory per element, named after it. Attributes and the authoring fields go 
 ```ts
 heading({ content: 'Fieldnotes', subType: 'h2', class: title })
 image({ src: '/fox.jpg', alt: 'A fox', css: { 'aspect-ratio': '3/2' } })
+image({ src: 'https://cdn.shop.com/p.jpg', alt: '…', sizes: '360px', width: 1200, height: 800 })   // resized by the page server
 container({ class: card, children: [ … ] })
 text('Wildlife, close up')          // a string is the content
 container([hero, grid])             // an array is the children
@@ -31,15 +32,26 @@ container([hero, grid])             // an array is the children
 Anything else in the object is an **attribute** (`authorSpace` warns `unknown-attribute` for one the element never
 reads).
 
-**A link's `href` is a page id.** `link({ href: 'reports' })` finds the page by id, folder included. `mode: 'internal'`
-for a path within the space carrying `{{tokens}}` — a row's own slug (`'/games/{{ list_games.item.slug }}'`), a route
-param, state; `mode: 'external'` for a full URL passed through untouched. A link is an `<a>`: never put a link inside
+**A link says where by its `href`:** a page id (`link({ href: 'reports' })`, folder included), a path within the space
+— with `{{tokens}}` if it needs them, a row's own slug (`'/games/{{ list_games.item.slug }}'`) — or a full URL
+(`https:`, `mailto:`, `tel:`), passed through untouched. `mode` follows from it; write it only to say otherwise. A link
+that opens another tab (`target: 'blank'`) gets `rel="noopener noreferrer"`. A link is an `<a>`: never put a link inside
 another link — make the card the link, or the button, not both.
+
+**An element's `id` is not its HTML id.** It reaches the DOM as `data-id`. For a section a URL can land on, give it
+an `anchor` (`anchor: 'plans'` → `id="plans"`: lowercase, digits, `-`) and link to it with `hash`:
+`link({ href: 'home', hash: 'plans' })` goes to `/#plans` and scrolls there, waiting for a section that renders once
+its data arrives. One anchor per page, layouts included; never inside a list row or a component, which would repeat
+it — `authorSpace` refuses each, and a `hash` no element on that page carries (`anchor-missing`). Under a fixed
+header, give the section `scroll-margin-top` (the header's height) so it does not land beneath it.
 
 **Some types hold no children.** A `heading`, `text`, `paragraph`, `image`, `formControl`… renders its own attributes
 and nothing nested in it — `authorSpace` refuses children there. A heading made of parts (a word in another colour, an
 icon, a badge) is a `container` with the heading's tag: `container({ subType: 'h1', class: title, children: [text('Space
 '), text('Gamer', { class: accent })] })` — give the texts `display: inline` in their class.
+A piece that sits in a line of text without breaking it — a dot before a title, a badge — is
+`container({ subType: 'span', … })`: inline by default. It holds words and inline pieces, never a heading or a
+paragraph (`span-holds-block`).
 
 **A `button` shows its `content` AND its children.** `content` defaults to "Button": a button whose words are children
 says `content: ''` (`default-content-beside-children` warns otherwise). Its accessible name is everything it shows.
@@ -69,14 +81,17 @@ node --input-type=module -e "import * as a from '@plitzi/sdk-authoring'; const t
 
 ## CSS
 
-Write CSS as you write CSS, shorthands included — they are expanded to the longhands Plitzi's editor reads. A property
-outside the vocabulary is refused with the key it should have been (`paddingTop` → `padding-top`).
+Write CSS as you write CSS, shorthands included — they are expanded to the longhands Plitzi's editor reads. Keys in
+kebab-case or camelCase (`paddingTop`, as a React style object), and a bare number on a length is pixels (`gap: 16`;
+`fontWeight: 800`, `opacity: 0.5` stay numbers). A property outside the vocabulary is refused.
 
 - `column(gap, extra?)`, `row(gap, extra?)`, `grid(columns, gap, extra?)` for the three layouts every space repeats.
 - **Breakpoints are ranges, not a cascade.** `tablet` is 48–64rem, `mobile` below 48rem, and each inherits only from
   `desktop` — a rule for `tablet` never reaches a phone (`authorSpace` warns `tablet-rule-skips-mobile`). A rule for
   everything narrower than a desktop is `compact`, written to both: `css: { desktop: { … }, compact: { 'grid-template-columns':
   '1fr' }, mobile: { gap: '8px' } }` — what `tablet` or `mobile` say for themselves wins.
+- **One property that changes, in place:** `{ fontSize: { desktop: '24px', mobile: '18px' }, fontWeight: 800 }` — the
+  rest of the rule stays desktop-only, without splitting it by breakpoint. Both forms mix.
 - **`backdrop-filter`, `filter` and `transform` make an element the containing block of its `position: fixed`
   children.** A glass header with a fixed phone dock inside puts the dock at the top of the header, not the screen.
 - **Fonts are declared.** A `font-family` loads only if the space lists the face in `fonts`
@@ -137,25 +152,16 @@ container({ class: card, children: [ … ] });
 
 **A variant chosen by the data:** `variantFrom(pill, 'jobs.item.status')`, or with a template when the data does not
 already speak in variant names — `variantFrom(pill, 'runs.item.status', { template: "{{ source == 'completed' ?
-'ok' : 'failed' }}" })`. The binding's key names the CLASS; never write it by hand. For "the current page", see
-`activeOn` in [layouts.md](layouts.md).
+'ok' : 'failed' }}" })`. The binding's key names the CLASS; never write it by hand. A variant while a condition holds
+— the dot of the slide on screen — is `activeWhen(dot, '{{ list_dots.index == state.slide }}')` (`active`, else
+`idle`); for "the current page", `activeOn` in [layouts.md](layouts.md).
 
-## Colours and themes
+## From Tailwind classes
 
-Every colour is a **variable** with both values, and elements say `var(--name)`:
+A design written in Tailwind classes becomes classes the builder edits with `styles('pill', tw('…'))` — see
+[tailwind.md](tailwind.md).
 
-```ts
-variables: {
-  color: {
-    foreground: { light: '#0c0c14', dark: '#ededf3', default: '#0c0c14' },
-    card: { light: '#ffffff', dark: '#101019', default: '#ffffff' },
-    primary: { light: '#5b3df5', dark: '#6e52f7', default: '#5b3df5' }
-  }
-}
-```
+## Colours, themes and motion
 
-- Choose each value against its own background: a colour picked on white is not the same colour on near-black.
-- Fixed colours are only for surfaces that are fixed in both themes (a brand panel that is always dark) — and then
-  the text on them is fixed too. Theme-following text on a fixed background is the bug.
-- A tint of a token is `color-mix(in srgb, var(--primary) 12%, transparent)`, which follows the theme for free.
-- `themeToggle()` is the switch; `theme.resolved` (`light`/`dark`) is a global source for anything else that needs it.
+Every colour is a token with a light and a dark value, read as `var(--name)` (or `tokens(variables)`); keyframes go in
+`customCss` — see [colours-and-motion.md](colours-and-motion.md).

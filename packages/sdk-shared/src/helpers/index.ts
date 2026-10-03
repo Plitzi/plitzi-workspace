@@ -5,6 +5,7 @@ import syntaxHighlight from './syntaxHighlight';
 export * from './cookies';
 export * from './fetchManifest';
 export * from './formatDate';
+export * from './interval';
 export * from './isDate';
 export * from './isRecord';
 export * from './generateFacade';

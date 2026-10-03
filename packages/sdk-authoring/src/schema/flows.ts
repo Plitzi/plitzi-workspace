@@ -1,6 +1,8 @@
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
+import { AuthoringError } from './codes';
+
 import type { StepSpec } from './types';
 import type { Rule, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementInteraction, WhileRunning } from '@plitzi/sdk-shared';
@@ -32,13 +34,17 @@ const assertStepIds = (ids: string[], where: string): void => {
   const seen = new Set<string>();
   for (const id of ids) {
     if (!isValidElementId(id)) {
-      throw new Error(
+      throw new AuthoringError(
+        'step-name',
         `Step "${id}" in ${where} is not a valid name: start with a letter, then letters, numbers, hyphens and underscores. A later step reads this one as {{ ${id}.field }}.`
       );
     }
 
     if (seen.has(id)) {
-      throw new Error(`${where} names the step "${id}" twice. A flow's steps are keyed by id, so the second wins.`);
+      throw new AuthoringError(
+        'step-duplicate',
+        `${where} names the step "${id}" twice. A flow's steps are keyed by id, so the second wins.`
+      );
     }
 
     seen.add(id);
@@ -156,13 +162,17 @@ const both = (inner: RuleGroup, outer: RuleGroup): RuleGroup =>
  */
 export const whileRunning = (mode: WhileRunning, trigger: StepSpec): StepSpec => {
   if (trigger.type !== 'trigger') {
-    throw new Error(
+    throw new AuthoringError(
+      'while-running',
       `whileRunning('${mode}', …) wraps a flow's TRIGGER — it decides what firing the trigger again does — and was given a "${trigger.type}" step (${trigger.action}). Put it around the first step: \`[whileRunning('${mode}', onClick()), …]\`.`
     );
   }
 
   if (!WHILE_RUNNING_MODES.includes(mode)) {
-    throw new Error(`whileRunning takes ${WHILE_RUNNING_MODES.map(item => `'${item}'`).join(', ')}, not '${mode}'.`);
+    throw new AuthoringError(
+      'while-running',
+      `whileRunning takes ${WHILE_RUNNING_MODES.map(item => `'${item}'`).join(', ')}, not '${mode}'.`
+    );
   }
 
   return { ...trigger, whileRunning: mode };

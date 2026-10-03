@@ -483,7 +483,7 @@ describe('a name used twice', () => {
           { name: 'Two', slug: 'two', body: [foot()] }
         ]
       })
-    ).toThrow(/uses a name already taken at .*prefixed by what it is for/);
+    ).toThrow(/uses a name already taken at .*scope\('<what it is for>'/);
   });
 });
 

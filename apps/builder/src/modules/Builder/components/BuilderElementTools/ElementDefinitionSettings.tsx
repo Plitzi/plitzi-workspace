@@ -8,6 +8,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { slugifyElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
+import ElementAnchor from './ElementAnchor';
 import ElementFlagGate from './ElementFlagGate';
 
 import type { Element, ElementLoadStrategy } from '@plitzi/sdk-shared';
@@ -180,6 +181,7 @@ const ElementDefinitionSettings = ({
           </span>
         </div>
       )}
+      {definition.type !== 'page' && <ElementAnchor key={id} anchor={definition.anchor} onUpdate={onUpdate} />}
       <ElementFlagGate
         gate={definition.flag}
         flagNames={flagNames}

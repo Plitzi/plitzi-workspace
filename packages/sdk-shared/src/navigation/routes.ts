@@ -140,6 +140,12 @@ function getPageFullPath(
  * a flow's `navigate` to `/security`, and to the home page for a folder's index — whose own slug is empty.
  */
 const navigationTarget = (pages: Record<string, Element>, pageFolders: PageFolder[], target: string): string => {
+  // A section of a page — `home#plans` — goes to that page, and the fragment comes along for the router to scroll to.
+  const fragmentAt = target.indexOf('#');
+  if (fragmentAt > 0) {
+    return `${navigationTarget(pages, pageFolders, target.slice(0, fragmentAt))}${target.slice(fragmentAt)}`;
+  }
+
   const page = pages[target] as Element | undefined;
   if (!page) {
     return target;

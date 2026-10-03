@@ -31,8 +31,14 @@ const prettierrc = (): string =>
 /** What a project writes that is nobody's to format or lint: its builds, its authored documents, its test output. */
 export const PROJECT_OUTPUTS = ['dist', 'space', '.sdk-plugins', 'visual/.results', 'visual/screenshots'];
 
+/**
+ * What is the agents' and not the project's: the skills copied in, whose recipes are TypeScript no program of the
+ * project includes — linted with types, they would stop the lint before its first file.
+ */
+const AGENT_FILES = '.claude';
+
 export const prettierignore = (outputs: readonly string[]): string =>
-  `${['node_modules', ...outputs.filter(output => output !== '.sdk-plugins')].join('\n')}\n`;
+  `${['node_modules', AGENT_FILES, ...outputs.filter(output => output !== '.sdk-plugins')].join('\n')}\n`;
 
 /**
  * Flat config, and only what earns its place.
@@ -49,7 +55,7 @@ import tsEslint from 'typescript-eslint';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tsEslint.config(
-  { ignores: [${outputs.map(output => `'${output}'`).join(', ')}] },
+  { ignores: [${[AGENT_FILES, ...outputs].map(output => `'${output}'`).join(', ')}] },
   js.configs.recommended,
   {
     /**

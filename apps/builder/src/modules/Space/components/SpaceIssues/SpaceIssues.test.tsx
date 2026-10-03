@@ -24,10 +24,10 @@ describe('SpaceIssues', () => {
       <SpaceIssues
         intro="Fix these first"
         issues={{
-          errors: [{ code: 'a', message: 'Broken', elementId: null, fixable: false }],
+          errors: [{ code: 'a', message: 'Broken', elementId: null, fixable: false, fix: null }],
           warnings: [
-            { code: 'b', message: 'Odd', elementId: null, fixable: false },
-            { code: 'c', message: 'Odder', elementId: null, fixable: false }
+            { code: 'b', message: 'Odd', elementId: null, fixable: false, fix: null },
+            { code: 'c', message: 'Odder', elementId: null, fixable: false, fix: null }
           ]
         }}
         onDismiss={vi.fn()}
@@ -44,8 +44,8 @@ describe('SpaceIssues', () => {
       <SpaceIssues
         issues={{
           errors: [
-            { code: 'page-target-url', message: 'A URL in page mode', elementId: null, fixable: true },
-            { code: 'template-unreadable', message: 'Cannot be read', elementId: null, fixable: false }
+            { code: 'page-target-url', message: 'A URL in page mode', elementId: null, fixable: true, fix: null },
+            { code: 'template-unreadable', message: 'Cannot be read', elementId: null, fixable: false, fix: null }
           ],
           warnings: []
         }}
@@ -63,7 +63,10 @@ describe('SpaceIssues', () => {
   it('offers nothing when nothing has one reading', () => {
     const { queryByText } = render(
       <SpaceIssues
-        issues={{ errors: [{ code: 'x', message: 'Needs a person', elementId: null, fixable: false }], warnings: [] }}
+        issues={{
+          errors: [{ code: 'x', message: 'Needs a person', elementId: null, fixable: false, fix: null }],
+          warnings: []
+        }}
         onDismiss={vi.fn()}
         onFix={vi.fn(() => Promise.resolve())}
       />

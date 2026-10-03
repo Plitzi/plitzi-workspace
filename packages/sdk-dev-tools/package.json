@@ -22,6 +22,18 @@
       "types": "./dist/DevToolsRoot.d.ts",
       "import": "./dist/DevToolsRoot.mjs"
     },
+    "./agentInspector/flowRuns": {
+      "types": "./dist/agentInspector/flowRuns.d.ts",
+      "import": "./dist/agentInspector/flowRuns.mjs"
+    },
+    "./agentInspector/inspector": {
+      "types": "./dist/agentInspector/inspector.d.ts",
+      "import": "./dist/agentInspector/inspector.mjs"
+    },
+    "./agentInspector/useAgentInspector": {
+      "types": "./dist/agentInspector/useAgentInspector.d.ts",
+      "import": "./dist/agentInspector/useAgentInspector.mjs"
+    },
     "./components/DevToolsIndicator": {
       "types": "./dist/components/DevToolsIndicator/index.d.ts",
       "import": "./dist/components/DevToolsIndicator/index.mjs"

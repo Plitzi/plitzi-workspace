@@ -27,10 +27,14 @@ export const space = {
 const { schema, style, warnings } = authorSpace(space);
 ```
 
-The published `.d.ts` is the reference for every factory, field and step builder
-(`node_modules/@plitzi/sdk-authoring/dist/index.d.ts`) — read it instead of guessing a name or a param. For one element
-type, the exported catalogues answer faster (`elementDefaultAttributes`, `elementTriggers`, `elementSlots`… — see
-[elements and styles](reference/elements-and-styles.md)).
+**Start with [the cheatsheet](CHEATSHEET.md)** — the factories, fields, steps and the problems met most, on one page —
+and open a reference below only when the task names its subject. What an element takes, a step's params, what a
+trigger hands its flow: `npx @plitzi/cli explain <name>` answers in a few lines (over MCP, `plitzi://explain/<name>`).
+The published `.d.ts` documents the rest — search it by name, never read it whole.
+
+This skill writes a space that lives in code. One that lives on Plitzi — edited in the builder, published from there —
+is edited through the Plitzi MCP server instead, never both on one space; `plitzi create --from <space>` turns the
+second into the first. If the MCP asks for a sign-in nobody can give, a project in code needs no account.
 
 ## How to work
 
@@ -42,7 +46,9 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
    refusals come one at a time; the linter's come as ONE list — fix every line of it before running again. How it
    checks, a one-file author script for any project, and what it cannot see: [validation](reference/validation.md).
 3. **Read every warning.** Each one names something written that will not do what it says. Zero warnings is the bar.
-4. **Look at it.** `npm run shot -- /about --width 390 --scheme dark` saves a picture of one page; `npm run visual`
+4. **Look at it.** `npm run check -- /about --width 1440,390` says in text whether the page is whole — every element on
+   screen, nothing overflowing, a clean console; `npm run shot -- /about --width 390 --scheme dark` is the picture, for
+   when it says something is wrong (`--frames 4` shows what moves); `npm run visual`
    runs the checks. Look at desktop, tablet and mobile, light and dark, and the page while its data is still loading.
 5. **Go through the [review checklist](reference/review-checklist.md) before saying it is done.** It is the feedback a
    reviewer gives on every change, written down so you do not need to hear it.
@@ -50,8 +56,9 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
 ## The rules that matter most
 
 1. **Name what is referred to.** Give an `id` to every element a binding, a flow or a test addresses. Ids are ONE
-   namespace for the whole space — layouts and every page share it — so an element built by a helper that runs more
-   than once gets its id prefixed by what it is for: `` `${pageId}-foot` ``.
+   namespace for the whole space — layouts and every page share it — so a helper that runs more than once builds inside
+   `scope('promos', ref => …)`: every id in it is prefixed (`promos-panel`), and `ref('slides')` names one in full. An `id` is the element's name in the
+   space (`data-id` in the page); the DOM id a URL's `#fragment` lands on is its `anchor`.
 2. **Share with classes, layouts and components, never with copies.** A look used twice is a `styles()` class.
    Chrome shown on several pages — a header, a sidebar, a footer — is a **layout** the pages name, written once. A block
    placed many times with different content — a product card, a testimonial — is a **component** placed with
@@ -59,7 +66,9 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
    (`entries.map(entry => link(…))`), not a block pasted per item. See [layouts and duplication](reference/layouts.md)
    and [components](reference/components.md).
 3. **One element, one base selector.** An element takes a shared `class` OR its own `css`, never both — authoring
-   refuses the pair. A look that never changes is its own class.
+   refuses the pair. "This class plus one thing" is the class with rules on top, last in the list:
+   `class: [cover, { opacity: '0.25' }]` (needs the element's `id`; it becomes the class `<id>--own`). A look that
+   never changes is its own class.
 4. **Visible by default; decide which way the logic flips.** An element is on screen unless something hides it. When
    the logic REVEALS it (hidden → shown: an empty state, a "get started" card, an admin-only panel), it starts hidden —
    `visible: 'source'`, or `visible: false` plus a binding for a computed condition — so it never flashes while data
@@ -99,81 +108,47 @@ type, the exported catalogues answer faster (`elementDefaultAttributes`, `elemen
 
 ## Recipes
 
-Copy the one that fits, then change the names. Each is the shape `authorSpace` accepts on the first try.
+Each is a whole file that authors with no warning — CI holds it to that. Copy the one that fits, then change the names.
 
-```ts
-// Data with no backend: a JSON file the project serves (public/data/games.json), read by a provider.
-apiContainer({ id: 'catalog', query: '/data/games.json', cache: true, children: [ /* reads catalog.data.… */ ] })
-
-// A list of rows from that data. Inside a row: short form in bindings, full name in templates and attributes.
-list({ id: 'games', source: 'controlled', bind: { items: 'catalog.data.games' }, children: [
-  link({ mode: 'internal', href: '/games/{{ list_games.item.slug }}', children: [
-    text('', { bind: { content: 'games.item.title' } })
-  ] })
-] })
-
-// A filtered list: a template that hands over its VALUE.
-list({ id: 'shown', source: 'controlled',
-  bind: [bindTemplate('items', 'catalog.data.games', "{{ source|filter(g => g.genre == state.genre) }}", { returns: 'value' })],
-  children: [ … ] })
-
-// Text computed from data.
-text('', { bind: [bindTemplate('content', 'catalog.data.games', '{{ source|length }} games')] })
-
-// Shown only when a computed condition says so (starts hidden, no flash).
-text('Nothing here yet', { visible: { source: 'catalog.data.games', template: '{{ source is defined and source|length == 0 }}' } })
-
-// A value used in many places: declare it once in the space, read it anywhere as computed.xp.
-computed: { xp: '{{ (state.favourites|length) * 10 }}' }
-
-// A feature behind a flag: declare it once in the space, gate both versions — exactly one is ever rendered.
-flags: { newCheckout: { description: 'The one-step checkout', value: false, rules: [] } }
-container({ id: 'checkout-new', flag: 'newCheckout', children: [ … ] })
-container({ id: 'checkout-old', flag: '!newCheckout', children: [ … ] })
-
-// A button that does something: a flow is [trigger, steps…].
-button({ content: 'Save', flows: [[onClick(), setState({ key: 'saved', type: 'boolean', value: true })]] })
-
-// A form: the flow goes on the form, which manages its own submit.
-form({ id: 'signup', managedByInteractions: true,
-  flows: [[named('sent', onSubmit()), setState({ key: 'email', type: 'text', value: '{{ sent.values.email }}' })]],
-  children: [formControl({ name: 'email', label: 'Email', subType: 'email' }), button({ content: 'Sign up', subType: 'submit' })] })
-
-// A modal: hidden until a flow opens it.
-modalContainer({ id: 'details', visible: false, title: 'Details', children: [ … ] })
-button({ content: 'Open', flows: [[onClick(), openModal('details')]] })
-
-// A plugin: author it from its own declaration, flow on its events, call its actions — all checked.
-const seats = defineElement<SeatPickerAttributes>(declaration);
-seats({ id: 'seats', flows: [[named('picked', declaredTrigger(declaration, 'onPick')), setState({ key: 'seat', type: 'text', value: '{{ picked.seat }}' })]] })
-button({ content: 'Clear', flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'seats' })]] })
-authorSpace(space, { plugins: [declaration] })
-
-// Usable without sight: an icon-only button says what it does; a clickable card IS a button; a field keeps its label
-// out of sight rather than dropping it; a picture says what it shows, or that it only decorates.
-button({ content: '', title: 'Close', children: [fontAwesome({ icon: 'fa-solid fa-xmark' })], flows: [[onClick(), closeModal('details')]] })
-button({ content: '', class: card, children: [text('Pro'), text('12 € a month')], flows: [[onClick(), setState({ key: 'plan', type: 'text', value: 'pro' })]] })
-formControl({ name: 'q', label: 'Search the docs', hideLabel: true, placeholder: 'Search…' })
-image({ src: '/team.jpg', alt: 'The team at the 2026 offsite' }); image({ src: '/grain.png', decorative: true })
-
-// A link: to a page by its id, to a path with mode 'internal', to anything else with mode 'external'.
-link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link({ href: 'mailto:hi@x.com', mode: 'external' })
-```
+| To… | Open |
+| --- | --- |
+| Show data with no backend: a JSON file, a card per row, a count, an empty state, a computed value | [recipes/show-data.ts](recipes/show-data.ts) |
+| Data typed by a sample of it: completed and checked paths, typed rows | [recipes/typed-data.ts](recipes/typed-data.ts) |
+| Filter and sort a list from a select | [recipes/filter-a-list.ts](recipes/filter-a-list.ts) |
+| A page per record (`/products/:slug`), and "not found" | [recipes/detail-page.ts](recipes/detail-page.ts) |
+| Link to a section of a page (`/#plans`) | [recipes/link-to-a-section.ts](recipes/link-to-a-section.ts) |
+| A carousel: slides with arrows, dots and autoplay; a marquee; a row that swipes | [recipes/carousel.ts](recipes/carousel.ts) |
+| Do something every few seconds — a ticker, a poll, a slideshow by hand | [recipes/every-few-seconds.ts](recipes/every-few-seconds.ts) |
+| A marquee that scrolls for ever and stops under the pointer | [recipes/marquee.ts](recipes/marquee.ts) |
+| A row that scrolls sideways, with arrows that hide at its ends | [recipes/scroll-a-row.ts](recipes/scroll-a-row.ts) |
+| A link built from a row: WhatsApp with the product's name, `mailto:` | [recipes/link-with-data.ts](recipes/link-with-data.ts) |
+| React to a click or a submit; a modal; a switch | [recipes/forms-and-modals.ts](recipes/forms-and-modals.ts) |
+| A feature behind a flag | [recipes/feature-flag.ts](recipes/feature-flag.ts) |
+| An element of your own (a plugin), checked | [recipes/plugin.ts](recipes/plugin.ts) |
+| Controls a screen reader and a browser agent can use | [recipes/usable-without-sight.ts](recipes/usable-without-sight.ts) |
+| Tokens, a shared class, "the class plus one thing", tablet and phone at once | [recipes/style-a-page.ts](recipes/style-a-page.ts) |
+| A design in Tailwind classes, kept as classes the builder edits | [recipes/from-tailwind.ts](recipes/from-tailwind.ts) |
+| A page from elsewhere in a frame (`embed`: a map, a player) and a drawing of your own (`svg`) | [recipes/embed-and-svg.ts](recipes/embed-and-svg.ts) |
 
 ## References
 
 | Read | When |
 | --- | --- |
 | [elements-and-styles.md](reference/elements-and-styles.md) | Any element or CSS: factories, fields, classes, states, variants, tokens, fonts, lists, links |
+| [colours-and-motion.md](reference/colours-and-motion.md) | Colours for both themes, tokens, keyframes and motion |
+| [tailwind.md](reference/tailwind.md) | A design written in Tailwind classes: `tw()`, its breakpoints and states, what it refuses |
 | [layouts.md](reference/layouts.md) | Anything shown on more than one page; menus; reducing duplication of elements and styles |
 | [components.md](reference/components.md) | One block placed many times — a card, a tier, a testimonial: props, slots, binding a row into one, why it is closed |
 | [data-and-visibility.md](reference/data-and-visibility.md) | Bindings, providers, offline data, loading/empty/error states, live data, caching, showing and hiding, kept state |
+| [kept-state.md](reference/kept-state.md) | State that outlives a reload: `keepState`, transient and painted keys |
 | [feature-flags.md](reference/feature-flags.md) | Switching a part of the space on or off — a beta, a rollout, the old version kept until the new one ships |
-| [lists.md](reference/lists.md) | Rendering rows, filtering and sorting them, a detail page for one record |
+| [lists.md](reference/lists.md) | Rendering rows, filtering and sorting them, a detail page for one record, carousels |
+| [typed-sources.md](reference/typed-sources.md) | Data typed by a sample of it: `source()`, typed rows, `twig` for templates |
 | [validation.md](reference/validation.md) | How `authorSpace` checks, the loop that wastes no attempts, and what it cannot see |
 | [authoring-errors.md](reference/authoring-errors.md) | What `authorSpace` refuses or warns about, and what to write instead |
 | [templates.md](reference/templates.md) | Any `{{ … }}` or `{% … %}`: where it runs, naming sources, filters, tests, dates |
-| [flows.md](reference/flows.md) | Clicks, submits, page loads, server actions, realtime channels, modals, state |
+| [flows.md](reference/flows.md) | Clicks, submits, page loads, every few seconds, server actions, modals, state |
+| [realtime.md](reference/realtime.md) | Pages that see each other: channels, presence, cursors, a shared board, who may hear a topic |
 | [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, channels, registering, behaving in the builder |
 | [structure.md](reference/structure.md) | A space bigger than one screen: files, helpers, naming, keeping it short |
 | [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame, shortcuts, counting renders |
@@ -181,3 +156,13 @@ link({ href: 'about' }); link({ href: '/games/nebula', mode: 'internal' }); link
 | [snippets-and-export.md](reference/snippets-and-export.md) | Publishing a snippet; turning an exported JSON — or a server action — into code |
 | [accessibility.md](reference/accessibility.md) | Icon buttons, fields, images, clickable cards, toggles, headings, landmarks, a canvas — anything a screen reader or a browser agent has to use |
 | [review-checklist.md](reference/review-checklist.md) | Before you say it is done |
+
+**What to read for a kind of task** — the cheatsheet, then only these:
+
+- A site — landing, catalogue, blog: elements-and-styles, layouts, components, lists.
+- An app with state and actions: data-and-visibility, templates, flows — realtime when pages see each other.
+- A component of your own: plugins.
+- A refusal or a warning: search authoring-errors.md for its code — never read it whole.
+- Tests: testing.
+
+Nothing else needs reading up front.

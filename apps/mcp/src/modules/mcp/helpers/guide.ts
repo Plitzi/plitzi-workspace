@@ -141,7 +141,8 @@ level at a time. \`plitzi_screenshot view:"accessibility"\` shows the tree and w
 the save on any \`Pre-existing malformation in element …\` error (a broken transformer, a malformed step, an attribute
 it never reads) — even parts you did not touch. These are NOT from your change (the message says so); fix them in the
 SAME batch and re-apply (the check runs on the result, so the fix unblocks it). \`Pre-existing issue\` warnings advise
-but do not block. A broken tree your batch leaves ANYWHERE (an element orphaned by a delete) blocks it too.
+but do not block. A broken tree your batch leaves ANYWHERE (an element orphaned by a delete) blocks it too. Each
+problem leads with its \`[code]\`, and its hint says what to write instead.
 
 Read \`plitzi://guide\` before anything above is unclear.
 `;
@@ -176,6 +177,9 @@ Never download a whole tree you do not need.
   Read the descriptions to pick the right type — e.g. \`apiContainer\` fetches backend data into the frontend,
   \`link\` navigates between pages, \`list\` repeats a template over a data array. \`plugin\` types are custom elements.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
+- \`plitzi://explain/{name}\` — what a name means: an element type's attributes, triggers and callbacks; a step's
+  params; what a trigger hands its flow; a problem code's fix. \`plitzi://explain/steps\` (or elements, triggers,
+  codes, transformers) lists every one of a kind.
 - \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
 - \`plitzi://schema/{env}/layouts\` — the shared **layout shells** (header/sidebar/footer) and the pages rendered
   inside each. Read one like a page. See *Shared layouts* below.
@@ -878,6 +882,9 @@ the component does not have is reported by \`plitzi_validate\` — fix it before
   \`"external"\` is a full URL. \`target\` is \`self\`/\`blank\`/\`parent\`/\`top\`. Reach for the \`navigate\` globalCallback
   only when navigation must be **one step inside a larger interaction flow** (e.g. save, then go) — for a plain link,
   use \`link\`.
+- **A section of a page** is an element with an \`anchor\` (its \`id\` in the DOM: lowercase, digits, \`-\`; one per
+  page, layouts included; not inside a list row or a component). A link lands on it with \`hash\`:
+  \`{ "mode": "page", "href": "home", "hash": "plans" }\` goes to \`/#plans\` and scrolls there, from any page.
 
 Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, name, slug, parentId? }\`; its \`ref\`
 **is its id**, and that id is what a page and a nested folder reference.

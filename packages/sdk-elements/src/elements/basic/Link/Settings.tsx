@@ -10,12 +10,13 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 type SettingsProps = {
   mode?: 'page' | 'internal' | 'external';
   href?: string;
+  hash?: string;
   target?: 'blank' | 'self' | 'parent' | 'top';
   label?: string;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ mode = 'page', href = '#', target = 'self', label = '', onUpdate }: SettingsProps) => {
+const Settings = ({ mode = 'page', href = '#', hash = '', target = 'self', label = '', onUpdate }: SettingsProps) => {
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
@@ -106,6 +107,15 @@ const Settings = ({ mode = 'page', href = '#', target = 'self', label = '', onUp
           </Select>
           <div className="truncate rounded-b border-r border-b border-l border-gray-200 p-1 text-xs">{fullpath}</div>
         </div>
+      )}
+      {mode !== 'external' && (
+        <Input
+          value={hash}
+          label="Section"
+          placeholder="An element's anchor, without the #"
+          onChange={handleChange('hash')}
+          size="sm"
+        />
       )}
       <Input
         value={label}

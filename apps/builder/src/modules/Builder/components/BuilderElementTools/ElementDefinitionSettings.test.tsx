@@ -60,13 +60,14 @@ describe('ElementDefinitionSettings', () => {
 
   it('keeps the free label text behind its toggle', async () => {
     const { container, getByTitle } = await renderSettings();
+    const labelField = () => container.querySelector<HTMLInputElement>('input[placeholder="Hero section"]');
 
-    expect(container.querySelectorAll('input')).toHaveLength(1);
+    expect(labelField()).toBeNull();
 
     fireEvent.click(getByTitle('Label'));
     await flushStorageSync();
 
-    expect(container.querySelectorAll('input')[1].value).toBe('Hero section');
+    expect(labelField()?.value).toBe('Hero section');
   });
 
   it('does not rename when the field is only focused and left', async () => {

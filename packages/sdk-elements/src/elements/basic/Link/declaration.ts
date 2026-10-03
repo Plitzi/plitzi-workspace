@@ -18,6 +18,7 @@ const declaration = elementDeclaration<LinkAttributes>()({
       href: '#',
       target: 'self',
       mode: 'page',
+      hash: '',
       label: ''
     },
     definition: {

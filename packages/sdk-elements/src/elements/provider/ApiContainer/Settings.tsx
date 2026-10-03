@@ -42,6 +42,7 @@ type SettingsProps = {
   pagination?: 'none' | 'url' | 'append';
   pageParam?: string;
   renderWhileLoading?: boolean;
+  loadingSlot?: string;
   cache?: boolean;
   staleTime?: number | string;
   gcTime?: number | string;
@@ -69,6 +70,7 @@ const Settings = ({
   pagination = 'none',
   pageParam = 'page',
   renderWhileLoading = false,
+  loadingSlot = '',
   cache = false,
   staleTime = 30,
   gcTime = 300,
@@ -136,6 +138,8 @@ const Settings = ({
     (e: ChangeEvent) => onUpdate?.('singleRecord', (e.target as HTMLInputElement).checked),
     [onUpdate]
   );
+
+  const handleChangeLoadingSlot = useCallback((value: string) => onUpdate?.('loadingSlot', value), [onUpdate]);
 
   const handleChangeRenderWhileLoading = useCallback(
     (e: ChangeEvent) => onUpdate?.('renderWhileLoading', (e.target as HTMLInputElement).checked),
@@ -341,6 +345,14 @@ const Settings = ({
             size="sm"
             label="Render children while loading"
             onChange={handleChangeRenderWhileLoading}
+          />
+          <Input
+            value={loadingSlot}
+            label="Loading slot"
+            placeholder="catalog-skeleton"
+            title="The id of a child shown instead of the others until the first answer arrives — a skeleton — and gone after it."
+            size="xs"
+            onChange={handleChangeLoadingSlot}
           />
         </>
       )}

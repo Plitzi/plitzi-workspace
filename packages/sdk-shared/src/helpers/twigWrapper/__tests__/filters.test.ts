@@ -490,4 +490,21 @@ describe('AST processTwig — array query filters', () => {
     });
     expect(result).toBe('a=1b=2');
   });
+
+  // In `en` unless named: a page rendered on a server and hydrated elsewhere writes one price, not two.
+  it('currency filter: a price as the locale writes it, a whole amount without cents when asked', () => {
+    expect(processTwig("{{ price|currency('USD') }}", { price: 2040.57 })).toBe('$2,040.57');
+    expect(processTwig("{{ price|currency('USD', 'en', { trimZeros: true }) }}", { price: 440 })).toBe('$440');
+    expect(processTwig("{{ price|currency('EUR', 'de') }}", { price: '19.9' })).toBe('19,90\u00a0€');
+  });
+
+  it('currency filter leaves what is not a price, or not a currency, as written', () => {
+    expect(processTwig("{{ price|currency('USD') }}", { price: 'free' })).toBe('free');
+    expect(processTwig("{{ price|currency('dollars') }}", { price: 5 })).toBe('5');
+  });
+
+  it('percent filter: a share as a percentage', () => {
+    expect(processTwig('{{ share|percent(1) }}', { share: 0.256 })).toBe('25.6%');
+    expect(processTwig('{{ share|percent }}', { share: 0.5 })).toBe('50%');
+  });
 });

@@ -190,10 +190,9 @@ to author — and \`YourThing/index.ts\` with an \`export default\`.
 
 ## Three things that bite
 
-**Render \`RootElement\`, not a \`div\`.** It is what makes a plugin an *element*: the id and classes the space
+**Render \`RootElement\`, not a \`div\`.** It is what makes a plugin an _element_: the id and classes the space
 gave it land on what you render, so the CSS authored on the element applies, the builder can select it, and a test
 can find it by name. A plain tag renders the same pixels and none of that.
-
 
 **Do not render anything that differs between the server and the first client render** — a clock, a random number,
 anything read out of \`window\`. React answers a hydration mismatch by discarding the whole tree, so it does not
@@ -226,8 +225,10 @@ ${list.length <= 120 ? list : `export const declarations: PluginDeclarationData[
 };
 
 export const pluginFiles = (answers: CreateAnswers): ProjectFiles => ({
-  'src/plugins/StatCard/StatCard.tsx': component(),
-  'src/plugins/StatCard/index.ts': barrel(),
+  // Only the tour hosts the example: elsewhere the folder, its README and its registry are what `add plugin` fills.
+  ...((answers.template ?? 'welcome') === 'welcome'
+    ? { 'src/plugins/StatCard/StatCard.tsx': component(), 'src/plugins/StatCard/index.ts': barrel() }
+    : {}),
   'src/plugins/README.md': readme(answers),
   // Only where the space is authored here: a space kept in Plitzi is checked by the builder instead.
   ...(answers.source === 'local' ? { 'src/plugins/declarations.ts': projectDeclarations([]) } : {})

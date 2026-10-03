@@ -1,7 +1,14 @@
 /* eslint-disable quotes */
 import { describe, expect, it } from 'vitest';
 
-import { blankSpace, blankSpaceSource, blankSpaceSpec, toPortableSource } from './index';
+import {
+  blankSpace,
+  blankSpaceSource,
+  blankSpaceSpec,
+  emptySpaceSource,
+  emptySpaceSpec,
+  toPortableSource
+} from './index';
 import { custom } from '../elements';
 import * as authoring from '../index';
 import { authorSpace, validateSpace } from '../schema';
@@ -115,6 +122,27 @@ describe('the copy handed to a project', () => {
     // Named for whoever receives it, not for the platform: the copy is somebody's own site, not Plitzi's blank one.
     expect(source).toContain('export const space');
     expect(source).not.toContain('blankSpaceSpec');
+  });
+
+  /**
+   * The copy is the example an agent writes the rest of the space after, so it follows the skill's own rules: a box
+   * one rule set owns whole is a shorthand (`padding: '6px 10px'`), not its four sides written apart.
+   */
+  it('writes a box one rule set owns as a shorthand', () => {
+    const groups = {
+      padding: ['padding-top', 'padding-right', 'padding-bottom', 'padding-left'],
+      margin: ['margin-top', 'margin-right', 'margin-bottom', 'margin-left'],
+      border: ['border-width', 'border-style', 'border-color']
+    };
+    // The innermost `{ … }` of the source: one rule set each.
+    const ruleSets = blankSpaceSource().match(/\{[^{}]*\}/g) ?? [];
+    const spelledOut = ruleSets.flatMap(rules =>
+      Object.entries(groups)
+        .filter(([, longhands]) => longhands.every(longhand => rules.includes(`'${longhand}'`)))
+        .map(([shorthand]) => `${shorthand} in ${rules.replace(/\s+/g, ' ')}`)
+    );
+
+    expect(spelledOut).toEqual([]);
   });
 
   /** The whole file has to survive, not just its header — the rewrite is of imports, not of the declaration. */
@@ -267,5 +295,28 @@ describe('the copy handed to a project', () => {
         ''
       ].join('\n')
     );
+  });
+});
+
+/** `plitzi create --template blank`: what a project about to be something specific starts from. */
+describe('spaces/empty', () => {
+  it('authors a valid space with no warning: tokens, a layout and a page in it', () => {
+    const { schema, style, warnings } = authorSpace(emptySpaceSpec);
+
+    expect(validateSpace({ schema, style }).valid).toBe(true);
+    expect(warnings).toEqual([]);
+    expect(schema.pages).toEqual(['home']);
+  });
+
+  it('is handed out as a file under the project’s name, importing only what the package exports', () => {
+    const source = emptySpaceSource({ name: 'My Shop' });
+    const match = /^import \{([^}]*)\} from '@plitzi\/sdk-authoring';$/m.exec(source);
+
+    expect(source).toContain("name: 'My Shop'");
+    expect(source).toContain("permanentUrl: 'my-shop'");
+    expect(source).not.toMatch(/from '\.\./);
+    for (const name of (match?.[1] ?? '').split(',').map(entry => entry.trim())) {
+      expect(authoring, `@plitzi/sdk-authoring exports ${name}`).toHaveProperty(name);
+    }
   });
 });

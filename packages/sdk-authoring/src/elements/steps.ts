@@ -1,10 +1,14 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
+import { intervalOf, MIN_INTERVAL_MS } from '@plitzi/sdk-shared/helpers/interval';
 import { parseKeys } from '@plitzi/sdk-shared/helpers/keys';
+import { SCROLL_TRIGGER } from '@plitzi/sdk-shared/helpers/scroll';
 
 import { typeTriggerDefinitions } from './catalog';
+import { AuthoringError } from '../schema/codes';
 
 import type { StepSpec } from '../schema';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
+import type { ScrollStepBehavior, ScrollStepPosition } from '@plitzi/sdk-shared/helpers/scroll';
 
 /**
  * How a flow starts, and how an element changes itself.
@@ -75,12 +79,31 @@ export const onLoad = (): StepSpec => on('onLoad');
 export const onKey = (keys: string): StepSpec => {
   const { problems } = parseKeys(keys);
   if (problems.length || !keys.trim()) {
-    throw new Error(
+    throw new AuthoringError(
+      'trigger-keys',
       `onKey('${keys}') is not a shortcut: ${problems.join('; ') || 'it is empty'}. Write one or several, with commas: 'f', 'shift+f', 'mod+k', 'escape, q'.`
     );
   }
 
   return on('onKey', { keys });
+};
+
+/**
+ * Every `ms` milliseconds while the element is on the page and the tab is in view — an autoplay, a clock, a refresh:
+ * `[[onInterval(5000), setState({ key: 'slide', type: 'number', value: '{{ ((state.slide ?? 0) + 1) % 4 }}' })]]`.
+ *
+ * At least 250 ms. It does not tick in the builder outside preview. To pause it, put a condition on its steps
+ * (`when(...)`) — a state an `onMouseEnter` sets, say. `{{ <this step's id>.count }}` is how many times it has ticked.
+ */
+export const onInterval = (ms: number): StepSpec => {
+  if (intervalOf(ms) === undefined) {
+    throw new AuthoringError(
+      'trigger-interval',
+      `onInterval(${String(ms)}) is not an interval a flow can repeat on: it takes a whole number of milliseconds, at least ${MIN_INTERVAL_MS} — \`onInterval(5000)\` is every five seconds.`
+    );
+  }
+
+  return on('onInterval', { interval: ms });
 };
 
 /**
@@ -90,6 +113,13 @@ export const onKey = (keys: string): StepSpec => {
  * id plus the current route and query params, so it is the one to use when a flow needs to make a decision from the
  * address that brought the visitor here.
  */
+/**
+ * The element's own box scrolled; once on mount too. Its flow reads `{ x, y, atStart, atEnd }` — name the trigger
+ * and hide the arrow at the end already reached: `[named('row', onScroll()), setState({ key: 'atEnd', type:
+ * 'boolean', value: '{{ row.atEnd }}' })]`.
+ */
+export const onScroll = (): StepSpec => on(SCROLL_TRIGGER);
+
 export const onPageLoad = (): StepSpec => on('onPageLoad');
 
 /**
@@ -258,6 +288,46 @@ export const toggleElement = (
   params
 });
 
+type ScrollMove = { x?: string; y?: string; behavior?: ScrollStepBehavior };
+
+/**
+ * Moves what an element's box shows — a row of cards with `overflow: auto`, a panel — by an amount: pixels (`'240'`) or
+ * a share of what the box shows (`'80%'`); negative goes back. `target` is the element whose box scrolls.
+ *
+ * `[onClick(), scrollBy('cards', { x: '80%' })]` is the "next" arrow over a row that still swipes on a phone.
+ */
+export const scrollBy = (target: string, move: ScrollMove): StepSpec => ({
+  type: 'callback',
+  action: 'scrollBy',
+  title: 'Scroll By',
+  on: target,
+  params: { ...move }
+});
+
+/** Moves an element's box to a place: `'start'`, `'end'`, pixels from the start, or a share of the way (`'50%'`). */
+export const scrollTo = (target: string, place: ScrollMove): StepSpec => ({
+  type: 'callback',
+  action: 'scrollTo',
+  title: 'Scroll To',
+  on: target,
+  params: { ...place }
+});
+
+/**
+ * Brings an element into view — the page, and every box around it that scrolls. For a link to a part of the page,
+ * an `anchor` and a link's `hash` say it without a flow; this is for a flow that has more to do.
+ */
+export const scrollIntoView = (
+  target: string,
+  where: { block?: ScrollStepPosition; inline?: ScrollStepPosition; behavior?: ScrollStepBehavior } = {}
+): StepSpec => ({
+  type: 'callback',
+  action: 'scrollIntoView',
+  title: 'Scroll Into View',
+  on: target,
+  params: { ...where }
+});
+
 /** What a declaration offers the two builders below: its events and its actions, keyed by name. */
 interface DeclaresInteractions {
   triggers?: Readonly<Record<string, InteractionCallback>>;
@@ -309,3 +379,34 @@ export const declaredCallback = <D extends DeclaresInteractions>(
     params: target.params ?? {}
   };
 };
+
+const carouselStep = (
+  target: string,
+  action: string,
+  title: string,
+  params: Record<string, unknown> = {}
+): StepSpec => ({
+  type: 'callback',
+  action,
+  title,
+  on: target,
+  params
+});
+
+/** The carousel `target` shows its next slide — round to the first after the last when it loops. */
+export const carouselNext = (target: string): StepSpec => carouselStep(target, 'next', 'Next Slide');
+
+/** The carousel `target` shows its previous slide; the slide enters from the left. */
+export const carouselPrevious = (target: string): StepSpec => carouselStep(target, 'previous', 'Previous Slide');
+
+/**
+ * The carousel `target` shows the slide at `index`, from 0 — a dot's own row: `carouselGoTo('hero', '{{ list_dots.index }}')`.
+ */
+export const carouselGoTo = (target: string, index: number | string): StepSpec =>
+  carouselStep(target, 'goTo', 'Go To Slide', { index: String(index) });
+
+/** The carousel `target` moves on by itself again, every `autoplay` milliseconds. */
+export const carouselPlay = (target: string): StepSpec => carouselStep(target, 'play', 'Play');
+
+/** The carousel `target` stops moving by itself until it is told to play. */
+export const carouselPause = (target: string): StepSpec => carouselStep(target, 'pause', 'Pause');

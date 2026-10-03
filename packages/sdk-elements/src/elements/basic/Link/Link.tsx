@@ -21,6 +21,11 @@ export type LinkProps = {
   target?: 'self' | 'blank' | 'parent' | 'top';
   mode?: 'page' | 'internal' | 'external';
   /**
+   * A section of the page it goes to: the `anchor` of an element there, without the `#`. `/pricing` and `hash: 'plans'`
+   * land on `/pricing#plans`, scrolled to that element. Read in `page` and `internal` modes.
+   */
+  hash?: string;
+  /**
    * What a screen reader announces instead of the link's contents.
    *
    * Worth setting on a link that wraps a whole card: with nothing here, the announced name is every word inside
@@ -29,7 +34,16 @@ export type LinkProps = {
   label?: string;
 };
 
-const Link = ({ ref, children, className = '', href = '#', target = 'self', mode = 'page', label = '' }: LinkProps) => {
+const Link = ({
+  ref,
+  children,
+  className = '',
+  href = '#',
+  target = 'self',
+  mode = 'page',
+  hash = '',
+  label = ''
+}: LinkProps) => {
   const { style } = useElement();
   const {
     settings: { previewMode }
@@ -42,7 +56,7 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
     'navigation.navigate'
   ]);
 
-  const url = useMemo(() => {
+  const path = useMemo(() => {
     if (mode === 'external') {
       return href;
     }
@@ -65,6 +79,7 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
 
     return getPageFullPath(pageDefinitions, pageFolders, href, true);
   }, [mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
+  const url = mode !== 'external' && hash ? `${path}#${hash}` : path;
 
   const handleClick = (e: MouseEvent) => {
     if (!previewMode) {
@@ -86,6 +101,8 @@ const Link = ({ ref, children, className = '', href = '#', target = 'self', mode
       ref,
       style,
       target: `_${target}`,
+      // Another tab is another page: it gets no handle back on this one, nor its address.
+      ...(target === 'blank' ? { rel: 'noopener noreferrer' } : {}),
       // Empty means "let the contents name it", which is right for an ordinary link and only wrong for a card.
       'aria-label': label ? label : undefined,
       className: clsx('plitzi-component__link', className)

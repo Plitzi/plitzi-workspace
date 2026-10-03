@@ -40,6 +40,7 @@ const InitQuery = /* GraphQL */ `
               name
               is
             }
+            anchor
           }
           attributes
         }

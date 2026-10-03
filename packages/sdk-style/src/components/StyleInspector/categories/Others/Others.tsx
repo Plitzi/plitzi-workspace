@@ -4,6 +4,7 @@ import OthersForm from './OthersForm';
 import OthersInteraction from './OthersInteraction';
 import OthersOutline from './OthersOutline';
 import OthersScrollbar from './OthersScrollbar';
+import OthersScrollSnap from './OthersScrollSnap';
 import OthersSvg from './OthersSvg';
 import OthersTable from './OthersTable';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
@@ -21,6 +22,11 @@ const dotKeys = [
   'appearance',
   'scroll-behavior',
   'overscroll-behavior',
+  'scroll-snap-type',
+  'scroll-snap-align',
+  'scroll-snap-stop',
+  'scroll-padding-top',
+  'scroll-margin-top',
   'accent-color',
   'caret-color',
   'color-scheme',
@@ -44,6 +50,11 @@ const advancedKeys = [
   'appearance',
   'scroll-behavior',
   'overscroll-behavior',
+  'scroll-snap-type',
+  'scroll-snap-align',
+  'scroll-snap-stop',
+  'scroll-padding-top',
+  'scroll-margin-top',
   'accent-color',
   'caret-color',
   'color-scheme',
@@ -73,6 +84,11 @@ const Others = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Other
     appearance,
     'scroll-behavior': scrollBehavior,
     'overscroll-behavior': overscrollBehavior,
+    'scroll-snap-type': scrollSnapType,
+    'scroll-snap-align': scrollSnapAlign,
+    'scroll-snap-stop': scrollSnapStop,
+    'scroll-padding-top': scrollPaddingTop,
+    'scroll-margin-top': scrollMarginTop,
     'accent-color': accentColor,
     'caret-color': caretColor,
     'color-scheme': colorScheme,
@@ -125,6 +141,14 @@ const Others = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Other
       />
       <CategoryAdvanced>
         <OthersScrollbar scrollbarWidth={scrollbarWidth} scrollbarColor={scrollbarColor} onChange={handleChange} />
+        <OthersScrollSnap
+          scrollSnapType={scrollSnapType}
+          scrollSnapAlign={scrollSnapAlign}
+          scrollSnapStop={scrollSnapStop}
+          scrollPaddingTop={scrollPaddingTop}
+          scrollMarginTop={scrollMarginTop}
+          onChange={handleChange}
+        />
         <OthersForm
           accentColor={accentColor}
           caretColor={caretColor}

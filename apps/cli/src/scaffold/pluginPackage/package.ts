@@ -32,7 +32,7 @@ const packageJson = ({ packageName, base }: PluginNames, { packageManager, owner
       },
       scripts: {
         start: 'vite',
-        typecheck: 'tsc -p tsconfig.json --noEmit',
+        typecheck: 'tsc -p tsconfig.json --noEmit --pretty false',
         lint: 'eslint .',
         format: 'prettier --write .',
         visual: 'playwright test'

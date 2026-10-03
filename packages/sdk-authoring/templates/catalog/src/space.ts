@@ -1,0 +1,27 @@
+/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
+/**
+ * The space, assembled: a file per part, so each stays short enough to read whole — the tokens, the layout every page
+ * shares, the product card, and one file per page. Add a page under `site/pages` and list it here.
+ *
+ * The products are `public/data/products.json`, served by this project; a provider on each page reads it like any API.
+ */
+import { productCard } from './site/components/productCard.ts';
+import { layout } from './site/layout.ts';
+import { catalog } from './site/pages/catalog.ts';
+import { home } from './site/pages/home.ts';
+import { product } from './site/pages/product.ts';
+import { variables } from './site/tokens.ts';
+
+import type { SpaceSpec } from '@plitzi/sdk-authoring';
+
+export const space: SpaceSpec = {
+  name: 'Catalog',
+  permanentUrl: 'catalog',
+  theme: { default: 'system', schemes: ['light', 'dark'] },
+  variables,
+  // How a price is shown, said once: `text({ from: …, as: 'price' })` anywhere.
+  formats: { price: "{{ source|currency('USD', 'en', { trimZeros: true }) }}" },
+  layouts: [layout],
+  components: [productCard],
+  pages: [home, catalog, product]
+};

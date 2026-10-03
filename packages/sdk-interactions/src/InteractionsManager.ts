@@ -3,6 +3,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
+import { INTERVAL_TRIGGER, intervalOf } from '@plitzi/sdk-shared/helpers/interval';
 import { KEY_TRIGGER } from '@plitzi/sdk-shared/helpers/keys';
 
 import { flowTrigger } from './InteractionsHelper';
@@ -21,20 +22,25 @@ import type {
 type InteractionUpdateListener = (timestamp: number) => void;
 
 /**
- * Whether a key press is for this trigger.
+ * Whether what fired a trigger is for this flow.
  *
- * One press fires the key trigger ONCE, listing every shortcut it matched — fired once per flow instead, the second
- * would find the first still running and be dropped. So each flow on it runs only when its own `keys` is on the list.
- * Every other trigger answers whatever fires it.
+ * One key press fires the key trigger ONCE, listing every shortcut it matched — fired once per flow instead, the
+ * second would find the first still running and be dropped. So each flow on it runs only when its own `keys` is on the
+ * list. A tick of an interval is the same: it is for the flows declared with that interval. Every other trigger
+ * answers whatever fires it.
  */
-const answersPress = (node: ElementInteraction, payload: Record<string, unknown>): boolean => {
-  if (node.action !== KEY_TRIGGER) {
-    return true;
+const answersFiring = (node: ElementInteraction, payload: Record<string, unknown>): boolean => {
+  if (node.action === KEY_TRIGGER) {
+    const { shortcuts } = payload;
+
+    return Array.isArray(shortcuts) && shortcuts.includes(node.params.keys);
   }
 
-  const { shortcuts } = payload;
+  if (node.action === INTERVAL_TRIGGER) {
+    return intervalOf(node.params.interval) === payload.interval;
+  }
 
-  return Array.isArray(shortcuts) && shortcuts.includes(node.params.keys);
+  return true;
 };
 
 class InteractionsManager {
@@ -98,7 +104,7 @@ class InteractionsManager {
 
       const triggersToRun = Object.values(interactions).filter(
         (node: ElementInteraction) =>
-          node.type === 'trigger' && node.action === eventName && node.enabled && answersPress(node, params)
+          node.type === 'trigger' && node.action === eventName && node.enabled && answersFiring(node, params)
       );
 
       await Promise.all(

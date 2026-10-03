@@ -1,4 +1,4 @@
-import { elementSourceTypes, fixSpace, lintSpace } from '@plitzi/sdk-authoring';
+import { authoringCodeEntry, elementSourceTypes, fixSpace, lintSpace } from '@plitzi/sdk-authoring';
 import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import { styleWithoutTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 
@@ -88,6 +88,18 @@ const readingOf = (space: Space) => {
   return { structure, meaning, all: [...structure.errors, ...meaning.errors, ...meaning.warnings] };
 };
 
+/**
+ * An issue as the agent reads it: led by its code, which is how it is filed — the agent has no skill page to look a
+ * code up in, so what to write instead comes with it, from the same table `authorSpace` raises it from.
+ */
+const said = (issue: LintIssue): string => `[${issue.code}] ${issue.message}`;
+
+const fixOf = (issue: LintIssue): string => {
+  const entry = authoringCodeEntry(issue.code);
+
+  return entry ? `Write instead: ${entry.fix}.` : '';
+};
+
 const keyOf = (issue: LintIssue): string => JSON.stringify([issue.code, issue.elementId ?? '', issue.message]);
 const kindOf = (issue: LintIssue): string => JSON.stringify([issue.code, issue.elementId ?? '']);
 
@@ -142,17 +154,24 @@ export const lintDraft = (draft: Space, ops: Operation[], before?: Space): Valid
   const toError = (issue: LintIssue): ValidationError => ({
     path: issue.elementId ? `element "${issue.elementId}"` : 'schema',
     message: preExisting(issue)
-      ? `Pre-existing malformation in element "${issue.elementId ?? ''}": ${issue.message}`
-      : issue.message,
-    hint: preExisting(issue)
-      ? 'This issue already exists in the space (NOT caused by your change), but the save is blocked until you fix it too, in this same batch.'
-      : ''
+      ? `Pre-existing malformation in element "${issue.elementId ?? ''}": ${said(issue)}`
+      : said(issue),
+    hint: [
+      preExisting(issue)
+        ? 'This issue already exists in the space (NOT caused by your change), but the save is blocked until you fix it too, in this same batch.'
+        : '',
+      fixOf(issue)
+    ]
+      .filter(Boolean)
+      .join(' ')
   });
 
   const errors = candidates.filter(issue => onTouched(issue) || !preExisting(issue)).map(toError);
-  const warnings = touchedWarnings.map(issue =>
-    preExisting(issue) ? `Pre-existing issue in element "${issue.elementId ?? ''}": ${issue.message}` : issue.message
-  );
+  const warnings = touchedWarnings.map(issue => {
+    const line = [said(issue), fixOf(issue)].filter(Boolean).join(' ');
+
+    return preExisting(issue) ? `Pre-existing issue in element "${issue.elementId ?? ''}": ${line}` : line;
+  });
 
   // Not a malformation: styling a provider that renders no element is what a batch does by accident, so it is said
   // about the element as it now stands.

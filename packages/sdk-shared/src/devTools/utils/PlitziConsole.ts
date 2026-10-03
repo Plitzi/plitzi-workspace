@@ -42,6 +42,7 @@ class PlitziConsole {
   listeningParams?: { category: Log['category'] };
   #deliveryQueue: Log[] = [];
   #flushScheduled = false;
+  #listeners = new Set<(log: Log) => void>();
 
   constructor(callback?: CallbackInternal, pendingLimit: number = 100) {
     this.callbackInternal = callback;
@@ -62,6 +63,18 @@ class PlitziConsole {
 
       this.pendingLogs = [];
     }
+  }
+
+  /**
+   * Every log as it is written, beside whatever panel takes them — what a reader in text (the agent inspector) keeps
+   * for itself. Only in a browser, as everything kept here is.
+   */
+  addListener(listener: (log: Log) => void): () => void {
+    this.#listeners.add(listener);
+
+    return () => {
+      this.#listeners.delete(listener);
+    };
   }
 
   setCallbackAddProvider(callback?: CallbackAddProvider) {
@@ -88,6 +101,14 @@ class PlitziConsole {
     }
 
     const time = this.getTime(true);
+    if (this.#listeners.size > 0 && canDeliverLater()) {
+      // The category and its params arrive as two arguments; together they are one of `Log`'s cases.
+      const log = { logType, category, message, params, time } as Log;
+      for (const listener of this.#listeners) {
+        listener(log);
+      }
+    }
+
     if (!this.callbackInternal) {
       this.pendingLogs.push({ logType, category, message, params, time } as Log);
       if (this.pendingLogs.length > this.pendingLimit) {

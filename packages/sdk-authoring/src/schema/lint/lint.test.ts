@@ -218,6 +218,51 @@ describe('lintSpace', () => {
     });
   });
 
+  describe('anchors', () => {
+    it('anchor-invalid', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.hello.definition.anchor = 'Our Plans';
+      });
+
+      expect(errorsOf(documents)).toContain('anchor-invalid');
+    });
+
+    it('anchor-no-tag', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.feed.attributes.subType = '';
+        schema.flat.feed.definition.anchor = 'feed';
+      });
+
+      expect(errorsOf(documents)).toContain('anchor-no-tag');
+    });
+
+    it('anchor-repeated', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.box.definition.type = 'list';
+        schema.flat.hello.definition.anchor = 'hello';
+      });
+
+      expect(errorsOf(documents)).toContain('anchor-repeated');
+    });
+
+    it('anchor-duplicate', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.box.definition.anchor = 'intro';
+        schema.flat.go.definition.anchor = 'intro';
+      });
+
+      expect(errorsOf(documents)).toContain('anchor-duplicate');
+    });
+
+    it('anchor-missing', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat['to-about'].attributes.hash = 'team';
+      });
+
+      expect(errorsOf(documents)).toContain('anchor-missing');
+    });
+  });
+
   describe('templates', () => {
     it('template-unreadable', () => {
       const documents = withChange(({ schema }) => {
@@ -412,6 +457,64 @@ describe('lintSpace', () => {
       });
 
       expect(errorsOf(documents)).toContain('attribute-value');
+    });
+
+    it('span-holds-block', () => {
+      const inline = withChange(({ schema }) => {
+        schema.flat.box.attributes.subType = 'span';
+      });
+      const holdsHeading = withChange(({ schema }) => {
+        schema.flat.box.attributes.subType = 'span';
+        addElement(schema, { id: 'title', type: 'heading', attributes: { subType: 'h2', content: 'Hi' } });
+        const home = homeId(schema);
+        schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(id => id !== 'title');
+        schema.flat.title.definition.parentId = 'box';
+        schema.flat.box.definition.items = [...(schema.flat.box.definition.items ?? []), 'title'];
+      });
+
+      expect(errorsOf(inline)).toEqual([]);
+      expect(warningsOf(inline)).not.toContain('span-holds-block');
+      expect(warningsOf(holdsHeading)).toContain('span-holds-block');
+    });
+
+    it('loading-slot-unknown', () => {
+      const providerWith = (loadingSlot: string) =>
+        errorsOf(
+          withChange(({ schema }) => {
+            addElement(schema, {
+              id: 'catalog',
+              type: 'apiContainer',
+              attributes: { query: '/data/x.json', loadingSlot }
+            });
+            addElement(schema, { id: 'skeleton', type: 'container', attributes: {} });
+            const home = homeId(schema);
+            schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(
+              id => id !== 'skeleton'
+            );
+            schema.flat.skeleton.definition.parentId = 'catalog';
+            schema.flat.catalog.definition.items = ['skeleton'];
+          })
+        );
+
+      expect(providerWith('skeleton')).not.toContain('loading-slot-unknown');
+      expect(providerWith('skeletn')).toContain('loading-slot-unknown');
+    });
+
+    it('list-item-key-missing', () => {
+      const listOf = (items: unknown[]) =>
+        warningsOf(
+          withChange(({ schema }) => {
+            addElement(schema, {
+              id: 'rows',
+              type: 'list',
+              attributes: { source: 'controlled', itemKey: 'slug', items }
+            });
+          })
+        );
+
+      expect(listOf([{ slug: 'a' }, { slug: 'b' }])).not.toContain('list-item-key-missing');
+      expect(listOf([{ slug: 'a' }, { name: 'b' }])).toContain('list-item-key-missing');
+      expect(listOf([{ slug: 'a' }, { slug: 'a' }])).toContain('list-item-key-missing');
     });
 
     it('attribute-kind', () => {
@@ -736,6 +839,17 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('trigger-keys');
     });
 
+    it('trigger-interval', () => {
+      const documents = withChange(({ schema }) => {
+        setFlow(schema, 'go', [
+          step('tick', 'trigger', 'onInterval', { elementId: 'go', params: { interval: 50 } }),
+          step('open', 'callback', 'openModal', { elementId: 'modal' })
+        ]);
+      });
+
+      expect(errorsOf(documents)).toContain('trigger-interval');
+    });
+
     it('state-toggled-in-branches', () => {
       const branch = (id: string, value: boolean, operator: '=' | '!=') =>
         step(id, 'globalCallback', 'setState', {
@@ -921,6 +1035,18 @@ describe('lintSpace', () => {
     });
   });
 
+  describe('svg', () => {
+    it('svg-not-svg', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'icon', type: 'svg', attributes: { content: '<div><svg></svg></div>' } });
+        addElement(schema, { id: 'ok', type: 'svg', attributes: { content: '<svg viewBox="0 0 1 1"></svg>' } });
+      });
+
+      expect(errorsOf(documents)).toContain('svg-not-svg');
+      expect(lintSpace(documents).errors.filter(issue => issue.code === 'svg-not-svg')).toHaveLength(1);
+    });
+  });
+
   describe('style', () => {
     it('colour-without-dark', () => {
       const documents = withChange(({ style }) => {
@@ -928,6 +1054,19 @@ describe('lintSpace', () => {
       });
 
       expect(warningsOf(documents)).toContain('colour-without-dark');
+    });
+
+    it('unknown-variable', () => {
+      const documents = withChange(({ style }) => {
+        style.platform.desktop.card = {
+          name: 'card',
+          type: 'class',
+          cache: '',
+          attributes: { base: { default: { color: 'var(--inkk)', 'background-color': 'var(--edge, #ccc)' } } }
+        };
+      });
+
+      expect(warningsOf(documents)).toContain('unknown-variable');
     });
   });
 
@@ -981,6 +1120,22 @@ describe('lintSpace', () => {
         .map(issue => issue.elementId);
 
       expect(flagged).toEqual(['email', 'swatch']);
+    });
+
+    it('embed-without-title', () => {
+      const documents = withChange(({ schema }) => {
+        addElement(schema, { id: 'map', type: 'embed', attributes: { src: 'https://maps.example.com', title: '' } });
+        addElement(schema, {
+          id: 'video',
+          type: 'embed',
+          attributes: { src: 'https://v.example.com', title: 'Launch' }
+        });
+      });
+      const flagged = lintSpace(documents)
+        .warnings.filter(issue => issue.code === 'embed-without-title')
+        .map(issue => issue.elementId);
+
+      expect(flagged).toEqual(['map']);
     });
 
     it('image-without-alt', () => {

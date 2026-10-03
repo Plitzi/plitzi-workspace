@@ -10,7 +10,7 @@ export const schemaToWire = (schema: Schema): SchemaRaw => ({ ...schema, flat: O
 
 /** An element as the store holds it: what the wire sent `null` for is absent, as it is in the document. */
 export const elementFromWire = ({ definition, ...element }: WireElement): Element => {
-  const { parentId, items, bindings, interactions, initialState, runtime, loadStrategy, flag, ...required } =
+  const { parentId, items, bindings, interactions, initialState, runtime, loadStrategy, flag, anchor, ...required } =
     definition;
 
   return {
@@ -24,7 +24,8 @@ export const elementFromWire = ({ definition, ...element }: WireElement): Elemen
       ...(initialState === null || initialState === undefined ? {} : { initialState }),
       ...(runtime === null || runtime === undefined ? {} : { runtime }),
       ...(loadStrategy === null || loadStrategy === undefined ? {} : { loadStrategy }),
-      ...(flag === null || flag === undefined ? {} : { flag })
+      ...(flag === null || flag === undefined ? {} : { flag }),
+      ...(anchor === null || anchor === undefined ? {} : { anchor })
     }
   };
 };

@@ -26,7 +26,8 @@ type SettingsProps = {
     | 'h3'
     | 'h4'
     | 'h5'
-    | 'h6';
+    | 'h6'
+    | 'span';
   label?: string;
   decorative?: boolean;
   onUpdate?: (key: string, value: string | boolean | number) => void;
@@ -63,6 +64,7 @@ const Settings = ({ subType = 'div', label = '', decorative = false, onUpdate }:
         <option value="h4">H4 (heading with parts)</option>
         <option value="h5">H5 (heading with parts)</option>
         <option value="h6">H6 (heading with parts)</option>
+        <option value="span">Span (inline)</option>
       </Select>
       <Input
         value={label}

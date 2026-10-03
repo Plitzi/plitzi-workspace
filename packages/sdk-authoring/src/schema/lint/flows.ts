@@ -1,3 +1,4 @@
+import { INTERVAL_TRIGGER, intervalOf, MIN_INTERVAL_MS } from '@plitzi/sdk-shared/helpers/interval';
 import { KEY_TRIGGER, parseKeys } from '@plitzi/sdk-shared/helpers/keys';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
@@ -156,6 +157,19 @@ const checkTriggerKeys = (ctx: LintContext, node: ElementInteraction, where: str
   );
 };
 
+/** A repeating flow whose interval cannot repeat: not a whole number of milliseconds, or faster than the floor. */
+const checkTriggerInterval = (ctx: LintContext, node: ElementInteraction, where: string, hostId: string): void => {
+  if (node.action !== INTERVAL_TRIGGER || intervalOf(node.params.interval) !== undefined) {
+    return;
+  }
+
+  ctx.error(
+    'trigger-interval',
+    `${where} repeats a flow every ${JSON.stringify(node.params.interval)} ms, which never ticks: an interval is a whole number of milliseconds, at least ${MIN_INTERVAL_MS} — \`onInterval(5000)\`.`,
+    hostId
+  );
+};
+
 /**
  * `whileRunning` is a trigger's: it says what firing the trigger again does. On any other step it means nothing and
  * runs nothing — and a value outside the three is a flow that does something nobody chose.
@@ -187,6 +201,7 @@ const checkWhileRunning = (ctx: LintContext, node: ElementInteraction, where: st
 
 const checkTrigger = (ctx: LintContext, node: ElementInteraction, where: string, host: Element): void => {
   checkTriggerKeys(ctx, node, where, host.id);
+  checkTriggerInterval(ctx, node, where, host.id);
   const triggers = ctx.catalogs.vocabulary?.triggers;
   const type = ctx.catalogType(host);
   if (

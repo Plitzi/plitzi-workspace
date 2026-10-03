@@ -1,0 +1,73 @@
+/* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
+/**
+ * Show data with no backend: a JSON file the project serves (`public/data/products.json`), read by a provider — one
+ * card per product, a skeleton while it loads, a count, a computed value, and an empty state that never flashes.
+ */
+import { apiContainer, container, heading, list, styles, text } from '@plitzi/sdk-authoring';
+
+import type { SpaceSpec } from '@plitzi/sdk-authoring';
+
+// A list is a `<ul>`: a grid of cards takes the bullets and the indent off.
+const grid = styles('product-grid', {
+  display: 'grid',
+  'grid-template-columns': 'repeat(auto-fill, minmax(220px, 1fr))',
+  gap: '16px',
+  margin: '0px',
+  padding: '0px',
+  'list-style-type': 'none'
+});
+
+const card = styles('product-card', { padding: '16px', 'border-radius': '12px', 'background-color': 'var(--card)' });
+
+// The shape of what is coming, shown until the file answers.
+const skeleton = styles('product-skeleton', {
+  height: '96px',
+  'border-radius': '12px',
+  'background-color': 'var(--card)'
+});
+
+export const recipe: SpaceSpec = {
+  name: 'Catalogue',
+  permanentUrl: 'catalogue',
+  variables: { color: { card: { light: '#ffffff', dark: '#16161d', default: '#ffffff' } } },
+  // Read anywhere as `computed.cartCount`, declared once.
+  computed: { cartCount: '{{ (state.cart ?? [])|length }}' },
+  // How a price is shown, said once: `text({ from: …, as: 'price' })` anywhere.
+  formats: { price: "{{ source|currency('USD', 'en', { trimZeros: true }) }}" },
+  pages: [
+    {
+      id: 'home',
+      name: 'Home',
+      slug: '',
+      body: [
+        text({ from: 'computed.cartCount', as: '{{ source }} in the cart' }),
+        apiContainer({
+          id: 'catalog',
+          query: '/data/products.json',
+          cache: true,
+          // Shown in place of the rest until the first answer, and gone after it.
+          loadingSlot: 'catalog-skeleton',
+          children: [
+            container({ id: 'catalog-skeleton', class: skeleton }),
+            // Inside a template a source is spelled in full; a binding's own source is `source`.
+            text({ from: 'catalog.data.products', as: '{{ source|length }} products' }),
+            list({
+              id: 'products',
+              class: grid,
+              items: 'catalog.data.products',
+              children: [
+                // Inside a row, a binding names the row short (`products.item`), a template in full (`list_products`).
+                heading({ subType: 'h3', class: card, from: 'products.item.title' }),
+                text({ from: 'products.item.price', as: 'price' })
+              ]
+            }),
+            // Revealed by the data, so it starts hidden: nothing flashes while the file loads.
+            text('No products yet.', {
+              visible: { source: 'catalog.data.products', template: '{{ source is defined and source|length == 0 }}' }
+            })
+          ]
+        })
+      ]
+    }
+  ]
+};
