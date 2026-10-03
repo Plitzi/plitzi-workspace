@@ -1,7 +1,7 @@
 import type { SuggestionCode } from '../codes';
 
 /**
- * A shorter way to the same page — not a problem: what is written renders as written.
+ * A shorter or lighter way to the same page — not a problem: what is written renders as written.
  *
  * `saves` is how many elements the space would no longer carry, the measure suggestions are ranked by; a suggestion
  * about the stylesheet saves none and is listed after those that do.

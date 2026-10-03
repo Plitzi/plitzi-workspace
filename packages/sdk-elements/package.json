@@ -1269,7 +1269,7 @@
   "sideEffects": false,
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.27",
+    "@plitzi/plitzi-ui": "^1.6.29",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",

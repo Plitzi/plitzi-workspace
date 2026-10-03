@@ -98,6 +98,10 @@ vars. **Write plain CSS** — shorthands (\`border\`, \`padding\`, \`margin\`, \
 still \`display: flex\` + \`flex-direction\`/\`align-items\`/…, not a \`flex\` value. Mind a type's \`defaultStyle\`
 (\`text\` is \`display: inline\`). Global styles (\`button {…}\`) and id styles (\`#id\`) have their own ops.
 
+**Motion:** animate only \`opacity\` and \`transform\` — they stay smooth while the page loads; an animated blur,
+shadow, size, \`top\`/\`left\` or \`background-position\` stutters on every visitor's machine. Good practices in
+\`plitzi://guide\` (Motion).
+
 **Data bindings** (\`upsertBinding\`, category attributes|style|initialState): connect a \`source\` to a \`to\` field.
 A source \`<type>_<name>\` is scoped to the provider's **DESCENDANTS only** — bind inside the provider's subtree
 (the global sources ${GLOBALS} are bindable anywhere). \`apiContainer.mockData\` is builder-only; set a
@@ -299,6 +303,8 @@ space already had is not repeated on every batch — and none of them blocks any
   box's class — never the class itself; the icon's class goes in the \`icon\` slot.
 - \`custom-css-class\`, \`custom-css-sdk-default\`, \`custom-css-notifications\` — \`customCss\` that a class's
   \`states\`/\`ancestors\`, the SDK (reduced motion, the theme toggle's icons) or the space's notification look says.
+- \`heavy-animation\` — keyframes that animate a size, a position, a blur, a shadow, or a colour in a loop: they stutter
+  while the page loads. Lighter, not shorter — see **Motion — good practices**.
 \`plitzi://explain/<code>\` explains each. Take one unless the copies are about to diverge.
 
 ## Readers: resources vs plitzi_search vs plitzi_read (do not confuse them)
@@ -977,6 +983,26 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   \`null\` removes one.
   Example — inject a keyframe globally:
   \`{ "type": "patchSettings", "customCss": "@keyframes spin { to { transform: rotate(360deg); } }" }\`.
+
+## Motion — good practices
+Keyframes go in \`customCss\` (\`patchSettings\`), a definition names them (\`animation\`). Only \`opacity\` and
+\`transform\` (\`translate\`, \`scale\`, \`rotate\`) animate off the main thread: they stay smooth while the page
+hydrates and on a slow phone. Anything else repaints or lays the page out again on every frame, and freezes while the
+page's scripts run.
+- Slide, grow, fade with \`transform\` and \`opacity\` — never \`left\`, \`top\`, \`width\`, \`height\` or
+  \`margin\`. Something travelling across a box is \`transform: translate(%)\` on an element as large as the box.
+- No animated blur: no \`filter: blur()\` in an entrance or a loop, no \`backdrop-filter\` over moving content. A soft
+  shape is a \`radial-gradient\` fading to transparent.
+- Fake the expensive ones: a growing shadow is a second shadow on a pseudo-element whose \`opacity\` changes; a
+  pulsing glow is a static gradient whose \`opacity\` or \`scale\` changes.
+- Decoration that must animate something else (a custom property, \`background-position\`) starts paused and runs
+  once the page is hydrated: \`.glow { animation: glow 8s linear infinite paused; } [data-hydrated] .glow {
+  animation-play-state: running; }\` in \`customCss\`.
+- Entrances: \`opacity\` + a small \`translateY\`, under ~600ms, staggered by tens of ms.
+- One slow ambient loop per screen at most — not one per card: \`infinite\` runs on every visitor's battery.
+- Name what transitions (\`transition: transform 200ms, opacity 200ms\`), never \`all\`; \`will-change\` only on the
+  few elements about to move.
+- Reduced motion is the SDK's: it cuts every animation to an instant for whoever asks — never write that reset.
 
 ## Accessibility — pages people, screen readers and browser agents can all use
 A page is read three ways: seen, heard through a screen reader, and worked by a **browser agent** (Claude in Chrome)

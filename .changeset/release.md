@@ -562,3 +562,25 @@ running }`. Opacity and transform animations run on the compositor and need no g
 Hydration is lighter on the way: the fonts' Google URLs sort their families by code point instead of `localeCompare`,
 whose first call built a collator in the middle of the page's first render, and twig's compiled-template cache holds
 1024 templates instead of a number a large space outgrew, compiling the same ones again on every render.
+
+Good practices for motion, said wherever a space is written: `docs/en/motion.md`, the authoring skill (a rule in
+`SKILL.md` and `reference/colours-and-motion.md`), the MCP server's guide and quickstart, and the website's styling
+docs — animate `opacity` and `transform`, never blur, a shadow or a size; fake the expensive ones with the cheap ones;
+hold main-thread decoration until `data-hydrated`; short entrances, one slow loop per screen, no `transition: all`.
+
+`heavy-animation`, a new suggestion: keyframes that something runs and that animate a size or a position, a blur or a
+shadow — or, in a loop, a colour, a gradient or a custom property — are named with each property and the way out of
+its cost. A loop that starts `paused` and runs under `[data-hydrated]` is let through, a property that only switches
+(`visibility`) is not counted, and keyframes nothing runs are not mentioned. It reaches `authorSpace`, `npm run
+author`, `plitzi_validate`/`plitzi_apply`, `plitzi explain` and the builder's problems panel like every suggestion. The
+stylesheet scanner `customCss` folding used is shared now (`style/stylesheet`), and reads at-rules' blocks.
+
+`authorSpace` suggests `heavy-animation` for keyframes something runs off the compositor — a size, a position, a
+blur, a shadow every time; a colour, a gradient or a custom property in a loop — naming each property and the way out
+of its cost. A loop that starts `paused` and runs under `[data-hydrated]` is let through; a property that only
+switches (`visibility`) is not counted. It reaches `plitzi_validate`, `npm run author` and the builder's problems
+panel like every suggestion, and never blocks. The scanner `customCss` is read with is shared now
+(`style/stylesheet`), so the fold and this read the same segments.
+
+`@plitzi/plitzi-ui` 1.6.29: every field is labelled by its `label` and described by its error message, the code
+editor included.

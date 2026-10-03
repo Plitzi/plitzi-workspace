@@ -31,6 +31,7 @@ reason is usually that the copies are about to diverge. `npx @plitzi/cli explain
 | `.card:hover { … }`, `.card .icon { … }` in `customCss` | The class's own `states` and `ancestors` | `custom-css-class` |
 | A reduced-motion reset, or rules showing one icon of the theme toggle, in `customCss` | Nothing: the SDK does both for every space | `custom-css-sdk-default` |
 | `.Toastify__toast { font-family: …; border: … }` in `customCss` | `notifications: { font, fontSize, border, shadow, padding, … }` | `custom-css-notifications` |
+| Keyframes animating `width`, `top`, `filter: blur()`, `box-shadow`, a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — [motion](colours-and-motion.md) | `heavy-animation` |
 
 And a few the suggestions do not count, because they cost styles rather than elements:
 

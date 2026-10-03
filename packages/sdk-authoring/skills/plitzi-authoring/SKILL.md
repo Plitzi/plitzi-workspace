@@ -110,6 +110,8 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
     (`hideLabel: true` hides it and keeps the name), every image an `alt` or `decorative: true`. Clicks go on a
     `button` — it holds children, so a whole card can be one — or a `link`, never on a container. See
     [accessibility](reference/accessibility.md).
+14. **Motion that stays smooth.** Animate `opacity` and `transform` only; no animated blur, shadow or size. See
+    [motion](reference/colours-and-motion.md).
 
 ## Recipes
 
@@ -140,7 +142,7 @@ Each is a whole file that authors with no warning — CI holds it to that. Copy 
 | Read | When |
 | --- | --- |
 | [elements-and-styles.md](reference/elements-and-styles.md) | Any element or CSS: factories, fields, classes, states, variants, tokens, fonts, lists, links |
-| [colours-and-motion.md](reference/colours-and-motion.md) | Colours for both themes, tokens, keyframes and motion |
+| [colours-and-motion.md](reference/colours-and-motion.md) | Colours for both themes, tokens, keyframes, and motion that stays smooth (good practices) |
 | [tailwind.md](reference/tailwind.md) | A design written in Tailwind classes: `tw()`, its breakpoints and states, what it refuses |
 | [layouts.md](reference/layouts.md) | Anything shown on more than one page; menus; reducing duplication of elements and styles |
 | [efficiency.md](reference/efficiency.md) | The same page with fewer elements: the suggestions `authorSpace` makes, and the short way for each long one |

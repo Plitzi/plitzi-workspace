@@ -210,6 +210,75 @@ describe('suggestions', () => {
     );
   });
 
+  describe('heavy animations', () => {
+    const animated = (customCss: string, classes: SpaceSpec['classes'] = {}) =>
+      authorSpace(
+        space([page('home', [container({ class: 'card' })])], {
+          classes: { card: {}, ...classes },
+          customCss
+        })
+      ).suggestions.filter(suggestion => suggestion.code === 'heavy-animation');
+
+    it('names the keyframes a class runs off the compositor, and the way out of each cost', () => {
+      const [suggestion] = animated(
+        '@keyframes grow { to { width: 100%; box-shadow: 0 0 40px red; } }\n@keyframes fade { to { opacity: 1; } }',
+        { bar: { animation: 'grow 1s ease infinite' }, ghost: { animation: 'fade 1s' } }
+      );
+
+      expect(suggestion.message).toContain('`grow` (`width`, `box-shadow`)');
+      expect(suggestion.message).not.toContain('`fade`');
+      expect(suggestion.message).toContain('`translate`, `scale`');
+      expect(suggestion.message).toContain('`opacity` changes');
+    });
+
+    it('reads the animations customCss starts too, inside an at-rule', () => {
+      expect(
+        animated(
+          '@keyframes sweep { to { background-position: 100% 0; } }\n@media (min-width: 40rem) { .hero::before { animation: sweep 9s linear infinite; } }'
+        )
+      ).toHaveLength(1);
+    });
+
+    it('lets main-thread decoration through once it waits for the page to be hydrated', () => {
+      const keyframes = '@keyframes glow { to { --glow: 1; } }';
+      const gate = '[data-hydrated] .glow { animation-play-state: running; }';
+
+      expect(animated(`${keyframes}\n${gate}`, { glow: { animation: 'glow 8s linear infinite paused' } })).toEqual([]);
+      expect(animated(keyframes, { glow: { animation: 'glow 8s linear infinite paused' } })).toHaveLength(1);
+      expect(animated(`${keyframes}\n${gate}`, { glow: { animation: 'glow 8s linear infinite' } })).toHaveLength(1);
+    });
+
+    it('counts a colour only when it loops, and never a property that only switches', () => {
+      const keyframes =
+        '@keyframes lit { to { background-color: red; } }\n@keyframes boot { to { visibility: visible; } }';
+
+      expect(
+        animated(keyframes, { lit: { animation: 'lit 300ms ease' }, boot: { animation: 'boot 1s infinite' } })
+      ).toEqual([]);
+      expect(animated(keyframes, { lit: { animation: 'lit 2s ease infinite' } })).toHaveLength(1);
+    });
+
+    it('does not let a blur through for waiting', () => {
+      const [suggestion] = animated(
+        '@keyframes haze { to { filter: blur(40px); color: red; } }\n[data-hydrated] .haze { animation-play-state: running; }',
+        { haze: { animation: 'haze 4s infinite paused' } }
+      );
+
+      expect(suggestion.message).toContain('`haze` (`filter`)');
+    });
+
+    it('has nothing to say about keyframes nothing runs, or ones the compositor runs alone', () => {
+      expect(
+        animated(
+          '@keyframes unused { to { height: 0; } }\n@keyframes rise { from { opacity: 0; translate: 0 8px; } }',
+          {
+            rise: { animation: 'rise 400ms ease both' }
+          }
+        )
+      ).toEqual([]);
+    });
+  });
+
   it('has nothing to say about a space written the short way', () => {
     expect(authorSpace(space([page('home', [heading({ content: 'Hello' })])])).suggestions).toEqual([]);
   });

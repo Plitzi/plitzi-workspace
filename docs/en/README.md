@@ -25,6 +25,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [AI agents (MCP)](./mcp.md) | Connecting Claude or any MCP client to a space: what an agent can do, how it works a space, and what the server guarantees |
 | [Change history](./history.md) | Every save of a space's schema and style — who, from where, what exactly — read in the builder's timeline or over MCP |
 | [Fonts](./fonts.md) | What a space loads type from: the manifest, the four sources, hosting faces yourself, and what a deployment configures |
+| [Motion](./motion.md) | Good practices for animation: what moves cheaply, what stutters while a page loads, and how to keep decoration out of the way |
 
 ## Package documentation
 

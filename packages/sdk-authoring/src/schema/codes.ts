@@ -876,6 +876,12 @@ export const AUTHORING_CODES = {
     kind: 'suggested',
     means: 'the toasts dressed with `.Toastify__toast` rules in `customCss`',
     fix: '`notifications: { font, fontSize, border, shadow, padding, background, text, radius }`'
+  },
+  'heavy-animation': {
+    kind: 'suggested',
+    means:
+      'keyframes animating what the browser repaints or lays out again on every frame — a size, a position, a blur, a shadow, or a colour in a loop — which stutters whenever the page is busy, most of all while it loads',
+    fix: '`opacity` and `transform`: a size or a position is `translate`/`scale`, a blur or a shadow is the `opacity` of a layer carrying it; a loop that must animate anything else starts `paused` and runs under `[data-hydrated]`'
   }
 } as const satisfies Record<string, AuthoringCodeEntry>;
 

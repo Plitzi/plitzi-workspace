@@ -61,8 +61,9 @@ export const authoringErrorsPage = (): string =>
     authoringCodesTable('warned'),
     '## Suggested',
     'Nothing is wrong: the page renders as written. Each is a shorter way to the same page — fewer elements, less CSS — ' +
-      'and `authorSpace` returns them in `suggestions`, the ones that save the most first. Take them: a space written the ' +
-      'short way is the one an editor, an agent and the next person can read. More in [efficiency](efficiency.md).',
+      'or a lighter one, and `authorSpace` returns them in `suggestions`, the ones that save the most first. Take them: a ' +
+      'space written the short way is the one an editor, an agent and the next person can read. More in ' +
+      '[efficiency](efficiency.md) and [motion](colours-and-motion.md).',
     authoringCodesTable('suggested'),
     STRUCTURE
   ].join('\n\n') + '\n';

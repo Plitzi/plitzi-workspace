@@ -192,7 +192,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 
 ## Suggested
 
-Nothing is wrong: the page renders as written. Each is a shorter way to the same page — fewer elements, less CSS — and `authorSpace` returns them in `suggestions`, the ones that save the most first. Take them: a space written the short way is the one an editor, an agent and the next person can read. More in [efficiency](efficiency.md).
+Nothing is wrong: the page renders as written. Each is a shorter way to the same page — fewer elements, less CSS — or a lighter one, and `authorSpace` returns them in `suggestions`, the ones that save the most first. Take them: a space written the short way is the one an editor, an agent and the next person can read. More in [efficiency](efficiency.md) and [motion](colours-and-motion.md).
 
 | Code | Written the long way | The short way |
 | --- | --- | --- |
@@ -200,6 +200,7 @@ Nothing is wrong: the page renders as written. Each is a shorter way to the same
 | `custom-css-class` | a `customCss` rule a class can hold — `.card:hover`, `.panel .icon` | the class's own `states` or `ancestors`, where the style editor reads it back and a breakpoint can change it |
 | `custom-css-notifications` | the toasts dressed with `.Toastify__toast` rules in `customCss` | `notifications: { font, fontSize, border, shadow, padding, background, text, radius }` |
 | `custom-css-sdk-default` | `customCss` repeating what the SDK already does for every space — less motion when asked, the theme toggle showing one icon | nothing: remove it |
+| `heavy-animation` | keyframes animating what the browser repaints or lays out again on every frame — a size, a position, a blur, a shadow, or a colour in a loop — which stutters whenever the page is busy, most of all while it loads | `opacity` and `transform`: a size or a position is `translate`/`scale`, a blur or a shadow is the `opacity` of a layer carrying it; a loop that must animate anything else starts `paused` and runs under `[data-hydrated]` |
 | `repeated-on-pages` | the same block — a header, a footer, a side panel — written into several pages | a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it; a link marks its own page with the `current` state |
 | `repeated-shape` | the same structure written again and again with different words — cards, rows, tiles | a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards |
 

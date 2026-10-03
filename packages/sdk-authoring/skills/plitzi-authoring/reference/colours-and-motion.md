@@ -10,13 +10,33 @@
   { 'animation-play-state': 'paused' } } } }`.
 - **A stagger** — rows arriving one after another — is `animation-delay` per `:nth-child` in `customCss`, against the
   row's class.
-- **Smooth while the page loads:** animate `opacity` and `transform` — they run on the compositor. A decoration that
-  animates anything else (a custom property, `background-position`, `top`) stutters while the page hydrates: start it
-  paused and run it once the SDK's root says `data-hydrated` — `'.glow { animation: glow 8s linear infinite paused; }
-  [data-hydrated] .glow { animation-play-state: running; }'` in `customCss`.
 - Keep motion for meaning. Whoever asks their machine for less motion gets it without a word from you: the SDK cuts
   every animation and transition to an instant for them. Write a `prefers-reduced-motion` rule only for what that does
   not cover — a hover that moves a card (`transform: none`), a decoration better not shown at all.
+
+## Motion — good practices
+
+Only `opacity` and `transform` (`translate`, `scale`, `rotate`) animate off the main thread: they stay smooth while
+the page hydrates and on a slow phone. Everything else repaints, or lays the page out again, on every frame.
+
+- **Slide, grow, fade** with `transform` and `opacity` — never `left`, `top`, `width`, `height` or `margin`. Something
+  that travels across a box is `transform: translate(%)` on an element as large as the box.
+- **No animated blur:** no `filter: blur()` in an entrance or a loop, no `backdrop-filter` over moving content. A soft
+  shape is a `radial-gradient` fading to transparent.
+- **Fake the expensive ones:** a growing shadow is a second shadow on a pseudo-element whose `opacity` changes; a
+  pulsing glow is a static gradient whose `opacity` or `scale` changes.
+- **Main-thread decoration waits for hydration:** a sweep on a custom property, a `background-position` seam — start
+  it paused, run it once the SDK's root says `data-hydrated`:
+  `'.glow { animation: glow 8s linear infinite paused; } [data-hydrated] .glow { animation-play-state: running; }'`.
+- **Entrances:** `opacity` + a small `translateY`, under ~600ms, staggered by tens of ms.
+- **One ambient loop per screen**, slow — not one per card. `infinite` runs on every visitor's battery for as long
+  as the page is open.
+- **Name what transitions:** `transition: 'transform 200ms, opacity 200ms'`, never `all` (a hover that changes
+  `padding` becomes a layout animation).
+- **`will-change`** only on the few elements about to move, never on every item of a list.
+
+`authorSpace` suggests `heavy-animation` for keyframes a class or `customCss` runs off the compositor, naming each
+property and the way out.
 
 ## Colours and themes
 

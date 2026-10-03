@@ -344,6 +344,13 @@ by hand the key is the trap: it names the selector the variants
 belong to, and the element's type (`text.base`) is a different selector from its class (`statusPill.base`) — the
 first renders with no variant at all, and nothing reports it.
 
+### Motion
+
+Keyframes go in the space's `customCss` and a class names them (`animation: 'marquee 30s linear infinite'`). Animate
+`opacity` and `transform`: they keep running while the page hydrates, and anything else — a blur, a shadow, a
+`background-position`, a size — repaints on the main thread and stutters with it. A decoration that needs one of
+those starts `paused` and runs under `[data-hydrated]`. The whole list is in [Motion](./motion.md).
+
 ---
 
 ## 5. Data
@@ -798,6 +805,7 @@ const { suggestions } = authorSpace(space);
 | `custom-css-class` | `customCss` rules a class's `states` and `ancestors` say | Those, on the class |
 | `custom-css-sdk-default` | A reduced-motion reset, or the theme toggle's icons, in `customCss` | Nothing: the SDK does both |
 | `custom-css-notifications` | `.Toastify__toast` rules in `customCss` | The space's `notifications` |
+| `heavy-animation` | Keyframes animating a size, a position, a blur, a shadow, or a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — see [Motion](./motion.md) |
 
 A suggestion never blocks: it is advice, not the publish gate, and copies about to diverge are a reason to leave it.
 `suggestSpace({ schema, style })` gives the same list for a document authored anywhere; the MCP server's
