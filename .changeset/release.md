@@ -488,3 +488,7 @@ every command that writes, overwrites or names an environment. `import` no longe
 and `runtime status` take `--json` too; `functions` and `runtime push` refuse outside a project, as every other command
 that works on one does, instead of writing `functions/` into whatever folder they were run from; and every command
 says a finished action the same way, in green.
+
+The SDK's production build keeps `console.warn` and `console.error`, and drops only `log`, `info` and `debug`. It used
+to drop them all: an override of a flag the space does not declare, or a render that failed, said nothing on a
+published site — exactly where nobody can attach a debugger.

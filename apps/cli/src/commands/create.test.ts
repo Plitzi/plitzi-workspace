@@ -11,6 +11,16 @@ import { scaffold } from '../scaffold';
 import type { CreateAnswers } from '../scaffold';
 
 /**
+ * The manager's version is asked of the manager itself, which runs it — and where `corepack enable` put a shim, the
+ * first `pnpm --version` downloads pnpm. A test that wrote a pnpm project timed out on a runner over that download, so
+ * the answer is fixed here: what is under test is the project, not which managers this machine has.
+ */
+vi.mock('../scaffold/packageManager', async importOriginal => ({
+  ...(await importOriginal<typeof import('../scaffold/packageManager')>()),
+  detectManagerVersion: () => '10.0.0'
+}));
+
+/**
  * The scaffold is a promise about the first five minutes: install, start, see a page. What is asserted is the
  * shape somebody depends on — the files exist, the space is theirs to edit, a secret is only ever in the file
  * git ignores, and a directory with work in it is never written over.

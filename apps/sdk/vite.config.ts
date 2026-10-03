@@ -416,7 +416,10 @@ export default defineConfig(({ mode, command }) => {
       minify: devMode ? false : 'terser', // usar terser para máxima compresión
       terserOptions: {
         compress: {
-          drop_console: true, // elimina todos los console.log, console.warn, etc.
+          // The chatter goes; what tells somebody something is wrong stays. `warn` and `error` are how the SDK says an
+          // override was ignored or a render failed, on the published site as anywhere else — dropping them made
+          // those silent exactly where nobody can attach a debugger.
+          drop_console: ['log', 'info', 'debug'],
           drop_debugger: true, // elimina todos los debugger;
           passes: 2 // hace múltiples pasadas de optimización para limpiar más código muerto
         },

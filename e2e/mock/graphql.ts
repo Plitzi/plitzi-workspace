@@ -1,3 +1,5 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { plainSpace } from '../spaces';
 
 import type { OfflineDataRaw, Style } from '@plitzi/sdk-shared';
@@ -52,6 +54,8 @@ const asElement = (id: string, node: Record<string, unknown>) => {
       items: definition.items ?? [],
       runtime: definition.runtime ?? null,
       loadStrategy: definition.loadStrategy ?? null,
+      flag: isRecord(definition.flag) ? { ...definition.flag, __typename: 'SpaceElementFlagGate' } : null,
+      anchor: definition.anchor ?? null,
       __typename: 'SpaceElementDefinition'
     },
     __typename: 'SpaceElement'
@@ -72,6 +76,8 @@ const initQuery = (space: OfflineDataRaw) => {
 
   return {
     data: {
+      // The editor's own flags, as the platform resolves them for whoever opened it: none, on a mocked platform.
+      PlatformFlags: {},
       Space: {
         definition: { name: 'E2E Space', permanentUrl: 'e2e-space', __typename: 'SpaceDefinition' },
         schema: {
@@ -84,6 +90,7 @@ const initQuery = (space: OfflineDataRaw) => {
           pageFolders: asList(schema.pageFolders).map(folder => ({ ...folder, __typename: 'SpacePageFolder' })),
           variables: asList(schema.variables),
           components: schema.components,
+          flags: schema.flags ?? {},
           __typename: 'SpaceSchema'
         },
         // No remote plugins: every element in the sample space is one the SDK ships, and a resource fetched from
