@@ -168,17 +168,29 @@ const fleet = async <T>(
   return { pid: parsed.pid, value: read('value' in parsed ? parsed.value : undefined) };
 };
 
-/** Asks until every one of `expected` processes has answered once, and keeps each one's answer. */
+/**
+ * Asks until every one of `expected` processes has answered once, and keeps each one's answer.
+ *
+ * Bounded by time, never by a count of requests: a run of them is over in milliseconds, and a worker that listens a
+ * second later than the others — any of them, on a busy CI runner — would never be asked.
+ */
 const fromEach = async <T>(
   port: number,
   route: string,
   expected: number,
-  read: (value: unknown) => T
+  read: (value: unknown) => T,
+  timeoutMs = 30_000
 ): Promise<Map<number, T>> => {
   const answers = new Map<number, T>();
-  for (let attempt = 0; attempt < expected * 30 && answers.size < expected; attempt += 1) {
+  const deadline = Date.now() + timeoutMs;
+  while (answers.size < expected && Date.now() < deadline) {
+    const seen = answers.size;
     const { pid, value } = await fleet(port, route, read);
     answers.set(pid, value);
+
+    if (answers.size === seen) {
+      await sleep(50);
+    }
   }
 
   return answers;
@@ -198,11 +210,13 @@ const asRole = (value: unknown): Role =>
 
 /** The role of every worker, once the one that runs the jobs has had time to start its scheduler. */
 const rolesOf = async (port: number, expected: number): Promise<Map<number, Role>> => {
-  const deadline = Date.now() + 10_000;
+  const deadline = Date.now() + 30_000;
+  const settled = (roles: Map<number, Role>) =>
+    roles.size === expected && [...roles.values()].some(role => role.scheduling);
   let roles = await fromEach(port, 'role', expected, asRole);
-  while (Date.now() < deadline && ![...roles.values()].some(role => role.scheduling)) {
+  while (!settled(roles) && Date.now() < deadline) {
     await sleep(100);
-    roles = await fromEach(port, 'role', expected, asRole);
+    roles = await fromEach(port, 'role', expected, asRole, Math.max(deadline - Date.now(), 0));
   }
 
   return roles;
@@ -313,8 +327,7 @@ describe('workers — a server on several processes', () => {
   }, 60_000);
 
   it('runs the scheduler and the jobs in one worker only', async () => {
-    const run = await start({ WORKERS: '3' });
-    await untilServing(run);
+    const run = await startServing(3);
 
     const roles = [...(await rolesOf(run.port, 3)).values()];
 
@@ -322,11 +335,10 @@ describe('workers — a server on several processes', () => {
     expect(roles.filter(role => role.jobs)).toHaveLength(1);
     expect(roles.filter(role => role.scheduling)).toHaveLength(1);
     expect(roles.find(role => role.jobs)?.scheduling).toBe(true);
-  }, 60_000);
+  }, 90_000);
 
   it('hands the jobs to the replacement of the worker that ran them, and to nobody else', async () => {
-    const run = await start({ WORKERS: '3' });
-    await untilServing(run);
+    const run = await startServing(3);
     const before = await rolesOf(run.port, 3);
     const [victim] = [...before].find(([, role]) => role.jobs) ?? [];
     if (victim === undefined) {
@@ -385,7 +397,8 @@ describe('workers — a server on several processes', () => {
     // Every answer, not one per process: a worker asked twice answers `true` and then `false`, and keeping only its
     // last answer lost the one enqueue that happened.
     const answers: { pid: number; value: boolean }[] = [];
-    for (let attempt = 0; attempt < 90 && new Set(answers.map(answer => answer.pid)).size < 3; attempt += 1) {
+    const deadline = Date.now() + 30_000;
+    while (new Set(answers.map(answer => answer.pid)).size < 3 && Date.now() < deadline) {
       answers.push(await fleet(run.port, 'queue/enqueue?key=job-1', asBoolean));
     }
 
@@ -403,7 +416,8 @@ describe('workers — a server on several processes', () => {
     const writer = (await fleet(run.port, 'draft/put?key=draft-1', asBoolean)).pid;
     const asTake = (value: unknown): boolean | 'declined' => (value === 'declined' ? value : asBoolean(value));
     let reader: { pid: number; value: boolean | 'declined' } | undefined;
-    for (let attempt = 0; attempt < 60 && (reader === undefined || reader.value === 'declined'); attempt += 1) {
+    const deadline = Date.now() + 30_000;
+    while ((reader === undefined || reader.value === 'declined') && Date.now() < deadline) {
       reader = await fleet(run.port, `draft/take?key=draft-1&unless=${writer}`, asTake);
     }
 
@@ -422,12 +436,10 @@ describe('workers — a server on several processes', () => {
     // Which worker answers is the operating system's to choose, so ask until more than one has: every attempt past the
     // tenth is refused whichever worker counts it, and a refusal from a worker that counted none of the first ten is
     // the shared count itself.
+    // Inside the 300-second window the attempts are counted in.
     const verdicts: { pid: number; value: { allowed: boolean } }[] = [];
-    for (
-      let attempt = 0;
-      attempt < 100 && (verdicts.length < 12 || new Set(verdicts.map(verdict => verdict.pid)).size < 2);
-      attempt += 1
-    ) {
+    const deadline = Date.now() + 30_000;
+    while ((verdicts.length < 12 || new Set(verdicts.map(verdict => verdict.pid)).size < 2) && Date.now() < deadline) {
       verdicts.push(await fleet(run.port, 'login?key=ada', asVerdict));
     }
 
