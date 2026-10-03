@@ -226,11 +226,14 @@ export default defineConfig(({ mode, command }) => {
   const onlyAnalyze = !!process.env.ONLY_ANALYZE;
   const onlyGzip = !!process.env.ONLY_GZIP;
   const isWatch = process.argv.includes('--watch');
+  // mkcert turns its logger on by writing `process.env.DEBUG`, which every library reading DEBUG obeys under Vitest
+  // too. Tests serve nothing, so they need no certificate.
+  const testing = !!process.env.VITEST;
   // const isSSR = process.argv.includes('--ssr');
 
   return {
     plugins: [
-      mkcert(),
+      !testing && mkcert(),
       react(),
       ViteEjsPlugin({
         ...bootstrap(),

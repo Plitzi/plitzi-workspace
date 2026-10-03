@@ -3,8 +3,9 @@ import chalk from 'chalk';
 import { authorSpace, failedFlowText, inspectDocument, inspectPage, readDevTools } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
-import { findProject } from './existingProject';
+import { projectHere } from './existingProject';
 import { loadProjectSpace } from './projectSpace';
+import { fail } from './terminal';
 import { launchBrowser, projectOrigin } from '../browser';
 
 import type { Browser, Scheme } from '../browser';
@@ -24,8 +25,9 @@ import type { DevToolsInput, SpaceHandles } from '@plitzi/sdk-authoring';
  */
 
 export interface CheckOptions {
-  width?: string;
-  scheme?: string;
+  /** Validated where the flag is declared (`widths` in options.ts). */
+  width?: number[];
+  scheme?: Scheme;
   json?: boolean;
   /** The page's state and every source by name, as its dev tools hold them. */
   state?: boolean;
@@ -203,15 +205,8 @@ const reportText = (report: CheckReport, asked: DevToolsInput): string => {
 };
 
 export const check = async (route: string | undefined, options: CheckOptions): Promise<void> => {
-  const fail = (problem: string): void => {
-    console.error(chalk.red(problem));
-    process.exitCode = 1;
-  };
-
-  const project = await findProject(process.cwd());
+  const project = await projectHere('whose page to check');
   if (!project) {
-    fail('There is no package.json here or above: run this in the project whose page to check.');
-
     return;
   }
 
@@ -238,11 +233,8 @@ export const check = async (route: string | undefined, options: CheckOptions): P
   }
 
   try {
-    const widths = (options.width ?? '1440,390')
-      .split(',')
-      .map(Number)
-      .filter(width => Number.isFinite(width) && width > 0);
-    const scheme: Scheme = options.scheme === 'dark' ? 'dark' : 'light';
+    const widths = options.width ?? [1440, 390];
+    const scheme = options.scheme ?? 'light';
     const asked: DevToolsInput = {
       state: Boolean(options.state),
       ...(options.element ? { element: options.element } : {})

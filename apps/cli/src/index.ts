@@ -1,5 +1,6 @@
 import { Option, program } from 'commander';
 
+import { SCHEMES } from './browser';
 import { login, logout, space, whoami } from './commands/account';
 import addPlugin from './commands/addPlugin';
 import { check } from './commands/check';
@@ -24,9 +25,10 @@ import {
 import { shot } from './commands/shot';
 import { skillsUpdate } from './commands/skills';
 import uploadPluginCommand from './commands/uploadPlugin';
+import { positiveInteger, width, widths } from './options';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 
-import type { AccountOptions } from './commands/account';
+import type { AccountOptions, WhoamiOptions } from './commands/account';
 import type { AddPluginOptions } from './commands/addPlugin';
 import type { CheckOptions } from './commands/check';
 import type { CreateOptions } from './commands/create';
@@ -39,7 +41,7 @@ import type { ImportOptions } from './commands/importPage';
 import type { PackPluginOptions } from './commands/packPlugin';
 import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
-import type { RuntimeOptions } from './commands/runtime';
+import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
 import type { ShotOptions } from './commands/shot';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 
@@ -58,6 +60,13 @@ const collect = (value: string, previous: string[]): string[] => [...previous, v
 
 /** The flags that shape a PROJECT: given with `--plugin`, they are a mistake worth saying rather than ignoring. */
 const PROJECT_ONLY = ['mode', 'source', 'key', 'template'] as const;
+
+/** The widths a page is looked at, as one flag every command that opens a page shares. */
+const widthsOption = (description: string, fallback: number[]): Option =>
+  new Option('--width <px,px>', description).argParser(widths).default(fallback, fallback.join(','));
+
+const schemeOption = (): Option =>
+  new Option('--scheme <scheme>', 'The colour scheme').choices(SCHEMES).default('light');
 
 const API_OPTION = [
   '--api <url>',
@@ -210,8 +219,9 @@ program
 program
   .command('whoami')
   .description('Who the CLI is signed in as, and the space it works in')
+  .option('--json', 'One object: { api, user, space }, for a tool or an agent')
   .option(...API_OPTION)
-  .action((options: AccountOptions) => whoami(options));
+  .action((options: WhoamiOptions) => whoami(options));
 
 program
   .command('space')
@@ -225,8 +235,8 @@ program
   .description(
     'Whether a page of the running project is whole, in text: every element on screen, no broken image, no console error, no failed flow'
   )
-  .option('--width <px,px>', 'The widths to check it at, separated by commas', '1440,390')
-  .option('--scheme <scheme>', 'light or dark', 'light')
+  .addOption(widthsOption('The widths to check it at, separated by commas', [1440, 390]))
+  .addOption(schemeOption())
   .option('--state', 'Also what the page holds: its state, and every source by name')
   .option('--element <id>', 'Also one element: what it reads, its own state, whether it is on screen')
   .option('--json', 'One object per width, for a tool or an agent')
@@ -247,13 +257,11 @@ program
   .description(
     'A page of a site you verified, as a place to start writing from: its tokens, the outline of its blocks per breakpoint, its lists as JSON — never its words'
   )
-  .option('--out <dir>', 'Where it is written, inside the project', 'src/imported')
-  .option(
-    '--widths <px,px>',
-    'The widths it is measured at: the widest is desktop, then tablet and mobile',
-    '1440,768,390'
+  .option('-o, --out <dir>', 'Where it is written, inside the project', 'src/imported')
+  .addOption(
+    widthsOption('The widths it is measured at: the widest is desktop, then tablet and mobile', [1440, 768, 390])
   )
-  .option('--force', 'Write over what --out already holds')
+  .option('-f, --force', 'Write over what --out already holds')
   .option('--json', 'One object, for a tool or an agent')
   .option(...API_OPTION)
   .action((url: string, options: ImportOptions) => importPage(url, options));
@@ -262,13 +270,22 @@ program
   .command('shot')
   .argument('[path]', 'The page: /about. The home page when left out')
   .description('A picture of one page of the running project — and, asked, how it differs from another or what moves')
-  .option('--width <px>', 'The viewport width', '1280')
-  .option('--height <px>', 'The viewport height (the picture is the whole page)', '800')
-  .option('--scheme <scheme>', 'light or dark', 'light')
-  .option('--out <file>', 'Where the picture goes. visual/.shots/<page>-<width>-<scheme>.png by default')
+  .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1280))
+  .addOption(
+    new Option('--height <px>', 'The viewport height (the picture is the whole page)')
+      .argParser(positiveInteger)
+      .default(800)
+  )
+  .addOption(schemeOption())
+  .option('-o, --out <file>', 'Where the picture goes. visual/.shots/<page>-<width>-<scheme>.png by default')
   .option('--compare <url>', 'Another site: the same page there, side by side, and how much differs by section')
-  .option('--frames <n>', 'Pictures taken one after another: which sections move (a marquee, an autoplay)')
-  .option('--every <ms>', 'How far apart --frames are taken', '500')
+  .addOption(
+    new Option(
+      '--frames <n>',
+      'Pictures taken one after another: which sections move (a marquee, an autoplay)'
+    ).argParser(positiveInteger)
+  )
+  .addOption(new Option('--every <ms>', 'How far apart --frames are taken').argParser(positiveInteger).default(500))
   .option('--wait-for <element>', 'An element to wait for first: its name (data-plitzi-el) or a CSS selector')
   .option('--reduced-motion', 'As a visitor who asked for less motion')
   .option('--json', 'One object, for a tool or an agent')
@@ -359,8 +376,9 @@ runtime
 runtime
   .command('status')
   .description('How each environment’s runtime is, and the names of its variables')
+  .option('--json', 'One object: { space, environments, variables, sizes }, for a tool or an agent')
   .option(...API_OPTION)
-  .action((options: RuntimeOptions) => runtimeStatus(options));
+  .action((options: RuntimeStatusOptions) => runtimeStatus(options));
 
 for (const power of ['start', 'stop'] as const) {
   runtime
@@ -370,7 +388,7 @@ for (const power of ['start', 'stop'] as const) {
         ? 'Start an environment’s runtime again — one stopped for being unused, or by hand'
         : 'Stop an environment’s runtime, and keep it stopped until it is started'
     )
-    .option('--environment <name>', 'The environment: main (the draft) or a published one', 'main')
+    .option('-e, --environment <name>', 'The environment: main (the draft) or a published one', 'main')
     .option(...API_OPTION)
     .action((options: RuntimeOptions & { environment?: string }) => powerRuntime(power, options));
 }
@@ -379,7 +397,7 @@ runtime
   .command('size')
   .description('Choose the size an environment’s runtime runs at, among those the space’s plan includes')
   .argument('<size>', 'small, medium or large — plitzi runtime status says which the plan includes')
-  .option('--environment <name>', 'The environment: main (the draft) or a published one', 'main')
+  .option('-e, --environment <name>', 'The environment: main (the draft) or a published one', 'main')
   .option(...API_OPTION)
   .action((size: string, options: RuntimeOptions & { environment?: string }) => setRuntimeSize(size, options));
 
@@ -387,6 +405,7 @@ const vars = runtime.command('vars').description('What the runtime starts with �
 
 vars
   .command('set')
+  .description('Give the runtime a variable, or a new value for one it has')
   .argument('<name>', 'The variable, in capitals: REDIS_URL')
   .argument('[value]', 'Its value — read from standard input when left out, which keeps it out of the shell history')
   .option(...API_OPTION)
@@ -396,6 +415,7 @@ vars
 
 vars
   .command('unset')
+  .description('Take a variable away from the runtime')
   .argument('<name>', 'The variable')
   .option(...API_OPTION)
   .action((name: string, options: RuntimeOptions) => unsetRuntimeVariable(name, options));

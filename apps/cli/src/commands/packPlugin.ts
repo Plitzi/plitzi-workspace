@@ -4,8 +4,8 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
-import { findProject } from './existingProject';
-import { askText, atTerminal, refuseWithoutTerminal } from './terminal';
+import { findProject, readPackageJson } from './existingProject';
+import { askText, atTerminal, fail, refuseWithoutTerminal } from './terminal';
 import { PackError, packPlugin } from '../pack';
 import { pluginNames } from '../scaffold';
 
@@ -57,13 +57,6 @@ const elementFolders = async (project: ExistingProject): Promise<string[]> => {
   return folders.filter((_folder, index) => packable[index]);
 };
 
-const readVersion = async (root: string): Promise<string> => {
-  // Read for its version alone: the file is the project's.
-  const { version } = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf-8')) as { version?: string };
-
-  return version ?? '0.0.0';
-};
-
 /** The `-kebab-` spelling of a type, for the files it names: `seatPicker` writes `seat-picker.mjs`. */
 const fileNameOf = (folder: string): string =>
   path
@@ -107,13 +100,10 @@ const chosenFolders = async (project: ExistingProject, foldersGiven: string[]): 
 
   const candidates = await elementFolders(project);
   if (candidates.length === 0) {
-    console.error(
-      chalk.red(
-        'No element to pack: name its folder (plitzi pack plugin src/components/SeatPicker), or add one with ' +
-          'plitzi add plugin.'
-      )
+    fail(
+      'No element to pack: name its folder (plitzi pack plugin src/components/SeatPicker), or add one with ' +
+        'plitzi add plugin.'
     );
-    process.exitCode = 1;
 
     return undefined;
   }
@@ -140,10 +130,7 @@ const chosenFolders = async (project: ExistingProject, foldersGiven: string[]): 
 const packPluginCommand = async (foldersGiven: string[], options: PackPluginOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project) {
-    console.error(
-      chalk.red('plitzi pack plugin packs a plugin of a project, and there is no package.json here or above.')
-    );
-    process.exitCode = 1;
+    fail('plitzi pack plugin packs a plugin of a project, and there is no package.json here or above.');
 
     return;
   }
@@ -154,11 +141,9 @@ const packPluginCommand = async (foldersGiven: string[], options: PackPluginOpti
     return;
   }
 
-  const packageName = JSON.parse(await fs.readFile(path.join(project.root, 'package.json'), 'utf-8')) as {
-    name?: string;
-  };
-  const base = inPackage ? pluginNames(packageName.name ?? path.basename(project.root)).base : fileNameOf(folders[0]);
-  const version = options.pluginVersion ?? (await readVersion(project.root));
+  const manifest = await readPackageJson(project.root);
+  const base = inPackage ? pluginNames(manifest?.name ?? path.basename(project.root)).base : fileNameOf(folders[0]);
+  const version = options.pluginVersion ?? manifest?.version ?? '0.0.0';
   const source: PackSource = inPackage
     ? {
         kind: 'package',
@@ -219,8 +204,7 @@ const packPluginCommand = async (foldersGiven: string[], options: PackPluginOpti
       throw error;
     }
 
-    console.error(chalk.red(error.message));
-    process.exitCode = 1;
+    fail(error.message);
   }
 };
 

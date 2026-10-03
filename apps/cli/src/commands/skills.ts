@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { findProject } from './existingProject';
-import { writeFiles } from './terminal';
+import { projectHere } from './existingProject';
+import { fail, writeFiles } from './terminal';
 import { SKILL_NAMES, skillFiles, skillVersion } from '../scaffold/skills';
 
 /**
@@ -25,11 +25,8 @@ const readSkill = async (file: string): Promise<string | undefined> => {
 };
 
 export const skillsUpdate = async (): Promise<void> => {
-  const project = await findProject(process.cwd());
+  const project = await projectHere('whose skills to update');
   if (!project) {
-    console.error(chalk.red('There is no package.json here or above: run this in the project whose skills to update.'));
-    process.exitCode = 1;
-
     return;
   }
 
@@ -43,12 +40,9 @@ export const skillsUpdate = async (): Promise<void> => {
   }
 
   if (present.length === 0) {
-    console.error(
-      chalk.red(
-        `No Plitzi skill in ${path.relative(process.cwd(), folder) || '.claude/skills'}: \`plitzi create\` writes them into a project it makes.`
-      )
+    fail(
+      `No Plitzi skill in ${path.relative(process.cwd(), folder) || '.claude/skills'}: \`plitzi create\` writes them into a project it makes.`
     );
-    process.exitCode = 1;
 
     return;
   }
@@ -69,6 +63,6 @@ export const skillsUpdate = async (): Promise<void> => {
     await fs.rm(path.join(folder, name), { recursive: true, force: true });
     await writeFiles(project.root, own);
     const now = skillVersion(own[`.claude/skills/${name}/SKILL.md`] ?? '');
-    console.log(`${name}: ${was ?? 'unversioned'} → ${now ?? 'unversioned'}`);
+    console.log(chalk.green(`${name}: ${was ?? 'unversioned'} → ${now ?? 'unversioned'}`));
   }
 };

@@ -10,6 +10,17 @@ npx @plitzi/cli pack plugin                    # a plugin built, and zipped the 
 npx @plitzi/cli upload plugin                  # that zip, on the space you work in, and installed there
 ```
 
+## What every command does the same way
+
+- **The answer goes to stdout; everything else to stderr** — errors, and the prompts on the way (sign in, open this
+  address). So `--json`, where a command has it, prints one object on one line and nothing more.
+- **It exits 1 when it did not do what it was asked**, with why in red; a check that found something wrong exits 1 too.
+- **A value that is not one is refused**, saying what the flag takes — a width out of range, a scheme that is not
+  `light` or `dark`, a count of 0 — never quietly turned into the default.
+- **The same flag means the same thing everywhere:** `-o, --out` where it writes, `-f, --force` to write over what is
+  there, `-e, --environment` for which version of the space, `--width` for the widths a page is looked at (one, or
+  several separated by commas), `--api` for the platform, `--json` for a tool or an agent.
+
 ## `create`
 
 Scaffolds a project that renders a Plitzi space, installs it, and leaves it ready to start. Three choices shape it —
@@ -153,7 +164,7 @@ only if every fix is gone and no problem was added; a fix that would add one is 
 
 ```bash
 plitzi import https://example.com/pricing                 # into src/imported
-plitzi import https://example.com/ --out src/home --widths 1440,390
+plitzi import https://example.com/ --out src/home --width 1440,390
 ```
 
 A page you own or may reuse, measured in the project's own Playwright as a place to start writing from — never a copy
@@ -311,7 +322,7 @@ What `upload plugin` and `runtime push` keep, written to a file to look at: the 
 ```bash
 plitzi login          # sign in, in your browser
 plitzi space          # choose the space to work in, in your browser
-plitzi whoami         # who you are signed in as, and the space
+plitzi whoami         # who you are signed in as, and the space; --json for a tool
 plitzi upload plugin  # the zip pack plugin left, on that space
 plitzi logout         # the session revoked on the platform, and forgotten here
 ```
@@ -341,7 +352,7 @@ certificate authorities the system trusts, as the browser beside it does.
 
 ```bash
 plitzi runtime push                                   # pack src/runtime.ts and keep it as the space's draft runtime
-plitzi runtime status                                 # how each environment's runtime is, and its variables' names
+plitzi runtime status                                 # how each environment's runtime is, and its variables' names; --json
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
 plitzi runtime size medium                            # the size the draft runs at (--environment for a published one)

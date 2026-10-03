@@ -40,8 +40,10 @@ beforeEach(() => {
 });
 
 describe('SitemapDiagram', () => {
-  it('draws every folder over what it holds, with where each page answers', () => {
+  it('draws every folder over what it holds, with where each page answers', async () => {
     render(<SitemapDiagram pages={pages} pageFolders={folders} />);
+    // useStorage announces its first write of the folds a microtask later in tests, and the diagram re-reads it then.
+    await act(() => Promise.resolve());
 
     expect(screen.getAllByRole('treeitem')).toHaveLength(3);
     expect(screen.getByTitle('/blog/post')).toBeDefined();

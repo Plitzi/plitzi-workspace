@@ -14,7 +14,7 @@ import dts from 'vite-plugin-dts';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import mkcert from 'vite-plugin-mkcert';
 
-import { typescriptLibAlias } from './vite.functions-worker.config';
+import { typescriptLibAlias } from './vite.functions-worker.config.ts';
 
 import type { Plugin } from 'vite';
 
@@ -119,11 +119,14 @@ export default defineConfig(({ mode, command }) => {
    *  in its hosts file and no locally-trusted certificate authority, and minting one per run to talk to a mocked
    *  backend would be ceremony for nothing. Unset — which is every normal `yarn start` — nothing changes. */
   const plainHttp = !!process.env.PLITZI_BUILDER_HTTP;
+  // mkcert turns its logger on by writing `process.env.DEBUG`, and under Vitest every library that reads DEBUG then
+  // logs too (@typescript/vfs printed each file it read). Tests serve nothing, so they need no certificate.
+  const testing = !!process.env.VITEST;
   // const isSSR = process.argv.includes('--ssr');
 
   return {
     plugins: [
-      !plainHttp && mkcert(),
+      !plainHttp && !testing && mkcert(),
       react(),
       ViteEjsPlugin({
         ...bootstrap(),

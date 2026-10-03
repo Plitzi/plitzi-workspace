@@ -5,7 +5,8 @@ import chalk from 'chalk';
 
 import { comparePictures, pageRegions } from '@plitzi/sdk-authoring';
 
-import { findProject } from './existingProject';
+import { projectHere } from './existingProject';
+import { fail } from './terminal';
 import { dataUrl, fromDataUrl, launchBrowser, projectOrigin } from '../browser';
 
 import type { Browser, BrowserPage, Scheme } from '../browser';
@@ -22,13 +23,14 @@ import type { PictureDiff, PictureRegion } from '@plitzi/sdk-authoring';
  */
 
 export interface ShotOptions {
-  width?: string;
-  height?: string;
-  scheme?: string;
+  /** The numbers and the scheme are validated where the flags are declared (options.ts). */
+  width?: number;
+  height?: number;
+  scheme?: Scheme;
   out?: string;
   compare?: string;
-  frames?: string;
-  every?: string;
+  frames?: number;
+  every?: number;
   waitFor?: string;
   reducedMotion?: boolean;
   json?: boolean;
@@ -47,12 +49,6 @@ interface ShotReport {
 
 /** A region moves when more than this share of it changed between two frames: below is anti-aliasing and carets. */
 const MOVING_PERCENT = 0.5;
-
-const numberOption = (value: string | undefined, fallback: number): number => {
-  const parsed = Number(value);
-
-  return value !== undefined && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-};
 
 /** A selector, or an element's name — what `data-plitzi-el` carries. */
 const selectorOf = (target: string): string => (/^[#.[]/.test(target) ? target : `[data-plitzi-el="${target}"]`);
@@ -98,15 +94,8 @@ const framesMoved = (diffs: PictureDiff[]): { name: string; changed: number }[] 
 };
 
 export const shot = async (route: string | undefined, options: ShotOptions): Promise<void> => {
-  const fail = (problem: string): void => {
-    console.error(chalk.red(problem));
-    process.exitCode = 1;
-  };
-
-  const project = await findProject(process.cwd());
+  const project = await projectHere('whose page to picture');
   if (!project) {
-    fail('There is no package.json here or above: run this in the project whose page to picture.');
-
     return;
   }
 
@@ -127,9 +116,9 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   try {
     const pathname = route ?? '/';
     const view = {
-      width: numberOption(options.width, 1280),
-      height: numberOption(options.height, 800),
-      scheme: options.scheme === 'dark' ? ('dark' as const) : ('light' as const),
+      width: options.width ?? 1280,
+      height: options.height ?? 800,
+      scheme: options.scheme ?? 'light',
       reducedMotion: options.reducedMotion === true,
       ...(options.waitFor ? { waitFor: options.waitFor } : {})
     };
@@ -174,9 +163,9 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       };
     }
 
-    const frames = numberOption(options.frames, 0);
+    const frames = options.frames ?? 0;
     if (frames > 1) {
-      const every = numberOption(options.every, 500);
+      const every = options.every ?? 500;
       const pictures = [taken.png];
       for (let frame = 1; frame < frames; frame += 1) {
         await taken.page.waitForTimeout(every);

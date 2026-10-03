@@ -5,13 +5,14 @@ import chalk from 'chalk';
 
 import { coveredByWorkspace, findProject } from './existingProject';
 import {
-  INSTALL_HINTS,
   ask,
   askChoice,
   askText,
   atTerminal,
   cdPrefix,
+  fail,
   install,
+  INSTALL_HINTS,
   isEmpty,
   nearestExisting,
   refuseWithoutTerminal,
@@ -162,8 +163,7 @@ const createPlugin = async (directory: string | undefined, options: CreatePlugin
       ? undefined
       : (pluginNameProblem(nameGiven) ?? elementListProblem(pluginNames(nameGiven).base, othersGiven ?? []));
   if (nameProblem) {
-    console.error(chalk.red(nameProblem));
-    process.exitCode = 1;
+    fail(nameProblem);
 
     return;
   }
@@ -227,8 +227,7 @@ const createPlugin = async (directory: string | undefined, options: CreatePlugin
 
     const wasEmpty = await isEmpty(target);
     if (!options.force && !wasEmpty) {
-      console.error(chalk.red(`${target} is not empty. Pass --force to write into it anyway.`));
-      process.exitCode = 1;
+      fail(`${target} is not empty. Pass --force to write into it anyway.`);
 
       return;
     }
@@ -272,13 +271,8 @@ const createPlugin = async (directory: string | undefined, options: CreatePlugin
     const wantsInstall = options.install !== false && !unlisted;
     const installed = wantsInstall && (await install(packageManager, target));
     if (wantsInstall && !installed) {
-      console.error(
-        chalk.red(
-          `\n\`${installCommand(packageManager)}\` failed. The plugin is written; the reason is in the output above.`
-        )
-      );
+      fail(`\n\`${installCommand(packageManager)}\` failed. The plugin is written; the reason is in the output above.`);
       console.error(chalk.dim(INSTALL_HINTS[packageManager]));
-      process.exitCode = 1;
     }
 
     // Formatted by its own Prettier, once, while nothing in the folder is anybody else's.

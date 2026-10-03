@@ -7,9 +7,10 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
-import { apiFor, connectionWithSpace, fail } from './account';
-import { findProject } from './existingProject';
+import { connectToSpace } from './account';
+import { projectHere } from './existingProject';
 import { keepSource } from './keepSource';
+import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
 import { packSource } from '../pack/source';
 
@@ -23,6 +24,10 @@ import type { Connection } from '../account/connection';
  * The code is packed with the project's own `@plitzi/sdk-server`, at the version the project runs: what the platform
  * runs is what the project would have run itself.
  */
+
+export interface RuntimeStatusOptions extends AccountOptions {
+  json?: boolean;
+}
 
 export interface RuntimeOptions extends AccountOptions {
   /** The runtime module: whose default export is `defineRuntime(…)`. `src/runtime.ts` by default. */
@@ -68,20 +73,14 @@ const projectPacker = async (root: string): Promise<Packer | undefined> => {
   return undefined;
 };
 
-const connect = async (options: AccountOptions, doing: string): Promise<Connection | undefined> => {
-  const api = await apiFor(options);
-
-  return api ? connectionWithSpace(api, doing) : undefined;
-};
-
 /** Packs the project's runtime module and keeps it as the space's draft runtime — which a publish takes live. */
 export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
-  const connection = await connect(options, 'to push to');
-  if (!connection?.space) {
+  const root = (await projectHere('whose runtime to push'))?.root;
+  const connection = root && (await connectToSpace(options, 'to push to'));
+  if (!root || !connection || !connection.space) {
     return;
   }
 
-  const root = (await findProject(process.cwd()))?.root ?? process.cwd();
   const entry = path.resolve(root, options.entry ?? DEFAULT_ENTRY);
   try {
     await fs.access(entry);
@@ -124,8 +123,10 @@ export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
   }
 
   console.log(
-    `${chalk.green('✓')} ${connection.space.name}’s draft runtime is ${reply.data.digest.slice(0, 12)} ` +
-      `(${(bytes.byteLength / 1024).toFixed(0)} KB). It starts in a moment; publish the space to take it live.`
+    chalk.green(
+      `${connection.space.name}’s draft runtime is ${reply.data.digest.slice(0, 12)} ` +
+        `(${(bytes.byteLength / 1024).toFixed(0)} KB).`
+    ) + chalk.dim(' It starts in a moment; publish the space to take it live.')
   );
 
   // Its source beside it (docs/en/projects-from-spaces.md): what it was packed from, so the space can be taken back out as a project.
@@ -169,14 +170,20 @@ const readRuntime = async (
 };
 
 /** How each environment's runtime is, and the names of its variables. */
-export const runtimeStatus = async (options: AccountOptions): Promise<void> => {
-  const connection = await connect(options, 'to read');
+export const runtimeStatus = async (options: RuntimeStatusOptions): Promise<void> => {
+  const connection = await connectToSpace(options, 'to read');
   if (!connection?.space) {
     return;
   }
 
   const runtime = await readRuntime(connection, connection.space.id);
   if (!runtime) {
+    return;
+  }
+
+  if (options.json) {
+    console.log(JSON.stringify({ space: { id: connection.space.id, name: connection.space.name }, ...runtime }));
+
     return;
   }
 
@@ -218,7 +225,7 @@ export const runtimeStatus = async (options: AccountOptions): Promise<void> => {
 
 /** Starts an environment's runtime again, or stops it — kept stopped until started. */
 export const powerRuntime = async (power: 'start' | 'stop', options: AccountOptions & { environment?: string }) => {
-  const connection = await connect(options, 'to configure');
+  const connection = await connectToSpace(options, 'to configure');
   if (!connection?.space) {
     return;
   }
@@ -245,13 +252,15 @@ export const powerRuntime = async (power: 'start' | 'stop', options: AccountOpti
   }
 
   console.log(
-    `${chalk.green('✓')} ${environment} ${power === 'start' ? 'starts in a moment' : 'stops, and stays stopped until started'}.`
+    chalk.green(
+      `${environment} ${power === 'start' ? 'starts in a moment' : 'stops, and stays stopped until started'}.`
+    )
   );
 };
 
 /** Chooses the size an environment's runtime runs at — one the space's plan includes — and it starts again at it. */
 export const setRuntimeSize = async (size: string, options: AccountOptions & { environment?: string }) => {
-  const connection = await connect(options, 'to configure');
+  const connection = await connectToSpace(options, 'to configure');
   if (!connection?.space) {
     return;
   }
@@ -275,7 +284,7 @@ export const setRuntimeSize = async (size: string, options: AccountOptions & { e
     return;
   }
 
-  console.log(`${chalk.green('✓')} ${environment} runs at ${size} — the runtime starts again at it.`);
+  console.log(chalk.green(`${environment} runs at ${size} — the runtime starts again at it.`));
 };
 
 /** Everything sent on standard input: a value piped in rather than typed where the shell history keeps it. */
@@ -295,7 +304,7 @@ const readStdin = async (): Promise<string> => {
  * input (`printf %s "$URL" | plitzi runtime vars set REDIS_URL`), which keeps a secret out of the shell's history.
  */
 export const setRuntimeVariable = async (name: string, value: string | undefined, options: AccountOptions) => {
-  const connection = await connect(options, 'to configure');
+  const connection = await connectToSpace(options, 'to configure');
   if (!connection?.space) {
     return;
   }
@@ -319,11 +328,11 @@ export const setRuntimeVariable = async (name: string, value: string | undefined
     return;
   }
 
-  console.log(`${chalk.green('✓')} ${name} set — the runtime starts again with it.`);
+  console.log(chalk.green(`${name} set — the runtime starts again with it.`));
 };
 
 export const unsetRuntimeVariable = async (name: string, options: AccountOptions) => {
-  const connection = await connect(options, 'to configure');
+  const connection = await connectToSpace(options, 'to configure');
   if (!connection?.space) {
     return;
   }
@@ -339,5 +348,5 @@ export const unsetRuntimeVariable = async (name: string, options: AccountOptions
     return;
   }
 
-  console.log(`${chalk.green('✓')} ${name} removed — the runtime starts again without it.`);
+  console.log(chalk.green(`${name} removed — the runtime starts again without it.`));
 };

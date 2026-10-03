@@ -10,8 +10,9 @@ import chalk from 'chalk';
 import { readFunctionsSource } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
-import { apiFor, connectionWithSpace, fail } from './account';
-import { findProject } from './existingProject';
+import { connectToSpace } from './account';
+import { projectHere } from './existingProject';
+import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
 
 import type { AccountOptions } from './account';
@@ -40,8 +41,8 @@ export type WorkingCopy = { space: number; version: string; files: Files };
 type Draft = { files: Files; version: string; manifest: { tasks: { namespace: string; action: string }[] } | null };
 type Problem = { file?: string; line?: number; column?: number; message: string };
 
-/** The project's root: where `functions/` and `.plitzi/` go. */
-const rootOf = async (): Promise<string> => (await findProject(process.cwd()))?.root ?? process.cwd();
+/** The project's root: where `functions/` and `.plitzi/` go. Undefined — said — outside a project. */
+const rootOf = async (): Promise<string | undefined> => (await projectHere('whose functions these are'))?.root;
 
 /** Every source file under `functions/`, by its path there — read by the one rule of what a source is. */
 const readLocal = (root: string): Promise<Files> =>
@@ -90,12 +91,6 @@ const taskList = (draft: Pick<Draft, 'manifest'>): string =>
     ? draft.manifest.tasks.map(task => `${task.namespace}.${task.action}`).join(', ')
     : 'no tasks';
 
-const connect = async (options: FunctionsOptions, doing: string): Promise<Connection | undefined> => {
-  const api = await apiFor(options);
-
-  return api ? connectionWithSpace(api, doing) : undefined;
-};
-
 const readDraft = async (connection: Connection, spaceId: number): Promise<Draft | undefined> => {
   const answered = await authorizedRequest<Draft & { error?: string }>(connection, `/spaces/${spaceId}/functions`);
   if (!answered.ok) {
@@ -115,12 +110,12 @@ const readDraft = async (connection: Connection, spaceId: number): Promise<Draft
 };
 
 export const pullFunctions = async (options: FunctionsOptions): Promise<void> => {
-  const connection = await connect(options, 'to pull from');
-  if (!connection?.space) {
+  const root = await rootOf();
+  const connection = root && (await connectToSpace(options, 'to pull from'));
+  if (!root || !connection || !connection.space) {
     return;
   }
 
-  const root = await rootOf();
   const [local, state] = await Promise.all([readLocal(root), readState(root)]);
   const unpushed = state ? changedFiles(local, state.files) : Object.keys(local);
   if (!options.force && (state?.space ?? connection.space.id) !== connection.space.id) {
@@ -158,7 +153,9 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
   const count = Object.keys(draft.files).length;
   console.log(
     count
-      ? `Pulled ${count} file${count === 1 ? '' : 's'} of ${chalk.bold(connection.space.name)}’s functions into functions/ — ${taskList(draft)}.`
+      ? chalk.green(
+          `Pulled ${count} file${count === 1 ? '' : 's'} of ${connection.space.name}’s functions into functions/ — ${taskList(draft)}.`
+        )
       : `${chalk.bold(connection.space.name)} has no functions yet. Write functions/index.ts and plitzi functions push.`
   );
 };
@@ -175,12 +172,12 @@ const printProblems = (problems: Problem[]): void => {
 };
 
 export const pushFunctions = async (options: FunctionsOptions): Promise<void> => {
-  const connection = await connect(options, 'to push to');
-  if (!connection?.space) {
+  const root = await rootOf();
+  const connection = root && (await connectToSpace(options, 'to push to'));
+  if (!root || !connection || !connection.space) {
     return;
   }
 
-  const root = await rootOf();
   const [local, state] = await Promise.all([readLocal(root), readState(root)]);
   if (!Object.hasOwn(local, 'index.ts')) {
     fail('There is no functions/index.ts here: it is where a space’s functions start. Pull them, or write it.');
@@ -253,8 +250,9 @@ export const pushFunctions = async (options: FunctionsOptions): Promise<void> =>
 
   await writeFunctionsState(root, { space: connection.space.id, version: reply.data.version, files: local });
   console.log(
-    `Pushed to ${chalk.bold(connection.space.name)}’s draft — ${taskList({ manifest: reply.data.manifest ?? null })}. ` +
-      chalk.dim('The live site runs them once the space is published.')
+    chalk.green(
+      `Pushed to ${connection.space.name}’s draft — ${taskList({ manifest: reply.data.manifest ?? null })}.`
+    ) + chalk.dim(' The live site runs them once the space is published.')
   );
 };
 
@@ -301,7 +299,7 @@ export const tryFunction = async (task: string, options: FunctionsOptions): Prom
     return;
   }
 
-  const connection = await connect(options, 'to try it in');
+  const connection = await connectToSpace(options, 'to try it in');
   if (!connection?.space) {
     return;
   }
@@ -428,9 +426,9 @@ export const devFunction = async (task: string, options: FunctionsDevOptions): P
   }
 
   const params = paramsOf(options.params);
-  const root = await rootOf();
-  const runner = params ? await projectRunner(root) : undefined;
-  if (!params || !runner) {
+  const root = params && (await rootOf());
+  const runner = root ? await projectRunner(root) : undefined;
+  if (!root || !runner) {
     return;
   }
 

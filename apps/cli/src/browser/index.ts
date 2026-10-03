@@ -8,15 +8,17 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import type { PlitziProject } from '../commands/existingProject';
 
 /**
- * A browser on the project's own Playwright, and the project's own server to point it at — what `plitzi shot` and
- * `plitzi check` look at a page with.
+ * A browser on the project's own Playwright, and the project's own server to point it at — what `plitzi check`,
+ * `plitzi shot` and `plitzi import` look at a page with (`import` at a site of the person's, not the project's server).
  *
  * Playwright is the project's: `create` installs it for the visual tests, and a second copy in the CLI would be a
  * second set of browsers to download. It is described here by the little that is used of it, and checked to be that
  * when it loads, so the CLI depends on no driver.
  */
 
-export type Scheme = 'light' | 'dark';
+export const SCHEMES = ['light', 'dark'] as const;
+
+export type Scheme = (typeof SCHEMES)[number];
 
 export interface PageMessage {
   type(): string;

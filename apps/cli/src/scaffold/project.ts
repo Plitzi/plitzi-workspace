@@ -290,7 +290,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
   const zeroWarnings = local ? `Zero warnings from ${run('author')}.` : 'Zero warnings from authoring.';
   const port =
     answers.mode === 'server'
-      ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code('.plitzi/dev-server.json')}, where ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one.`
+      ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code('.plitzi/dev-server.json')}, where ${code('check')}, ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one.`
       : `${run('start')} runs Vite on 5173.`;
   const pictures =
     answers.mode === 'server'

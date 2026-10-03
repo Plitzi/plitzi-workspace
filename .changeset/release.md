@@ -478,3 +478,13 @@ the input they listen on; the casts of `event.target` are gone.
 
 The builder's flag form checks each rule's `when` is a group of conditions before it saves, rather than passing
 whatever the field held.
+
+The CLI's commands now work the same way: the answer on stdout and errors and sign-in prompts on stderr, so `--json`
+is only the answer (`import --json` printed the sign-in prompt into it); exit 1 whenever a command did not do what it
+was asked (`fix --json` with a problem exited 0); and a flag's value checked where the flag is declared, refused with
+what it takes — `--width abc` or `--scheme darkk` used to check at no width or in light, saying nothing. One flag means
+one thing everywhere: `import --widths` is `--width`, like `check`, and `-o`, `-f` and `-e` are the short forms on
+every command that writes, overwrites or names an environment. `import` no longer repeats a sign-in error. `whoami`
+and `runtime status` take `--json` too; `functions` and `runtime push` refuse outside a project, as every other command
+that works on one does, instead of writing `functions/` into whatever folder they were run from; and every command
+says a finished action the same way, in green.

@@ -5,12 +5,13 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
-import { apiFor, fail } from './account';
+import { apiFor } from './account';
 import { download, fetchExport, functionsOnDisk, notFetched, versionLabel } from './createFrom';
 import { findProject } from './existingProject';
 import { writeFunctionsState } from './functions';
 import { projectFormatter } from './projectFormatter';
 import { digest, digestsOf, readOrigin, writeOrigin } from './spaceOrigin';
+import { fail } from './terminal';
 import { installCommand } from '../scaffold';
 import { projectFromSpace } from '../scaffold/fromSpace';
 

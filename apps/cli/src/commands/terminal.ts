@@ -12,6 +12,12 @@ import type readline from 'node:readline/promises';
  * what happens when nobody is.
  */
 
+/** Why a command stopped, to stderr, and the exit code that says it did. */
+export const fail = (problem: string): void => {
+  console.error(chalk.red(problem));
+  process.exitCode = 1;
+};
+
 /** A choice among a fixed few, put to the person as the flag that would have answered it. */
 export type Question<T extends string> = {
   flag: string;

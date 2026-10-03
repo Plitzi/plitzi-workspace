@@ -10,6 +10,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { findProject } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { loadProjectSpace } from './projectSpace';
+import { fail } from './terminal';
 import { unifiedDiff } from '../fix/diff';
 import { formatLikeBefore } from '../fix/format';
 import { projectPlan, verdict } from '../fix/plan';
@@ -113,6 +114,35 @@ const editSources = async (root: string, fixes: readonly PlannedFix[]): Promise<
   return { files, written, left };
 };
 
+/** A plan as `plitzi fix --json` prints it. */
+const planFromJson = (stdout: string): ProjectPlan => {
+  const parsed: unknown = JSON.parse(stdout);
+  if (!isRecord(parsed)) {
+    return { problem: 'the space did not answer as a plan' };
+  }
+
+  if (typeof parsed.problem === 'string') {
+    return { problem: parsed.problem };
+  }
+
+  const entries = (value: unknown): Record<string, unknown>[] => (Array.isArray(value) ? value.filter(isRecord) : []);
+  const elementOf = (entry: Record<string, unknown>): string | null =>
+    typeof entry.elementId === 'string' ? entry.elementId : null;
+
+  return {
+    fixes: entries(parsed.fixes).map(entry => ({
+      code: String(entry.code),
+      elementId: elementOf(entry),
+      message: String(entry.message)
+    })),
+    problems: entries(parsed.problems).map(entry => ({
+      code: String(entry.code),
+      elementId: elementOf(entry),
+      message: String(entry.message)
+    }))
+  };
+};
+
 /** The plan, made in a process of its own: the edited files are imported fresh, never from this one's module cache. */
 const planAfresh = async (): Promise<ProjectPlan> => {
   try {
@@ -120,32 +150,15 @@ const planAfresh = async (): Promise<ProjectPlan> => {
       cwd: process.cwd(),
       maxBuffer: 16 * 1024 * 1024
     });
-    const parsed: unknown = JSON.parse(stdout);
-    if (!isRecord(parsed)) {
-      return { problem: 'the space did not answer as a plan' };
-    }
 
-    if (typeof parsed.problem === 'string') {
-      return { problem: parsed.problem };
-    }
-
-    const entries = (value: unknown): Record<string, unknown>[] => (Array.isArray(value) ? value.filter(isRecord) : []);
-    const elementOf = (entry: Record<string, unknown>): string | null =>
-      typeof entry.elementId === 'string' ? entry.elementId : null;
-
-    return {
-      fixes: entries(parsed.fixes).map(entry => ({
-        code: String(entry.code),
-        elementId: elementOf(entry),
-        message: String(entry.message)
-      })),
-      problems: entries(parsed.problems).map(entry => ({
-        code: String(entry.code),
-        elementId: elementOf(entry),
-        message: String(entry.message)
-      }))
-    };
+    return planFromJson(stdout);
   } catch (error) {
+    // A plan with a problem exits 1 and still prints it: that is the answer, not a failure to get one.
+    const printed = isRecord(error) && typeof error.stdout === 'string' ? error.stdout.trim() : '';
+    if (printed.startsWith('{')) {
+      return planFromJson(printed);
+    }
+
     return { problem: error instanceof Error ? error.message.split('\n').slice(0, 3).join(' ') : String(error) };
   }
 };
@@ -159,11 +172,6 @@ const leftText = (left: Edited['left']): string[] =>
       ];
 
 export const fix = async (options: FixOptions): Promise<void> => {
-  const fail = (problem: string): void => {
-    console.error(chalk.red(problem));
-    process.exitCode = 1;
-  };
-
   const project = await findProject(process.cwd());
   if (!project || project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
     fail(
@@ -183,6 +191,9 @@ export const fix = async (options: FixOptions): Promise<void> => {
   const plan = projectPlan(loaded);
   if (options.json) {
     console.log(JSON.stringify(plan));
+    if ('problem' in plan) {
+      process.exitCode = 1;
+    }
 
     return;
   }

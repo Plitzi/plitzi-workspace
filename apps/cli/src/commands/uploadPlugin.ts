@@ -5,10 +5,10 @@ import readline from 'node:readline/promises';
 import chalk from 'chalk';
 import { unzipSync } from 'fflate';
 
-import { apiFor, connectionWithSpace, fail } from './account';
+import { apiFor, connectionWithSpace } from './account';
 import { findProject } from './existingProject';
 import { keepSource } from './keepSource';
-import { askPick, atTerminal, refuseWithoutTerminal } from './terminal';
+import { askPick, atTerminal, fail, refuseWithoutTerminal } from './terminal';
 import { authorizedRequest } from '../account/session';
 import { sourceFileOf } from '../pack/pack';
 

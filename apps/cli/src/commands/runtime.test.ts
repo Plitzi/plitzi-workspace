@@ -110,4 +110,28 @@ describe('plitzi runtime', () => {
 
     expect(platform.runtime.variables.has('REDIS_URL')).toBe(false);
   });
+
+  it('says the status as one JSON object with --json, names and never values', async () => {
+    await setRuntimeVariable('REDIS_URL', 'redis://secret@db:6379', { api: platform.api });
+    said.out = '';
+    await runtimeStatus({ api: platform.api, json: true });
+
+    const lines = said.out.trim().split('\n');
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0])).toMatchObject({
+      space: { id: 3, name: 'Website' },
+      variables: ['REDIS_URL'],
+      environments: [expect.objectContaining({ environment: 'main', status: 'ready' })]
+    });
+    expect(said.out).not.toContain('secret@db');
+  });
+
+  it('refuses outside a project, before signing in or sending anything', async () => {
+    vi.spyOn(process, 'cwd').mockReturnValue(path.parse(home).root);
+    await pushRuntime({ api: platform.api });
+
+    expect(said.err).toContain('There is no package.json here or above');
+    expect(process.exitCode).toBe(1);
+    expect(platform.runtime.pushed).toEqual([]);
+  });
 });

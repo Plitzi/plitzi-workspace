@@ -5,9 +5,10 @@ import chalk from 'chalk';
 
 import { darkScheme, importedFiles, importProbe } from '@plitzi/sdk-authoring';
 
-import { findProject } from './existingProject';
+import { projectHere } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { siteOwnership } from './siteOwnership';
+import { fail } from './terminal';
 import { launchBrowser } from '../browser';
 
 import type { AccountOptions } from './account';
@@ -28,7 +29,8 @@ import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk
 
 export interface ImportOptions extends AccountOptions {
   out?: string;
-  widths?: string;
+  /** Validated where the flag is declared (`widths` in options.ts). */
+  width?: number[];
   force?: boolean;
   json?: boolean;
 }
@@ -88,7 +90,7 @@ const count = (amount: number, one: string, many = `${one}s`): string =>
 
 const summaryText = (summary: ImportSummary, out: string, stale: string[]): string =>
   [
-    chalk.green(`✓ Imported ${summary.url} into ${out}`),
+    chalk.green(`Imported ${summary.url} into ${out}`),
     `  tokens   ${count(summary.colours, 'colour')} (${summary.dark ? 'light and dark' : 'no dark scheme: dark repeats light'}), ${count(summary.shadows, 'shadow')}, ${count(summary.radii, 'radius', 'radii')}${summary.fonts.length > 0 ? `, fonts ${summary.fonts.join(', ')}` : ''}`,
     `  outline  ${count(summary.blocks, 'block')} at ${summary.widths.join(', ')} px`,
     ...(summary.lists.length > 0
@@ -106,11 +108,6 @@ const summaryText = (summary: ImportSummary, out: string, stale: string[]): stri
   ].join('\n');
 
 export const importPage = async (address: string, options: ImportOptions): Promise<void> => {
-  const fail = (problem: string): void => {
-    console.error(chalk.red(problem));
-    process.exitCode = 1;
-  };
-
   let url: URL;
   try {
     url = new URL(address);
@@ -126,10 +123,8 @@ export const importPage = async (address: string, options: ImportOptions): Promi
     return;
   }
 
-  const project = await findProject(process.cwd());
+  const project = await projectHere('to import into');
   if (!project) {
-    fail('There is no package.json here or above: run this in the project to import into.');
-
     return;
   }
 
@@ -148,19 +143,13 @@ export const importPage = async (address: string, options: ImportOptions): Promi
     return;
   }
 
-  const widths = (options.widths ?? '1440,768,390')
-    .split(',')
-    .map(Number)
-    .filter(width => Number.isInteger(width) && width >= 320 && width <= 3840);
-  if (widths.length === 0) {
-    fail('--widths takes widths in pixels between 320 and 3840, separated by commas: 1440,768,390.');
-
-    return;
-  }
+  const widths = options.width ?? [1440, 768, 390];
 
   const ownership = await siteOwnership(url, options);
   if (!ownership.ok) {
-    fail(ownership.problem);
+    if (ownership.problem) {
+      fail(ownership.problem);
+    }
 
     return;
   }

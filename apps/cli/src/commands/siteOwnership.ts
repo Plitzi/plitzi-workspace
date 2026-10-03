@@ -15,7 +15,8 @@ import type { AccountOptions } from './account';
  * the person's own development server.
  */
 
-export type SiteOwnership = { ok: true; said: string } | { ok: false; problem: string };
+/** Not the person's, with why — or with no `problem` when signing in failed and already said so. */
+export type SiteOwnership = { ok: true; said: string } | { ok: false; problem?: string };
 
 const LOOPBACK = /^(127\.|::1$|::ffff:127\.)/;
 
@@ -46,13 +47,9 @@ export const siteOwnership = async (url: URL, options: AccountOptions): Promise<
   }
 
   const api = await apiFor(options);
-  if (!api) {
-    return { ok: false, problem: 'There is no platform to ask whether the site is yours: pass --api.' };
-  }
-
-  const connection = await signedIn(api, `to show ${url.hostname} is yours`);
+  const connection = api && (await signedIn(api, `to show ${url.hostname} is yours`));
   if (!connection) {
-    return { ok: false, problem: `Sign in to import ${url.hostname}: only a site whose domain you verified is read.` };
+    return { ok: false };
   }
 
   const answered = await authorizedRequest<unknown>(

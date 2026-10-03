@@ -9,6 +9,7 @@ import { signedIn } from './account';
 import { writeFunctionsState } from './functions';
 import { projectFormatter } from './projectFormatter';
 import { digestsOnDisk, writeOrigin } from './spaceOrigin';
+import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
 
 import type { ProjectFromSpace } from '../scaffold/fromSpace';
@@ -70,8 +71,7 @@ export const fetchExport = async (
     `/spaces/${encodeURIComponent(from)}/export?${query.toString()}`
   );
   if (!answered.ok) {
-    console.error(chalk.red(answered.error));
-    process.exitCode = 1;
+    fail(answered.error);
 
     return undefined;
   }
@@ -86,8 +86,7 @@ export const fetchExport = async (
     403: `You may not take ${from} out: it takes being able to change it — its owner, an administrator or a writer.`,
     404: said ?? `There is no space ${from} you can reach.`
   };
-  console.error(chalk.red(why[status] ?? said ?? `The platform would not hand ${from} over (${String(status)}).`));
-  process.exitCode = 1;
+  fail(why[status] ?? said ?? `The platform would not hand ${from} over (${String(status)}).`);
 
   return undefined;
 };

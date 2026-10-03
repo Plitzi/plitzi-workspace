@@ -4,6 +4,7 @@ import path from 'node:path';
 import chalk from 'chalk';
 
 import { findProject } from './existingProject';
+import { fail } from './terminal';
 import { packSource } from '../pack/source';
 
 import type { SourceSnapshotKind } from '@plitzi/sdk-shared/source';
@@ -23,10 +24,7 @@ export interface PackSourceOptions {
 const packSourceCommand = async (entries: string[], options: PackSourceOptions): Promise<void> => {
   const root = options.root ? path.resolve(options.root) : (await findProject(process.cwd()))?.root;
   if (!root) {
-    console.error(
-      chalk.red('plitzi pack source packs a project’s source, and there is no package.json here or above.')
-    );
-    process.exitCode = 1;
+    fail('plitzi pack source packs a project’s source, and there is no package.json here or above.');
 
     return;
   }
@@ -46,8 +44,7 @@ const packSourceCommand = async (entries: string[], options: PackSourceOptions):
         chalk.dim(` — ${path.relative(process.cwd(), out)} (${(bytes.byteLength / 1024).toFixed(0)} KB)`)
     );
   } catch (error) {
-    console.error(chalk.red(error instanceof Error ? error.message : String(error)));
-    process.exitCode = 1;
+    fail(error instanceof Error ? error.message : String(error));
   }
 };
 

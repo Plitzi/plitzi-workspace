@@ -46,8 +46,11 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
 - **Signing in happens in the browser.** `login`, `space` and a first `upload` open one; the person completes it (MFA
   and social sign-in included — the CLI never sees a password). Tell them a browser tab is waiting, and wait.
 - **One space at a time.** Everything goes to the space `whoami` names; `plitzi space` switches it. No command takes a
-  space as a flag, so check `whoami` before an upload.
+  space as a flag, so check `whoami --json` (`{ api, user, space }`) before an upload.
 - **`--no-install`** writes the files without installing, **`--force`** writes into a directory that has work in it.
+- **Read stdout, exit code and stderr apart.** The answer is on stdout (`--json`: one object, one line); errors and
+  sign-in prompts are on stderr; exit 1 means it did not do what was asked, or a check found something. A flag value
+  that is not one is refused with what it takes — read the message rather than retrying without the flag.
 
 ## The Plitzi MCP or this CLI
 
@@ -84,7 +87,7 @@ What a project gives you, so you use it rather than rebuild it:
 | `typecheck`, `lint`, `format` | before calling a change done |
 
 **Which port.** `start` takes 8080, or the next free one when something else holds it — printed, and written to
-`.plitzi/dev-server.json`, where `shot` and `visual` look for it. Set `PORT` to choose one (then a taken port is an
+`.plitzi/dev-server.json`, where `check`, `shot` and `visual` look for it. Set `PORT` to choose one (then a taken port is an
 error). `/health` answers with the space's name: a server that answers as something else is not this project.
 
 The data a page reads with no backend goes in `public/data/*.json`, served by the project as it is; in server mode a

@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { fail } from './terminal';
 import { declarationsRegistry, elementsRegistry, projectDeclarations } from '../scaffold';
 
 import type { PackageManager } from '../scaffold';
@@ -54,6 +55,8 @@ export interface PluginPackage {
 }
 
 export interface PackageJson {
+  name?: string;
+  version?: string;
   workspaces?: string[] | { packages?: string[] };
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
@@ -263,3 +266,17 @@ export const findProject = async (from: string): Promise<ExistingProject | undef
 export const coveredByWorkspace = (project: ExistingProject, dir: string): boolean =>
   project.workspaceRoot !== undefined &&
   project.workspaceFolders.some(folder => path.dirname(dir) === path.join(project.workspaceRoot ?? '', folder));
+
+/**
+ * The project the command runs in, or `undefined` — said — when there is none: every command that works on a project
+ * refuses outside one rather than writing into whatever folder it was run from. `what` ends the sentence: "whose page
+ * to check".
+ */
+export const projectHere = async (what: string): Promise<ExistingProject | undefined> => {
+  const project = await findProject(process.cwd());
+  if (!project) {
+    fail(`There is no package.json here or above: run this in the project ${what}.`);
+  }
+
+  return project;
+};

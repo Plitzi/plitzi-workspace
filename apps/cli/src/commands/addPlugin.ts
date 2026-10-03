@@ -4,9 +4,9 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
-import { findProject } from './existingProject';
+import { findProject, readPackageJson } from './existingProject';
 import { projectFormatter } from './projectFormatter';
-import { askChoice, askText, atTerminal, isEmpty, refuseWithoutTerminal, writeFiles } from './terminal';
+import { askChoice, askText, atTerminal, fail, isEmpty, refuseWithoutTerminal, writeFiles } from './terminal';
 import {
   declarationsRegistry,
   elementsRegistry,
@@ -247,10 +247,7 @@ const registerElsewhere = async (root: string, added: { names: PluginNames; targ
     `\nRegister ${added.length > 1 ? 'them' : 'it'} where the project renders its space:\n\n${chalk.dim(registration(added))}`
   );
 
-  // Read for the dependency lists alone: the file is the project's, and nothing else in it is this command's.
-  const { dependencies = {}, devDependencies = {} } = JSON.parse(
-    await fs.readFile(path.join(root, 'package.json'), 'utf-8')
-  ) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+  const { dependencies = {}, devDependencies = {} } = (await readPackageJson(root)) ?? {};
   if (!('@plitzi/plitzi-sdk' in { ...dependencies, ...devDependencies })) {
     console.log(chalk.yellow('\nThe elements import @plitzi/plitzi-sdk, which this project does not depend on yet.'));
   }
@@ -259,42 +256,30 @@ const registerElsewhere = async (root: string, added: { names: PluginNames; targ
 const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project) {
-    console.error(
-      chalk.red(
-        'plitzi add plugin adds an element to a project, and there is no package.json here or above. ' +
-          'For a plugin of its own, run plitzi create <folder> --plugin.'
-      )
+    fail(
+      'plitzi add plugin adds an element to a project, and there is no package.json here or above. ' +
+        'For a plugin of its own, run plitzi create <folder> --plugin.'
     );
-    process.exitCode = 1;
 
     return;
   }
 
   if (namesGiven.length > 1 && (options.title !== undefined || options.description !== undefined)) {
-    console.error(
-      chalk.red('--title and --description describe one element: add several without them, or one at a time.')
-    );
-    process.exitCode = 1;
+    fail('--title and --description describe one element: add several without them, or one at a time.');
 
     return;
   }
 
   const { shape, problem: shapeProblem } = shapeFromFlags(options);
   if (shapeProblem ?? (shape && namesGiven.length > 1)) {
-    console.error(
-      chalk.red(
-        shapeProblem ?? '--prop, --trigger, --callback and --headless shape one element: add them one at a time.'
-      )
-    );
-    process.exitCode = 1;
+    fail(shapeProblem ?? '--prop, --trigger, --callback and --headless shape one element: add them one at a time.');
 
     return;
   }
 
   const givenProblem = namesGiven.length > 0 ? namesProblem(namesGiven) : undefined;
   if (givenProblem) {
-    console.error(chalk.red(givenProblem));
-    process.exitCode = 1;
+    fail(givenProblem);
 
     return;
   }
@@ -346,8 +331,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
     });
     for (const { target } of planned) {
       if (!options.force && !(await isEmpty(target))) {
-        console.error(chalk.red(`${target} is not empty. Pass --force to write into it anyway.`));
-        process.exitCode = 1;
+        fail(`${target} is not empty. Pass --force to write into it anyway.`);
 
         return;
       }

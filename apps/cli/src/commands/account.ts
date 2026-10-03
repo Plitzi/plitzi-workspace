@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 
+import { fail } from './terminal';
 import { readConnection, resolveApi } from '../account/connection';
 import { openBrowser } from '../account/oauth';
 import { authorizedRequest, connect, currentConnection, disconnect } from '../account/session';
@@ -18,9 +19,16 @@ export interface AccountOptions {
   api?: string;
 }
 
-/** The address to open, printed as well: over SSH, or with no browser to start, it is opened by hand. */
-export const openInBrowser = (url: string): void => {
-  console.log(`\nContinue in your browser. If it did not open, go to:\n  ${chalk.cyan(url)}`);
+export interface WhoamiOptions extends AccountOptions {
+  json?: boolean;
+}
+
+/**
+ * The address to open, printed as well: over SSH, or with no browser to start, it is opened by hand. To stderr, like
+ * every prompt on the way to a command's answer, so `--json` output stays only the answer.
+ */
+const openInBrowser = (url: string): void => {
+  console.error(`\nContinue in your browser. If it did not open, go to:\n  ${chalk.cyan(url)}`);
   openBrowser(url);
 };
 
@@ -28,16 +36,10 @@ export const openInBrowser = (url: string): void => {
 export const apiFor = async (options: AccountOptions): Promise<string | undefined> => {
   const api = resolveApi(options.api, await readConnection());
   if (!api) {
-    console.error(chalk.red(`"${options.api ?? process.env.PLITZI_API_URL ?? ''}" is not an address.`));
-    process.exitCode = 1;
+    fail(`"${options.api ?? process.env.PLITZI_API_URL ?? ''}" is not an address.`);
   }
 
   return api;
-};
-
-export const fail = (error: string): void => {
-  console.error(chalk.red(error));
-  process.exitCode = 1;
 };
 
 /** Who the connection signs in as, asked of the platform — which also proves the session still works. */
@@ -102,7 +104,7 @@ export const logout = async (): Promise<void> => {
   console.log(connection ? `\nSigned out of ${connection.api}.\n` : '\nNot signed in.\n');
 };
 
-export const whoami = async (options: AccountOptions): Promise<void> => {
+export const whoami = async (options: WhoamiOptions): Promise<void> => {
   const api = await apiFor(options);
   if (!api) {
     return;
@@ -128,6 +130,20 @@ export const whoami = async (options: AccountOptions): Promise<void> => {
     return;
   }
 
+  if (options.json) {
+    // The space and who, never the grant: it holds the session's tokens.
+    const { space: chosen } = current.value;
+    console.log(
+      JSON.stringify({
+        api,
+        user: who.value,
+        space: chosen ? { id: chosen.id, name: chosen.name, permanentUrl: chosen.permanentUrl } : null
+      })
+    );
+
+    return;
+  }
+
   console.log(`\nSigned in to ${api} as ${chalk.bold(who.value)}.`);
   console.log(`${spaceLine(current.value)}\n`);
 };
@@ -136,7 +152,7 @@ export const whoami = async (options: AccountOptions): Promise<void> => {
  * The space to work in, chosen on the platform's grant screen. The connection is REPLACED by the new grant — the CLI
  * works in one space at a time, and the space it worked in before is no longer reachable from it.
  */
-export const chooseSpace = async (api: string): Promise<Outcome<Connection>> => {
+const chooseSpace = async (api: string): Promise<Outcome<Connection>> => {
   const connected = await connect(api, { scope: 'space', open: openInBrowser });
   if (connected.ok && !connected.value.space) {
     return { ok: false, error: 'No space was chosen.' };
@@ -178,7 +194,7 @@ export const connectionWithSpace = async (api: string, doing = 'to work in'): Pr
     return current.value;
   }
 
-  console.log(current.value ? `\nChoose the space ${doing}.` : `\nSign in, and choose the space ${doing}.`);
+  console.error(current.value ? `\nChoose the space ${doing}.` : `\nSign in, and choose the space ${doing}.`);
   const chosen = await chooseSpace(api);
   if (!chosen.ok) {
     fail(chosen.error);
@@ -200,7 +216,7 @@ export const signedIn = async (api: string, doing: string): Promise<Connection |
     return current.value;
   }
 
-  console.log(`\nSign in ${doing}.`);
+  console.error(`\nSign in ${doing}.`);
   const connected = await connect(api, { open: openInBrowser });
   if (!connected.ok) {
     fail(connected.error);
@@ -209,4 +225,11 @@ export const signedIn = async (api: string, doing: string): Promise<Connection |
   }
 
   return connected.value;
+};
+
+/** The platform the options name, then the connection to its chosen space: how a command that works in it starts. */
+export const connectToSpace = async (options: AccountOptions, doing: string): Promise<Connection | undefined> => {
+  const api = await apiFor(options);
+
+  return api ? connectionWithSpace(api, doing) : undefined;
 };

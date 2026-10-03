@@ -7,11 +7,12 @@ import chalk from 'chalk';
 import { apiFor } from './account';
 import { fetchExport, recordOrigin, versionLabel, writeFromSpace } from './createFrom';
 import {
-  INSTALL_HINTS,
   ask,
   atTerminal,
   cdPrefix,
+  fail,
   install,
+  INSTALL_HINTS,
   isEmpty,
   nearestExisting,
   refuseWithoutTerminal,
@@ -156,18 +157,14 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
 
   const wasEmpty = await isEmpty(target);
   if (!options.force && !wasEmpty) {
-    console.error(chalk.red(`${target} is not empty. Pass --force to write into it anyway.`));
-    process.exitCode = 1;
+    fail(`${target} is not empty. Pass --force to write into it anyway.`);
 
     return;
   }
 
   // A space taken out of Plitzi is served by a server of the project's own: there is no browser-only form of it.
   if (options.from && options.mode === 'client') {
-    console.error(
-      chalk.red('A project made from a space runs its own server: leave out --mode, or pass --mode server.')
-    );
-    process.exitCode = 1;
+    fail('A project made from a space runs its own server: leave out --mode, or pass --mode server.');
 
     return;
   }
@@ -175,14 +172,11 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   const environment = options.environment ?? 'main';
   const revision = options.revision === undefined ? undefined : Number(options.revision);
   if (revision !== undefined && (!Number.isInteger(revision) || revision < 1 || environment === 'main')) {
-    console.error(
-      chalk.red(
-        environment === 'main'
-          ? 'The draft (main) has no revisions: name a published environment with --environment, then --revision.'
-          : `--revision takes a revision number from 1, not "${options.revision ?? ''}".`
-      )
+    fail(
+      environment === 'main'
+        ? 'The draft (main) has no revisions: name a published environment with --environment, then --revision.'
+        : `--revision takes a revision number from 1, not "${options.revision ?? ''}".`
     );
-    process.exitCode = 1;
 
     return;
   }
@@ -197,22 +191,18 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   // A template is what a space written here starts as: one read from Plitzi, or taken out of it, already has its own.
   const template = CREATE_TEMPLATES.find(candidate => candidate === (options.template ?? 'welcome'));
   if (!template || (options.template !== undefined && (source === 'cloud' || options.from))) {
-    console.error(
-      chalk.red(
-        template
-          ? '--template is what a space written in the project starts as: it goes with --source local, without --from.'
-          : `--template is ${CREATE_TEMPLATES.join(' or ')}, not "${options.template ?? ''}".`
-      )
+    fail(
+      template
+        ? '--template is what a space written in the project starts as: it goes with --source local, without --from.'
+        : `--template is ${CREATE_TEMPLATES.join(' or ')}, not "${options.template ?? ''}".`
     );
-    process.exitCode = 1;
 
     return;
   }
 
   // A project of its own carries its space: there is no published version for it to pin.
   if (revision !== undefined && !options.from && source === 'local') {
-    console.error(chalk.red('--revision pins a published version: it goes with --from, or with --source cloud.'));
-    process.exitCode = 1;
+    fail('--revision pins a published version: it goes with --from, or with --source cloud.');
 
     return;
   }
@@ -226,8 +216,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
 
   const key = source === 'cloud' ? (options.key ?? (await askForKey(mode))) : '';
   if (source === 'cloud' && !key) {
-    console.error(chalk.red('\nNo key. Mint one under Credentials in the builder, then run this again.'));
-    process.exitCode = 1;
+    fail('\nNo key. Mint one under Credentials in the builder, then run this again.');
 
     return;
   }
@@ -282,13 +271,8 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
    * `node_modules`.
    */
   if (wantsInstall && !installed) {
-    console.error(
-      chalk.red(
-        `\n\`${installCommand(packageManager)}\` failed. The project is written; the reason is in the output above.`
-      )
-    );
+    fail(`\n\`${installCommand(packageManager)}\` failed. The project is written; the reason is in the output above.`);
     console.error(chalk.dim(INSTALL_HINTS[packageManager]));
-    process.exitCode = 1;
   }
 
   /**

@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 
 import chalk from 'chalk';
 
+import { fail } from './terminal';
+
 /**
  * `plitzi data describe <file>`: the shape of a JSON document, in a few lines — what an agent needs to bind to it, without reading it.
  *
@@ -177,10 +179,7 @@ export const dataDescribe = async (file: string, options: DataDescribeOptions): 
   try {
     value = JSON.parse(await fs.readFile(file, 'utf-8'));
   } catch (error) {
-    console.error(
-      chalk.red(`${file} is not a JSON file this can read: ${error instanceof Error ? error.message : String(error)}`)
-    );
-    process.exitCode = 1;
+    fail(`${file} is not a JSON file this can read: ${error instanceof Error ? error.message : String(error)}`);
 
     return;
   }
