@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { accessibleName, findOverflow, findSmallTargets, findUnnamed } from './scans';
+import { findLowContrast } from './contrast';
+import { findHeadingGaps } from './headings';
+import { findImageScale } from './images';
+import { accessibleName, findUnnamed } from './names';
+import { findOverflow } from './overflow';
+import { findSmallTargets } from './targets';
 
 /** jsdom lays nothing out: every box is given here, by the element's `data-box` — `left,top,width,height`. */
 const withBoxes = (html: string): HTMLElement => {
@@ -91,5 +96,55 @@ describe('findOverflow', () => {
 
     expect(found.map(finding => finding.element.id)).toEqual(['wide']);
     expect(found[0].note).toBe('120 px past the page');
+  });
+});
+
+describe('findLowContrast', () => {
+  it('points at text under AA against its own backdrop, and holds large text to 3:1', () => {
+    const page = withBoxes(`
+      <p id="faint" style="color: rgb(170, 170, 170); background-color: rgb(255, 255, 255)">Faint words</p>
+      <p style="color: rgb(20, 20, 20); background-color: rgb(255, 255, 255)">Dark words</p>
+      <p style="color: rgb(140, 140, 140); background-color: rgb(255, 255, 255); font-size: 32px">A big title</p>
+      <p style="color: rgb(170, 170, 170); background-image: linear-gradient(red, blue)">Over a gradient</p>`);
+    const found = findLowContrast(page);
+
+    expect(found.map(finding => finding.element.id)).toEqual(['faint']);
+    expect(found[0].note).toBe('2.32:1, needs 4.5:1');
+  });
+});
+
+describe('findImageScale', () => {
+  it('points at a picture stretched past its pixels and at one far bigger than drawn', () => {
+    const page = withBoxes(`
+      <img id="soft" alt="" data-box="0,0,800,400">
+      <img id="heavy" alt="" data-box="0,0,300,200">
+      <img id="fine" alt="" data-box="0,0,600,300">`);
+    const natural: Record<string, number> = { soft: 400, heavy: 2400, fine: 1200 };
+    for (const image of page.querySelectorAll('img')) {
+      Object.defineProperty(image, 'complete', { value: true });
+      Object.defineProperty(image, 'naturalWidth', { value: natural[image.id] });
+    }
+
+    expect(findImageScale(page).map(finding => [finding.element.id, finding.note])).toEqual([
+      ['soft', '400 px file drawn at 800 px — soft'],
+      ['heavy', '2400 px file for 300 px']
+    ]);
+  });
+});
+
+describe('findHeadingGaps', () => {
+  it('points at a second h1 and at a level skipped on the way down', () => {
+    const page = withBoxes('<h1>Plitzi</h1><h2>Pricing</h2><h4 id="skip">Free</h4><h1 id="again">Again</h1>');
+
+    expect(findHeadingGaps(page).map(finding => [finding.element.textContent, finding.note])).toEqual([
+      ['Again', 'another h1'],
+      ['Free', 'h4 right after h2']
+    ]);
+  });
+
+  it('says so when a page has headings and no h1', () => {
+    const page = withBoxes('<h2>Pricing</h2>');
+
+    expect(findHeadingGaps(page).map(finding => finding.note)).toEqual(['the page has no h1']);
   });
 });

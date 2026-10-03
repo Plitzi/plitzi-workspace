@@ -595,11 +595,16 @@ zoom, lets every click through, and is remembered between visits like the outlin
 ## A QA tab in the dev tools
 
 The dev tools — wherever debugging is authorized, a pre-production deployment included — have a **QA** tab for whoever
-checks a build in the browser it will be used in: the builder's layout grid over the page, every element's outline
-with its type and id, the viewport's size and the breakpoint showing, animations paused, the page with reduced motion,
-the page as seen without one kind of colour, in grayscale or out of focus — and three checks that outline what they
-find and scroll to it: whatever sticks out past the page's sides, controls and pictures with no name, and touch targets
-under 24 × 24 px with another too close (WCAG 2.2). What is on stays on with the panel folded away, in this browser.
+checks a build in the browser it will be used in. A bar of tools over the page: an **inspector** — point at any element
+for its box model, type, colours and their contrast; click to keep it in the tab with its computed box, type, classes
+and every CSS rule that reaches it as written (copyable); hold Alt over another to measure the distance between them —
+the builder's layout grid, every element's outline, the order the Tab key walks the controls in, the viewport's size
+and the breakpoint showing, animations paused, the page with reduced motion, and the page as seen without one kind of
+colour, in grayscale or out of focus. Beside it, six checks that outline what they find and scroll to it: whatever
+sticks out past the page's sides, controls and pictures with no name, text under AA contrast, pictures stretched past
+their pixels or far bigger than shown, a heading outline with no h1 or a skipped level, and touch targets under 24 × 24
+px with another too close (WCAG 2.2). The tab lays the checks and the inspector side by side when the panel is wide.
+Folding the panel away stops the inspector and the checks; the views — grid, outlines, vision — stay, in this browser.
 
 The layout grid and the breakpoints are one definition in `@plitzi/sdk-shared/style` (`LAYOUT_GRIDS`,
 `layoutGridLook`, `layoutGridCss`, `DISPLAY_MODE_MIN_WIDTH`, `displayModeAt`), which `@plitzi/sdk-style` compiles its

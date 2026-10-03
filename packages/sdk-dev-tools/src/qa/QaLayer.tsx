@@ -2,15 +2,18 @@ import { use, useEffect, useMemo } from 'react';
 
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
+import { CHECKS } from './checks';
+import { NO_FINDINGS } from './findings';
+import QaGrid from './overlays/QaGrid';
+import QaInspector from './overlays/QaInspector';
+import QaTabOrder from './overlays/QaTabOrder';
+import QaViewport from './overlays/QaViewport';
 import QaContext from './QaContext';
 import { VISION_MATRIX, qaCss, visionFilterId } from './qaCss';
-import QaGrid from './QaGrid';
 import { QA_CHECKS, QA_FINDING_ATTRIBUTE, QA_PAGE_ATTRIBUTE, REDUCED_MOTION_CLASS, isQaActive } from './qaSettings';
-import QaViewport from './QaViewport';
-import { SCANS } from './scans';
 import usePageBox from './usePageBox';
 
-import type { QaFindings } from './QaContext';
+import type { QaFindings } from './findings';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -92,7 +95,7 @@ const QaLayer = () => {
   useEffect(() => {
     const page = pageRef.current;
     if (!page || checks.length === 0) {
-      setFindings({ overflow: [], names: [], targets: [] });
+      setFindings(NO_FINDINGS);
 
       return undefined;
     }
@@ -100,9 +103,9 @@ const QaLayer = () => {
     let marked: Element[] = [];
     const look = () => {
       marked.forEach(element => element.removeAttribute(QA_FINDING_ATTRIBUTE));
-      const found: QaFindings = { overflow: [], names: [], targets: [] };
+      const found: QaFindings = { ...NO_FINDINGS };
       for (const check of checks) {
-        found[check] = SCANS[check](page);
+        found[check] = CHECKS[check].run(page);
       }
 
       const byElement = new Map<Element, string[]>();
@@ -132,6 +135,8 @@ const QaLayer = () => {
   return (
     <>
       {settings.grid && <QaGrid box={box} />}
+      {settings.tabOrder && <QaTabOrder />}
+      {settings.inspect && <QaInspector />}
       {settings.viewport && <QaViewport box={box} />}
     </>
   );

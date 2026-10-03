@@ -1,6 +1,6 @@
 import { displayModeAt } from '@plitzi/sdk-shared/style';
 
-import type { PageBox } from './usePageBox';
+import type { PageBox } from '../usePageBox';
 
 export type QaViewportProps = { box: PageBox };
 

@@ -126,9 +126,12 @@ A plugin that draws owns its own markup, and what the linter can't see is up to 
   `page.getByRole('button', { name: 'Close' })` fails when the name is missing, which makes it a useful test on its
   own.
 - **On a running build:** the dev tools' **QA** tab (wherever debugging is authorized — a pre-production deployment,
-  say) lists every control or picture with no name and every touch target under 24 × 24 px that has another within
-  its circle (WCAG 2.2 Target Size, Minimum), outlines them on the page and scrolls to each. It can also show the page
-  without one kind of colour (protanopia, deuteranopia, tritanopia), in grayscale or out of focus.
+  say) lists every control or picture with no name, every line of text under AA contrast against what is actually
+  behind it, a heading outline with no h1 or a skipped level, and every touch target under 24 × 24 px that has another
+  within its circle (WCAG 2.2 Target Size, Minimum); it outlines them on the page and scrolls to each. Its **Tab order**
+  numbers the controls in the order the Tab key walks them, and its inspector shows any element's contrast as you point
+  at it. It can also show the page without one kind of colour (protanopia, deuteranopia, tritanopia), in grayscale or
+  out of focus.
 - **By hand:** Chrome DevTools, Elements, Accessibility pane. Or tab through the page: everything you can click, you
   should be able to reach and press from the keyboard.
 

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import type { QaFinding } from '../../../../qa/scans';
+import type { QaFinding } from '../../../../qa/checks';
 
 /** The class the dev tools outline an element with when a tab points at it. */
 const POINTED = 'devtools-element-hovered';

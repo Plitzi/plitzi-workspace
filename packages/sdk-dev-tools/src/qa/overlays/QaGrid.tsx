@@ -1,6 +1,6 @@
 import { LAYOUT_GRIDS, displayModeAt, layoutGridLook } from '@plitzi/sdk-shared/style';
 
-import type { PageBox } from './usePageBox';
+import type { PageBox } from '../usePageBox';
 
 export type QaGridProps = { box: PageBox };
 

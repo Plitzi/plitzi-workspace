@@ -12,14 +12,14 @@ import QaLayer from '../../../../qa/QaLayer';
 import type { ReactNode } from 'react';
 
 /** The page beside the panel, as the dev tools' container holds it, with the QA tab and its layer over it. */
-const Harness = ({ page }: { page: ReactNode }) => {
+const Harness = ({ page, collapsed = false }: { page: ReactNode; collapsed?: boolean }) => {
   const pageRef = useRef<HTMLDivElement>(null);
 
   return createElement(
     StoreProvider,
     { value: {} },
     createElement('div', { ref: pageRef, 'data-testid': 'page' }, page),
-    createElement(QaProvider, { pageRef }, createElement(QaLayer), createElement(QaViewer))
+    createElement(QaProvider, { pageRef, collapsed }, createElement(QaLayer), createElement(QaViewer))
   );
 };
 
@@ -49,12 +49,12 @@ describe('QaViewer', () => {
 
     expect(page().hasAttribute('data-plitzi-qa-page')).toBe(false);
 
-    fireEvent.click(screen.getByRole('switch', { name: /Element outlines/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Outlines' }));
 
     expect(page().hasAttribute('data-plitzi-qa-page')).toBe(true);
     expect(document.head.querySelector('style[data-plitzi-qa]')?.textContent).toContain('outline: 1px dashed');
 
-    fireEvent.click(screen.getByRole('switch', { name: /Element outlines/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Outlines' }));
 
     expect(page().hasAttribute('data-plitzi-qa-page')).toBe(false);
     expect(document.head.querySelector('style[data-plitzi-qa]')).toBeNull();
@@ -63,11 +63,11 @@ describe('QaViewer', () => {
   it('shows the page with less motion by the SDK’s own class', () => {
     render(createElement(Harness, { page: null }));
 
-    fireEvent.click(screen.getByRole('switch', { name: /Reduced motion/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reduced motion' }));
 
     expect(document.documentElement.classList.contains('plitzi-reduced-motion')).toBe(true);
 
-    fireEvent.click(screen.getByRole('switch', { name: /Reduced motion/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reduced motion' }));
 
     expect(document.documentElement.classList.contains('plitzi-reduced-motion')).toBe(false);
   });
@@ -87,7 +87,7 @@ describe('QaViewer', () => {
 
     button.getClientRects = () => [new DOMRect(0, 0, 40, 40)] as unknown as DOMRectList;
 
-    fireEvent.click(screen.getByRole('switch', { name: /Nameless controls/ }));
+    fireEvent.click(screen.getByRole('switch', { name: /No accessible name/ }));
     act(() => {
       vi.advanceTimersByTime(300);
     });
@@ -95,8 +95,41 @@ describe('QaViewer', () => {
     expect(button.getAttribute('data-plitzi-qa-finding')).toBe('names');
     expect(screen.getByText('a button with no name')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('switch', { name: /Nameless controls/ }));
+    fireEvent.click(screen.getByRole('switch', { name: /No accessible name/ }));
 
     expect(button.hasAttribute('data-plitzi-qa-finding')).toBe(false);
+  });
+
+  it('keeps the element clicked while inspecting, without the page’s own click happening', () => {
+    const pageClick = vi.fn();
+    render(
+      createElement(Harness, {
+        page: createElement(
+          'a',
+          { href: '#away', 'data-plitzi-el': 'lp-hero-start', 'data-type': 'link', onClick: pageClick },
+          'Start free'
+        )
+      })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inspect' }));
+    fireEvent.click(screen.getByText('Start free'));
+
+    expect(pageClick).not.toHaveBeenCalled();
+    expect(screen.getByText('link · lp-hero-start')).toBeTruthy();
+    expect(screen.getByText(/CSS that reaches it/)).toBeTruthy();
+  });
+
+  it('puts the inspector and the checks away when the panel is folded, and keeps the views', () => {
+    const view = render(createElement(Harness, { page: createElement('p', null, 'Hello') }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Inspect' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Grid' }));
+    fireEvent.click(screen.getByRole('switch', { name: /Low contrast/ }));
+    view.rerender(createElement(Harness, { page: createElement('p', null, 'Hello'), collapsed: true }));
+
+    expect(screen.getByRole('button', { name: 'Inspect' }).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('switch', { name: /Low contrast/ }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByRole('button', { name: 'Grid' }).getAttribute('aria-pressed')).toBe('true');
   });
 });

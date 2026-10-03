@@ -23,8 +23,8 @@ export type DevToolsOverlayProps = {
 
 // What the dev tools show at any moment: the floating badge while collapsed, the docked panel while open. The two are
 // mutually exclusive — the panel carries its own way back to the badge — so they share one prop list here instead of
-// being placed twice by every render mode of the container. The QA tools' layer is here too, under both: what a tester
-// turned on stays on with the panel folded away.
+// being placed twice by every render mode of the container. The QA tools' layer is here too, under both: the views a
+// tester turned on stay with the panel folded away; the inspector and the checks stop with it.
 const DevToolsOverlay = ({
   className,
   collapsed,
@@ -38,7 +38,7 @@ const DevToolsOverlay = ({
   pageRef
 }: DevToolsOverlayProps) => {
   return (
-    <QaProvider pageRef={pageRef}>
+    <QaProvider pageRef={pageRef} collapsed={collapsed}>
       <QaLayer />
       {collapsed && <DevToolsIndicator className={className} onOpen={onOpen} />}
       {!collapsed && (

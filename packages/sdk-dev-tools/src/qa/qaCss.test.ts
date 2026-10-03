@@ -15,7 +15,7 @@ describe('qaCss', () => {
       outlines: true,
       paused: true,
       vision: 'protanopia',
-      checks: { overflow: true, names: true, targets: false }
+      checks: { ...QA_DEFAULTS.checks, overflow: true, names: true }
     });
     const selectors = css.match(/^[^{}\n]+(?=\{)/gm) ?? [];
 

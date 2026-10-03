@@ -638,37 +638,65 @@
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/index.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/index.mjs"
     },
+    "./components/DevToolsPanel/tabs/QaViewer/QaAllChecksButton": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaAllChecksButton.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaAllChecksButton.mjs"
+    },
     "./components/DevToolsPanel/tabs/QaViewer/QaCheckRow": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaCheckRow.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaCheckRow.mjs"
+    },
+    "./components/DevToolsPanel/tabs/QaViewer/QaChecks": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaChecks.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaChecks.mjs"
+    },
+    "./components/DevToolsPanel/tabs/QaViewer/QaDivider": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaDivider.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaDivider.mjs"
     },
     "./components/DevToolsPanel/tabs/QaViewer/QaFindingItem": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaFindingItem.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaFindingItem.mjs"
     },
-    "./components/DevToolsPanel/tabs/QaViewer/QaGroup": {
-      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaGroup.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaGroup.mjs"
+    "./components/DevToolsPanel/tabs/QaViewer/QaInspectorDetails": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaInspectorDetails.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaInspectorDetails.mjs"
+    },
+    "./components/DevToolsPanel/tabs/QaViewer/QaInspectorEmpty": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaInspectorEmpty.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaInspectorEmpty.mjs"
+    },
+    "./components/DevToolsPanel/tabs/QaViewer/QaInspectorPanel": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaInspectorPanel.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaInspectorPanel.mjs"
+    },
+    "./components/DevToolsPanel/tabs/QaViewer/QaProperty": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaProperty.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaProperty.mjs"
     },
     "./components/DevToolsPanel/tabs/QaViewer/QaRescanButton": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaRescanButton.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaRescanButton.mjs"
     },
-    "./components/DevToolsPanel/tabs/QaViewer/QaSettingSwitch": {
-      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaSettingSwitch.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaSettingSwitch.mjs"
+    "./components/DevToolsPanel/tabs/QaViewer/QaRuleItem": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaRuleItem.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaRuleItem.mjs"
     },
-    "./components/DevToolsPanel/tabs/QaViewer/QaSwitch": {
-      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaSwitch.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaSwitch.mjs"
+    "./components/DevToolsPanel/tabs/QaViewer/QaToolChip": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaToolChip.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaToolChip.mjs"
+    },
+    "./components/DevToolsPanel/tabs/QaViewer/QaToolbar": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaToolbar.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaToolbar.mjs"
     },
     "./components/DevToolsPanel/tabs/QaViewer/QaViewer": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaViewer.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaViewer.mjs"
     },
-    "./components/DevToolsPanel/tabs/QaViewer/QaVisionPicker": {
-      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaVisionPicker.d.ts",
-      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaVisionPicker.mjs"
+    "./components/DevToolsPanel/tabs/QaViewer/QaVisionSelect": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaVisionSelect.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaVisionSelect.mjs"
     },
     "./components/DevToolsPanel/tabs/QaViewer/index": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/index.d.ts",
@@ -986,17 +1014,101 @@
       "types": "./dist/qa/QaContext.d.ts",
       "import": "./dist/qa/QaContext.mjs"
     },
-    "./qa/QaGrid": {
-      "types": "./dist/qa/QaGrid.d.ts",
-      "import": "./dist/qa/QaGrid.mjs"
-    },
     "./qa/QaLayer": {
       "types": "./dist/qa/QaLayer.d.ts",
       "import": "./dist/qa/QaLayer.mjs"
     },
-    "./qa/QaViewport": {
-      "types": "./dist/qa/QaViewport.d.ts",
-      "import": "./dist/qa/QaViewport.mjs"
+    "./qa/checks": {
+      "types": "./dist/qa/checks/index.d.ts",
+      "import": "./dist/qa/checks/index.mjs"
+    },
+    "./qa/checks/contrast": {
+      "types": "./dist/qa/checks/contrast.d.ts",
+      "import": "./dist/qa/checks/contrast.mjs"
+    },
+    "./qa/checks/dom": {
+      "types": "./dist/qa/checks/dom.d.ts",
+      "import": "./dist/qa/checks/dom.mjs"
+    },
+    "./qa/checks/headings": {
+      "types": "./dist/qa/checks/headings.d.ts",
+      "import": "./dist/qa/checks/headings.mjs"
+    },
+    "./qa/checks/images": {
+      "types": "./dist/qa/checks/images.d.ts",
+      "import": "./dist/qa/checks/images.mjs"
+    },
+    "./qa/checks/index": {
+      "types": "./dist/qa/checks/index.d.ts",
+      "import": "./dist/qa/checks/index.mjs"
+    },
+    "./qa/checks/names": {
+      "types": "./dist/qa/checks/names.d.ts",
+      "import": "./dist/qa/checks/names.mjs"
+    },
+    "./qa/checks/overflow": {
+      "types": "./dist/qa/checks/overflow.d.ts",
+      "import": "./dist/qa/checks/overflow.mjs"
+    },
+    "./qa/checks/targets": {
+      "types": "./dist/qa/checks/targets.d.ts",
+      "import": "./dist/qa/checks/targets.mjs"
+    },
+    "./qa/findings": {
+      "types": "./dist/qa/findings.d.ts",
+      "import": "./dist/qa/findings.mjs"
+    },
+    "./qa/inspect/colour": {
+      "types": "./dist/qa/inspect/colour.d.ts",
+      "import": "./dist/qa/inspect/colour.mjs"
+    },
+    "./qa/inspect/describe": {
+      "types": "./dist/qa/inspect/describe.d.ts",
+      "import": "./dist/qa/inspect/describe.mjs"
+    },
+    "./qa/inspect/measure": {
+      "types": "./dist/qa/inspect/measure.d.ts",
+      "import": "./dist/qa/inspect/measure.mjs"
+    },
+    "./qa/inspect/rules": {
+      "types": "./dist/qa/inspect/rules.d.ts",
+      "import": "./dist/qa/inspect/rules.mjs"
+    },
+    "./qa/overlays/QaBoxModel": {
+      "types": "./dist/qa/overlays/QaBoxModel.d.ts",
+      "import": "./dist/qa/overlays/QaBoxModel.mjs"
+    },
+    "./qa/overlays/QaContrastBadge": {
+      "types": "./dist/qa/overlays/QaContrastBadge.d.ts",
+      "import": "./dist/qa/overlays/QaContrastBadge.mjs"
+    },
+    "./qa/overlays/QaGrid": {
+      "types": "./dist/qa/overlays/QaGrid.d.ts",
+      "import": "./dist/qa/overlays/QaGrid.mjs"
+    },
+    "./qa/overlays/QaInspector": {
+      "types": "./dist/qa/overlays/QaInspector.d.ts",
+      "import": "./dist/qa/overlays/QaInspector.mjs"
+    },
+    "./qa/overlays/QaMeasure": {
+      "types": "./dist/qa/overlays/QaMeasure.d.ts",
+      "import": "./dist/qa/overlays/QaMeasure.mjs"
+    },
+    "./qa/overlays/QaSwatch": {
+      "types": "./dist/qa/overlays/QaSwatch.d.ts",
+      "import": "./dist/qa/overlays/QaSwatch.mjs"
+    },
+    "./qa/overlays/QaTabOrder": {
+      "types": "./dist/qa/overlays/QaTabOrder.d.ts",
+      "import": "./dist/qa/overlays/QaTabOrder.mjs"
+    },
+    "./qa/overlays/QaTooltip": {
+      "types": "./dist/qa/overlays/QaTooltip.d.ts",
+      "import": "./dist/qa/overlays/QaTooltip.mjs"
+    },
+    "./qa/overlays/QaViewport": {
+      "types": "./dist/qa/overlays/QaViewport.d.ts",
+      "import": "./dist/qa/overlays/QaViewport.mjs"
     },
     "./qa/qaCss": {
       "types": "./dist/qa/qaCss.d.ts",
@@ -1006,9 +1118,9 @@
       "types": "./dist/qa/qaSettings.d.ts",
       "import": "./dist/qa/qaSettings.mjs"
     },
-    "./qa/scans": {
-      "types": "./dist/qa/scans.d.ts",
-      "import": "./dist/qa/scans.mjs"
+    "./qa/tabOrder": {
+      "types": "./dist/qa/tabOrder.d.ts",
+      "import": "./dist/qa/tabOrder.mjs"
     },
     "./qa/usePageBox": {
       "types": "./dist/qa/usePageBox.d.ts",

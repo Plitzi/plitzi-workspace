@@ -1,3 +1,4 @@
+import { CHECKS } from './checks';
 import { QA_CHECKS, QA_FINDING_ATTRIBUTE, QA_PAGE_ATTRIBUTE } from './qaSettings';
 
 import type { QaCheck, QaSettings, VisionMode } from './qaSettings';
@@ -34,16 +35,16 @@ ${PAGE} ${NAMED}[data-plitzi-el]:hover::after {
   pointer-events: none;
 }`;
 
-const PAUSED = `${PAGE} *, ${PAGE} ::before, ${PAGE} ::after { animation-play-state: paused !important; }`;
+/** While inspecting, every element of the page answers the pointer as something to pick, not to use. */
+const INSPECTING = `${PAGE}, ${PAGE} * { cursor: crosshair !important; }`;
 
-/** A colour per check, outline and wash, so two findings on one element can still be told apart. */
-const CHECK_COLOUR: Record<QaCheck, string> = { overflow: '#f97316', names: '#e11d48', targets: '#d97706' };
+const PAUSED = `${PAGE} *, ${PAGE} ::before, ${PAGE} ::after { animation-play-state: paused !important; }`;
 
 const findings = (checks: QaCheck[]): string =>
   checks
     .map(
       check =>
-        `${PAGE} [${QA_FINDING_ATTRIBUTE}~="${check}"] { outline: 2px solid ${CHECK_COLOUR[check]} !important; outline-offset: 1px !important; box-shadow: 0 0 0 4px color-mix(in srgb, ${CHECK_COLOUR[check]} 22%, transparent) !important; }`
+        `${PAGE} [${QA_FINDING_ATTRIBUTE}~="${check}"] { outline: 2px solid ${CHECKS[check].colour} !important; outline-offset: 1px !important; box-shadow: 0 0 0 4px color-mix(in srgb, ${CHECKS[check].colour} 22%, transparent) !important; }`
     )
     .join('\n');
 
@@ -75,6 +76,7 @@ export const qaCss = (settings: QaSettings): string => {
   const checks = QA_CHECKS.filter(check => settings.checks[check]);
 
   return [
+    settings.inspect ? INSPECTING : '',
     settings.outlines ? OUTLINES : '',
     settings.paused ? PAUSED : '',
     settings.vision === 'none' ? '' : `${PAGE} { filter: ${VISION_FILTER[settings.vision]}; }`,
