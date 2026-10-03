@@ -26,7 +26,9 @@ row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item`
 - A **nested list** sees the outer row: inside `list_features`, `list_games.item` is still the game.
 - The list is a `<ul>` and its `class` styles that root; each child is rendered straight into it, with no wrapper.
   A card grid needs `{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` in its class.
-- Fixed data is `items: [ … ]` on the list itself — no provider needed.
+- Fixed data is `items: [ … ]` on the list itself — no provider needed. Worth it when the rows ARE data — written from
+  an array, or rows that come and go (`repeated-shape` points at sibling copies). Three cards a person rewords on the
+  canvas are easier to edit as three cards than as a JSON array.
 - Everything inside a row is `repeated` in the handles: a test addresses one copy with `.first()` / `.nth()`.
 - **A row is its item's by its `id`** when every item has a different one, else by its position: filtered or
   reordered, a row's state (an open detail, a field's text) follows its item. Items named by another field say so —

@@ -21,6 +21,7 @@ import * as interactionSteps from '../interactions/steps';
 import { authoringCodeEntry, AUTHORING_CODES } from '../schema/codes';
 import { BUILTIN_TRANSFORMERS } from '../transformers';
 
+import type { AuthoringCodeEntry } from '../schema/codes';
 import type { InteractionCallback, InteractionCallbackParam } from '@plitzi/sdk-shared';
 import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
 
@@ -82,7 +83,7 @@ export type Explanation =
       firedBy: string[] | 'every element';
       params: ParamInfo[];
     }
-  | { kind: 'code'; name: string; refused: boolean; means: string; fix: string }
+  | { kind: 'code'; name: string; codeKind: AuthoringCodeEntry['kind']; means: string; fix: string }
   | { kind: 'transformer'; name: string; title: string; description: string; params: ParamInfo[] };
 
 export type ExplainKind = Explanation['kind'];
@@ -286,9 +287,7 @@ export const explain = (name: string): Explanation[] => {
   const transformer = Object.hasOwn(BUILTIN_TRANSFORMERS, name) ? BUILTIN_TRANSFORMERS[name] : undefined;
 
   return [
-    ...(code
-      ? [{ kind: 'code' as const, name, refused: code.kind === 'refused', means: code.means, fix: code.fix }]
-      : []),
+    ...(code ? [{ kind: 'code' as const, name, codeKind: code.kind, means: code.means, fix: code.fix }] : []),
     ...(element ? [element] : []),
     ...(trigger ? [trigger] : []),
     ...explainSteps(name),
@@ -388,8 +387,9 @@ export const explanationText = (explanation: Explanation): string => {
       ].join('\n');
     case 'code':
       return [
-        `${explanation.name} — ${explanation.refused ? 'refused' : 'warned'}: ${explanation.means}.`,
-        `Write instead: ${explanation.fix}.`
+        `${explanation.name} — ${explanation.codeKind}: ${explanation.means}.`,
+        // A suggestion is not a mistake: what it names is written the long way, and this is the short one.
+        `${explanation.codeKind === 'suggested' ? 'The short way' : 'Write instead'}: ${explanation.fix}.`
       ].join('\n');
     case 'transformer':
       return [

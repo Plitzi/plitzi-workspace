@@ -105,6 +105,14 @@ real \`query\` for production. \`transformers: [{action, params}]\` post-process
 from \`plitzi://data-sources\`; \`twigTemplate\` formats it (the value is \`{{source}}\`, not \`{{value}}\`). \`when\` is
 a QueryBuilder RuleGroup gating the binding.
 
+**Fewer elements, same page:** a \`link\` or \`button\` says its words itself — \`content\` (a link puts them
+\`before\`/\`after\` its children with \`contentPlacement\`), never a lone \`text\` child, which also ignores the box's
+colour and hover. Chrome on several pages is a **layout**; the nav item of the page being shown is marked by the
+\`current\` state of its class, not by a copy of the header per page. Sibling rows of data are one \`repeatElement\`; a
+block repeated with other words is a **component** (\`upsertComponent { fromRef }\`). \`plitzi_validate\` and
+\`plitzi_apply\` answer with **\`suggestions\`** for what the batch could have written shorter, each with the elements
+it saves — never blocking; take them unless the copies are about to diverge.
+
 **Interactions** (\`upsertInteractionFlow\`): a \`trigger\` node first, then callbacks/utilities **in order** (links
 computed for you). Node types: \`callback\` (an element's own callback — \`elementId\` is that element), \`globalCallback\`
 (a source module — omit \`elementId\`, the MCP sets it), \`utility\` (no element). Element \`setState\`
@@ -127,7 +135,8 @@ flow — list page, detail page, paging, writes — in \`plitzi://guide\`.
 **Pages & navigation:** \`upsertPage\` — always set a **relative** \`slug\` (no leading \`/\`; the runtime and folder
 slugs prepend the path). A \`:name\` segment (\`"posts/:postId"\`) is a route param, readable as \`{{name}}\` and as the
 source \`navigation.routeParams.name\` → build dynamic pages this way. To move between pages **prefer the \`Link\`
-element** (a container: \`mode\` "page"/"internal"/"external") over a \`navigate\` interaction.
+element** (\`mode\` "page"/"internal"/"external"; its words are its \`content\`, and it can wrap any children too) over
+a \`navigate\` interaction.
 
 **Feature flags:** what a person switches on (a beta, a rollout) is \`upsertFlag\` plus \`flag: "x"\` / \`"!x"\` on the
 element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`.
@@ -259,10 +268,10 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
 
 ## Tools
 - \`plitzi_validate\` — check a batch, returns teachable errors/warnings. Writes nothing. Also reports **pre-existing
-  malformations** in any resource the batch touches (see below).
+  malformations** in any resource the batch touches (see below), and \`suggestions\` (see *Suggestions*).
 - \`plitzi_apply\` — validate → apply → persist atomically. Rejects the whole batch on any error or conflict. Pass
   \`dryRun: true\` to apply in memory only and get the same result back (changed versions + full element detail)
-  without persisting — inspect it, then re-run without \`dryRun\` to commit.
+  without persisting — inspect it, then re-run without \`dryRun\` to commit. Its answer carries \`suggestions\` too.
 - \`plitzi_search\` — find elements (and pages/definitions) across the space.
 - \`plitzi_read\` — read many resource **uris in one batch** (pages, elements, definitions, variables). Pass the
   ready-made uris from search / a write response; each result is \`{ uri, stateVersion, data }\` or a teachable error,
@@ -274,6 +283,22 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   names, with every control and picture that has no name listed in \`unnamed\` — as text, far cheaper than an image
   (\`"both"\` returns both). Both need the SSR render service; where it is missing they answer \`PREVIEW_UNAVAILABLE\`.
 - \`plitzi_render\` — a different job: show the user a self-contained widget built offline. It never touches the space.
+
+## Suggestions — the same page with fewer elements
+\`plitzi_validate\` and \`plitzi_apply\` answer with \`suggestions\`: lines like \`[content-attribute] … (saves 4
+elements)\`, each naming a shorter way to what the batch just wrote. Only what THIS batch opened up is said — what the
+space already had is not repeated on every batch — and none of them blocks anything: the page renders as written.
+- \`repeated-on-pages\` — the same block at the edge of several pages: put it in a **layout** once (a block only some
+  pages of a layout carry is a **component** instead). Copies differing only in one link's class are the nav item of the
+  page being shown: the \`current\` state marks it (see *Pages & folders*).
+- \`repeated-shape\` — one structure written again with other words: a **component** with props
+  (\`upsertComponent { fromRef }\` turns one copy into it), or, for sibling rows of data, one \`repeatElement\`/\`list\`.
+  A few cards a person rewords by hand can stay cards.
+- \`content-attribute\` — a \`button\` or \`link\` whose only child is a \`text\`: its words are its own \`content\`. What
+  the text's class adds (\`white-space: nowrap\`) moves to the box's class — never the class itself.
+- \`custom-css-class\`, \`custom-css-sdk-default\`, \`custom-css-notifications\` — \`customCss\` that a class's
+  \`states\`/\`ancestors\`, the SDK (reduced motion, the theme toggle's icons) or the space's notification look says.
+\`plitzi://explain/<code>\` explains each. Take one unless the copies are about to diverge.
 
 ## Readers: resources vs plitzi_search vs plitzi_read (do not confuse them)
 Three ways to read, each for a different moment — pick by what you have in hand:
@@ -815,6 +840,9 @@ vocabulary:
 - \`deleteLayout\` removes a shell and everything in it, and is **refused while any page still renders inside it**
   (the refusal names them). Destructive: what it deletes is on every page that uses it, so confirm first.
 
+**Only some pages?** A block that only some of a layout's pages carry (a newsletter band on two of ten) is not
+chrome: make it a **component** and place it on those pages.
+
 **Where does this element belong?** If the user asks for something "on every page" — a nav item, a banner, a footer
 link, an upgrade prompt in the sidebar — it belongs in the LAYOUT, not in the page you happen to have open. Check
 the page's \`layout\` first; if the element you are looking for is not in the page's own tree, it is in the shell.
@@ -886,6 +914,13 @@ the component does not have is reported by \`plitzi_validate\` — fix it before
   \`"external"\` is a full URL. \`target\` is \`self\`/\`blank\`/\`parent\`/\`top\`. Reach for the \`navigate\` globalCallback
   only when navigation must be **one step inside a larger interaction flow** (e.g. save, then go) — for a plain link,
   use \`link\`.
+- **A link's words are its \`content\`** — \`{ "type": "link", "props": { "mode": "page", "href": "pricing", "content":
+  "Pricing" } }\`. With children too (an icon), \`contentPlacement\` puts the words \`before\` or \`after\` them. A
+  \`text\` inside a link is one element more, and it keeps a colour of its own instead of the link's (and its hover).
+- **The link to the page being shown marks itself**: it carries \`aria-current="page"\`, and its class's \`current\`
+  state says how it looks — \`{ "type": "patchDefinition", "ref": "nav-link", "states": { "current": { "desktop": {
+  "color": "var(--primary)" } } } }\`. So a header written once in a layout lights the right item on every page; never
+  copy the header per page to style one item.
 - **A section of a page** is an element with an \`anchor\` (its \`id\` in the DOM: lowercase, digits, \`-\`; one per
   page, layouts included; not inside a list row or a component). A link lands on it with \`hash\`:
   \`{ "mode": "page", "href": "home", "hash": "plans" }\` goes to \`/#plans\` and scrolls there, from any page.

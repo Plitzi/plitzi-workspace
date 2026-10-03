@@ -84,7 +84,10 @@ calls as a small one:
    own resource instead of its contents.
 2. **`plitzi_search`** — finds elements by label, type or attribute, and each hit already carries what an edit needs
    (its URI, its version, and with `include: "detail"` its props and resolved CSS).
-3. **`plitzi_validate`** or **`plitzi_apply` with `dryRun`** — checks a batch without saving.
+3. **`plitzi_validate`** or **`plitzi_apply` with `dryRun`** — checks a batch without saving, and answers with
+   **suggestions**: a shorter way to what the batch wrote — a header copied onto a third page that a layout would
+   hold once, a `text` inside a button that is the button's own `content` — each with the elements it saves. Only what
+   the batch opened up is said, and none of them blocks the save.
 4. **`plitzi_screenshot`** — renders the page with the unsaved batch applied, desktop and mobile. With
    `view: "accessibility"` it reads the page as a screen reader and a browser agent do instead, and lists every
    control and picture with no name.
@@ -94,8 +97,8 @@ calls as a small one:
 |---|---|
 | `plitzi_search` | Find elements, pages and style classes; returns the names every edit takes |
 | `plitzi_read` | Read several resources at once by URI |
-| `plitzi_validate` | Check a batch of operations without saving |
-| `plitzi_apply` | Apply and save a batch — all of it or none of it |
+| `plitzi_validate` | Check a batch of operations without saving: errors, warnings and suggestions |
+| `plitzi_apply` | Apply and save a batch — all of it or none of it; answers with the batch's suggestions too |
 | `plitzi_preview` | Render a page to HTML, optionally with an unsaved batch |
 | `plitzi_screenshot` | Render a page to an image, or to its accessibility tree (`view: "accessibility"`), optionally with an unsaved batch |
 | `plitzi_render` | Show the user an offline widget; never touches the space |
@@ -147,9 +150,11 @@ so a new operation or resource is not finished until the guide explains it.
 
 - **Quality beyond validity.** The linter guarantees a space is well-formed and wired, and warns about what makes a
   page unusable without sight: controls with no name, pictures with no `alt`, clicks on things that are not
-  controls, headings that skip a level ([Accessibility](./accessibility.md)). It does not judge the rest. Contrast,
-  focus order and hardcoded values where a design token exists are not checked, so "make this page better" still
-  rests on the agent's judgement, the screenshot and the accessibility view.
+  controls, headings that skip a level ([Accessibility](./accessibility.md)). The suggestions judge one thing more —
+  economy: the same page written with fewer elements (layouts, components, lists, an element's own `content`, a
+  class's states instead of `customCss`). The rest is not judged. Contrast, focus order and hardcoded values where a
+  design token exists are not checked, so "make this page better" still rests on the agent's judgement, the
+  screenshot and the accessibility view.
 - **Intent.** Nothing tells the agent what a page is *for* — its audience or goal — beyond what the user says in the
   conversation.
 - **Evals.** There is no golden corpus of spaces and edits that measures whether an agent's change improves a page

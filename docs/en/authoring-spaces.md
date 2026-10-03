@@ -109,8 +109,10 @@ resolves the chain from the outside in. `folder` files a layout under a page fol
 Ids are one namespace for the layout and every page that names it — a helper that builds an element per page
 prefixes its ids with the page (`` `${pageId}-foot` ``), and authoring names both places when two elements collide.
 
-**A menu in a layout marks the current page with `activeOn`.** The menu is the same nodes on every page, so its
-current entry cannot be styled by hand: `activeOn(navLink, ['spaces', 'space-record'])` binds the class's `active`
+**A menu in a layout marks the current page by itself.** The menu is the same nodes on every page, and the link to
+the page being shown carries `aria-current="page"`: its class's `current` state says how it looks
+(`states: { current: { color: 'var(--foreground)' } }`), with no binding at all. An entry lit on several pages — a
+section with pages of its own — is `activeOn(navLink, ['spaces', 'space-record'])`, which binds the class's `active`
 variant to `navigation.currentPageId` for those pages and `idle` for every other. The entries themselves are data —
 one list of pages (id, slug, title, summary, order) that the menu, the page titles, the meta descriptions and the
 "previous / next" links all read — and the pages that share a shape come from one function that takes that entry
@@ -178,6 +180,11 @@ Two shorthands, for the two things a page is mostly made of:
 text('Wildlife, close up');            // a string is the content
 container([hero, grid]);               // an array is the children
 ```
+
+A `button` and a `link` say their words themselves — `link({ href: 'pricing', content: 'Pricing' })` — and hold
+children too (an icon), with the words `after` them or `before` (`contentPlacement`). A `text` inside instead is an
+element more, with a colour of its own that ignores the link's colour and hover (`content-attribute` suggests the
+move).
 
 ### Elements this SDK does not ship
 
@@ -287,8 +294,10 @@ container({ css: { color: 'var(--muted)' }, states: { hover: { color: 'var(--for
 ```
 
 `states` takes the states the editor has tabs for — `hover`, `focus`, `focus-visible`, `focus-within`, `active`,
-`disabled`, `checked`, `visited`, `current` and `hidden` — and each one, like `css`, may be written per breakpoint. An element's own `states` sit beside its own `css`, and are
-refused next to a shared `class` for the same reason `css` is. An element type's defaults (`elements`) take the same
+`disabled`, `checked`, `visited`, `current` and `hidden` — and each one, like `css`, may be written per breakpoint.
+Once a style has `states`, `variants` or `ancestors`, its own rules go under `css` beside them: rules written next to
+`states` are refused (`rule-set-mixed`) rather than read as something else. An element's own `states` sit beside its
+own `css`, and are refused next to a shared `class` for the same reason `css` is. An element type's defaults (`elements`) take the same
 `states` and `variants`, and `slots` for the type's other selectors — a modal's `rootContainer`, a form control's
 `input` — so every element of the type is dressed at once.
 

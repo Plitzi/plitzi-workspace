@@ -196,12 +196,12 @@ Nothing is wrong: the page renders as written. Each is a shorter way to the same
 
 | Code | Written the long way | The short way |
 | --- | --- | --- |
-| `content-attribute` | a button or a link whose only child is a text, which is an element more than it needs | the words as its own `content` (`button({ content: 'Save' })`, `link({ href, content: 'Pricing' })`), the text's class on it |
+| `content-attribute` | a button or a link whose only child is a text, which is an element more than it needs | the words as its own `content` (`button({ content: 'Save' })`, `link({ href, content: 'Pricing' })`); what the text's class adds moves to the box's class, never the class itself |
 | `custom-css-class` | a `customCss` rule a class can hold — `.card:hover`, `.panel .icon` | the class's own `states` or `ancestors`, where the style editor reads it back and a breakpoint can change it |
 | `custom-css-notifications` | the toasts dressed with `.Toastify__toast` rules in `customCss` | `notifications: { font, fontSize, border, shadow, padding, background, text, radius }` |
 | `custom-css-sdk-default` | `customCss` repeating what the SDK already does for every space — less motion when asked, the theme toggle showing one icon | nothing: remove it |
-| `repeated-on-pages` | the same block — a header, a footer, a side panel — written into several pages | a layout holding it once (`layouts`, and `layout: { id, slot }` on each page); a link marks its own page with the `current` state |
-| `repeated-shape` | the same structure written again and again with different words — cards, rows, tiles | a component with props (`components`, `component(id, { props })`), or one `list` over the data when they sit side by side |
+| `repeated-on-pages` | the same block — a header, a footer, a side panel — written into several pages | a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it; a link marks its own page with the `current` state |
+| `repeated-shape` | the same structure written again and again with different words — cards, rows, tiles | a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards |
 
 ## UPPER_CASE codes
 

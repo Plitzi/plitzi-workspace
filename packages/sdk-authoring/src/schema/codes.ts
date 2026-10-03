@@ -848,17 +848,17 @@ export const AUTHORING_CODES = {
   'repeated-on-pages': {
     kind: 'suggested',
     means: 'the same block — a header, a footer, a side panel — written into several pages',
-    fix: 'a layout holding it once (`layouts`, and `layout: { id, slot }` on each page); a link marks its own page with the `current` state'
+    fix: 'a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it; a link marks its own page with the `current` state'
   },
   'repeated-shape': {
     kind: 'suggested',
     means: 'the same structure written again and again with different words — cards, rows, tiles',
-    fix: 'a component with props (`components`, `component(id, { props })`), or one `list` over the data when they sit side by side'
+    fix: 'a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards'
   },
   'content-attribute': {
     kind: 'suggested',
     means: 'a button or a link whose only child is a text, which is an element more than it needs',
-    fix: "the words as its own `content` (`button({ content: 'Save' })`, `link({ href, content: 'Pricing' })`), the text's class on it"
+    fix: "the words as its own `content` (`button({ content: 'Save' })`, `link({ href, content: 'Pricing' })`); what the text's class adds moves to the box's class, never the class itself"
   },
   'custom-css-class': {
     kind: 'suggested',

@@ -6,6 +6,8 @@ of it; each line is something that has shipped broken before.
 ## It renders, and says so
 
 - [ ] `authorSpace` returns **zero warnings**. Each one is written code that will not do what it says.
+- [ ] Every **suggestion** is taken, or left for a reason you can say (the copies are about to diverge; three cards a
+      person rewords on the canvas). The ones your change opened up first — [efficiency.md](efficiency.md).
 - [ ] No console errors on any page you touched.
 
 ## Nothing flashes, nothing jumps

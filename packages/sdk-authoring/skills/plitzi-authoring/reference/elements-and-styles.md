@@ -38,6 +38,11 @@ reads).
 that opens another tab (`target: 'blank'`) gets `rel="noopener noreferrer"`. A link is an `<a>`: never put a link inside
 another link — make the card the link, or the button, not both.
 
+**A link's words are its `content`**, as a button's (`link({ href: 'pricing', content: 'Pricing' })`), `after` its
+children or `before` (`contentPlacement`) — never a `text` inside, which keeps a colour of its own over the link's. The
+link to the page being shown is `aria-current="page"`; its class's `current` state styles it, so one header in a
+layout lights the right item everywhere.
+
 **An element's `id` is not its HTML id.** It reaches the DOM as `data-id`. For a section a URL can land on, give it
 an `anchor` (`anchor: 'plans'` → `id="plans"`: lowercase, digits, `-`) and link to it with `hash`:
 `link({ href: 'home', hash: 'plans' })` goes to `/#plans` and scrolls there, waiting for a section that renders once

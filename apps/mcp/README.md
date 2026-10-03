@@ -91,8 +91,8 @@ resolves with `canWrite: false` reads everything and is refused at every write t
 |---|---|---|
 | `plitzi_search` | read | Find elements, pages, styles and bindings; returns ready-made URIs |
 | `plitzi_read` | read | Read one or more resources in detail by URI |
-| `plitzi_validate` | read | Dry-run a batch of operations and report what would fail |
-| `plitzi_apply` | write | Apply a batch of operations and persist |
+| `plitzi_validate` | read | Dry-run a batch of operations: what would fail, what is warned, and suggestions for a shorter way to the same page |
+| `plitzi_apply` | write | Apply a batch of operations and persist; answers with the batch's suggestions too |
 | `plitzi_preview` | read | Render a draft to HTML through an SSR server |
 | `plitzi_screenshot` | read | Render a draft to a PNG (desktop, mobile or both) through the screenshot service |
 | `plitzi_render` | read | Render a self-contained UI widget, offline, with no space |

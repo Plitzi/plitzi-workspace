@@ -119,7 +119,12 @@ when an install fails the CLI says which setting names it.
   file that authors with no warning. `.claude` is left out of the project's lint and formatting.
 - **`AGENTS.md`**: the commands, the port, where data goes, how to look at a page, and what not to read.
 - **Quiet output.** `author` prints one line when the space is fine (every problem with its code when it is not), the
-  server only what goes wrong (`npm start -- --verbose` for every request), `typecheck` one line per error.
+  server only what goes wrong (`npm start -- --verbose` for every request), `typecheck` one line per error. Under the
+  warnings, `author` prints the space's **suggestions**
+  (`[suggest] repeated-on-pages · … (saves 57) · src/pages/docs.ts:291`): a shorter way to the same page — a layout
+  for a header on every page, a component for a card copied with other words, a link's own `content` — the ones that
+  save the most first. Not problems: the space authors either way. `npm run author -- --json` carries them in
+  `suggestions`.
 
 ## `create --template blank` and `--template catalog`
 
@@ -194,6 +199,7 @@ plitzi explain container        # an element: its attributes and their values, w
 plitzi explain navigate         # a step: its params and the function that writes it
 plitzi explain onScroll         # a trigger: what it hands its flow, and what fires it
 plitzi explain class-and-css    # a problem's code: what was wrong, what to write instead
+plitzi explain content-attribute # a suggestion's code: what is written the long way, and the short one
 plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers
 ```
 

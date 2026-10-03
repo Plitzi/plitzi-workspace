@@ -524,3 +524,8 @@ link with only a label no longer needs a `text` inside it.
 A style that writes its rules beside `states`, `variants` or `ancestors` — `{ desktop: { … }, ancestors: { … } }` — is
 refused with what to write (`rule-set-mixed`: the rules go under `css`), instead of reporting `desktop: [object Object]`
 as a CSS value it could not read.
+
+`plitzi explain` and `plitzi://explain` name a suggestion's code `suggested`, with its short way, instead of calling it
+`warned`. The MCP server's guide teaches the short way first — a link's own `content`, the `current` state for the link
+to the page being shown, a component for a block only some pages of a layout carry — and how to read the
+`suggestions` `plitzi_validate` and `plitzi_apply` answer with.

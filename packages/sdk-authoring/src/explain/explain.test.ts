@@ -46,6 +46,9 @@ describe('explain', () => {
 
   it('says what a problem’s code means and what to write instead', () => {
     expect(explanationText(explain('class-and-css')[0])).toMatch(/^class-and-css — refused: .*\nWrite instead: /);
+    expect(explanationText(explain('content-attribute')[0])).toMatch(
+      /^content-attribute — suggested: .*\nThe short way: /
+    );
   });
 
   it('says nothing about a name that is nothing', () => {
