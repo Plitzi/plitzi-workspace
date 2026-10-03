@@ -22,19 +22,19 @@
   "sideEffects": false,
   "dependencies": {
     "@plitzi/sdk-authoring": "workspace:*",
-    "chalk": "^6.0.0",
+    "chalk": "^6.0.1",
     "commander": "^15.0.0",
     "esbuild": "^0.28.2",
     "fflate": "^0.8.3"
   },
   "devDependencies": {
     "@plitzi/sdk-shared": "workspace:*",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.4",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
     "typescript": "^6.0.3",
-    "vite": "^8.3.1",
-    "vitest": "^5.0.1"
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
   },
   "scripts": {
     "build:dev": "vite build --mode development",

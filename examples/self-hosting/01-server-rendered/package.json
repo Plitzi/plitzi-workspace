@@ -20,7 +20,7 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@plitzi/sdk-authoring": "workspace:*",
-    "@types/node": "^26.6.2",
+    "@types/node": "^26.6.4",
     "typescript": "^6.0.3"
   },
   "engines": {

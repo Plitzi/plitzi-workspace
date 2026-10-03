@@ -33,17 +33,17 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
-    "@types/mailparser": "^3.4.6",
+    "@types/mailparser": "^3.9.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/smtp-server": "^3.5.13",
     "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9.39.5",
-    "mailparser": "^3.9.28",
-    "smtp-server": "^3.19.13",
+    "mailparser": "^3.9.34",
+    "smtp-server": "^3.19.17",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vite": "^8.3.1"
+    "vite": "^8.3.2"
   }
 }

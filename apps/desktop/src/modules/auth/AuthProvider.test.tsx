@@ -43,41 +43,62 @@ const clientAnswering = (status: number): ApiClient =>
     )
   }) as unknown as ApiClient;
 
+/**
+ * How long the whole window may take to settle. It renders the sidebar as a space, through the SDK, and the SDK brings
+ * its elements in by dynamic import: the first render on a cold CI runner waits seconds for Vite to transform them,
+ * where a warm machine takes a fifth of one — far past Testing Library's default second.
+ */
+const SETTLED = { timeout: 10_000 };
+
+const TEST_TIMEOUT = 20_000;
+
 beforeEach(() => {
   sessionStorage.clear();
 });
 
 describe('a window whose session the server refuses', () => {
-  it('signs itself out and says so, instead of retrying an error forever', async () => {
-    sessionStorage.setItem(SESSION_KEY, serializeSession(stored()));
+  it(
+    'signs itself out and says so, instead of retrying an error forever',
+    async () => {
+      sessionStorage.setItem(SESSION_KEY, serializeSession(stored()));
 
-    render(<App api={clientAnswering(401)} />);
+      render(<App api={clientAnswering(401)} />);
 
-    // Back at the way in, with the reason on screen: arriving here mid-task otherwise reads as the app losing its
-    // place, and "sign in again" is only an instruction if somebody is told they were signed out.
-    expect(await screen.findByText(/session ended/iu)).toBeTruthy();
-    await waitFor(() => expect(screen.getByRole('button', { name: /sign in/iu })).toBeTruthy());
-    // And the credential is gone from storage, so a relaunch does not repeat the whole thing.
-    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
-  });
+      // Back at the way in, with the reason on screen: arriving here mid-task otherwise reads as the app losing its
+      // place, and "sign in again" is only an instruction if somebody is told they were signed out.
+      expect(await screen.findByText(/session ended/iu, {}, SETTLED)).toBeTruthy();
+      await waitFor(() => expect(screen.getByRole('button', { name: /sign in/iu })).toBeTruthy(), SETTLED);
+      // And the credential is gone from storage, so a relaunch does not repeat the whole thing.
+      expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
+    },
+    TEST_TIMEOUT
+  );
 
-  it('leaves a working session alone, and says nothing about it', async () => {
-    sessionStorage.setItem(SESSION_KEY, serializeSession(stored()));
+  it(
+    'leaves a working session alone, and says nothing about it',
+    async () => {
+      sessionStorage.setItem(SESSION_KEY, serializeSession(stored()));
 
-    render(<App api={clientAnswering(200)} />);
+      render(<App api={clientAnswering(200)} />);
 
-    await waitFor(() => expect(sessionStorage.getItem(SESSION_KEY)).not.toBeNull());
-    expect(screen.queryByText(/session ended/iu)).toBeNull();
-  });
+      await waitFor(() => expect(sessionStorage.getItem(SESSION_KEY)).not.toBeNull(), SETTLED);
+      expect(screen.queryByText(/session ended/iu)).toBeNull();
+    },
+    TEST_TIMEOUT
+  );
 
   /**
    * A session that was never there is not a session that ended, and the difference is what the screen says: somebody
    * opening the app for the first time is not told they were signed out of something.
    */
-  it('says nothing to somebody who was never signed in', async () => {
-    render(<App api={clientAnswering(401)} />);
+  it(
+    'says nothing to somebody who was never signed in',
+    async () => {
+      render(<App api={clientAnswering(401)} />);
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /sign in/iu })).toBeTruthy());
-    expect(screen.queryByText(/session ended/iu)).toBeNull();
-  });
+      await waitFor(() => expect(screen.getByRole('button', { name: /sign in/iu })).toBeTruthy(), SETTLED);
+      expect(screen.queryByText(/session ended/iu)).toBeNull();
+    },
+    TEST_TIMEOUT
+  );
 });
