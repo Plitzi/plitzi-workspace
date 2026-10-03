@@ -65,6 +65,20 @@ yarn e2e tests/server/rsc            # one part of it, by path
 yarn e2e --project=server tests/server/auth
 ```
 
+**Every server starts at once.** Playwright starts a `webServer` list one entry after another, so the first spec
+used to wait for the sum of every boot — fifty seconds for twenty-six servers. The config gives it one instead,
+`launch.ts`, which starts the selected servers together and says it is ready once all of them listen: the wait is
+the slowest boot alone. Each server's stdout is dropped unless `E2E_SERVER_LOGS=1`; its stderr is kept, prefixed
+with its id.
+
+**A port already taken is reused only when it is this repository's.** A server left running from an earlier run, or
+your own dev server, is used as it is. One running from another folder is refused before any spec runs, with its
+folder and pid — it used to be tested as if it were the app, and failed every spec of it on a timeout with a
+screenshot of somebody else's site. On CI every port must be free.
+
+**The long chain goes first.** `examples` holds the one serial spec — replicas sharing a queue, waiting out a cron
+minute and a lease — so it is listed first and the rest runs beside it, rather than after everything else.
+
 **`cross` is the one that earns its keep.** Most of what breaks in this repo breaks *between* two apps: the client
 and server render paths disagreeing, a token minted by one package that another will not accept. Those failures
 are invisible to every category above it.
@@ -296,7 +310,7 @@ test.use({ mockSpace: minimalSpace({ heading: 'just this' }) });
 `.github/workflows/ci.yml` runs the suite on every push, after `lint`, on the same `node_modules` and `dist`
 caches — the examples render built output, so an e2e run on an unbuilt tree tests nothing.
 
-Nothing is provisioned for it: **no database, no hosts file, no certificates**. Playwright starts every server
+Nothing is provisioned for it: **no database, no hosts file, no certificates**. The suite starts every server
 itself, and the targets that would need those are gated off and skip with an explanation instead of failing. The
 HTML report is uploaded on every run and the screenshots on failure, so a red build can be stepped through
 locally with the trace of what broke.

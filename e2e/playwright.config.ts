@@ -4,10 +4,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 import { backendSummary } from './backend';
 import { categories } from './categories';
+import { LAUNCH_TARGETS_ENV, LAUNCHER_PORT } from './launchConfig';
 import { selectedTargets } from './targets';
 import { WARM_UP_ENV } from './warmUp';
-
-import type { Target } from './targets';
 
 const WARM_UP = 'warm-up';
 
@@ -27,27 +26,6 @@ const isCI = !!process.env.CI;
  *  compare against, so a stable path matters more than a clean one. */
 const artifacts = './.artifacts';
 
-/** Every server here logs a line per request — an access log, a run per action — and Playwright prefixes and
- *  reprints all of it as `[WebServer] …`. During a suite that is pure noise: one page load is a dozen lines that
- *  say only that the thing under test did what the assertion is about to check anyway.
- *
- *  So stdout is dropped and stderr is kept: the servers write failures with `console.error` (see `consoleLogger`),
- *  and a server that dies on boot says so there too. `E2E_SERVER_LOGS=1` puts the chatter back for the case where
- *  the question IS what a server did. */
-const showServerLogs = !!process.env.E2E_SERVER_LOGS;
-
-/** Readiness is the open port, not a successful GET. An MCP server answers JSON-RPC and nothing else — `GET /` is
- *  a 405 there by design, which Playwright's URL probe never accepts and would sit retrying until it times out. A
- *  listening socket means the same thing for all of them and misreads none. */
-const toWebServer = (target: Target) => ({
-  command: target.command ?? `yarn workspace ${target.workspace} start`,
-  port: Number(new URL(target.origin).port),
-  reuseExistingServer: !isCI,
-  timeout: 180_000,
-  stdout: showServerLogs ? ('pipe' as const) : ('ignore' as const),
-  stderr: 'pipe' as const
-});
-
 const servers = selectedTargets();
 
 /** Handed to the setup project through the environment, because it runs in a worker: `--project` lives on the
@@ -66,6 +44,15 @@ if (process.env.TEST_WORKER_INDEX === undefined) {
   console.log(`[e2e] ${backendSummary()}`);
   console.log(`[e2e] starting ${servers.length} server(s): ${servers.map(server => server.id).join(', ')}`);
 }
+
+/** Playwright hands work out in the order the projects are listed, and `examples` holds the one long serial chain —
+ *  replicas sharing a queue, waiting out a cron minute and a lease, the better part of a minute on one worker. Listed
+ *  last, it began when everything else was done and the run waited for it alone; listed first, the rest runs beside
+ *  it. */
+const firstLongest = (all: typeof categories): typeof categories => [
+  ...all.filter(category => category.name === 'examples'),
+  ...all.filter(category => category.name !== 'examples')
+];
 
 export default defineConfig({
   // No top-level `testDir`: every project declares its own, and a parent that also claims the whole tree makes
@@ -99,7 +86,7 @@ export default defineConfig({
   // cwd by UI mode, and the two are not the same place.
   projects: [
     { name: WARM_UP, testDir: import.meta.dirname, testMatch: /warmUp\.setup\.ts$/ },
-    ...categories.map(category => ({
+    ...firstLongest(categories).map(category => ({
       name: category.name,
       testDir: path.resolve(import.meta.dirname, 'tests', category.name),
       /** Every category waits for the warm-up, so it runs in UI mode too — the runner that most needed it, and
@@ -107,5 +94,25 @@ export default defineConfig({
       dependencies: [WARM_UP]
     }))
   ],
-  webServer: servers.map(toWebServer)
+  /** One process that starts every selected server at once — see `launch.ts`. Each server's stdout (a line per
+   *  request) is dropped unless `E2E_SERVER_LOGS=1`; stderr, where they report failures, is kept. SIGTERM, not
+   *  Playwright's default SIGKILL, so the launcher can take the servers it started down with it. */
+  webServer: servers.length
+    ? {
+        command: 'node --import tsx launch.ts',
+        cwd: import.meta.dirname,
+        port: LAUNCHER_PORT,
+        env: {
+          ...Object.fromEntries(
+            Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined)
+          ),
+          [LAUNCH_TARGETS_ENV]: servers.map(server => server.id).join(',')
+        },
+        reuseExistingServer: false,
+        timeout: 200_000,
+        stdout: 'pipe',
+        stderr: 'pipe',
+        gracefulShutdown: { signal: 'SIGTERM', timeout: 10_000 }
+      }
+    : undefined
 });

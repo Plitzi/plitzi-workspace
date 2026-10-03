@@ -44,11 +44,25 @@ const freePort = (): Promise<number> =>
  * `node --import tsx` is that script's own command, run directly so the pid this spec kills is the server's — not a
  * package manager's that would outlive it.
  */
+/** The replicas' lease and run timeout, shortened from the example's ten and thirty seconds: the specs below wait out
+ *  both, and what they prove is the order of events, not the demo's pace. Work that must outlast a lease is a second
+ *  longer than one. */
+const LEASE_MS = 3_000;
+const RUN_TIMEOUT_MS = 10_000;
+const OUTLASTS_LEASE_SECONDS = LEASE_MS / 1000 + 1;
+
 const boot = async (name: string, queueFile: string): Promise<Replica> => {
   const port = await freePort();
   const child = spawn(process.execPath, ['--disable-warning=ExperimentalWarning', '--import', 'tsx', 'src/main.ts'], {
     cwd: EXAMPLE_DIR,
-    env: { ...process.env, PORT: String(port), QUEUE_DB: queueFile, REPLICA: name },
+    env: {
+      ...process.env,
+      PORT: String(port),
+      QUEUE_DB: queueFile,
+      REPLICA: name,
+      LEASE_MS: String(LEASE_MS),
+      RUN_TIMEOUT_MS: String(RUN_TIMEOUT_MS)
+    },
     stdio: 'pipe'
   });
 
@@ -193,8 +207,8 @@ describeTarget('server-actions-schedules', () => {
     /**
      * A deploy: `^C` (SIGTERM) on the replica running an export, and a new replica in its place.
      *
-     * Twelve seconds of work against a ten-second lease: a replica that stopped renewing its claim while it waited
-     * would see the other one take the export over and run it a second time.
+     * Work that outlasts the lease: a replica that stopped renewing its claim while it waited would see the other one
+     * take the export over and run it a second time.
      */
     test('a replica told to stop finishes its job first, and leaves the rest to the one staying', async ({
       request
@@ -202,7 +216,7 @@ describeTarget('server-actions-schedules', () => {
       test.setTimeout(60_000);
       const [a] = replicas;
 
-      const { body } = await callAction(request, a.origin, 'start-export', { seconds: 12 });
+      const { body } = await callAction(request, a.origin, 'start-export', { seconds: OUTLASTS_LEASE_SECONDS });
       const jobId = body.output.jobId;
       await expect
         .poll(async () => (await boardJob(request, a.origin, jobId))?.status, { timeout: 15_000 })
@@ -240,15 +254,15 @@ describeTarget('server-actions-schedules', () => {
     });
 
     test('a replica killed mid-job leaves it to the other one', async ({ request }) => {
-      // A ten-second lease, then the dead replica's single-flight key — the run timeout, thirty seconds here — before
-      // the survivor may run it: see the README.
+      // The lease, then the dead replica's single-flight key — held for the run timeout — before the survivor may run
+      // it: see the README.
       test.setTimeout(90_000);
       const a = replicas.find(alive);
       if (!a) {
         throw new Error('no replica is running');
       }
 
-      const { body } = await callAction(request, a.origin, 'start-export', { seconds: 5 });
+      const { body } = await callAction(request, a.origin, 'start-export', { seconds: OUTLASTS_LEASE_SECONDS });
       const jobId = body.output.jobId;
 
       await expect

@@ -13,20 +13,34 @@ import type { Page } from '@playwright/test';
 
 const DESKTOP_ORIGIN = target('desktop').origin;
 
-const DARK_CHROME = /^oklch\(0\.1/;
-const LIGHT_CHROME = /^oklch\(0\.9/;
+/** Bounds on the chrome's luminance, 0 (black) to 1 (white): the theme is what is asserted, not how the palette writes
+ *  its colours — the same zinc reads `oklch(…)` from Tailwind's own palette and `rgb(…)` from the design tokens. */
+const isDarkChrome = (luminance: number): boolean => luminance < 0.2;
+const isLightChrome = (luminance: number): boolean => luminance > 0.85;
 
 const openWindow = async (page: Page): Promise<void> => {
   await page.goto(DESKTOP_ORIGIN);
   await expect(page.locator('.sh-rail')).toBeVisible({ timeout: 60_000 });
 };
 
-/** The chrome's own ground: `LayoutMain`, drawn `bg-zinc-50 dark:bg-zinc-950`. */
-const chromeBackground = (page: Page): Promise<string> =>
+/** The chrome's own ground, `LayoutMain`'s `bg-zinc-50 dark:bg-zinc-950`, as its luminance: the browser paints the
+ *  computed colour into a canvas, which reads back sRGB whatever space the colour was written in. */
+const chromeLuminance = (page: Page): Promise<number> =>
   page
     .locator('.bg-zinc-50')
     .first()
-    .evaluate(node => getComputedStyle(node).backgroundColor);
+    .evaluate(node => {
+      const context = document.createElement('canvas').getContext('2d');
+      if (!context) {
+        return Number.NaN;
+      }
+
+      context.fillStyle = getComputedStyle(node).backgroundColor;
+      context.fillRect(0, 0, 1, 1);
+      const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+
+      return (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+    });
 
 describeTarget('desktop', () => {
   test.describe('on a machine set to dark', () => {
@@ -36,7 +50,7 @@ describeTarget('desktop', () => {
       await openWindow(page);
 
       await expect(page.locator('html')).not.toHaveClass(/\b(dark|light)\b/);
-      expect(await chromeBackground(page)).toMatch(DARK_CHROME);
+      expect(isDarkChrome(await chromeLuminance(page))).toBe(true);
     });
 
     /** Tailwind's own `dark:` is the media query alone, so the class on `<html>` used to repaint nothing. */
@@ -45,7 +59,7 @@ describeTarget('desktop', () => {
       await openWindow(page);
 
       await expect(page.locator('html')).toHaveClass(/\blight\b/);
-      await expect.poll(() => chromeBackground(page)).toMatch(LIGHT_CHROME);
+      await expect.poll(async () => isLightChrome(await chromeLuminance(page))).toBe(true);
     });
   });
 
@@ -56,7 +70,7 @@ describeTarget('desktop', () => {
       await openWindow(page);
 
       await expect(page.locator('html')).not.toHaveClass(/\b(dark|light)\b/);
-      expect(await chromeBackground(page)).toMatch(LIGHT_CHROME);
+      expect(isLightChrome(await chromeLuminance(page))).toBe(true);
     });
 
     /** `localhost` cookies ignore the port, so in development every other app's `theme` cookie lands here too. */

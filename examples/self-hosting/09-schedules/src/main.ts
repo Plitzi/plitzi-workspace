@@ -25,6 +25,10 @@ const DATABASE = process.env.QUEUE_DB ?? path.resolve(here, '../.data/queue.db')
 
 /** What this process is called in the job history and the activity feed. */
 const REPLICA = process.env.REPLICA ?? `replica-${PORT}`;
+/** How long a claim on a job lasts without renewal, and how long a run may take. Shorter ones make a dead replica's
+ *  job move over sooner — what the e2e suite does, so it does not sit through the demo's pace. */
+const LEASE_MS = Number(process.env.LEASE_MS ?? 10_000);
+const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS ?? 30_000);
 
 const db = openDatabase(DATABASE);
 const queue = createSqliteJobQueue(db);
@@ -55,7 +59,7 @@ const server = createServer({
     lookups,
     kv,
     // Room for the slow export; every other run here finishes in milliseconds.
-    limits: { timeoutMs: 30_000 },
+    limits: { timeoutMs: RUN_TIMEOUT_MS },
     jobs: {
       queue,
       // The self-hosted shape: one space, named once. A multi-tenant deployment answers `listScheduledSpaces`.
@@ -70,7 +74,7 @@ const server = createServer({
        */
       pollMs: 500,
       schedulePollMs: 2_000,
-      leaseMs: 10_000,
+      leaseMs: LEASE_MS,
       maxAttempts: 3,
       backoff: { baseMs: 2_000, maxMs: 10_000 }
     },

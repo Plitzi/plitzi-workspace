@@ -159,7 +159,9 @@ two replicas on two databases are two clusters, and the heartbeat fires once in 
 ## The file
 
 The queue lives in `.data/queue.db` (ignored by git). Delete it to start from nothing, or point `QUEUE_DB` somewhere
-else. `REPLICA` overrides the name a process goes by; it defaults to `replica-<port>`.
+else. `REPLICA` overrides the name a process goes by; it defaults to `replica-<port>`. `LEASE_MS` (10 000) and
+`RUN_TIMEOUT_MS` (30 000) are how long a claim lasts unrenewed and how long a run may take — shorter, a killed
+replica's job moves over sooner.
 
 ## Next
 
