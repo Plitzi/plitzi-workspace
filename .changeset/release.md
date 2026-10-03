@@ -511,10 +511,12 @@ page, each with its code, the elements it is about and how many it would save, t
 every page is a layout (`repeated-on-pages`, which also names the `current` state when the copies differ only in the
 active link), one structure copied with other words a component or a list (`repeated-shape`), a `text` alone inside a
 button or a link the element's own `content` (`content-attribute`), and `customCss` that a class's states, the SDK or
-`notifications` already say (`custom-css-*`). `suggestSpace({ schema, style })` gives them for any document; they never
-block. `plitzi_validate` and `plitzi_apply` answer with the ones a batch opened up, `npm run author` prints them under
-the warnings (and `--json` carries them), and the authoring skill's new `reference/efficiency.md` teaches the short way
-first.
+`notifications` already say (`custom-css-*`). Copies are compared by what they read too — a block reading its own
+provider is still one block, two pagers over two lists are not — a block only some pages of a layout carry is offered as
+a component rather than a layout of its own, and a text that is a shape drawn inside a button is left alone.
+`suggestSpace({ schema, style })` gives them for any document; they never block. `plitzi_validate` and `plitzi_apply`
+answer with the ones a batch opened up, `npm run author` prints them under the warnings (and `--json` carries them), and
+the authoring skill's new `reference/efficiency.md` teaches the short way first.
 
 A `link` has words of its own: `content`, drawn before or after its children (`contentPlacement`), as a button's — a
 link with only a label no longer needs a `text` inside it.

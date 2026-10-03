@@ -18,6 +18,6 @@ export type { Suggestion } from './types';
  * are ranked by.
  */
 export const suggestSpace = ({ schema, style }: { schema: Schema; style: Style }): Suggestion[] =>
-  [...suggestRepeats(schema, style), ...suggestContent(schema), ...suggestCustomCss(schema, style)].sort(
+  [...suggestRepeats(schema, style), ...suggestContent(schema, style), ...suggestCustomCss(schema, style)].sort(
     (a, b) => b.saves - a.saves
   );

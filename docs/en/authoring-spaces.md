@@ -783,7 +783,7 @@ const { suggestions } = authorSpace(space);
 | Code | Written the long way | The short way |
 | --- | --- | --- |
 | `repeated-on-pages` | One block at the edge of several pages, the same or styled per page | A layout holding it once; a link marks its own page with the `current` state |
-| `repeated-shape` | One structure written again with other words | A component with props, or one `list` when the copies are siblings |
+| `repeated-shape` | One structure written again with other words | A component with props, or one `list` when the copies are sibling rows of data |
 | `content-attribute` | A `button` or `link` whose only child is a `text` | The element's own `content` |
 | `custom-css-class` | `customCss` rules a class's `states` and `ancestors` say | Those, on the class |
 | `custom-css-sdk-default` | A reduced-motion reset, or the theme toggle's icons, in `customCss` | Nothing: the SDK does both |

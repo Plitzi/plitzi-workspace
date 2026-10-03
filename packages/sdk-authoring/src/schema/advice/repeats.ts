@@ -26,7 +26,7 @@ const MIN_SHAPE_COPIES = 3;
 /** Two copies are worth a component only when each is this large. */
 const MIN_PAIR = 8;
 
-type Signatures = { exact: string; near: string; shape: string; size: number };
+type Signatures = { exact: string; near: string; shape: string; outside: string; size: number };
 
 /** A key for a value, the same whatever order its object keys were written in. */
 const stable = (value: unknown): string => {
@@ -62,8 +62,49 @@ const classesKey = (styleSelectors: Element['definition']['styleSelectors'], dec
     )
   );
 
+/** The element a binding's source is published by — `apiContainer_feed.items` and `feed.items` both name `feed`. */
+const providerOf = (flat: Schema['flat'], source: string): string | undefined => {
+  const [head] = source.split('.');
+  const unprefixed = head.slice(head.indexOf('_') + 1);
+
+  return [head, unprefixed].find(candidate => Object.hasOwn(flat, candidate));
+};
+
+const isAncestor = (flat: Schema['flat'], ancestor: string, id: string): boolean => {
+  for (
+    let at = flat[id].definition.parentId;
+    at !== undefined && Object.hasOwn(flat, at);
+    at = flat[at].definition.parentId
+  ) {
+    if (at === ancestor) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+/** A binding that reads a provider above the element it is on: the provider, and how far up it sits. */
+type Read = { provider: string; depth: number; source: string };
+
 const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, Signatures> => {
+  const depthOf = new Map<string, number>();
+  const depth = (id: string): number => {
+    const known = depthOf.get(id);
+    if (known !== undefined) {
+      return known;
+    }
+
+    const parent = flat[id].definition.parentId;
+    const value = parent !== undefined && Object.hasOwn(flat, parent) ? depth(parent) + 1 : 0;
+    depthOf.set(id, value);
+
+    return value;
+  };
+
   const memo = new Map<string, Signatures>();
+  /** The reads of a subtree that leave it: what a copy takes from where it is placed. */
+  const leaving = new Map<string, Read[]>();
   const visit = (id: string): Signatures | undefined => {
     const known = memo.get(id);
     if (known) {
@@ -76,7 +117,7 @@ const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, 
 
     const element: Element = flat[id];
 
-    const { type, items = [], styleSelectors, initialState, interactions } = element.definition;
+    const { type, items = [], styleSelectors, initialState, interactions, bindings } = element.definition;
     const children = items.flatMap(child => visit(child) ?? []);
     // What its flows do, without their values: copies whose steps differ cannot be one component with props.
     const flows = Object.values(interactions ?? {})
@@ -84,11 +125,35 @@ const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, 
       .sort()
       .join(',');
     const classes = classesKey(styleSelectors, declared);
-    const own = `${type}|${stable(element.attributes)}|${stable(initialState?.visibility ?? null)}`;
+
+    // What it reads is part of what it is, and where from: a provider inside the copy is named by how far up it sits
+    // (each copy has its own, and one copy would have one), a provider outside it by name — two pagers bound to two
+    // lists are not one pager in two places.
+    const own: Read[] = [];
+    const reads = Object.entries(bindings ?? {}).map(([category, list]) => [
+      category,
+      list.map(({ id: _id, source, ...binding }) => {
+        const provider = providerOf(flat, source);
+        const up = provider === undefined ? undefined : depth(id) - depth(provider);
+        if (provider === undefined || up === undefined || up <= 0 || !isAncestor(flat, provider, id)) {
+          return { ...binding, source };
+        }
+
+        own.push({ provider, depth: depth(provider), source });
+
+        return { ...binding, source: `^${String(up)}${source.slice(source.indexOf('.'))}` };
+      })
+    ]);
+    const open = [...own, ...items.flatMap(child => leaving.get(child) ?? [])].filter(read => read.depth < depth(id));
+    leaving.set(id, open);
+    const outside = stable([...new Set(open.map(read => read.source))].sort());
+
+    const body = `${type}|${stable(element.attributes)}|${stable(initialState?.visibility ?? null)}|${stable(reads)}`;
     const signatures = {
-      exact: `${own}|${classes}(${children.map(child => child.exact).join(',')})`,
-      near: `${own}(${children.map(child => child.near).join(',')})`,
+      exact: `${body}|${classes}(${children.map(child => child.exact).join(',')})`,
+      near: `${body}(${children.map(child => child.near).join(',')})`,
       shape: `${type}|${classes}|${flows}(${children.map(child => child.shape).join(',')})`,
+      outside,
       size: 1 + children.reduce((sum, child) => sum + child.size, 0)
     };
     memo.set(id, signatures);
@@ -108,18 +173,16 @@ const named = (ids: string[]): string => {
 };
 
 /** Elements grouped by one of their signatures, the largest trees first. */
-const groupBy = (
-  ids: string[],
-  signatures: Map<string, Signatures>,
-  key: keyof Omit<Signatures, 'size'>
-): string[][] => {
+const groupBy = (ids: string[], signatures: Map<string, Signatures>, key: 'exact' | 'near' | 'shape'): string[][] => {
   const groups = new Map<string, string[]>();
   for (const id of ids) {
     const signature = signatures.get(id);
     if (signature) {
-      const group = groups.get(signature[key]) ?? [];
+      // A copy that reads from where it is placed is the same copy only where it reads the same thing.
+      const value = key === 'shape' ? signature.shape : `${signature[key]}|${signature.outside}`;
+      const group = groups.get(value) ?? [];
       group.push(id);
-      groups.set(signature[key], group);
+      groups.set(value, group);
     }
   }
 
@@ -194,15 +257,34 @@ export const suggestRepeats = (schema: Schema, style: Style): Suggestion[] => {
             'its own page by itself, so its class says how with `states: { current: { … } }` (or `activeOn` for an ' +
             'entry lit on several pages), and the copies become one.'
           : '';
-      suggestions.push({
-        code: 'repeated-on-pages',
-        elementIds: fresh,
-        saves: (fresh.length - 1) * size,
-        message:
-          `${String(fresh.length)} pages carry the same ${type} of ${String(size)} elements (${named(fresh)}). ` +
-          'Write it once in a layout — `layouts: [{ id, body: [ … it, container({ id: slot }) … ] }]` — and give each ' +
-          `page \`layout: { id, slot }\`: every page then holds only its content.${onlyClasses}`
-      });
+      const carried = `${String(fresh.length)} pages carry the same ${type} of ${String(size)} elements (${named(fresh)}).`;
+      // Pages that already share a layout and only some of them carry the block: it is a part of those pages, not the
+      // frame of all of them — one component placed on each, rather than a layout of its own for a few.
+      const layouts = new Set([...pagesWithIt].map(page => flat[page].attributes.layout));
+      const [only] = layouts;
+      const layout = layouts.size === 1 && typeof only === 'string' && only !== '' ? only : undefined;
+      const sharing = layout ? schema.pages.filter(page => flat[page].attributes.layout === layout).length : 0;
+      suggestions.push(
+        sharing > pagesWithIt.size
+          ? {
+              code: 'repeated-on-pages',
+              elementIds: fresh,
+              saves: (fresh.length - 1) * size - fresh.length,
+              message:
+                `${carried} The pages share the layout "${layout}" and only ${String(fresh.length)} of its ` +
+                `${String(sharing)} pages carry it, so it is a part of them, not their frame: make it a component — ` +
+                '`components: [{ id, root }]` — placed with `component(id)` on each, one tree to read and edit.' +
+                onlyClasses
+            }
+          : {
+              code: 'repeated-on-pages',
+              elementIds: fresh,
+              saves: (fresh.length - 1) * size,
+              message:
+                `${carried} Write it once in a layout — \`layouts: [{ id, body: [ … it, container({ id: slot }) … ] }]\` ` +
+                `— and give each page \`layout: { id, slot }\`: every page then holds only its content.${onlyClasses}`
+            }
+      );
       fresh.forEach(cover);
     }
   }
@@ -226,11 +308,14 @@ export const suggestRepeats = (schema: Schema, style: Style): Suggestion[] => {
       message: siblings
         ? `${String(fresh.length)} ${type}s of ${String(size)} elements side by side (${named(fresh)}) are one ` +
           'item written again for each row of data. One `list` over the rows draws them: its item template is ' +
-          'written once and reads each row (`{{ <list>.item.<field> }}`).'
+          'written once and reads each row (`{{ <list>.item.<field> }}`). Worth it when they are data — an array ' +
+          'they were written from, rows that come and go; a few cards a person edits word by word on the canvas can ' +
+          'stay as they are.'
         : `${String(fresh.length)} ${type}s of ${String(size)} elements share one structure (${named(fresh)}) and ` +
           'differ only in what they say. Make it a component — `components: [{ id, props, root }]` — and place it ' +
           'with `component(id, { props })`: one tree to read and edit, and every copy changes with it. What a copy ' +
-          "says or does differently is a prop: an attribute reads `{{ props.title }}`, and so does a flow's step."
+          "says or does differently is a prop: an attribute reads `{{ props.title }}`, and so does a flow's step; " +
+          'what it reads from the page is a prop the instance binds (`component(id, { bind: [{ to: prop, source }] })`).'
     });
     fresh.forEach(cover);
   }

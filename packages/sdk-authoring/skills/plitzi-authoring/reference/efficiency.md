@@ -26,8 +26,8 @@ reason is usually that the copies are about to diverge. `npx @plitzi/cli explain
 | The same header, footer or sidebar in every page | A **layout** holding it once; each page names it (`layout: { id, slot }`) — [layouts](layouts.md) | `repeated-on-pages` |
 | A header copied per page so one link can be styled "active" | The link marks its own page: `states: { current: { … } }` on its class; `activeOn` for an entry lit on several pages | `repeated-on-pages` |
 | The same card, row or tile written again with other words | A **component** with props, placed with `component(id, { props })` — [components](components.md) | `repeated-shape` |
-| Rows of data written one by one, side by side | One `list` over the rows — `items: [ … ]` fixed, or bound to a source — with its row written once — [lists](lists.md) | `repeated-shape` |
-| `button({ children: [text('Save')] })`, `link({ children: [text('Docs')] })` | `button({ content: 'Save' })`, `link({ href, content: 'Docs' })`; the text's class goes on the button or link | `content-attribute` |
+| Rows of data written one by one, side by side | One `list` over the rows — `items: [ … ]` fixed, or bound to a source — with its row written once — [lists](lists.md). Data is the test: three cards a person rewords on the canvas read better as three cards | `repeated-shape` |
+| `button({ children: [text('Save')] })`, `link({ children: [text('Docs')] })` | `button({ content: 'Save' })`, `link({ href, content: 'Docs' })`; what the text's class adds (`whiteSpace: 'nowrap'`) moves to the box's class — never the class itself, whose `inherit` would then point past the box and whose `pointerEvents: 'none'` would switch the box off | `content-attribute` |
 | `.card:hover { … }`, `.card .icon { … }` in `customCss` | The class's own `states` and `ancestors` | `custom-css-class` |
 | A reduced-motion reset, or rules showing one icon of the theme toggle, in `customCss` | Nothing: the SDK does both for every space | `custom-css-sdk-default` |
 | `.Toastify__toast { font-family: …; border: … }` in `customCss` | `notifications: { font, fontSize, border, shadow, padding, … }` | `custom-css-notifications` |

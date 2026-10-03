@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { button, container, heading, link, text } from '../../elements';
+import { button, container, heading, link, list, text } from '../../elements';
 import { onClick } from '../../elements/steps';
 import { setState, toggleState } from '../../interactions';
 import { authorSpace } from '../space';
@@ -58,6 +58,53 @@ describe('suggestions', () => {
     expect(suggestion.message).toContain('states: { current:');
   });
 
+  it('does not take two blocks reading different sources for one in two places', () => {
+    const pager = (source: string) =>
+      container({
+        class: 'top',
+        visible: `${source}.total`,
+        children: [text({ content: 'a' }), text({ content: 'b' }), text({ content: 'c' }), text({ content: 'd' })]
+      });
+    const pages = [
+      page('home', [heading({ content: 'h' }), pager('state.one')]),
+      page('about', [heading({ content: 'a' }), pager('state.two')])
+    ];
+
+    expect(codesOf(space(pages))).not.toContain('repeated-on-pages');
+  });
+
+  it('offers a component for a block only some pages of one layout carry', () => {
+    const band = () =>
+      container({ class: 'top', children: ['a', 'b', 'c', 'd', 'e'].map(word => text({ content: word })) });
+    const spec = space(
+      ['home', 'about', 'pricing'].map(id => ({
+        ...page(id, id === 'pricing' ? [heading({ content: id })] : [heading({ content: id }), band()]),
+        layout: { id: 'site', slot: 'main' }
+      })),
+      { layouts: [{ id: 'site', body: [container({ id: 'main' })] }] }
+    );
+    const suggestion = authorSpace(spec).suggestions.find(entry => entry.code === 'repeated-on-pages');
+
+    expect(suggestion?.message).toContain('make it a component');
+    expect(suggestion?.saves).toBe(4);
+  });
+
+  it('takes copies that each read a provider of their own for one block', () => {
+    const footer = (prefix: string) =>
+      container({
+        class: 'top',
+        children: [
+          text({ content: 'Links' }),
+          list({ id: `${prefix}-links`, items: ['Docs', 'Blog'], children: [text({ from: `${prefix}-links.item` })] }),
+          text({ content: 'a' }),
+          text({ content: 'b' })
+        ]
+      });
+    const pages = ['home', 'about'].map(id => page(id, [heading({ content: id }), footer(id)]));
+
+    expect(codesOf(space(pages))).toContain('repeated-on-pages');
+  });
+
   it('leaves a block between two parts of a page alone: a layout could not hold it there', () => {
     const middle = (id: string) =>
       page(id, [heading({ content: id }), header('none'), text({ content: `${id} ends here` })]);
@@ -110,7 +157,21 @@ describe('suggestions', () => {
     const suggestion = authorSpace(spec).suggestions.find(entry => entry.code === 'content-attribute');
 
     expect(suggestion?.saves).toBe(2);
-    expect(suggestion?.message).toContain('`class: [button, label]`');
+    expect(suggestion?.message).toContain('Where the text wears a class (1 of them)');
+  });
+
+  it('leaves alone a text that is a shape drawn inside the button, not words', () => {
+    const spec = space(
+      [
+        page('home', [
+          button({ content: '', children: [text({ content: '' })] }),
+          button({ content: '', children: [text({ content: 'x', class: 'swatch' })] })
+        ])
+      ],
+      { classes: { swatch: { width: '16px', height: '16px', backgroundColor: 'red' } } }
+    );
+
+    expect(codesOf(spec)).not.toContain('content-attribute');
   });
 
   it('reads customCss for what a class, the SDK or the notifications say better', () => {
