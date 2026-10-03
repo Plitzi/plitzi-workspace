@@ -42,6 +42,12 @@ const isEventStream = (asking: Asking, answering: Answering): boolean => {
 export const watchConnections = (server: PrimaryServer) => {
   const sockets = new Set<Duplex>();
   const answering = new Map<Answering, Asking>();
+  let draining = false;
+  const closeIdle = (): void => {
+    if ('closeIdleConnections' in server) {
+      server.closeIdleConnections();
+    }
+  };
   server.on('connection', (socket: Duplex) => {
     sockets.add(socket);
     socket.once('close', () => sockets.delete(socket));
@@ -50,13 +56,21 @@ export const watchConnections = (server: PrimaryServer) => {
     'request',
     (request: Asking, response: Answering & { once: (event: 'close', done: () => void) => unknown }) => {
       answering.set(response, request);
-      response.once('close', () => answering.delete(response));
+      response.once('close', () => {
+        answering.delete(response);
+        // Node keeps a closing server's connections alive like any other: one whose answer just finished would sit
+        // idle until the client let it go — undici holds one for 3 s — and the shutdown with it.
+        if (draining) {
+          closeIdle();
+        }
+      });
     }
   );
 
   return {
     drain: (label: string, graceMs = SHUTDOWN_GRACE_MS): Promise<void> =>
       new Promise((resolve, reject) => {
+        draining = true;
         const cut = setTimeout(() => {
           if (sockets.size) {
             serverLog.warn(label, `${sockets.size} connection(s) still open after ${graceMs} ms: closing them`);
@@ -79,11 +93,6 @@ export const watchConnections = (server: PrimaryServer) => {
           resolve();
         });
         // A keep-alive connection with nothing being answered on it is closed now; one that is, once it is idle.
-        const closeIdle = (): void => {
-          if ('closeIdleConnections' in server) {
-            server.closeIdleConnections();
-          }
-        };
         closeIdle();
 
         answering.forEach((request, response) => {

@@ -59,6 +59,13 @@ describe('RTCodec', () => {
     expect(() => codec.decode(buffer)).toThrow();
   });
 
+  it('refuses a frame whose event it does not know', () => {
+    const buffer = new ArrayBuffer(5);
+    new DataView(buffer).setUint8(0, 99);
+
+    expect(() => codec.decode(buffer)).toThrow('unknown event 99');
+  });
+
   it('can handle empty payload object', () => {
     const payload = {};
 

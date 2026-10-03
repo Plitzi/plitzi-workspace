@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import RTCodec, { RTEvent, RTEventCloseCode } from '@plitzi/sdk-shared/websockets/RTCodec';
+import RTCodec, { isRTEventCloseCode, RTEvent, RTEventCloseCode } from '@plitzi/sdk-shared/websockets/RTCodec';
 
 import type { RTMessageManagedClient } from '@plitzi/sdk-shared/websockets/RTCodec';
 
@@ -94,7 +94,8 @@ const useWebsocket = <T = unknown>({
     ws.onerror = () => ws.close();
 
     ws.onclose = e => {
-      const { reason, code } = e as { reason: string; code: RTEventCloseCode };
+      const { reason } = e;
+      const code = isRTEventCloseCode(e.code) ? e.code : RTEventCloseCode.UNKNOWN;
       if (code === RTEventCloseCode.NORMAL || code === RTEventCloseCode.AWAY) {
         return;
       }

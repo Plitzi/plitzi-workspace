@@ -61,7 +61,13 @@ interface SourceOptions {
   asks?: { cpuMs?: number };
 }
 
-const sourceOf = (body: string, { hosts = [], extra = '', asks = {} }: SourceOptions = {}) => ({
+/**
+ * Room for a runner slower than a laptop: the 100 ms a task gets by default is a third spent on one here. A test that
+ * stops a run on its CPU caps it with the space's `limits`, which this never overrides.
+ */
+const ASKS_ENOUGH = { cpuMs: 1000 };
+
+const sourceOf = (body: string, { hosts = [], extra = '', asks = ASKS_ENOUGH }: SourceOptions = {}) => ({
   'index.ts': `import { defineFunctions } from '@plitzi/sdk-server/functions';
 ${extra}
 export default defineFunctions({
@@ -158,7 +164,7 @@ describe('preparing a space’s functions', () => {
     expect(prepared.ok).toBe(true);
     expect(prepared.ok && prepared.functions.manifest).toEqual({
       hosts: ['api.example.com'],
-      tasks: [{ namespace: 'probe', action: 'run', title: 'Probe', params: {} }],
+      tasks: [{ namespace: 'probe', action: 'run', title: 'Probe', params: {}, limits: ASKS_ENOUGH }],
       routes: []
     });
     expect(prepared.ok && prepared.functions.bundle.id).toMatch(/^[0-9a-f]{64}$/);

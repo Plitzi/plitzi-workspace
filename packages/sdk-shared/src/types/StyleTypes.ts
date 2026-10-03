@@ -22,6 +22,11 @@ export enum StyleVariableCategory {
   // Z_INDEX = 'z-index',
 }
 
+const STYLE_VARIABLE_CATEGORIES: readonly string[] = Object.values(StyleVariableCategory);
+
+export const isStyleVariableCategory = (value: unknown): value is StyleVariableCategory =>
+  typeof value === 'string' && STYLE_VARIABLE_CATEGORIES.includes(value);
+
 export type StyleThemeValue = Partial<Record<ColorScheme | 'default', string>>;
 export type StyleVariableValue = string | number | StyleThemeValue;
 export type StyleVariableGroup = Record<string, StyleVariableValue>;

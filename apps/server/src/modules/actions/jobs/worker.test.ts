@@ -391,7 +391,9 @@ describe('stopping a worker', () => {
     const test = world(gate.run);
     await test.job();
 
-    // The shortest heartbeat the worker keeps is one second, whatever the lease: a real second has to pass.
+    // The shortest heartbeat the worker keeps is one second, whatever the lease: a real second has to pass. Waited
+    // for as the beat itself rather than a sleep a little longer, which a busy CI runner's late timer outlasts.
+    const beat = vi.spyOn(test.queue, 'heartbeat');
     const worker = test.worker({ workerId: 'pod-a', leaseMs: 1_000 });
     worker.start();
     await gate.running;
@@ -399,7 +401,9 @@ describe('stopping a worker', () => {
 
     // The lease it was claimed with runs out while it drains…
     test.advance(900);
-    await new Promise(resolve => setTimeout(resolve, 1_100));
+    const beatsBefore = beat.mock.calls.length;
+    await vi.waitFor(() => expect(beat.mock.calls.length).toBeGreaterThan(beatsBefore), { timeout: 4_000 });
+    await beat.mock.results.at(-1)?.value;
     test.advance(900);
 
     // …and the heartbeat has moved it on, so a replica that is staying finds nothing to take.

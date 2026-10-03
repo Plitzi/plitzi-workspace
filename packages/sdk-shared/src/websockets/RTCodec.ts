@@ -27,6 +27,10 @@ export const isRTEvent = (value: unknown): value is RTEvent => {
   return typeof value === 'number' && value in RTEvent;
 };
 
+export const isRTEventCloseCode = (value: unknown): value is RTEventCloseCode => {
+  return typeof value === 'number' && value in RTEventCloseCode;
+};
+
 export type RTMessageManagedClient =
   | { type: RTEvent.INIT; payload: undefined }
   | { type: RTEvent.KA; payload: undefined }
@@ -138,6 +142,11 @@ export default class RTCodec {
     const view = new DataView(data);
 
     const type = view.getUint8(0);
+    // A frame this codec has no event for is as unreadable as one whose payload is not JSON: refused the same way.
+    if (!isRTEvent(type)) {
+      throw new Error(`RTCodec: unknown event ${String(type)}`);
+    }
+
     const length = view.getUint32(1);
     if (length === 0) {
       return { type, payload: undefined as T };

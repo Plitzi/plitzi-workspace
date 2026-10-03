@@ -145,11 +145,13 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
     });
 
     it('keeps a claim alive while its worker reports in', async () => {
+      // Only the wait past the first lease is timed; a slow store can make the heartbeat or the next claim late, never
+      // early, so each has the room a busy CI runner needs.
       await queue.enqueue(await job());
-      await queue.claim({ workerId: 'pod-a', leaseMs: 300, limit: 1 });
+      await queue.claim({ workerId: 'pod-a', leaseMs: 1_000, limit: 1 });
       await wait(150);
-      expect(await queue.heartbeat({ jobIds: ['job-1'], workerId: 'pod-a', leaseMs: 300 })).toEqual([]);
-      await wait(200);
+      expect(await queue.heartbeat({ jobIds: ['job-1'], workerId: 'pod-a', leaseMs: 60_000 })).toEqual([]);
+      await wait(1_000);
 
       // Past the lease it was claimed with, inside the one it was renewed to.
       expect(await queue.claim({ workerId: 'pod-b', leaseMs: 60_000, limit: 1 })).toEqual([]);

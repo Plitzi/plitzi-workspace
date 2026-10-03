@@ -143,6 +143,7 @@ describe('plitzi functions dev', () => {
     );
   };
 
+  // Loading the project's own runner — sdk-server, its bundler and an isolate — takes two seconds on a laptop alone.
   it('runs a task from functions/ in an isolate, with nothing sent to the space', async () => {
     await installSdkServer();
     await write(
@@ -157,7 +158,7 @@ describe('plitzi functions dev', () => {
     expect(said.out).toContain('"Hello, Ada"');
     expect(platform.tried).toEqual([]);
     expect(process.exitCode).toBeUndefined();
-  });
+  }, 30_000);
 
   it('says what to install when the project has no sdk-server', async () => {
     await write('index.ts', 'export default {};');

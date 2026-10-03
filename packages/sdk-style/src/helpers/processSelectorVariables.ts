@@ -1,4 +1,4 @@
-import { StyleVariableCategory } from '@plitzi/sdk-shared/types';
+import { isStyleVariableCategory, StyleVariableCategory } from '@plitzi/sdk-shared/types';
 
 import type { StyleItem, StyleThemeValue } from '@plitzi/sdk-shared';
 
@@ -14,11 +14,9 @@ const processSelectorVariables = (selector: Omit<StyleItem, 'cache'>) => {
     dark: []
   };
 
-  (Object.keys(variables) as StyleVariableCategory[]).forEach(category => {
-    const variablesGroup = variables[category];
-    if (!variablesGroup) {
-      return;
-    }
+  Object.entries(variables).forEach(([key, variablesGroup]) => {
+    // A category this version does not know is written as a custom one, as the switch's default always did.
+    const category = isStyleVariableCategory(key) ? key : StyleVariableCategory.CUSTOM;
 
     switch (category) {
       case StyleVariableCategory.COLOR: {

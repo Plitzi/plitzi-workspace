@@ -12,7 +12,6 @@ import { splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-shared/
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
-import type { StyleVariableCategory } from '@plitzi/sdk-shared';
 
 const StyleAdvanceEditor = () => {
   const { resolvedTheme } = useTheme();
@@ -70,8 +69,8 @@ const StyleAdvanceEditor = () => {
       return [];
     }
 
-    return Object.keys(styleVariables)
-      .flatMap(variableGroup => Object.keys(styleVariables[variableGroup as StyleVariableCategory] ?? {}))
+    return Object.values(styleVariables)
+      .flatMap(variableGroup => Object.keys(variableGroup))
       .map(variable => ({ type: 'css-token', value: variable }));
   }, [styleVariables]);
 

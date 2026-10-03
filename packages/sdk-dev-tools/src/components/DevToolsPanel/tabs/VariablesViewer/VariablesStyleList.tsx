@@ -9,14 +9,11 @@ export type VariablesListProps = { variables?: Partial<StyleVariables> };
 const VariablesStyleList = ({ variables }: VariablesListProps) => {
   const variablesParsed = useMemo(
     () =>
-      Object.keys(variables ?? {}).reduce<{ name: string; type: string; value: string | StyleVariableValue }[]>(
-        (acum, categoryKey) => {
-          const category = variables?.[categoryKey as keyof StyleVariables];
-          if (category) {
-            Object.keys(category).forEach(varKey => {
-              acum.push({ name: varKey, type: categoryKey === 'color' ? 'color' : 'text', value: category[varKey] });
-            });
-          }
+      Object.entries(variables ?? {}).reduce<{ name: string; type: string; value: string | StyleVariableValue }[]>(
+        (acum, [categoryKey, category]) => {
+          Object.keys(category).forEach(varKey => {
+            acum.push({ name: varKey, type: categoryKey === 'color' ? 'color' : 'text', value: category[varKey] });
+          });
 
           return acum;
         },

@@ -4,7 +4,7 @@ import Form, { useForm, useFormWatch } from '@plitzi/plitzi-ui/Form';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 
-import { StyleVariableCategory } from '@plitzi/sdk-shared';
+import { isStyleVariableCategory, StyleVariableCategory } from '@plitzi/sdk-shared';
 
 import type { StyleThemeValue, StyleVariableValue } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -99,11 +99,15 @@ const StyleVariableForm = ({
 
   const handleChangeValue = useCallback(
     (value: string) => {
+      if (!isStyleVariableCategory(value)) {
+        return;
+      }
+
       form.formMethods.setValue(
         'value',
-        (value as StyleVariableCategory) === StyleVariableCategory.COLOR ? { default: '', light: '', dark: '' } : ''
+        value === StyleVariableCategory.COLOR ? { default: '', light: '', dark: '' } : ''
       );
-      setDefaultValues(normalizeValue(value as StyleVariableCategory, name, value));
+      setDefaultValues(normalizeValue(value, name, value));
     },
     [form.formMethods, name]
   );

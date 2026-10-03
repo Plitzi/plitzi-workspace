@@ -5,6 +5,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
+import { isStyleVariableCategory } from '@plitzi/sdk-shared';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
@@ -48,8 +49,8 @@ const Variables = () => {
           name.toLowerCase().includes(filter.toLowerCase())
         );
 
-        if (filtered.length > 0) {
-          acc[category as StyleVariableCategory] = Object.fromEntries(filtered);
+        if (isStyleVariableCategory(category) && filtered.length > 0) {
+          acc[category] = Object.fromEntries(filtered);
         }
 
         return acc;

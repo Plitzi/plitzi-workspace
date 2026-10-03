@@ -249,9 +249,9 @@ describe('createRealtimeClient', () => {
     stops.push(client.subscribe('board:1', () => undefined));
     await wait();
     dropped.streams[0].end();
-    await wait(700);
 
-    expect(dropped.streams.length).toBe(2);
+    // Its first try is half a second later: waited for, not slept past, since a busy runner's timers run late.
+    await vi.waitFor(() => expect(dropped.streams.length).toBe(2), { timeout: 3_000 });
 
     const refused = fakeServer(() => 403);
     const other = createRealtimeClient('/_realtime', { fetchImpl: refused.fetchImpl });

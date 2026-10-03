@@ -1,5 +1,11 @@
 # @plitzi/sdk-authoring
 
+## 0.38.0
+
+### Minor Changes
+
+- v0.38.0
+
 ## 0.37.10
 
 ### Patch Changes

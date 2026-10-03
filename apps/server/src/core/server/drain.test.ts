@@ -38,15 +38,15 @@ describe('watchConnections().drain', () => {
     await expect(ended).resolves.toContain('event: ready');
   });
 
-  it('lets a request that is being answered finish', async () => {
+  it('lets a request that is being answered finish, and closes its connection once it has', async () => {
     const { connections, url } = await serve((_req, res) => {
       setTimeout(() => res.end('done'), 150);
     });
     const answer = fetch(url).then(response => response.text());
     await new Promise(resolve => setTimeout(resolve, 30));
 
-    await connections.drain('test', 5000);
-
+    // Not the seconds the client would keep the connection alive for.
+    expect(await elapsed(connections.drain('test', 5000))).toBeLessThan(1000);
     expect(await answer).toBe('done');
   });
 
