@@ -7,12 +7,11 @@ import { z } from 'zod';
 import { isFlagName } from '@plitzi/sdk-shared/flags';
 
 import FlagRule from './FlagRule';
+import { EMPTY_WHEN, isRuleGroup } from './ruleGroup';
 
 import type { Field, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { SchemaFlag } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
-
-const EMPTY_WHEN: RuleGroup = { combinator: 'and', rules: [] };
 
 const flagFormSchema = z.object({
   name: z.string().refine(isFlagName, {
@@ -20,7 +19,9 @@ const flagFormSchema = z.object({
   }),
   description: z.string().max(300),
   value: z.boolean(),
-  rules: z.array(z.object({ value: z.boolean(), when: z.custom<RuleGroup>() }))
+  rules: z.array(
+    z.object({ value: z.boolean(), when: z.custom<RuleGroup>(isRuleGroup, { message: 'A rule needs its conditions' }) })
+  )
 });
 
 type FlagFormValues = z.infer<typeof flagFormSchema>;

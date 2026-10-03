@@ -314,6 +314,10 @@
       "types": "./dist/helpers/cookies.d.ts",
       "import": "./dist/helpers/cookies.mjs"
     },
+    "./helpers/eventTarget": {
+      "types": "./dist/helpers/eventTarget.d.ts",
+      "import": "./dist/helpers/eventTarget.mjs"
+    },
     "./helpers/fetchManifest": {
       "types": "./dist/helpers/fetchManifest.d.ts",
       "import": "./dist/helpers/fetchManifest.mjs"

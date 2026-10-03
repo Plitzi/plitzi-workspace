@@ -6,6 +6,7 @@ import { use, useRef, useCallback, useEffect, useImperativeHandle } from 'react'
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { elementOf, nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import AppContext from '@pmodules/App/AppContext';
 import useCollaboratorCursor from '@pmodules/Collaboration/hooks/useCollaboratorCursor';
@@ -74,12 +75,12 @@ const BuilderAreaTracking = ({
         return;
       }
 
-      const closest = (e.target as HTMLDivElement).closest<HTMLDivElement>('.builder__overlay');
+      const closest = elementOf(e.target)?.closest('.builder__overlay');
       if (closest) {
         return;
       }
 
-      const target = (e.target as HTMLDivElement).closest<HTMLDivElement>('.plitzi-component');
+      const target = elementOf(e.target)?.closest<HTMLElement>('.plitzi-component');
       if (!target) {
         return;
       }
@@ -100,7 +101,7 @@ const BuilderAreaTracking = ({
         return;
       }
 
-      const closest = (e.target as HTMLDivElement).closest<HTMLDivElement>('.plitzi-component');
+      const closest = elementOf(e.target)?.closest<HTMLElement>('.plitzi-component');
       if (!closest) {
         return;
       }
@@ -130,8 +131,8 @@ const BuilderAreaTracking = ({
           }
 
           if (
-            iframeDOM?.contentWindow?.document.body.contains(e.target as HTMLDivElement) ||
-            (e.target as HTMLDivElement).closest('.builder__breadcrumb')
+            iframeDOM?.contentWindow?.document.body.contains(nodeOf(e.target)) ||
+            elementOf(e.target)?.closest('.builder__breadcrumb')
           ) {
             builderHandler('schemaRemoveElement', elementSelected);
           }
@@ -152,7 +153,7 @@ const BuilderAreaTracking = ({
         case 'P':
         case 'p': {
           // A key pressed inside the canvas stays in its iframe and never reaches the document the search listens on.
-          if (isSearchShortcut(e) && iframeDOM?.contentWindow?.document.body.contains(e.target as HTMLDivElement)) {
+          if (isSearchShortcut(e) && iframeDOM?.contentWindow?.document.body.contains(nodeOf(e.target))) {
             e.preventDefault();
             openSearch();
           }
@@ -164,7 +165,7 @@ const BuilderAreaTracking = ({
         case 'y': {
           if (
             (e.ctrlKey || e.metaKey) &&
-            iframeDOM?.contentWindow?.document.body.contains(e.target as HTMLDivElement) &&
+            iframeDOM?.contentWindow?.document.body.contains(nodeOf(e.target)) &&
             canRedo
           ) {
             if (elementSelected) {
@@ -183,7 +184,7 @@ const BuilderAreaTracking = ({
         case 'z': {
           if (
             (e.ctrlKey || e.metaKey) &&
-            iframeDOM?.contentWindow?.document.body.contains(e.target as HTMLDivElement) &&
+            iframeDOM?.contentWindow?.document.body.contains(nodeOf(e.target)) &&
             canUndo
           ) {
             if (elementSelected) {
@@ -229,7 +230,7 @@ const BuilderAreaTracking = ({
         return;
       }
 
-      if (!iframeDOM?.contentWindow?.document.body.contains(e.target as HTMLDivElement) && document.body !== e.target) {
+      if (!iframeDOM?.contentWindow?.document.body.contains(nodeOf(e.target)) && document.body !== e.target) {
         return;
       }
 
@@ -251,10 +252,10 @@ const BuilderAreaTracking = ({
   const handlePaste = useCallback(
     async (e: ClipboardEvent) => {
       if (
-        !iframeDOM?.contentWindow?.document.body.contains(e.target as HTMLDivElement) &&
+        !iframeDOM?.contentWindow?.document.body.contains(nodeOf(e.target)) &&
         document.body !== e.target &&
-        !(e.target as HTMLDivElement).closest('.builder__tree') &&
-        !(e.target as HTMLDivElement).closest('.builder__breadcrumb')
+        !elementOf(e.target)?.closest('.builder__tree') &&
+        !elementOf(e.target)?.closest('.builder__breadcrumb')
       ) {
         return;
       }

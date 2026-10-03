@@ -9,6 +9,7 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
@@ -112,7 +113,7 @@ const Transform = () => {
   const handleChangeCustomStyle = useCallback((value: string) => setCustomCss(value), [setCustomCss]);
 
   const handlePaste = useCallback((e: ClipboardEvent<HTMLDivElement>) => {
-    if (!editorRef.current || !editorRef.current.contains(e.target as HTMLDivElement)) {
+    if (!editorRef.current || !editorRef.current.contains(nodeOf(e.target))) {
       return;
     }
 

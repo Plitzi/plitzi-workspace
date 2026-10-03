@@ -470,3 +470,11 @@ The server checks what a deployment's config hands it in one place (`configSeam`
 manifest a lookup returns goes through the validator the builder saves with, as it is read — an action that is not a
 document is refused by name, and one in a list is left out and said rather than failing the space's schedule — and the
 database drivers and functions config are checked once, as the server starts. Four unchecked casts are gone.
+
+`@plitzi/sdk-shared/helpers/eventTarget` reads an event's target as a node (`nodeOf`, `isNodeTarget`) or an element
+(`elementOf`, `isElementTarget`) by its own type rather than `instanceof`, which is false for a target in the builder's
+canvas iframe. The builder, the style inspector and the dev tools use it, and type their change and key handlers by
+the input they listen on; the casts of `event.target` are gone.
+
+The builder's flag form checks each rule's `when` is a group of conditions before it saves, rather than passing
+whatever the field held.

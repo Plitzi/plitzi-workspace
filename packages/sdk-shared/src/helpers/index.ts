@@ -3,6 +3,7 @@ import generateFacade from './generateFacade';
 import syntaxHighlight from './syntaxHighlight';
 
 export * from './cookies';
+export * from './eventTarget';
 export * from './fetchManifest';
 export * from './formatDate';
 export * from './interval';

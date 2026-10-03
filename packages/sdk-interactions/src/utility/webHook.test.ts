@@ -13,6 +13,9 @@ vi.mock('@plitzi/sdk-shared/queries', async importOriginal => ({
 
 const fetchMock = vi.fn();
 
+// An interaction callback is declared over every step's params; this one is webHook's, which these tests pass whole.
+const call = webHook.callback as (values: Record<string, unknown>) => Promise<{ response: unknown }>;
+
 const send = (params: Record<string, unknown>, status = 200) => {
   fetchMock.mockResolvedValue({
     ok: status < 400,
@@ -20,7 +23,7 @@ const send = (params: Record<string, unknown>, status = 200) => {
     json: () => Promise.resolve({ at: fetchMock.mock.calls.length })
   });
 
-  return (webHook.callback as (values: Record<string, unknown>) => Promise<{ response: unknown }>)({
+  return call({
     url: 'https://api.test/cart/items',
     method: 'get',
     body: {},
@@ -51,7 +54,6 @@ describe('webHook', () => {
 
   it('fails when no answer arrives at all, saying which request and why', async () => {
     fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
-    const call = webHook.callback as (values: Record<string, unknown>) => Promise<unknown>;
 
     await expect(
       call({ url: 'https://api.test/cart', method: 'post', body: {}, authorizationToken: '', credentials: 'omit' })

@@ -4,7 +4,9 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import { useCallback } from 'react';
 
-import type { Field, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
+import { EMPTY_WHEN, isRuleGroup } from './ruleGroup';
+
+import type { Field } from '@plitzi/plitzi-ui/QueryBuilder';
 
 export type FlagRuleProps = {
   index: number;
@@ -49,8 +51,7 @@ const FlagRule = ({ index, last, fields, onRemove, onMove }: FlagRuleProps) => {
               direction="vertical"
               intent="gray"
               className="w-full"
-              // `Form.Custom` hands any field's value as unknown; this field is `rules.N.when`, a RuleGroup in the form.
-              query={value as RuleGroup}
+              query={isRuleGroup(value) ? value : EMPTY_WHEN}
               fields={fields}
               onChange={onChange}
               showBranches

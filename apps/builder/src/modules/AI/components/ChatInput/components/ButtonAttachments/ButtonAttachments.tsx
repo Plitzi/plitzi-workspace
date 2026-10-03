@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
 import KeyboardKey from '@pmodules/Keyboard';
 
 import type { AiAttachment, AiMode } from '@pmodules/AI/types';
@@ -37,7 +38,7 @@ const ButtonAttachments = ({
     }
 
     const handler = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) {
+      if (!rootRef.current?.contains(nodeOf(e.target))) {
         setOpen(false);
       }
     };

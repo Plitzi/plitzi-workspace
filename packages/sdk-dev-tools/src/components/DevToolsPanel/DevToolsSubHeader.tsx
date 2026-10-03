@@ -2,6 +2,8 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+
 import DevToolsButton from './DevToolsButton';
 import useHighlightElement from '../../highlight';
 
@@ -30,18 +32,18 @@ const DevToolsSubHeader = ({ className, elementSelected, currentPageId, onSelect
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      const closest = (e.target as HTMLElement).closest('.plitzi-sdk');
+      const closest = elementOf(e.target)?.closest('.plitzi-sdk');
       if (!closest) {
         return;
       }
 
-      handleElementHoveredDebounced((e.target as HTMLElement).closest('[data-id]') as HTMLElement | undefined);
+      handleElementHoveredDebounced(elementOf(e.target)?.closest<HTMLElement>('[data-id]') ?? undefined);
     },
     [handleElementHoveredDebounced]
   );
 
   const handleClick = useCallback((e: MouseEvent) => {
-    const closest = (e.target as HTMLElement).closest('.plitzi-sdk');
+    const closest = elementOf(e.target)?.closest('.plitzi-sdk');
     if (!closest) {
       return;
     }

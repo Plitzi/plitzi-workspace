@@ -4,6 +4,7 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 import { deleteKey, withModifier } from '@pmodules/Keyboard';
@@ -68,7 +69,7 @@ const BuilderContextMenu = ({ width = 250, iframeDOM, zoom = 1, getWindow }: Bui
       e.preventDefault();
       e.stopPropagation();
 
-      const closest = (e.target as HTMLElement).closest('.builder__context-menu');
+      const closest = elementOf(e.target)?.closest('.builder__context-menu');
       if (closest) {
         return;
       }

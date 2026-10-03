@@ -2,6 +2,8 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import clsx from 'clsx';
 import { memo, useCallback, useMemo, useState } from 'react';
 
+import { nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+
 import CategoryOption from '../../../../components/CategoryOption';
 import CategorySection from '../../../../components/CategorySection';
 import { serializeLayerImage } from '../../helpers/backgroundParser';
@@ -75,7 +77,7 @@ const BackgroundLayer = ({ layer, index, expanded, onExpand, onChange, onRemove,
   }, []);
 
   const handleDragLeave = useCallback((e: DragEvent) => {
-    if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node)) {
+    if (!e.currentTarget.contains(nodeOf(e.relatedTarget))) {
       setIsDragOver(false);
     }
   }, []);

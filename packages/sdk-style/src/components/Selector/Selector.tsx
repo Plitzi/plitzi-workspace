@@ -85,9 +85,9 @@ const Selector = ({
   );
 
   const handleChangeInput = useCallback(
-    (e: ChangeEvent) => {
-      setOpen((e.target as HTMLInputElement).value.length > 0);
-      setInputValue((e.target as HTMLInputElement).value);
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setOpen(e.target.value.length > 0);
+      setInputValue(e.target.value);
     },
     [setOpen]
   );
@@ -161,10 +161,10 @@ const Selector = ({
   );
 
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+    (e: KeyboardEvent<HTMLInputElement>) => {
       switch (e.key) {
         case 'Enter': {
-          const { value: newValue } = e.target as HTMLInputElement;
+          const { value: newValue } = e.currentTarget;
           if (newValue !== '' && !tags.find(tag => tag.name === newValue)) {
             setInputValue('');
             const tag: Pick<StyleItem, 'name' | 'type'> = { name: selectorFormatter(newValue), type: 'class' };
@@ -176,7 +176,7 @@ const Selector = ({
             onAdd?.(tag, false);
             onChange?.(finalValue);
             setOpen(false);
-            (e.target as HTMLInputElement).blur();
+            e.currentTarget.blur();
             onSelectorSelected?.(tag);
           }
 
@@ -202,7 +202,7 @@ const Selector = ({
         case 'Escape': {
           e.stopPropagation();
           setInputValue('');
-          (e.target as HTMLInputElement).blur();
+          e.currentTarget.blur();
 
           break;
         }
