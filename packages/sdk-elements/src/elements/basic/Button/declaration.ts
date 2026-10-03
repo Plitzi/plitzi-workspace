@@ -11,12 +11,15 @@ const declaration = elementDeclaration<ButtonAttributes>()({
   type: 'button',
   attributeValues: {
     subType: valuesOf<NonNullable<ButtonProps['subType']>>()(['button', 'submit', 'reset']),
-    contentPlacement: valuesOf<NonNullable<ButtonProps['contentPlacement']>>()(['before', 'after'])
+    contentPlacement: valuesOf<NonNullable<ButtonProps['contentPlacement']>>()(['before', 'after']),
+    iconPlacement: valuesOf<NonNullable<ButtonProps['iconPlacement']>>()(['before', 'after'])
   },
   content: {
     attributes: {
       contentPlacement: 'after',
       content: 'Button',
+      icon: '',
+      iconPlacement: 'before',
       subType: 'button',
       disabled: false
     },
@@ -25,11 +28,13 @@ const declaration = elementDeclaration<ButtonAttributes>()({
       type: 'button',
       description:
         'A clickable button. On its own it only renders; wire an interaction flow (trigger onClick → callbacks) to make ' +
-        'it DO something.',
+        'it DO something. Its words are its `content` and an icon beside them its `icon` (Font Awesome classes) — no ' +
+        'text or fontAwesome element inside it for them.',
       items: [],
       bindings: {},
       styleSelectors: {
-        base: ''
+        base: '',
+        icon: ''
       },
       initialState: {
         visibility: true

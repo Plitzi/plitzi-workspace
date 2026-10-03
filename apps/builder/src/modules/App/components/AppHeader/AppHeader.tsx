@@ -67,7 +67,7 @@ const AppHeader = () => {
     const refused = issuesFromError(responseMutation.error);
     if (refused) {
       // Saved between the check above and the publish: the server's reading is the one that counts.
-      await showSpaceIssues({ errors: refused, warnings: [] }, PUBLISH_REFUSED);
+      await showSpaceIssues({ errors: refused, warnings: [], suggestions: [] }, PUBLISH_REFUSED);
     } else if (responseMutation.result) {
       addToast(
         <div>

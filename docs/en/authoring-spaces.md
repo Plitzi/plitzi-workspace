@@ -181,8 +181,9 @@ text('Wildlife, close up');            // a string is the content
 container([hero, grid]);               // an array is the children
 ```
 
-A `button` and a `link` say their words themselves — `link({ href: 'pricing', content: 'Pricing' })` — and hold
-children too (an icon), with the words `after` them or `before` (`contentPlacement`). A `text` inside instead is an
+A `button` and a `link` say their words themselves — `link({ href: 'pricing', content: 'Pricing' })` — with an icon
+beside them as `icon` (`'fa-solid fa-arrow-right'`, `iconPlacement: 'before' | 'after'`, styled through the `icon`
+slot), and hold children too, with the words `after` them or `before` (`contentPlacement`). A `text` inside instead is an
 element more, with a colour of its own that ignores the link's colour and hover (`content-attribute` suggests the
 move).
 

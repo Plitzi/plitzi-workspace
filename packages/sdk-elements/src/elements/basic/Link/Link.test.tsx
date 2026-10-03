@@ -58,6 +58,25 @@ describe('Link Tests', () => {
     expect(getByText('Docs').textContent).toBe('Docsicon');
   });
 
+  it('draws an icon beside its words, hidden from readers, dressed by its slot', () => {
+    const iconSlot = {
+      ...skipHocEntry(),
+      definition: { rootId: 'root', label: '', type: 'link', styleSelectors: { base: '', icon: 'arrow' } }
+    };
+    const { getByText } = render(
+      <StoreProvider value={storeValue}>
+        <ElementContext value={iconSlot}>
+          <Link mode="internal" href="docs" content="Docs" icon="fa-solid fa-arrow-right" iconPlacement="after" />
+        </ElementContext>
+      </StoreProvider>
+    );
+    const icon = getByText('Docs').querySelector('i');
+
+    expect(icon?.className).toBe('plitzi-element-icon fa-solid fa-arrow-right arrow');
+    expect(icon?.getAttribute('aria-hidden')).toBe('true');
+    expect(getByText('Docs').lastChild).toBe(icon);
+  });
+
   it('says it leads to the page being shown, and no other link does', () => {
     const at = { ...storeValue, navigation: { ...navigation, href: 'https://example.test/carta?ref=nav' } };
     const { getByText } = render(

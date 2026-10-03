@@ -8,6 +8,7 @@ import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-shared/style/notifications';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
@@ -20,13 +21,13 @@ const StyleAdvanceEditor = () => {
     'style.variables'
   ]);
   const { schemaUpdateSettings } = use(SchemaContext);
-  const [customCss, setCustomCss] = useState(() => {
-    if (typeof customCssProp !== 'string') {
-      return '';
-    }
-
-    return customCssProp;
-  });
+  // The notifications' look is written into the same string as a rule of its own, and edited in the space's settings:
+  // this editor shows the space's own CSS without it, and keeps it when that CSS is saved.
+  const stored = useMemo(
+    () => splitNotificationsCss(typeof customCssProp === 'string' ? customCssProp : ''),
+    [customCssProp]
+  );
+  const [customCss, setCustomCss] = useState(() => stored.customCss);
   const schemaUpdateSettingsDebounce = useMemo(
     () => schemaUpdateSettings && debounce(schemaUpdateSettings, 500),
     [schemaUpdateSettings]
@@ -34,12 +35,17 @@ const StyleAdvanceEditor = () => {
   const { server, webKey } = use(NetworkContext);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });
 
+  const save = useCallback(
+    (own: string) => schemaUpdateSettingsDebounce?.(withNotificationsCss(own, stored.notifications), 'customCss'),
+    [schemaUpdateSettingsDebounce, stored.notifications]
+  );
+
   const handleChange = useCallback(
     (value: string | number | boolean) => {
-      schemaUpdateSettingsDebounce?.(value, 'customCss');
-      setCustomCss(value as string);
+      save(String(value));
+      setCustomCss(String(value));
     },
-    [setCustomCss, schemaUpdateSettingsDebounce]
+    [save]
   );
 
   const handleFormat = useCallback(async () => {
@@ -55,9 +61,9 @@ const StyleAdvanceEditor = () => {
     const customCssPretty = get(response, 'data', customCss);
     if (customCssPretty !== customCss) {
       setCustomCss(customCssPretty);
-      schemaUpdateSettingsDebounce?.(customCssPretty, 'customCss');
+      save(customCssPretty);
     }
-  }, [networkQuery, customCss, schemaUpdateSettingsDebounce]);
+  }, [networkQuery, customCss, save]);
 
   const variables = useMemo<AutoComplete[]>(() => {
     if (!styleVariables) {

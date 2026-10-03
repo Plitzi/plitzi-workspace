@@ -5,11 +5,12 @@ import { levelOf } from '@pmodules/Space/helpers/spaceIssues';
 import useShowSpaceIssues from '@pmodules/Space/hooks/useShowSpaceIssues';
 import useSpaceIssues from '@pmodules/Space/hooks/useSpaceIssues';
 
-import { LEVEL_ICON, LEVEL_TEXT, LEVEL_TITLE } from './helpers';
+import { LEVEL_ICON, LEVEL_TEXT, LEVEL_TITLE, SUGGESTING_TEXT } from './helpers';
 
 /**
  * How the saved space reads, in the header: the count of what stops it from publishing, or of what only asks to be
- * looked at, or a quiet tick. Found out here, while editing, rather than from a refused publish.
+ * looked at, or — nothing wrong — of the shorter ways to the same page, or a quiet tick. Found out here, while editing,
+ * rather than from a refused publish.
  */
 const IssuesButton = () => {
   const { issues } = useSpaceIssues();
@@ -26,22 +27,30 @@ const IssuesButton = () => {
   }
 
   const level = levelOf(issues);
+  // Nothing wrong, and something shorter: said in the accent, not as an alarm.
+  const suggesting = level === 'clean' && issues.suggestions.length > 0;
   const count = level === 'errors' ? issues.errors.length : issues.warnings.length;
+  const shown = suggesting ? issues.suggestions.length : count;
+  const tone = suggesting ? SUGGESTING_TEXT : LEVEL_TEXT[level];
+  const icon = suggesting ? 'fa-lightbulb' : LEVEL_ICON[level];
+  const title = suggesting
+    ? `${LEVEL_TITLE.clean} — ${String(issues.suggestions.length)} shorter way${issues.suggestions.length === 1 ? '' : 's'} to the same page`
+    : LEVEL_TITLE[level];
 
   return (
     <button
       id="header-issues"
       type="button"
-      title={LEVEL_TITLE[level]}
+      title={title}
       className={clsx(
         'flex h-7 cursor-pointer items-center gap-1.5 rounded px-2 text-xs transition-colors select-none',
         'hover:bg-zinc-100 dark:hover:bg-zinc-800',
-        LEVEL_TEXT[level]
+        tone
       )}
       onClick={handleClick}
     >
-      <i className={clsx('fa-solid text-[10px]', LEVEL_ICON[level])} />
-      {level !== 'clean' && <span className="font-medium">{count}</span>}
+      <i className={clsx('fa-solid text-[10px]', icon)} />
+      {(level !== 'clean' || suggesting) && <span className="font-medium">{shown}</span>}
     </button>
   );
 };

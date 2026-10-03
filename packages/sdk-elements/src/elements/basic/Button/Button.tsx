@@ -3,9 +3,12 @@ import clsx from 'clsx';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import ElementWords from '../../../Element/ElementWords';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
+import type { IconPlacement } from '../../../Element/ElementWords';
 import type { ReactNode, RefObject } from 'react';
 
 export type ButtonProps = {
@@ -14,6 +17,13 @@ export type ButtonProps = {
   children?: ReactNode;
   contentPlacement?: 'before' | 'after';
   content?: string;
+  /**
+   * An icon beside the words, as Font Awesome classes — `'fa-solid fa-arrow-right'` — instead of a `fontAwesome`
+   * element inside. Decoration: the words (or `title`/`label`) name it. Its `icon` slot styles it.
+   */
+  icon?: string;
+  /** Which side of the words the icon sits on. */
+  iconPlacement?: IconPlacement;
   subType?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
   /**
@@ -48,6 +58,8 @@ const Button = ({
   children,
   contentPlacement = 'after',
   content = 'Button',
+  icon = '',
+  iconPlacement = 'before',
   subType = 'button',
   disabled = false,
   ariaExpanded,
@@ -58,6 +70,9 @@ const Button = ({
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
+  const {
+    definition: { styleSelectors }
+  } = useElement();
 
   return (
     <RootElement
@@ -65,7 +80,7 @@ const Button = ({
       tag="button"
       type={previewMode ? subType : 'button'}
       className={clsx('plitzi-component__button', className, {
-        'container--empty--skip': !previewMode && !children && content
+        'container--empty--skip': !previewMode && !children && (content || icon)
       })}
       disabled={disabled}
       title={title || undefined}
@@ -73,9 +88,13 @@ const Button = ({
       aria-expanded={ariaExpanded}
       aria-pressed={ariaPressed}
     >
-      {contentPlacement === 'before' && content}
+      {contentPlacement === 'before' && (
+        <ElementWords content={content} icon={icon} iconPlacement={iconPlacement} iconClassName={styleSelectors.icon} />
+      )}
       {children}
-      {contentPlacement === 'after' && content}
+      {contentPlacement === 'after' && (
+        <ElementWords content={content} icon={icon} iconPlacement={iconPlacement} iconClassName={styleSelectors.icon} />
+      )}
     </RootElement>
   );
 };

@@ -196,7 +196,7 @@ Nothing is wrong: the page renders as written. Each is a shorter way to the same
 
 | Code | Written the long way | The short way |
 | --- | --- | --- |
-| `content-attribute` | a button or a link whose only child is a text, which is an element more than it needs | the words as its own `content` (`button({ content: 'Save' })`, `link({ href, content: 'Pricing' })`); what the text's class adds moves to the box's class, never the class itself |
+| `content-attribute` | a button or a link whose children are only its words and an icon — a `text`, a `fontAwesome` — elements more than it needs | its own `content` and `icon` (`link({ href, content: 'Docs', icon: 'fa-solid fa-arrow-right', iconPlacement: 'after' })`); the icon's class goes on the `icon` slot, and what the text's class adds on the box's class, never the class itself |
 | `custom-css-class` | a `customCss` rule a class can hold — `.card:hover`, `.panel .icon` | the class's own `states` or `ancestors`, where the style editor reads it back and a breakpoint can change it |
 | `custom-css-notifications` | the toasts dressed with `.Toastify__toast` rules in `customCss` | `notifications: { font, fontSize, border, shadow, padding, background, text, radius }` |
 | `custom-css-sdk-default` | `customCss` repeating what the SDK already does for every space — less motion when asked, the theme toggle showing one icon | nothing: remove it |

@@ -105,9 +105,9 @@ real \`query\` for production. \`transformers: [{action, params}]\` post-process
 from \`plitzi://data-sources\`; \`twigTemplate\` formats it (the value is \`{{source}}\`, not \`{{value}}\`). \`when\` is
 a QueryBuilder RuleGroup gating the binding.
 
-**Fewer elements, same page:** a \`link\` or \`button\` says its words itself — \`content\` (a link puts them
-\`before\`/\`after\` its children with \`contentPlacement\`), never a lone \`text\` child, which also ignores the box's
-colour and hover. Chrome on several pages is a **layout**; the nav item of the page being shown is marked by the
+**Fewer elements, same page:** a \`link\` or \`button\` says its words itself — \`content\`, with an icon beside them
+as \`icon\` (\`iconPlacement\` before/after, its class on the \`icon\` slot) — never a \`text\` or \`fontAwesome\` child;
+a text child also ignores the box's colour and hover. Chrome on several pages is a **layout**; the nav item of the page being shown is marked by the
 \`current\` state of its class, not by a copy of the header per page. Sibling rows of data are one \`repeatElement\`; a
 block repeated with other words is a **component** (\`upsertComponent { fromRef }\`). \`plitzi_validate\` and
 \`plitzi_apply\` answer with **\`suggestions\`** for what the batch could have written shorter, each with the elements
@@ -294,8 +294,9 @@ space already had is not repeated on every batch — and none of them blocks any
 - \`repeated-shape\` — one structure written again with other words: a **component** with props
   (\`upsertComponent { fromRef }\` turns one copy into it), or, for sibling rows of data, one \`repeatElement\`/\`list\`.
   A few cards a person rewords by hand can stay cards.
-- \`content-attribute\` — a \`button\` or \`link\` whose only child is a \`text\`: its words are its own \`content\`. What
-  the text's class adds (\`white-space: nowrap\`) moves to the box's class — never the class itself.
+- \`content-attribute\` — a \`button\` or \`link\` whose children are only a \`text\` and/or a \`fontAwesome\`: its words
+  are its own \`content\` and the icon its \`icon\`. What the text's class adds (\`white-space: nowrap\`) moves to the
+  box's class — never the class itself; the icon's class goes in the \`icon\` slot.
 - \`custom-css-class\`, \`custom-css-sdk-default\`, \`custom-css-notifications\` — \`customCss\` that a class's
   \`states\`/\`ancestors\`, the SDK (reduced motion, the theme toggle's icons) or the space's notification look says.
 \`plitzi://explain/<code>\` explains each. Take one unless the copies are about to diverge.
@@ -914,9 +915,11 @@ the component does not have is reported by \`plitzi_validate\` — fix it before
   \`"external"\` is a full URL. \`target\` is \`self\`/\`blank\`/\`parent\`/\`top\`. Reach for the \`navigate\` globalCallback
   only when navigation must be **one step inside a larger interaction flow** (e.g. save, then go) — for a plain link,
   use \`link\`.
-- **A link's words are its \`content\`** — \`{ "type": "link", "props": { "mode": "page", "href": "pricing", "content":
-  "Pricing" } }\`. With children too (an icon), \`contentPlacement\` puts the words \`before\` or \`after\` them. A
-  \`text\` inside a link is one element more, and it keeps a colour of its own instead of the link's (and its hover).
+- **A link's words are its \`content\`, and an icon beside them its \`icon\`** — \`{ "type": "link", "props": { "mode":
+  "page", "href": "pricing", "content": "Pricing", "icon": "fa-solid fa-arrow-right", "iconPlacement": "after" } }\`
+  (a \`button\` takes the same two). The icon's class goes in the element's \`icon\` slot (\`style.slots.icon\`). With
+  children too, \`contentPlacement\` puts the words \`before\` or \`after\` them. A \`text\` or \`fontAwesome\` inside is
+  one element more, and a text keeps a colour of its own instead of the link's (and its hover).
 - **The link to the page being shown marks itself**: it carries \`aria-current="page"\`, and its class's \`current\`
   state says how it looks — \`{ "type": "patchDefinition", "ref": "nav-link", "states": { "current": { "desktop": {
   "color": "var(--primary)" } } } }\`. So a header written once in a layout lights the right item on every page; never

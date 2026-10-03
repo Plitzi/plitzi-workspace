@@ -2,7 +2,7 @@
 import { declaredClasses } from './declaredClasses';
 
 import type { Suggestion } from './types';
-import type { Schema, Style } from '@plitzi/sdk-shared';
+import type { Element, Schema, Style } from '@plitzi/sdk-shared';
 
 /** The elements that draw words of their own: a child that is only those words is an element more than needed. */
 const WITH_CONTENT = new Set(['button', 'link']);
@@ -44,39 +44,50 @@ const propertiesOf = (style: Style): Map<string, Set<string>> => {
   return found;
 };
 
+/** A child that does something of its own — a binding, a flow, a condition, children — would not move with the words. */
+const isBusy = ({ definition }: Element): boolean =>
+  Object.values(definition.bindings ?? {}).some(list => list.length > 0) ||
+  Object.keys(definition.interactions ?? {}).length > 0 ||
+  definition.initialState?.visibility === false ||
+  (definition.items?.length ?? 0) > 0;
+
+/** An icon that is only decoration, the size of the words: what the element's own `icon` draws. */
+const isPlainIcon = ({ attributes }: Element): boolean =>
+  !attributes.label && (attributes.size ?? 'fa-1x') === 'fa-1x' && !attributes.iconAnimation;
+
 /**
- * A button or a link holding one `text` and nothing else — the commonest element spent for nothing. Its words are
- * its own `content`; only a text that does something of its own (a binding, a flow, a condition) is left alone, since
- * that would not move with the words.
+ * A button or a link holding only its words and an icon — a `text`, a `fontAwesome`, or both — the commonest
+ * elements spent for nothing. The words are its own `content` and the icon its `icon`; a child that does something of
+ * its own (a binding, a flow, a condition), an icon that means something (`label`) or is sized or animated, and a
+ * text that is a drawn shape are left alone, since none of that would move with them.
  */
 export const suggestContent = (schema: Schema, style: Style): Suggestion[] => {
   const { flat } = schema;
   const declared = declaredClasses(style);
   const properties = propertiesOf(style);
-  const found: { id: string; classed: boolean }[] = [];
+  const found: { id: string; saves: number; classed: boolean; icon: boolean }[] = [];
   for (const [id, element] of Object.entries(flat)) {
     const items = element.definition.items ?? [];
-    if (!WITH_CONTENT.has(element.definition.type) || items.length !== 1) {
+    if (!WITH_CONTENT.has(element.definition.type) || items.length === 0 || items.length > 2) {
       continue;
     }
 
-    const child = flat[items[0]];
-    const { definition } = child;
-    const busy =
-      Object.values(definition.bindings ?? {}).some(list => list.length > 0) ||
-      Object.keys(definition.interactions ?? {}).length > 0 ||
-      definition.initialState?.visibility === false ||
-      (definition.items?.length ?? 0) > 0;
-    if (definition.type !== 'text' || busy) {
+    const children = items.map(item => flat[item]);
+    const texts = children.filter(child => child.definition.type === 'text');
+    const icons = children.filter(child => child.definition.type === 'fontAwesome');
+    const text = texts.at(0);
+    const icon = icons.at(0);
+    const onlyThese = texts.length <= 1 && icons.length <= 1 && texts.length + icons.length === children.length;
+    if (!onlyThese || children.some(isBusy) || (icon && !isPlainIcon(icon))) {
       continue;
     }
 
     // Every element is given a class generated from its id; only the space's own classes are something to move.
-    const classes = definition.styleSelectors.base.split(/\s+/).filter(name => declared.has(name));
-    const words = typeof child.attributes.content === 'string' && child.attributes.content.trim() !== '';
+    const classes = text ? text.definition.styleSelectors.base.split(/\s+/).filter(name => declared.has(name)) : [];
+    const words = !text || (typeof text.attributes.content === 'string' && text.attributes.content.trim() !== '');
     const drawn = classes.some(name => [...(properties.get(name) ?? [])].some(property => BOX.test(property)));
     if (words && !drawn) {
-      found.push({ id, classed: classes.length > 0 });
+      found.push({ id, saves: children.length, classed: classes.length > 0, icon: Boolean(icon) });
     }
   }
 
@@ -85,18 +96,24 @@ export const suggestContent = (schema: Schema, style: Style): Suggestion[] => {
   }
 
   const classed = found.filter(entry => entry.classed);
+  const iconed = found.filter(entry => entry.icon);
   const example = found[0].id;
 
   return [
     {
       code: 'content-attribute',
       elementIds: found.map(entry => entry.id),
-      saves: found.length,
+      saves: found.reduce((sum, entry) => sum + entry.saves, 0),
       message:
         `${String(found.length)} button${found.length === 1 ? '' : 's'} or link${found.length === 1 ? '' : 's'} ` +
-        `hold one text and nothing else ("${example}"${found.length > 1 ? ' and the rest' : ''}): the words are ` +
-        "their own `content` — `button({ content: 'Save' })`, `link({ href: '/pricing', content: 'Pricing' })` — " +
-        `one element each instead of two.${
+        `hold only their words${iconed.length > 0 ? ' and an icon' : ''} as elements ("${example}"${found.length > 1 ? ' and the rest' : ''}): the words are ` +
+        "their own `content` — `button({ content: 'Save' })`, `link({ href: '/pricing', content: 'Pricing' })`" +
+        (iconed.length > 0
+          ? ` — and the icon (${String(iconed.length)} of them) its \`icon\`: \`icon: 'fa-solid fa-arrow-right'\`, ` +
+            "`iconPlacement: 'after'` for one after the words, and the class it wore on the `icon` slot " +
+            '(`slots: { icon: arrow }`)'
+          : '') +
+        ` — the element alone instead of it and its children.${
           classed.length > 0
             ? ` Where the text wears a class (${String(classed.length)} of them), what it adds moves to the button's ` +
               "or link's class: a rule the box does not already have (`whiteSpace: 'nowrap'`). A rule saying " +

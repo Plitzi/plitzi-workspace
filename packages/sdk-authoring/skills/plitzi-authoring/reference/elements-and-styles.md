@@ -38,8 +38,9 @@ reads).
 that opens another tab (`target: 'blank'`) gets `rel="noopener noreferrer"`. A link is an `<a>`: never put a link inside
 another link — make the card the link, or the button, not both.
 
-**A link's words are its `content`**, as a button's (`link({ href: 'pricing', content: 'Pricing' })`), `after` its
-children or `before` (`contentPlacement`) — never a `text` inside, which keeps a colour of its own over the link's. The
+**A link's words are its `content`** and an icon its `icon`, as a button's (`link({ href: 'pricing', content:
+'Pricing', icon: 'fa-solid fa-arrow-right', iconPlacement: 'after' })`, its class on the `icon` slot) — never a
+`text` or `fontAwesome` inside. The
 link to the page being shown is `aria-current="page"`; its class's `current` state styles it, so one header in a
 layout lights the right item everywhere.
 

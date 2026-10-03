@@ -1,9 +1,8 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import clsx from 'clsx';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useCallback } from 'react';
 
-import type { ReactNode } from 'react';
+import IconPicker from '../../../components/IconPicker';
 
 type SettingsProps = {
   icon?: string;
@@ -13,88 +12,8 @@ type SettingsProps = {
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-type FontIcon = {
-  styles: string[];
-  label: string;
-};
-
 const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', label = '', onUpdate }: SettingsProps) => {
-  const [icons, setIcons] = useState<Record<string, FontIcon>>({});
-  const [type, setType] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState('');
-
-  const handleClick = useCallback((item: string) => () => onUpdate?.('icon', item), [onUpdate]);
-
-  const iconsToRender = useMemo(
-    () =>
-      Object.keys(icons).map(ic => {
-        const { styles, label } = icons[ic];
-        if (!label.toLowerCase().includes(filter.toLowerCase())) {
-          return [];
-        }
-
-        const iconsContent: ReactNode[] = [];
-        styles.forEach(icStyle => {
-          if (type !== '' && icStyle !== type) {
-            return;
-          }
-
-          let iconStyle = 'fa';
-          switch (icStyle) {
-            case 'brands':
-              iconStyle = 'fab';
-
-              break;
-            case 'regular':
-              iconStyle = 'far';
-
-              break;
-            case 'solid':
-              iconStyle = 'fas';
-
-              break;
-            default:
-          }
-
-          const iconClass = `${iconStyle} fa-${ic}`;
-
-          iconsContent.push(
-            <div
-              key={iconClass}
-              className={clsx(
-                'flex h-6 w-6 cursor-pointer items-center justify-center rounded-md p-1 hover:bg-blue-200 hover:text-white',
-                { 'bg-[#339af0] text-white': iconClass === icon }
-              )}
-              onClick={handleClick(iconClass)}
-              title={`${label} - [${ic}]`}
-            >
-              <i key={`${ic}_${iconStyle}`} className={iconClass} />
-            </div>
-          );
-        });
-
-        return iconsContent;
-      }),
-    [icon, icons, filter, type, handleClick]
-  );
-
-  const fetchIcons = async () => {
-    setLoading(true);
-    const response = await fetch('https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/metadata/icons.json');
-    setIcons((await response.json()) as Record<string, FontIcon>);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    void fetchIcons();
-  }, []);
-
-  const handleChangeFilter = useCallback((value: string) => setFilter(value), []);
-
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
-
-  const handleChangeType = useCallback((value: string) => setType(value), []);
 
   return (
     <div className="flex grow basis-0 flex-col gap-4 py-2">
@@ -105,11 +24,6 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', label = '', o
         onChange={handleChange('label')}
         size="xs"
       />
-      <Select value={type} placeholder="All" label="Icon Type" onChange={handleChangeType} size="xs">
-        <option value="regular">Regular</option>
-        <option value="solid">Solid</option>
-        <option value="brands">Brands</option>
-      </Select>
       <Select
         label="Icon Animation"
         value={iconAnimation}
@@ -131,13 +45,7 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', label = '', o
         <option value="fa-3x">3X</option>
         <option value="fa-4x">4X</option>
       </Select>
-      <Input value={filter} placeholder="Search Icon..." onChange={handleChangeFilter} size="xs" />
-      <div className="flex grow basis-0 flex-col overflow-auto py-2">
-        <div className="flex flex-wrap items-center justify-center gap-1">
-          {loading && <i className="fa-solid fa-sync fa-spin fa-3x" />}
-          {!loading && iconsToRender}
-        </div>
-      </div>
+      <IconPicker value={icon} onChange={handleChange('icon')} />
     </div>
   );
 };

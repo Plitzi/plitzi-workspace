@@ -12,7 +12,8 @@ const declaration = elementDeclaration<LinkAttributes>()({
   attributeValues: {
     mode: valuesOf<NonNullable<LinkProps['mode']>>()(['page', 'internal', 'external']),
     target: valuesOf<NonNullable<LinkProps['target']>>()(['self', 'blank', 'parent', 'top']),
-    contentPlacement: valuesOf<NonNullable<LinkProps['contentPlacement']>>()(['before', 'after'])
+    contentPlacement: valuesOf<NonNullable<LinkProps['contentPlacement']>>()(['before', 'after']),
+    iconPlacement: valuesOf<NonNullable<LinkProps['iconPlacement']>>()(['before', 'after'])
   },
   content: {
     attributes: {
@@ -22,19 +23,22 @@ const declaration = elementDeclaration<LinkAttributes>()({
       hash: '',
       label: '',
       content: '',
-      contentPlacement: 'after'
+      contentPlacement: 'after',
+      icon: '',
+      iconPlacement: 'before'
     },
     definition: {
       label: 'Link',
       type: 'link',
       description:
         'Navigation. Moves the user between pages of the site or to an external URL (its `mode`/`href` decide which). Use ' +
-        'this to go page-to-page rather than a button + interaction. Its words are its own `content` — no text element ' +
-        'inside it for them.',
+        'this to go page-to-page rather than a button + interaction. Its words are its own `content` and an icon beside ' +
+        'them its `icon` (Font Awesome classes) — no text or fontAwesome element inside it for them.',
       items: [],
       bindings: {},
       styleSelectors: {
-        base: ''
+        base: '',
+        icon: ''
       },
       initialState: {
         visibility: true

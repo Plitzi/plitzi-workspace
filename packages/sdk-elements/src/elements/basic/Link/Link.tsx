@@ -8,10 +8,12 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import { isCurrentPage } from './isCurrentPage';
+import ElementWords from '../../../Element/ElementWords';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
+import type { IconPlacement } from '../../../Element/ElementWords';
 import type { MouseEvent, ReactNode, RefObject } from 'react';
 
 export type LinkProps = {
@@ -39,6 +41,13 @@ export type LinkProps = {
    */
   content?: string;
   contentPlacement?: 'before' | 'after';
+  /**
+   * An icon beside the words, as Font Awesome classes — `'fa-solid fa-arrow-right'` — instead of a `fontAwesome`
+   * element inside. Decoration: the words (or `title`/`label`) name it. Its `icon` slot styles it.
+   */
+  icon?: string;
+  /** Which side of the words the icon sits on. */
+  iconPlacement?: IconPlacement;
 };
 
 const Link = ({
@@ -51,9 +60,14 @@ const Link = ({
   hash = '',
   label = '',
   content = '',
-  contentPlacement = 'after'
+  contentPlacement = 'after',
+  icon = '',
+  iconPlacement = 'before'
 }: LinkProps) => {
-  const { style } = useElement();
+  const {
+    style,
+    definition: { styleSelectors }
+  } = useElement();
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
@@ -130,9 +144,13 @@ const Link = ({
 
   return (
     <RootElement tag="a" {...propsMemo} onClick={handleClick}>
-      {contentPlacement === 'before' && content}
+      {contentPlacement === 'before' && (
+        <ElementWords content={content} icon={icon} iconPlacement={iconPlacement} iconClassName={styleSelectors.icon} />
+      )}
       {children}
-      {contentPlacement === 'after' && content}
+      {contentPlacement === 'after' && (
+        <ElementWords content={content} icon={icon} iconPlacement={iconPlacement} iconClassName={styleSelectors.icon} />
+      )}
     </RootElement>
   );
 };

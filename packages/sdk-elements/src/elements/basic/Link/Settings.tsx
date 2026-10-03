@@ -7,6 +7,8 @@ import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
+import IconField from '../../../components/IconField';
+
 type SettingsProps = {
   mode?: 'page' | 'internal' | 'external';
   href?: string;
@@ -15,6 +17,8 @@ type SettingsProps = {
   label?: string;
   content?: string;
   contentPlacement?: 'before' | 'after';
+  icon?: string;
+  iconPlacement?: 'before' | 'after';
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
@@ -26,6 +30,8 @@ const Settings = ({
   label = '',
   content = '',
   contentPlacement = 'after',
+  icon = '',
+  iconPlacement = 'before',
   onUpdate
 }: SettingsProps) => {
   const {
@@ -146,6 +152,7 @@ const Settings = ({
         onChange={handleChange('label')}
         size="sm"
       />
+      <IconField icon={icon} iconPlacement={iconPlacement} onUpdate={onUpdate} />
     </div>
   );
 };

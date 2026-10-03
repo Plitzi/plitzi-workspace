@@ -34,6 +34,10 @@
       "types": "./dist/Element/ElementParentContext.d.ts",
       "import": "./dist/Element/ElementParentContext.mjs"
     },
+    "./Element/ElementWords": {
+      "types": "./dist/Element/ElementWords.d.ts",
+      "import": "./dist/Element/ElementWords.mjs"
+    },
     "./Element/JsxManager": {
       "types": "./dist/Element/JsxManager.d.ts",
       "import": "./dist/Element/JsxManager.mjs"
@@ -161,6 +165,30 @@
     "./components/ElementAdvancedEditor": {
       "types": "./dist/components/ElementAdvancedEditor.d.ts",
       "import": "./dist/components/ElementAdvancedEditor.mjs"
+    },
+    "./components/IconField": {
+      "types": "./dist/components/IconField/index.d.ts",
+      "import": "./dist/components/IconField/index.mjs"
+    },
+    "./components/IconField/IconField": {
+      "types": "./dist/components/IconField/IconField.d.ts",
+      "import": "./dist/components/IconField/IconField.mjs"
+    },
+    "./components/IconField/index": {
+      "types": "./dist/components/IconField/index.d.ts",
+      "import": "./dist/components/IconField/index.mjs"
+    },
+    "./components/IconPicker": {
+      "types": "./dist/components/IconPicker/index.d.ts",
+      "import": "./dist/components/IconPicker/index.mjs"
+    },
+    "./components/IconPicker/IconPicker": {
+      "types": "./dist/components/IconPicker/IconPicker.d.ts",
+      "import": "./dist/components/IconPicker/IconPicker.mjs"
+    },
+    "./components/IconPicker/index": {
+      "types": "./dist/components/IconPicker/index.d.ts",
+      "import": "./dist/components/IconPicker/index.mjs"
     },
     "./dataSource": {
       "types": "./dist/dataSource/index.d.ts",

@@ -29,8 +29,8 @@ describe('spaceIssues helpers', () => {
   });
 
   it('ranks errors over warnings over nothing', () => {
-    expect(levelOf({ errors: [issue], warnings: [issue] })).toBe('errors');
-    expect(levelOf({ errors: [], warnings: [issue] })).toBe('warnings');
-    expect(levelOf({ errors: [], warnings: [] })).toBe('clean');
+    expect(levelOf({ errors: [issue], warnings: [issue], suggestions: [] })).toBe('errors');
+    expect(levelOf({ errors: [], warnings: [issue], suggestions: [] })).toBe('warnings');
+    expect(levelOf({ errors: [], warnings: [], suggestions: [] })).toBe('clean');
   });
 });

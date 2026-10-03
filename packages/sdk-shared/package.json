@@ -1303,6 +1303,10 @@
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
     },
+    "./style/notifications": {
+      "types": "./dist/style/notifications.d.ts",
+      "import": "./dist/style/notifications.mjs"
+    },
     "./style/runtimeStyle": {
       "types": "./dist/style/runtimeStyle.d.ts",
       "import": "./dist/style/runtimeStyle.mjs"

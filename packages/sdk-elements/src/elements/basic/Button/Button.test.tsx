@@ -20,7 +20,7 @@ vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
 describe('Button Tests', () => {
   it('Render Component', () => {
     const { baseElement } = render(
-      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+      <ElementContext value={elementEntry('btn')}>
         <Button />
       </ElementContext>
     );
@@ -30,7 +30,7 @@ describe('Button Tests', () => {
 
   it('says what it toggles only when told to', () => {
     const { getAllByRole } = render(
-      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+      <ElementContext value={elementEntry('btn')}>
         <Button content="Plain" />
         <Button content="Menu" ariaExpanded={false} />
         <Button content="Filter" ariaPressed />
@@ -44,9 +44,23 @@ describe('Button Tests', () => {
     expect(filter.getAttribute('aria-pressed')).toBe('true');
   });
 
+  it('draws an icon beside its words, or alone with a title to name it', () => {
+    const { getByRole } = render(
+      <ElementContext value={elementEntry('btn')}>
+        <Button content="Save" icon="fa-solid fa-floppy-disk" />
+        <Button content="" icon="fa-solid fa-xmark" title="Close" />
+      </ElementContext>
+    );
+    const save = getByRole('button', { name: 'Save' }).querySelector('i');
+    const close = getByRole('button', { name: 'Close' }).querySelector('i');
+
+    expect(getByRole('button', { name: 'Save' }).firstChild).toBe(save);
+    expect(close?.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('lets an empty content be named by its children or its title', () => {
     const { getByRole } = render(
-      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+      <ElementContext value={elementEntry('btn')}>
         <Button content="">
           <span>Refresh your spaces</span>
         </Button>
@@ -60,7 +74,7 @@ describe('Button Tests', () => {
 
   it('is named by everything it shows, never by its content alone', () => {
     const { getByRole } = render(
-      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+      <ElementContext value={elementEntry('btn')}>
         <Button content="">
           <span>Launch</span>
         </Button>
@@ -72,7 +86,7 @@ describe('Button Tests', () => {
 
   it('is named by its label when the words it shows are only a key hint', () => {
     const { getByRole } = render(
-      <ElementContext value={elementEntry('btn', { definition: { label: 'Button' } as never })}>
+      <ElementContext value={elementEntry('btn')}>
         <Button content="V" label="Select (V)" title="Select — click a shape · V" />
       </ElementContext>
     );

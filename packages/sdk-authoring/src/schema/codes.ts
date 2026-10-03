@@ -857,8 +857,9 @@ export const AUTHORING_CODES = {
   },
   'content-attribute': {
     kind: 'suggested',
-    means: 'a button or a link whose only child is a text, which is an element more than it needs',
-    fix: "the words as its own `content` (`button({ content: 'Save' })`, `link({ href, content: 'Pricing' })`); what the text's class adds moves to the box's class, never the class itself"
+    means:
+      'a button or a link whose children are only its words and an icon — a `text`, a `fontAwesome` — elements more than it needs',
+    fix: "its own `content` and `icon` (`link({ href, content: 'Docs', icon: 'fa-solid fa-arrow-right', iconPlacement: 'after' })`); the icon's class goes on the `icon` slot, and what the text's class adds on the box's class, never the class itself"
   },
   'custom-css-class': {
     kind: 'suggested',

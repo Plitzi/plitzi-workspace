@@ -17,3 +17,6 @@ export const LEVEL_TITLE: Record<IssuesLevel, string> = {
   warnings: 'Things that render, but most likely not as meant',
   errors: 'Problems that stop this space from publishing'
 };
+
+/** Nothing wrong, and a shorter way to the same page: the accent, never the colours of a problem. */
+export const SUGGESTING_TEXT = 'text-indigo-600 dark:text-indigo-400';

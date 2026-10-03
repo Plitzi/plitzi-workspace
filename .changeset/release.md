@@ -534,3 +534,20 @@ The MCP server dresses the notifications too: `patchSettings { notifications: { 
 field by field (`null` removes one), and `plitzi://settings` reads them apart from the space's own `customCss` — the
 same rule authoring writes for a space's `notifications`, kept when either changes. The builder's Export gives that
 rule back as `notifications` instead of leaving it in `customCss` (`splitNotificationsCss`, `withNotificationsCss`).
+
+A `button` and a `link` draw an icon beside their words: `icon` (Font Awesome classes, `'fa-solid fa-arrow-right'`) and
+`iconPlacement` (`before` or `after` the words), dressed through a new `icon` slot; it takes the size of the words and
+no space of its own — the box's `gap`, or a margin on the slot, separates them. One element instead of the element, a
+`text` and a `fontAwesome`; alone, with a `title`, it is an icon button. The builder offers the icon picker in both
+elements' settings (shared now with `fontAwesome`'s), and the `content-attribute` suggestion points at a plain
+`fontAwesome` beside the words too.
+
+The builder lists the suggestions: `SpaceIssues` answers `suggestions` beside `errors` and `warnings`, the problems
+panel shows them last — the short way, how many elements it saves, and each element it is about, a link to it — and
+the header's issues button, with nothing wrong, shows a light bulb and how many there are.
+
+The builder edits the notifications' look in the space settings (Notifications: surface, text, accents, radius, font,
+size, border, shadow, padding), checked as it is typed; the custom CSS editor shows the space's own CSS without the
+rule they are stored as, and keeps it. The mechanism moved to `@plitzi/sdk-shared/style/notifications`
+(`notificationsCss`, `notificationsProblem`, `splitNotificationsCss`, `withNotificationsCss`); `@plitzi/sdk-authoring`
+re-exports it, refusing a spec that is not sound as before.

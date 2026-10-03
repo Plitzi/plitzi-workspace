@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { fixableCount } from '@pmodules/Space/helpers/spaceIssues';
 
 import IssueGroup from './components/IssueGroup';
+import SuggestionGroup from './components/SuggestionGroup';
 import { MUTED } from './helpers';
 
 import type { TSpaceIssues } from '@plitzi/sdk-shared';
@@ -21,7 +22,8 @@ export type SpaceIssuesProps = {
 
 /**
  * Everything the linter found in the saved space: errors first, since they are what stops a publish, then what renders
- * but most likely not as meant. Each one names its element and takes you to it.
+ * but most likely not as meant, then the shorter ways to the same page. Each one names its elements and takes you to
+ * them.
  */
 const SpaceIssues = ({ issues, intro, onDismiss, onFix }: SpaceIssuesProps) => {
   const clean = issues.errors.length === 0 && issues.warnings.length === 0;
@@ -47,6 +49,7 @@ const SpaceIssues = ({ issues, intro, onDismiss, onFix }: SpaceIssuesProps) => {
       )}
       <IssueGroup title="Errors" issues={issues.errors} severity="error" onDismiss={onDismiss} />
       <IssueGroup title="Warnings" issues={issues.warnings} severity="warning" onDismiss={onDismiss} />
+      <SuggestionGroup suggestions={issues.suggestions} onDismiss={onDismiss} />
     </div>
   );
 };

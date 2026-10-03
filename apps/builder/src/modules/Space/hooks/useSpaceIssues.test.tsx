@@ -15,7 +15,8 @@ const issues: TSpaceIssues = {
   errors: [
     { code: 'binding-target-unknown', message: 'Lands on nothing', elementId: 'hello', fixable: false, fix: null }
   ],
-  warnings: []
+  warnings: [],
+  suggestions: []
 };
 
 const mutate = vi.fn(() => Promise.resolve({ SpaceIssues: issues }));

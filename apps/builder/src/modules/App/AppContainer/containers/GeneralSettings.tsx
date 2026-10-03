@@ -9,6 +9,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import ViewPage from '../../components/ViewPage';
 import ViewSection from '../../components/ViewSection';
+import NotificationsSettings from '../components/NotificationsSettings';
 
 import type { ChangeEvent } from 'react';
 
@@ -358,6 +359,7 @@ const GeneralSettings = () => {
           </Alert>
         )}
       </ViewSection>
+      <NotificationsSettings />
       <ViewSection title="Debugging">
         <Alert intent="warning" size="xs" solid={false}>
           For sites served with SSR — usually your <code>*.plitzi.app</code> address, or a custom domain pointed at it.

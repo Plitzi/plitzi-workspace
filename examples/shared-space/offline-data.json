@@ -248,7 +248,9 @@
           "hash": "",
           "label": "",
           "content": "",
-          "contentPlacement": "after"
+          "contentPlacement": "after",
+          "icon": "",
+          "iconPlacement": "before"
         },
         "definition": {
           "label": "Link",
@@ -260,7 +262,8 @@
             "paragraph-1"
           ],
           "styleSelectors": {
-            "base": "buttonLink"
+            "base": "buttonLink",
+            "icon": ""
           },
           "initialState": {
             "visibility": true
@@ -363,7 +366,9 @@
           "hash": "",
           "label": "",
           "content": "",
-          "contentPlacement": "after"
+          "contentPlacement": "after",
+          "icon": "",
+          "iconPlacement": "before"
         },
         "definition": {
           "label": "Link",
@@ -375,7 +380,8 @@
             "paragraph-2"
           ],
           "styleSelectors": {
-            "base": "buttonLink"
+            "base": "buttonLink",
+            "icon": ""
           },
           "initialState": {
             "visibility": true
@@ -478,7 +484,9 @@
           "hash": "",
           "label": "",
           "content": "",
-          "contentPlacement": "after"
+          "contentPlacement": "after",
+          "icon": "",
+          "iconPlacement": "before"
         },
         "definition": {
           "label": "Link",
@@ -490,7 +498,8 @@
             "paragraph-3"
           ],
           "styleSelectors": {
-            "base": "buttonLink"
+            "base": "buttonLink",
+            "icon": ""
           },
           "initialState": {
             "visibility": true
@@ -593,7 +602,9 @@
           "hash": "",
           "label": "",
           "content": "",
-          "contentPlacement": "after"
+          "contentPlacement": "after",
+          "icon": "",
+          "iconPlacement": "before"
         },
         "definition": {
           "label": "Link",
@@ -605,7 +616,8 @@
             "paragraph-4"
           ],
           "styleSelectors": {
-            "base": "buttonLink"
+            "base": "buttonLink",
+            "icon": ""
           },
           "initialState": {
             "visibility": true

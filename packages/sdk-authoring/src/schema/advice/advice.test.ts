@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { button, container, heading, link, list, text } from '../../elements';
+import { button, container, fontAwesome, heading, link, list, text } from '../../elements';
 import { onClick } from '../../elements/steps';
 import { setState, toggleState } from '../../interactions';
 import { authorSpace } from '../space';
@@ -158,6 +158,28 @@ describe('suggestions', () => {
 
     expect(suggestion?.saves).toBe(2);
     expect(suggestion?.message).toContain('Where the text wears a class (1 of them)');
+  });
+
+  it('offers the own icon of a button or a link for a plain icon beside its words, and leaves one that means something', () => {
+    const spec = space([
+      page('home', [
+        link({
+          href: '/a',
+          mode: 'internal',
+          children: [text({ content: 'Docs' }), fontAwesome({ icon: 'fas fa-arrow-right' })]
+        }),
+        button({ content: '', title: 'Close', children: [fontAwesome({ icon: 'fas fa-xmark' })] }),
+        button({
+          content: '',
+          children: [fontAwesome({ icon: 'fas fa-star', label: 'Favourite' }), text({ content: 'Star' })]
+        })
+      ])
+    ]);
+    const suggestion = authorSpace(spec).suggestions.find(entry => entry.code === 'content-attribute');
+
+    expect(suggestion?.elementIds).toHaveLength(2);
+    expect(suggestion?.saves).toBe(3);
+    expect(suggestion?.message).toContain('its `icon`');
   });
 
   it('leaves alone a text that is a shape drawn inside the button, not words', () => {

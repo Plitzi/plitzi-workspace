@@ -3,11 +3,15 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback } from 'react';
 
+import IconField from '../../../components/IconField';
+
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
   content?: string;
   contentPlacement?: 'before' | 'after' | 'elements';
+  icon?: string;
+  iconPlacement?: 'before' | 'after';
   subType?: 'button' | 'reset' | 'submit';
   disabled?: boolean;
   title?: string;
@@ -18,6 +22,8 @@ type SettingsProps = {
 const Settings = ({
   content = 'Button',
   contentPlacement = 'after',
+  icon = '',
+  iconPlacement = 'before',
   subType = 'button',
   disabled = false,
   title = '',
@@ -70,6 +76,7 @@ const Settings = ({
         <option value="reset">Reset</option>
       </Select>
       <Checkbox checked={disabled} label="Is Disabled" onChange={handleChangeDisabled} size="xs" />
+      <IconField icon={icon} iconPlacement={iconPlacement} onUpdate={onUpdate} />
     </div>
   );
 };
