@@ -410,6 +410,10 @@
       "types": "./dist/elements/basic/Link/index.d.ts",
       "import": "./dist/elements/basic/Link/index.mjs"
     },
+    "./elements/basic/Link/isCurrentPage": {
+      "types": "./dist/elements/basic/Link/isCurrentPage.d.ts",
+      "import": "./dist/elements/basic/Link/isCurrentPage.mjs"
+    },
     "./elements/basic/Markdown": {
       "types": "./dist/elements/basic/Markdown/index.d.ts",
       "import": "./dist/elements/basic/Markdown/index.mjs"

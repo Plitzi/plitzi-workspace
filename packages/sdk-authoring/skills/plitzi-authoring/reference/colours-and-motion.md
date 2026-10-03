@@ -10,7 +10,9 @@
   { 'animation-play-state': 'paused' } } } }`.
 - **A stagger** — rows arriving one after another — is `animation-delay` per `:nth-child` in `customCss`, against the
   row's class.
-- Keep motion for meaning: `@media (prefers-reduced-motion: reduce)` in `customCss` turns it off for whoever asks.
+- Keep motion for meaning. Whoever asks their machine for less motion gets it without a word from you: the SDK cuts
+  every animation and transition to an instant for them. Write a `prefers-reduced-motion` rule only for what that does
+  not cover — a hover that moves a card (`transform: none`), a decoration better not shown at all.
 
 ## Colours and themes
 

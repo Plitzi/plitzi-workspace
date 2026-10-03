@@ -18,22 +18,40 @@ export interface NotificationsSpec {
   info?: string;
   /** Corner radius, e.g. `'12px'`. */
   radius?: string;
+  /** Its typeface — the space's own, as a token: `'var(--font-sans)'`. */
+  font?: string;
+  /** Its text size, e.g. `'13px'`. */
+  fontSize?: string;
+  /** Its edge, as `border` writes it: `'1px solid var(--border)'`. */
+  border?: string;
+  /** Its depth, as `box-shadow` writes it: `'var(--shadow-lg)'`. */
+  shadow?: string;
+  /** The room inside it, e.g. `'12px 14px'`. */
+  padding?: string;
 }
 
-/** Each field, and the library variables it sets on the toast container. */
-const VARIABLES: Record<keyof NotificationsSpec, readonly string[]> = {
+/** The fields the library has a variable for, and the variables each sets on the toast container. */
+const VARIABLES: Partial<Record<keyof NotificationsSpec, readonly string[]>> = {
   background: ['--toastify-color-light', '--toastify-color-dark'],
   text: ['--toastify-text-color-light', '--toastify-text-color-dark'],
   success: ['--toastify-color-success'],
   danger: ['--toastify-color-error'],
   warning: ['--toastify-color-warning'],
   info: ['--toastify-color-info'],
-  radius: ['--toastify-toast-bd-radius']
+  radius: ['--toastify-toast-bd-radius'],
+  font: ['--toastify-font-family'],
+  shadow: ['--toastify-toast-shadow'],
+  padding: ['--toastify-toast-padding']
 };
 
-const FIELDS = Object.keys(VARIABLES);
+/** The fields it has none for, written on the toast itself — which carries no class of the space's to say them. */
+const PROPERTIES: Partial<Record<keyof NotificationsSpec, string>> = { fontSize: 'font-size', border: 'border' };
 
-const isField = (key: string): key is keyof NotificationsSpec => Object.hasOwn(VARIABLES, key);
+const FIELDS = [...Object.keys(VARIABLES), ...Object.keys(PROPERTIES)];
+
+const isField = (key: string): key is keyof NotificationsSpec => FIELDS.includes(key);
+
+const CONTAINER = '.Toastify__toast-container.plitzi-sdk-toasts';
 
 /**
  * The rule that styles the toast container, or `''` when there is nothing to say.
@@ -43,6 +61,7 @@ const isField = (key: string): key is keyof NotificationsSpec => Object.hasOwn(V
  */
 export const notificationsCss = (spec: NotificationsSpec | undefined): string => {
   const declarations: string[] = [];
+  const toast: string[] = [];
   for (const [key, value] of Object.entries(spec ?? {})) {
     if (!isField(key)) {
       throw new AuthoringError(
@@ -62,8 +81,19 @@ export const notificationsCss = (spec: NotificationsSpec | undefined): string =>
       );
     }
 
-    declarations.push(...VARIABLES[key].map(variable => `  ${variable}: ${value.trim()};`));
+    const property = PROPERTIES[key];
+    if (property) {
+      toast.push(`  ${property}: ${value.trim()};`);
+    } else {
+      declarations.push(...(VARIABLES[key] ?? []).map(variable => `  ${variable}: ${value.trim()};`));
+    }
   }
 
-  return declarations.length > 0 ? `.Toastify__toast-container.plitzi-sdk-toasts {\n${declarations.join('\n')}\n}` : '';
+  return [
+    declarations.length > 0 ? `${CONTAINER} {\n${declarations.join('\n')}\n}` : '',
+    // No weight at all, so a rule of the space's own — the error toast's border colour — still wins over it.
+    toast.length > 0 ? `:where(${CONTAINER} .Toastify__toast) {\n${toast.join('\n')}\n}` : ''
+  ]
+    .filter(Boolean)
+    .join('\n');
 };

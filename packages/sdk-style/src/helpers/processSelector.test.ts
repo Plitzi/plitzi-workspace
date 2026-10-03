@@ -946,3 +946,14 @@ describe('processSelector / the hidden state', () => {
     );
   });
 });
+
+describe('processSelector / the current state', () => {
+  const cacheOf = (block: StyleBlock, name = 'navLink'): string =>
+    processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
+
+  it('selects the link to the page being shown, which a hover still answers', () => {
+    const cache = cacheOf({ default: { color: 'gray' }, states: { hover: { color: 'black' }, current: { color: 'red' } } });
+
+    expect(cache).toBe('.navLink{color:gray;&[aria-current="page"]{color:red;}&:hover{color:black;}}');
+  });
+});

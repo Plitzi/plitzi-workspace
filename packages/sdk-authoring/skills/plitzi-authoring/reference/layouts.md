@@ -36,6 +36,13 @@ pages: [{ name: 'Quickstart', slug: 'quickstart', folder: 'docs', layout: { id: 
   sidebar) inside the application shell. The page resolves the chain from the outside in.
 - **A provider in a layout serves every page** — the plan in a sidebar, a star count in a top bar. A server provider
   (`runtime: 'server'`) in a layout is resolved with the page like one in the page.
+- **The layout is a box between the page and its shell.** The page's own class styles the page's root, which holds the
+  layout, which holds your shell — so a page that is a column stretching its content to the window's height
+  (`min-height: 100vh` with a `flex-grow: 1` child) no longer reaches the shell: the footer lifts off the bottom. Give
+  the layout `css: { display: 'contents' }` and the chain is what it was. A slot that only marks where the page goes,
+  inside a parent that lays its children out, takes the same.
+- **The slot can be a role, not only a place.** A split screen's form half is the slot itself (`class: formPane`), so
+  each page is just its card.
 - **Ids are shared** between a layout and all its pages. Name layout elements after the layout (`docs-topbar`), and
   let pages prefix theirs with the page id.
 
@@ -90,9 +97,19 @@ const navLink = styles('nav-link', {
 link({ href: 'spaces', class: navLink, bind: [activeOn(navLink, ['spaces', 'space-record'])] });
 ```
 
-`activeOn(class, pageIds, { variant?, slot? })` binds the class's variant to `navigation.currentPageId`: the `active`
-variant on those pages, `idle` everywhere else. Several ids for one entry — a section and the pages under it. Do not
-write the binding by hand with a `when` rule per page; that is the long form this replaces.
+A link to ONE page needs nothing of this: it marks itself — `aria-current="page"`, which a screen reader announces — and
+its class dresses it with the `current` state:
+
+```ts
+const navLink = styles('nav-link', { css: { color: 'var(--muted)' }, states: { current: { color: 'var(--foreground)' } } });
+
+link({ href: '/pricing', mode: 'internal', class: navLink });
+```
+
+`activeOn(class, pageIds, { variant?, slot? })` is for an entry lit on SEVERAL pages — a section and the pages under it,
+a journal and its articles: it binds the class's variant to `navigation.currentPageId`, the `active` variant on those
+pages and `idle` everywhere else. Do not write the binding by hand with a `when` rule per page; that is the long form
+this replaces.
 
 ## Pages from a factory
 

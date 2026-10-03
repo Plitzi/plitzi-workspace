@@ -8,7 +8,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
 
-import { apiContainer, button, container, heading, text } from '../elements';
+import { apiContainer, button, container, heading, link, text } from '../elements';
 import { authorSpace } from '../index';
 import { blankSpaceSpec } from '../spaces';
 import { styles } from '../style';
@@ -613,6 +613,33 @@ describe('specFromSpace / customCss', () => {
     expect(spec.customCss).toBe(
       '.card .icon { transform: rotate(1deg); }\n\n@media (prefers-reduced-motion: reduce) { .card { transition: none; } }\n'
     );
+  });
+});
+
+describe('specFromSpace / the current state', () => {
+  it('folds the attribute a link to this page carries into the class, as its current state', () => {
+    const documents = authorSpace({
+      name: 'Current',
+      permanentUrl: 'current',
+      classes: { navLink: { color: 'gray' } },
+      customCss: ".navLink[aria-current='page'] { color: red; }\n",
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [link({ href: '/', class: 'navLink', children: [] })] }]
+    });
+    const { spec } = specFromSpace(documents);
+
+    expect(spec.classes?.navLink).toMatchObject({ states: { current: { color: 'red' } } });
+    expect(spec.customCss ?? '').toBe('');
+  });
+
+  it('writes the state as that attribute', () => {
+    const { style } = authorSpace({
+      name: 'Current',
+      permanentUrl: 'current',
+      classes: { navLink: { css: { color: 'gray' }, states: { current: { color: 'red' } } } },
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [link({ href: '/', class: 'navLink', children: [] })] }]
+    });
+
+    expect(style.platform.desktop.navLink.cache).toContain('&[aria-current="page"]{color:red;}');
   });
 });
 

@@ -7,6 +7,7 @@ import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
+import { isCurrentPage } from './isCurrentPage';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -48,12 +49,13 @@ const Link = ({
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
-  const [[pageDefinitions, pageFolders, routeParams, queryParams, navigate]] = useSdkStore([
+  const [[pageDefinitions, pageFolders, routeParams, queryParams, navigate, location]] = useSdkStore([
     'pageDefinitions',
     'schema.pageFolders',
     'navigation.routeParams',
     'navigation.queryParams',
-    'navigation.navigate'
+    'navigation.navigate',
+    'navigation.href'
   ]);
 
   const path = useMemo(() => {
@@ -80,6 +82,9 @@ const Link = ({
     return getPageFullPath(pageDefinitions, pageFolders, href, true);
   }, [mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
   const url = mode !== 'external' && hash ? `${path}#${hash}` : path;
+  // The page being shown, said by the link that leads to it: what a screen reader announces, and what the `current`
+  // style state selects. From the address the server rendered, so the first paint already marks it.
+  const current = mode !== 'external' && isCurrentPage(path, location);
 
   const handleClick = (e: MouseEvent) => {
     if (!previewMode) {
@@ -105,6 +110,7 @@ const Link = ({
       ...(target === 'blank' ? { rel: 'noopener noreferrer' } : {}),
       // Empty means "let the contents name it", which is right for an ordinary link and only wrong for a card.
       'aria-label': label ? label : undefined,
+      'aria-current': current ? ('page' as const) : undefined,
       className: clsx('plitzi-component__link', className)
     };
     if (!previewMode) {
@@ -112,7 +118,7 @@ const Link = ({
     }
 
     return { ...propsToReturn, href: url };
-  }, [ref, style, target, label, className, previewMode, url]);
+  }, [ref, style, target, label, current, className, previewMode, url]);
 
   return (
     <RootElement tag="a" {...propsMemo} onClick={handleClick}>

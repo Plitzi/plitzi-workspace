@@ -46,9 +46,14 @@ All of this helps screen readers too. Neither kind of reader needs something the
 | `formControl` | The `<label for>` of every field. A field that breaks a rule gets `aria-invalid` and is described by its message (`aria-describedby`), and the message is an `alert`. The password eye is a real button, "Show password", with `aria-pressed` |
 | `dropdown` | Marks the button that opens it with `aria-haspopup` and `aria-expanded`. Opened from the keyboard, the focus moves to the popup's first control (the popup can come before the button in the page, where Tab would never reach it). When the popup closes with the focus inside, the focus goes back to the button |
 | `pagination` | A `nav` named "Pagination" (`label`). The current page has `aria-current="page"` |
+| `link` | A link to the page being shown has `aria-current="page"`, from the address the page was rendered at — and the `current` style state to dress it |
 | `themeToggle` | The switch is named by its two labels. The segmented form is a `group` whose options say which one is pressed |
 | `fontAwesome` | Decoration: `aria-hidden`, unless `label` gives it a meaning |
 | `button` | `ariaPressed` and `ariaExpanded` as attributes you can bind. The focus ring is hidden for a pointer only (`:focus:not(:focus-visible)`), never for a keyboard |
+
+Beyond the elements, the SDK's own stylesheet: a visitor whose machine asks for less motion
+(`prefers-reduced-motion: reduce`) gets every animation and transition cut to an instant and no smooth scrolling, on
+every space.
 
 ## 3. What an author says
 

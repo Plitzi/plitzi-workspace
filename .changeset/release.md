@@ -492,3 +492,16 @@ says a finished action the same way, in green.
 The SDK's production build keeps `console.warn` and `console.error`, and drops only `log`, `info` and `debug`. It used
 to drop them all: an override of a flag the space does not declare, or a render that failed, said nothing on a
 published site — exactly where nobody can attach a debugger.
+
+A link to the page being shown says so: it carries `aria-current="page"` — read from the address the page was rendered
+at, so the first paint has it — and a class dresses it with the new `current` style state (`states: { current: … }`,
+a tab in the style editor, folded from `[aria-current="page"]` rules when a space is exported). A site's header now
+goes in a layout once, instead of a copy per page to mark the right navigation item.
+
+`notifications` dresses the whole toast, not only its colours: `font`, `fontSize`, `border`, `shadow` and `padding`
+join `radius` — the library's variables where it has them, a rule on the toast where it has none. A space no longer
+writes `.Toastify__toast { … }` into its `customCss` for them.
+
+A visitor whose machine asks for less motion gets it on every space: the SDK's base layer cuts animations and
+transitions to an instant (each still ends where it would) and turns smooth scrolling off. Spaces used to copy that
+rule into their own custom CSS, and one that did not moved anyway.

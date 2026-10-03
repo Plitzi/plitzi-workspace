@@ -3,17 +3,19 @@ import path from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
 
 import { backendSummary } from './backend';
-import { categories } from './categories';
+import { visibleCategories } from './categories';
 import { LAUNCH_TARGETS_ENV, LAUNCHER_PORT } from './launchConfig';
 import { selectedTargets } from './targets';
 import { WARM_UP_ENV } from './warmUp';
+
+import type { Category } from './categories';
 
 const WARM_UP = 'warm-up';
 
 /** One Playwright for the whole monorepo, run from the root with `yarn e2e`.
  *
- *  It is cut one category per app — `sdk`, `server`, `mcp`, `builder`, plus `cross` and `examples` — each of which
- *  is a Playwright project, so `yarn e2e --project=server` runs one app and starts only the servers that app
+ *  It is cut one category per app — `sdk`, `server`, `mcp`, `builder`, plus `cross` and, only when asked for,
+ *  `examples` — each of which is a Playwright project, so `yarn e2e --project=server` runs one app and starts only the servers that app
  *  declares. Sub-categories are the directories inside. See `categories.ts`.
  *
  *  The config sits beside the specs rather than at the repo root so that config, fixtures and specs are all one
@@ -49,7 +51,7 @@ if (process.env.TEST_WORKER_INDEX === undefined) {
  *  replicas sharing a queue, waiting out a cron minute and a lease, the better part of a minute on one worker. Listed
  *  last, it began when everything else was done and the run waited for it alone; listed first, the rest runs beside
  *  it. */
-const firstLongest = (all: typeof categories): typeof categories => [
+const firstLongest = (all: Category[]): Category[] => [
   ...all.filter(category => category.name === 'examples'),
   ...all.filter(category => category.name !== 'examples')
 ];
@@ -86,7 +88,7 @@ export default defineConfig({
   // cwd by UI mode, and the two are not the same place.
   projects: [
     { name: WARM_UP, testDir: import.meta.dirname, testMatch: /warmUp\.setup\.ts$/ },
-    ...firstLongest(categories).map(category => ({
+    ...firstLongest(visibleCategories()).map(category => ({
       name: category.name,
       testDir: path.resolve(import.meta.dirname, 'tests', category.name),
       /** Every category waits for the warm-up, so it runs in UI mode too — the runner that most needed it, and

@@ -115,6 +115,32 @@
     border: 0 solid;
   }
 
+  /**
+   * A visitor who asked their machine for less motion gets it, on every space, without the space saying so.
+   *
+   * Every space used to copy this into its own custom CSS — and one that forgot moved anyway. `!important` because it
+   * has to win over a class's own `animation` or `transition`, which is exactly what it is for; in this layer it also
+   * wins over a space's `!important`, as an accessibility setting should. An animation still plays once, near
+   * instantly and without its delay, so whatever it ends on — a panel shown, a counter's last number — is where the
+   * page lands, at once: a staggered entrance would otherwise still keep the content waiting.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    ::before,
+    ::after {
+      transition-duration: 0.01ms !important;
+      transition-delay: 0s !important;
+      animation-duration: 0.01ms !important;
+      animation-delay: 0s !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   .plitzi-sdk {
     display: flex;
 

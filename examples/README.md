@@ -76,14 +76,14 @@ whole point is that nothing is compiled should not need a bundler to develop.
 Every example takes `PORT` if the default collides. `yarn start` at the repo root does **not** boot the examples —
 it is the package dev loop, and eight extra servers fighting for ports would only get in the way.
 
-## These are checked
+## Checking them
 
 Each example has a browser spec asserting what its own README claims — the pages it says it serves, the flows it
-says it supports, the response it says it returns. Run them with `yarn e2e` from the repo root; the servers boot
-themselves. See [`e2e/README.md`](../e2e/README.md).
+says it supports, the response it says it returns. Run them with `yarn e2e --project=examples` from the repo root;
+the servers boot themselves. See [`e2e/README.md`](../e2e/README.md).
 
-An example that stops working is a new user blocked at step one, so the suite treats each of these as a promise
-rather than a demo.
+They are not part of the workspace's own checks: the root `yarn test`, `yarn lint`, `yarn typecheck` and `yarn e2e`
+leave them out, and so does CI. An example you change is one you check, with its own scripts or the command above.
 
 ## Where to go next
 

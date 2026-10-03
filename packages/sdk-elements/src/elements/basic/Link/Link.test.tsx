@@ -42,6 +42,29 @@ describe('Link Tests', () => {
     expect(baseElement).toBeTruthy();
   });
 
+  it('says it leads to the page being shown, and no other link does', () => {
+    const at = { ...storeValue, navigation: { ...navigation, href: 'https://example.test/carta?ref=nav' } };
+    const { getByText } = render(
+      <StoreProvider value={at}>
+        <ElementContext value={skipHocEntry()}>
+          <Link mode="internal" href="carta">
+            Carta
+          </Link>
+          <Link mode="internal" href="vinos">
+            Vinos
+          </Link>
+          <Link mode="external" href="https://example.test/carta">
+            Fuera
+          </Link>
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    expect(getByText('Carta').closest('a')?.getAttribute('aria-current')).toBe('page');
+    expect(getByText('Vinos').closest('a')?.hasAttribute('aria-current')).toBe(false);
+    expect(getByText('Fuera').closest('a')?.hasAttribute('aria-current')).toBe(false);
+  });
+
   describe('href resolution', () => {
     const slotted = (id: string, attributes: Record<string, unknown> = {}) => ({
       id,

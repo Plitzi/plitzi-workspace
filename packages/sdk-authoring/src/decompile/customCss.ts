@@ -46,8 +46,14 @@ export interface CustomCssFold {
 
 type Segment = { kind: 'rule'; selector: string; body: string; text: string } | { kind: 'other'; text: string };
 
-// The states written as a pseudo-class — what `.card:hover` names. `.panel:hidden` is no CSS, and not the hidden state.
-const STATE_SET = new Set<string>(STYLE_STATES.filter(state => stateSuffix(state) === `:${state}`));
+// The states written as a pseudo-class — what `.card:hover` names — and `current`, which a selector names as the attribute
+// a link to this page carries and `targetOf` reads as `:current`. `.panel:hidden` is no CSS, and not the hidden state.
+const STATE_SET = new Set<string>(
+  STYLE_STATES.filter(state => state === 'current' || stateSuffix(state) === `:${state}`)
+);
+
+/** `[aria-current="page"]`, in either quotes, written as the state it is, so one pattern reads every state. */
+const asStateNames = (selector: string): string => selector.replaceAll(/\[aria-current=(["'])page\1\]/g, ':current');
 
 const QUOTES = new Set(['"', "'"]);
 
@@ -167,7 +173,8 @@ const SIMPLE_SELECTOR = /^\.([A-Za-z_][\w-]*)(?::([a-z-]+))?$/;
 const ANCESTOR_SELECTOR =
   /^\.([A-Za-z_][\w-]*)(?:\[data-variant=(["']?)([\w-]+)\2\])?(?::([a-z-]+))?\s+\.([A-Za-z_][\w-]*)$/;
 
-const targetOf = (selector: string, isClass: (name: string) => boolean): FoldTarget | undefined => {
+const targetOf = (written: string, isClass: (name: string) => boolean): FoldTarget | undefined => {
+  const selector = asStateNames(written);
   const simple = SIMPLE_SELECTOR.exec(selector);
   if (simple) {
     const className = simple[1];

@@ -4,8 +4,9 @@ One Playwright for the whole monorepo, cut into categories you can run on their 
 
 ```bash
 yarn e2e:install               # download the browser (once, after cloning)
-yarn e2e                       # everything
+yarn e2e                       # everything but the examples
 yarn e2e --project=server      # one app — and only the servers it needs
+yarn e2e --project=examples    # the examples, only ever on request
 yarn e2e --list                # what exists, without running it
 ```
 
@@ -28,9 +29,8 @@ what cannot be expressed as a flag.
 > itself is behind the collapsed chevron at the top left, next to `Status: all  Projects: …`; ticking the apps
 > you want there does the same thing.
 >
-> UI mode also starts only the servers the suite owns (three), not the examples' nine — unscoped it would sit on
-> an empty panel for the better part of a minute. `yarn e2e:ui --project=examples` brings those up when they are
-> what you are working on.
+> The examples' servers are never started unless asked for: `yarn e2e:ui --project=examples` brings them up when
+> they are what you are working on.
 
 ### The `warm-up` project
 
@@ -55,7 +55,7 @@ It is a setup project rather than a `globalSetup` for one reason: only the setup
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
 | `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (mocked backend unless a token is exported) |
 | `cross` | — more than one | `parity`, `agent`, `auth` | harness + both servers |
-| `examples` | — onboarding | one per example | the examples |
+| `examples` | — onboarding, on request only | one per example | the examples |
 
 Both levels are addressable, and a category starts only the servers it declares:
 
@@ -77,7 +77,8 @@ folder and pid — it used to be tested as if it were the app, and failed every 
 screenshot of somebody else's site. On CI every port must be free.
 
 **The long chain goes first.** `examples` holds the one serial spec — replicas sharing a queue, waiting out a cron
-minute and a lease — so it is listed first and the rest runs beside it, rather than after everything else.
+minute and a lease — so when it is asked for it is listed first and the rest runs beside it, rather than after
+everything else.
 
 **`cross` is the one that earns its keep.** Most of what breaks in this repo breaks *between* two apps: the client
 and server render paths disagreeing, a token minted by one package that another will not accept. Those failures
@@ -146,7 +147,9 @@ producer the deployment does not have.
 > two tests signing in as the same person in parallel would each quietly retire the other's session.
 
 The `examples` category is the exception, and its job is narrower: **an example a new user is told to run is a
-promise**, and that category is the promise being kept. Nothing else depends on the examples.
+promise**, and that category is how to check it. Nothing else depends on the examples, and they are not part of the
+workspace's own checks: no `yarn e2e`, `yarn test`, `yarn lint` or `yarn typecheck` from the root — nor CI — runs
+them. `yarn e2e --project=examples` does, when an example is what changed.
 
 ## What a spec asserts
 
@@ -308,9 +311,9 @@ test.use({ mockSpace: minimalSpace({ heading: 'just this' }) });
 ## In CI
 
 `.github/workflows/ci.yml` runs the suite on every push, beside the checks rather than after them, on the build the
-`build` job cached — the examples render built output, so an e2e run on an unbuilt tree tests nothing. It runs in
-three parts on three runners, by category (`ciParts.ts`: `apps` is sdk, desktop and builder, `examples` its own,
-`server` every other one — so a category added to `categories.ts` runs without being listed anywhere else). Each
+`build` job cached — the apps render built output, so an e2e run on an unbuilt tree tests nothing. It runs in two
+parts on two runners, by category (`ciParts.ts`: `apps` is sdk, desktop and builder, `server` every other one but
+`examples` — so a category added to `categories.ts` runs without being listed anywhere else). Each
 runner starts only the servers its categories declare; each part writes a blob report and `e2e-report` merges them
 into the one HTML report the run uploads.
 
@@ -325,8 +328,8 @@ A gated target needs something this machine may not have. It asks whether that t
 moment you provide it and skips with the instruction otherwise — there is no flag to set:
 
 ```bash
-yarn workspace @plitzi/plitzi-sdk build-vendor:prod   # unlocks the no-build example
-DATABASE_URL=mysql://… yarn e2e                        # unlocks the MySQL example (127.0.0.1:33006 by default)
+yarn workspace @plitzi/plitzi-sdk build-vendor:prod                # unlocks the no-build example
+DATABASE_URL=mysql://… yarn e2e --project=examples                  # unlocks the MySQL example (127.0.0.1:33006 by default)
 export PLITZI_WEB_KEY=… PLITZI_USER_KEY=…             # unlocks the builder, live
 ```
 

@@ -287,10 +287,14 @@ container({ css: { color: 'var(--muted)' }, states: { hover: { color: 'var(--for
 ```
 
 `states` takes the states the editor has tabs for — `hover`, `focus`, `focus-visible`, `focus-within`, `active`,
-`disabled`, `checked`, `visited` and `hidden` — and each one, like `css`, may be written per breakpoint. An element's own `states` sit beside its own `css`, and are
+`disabled`, `checked`, `visited`, `current` and `hidden` — and each one, like `css`, may be written per breakpoint. An element's own `states` sit beside its own `css`, and are
 refused next to a shared `class` for the same reason `css` is. An element type's defaults (`elements`) take the same
 `states` and `variants`, and `slots` for the type's other selectors — a modal's `rootContainer`, a form control's
 `input` — so every element of the type is dressed at once.
+
+`current` is a link to the page being shown: the link marks itself (`aria-current="page"`, which a screen reader
+announces too) from the address the page was rendered at, so a header written once in a layout dresses the right
+navigation item on every page — no class chosen per page, no copy of the header per page.
 
 `hidden` is not a pseudo-class: it is how an element looks while its `visible` says no — where it goes as it hides
 and where it comes from as it shows (it is also written as the element's `@starting-style`). With a transition on the

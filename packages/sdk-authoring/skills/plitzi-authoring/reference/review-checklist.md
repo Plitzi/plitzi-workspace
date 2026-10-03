@@ -25,7 +25,8 @@ of it; each line is something that has shipped broken before.
 - [ ] Desktop, tablet and mobile — and nothing scrolls sideways on a phone. A rule for tablets and phones alike is
       written under `compact`.
 - [ ] Light AND dark. Every colour is a token with both values; no theme-following text on a fixed background.
-- [ ] Focus is visible on everything clickable (`focus-visible`), and `prefers-reduced-motion` stops what moves.
+- [ ] Focus is visible on everything clickable (`focus-visible`). Animations and transitions stop by themselves for
+  `prefers-reduced-motion`; a hover that moves something is turned off there too (`transform: none`).
 
 ## Usable without sight
 

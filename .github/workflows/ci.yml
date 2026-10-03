@@ -1,4 +1,4 @@
-# Build once, then check in parallel: the checks split three ways, the unit tests, and the browser suite split three
+# Build once, then check in parallel: the checks split three ways, the unit tests, and the browser suite split two
 # ways — every one of them on its own runner, each restoring the build from the cache rather than making it again. A
 # release publishes once the checks and the tests pass.
 
@@ -58,7 +58,8 @@ jobs:
 
   # Lint, style lint and typecheck, split three ways by package: in one job they were the pipeline's longest leg, every
   # package's type-aware lint at once on one runner. Each part is named by what it holds, and the last is "everything
-  # else" — written as the others' exclusion, so a package added tomorrow is checked without anybody listing it.
+  # else" — written as the others' exclusion, so a package added tomorrow is checked without anybody listing it. The
+  # examples are in none: they are written for a person to copy, not part of what the workspace ships.
   #
   # `--only` because these tasks need nothing of each other: without it `dependsOn: ^lint` in turbo.json pulls every
   # dependency's lint into each part, and the shared packages were checked in all three.
@@ -82,6 +83,7 @@ jobs:
               --filter=!@plitzi/plitzi-builder --filter=!@plitzi/plitzi-desktop --filter=!@plitzi/plitzi-sdk
               --filter=!@plitzi/e2e --filter=!@plitzi/sdk-server --filter=!@plitzi/sdk-shared --filter=!@plitzi/cli
               --filter=!@plitzi/sdk-auth --filter=!@plitzi/sdk-schema --filter=!@plitzi/sdk-interactions
+              --filter=!./examples/**
     name: checks (${{ matrix.part.name }})
     steps:
       - uses: actions/checkout@v7
@@ -107,7 +109,8 @@ jobs:
       - name: Prune Cache turbo
         run: find .turbo/cache -type f -mtime +7 -delete || true
 
-  # Every package's unit tests. The integration tests among them skip themselves where there is no database to reach.
+  # Every package's unit tests, the examples' aside (the root `test` script leaves them out). The integration tests
+  # among them skip themselves where there is no database to reach.
   test:
     needs: build
     runs-on: ubuntu-latest
@@ -122,13 +125,14 @@ jobs:
       - name: Yarn Test
         run: yarn test
 
-  # The browser suite, split three ways by category. Needs the build — the examples render built output, so an e2e run
-  # on an unbuilt tree tests nothing — but not the checks: a formatting complaint says nothing about whether the app
-  # works.
+  # The browser suite, split two ways by category, the examples' left out — they run on request only. Needs the build —
+  # the apps render built output, so an e2e run on an unbuilt tree tests nothing — but not the checks: a formatting
+  # complaint says nothing about whether the app works.
   #
   # Split by category rather than `--shard`, because a category starts only the servers it declares (e2e/targets.ts):
-  # each runner boots its part of them, not all twenty-six. The parts are e2e/ciParts.ts's. Every server is started by the suite itself, so there is nothing to provision: no database, no hosts
-  # file, no certificates. `yarn e2e:ci` says so — the backend is answered in the browser.
+  # each runner boots its part of them, not all of them. The parts are e2e/ciParts.ts's. Every server is started by the
+  # suite itself, so there is nothing to provision: no database, no hosts file, no certificates. `yarn e2e:ci` says so
+  # — the backend is answered in the browser.
   e2e:
     if: github.event_name == 'push'
     needs: build
@@ -137,8 +141,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Which categories each part runs is e2e/ciParts.ts's: `server` is every category the other two do not name.
-        part: [apps, server, examples]
+        # Which categories each part runs is e2e/ciParts.ts's: `server` is every category `apps` does not name.
+        part: [apps, server]
     name: e2e (${{ matrix.part }})
     steps:
       - uses: actions/checkout@v7
@@ -166,8 +170,7 @@ jobs:
         run: yarn playwright install-deps chromium
 
       # Each part writes a blob, which `e2e-report` merges into one report; failures are annotated on the run as they
-      # happen. Every target that can run without provisioning does, the builder included. The rest — the MySQL
-      # example — skips with the reason, because the gate asks whether the thing is there rather than reading a flag.
+      # happen. Every target that can run without provisioning does, the builder included.
       - name: Yarn E2E
         run: |
           read -ra projects <<< "$(node --import tsx e2e/ciParts.ts ${{ matrix.part }})"
@@ -191,7 +194,7 @@ jobs:
           path: e2e/.artifacts/test-results
           retention-days: 14
 
-  # One report for the three parts. It carries the trace of every failure: open it and step through the run that broke.
+  # One report for the two parts. It carries the trace of every failure: open it and step through the run that broke.
   e2e-report:
     if: ${{ !cancelled() && github.event_name == 'push' }}
     needs: e2e

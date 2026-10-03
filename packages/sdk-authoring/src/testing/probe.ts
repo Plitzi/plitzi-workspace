@@ -50,12 +50,22 @@ export function probePage(input: ProbeInput): ProbeFindings {
       }
     }
 
+    if (getComputedStyle(node).display === 'contents') {
+      return 'it has no box of its own (display:contents) and nothing inside it shows';
+    }
+
     const box = node.getBoundingClientRect();
 
     return `it has no size (${Math.round(box.width)}×${Math.round(box.height)})`;
   };
 
   const isVisible = (node: Element): boolean => {
+    // No box of its own — a layout's slot that leaves the page's sections to the layout around it: it shows what its
+    // children show. Its own rectangle is always 0×0, which is not it being hidden.
+    if (getComputedStyle(node).display === 'contents') {
+      return [...node.children].some(isVisible);
+    }
+
     const box = node.getBoundingClientRect();
 
     return box.width > 0 && box.height > 0 && getComputedStyle(node).visibility === 'visible';

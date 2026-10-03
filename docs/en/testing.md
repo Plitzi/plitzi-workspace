@@ -5,10 +5,10 @@ Two runners, with a clean line between them.
 | | Runner | Where | What it is for |
 |---|---|---|---|
 | Unit / integration | Vitest | beside the source it tests | A function, a hook, a component, a server handler — anything that can be decided without a browser |
-| End to end | Playwright | [`e2e/`](../../e2e) | What a person opens: the examples, the SDK rendering in them, the builder |
+| End to end | Playwright | [`e2e/`](../../e2e) | What a person opens: the SDK rendering a space, the page server, the builder |
 
 ```bash
-yarn test          # every package's Vitest suite
+yarn test          # every package's Vitest suite — the examples' aside
 yarn e2e           # the browser suite, for the whole monorepo
 ```
 
@@ -45,7 +45,7 @@ it is complete.
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` |
 | `builder` | `@plitzi/plitzi-builder` | `boot` |
 | `cross` | more than one app | `parity`, `agent`, `auth` |
-| `examples` | — | one per example |
+| `examples` | — (on request only) | one per example |
 
 Both levels are addressable: `yarn e2e --project=server` for the app, `yarn e2e tests/server/rsc` for one part.
 
@@ -61,9 +61,10 @@ The same cycle against the real platform — API, databases, buckets, upload and
 `plitzi-sdk-server`'s `test/e2e/flows/spaces/space-as-project.e2e.test.ts` (see
 [A space as a project](./projects-from-spaces.md#where-it-is-tested)).
 
-**The `examples` category has its own job.** An example a new user is told to run is a promise, and a promise
-nothing checks is a promise that breaks. Each one has a spec asserting what its own README claims, so a change
-that quietly breaks the first thing a new user runs fails here instead of in their terminal.
+**The `examples` category has its own job.** An example a new user is told to run is a promise: each one has a spec
+asserting what its own README claims. They are not part of the workspace's own checks — the root `yarn test`,
+`yarn lint`, `yarn typecheck` and `yarn e2e` leave the examples out, and so does CI. `yarn e2e --project=examples`
+runs them, when an example is what changed.
 
 ### Seeing it happen
 

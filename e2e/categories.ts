@@ -11,7 +11,8 @@
  *  ```
  *
  *  Two categories are not apps, and say so: `cross` is what needs more than one, and `examples` is the onboarding
- *  promise rather than a piece of software. */
+ *  promise rather than a piece of software — run only when asked for (`yarn e2e --project=examples`), never as part
+ *  of the workspace's own checks. */
 
 export type Subcategory = {
   /** Directory under `tests/<category>/`, and the tag its specs carry. */
@@ -27,6 +28,8 @@ export type Category = {
   /** Target ids from `targets.ts` this category needs running. */
   targets: string[];
   subcategories: Subcategory[];
+  /** Left out of every run that does not name it with `--project`, CI's included. */
+  onRequest?: boolean;
 };
 
 const EXAMPLE_TARGETS = [
@@ -129,7 +132,8 @@ export const categories: Category[] = [
     name: 'examples',
     what: 'Every example still does what its own README says',
     targets: EXAMPLE_TARGETS,
-    subcategories: []
+    subcategories: [],
+    onRequest: true
   }
 ];
 
@@ -157,14 +161,15 @@ export const requestedCategories = (): string[] => {
   return names;
 };
 
-const isUiMode = (): boolean => process.argv.includes('--ui');
+/** The categories this run can see: every one but those run only on request, and those too when `--project` names
+ *  them. A category left out is not a Playwright project at all, so its specs cannot run without their servers. */
+export const visibleCategories = (): Category[] => {
+  const requested = requestedCategories();
 
-/** Every target the selected categories need.
- *
- *  No selection means the whole suite — except in UI mode, where it means every category but `examples`. Playwright
- *  starts every declared server before it can show anything, and the examples are nine of them: unscoped, the UI
- *  would sit on an empty panel for the better part of a minute with nothing on screen to say why. The surfaces the
- *  suite owns start in seconds, and `yarn e2e:ui --project=examples` brings the rest when they are the subject. */
+  return categories.filter(category => !category.onRequest || requested.includes(category.name));
+};
+
+/** Every target the selected categories need: the ones `--project` names, or every visible one. */
 export const targetsForRun = (): string[] => {
   const requested = requestedCategories();
 
@@ -172,7 +177,7 @@ export const targetsForRun = (): string[] => {
     return unique(categories.filter(category => requested.includes(category.name)));
   }
 
-  return unique(isUiMode() ? categories.filter(category => category.name !== 'examples') : categories);
+  return unique(visibleCategories());
 };
 
 const unique = (selected: Category[]): string[] => [...new Set(selected.flatMap(category => category.targets))];

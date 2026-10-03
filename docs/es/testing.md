@@ -5,10 +5,10 @@ Dos runners, con una línea clara entre ellos.
 | | Runner | Dónde | Para qué sirve |
 |---|---|---|---|
 | Unitarias / integración | Vitest | junto al código que prueban | Una función, un hook, un componente, un handler de servidor — todo lo que se decide sin navegador |
-| End to end | Playwright | [`e2e/`](../../e2e) | Lo que una persona abre: los examples, el SDK renderizando dentro de ellos, el builder |
+| End to end | Playwright | [`e2e/`](../../e2e) | Lo que una persona abre: el SDK renderizando un space, el servidor de páginas, el builder |
 
 ```bash
-yarn test          # la suite de Vitest de cada paquete
+yarn test          # la suite de Vitest de cada paquete — salvo los examples
 yarn e2e           # la suite de navegador, para todo el monorepo
 ```
 
@@ -45,7 +45,7 @@ antes de estar completa.
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` |
 | `builder` | `@plitzi/plitzi-builder` | `boot` |
 | `cross` | más de una app | `parity`, `agent`, `auth` |
-| `examples` | — | una por example |
+| `examples` | — (sólo bajo petición) | una por example |
 
 Los dos niveles se direccionan: `yarn e2e --project=server` para la app, `yarn e2e tests/server/rsc` para una parte.
 
@@ -62,10 +62,10 @@ runtime, su acción ejecutando su function, sus archivos. El mismo ciclo contra 
 buckets, upload y push, snapshots, `pull` — es `test/e2e/flows/spaces/space-as-project.e2e.test.ts` de
 `plitzi-sdk-server` (ver [A space as a project](../en/projects-from-spaces.md#where-it-is-tested)).
 
-**La categoría `examples` tiene su propio trabajo.** Un example al que se manda a un usuario nuevo es una promesa,
-y una promesa que nadie comprueba es una promesa que se rompe. Cada uno tiene un spec que afirma lo que dice su
-README, así que un cambio que rompa en silencio lo primero que ejecuta un usuario nuevo falla aquí y no en su
-terminal.
+**La categoría `examples` tiene su propio trabajo.** Un example al que se manda a un usuario nuevo es una promesa:
+cada uno tiene un spec que afirma lo que dice su README. No forman parte de las comprobaciones del workspace — los
+`yarn test`, `yarn lint`, `yarn typecheck` y `yarn e2e` de la raíz dejan fuera los examples, y el CI también.
+`yarn e2e --project=examples` los ejecuta, cuando lo que cambió es un example.
 
 ### Verlo ocurrir
 
