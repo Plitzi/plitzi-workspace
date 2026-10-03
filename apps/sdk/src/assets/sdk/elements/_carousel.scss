@@ -42,9 +42,9 @@
   }
 
   .carousel__marquee {
+    width: max-content;
     display: flex;
     gap: var(--plitzi-carousel-gap, 0px);
-    width: max-content;
 
     > .carousel__slide {
       flex: 0 0 var(--plitzi-carousel-slide-width, auto);
@@ -61,8 +61,8 @@
 
   .carousel__slide--empty {
     padding: 24px;
-    text-align: center;
     opacity: 0.6;
+    text-align: center;
   }
 
   @keyframes plitzi-carousel-in-next {

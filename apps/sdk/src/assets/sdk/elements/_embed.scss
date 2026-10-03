@@ -1,17 +1,17 @@
 @mixin styles {
   .plitzi-component__embed {
-    display: block;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    display: block;
     border: 0;
+    aspect-ratio: 16 / 9;
 
     // In the builder the page inside would take every click: a cover over it selects the element instead.
     &.embed--edit-mode {
       position: relative;
 
       > iframe {
-        width: 100%;
         height: 100%;
+        width: 100%;
         border: 0;
         pointer-events: none;
       }
