@@ -1279,6 +1279,10 @@
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
     },
+    "./style/breakpoints": {
+      "types": "./dist/style/breakpoints.d.ts",
+      "import": "./dist/style/breakpoints.mjs"
+    },
     "./style/displayModes": {
       "types": "./dist/style/displayModes.d.ts",
       "import": "./dist/style/displayModes.mjs"
@@ -1302,6 +1306,10 @@
     "./style/index": {
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
+    },
+    "./style/layoutGrid": {
+      "types": "./dist/style/layoutGrid.d.ts",
+      "import": "./dist/style/layoutGrid.mjs"
     },
     "./style/notifications": {
       "types": "./dist/style/notifications.d.ts",

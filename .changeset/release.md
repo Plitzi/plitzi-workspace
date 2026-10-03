@@ -589,5 +589,19 @@ editor included.
 
 The builder's header has a layout grid switch beside the element outlines: the columns a page is laid out on, drawn
 over the canvas — twelve on a desktop, eight on a tablet, four on a phone, with their gutters and margins — so an
-element is lined up by eye with the rest of the page. It follows the canvas zoom, lets every click through, and is
-remembered between visits like the outlines.
+element is lined up by eye with the rest of the page — switching at the page's own breakpoints. It follows the canvas
+zoom, lets every click through, and is remembered between visits like the outlines.
+
+## A QA tab in the dev tools
+
+The dev tools — wherever debugging is authorized, a pre-production deployment included — have a **QA** tab for whoever
+checks a build in the browser it will be used in: the builder's layout grid over the page, every element's outline
+with its type and id, the viewport's size and the breakpoint showing, animations paused, the page with reduced motion,
+the page as seen without one kind of colour, in grayscale or out of focus — and three checks that outline what they
+find and scroll to it: whatever sticks out past the page's sides, controls and pictures with no name, and touch targets
+under 24 × 24 px with another too close (WCAG 2.2). What is on stays on with the panel folded away, in this browser.
+
+The layout grid and the breakpoints are one definition in `@plitzi/sdk-shared/style` (`LAYOUT_GRIDS`,
+`layoutGridLook`, `layoutGridCss`, `DISPLAY_MODE_MIN_WIDTH`, `displayModeAt`), which `@plitzi/sdk-style` compiles its
+media queries from and the builder's grid draws with. The SDK's stylesheet applies its reduced-motion rule under the
+class `plitzi-reduced-motion` on the document too, from the same mixin as the media query.

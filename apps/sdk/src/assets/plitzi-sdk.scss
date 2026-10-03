@@ -3,6 +3,24 @@
 
 @layer theme, base, plitzi-sdk-base, components, utilities, plitzi-sdk-runtime, plitzi-sdk-plugin;
 
+/* What a visitor who asked for less motion gets — written once, applied by the media query and by the QA class. */
+@mixin reduced-motion($root) {
+  #{$root} {
+    scroll-behavior: auto;
+  }
+
+  #{$root} *,
+  #{$root} ::before,
+  #{$root} ::after {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer components {
   // @import '@fortawesome/fontawesome-free/css/all.min.css';
   @import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
@@ -125,21 +143,14 @@
    * page lands, at once: a staggered entrance would otherwise still keep the content waiting.
    */
   @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
-
-    *,
-    ::before,
-    ::after {
-      transition-duration: 0.01ms !important;
-      transition-delay: 0s !important;
-      animation-duration: 0.01ms !important;
-      animation-delay: 0s !important;
-      animation-iteration-count: 1 !important;
-      scroll-behavior: auto !important;
-    }
+    @include reduced-motion(html);
   }
+
+  /*
+   * The same stills, asked for by a class on the document: how the dev tools' QA tab shows a page as a visitor who
+   * asked for less motion sees it, without changing the machine's setting.
+   */
+  @include reduced-motion('html.plitzi-reduced-motion');
 
   .plitzi-sdk {
     display: flex;

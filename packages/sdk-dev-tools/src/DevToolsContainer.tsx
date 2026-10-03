@@ -76,6 +76,8 @@ const DevToolsContainer = ({
   // and it is dropped as soon as the user picks a tab themselves.
   const [logTypeFilter, setLogTypeFilter] = useState<LogType | undefined>();
   const fallbackIdRef = useRef<string>(undefined);
+  // The page's own box, beside the panel: what the QA tools draw over and look in.
+  const pageRef = useRef<HTMLDivElement>(null);
   if (!fallbackIdRef.current) {
     fallbackIdRef.current = `sdk-instance-${++fallbackInstanceSeq}`;
   }
@@ -145,6 +147,7 @@ const DevToolsContainer = ({
               onCollapse={handleCollapse}
               onTabSelect={handleTabSelect}
               onChangeOrientation={handleChangeOrientation}
+              pageRef={pageRef}
             />
           )}
           {renderMode === 'shadow' && (
@@ -162,6 +165,7 @@ const DevToolsContainer = ({
                   onCollapse={handleCollapse}
                   onTabSelect={handleTabSelect}
                   onChangeOrientation={handleChangeOrientation}
+                  pageRef={pageRef}
                 />
               </ContainerShadow.Content>
             </ContainerShadow>
@@ -189,7 +193,9 @@ const DevToolsContainer = ({
     >
       {/* Tag every nested StoreProvider below with this instance's id so the panel's scope dropdown can group them. */}
       <DevStoreScopeContext value={effectiveInstanceId}>
-        <div className={clsx('grow', { 'basis-0 flex-col overflow-auto': !inFlow }, innerClassName)}>{children}</div>
+        <div ref={pageRef} className={clsx('grow', { 'basis-0 flex-col overflow-auto': !inFlow }, innerClassName)}>
+          {children}
+        </div>
       </DevStoreScopeContext>
       {/* In flow the page is as tall as its content, so the badge rides a zero-height anchor stuck to the bottom of
           whatever scrolls — the window, or the pane a host gave the space. */}

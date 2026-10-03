@@ -21,7 +21,9 @@ const TABS = [
   { id: 'plugins', label: 'Plugins', icon: 'fa-solid fa-puzzle-piece' },
   { id: 'tracing', label: 'Tracing', icon: 'fa-solid fa-gauge-high' },
   // Own tab rather than a Logs filter: a run has input, output, progress and server steps — none is a log line.
-  { id: 'actions', label: 'Actions', icon: 'fa-solid fa-bolt' }
+  { id: 'actions', label: 'Actions', icon: 'fa-solid fa-bolt' },
+  // The page itself, for whoever checks a build: the grid, outlines, motion, colour and the checks a tester runs.
+  { id: 'qa', label: 'QA', icon: 'fa-solid fa-ruler-combined' }
 ] as const;
 
 export type DevToolsHeaderProps = {

@@ -12,7 +12,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { fontLinkAssets, fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
+import { fontLinkAssets, fontsToHead, fontUrlResolver, layoutGridCss } from '@plitzi/sdk-shared/style';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
@@ -28,7 +28,6 @@ import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
 import BuilderAreaTracking from './BuilderAreaTracking';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
-import { layoutGridCss } from '../../helpers/layoutGrid';
 
 import type { ComponentPluginWithHOC, DisplayMode, SpaceFont } from '@plitzi/sdk-shared';
 

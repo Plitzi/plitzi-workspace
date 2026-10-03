@@ -10,6 +10,7 @@ import FlagsViewer from './tabs/FlagsViewer';
 import HistoryViewer from './tabs/HistoryViewer';
 import Logs from './tabs/Logs';
 import PluginsViewer from './tabs/PluginsViewer/PluginsViewer';
+import QaViewer from './tabs/QaViewer';
 import StoreViewer from './tabs/StoreViewer';
 import TracingViewer from './tabs/TracingViewer';
 import VariablesViewer from './tabs/VariablesViewer';
@@ -52,6 +53,7 @@ const DevToolsBody = ({
         {tabSelected === 'plugins' && <PluginsViewer />}
         {tabSelected === 'tracing' && <TracingViewer />}
         {tabSelected === 'actions' && <ActionsViewer />}
+        {tabSelected === 'qa' && <QaViewer />}
       </div>
     </div>
   );

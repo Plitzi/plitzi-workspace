@@ -65,6 +65,10 @@ hover that moves a card or a page that scrolls itself.
 
 ## Checking a page
 
+On a running build, the dev tools' **QA** tab pauses every animation where it is, to look at a moment of it, and shows
+the page with reduced motion — the SDK's own rule, applied by the class `plitzi-reduced-motion` on the document — without
+changing the machine's setting.
+
 The authoring linter reads the space's keyframes: one that animates anything but `opacity` and `transform`, and that
 something runs, is suggested `heavy-animation` — in `authorSpace`'s and `plitzi_validate`'s `suggestions` and the
 builder's problems panel — with each property it animates and the way out of its cost. A property from the second row

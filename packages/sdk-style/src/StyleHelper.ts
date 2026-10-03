@@ -1,4 +1,5 @@
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
+import { DISPLAY_MODES, DISPLAY_MODE_MIN_WIDTH, displayModeWidthRem, isDisplayMode } from '@plitzi/sdk-shared/style';
 import { styleVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 
 import type { DisplayMode, Style, TagType, StyleVariables } from '@plitzi/sdk-shared';
@@ -36,19 +37,13 @@ export const selectorToString = (
   return value.join(separator);
 };
 
-const defaultWidth: Record<string, string> = { desktop: '64rem', tablet: '48rem', mobile: '0' };
+const defaultWidth: Record<string, string> = Object.fromEntries(
+  DISPLAY_MODES.map(displayMode => [displayMode, displayModeWidthRem(displayMode)])
+);
 
 const toPx = (key: string): number => {
-  if (key === 'mobile') {
-    return 0;
-  }
-
-  if (key === 'tablet') {
-    return 768;
-  }
-
-  if (key === 'desktop') {
-    return 1024;
+  if (isDisplayMode(key)) {
+    return DISPLAY_MODE_MIN_WIDTH[key];
   }
 
   const match = key.match(/(\d*\.?\d+)(px|rem)/);
