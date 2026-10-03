@@ -183,9 +183,9 @@
       .overlay__drop-message {
         padding: 3px 8px;
         border-radius: 6px;
-        font-family: $labelFont;
         font-weight: 500;
         line-height: 16px;
+        font-family: $labelFont;
         font-size: 12px;
         white-space: nowrap;
         text-overflow: ellipsis;
@@ -242,11 +242,11 @@
       position: absolute;
       border-top-left-radius: 4px;
       color: white;
-      font-family: $labelFont;
       font-weight: 600;
-      font-variant-numeric: tabular-nums;
       line-height: 18px;
+      font-family: $labelFont;
       font-size: 10px;
+      font-variant-numeric: tabular-nums;
     }
 
     .overlay__element-name {
@@ -260,9 +260,9 @@
       align-items: center;
       border-bottom-right-radius: 4px;
       color: white;
-      font-family: $labelFont;
       font-weight: 600;
       line-height: 18px;
+      font-family: $labelFont;
       font-size: 10px;
       letter-spacing: 0.01em;
       white-space: nowrap;
@@ -366,8 +366,8 @@
       border-top-right-radius: 4px;
       background-color: $dangerStrong;
       color: white;
-      font-family: $labelFont;
       line-height: 12px;
+      font-family: $labelFont;
       font-size: 12px;
       white-space: nowrap;
       text-overflow: ellipsis;
