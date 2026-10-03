@@ -246,6 +246,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # The changesets action publishes only when no changeset is pending. With one left in the tagged commit it opens a
+      # version PR instead — against the tag, which GitHub refuses — and publishes nothing. Said here, before anything
+      # is built or pushed.
+      - name: No pending changesets
+        run: |
+          pending=$(find .changeset -name '*.md' ! -name 'README.md')
+          if [ -n "$pending" ]; then
+            echo "::error::Changesets still pending at ${GITHUB_REF_NAME}: ${pending}. Run 'yarn changeset version' and commit before tagging the release."
+            exit 1
+          fi
+
       - uses: ./.github/actions/setup
         with:
           cache-version: ${{ secrets.CACHE_VERSION }}

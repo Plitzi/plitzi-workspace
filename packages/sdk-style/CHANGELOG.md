@@ -1,5 +1,20 @@
 # @plitzi/sdk-style
 
+## 0.38.1
+
+### Patch Changes
+
+- 266e691: ## A shutdown that does not wait on idle connections
+
+  A server shutting down while it answered a request waited, once the answer was sent, for the client to let go of the
+  keep-alive connection it came on — three seconds for Node's own `fetch`, longer for others — before it could stop. The
+  connection is now closed as soon as its answer is finished.
+
+- Updated dependencies [266e691]
+  - @plitzi/sdk-plugins@0.38.1
+  - @plitzi/sdk-shared@0.38.1
+  - @plitzi/sdk-variables@0.38.1
+
 ## 0.38.0
 
 ### Minor Changes
