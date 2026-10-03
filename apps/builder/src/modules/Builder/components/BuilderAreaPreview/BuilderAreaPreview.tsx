@@ -21,6 +21,7 @@ import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import styleFrame from '../../../Builder/Assets/index-iframe.scss?inline';
 
@@ -34,7 +35,7 @@ const previewOverride = { previewMode: true };
 
 const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: BuilderAreaPreviewProps) => {
   const previewRender = useRenderOverride(previewOverride);
-  const { environment } = use(NetworkContext);
+  const { environment } = useBuilderNetwork();
   const { rootRef } = use(ContainerRootContext);
   const { displayBorderComponents } = use(AppContext);
   // The same area the canvas uses: a preview of the space is the space, so it is painted the way the space is.

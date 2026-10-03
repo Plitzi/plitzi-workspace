@@ -88,7 +88,7 @@ const Settings = ({
   const handleChangeLabel = useCallback((value: string) => onUpdate?.('label', value), [onUpdate]);
 
   const handleChangeHideLabel = useCallback(
-    (e: ChangeEvent) => onUpdate?.('hideLabel', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('hideLabel', e.target.checked),
     [onUpdate]
   );
 
@@ -105,17 +105,17 @@ const Settings = ({
   const handleChangeDefaultValue = useCallback((value: string) => onUpdate?.('defaultValue', value), [onUpdate]);
 
   const handleChangeAutoFocus = useCallback(
-    (e: ChangeEvent) => onUpdate?.('autoFocus', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('autoFocus', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeAutoComplete = useCallback(
-    (e: ChangeEvent) => onUpdate?.('autoComplete', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('autoComplete', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeRequired = useCallback(
-    (e: ChangeEvent) => onUpdate?.('required', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('required', e.target.checked),
     [onUpdate]
   );
 
@@ -146,17 +146,17 @@ const Settings = ({
   const handleChangeMatchesMessage = useCallback((value: string) => onUpdate?.('matchesMessage', value), [onUpdate]);
 
   const handleChangeReadOnly = useCallback(
-    (e: ChangeEvent) => onUpdate?.('readOnly', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('readOnly', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeDisabled = useCallback(
-    (e: ChangeEvent) => onUpdate?.('disabled', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('disabled', e.target.checked),
     [onUpdate]
   );
 
   const handleChangePreviewError = useCallback(
-    (e: ChangeEvent) => onUpdate?.('previewError', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('previewError', e.target.checked),
     [onUpdate]
   );
 

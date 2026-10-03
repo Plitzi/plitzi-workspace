@@ -38,7 +38,7 @@ const Settings = ({
   const handleChangeLabel = useCallback((value: string) => onUpdate?.('label', value), [onUpdate]);
 
   const handleChangeDisabled = useCallback(
-    (e: ChangeEvent) => onUpdate?.('disabled', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('disabled', e.target.checked),
     [onUpdate]
   );
 

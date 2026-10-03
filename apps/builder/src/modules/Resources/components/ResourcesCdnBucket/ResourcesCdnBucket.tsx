@@ -5,7 +5,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import { mainPluginOf } from '../../helpers';
@@ -15,11 +15,8 @@ import ResourcesList from '../ResourcesList';
 
 import type { ResourceCdnBucketFormValues } from '../../Models/ResourceCdnBucketForm';
 import type {
-  BuilderMutationsMap,
-  BuilderQueriesMap,
   CdnBucket,
   ComponentDefinition,
-  NetworkContextValue,
   ResourceFile,
   ResourceWithFile,
   Resource as TResource
@@ -48,7 +45,7 @@ const ResourcesCdnBucket = ({ cdnIdentifier, provider, bucket, prefix, onChange 
   const { showDialog, showModal } = useModal();
   const [removing, setRemoving] = useState(false);
   const { plugins, remove, add } = use(PluginsContext);
-  const { mutate: mutateNetwork } = use(NetworkContext) as NetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const isPrivate = bucket.visibility === 'private';
   const { data, error, isLoading, mutate } = useGraphQL('SpaceResources', data => data?.SpaceResources.resources, {
     cdnIdentifier,

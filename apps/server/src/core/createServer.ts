@@ -1,3 +1,4 @@
+import { actionLookupsOf, connectorLookupsOf } from './configSeam';
 import { actionsModuleFor } from '../modules/actions/moduleFor';
 import { connectorRscData } from '../modules/rsc/connectorRscData';
 import { createAuthApiStage } from './http/stages/authApi';
@@ -7,9 +8,8 @@ import { resolveServices } from './services/resolve';
 
 import type { Auth } from './auth/createAuth';
 import type { PipelineExtensions } from './http/types';
-import type { ActionLookups } from '../modules/actions/types';
-import type { ConnectorLookups } from '../modules/connectors/resolver';
 import type {
+  ConnectorLookupsConfig,
   SSRActionConfig,
   SSRPageAdapters,
   SSRRscConfig,
@@ -71,7 +71,7 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
 const withConnectorRsc = <
   T extends {
     adapters: SSRPageAdapters;
-    connectors?: unknown;
+    connectors?: ConnectorLookupsConfig;
     action?: SSRActionConfig;
     rsc?: SSRRscConfig;
     publicDir?: string;
@@ -88,13 +88,11 @@ const withConnectorRsc = <
   // and one `kv`. `actionsModuleFor` memoizes on the config OBJECT — so it is asked about the object the page server
   // is handed, never the one this was spread from: asked about that one, it built a second module, and a board a
   // call had just saved read as missing from every render.
-  const module = actionsModuleFor(resolved as SSRServerConfig);
+  const module = actionsModuleFor(resolved);
   const actions =
-    module && config.action?.lookups ? { lookups: config.action.lookups as ActionLookups, module } : undefined;
+    module && config.action?.lookups ? { lookups: actionLookupsOf(config.action.lookups), module } : undefined;
   resolved.adapters.getRscData = connectorRscData({
-    // The public config hands a manifest back as `unknown` (a deployment reads it from its own store); the connector
-    // module reads it as the manifest the space saved, unchecked — a manifest guard at this boundary would close it.
-    connectors: config.connectors as ConnectorLookups | undefined,
+    connectors: config.connectors ? connectorLookupsOf(config.connectors) : undefined,
     actions,
     publicDir: config.publicDir,
     elementTimeoutMs: config.rsc?.elementTimeoutMs

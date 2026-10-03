@@ -1,8 +1,8 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import useAiErrors from './useAiErrors';
 import useAiUsage from './useAiUsage';
@@ -23,7 +23,7 @@ type QueueEntry = {
 };
 
 const useAiChat = (providerSettings?: AiProviderSettings) => {
-  const { server, webKey } = use(NetworkContext);
+  const { server, webKey } = useBuilderNetwork();
   const { networkQuery } = useNetwork({ initLoading: false, server, webKey, baseUrl: server.serverUrl });
   const [conversationId, setConversationId] = useStorage<string>('builder-state.aiChat.conversationId', '');
   // Typed here, not inferred: this hook hands the setter on, and its type must name this package's React.

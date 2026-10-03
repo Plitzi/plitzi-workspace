@@ -2,22 +2,16 @@ import Button from '@plitzi/plitzi-ui/Button';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
 import useDisclosure from '@plitzi/plitzi-ui/hooks/useDisclosure';
 import Modal from '@plitzi/plitzi-ui/Modal';
-import { use, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import buildCredentialData from '@pmodules/Space/helpers/buildCredentialData';
 import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
 
 import ModalBody from './ModalBody';
 
-import type {
-  BuilderMutationsMap,
-  BuilderNetworkContextValue,
-  BuilderQueriesMap,
-  SpaceCredential,
-  SpaceCredentialProvider
-} from '@plitzi/sdk-shared';
+import type { SpaceCredential, SpaceCredentialProvider } from '@plitzi/sdk-shared';
 import type { spaceCredentialFormSchema } from '@pmodules/Space/Models/SpaceCredentialForm';
 import type { MouseEvent, ReactNode } from 'react';
 import type z from 'zod';
@@ -37,10 +31,7 @@ const SpaceCredentialSelectorModal = ({
   selected: selectedProp,
   onSelect
 }: SpaceCredentialSelectorModalProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const [selected, setSelected] = useState(selectedProp);
   const [newCredential, setNewCredential] = useState<
     Omit<SpaceCredential, 'identifier' | 'createdAt' | 'updatedAt'> | undefined

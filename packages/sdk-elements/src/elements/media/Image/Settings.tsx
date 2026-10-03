@@ -43,7 +43,7 @@ const Settings = ({
   );
 
   const handleChangeDecorative = useCallback(
-    (e: ChangeEvent) => onUpdate?.('decorative', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('decorative', e.target.checked),
     [onUpdate]
   );
 

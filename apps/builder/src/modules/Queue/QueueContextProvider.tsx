@@ -1,6 +1,6 @@
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import useQueueManager from './hooks/useQueueManager';
 import QueueContext from './QueueContext';
@@ -17,7 +17,7 @@ export type QueueContextProviderProps = {
 };
 
 const QueueContextProvider = ({ children, includeSubscriptions = true }: QueueContextProviderProps) => {
-  const { mutate } = use(NetworkContext);
+  const { mutate } = useBuilderNetwork();
 
   const { enqueue, processing } = useQueueManager({
     delay: 100,

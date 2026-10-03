@@ -169,8 +169,12 @@ What lands in `--out`:
 - `assets.json`, `screens/<width>.png`, and `IMPORT.md`: what was not carried over (the text, states, scripts, fonts
   not on Google) and what to do next.
 
-It asks the site's `robots.txt` first, as `Plitzi-Import`, and stops where that says no. It refuses an `--out` that
-already has files unless `--force`, and then names the files an earlier import left that it did not write again.
+It reads only a site that is yours: one served from this machine (a host that resolves to loopback), or one a verified
+domain of one of your spaces covers — the `_plitzi` TXT record a custom domain is verified by, under **Domains** in the
+dashboard, asked of the platform you are signed in to (`--api`). Anything else is refused before a page is opened.
+
+It refuses an `--out` that already has files unless `--force`, and then names the files an earlier import left that it
+did not write again.
 
 ## `explain`
 

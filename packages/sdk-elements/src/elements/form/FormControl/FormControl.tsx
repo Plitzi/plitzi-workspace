@@ -145,8 +145,9 @@ const FormControl = ({
         return;
       }
 
-      const target = e.target as HTMLInputElement;
-      const value = target.type === 'checkbox' || subType === 'switch' ? target.checked : target.value;
+      const { target } = e;
+      const checkable = target instanceof HTMLInputElement && (target.type === 'checkbox' || subType === 'switch');
+      const value = checkable ? target.checked : target.value;
       void interactionsManager.interactionTrigger(id, 'onChange', { value, name });
     },
     [handleChange, previewMode, subType, interactionsManager, id, name]

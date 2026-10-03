@@ -1,16 +1,9 @@
-import { use, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
-import type {
-  ActionRunReport,
-  BuilderMutationsMap,
-  BuilderQueriesMap,
-  FunctionsDraft,
-  FunctionsSaveResult
-} from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { ActionRunReport, BuilderMutationsMap, FunctionsDraft, FunctionsSaveResult } from '@plitzi/sdk-shared';
 
 /** What saving answered, read from the one shape GraphQL carries it in — the three answers the platform gives. */
 const saveResultOf = (
@@ -32,10 +25,7 @@ const saveResultOf = (
  * operations a project's CLI and an agent use (`SpaceSaveFunctions`, `SpaceRemoveFunctions`, `SpaceTryFunction`).
  */
 const useFunctions = () => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const { data, error, isLoading, mutate } = useGraphQL('SpaceFunctions', answer => answer?.SpaceFunctions);
 
   const save = useCallback(

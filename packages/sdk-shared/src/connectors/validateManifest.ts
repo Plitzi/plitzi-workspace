@@ -3,6 +3,7 @@ import { connectorTokens } from './manifestTokens';
 import { isRecord } from '../helpers/isRecord';
 
 import type { ConnectorTokenScope } from './manifestTokens';
+import type { ConnectorManifestDraft } from '../types';
 
 /**
  * The one connector-manifest validator.
@@ -417,3 +418,7 @@ export const validateConnectorManifest = (input: unknown): ConnectorManifestRepo
 
   return { valid: acum.errors.length === 0, errors: acum.errors, warnings: acum.warnings };
 };
+
+/** Whether a value read from outside — a deployment's store, a request — is a manifest the engine can run. */
+export const isConnectorManifestDraft = (input: unknown): input is ConnectorManifestDraft =>
+  validateConnectorManifest(input).valid;

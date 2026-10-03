@@ -7,9 +7,10 @@ import { darkScheme, importedFiles, importProbe } from '@plitzi/sdk-authoring';
 
 import { findProject } from './existingProject';
 import { projectFormatter } from './projectFormatter';
-import { robotsAllows } from './robots';
+import { siteOwnership } from './siteOwnership';
 import { launchBrowser } from '../browser';
 
+import type { AccountOptions } from './account';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk-authoring';
 
@@ -19,44 +20,20 @@ import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk
  * layout per breakpoint, the lists it repeats as JSON rows, the pictures it shows, and a screenshot per width. Never
  * its words: the structure is what takes longest to work out by hand, and the content is the owner's.
  *
- * It asks the site's `robots.txt` first, and stops where that says no.
+ * Only a site that is the person's: a verified domain of one of their spaces covering it (`siteOwnership`), or one
+ * served from this machine.
  *
  *   plitzi import https://example.com/pricing --out src/pricing
  */
 
-export interface ImportOptions {
+export interface ImportOptions extends AccountOptions {
   out?: string;
   widths?: string;
   force?: boolean;
   json?: boolean;
 }
 
-/** The name `robots.txt` is read for. A site that names it says what it may read; one that does not, `*` does. */
-const AGENT = 'Plitzi-Import';
-
 const OUTLINE_DEPTH = 4;
-
-const robotsVerdict = async (url: URL): Promise<{ allowed: true } | { allowed: false; problem: string }> => {
-  let text: string;
-  try {
-    const response = await fetch(new URL('/robots.txt', url), { signal: AbortSignal.timeout(5000) });
-    // No robots.txt (404) asks nothing; one the server will not give (5xx) is read as asking nothing too, as crawlers do.
-    if (!response.ok) {
-      return { allowed: true };
-    }
-
-    text = await response.text();
-  } catch {
-    return { allowed: true };
-  }
-
-  return robotsAllows(text, `${url.pathname}${url.search}`, AGENT)
-    ? { allowed: true }
-    : {
-        allowed: false,
-        problem: `${url.origin}/robots.txt asks agents not to read ${url.pathname}. If the site is yours, allow ${AGENT} there.`
-      };
-};
 
 /** Scrolls to the end and back, so pictures and sections that load as they come into view are there to measure. */
 const revealLazyContent = async (page: BrowserPage): Promise<void> => {
@@ -181,11 +158,15 @@ export const importPage = async (address: string, options: ImportOptions): Promi
     return;
   }
 
-  const robots = await robotsVerdict(url);
-  if (!robots.allowed) {
-    fail(robots.problem);
+  const ownership = await siteOwnership(url, options);
+  if (!ownership.ok) {
+    fail(ownership.problem);
 
     return;
+  }
+
+  if (!options.json) {
+    console.log(chalk.dim(`${url.hostname} is yours: ${ownership.said}.`));
   }
 
   const browser = await launchBrowser(project.root);

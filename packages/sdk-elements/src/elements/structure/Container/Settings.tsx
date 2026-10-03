@@ -37,7 +37,7 @@ const Settings = ({ subType = 'div', label = '', decorative = false, onUpdate }:
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
 
   const handleChangeDecorative = useCallback(
-    (e: ChangeEvent) => onUpdate?.('decorative', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('decorative', e.target.checked),
     [onUpdate]
   );
 

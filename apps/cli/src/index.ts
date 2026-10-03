@@ -245,7 +245,7 @@ program
   .command('import')
   .argument('<url>', 'The page to start from: https://example.com/pricing')
   .description(
-    'A page you own, as a place to start writing from: its tokens, the outline of its blocks per breakpoint, its lists as JSON — never its words'
+    'A page of a site you verified, as a place to start writing from: its tokens, the outline of its blocks per breakpoint, its lists as JSON — never its words'
   )
   .option('--out <dir>', 'Where it is written, inside the project', 'src/imported')
   .option(
@@ -255,6 +255,7 @@ program
   )
   .option('--force', 'Write over what --out already holds')
   .option('--json', 'One object, for a tool or an agent')
+  .option(...API_OPTION)
   .action((url: string, options: ImportOptions) => importPage(url, options));
 
 program

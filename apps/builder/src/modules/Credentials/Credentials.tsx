@@ -1,22 +1,16 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
-import { use, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import EmptyState from '@pmodules/App/components/EmptyState';
 import ViewPage from '@pmodules/App/components/ViewPage';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import SpaceCredentials from '@pmodules/Space/components/SpaceCredentials';
 import buildCredentialData from '@pmodules/Space/helpers/buildCredentialData';
 import SpaceCredentialForm from '@pmodules/Space/Models/SpaceCredentialForm';
 
-import type {
-  BuilderMutationsMap,
-  BuilderQueriesMap,
-  SpaceCredentialProvider,
-  SpaceCredential as TSpaceCredential
-} from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { SpaceCredentialProvider, SpaceCredential as TSpaceCredential } from '@plitzi/sdk-shared';
 import type { spaceCredentialFormSchema } from '@pmodules/Space/Models/SpaceCredentialForm';
 import type { MouseEvent } from 'react';
 import type z from 'zod';
@@ -32,10 +26,7 @@ const DESCRIPTION =
   'Secrets are encrypted at rest and only ever resolved on the server. A connector names the credential it needs; the value itself never reaches the browser or the published page.';
 
 const Credentials = () => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const { data = [], isLoading, mutate } = useGraphQL('SpaceCredentials', data => data?.SpaceCredentials.edges);
   const { showDialog } = useModal();
   const [provider, setProvider] = useState<SpaceCredentialProvider | undefined>(undefined);

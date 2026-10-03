@@ -2,8 +2,8 @@ import { use, useCallback } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { SpaceExport } from '../helpers/exportFiles';
 import type { ExportFormat } from '../helpers/exportFormats';
@@ -34,7 +34,7 @@ export type SpaceExportResult =
  * code authors the same space, and the plan gate. Anything that needs the space as files calls this.
  */
 const useSpaceExport = () => {
-  const { server, webKey } = use(NetworkContext);
+  const { server, webKey } = useBuilderNetwork();
   const { networkQuery } = useNetwork({ initLoading: false, server, webKey });
   const { plugins } = use(PluginsContext);
   const getSchema = useBuilderStoreGetter('schema');

@@ -6,10 +6,10 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import UrlParams from './components/UrlParams';
 
@@ -18,7 +18,7 @@ import type { SchemaVariable, StyleVariableCategory, StyleVariableGroup, StyleVa
 const Variables = () => {
   const { showDialog } = useModal();
   const { addToast } = useToast();
-  const { environment } = use(NetworkContext);
+  const { environment } = useBuilderNetwork();
   const { builderHandler } = use(BuilderContext);
   const [filter, setFilter] = useState('');
   const [[schemaVariables, styleVariables, routeParams = {}, queryParams = {}, hostname = '']] = useBuilderStore([

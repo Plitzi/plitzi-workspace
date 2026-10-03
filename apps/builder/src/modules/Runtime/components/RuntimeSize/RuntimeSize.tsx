@@ -1,17 +1,11 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Select from '@plitzi/plitzi-ui/Select';
-import { use, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
-import type {
-  BuilderMutationsMap,
-  BuilderQueriesMap,
-  SpaceRuntimeEnvironment,
-  SpaceRuntimeSizeOption
-} from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { SpaceRuntimeEnvironment, SpaceRuntimeSizeOption } from '@plitzi/sdk-shared';
 
 export type RuntimeSizeProps = {
   environment: string;
@@ -41,10 +35,7 @@ const messageOf = (error: string | Error | undefined): string =>
  * restarts at the new size, it says so.
  */
 const RuntimeSize = ({ environment, size, status, sizes, onChange }: RuntimeSizeProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const [choice, setChoice] = useState(size);
   const [applying, setApplying] = useState<string | undefined>(undefined);
   const [problem, setProblem] = useState<string | undefined>(undefined);

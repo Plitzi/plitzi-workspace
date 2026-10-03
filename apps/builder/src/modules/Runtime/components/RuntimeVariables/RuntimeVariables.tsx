@@ -1,13 +1,10 @@
 import Alert from '@plitzi/plitzi-ui/Alert';
 import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
-import { use, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import ViewSection from '@pmodules/App/components/ViewSection';
-
-import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 export type RuntimeVariablesProps = {
   /** The variables it has, by name. */
@@ -23,10 +20,7 @@ const messageOf = (error: string | Error | undefined): string =>
  * encrypted and handed to the runtime alone. Changing one starts the runtime again with it.
  */
 const RuntimeVariables = ({ names, onChange }: RuntimeVariablesProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
   const [problem, setProblem] = useState('');

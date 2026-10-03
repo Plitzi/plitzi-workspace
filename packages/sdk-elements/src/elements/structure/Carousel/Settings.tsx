@@ -38,7 +38,7 @@ const Settings = ({
   );
 
   const handleChangeChecked = useCallback(
-    (key: string) => (e: ChangeEvent) => onUpdate?.(key, (e.target as HTMLInputElement).checked),
+    (key: string) => (e: ChangeEvent<HTMLInputElement>) => onUpdate?.(key, e.target.checked),
     [onUpdate]
   );
 

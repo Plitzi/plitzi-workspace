@@ -156,6 +156,14 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
         json(res, 401, { error: 'Not authenticated' });
       } else if (url.pathname === '/auth/session') {
         json(res, 200, { success: true, details: { email: 'ada@example.com', username: 'ada' } });
+      } else if (url.pathname === '/account/domains/covering') {
+        // `shop.example.com` is a verified domain of space 3; nothing else is anybody's.
+        const host = url.searchParams.get('host') ?? '';
+        if (host === 'shop.example.com' || host.endsWith('.shop.example.com')) {
+          json(res, 200, { domain: 'shop.example.com', space: { id: 3, name: 'Website' } });
+        } else {
+          json(res, 404, { error: `No space of yours has a verified domain that covers ${host}` });
+        }
       } else if (url.pathname === '/spaces/3') {
         json(res, 200, { space: { id: 3, name: 'Website', permanentUrl: 'website' } });
       } else if (url.pathname === '/spaces/3/cdns') {

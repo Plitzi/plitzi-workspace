@@ -17,6 +17,9 @@ const isCachedRead = (params: Record<string, unknown>) =>
  * A read may be served from the page's query cache — the same one api containers use, under the same key, so a
  * flow reading a URL a container already loaded does not ask again. A write says what it refreshes once it
  * succeeded, which by default is every cached request to the site it wrote to.
+ *
+ * Any answer is the step's result, an error status included — `{{ <step>.response.status }}` is how a flow tells a 401
+ * from a 200. No answer at all fails the step, so the flow stops and its `onFailure` runs.
  */
 export const webHookSpec: BuiltinActionSpec = {
   title: 'Webhook',

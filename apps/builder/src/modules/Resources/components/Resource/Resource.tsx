@@ -7,8 +7,8 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useState, use, useCallback } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import { mainPluginOf, pluginUsage } from '../../helpers';
 import ResourceContent from '../ResourceContent';
@@ -52,7 +52,7 @@ const Resource = ({
   isLoading = false,
   onRemove
 }: ResourceProps) => {
-  const { mutate } = use(NetworkContext);
+  const { mutate } = useBuilderNetwork();
   const { plugins } = use(PluginsContext);
   // Read when a removal is asked for, not subscribed to: every card in the list would re-render on every edit.
   const getSchemaFlat = useBuilderStoreGetter('schema.flat');

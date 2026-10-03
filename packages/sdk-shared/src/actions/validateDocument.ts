@@ -3,7 +3,7 @@ import { FAILURE_HANDLER_TASK } from './failureHandler';
 import { triggerAccess, triggerHasStaleVerify, triggerVerify } from './triggerParams';
 import { isRecord } from '../helpers/isRecord';
 
-import type { ActionTriggerParams } from '../types';
+import type { ActionDocument, ActionTriggerParams } from '../types';
 
 /**
  * The one server-action validator.
@@ -523,3 +523,7 @@ export const validateActionDocument = (document: unknown): ActionDocumentReport 
 
   return { valid: errors.length === 0, errors, warnings };
 };
+
+/** Whether a value read from outside — a deployment's store, a request — is an action document a server can run. */
+export const isActionDocument = (document: unknown): document is ActionDocument =>
+  validateActionDocument(document).valid;

@@ -5,8 +5,8 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
 import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore, useRenderSettings, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import type { RouteParams } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -22,7 +22,7 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
     'urlTest'
   ]);
   const { previewMode } = useRenderSettings();
-  const { server } = use(NetworkContext);
+  const { server } = useBuilderNetwork();
   const { authenticated } = use(AuthContext);
   const { queryParams, hostname, origin, location } = useNavigation({ server });
   const navigate = useNavigate();

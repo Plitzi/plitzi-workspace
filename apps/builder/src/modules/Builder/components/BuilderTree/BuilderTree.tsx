@@ -8,9 +8,9 @@ import { elementIdConflict, slugifyElementId } from '@plitzi/sdk-schema/helpers/
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import { processPaste } from '@pmodules/Builder/BuilderHelper';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import BuilderTreeNodeControls from './BuilderTreeNodeControls';
 import BuilderTreeSearch from './BuilderTreeSearch';
@@ -31,7 +31,7 @@ const BuilderTree = () => {
   ]);
   const { componentDefinitions } = use(ComponentContext);
   const { addToast } = useToast();
-  const { mutate } = use(NetworkContext);
+  const { mutate } = useBuilderNetwork();
   const {
     baseContext: { baseElementId },
     builderHandler,

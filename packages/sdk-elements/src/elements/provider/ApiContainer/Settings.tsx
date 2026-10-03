@@ -104,7 +104,7 @@ const Settings = ({
   const handleChangeMockData = useCallback((value: string) => onUpdate?.('mockData', value), [onUpdate]);
 
   const handleChangeEnabled = useCallback(
-    (e: ChangeEvent) => setAdvancedSettings((e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => setAdvancedSettings(e.target.checked),
     []
   );
 
@@ -135,19 +135,19 @@ const Settings = ({
   );
 
   const handleChangeSingleRecord = useCallback(
-    (e: ChangeEvent) => onUpdate?.('singleRecord', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('singleRecord', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeLoadingSlot = useCallback((value: string) => onUpdate?.('loadingSlot', value), [onUpdate]);
 
   const handleChangeRenderWhileLoading = useCallback(
-    (e: ChangeEvent) => onUpdate?.('renderWhileLoading', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('renderWhileLoading', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeCache = useCallback(
-    (e: ChangeEvent) => onUpdate?.('cache', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('cache', e.target.checked),
     [onUpdate]
   );
 

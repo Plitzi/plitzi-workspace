@@ -11,22 +11,18 @@ import { flatMapOf } from '@plitzi/sdk-schema/helpers/components';
 import fitSnippet from '@plitzi/sdk-schema/helpers/fitSnippet';
 import SchemaReducer, { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { schemaFromWire } from '@plitzi/sdk-shared/network/spaceEvents';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type {
-  BuilderMutationsMap,
-  BuilderNetworkContextValue,
-  BuilderQueriesMap,
-  SpaceEventMap,
   DropPosition,
   Element,
   PageFolder,
@@ -68,11 +64,7 @@ const SchemaContextProvider = ({
       filterCallback: isUserEdit
     }
   ]);
-  const { mutate, subscriptionManager } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap,
-    SpaceEventMap
-  >;
+  const { mutate, subscriptionManager } = useBuilderNetwork();
   useBuilderStoreSync('schema', schema);
   const getSchema = useBuilderStoreGetter('schema');
   const getStyle = useBuilderStoreGetter('style');

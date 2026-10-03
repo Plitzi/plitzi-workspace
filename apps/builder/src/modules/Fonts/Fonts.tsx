@@ -5,9 +5,9 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { familiesInCss, primaryFamily } from '@plitzi/sdk-shared/style';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import AddGoogleFont from './components/AddGoogleFont';
 import AddHostedFont from './components/AddHostedFont';
@@ -32,7 +32,7 @@ const Fonts = () => {
   const { showDialog } = useModal();
   const { addToast } = useToast();
   const { builderHandler } = use(BuilderContext);
-  const { server, userKey, webId, environment } = use(NetworkContext);
+  const { server, userKey, webId, environment } = useBuilderNetwork();
   const [mirroring, setMirroring] = useState<string>();
   const [[fonts = NO_FONTS, cache = '']] = useBuilderStore(['style.fonts', 'style.cache']);
 

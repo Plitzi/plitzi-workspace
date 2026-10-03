@@ -51,7 +51,7 @@ const Settings = ({
   );
 
   const handleChangeIsPlugin = useCallback(
-    (e: ChangeEvent) => onUpdate?.('isPlugin', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('isPlugin', e.target.checked),
     [onUpdate]
   );
 

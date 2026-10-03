@@ -6,18 +6,13 @@ import clsx from 'clsx';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import { mainPluginOf } from '../../helpers';
 import Resource from '../Resource';
 import { ResourcesListContext } from './ResourcesListProvider';
 
-import type {
-  BuilderMutationsMap,
-  BuilderNetworkContextValue,
-  BuilderQueriesMap,
-  Resource as TResource
-} from '@plitzi/sdk-shared';
+import type { Resource as TResource } from '@plitzi/sdk-shared';
 import type { DragEvent, MouseEvent } from 'react';
 
 export type ResourcesDirectoryProps = {
@@ -47,7 +42,7 @@ const ResourceDirectory = ({
   onRemove,
   onRemoveDirectory
 }: ResourcesDirectoryProps) => {
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate } = useBuilderNetwork();
   const { addToast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const { plugins, remove } = use(PluginsContext);

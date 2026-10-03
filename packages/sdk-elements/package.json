@@ -702,6 +702,10 @@
       "types": "./dist/elements/media/Embed/declaration.d.ts",
       "import": "./dist/elements/media/Embed/declaration.mjs"
     },
+    "./elements/media/Embed/embeddableSrc": {
+      "types": "./dist/elements/media/Embed/embeddableSrc.d.ts",
+      "import": "./dist/elements/media/Embed/embeddableSrc.mjs"
+    },
     "./elements/media/Embed/index": {
       "types": "./dist/elements/media/Embed/index.d.ts",
       "import": "./dist/elements/media/Embed/index.mjs"

@@ -7,8 +7,8 @@ import { use, useCallback, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { withForcedFlag } from '@plitzi/sdk-shared/flags';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import FlagForm from './components/FlagForm';
 import FlagItem from './components/FlagItem';
@@ -16,8 +16,7 @@ import PublishFlagsForm from './components/PublishFlagsForm';
 import { flagRuleFields } from './helpers/flagRuleFields';
 
 import type { PublishFlagsValues } from './components/PublishFlagsForm';
-import type { BuilderMutationsMap, BuilderQueriesMap, SchemaFlag } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { SchemaFlag } from '@plitzi/sdk-shared';
 
 const NONE: Record<string, boolean> = {};
 
@@ -32,7 +31,7 @@ const Flags = () => {
   const { showDialog, showModal } = useModal();
   const { addToast } = useToast();
   const { builderHandler } = use(BuilderContext);
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate } = useBuilderNetwork();
   const [filter, setFilter] = useState('');
   const [adding, setAdding] = useState(false);
   const [[declared, resolved, routeParams = {}, queryParams = {}, visitorRoles]] = useBuilderStore([

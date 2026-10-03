@@ -6,10 +6,10 @@ import { use, useRef, useCallback, useEffect, useImperativeHandle } from 'react'
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import AppContext from '@pmodules/App/AppContext';
 import useCollaboratorCursor from '@pmodules/Collaboration/hooks/useCollaboratorCursor';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import { processPaste } from '../../BuilderHelper';
@@ -58,7 +58,7 @@ const BuilderAreaTracking = ({
   const { displayBorderComponents } = use(AppContext);
   const { addToast } = useToast();
   const { canRedo, canUndo, undoableRedo, undoableUndo } = use(UndoableContext);
-  const { mutate } = use(NetworkContext);
+  const { mutate } = useBuilderNetwork();
   const { componentDefinitions } = use(ComponentContext);
   const { openSearch } = use(BuilderSearchContext);
 

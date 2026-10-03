@@ -441,8 +441,10 @@ taken for attributes nobody reads — it used to remove the binding of a list ro
 start from: `tokens.ts` (the page's custom properties by name, then its dominant colours, each with the value the same
 place shows in the dark scheme; repeated corners and shadows; Google fonts), `outline.ts` (`container()`s for its
 landmarks and blocks, with their layout per breakpoint as what each narrower width changes), its repeated lists as
-`data/*.json`, `assets.json`, a screenshot per width and `IMPORT.md`. Never its words. It reads `robots.txt` first and
-stops where that says no; `--out`, `--widths`, `--force`, `--json`. From `@plitzi/sdk-authoring`: `importProbe` (runs
+`data/*.json`, `assets.json`, a screenshot per width and `IMPORT.md`. Never its words. It imports only a site that is
+the person's: a verified domain of one of their spaces covering the host (the `_plitzi` TXT record, asked of the
+platform's new `GET /account/domains/covering`), or one served from this machine; `--out`, `--widths`, `--force`,
+`--json`, `--api`. From `@plitzi/sdk-authoring`: `importProbe` (runs
 in the page), `importedFiles` and `darkScheme`.
 
 A compound element without the part it shows its content through — a `carousel` with no `carouselTrack`, a
@@ -458,3 +460,13 @@ report `window.__plitzi.element()` and `plitzi check --element` give: own state,
 or sits in, copies and box, read again every second. That report now finds an element inside a component, which it
 missed. **Logs** has a `realtime` category: the page's connection opening and dropping, each message in (←) and out
 (→), and every topic the server refused, with why. One hook outlines an element for every tab.
+
+A `webHook` step that gets no answer at all — offline, refused, blocked by CORS — now fails, with the request and the
+reason, so the flow stops and its `onFailure` runs. It used to succeed with an empty response, and the flow carried on
+as if the request had been made. Any answer is still the step's result, an error status included: a flow reads
+`{{ <step>.response.status }}` to tell a 401 from a 200. `response.data` is typed as what the body parsed to.
+
+The server checks what a deployment's config hands it in one place (`configSeam`): each action document and connector
+manifest a lookup returns goes through the validator the builder saves with, as it is read — an action that is not a
+document is refused by name, and one in a list is left out and said rather than failing the space's schedule — and the
+database drivers and functions config are checked once, as the server starts. Four unchecked casts are gone.

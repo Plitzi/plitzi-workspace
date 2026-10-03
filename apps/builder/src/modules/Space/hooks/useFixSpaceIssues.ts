@@ -2,12 +2,9 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import useSpaceIssues from './useSpaceIssues';
-
-import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 /**
  * Asks the server to fix every issue of the saved space that has one reading, and puts the result on screen.
@@ -17,7 +14,7 @@ import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/Netw
  * from subscriptions — so the save queue does not send it straight back. Resolves with the changes made.
  */
 const useFixSpaceIssues = () => {
-  const { mutate } = use(NetworkContext) as BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap>;
+  const { mutate } = useBuilderNetwork();
   const { eventBridge } = use(EventBridgeContext);
   const { addToast } = useToast();
   const { refresh } = useSpaceIssues();

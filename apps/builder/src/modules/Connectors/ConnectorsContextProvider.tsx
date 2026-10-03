@@ -1,19 +1,13 @@
-import { useCallback, use, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import ConnectorsContext from './ConnectorsContext';
 
 import type { ConnectorsContextValue } from './ConnectorsContext';
-import type {
-  BuilderMutationsMap,
-  BuilderQueriesMap,
-  ConnectorManifestDraft,
-  SpaceConnector
-} from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { ConnectorManifestDraft, SpaceConnector } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 export type ConnectorsContextProviderProps = {
@@ -38,10 +32,7 @@ const byIdentifier = (connectors: SpaceConnector[]) =>
  * so putting endpoints there does not put them on a visitor's page.
  */
 const ConnectorsContextProvider = ({ children }: ConnectorsContextProviderProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const {
     data = emptyConnectors,
     error,

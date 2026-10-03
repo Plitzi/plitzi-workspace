@@ -4,14 +4,11 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import Select from '@plitzi/plitzi-ui/Select';
-import { use, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import ViewSection from '@pmodules/App/components/ViewSection';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
-
-import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
 export type VisitorGrantsProps = {
   /** The roles the space declares, which are the only ones that can be given. */
@@ -28,10 +25,7 @@ const messageOf = (error: string | Error | undefined): string =>
  * theirs from then on. Taking one back is immediate.
  */
 const VisitorGrants = ({ roles }: VisitorGrantsProps) => {
-  const { mutate: mutateNetwork } = use(NetworkContext) as BuilderNetworkContextValue<
-    BuilderQueriesMap,
-    BuilderMutationsMap
-  >;
+  const { mutate: mutateNetwork } = useBuilderNetwork();
   const { data = [], isLoading, mutate } = useGraphQL('SpaceVisitors', data => data?.SpaceVisitors);
   const { showDialog } = useModal();
   const [email, setEmail] = useState('');

@@ -11,9 +11,9 @@ import { Link } from 'react-router-dom';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import Transform from '@pmodules/Transformers/Transform';
 
 import BuilderElementTools from '../BuilderElementTools';
@@ -47,7 +47,7 @@ const BuilderAreaHeader = ({
     use(BuilderContext);
   const {
     server: { basePath }
-  } = use(NetworkContext);
+  } = useBuilderNetwork();
 
   const handleClickBackToInstance = useCallback(() => builderSetBaseContext(), [builderSetBaseContext]);
 

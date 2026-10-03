@@ -41,27 +41,27 @@ const Settings = ({
   const handleChangePopupPlacement = useCallback((value: string) => onUpdate?.('popupPlacement', value), [onUpdate]);
 
   const handleChangeOpenPopup = useCallback(
-    (e: ChangeEvent) => onUpdate?.('openPopup', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('openPopup', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeBackgroundDisabled = useCallback(
-    (e: ChangeEvent) => onUpdate?.('backgroundDisabled', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('backgroundDisabled', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeCloseOnClickBackground = useCallback(
-    (e: ChangeEvent) => onUpdate?.('closeOnClickBackground', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('closeOnClickBackground', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeCloseOnClickPopup = useCallback(
-    (e: ChangeEvent) => onUpdate?.('closeOnClickPopup', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('closeOnClickPopup', e.target.checked),
     [onUpdate]
   );
 
   const handleChangeDisabled = useCallback(
-    (e: ChangeEvent) => onUpdate?.('disabled', (e.target as HTMLInputElement).checked),
+    (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('disabled', e.target.checked),
     [onUpdate]
   );
 
