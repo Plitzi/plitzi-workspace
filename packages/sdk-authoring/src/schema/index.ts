@@ -18,6 +18,7 @@ export * from './lint';
 export * from './notifications';
 export * from './refusals';
 export * from './space';
+export * from './advice';
 export * from './snippet';
 export * from './validate';
 export type * from './types';

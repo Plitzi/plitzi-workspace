@@ -2,7 +2,7 @@ import { AUTHORING_CODES } from './codes';
 
 import type { AuthoringCodeEntry } from './codes';
 
-const INTRO = `# When \`authorSpace\` refuses or warns
+const INTRO = `# When \`authorSpace\` refuses, warns or suggests
 
 <!-- Generated from AUTHORING_CODES (src/schema/codes.ts) by \`yarn generate:authoring-errors\`. Do not edit. -->
 
@@ -40,7 +40,13 @@ export const authoringCodesTable = (kind: AuthoringCodeEntry['kind']): string =>
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([code, entry]) => `| \`${code}\` | ${cell(entry.means)} | ${cell(entry.fix)} |`);
 
-  return ['| Code | What was wrong | Write instead |', '| --- | --- | --- |', ...rows].join('\n');
+  // A suggestion is not something wrong: its row is the long way it was written, and the short way.
+  const head =
+    kind === 'suggested'
+      ? '| Code | Written the long way | The short way |'
+      : '| Code | What was wrong | Write instead |';
+
+  return [head, '| --- | --- | --- |', ...rows].join('\n');
 };
 
 /** The skill's `authoring-errors.md`, from the table every refusal and warning is raised with. */
@@ -53,5 +59,10 @@ export const authoringErrorsPage = (): string =>
     '## Warned',
     'The space renders, and renders something you probably did not mean. Fix every one.',
     authoringCodesTable('warned'),
+    '## Suggested',
+    'Nothing is wrong: the page renders as written. Each is a shorter way to the same page — fewer elements, less CSS — ' +
+      'and `authorSpace` returns them in `suggestions`, the ones that save the most first. Take them: a space written the ' +
+      'short way is the one an editor, an agent and the next person can read. More in [efficiency](efficiency.md).',
+    authoringCodesTable('suggested'),
     STRUCTURE
   ].join('\n\n') + '\n';

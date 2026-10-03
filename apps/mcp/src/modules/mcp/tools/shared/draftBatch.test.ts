@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSpace } from '../../tests/helpers';
+import { buildSpace, capturing } from '../../tests/helpers';
 import { apply } from '../apply';
 import { validate } from '../validate';
 
@@ -69,5 +69,42 @@ describe('draftBatch — old issues fixed, new ones refused', () => {
 
     expect(checked.valid).toBe(false);
     expect(checked.errors.some(error => error.message.includes('"title"'))).toBe(true);
+  });
+});
+
+// A shorter way to the same page is said once, when the batch opens it up — never a refusal, and never again on the
+// next batch that leaves it as it was.
+describe('draftBatch — suggestions', () => {
+  const labelledButton: Operation[] = [
+    {
+      type: 'upsertElement',
+      pageRef: 'home',
+      parentRef: 'c1',
+      element: {
+        ref: 'save',
+        type: 'button',
+        children: [{ ref: 'save-label', type: 'text', props: { content: 'Save' } }]
+      }
+    }
+  ];
+
+  it('says what the batch could have written shorter, in validate and in apply alike', async () => {
+    const checked = validate({ operations: labelledButton }, buildSpace());
+    const applied = await apply({ operations: labelledButton, dryRun: true }, buildSpace());
+
+    expect(checked.valid).toBe(true);
+    expect(checked.suggestions?.some(line => line.startsWith('[content-attribute]'))).toBe(true);
+    expect(applied.suggestions).toEqual(checked.suggestions);
+  });
+
+  it('says nothing of what the space already held', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: labelledButton }, buildSpace(), cap.persisters);
+    const checked = validate(
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { subType: 'section' } }] },
+      cap.saved()
+    );
+
+    expect(checked.suggestions ?? []).toEqual([]);
   });
 });

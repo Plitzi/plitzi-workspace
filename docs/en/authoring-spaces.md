@@ -768,6 +768,33 @@ const { valid, errors, warnings } = validateSpace({ schema, style });
 Worth running over an export from the builder, a JSON somebody edited by hand, or anything a self-hosted
 deployment is about to serve.
 
+### What could be shorter: suggestions
+
+A space can be right and still be two or three times the size it needs: the same header written into every page, the
+same card copied with other words, a `text` inside every button. Nothing there is refused or warned — it renders — but
+every copy is an element to read and a place the next edit has to be made again. `authorSpace` also returns
+`suggestions`, the shorter way to the same page, the ones that save the most elements first:
+
+```ts
+const { suggestions } = authorSpace(space);
+// [{ code: 'repeated-on-pages', saves: 57, at: 'src/pages/docs.ts:291', elementIds: [...], message: '4 pages carry…' }]
+```
+
+| Code | Written the long way | The short way |
+| --- | --- | --- |
+| `repeated-on-pages` | One block at the edge of several pages, the same or styled per page | A layout holding it once; a link marks its own page with the `current` state |
+| `repeated-shape` | One structure written again with other words | A component with props, or one `list` when the copies are siblings |
+| `content-attribute` | A `button` or `link` whose only child is a `text` | The element's own `content` |
+| `custom-css-class` | `customCss` rules a class's `states` and `ancestors` say | Those, on the class |
+| `custom-css-sdk-default` | A reduced-motion reset, or the theme toggle's icons, in `customCss` | Nothing: the SDK does both |
+| `custom-css-notifications` | `.Toastify__toast` rules in `customCss` | The space's `notifications` |
+
+A suggestion never blocks: it is advice, not the publish gate, and copies about to diverge are a reason to leave it.
+`suggestSpace({ schema, style })` gives the same list for a document authored anywhere; the MCP server's
+`plitzi_validate` and `plitzi_apply` answer with the ones a batch opened up (never again the ones the space already
+had), and `npm run author` prints them under the warnings. The skill's `reference/efficiency.md` is the agent's version
+of this table, with the rules that cost styles rather than elements.
+
 ---
 
 ## 8. Agents

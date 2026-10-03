@@ -24,6 +24,7 @@ import {
   splitClassList,
   toBlocks
 } from '../style';
+import { suggestSpace } from './advice';
 import {
   COMPONENT_SOURCES,
   GLOBAL_SOURCES,
@@ -228,11 +229,20 @@ class SpaceAuthor {
       this.options.allow
     );
 
+    // Where each suggestion's first element was written, as a refusal says it: the line to go and change.
+    const suggestions = suggestSpace({ schema, style }).map(suggestion => {
+      const first = suggestion.elementIds.at(0);
+      const at = first === undefined ? undefined : writtenAt(this.specOf(first));
+
+      return at === undefined ? suggestion : { ...suggestion, at };
+    });
+
     return {
       schema,
       style,
       handles: buildHandles(this.handles, this.layoutHandles),
-      warnings: [...this.styleWarnings, ...warnings]
+      warnings: [...this.styleWarnings, ...warnings],
+      suggestions
     };
   }
 

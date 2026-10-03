@@ -13,7 +13,7 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 
 | Step | Tool | Answers |
 | --- | --- | --- |
-| Write | `npm run author` | Whether the space authors: one line when it does, every problem at once (file, line, what to change) when not |
+| Write | `npm run author` | Whether the space authors: one line when it does, every problem at once (file, line, what to change) when not — and, under the warnings, the suggestions: a shorter way to the same page, with the elements it saves |
 | Repair | `npx plitzi fix` | The problems with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
 | Check | `npm run check` (`plitzi check`) | Whether a page of the running server is whole, in text: elements on screen, overflow, contrast, console, refused requests, failed flows |
 | Inspect | `plitzi check --state --element <id>` | What the page holds: its state, every source by name and shape, one element's own state and bindings |

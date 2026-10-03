@@ -75,7 +75,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     };
   }
 
-  const { draft, outcome, warnings } = result;
+  const { draft, outcome, warnings, suggestions } = result;
 
   // Dry run: everything is applied to the in-memory draft and reported (changed versions + full element detail),
   // but nothing is persisted — the agent inspects the outcome, then re-runs without dryRun to commit.
@@ -86,7 +86,8 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
       summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
       changed: changedResources(draft, env, outcome.staleResources),
       elements: resolvedElements(draft, env, outcome.elementRefs),
-      warnings: noWarnings(warnings)
+      warnings: noWarnings(warnings),
+      suggestions: noWarnings(suggestions)
     };
   }
 
@@ -178,7 +179,8 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
     changed: changedResources(draft, env, outcome.staleResources),
     elements: resolvedElements(draft, env, outcome.elementRefs),
-    warnings: noWarnings(warnings)
+    warnings: noWarnings(warnings),
+    suggestions: noWarnings(suggestions)
   };
 };
 

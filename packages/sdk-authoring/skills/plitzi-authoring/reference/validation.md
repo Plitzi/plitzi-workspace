@@ -36,9 +36,10 @@ bar.
    import { space } from './src/space.ts';
 
    try {
-     const { schema, warnings } = authorSpace(space, { plugins: [] /* your declarations */ });
+     const { schema, warnings, suggestions } = authorSpace(space, { plugins: [] /* your declarations */ });
      console.log(`${Object.keys(schema.flat).length} elements, ${warnings.length} warnings`);
      warnings.forEach(warning => console.log(`[${warning.code}] ${warning.message}`));
+     suggestions.forEach(({ code, message, saves }) => console.log(`[suggest] ${code} (saves ${saves}): ${message}`));
    } catch (error) {
      console.log((error as Error).message);
    }

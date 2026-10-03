@@ -91,7 +91,7 @@ export const elementAttributeNames = {
   heading: ['content', 'subType'],
   image: ['alt', 'decorative', 'fetchPriority', 'height', 'loadMode', 'sizes', 'src', 'width'],
   layoutContainer: ['layout', 'layoutContainer', 'subType'],
-  link: ['hash', 'href', 'label', 'mode', 'target'],
+  link: ['content', 'contentPlacement', 'hash', 'href', 'label', 'mode', 'target'],
   list: ['itemKey', 'items', 'source', 'subType'],
   listItem: [],
   loading: [],

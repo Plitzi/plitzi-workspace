@@ -48,6 +48,8 @@ export interface WriteResponse {
   changed: ChangedResource[];
   elements?: WriteElement[];
   warnings?: string[];
+  /** Shorter ways to the same page the batch opened up. Never a reason it was refused. */
+  suggestions?: string[];
   errors?: ValidationError[];
   conflict?: { message: string; conflicts: Conflict[] };
 }
@@ -93,6 +95,8 @@ export interface ValidationResult {
   valid: boolean;
   errors: ValidationError[];
   warnings: string[];
+  /** Shorter ways to the same page the batch would open up — a layout, a component, an element's own content. */
+  suggestions?: string[];
 }
 
 // --- plitzi_search ---

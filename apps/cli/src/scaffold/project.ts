@@ -284,7 +284,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
   const commands = [
     `| ${code(installCommand(answers.packageManager))} | install |`,
     `| ${run('start')} | serve it |`,
-    ...(local ? [`| ${run('author')} | author the space and print its warnings |`] : []),
+    ...(local ? [`| ${run('author')} | author the space and print its warnings and suggestions |`] : []),
     `| ${run('visual')} | open the page in a browser and check it rendered |`
   ];
   const zeroWarnings = local ? `Zero warnings from ${run('author')}.` : 'Zero warnings from authoring.';

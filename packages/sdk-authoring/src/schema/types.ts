@@ -1,3 +1,4 @@
+import type { Suggestion } from './advice';
 import type { VisibleCondition } from './bindings';
 import type { SpaceHandles } from './handles';
 import type { NotificationsSpec } from './notifications';
@@ -643,6 +644,12 @@ export interface AuthoredSpace {
    * errors of its own.
    */
   warnings: SchemaValidationError[];
+  /**
+   * A shorter way to the same page — a layout for a header on every page, a component for cards written ten times, an
+   * element's own `content` — ranked by the elements each would save. Not a problem: nothing here is wrong. See
+   * `suggestSpace`.
+   */
+  suggestions: Suggestion[];
 }
 
 /**

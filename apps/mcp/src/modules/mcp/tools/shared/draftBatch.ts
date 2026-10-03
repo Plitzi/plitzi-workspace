@@ -1,5 +1,6 @@
 import { expandOperations } from './expandOperations';
 import { fixTouched, lintDraft } from './lintDraft';
+import { newSuggestions } from './newSuggestions';
 import { validateOperations } from './validator';
 import { cloneSpace } from '../../helpers';
 import { applyOperations } from '../apply/dispatch';
@@ -11,7 +12,15 @@ import type { Operation } from '../operations';
 
 export type DraftResult =
   | { ok: false; errors: ValidationError[]; warnings: string[] }
-  | { ok: true; ops: Operation[]; draft: Space; outcome: MutationOutcome; warnings: string[] };
+  | {
+      ok: true;
+      ops: Operation[];
+      draft: Space;
+      outcome: MutationOutcome;
+      warnings: string[];
+      /** Shorter ways to the same page this batch opened up. Never a reason to refuse it. */
+      suggestions: string[];
+    };
 
 /**
  * A batch run on a copy of the space and read back — the one way every tool that takes operations handles them, so
@@ -52,5 +61,5 @@ export const draftBatch = (
     return { ok: false, errors: reading.errors, warnings };
   }
 
-  return { ok: true, ops, draft, outcome, warnings };
+  return { ok: true, ops, draft, outcome, warnings, suggestions: newSuggestions(prepared.space, draft) };
 };

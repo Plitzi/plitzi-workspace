@@ -42,6 +42,22 @@ describe('Link Tests', () => {
     expect(baseElement).toBeTruthy();
   });
 
+  it('draws its own words, before or after what it holds', () => {
+    const { getByText } = render(
+      <StoreProvider value={storeValue}>
+        <ElementContext value={skipHocEntry()}>
+          <Link mode="internal" href="pricing" content="Pricing" />
+          <Link mode="internal" href="docs" content="Docs" contentPlacement="before">
+            <i>icon</i>
+          </Link>
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    expect(getByText('Pricing').tagName).toBe('A');
+    expect(getByText('Docs').textContent).toBe('Docsicon');
+  });
+
   it('says it leads to the page being shown, and no other link does', () => {
     const at = { ...storeValue, navigation: { ...navigation, href: 'https://example.test/carta?ref=nav' } };
     const { getByText } = render(

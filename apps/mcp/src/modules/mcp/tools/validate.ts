@@ -12,9 +12,16 @@ export const validate = (input: ValidateInput, space: Space): ValidationResult =
   // including a PRE-EXISTING malformation in anything the batch touches.
   const result = draftBatch(space, (input.environment ?? 'main') as Env, input.operations);
 
-  return result.ok
-    ? { valid: true, errors: [], warnings: result.warnings }
-    : { valid: false, errors: result.errors, warnings: result.warnings };
+  if (!result.ok) {
+    return { valid: false, errors: result.errors, warnings: result.warnings };
+  }
+
+  return {
+    valid: true,
+    errors: [],
+    warnings: result.warnings,
+    ...(result.suggestions.length > 0 ? { suggestions: result.suggestions } : {})
+  };
 };
 
 export const validateTool = defineTool({
@@ -22,7 +29,8 @@ export const validateTool = defineTool({
   title: 'Validate',
   description:
     'Check a batch of operations without executing them. Returns teachable errors and warnings — including any ' +
-    'PRE-EXISTING malformation in a resource the batch touches (which blocks a save until fixed).',
+    'PRE-EXISTING malformation in a resource the batch touches (which blocks a save until fixed) — and suggestions: ' +
+    'shorter ways to the same page the batch opens up (a layout, a component, an element’s own content).',
   inputShape: validateShape,
   access: 'read',
   run: (input, ctx) => validate(input, ctx.space)

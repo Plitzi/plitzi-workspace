@@ -1,7 +1,7 @@
 /* eslint-disable quotes -- the rows quote code, which reads best in the other quotes */
 /**
  * Every problem `authorSpace` and `lintSpace` report, by its code: whether it is refused or warned, what was wrong, and
- * what to write instead.
+ * what to write instead — and every suggestion `suggestSpace` makes, a shorter way to the same page.
  *
  * The one table: a refusal or a warning raised with a code that is not here is a compile error, and the skill's
  * `authoring-errors.md` is generated from it (`yarn generate:authoring-errors`), so the page cannot miss one. The
@@ -10,8 +10,11 @@
  */
 
 export type AuthoringCodeEntry = {
-  /** Refused stops the space from being written; warned writes it, and says it will not do what it says. */
-  kind: 'refused' | 'warned';
+  /**
+   * Refused stops the space from being written; warned writes it, and says it will not do what it says; suggested is
+   * not a problem at all — the page renders as written, and a shorter way to the same page exists.
+   */
+  kind: 'refused' | 'warned' | 'suggested';
   /** What was wrong, in a line. */
   means: string;
   /** What to write instead. */
@@ -834,6 +837,39 @@ export const AUTHORING_CODES = {
     kind: 'warned',
     means: 'a control inside a `decorative` container — Tab lands on something nothing announces',
     fix: 'move it out of the illustration'
+  },
+
+  // Suggestions: nothing is wrong, and the same page can be written with fewer elements or less CSS.
+  'repeated-on-pages': {
+    kind: 'suggested',
+    means: 'the same block — a header, a footer, a side panel — written into several pages',
+    fix: 'a layout holding it once (`layouts`, and `layout: { id, slot }` on each page); a link marks its own page with the `current` state'
+  },
+  'repeated-shape': {
+    kind: 'suggested',
+    means: 'the same structure written again and again with different words — cards, rows, tiles',
+    fix: 'a component with props (`components`, `component(id, { props })`), or one `list` over the data when they sit side by side'
+  },
+  'content-attribute': {
+    kind: 'suggested',
+    means: 'a button or a link whose only child is a text, which is an element more than it needs',
+    fix: "the words as its own `content` (`button({ content: 'Save' })`, `link({ href, content: 'Pricing' })`), the text's class on it"
+  },
+  'custom-css-class': {
+    kind: 'suggested',
+    means: 'a `customCss` rule a class can hold — `.card:hover`, `.panel .icon`',
+    fix: "the class's own `states` or `ancestors`, where the style editor reads it back and a breakpoint can change it"
+  },
+  'custom-css-sdk-default': {
+    kind: 'suggested',
+    means:
+      '`customCss` repeating what the SDK already does for every space — less motion when asked, the theme toggle showing one icon',
+    fix: 'nothing: remove it'
+  },
+  'custom-css-notifications': {
+    kind: 'suggested',
+    means: 'the toasts dressed with `.Toastify__toast` rules in `customCss`',
+    fix: '`notifications: { font, fontSize, border, shadow, padding, background, text, radius }`'
   }
 } as const satisfies Record<string, AuthoringCodeEntry>;
 
@@ -847,6 +883,10 @@ export type RefusalCode = {
 
 export type WarningCode = {
   [Code in AuthoringCode]: Codes[Code]['kind'] extends 'warned' ? Code : never;
+}[AuthoringCode];
+
+export type SuggestionCode = {
+  [Code in AuthoringCode]: Codes[Code]['kind'] extends 'suggested' ? Code : never;
 }[AuthoringCode];
 
 const isAuthoringCode = (code: string): code is AuthoringCode => Object.hasOwn(AUTHORING_CODES, code);

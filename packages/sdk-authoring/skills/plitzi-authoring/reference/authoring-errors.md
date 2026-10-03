@@ -1,4 +1,4 @@
-# When `authorSpace` refuses or warns
+# When `authorSpace` refuses, warns or suggests
 
 <!-- Generated from AUTHORING_CODES (src/schema/codes.ts) by `yarn generate:authoring-errors`. Do not edit. -->
 
@@ -188,6 +188,19 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `unknown-global-callback` | a global callback no built-in source declares — it runs only if something registers it | the built-in it suggests, or make sure a plugin or module of the space registers it |
 | `unknown-utility` | a utility that is not one of the built-in ones | one of the built-in utilities |
 | `unknown-variable` | a `var(--x)` nothing in the space declares — the property it is in is dropped | declare it under `variables`, fix the name, or give it a fallback: `var(--x, …)` |
+
+## Suggested
+
+Nothing is wrong: the page renders as written. Each is a shorter way to the same page — fewer elements, less CSS — and `authorSpace` returns them in `suggestions`, the ones that save the most first. Take them: a space written the short way is the one an editor, an agent and the next person can read. More in [efficiency](efficiency.md).
+
+| Code | Written the long way | The short way |
+| --- | --- | --- |
+| `content-attribute` | a button or a link whose only child is a text, which is an element more than it needs | the words as its own `content` (`button({ content: 'Save' })`, `link({ href, content: 'Pricing' })`), the text's class on it |
+| `custom-css-class` | a `customCss` rule a class can hold — `.card:hover`, `.panel .icon` | the class's own `states` or `ancestors`, where the style editor reads it back and a breakpoint can change it |
+| `custom-css-notifications` | the toasts dressed with `.Toastify__toast` rules in `customCss` | `notifications: { font, fontSize, border, shadow, padding, background, text, radius }` |
+| `custom-css-sdk-default` | `customCss` repeating what the SDK already does for every space — less motion when asked, the theme toggle showing one icon | nothing: remove it |
+| `repeated-on-pages` | the same block — a header, a footer, a side panel — written into several pages | a layout holding it once (`layouts`, and `layout: { id, slot }` on each page); a link marks its own page with the `current` state |
+| `repeated-shape` | the same structure written again and again with different words — cards, rows, tiles | a component with props (`components`, `component(id, { props })`), or one `list` over the data when they sit side by side |
 
 ## UPPER_CASE codes
 

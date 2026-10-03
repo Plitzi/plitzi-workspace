@@ -45,7 +45,10 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
    do exactly that. Never work around a check, cast past it, or move the logic into a plugin to escape it. The first
    refusals come one at a time; the linter's come as ONE list — fix every line of it before running again. How it
    checks, a one-file author script for any project, and what it cannot see: [validation](reference/validation.md).
-3. **Read every warning.** Each one names something written that will not do what it says. Zero warnings is the bar.
+3. **Read every warning, then every suggestion.** A warning names something written that will not do what it says —
+   zero warnings is the bar. A suggestion (`[suggest]`, `suggestions` in `authorSpace`'s result) names a shorter way to
+   the same page: a layout for chrome on every page, a component or a `list` for copies, a button's own `content`. Take
+   them, the ones that save the most first. See [efficiency](reference/efficiency.md).
 4. **Look at it.** `npm run check -- /about --width 1440,390` says in text whether the page is whole — every element on
    screen, nothing overflowing, a clean console; `npm run shot -- /about --width 390 --scheme dark` is the picture, for
    when it says something is wrong (`--frames 4` shows what moves); `npm run visual`
@@ -62,9 +65,11 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
 2. **Share with classes, layouts and components, never with copies.** A look used twice is a `styles()` class.
    Chrome shown on several pages — a header, a sidebar, a footer — is a **layout** the pages name, written once. A block
    placed many times with different content — a product card, a testimonial — is a **component** placed with
-   `component(id, { props })`. A menu, a card grid, a list of steps is DATA mapped to elements
-   (`entries.map(entry => link(…))`), not a block pasted per item. See [layouts and duplication](reference/layouts.md)
-   and [components](reference/components.md).
+   `component(id, { props })`. A menu, a card grid, a list of steps is DATA, never a block pasted per item: a short
+   menu mapped in code (`entries.map(entry => link({ href, content: entry.title }))`) is fine; rows — cards, dishes,
+   tiles — are one `list` over them (`items: [ … ]`) whose row is written once. A link or a button says its words as
+   its own `content`, not through a `text` inside it. See [layouts and duplication](reference/layouts.md),
+   [components](reference/components.md) and [efficiency](reference/efficiency.md).
 3. **One element, one base selector.** An element takes a shared `class` OR its own `css`, never both — authoring
    refuses the pair. "This class plus one thing" is the class with rules on top, last in the list:
    `class: [cover, { opacity: '0.25' }]` (needs the element's `id`; it becomes the class `<id>--own`). A look that
@@ -138,6 +143,7 @@ Each is a whole file that authors with no warning — CI holds it to that. Copy 
 | [colours-and-motion.md](reference/colours-and-motion.md) | Colours for both themes, tokens, keyframes and motion |
 | [tailwind.md](reference/tailwind.md) | A design written in Tailwind classes: `tw()`, its breakpoints and states, what it refuses |
 | [layouts.md](reference/layouts.md) | Anything shown on more than one page; menus; reducing duplication of elements and styles |
+| [efficiency.md](reference/efficiency.md) | The same page with fewer elements: the suggestions `authorSpace` makes, and the short way for each long one |
 | [components.md](reference/components.md) | One block placed many times — a card, a tier, a testimonial: props, slots, binding a row into one, why it is closed |
 | [data-and-visibility.md](reference/data-and-visibility.md) | Bindings, providers, offline data, loading/empty/error states, live data, caching, showing and hiding, kept state |
 | [kept-state.md](reference/kept-state.md) | State that outlives a reload: `keepState`, transient and painted keys |

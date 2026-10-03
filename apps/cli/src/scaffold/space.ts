@@ -69,13 +69,15 @@ const outdatedSkill = (): { skill: string; sdk: string } | undefined => {
 };
 
 try {
-  const { schema, style, warnings } = authorSpace(space, { plugins: declarations });
+  const { schema, style, warnings, suggestions } = authorSpace(space, { plugins: declarations });
   mkdirSync('space', { recursive: true });
   writeFileSync('space/offline-data.json', \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);
 
   const outdated = outdatedSkill();
   if (json) {
-    console.log(JSON.stringify({ ok: true, pages: schema.pages.length, warnings, ...(outdated ? { outdated } : {}) }));
+    console.log(
+      JSON.stringify({ ok: true, pages: schema.pages.length, warnings, suggestions, ...(outdated ? { outdated } : {}) })
+    );
   } else {
     for (const warning of warnings) {
       console.warn(\`[author] \${warning.code} · \${warning.message}\`);
@@ -86,13 +88,21 @@ try {
       console.warn(hint);
     }
 
+    // Not problems: a shorter way to the same page, the one that saves the most elements first.
+    for (const suggestion of suggestions) {
+      const at = suggestion.at ? \` · \${suggestion.at}\` : '';
+      console.warn(\`[suggest] \${suggestion.code} · \${suggestion.message} (saves \${suggestion.saves})\${at}\`);
+    }
+
     if (outdated) {
       console.warn(
         \`[skills] the authoring skill is \${outdated.skill} and @plitzi/sdk-authoring is \${outdated.sdk}: npx @plitzi/cli skills update\`
       );
     }
 
-    console.log(\`ok · \${schema.pages.length} pages · \${warnings.length} warnings · space/offline-data.json\`);
+    console.log(
+      \`ok · \${schema.pages.length} pages · \${warnings.length} warnings · \${suggestions.length} suggestions · space/offline-data.json\`
+    );
   }
 } catch (error) {
   // The message is the whole report — every problem, where it was written and what to change. The stack would only

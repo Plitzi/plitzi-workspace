@@ -33,6 +33,12 @@ export type LinkProps = {
    * it — the topic, the headline, the standfirst, the byline and the button — read out as one link.
    */
   label?: string;
+  /**
+   * The link's own words — `Pricing` — drawn without a text element inside it, so a link that says something is one
+   * element rather than two. Beside its children when it has any, where `contentPlacement` says.
+   */
+  content?: string;
+  contentPlacement?: 'before' | 'after';
 };
 
 const Link = ({
@@ -43,7 +49,9 @@ const Link = ({
   target = 'self',
   mode = 'page',
   hash = '',
-  label = ''
+  label = '',
+  content = '',
+  contentPlacement = 'after'
 }: LinkProps) => {
   const { style } = useElement();
   const {
@@ -122,7 +130,9 @@ const Link = ({
 
   return (
     <RootElement tag="a" {...propsMemo} onClick={handleClick}>
+      {contentPlacement === 'before' && content}
       {children}
+      {contentPlacement === 'after' && content}
     </RootElement>
   );
 };

@@ -1,0 +1,52 @@
+# Efficiency: the same page with fewer elements
+
+Every element is a node the page renders, the builder lists, the document stores and the next reader has to read. A
+space written the long way still renders — nothing in it is wrong — but it is two or three times the size it needs,
+and every copy is a place the next edit has to be made again. The platform has a short way for each of the long ones
+below. Use it from the start; `authorSpace` points out the ones you missed.
+
+## Read the suggestions
+
+`authorSpace` returns `suggestions` beside `warnings` — the ones that save the most elements first, each with its code,
+what to write instead, the elements it is about and how many it would save:
+
+```ts
+const { warnings, suggestions } = authorSpace(space);
+// [{ code: 'repeated-on-pages', saves: 57, at: 'src/pages/docs.ts:291', elementIds: [...], message: '4 pages carry…' }]
+```
+
+`npm run author` prints them under the warnings (`[suggest]`), and `npm run author -- --json` carries them. A warning
+is a bug to fix; a suggestion is a shorter way to the same page — take it unless you have a reason not to, and the
+reason is usually that the copies are about to diverge. `npx @plitzi/cli explain repeated-on-pages` explains any code.
+
+## The long way, and the short one
+
+| Written the long way | The short way | Suggestion |
+| --- | --- | --- |
+| The same header, footer or sidebar in every page | A **layout** holding it once; each page names it (`layout: { id, slot }`) — [layouts](layouts.md) | `repeated-on-pages` |
+| A header copied per page so one link can be styled "active" | The link marks its own page: `states: { current: { … } }` on its class; `activeOn` for an entry lit on several pages | `repeated-on-pages` |
+| The same card, row or tile written again with other words | A **component** with props, placed with `component(id, { props })` — [components](components.md) | `repeated-shape` |
+| Rows of data written one by one, side by side | One `list` over the rows — `items: [ … ]` fixed, or bound to a source — with its row written once — [lists](lists.md) | `repeated-shape` |
+| `button({ children: [text('Save')] })`, `link({ children: [text('Docs')] })` | `button({ content: 'Save' })`, `link({ href, content: 'Docs' })`; the text's class goes on the button or link | `content-attribute` |
+| `.card:hover { … }`, `.card .icon { … }` in `customCss` | The class's own `states` and `ancestors` | `custom-css-class` |
+| A reduced-motion reset, or rules showing one icon of the theme toggle, in `customCss` | Nothing: the SDK does both for every space | `custom-css-sdk-default` |
+| `.Toastify__toast { font-family: …; border: … }` in `customCss` | `notifications: { font, fontSize, border, shadow, padding, … }` | `custom-css-notifications` |
+
+And a few the suggestions do not count, because they cost styles rather than elements:
+
+- **A look used twice is a class**, written once with `styles()`; every element of a TYPE dressed the same way is the
+  space's `elements` defaults (`elements: { heading: { color: 'var(--fg)' } }`), not a class on each.
+- **Inner parts are slots.** A form control's input, a modal's backdrop, a theme toggle's icons: style them with
+  `slots: { input: inputClass }` on the element, or the type's `slots` in `elements` — never a `customCss` rule reaching
+  into the element.
+- **A container with one child and nothing of its own** — no class, no flow, no condition — is an element for nothing:
+  put what it was for on the child.
+- **A wrapper that only marks where something goes** inside a parent that lays its children out takes
+  `css: { display: 'contents' }` (a layout's slot, a layout itself in a page that is a column): no box, so the layout
+  around it is what it was.
+
+## Measured
+
+On the seeded spaces, taking these suggestions removed a third of a restaurant site (2,533 → 1,697 elements: header
+and footer into a layout), two fifths of a blog (353 → 210: the per-page header provider into the layout) and of a
+sign-in space (848 → 530: the split screen into a layout) — and rendered every page pixel for pixel the same.

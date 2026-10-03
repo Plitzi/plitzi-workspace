@@ -13,10 +13,21 @@ type SettingsProps = {
   hash?: string;
   target?: 'blank' | 'self' | 'parent' | 'top';
   label?: string;
+  content?: string;
+  contentPlacement?: 'before' | 'after';
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ mode = 'page', href = '#', hash = '', target = 'self', label = '', onUpdate }: SettingsProps) => {
+const Settings = ({
+  mode = 'page',
+  href = '#',
+  hash = '',
+  target = 'self',
+  label = '',
+  content = '',
+  contentPlacement = 'after',
+  onUpdate
+}: SettingsProps) => {
   const {
     contexts: { NetworkContext }
   } = usePlitziServiceContext();
@@ -75,6 +86,17 @@ const Settings = ({ mode = 'page', href = '#', hash = '', target = 'self', label
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
+      <Input
+        value={content}
+        label="Content"
+        placeholder="The link's words, without a text inside it"
+        onChange={handleChange('content')}
+        size="sm"
+      />
+      <Select value={contentPlacement} label="Content Placement" onChange={handleChange('contentPlacement')} size="sm">
+        <option value="before">Before Elements</option>
+        <option value="after">After Elements</option>
+      </Select>
       <Select value={target} label="Target" onChange={handleChange('target')} size="sm">
         <option value="blank">Blank</option>
         <option value="self">Self</option>

@@ -11,7 +11,8 @@ const declaration = elementDeclaration<LinkAttributes>()({
   type: 'link',
   attributeValues: {
     mode: valuesOf<NonNullable<LinkProps['mode']>>()(['page', 'internal', 'external']),
-    target: valuesOf<NonNullable<LinkProps['target']>>()(['self', 'blank', 'parent', 'top'])
+    target: valuesOf<NonNullable<LinkProps['target']>>()(['self', 'blank', 'parent', 'top']),
+    contentPlacement: valuesOf<NonNullable<LinkProps['contentPlacement']>>()(['before', 'after'])
   },
   content: {
     attributes: {
@@ -19,14 +20,17 @@ const declaration = elementDeclaration<LinkAttributes>()({
       target: 'self',
       mode: 'page',
       hash: '',
-      label: ''
+      label: '',
+      content: '',
+      contentPlacement: 'after'
     },
     definition: {
       label: 'Link',
       type: 'link',
       description:
         'Navigation. Moves the user between pages of the site or to an external URL (its `mode`/`href` decide which). Use ' +
-        'this to go page-to-page rather than a button + interaction.',
+        'this to go page-to-page rather than a button + interaction. Its words are its own `content` — no text element ' +
+        'inside it for them.',
       items: [],
       bindings: {},
       styleSelectors: {
