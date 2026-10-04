@@ -1,3 +1,5 @@
+@use 'placeholder';
+
 @mixin styles {
   .plitzi-component__plitzi-sdk {
     > .plitzi-sdk {
@@ -15,8 +17,7 @@
     .plitzi-component__plitzi-sdk {
       // The nested space renders itself, so this element has no empty state of its own: in build mode it still
       // needs a surface to select.
-      min-height: 50px;
-      min-width: 50px;
+      @include placeholder.empty;
     }
   }
 }

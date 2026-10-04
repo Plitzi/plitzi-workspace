@@ -27,7 +27,9 @@ image({ src, alt, motion: { loop: 'float' } })                         // keeps 
 
 Every preset moves only `opacity` and the transforms — an arrival the individual `translate`/`scale`/`rotate` properties, so it
 composes with a `transform` of the element's own, a loop `transform` — and a visitor who asked for less motion gets
-none of it. It is refused where it could not play (`motion-invalid`, `motion-no-tag` on a provider with no tag). In the
+none of it. An arrival from the side starts beside where it lands, so the SDK's root clips what overflows sideways
+(`overflow-x: clip`): it never scrolls the page while it plays. Content wider than the page scrolls in a box of its own
+(`overflow-x: auto`). It is refused where it could not play (`motion-invalid`, `motion-no-tag` on a provider with no tag). In the
 builder it is the element's **Motion** tab — each preset a tile that plays it while the pointer rests on it, and the
 choices read back as a sentence; the canvas holds it still while editing, and **▶** in the header (or **Play on the
 canvas** in the tab) plays it from the start — the space's own `[data-hydrated]` loops with it. **Preview** plays it as

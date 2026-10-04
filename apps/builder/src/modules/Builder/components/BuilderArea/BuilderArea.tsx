@@ -11,7 +11,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { isMotionAnimation, MOTION_PLAY_CSS, MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
+import { isMotionAnimation } from '@plitzi/sdk-shared/schema/motion';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver, layoutGridCss } from '@plitzi/sdk-shared/style';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
@@ -28,6 +28,7 @@ import SpaceContainer from '@pmodules/Space/SpaceContainer';
 import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
 import BuilderAreaTracking from './BuilderAreaTracking';
+import { canvasMotionCss } from './canvasMotionCss';
 import { liveCanvas } from './liveCanvas';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 
@@ -46,18 +47,6 @@ export type BuilderAreaProps = {
   mobilePreview?: boolean;
   previewMode?: boolean;
   debugMode?: boolean;
-};
-
-/**
- * How the canvas plays the declared motion. Editing, it is held at its end — or played from the start with Play; in
- * preview, not at all: the page plays it as a published page does.
- */
-const canvasMotionCss = (previewMode: boolean, playing: boolean): string => {
-  if (previewMode) {
-    return '';
-  }
-
-  return playing ? MOTION_PLAY_CSS : MOTION_STILL_CSS;
 };
 
 const BuilderArea = ({

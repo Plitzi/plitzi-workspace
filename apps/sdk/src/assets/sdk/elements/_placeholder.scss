@@ -1,0 +1,14 @@
+/**
+ * What an empty element is given on the builder's canvas, with the component borders shown: enough room to see it, pick
+ * it and drop into it — an empty box measures nothing, and a box that measures nothing cannot be found.
+ *
+ * Small on purpose. It is a MINIMUM, so it also applies to an empty element that has a size of its own — a dot, a
+ * planet, a divider drawn by its background — and grows any smaller than this while editing. 24px is still a target a
+ * pointer finds and a dashed border shows, and it leaves that kind of shape near its true size.
+ */
+$empty-size: 24px;
+
+@mixin empty {
+  min-height: $empty-size;
+  min-width: $empty-size;
+}

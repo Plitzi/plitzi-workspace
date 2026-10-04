@@ -154,6 +154,11 @@
 
   .plitzi-sdk {
     display: flex;
+    // An arrival from the side starts beside where it lands (`slide-left` 32px to the right), and until it has played
+    // that offset would push the page sideways — on a phone, past a 16px gutter. `clip` cuts it without making the root
+    // a scroll container, so the window still scrolls, a sticky bar still sticks and a scroll timeline still follows.
+    // Content wider than the page is cut too: it scrolls in a box of its own (`overflow-x: auto`).
+    overflow-x: clip;
 
     &.min-h-screen {
       min-height: 100vh;

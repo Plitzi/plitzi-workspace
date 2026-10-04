@@ -1,3 +1,5 @@
+@use 'placeholder';
+
 @mixin styles {
   .plitzi-component__list {
     margin-bottom: 10px;
@@ -69,9 +71,7 @@
     .plitzi-component__list-item,
     .plitzi-component__controlled-list {
       &.container--empty {
-        // Render a placeholder for empty containers during build mode
-        min-height: 50px;
-        min-width: 50px;
+        @include placeholder.empty;
       }
     }
   }

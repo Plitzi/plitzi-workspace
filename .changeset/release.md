@@ -162,6 +162,20 @@ is its first), and so is a loop (`MOTION_LOOP_FRAMES[name].frames`, replacing `t
 individual `translate`, `scale` and `rotate`, so they still compose with an element's own `transform` and with a loop.
 The builder's Motion tab previews every frame; authoring, the MCP, `explain motion` and GraphQL read the same lists.
 
+An arrival from the side no longer scrolls the page sideways. `slide-left` starts 32px to the right of where it lands,
+past a phone's 16px gutter, and until it had played the page could be dragged sideways. The SDK's root clips that way
+now (`overflow-x: clip`, which keeps the window the scroller: sticky bars and scroll timelines are untouched), and the
+builder's preview does the same. Content wider than the page is cut rather than scrolling the page — give it a box of
+its own with `overflow-x: auto`.
+
+**3D and the transform parts are style properties.** `transform-style`, `perspective-origin`, `backface-visibility`,
+`translate`, `rotate` and `scale` join the vocabulary (they were refused as `css-property-unknown` and had to go in
+`customCss`); `scale: 0.94` is a factor, not pixels.
+
+**The builder's placeholder for an empty element is 24px** (was 50px), one size for every element that has one. It
+is a minimum, so it also grew empty shapes with a size of their own — a dot, a planet — while editing; 24px is still
+a box to see, pick and drop into.
+
 The desktop app's window was blank: authoring, run in the renderer to build the rail, asked Vite's `process` shim for
 a working directory it does not have. It reads one only where there is one now — and only when a class conflict is
 reported, rather than for every element of every space it writes.

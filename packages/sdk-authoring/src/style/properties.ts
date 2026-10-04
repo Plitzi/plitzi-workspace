@@ -43,6 +43,7 @@ const UNITLESS = new Set([
   'orphans',
   'widows',
   'zoom',
+  'scale',
   'tab-size',
   'animation-iteration-count',
   'grid-row-start',

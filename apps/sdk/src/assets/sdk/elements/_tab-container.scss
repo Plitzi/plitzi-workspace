@@ -1,3 +1,5 @@
+@use 'placeholder';
+
 @mixin styles {
   .plitzi-component__tab-container-item {
     display: none;
@@ -13,9 +15,7 @@
     .plitzi-component__tab-container-body,
     .plitzi-component__tab-container-item {
       &.container--empty {
-        // Render a placeholder for empty containers during build mode
-        min-height: 50px;
-        min-width: 50px;
+        @include placeholder.empty;
       }
     }
   }

@@ -1,3 +1,5 @@
+@use 'placeholder';
+
 @mixin styles {
   .plitzi-component__custom {
     display: flex;
@@ -9,8 +11,7 @@
     .plitzi-component__custom {
       // It renders a plugin component, never children, so there is no empty state to key on: in build mode the
       // element still needs a surface to select and drop onto.
-      min-height: 50px;
-      min-width: 50px;
+      @include placeholder.empty;
     }
   }
 }

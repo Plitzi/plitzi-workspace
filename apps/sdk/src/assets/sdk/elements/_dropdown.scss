@@ -1,3 +1,5 @@
+@use 'placeholder';
+
 @mixin styles {
   .plitzi-component__dropdown {
     cursor: pointer;
@@ -15,8 +17,7 @@
   }
 
   .plitzi-component__dropdown-popup {
-    min-height: 50px;
-    min-width: 50px;
+    @include placeholder.empty;
     padding-right: 4px;
     padding-bottom: 4px;
     padding-left: 4px;
@@ -49,9 +50,7 @@
       // The component marks itself empty--skip when it paints its own trigger, so the placeholder only shows for
       // a dropdown that really has nothing to select.
       &.container--empty:not(.container--empty--skip) {
-        // Render a placeholder for empty containers during build mode
-        min-height: 50px;
-        min-width: 50px;
+        @include placeholder.empty;
       }
     }
   }

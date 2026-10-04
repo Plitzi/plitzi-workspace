@@ -13,6 +13,24 @@ describe('css', () => {
     });
   });
 
+  // A scene in 3D — a disc tilted back, things standing up on it — and a transform built of its parts.
+  it('takes the 3D properties and the transform parts, each a property of its own', () => {
+    const scene = {
+      'transform-style': 'preserve-3d',
+      perspective: '1600px',
+      'perspective-origin': '50% 30%',
+      'backface-visibility': 'hidden',
+      translate: '0 24px',
+      rotate: '-6deg'
+    };
+
+    expect(css(scene)).toEqual(scene);
+  });
+
+  it('reads a bare number for `scale` as the factor it is, not a length', () => {
+    expect(css({ scale: 0.94 })).toEqual({ scale: 0.94 });
+  });
+
   // What a marketing page masks and highlights with: a dotted map faded at its edges, a heading tinted line by line.
   it('takes masks, the prefixed text clip and box-decoration-break', () => {
     const effects = {

@@ -1,3 +1,5 @@
+@use 'placeholder';
+
 @mixin styles {
   // .plitzi-component__block-jsx {
   // }
@@ -5,9 +7,7 @@
   .builder-iframe.builder--display-component-border {
     .plitzi-component__block-jsx {
       &.block-jsx--empty {
-        // Render a placeholder for empty containers during build mode
-        min-height: 50px;
-        min-width: 50px;
+        @include placeholder.empty;
       }
 
       &.plitzi-component {
