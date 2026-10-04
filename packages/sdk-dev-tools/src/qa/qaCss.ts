@@ -1,7 +1,9 @@
 import { CHECKS } from './checks';
 import { QA_CHECKS, QA_FINDING_ATTRIBUTE, QA_PAGE_ATTRIBUTE } from './qaSettings';
+import { XRAY, XRAY_ATTRIBUTE, XRAY_MARKS } from './xray';
 
 import type { QaCheck, QaSettings, VisionMode } from './qaSettings';
+import type { XrayFilter } from './xray';
 
 /**
  * The rules the QA tab adds to the document, from what it has on — scoped to the page's box, so the dev tools' own
@@ -34,6 +36,21 @@ ${PAGE} ${NAMED}[data-plitzi-el]:hover::after {
   white-space: nowrap;
   pointer-events: none;
 }`;
+
+/**
+ * Every element's box faintly, and what carries wiring in the colour of its mark. Rules last win, so they go in reverse:
+ * an element with several marks is drawn in the first of them, the order the tab lists them in.
+ */
+const xray = (filter: XrayFilter): string =>
+  [
+    `${PAGE} [data-plitzi-el] { outline: 1px dashed rgba(127, 127, 127, 0.35); outline-offset: -1px; }`,
+    ...XRAY_MARKS.filter(mark => filter === 'all' || filter === mark)
+      .reverse()
+      .map(
+        mark =>
+          `${PAGE} [${XRAY_ATTRIBUTE}~="${mark}"] { outline: 1.5px solid ${XRAY[mark].colour}; outline-offset: -1.5px; }`
+      )
+  ].join('\n');
 
 /** While inspecting, every element of the page answers the pointer as something to pick, not to use. */
 const INSPECTING = `${PAGE}, ${PAGE} * { cursor: crosshair !important; }`;
@@ -78,6 +95,7 @@ export const qaCss = (settings: QaSettings): string => {
   return [
     settings.inspect ? INSPECTING : '',
     settings.outlines ? OUTLINES : '',
+    settings.xray ? xray(settings.xrayFilter) : '',
     settings.paused ? PAUSED : '',
     settings.vision === 'none' ? '' : `${PAGE} { filter: ${VISION_FILTER[settings.vision]}; }`,
     findings(checks)

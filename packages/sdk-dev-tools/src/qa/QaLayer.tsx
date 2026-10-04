@@ -1,5 +1,6 @@
 import { use, useEffect, useMemo } from 'react';
 
+import { treeOf } from '@plitzi/sdk-schema/helpers/components';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import { CHECKS } from './checks';
@@ -8,10 +9,12 @@ import QaGrid from './overlays/QaGrid';
 import QaInspector from './overlays/QaInspector';
 import QaTabOrder from './overlays/QaTabOrder';
 import QaViewport from './overlays/QaViewport';
+import QaXrayTags from './overlays/QaXrayTags';
 import QaContext from './QaContext';
 import { VISION_MATRIX, qaCss, visionFilterId } from './qaCss';
 import { QA_CHECKS, QA_FINDING_ATTRIBUTE, QA_PAGE_ATTRIBUTE, REDUCED_MOTION_CLASS, isQaActive } from './qaSettings';
 import usePageBox from './usePageBox';
+import { NO_XRAY_COUNTS, XRAY_ATTRIBUTE, xrayMarksOf } from './xray';
 
 import type { QaFindings } from './findings';
 
@@ -23,6 +26,12 @@ const RESCAN_AFTER_MS = 250;
 /** The longest a look waits for the page to be idle. */
 const IDLE_TIMEOUT_MS = 1000;
 
+/** How long the page has to stay still before the x-ray marks it again. */
+const REMARK_AFTER_MS = 200;
+
+/** The speed every animation plays at in slow motion. */
+const SLOW_MOTION_RATE = 0.25;
+
 /**
  * What the QA tab has on, applied to the page — mounted with the dev tools whether the panel is open or not, so a
  * tester can fold the panel away and keep the grid.
@@ -31,8 +40,12 @@ const IDLE_TIMEOUT_MS = 1000;
  * the size badge are drawn by React, beside the panel.
  */
 const QaLayer = () => {
-  const { settings, pageRef, round, setFindings } = use(QaContext);
-  const [currentPageId] = useCommonStore('navigation.currentPageId');
+  const { settings, pageRef, round, setFindings, setXrayCounts } = use(QaContext);
+  const [[currentPageId, flat, components]] = useCommonStore([
+    'navigation.currentPageId',
+    'schema.flat',
+    'schema.components'
+  ]);
   const box = usePageBox(pageRef);
   const active = isQaActive(settings);
   const css = useMemo(() => qaCss(settings), [settings]);
@@ -94,6 +107,73 @@ const QaLayer = () => {
 
     return () => svg.remove();
   }, [settings.vision]);
+
+  // The page's elements are named in the DOM; what is wired to them is in the document, read by that name.
+  useEffect(() => {
+    const page = pageRef.current;
+    if (!page || !settings.xray) {
+      setXrayCounts(NO_XRAY_COUNTS);
+
+      return undefined;
+    }
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const mark = () => {
+      const counts = { ...NO_XRAY_COUNTS };
+      page.querySelectorAll('[data-plitzi-el]').forEach(element => {
+        const id = element.getAttribute('data-plitzi-el') ?? '';
+        const definition = treeOf({ flat, components }, id)?.flat[id]?.definition;
+        const marks = definition ? xrayMarksOf(definition) : [];
+        marks.forEach(found => {
+          counts[found] += 1;
+        });
+        if (marks.length === 0) {
+          element.removeAttribute(XRAY_ATTRIBUTE);
+        } else if (element.getAttribute(XRAY_ATTRIBUTE) !== marks.join(' ')) {
+          element.setAttribute(XRAY_ATTRIBUTE, marks.join(' '));
+        }
+      });
+      setXrayCounts(counts);
+    };
+    const markLater = () => {
+      clearTimeout(timer);
+      timer = setTimeout(mark, REMARK_AFTER_MS);
+    };
+    mark();
+    // What a list renders, a page switched to, a panel opened: new elements, marked once the page settles. The marks'
+    // own attribute is left out, or marking would wake the observer it answers.
+    const observer = new MutationObserver(markLater);
+    observer.observe(page, { childList: true, subtree: true });
+
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+      page.querySelectorAll(`[${XRAY_ATTRIBUTE}]`).forEach(element => element.removeAttribute(XRAY_ATTRIBUTE));
+    };
+  }, [settings.xray, pageRef, flat, components, currentPageId, setXrayCounts]);
+
+  // Every animation the page plays — those running, and each one that starts after — at a quarter of its speed.
+  useEffect(() => {
+    const page = pageRef.current;
+    if (!page || !settings.slowMotion) {
+      return undefined;
+    }
+
+    const playAt = (rate: number) =>
+      page.getAnimations({ subtree: true }).forEach(animation => {
+        animation.playbackRate = rate;
+      });
+    const slow = () => playAt(SLOW_MOTION_RATE);
+    slow();
+    page.addEventListener('animationstart', slow);
+    page.addEventListener('transitionrun', slow);
+
+    return () => {
+      page.removeEventListener('animationstart', slow);
+      page.removeEventListener('transitionrun', slow);
+      playAt(1);
+    };
+  }, [settings.slowMotion, pageRef]);
 
   // The checks look at the page as drawn: again on demand, when the window settles at a new size, and on another page.
   useEffect(() => {
@@ -157,6 +237,7 @@ const QaLayer = () => {
   return (
     <>
       {settings.grid && <QaGrid box={box} />}
+      {settings.xray && <QaXrayTags filter={settings.xrayFilter} />}
       {settings.tabOrder && <QaTabOrder />}
       {settings.inspect && <QaInspector />}
       {settings.viewport && <QaViewport box={box} />}

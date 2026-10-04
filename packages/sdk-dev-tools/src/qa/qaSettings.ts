@@ -1,3 +1,5 @@
+import type { XrayFilter } from './xray';
+
 /**
  * What the QA tab can turn on over a running page — for whoever checks a build before it ships: a designer lining
  * things up, a tester looking for what breaks. Kept in this browser, and only ever offered where the dev tools are,
@@ -18,12 +20,18 @@ export interface QaSettings {
   grid: boolean;
   /** Every element's box, and its type and id when pointed at. */
   outlines: boolean;
+  /** What the document wires to each element — data, a condition, a flow, motion, a flag — marked and named on it. */
+  xray: boolean;
+  /** The one kind of wiring the x-ray shows, or all of them. */
+  xrayFilter: XrayFilter;
   /** The order the Tab key walks the page's controls in, numbered on them. */
   tabOrder: boolean;
   /** The viewport's size and the breakpoint whose rules show. */
   viewport: boolean;
   /** Every animation held where it is, to look at a moment of it. */
   paused: boolean;
+  /** Every animation at a quarter of its speed, to see how it moves rather than that it did. */
+  slowMotion: boolean;
   /** The page as a visitor who asked for less motion gets it — the SDK's own rule, by class. */
   reducedMotion: boolean;
   vision: VisionMode;
@@ -34,25 +42,31 @@ export const QA_DEFAULTS: QaSettings = {
   inspect: false,
   grid: false,
   outlines: false,
+  xray: false,
+  xrayFilter: 'all',
   tabOrder: false,
   viewport: false,
   paused: false,
+  slowMotion: false,
   reducedMotion: false,
   vision: 'none',
   checks: { overflow: false, names: false, targets: false, contrast: false, images: false, headings: false }
 };
 
 /** The tools that are simply on or off. */
-export type QaSwitch = 'inspect' | 'grid' | 'outlines' | 'tabOrder' | 'viewport' | 'paused' | 'reducedMotion';
+export type QaSwitch =
+  'inspect' | 'grid' | 'outlines' | 'xray' | 'tabOrder' | 'viewport' | 'paused' | 'slowMotion' | 'reducedMotion';
 
 /** Whether any of it is on: the page is marked only while something is. */
 export const isQaActive = (settings: QaSettings): boolean =>
   settings.inspect ||
   settings.grid ||
   settings.outlines ||
+  settings.xray ||
   settings.tabOrder ||
   settings.viewport ||
   settings.paused ||
+  settings.slowMotion ||
   settings.reducedMotion ||
   settings.vision !== 'none' ||
   Object.values(settings.checks).some(Boolean);

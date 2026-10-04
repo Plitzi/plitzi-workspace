@@ -90,6 +90,14 @@ for less motion. `view` follows the scroll where the browser has scroll timeline
   init queries. **The platform's GraphQL schema has to declare `SpaceElementMotion`
   before this version's builder or SDK queries it.**
 
+## Dev tools QA: x-ray and motion
+
+The **QA** tab gains an **X-ray**: every element the document wires something to — bound to data, shown on a condition,
+running a flow, moving, behind a flag — outlined in its colour and named on the page, read from the space's document by
+the element's name; its legend counts each kind on the page and picks one to show alone. Beside **Pause**, **Slow**
+plays every animation at a quarter of its speed and **Replay** plays the declared motion again from the start, without
+reloading the page.
+
 ## Plugins that draw
 
 `useCanvas2d`, `useWebGL`, `useWebGL2` and `useAnimationFrame` (`@plitzi/plitzi-sdk`): a canvas sized to the device (at
@@ -102,7 +110,8 @@ compiles and links, and a shader that fails throws a `ShaderError` with the driv
 ## A space re-authored without a restart
 
 A project's `npm run start:dev` restarts for its server code and its plugins only: a save to the space is re-authored
-in a process of its own and every open page loads again (`server.reloadPages()`, an SSE endpoint in `devMode`); an
+in a process of its own and every open page loads again (`server.reloadPages()` over an SSE endpoint, on with
+`createServer({ devReload: true })` — never by `devMode` alone, since every open page holds a connection for it); an
 edit authoring refuses is printed and the page keeps the last space that authored. A shutdown also ends WebSockets at
 once (`1001`, going away) rather than waiting out the grace — the ten seconds a restart used to wait on an open page.
 

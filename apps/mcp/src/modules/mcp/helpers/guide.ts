@@ -679,7 +679,9 @@ reads \`list_<name>.item.values.<field>\`), \`.pageInfo\` (\`page\`, \`pageCount
 instead of \`.records\` — that is what a **detail page** uses. Bind an empty-state block's visibility to \`.isEmpty\`
 and an error block's to \`.hasError\`; they are ordinary bindings, no special mechanism.
 
-**A list page** — provider, then a \`list\` inside it bound to the records, then the row template reading the item:
+**A list page** — provider, then a \`list\` inside it bound to the records, then the row template reading the item
+(a \`list\` is a \`<ul>\`, or \`<ol>\` by \`subType\`; its row a \`listItem\`, an \`<li>\` — any other row is warned
+\`list-row-not-li\`):
 \`\`\`json
 { "operations": [
   { "type": "upsertElement", "pageRef": "blog", "element": {

@@ -80,7 +80,7 @@ export const createPageServer = (
   const actions = actionsModuleFor(config);
   const realtime = realtimeModuleFor(config);
 
-  const devReload = config.devMode ? createDevReload() : undefined;
+  const devReload = config.devReload ? createDevReload() : undefined;
   // First: a page listening for a reload asks before anything else is looked at, and holds its connection open.
   const stages = [...(devReload ? [devReload.stage] : []), ...buildPagePipeline(services, extensions)];
   const makeHandlerForPort = (port: number) => {

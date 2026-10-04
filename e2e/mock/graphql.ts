@@ -36,6 +36,17 @@ const asList = (value: unknown): Record<string, unknown>[] => {
   return value && typeof value === 'object' ? Object.values(value as Record<string, Record<string, unknown>>) : [];
 };
 
+/** Every field the init query selects, each present: an absent one is a field Apollo reports missing, not a null. */
+const motionOf = (motion: Record<string, unknown>) => ({
+  enter: motion.enter ?? null,
+  on: motion.on ?? null,
+  duration: motion.duration ?? null,
+  delay: motion.delay ?? null,
+  stagger: motion.stagger ?? null,
+  loop: motion.loop ?? null,
+  __typename: 'SpaceElementMotion'
+});
+
 const asElement = (id: string, node: Record<string, unknown>) => {
   const definition = (node.definition ?? {}) as Record<string, unknown>;
 
@@ -56,6 +67,7 @@ const asElement = (id: string, node: Record<string, unknown>) => {
       loadStrategy: definition.loadStrategy ?? null,
       flag: isRecord(definition.flag) ? { ...definition.flag, __typename: 'SpaceElementFlagGate' } : null,
       anchor: definition.anchor ?? null,
+      motion: isRecord(definition.motion) ? motionOf(definition.motion) : null,
       __typename: 'SpaceElementDefinition'
     },
     __typename: 'SpaceElement'

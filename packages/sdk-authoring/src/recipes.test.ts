@@ -223,7 +223,12 @@ describe('the skill’s recipes', () => {
                           setState({ key: 'pendingDelete', type: 'text', value: '{{ list_rows.item.id }}' }),
                           delay(5000),
                           when(
-                            { field: 'state.pendingDelete', operator: '=', value: 'list_rows.item.id', isBinding: true },
+                            {
+                              field: 'state.pendingDelete',
+                              operator: '=',
+                              value: 'list_rows.item.id',
+                              isBinding: true
+                            },
                             runServerAction({ actionId: 'row-delete', input: { id: '{{ list_rows.item.id }}' } })
                           )
                         ]

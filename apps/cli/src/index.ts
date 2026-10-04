@@ -274,7 +274,10 @@ program
   .description('A picture of one page of the running project — and, asked, how it differs from another or what moves')
   .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1280))
   .addOption(
-    new Option('--height <px>', 'The viewport height (the picture is the whole page unless --viewport, --scroll-to or --clip)')
+    new Option(
+      '--height <px>',
+      'The viewport height (the picture is the whole page unless --viewport, --scroll-to or --clip)'
+    )
       .argParser(positiveInteger)
       .default(800)
   )

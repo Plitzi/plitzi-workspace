@@ -13,10 +13,10 @@ const BASE = `http://127.0.0.1:${PORT}`;
 
 let server: SSRServer | undefined;
 
-const start = async (devMode: boolean): Promise<SSRServer> => {
+const start = async (options: { devMode: boolean; devReload?: boolean }): Promise<SSRServer> => {
   const started = createServer({
     port: PORT,
-    devMode,
+    ...options,
     adapters: createJsonAdapters({ offlineData: { schema: EMPTY_SCHEMA.schema, style: EMPTY_STYLE_SCHEMA } })
   });
   started.listen(PORT, '127.0.0.1');
@@ -34,8 +34,8 @@ afterEach(async () => {
 });
 
 describe('reloadPages', () => {
-  it('tells every page listening in development to load again', async () => {
-    const running = await start(true);
+  it('tells every page listening to load again', async () => {
+    const running = await start({ devMode: true, devReload: true });
     const stream = await fetch(`${BASE}/__plitzi/reload`);
     expect(stream.headers.get('content-type')).toContain('text/event-stream');
     const reader = stream.body?.getReader();
@@ -51,14 +51,15 @@ describe('reloadPages', () => {
     await reader?.cancel();
   });
 
-  it('is a page the template listens on only in development', async () => {
-    await start(true);
+  it('is a page the template listens on only when asked for — a development server alone does not', async () => {
+    await start({ devMode: true, devReload: true });
     const page = await (await fetch(`${BASE}/`)).text();
     expect(page).toContain('new EventSource(');
     expect(page).toContain('/__plitzi/reload');
     await server?.close();
 
-    await start(false);
+    // Every open page would hold a connection for it: a server that never reloads pages must not hand that out.
+    await start({ devMode: true });
     expect(await (await fetch(`${BASE}/`)).text()).not.toContain('/__plitzi/reload');
     expect((await fetch(`${BASE}/__plitzi/reload`)).headers.get('content-type')).not.toContain('text/event-stream');
   });

@@ -11,14 +11,14 @@ export const DEV_RELOAD_PATH = '/__plitzi/reload';
  * code, without restarting the server: `main.ts` re-authors in a process of its own and calls `reloadPages()`, and
  * every page open on this server loads again.
  *
- * Only in `devMode`: a published page has no reason to keep a connection open for this, and the template only
- * listens when the server says it may (`devReload` in its params).
+ * Only with `devReload` on: every open page keeps a connection for it, which a server that never calls `reloadPages`
+ * — a published one, or a platform's — would pay for and get nothing from. The template listens only then too.
  */
 export const createDevReload = () => {
   const listening = new Set<EventStream>();
 
   const stage: Stage = ctx => {
-    if (!ctx.config.devMode || ctx.req.path !== DEV_RELOAD_PATH) {
+    if (!ctx.config.devReload || ctx.req.path !== DEV_RELOAD_PATH) {
       return Promise.resolve(false);
     }
 

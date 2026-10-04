@@ -131,6 +131,8 @@ const SERVER_NAME = schema.definition.permanentUrl;
 const server = createServer({
   port: PORT,
   devMode: process.env.NODE_ENV !== 'production',
+  // A save to the space re-authors it and the open pages load again (\`watchSpace\` below).
+  devReload: DEVELOPING,
   health: { name: SERVER_NAME },
   adapters: createJsonAdapters({
     offlineData: DEVELOPING ? OFFLINE_DATA : offlineData,

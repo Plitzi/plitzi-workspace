@@ -3,9 +3,11 @@ import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { NO_FINDINGS } from './findings';
 import { QA_DEFAULTS } from './qaSettings';
+import { NO_XRAY_COUNTS } from './xray';
 
 import type { QaFindings } from './findings';
 import type { QaCheck, QaSettings } from './qaSettings';
+import type { XrayCounts } from './xray';
 import type { ReactNode, RefObject } from 'react';
 
 export interface QaContextValue {
@@ -15,6 +17,9 @@ export interface QaContextValue {
   /** What the checks that are on found, the last time they looked. */
   findings: QaFindings;
   setFindings: (findings: QaFindings) => void;
+  /** How many elements of the page the x-ray marked, by mark, the last time it looked. */
+  xrayCounts: XrayCounts;
+  setXrayCounts: (counts: XrayCounts) => void;
   /** Bumped to make the checks look again. */
   round: number;
   rescan: () => void;
@@ -31,6 +36,8 @@ const QaContext = createContext<QaContextValue>({
   setCheck: () => undefined,
   findings: NO_FINDINGS,
   setFindings: () => undefined,
+  xrayCounts: NO_XRAY_COUNTS,
+  setXrayCounts: () => undefined,
   round: 0,
   rescan: () => undefined,
   pageRef: { current: null },
@@ -52,6 +59,7 @@ export const QaProvider = ({ children, pageRef, collapsed }: QaProviderProps) =>
   // — would hand this a new object, and with it new settings and a rescan of every check that is on.
   const [stored, setStored] = useStorage<Partial<QaSettings>>('plitzi-sdk-dev-tools-qa', QA_DEFAULTS);
   const [findings, setFindings] = useState<QaFindings>(NO_FINDINGS);
+  const [xrayCounts, setXrayCounts] = useState<XrayCounts>(NO_XRAY_COUNTS);
   const [round, setRound] = useState(0);
   const [pinned, setPinned] = useState<Element | undefined>();
   // A browser that kept an older set of settings gets the new ones off, not undefined.
@@ -88,8 +96,21 @@ export const QaProvider = ({ children, pageRef, collapsed }: QaProviderProps) =>
   }, [collapsed, setStored]);
 
   const value = useMemo(
-    () => ({ settings, setSetting, setCheck, findings, setFindings, round, rescan, pageRef, pinned, setPinned }),
-    [settings, setSetting, setCheck, findings, round, rescan, pageRef, pinned]
+    () => ({
+      settings,
+      setSetting,
+      setCheck,
+      findings,
+      setFindings,
+      xrayCounts,
+      setXrayCounts,
+      round,
+      rescan,
+      pageRef,
+      pinned,
+      setPinned
+    }),
+    [settings, setSetting, setCheck, findings, xrayCounts, round, rescan, pageRef, pinned]
   );
 
   return <QaContext value={value}>{children}</QaContext>;

@@ -385,7 +385,10 @@ describe('what an element is written with that reaches nothing', () => {
       ],
       {
         components: [
-          { id: 'line', root: authoring.container({ id: 'line-root', subType: 'li', children: [authoring.text('x')] }) },
+          {
+            id: 'line',
+            root: authoring.container({ id: 'line-root', subType: 'li', children: [authoring.text('x')] })
+          },
           { id: 'card', root: authoring.container({ id: 'card-root', children: [authoring.text('y')] }) }
         ]
       }

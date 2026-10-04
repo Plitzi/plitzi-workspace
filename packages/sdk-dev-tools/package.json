@@ -674,6 +674,10 @@
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaProperty.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaProperty.mjs"
     },
+    "./components/DevToolsPanel/tabs/QaViewer/QaReplayButton": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaReplayButton.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaReplayButton.mjs"
+    },
     "./components/DevToolsPanel/tabs/QaViewer/QaRescanButton": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaRescanButton.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaRescanButton.mjs"
@@ -697,6 +701,14 @@
     "./components/DevToolsPanel/tabs/QaViewer/QaVisionSelect": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaVisionSelect.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaVisionSelect.mjs"
+    },
+    "./components/DevToolsPanel/tabs/QaViewer/QaXray": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXray.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXray.mjs"
+    },
+    "./components/DevToolsPanel/tabs/QaViewer/QaXrayRow": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXrayRow.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXrayRow.mjs"
     },
     "./components/DevToolsPanel/tabs/QaViewer/index": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/index.d.ts",
@@ -1110,6 +1122,10 @@
       "types": "./dist/qa/overlays/QaViewport.d.ts",
       "import": "./dist/qa/overlays/QaViewport.mjs"
     },
+    "./qa/overlays/QaXrayTags": {
+      "types": "./dist/qa/overlays/QaXrayTags.d.ts",
+      "import": "./dist/qa/overlays/QaXrayTags.mjs"
+    },
     "./qa/qaCss": {
       "types": "./dist/qa/qaCss.d.ts",
       "import": "./dist/qa/qaCss.mjs"
@@ -1125,6 +1141,10 @@
     "./qa/usePageBox": {
       "types": "./dist/qa/usePageBox.d.ts",
       "import": "./dist/qa/usePageBox.mjs"
+    },
+    "./qa/xray": {
+      "types": "./dist/qa/xray.d.ts",
+      "import": "./dist/qa/xray.mjs"
     },
     "./scope/helpers": {
       "types": "./dist/scope/helpers.d.ts",

@@ -6,6 +6,7 @@ import {
   hostAction,
   image,
   list,
+  listItem,
   named,
   onClick,
   row,
@@ -284,8 +285,8 @@ const openClass = (listId: string) => ({
   params: { template: `{{ host.openSpace == ${listId}.item.url ? "sh-space sh-open" : "sh-space" }}` }
 });
 
-/** One row, in whichever of the two lists. The list's id is part of every token the row reads, so it is a parameter. */
-const spaceRowFor = (listId: string): ElementSpec =>
+/** The row's button: the space's badge and name, and opening it. */
+const spaceButtonFor = (listId: string): ElementSpec =>
   button({
     id: `${listId}-row`,
     subType: 'button',
@@ -306,6 +307,17 @@ const spaceRowFor = (listId: string): ElementSpec =>
     flows: [
       [named(`${listId}-open`, onClick()), hostAction({ action: 'openSpace', value: `{{ ${listId}.item.url }}` })]
     ]
+  });
+
+/** What a list lays out: the `<li>` around a row's button, a grid so the button keeps the whole width. */
+const spaceItem = styles('sh-space-item', { display: 'grid' });
+
+/** One row, in whichever of the two lists. The list's id is part of every token the row reads, so it is a parameter. */
+const spaceRowFor = (listId: string): ElementSpec =>
+  listItem({
+    id: `${listId}-item`,
+    class: spaceItem,
+    children: [spaceButtonFor(listId)]
   });
 
 /* -------------------------------------------------------------------------- */

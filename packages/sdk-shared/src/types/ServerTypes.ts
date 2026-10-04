@@ -163,7 +163,7 @@ export type SSRTemplateProps = {
   reactCompilerRuntime?: string;
   /** When true the client-side <script> block is omitted — useful for inspecting raw SSR HTML. */
   ssrOnly?: boolean;
-  /** The page listens for the server saying the space changed, and loads again — `devMode` only (`reloadPages`). */
+  /** The page listens for the server saying the space changed, and loads again — with `devReload` on (`reloadPages`). */
   devReload?: boolean;
   debugMode?: boolean;
   /**
@@ -959,6 +959,12 @@ export type SSRServerConfig = {
   publicDir?: string;
   static?: Record<string, string>;
   devMode?: boolean;
+  /**
+   * Every page this server renders listens for `reloadPages` and loads again — the edit loop of a project that authors
+   * its space in code and re-authors it on save. Off unless asked for, `devMode` included: each open page holds a
+   * connection to the server for it, which a server that never calls `reloadPages` would only pay for.
+   */
+  devReload?: boolean;
   /** Authorizes debugging on the pages this server renders. An SSR page loads the very same SDK, so this is the
    *  server-side face of the SDK's `debugMode` prop: the page decides, and the visitor's 'plitzi_debug' cookie can
    *  only narrow it. Left unset, `devMode` authorizes it — a development server debugs without being told to — and
@@ -1182,8 +1188,8 @@ export type SSRServer = {
   readonly cache: CacheManager | null;
   readonly plugins: PluginRegistry;
   /**
-   * In `devMode`, every page open on this server loads again — what a project that authors its space in code calls
-   * once it wrote the new documents, instead of restarting the server. Nothing otherwise.
+   * With `devReload` on, every page open on this server loads again — what a project that authors its space in code
+   * calls once it wrote the new documents, instead of restarting the server. Nothing otherwise.
    */
   reloadPages: () => void;
 };
