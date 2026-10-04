@@ -113,8 +113,24 @@ describe('ElementMotion', () => {
 
     expect(animate).toHaveBeenLastCalledWith(
       [
-        { opacity: 0, scale: '0.94' },
-        { opacity: 1, translate: '0 0', scale: '1' }
+        { opacity: 0, scale: '0.94', offset: 0 },
+        { opacity: 1, translate: '0 0', scale: '1', rotate: '0deg', offset: 1 }
+      ],
+      expect.objectContaining({ iterations: Infinity })
+    );
+  });
+
+  it('previews an arrival through every frame it passes on the way, not only where it starts', () => {
+    mount();
+    const pop = within(screen.getByRole('radiogroup', { name: 'Arrives' })).getByRole('radio', { name: 'Pop' });
+    fireEvent.pointerEnter(pop);
+
+    expect(animate).toHaveBeenLastCalledWith(
+      [
+        { opacity: 0, scale: '0.5', offset: 0 },
+        { opacity: 1, scale: '1.08', offset: 0.55 },
+        { scale: '0.97', offset: 0.78 },
+        { opacity: 1, translate: '0 0', scale: '1', rotate: '0deg', offset: 1 }
       ],
       expect.objectContaining({ iterations: Infinity })
     );
@@ -127,7 +143,11 @@ describe('ElementMotion', () => {
     );
 
     expect(animate).toHaveBeenLastCalledWith(
-      [{ transform: 'none' }, { transform: 'scale(1.12)' }, { transform: 'none' }],
+      [
+        { transform: 'none', offset: 0 },
+        { transform: 'scale(1.12)', offset: 0.5 },
+        { transform: 'none', offset: 1 }
+      ],
       expect.objectContaining({ iterations: Infinity })
     );
     expect(screen.getByTitle(/3× stronger here than on the page/)).toBeTruthy();

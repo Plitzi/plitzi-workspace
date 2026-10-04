@@ -14,7 +14,7 @@ describe('motion', () => {
     expect(isMotion({ loop: 'float' })).toBe(true);
     expect(motionProblems({ enter: 'bounce', on: 'hover', duration: -1, speed: 2 })).toEqual([
       'motion has no "speed" — it takes enter, on, duration, delay, stagger and loop',
-      'motion.enter is one of fade, fade-up, fade-down, slide-left, slide-right, scale',
+      'motion.enter is one of fade, fade-up, fade-down, slide-left, slide-right, slide-up, scale, zoom-in, zoom-out, pop, bounce-in, tilt, spin-in',
       'motion.on is load, view or scroll',
       'motion.duration is a number of ms from 0 to 10000'
     ]);

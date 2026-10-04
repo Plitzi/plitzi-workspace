@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MOTION_DEFAULT_DURATION,
   MOTION_ENTER_EASING,
-  MOTION_ENTER_FROM,
+  MOTION_ENTER_FRAMES,
   MOTION_ENTERS,
   MOTION_LOOP_FRAMES,
   MOTION_LOOPS
@@ -28,22 +28,28 @@ const keyframes = (name: string): string => {
 
 // The builder's Motion tab previews each preset from sdk-shared's frames, not from this stylesheet: they must agree.
 describe('_motion.scss', () => {
-  it.each(MOTION_ENTERS)('starts the %s arrival where sdk-shared says', name => {
-    const declarations = Object.entries(MOTION_ENTER_FROM[name])
-      .map(([property, value]) => `${property}: ${String(value)};`)
-      .join(' ');
+  it.each(MOTION_ENTERS)('plays the %s arrival through the frames sdk-shared says', name => {
+    const frames = MOTION_ENTER_FRAMES[name].map(({ at, ...frame }) => {
+      const declarations = Object.entries(frame)
+        .map(([property, value]) => `${property}: ${String(value)};`)
+        .join(' ');
 
-    expect(keyframes(`plitzi-motion-${name}`)).toBe(`from { ${declarations} }`);
+      return `${String(at)}% { ${declarations} }`;
+    });
+
+    expect(keyframes(`plitzi-motion-${name}`)).toBe(frames.join(' '));
   });
 
-  it.each(MOTION_LOOPS)('moves the %s loop through the frame, period and curve sdk-shared says', name => {
-    const { transform, at, periodMs, easing } = MOTION_LOOP_FRAMES[name];
+  it.each(MOTION_LOOPS)('moves the %s loop through the frames, period and curve sdk-shared says', name => {
+    const { frames, periodMs, easing } = MOTION_LOOP_FRAMES[name];
     const rule = new RegExp(
       `\\[data-motion-loop=${name}\\] \\{\\s*--plitzi-motion-loop: plitzi-motion-loop-${name};\\s*` +
         '--plitzi-motion-loop-period: ([\\d.]+)s;\\s*--plitzi-motion-loop-easing: ([\\w-]+);'
     ).exec(css);
 
-    expect(keyframes(`plitzi-motion-loop-${name}`)).toBe(`${at === 'end' ? 'to' : '50%'} { transform: ${transform}; }`);
+    expect(keyframes(`plitzi-motion-loop-${name}`)).toBe(
+      frames.map(({ at, transform }) => `${String(at)}% { transform: ${transform}; }`).join(' ')
+    );
     expect(Number(rule?.[1]) * 1000).toBe(periodMs);
     expect(rule?.[2]).toBe(easing);
   });

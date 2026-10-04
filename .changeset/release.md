@@ -143,9 +143,28 @@ and the MCP's local screenshots hold motion at its end. The builder's Motion tab
 The builder's preview plays motion as the published page does. It held everything at its end, and nothing marked
 the canvas `data-hydrated`, so neither the loops nor a space's own `[data-hydrated]` animations ever started there.
 Now an arrival plays as it comes into view, and the loops and keyframes run; **▶** on the canvas being edited runs the
-space's own `[data-hydrated]` loops too. The motion guide adds the rule this needs from a space: an entrance of its own
-that plays once is applied under `[data-hydrated]`, not held paused on its first frame, or a canvas that never goes
-live shows it where it starts.
+space's own `[data-hydrated]` loops too. The motion guide adds the rule this needs from a space: `[data-hydrated]` is for
+loops; an entrance of its own that plays once (`transform`/`opacity` only) plays from the first paint with
+`backwards`, as the presets do — gated on hydration it jumps when the page goes live, and a canvas that never goes
+live holds it on its first frame.
+
+## Thirteen ways in, nine loops
+
+`motion` grows from six arrivals and four loops to thirteen and nine, all still `opacity` and the transforms:
+
+- **Bold arrivals:** `slide-up` (from well below), `zoom-in` (from 60%), `zoom-out` (settling from 125%), `tilt`
+  (rising as it turns straight), `spin-in` (half a turn as it grows).
+- **Springy arrivals:** `pop` overshoots and settles; `bounce-in` falls into place and bounces.
+- **Loops:** `bounce`, `wobble`, `orbit` (a slow circle round where it is), `heartbeat`, `drift`.
+
+An arrival is now a list of frames (`MOTION_ENTER_FRAMES` in `@plitzi/sdk-shared/schema/motion`; `MOTION_ENTER_FROM`
+is its first), and so is a loop (`MOTION_LOOP_FRAMES[name].frames`, replacing `transform`/`at`). Arrivals move the
+individual `translate`, `scale` and `rotate`, so they still compose with an element's own `transform` and with a loop.
+The builder's Motion tab previews every frame; authoring, the MCP, `explain motion` and GraphQL read the same lists.
+
+The desktop app's window was blank: authoring, run in the renderer to build the rail, asked Vite's `process` shim for
+a working directory it does not have. It reads one only where there is one now — and only when a class conflict is
+reported, rather than for every element of every space it writes.
 
 ## Authoring advice that knows where and when
 

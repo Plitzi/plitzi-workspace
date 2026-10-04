@@ -19,13 +19,13 @@ image({ src, alt, motion: { loop: 'float' } })                         // keeps 
 
 | Field | Values |
 | --- | --- |
-| `enter` | `fade`, `fade-up`, `fade-down`, `slide-left`, `slide-right`, `scale` |
+| `enter` | gentle: `fade`, `fade-up`, `fade-down`, `slide-left`, `slide-right`, `scale` · bold: `slide-up`, `zoom-in`, `zoom-out`, `tilt`, `spin-in` · springy: `pop`, `bounce-in` |
 | `on` | `load` (default); `view` — once, the first time it comes into view, and then it stays; `scroll` — with the scroll itself, both ways (it goes back out as the reader scrolls up past it), on load where the browser has no scroll timelines |
 | `duration`, `delay` | ms (600 and 0 by default); `duration` does not apply under `scroll`, which follows the scroll |
 | `stagger` | ms between children: they arrive instead of the element, the first 24 one by one |
-| `loop` | `float`, `pulse`, `spin`, `sway` — held until the page is live (`data-hydrated`) |
+| `loop` | `float`, `pulse`, `spin`, `sway`, `drift`, `orbit` — ambient · `bounce`, `wobble`, `heartbeat` — to draw the eye; held until the page is live (`data-hydrated`) |
 
-Every preset moves only `opacity` and the transforms — an arrival the individual `translate`/`scale` properties, so it
+Every preset moves only `opacity` and the transforms — an arrival the individual `translate`/`scale`/`rotate` properties, so it
 composes with a `transform` of the element's own, a loop `transform` — and a visitor who asked for less motion gets
 none of it. It is refused where it could not play (`motion-invalid`, `motion-no-tag` on a provider with no tag). In the
 builder it is the element's **Motion** tab — each preset a tile that plays it while the pointer rests on it, and the
@@ -71,10 +71,11 @@ each of them.
    [data-hydrated] .glow { animation-play-state: running; }
    ```
 
-   The page loads still, then comes alive; nothing stutters. An entrance of your own that plays **once** as the page
-   goes live is applied under `[data-hydrated]` rather than held paused on its first frame —
-   `[data-hydrated] .disc { animation: unfold 2s backwards; }` — so a page that never goes live (the builder's canvas
-   while editing, one read without scripts) shows it where it ends, not where it starts.
+   The page loads still, then comes alive; nothing stutters. That is for **loops**. An entrance of your own that plays
+   **once** is the opposite: `transform` and `opacity` only, playing from the first paint with `backwards` —
+   `.disc { animation: unfold 2s 200ms backwards; }` — as the presets do. The compositor plays it while the page
+   hydrates; held for `[data-hydrated]` instead, the server's paint shows it finished, then it jumps back to start
+   when the page goes live, and a canvas that never goes live holds it on its first frame.
 5. **Entrances are short and cheap.** What appears as the page loads fades and rises — `opacity` and a small
    `translateY`, under ~600 ms, with a stagger of tens of milliseconds between rows. Not a blur that clears, not a
    height that opens.

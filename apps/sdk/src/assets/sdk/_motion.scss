@@ -3,66 +3,140 @@
  * properties (`@plitzi/sdk-shared/schema/motion`, the list of presets this mirrors).
  *
  * Every preset moves only `opacity` and the transforms, which the compositor animates without laying the page out
- * again. An arrival moves the individual `translate` / `scale` properties, so it composes with a `transform` the
- * element has of its own; a loop moves `transform`, so it composes with the arrival. A loop waits until the page is
+ * again. An arrival moves the individual `translate` / `scale` / `rotate` properties, so it composes with a
+ * `transform` the element has of its own; a loop moves `transform`, so it composes with the arrival. A loop waits until the page is
  * live (`data-hydrated`): decoration does not compete with the first render. A visitor who asked for less motion —
  * their system, or the QA tab's switch — gets none of it.
  */
 
 @use 'sass:list';
 
+// name: its frames, from where it starts through any it passes on the way. It ends where the element is.
 $enters: (
   'fade': (
-    opacity: 0
+    '0%': (opacity: 0)
   ),
   'fade-up': (
-    opacity: 0,
-    translate: 0 24px
+    '0%': (opacity: 0, translate: 0 24px)
   ),
   'fade-down': (
-    opacity: 0,
-    translate: 0 -24px
+    '0%': (opacity: 0, translate: 0 -24px)
   ),
   'slide-left': (
-    opacity: 0,
-    translate: 32px 0
+    '0%': (opacity: 0, translate: 32px 0)
   ),
   'slide-right': (
-    opacity: 0,
-    translate: -32px 0
+    '0%': (opacity: 0, translate: -32px 0)
+  ),
+  'slide-up': (
+    '0%': (opacity: 0, translate: 0 72px)
   ),
   'scale': (
-    opacity: 0,
-    scale: 0.94
+    '0%': (opacity: 0, scale: 0.94)
+  ),
+  'zoom-in': (
+    '0%': (opacity: 0, scale: 0.6)
+  ),
+  'zoom-out': (
+    '0%': (opacity: 0, scale: 1.25)
+  ),
+  'pop': (
+    '0%': (opacity: 0, scale: 0.5),
+    '55%': (opacity: 1, scale: 1.08),
+    '78%': (scale: 0.97)
+  ),
+  'bounce-in': (
+    '0%': (opacity: 0, translate: 0 -64px),
+    '55%': (opacity: 1, translate: 0 10px),
+    '75%': (translate: 0 -5px),
+    '90%': (translate: 0 2px)
+  ),
+  'tilt': (
+    '0%': (opacity: 0, translate: 0 32px, rotate: -6deg)
+  ),
+  'spin-in': (
+    '0%': (opacity: 0, scale: 0.4, rotate: -180deg)
   )
 );
 
-// name: (the keyframe at its peak, its period, its easing)
+// name: (its frames — the transform at each, the element at rest wherever none is named — its period, its easing)
 $loops: (
   'float': (
     (
-      transform: translateY(-8px)
+      '50%': translateY(-8px)
     ),
     6s,
     ease-in-out
   ),
   'pulse': (
     (
-      transform: scale(1.04)
+      '50%': scale(1.04)
     ),
     3s,
     ease-in-out
   ),
   'spin': (
-    null,
+    (
+      '100%': rotate(360deg)
+    ),
     12s,
     linear
   ),
   'sway': (
     (
-      transform: rotate(2deg)
+      '50%': rotate(2deg)
     ),
     5s,
+    ease-in-out
+  ),
+  'bounce': (
+    (
+      '0%': translateY(0) scale(1.03, 0.97),
+      '45%': translateY(-14px) scale(0.98, 1.02),
+      '55%': translateY(-14px) scale(0.98, 1.02),
+      '100%': translateY(0) scale(1.03, 0.97)
+    ),
+    1.4s,
+    ease-in-out
+  ),
+  'wobble': (
+    (
+      '25%': rotate(-5deg),
+      '75%': rotate(5deg)
+    ),
+    2.4s,
+    ease-in-out
+  ),
+  'orbit': (
+    (
+      '0%': translate(0px, -6px),
+      '12.5%': translate(4.2px, -4.2px),
+      '25%': translate(6px, 0px),
+      '37.5%': translate(4.2px, 4.2px),
+      '50%': translate(0px, 6px),
+      '62.5%': translate(-4.2px, 4.2px),
+      '75%': translate(-6px, 0px),
+      '87.5%': translate(-4.2px, -4.2px),
+      '100%': translate(0px, -6px)
+    ),
+    8s,
+    linear
+  ),
+  'heartbeat': (
+    (
+      '14%': scale(1.1),
+      '28%': scale(1),
+      '42%': scale(1.07),
+      '70%': scale(1)
+    ),
+    1.6s,
+    ease-in-out
+  ),
+  'drift': (
+    (
+      '50%': translateX(12px)
+    ),
+    7s,
     ease-in-out
   )
 );
@@ -84,11 +158,13 @@ $moving: '[data-motion-enter], [data-motion-stagger] > *, [data-motion-loop]';
     inherits: false;
   }
 
-  @each $name, $from in $enters {
+  @each $name, $frames in $enters {
     @keyframes plitzi-motion-#{$name} {
-      from {
-        @each $property, $value in $from {
-          #{$property}: $value;
+      @each $at, $frame in $frames {
+        #{$at} {
+          @each $property, $value in $frame {
+            #{$property}: $value;
+          }
         }
       }
     }
@@ -100,18 +176,10 @@ $moving: '[data-motion-enter], [data-motion-stagger] > *, [data-motion-loop]';
   }
 
   @each $name, $loop in $loops {
-    $peak: list.nth($loop, 1);
-
     @keyframes plitzi-motion-loop-#{$name} {
-      @if $name == 'spin' {
-        to {
-          transform: rotate(360deg);
-        }
-      } @else {
-        50% {
-          @each $property, $value in $peak {
-            #{$property}: $value;
-          }
+      @each $at, $transform in list.nth($loop, 1) {
+        #{$at} {
+          transform: $transform;
         }
       }
     }

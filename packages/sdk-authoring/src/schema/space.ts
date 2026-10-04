@@ -205,7 +205,7 @@ class SpaceAuthor {
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
   private readonly classRules = new Map<string, ResponsiveBlock>();
   /** Where each class was first declared, in words — what a second declaration that disagrees is told it disagrees with. */
-  private readonly classOrigins = new Map<string, string>();
+  private readonly classOrigins = new Map<string, () => string>();
   /** Every element's own selector, named or derived — each one is that element's alone. */
   private readonly ownSelectors = new Set<string>();
 
@@ -314,7 +314,7 @@ class SpaceAuthor {
 
     for (const [name, value] of Object.entries(this.spec.classes ?? {})) {
       if (!isStyleDeclaration(value)) {
-        this.declareClass(name, toBlocks(value), `the space-wide \`classes\` entry "${name}"`);
+        this.declareClass(name, toBlocks(value), () => `the space-wide \`classes\` entry "${name}"`);
         continue;
       }
 
@@ -325,7 +325,7 @@ class SpaceAuthor {
         );
       }
 
-      this.declareClass(name, value.rules, `${declaredAt(value)}, listed in the space-wide \`classes\``);
+      this.declareClass(name, value.rules, () => `${declaredAt(value)}, listed in the space-wide \`classes\``);
     }
 
     const layouts = this.spec.layouts ?? [];
@@ -537,8 +537,11 @@ class SpaceAuthor {
    * arriving twice is the ordinary case and not an error. Arriving twice saying DIFFERENT things is: a class name
    * that means one thing on one page and another somewhere else is a rule that silently depends on which file the
    * bundler reached first, which is the shape of bug this whole surface exists to make impossible.
+   *
+   * `origin` says where, and is only asked for when there is a conflict to report: reading where an element was written
+   * means formatting a stack, which every element of every space would otherwise pay for on every write.
    */
-  private declareClass(name: string, blocks: ResponsiveBlock, origin: string): void {
+  private declareClass(name: string, blocks: ResponsiveBlock, origin: () => string): void {
     const existing = this.classRules.get(name);
     if (!existing) {
       this.classRules.set(name, blocks);
@@ -550,7 +553,7 @@ class SpaceAuthor {
     if (!sameBlocks(existing, blocks)) {
       throw new AuthoringError(
         'class-conflict',
-        `The class "${name}" is declared twice with different rules: ${this.classOrigins.get(name) ?? 'once before'}, and ${origin}. A class is one rule set per space: rename one of them, or make them agree.`
+        `The class "${name}" is declared twice with different rules: ${this.classOrigins.get(name)?.() ?? 'once before'}, and ${origin()}. A class is one rule set per space: rename one of them, or make them agree.`
       );
     }
   }
@@ -562,24 +565,29 @@ class SpaceAuthor {
    * rules stay next to the element they dress — and it means one declared and never named writes nothing at all.
    */
   private collectDeclarations(rootClass: ClassList | undefined, body: ElementSpec[], rootWhere: string): void {
-    const collect = (value: ClassList | undefined, usedBy: string): void => {
+    const collect = (value: ClassList | undefined, usedBy: () => string): void => {
       for (const ref of value ? classRefs(value) : []) {
         if (typeof ref !== 'string') {
-          this.declareClass(ref.name, ref.rules, `${declaredAt(ref)}, used by ${usedBy}`);
+          this.declareClass(ref.name, ref.rules, () => `${declaredAt(ref)}, used by ${usedBy()}`);
         }
       }
     };
 
     const walk = (spec: ElementSpec): void => {
-      const at = writtenAt(spec);
-      const element = `${spec.type}${spec.id === undefined ? '' : ` "${spec.id}"`}${at === undefined ? '' : ` at ${at}`}`;
+      const element = (): string => {
+        const at = writtenAt(spec);
+
+        return `${spec.type}${spec.id === undefined ? '' : ` "${spec.id}"`}${at === undefined ? '' : ` at ${at}`}`;
+      };
       // Rules of the element's own on top of its classes are not a declaration: they are written with the element.
       collect(spec.class === undefined ? undefined : splitClassList(spec.class).refs, element);
-      Object.entries(spec.slots ?? {}).forEach(([slot, value]) => collect(value, `the "${slot}" slot of ${element}`));
+      Object.entries(spec.slots ?? {}).forEach(([slot, value]) =>
+        collect(value, () => `the "${slot}" slot of ${element()}`)
+      );
       spec.children?.forEach(walk);
     };
 
-    collect(rootClass, rootWhere);
+    collect(rootClass, () => rootWhere);
     body.forEach(walk);
   }
 

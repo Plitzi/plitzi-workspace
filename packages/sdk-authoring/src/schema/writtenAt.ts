@@ -28,6 +28,16 @@ const OWN_ROOT = ((): string => {
 const isOwnFrame = (file: string): boolean =>
   file.startsWith('node:') || file.includes('/node_modules/') || (OWN_ROOT !== '' && file.startsWith(OWN_ROOT));
 
+/**
+ * The working directory, with its trailing slash — or nothing where there is none to ask: a browser bundle may carry a
+ * `process` shim (Vite's has `env` and no `cwd`), so its presence alone says nothing.
+ */
+const workingDirectory = (): string => {
+  const cwd: unknown = typeof process === 'undefined' ? undefined : Reflect.get(process, 'cwd');
+
+  return typeof cwd === 'function' ? `${String(Reflect.apply(cwd, process, []))}/` : '';
+};
+
 const FRAME = /\(?((?:file:\/\/)?[^\s()]+?):(\d+):(\d+)\)?$/;
 
 export const markWrittenAt = <T extends object>(spec: T): T => {
@@ -56,7 +66,7 @@ export const writtenAtPosition = (spec: unknown): WrittenPosition | undefined =>
     return undefined;
   }
 
-  const cwd = typeof process !== 'undefined' ? `${process.cwd()}/` : '';
+  const cwd = workingDirectory();
   for (const line of marker.stack.split('\n').slice(1)) {
     const match = FRAME.exec(line.trim());
     if (!match) {

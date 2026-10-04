@@ -1,7 +1,7 @@
 import {
   MOTION_DEFAULT_DURATION,
   MOTION_ENTER_EASING,
-  MOTION_ENTER_FROM,
+  MOTION_ENTER_FRAMES,
   MOTION_ENTERS,
   MOTION_LOOP_FRAMES,
   MOTION_LOOPS
@@ -25,14 +25,26 @@ export const ENTER_COPY: Record<MotionEnter, PresetCopy> = {
   'fade-down': { label: 'Drop', hint: 'Fades in, coming down a little', phrase: 'drops into place' },
   'slide-left': { label: 'From the right', hint: 'Fades in, sliding left', phrase: 'slides in from the right' },
   'slide-right': { label: 'From the left', hint: 'Fades in, sliding right', phrase: 'slides in from the left' },
-  scale: { label: 'Grow', hint: 'Fades in, growing slightly', phrase: 'grows into place' }
+  'slide-up': { label: 'Slide up', hint: 'Comes up from well below', phrase: 'slides up into place' },
+  scale: { label: 'Grow', hint: 'Fades in, growing slightly', phrase: 'grows into place' },
+  'zoom-in': { label: 'Zoom in', hint: 'Grows from small, all the way', phrase: 'zooms in' },
+  'zoom-out': { label: 'Zoom out', hint: 'Settles from larger than it is', phrase: 'settles from larger' },
+  pop: { label: 'Pop', hint: 'Grows past its size and settles back', phrase: 'pops into place' },
+  'bounce-in': { label: 'Bounce in', hint: 'Falls into place and bounces', phrase: 'bounces into place' },
+  tilt: { label: 'Tilt in', hint: 'Rises, turning straight as it lands', phrase: 'tilts into place' },
+  'spin-in': { label: 'Spin in', hint: 'Turns half round as it grows in', phrase: 'spins into place' }
 };
 
 export const LOOP_COPY: Record<MotionLoop, PresetCopy> = {
   float: { label: 'Float', hint: 'Rises and settles, slowly', phrase: 'floats gently' },
   pulse: { label: 'Pulse', hint: 'Grows a touch and back, like a breath', phrase: 'breathes' },
   spin: { label: 'Spin', hint: 'Turns round, once every 12 s', phrase: 'keeps turning' },
-  sway: { label: 'Sway', hint: 'Tilts side to side', phrase: 'sways side to side' }
+  sway: { label: 'Sway', hint: 'Tilts side to side', phrase: 'sways side to side' },
+  bounce: { label: 'Bounce', hint: 'Hops and lands, squashing a little', phrase: 'keeps bouncing' },
+  wobble: { label: 'Wobble', hint: 'Rocks one way and the other', phrase: 'wobbles' },
+  orbit: { label: 'Orbit', hint: 'Circles round where it is, slowly', phrase: 'circles slowly' },
+  heartbeat: { label: 'Heartbeat', hint: 'Two quick beats, then a rest', phrase: 'beats like a heart' },
+  drift: { label: 'Drift', hint: 'Drifts sideways and back', phrase: 'drifts side to side' }
 };
 
 export const ARRIVES_NONE: PresetCopy = {
@@ -140,11 +152,15 @@ const emphasised = (transform: string): string =>
     return `${fn}(${String(Number(strong.toFixed(3)))}${unit})`;
   });
 
+/** A loop that keeps turning rather than swinging back: its last frame is a full turn on, which is where it began. */
+const isTurn = (loop: MotionLoop): boolean =>
+  MOTION_LOOP_FRAMES[loop].frames.some(frame => frame.at === 100 && /360deg/.test(frame.transform));
+
 /** Whether the stage plays this preset stronger than the page does — what its caption owns up to. */
 export const isEmphasised = (kind: PresetKind, name: string): boolean => {
   const loop = kind === 'loop' ? MOTION_LOOPS.find(preset => preset === name) : undefined;
 
-  return loop !== undefined && MOTION_LOOP_FRAMES[loop].at === 'middle';
+  return loop !== undefined && !isTurn(loop);
 };
 
 /**
@@ -160,7 +176,10 @@ export const previewOf = (
   const enter = kind === 'enter' ? MOTION_ENTERS.find(preset => preset === name) : undefined;
   if (enter) {
     return {
-      keyframes: [{ ...MOTION_ENTER_FROM[enter] }, { opacity: 1, translate: '0 0', scale: '1' }],
+      keyframes: [
+        ...MOTION_ENTER_FRAMES[enter].map(({ at, ...frame }) => ({ ...frame, offset: at / 100 })),
+        { opacity: 1, translate: '0 0', scale: '1', rotate: '0deg', offset: 1 }
+      ],
       options: {
         duration: MOTION_DEFAULT_DURATION,
         easing: MOTION_ENTER_EASING,
@@ -172,11 +191,18 @@ export const previewOf = (
 
   const loop = kind === 'loop' ? MOTION_LOOPS.find(preset => preset === name) : undefined;
   if (loop) {
-    const { transform, at, periodMs, easing } = MOTION_LOOP_FRAMES[loop];
-    const keyframes =
-      at === 'end'
-        ? [{ transform: 'none' }, { transform }]
-        : [{ transform: 'none' }, { transform: emphasised(transform) }, { transform: 'none' }];
+    const { frames, periodMs, easing } = MOTION_LOOP_FRAMES[loop];
+    const turn = isTurn(loop);
+    const named = frames.map(({ at, transform }) => ({
+      transform: turn ? transform : emphasised(transform),
+      offset: at / 100
+    }));
+    // A frame the loop does not name is the element at rest, as the stylesheet leaves it.
+    const keyframes = [
+      ...(named[0]?.offset === 0 ? [] : [{ transform: 'none', offset: 0 }]),
+      ...named,
+      ...(named.at(-1)?.offset === 1 ? [] : [{ transform: 'none', offset: 1 }])
+    ];
 
     return { keyframes, options: { duration: periodMs / 3, easing, iterations: repeat ? Infinity : 1 } };
   }

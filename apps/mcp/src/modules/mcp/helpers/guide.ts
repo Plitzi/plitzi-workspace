@@ -1,4 +1,4 @@
-import { BUILTIN_TRANSFORMERS, GLOBAL_SOURCES } from '@plitzi/sdk-authoring';
+import { BUILTIN_TRANSFORMERS, GLOBAL_SOURCES, MOTION_ENTERS, MOTION_LOOPS } from '@plitzi/sdk-authoring';
 
 // Generated from sdk-authoring, which the linter validates against, so what the guide teaches is what a save accepts.
 const GLOBALS = GLOBAL_SOURCES.map(source => `\`${source}\``).join(', ');
@@ -1017,8 +1017,8 @@ A preset first: an element's \`motion\` field (\`upsertElement\`/\`patchElement\
 \`{ "enter": "fade-up", "on": "view" }\`, \`"stagger": 60\` for its children one by one, \`"loop": "float"\` — is
 played by the SDK, cheap and stilled for reduced motion. \`on\`: \`load\` (default), \`view\` (once, the first time it
 comes into view, then it stays) or \`scroll\` (follows the scroll both ways — it fades back out as the reader scrolls
-up past it; only for an effect that is about the scroll itself). Enters: fade, fade-up, fade-down, slide-left, slide-right,
-scale; loops: float, pulse, spin, sway. Beyond them, keyframes go in \`customCss\` (\`patchSettings\`), a
+up past it; only for an effect that is about the scroll itself). Enters: ${MOTION_ENTERS.join(', ')}; loops:
+${MOTION_LOOPS.join(', ')}. Beyond them, keyframes go in \`customCss\` (\`patchSettings\`), a
 definition names them (\`animation\`). Only \`opacity\` and
 \`transform\` (\`translate\`, \`scale\`, \`rotate\`) animate off the main thread: they stay smooth while the page
 hydrates and on a slow phone. Anything else repaints or lays the page out again on every frame, and freezes while the
@@ -1031,8 +1031,8 @@ page's scripts run.
   pulsing glow is a static gradient whose \`opacity\` or \`scale\` changes.
 - Decoration that must animate something else (a custom property, \`background-position\`) starts paused and runs
   once the page is hydrated: \`.glow { animation: glow 8s linear infinite paused; } [data-hydrated] .glow {
-  animation-play-state: running; }\` in \`customCss\`. An entrance of its own that plays once is applied only under
-  \`[data-hydrated]\`, not held paused on its first frame: the builder's canvas never goes live.
+  animation-play-state: running; }\` in \`customCss\`. That is for loops: an entrance of its own that plays once
+  (\`transform\`/\`opacity\` only) plays from the first paint with \`backwards\`, never gated on \`[data-hydrated]\`.
 - Entrances: \`opacity\` + a small \`translateY\`, under ~600ms, staggered by tens of ms.
 - One slow ambient loop per screen at most — not one per card: \`infinite\` runs on every visitor's battery.
 - Name what transitions (\`transition: transform 200ms, opacity 200ms\`), never \`all\`; \`will-change\` only on the

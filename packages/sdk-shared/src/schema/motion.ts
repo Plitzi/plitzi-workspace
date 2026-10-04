@@ -9,7 +9,21 @@ import { isRecord } from '../helpers/isRecord';
  * The one description the authoring package, the builder's Motion tab, the MCP and the validator all read; the
  * stylesheet mirrors its presets and frames, and a test in `apps/sdk` holds the two together.
  */
-export const MOTION_ENTERS = ['fade', 'fade-up', 'fade-down', 'slide-left', 'slide-right', 'scale'] as const;
+export const MOTION_ENTERS = [
+  'fade',
+  'fade-up',
+  'fade-down',
+  'slide-left',
+  'slide-right',
+  'slide-up',
+  'scale',
+  'zoom-in',
+  'zoom-out',
+  'pop',
+  'bounce-in',
+  'tilt',
+  'spin-in'
+] as const;
 
 export type MotionEnter = (typeof MOTION_ENTERS)[number];
 
@@ -22,8 +36,21 @@ export const MOTION_TRIGGERS = ['load', 'view', 'scroll'] as const;
 
 export type MotionTrigger = (typeof MOTION_TRIGGERS)[number];
 
-/** A motion that repeats: a gentle rise and fall, a breath, a turn, a sway. Held until the page is live. */
-export const MOTION_LOOPS = ['float', 'pulse', 'spin', 'sway'] as const;
+/**
+ * A motion that repeats: a gentle rise and fall, a breath, a turn, a sway — a bounce, a wobble, a small orbit, a
+ * heartbeat, a drift. Held until the page is live.
+ */
+export const MOTION_LOOPS = [
+  'float',
+  'pulse',
+  'spin',
+  'sway',
+  'bounce',
+  'wobble',
+  'orbit',
+  'heartbeat',
+  'drift'
+] as const;
 
 export type MotionLoop = (typeof MOTION_LOOPS)[number];
 
@@ -50,28 +77,115 @@ export const MOTION_DEFAULT_DURATION = 600;
 
 export const MOTION_ENTER_EASING = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
 
-/** Where each arrival starts from; it ends where the element is. */
-export const MOTION_ENTER_FROM: Record<MotionEnter, { opacity: number; translate?: string; scale?: string }> = {
-  fade: { opacity: 0 },
-  'fade-up': { opacity: 0, translate: '0 24px' },
-  'fade-down': { opacity: 0, translate: '0 -24px' },
-  'slide-left': { opacity: 0, translate: '32px 0' },
-  'slide-right': { opacity: 0, translate: '-32px 0' },
-  scale: { opacity: 0, scale: '0.94' }
+/**
+ * One frame of an arrival, `at` a percentage of its duration. It moves the individual `translate`, `scale` and `rotate`
+ * properties — never `transform` — so it composes with a `transform` the element has of its own and with a loop.
+ */
+export interface MotionEnterFrame {
+  at: number;
+  opacity?: number;
+  translate?: string;
+  scale?: string;
+  rotate?: string;
+}
+
+/**
+ * Each arrival's frames, from where it starts (`at: 0`) through any it passes on the way — an overshoot, a bounce. It
+ * always ends where the element is, which is why no frame says so.
+ */
+export const MOTION_ENTER_FRAMES: Record<MotionEnter, MotionEnterFrame[]> = {
+  fade: [{ at: 0, opacity: 0 }],
+  'fade-up': [{ at: 0, opacity: 0, translate: '0 24px' }],
+  'fade-down': [{ at: 0, opacity: 0, translate: '0 -24px' }],
+  'slide-left': [{ at: 0, opacity: 0, translate: '32px 0' }],
+  'slide-right': [{ at: 0, opacity: 0, translate: '-32px 0' }],
+  'slide-up': [{ at: 0, opacity: 0, translate: '0 72px' }],
+  scale: [{ at: 0, opacity: 0, scale: '0.94' }],
+  'zoom-in': [{ at: 0, opacity: 0, scale: '0.6' }],
+  'zoom-out': [{ at: 0, opacity: 0, scale: '1.25' }],
+  pop: [
+    { at: 0, opacity: 0, scale: '0.5' },
+    { at: 55, opacity: 1, scale: '1.08' },
+    { at: 78, scale: '0.97' }
+  ],
+  'bounce-in': [
+    { at: 0, opacity: 0, translate: '0 -64px' },
+    { at: 55, opacity: 1, translate: '0 10px' },
+    { at: 75, translate: '0 -5px' },
+    { at: 90, translate: '0 2px' }
+  ],
+  tilt: [{ at: 0, opacity: 0, translate: '0 32px', rotate: '-6deg' }],
+  'spin-in': [{ at: 0, opacity: 0, scale: '0.4', rotate: '-180deg' }]
+};
+
+/** Where each arrival starts from — its first frame. */
+// `Object.fromEntries` answers a record of strings; the entries are one per name of MOTION_ENTERS, so it is whole.
+export const MOTION_ENTER_FROM = Object.fromEntries(
+  MOTION_ENTERS.map(name => {
+    const [{ at: _at, ...from }] = MOTION_ENTER_FRAMES[name];
+
+    return [name, from];
+  })
+) as Record<MotionEnter, Omit<MotionEnterFrame, 'at'>>;
+
+/** One frame of a loop: its `transform` at a percentage of its period. A frame no loop names is the element at rest. */
+export interface MotionLoopFrame {
+  at: number;
+  transform: string;
+}
+
+/** A point on a circle of `radius` px, `turn` of the way round from the top — the frames `orbit` goes through. */
+const onCircle = (radius: number, turn: number): string => {
+  const angle = turn * 2 * Math.PI;
+  const x = Math.round(Math.sin(angle) * radius * 10) / 10;
+  const y = Math.round(-Math.cos(angle) * radius * 10) / 10;
+
+  return `translate(${String(x)}px, ${String(y)}px)`;
 };
 
 /**
- * Each loop's one moving frame — its `transform` halfway through the period and back (`middle`), or at the end of
- * one that keeps turning (`end`) — and its period and curve.
+ * Each loop's frames, its period and its curve. A loop that swings starts and ends at rest; one that keeps turning
+ * (`spin`) ends a full turn on, which is the same place.
  */
-export const MOTION_LOOP_FRAMES: Record<
-  MotionLoop,
-  { transform: string; at: 'middle' | 'end'; periodMs: number; easing: string }
-> = {
-  float: { transform: 'translateY(-8px)', at: 'middle', periodMs: 6000, easing: 'ease-in-out' },
-  pulse: { transform: 'scale(1.04)', at: 'middle', periodMs: 3000, easing: 'ease-in-out' },
-  spin: { transform: 'rotate(360deg)', at: 'end', periodMs: 12_000, easing: 'linear' },
-  sway: { transform: 'rotate(2deg)', at: 'middle', periodMs: 5000, easing: 'ease-in-out' }
+export const MOTION_LOOP_FRAMES: Record<MotionLoop, { frames: MotionLoopFrame[]; periodMs: number; easing: string }> = {
+  float: { frames: [{ at: 50, transform: 'translateY(-8px)' }], periodMs: 6000, easing: 'ease-in-out' },
+  pulse: { frames: [{ at: 50, transform: 'scale(1.04)' }], periodMs: 3000, easing: 'ease-in-out' },
+  spin: { frames: [{ at: 100, transform: 'rotate(360deg)' }], periodMs: 12_000, easing: 'linear' },
+  sway: { frames: [{ at: 50, transform: 'rotate(2deg)' }], periodMs: 5000, easing: 'ease-in-out' },
+  bounce: {
+    frames: [
+      { at: 0, transform: 'translateY(0) scale(1.03, 0.97)' },
+      { at: 45, transform: 'translateY(-14px) scale(0.98, 1.02)' },
+      { at: 55, transform: 'translateY(-14px) scale(0.98, 1.02)' },
+      { at: 100, transform: 'translateY(0) scale(1.03, 0.97)' }
+    ],
+    periodMs: 1400,
+    easing: 'ease-in-out'
+  },
+  wobble: {
+    frames: [
+      { at: 25, transform: 'rotate(-5deg)' },
+      { at: 75, transform: 'rotate(5deg)' }
+    ],
+    periodMs: 2400,
+    easing: 'ease-in-out'
+  },
+  orbit: {
+    frames: Array.from({ length: 9 }, (_, step) => ({ at: (step * 100) / 8, transform: onCircle(6, step / 8) })),
+    periodMs: 8000,
+    easing: 'linear'
+  },
+  heartbeat: {
+    frames: [
+      { at: 14, transform: 'scale(1.1)' },
+      { at: 28, transform: 'scale(1)' },
+      { at: 42, transform: 'scale(1.07)' },
+      { at: 70, transform: 'scale(1)' }
+    ],
+    periodMs: 1600,
+    easing: 'ease-in-out'
+  },
+  drift: { frames: [{ at: 50, transform: 'translateX(12px)' }], periodMs: 7000, easing: 'ease-in-out' }
 };
 
 /** The longest a duration, a delay or a stagger may be: past it, a page is waiting on its decoration. */
