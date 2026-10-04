@@ -8,8 +8,13 @@ export interface TextChange {
   text: string;
 }
 
-/** The change an edit makes to the source, or why it makes none — and is left to the author, said. */
-export type EditOutcome = { change: TextChange } | { unplaced: string };
+/**
+ * The changes an edit makes to the source — one span, or a few where it moves something (children that become an
+ * attribute) — or why it makes none, and is left to the author, said.
+ */
+export type EditOutcome = { changes: TextChange[]; orphans?: string[] } | { unplaced: string };
+
+const one = (change: TextChange): EditOutcome => ({ changes: [change] });
 
 type Ts = typeof TypeScript;
 type Node = TypeScript.Node;
@@ -174,20 +179,18 @@ const editKey = (
     }
 
     if (!holder || !property) {
-      return { change: insertInto(sourceFile, inner ?? object, edit.key, literalText(edit.value)) };
+      return one(insertInto(sourceFile, inner ?? object, edit.key, literalText(edit.value)));
     }
 
     if (!ts.isPropertyAssignment(property) || !isLiteral(ts, property.initializer)) {
       return { unplaced: `\`${edit.key}\` is not written as a value there` };
     }
 
-    return {
-      change: {
-        start: property.initializer.getStart(sourceFile),
-        end: property.initializer.getEnd(),
-        text: literalText(edit.value)
-      }
-    };
+    return one({
+      start: property.initializer.getStart(sourceFile),
+      end: property.initializer.getEnd(),
+      text: literalText(edit.value)
+    });
   }
 
   if (!holder || !property) {
@@ -195,24 +198,20 @@ const editKey = (
   }
 
   if (edit.op === 'remove') {
-    return { change: removeFromList(sourceFile, holder.properties, holder.properties.indexOf(property)) };
+    return one(removeFromList(sourceFile, holder.properties, holder.properties.indexOf(property)));
   }
 
   if (edit.op === 'rename' && edit.to !== undefined) {
     if (ts.isShorthandPropertyAssignment(property)) {
-      return {
-        change: {
-          start: property.getStart(sourceFile),
-          end: property.getEnd(),
-          text: `${keyText(edit.to)}: ${property.name.text}`
-        }
-      };
+      return one({
+        start: property.getStart(sourceFile),
+        end: property.getEnd(),
+        text: `${keyText(edit.to)}: ${property.name.text}`
+      });
     }
 
     if (ts.isPropertyAssignment(property)) {
-      return {
-        change: { start: property.name.getStart(sourceFile), end: property.name.getEnd(), text: keyText(edit.to) }
-      };
+      return one({ start: property.name.getStart(sourceFile), end: property.name.getEnd(), text: keyText(edit.to) });
     }
   }
 
@@ -245,7 +244,7 @@ const editBinding = (ts: Ts, sourceFile: TypeScript.SourceFile, props: ObjectLit
     visit(list);
 
     return found
-      ? { change: { start: found.getStart(sourceFile), end: found.getEnd(), text: quoted(edit.to) } }
+      ? one({ start: found.getStart(sourceFile), end: found.getEnd(), text: quoted(edit.to) })
       : { unplaced: `"${edit.key}" is not written as a transformer there` };
   }
 
@@ -254,9 +253,7 @@ const editBinding = (ts: Ts, sourceFile: TypeScript.SourceFile, props: ObjectLit
   }
 
   // The last binding taken out takes `bind` with it: an empty one says nothing.
-  const dropBind = (): EditOutcome => ({
-    change: removeFromList(sourceFile, props.properties, props.properties.indexOf(bind))
-  });
+  const dropBind = (): EditOutcome => one(removeFromList(sourceFile, props.properties, props.properties.indexOf(bind)));
 
   if (ts.isObjectLiteralExpression(list)) {
     const property = findProperty(ts, list, edit.key);
@@ -266,7 +263,7 @@ const editBinding = (ts: Ts, sourceFile: TypeScript.SourceFile, props: ObjectLit
 
     return list.properties.length === 1
       ? dropBind()
-      : { change: removeFromList(sourceFile, list.properties, list.properties.indexOf(property)) };
+      : one(removeFromList(sourceFile, list.properties, list.properties.indexOf(property)));
   }
 
   if (ts.isArrayLiteralExpression(list)) {
@@ -289,10 +286,140 @@ const editBinding = (ts: Ts, sourceFile: TypeScript.SourceFile, props: ObjectLit
       return { unplaced: `the binding onto "${edit.key}" is not written there` };
     }
 
-    return list.elements.length === 1 ? dropBind() : { change: removeFromList(sourceFile, list.elements, index) };
+    return list.elements.length === 1 ? dropBind() : one(removeFromList(sourceFile, list.elements, index));
   }
 
   return { unplaced: '`bind` is not written as a literal there' };
+};
+
+/** The factories a child of the moved kind is written with: what a move may leave imported and unused. */
+const WORD_FACTORIES = ['text', 'fontAwesome'];
+
+/**
+ * `children: [text(words), fontAwesome({ icon })]` written as the element's own `content: words, icon` — the words
+ * kept as written, a literal or an expression (`entry.label`). Only children written exactly so are moved: a `text`
+ * handed options (a class, an id) or an icon with more than its class is something the element's own attributes would
+ * not say, and is left for the author.
+ */
+const moveChildrenToContent = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  props: ObjectLiteral,
+  edit: SpecEdit
+): EditOutcome => {
+  const children = findProperty(ts, props, 'children');
+  if (!children || !ts.isPropertyAssignment(children) || !ts.isArrayLiteralExpression(children.initializer)) {
+    return { unplaced: '`children` is not written as a list there' };
+  }
+
+  let words: TypeScript.Expression | undefined;
+  let icon: TypeScript.Expression | undefined;
+  for (const child of children.initializer.elements) {
+    // A factory handed one argument: a second is options — a class, an id — that would not move with the words.
+    const call =
+      ts.isCallExpression(child) && ts.isIdentifier(child.expression) && child.arguments.length === 1
+        ? { factory: child.expression.text, argument: child.arguments[0] }
+        : undefined;
+    if (call?.factory === 'text' && !words) {
+      words = call.argument;
+      continue;
+    }
+
+    const iconProperty =
+      call?.factory === 'fontAwesome' &&
+      ts.isObjectLiteralExpression(call.argument) &&
+      call.argument.properties.length === 1
+        ? findProperty(ts, call.argument, 'icon')
+        : undefined;
+    if (iconProperty && ts.isPropertyAssignment(iconProperty) && !icon) {
+      icon = iconProperty.initializer;
+      continue;
+    }
+
+    return { unplaced: 'a child carries more than its words or its icon there' };
+  }
+
+  if (Boolean(icon) !== (edit.icon !== undefined) || (words === undefined && edit.value !== '')) {
+    return { unplaced: 'the children written there are not the ones it holds' };
+  }
+
+  if (words && ts.isStringLiteral(words) && words.text !== edit.value) {
+    return { unplaced: 'the words written there are not the ones it shows' };
+  }
+
+  if (icon && findProperty(ts, props, 'icon')) {
+    return { unplaced: 'it is written with an `icon` of its own already' };
+  }
+
+  // A `content: ''` written beside the children goes: it said "no words of its own", which is no longer so.
+  const content = findProperty(ts, props, 'content');
+  if (
+    content &&
+    words &&
+    !(ts.isPropertyAssignment(content) && ts.isStringLiteral(content.initializer) && content.initializer.text === '')
+  ) {
+    return { unplaced: 'it is written with words of its own beside its children' };
+  }
+
+  const written = [
+    words && `content: ${words.getText(sourceFile)}`,
+    icon && `icon: ${icon.getText(sourceFile)}`,
+    edit.iconPlacement && `iconPlacement: ${quoted(edit.iconPlacement)}`
+  ].filter((part): part is string => Boolean(part));
+
+  return {
+    changes: [
+      ...(content && words ? [removeFromList(sourceFile, props.properties, props.properties.indexOf(content))] : []),
+      { start: children.getStart(sourceFile), end: children.getEnd(), text: written.join(', ') }
+    ],
+    orphans: WORD_FACTORIES
+  };
+};
+
+/**
+ * The named imports among `names` that nothing in the file uses any longer — what a move left behind, taken out with
+ * the import that held only them.
+ */
+export const pruneImports = (ts: Ts, fileName: string, text: string, names: readonly string[]): string => {
+  const sourceFile = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const used = new Set<string>();
+  const visit = (node: Node): void => {
+    if (ts.isIdentifier(node) && !ts.isImportSpecifier(node.parent)) {
+      used.add(node.text);
+    }
+
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  const changes: TextChange[] = [];
+  for (const statement of sourceFile.statements) {
+    const clause = ts.isImportDeclaration(statement) ? statement.importClause : undefined;
+    const bindings = clause?.namedBindings;
+    if (!clause || !bindings || !ts.isNamedImports(bindings)) {
+      continue;
+    }
+
+    const elements = bindings.elements;
+    const unused = elements.filter(element => names.includes(element.name.text) && !used.has(element.name.text));
+    if (unused.length === 0) {
+      continue;
+    }
+
+    if (unused.length === elements.length && !clause.name) {
+      changes.push({ start: statement.getFullStart(), end: statement.getEnd(), text: '' });
+      continue;
+    }
+
+    const kept = elements.filter(element => !unused.includes(element));
+    changes.push({
+      start: bindings.getStart(sourceFile),
+      end: bindings.getEnd(),
+      text: `{ ${kept.map(element => element.getText(sourceFile)).join(', ')} }`
+    });
+  }
+
+  return applyChanges(text, changes) ?? text;
 };
 
 /**
@@ -318,6 +445,10 @@ export const sourceEdit = (
 
   if (edit.on === 'binding') {
     return editBinding(ts, sourceFile, props, edit);
+  }
+
+  if (edit.on === 'children') {
+    return moveChildrenToContent(ts, sourceFile, props, edit);
   }
 
   if (edit.on === 'step') {

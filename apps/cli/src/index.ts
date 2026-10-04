@@ -23,10 +23,11 @@ import {
   unsetRuntimeVariable
 } from './commands/runtime';
 import { shot } from './commands/shot';
-import { skillsUpdate } from './commands/skills';
+import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { positiveInteger, width, widths } from './options';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
+import { CLI_VERSION } from './scaffold/project';
 
 import type { AccountOptions, WhoamiOptions } from './commands/account';
 import type { AddPluginOptions } from './commands/addPlugin';
@@ -43,6 +44,7 @@ import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
 import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
 import type { ShotOptions } from './commands/shot';
+import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 
 /**
@@ -53,7 +55,7 @@ import type { UploadPluginOptions } from './commands/uploadPlugin';
  * could tell whether any of it worked. The same holds for an element of one's own, which is the second thing it does.
  */
 
-program.name('plitzi').description('Plitzi command line');
+program.name('plitzi').description('Plitzi command line').version(CLI_VERSION);
 
 /** A flag given more than once, as the list of every value. */
 const collect = (value: string, previous: string[]): string[] => [...previous, value];
@@ -302,12 +304,30 @@ program
   .option('--json', 'One object, for a tool or an agent')
   .action((name: string | undefined, options: ExplainOptions) => explainCommand(name, options));
 
+program
+  .command('upgrade')
+  .alias('update')
+  .argument('[parts...]', `Only these: ${UPGRADE_PARTS.join(', ')} — every one when none is named`)
+  .description(
+    'Bring the project up to this CLI: its machinery files, package.json, the skills and renamed names — shown; with --write made'
+  )
+  .option(
+    '--write',
+    'Make the changes: files nobody changed replaced, package.json merged and installed, names renamed'
+  )
+  .option('--take <files...>', 'Replace these files of your own too (`all` for every one), after reading their diff')
+  .option('--no-install', 'Write package.json and leave the install to you')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((parts: string[], options: UpgradeOptions) => upgrade(parts, options));
+
 const skills = program.command('skills').description('The Plitzi skills an agent reads in .claude/skills/');
 
 skills
   .command('update')
-  .description('Bring them up to the Plitzi packages this project has installed, each replaced whole')
-  .action(() => skillsUpdate());
+  .description(
+    'Bring them up to the Plitzi packages this project has installed, each replaced whole (`upgrade skills --write`)'
+  )
+  .action(() => upgrade(['skills'], { write: true }));
 
 const data = program.command('data').description('The JSON a project serves (public/data), without reading it whole');
 

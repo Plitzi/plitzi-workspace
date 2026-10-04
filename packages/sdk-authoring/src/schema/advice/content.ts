@@ -55,17 +55,34 @@ const isBusy = ({ definition }: Element): boolean =>
 const isPlainIcon = ({ attributes }: Element): boolean =>
   !attributes.label && (attributes.size ?? 'fa-1x') === 'fa-1x' && !attributes.iconAnimation;
 
+/** A button or a link whose children are only its words and an icon, and what they become on it. */
+export interface ContentMove {
+  id: string;
+  /** The children it holds: the elements the move takes away. */
+  children: string[];
+  /** The words, as its `content` — empty for an icon alone. */
+  words: string;
+  /** The icon's class, as its `icon`, when it holds one. */
+  icon?: string;
+  /** Whether the icon comes after the words — `iconPlacement: 'after'`; the default draws it first. */
+  iconAfter: boolean;
+  /** Whether the text wears a class of the space's own, whose rules would have to move by hand. */
+  classed: boolean;
+}
+
 /**
  * A button or a link holding only its words and an icon — a `text`, a `fontAwesome`, or both — the commonest
  * elements spent for nothing. The words are its own `content` and the icon its `icon`; a child that does something of
  * its own (a binding, a flow, a condition), an icon that means something (`label`) or is sized or animated, and a
  * text that is a drawn shape are left alone, since none of that would move with them.
+ *
+ * What the `content-attribute` suggestion says, and what `plitzi fix` writes for the moves with no class to carry.
  */
-export const suggestContent = (schema: Schema, style: Style): Suggestion[] => {
+export const contentMoves = (schema: Schema, style: Style): ContentMove[] => {
   const { flat } = schema;
   const declared = declaredClasses(style);
   const properties = propertiesOf(style);
-  const found: { id: string; saves: number; classed: boolean; icon: boolean }[] = [];
+  const found: ContentMove[] = [];
   for (const [id, element] of Object.entries(flat)) {
     const items = element.definition.items ?? [];
     if (!WITH_CONTENT.has(element.definition.type) || items.length === 0 || items.length > 2) {
@@ -87,10 +104,28 @@ export const suggestContent = (schema: Schema, style: Style): Suggestion[] => {
     const words = !text || (typeof text.attributes.content === 'string' && text.attributes.content.trim() !== '');
     const drawn = classes.some(name => [...(properties.get(name) ?? [])].some(property => BOX.test(property)));
     if (words && !drawn) {
-      found.push({ id, saves: children.length, classed: classes.length > 0, icon: Boolean(icon) });
+      const iconClass = icon && typeof icon.attributes.icon === 'string' ? icon.attributes.icon : undefined;
+      found.push({
+        id,
+        children: items,
+        words: text && typeof text.attributes.content === 'string' ? text.attributes.content : '',
+        ...(iconClass === undefined ? {} : { icon: iconClass }),
+        iconAfter: icon !== undefined && text !== undefined && children.indexOf(icon) > children.indexOf(text),
+        classed: classes.length > 0
+      });
     }
   }
 
+  return found;
+};
+
+export const suggestContent = (schema: Schema, style: Style): Suggestion[] => {
+  const found = contentMoves(schema, style).map(move => ({
+    id: move.id,
+    saves: move.children.length,
+    classed: move.classed,
+    icon: move.icon !== undefined
+  }));
   if (found.length === 0) {
     return [];
   }

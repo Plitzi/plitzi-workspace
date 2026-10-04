@@ -39,7 +39,7 @@ export const home: PageSpec = {
       children: [
         heading('Good things for a good desk', { id: 'home-title', subType: 'h1', css: { margin: '0px' } }),
         text('Lamps, paper and pens we would use ourselves.', { id: 'home-lede', class: lede }),
-        link({ id: 'home-cta', href: '/products', class: cta, children: [text('See every product')] })
+        link({ id: 'home-cta', href: '/products', class: cta, content: 'See every product' })
       ]
     }),
     apiContainer({

@@ -5,7 +5,6 @@
 import {
   button,
   closeModal,
-  fontAwesome,
   form,
   formControl,
   modalContainer,
@@ -52,7 +51,7 @@ export const recipe: SpaceSpec = {
             button({
               content: '',
               title: 'Close',
-              children: [fontAwesome({ icon: 'fa-solid fa-xmark' })],
+              icon: 'fa-solid fa-xmark',
               flows: [[onClick(), closeModal('details')]]
             })
           ]

@@ -550,6 +550,8 @@ export interface PluginDeclarationData {
   type: string;
   /** The source name it publishes under, when it publishes one. */
   sourceType?: string;
+  /** Behaviour rather than content: it draws nothing on a page, so no check waits for it on screen. */
+  drawsNothing?: boolean;
   /** The events it fires beyond the ones every element does, by action. */
   triggers?: Readonly<Record<string, { action: string }>>;
   /** The actions it answers to beyond `setState` and `toggleState`, by action. */
@@ -596,6 +598,11 @@ export interface AuthorSpaceOptions {
   attributeNames?: Readonly<Record<string, readonly string[] | null>>;
   /** The types that hold no children. Left out, children written into one are dropped at render time unreported. */
   leafTypes?: readonly string[];
+  /**
+   * The types that draw nothing on a page (a plugin's `drawsNothing`), under the name a space uses them by — their own
+   * type or `custom:<renderType>`. Their handles are `boxless`, so a page check does not wait for them on screen.
+   */
+  drawsNothingTypes?: readonly string[];
   /**
    * Element type → the attributes it starts with. What tells a default `content` rendered beside children apart from
    * one the author wrote, and an attribute that holds a list from one that holds text.

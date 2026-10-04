@@ -62,7 +62,7 @@ export const layout: LayoutSpec = {
           subType: 'header',
           class: header,
           children: [
-            link({ id: 'site-brand', href: '/', class: brand, children: [text('Desk & Co.')] }),
+            link({ id: 'site-brand', href: '/', class: brand, content: 'Desk & Co.' }),
             container({
               id: 'site-nav',
               subType: 'nav',
@@ -72,7 +72,7 @@ export const layout: LayoutSpec = {
                   href: entry.href,
                   class: navLink,
                   bind: [activeOn(navLink, [...entry.pages])],
-                  children: [text(entry.label)]
+                  content: entry.label
                 })
               )
             })

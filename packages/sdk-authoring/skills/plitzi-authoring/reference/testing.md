@@ -13,8 +13,11 @@ expect((await inspectPage(page, handles)).problems).toEqual([]);
 It checks the open page and returns EVERY problem at once, one sentence each, naming the element and the reason:
 
 - every element the page owes is present and visible — its own and those of the layouts around it
-  (`heading "hero-title" is on the page but not visible: display:none on "hero"`);
-- every image arrived — an image element that failed says so (`data-plitzi-failed`), though its fallback loads;
+  (`heading "hero-title" is on the page but not visible: display:none on "hero"`). One a breakpoint hides at this
+  width (`mobile: { display: 'none' }`, or shown only at another width) is laid out by width, not missing: it is
+  checked at the width it shows at — run the check at each width you author for;
+- every image arrived — an image element that failed says so (`data-plitzi-failed`), though its fallback loads. A lazy
+  image out of sight (below the fold, or beside the screen in a carousel's track) has not been asked for yet, and waits;
 - nothing scrolls sideways (`the page scrolls sideways by 37px — widest: "cards"`);
 - no text is drawn in the colour painted behind it.
 
@@ -36,7 +39,8 @@ Three flags say what a bare visit cannot promise, and `onScreen` leaves out:
 - `conditional` — on screen only under a condition of its own or of an ancestor;
 - `repeated` — inside a list row, so rendered once per row: several copies, or none while the list is empty. Address
   one with `.first()` / `.nth(i)`, in a test that knows the data;
-- `boxless` — a provider with no tag, which renders its children and no element of its own.
+- `boxless` — a provider with no tag, which renders its children and no element of its own; or a plugin whose
+  declaration says `drawsNothing: true` — behaviour rather than content, a clock that fires a flow.
 
 A `formControl`'s id names its wrapper: type into `locate('email').locator('input')`.
 

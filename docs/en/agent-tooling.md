@@ -14,7 +14,8 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 | Step | Tool | Answers |
 | --- | --- | --- |
 | Write | `npm run author` | Whether the space authors: one line when it does, every problem at once (file, line, what to change) when not — and, under the warnings, the suggestions: a shorter way to the same page, with the elements it saves |
-| Repair | `npx plitzi fix` | The problems with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
+| Upgrade | `npx plitzi upgrade [files\|packages\|skills\|renames]` | The project brought up to the CLI it has: the CLI's files (replaced where nobody changed them, a diff where somebody did), `package.json` merged, the skills, every renamed name at its line; `--write` makes it |
+| Repair | `npx plitzi fix` | The problems — and the suggestions — with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
 | Check | `npm run check` (`plitzi check`) | Whether a page of the running server is whole, in text: elements on screen, overflow, contrast, console, refused requests, failed flows |
 | Inspect | `plitzi check --state --element <id>` | What the page holds: its state, every source by name and shape, one element's own state and bindings |
 | Look | `plitzi shot` | A picture — `--compare <url>` against another site by section, `--frames` for what moves |
@@ -42,6 +43,10 @@ words (`FixChange`); `planFixes` places it at the line and column of the call th
 literals there, with the project's own TypeScript and formatted with its own Prettier. It shows a diff by default.
 `--write` keeps the edits only if the space, authored again in a fresh process, has every fix gone and no problem added
 — a fix that would add one is put back and said. Anything that needs a decision stays a message with where it is.
+A suggestion is planned the same way where it has one reading: `content-attribute` moves a button's or a link's
+children — its words and an icon, written as plain `text(…)` and `fontAwesome({ icon })` — to its own `content` and
+`icon`, keeping the words as written (`entry.label` stays an expression) and taking out an import it left unused; a
+child with an id, options or a class of the space's own stays, said.
 
 **`plitzi import` reads only a site that is the user's.** Its risk is reuse of somebody else's site, so it carries no
 words — tokens, the outline of the blocks with their layout per breakpoint, the repeated lists as JSON rows to replace,

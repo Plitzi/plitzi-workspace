@@ -39,7 +39,7 @@ export const panel = (params: { id: string; title: string; sub?: string; link?: 
           children: [
             heading(params.title, { id: 'title', subType: 'h3', class: panelTitle }),
             ...(params.sub ? [text(params.sub, { id: 'sub', class: panelSub })] : []),
-            ...(params.link ? [link({ id: 'link', href: params.link.href, class: panelLink, children: [text(params.link.label)] })] : [])
+            ...(params.link ? [link({ id: 'link', href: params.link.href, class: panelLink, content: params.link.label })] : [])
           ]
         }),
         ...params.children

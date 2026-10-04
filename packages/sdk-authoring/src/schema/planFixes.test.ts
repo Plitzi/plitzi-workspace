@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { button, element, onClick, planFixes, setState } from '../index';
+import { button, element, fontAwesome, link, onClick, planFixes, setState, text } from '../index';
 
 import type { ElementSpec, SpaceSpec } from './types';
 
@@ -39,6 +39,42 @@ describe('planFixes', () => {
         code: 'state-key-has-runtime-prefix',
         elementId: 'add',
         edit: { on: 'step', op: 'set', key: 'key', value: 'count', step: { flow: 0, index: 1 } }
+      }
+    ]);
+  });
+
+  /** The `content-attribute` suggestion, where it has one way to be written: `plitzi fix` makes it. */
+  it('plans words and an icon held as children as the element’s own, and leaves what cannot move as is', () => {
+    const { fixes } = planFixes(
+      page([
+        link({ id: 'pricing', href: '/pricing', children: [text('Pricing')] }),
+        link({
+          id: 'docs',
+          href: '/docs',
+          children: [text('Docs'), fontAwesome({ icon: 'fa-solid fa-arrow-right' })]
+        }),
+        // A child with an id of its own is something a test or a flow may point at: it stays.
+        link({ id: 'named', href: '/', children: [text('Home', { id: 'home-words' })] })
+      ])
+    );
+
+    expect(fixes.map(({ code, elementId, edit }) => ({ code, elementId, edit }))).toEqual([
+      {
+        code: 'content-attribute',
+        elementId: 'pricing',
+        edit: { on: 'children', op: 'set', key: 'content', value: 'Pricing' }
+      },
+      {
+        code: 'content-attribute',
+        elementId: 'docs',
+        edit: {
+          on: 'children',
+          op: 'set',
+          key: 'content',
+          value: 'Docs',
+          icon: 'fa-solid fa-arrow-right',
+          iconPlacement: 'after'
+        }
       }
     ]);
   });

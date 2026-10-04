@@ -9,7 +9,7 @@ import { fail } from './terminal';
 import { launchBrowser, projectOrigin } from '../browser';
 
 import type { Browser, Scheme } from '../browser';
-import type { DevToolsInput, SpaceHandles } from '@plitzi/sdk-authoring';
+import type { DevToolsInput, PageIssue, SpaceHandles } from '@plitzi/sdk-authoring';
 
 /**
  * `plitzi check`: whether a page of the running project is whole, said in text — every element it owes on screen, no
@@ -35,13 +35,25 @@ export interface CheckOptions {
   element?: string;
 }
 
+/** One problem of a page, as data: what an agent branches on and points at, beside the sentence a person reads. */
+export interface CheckIssue {
+  code: PageIssue['code'] | 'no-answer' | 'no-page' | 'flow-failed';
+  message: string;
+  /** The space's element it is about, by id — absent for one about the page as a whole. */
+  elementId?: string;
+  /** The width it was found at, so a list of every width's issues still says where each one is. */
+  width: number;
+}
+
 export interface CheckReport {
   path: string;
   width: number;
   ok: boolean;
   /** The elements the space owes this page that were looked for — 0 for a space that is not in the project. */
   checked: number;
+  /** The problems as sentences — each `issues` entry's `message`. */
   problems: string[];
+  issues: CheckIssue[];
   consoleErrors: string[];
   failedRequests: string[];
   /** Whether the page had its dev tools on, which is what flows, state and elements are read from. */
@@ -113,12 +125,15 @@ const checkAt = async (
 
   const answered = await page.goto(`${origin}${pathname}`, { waitUntil: 'networkidle' }).catch(() => null);
   if (!answered) {
+    const issue: CheckIssue = { code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width };
+
     return {
       path: pathname,
       width,
       ok: false,
       checked: 0,
-      problems: [`nothing answers at ${origin}${pathname}`],
+      problems: [issue.message],
+      issues: [issue],
       consoleErrors,
       failedRequests,
       devTools: false
@@ -128,18 +143,29 @@ const checkAt = async (
   const pageId = handles ? pageFor(handles, pathname) : undefined;
   const report = handles && pageId ? await inspectPage(page, handles, { page: pageId }) : await inspectDocument(page);
   const devTools = await readDevTools(page, asked);
-  const problems = [
-    ...(handles && !pageId ? [`no page of the space answers at ${pathname}`] : []),
-    ...report.problems,
-    ...devTools.flows.filter(flow => flow.status === 'failed').map(failedFlowText)
+  const noPage: CheckIssue[] =
+    handles && !pageId ? [{ code: 'no-page', message: `no page of the space answers at ${pathname}`, width }] : [];
+  const failedFlows = devTools.flows
+    .filter(flow => flow.status === 'failed')
+    .map((flow): CheckIssue => ({
+      code: 'flow-failed',
+      message: failedFlowText(flow),
+      ...(flow.on === undefined ? {} : { elementId: flow.on }),
+      width
+    }));
+  const issues: CheckIssue[] = [
+    ...noPage,
+    ...report.issues.map((issue): CheckIssue => ({ ...issue, width })),
+    ...failedFlows
   ];
 
   return {
     path: pathname,
     width,
-    ok: problems.length === 0 && consoleErrors.length === 0 && failedRequests.length === 0,
+    ok: issues.length === 0 && consoleErrors.length === 0 && failedRequests.length === 0,
     checked: report.checked,
-    problems,
+    problems: issues.map(issue => issue.message),
+    issues,
     consoleErrors,
     failedRequests,
     devTools: devTools.available,

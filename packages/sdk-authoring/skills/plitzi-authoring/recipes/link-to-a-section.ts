@@ -15,7 +15,7 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        link({ href: 'home', hash: 'plans', children: [text('See the plans')] }),
+        link({ href: 'home', hash: 'plans', content: 'See the plans' }),
         container({
           id: 'plans-section',
           subType: 'section',
@@ -29,7 +29,7 @@ export const recipe: SpaceSpec = {
       name: 'About',
       slug: 'about',
       // → /#plans
-      body: [link({ href: 'home', hash: 'plans', children: [text('Plans')] })]
+      body: [link({ href: 'home', hash: 'plans', content: 'Plans' })]
     }
   ]
 };

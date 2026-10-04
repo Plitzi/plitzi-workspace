@@ -7,11 +7,13 @@ import { authorSpace, validateSpace } from '../schema';
 
 /** The catalog template is a project's first files: it has to author clean, and be the site it says it is. */
 describe('templates/catalog', () => {
-  const { schema, style, warnings } = authorSpace(space);
+  const { schema, style, warnings, suggestions } = authorSpace(space);
 
-  it('authors a valid space with nothing to warn about', () => {
+  // Nor anything to suggest: the first `npm run author` of a new project is what it learns the space's idiom from.
+  it('authors a valid space with nothing to warn about or suggest', () => {
     expect(validateSpace({ schema, style }).valid).toBe(true);
     expect(warnings).toEqual([]);
+    expect(suggestions.map(suggestion => `${suggestion.code}: ${suggestion.message}`)).toEqual([]);
   });
 
   it('is a home, a catalog and a page per product, in one layout', () => {

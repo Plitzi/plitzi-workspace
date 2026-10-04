@@ -13,10 +13,10 @@ warns about each case below (`control-without-name`, `image-without-alt`, `click
 button({ content: 'Save' })
 
 // An icon only: `title` is its name, and also its tooltip. The icon is hidden from the tree by itself.
-button({ content: '', title: 'Close', children: [fontAwesome({ icon: 'fa-solid fa-xmark' })] })
+button({ content: '', title: 'Close', icon: 'fa-solid fa-xmark' })
 
 // Words that do not say what it does — a key hint, a count: `label` is read in their place.
-button({ content: '', label: 'Select (V)', title: 'Select — V', children: [fontAwesome({ icon: 'fa-solid fa-arrow-pointer' }), text('V')] })
+button({ content: 'V', label: 'Select (V)', title: 'Select — V', icon: 'fa-solid fa-arrow-pointer' })
 
 // A link around a whole card: without `label` it is announced as every word inside the card.
 link({ href: '/posts/field-notes', label: 'Read “Field notes”', children: [ /* cover, topic, title, byline */ ] })

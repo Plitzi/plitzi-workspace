@@ -15,9 +15,11 @@ export interface ProbeFindings {
   marked: boolean;
   missing: string[];
   hidden: { id: string; reason: string }[];
-  brokenImages: string[];
-  overflow: { pixels: number; widest: string[] } | null;
-  illegible: string[];
+  /** Each with the element it is in, by id, when one of the space's holds it. */
+  brokenImages: { source: string; elementId?: string }[];
+  /** `elementIds`: the widest ones the space named, for a tool to point at. */
+  overflow: { pixels: number; widest: string[]; elementIds: string[] } | null;
+  illegible: { text: string; elementId?: string }[];
 }
 
 /**
@@ -37,17 +39,86 @@ export function probePage(input: ProbeInput): ProbeFindings {
     return `<${node.tagName.toLowerCase()}${firstClass ? `.${firstClass}` : ''}>`;
   };
 
-  /** Why an element has no box, named by the node that takes it away — which is rarely the element itself. */
-  const whyHidden = (node: Element): string => {
+  /** The space's element a node belongs to: itself when it is one, or the nearest that holds it. */
+  const elementIdOf = (node: Element): string | undefined =>
+    node.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el') ?? undefined;
+
+  /** The node that takes an element's box away — which is rarely the element itself — and what it does. */
+  const hiderOf = (node: Element): { at: Element; how: string } | undefined => {
     for (let at: Element | null = node; at; at = at.parentElement) {
       const style = getComputedStyle(at);
       if (style.display === 'none') {
-        return `display:none on ${at === node ? 'itself' : nameOf(at)}`;
+        return { at, how: 'display:none' };
       }
 
       if (style.visibility === 'hidden' || style.visibility === 'collapse') {
-        return `visibility:${style.visibility} on ${at === node ? 'itself' : nameOf(at)}`;
+        return { at, how: `visibility:${style.visibility}` };
       }
+    }
+
+    return undefined;
+  };
+
+  /** The style rules of the page's own sheets that sit under a condition on the viewport (`@media`, `@container`). */
+  const conditionalRules = (): CSSStyleRule[] => {
+    const found: CSSStyleRule[] = [];
+    const walk = (rules: CSSRuleList, conditional: boolean): void => {
+      for (const rule of rules) {
+        if (rule instanceof CSSStyleRule) {
+          if (conditional) {
+            found.push(rule);
+          }
+
+          walk(rule.cssRules, conditional);
+        } else if (
+          rule instanceof CSSMediaRule ||
+          (typeof CSSContainerRule !== 'undefined' && rule instanceof CSSContainerRule)
+        ) {
+          walk(rule.cssRules, true);
+        } else if (rule instanceof CSSGroupingRule) {
+          walk(rule.cssRules, conditional);
+        }
+      }
+    };
+    for (const sheet of document.styleSheets) {
+      try {
+        walk(sheet.cssRules, false);
+      } catch {
+        // A stylesheet from another origin keeps its rules to itself.
+      }
+    }
+
+    return found;
+  };
+
+  let widthRules: CSSStyleRule[] | undefined;
+  /**
+   * Whether a node is shown or hidden by the width it is drawn at: a rule under a breakpoint sets its `display` or its
+   * `visibility` — whether that rule applies now or not. The desktop navigation a phone hides, the bottom bar only a
+   * phone shows: hidden at this width on purpose, and checked at the width it shows at.
+   */
+  const laidOutByWidth = (node: Element): boolean => {
+    widthRules ??= conditionalRules();
+
+    return widthRules.some(rule => {
+      if (!rule.style.display && !rule.style.visibility) {
+        return false;
+      }
+
+      try {
+        return node.matches(rule.selectorText);
+      } catch {
+        // A nested rule's relative selector (`&:hover`), or one this engine cannot read: not one that names the node.
+        return false;
+      }
+    });
+  };
+
+  /** Why an element has no box, named by the node that takes it away — which is rarely the element itself. */
+  const whyHidden = (node: Element): string => {
+    const hider = hiderOf(node);
+    if (hider) {
+      return `${hider.how} on ${hider.at === node ? 'itself' : nameOf(hider.at)}`;
     }
 
     if (getComputedStyle(node).display === 'contents') {
@@ -78,26 +149,61 @@ export function probePage(input: ProbeInput): ProbeFindings {
     if (nodes.length === 0) {
       missing.push(id);
     } else if (!nodes.some(isVisible)) {
-      hidden.push({ id, reason: whyHidden(nodes[0]) });
+      const hider = hiderOf(nodes[0]);
+      if (!hider || !laidOutByWidth(hider.at)) {
+        hidden.push({ id, reason: whyHidden(nodes[0]) });
+      }
     }
   }
 
   /**
+   * Whether any of a node is where it can be seen: its box cut by every ancestor that clips what spills (a carousel's
+   * track, a scrolling row) and then by the viewport — the test the browser runs before it fetches a lazy image.
+   */
+  const inSight = (node: Element): boolean => {
+    let { left, top, right, bottom } = node.getBoundingClientRect();
+    for (let at = node.parentElement; at; at = at.parentElement) {
+      const style = getComputedStyle(at);
+      if (style.display === 'contents') {
+        continue;
+      }
+
+      const box = at.getBoundingClientRect();
+      if (style.overflowX !== 'visible') {
+        left = Math.max(left, box.left);
+        right = Math.min(right, box.right);
+      }
+
+      if (style.overflowY !== 'visible') {
+        top = Math.max(top, box.top);
+        bottom = Math.min(bottom, box.bottom);
+      }
+    }
+
+    return (
+      Math.min(right, window.innerWidth) > Math.max(left, 0) && Math.min(bottom, window.innerHeight) > Math.max(top, 0)
+    );
+  };
+
+  /**
    * An image element that failed draws a fallback that loads fine, so the browser alone would call it loaded: it says
-   * which source failed in `data-plitzi-failed`. Any other `img` is asked the browser's way — except a lazy one below the
-   * fold, which has not been asked for yet, which is it working, not failing.
+   * which source failed in `data-plitzi-failed`. Any other `img` is asked the browser's way — except a lazy one out of
+   * sight (below the fold, or beside it in a carousel's track), which has not been asked for yet: it working, not
+   * failing.
    */
   const brokenImages = input.images
     ? [...document.querySelectorAll('img')].flatMap(image => {
         const failed = image.getAttribute('data-plitzi-failed');
+        const elementId = elementIdOf(image);
+        const at = elementId === undefined ? {} : { elementId };
         if (failed !== null) {
-          return [`${failed} (${nameOf(image)})`];
+          return [{ source: `${failed} (${nameOf(image)})`, ...at }];
         }
 
-        const pending = image.loading === 'lazy' && image.getBoundingClientRect().top >= window.innerHeight;
+        const pending = image.loading === 'lazy' && !inSight(image);
 
         return !pending && (!image.complete || image.naturalWidth === 0)
-          ? [image.currentSrc || image.src || nameOf(image)]
+          ? [{ source: image.currentSrc || image.src || nameOf(image), ...at }]
           : [];
       })
     : [];
@@ -128,12 +234,20 @@ export function probePage(input: ProbeInput): ProbeFindings {
     if (wide.length > 0) {
       overflow = {
         pixels: Math.round(wide[0].right - viewport),
-        widest: wide.slice(0, 3).map(entry => nameOf(entry.node))
+        widest: wide.slice(0, 3).map(entry => nameOf(entry.node)),
+        elementIds: [
+          ...new Set(
+            wide
+              .slice(0, 3)
+              .map(entry => elementIdOf(entry.node))
+              .filter((id): id is string => id !== undefined)
+          )
+        ]
       };
     }
   }
 
-  const illegible: string[] = [];
+  const illegible: { text: string; elementId?: string }[] = [];
   if (input.legibility) {
     const parse = (value: string): number[] | null => {
       const parts = value.match(/[\d.]+/g);
@@ -206,7 +320,11 @@ export function probePage(input: ProbeInput): ProbeFindings {
 
       const distance = Math.abs(ink[0] - paper[0]) + Math.abs(ink[1] - paper[1]) + Math.abs(ink[2] - paper[2]);
       if (ink[3] === 0 || distance < 24) {
-        illegible.push(`${nameOf(node)}: "${text.slice(0, 40)}"`);
+        const elementId = elementIdOf(node);
+        illegible.push({
+          text: `${nameOf(node)}: "${text.slice(0, 40)}"`,
+          ...(elementId === undefined ? {} : { elementId })
+        });
       }
     }
   }

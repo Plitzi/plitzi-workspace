@@ -132,6 +132,12 @@ export const withPluginCatalogs = (options: AuthorSpaceOptions): AuthorSpaceOpti
         Object.keys(declaration.content?.definition?.styleSelectors ?? {}).filter(slot => slot !== 'base')
       )
     },
+    drawsNothingTypes: [
+      ...(rest.drawsNothingTypes ?? []),
+      ...plugins
+        .filter(declaration => declaration.drawsNothing === true)
+        .flatMap(declaration => [declaration.type, hostedKey(declaration)])
+    ],
     // A plugin package holds children only when its definition says so — as the built-in elements do.
     leafTypes: [
       ...(rest.leafTypes ?? []),

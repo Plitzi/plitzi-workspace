@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { container, heading, list, text } from '../elements';
 import { authorSpace } from '../index';
-import { describeFindings, inspectDocument, inspectPage } from './inspect';
+import { describeFindings, inspectDocument, inspectPage, issuesOf } from './inspect';
 import { onScreen } from './onScreen';
 import { singlePageSpace, withElement } from './variants';
 
@@ -101,9 +101,9 @@ describe('testing/describeFindings', () => {
         ...clean,
         missing: ['title'],
         hidden: [{ id: 'rows', reason: 'display:none on "inner-slot"' }],
-        brokenImages: ['https://cdn.test/logo.png'],
-        overflow: { pixels: 37, widest: ['<img.cover>'] },
-        illegible: ['"title": "Hi"']
+        brokenImages: [{ source: 'https://cdn.test/logo.png' }],
+        overflow: { pixels: 37, widest: ['<img.cover>'], elementIds: [] },
+        illegible: [{ text: '"title": "Hi"', elementId: 'title' }]
       })
     ).toEqual([
       'heading "title" is not on the page',
@@ -111,6 +111,26 @@ describe('testing/describeFindings', () => {
       'an image never loaded: https://cdn.test/logo.png',
       'the page scrolls sideways by 37px — widest: <img.cover>',
       'text drawn in the colour behind it: "title": "Hi"'
+    ]);
+  });
+
+  /** What a tool acts on (`plitzi check --json`): the kind of problem and the element, beside the sentence. */
+  it('hands each problem over as data too: its code and the element it is about', () => {
+    expect(
+      issuesOf(owed, {
+        ...clean,
+        missing: ['title'],
+        hidden: [{ id: 'rows', reason: 'display:none on "inner-slot"' }],
+        brokenImages: [{ source: '/logo.png', elementId: 'logo' }],
+        overflow: { pixels: 37, widest: ['"cover"', '<img.x>'], elementIds: ['cover'] },
+        illegible: [{ text: '<p>: "Hi"' }]
+      }).map(({ code, elementId }) => ({ code, elementId }))
+    ).toEqual([
+      { code: 'element-missing', elementId: 'title' },
+      { code: 'element-hidden', elementId: 'rows' },
+      { code: 'image-not-loaded', elementId: 'logo' },
+      { code: 'sideways-scroll', elementId: 'cover' },
+      { code: 'illegible-text', elementId: undefined }
     ]);
   });
 
@@ -141,7 +161,7 @@ describe('testing/inspectPage', () => {
   it('inspects the home page by default and reports what it checked', async () => {
     const report = await inspectPage(driver([clean]), handles);
 
-    expect(report).toEqual({ page: 'home', checked: 6, problems: [] });
+    expect(report).toEqual({ page: 'home', checked: 6, problems: [], issues: [] });
   });
 
   /** A provider still answering is a missing element for a few frames — the same retry an assertion would give it. */
@@ -164,11 +184,16 @@ describe('testing/inspectPage', () => {
 
   /** An example served by somebody else's server has no handles, and still owes images, width and legible text. */
   it('checks a document with no space in hand, owing no elements', async () => {
-    const report = await inspectDocument(driver([{ ...clean, marked: false, brokenImages: ['/x.png'] }]), {
+    const report = await inspectDocument(driver([{ ...clean, marked: false, brokenImages: [{ source: '/x.png' }] }]), {
       timeout: 0
     });
 
-    expect(report).toEqual({ page: 'document', checked: 0, problems: ['an image never loaded: /x.png'] });
+    expect(report).toEqual({
+      page: 'document',
+      checked: 0,
+      problems: ['an image never loaded: /x.png'],
+      issues: [{ code: 'image-not-loaded', message: 'an image never loaded: /x.png' }]
+    });
   });
 
   it('names a page that does not exist', async () => {

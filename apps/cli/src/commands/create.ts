@@ -6,6 +6,7 @@ import chalk from 'chalk';
 
 import { apiFor } from './account';
 import { fetchExport, recordOrigin, versionLabel, writeFromSpace } from './createFrom';
+import { digestOf, writeScaffoldRecord } from './scaffoldRecord';
 import {
   ask,
   atTerminal,
@@ -25,11 +26,12 @@ import {
   detectManagerVersion,
   detectPackageManager,
   installCommand,
+  machineryFiles,
   runCommand,
   scaffold
 } from '../scaffold';
 import { envFromSpace, projectFromSpace } from '../scaffold/fromSpace';
-import { packageJson } from '../scaffold/project';
+import { CLI_VERSION, packageJson } from '../scaffold/project';
 
 import type { Question } from './terminal';
 import type { CreateAnswers, PackageManager } from '../scaffold';
@@ -259,6 +261,16 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
       : files
   );
   const missing = fromSpace ? await writeFromSpace(target, fromSpace) : [];
+  // What of the CLI's machinery was written, by digest: what lets `plitzi upgrade` replace a file nobody touched since.
+  await writeScaffoldRecord(
+    target,
+    CLI_VERSION,
+    Object.fromEntries(
+      Object.keys(machineryFiles(answers))
+        .filter(file => file in files)
+        .map(file => [file, digestOf(files[file])])
+    )
+  );
 
   const wantsInstall = options.install !== false;
   const installed = wantsInstall && (await install(packageManager, target));

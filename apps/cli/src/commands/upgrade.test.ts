@@ -1,0 +1,230 @@
+/* eslint-disable quotes -- the cases are source code, which reads best in the other quotes */
+import { readFileSync } from 'node:fs';
+import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import os from 'node:os';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
+import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
+import { writeFiles } from './terminal';
+import { upgrade } from './upgrade';
+import { machineryFiles, scaffold } from '../scaffold';
+import { CLI_VERSION } from '../scaffold/project';
+
+import type { UpgradeOptions } from './upgrade';
+import type { CreateAnswers } from '../scaffold';
+
+/** The version the CLI resolves `@plitzi/sdk-authoring` at, read as it reads it. */
+const authoringVersion = (): string => {
+  const manifest: unknown = JSON.parse(
+    readFileSync(createRequire(import.meta.url).resolve('@plitzi/sdk-authoring/package.json'), 'utf-8')
+  );
+
+  return isRecord(manifest) && typeof manifest.version === 'string' ? manifest.version : '';
+};
+
+/** A list of the JSON answer, each entry read as an object. */
+const recordsIn = (value: unknown): Record<string, unknown>[] => {
+  const list: unknown[] = Array.isArray(value) ? value : [];
+
+  return list.filter(isRecord);
+};
+
+const ANSWERS: CreateAnswers = {
+  name: 'shop',
+  mode: 'server',
+  source: 'local',
+  key: '',
+  environment: 'main',
+  packageManager: 'npm',
+  managerVersion: '11.0.0'
+};
+
+describe('plitzi upgrade', () => {
+  const cwd = process.cwd();
+  let root = '';
+  const file = (name: string) => path.join(root, name);
+  const read = (name: string) => fs.readFile(file(name), 'utf-8');
+
+  /** What it said, as `--json` says it — never installing, which a test has no network for. */
+  const run = async (parts: string[], options: UpgradeOptions = {}): Promise<Record<string, unknown>> => {
+    const said = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    await upgrade(parts, { ...options, json: true, install: false });
+    const printed: unknown = said.mock.calls.at(-1)?.[0];
+    const parsed: unknown = JSON.parse(String(printed));
+    said.mockRestore();
+
+    return isRecord(parsed) ? parsed : {};
+  };
+
+  beforeEach(async () => {
+    root = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-upgrade-'));
+    // A project as `create` writes it today, without the skills — those are the installed packages' to say.
+    await writeFiles(
+      root,
+      Object.fromEntries(Object.entries(scaffold(ANSWERS)).filter(([name]) => !name.startsWith('.claude/')))
+    );
+    process.chdir(root);
+  });
+
+  afterEach(async () => {
+    process.chdir(cwd);
+    vi.restoreAllMocks();
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  it('replaces what the CLI wrote and nobody changed, adds what is missing, and only shows what is the project’s', async () => {
+    const ours = machineryFiles(ANSWERS);
+    // Written by an older CLI, untouched since: its digest is the one recorded.
+    await fs.writeFile(file('src/author.ts'), '// the author script of an older CLI\n');
+    // The project's own: no record says the CLI wrote it so.
+    await fs.writeFile(file('playwright.config.ts'), '// tuned by hand\n');
+    await fs.rm(file('eslint.config.mjs'));
+    await writeScaffoldRecord(root, '0.37.9', { 'src/author.ts': digestOf('// the author script of an older CLI\n') });
+
+    const shown = await run(['files']);
+    const statuses = Object.fromEntries(
+      recordsIn(shown.files).map((entry): [string, unknown] => [String(entry.file), entry.status])
+    );
+    expect(statuses).toMatchObject({
+      'src/author.ts': 'updated',
+      'playwright.config.ts': 'yours',
+      'eslint.config.mjs': 'added',
+      'tsconfig.json': 'current'
+    });
+    // Shown is not written.
+    expect(await read('src/author.ts')).toBe('// the author script of an older CLI\n');
+
+    await run(['files'], { write: true });
+
+    expect(await read('src/author.ts')).toBe(ours['src/author.ts']);
+    expect(await read('eslint.config.mjs')).toBe(ours['eslint.config.mjs']);
+    expect(await read('playwright.config.ts')).toBe('// tuned by hand\n');
+    const record = await readScaffoldRecord(root);
+    expect(record?.cli).toBe(CLI_VERSION);
+    expect(record?.files['src/author.ts']).toBe(digestOf(ours['src/author.ts']));
+    expect(record?.files['playwright.config.ts']).toBeUndefined();
+
+    await run(['files'], { write: true, take: ['playwright.config.ts'] });
+
+    expect(await read('playwright.config.ts')).toBe(ours['playwright.config.ts']);
+  });
+
+  it('never names the project’s own files — its space, pages and README', async () => {
+    await fs.writeFile(file('src/space.ts'), '// mine\n');
+    await fs.writeFile(file('README.md'), '# mine\n');
+
+    const shown = await run(['files']);
+    const named = recordsIn(shown.files).map(entry => entry.file);
+
+    expect(named).not.toContain('src/space.ts');
+    expect(named).not.toContain('README.md');
+    expect(named).not.toContain('package.json');
+  });
+
+  it('merges package.json: what is missing added, @plitzi raised, a script of the project’s own left as it is', async () => {
+    const manifest: unknown = JSON.parse(await read('package.json'));
+    if (!isRecord(manifest) || !isRecord(manifest.scripts) || !isRecord(manifest.dependencies)) {
+      throw new Error('the scaffold wrote no scripts');
+    }
+
+    const without = (entries: Record<string, unknown>, name: string) =>
+      Object.fromEntries(Object.entries(entries).filter(([key]) => key !== name));
+    const devDependencies = isRecord(manifest.devDependencies) ? without(manifest.devDependencies, '@plitzi/cli') : {};
+    const scripts = { ...without(manifest.scripts, 'check'), lint: 'eslint src' };
+    await fs.writeFile(
+      file('package.json'),
+      `${JSON.stringify(
+        {
+          ...manifest,
+          scripts,
+          dependencies: { ...manifest.dependencies, '@plitzi/plitzi-sdk': '^0.1.0', 'left-pad': '^1.3.0' },
+          devDependencies
+        },
+        null,
+        2
+      )}\n`
+    );
+
+    const shown = await run(['packages'], { write: true });
+
+    expect(shown.packages).toMatchObject({
+      raised: [{ name: '@plitzi/plitzi-sdk', from: '^0.1.0', to: `^${CLI_VERSION}` }],
+      added: [{ section: 'devDependencies', name: '@plitzi/cli' }],
+      scripts: [{ name: 'check', command: 'plitzi check' }],
+      ownScripts: [{ name: 'lint', yours: 'eslint src' }],
+      install: 'needed'
+    });
+    const written: unknown = JSON.parse(await read('package.json'));
+    expect(written).toMatchObject({
+      scripts: { lint: 'eslint src', check: 'plitzi check' },
+      dependencies: { '@plitzi/plitzi-sdk': `^${CLI_VERSION}`, 'left-pad': '^1.3.0' },
+      devDependencies: { '@plitzi/cli': `^${CLI_VERSION}` }
+    });
+  });
+
+  it('brings every Plitzi skill to the installed version, whole, and leaves the project’s own skills alone', async () => {
+    const skill = (name: string, inside: string) => file(path.join('.claude/skills', name, inside));
+    await fs.mkdir(path.dirname(skill('plitzi-authoring', 'reference/gone.md')), { recursive: true });
+    await fs.writeFile(skill('plitzi-authoring', 'SKILL.md'), '---\nname: plitzi-authoring\nversion: 0.1.0\n---\nOld.');
+    await fs.writeFile(skill('plitzi-authoring', 'reference/gone.md'), 'A reference the skill no longer has.');
+    await fs.mkdir(path.dirname(skill('ours', 'SKILL.md')), { recursive: true });
+    await fs.writeFile(skill('ours', 'SKILL.md'), 'The project’s own.');
+
+    const shown = await run(['skills'], { write: true });
+
+    expect(shown.skills).toEqual(
+      expect.arrayContaining([{ name: 'plitzi-authoring', was: '0.1.0', now: authoringVersion() }])
+    );
+    const updated = await fs.readFile(skill('plitzi-authoring', 'SKILL.md'), 'utf-8');
+    expect(updated).toContain(`version: ${authoringVersion()}`);
+    await expect(fs.readFile(skill('plitzi-authoring', 'reference/gone.md'), 'utf-8')).rejects.toThrow();
+    expect(await fs.readFile(skill('ours', 'SKILL.md'), 'utf-8')).toBe('The project’s own.');
+    // One the project never had is what `create` writes today: added.
+    await expect(fs.readFile(skill('plitzi-cli', 'SKILL.md'), 'utf-8')).resolves.toContain('name: plitzi-cli');
+  });
+
+  it('finds a renamed name where it is written, and renames it — an import only where it is the package’s', async () => {
+    await fs.mkdir(file('src/plugins/Ticker'), { recursive: true });
+    await fs.mkdir(file('src/site'), { recursive: true });
+    await fs.writeFile(
+      file('src/plugins/Ticker/declaration.ts'),
+      'export default { builder: { canTemplate: true } };\n'
+    );
+    await fs.writeFile(
+      file('src/site/snippet.ts'),
+      "import { authorTemplate } from '@plitzi/sdk-authoring';\n\nexport const hero = authorTemplate({});\n"
+    );
+    // A name of the project's own, which only happens to be spelled like the old export.
+    await fs.writeFile(file('src/site/own.ts'), 'export type TemplateSpec = { id: string };\n');
+
+    const shown = await run(['renames']);
+    expect(shown.renames).toEqual([
+      expect.objectContaining({
+        file: path.join('src', 'plugins', 'Ticker', 'declaration.ts'),
+        line: 1,
+        name: 'canTemplate'
+      }),
+      expect.objectContaining({ file: path.join('src', 'site', 'snippet.ts'), line: 1, name: 'authorTemplate' }),
+      expect.objectContaining({ file: path.join('src', 'site', 'snippet.ts'), line: 3, name: 'authorTemplate' })
+    ]);
+
+    await run(['renames'], { write: true });
+
+    expect(await read('src/plugins/Ticker/declaration.ts')).toBe('export default { builder: { canSnippet: true } };\n');
+    expect(await read('src/site/snippet.ts')).toContain('authorSnippet({})');
+    expect(await read('src/site/own.ts')).toBe('export type TemplateSpec = { id: string };\n');
+  });
+
+  it('refuses a part it does not know, naming the ones there are', async () => {
+    const said = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    await upgrade(['skils'], {});
+
+    expect(String(said.mock.calls.at(0)?.[0])).toContain('files, packages, skills, renames');
+    process.exitCode = undefined;
+  });
+});

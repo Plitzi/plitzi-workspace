@@ -2,7 +2,7 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
-import { applyChanges, sourceEdit } from './sourceEdits';
+import { applyChanges, pruneImports, sourceEdit } from './sourceEdits';
 
 import type { SpecEdit } from '@plitzi/sdk-authoring';
 
@@ -20,7 +20,7 @@ const edited = (text: string, marker: string, edit: SpecEdit, nth = 0): string =
     return `unplaced: ${outcome.unplaced}`;
   }
 
-  return applyChanges(text, [outcome.change]) ?? 'overlap';
+  return applyChanges(text, outcome.changes) ?? 'overlap';
 };
 
 describe('a planned edit, made in the source', () => {
@@ -106,5 +106,73 @@ describe('a planned edit, made in the source', () => {
     expect(edited("text({ content: 'Hi' })", 'content', { on: 'attribute', op: 'remove', key: 'content' })).toBe(
       'unplaced: the call that wrote it is not where it was'
     );
+  });
+});
+
+describe('children that are only words and an icon, written as the element’s own', () => {
+  const move = (value: string, more: Partial<SpecEdit> = {}): SpecEdit => ({
+    on: 'children',
+    op: 'set',
+    key: 'content',
+    value,
+    ...more
+  });
+
+  it('moves the words — as written, a literal or an expression — and the icon, after the words when it was', () => {
+    expect(edited("link({ href: '/', children: [text('Pricing')] })", 'link', move('Pricing'))).toBe(
+      "link({ href: '/', content: 'Pricing' })"
+    );
+    expect(edited('link({ href: entry.href, children: [text(entry.label)] })', 'link', move('Shop'))).toBe(
+      'link({ href: entry.href, content: entry.label })'
+    );
+    expect(
+      edited(
+        "link({ children: [text('Docs'), fontAwesome({ icon: 'fa-solid fa-arrow-right' })] })",
+        'link',
+        move('Docs', { icon: 'fa-solid fa-arrow-right', iconPlacement: 'after' })
+      )
+    ).toBe("link({ content: 'Docs', icon: 'fa-solid fa-arrow-right', iconPlacement: 'after' })");
+  });
+
+  it("drops the `content: ''` that said it had no words of its own", () => {
+    expect(edited("button({ content: '', title: 'Go', children: [text('Go')] })", 'button', move('Go'))).toBe(
+      "button({ title: 'Go', content: 'Go' })"
+    );
+    expect(
+      edited(
+        "button({ content: '', title: 'Close', children: [fontAwesome({ icon: 'fa-solid fa-xmark' })] })",
+        'button',
+        move('', { icon: 'fa-solid fa-xmark' })
+      )
+    ).toBe("button({ content: '', title: 'Close', icon: 'fa-solid fa-xmark' })");
+  });
+
+  it('leaves to the author a child written with more than its words, or words that are not the ones shown', () => {
+    expect(edited("link({ children: [text('Pricing', { class: strong })] })", 'link', move('Pricing'))).toBe(
+      'unplaced: a child carries more than its words or its icon there'
+    );
+    expect(edited("link({ children: [text('Prices')] })", 'link', move('Pricing'))).toBe(
+      'unplaced: the words written there are not the ones it shows'
+    );
+    expect(edited("button({ content: 'Save', children: [text('now')] })", 'button', move('now'))).toBe(
+      'unplaced: it is written with words of its own beside its children'
+    );
+  });
+
+  it('takes out the imports a move left unused, and only those', () => {
+    const text = [
+      "import { fontAwesome, link, text } from '@plitzi/sdk-authoring';",
+      "import { heading } from './kit';",
+      '',
+      "export const nav = link({ href: '/', content: 'Home' });",
+      "export const lede = text('Still here');"
+    ].join('\n');
+
+    expect(pruneImports(ts, 'nav.ts', text, ['text', 'fontAwesome'])).toBe(
+      text.replace('{ fontAwesome, link, text }', '{ link, text }')
+    );
+    expect(
+      pruneImports(ts, 'nav.ts', "import { text } from '@plitzi/sdk-authoring';\nexport const a = 1;", ['text'])
+    ).toBe('\nexport const a = 1;');
   });
 });

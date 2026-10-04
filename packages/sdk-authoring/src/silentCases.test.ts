@@ -218,6 +218,21 @@ describe('handles a generic visual test can trust', () => {
     expect(handles.element('cell').repeated).toBe(true);
     expect(handles.element('rows').repeated).toBeUndefined();
   });
+
+  it('marks a plugin that declares it draws nothing, hosted by `custom` or by its own type, and no other', () => {
+    const ticker = { type: 'ticker', drawsNothing: true, content: { attributes: { interval: 5000 } } };
+    const badge = { type: 'badge', content: { attributes: { tone: 'info' } } };
+    const { handles } = authoring.authorSpace(
+      space([
+        authoring.custom({ id: 'autoplay', renderType: 'ticker', interval: 3000 }),
+        authoring.custom({ id: 'tag', renderType: 'badge', tone: 'info' })
+      ]),
+      { plugins: [ticker, badge] }
+    );
+
+    expect(handles.element('autoplay').boxless).toBe(true);
+    expect(handles.element('tag').boxless).toBeUndefined();
+  });
 });
 
 describe('a form control on its own', () => {

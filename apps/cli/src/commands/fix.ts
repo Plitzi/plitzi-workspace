@@ -14,7 +14,7 @@ import { fail } from './terminal';
 import { unifiedDiff } from '../fix/diff';
 import { formatLikeBefore } from '../fix/format';
 import { projectPlan, verdict } from '../fix/plan';
-import { applyChanges, sourceEdit } from '../fix/sourceEdits';
+import { applyChanges, pruneImports, sourceEdit } from '../fix/sourceEdits';
 import { loadTypeScript } from '../projectTypeScript';
 
 import type { ProjectPlan } from '../fix/plan';
@@ -44,7 +44,9 @@ const run = promisify(execFile);
 interface Placed {
   fix: PlannedFix;
   file: string;
-  change: TextChange;
+  changes: TextChange[];
+  /** The imports the change may have left unused. */
+  orphans: readonly string[];
 }
 
 /** Edits planned, made: each file's text before and after, and the fixes that are left for the author. */
@@ -83,7 +85,7 @@ const editSources = async (root: string, fixes: readonly PlannedFix[]): Promise<
     if ('unplaced' in outcome) {
       left.push({ fix, why: outcome.unplaced });
     } else {
-      placed.push({ fix, file, change: outcome.change });
+      placed.push({ fix, file, changes: outcome.changes, orphans: outcome.orphans ?? [] });
     }
   }
 
@@ -94,7 +96,7 @@ const editSources = async (root: string, fixes: readonly PlannedFix[]): Promise<
     const mine = placed.filter(entry => entry.file === file);
     const changed = applyChanges(
       text,
-      mine.map(entry => entry.change)
+      mine.flatMap(entry => entry.changes)
     );
     if (changed === undefined) {
       left.push(...mine.map(entry => ({ fix: entry.fix, why: 'it overlaps another fix in the same place' })));
@@ -102,10 +104,12 @@ const editSources = async (root: string, fixes: readonly PlannedFix[]): Promise<
     }
 
     if (mine.length > 0) {
+      const orphans = [...new Set(mine.flatMap(entry => entry.orphans))];
+      const pruned = ts && orphans.length > 0 ? pruneImports(ts, file, changed, orphans) : changed;
       files.push({
         file,
         before: text,
-        after: await formatLikeBefore(format, path.relative(root, file), text, changed)
+        after: await formatLikeBefore(format, path.relative(root, file), text, pruned)
       });
       written.push(...mine.map(entry => entry.fix));
     }

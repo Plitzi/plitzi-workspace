@@ -1115,10 +1115,20 @@ describe('lintSpace', () => {
       expect(warningsOf(documents)).toContain('control-without-name');
     });
 
+    it('control-without-name still reads a link with no words, inside or of its own', () => {
+      const documents = withChange(({ schema }) => {
+        iconOnly(schema, 'profile', 'link', { content: '' });
+      });
+
+      expect(warningsOf(documents)).toContain('control-without-name');
+    });
+
     it('control-without-name is quiet once a title, a label or words inside name the control', () => {
       const documents = withChange(({ schema }) => {
         iconOnly(schema, 'close', 'button', { content: '', title: 'Close' });
         iconOnly(schema, 'profile', 'link', { label: 'Your profile' });
+        // Its own words, as the content-attribute suggestion writes them: a link that draws `content` is named by it.
+        addElement(schema, { id: 'pricing', type: 'link', attributes: { content: 'Pricing' } });
         addElement(schema, { id: 'email', type: 'formControl', attributes: { label: '', placeholder: 'Email' } });
         addElement(schema, { id: 'plain', type: 'button', attributes: {} });
       });

@@ -3,7 +3,7 @@
  * button, a field keeps its label out of sight rather than dropping it, a picture says what it shows or that it only
  * decorates.
  */
-import { button, fontAwesome, formControl, image, setState, styles, text, onClick } from '@plitzi/sdk-authoring';
+import { button, formControl, image, setState, styles, text, onClick } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -23,7 +23,7 @@ export const recipe: SpaceSpec = {
       name: 'Home',
       slug: '',
       body: [
-        button({ content: '', title: 'Search', children: [fontAwesome({ icon: 'fa-solid fa-magnifying-glass' })] }),
+        button({ content: '', title: 'Search', icon: 'fa-solid fa-magnifying-glass' }),
         button({
           content: '',
           class: card,

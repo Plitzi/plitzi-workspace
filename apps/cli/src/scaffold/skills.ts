@@ -98,7 +98,7 @@ const filesUnder = (root: string, folder = root): [string, string][] =>
 
 /**
  * The skills a project carries: both for a project that renders a space, the CLI's alone for a plugin package. With
- * `root`, from the packages that project installed — what `plitzi skills update` brings it up to.
+ * `root`, from the packages that project installed — what `plitzi upgrade skills` brings it up to.
  */
 export const skillFiles = (names: readonly SkillName[] = SKILL_NAMES, root?: string): ProjectFiles => {
   const resolvers = resolversFor(root);

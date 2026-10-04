@@ -7,7 +7,7 @@
 export { failedFlowText, readDevTools, readDevToolsInPage } from './devTools';
 export type { DevToolsDriver, DevToolsFlow, DevToolsFlowStep, DevToolsInput, DevToolsReport } from './devTools';
 export { inspectDocument, inspectPage } from './inspect';
-export type { DocumentChecks, InspectOptions, PageEvaluator, PageReport } from './inspect';
+export type { DocumentChecks, InspectOptions, PageEvaluator, PageIssue, PageIssueCode, PageReport } from './inspect';
 export { onScreen } from './onScreen';
 export { comparePictures, diffPictures, pageRegions } from './pictures';
 export type { PictureDiff, PictureDiffInput, PictureDriver, PictureRegion } from './pictures';

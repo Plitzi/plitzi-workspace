@@ -45,7 +45,7 @@ export const recipe: SpaceSpec = {
             container({ class: card, children: [heading(name, { subType: 'h3', class: title }), text('…')] })
           )
         }),
-        link({ href: '/start', class: cta, children: [text('Get started')] })
+        link({ href: '/start', class: cta, content: 'Get started' })
       ]
     }
   ]

@@ -40,3 +40,93 @@ describe('probePage / display:contents', () => {
     ]);
   });
 });
+
+/** Whether a node or any of its ancestors is `display: none` — which, in a browser, leaves it no box. */
+const hiddenByDisplay = (node: Element): boolean =>
+  getComputedStyle(node).display === 'none' || (node.parentElement !== null && hiddenByDisplay(node.parentElement));
+
+describe('probePage / hidden by the width it is drawn at', () => {
+  it('lets an element a breakpoint hides — or shows only at another width — be, and reports one hidden for good', () => {
+    // As a browser draws it: no box under anything `display: none`.
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      // The probe reads only the size; a whole DOMRect would be fields nothing here looks at.
+      return (hiddenByDisplay(this) ? { width: 0, height: 0 } : { width: 100, height: 20 }) as DOMRect;
+    });
+    document.head.innerHTML = `<style>
+      .desktop-nav { display: flex }
+      @media (max-width: 99999px) { .desktop-nav { display: none } }
+      .bottom-bar { display: none }
+      @media (max-width: 1px) { .bottom-bar { display: flex } }
+      .gone { display: none }
+    </style>`;
+    document.body.innerHTML = `
+      <nav data-plitzi-el="nav" class="desktop-nav"><a data-plitzi-el="nav-link">Shop</a></nav>
+      <div data-plitzi-el="bar" class="bottom-bar"></div>
+      <div data-plitzi-el="gone" class="gone"></div>`;
+
+    expect(probePage(input(['nav', 'nav-link', 'bar', 'gone'])).hidden).toEqual([
+      { id: 'gone', reason: 'display:none on itself' }
+    ]);
+  });
+});
+
+describe('probePage / images', () => {
+  /** A lazy image at `left`, `top`, 100×100, never fetched — as a browser leaves one it has not been asked for yet. */
+  const lazyImageAt = (src: string, left: number, top: number): HTMLImageElement => {
+    const image = document.createElement('img');
+    image.loading = 'lazy';
+    image.src = src;
+    Object.defineProperty(image, 'complete', { value: false });
+    vi.spyOn(image, 'getBoundingClientRect').mockReturnValue({
+      left,
+      top,
+      right: left + 100,
+      bottom: top + 100,
+      width: 100,
+      height: 100
+    } as DOMRect);
+
+    return image;
+  };
+
+  it('waits on a lazy image out of sight — below the fold or beside the screen in a carousel — and not on one in it', () => {
+    document.body.append(
+      lazyImageAt('/below.jpg', 0, window.innerHeight + 10),
+      lazyImageAt('/beside.jpg', window.innerWidth + 10, 0),
+      lazyImageAt('/in-sight.jpg', 0, 0)
+    );
+
+    expect(probePage({ ...input([]), images: true }).brokenImages).toEqual([
+      { source: `${window.location.origin}/in-sight.jpg` }
+    ]);
+  });
+
+  it('waits on one its carousel’s track cuts off, though the screen would show it', () => {
+    const track = document.createElement('div');
+    // As an attribute: jsdom drops `overflow-x` set through the style object.
+    track.setAttribute('style', 'overflow-x: hidden');
+    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 200,
+      bottom: 100,
+      width: 200,
+      height: 100
+    } as DOMRect);
+    track.append(lazyImageAt('/third-slide.jpg', 300, 0));
+    document.body.append(track);
+
+    expect(probePage({ ...input([]), images: true }).brokenImages).toEqual([]);
+  });
+});
+
+describe('probePage / which element a finding is about', () => {
+  it('names the space’s element an image sits in', () => {
+    document.body.innerHTML = '<figure data-plitzi-el="hero-photo"><img src="/hero.jpg"></figure>';
+    Object.defineProperty(document.querySelector('img'), 'complete', { value: false });
+
+    expect(probePage({ ...input([]), images: true }).brokenImages).toEqual([
+      { source: `${window.location.origin}/hero.jpg`, elementId: 'hero-photo' }
+    ]);
+  });
+});

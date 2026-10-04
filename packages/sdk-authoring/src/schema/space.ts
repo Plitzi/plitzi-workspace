@@ -25,6 +25,7 @@ import {
   toBlocks
 } from '../style';
 import { suggestSpace } from './advice';
+import { contentMoves } from './advice/content';
 import {
   COMPONENT_SOURCES,
   GLOBAL_SOURCES,
@@ -53,6 +54,7 @@ import {
 import { buildHandles, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
 import { fixSpace, lintSpace } from './lint';
+import { CUSTOM_TYPE } from './lint/context';
 import { MAIN_ATTRIBUTES } from './mainAttributes';
 import { withNotificationsCss } from './notifications';
 import { refusalOf, SpaceRefusedError } from './refusals';
@@ -1486,6 +1488,22 @@ class SpaceAuthor {
    * rather than filed somewhere plausible: a handle that resolves to the wrong root is worse than one that is absent,
    * which the lookup reports by name.
    */
+  /** Whether the element's plugin declares it draws nothing — under its own type, or as the component a `custom` hosts. */
+  private drawsNothing(element: Element): boolean {
+    const types = this.options.drawsNothingTypes;
+    if (!types?.length) {
+      return false;
+    }
+
+    const { type } = element.definition;
+    const renderType = element.attributes.renderType;
+
+    return (
+      types.includes(type) ||
+      (type === CUSTOM_TYPE && typeof renderType === 'string' && types.includes(`${CUSTOM_TYPE}:${renderType}`))
+    );
+  }
+
   private recordHandle(handle: ElementHandle): void {
     // `hasOwn` rather than a falsy check: an index signature types every read as a hit, so this is the only way to
     // ask whether a root has an entry at all.
@@ -1666,7 +1684,7 @@ class SpaceAuthor {
       ...([...ancestors].some(ancestor => REPEATING_TYPES.has(tree.map.flat[ancestor].definition.type))
         ? { repeated: true }
         : {}),
-      ...(rendersNoTag(element) ? { boxless: true } : {})
+      ...(rendersNoTag(element) || this.drawsNothing(element) ? { boxless: true } : {})
     });
 
     const children = spec.row === undefined ? spec.children : this.rowChildren(spec, spec.row, id, where);
@@ -1737,9 +1755,14 @@ export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): 
  * it — or on one of its steps, by the flow it is in and its place there.
  */
 export interface SpecEdit extends Omit<FixChange, 'on'> {
-  on: 'attribute' | 'field' | 'binding' | 'step';
+  /** `children`: the children it holds — only its words and an icon — written as its own `content` and `icon`. */
+  on: 'attribute' | 'field' | 'binding' | 'step' | 'children';
   /** For a step: which of the element's `flows`, and which step in it. */
   step?: { flow: number; index: number };
+  /** For `children`: the icon's class, when one of them is an icon. */
+  icon?: string;
+  /** For `children`: where the icon goes, when it came after the words. */
+  iconPlacement?: 'after';
 }
 
 /** One fix `fixSpace` would make, with where it was written and the edit that makes it there. */
@@ -1803,7 +1826,7 @@ export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): Fi
     message: issue.message
   }));
 
-  const fixes = fixSpace(documents, options).applied.map(fix => {
+  const fixes: PlannedFix[] = fixSpace(documents, options).applied.map(fix => {
     const written = fix.elementId === null ? undefined : author.specOf(fix.elementId);
     const at = written ? writtenAt(written) : undefined;
     const position = written ? writtenAtPosition(written) : undefined;
@@ -1819,5 +1842,36 @@ export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): Fi
     };
   });
 
-  return { problems, fixes };
+  return { problems, fixes: [...fixes, ...contentFixes(author, documents)] };
 };
+
+/**
+ * The `content-attribute` suggestions that have one way to be written: the children only words and an icon, none of
+ * them named — a child with an id of its own is something a test or a flow may point at — and the words wearing no
+ * class whose rules would have to be moved by hand.
+ */
+const contentFixes = (author: SpaceAuthor, documents: { schema: Schema; style: Style }): PlannedFix[] =>
+  contentMoves(documents.schema, documents.style)
+    .filter(move => !move.classed && move.children.every(child => author.specOf(child)?.id === undefined))
+    .map(move => {
+      const written = author.specOf(move.id);
+      const at = written ? writtenAt(written) : undefined;
+      const position = written ? writtenAtPosition(written) : undefined;
+      const holds = move.icon === undefined ? 'its words' : move.words ? 'its words and an icon' : 'an icon';
+
+      return {
+        code: 'content-attribute',
+        message: `"${move.id}" holds only ${holds} as elements: they are its own \`content\`${move.icon === undefined ? '' : ' and `icon`'}.`,
+        elementId: move.id,
+        ...(at === undefined ? {} : { at }),
+        ...(position === undefined ? {} : { position }),
+        edit: {
+          on: 'children',
+          op: 'set',
+          key: 'content',
+          value: move.words,
+          ...(move.icon === undefined ? {} : { icon: move.icon }),
+          ...(move.iconAfter ? { iconPlacement: 'after' } : {})
+        }
+      };
+    });

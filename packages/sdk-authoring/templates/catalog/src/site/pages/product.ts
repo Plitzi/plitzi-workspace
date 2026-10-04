@@ -22,7 +22,7 @@ export const product: PageSpec = {
   slug: 'products/:slug',
   layout: { id: 'site', slot: 'site-main' },
   body: [
-    link({ id: 'product-back', href: '/products', class: back, children: [text('← All products')] }),
+    link({ id: 'product-back', href: '/products', class: back, content: '← All products' }),
     apiContainer({
       id: products.id,
       query: PRODUCTS_URL,

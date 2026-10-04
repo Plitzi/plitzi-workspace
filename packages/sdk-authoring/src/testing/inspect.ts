@@ -28,6 +28,18 @@ export interface InspectOptions extends OnScreenOptions {
   timeout?: number;
 }
 
+/** What kind of problem a page check found: what a tool branches on, where `message` is what a person reads. */
+export type PageIssueCode =
+  'not-rendered' | 'element-missing' | 'element-hidden' | 'image-not-loaded' | 'sideways-scroll' | 'illegible-text';
+
+export interface PageIssue {
+  code: PageIssueCode;
+  /** The sentence, as `problems` holds it. */
+  message: string;
+  /** The space's element it is about, by id — absent for one about the page as a whole, or outside every element. */
+  elementId?: string;
+}
+
 export interface PageReport {
   /** The page that was inspected, by id. */
   page: string;
@@ -40,16 +52,35 @@ export interface PageReport {
    * together, instead of stopping at the first locator that timed out and saying only that it did.
    */
   problems: string[];
+  /** The same problems as data — each with its `code` and the element it is about — for a tool to act on. */
+  issues: PageIssue[];
 }
 
 const label = (handle: ElementHandle): string => `${handle.type} "${handle.id}"`;
 
-/** The findings as sentences. Separate from the probe so what a failure SAYS is tested without a browser. */
-export const describeFindings = (expected: ElementHandle[], findings: ProbeFindings): string[] => {
+const about = (elementId: string | undefined): { elementId?: string } => (elementId === undefined ? {} : { elementId });
+
+const sidewaysOf = (overflow: ProbeFindings['overflow']): PageIssue[] =>
+  overflow
+    ? [
+        {
+          code: 'sideways-scroll',
+          message: `the page scrolls sideways by ${overflow.pixels}px — widest: ${overflow.widest.join(', ')}`,
+          ...about(overflow.elementIds.at(0))
+        }
+      ]
+    : [];
+
+/** The findings as issues. Separate from the probe so what a failure SAYS is tested without a browser. */
+export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): PageIssue[] => {
   if (!findings.marked && expected.length > 0) {
     return [
-      'nothing on the page carries data-plitzi-el — the space did not render here, or it renders with ' +
-        '`testAttributes: false`'
+      {
+        code: 'not-rendered',
+        message:
+          'nothing on the page carries data-plitzi-el — the space did not render here, or it renders with ' +
+          '`testAttributes: false`'
+      }
     ];
   }
 
@@ -61,15 +92,33 @@ export const describeFindings = (expected: ElementHandle[], findings: ProbeFindi
   };
 
   return [
-    ...findings.missing.map(id => `${named(id)} is not on the page`),
-    ...findings.hidden.map(({ id, reason }) => `${named(id)} is on the page but not visible: ${reason}`),
-    ...findings.brokenImages.map(source => `an image never loaded: ${source}`),
-    ...(findings.overflow
-      ? [`the page scrolls sideways by ${findings.overflow.pixels}px — widest: ${findings.overflow.widest.join(', ')}`]
-      : []),
-    ...findings.illegible.map(text => `text drawn in the colour behind it: ${text}`)
+    ...findings.missing.map((id): PageIssue => ({
+      code: 'element-missing',
+      message: `${named(id)} is not on the page`,
+      elementId: id
+    })),
+    ...findings.hidden.map(({ id, reason }): PageIssue => ({
+      code: 'element-hidden',
+      message: `${named(id)} is on the page but not visible: ${reason}`,
+      elementId: id
+    })),
+    ...findings.brokenImages.map(({ source, elementId }): PageIssue => ({
+      code: 'image-not-loaded',
+      message: `an image never loaded: ${source}`,
+      ...about(elementId)
+    })),
+    ...sidewaysOf(findings.overflow),
+    ...findings.illegible.map(({ text, elementId }): PageIssue => ({
+      code: 'illegible-text',
+      message: `text drawn in the colour behind it: ${text}`,
+      ...about(elementId)
+    }))
   ];
 };
+
+/** The findings as sentences — what `problems` holds. */
+export const describeFindings = (expected: ElementHandle[], findings: ProbeFindings): string[] =>
+  issuesOf(expected, findings).map(issue => issue.message);
 
 const defaultPage = (handles: SpaceHandles): string => {
   const pages = Object.values(handles.pages);
@@ -101,9 +150,9 @@ const inspect = async (
   };
   const deadline = Date.now() + (options.timeout ?? 5000);
   for (;;) {
-    const problems = describeFindings(expected, await driver.evaluate(probePage, input));
-    if (problems.length === 0 || Date.now() >= deadline) {
-      return { page, checked: expected.length, problems };
+    const issues = issuesOf(expected, await driver.evaluate(probePage, input));
+    if (issues.length === 0 || Date.now() >= deadline) {
+      return { page, checked: expected.length, problems: issues.map(issue => issue.message), issues };
     }
 
     await pause(100);

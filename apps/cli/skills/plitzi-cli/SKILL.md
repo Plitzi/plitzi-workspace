@@ -26,7 +26,8 @@ npx @plitzi/cli pack plugin                    # a plugin built, and zipped the 
 npx @plitzi/cli upload plugin                  # that zip, on the space you work in, and installed there
 npx @plitzi/cli whoami                         # who the CLI is signed in as, and the space it works in
 npx @plitzi/cli data describe public/data/products.json   # a JSON file's fields, types and one row — not read whole
-npx @plitzi/cli skills update                  # the skills in .claude/skills, up to the SDK installed
+npx @plitzi/cli upgrade                        # the project up to this CLI: files, package.json, skills, renames (--write)
+npx @plitzi/cli upgrade skills --write         # only one part: files | packages | skills | renames
 npx @plitzi/cli explain navigate               # what a name means: element, step, trigger, problem or suggestion code (--list steps)
 npx @plitzi/cli functions pull                 # the space's functions (its own server code) into functions/
 npx @plitzi/cli functions push                 # functions/ back as the space's draft, built and checked
@@ -37,6 +38,10 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
 `plitzi --help` and `plitzi <command> --help` list every flag; what follows is what the help does not say.
 
 ## Running it as an agent
+
+- **After the SDK moves, `upgrade`.** It shows the CLI's files, scripts, versions and skills as they should be now, and
+  every renamed name at its line. `--write` replaces what nobody changed, merges `package.json` and installs; a file
+  you changed comes as a diff — `--take <file>` once read.
 
 - **`create` never decides for the person.** Three choices shape a project — package manager, `--mode`
   (`server`: SSR + RSC on a Node tier, `client`: browser only) and `--source` (`local`: the space lives in the project,

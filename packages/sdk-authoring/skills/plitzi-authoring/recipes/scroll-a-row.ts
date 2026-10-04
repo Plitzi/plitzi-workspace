@@ -45,10 +45,9 @@ export const recipe: SpaceSpec = {
           children: [
             // Shown until the row says it is at that end: the arrows are there before anybody scrolls.
             button({
-              content: '',
+              content: '‹',
               title: 'Previous categories',
               visible: '!state.rowAtStart',
-              children: [text('‹')],
               flows: [[onClick(), scrollBy('categories', { x: '-80%' })]]
             }),
             list({
@@ -65,10 +64,9 @@ export const recipe: SpaceSpec = {
               children: [text({ class: card, from: 'categories.item' })]
             }),
             button({
-              content: '',
+              content: '›',
               title: 'More categories',
               visible: '!state.rowAtEnd',
-              children: [text('›')],
               flows: [[onClick(), scrollBy('categories', { x: '80%' })]]
             })
           ]

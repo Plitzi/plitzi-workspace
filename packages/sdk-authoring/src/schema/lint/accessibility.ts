@@ -22,7 +22,7 @@ import type { Element } from '@plitzi/sdk-shared';
  */
 const NAMING_ATTRIBUTES: Readonly<Record<string, readonly string[]>> = {
   button: ['content', 'title', 'label'],
-  link: ['label'],
+  link: ['content', 'label'],
   formControl: ['label'],
   text: ['content'],
   heading: ['content'],
@@ -172,7 +172,7 @@ const hasWordsInside = (ctx: LintContext, id: string): boolean =>
 const FIXES: Readonly<Record<'button' | 'link', string>> = {
   button:
     'Give it a `title` saying what it does — `button({ title: "Close", … })` — which is also its tooltip, or words of its own in `content`.',
-  link: 'Give it a `label` saying where it goes — `link({ label: "Your profile", … })` — or words inside it.'
+  link: 'Give it words of its own in `content` — `link({ content: "Pricing", … })` — or, where its words are an icon or a picture, a `label` saying where it goes: `link({ label: "Your profile", … })`.'
 };
 
 /** A button, a link or a form field that nothing names. */

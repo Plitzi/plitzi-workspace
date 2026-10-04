@@ -33,7 +33,7 @@ import { space } from './space.ts';
 // \`--json\` answers in one object, for a tool or an agent; otherwise one line on success, the problems on failure.
 const json = process.argv.includes('--json');
 
-/** How many of the problems said have one fix \`plitzi fix\` can write in this source — and the line that says so. */
+/** How many of the warnings and suggestions said have one fix \`plitzi fix\` can write in this source — and the line that says so. */
 const fixableHint = (): string | undefined => {
   let count: number;
   try {
@@ -45,18 +45,21 @@ const fixableHint = (): string | undefined => {
   return count === 0 ? undefined : \`[fix] \${count} of these have one fix: npx plitzi fix shows it in your source, --write writes it\`;
 };
 
-/**
- * The skill an agent reads was copied from the SDK at one version: a newer SDK has what the older skill never taught.
- * Both versions, when they differ — \`npx @plitzi/cli skills update\` brings the skill up to the SDK.
- */
-const outdatedSkill = (): { skill: string; sdk: string } | undefined => {
-  let skill: string | undefined;
+/** A file's text, or undefined when there is none to read. */
+const readOptional = (file: string): string | undefined => {
   try {
-    skill = /^version: (.+)$/m.exec(readFileSync('.claude/skills/plitzi-authoring/SKILL.md', 'utf-8'))?.[1]?.trim();
+    return readFileSync(file, 'utf-8');
   } catch {
     return undefined;
   }
+};
 
+/**
+ * What of the project is older than the SDK installed: the skill an agent reads, copied from the SDK at one version,
+ * and the files the CLI wrote (\`.plitzi/scaffold.json\`) — a newer SDK has what neither taught nor wired. Each version
+ * that differs — \`npx plitzi upgrade\` brings both up.
+ */
+const outdated = (): { skill?: string; files?: string; sdk: string } | undefined => {
   const manifest: unknown = JSON.parse(
     readFileSync(createRequire(import.meta.url).resolve('@plitzi/sdk-authoring/package.json'), 'utf-8')
   );
@@ -64,8 +67,17 @@ const outdatedSkill = (): { skill: string; sdk: string } | undefined => {
     typeof manifest === 'object' && manifest !== null && 'version' in manifest && typeof manifest.version === 'string'
       ? manifest.version
       : undefined;
+  const skill = /^version: (.+)$/m.exec(readOptional('.claude/skills/plitzi-authoring/SKILL.md') ?? '')?.[1]?.trim();
+  const record: unknown = JSON.parse(readOptional('.plitzi/scaffold.json') ?? 'null');
+  const files =
+    typeof record === 'object' && record !== null && 'cli' in record && typeof record.cli === 'string'
+      ? record.cli
+      : undefined;
+  if (!sdk || ((!skill || skill === sdk) && (!files || files === sdk))) {
+    return undefined;
+  }
 
-  return skill && sdk && skill !== sdk ? { skill, sdk } : undefined;
+  return { ...(skill && skill !== sdk ? { skill } : {}), ...(files && files !== sdk ? { files } : {}), sdk };
 };
 
 try {
@@ -73,19 +85,14 @@ try {
   mkdirSync('space', { recursive: true });
   writeFileSync('space/offline-data.json', \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);
 
-  const outdated = outdatedSkill();
+  const behind = outdated();
   if (json) {
     console.log(
-      JSON.stringify({ ok: true, pages: schema.pages.length, warnings, suggestions, ...(outdated ? { outdated } : {}) })
+      JSON.stringify({ ok: true, pages: schema.pages.length, warnings, suggestions, ...(behind ? { outdated: behind } : {}) })
     );
   } else {
     for (const warning of warnings) {
       console.warn(\`[author] \${warning.code} · \${warning.message}\`);
-    }
-
-    const hint = warnings.length > 0 ? fixableHint() : undefined;
-    if (hint) {
-      console.warn(hint);
     }
 
     // Not problems: a shorter way to the same page, the one that saves the most elements first.
@@ -94,9 +101,19 @@ try {
       console.warn(\`[suggest] \${suggestion.code} · \${suggestion.message} (saves \${suggestion.saves})\${at}\`);
     }
 
-    if (outdated) {
+    // After both: \`plitzi fix\` writes a warning's fix and a suggestion's alike, where it has one reading.
+    const hint = warnings.length + suggestions.length > 0 ? fixableHint() : undefined;
+    if (hint) {
+      console.warn(hint);
+    }
+
+    if (behind) {
+      const older = [
+        behind.skill ? \`the authoring skill is \${behind.skill}\` : '',
+        behind.files ? \`its files are from \${behind.files}\` : ''
+      ].filter(Boolean);
       console.warn(
-        \`[skills] the authoring skill is \${outdated.skill} and @plitzi/sdk-authoring is \${outdated.sdk}: npx @plitzi/cli skills update\`
+        \`[upgrade] \${older.join(' and ')}, and @plitzi/sdk-authoring is \${behind.sdk}: npx plitzi upgrade shows what changes, --write makes it\`
       );
     }
 

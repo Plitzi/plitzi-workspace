@@ -458,11 +458,11 @@ describe('the scaffold', () => {
     const files = scaffold(answers());
 
     expect(files['.claude/skills/plitzi-authoring/SKILL.md']).toContain('---');
-    // The version it came from, which `author` compares with the SDK installed and `skills update` brings it up to.
+    // The version it came from, which `author` compares with the SDK installed and `upgrade` brings it up to.
     expect(files['.claude/skills/plitzi-authoring/SKILL.md']).toMatch(
       /^name: plitzi-authoring\nversion: \d+\.\d+\.\d+$/m
     );
-    expect(files['src/author.ts']).toContain('npx @plitzi/cli skills update');
+    expect(files['src/author.ts']).toContain('npx plitzi upgrade');
     // The references the skill links to travel with it, or every link in it points at nothing.
     expect(files['.claude/skills/plitzi-authoring/reference/layouts.md']).toContain('activeOn');
     expect(files['.claude/skills/plitzi-authoring/reference/review-checklist.md']).toBeDefined();
@@ -495,6 +495,8 @@ describe('plitzi create', () => {
       expect(written.sort()).toEqual([
         '.claude',
         '.gitignore',
+        // What the CLI wrote of its machinery, by digest: what `upgrade` replaces a file by.
+        '.plitzi',
         '.prettierignore',
         '.prettierrc',
         'AGENTS.md',

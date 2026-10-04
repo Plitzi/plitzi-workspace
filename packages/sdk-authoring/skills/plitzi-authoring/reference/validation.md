@@ -47,8 +47,9 @@ bar.
 
 2. **Fix, re-run, until it prints zero warnings.** What has one fix (`author` says how many) is written for you: `npx
    plitzi fix` shows it as a diff of your source, `--write` writes it and keeps it only if the space authors with each
-   fix gone and nothing new — a fix it cannot place, or that would add a problem, is said with the reason. Then
-   typecheck the project.
+   fix gone and nothing new — a fix it cannot place, or that would add a problem, is said with the reason. A
+   suggestion with one reading is written the same way (`content-attribute`: words and an icon held as children become
+   the button's or link's own `content` and `icon`). Then typecheck the project.
 3. **Look at it** — in a browser, at desktop and phone width, in both themes (see [testing](testing.md)). Stage 3 is
    thorough about MEANING and blind to what follows.
 

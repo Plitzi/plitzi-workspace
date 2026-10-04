@@ -46,10 +46,14 @@ describe('the skill’s recipes', () => {
     expect(unlisted).toEqual([]);
   });
 
+  // Nor with a suggestion: an agent applies those too, and a recipe that draws one teaches what the next run undoes.
   it.each(Object.entries(recipes).map(([path, module]) => [path.split('/').pop() ?? path, module] as const))(
-    '%s authors with no warning',
+    '%s authors with no warning and nothing to suggest',
     (_name, { recipe, plugins }) => {
-      expect(authorSpace(recipe, { plugins }).warnings).toEqual([]);
+      const { warnings, suggestions } = authorSpace(recipe, { plugins });
+
+      expect(warnings).toEqual([]);
+      expect(suggestions.map(suggestion => `${suggestion.code}: ${suggestion.message}`)).toEqual([]);
     }
   );
 

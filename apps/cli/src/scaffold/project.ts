@@ -15,6 +15,9 @@ const require = createRequire(import.meta.url);
 
 export const SDK_VERSION = `^${(require('@plitzi/sdk-authoring/package.json') as { version: string }).version}`;
 
+/** The same version, bare: this CLI's own — what `--version` prints and what wrote a project's machinery. */
+export const CLI_VERSION = SDK_VERSION.slice(1);
+
 /**
  * What every generated project builds and checks itself with.
  *
@@ -63,7 +66,7 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
 /** A server-mode project runs no bundler of its own: the page server builds the plugins, and Node runs the rest. */
 const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
   ...SHARED_DEV_DEPENDENCIES,
-  // `shot`, `check`, `explain`, `data describe` and `skills update` run from the project, at the version of the SDK.
+  // `shot`, `check`, `explain`, `data describe` and `upgrade` run from the project, at the version of the SDK.
   '@plitzi/cli': SDK_VERSION,
   ...(mode === 'server' ? {} : { vite: VITE_VERSION })
 });
@@ -347,6 +350,7 @@ ${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi add plugin')
 ## The rules that go wrong most
 
 - Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration; ${code('npx plitzi fix --write')} writes the ones with a single reading.
+- After the ${code('@plitzi/*')} packages move, ${code('npx plitzi upgrade')}: what this project's CLI files, scripts, skills and renamed names should now be — ${code('--write')} makes it, a file you changed comes as a diff.
 - ${zeroWarnings}
 - Chrome shared by pages is a layout; a look used twice is a class; a repeated block is a function or a ${code('map')}.
 - Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.
