@@ -126,10 +126,10 @@ $moving: '[data-motion-enter], [data-motion-stagger] > *, [data-motion-loop]';
   #{$moving} {
     animation-name: var(--plitzi-motion-enter, none), var(--plitzi-motion-loop, none);
     animation-duration: var(--plitzi-motion-duration, 600ms), var(--plitzi-motion-loop-period, 6s);
-    animation-delay: var(--plitzi-motion-delay, 0ms), 0ms;
     animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1), var(--plitzi-motion-loop-easing, ease-in-out);
-    animation-fill-mode: both, none;
+    animation-delay: var(--plitzi-motion-delay, 0ms), 0ms;
     animation-iteration-count: 1, infinite;
+    animation-fill-mode: both, none;
     animation-play-state: running, paused;
   }
 
