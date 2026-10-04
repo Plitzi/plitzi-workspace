@@ -163,6 +163,8 @@ export type SSRTemplateProps = {
   reactCompilerRuntime?: string;
   /** When true the client-side <script> block is omitted — useful for inspecting raw SSR HTML. */
   ssrOnly?: boolean;
+  /** The page listens for the server saying the space changed, and loads again — `devMode` only (`reloadPages`). */
+  devReload?: boolean;
   debugMode?: boolean;
   /**
    * The theme class this document wears on `<html>` — `dark`, `light`, or nothing at all.
@@ -1179,6 +1181,11 @@ export type SSRServer = {
   close: () => Promise<void>;
   readonly cache: CacheManager | null;
   readonly plugins: PluginRegistry;
+  /**
+   * In `devMode`, every page open on this server loads again — what a project that authors its space in code calls
+   * once it wrote the new documents, instead of restarting the server. Nothing otherwise.
+   */
+  reloadPages: () => void;
 };
 
 /** A key/value store with per-entry expiry, backing the OAuth layer's short-lived protocol state (registered

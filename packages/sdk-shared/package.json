@@ -1135,6 +1135,10 @@
       "types": "./dist/schema/layoutChain.d.ts",
       "import": "./dist/schema/layoutChain.mjs"
     },
+    "./schema/motion": {
+      "types": "./dist/schema/motion.d.ts",
+      "import": "./dist/schema/motion.mjs"
+    },
     "./schema/schemaConstants": {
       "types": "./dist/schema/schemaConstants.d.ts",
       "import": "./dist/schema/schemaConstants.mjs"

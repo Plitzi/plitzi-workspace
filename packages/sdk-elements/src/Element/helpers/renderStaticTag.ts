@@ -17,8 +17,13 @@ export type StaticTagProps = {
   anchor?: string;
   params?: DebugParams;
   serverMarker?: { 'data-rsc-id': string };
-  /** What an end-to-end test addresses this element by. Last in the spread: nothing may shadow it. */
-  testMarker?: { 'data-plitzi-el': string };
+  /** The element's declared motion, as the `data-motion-*` the SDK's stylesheet plays (`motionAttributes`). */
+  motion?: Record<string, string>;
+  /**
+   * What an end-to-end test addresses this element by — and, on a component instance's root, the instance. Last in the
+   * spread: nothing may shadow it.
+   */
+  testMarker?: { 'data-plitzi-el': string; 'data-plitzi-instance'?: string };
   events?: Record<string, unknown>;
   children?: ReactNode;
 };
@@ -32,6 +37,7 @@ const renderStaticTag = ({
   anchor,
   params,
   serverMarker,
+  motion,
   testMarker,
   events,
   children
@@ -49,6 +55,7 @@ const renderStaticTag = ({
       ...otherProps,
       ...(anchor ? { id: anchor } : {}),
       ...params,
+      ...motion,
       ...events,
       ...serverMarker,
       ...testMarker

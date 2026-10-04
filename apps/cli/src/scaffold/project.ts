@@ -85,8 +85,8 @@ const NODE_ENGINES = { node: '>=22.18' };
  *
  * `client` runs Vite, so a save is a hot module replacement — the page updates without reloading, and editing the
  * space is a live loop. `server` runs the page server under Node's `--watch`: there is no client bundle of this
- * project's own to hot-replace (the SDK is served by the server from its own copy), so a save restarts the
- * process and the next request renders the change. Both are one command; only one of them is HMR, and calling
+ * project's own to hot-replace (the SDK is served by the server from its own copy), so a save to the server's code
+ * restarts the process — and a save to a local space is re-authored in place and the open page reloads. Both are one command; only one of them is HMR, and calling
  * the other one HMR would be a promise the loop does not keep.
  */
 const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
@@ -97,9 +97,14 @@ const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
          * Watched by PATH, not wholesale.
          *
          * The server compiles the project's plugins into `.sdk-plugins/` and then IMPORTS what it built, so a
-         * bare `--watch` sees its own output land, restarts, compiles again, and never stops.
+         * bare `--watch` sees its own output land, restarts, compiles again, and never stops. A local space is not
+         * among them: `main.ts` re-authors it on save in a process of its own and the open pages load again
+         * (`reloadPages`), so only the server's own code and the plugins restart it.
          */
-        'start:dev': 'node --watch-path=./src src/main.ts',
+        'start:dev':
+          source === 'local'
+            ? 'node --watch-path=./src/main.ts --watch-path=./src/plugins src/main.ts'
+            : 'node --watch-path=./src src/main.ts',
         /**
          * What production runs: the same entry compiled to JavaScript. Node strips types by loading a TypeScript
          * transformer into the process — ~10 MB a server keeps for its whole life to read one file — so a deployment
@@ -214,9 +219,9 @@ export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
     packageManager === 'yarn' ? YARN_IGNORES : ''
   }`;
 
-const startLine = ({ mode, packageManager }: CreateAnswers): string =>
+const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`.plitzi/dev-server.json\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on save. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`.plitzi/dev-server.json\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code${source === 'local' ? '; a save to the space reloads the open page' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
     : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
 
 const spaceSection = (answers: CreateAnswers): string => {

@@ -66,8 +66,8 @@ says `content: ''` (`default-content-beside-children` warns otherwise). Its acce
 keeps its own value and fires `onChange` with `{ value, name }` on every change — a search box or a select that
 filters a screen needs no form. Bind `defaultValue` to the state it writes and a reset of that state reaches it.
 
-**A `list` is a `<ul>`.** The browser indents it and puts bullets on it; a list of cards needs
-`{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` in its class.
+**A `list` with `items` is a `<div>`, rows straight inside** — never `<li>` (`list-row-li`). Without `items`, a
+`<ul>`: `{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` takes its indent and bullets off.
 
 **A provider has no box unless you give it a tag.** An `apiContainer` renders no element of its own by default, so its
 children sit in the parent's layout and a `class` on it styles nothing (`STYLE_WITHOUT_TAG`). Put the layout on the

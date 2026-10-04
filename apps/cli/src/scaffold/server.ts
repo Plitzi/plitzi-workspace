@@ -63,7 +63,8 @@ writeFileSync(
 );
 console.log(\`pages on http://127.0.0.1:\${PORT}/\`);`;
 
-const localMain = (): string => `import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+const localMain = (): string => `import { spawn } from 'node:child_process';
+import { mkdirSync, readdirSync, watch, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import {
@@ -100,6 +101,18 @@ for (const warning of warnings) {
 ${PLUGINS}
 
 /**
+ * While developing, the documents are served from the file \`npm run author\` writes, which the server reads again
+ * whenever it changes — so a save is re-authored and shown without restarting anything (see \`watchSpace\` below). A
+ * deployment keeps them in memory, as authored at boot.
+ */
+const DEVELOPING = process.env.NODE_ENV !== 'production';
+const OFFLINE_DATA = path.join(PROJECT_ROOT, 'space/offline-data.json');
+if (DEVELOPING) {
+  mkdirSync(path.dirname(OFFLINE_DATA), { recursive: true });
+  writeFileSync(OFFLINE_DATA, \`\${JSON.stringify(offlineData, null, 2)}\\n\`);
+}
+
+/**
  * This project's own server code: \`functions/\` — what \`plitzi functions pull\` writes and \`push\` sends — built
  * the way Plitzi builds a space's and run here, in this process. Nothing there, no functions; code that does not build
  * stops the server with the file and line.
@@ -120,7 +133,7 @@ const server = createServer({
   devMode: process.env.NODE_ENV !== 'production',
   health: { name: SERVER_NAME },
   adapters: createJsonAdapters({
-    offlineData,
+    offlineData: DEVELOPING ? OFFLINE_DATA : offlineData,
     deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames }
   }),
   plugins,
@@ -140,6 +153,56 @@ ${LISTEN_SNIPPET}
  * queue for whichever server runs next. A second ^C exits at once.
  */
 closeOnSignals(server);
+
+/**
+ * A save to the space, while developing: re-authored by \`src/author.ts\` in a process of its own — the only way to
+ * read every file of it again, which an import never does twice — and every open page loads again once it wrote the
+ * new documents. What it refuses is printed and the page keeps the last space that authored. A change to this file or
+ * to a plugin restarts the server instead (\`start:dev\` watches those).
+ */
+const RESTARTS = ['main.ts', 'plugins'];
+const watchSpace = (): void => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let authoring = false;
+  let again = false;
+  const author = (): void => {
+    if (authoring) {
+      again = true;
+
+      return;
+    }
+
+    authoring = true;
+    const child = spawn(process.execPath, [path.join(PROJECT_ROOT, 'src/author.ts')], {
+      cwd: PROJECT_ROOT,
+      stdio: 'inherit'
+    });
+    child.on('close', code => {
+      authoring = false;
+      if (code === 0) {
+        server.reloadPages();
+      }
+
+      if (again) {
+        again = false;
+        author();
+      }
+    });
+  };
+
+  watch(path.join(PROJECT_ROOT, 'src'), { recursive: true }, (_event, file) => {
+    if (!file || RESTARTS.some(name => file === name || file.startsWith(\`\${name}\${path.sep}\`))) {
+      return;
+    }
+
+    clearTimeout(timer);
+    timer = setTimeout(author, 100);
+  });
+};
+
+if (DEVELOPING) {
+  watchSpace();
+}
 `;
 
 const cloudMain = (name: string): string => `import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';

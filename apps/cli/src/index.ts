@@ -274,7 +274,7 @@ program
   .description('A picture of one page of the running project — and, asked, how it differs from another or what moves')
   .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1280))
   .addOption(
-    new Option('--height <px>', 'The viewport height (the picture is the whole page)')
+    new Option('--height <px>', 'The viewport height (the picture is the whole page unless --viewport, --scroll-to or --clip)')
       .argParser(positiveInteger)
       .default(800)
   )
@@ -289,6 +289,9 @@ program
   )
   .addOption(new Option('--every <ms>', 'How far apart --frames are taken').argParser(positiveInteger).default(500))
   .option('--wait-for <element>', 'An element to wait for first: its name (data-plitzi-el) or a CSS selector')
+  .option('--clip <element>', 'Only this element — its name or a CSS selector — scrolled to wherever it is')
+  .option('--scroll-to <element>', 'The page scrolled until this element is in view; the picture is the screen there')
+  .option('--viewport', 'Only what fits the viewport, not the whole page')
   .option('--reduced-motion', 'As a visitor who asked for less motion')
   .option('--json', 'One object, for a tool or an agent')
   .action((path: string | undefined, options: ShotOptions) => shot(path, options));

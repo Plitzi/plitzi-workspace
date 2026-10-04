@@ -1,0 +1,180 @@
+/**
+ * An element's declared motion — `definition.motion`, rendered by `RootElement` as `data-motion-*` and timing custom
+ * properties (`@plitzi/sdk-shared/schema/motion`, the list of presets this mirrors).
+ *
+ * Every preset moves only `opacity` and the transforms, which the compositor animates without laying the page out
+ * again. An arrival moves the individual `translate` / `scale` properties, so it composes with a `transform` the
+ * element has of its own; a loop moves `transform`, so it composes with the arrival. A loop waits until the page is
+ * live (`data-hydrated`): decoration does not compete with the first render. A visitor who asked for less motion —
+ * their system, or the QA tab's switch — gets none of it.
+ */
+
+@use 'sass:list';
+
+$enters: (
+  'fade': (
+    opacity: 0
+  ),
+  'fade-up': (
+    opacity: 0,
+    translate: 0 24px
+  ),
+  'fade-down': (
+    opacity: 0,
+    translate: 0 -24px
+  ),
+  'slide-left': (
+    opacity: 0,
+    translate: 32px 0
+  ),
+  'slide-right': (
+    opacity: 0,
+    translate: -32px 0
+  ),
+  'scale': (
+    opacity: 0,
+    scale: 0.94
+  )
+);
+
+// name: (the keyframe at its peak, its period, its easing)
+$loops: (
+  'float': (
+    (
+      transform: translateY(-8px)
+    ),
+    6s,
+    ease-in-out
+  ),
+  'pulse': (
+    (
+      transform: scale(1.04)
+    ),
+    3s,
+    ease-in-out
+  ),
+  'spin': (
+    null,
+    12s,
+    linear
+  ),
+  'sway': (
+    (
+      transform: rotate(2deg)
+    ),
+    5s,
+    ease-in-out
+  )
+);
+
+// The most children `stagger` times one by one; the rest arrive with the last of them.
+$stagger-children: 24;
+
+$moving: '[data-motion-enter], [data-motion-stagger] > *, [data-motion-loop]';
+
+@mixin styles {
+  // Not inherited: an element's motion is its own, and its descendants move only by their own `data-motion-*`.
+  @property --plitzi-motion-enter {
+    syntax: '*';
+    inherits: false;
+  }
+
+  @property --plitzi-motion-loop {
+    syntax: '*';
+    inherits: false;
+  }
+
+  @each $name, $from in $enters {
+    @keyframes plitzi-motion-#{$name} {
+      from {
+        @each $property, $value in $from {
+          #{$property}: $value;
+        }
+      }
+    }
+
+    [data-motion-enter='#{$name}'],
+    [data-motion-stagger='#{$name}'] > * {
+      --plitzi-motion-enter: plitzi-motion-#{$name};
+    }
+  }
+
+  @each $name, $loop in $loops {
+    $peak: list.nth($loop, 1);
+
+    @keyframes plitzi-motion-loop-#{$name} {
+      @if $name == 'spin' {
+        to {
+          transform: rotate(360deg);
+        }
+      } @else {
+        50% {
+          @each $property, $value in $peak {
+            #{$property}: $value;
+          }
+        }
+      }
+    }
+
+    [data-motion-loop='#{$name}'] {
+      --plitzi-motion-loop: plitzi-motion-loop-#{$name};
+      --plitzi-motion-loop-period: #{list.nth($loop, 2)};
+      --plitzi-motion-loop-easing: #{list.nth($loop, 3)};
+    }
+  }
+
+  #{$moving} {
+    animation-name: var(--plitzi-motion-enter, none), var(--plitzi-motion-loop, none);
+    animation-duration: var(--plitzi-motion-duration, 600ms), var(--plitzi-motion-loop-period, 6s);
+    animation-delay: var(--plitzi-motion-delay, 0ms), 0ms;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1), var(--plitzi-motion-loop-easing, ease-in-out);
+    animation-fill-mode: both, none;
+    animation-iteration-count: 1, infinite;
+    animation-play-state: running, paused;
+  }
+
+  [data-hydrated] [data-motion-loop],
+  [data-hydrated][data-motion-loop] {
+    animation-play-state: running, running;
+  }
+
+  @for $index from 1 through $stagger-children {
+    [data-motion-stagger] > :nth-child(#{$index}) {
+      --plitzi-motion-index: #{$index - 1};
+    }
+  }
+
+  [data-motion-stagger] > :nth-child(n + #{$stagger-children + 1}) {
+    --plitzi-motion-index: #{$stagger-children - 1};
+  }
+
+  [data-motion-stagger] > * {
+    animation-delay:
+      calc(var(--plitzi-motion-delay, 0ms) + var(--plitzi-motion-index, 0) * var(--plitzi-motion-stagger, 0ms)),
+      0ms;
+  }
+
+  // As it scrolls into view: the arrival follows the scroll rather than a clock, at the reader's pace. Where the
+  // browser has no scroll timelines, it plays as the page loads instead — the same arrival, earlier.
+  @supports (animation-timeline: view()) {
+    [data-motion-on='view'][data-motion-enter],
+    [data-motion-on='view'][data-motion-stagger] > * {
+      animation-timeline: view(), auto;
+      animation-range:
+        entry calc(var(--plitzi-motion-index, 0) * 4%) cover calc(30% + var(--plitzi-motion-index, 0) * 4%),
+        normal;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #{$moving} {
+      animation: none !important;
+    }
+  }
+
+  html.plitzi-reduced-motion {
+    #{$moving} {
+      animation: none !important;
+    }
+  }
+}

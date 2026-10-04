@@ -985,7 +985,11 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   \`{ "type": "patchSettings", "customCss": "@keyframes spin { to { transform: rotate(360deg); } }" }\`.
 
 ## Motion — good practices
-Keyframes go in \`customCss\` (\`patchSettings\`), a definition names them (\`animation\`). Only \`opacity\` and
+A preset first: an element's \`motion\` field (\`upsertElement\`/\`patchElement\`) —
+\`{ "enter": "fade-up", "on": "view" }\`, \`"stagger": 60\` for its children one by one, \`"loop": "float"\` — is
+played by the SDK, cheap and stilled for reduced motion. Enters: fade, fade-up, fade-down, slide-left, slide-right,
+scale; loops: float, pulse, spin, sway. Beyond them, keyframes go in \`customCss\` (\`patchSettings\`), a
+definition names them (\`animation\`). Only \`opacity\` and
 \`transform\` (\`translate\`, \`scale\`, \`rotate\`) animate off the main thread: they stay smooth while the page
 hydrates and on a slow phone. Anything else repaints or lays the page out again on every frame, and freezes while the
 page's scripts run.

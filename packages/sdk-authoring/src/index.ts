@@ -154,6 +154,7 @@ export * from './import';
 export * from './spaces';
 export * from './style';
 export * from './testing';
+export { compactSvg } from './svg/compactSvg';
 export * from './transformers';
 
 /**

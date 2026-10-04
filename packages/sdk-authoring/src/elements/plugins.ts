@@ -2,6 +2,7 @@ import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/e
 import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
 
 import { defineElement } from './element';
+import { ELEMENT_SPEC_KEYS } from '../schema/guard';
 import { CUSTOM_TYPE } from '../schema/lint/context';
 
 import type { AuthorSpaceOptions, PluginDeclarationData } from '../schema';
@@ -131,6 +132,16 @@ export const withPluginCatalogs = (options: AuthorSpaceOptions): AuthorSpaceOpti
       ...byType(declaration =>
         Object.keys(declaration.content?.definition?.styleSelectors ?? {}).filter(slot => slot !== 'base')
       )
+    },
+    reservedPluginAttributes: {
+      ...rest.reservedPluginAttributes,
+      ...byType(declaration => {
+        const reserved = Object.keys(declaration.content?.attributes ?? {}).filter(name =>
+          (ELEMENT_SPEC_KEYS as readonly string[]).includes(name)
+        );
+
+        return reserved.length > 0 ? reserved : undefined;
+      })
     },
     drawsNothingTypes: [
       ...(rest.drawsNothingTypes ?? []),

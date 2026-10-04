@@ -58,6 +58,8 @@ export interface HttpServerParts {
   /** What the primary does once, before it starts the workers — work each of them would otherwise repeat, or race
    *  the others to do. */
   beforeFork?: () => Promise<void>;
+  /** The open pages told to load again (`SSRServer.reloadPages`) — a page server in `devMode`; nothing elsewhere. */
+  reloadPages?: () => void;
 }
 
 // The only thing every server shares: an HTTP transport and the listen/close lifecycle. It knows nothing about
@@ -97,6 +99,7 @@ export const createHttpServer = (
   return {
     cache,
     plugins,
+    reloadPages: parts.reloadPages ?? (() => undefined),
     listen(port: number, host = '0.0.0.0') {
       // Said where the count is decided: each worker runs this same config, and would repeat it.
       if (plan.requested !== undefined && role !== 'worker') {

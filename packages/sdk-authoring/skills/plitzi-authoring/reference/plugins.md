@@ -107,6 +107,11 @@ const newChart = useFlag('newChart'); // false for a flag the space does not dec
 Gating the whole plugin needs no code: give its element `flag: 'newChart'`. `useFlag` is for a plugin that changes
 inside — a new mode, an extra panel.
 
+## Drawing and animating
+
+A canvas, WebGL or a loop of its own: `useCanvas2d`, `useWebGL`, `useWebGL2` and `useAnimationFrame` — see
+[drawing](drawing.md).
+
 ## Registering
 
 A project `plitzi create` wrote registers every folder of `src/plugins` by itself, under the folder's name in

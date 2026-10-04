@@ -7,14 +7,11 @@ import { apiContainer, container, heading, list, styles, text } from '@plitzi/sd
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
-// A list is a `<ul>`: a grid of cards takes the bullets and the indent off.
+// A list with items is a `<div>`, its rows straight inside: the grid is all its class says.
 const grid = styles('product-grid', {
   display: 'grid',
   'grid-template-columns': 'repeat(auto-fill, minmax(220px, 1fr))',
-  gap: '16px',
-  margin: '0px',
-  padding: '0px',
-  'list-style-type': 'none'
+  gap: '16px'
 });
 
 const card = styles('product-card', { padding: '16px', 'border-radius': '12px', 'background-color': 'var(--card)' });

@@ -92,6 +92,8 @@ The space is not written until these are fixed.
 | `loading-slot-unknown` | an `apiContainer`'s `loadingSlot` that is not the id of one of its children | the id of the child to show until the first answer — `loadingSlot: 'catalog-skeleton'` beside that child |
 | `modifier-count` | more than one set of rules in a class list | one set, after the classes: `class: [card, { opacity: '0.5', 'margin-top': '8px' }]` |
 | `modifier-without-id` | rules on top of a class on an element with no `id` — the id names the class they become | `id: 'hero-bg'` |
+| `motion-invalid` | a `motion` with a preset, a trigger or a timing the page cannot play | `motion: { enter: 'fade-up', on: 'view' }` — the message lists the presets |
+| `motion-no-tag` | a `motion` on an element with no tag of its own — nothing to move | the motion on what it wraps, or a `subType` on it |
 | `no-pages` | a space with no pages | `pages: [{ id: 'home', name: 'Home', slug: '', body: [] }]` |
 | `notifications-shape` | `notifications` with a field it does not have, or a value that is not one CSS value | the fields it lists; a colour or a length, like 'var(--card)' or '12px' |
 | `outside-ancestor` | an element that reads the state of an element it is not inside | nest it in the element the message names |
@@ -172,9 +174,11 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `image-without-alt` | an image that is not `decorative` and has no `alt` | say what it shows, or `decorative: true` |
 | `label-ignored` | a `label` on a container whose tag is named by what it holds (`li`, a heading) | the words inside, or a landmark tag (`nav`, `section`…) |
 | `list-item-key-missing` | a list's `itemKey` that some of its items lack, or two of them share — the rows fall back to `id`, then position | a field every item has, once each |
+| `list-row-li` | a row of a list with `items` written as an `<li>` — that list is a `<div>`, so it is an `<li>` outside a list | a plain `container` (no `subType`) |
 | `overlay-never-opened` | a modal or a dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |
 | `overlay-starts-open` | a modal or a dialog open when the page loads | `visible: false`, opened by `openModal` |
 | `painted-state-without-keep-state` | `paintedState` without `keepState` — nothing is kept for the server to draw with | `settings.keepState: true`, or remove `paintedState` |
+| `plugin-attribute-reserved` | a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin | rename it in the plugin (`variant` → `kind`) |
 | `provider-without-source` | an `apiContainer` that asks nothing | a `query` (or `action`, `connector`, `resource`) |
 | `route-param-undeclared` | `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty | add `:x` to the slug, or read `navigation.queryParams.x` |
 | `server-data-without-rsc` | a `runtime: 'server'` provider with a `connector` or `action` in a space that does not turn server data on | `rsc: { enabled: true }` on the space |
@@ -189,6 +193,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `unknown-global-callback` | a global callback no built-in source declares — it runs only if something registers it | the built-in it suggests, or make sure a plugin or module of the space registers it |
 | `unknown-utility` | a utility that is not one of the built-in ones | one of the built-in utilities |
 | `unknown-variable` | a `var(--x)` nothing in the space declares — the property it is in is dropped | declare it under `variables`, fix the name, or give it a fallback: `var(--x, …)` |
+| `unknown-variant` | a variant no class of the element and no style of its type declares — nothing applies | declare it (`styles(name, { variants: { … } })`), or name one that is |
 
 ## Suggested
 

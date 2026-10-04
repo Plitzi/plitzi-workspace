@@ -66,3 +66,57 @@ them:
   `[fix]` line counts these too.
 - **The recipes, the skill's examples and the catalog template** hold to the suggestions as well as the warnings, and
   their tests say so: six recipes and the template wrote a link's or a button's words as a child.
+
+## Declared motion — in code, in the builder and over MCP
+
+An element says how it arrives and whether it keeps moving with `motion`, and the SDK's stylesheet plays it — no
+keyframes to write: `{ enter: 'fade-up', on: 'view' }` arrives as it scrolls into view, `{ enter: 'scale', stagger:
+60 }` brings its children one by one (a grid, a list's rows), `{ loop: 'float' }` keeps it moving. Enters: `fade`,
+`fade-up`, `fade-down`, `slide-left`, `slide-right`, `scale`; loops: `float`, `pulse`, `spin`, `sway`; `duration`,
+`delay`, `stagger` in ms. Opacity and the transforms only — an arrival on `translate`/`scale`, so it composes with an
+element's own `transform` — a loop held until the page is live (`data-hydrated`), and none of it for a visitor who asked
+for less motion. `view` follows the scroll where the browser has scroll timelines and plays on load where not.
+
+- **Authoring:** `motion` on any factory; refused where it cannot play (`motion-invalid`, `motion-no-tag`), and carried
+  by `specFromSpace` and `compareSpaces`.
+- **Builder:** a **Motion** panel in an element's settings; the canvas holds motion still while editing, and **▶** in the
+  header (or **Play** in the panel) plays it from the start.
+- **MCP:** `motion` on `upsertElement` and `patchElement`, checked the same way; the guide names the presets.
+- **Schema:** `definition.motion` (`ElementMotion`, `@plitzi/sdk-shared/schema/motion` — the presets, `motionProblems`,
+  `motionAttributes`), in both init queries. **The platform's GraphQL schema has to declare `SpaceElementMotion`
+  before this version's builder or SDK queries it.**
+
+## Plugins that draw
+
+`useCanvas2d`, `useWebGL`, `useWebGL2` and `useAnimationFrame` (`@plitzi/plitzi-sdk`): a canvas sized to the device (at
+most 2×), followed as it resizes, animating only while somebody can see it move — a live page, no reduced motion, the
+tab in front, the canvas on screen — and one still frame otherwise (the builder included). `createShaderProgram`
+compiles and links, and a shader that fails throws a `ShaderError` with the driver's log, printed as
+`[plugin <type> "<id>"] fragment shader failed: …` instead of an empty canvas; `error` and `ready` say where it is.
+`useReducedMotion` for the rest.
+
+## A space re-authored without a restart
+
+A project's `npm run start:dev` restarts for its server code and its plugins only: a save to the space is re-authored
+in a process of its own and every open page loads again (`server.reloadPages()`, an SSE endpoint in `devMode`); an
+edit authoring refuses is printed and the page keeps the last space that authored. A shutdown also ends WebSockets at
+once (`1001`, going away) rather than waiting out the grace — the ten seconds a restart used to wait on an open page.
+
+## Checks and authoring, from the stripe.com experiment
+
+- **A component's instance** is found by its own name: its root carries `data-plitzi-instance`, and the instance's
+  handle selects it — `inspectPage` no longer reports every named instance as missing.
+- **A carousel that scrolls by itself** (`overflow-x: auto`) is not the page scrolling sideways; the page's own pane
+  still is.
+- **Templates:** `{{ state.faq ?? -1 }}` — a sign on the right of `??` — reads.
+- **A plugin attribute named as an element field** (`variant`, `class`, `id`…) is warned about
+  (`plugin-attribute-reserved`): a factory never hands it to the plugin. A `variant` no class or type style declares is
+  `unknown-variant`.
+- **Lists:** a list with `items` is a `<div>` with its rows straight inside, as the docs now say; a row written as an
+  `<li>` is `list-row-li`.
+- **CSS:** `mask-size`, `mask-position`, `mask-repeat`, `mask-composite`, `-webkit-mask-image`,
+  `-webkit-background-clip`, `box-decoration-break` and `-webkit-box-decoration-break`.
+- **`plitzi shot`:** `--clip <element>`, `--scroll-to <element>` and `--viewport`; `--frames` takes the same framing.
+- **SVG from files:** `svgFile` and `svgFiles` (`@plitzi/sdk-authoring/node`) read a logo or a folder of them,
+  compacted (`compactSvg`, also on the main entry), instead of strings in the space's source.
+- The plugin scaffolds say that an inline `style` on `RootElement` outranks the element's classes.

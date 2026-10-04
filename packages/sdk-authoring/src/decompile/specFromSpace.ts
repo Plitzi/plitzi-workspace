@@ -154,7 +154,8 @@ const DEFINITION_FIELDS = new Set([
   'runtime',
   'loadStrategy',
   'flag',
-  'anchor'
+  'anchor',
+  'motion'
 ]);
 
 const PAGE_ATTRIBUTES = new Set([
@@ -1224,6 +1225,7 @@ class SpecReader {
       ...(definition.runtime ? { runtime: definition.runtime } : {}),
       ...(definition.loadStrategy ? { loadStrategy: definition.loadStrategy } : {}),
       ...(definition.anchor ? { anchor: definition.anchor } : {}),
+      ...(definition.motion ? { motion: definition.motion } : {}),
       ...(definition.flag ? { flag: flagSpecOf(definition.flag) } : {}),
       meta: { label: definition.label },
       ...this.childrenSpec(element)

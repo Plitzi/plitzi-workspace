@@ -6,6 +6,7 @@ import { LintContext } from './context';
 import { lintElements } from './elements';
 import { lintFlags } from './flags';
 import { lintFlows } from './flows';
+import { lintMotion } from './motion';
 import { lintPages } from './pages';
 import { lintStyle } from './style';
 import { lintComputed } from './templates';
@@ -44,6 +45,7 @@ export const lintSpace = (
   lintFlags(ctx);
   lintElements(ctx);
   lintAnchors(ctx);
+  lintMotion(ctx);
   lintInstances(ctx);
   lintChannels(ctx);
   lintFlows(ctx);

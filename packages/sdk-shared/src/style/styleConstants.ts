@@ -59,6 +59,12 @@ const styleConstants = {
   BACKGROUND_ATTACHMENT: 'background-attachment',
   BACKGROUND_BLEND_MODE: 'background-blend-mode',
   MASK_IMAGE: 'mask-image',
+  MASK_SIZE: 'mask-size',
+  MASK_POSITION: 'mask-position',
+  MASK_REPEAT: 'mask-repeat',
+  MASK_COMPOSITE: 'mask-composite',
+  // Safari before 15.4 masks only through the prefixed property.
+  WEBKIT_MASK_IMAGE: '-webkit-mask-image',
   // Border
   BORDER_TOP_STYLE: 'border-top-style',
   BORDER_TOP_WIDTH: 'border-top-width',
@@ -208,6 +214,11 @@ const styleConstants = {
   // Text painted with its background (`background-clip: text`) needs its own fill made transparent, and only the
   // prefixed property does that in every shipping browser.
   WEBKIT_TEXT_FILL_COLOR: '-webkit-text-fill-color',
+  // …and `background-clip: text` itself is read prefixed by Chromium and Safari.
+  WEBKIT_BACKGROUND_CLIP: '-webkit-background-clip',
+  // How a highlight or a padding behaves across the lines an inline element wraps over; Safari reads it prefixed.
+  BOX_DECORATION_BREAK: 'box-decoration-break',
+  WEBKIT_BOX_DECORATION_BREAK: '-webkit-box-decoration-break',
   // SVG
   FILL: 'fill',
   STROKE: 'stroke',
@@ -288,6 +299,11 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   [styleConstants.BACKGROUND_ATTACHMENT]: 'scroll',
   [styleConstants.BACKGROUND_BLEND_MODE]: 'normal',
   [styleConstants.MASK_IMAGE]: 'none',
+  [styleConstants.MASK_SIZE]: 'auto',
+  [styleConstants.MASK_POSITION]: '0% 0%',
+  [styleConstants.MASK_REPEAT]: 'repeat',
+  [styleConstants.MASK_COMPOSITE]: 'add',
+  [styleConstants.WEBKIT_MASK_IMAGE]: 'none',
   // Border
   [styleConstants.BORDER_TOP_STYLE]: 'solid',
   [styleConstants.BORDER_TOP_WIDTH]: '0px',
@@ -430,6 +446,9 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   [styleConstants.WEBKIT_LINE_CLAMP]: 'none',
   [styleConstants.WEBKIT_BOX_ORIENT]: 'horizontal',
   [styleConstants.WEBKIT_TEXT_FILL_COLOR]: 'currentcolor',
+  [styleConstants.WEBKIT_BACKGROUND_CLIP]: 'border-box',
+  [styleConstants.BOX_DECORATION_BREAK]: 'slice',
+  [styleConstants.WEBKIT_BOX_DECORATION_BREAK]: 'slice',
   // SVG
   [styleConstants.FILL]: 'currentColor',
   [styleConstants.STROKE]: 'none',

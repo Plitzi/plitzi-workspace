@@ -20,6 +20,7 @@ import DisplayModeButtons from './DisplayModeButtons';
 import GridButton from './GridButton';
 import HistoryButtons from './HistoryButtons';
 import IssuesButton from './IssuesButton';
+import MotionButton from './MotionButton';
 import PageHeader from './PageHeader';
 import PreviewModeButtons from './PreviewModeButtons';
 import QuotaMeter from './QuotaMeter';
@@ -172,6 +173,7 @@ const AppHeader = () => {
         <HistoryButtons />
         <BorderButton />
         <GridButton />
+        <MotionButton />
       </div>
       <div className="flex h-full items-center gap-4">
         <DisplayModeButtons />

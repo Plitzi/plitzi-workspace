@@ -74,7 +74,12 @@ const widgetOperations = [
 //
 // Raised from 200.5k for the notifications' look on `patchSettings`: one field, a record whose keys its one-line
 // description names (a property per key measured ~3k more across the four tools), ~0.8k in all.
-const TOOLS_BUDGET_BYTES = 201_500;
+//
+// Raised from 201.5k for an element's declared `motion` — the presets the SDK's stylesheet plays: a field of the
+// element and of its patch, ~1.1k across the four tools that carry the op union, registered once (`ElementMotion`) as
+// an open object checked by `motionProblems` — spelled out field by field it measured ~3k — with the presets in the
+// guide.
+const TOOLS_BUDGET_BYTES = 202_800;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

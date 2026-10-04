@@ -372,6 +372,8 @@ export const prepareRender = async (
       // The authorization, not what was drawn: see `debugAuthorized` above.
       debugMode: debugAuthorized,
       ssrOnly: config.ssrOnly === true,
+      // The page reloads itself when the server says the space changed (`reloadPages`): development only.
+      devReload: config.devMode === true,
       offlineData: offlineDataStr
     },
     // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page.

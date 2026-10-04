@@ -2,6 +2,7 @@ import http from 'node:http';
 import net from 'node:net';
 
 import { describe, expect, it } from 'vitest';
+import { WebSocket, WebSocketServer } from 'ws';
 
 import { watchConnections } from './drain';
 
@@ -48,6 +49,21 @@ describe('watchConnections().drain', () => {
     // Not the seconds the client would keep the connection alive for.
     expect(await elapsed(connections.drain('test', 5000))).toBeLessThan(1000);
     expect(await answer).toBe('done');
+  });
+
+  it('closes a WebSocket at once, telling its client the server is going away', async () => {
+    const { server, connections, url } = await serve(() => undefined);
+    const sockets = new WebSocketServer({ noServer: true });
+    server.on('upgrade', (request, socket, head) => {
+      sockets.handleUpgrade(request, socket, head, () => undefined);
+    });
+    const client = new WebSocket(url.replace('http', 'ws'));
+    await new Promise<void>(resolve => client.once('open', () => resolve()));
+    const closed = new Promise<number>(resolve => client.once('close', code => resolve(code)));
+
+    expect(await elapsed(connections.drain('test', 5000))).toBeLessThan(1000);
+    expect(await closed).toBe(1001);
+    sockets.close();
   });
 
   it('cuts what is still open once the grace runs out', async () => {

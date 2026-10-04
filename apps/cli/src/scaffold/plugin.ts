@@ -87,6 +87,10 @@ const StatCard = ({ label = 'Metric', value = 0, unit = '', series, className }:
    * It is what makes this an ELEMENT rather than a component that happens to be on the page: the element's id and
    * classes land on it, so the CSS authored on it in \`src/space.ts\` applies, the builder can select it, a test
    * can find it by name, and interactions fire on it. A plain tag renders the same pixels and none of that.
+   *
+   * Its \`style\` is inline, and inline outranks every class: what \`CARD\` sets — its display, its padding — the CSS
+   * authored on the element can never change. Keep it to what the element cannot render without, and leave layout and
+   * position (\`position\`, \`width\`, \`margin\`) to the space's classes.
    */
   return (
     <RootElement className={className} style={CARD}>

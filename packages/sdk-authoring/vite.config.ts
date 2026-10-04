@@ -40,9 +40,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    lib: { entry: './src/index.ts', formats: ['es'] },
+    // Two entries: everything, and what only an author on Node can do (`./node`: reading SVG files), apart so the
+    // main one never imports `node:fs` into a browser's bundle.
+    lib: { entry: { index: './src/index.ts', node: './src/node.ts' }, formats: ['es'] },
     rollupOptions: {
-      output: { entryFileNames: 'index.js', chunkFileNames: 'index-[name].js' }
+      external: [/^node:/],
+      output: { entryFileNames: '[name].js', chunkFileNames: 'index-[name].js' }
     },
     minify: false,
     sourcemap: false

@@ -7,6 +7,15 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
+import {
+  createShaderProgram,
+  ShaderError,
+  useAnimationFrame,
+  useCanvas2d,
+  useReducedMotion,
+  useWebGL,
+  useWebGL2
+} from '@plitzi/sdk-elements/canvas';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import useFlag from '@plitzi/sdk-elements/dataSource/useFlag';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
@@ -35,6 +44,7 @@ if (import.meta.env.PROD) {
   void import('./assets/plitzi-sdk-devtools.scss');
 }
 
+import type { CanvasHandle, CanvasOptions, CanvasSize, Frame } from '@plitzi/sdk-elements/canvas';
 import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
 import type { ChannelHandle } from '@plitzi/sdk-elements/realtime/useChannel';
 import type EventBridge from '@plitzi/sdk-event-bridge';
@@ -377,7 +387,16 @@ export {
   // read without a flow per message.
   useChannel,
   // One of the space's feature flags, for a plugin that ships a feature behind one: whatever every layer decided.
-  useFlag
+  useFlag,
+  // A plugin that draws: a loop that runs only while somebody can see it move, and a canvas sized to the device, with
+  // a still frame where it may not animate and an error that says why instead of an empty canvas.
+  useAnimationFrame,
+  useReducedMotion,
+  useCanvas2d,
+  useWebGL,
+  useWebGL2,
+  createShaderProgram,
+  ShaderError
 };
 
 export type {
@@ -395,7 +414,11 @@ export type {
   PluginDeclaration,
   ChannelHandle,
   RealtimeMember,
-  RealtimeMessage
+  RealtimeMessage,
+  CanvasHandle,
+  CanvasOptions,
+  CanvasSize,
+  Frame
 };
 
 export const version = typeof VERSION !== 'undefined' ? VERSION : '';

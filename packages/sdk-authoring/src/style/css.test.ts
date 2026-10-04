@@ -13,6 +13,23 @@ describe('css', () => {
     });
   });
 
+  // What a marketing page masks and highlights with: a dotted map faded at its edges, a heading tinted line by line.
+  it('takes masks, the prefixed text clip and box-decoration-break', () => {
+    const effects = {
+      'mask-image': 'radial-gradient(black, transparent)',
+      '-webkit-mask-image': 'radial-gradient(black, transparent)',
+      'mask-size': '8px 8px',
+      'mask-position': 'center',
+      'mask-repeat': 'repeat',
+      'mask-composite': 'intersect',
+      '-webkit-background-clip': 'text',
+      'box-decoration-break': 'clone',
+      '-webkit-box-decoration-break': 'clone'
+    };
+
+    expect(css(effects)).toEqual(effects);
+  });
+
   it('passes longhands through unchanged', () => {
     expect(css({ 'font-size': '14px', 'font-weight': 700 })).toEqual({ 'font-size': '14px', 'font-weight': 700 });
   });

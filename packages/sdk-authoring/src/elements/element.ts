@@ -16,6 +16,7 @@ import type {
   ElementAttributesBrand,
   ElementDeclarationData
 } from '@plitzi/sdk-shared/authoring/declare';
+import type { ElementMotion } from '@plitzi/sdk-shared/schema/motion';
 
 /**
  * Authoring an element.
@@ -76,6 +77,8 @@ export interface AuthoringProps {
   loadStrategy?: ElementLoadStrategy;
   /** Its `id` in the DOM, so `/page#anchor` lands on it. One per page; not inside a list row or a component. */
   anchor?: string;
+  /** How it arrives and whether it keeps moving: `{ enter: 'fade-up', on: 'view' }`. Played by the SDK's stylesheet. */
+  motion?: ElementMotion;
   /** The feature flag it exists under: `'newCheckout'` while on, `'!newCheckout'` while off. Not a visibility. */
   flag?: string;
   children?: ElementSpec[];
@@ -274,6 +277,7 @@ const buildSpec = (
     runtime,
     loadStrategy,
     anchor,
+    motion,
     flag,
     children,
     meta,
@@ -310,6 +314,7 @@ const buildSpec = (
     ...(runtime === undefined ? {} : { runtime }),
     ...(loadStrategy === undefined ? {} : { loadStrategy }),
     ...(anchor === undefined ? {} : { anchor }),
+    ...(motion === undefined ? {} : { motion }),
     ...(flag === undefined ? {} : { flag }),
     ...(list
       ? list.children === undefined

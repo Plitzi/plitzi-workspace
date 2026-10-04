@@ -24,8 +24,11 @@ row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item`
   bindings read the short form (`'games.item.title'`), templates and attribute tokens the full one
   (`{{ list_games.item.slug }}`).
 - A **nested list** sees the outer row: inside `list_features`, `list_games.item` is still the game.
-- The list is a `<ul>` and its `class` styles that root; each child is rendered straight into it, with no wrapper.
-  A card grid needs `{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` in its class.
+- A list with `items` is a `<div>` and its `class` styles that root; each row is rendered straight into it, with no
+  wrapper — so a row is never an `<li>`: one written as `container({ subType: 'li' })` is an `<li>` outside any list,
+  which the browser repairs and React then fails to hydrate (`list-row-li`). A grid of cards is all the root's class.
+  A list with no `items` is the plain `<ul>` (`subType: 'ol'` for a numbered one), and a `<ul>` is indented and
+  bulleted: `{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` takes that off.
 - Fixed data is `items: [ … ]` on the list itself — no provider needed. Worth it when the rows ARE data — written from
   an array, or rows that come and go (`repeated-shape` points at sibling copies). Three cards a person rewords on the
   canvas are easier to edit as three cards than as a JSON array.

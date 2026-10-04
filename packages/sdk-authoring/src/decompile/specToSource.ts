@@ -61,6 +61,7 @@ export const ELEMENT_FIELDS = [
   'runtime',
   'loadStrategy',
   'anchor',
+  'motion',
   'flag',
   'meta',
   'children'

@@ -130,3 +130,44 @@ describe('probePage / which element a finding is about', () => {
     ]);
   });
 });
+
+describe('probePage / sideways scroll', () => {
+  /** A box `right` px wide from the left edge, as the browser would lay it out. */
+  const boxTo = (node: HTMLElement, right: number): HTMLElement => {
+    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top: 0,
+      right,
+      bottom: 100,
+      width: right,
+      height: 100
+    } as DOMRect);
+
+    return node;
+  };
+
+  const element = (style: string, right: number, ...children: HTMLElement[]): HTMLElement => {
+    const node = document.createElement('div');
+    // As an attribute: jsdom drops `overflow-x` set through the style object.
+    node.setAttribute('style', style);
+    node.append(...children);
+
+    return boxTo(node, right);
+  };
+
+  it('lets a row that scrolls by itself — a carousel — hold what is wider than the screen', () => {
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(400);
+    document.body.append(element('overflow-x: auto', 400, element('', 1200)));
+
+    expect(probePage({ ...input([]), overflow: true }).overflow).toBeNull();
+  });
+
+  it('reports what is wider than the screen inside the pane the page itself scrolls in', () => {
+    vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(400);
+    const pane = element('overflow: auto', 400, element('', 900));
+    pane.className = 'plitzi-sdk';
+    document.body.append(pane);
+
+    expect(probePage({ ...input([]), overflow: true }).overflow).toMatchObject({ pixels: 500 });
+  });
+});

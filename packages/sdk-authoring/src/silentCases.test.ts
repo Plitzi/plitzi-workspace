@@ -219,6 +219,16 @@ describe('handles a generic visual test can trust', () => {
     expect(handles.element('rows').repeated).toBeUndefined();
   });
 
+  it('finds a component’s instance by its own name, which its root carries — it has no node of its own', () => {
+    const { handles } = authoring.authorSpace(
+      space([authoring.component('card', { id: 'first' })], {
+        components: [{ id: 'card', root: authoring.container({ id: 'card-root', children: [authoring.text('Hi')] }) }]
+      })
+    );
+
+    expect(handles.element('first').selector).toBe('[data-plitzi-instance="first"]');
+  });
+
   it('marks a plugin that declares it draws nothing, hosted by `custom` or by its own type, and no other', () => {
     const ticker = { type: 'ticker', drawsNothing: true, content: { attributes: { interval: 5000 } } };
     const badge = { type: 'badge', content: { attributes: { tone: 'info' } } };
@@ -290,5 +300,73 @@ describe('notifications', () => {
   it('refuses an unknown field and a value that would break out of its declaration', () => {
     expect(() => author([], { notifications: { error: 'red' } as never })).toThrow(/has no "error"/);
     expect(() => author([], { notifications: { text: 'red; } body { display: none' } })).toThrow(/not one CSS value/);
+  });
+});
+
+describe('what an element is written with that reaches nothing', () => {
+  it('says so of a variant nothing declares — and, once, of a plugin attribute named as the element’s own', () => {
+    const wave = { type: 'gradientWave', content: { attributes: { variant: 'wave', speed: 1 } } };
+    const { warnings } = authoring.authorSpace(
+      space([
+        authoring.custom({ id: 'hero-wave', renderType: 'gradientWave', variant: 'mesh' }),
+        authoring.custom({ id: 'footer-wave', renderType: 'gradientWave' })
+      ]),
+      { plugins: [wave] }
+    );
+
+    expect(warnings.map(({ code, elementId }) => ({ code, elementId }))).toEqual([
+      { code: 'plugin-attribute-reserved', elementId: 'hero-wave' },
+      { code: 'unknown-variant', elementId: 'hero-wave' }
+    ]);
+    expect(warnings[1].message).toContain('the plugin’s own `variant`');
+  });
+
+  it('says so of a list row written as an `<li>` — the list with items is a `<div>` — and not of a plain one', () => {
+    const { warnings } = author([
+      authoring.list({
+        id: 'faq',
+        items: [{ q: 'Why?' }],
+        children: [authoring.container({ id: 'faq-row', subType: 'li', children: [authoring.text('x')] })]
+      }),
+      authoring.list({
+        id: 'plain',
+        items: [{ q: 'Why?' }],
+        children: [authoring.container({ children: [authoring.text('y')] })]
+      })
+    ]);
+
+    expect(warnings.filter(warning => warning.code === 'list-row-li').map(warning => warning.elementId)).toEqual([
+      'faq-row'
+    ]);
+  });
+
+  it('is quiet about a variant a class of the element declares', () => {
+    const pill = authoring.styles('pill', { css: { padding: '4px' }, variants: { active: { color: 'red' } } });
+    const { warnings } = author([authoring.text('On', { id: 'on', class: pill, variant: 'active' })]);
+
+    expect(warnings.map(warning => warning.code)).not.toContain('unknown-variant');
+  });
+});
+
+describe('an element’s motion', () => {
+  it('is written into its definition, and comes back the same from the documents', () => {
+    const motion = { enter: 'fade-up', on: 'view', delay: 120 } as const;
+    const spec = space([authoring.container({ id: 'hero', motion, children: [authoring.text('Hi')] })]);
+    const { schema, style } = authoring.authorSpace(spec);
+
+    expect(schema.flat.hero.definition.motion).toEqual(motion);
+    const { spec: again } = authoring.specFromSpace({ schema, style });
+    expect(authoring.compareSpaces({ schema, style }, authoring.authorSpace(again))).toEqual([]);
+  });
+
+  it('is refused when the page cannot play it, or has nothing to move', () => {
+    expect(() =>
+      author([
+        authoring.container({ id: 'hero', motion: { enter: 'bounce' } as never, children: [authoring.text('x')] })
+      ])
+    ).toThrow(/motion-invalid[\s\S]*motion\.enter is one of fade, fade-up/);
+    expect(() =>
+      author([authoring.apiContainer({ id: 'feed', query: '/feed.json', motion: { enter: 'fade' }, children: [] })])
+    ).toThrow(/motion-no-tag/);
   });
 });

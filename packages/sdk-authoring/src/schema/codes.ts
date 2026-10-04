@@ -132,6 +132,16 @@ export const AUTHORING_CODES = {
   },
 
   // Anchors.
+  'motion-invalid': {
+    kind: 'refused',
+    means: 'a `motion` with a preset, a trigger or a timing the page cannot play',
+    fix: "`motion: { enter: 'fade-up', on: 'view' }` — the message lists the presets"
+  },
+  'motion-no-tag': {
+    kind: 'refused',
+    means: 'a `motion` on an element with no tag of its own — nothing to move',
+    fix: 'the motion on what it wraps, or a `subType` on it'
+  },
   'anchor-invalid': {
     kind: 'refused',
     means: "an `anchor` or a link's `hash` that is not lowercase letters, digits and `-`",
@@ -308,6 +318,16 @@ export const AUTHORING_CODES = {
     means: 'a type no built-in element has',
     fix: "the built-in it suggests; a plugin's declaration goes in `authorSpace(space, { plugins: [declaration] })`"
   },
+  'plugin-attribute-reserved': {
+    kind: 'warned',
+    means: 'a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin',
+    fix: 'rename it in the plugin (`variant` → `kind`)'
+  },
+  'unknown-variant': {
+    kind: 'warned',
+    means: 'a variant no class of the element and no style of its type declares — nothing applies',
+    fix: 'declare it (`styles(name, { variants: { … } })`), or name one that is'
+  },
   'unknown-attribute': {
     kind: 'refused',
     means: 'an attribute the element does not have',
@@ -397,6 +417,12 @@ export const AUTHORING_CODES = {
     kind: 'refused',
     means: 'a controlled list with nothing to render',
     fix: "`items: [ … ]` or `bind: { items: 'provider.data.rows' }`"
+  },
+  'list-row-li': {
+    kind: 'warned',
+    means:
+      'a row of a list with `items` written as an `<li>` — that list is a `<div>`, so it is an `<li>` outside a list',
+    fix: 'a plain `container` (no `subType`)'
   },
   'list-item-key-missing': {
     kind: 'warned',

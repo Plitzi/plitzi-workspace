@@ -139,5 +139,11 @@
       render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true);
     </script>
     <% } %>
+    <% if (locals.devReload) { %>
+    <%# Development only: the server says the space changed (re-authored, `reloadPages`), and the page loads again. %>
+    <script>
+      new EventSource('/__plitzi/reload').addEventListener('reload', () => location.reload());
+    </script>
+    <% } %>
   </body>
 </html>

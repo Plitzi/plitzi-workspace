@@ -6,6 +6,32 @@ stutters on a phone, and stutters everywhere while it loads. This guide says wha
 how to keep the expensive kind out of the way. It applies to whoever writes the space: a person in the builder, code
 written with `@plitzi/sdk-authoring`, or an agent over MCP.
 
+## Declared motion
+
+Most of what a page moves is an arrival — a section fading up as it scrolls in, cards following one another — or a
+gentle loop. An element says that with `motion`, and the SDK's stylesheet plays it; no keyframes to write:
+
+```ts
+container({ motion: { enter: 'fade-up', on: 'view' }, children })     // arrives as it scrolls into view
+container({ class: grid, motion: { enter: 'scale', stagger: 60 }, children: cards })  // its children, one by one
+image({ src, alt, motion: { loop: 'float' } })                         // keeps rising and falling, gently
+```
+
+| Field | Values |
+| --- | --- |
+| `enter` | `fade`, `fade-up`, `fade-down`, `slide-left`, `slide-right`, `scale` |
+| `on` | `load` (default) or `view` — tied to the scroll where the browser has scroll timelines, on load where not |
+| `duration`, `delay` | ms (600 and 0 by default); `duration` does not apply under `view`, which follows the scroll |
+| `stagger` | ms between children: they arrive instead of the element, the first 24 one by one |
+| `loop` | `float`, `pulse`, `spin`, `sway` — held until the page is live (`data-hydrated`) |
+
+Every preset moves only `opacity` and the transforms — an arrival the individual `translate`/`scale` properties, so it
+composes with a `transform` of the element's own, a loop `transform` — and a visitor who asked for less motion gets
+none of it. It is refused where it could not play (`motion-invalid`, `motion-no-tag` on a provider with no tag). In the
+builder it is the **Motion** panel of an element's settings; the canvas holds it still while editing, and **▶** in the
+header (or **Play** in the panel) plays it from the start. Over MCP, `motion` is a field of `upsertElement` and
+`patchElement`. Anything the presets do not cover is CSS, by the practices below.
+
 ## Why some animations are cheap
 
 A browser draws a frame in three steps: **layout** (where every box goes), **paint** (the pixels of each layer) and

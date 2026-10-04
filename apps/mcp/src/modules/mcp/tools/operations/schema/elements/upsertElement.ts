@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { flagGateOf } from '@plitzi/sdk-authoring';
+import { isMotion } from '@plitzi/sdk-shared/schema/motion';
 
 import { empty, fail, findRootByRef, resolveRef } from '../../../../helpers';
 import { elementInput, position } from '../shared';
@@ -70,6 +71,10 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
 
     if (op.element.anchor !== undefined) {
       existing.definition.anchor = op.element.anchor;
+    }
+
+    if (isMotion(op.element.motion)) {
+      existing.definition.motion = op.element.motion;
     }
 
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };

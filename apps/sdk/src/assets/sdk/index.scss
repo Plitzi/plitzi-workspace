@@ -1,4 +1,5 @@
 @use './elements' as elements;
+@use './motion' as motion;
 
 @mixin styles {
   .plitzi-component--hidden {
@@ -6,4 +7,5 @@
   }
 
   @include elements.styles;
+  @include motion.styles;
 }

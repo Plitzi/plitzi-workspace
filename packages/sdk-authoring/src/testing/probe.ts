@@ -216,11 +216,27 @@ export function probePage(input: ProbeInput): ProbeFindings {
   let overflow: ProbeFindings['overflow'] = null;
   if (input.overflow) {
     const viewport = document.documentElement.clientWidth;
+    /**
+     * Whether an ancestor keeps what spills inside it. One that hides or clips it does; so does one that scrolls it —
+     * a carousel's row, a table's wrapper — which is somewhere a person scrolls on purpose, not the page doing it. Not
+     * the page's own scroller: the document, or the pane the SDK scrolls a page in (`.plitzi-sdk`), whose sideways
+     * scroll IS the page scrolling sideways.
+     */
+    const keepsOverflow = (ancestor: Element): boolean => {
+      const { overflowX } = getComputedStyle(ancestor);
+      if (overflowX === 'hidden' || overflowX === 'clip') {
+        return true;
+      }
+
+      const pageScroller =
+        ancestor === document.documentElement || ancestor === document.body || ancestor.matches('.plitzi-sdk');
+
+      return (overflowX === 'auto' || overflowX === 'scroll') && !pageScroller;
+    };
     const visibleRight = (node: Element): number => {
       let right = node.getBoundingClientRect().right;
       for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
-        const { overflowX } = getComputedStyle(ancestor);
-        if (overflowX === 'hidden' || overflowX === 'clip') {
+        if (keepsOverflow(ancestor)) {
           right = Math.min(right, ancestor.getBoundingClientRect().right);
         }
       }

@@ -1,6 +1,6 @@
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
-import { useState, useMemo } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 
 import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
@@ -50,6 +50,11 @@ const AppMain = ({
     'black'
   );
   const [displayGrid, setDisplayGrid] = useStorage<boolean>('builder-state.app.displayGrid', false);
+  const [motionPlaying, setMotionPlaying] = useState(false);
+  const replayMotion = useCallback(() => {
+    setMotionPlaying(false);
+    requestAnimationFrame(() => setMotionPlaying(true));
+  }, []);
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
   const [mobilePreview, setMobilePreview] = useState(false);
@@ -70,6 +75,9 @@ const AppMain = ({
       setDisplayBorderComponents,
       displayGrid,
       setDisplayGrid,
+      motionPlaying,
+      setMotionPlaying,
+      replayMotion,
       zoom,
       setZoom,
       displayMode,
@@ -86,6 +94,9 @@ const AppMain = ({
       setDisplayBorderComponents,
       displayGrid,
       setDisplayGrid,
+      motionPlaying,
+      setMotionPlaying,
+      replayMotion,
       zoom,
       setZoom,
       displayMode,

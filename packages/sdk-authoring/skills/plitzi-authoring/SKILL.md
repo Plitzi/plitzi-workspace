@@ -158,6 +158,7 @@ Each is a whole file that authors with no warning — CI holds it to that. Copy 
 | [flows.md](reference/flows.md) | Clicks, submits, page loads, every few seconds, server actions, modals, state |
 | [realtime.md](reference/realtime.md) | Pages that see each other: channels, presence, cursors, a shared board, who may hear a topic |
 | [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, channels, registering, behaving in the builder |
+| [drawing.md](reference/drawing.md) | A plugin that draws or animates: a canvas sized to the device, WebGL shaders that say why they failed, a loop that stops when nobody sees it |
 | [structure.md](reference/structure.md) | A space bigger than one screen: files, helpers, naming, keeping it short |
 | [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame, shortcuts, counting renders |
 | [performance.md](reference/performance.md) | A page with many elements, a busy flow, something that feels slow: what renders, what it costs, how to measure it |

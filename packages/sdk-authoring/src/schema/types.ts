@@ -29,6 +29,7 @@ import type {
   Snippet
 } from '@plitzi/sdk-shared';
 import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
+import type { ElementMotion } from '@plitzi/sdk-shared/schema/motion';
 
 /**
  * What an author declares, as opposed to what a document stores.
@@ -202,6 +203,12 @@ export interface ElementSpec {
    * would repeat it.
    */
   anchor?: string;
+  /**
+   * How it arrives and whether it keeps moving — `{ enter: 'fade-up', on: 'view' }`, `{ loop: 'float' }`,
+   * `{ enter: 'scale', stagger: 60 }` for children that arrive one after another. Played by the SDK's stylesheet,
+   * opacity and transforms only, and stilled for a visitor who asked for less motion. See motion.md.
+   */
+  motion?: ElementMotion;
   /**
    * The feature flag this exists under: `'newCheckout'` exists only while the flag is on, `'!newCheckout'` only while
    * it is off — the old version, kept until the new one ships. Not a visibility: gated off, it is not rendered at all,
@@ -603,6 +610,11 @@ export interface AuthorSpaceOptions {
    * type or `custom:<renderType>`. Their handles are `boxless`, so a page check does not wait for them on screen.
    */
   drawsNothingTypes?: readonly string[];
+  /**
+   * Plugin type → the attributes it declares under a name authoring keeps for the element itself (`variant`, `class`,
+   * `id`…): a factory reads those as the element's, so the plugin is never handed them. Derived from `plugins`.
+   */
+  reservedPluginAttributes?: Readonly<Record<string, readonly string[]>>;
   /**
    * Element type → the attributes it starts with. What tells a default `content` rendered beside children apart from
    * one the author wrote, and an attribute that holds a list from one that holds text.

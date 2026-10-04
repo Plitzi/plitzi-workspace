@@ -170,6 +170,10 @@ const ${name} = ({ label = ${tsString(title)}, start = 0, step = 1, className }:
    * It is what makes this an ELEMENT rather than a component that happens to be on the page: the element's id and
    * classes land on it, so the CSS authored on it applies, the builder can select it, a test can find it by name, and
    * the events and actions above are this element's.
+   *
+   * Its \`style\` is inline, and inline outranks every class: what \`CARD\` sets — its display, its padding — the CSS
+   * authored on the element can never change. Keep it to what the element cannot render without, and leave layout and
+   * position (\`position\`, \`width\`, \`margin\`) to the space's classes.
    */
   return (
     <RootElement

@@ -221,6 +221,24 @@ describe('lintSpace', () => {
   });
 
   describe('anchors', () => {
+    it('motion-invalid', () => {
+      const documents = withChange(({ schema }) => {
+        // Written as a document would arrive from a JSON file or an old builder, past the type.
+        Object.assign(schema.flat.hello.definition, { motion: { enter: 'bounce', on: 'hover' } });
+      });
+
+      expect(errorsOf(documents)).toContain('motion-invalid');
+    });
+
+    it('motion-no-tag', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.feed.attributes.subType = '';
+        schema.flat.feed.definition.motion = { enter: 'fade' };
+      });
+
+      expect(errorsOf(documents)).toContain('motion-no-tag');
+    });
+
     it('anchor-invalid', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.hello.definition.anchor = 'Our Plans';

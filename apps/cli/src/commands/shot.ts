@@ -18,6 +18,8 @@ import type { PictureDiff, PictureRegion } from '@plitzi/sdk-authoring';
  *   plitzi shot /about --width 390 --scheme dark
  *   plitzi shot / --compare https://example.com --width 1440     # beside another site: how much differs, by section
  *   plitzi shot / --frames 4 --every 500                         # what moves: a marquee, an autoplay
+ *   plitzi shot / --clip pricing-table                           # one element, scrolled to wherever it is
+ *   plitzi shot / --scroll-to faq --viewport --frames 6          # the screen at that section, as it animates
  *
  * The project's server has to be running (`npm start`). `--json` answers in one object, for a tool or an agent.
  */
@@ -33,8 +35,20 @@ export interface ShotOptions {
   every?: number;
   waitFor?: string;
   reducedMotion?: boolean;
+  /** One element only: its name (`data-plitzi-el`) or a CSS selector. */
+  clip?: string;
+  /** The page scrolled until this element is in view — and, with `viewport`, the screen there. */
+  scrollTo?: string;
+  /** What fits the viewport, rather than the whole page. */
+  viewport?: boolean;
   json?: boolean;
 }
+
+/**
+ * What a picture holds: the whole page (with its sections, which a diff is reported by), what the screen shows, or one
+ * element. Every picture of one run — the first, a compared one, each frame — is taken the same way.
+ */
+type Framing = { kind: 'page' } | { kind: 'viewport' } | { kind: 'element'; selector: string };
 
 type RegionChange = { name: string; changed: number };
 
@@ -56,7 +70,16 @@ const selectorOf = (target: string): string => (/^[#.[]/.test(target) ? target :
 const pictureOf = async (
   browser: Browser,
   url: string,
-  view: { width: number; height: number; scheme: Scheme; reducedMotion: boolean; waitFor?: string }
+  view: {
+    width: number;
+    height: number;
+    scheme: Scheme;
+    reducedMotion: boolean;
+    waitFor?: string;
+    clip?: string;
+    scrollTo?: string;
+    viewport?: boolean;
+  }
 ): Promise<{ page: BrowserPage; png: Uint8Array } | { problem: string }> => {
   const page = await browser.newPage({
     viewport: { width: view.width, height: view.height },
@@ -75,7 +98,33 @@ const pictureOf = async (
     }
   }
 
-  return { page, png: await page.screenshot({ fullPage: true }) };
+  for (const target of [view.scrollTo, view.clip]) {
+    if (target && !(await page.waitForSelector(selectorOf(target), { timeout: 10_000 }).catch(() => null))) {
+      return { problem: `${target} is not on ${url}.` };
+    }
+  }
+
+  if (view.scrollTo) {
+    await page.locator(selectorOf(view.scrollTo)).first().scrollIntoViewIfNeeded();
+  }
+
+  return { page, png: await capture(page, framing(view)) };
+};
+
+const framing = (view: { clip?: string; viewport?: boolean; scrollTo?: string }): Framing => {
+  if (view.clip) {
+    return { kind: 'element', selector: selectorOf(view.clip) };
+  }
+
+  return view.viewport || view.scrollTo ? { kind: 'viewport' } : { kind: 'page' };
+};
+
+const capture = (page: BrowserPage, how: Framing): Promise<Uint8Array> => {
+  if (how.kind === 'element') {
+    return page.locator(how.selector).first().screenshot();
+  }
+
+  return page.screenshot({ fullPage: how.kind === 'page' });
 };
 
 const regionsText = (regions: { name: string; changed: number }[]): string =>
@@ -113,6 +162,15 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
+  if (options.compare && (options.clip || options.scrollTo || options.viewport)) {
+    await browser.close();
+    fail(
+      '`--compare` sets the whole page beside the other site, section by section: leave out --clip, --scroll-to and --viewport.'
+    );
+
+    return;
+  }
+
   try {
     const pathname = route ?? '/';
     const view = {
@@ -120,8 +178,12 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       height: options.height ?? 800,
       scheme: options.scheme ?? 'light',
       reducedMotion: options.reducedMotion === true,
-      ...(options.waitFor ? { waitFor: options.waitFor } : {})
+      ...(options.waitFor ? { waitFor: options.waitFor } : {}),
+      ...(options.clip ? { clip: options.clip } : {}),
+      ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
+      ...(options.viewport ? { viewport: true } : {})
     };
+    const how = framing(view);
     const name = pathname === '/' ? 'home' : pathname.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
     const out = path.resolve(
       project.root,
@@ -138,7 +200,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     await mkdir(path.dirname(out), { recursive: true });
     await writeFile(out, taken.png);
-    const regions: PictureRegion[] = await taken.page.evaluate(pageRegions, undefined);
+    // The sections a diff is told by are the page's: a picture of part of it is one region, named for what it shows.
+    const regions: PictureRegion[] = how.kind === 'page' ? await taken.page.evaluate(pageRegions, undefined) : [];
     const report: ShotReport = { path: pathname, width: view.width, scheme: view.scheme, out };
 
     if (options.compare) {
@@ -169,7 +232,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       const pictures = [taken.png];
       for (let frame = 1; frame < frames; frame += 1) {
         await taken.page.waitForTimeout(every);
-        pictures.push(await taken.page.screenshot({ fullPage: true }));
+        pictures.push(await capture(taken.page, how));
       }
 
       const diffs: PictureDiff[] = [];
@@ -177,7 +240,11 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         diffs.push(await comparePictures(taken.page, dataUrl(pictures[frame - 1]), dataUrl(pictures[frame]), regions));
       }
 
-      const moved = framesMoved(diffs);
+      const whole = how.kind === 'element' ? (options.clip ?? 'element') : 'viewport';
+      const moved =
+        how.kind === 'page'
+          ? framesMoved(diffs)
+          : [{ name: whole, changed: Math.max(0, ...diffs.map(diff => diff.changed)) }];
       report.frames = {
         count: frames,
         every,

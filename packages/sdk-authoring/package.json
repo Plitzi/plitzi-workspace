@@ -5,6 +5,9 @@
   "files": [
     "dist/index.js",
     "dist/index.d.ts",
+    "dist/index-*.js",
+    "dist/node.js",
+    "dist/node.d.ts",
     "skills"
   ],
   "main": "dist/index.js",
@@ -15,6 +18,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js",
+      "default": "./dist/node.js"
     },
     "./skills/*": "./skills/*",
     "./package.json": "./package.json"

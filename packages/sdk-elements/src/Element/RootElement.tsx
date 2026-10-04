@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { motionAttributes } from '@plitzi/sdk-shared/schema/motion';
 
 import parseStyle from './helpers/parseStyle';
 import renderStaticTag from './helpers/renderStaticTag';
@@ -61,8 +62,11 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     id,
     rootId,
     style,
-    definition: { type, label, runtime, anchor }
+    plitziElementLayout,
+    definition: { type, label, runtime, anchor, parentId, motion: declaredMotion }
   } = elementContext;
+  // After the early return above, so not a hook: two small objects, rebuilt with the style object they join.
+  const motion = motionAttributes(declaredMotion);
   const serverMarker = runtime === 'server' ? { 'data-rsc-id': id } : undefined;
   /**
    * What an end-to-end test finds this element by, and the reason it is not the debug params below: those exist for
@@ -70,7 +74,19 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
    * runs against. An id is not debug information — it is the element's name, the same one `authorSpace` handed the
    * author — so it ships unless a deployment turns it off.
    */
-  const testMarker = serviceContext.settings.testAttributes === false ? undefined : { 'data-plitzi-el': id };
+  /**
+   * A component's instance has no node of its own: the component's root is drawn where it is placed, under the
+   * COMPONENT's id, the same for every instance. So that root also carries the instance's — the only element with no
+   * parent inside a component's layout — and a suite finds each instance by the name the author gave it.
+   */
+  const instanceId =
+    plitziElementLayout?.type === 'component' && !parentId && plitziElementLayout.rootId !== id
+      ? plitziElementLayout.rootId
+      : undefined;
+  const testMarker =
+    serviceContext.settings.testAttributes === false
+      ? undefined
+      : { 'data-plitzi-el': id, ...(instanceId === undefined ? {} : { 'data-plitzi-instance': instanceId }) };
   const params: DebugParams =
     !debugMode && (previewMode || !type || rootId !== baseElementId)
       ? {}
@@ -86,12 +102,13 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     return renderStaticTag({
       tag,
       refProp: ref,
-      style: { ...style, ...styleParsed },
+      style: { ...style, ...styleParsed, ...motion.style },
       className,
       otherProps,
       anchor,
       params,
       serverMarker,
+      motion: motion.attributes,
       testMarker,
       children
     });
@@ -114,12 +131,13 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   return renderStaticTag({
     tag,
     refProp: interactions.nodeRef,
-    style: { ...style, ...styleParsed },
+    style: { ...style, ...styleParsed, ...motion.style },
     className: interactions.className,
     otherProps,
     anchor,
     params,
     serverMarker,
+    motion: motion.attributes,
     testMarker,
     events: interactions.events,
     children

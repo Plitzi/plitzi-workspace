@@ -12,6 +12,7 @@ import { createMemoryDraftStore, DRAFT_STORE_METHODS } from '../../modules/ssr/p
 import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
 import { makeHandler } from '../http/dispatcher';
+import { createDevReload } from '../http/stages/devReload';
 import { buildPagePipeline } from '../services/registry';
 
 import type { BuildContext } from '../http/dispatcher';
@@ -79,7 +80,9 @@ export const createPageServer = (
   const actions = actionsModuleFor(config);
   const realtime = realtimeModuleFor(config);
 
-  const stages = buildPagePipeline(services, extensions);
+  const devReload = config.devMode ? createDevReload() : undefined;
+  // First: a page listening for a reload asks before anything else is looked at, and holds its connection open.
+  const stages = [...(devReload ? [devReload.stage] : []), ...buildPagePipeline(services, extensions)];
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<SSRContext> = (raw, rawRes, req, res) => ({
       raw,
@@ -120,7 +123,11 @@ export const createPageServer = (
     },
     // Every realtime connection told to go the moment the server stops taking new ones: an open socket or stream never
     // ends on its own, and would hold the shutdown until the grace cut it.
-    onClosing: () => realtime?.close(),
+    onClosing: () => {
+      realtime?.close();
+      devReload?.close();
+    },
+    ...(devReload ? { reloadPages: devReload.reload } : {}),
     onDestroy: async () => {
       // Awaited first, and before the sockets go: the jobs running here are finished rather than abandoned, so a
       // rolling deploy costs no retries. Nothing else is waited for — what is still pending stays in the shared

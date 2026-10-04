@@ -1,3 +1,4 @@
+import type { ElementMotion } from './motion';
 import type { Element, Schema, SchemaRaw, WireElement } from '../types';
 
 // `flat` as a list is the wire shape of a schema — the live channel's and GraphQL's — and keyed by element id the
@@ -8,10 +9,31 @@ import type { Element, Schema, SchemaRaw, WireElement } from '../types';
 /** A schema as the channel carries it: `flat` as a list. What every publisher of a whole schema sends. */
 export const schemaToWire = (schema: Schema): SchemaRaw => ({ ...schema, flat: Object.values(schema.flat) });
 
+/** A motion as the document keeps it: GraphQL names every field, and answers `null` for each one it does not have. */
+const motionFromWire = (motion: NonNullable<WireElement['definition']['motion']>): ElementMotion => ({
+  ...(motion.enter ? { enter: motion.enter } : {}),
+  ...(motion.on ? { on: motion.on } : {}),
+  ...(typeof motion.duration === 'number' ? { duration: motion.duration } : {}),
+  ...(typeof motion.delay === 'number' ? { delay: motion.delay } : {}),
+  ...(typeof motion.stagger === 'number' ? { stagger: motion.stagger } : {}),
+  ...(motion.loop ? { loop: motion.loop } : {})
+});
+
 /** An element as the store holds it: what the wire sent `null` for is absent, as it is in the document. */
 export const elementFromWire = ({ definition, ...element }: WireElement): Element => {
-  const { parentId, items, bindings, interactions, initialState, runtime, loadStrategy, flag, anchor, ...required } =
-    definition;
+  const {
+    parentId,
+    items,
+    bindings,
+    interactions,
+    initialState,
+    runtime,
+    loadStrategy,
+    flag,
+    anchor,
+    motion,
+    ...required
+  } = definition;
 
   return {
     ...element,
@@ -25,7 +47,8 @@ export const elementFromWire = ({ definition, ...element }: WireElement): Elemen
       ...(runtime === null || runtime === undefined ? {} : { runtime }),
       ...(loadStrategy === null || loadStrategy === undefined ? {} : { loadStrategy }),
       ...(flag === null || flag === undefined ? {} : { flag }),
-      ...(anchor === null || anchor === undefined ? {} : { anchor })
+      ...(anchor === null || anchor === undefined ? {} : { anchor }),
+      ...(motion === null || motion === undefined ? {} : { motion: motionFromWire(motion) })
     }
   };
 };

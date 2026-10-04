@@ -2,6 +2,7 @@ import { flagGateOf } from '@plitzi/sdk-authoring';
 import { documentIds } from '@plitzi/sdk-schema/helpers/components';
 import { elementIdConflict, isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import { isMotion } from '@plitzi/sdk-shared/schema/motion';
 
 import { fail, findRootByRef, indexAddElement, resolveRef } from '../../../helpers';
 
@@ -113,7 +114,8 @@ export const createElement = (
       // and stamping every element with an explicit value would make a diff of a builder-authored page noisy.
       ...(input.runtime === undefined ? {} : { runtime: input.runtime }),
       ...(input.flag === undefined ? {} : { flag: flagGateOf(input.flag, `Element "${input.ref}"`) }),
-      ...(input.anchor === undefined ? {} : { anchor: input.anchor })
+      ...(input.anchor === undefined ? {} : { anchor: input.anchor }),
+      ...(isMotion(input.motion) ? { motion: input.motion } : {})
     }
   };
   if (!new FlatMap({ flat: space.schema.flat }).addElement(el, anchorId, drop)) {

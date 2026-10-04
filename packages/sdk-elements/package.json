@@ -162,6 +162,30 @@
       "types": "./dist/Element/hooks/useScrollInteractions.d.ts",
       "import": "./dist/Element/hooks/useScrollInteractions.mjs"
     },
+    "./canvas": {
+      "types": "./dist/canvas/index.d.ts",
+      "import": "./dist/canvas/index.mjs"
+    },
+    "./canvas/index": {
+      "types": "./dist/canvas/index.d.ts",
+      "import": "./dist/canvas/index.mjs"
+    },
+    "./canvas/shaders": {
+      "types": "./dist/canvas/shaders.d.ts",
+      "import": "./dist/canvas/shaders.mjs"
+    },
+    "./canvas/useAnimationFrame": {
+      "types": "./dist/canvas/useAnimationFrame.d.ts",
+      "import": "./dist/canvas/useAnimationFrame.mjs"
+    },
+    "./canvas/useCanvas": {
+      "types": "./dist/canvas/useCanvas.d.ts",
+      "import": "./dist/canvas/useCanvas.mjs"
+    },
+    "./canvas/useReducedMotion": {
+      "types": "./dist/canvas/useReducedMotion.d.ts",
+      "import": "./dist/canvas/useReducedMotion.mjs"
+    },
     "./components/ElementAdvancedEditor": {
       "types": "./dist/components/ElementAdvancedEditor.d.ts",
       "import": "./dist/components/ElementAdvancedEditor.mjs"

@@ -35,9 +35,19 @@ const element: Element = {
   definition: { rootId: 'root', label: 'My Text', type: 'text', styleSelectors: { base: 'el1-base' } }
 };
 
+/** One with a parent: inside a component, everything but its root. */
+const child: Element = { ...element, id: 'child', definition: { ...element.definition, parentId: 'el1' } };
+
+/** One that arrives as it scrolls into view, after a beat, and keeps floating. */
+const moving: Element = {
+  ...element,
+  id: 'moving',
+  definition: { ...element.definition, motion: { enter: 'fade-up', on: 'view', delay: 120, loop: 'float' } }
+};
+
 const renderTree = (children: ReactNode, settings?: Partial<PlitziServiceContextValue['settings']>) =>
   render(
-    <StoreProvider value={{ schema: { flat: { el1: element } }, runtime: { sources: {} } }}>
+    <StoreProvider value={{ schema: { flat: { el1: element, child, moving } }, runtime: { sources: {} } }}>
       <PlitziServiceContext value={{ ...serviceValue, settings: { ...serviceValue.settings, ...settings } }}>
         <ComponentContext
           value={
@@ -68,6 +78,43 @@ describe('Element pipeline (golden)', () => {
     const { container } = renderTree(<Text internalProps={{ id: 'el1', rootId: 'root' }} />);
 
     expect(container.querySelector('[data-plitzi-el="el1"]')).not.toBeNull();
+  });
+
+  /** A component's instance has no node of its own: its root carries the instance's name, and only its root. */
+  it('names the instance on a component’s root — not on a page’s root, nor on an element with a parent', () => {
+    const instanceOf = (id: string, layoutRoot: string) =>
+      renderTree(
+        <Text
+          internalProps={{
+            id,
+            rootId: layoutRoot,
+            plitziElementLayout: { slots: [], rootId: layoutRoot, type: 'component' }
+          }}
+        />
+      ).container.querySelector(`[data-plitzi-el="${id}"]`);
+
+    expect(instanceOf('el1', 'hero-card')?.getAttribute('data-plitzi-instance')).toBe('hero-card');
+    expect(instanceOf('el1', 'el1')?.hasAttribute('data-plitzi-instance')).toBe(false);
+    expect(instanceOf('child', 'hero-card')?.hasAttribute('data-plitzi-instance')).toBe(false);
+  });
+
+  it('carries its declared motion as what the stylesheet plays — and an element without one, nothing', () => {
+    const { container } = renderTree(
+      <>
+        <Text internalProps={{ id: 'moving', rootId: 'root' }} />
+        <Text internalProps={{ id: 'el1', rootId: 'root' }} />
+      </>
+    );
+    const node = container.querySelector<HTMLElement>('[data-plitzi-el="moving"]');
+
+    expect(node?.dataset).toMatchObject({ motionEnter: 'fade-up', motionOn: 'view', motionLoop: 'float' });
+    expect(node?.style.getPropertyValue('--plitzi-motion-delay')).toBe('120ms');
+    expect(
+      container
+        .querySelector('[data-plitzi-el="el1"]')
+        ?.getAttributeNames()
+        .filter(name => name.startsWith('data-motion'))
+    ).toEqual([]);
   });
 
   it('leaves the handle off when the deployment turns test attributes off', () => {

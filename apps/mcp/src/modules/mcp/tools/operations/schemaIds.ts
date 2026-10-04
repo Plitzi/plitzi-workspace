@@ -7,6 +7,7 @@ import {
   elementAnchor,
   elementFlag,
   elementInput,
+  elementMotion,
   initialStateInput,
   interactionNode,
   position,
@@ -49,6 +50,8 @@ const SHARED_SCHEMAS: [z.ZodType, string][] = [
   [elementFlag, 'ElementFlag'],
   // In an element and a patch, once per tool that carries the op union.
   [elementAnchor, 'ElementAnchor'],
+  // The same: an element and a patch, in every tool with the op union.
+  [elementMotion, 'ElementMotion'],
   [ruleGroup, 'RuleGroup'],
   [styleRefs, 'StyleRefs'],
   [initialStateInput, 'InitialState'],

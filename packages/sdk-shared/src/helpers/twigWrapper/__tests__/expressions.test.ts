@@ -14,6 +14,16 @@ describe('AST processTwig — default (??) coalescing', () => {
   });
 });
 
+describe('AST processTwig — a negative default', () => {
+  it('reads a sign on the right of ??, a literal or an expression', () => {
+    expect(processTwig('{{ x ?? -1 }}', {})).toBe('-1');
+    expect(processTwig('{{ x ?? -1 }}', { x: 3 })).toBe('3');
+    expect(processTwig('{{ (x ?? -1) + 1 }}', {})).toBe('0');
+    expect(processTwig('{{ x ?? -y }}', { y: 2 })).toBe('-2');
+    expect(processTwig('{{ x ?? - 1.5 }}', {})).toBe('-1.5');
+  });
+});
+
 describe('AST processTwig — operator expressions', () => {
   it('supports not in operator', () => {
     expect(processTwig('{% if "x" not in items %}not found{% endif %}', { items: ['a', 'b', 'c'] })).toBe('not found');

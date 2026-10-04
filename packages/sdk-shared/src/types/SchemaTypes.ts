@@ -2,6 +2,7 @@ import type { InteractionCallbackParamValues, InteractionCallbackType } from './
 import type { ChannelDeclarations } from './RealtimeTypes';
 import type { SnippetStyle } from './SnippetTypes';
 import type { BuiltinParam } from '../authoring/paramSpec';
+import type { ElementMotion } from '../schema/motion';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
 // RSC
@@ -126,6 +127,8 @@ export type ElementDefinition = {
    * for the platform, this names it for the URL. One per rendered page, layouts included (`isAnchor`).
    */
   anchor?: string;
+  /** How it arrives and whether it keeps moving, played by the SDK's stylesheet. See {@link ElementMotion}. */
+  motion?: ElementMotion;
 };
 
 /**
@@ -379,7 +382,16 @@ export type SchemaContextValue = {
 
 /** The fields of a definition an element may go without — absent in a document, `null` from GraphQL. */
 type OptionalDefinitionKey =
-  'parentId' | 'items' | 'bindings' | 'interactions' | 'initialState' | 'runtime' | 'loadStrategy' | 'flag' | 'anchor';
+  | 'parentId'
+  | 'items'
+  | 'bindings'
+  | 'interactions'
+  | 'initialState'
+  | 'runtime'
+  | 'loadStrategy'
+  | 'flag'
+  | 'anchor'
+  | 'motion';
 
 /**
  * An element as it arrives on the wire. GraphQL answers every field a query names, so one the element does not have
@@ -387,7 +399,10 @@ type OptionalDefinitionKey =
  */
 export type WireElement = Omit<Element, 'definition'> & {
   definition: Omit<ElementDefinition, OptionalDefinitionKey> & {
-    [K in OptionalDefinitionKey]?: ElementDefinition[K] | null;
+    [K in Exclude<OptionalDefinitionKey, 'motion'>]?: ElementDefinition[K] | null;
+  } & {
+    /** Every field the query names, `null` where the motion has none. */
+    motion?: { [K in keyof ElementMotion]?: ElementMotion[K] | null } | null;
   };
 };
 

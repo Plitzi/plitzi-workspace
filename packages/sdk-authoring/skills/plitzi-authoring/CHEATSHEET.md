@@ -31,14 +31,16 @@ text('Words', { class })                       // also text({ content }); a <div
 heading('Title', { subType: 'h2' })            // h1–h6; holds no children
 paragraph('A paragraph.')
 container([children], { subType: 'section' })  // div, section, nav, header, footer, main, article, li, h1–h6, span…
-link({ href: 'about', children })              // a page id, a '/path', or a URL — the mode follows from the href
+link({ href: 'about', content: 'About' })      // a page id, a '/path', or a URL — the mode follows from the href
 link({ href: 'home', hash: 'plans' })          // → /#plans, onto the element with anchor: 'plans'
+container({ motion: { enter: 'fade-up', on: 'view' }, children })  // arrives as it scrolls in; stagger, loop too
 button({ content: 'Save', flows })             // holds children too: then content: ''
 image({ src, alt })                            // or decorative: true
 embed({ src, title })                          // a map, a player: another page in a frame
 svg('<svg …>…</svg>', { label })               // checked, sanitised; currentColor follows the class
+svg(svgFile(new URL('./logo.svg', import.meta.url)))  // a file, compacted: svgFile/svgFiles from '@plitzi/sdk-authoring/node'
 fontAwesome({ icon: 'fa-solid fa-xmark' })
-list({ id: 'rows', items: 'p.data.rows', row: 'row-card' })    // a <ul>; a component per row (its `item` prop)
+list({ id: 'rows', items: 'p.data.rows', row: 'row-card' })    // a <div>; a component per row (its `item` prop)
 list({ id: 'rows', items: 'p.data.rows', row: r => text({ from: `${r.item}.title` }) })  // or a tree per row
 carousel({ id: 'hero', items: 'p.data.slides', autoplay: 5000, row: 'slide-card', children: [/* carouselNext('hero') arrows */] })
                                                // rows follow their item's `id`, or `itemKey: 'slug'`

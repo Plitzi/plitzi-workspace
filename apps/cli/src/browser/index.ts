@@ -30,9 +30,17 @@ export interface PageResponse {
   url(): string;
 }
 
+/** One element of a page, as `shot --clip` and `--scroll-to` reach it. */
+export interface PageElement {
+  screenshot(): Promise<Uint8Array>;
+  scrollIntoViewIfNeeded(): Promise<void>;
+}
+
 export interface BrowserPage {
   goto(url: string, options: { waitUntil: 'load' | 'networkidle' }): Promise<unknown>;
   screenshot(options: { fullPage: boolean }): Promise<Uint8Array>;
+  /** The first element the selector finds — Playwright's own, which scrolls whatever pane holds it into view. */
+  locator(selector: string): { first(): PageElement };
   evaluate<R, A>(fn: (input: A) => R | Promise<R>, input: A): Promise<R>;
   waitForSelector(selector: string, options: { timeout: number }): Promise<unknown>;
   waitForTimeout(milliseconds: number): Promise<void>;

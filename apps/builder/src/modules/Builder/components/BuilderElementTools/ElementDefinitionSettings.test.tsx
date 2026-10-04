@@ -148,7 +148,10 @@ describe('ElementDefinitionSettings / load strategy', () => {
     );
     await flushStorageSync();
 
-    return { ...view, onUpdate, select: view.container.querySelector('select') };
+    // By its label: the panel has other selects too (Motion's).
+    const field = view.queryByLabelText('Load content');
+
+    return { ...view, onUpdate, select: field instanceof HTMLSelectElement ? field : null };
   };
 
   it('is offered only for a type that holds children', async () => {

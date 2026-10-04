@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { FLAG_GATE_PATTERN } from '@plitzi/sdk-shared/flags';
 import { ANCHOR_PATTERN } from '@plitzi/sdk-shared/schema/anchor';
+import { motionProblems } from '@plitzi/sdk-shared/schema/motion';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementRuntime } from '@plitzi/sdk-shared';
@@ -85,6 +86,8 @@ export interface ElementInput {
   runtime?: ElementRuntime;
   flag?: string;
   anchor?: string;
+  /** Checked by `motionProblems`: what arrives here is one, which `isMotion` narrows it to where it is written. */
+  motion?: Record<string, unknown>;
   children?: ElementInput[];
 }
 
@@ -119,6 +122,22 @@ export const elementAnchor = z
   .regex(ANCHOR_PATTERN)
   .describe('Its DOM id, for `/page#anchor` and the `hash` of a link; one per page');
 
+/**
+ * How an element arrives and whether it keeps moving — the presets the SDK's stylesheet plays, and nothing else.
+ *
+ * An open object, checked by `motionProblems`, rather than its fields spelled out: this schema is in every tool that
+ * carries the op union, and spelled out it cost the listing more than its budget had room for. A wrong preset is
+ * refused with the list of right ones, and the guide's Motion section names them all.
+ */
+export const elementMotion = z
+  .record(z.string(), z.unknown())
+  .superRefine((motion, ctx) => {
+    for (const problem of motionProblems(motion)) {
+      ctx.addIssue({ code: 'custom', message: problem });
+    }
+  })
+  .describe('{enter,on,duration,delay,stagger,loop} — guide: Motion');
+
 export const initialStateInput = z.object({
   styleVariant: styleVariantInput
     .optional()
@@ -150,7 +169,8 @@ export const elementShape = {
     .describe('Applied style variant(s) and initial visibility (see plitzi://guide styling)'),
   runtime: elementRuntime.optional(),
   flag: elementFlag.optional(),
-  anchor: elementAnchor.optional()
+  anchor: elementAnchor.optional(),
+  motion: elementMotion.optional()
 };
 
 export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>

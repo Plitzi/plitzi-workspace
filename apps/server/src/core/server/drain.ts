@@ -9,6 +9,9 @@ import type { Duplex } from 'node:stream';
  */
 export const SHUTDOWN_GRACE_MS = 10_000;
 
+/** A WebSocket close frame, as a server sends it (unmasked): status 1001, "going away". */
+const GOING_AWAY = Buffer.from([0x88, 0x02, 0x03, 0xe9]);
+
 /** What of a response a shutdown reads: whether it is an event stream, and how to end it. */
 type Answering = { getHeader: (name: string) => unknown; end: (done?: () => void) => unknown };
 
@@ -36,8 +39,8 @@ const isEventStream = (asking: Asking, answering: Answering): boolean => {
  * Node's `server.close()` stops taking connections and then waits for every open one to end. A request ends; a
  * WebSocket or an event stream does not — a board open in a tab, an agent's app listening — so a server with one open
  * waited for ever, and a Ctrl+C or a SIGTERM hung until something killed it. `drain` stops taking connections, closes
- * the idle ones, ends every event stream at once (a stream has nothing left to finish), gives what is still being
- * answered `graceMs`, and then cuts what remains.
+ * the idle ones, ends every event stream and WebSocket at once (neither has anything left to finish), gives what is
+ * still being answered `graceMs`, and then cuts what remains.
  */
 export const watchConnections = (server: PrimaryServer) => {
   const sockets = new Set<Duplex>();
@@ -51,6 +54,13 @@ export const watchConnections = (server: PrimaryServer) => {
   server.on('connection', (socket: Duplex) => {
     sockets.add(socket);
     socket.once('close', () => sockets.delete(socket));
+  });
+  const websockets = new Set<Duplex>();
+  server.on('upgrade', (request: Asking, socket: Duplex) => {
+    if ([request.headers.upgrade].flat().some(value => value?.toLowerCase() === 'websocket')) {
+      websockets.add(socket);
+      socket.once('close', () => websockets.delete(socket));
+    }
   });
   server.on(
     'request',
@@ -100,6 +110,10 @@ export const watchConnections = (server: PrimaryServer) => {
             response.end(closeIdle);
           }
         });
+        // A WebSocket, like an event stream, has nothing left to finish: it is told the server is going away (1001)
+        // and closed, rather than held for the whole grace — the ten seconds a `--watch` restart waited on a page left
+        // open. Its client reconnects to the server that comes up next.
+        websockets.forEach(socket => socket.end(GOING_AWAY));
       })
   };
 };

@@ -107,6 +107,12 @@ const escapeId = (value: string): string => value.replace(/["\\]/g, '\\$&');
 
 export const selectorFor = (id: string): string => `[data-plitzi-el="${escapeId(id)}"]`;
 
+/**
+ * A component's instance, which has no node of its own: the component's root is drawn where it is placed and carries
+ * the instance's name beside the component's (`data-plitzi-instance`, see `RootElement`).
+ */
+export const instanceSelectorFor = (id: string): string => `[data-plitzi-instance="${escapeId(id)}"]`;
+
 /** The route for a slug: authoring stores it bare, and everything that navigates wants it absolute. */
 export const pathForSlug = (slug: string): string => (slug ? `/${slug}` : '/');
 

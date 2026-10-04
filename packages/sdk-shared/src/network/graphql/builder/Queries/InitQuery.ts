@@ -41,6 +41,14 @@ const InitQuery = /* GraphQL */ `
               is
             }
             anchor
+            motion {
+              enter
+              on
+              duration
+              delay
+              stagger
+              loop
+            }
           }
           attributes
         }

@@ -114,6 +114,7 @@ export const ELEMENT_SPEC_KEYS = [
   'runtime',
   'loadStrategy',
   'anchor',
+  'motion',
   'flag',
   'children',
   'meta'

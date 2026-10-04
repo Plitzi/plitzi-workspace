@@ -11,6 +11,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { MOTION_PLAY_CSS, MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver, layoutGridCss } from '@plitzi/sdk-shared/style';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
@@ -72,7 +73,7 @@ const BuilderArea = ({
   } = use(BuilderContext);
   // The scheme the SPACE is painted in — see the `canvas` area in `themeStore`. Not the editor's own.
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
-  const { displayBorderComponents, displayGrid, zoom } = use(AppContext);
+  const { displayBorderComponents, displayGrid, motionPlaying, zoom } = use(AppContext);
   /**
    * The families the space declares, resolved for the canvas the same way the published page resolves them.
    *
@@ -91,7 +92,13 @@ const BuilderArea = ({
     return `${fontHead.faces}\n:root{${cssVariables}}\n${styleFrame}\n@layer plitzi-builder-runtime{${cacheParsed}\n${customCss}\n${externalStyle}}`;
   }, [customCss, cache, externalStyle, variables, fontHead.faces]);
   // Apart from the space's own CSS, so turning the grid on or zooming does not process the whole stylesheet again.
-  const frameCss = useMemo(() => (displayGrid ? `${css}\n${layoutGridCss(zoom)}` : css), [css, displayGrid, zoom]);
+  const frameCss = useMemo(
+    () =>
+      [css, displayGrid && layoutGridCss(zoom), motionPlaying ? MOTION_PLAY_CSS : MOTION_STILL_CSS]
+        .filter(Boolean)
+        .join('\n'),
+    [css, displayGrid, motionPlaying, zoom]
+  );
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);

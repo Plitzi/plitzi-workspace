@@ -51,7 +51,7 @@ import {
   assertId,
   assertKnownKeys
 } from './guard';
-import { buildHandles, pathForSlug, selectorFor } from './handles';
+import { buildHandles, instanceSelectorFor, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
 import { fixSpace, lintSpace } from './lint';
 import { CUSTOM_TYPE } from './lint/context';
@@ -1488,19 +1488,84 @@ class SpaceAuthor {
    * rather than filed somewhere plausible: a handle that resolves to the wrong root is worse than one that is absent,
    * which the lookup reports by name.
    */
-  /** Whether the element's plugin declares it draws nothing — under its own type, or as the component a `custom` hosts. */
-  private drawsNothing(element: Element): boolean {
-    const types = this.options.drawsNothingTypes;
-    if (!types?.length) {
-      return false;
-    }
-
+  /** The name an element's plugin is declared under: its own type, or `custom:<renderType>` for one a `custom` hosts. */
+  private pluginKeyOf(element: Element): string {
     const { type } = element.definition;
     const renderType = element.attributes.renderType;
 
+    return type === CUSTOM_TYPE && typeof renderType === 'string' ? `${CUSTOM_TYPE}:${renderType}` : type;
+  }
+
+  /** Whether the element's plugin declares it draws nothing. */
+  private drawsNothing(element: Element): boolean {
+    return this.options.drawsNothingTypes?.includes(this.pluginKeyOf(element)) ?? false;
+  }
+
+  /** Plugin types already warned about a reserved attribute: said once, at the first element of the type. */
+  private readonly reservedWarned = new Set<string>();
+
+  /**
+   * What an element is written with that reaches nothing, said: a variant no class and no type style declares — the
+   * element looks the same with it or without — and, once per plugin, an attribute it declares under one of the
+   * element's own names, which a factory reads as that and never hands to the plugin.
+   */
+  private warnUnreachable(element: Element, spec: ElementSpec, where: string): void {
+    const key = this.pluginKeyOf(element);
+    const reserved = this.options.reservedPluginAttributes?.[key] ?? [];
+    if (reserved.length > 0 && !this.reservedWarned.has(key)) {
+      this.reservedWarned.add(key);
+      this.styleWarnings.push({
+        code: 'plugin-attribute-reserved',
+        message: `${where} is a "${key}", whose plugin declares ${reserved.map(name => `\`${name}\``).join(', ')} — ${reserved.length === 1 ? 'a name' : 'names'} authoring reads as the element's own (\`variant\` is its style variant, \`class\` its classes), so the plugin is never handed ${reserved.length === 1 ? 'it' : 'them'}. Rename ${reserved.length === 1 ? 'it' : 'them'} in the plugin: \`variant\` → \`kind\`.`,
+        elementId: element.id
+      });
+    }
+
+    if (spec.variant === undefined || this.variantDeclared(spec, spec.variant)) {
+      return;
+    }
+
+    const plugin = reserved.includes('variant')
+      ? ' If it was meant for the plugin’s own `variant`, that attribute is never set: rename it in the plugin.'
+      : '';
+    this.styleWarnings.push({
+      code: 'unknown-variant',
+      message: `${where} is written with \`variant: '${spec.variant}'\`, which no class of it and no style of its type declares, so nothing applies.${plugin} Declare it — \`styles(name, { variants: { ${spec.variant}: { … } } })\` — or name one that is.`,
+      elementId: element.id
+    });
+  }
+
+  /**
+   * A row of a list with `items` written as an `<li>`. That list is a `<div>` and renders each row straight into it, so
+   * the row is an `<li>` outside any list: the browser moves it, and React, finding the DOM it did not render, throws
+   * the page's hydration away.
+   */
+  private warnListRowItem(element: Element, parent: Element | undefined, where: string): void {
+    const isItem =
+      element.definition.type === 'listItem' ||
+      (element.definition.type === 'container' && element.attributes.subType === 'li');
+    if (!isItem || parent?.definition.type !== 'list' || parent.attributes.source !== 'controlled') {
+      return;
+    }
+
+    this.styleWarnings.push({
+      code: 'list-row-li',
+      message: `${where} is an \`<li>\` as a row of list "${parent.id}", which renders as a \`<div>\` with each row straight inside it — an \`<li>\` outside any list, which the browser repairs and React then fails to hydrate. Leave the row a plain \`container\` (no \`subType\`).`,
+      elementId: element.id
+    });
+  }
+
+  /** Whether `variant` is declared by the element's type style or by one of its classes — where `variantOwner` looks. */
+  private variantDeclared(spec: ElementSpec, variant: string): boolean {
+    if (this.spec.elements?.[spec.type]?.variants?.[variant] !== undefined) {
+      return true;
+    }
+
     return (
-      types.includes(type) ||
-      (type === CUSTOM_TYPE && typeof renderType === 'string' && types.includes(`${CUSTOM_TYPE}:${renderType}`))
+      spec.class !== undefined &&
+      classNames(splitClassList(spec.class).refs).some(name =>
+        Object.values(this.classRules.get(name) ?? {}).some(block => block.variants?.[variant] !== undefined)
+      )
     );
   }
 
@@ -1666,6 +1731,7 @@ class SpaceAuthor {
         ...(spec.runtime ? { runtime: spec.runtime } : {}),
         ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),
         ...(spec.anchor === undefined ? {} : { anchor: spec.anchor }),
+        ...(spec.motion === undefined ? {} : { motion: spec.motion }),
         ...(spec.flag === undefined ? {} : { flag: flagGateOf(spec.flag, where) }),
         ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where, tree.globals) } : {}),
         ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})
@@ -1673,12 +1739,17 @@ class SpaceAuthor {
     };
 
     this.insert(element, parentId, isRoot ? 'custom' : 'inside', place, tree);
+    this.warnUnreachable(element, spec, where);
+    this.warnListRowItem(element, parentId ? tree.map.flat[parentId] : undefined, where);
 
     this.recordHandle({
       id,
       type: spec.type,
       pageId: rootId,
-      selector: selectorFor(id),
+      selector:
+        element.definition.type === 'reference' && element.attributes.referenceType === 'component'
+          ? instanceSelectorFor(id)
+          : selectorFor(id),
       named: spec.id !== undefined,
       ...(conditional ? { conditional: true } : {}),
       ...([...ancestors].some(ancestor => REPEATING_TYPES.has(tree.map.flat[ancestor].definition.type))

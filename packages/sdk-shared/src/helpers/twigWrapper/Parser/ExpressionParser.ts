@@ -305,6 +305,25 @@ class ExpressionParser extends Cursor {
     return { type: 'binary', operator: '**', left: base, right: this.parsePower() };
   }
 
+  /**
+   * An atom that may carry a sign — the right operand of `??`, which binds tighter than `+` and `-` and so is read as
+   * an atom: `state.faq ?? -1` defaults to minus one, not to an unexpected `-`.
+   */
+  private parseSignedAtom(): Expression {
+    if (this.peek() === Char.Minus && isDigit(this.at(1))) {
+      return this.maybeTrailingFilters({ type: 'literal', value: this.scanNumber() });
+    }
+
+    if (this.peek() === Char.Minus) {
+      this.pos++;
+      this.skipWs();
+
+      return { type: 'unary', operator: '-', operand: this.parseSignedAtom() };
+    }
+
+    return this.parseAtom();
+  }
+
   private parseDefault(): Expression {
     // Skip leading whitespace so a unary minus is still recognised when it follows an operator, e.g. the
     // right operand of `10 - -2` reaches here as ` -2`.
@@ -326,7 +345,7 @@ class ExpressionParser extends Cursor {
     while (this.peek() === Char.Question && this.at(1) === Char.Question) {
       this.pos += 2;
       this.skipWs();
-      left = { type: 'default', value: left, defaultExpr: this.parseAtom() };
+      left = { type: 'default', value: left, defaultExpr: this.parseSignedAtom() };
       this.skipWs();
     }
 
