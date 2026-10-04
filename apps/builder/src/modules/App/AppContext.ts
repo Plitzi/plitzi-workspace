@@ -18,7 +18,9 @@ export type AppContextValue = {
    */
   motionPlaying: boolean;
   setMotionPlaying: Dispatch<SetStateAction<boolean>>;
-  /** Plays every motion from its start: off for a frame, then on, which is what makes an animation begin again. */
+  /** How many times the motion was asked to play from its start — what the canvas restarts its animations on. */
+  motionReplays: number;
+  /** Plays every motion on the canvas from its start, and leaves it playing. */
   replayMotion: () => void;
   zoom: number;
   setZoom: Dispatch<SetStateAction<number>>;

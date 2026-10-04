@@ -6,7 +6,8 @@ import { isRecord } from '../helpers/isRecord';
  * laying the page out again, and every one is stilled for a visitor who asked for less motion: the motion good
  * practices, kept by construction rather than by the author.
  *
- * The one description the authoring package, the builder's Motion panel, the MCP and the validator all read.
+ * The one description the authoring package, the builder's Motion tab, the MCP and the validator all read; the
+ * stylesheet mirrors its presets and frames, and a test in `apps/sdk` holds the two together.
  */
 export const MOTION_ENTERS = ['fade', 'fade-up', 'fade-down', 'slide-left', 'slide-right', 'scale'] as const;
 
@@ -39,6 +40,35 @@ export interface ElementMotion {
   /** Keeps moving after it arrived. */
   loop?: MotionLoop;
 }
+
+/** How long an arrival takes when it does not say, and the curve every arrival follows: quick out, gentle in. */
+export const MOTION_DEFAULT_DURATION = 600;
+
+export const MOTION_ENTER_EASING = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
+
+/** Where each arrival starts from; it ends where the element is. */
+export const MOTION_ENTER_FROM: Record<MotionEnter, { opacity: number; translate?: string; scale?: string }> = {
+  fade: { opacity: 0 },
+  'fade-up': { opacity: 0, translate: '0 24px' },
+  'fade-down': { opacity: 0, translate: '0 -24px' },
+  'slide-left': { opacity: 0, translate: '32px 0' },
+  'slide-right': { opacity: 0, translate: '-32px 0' },
+  scale: { opacity: 0, scale: '0.94' }
+};
+
+/**
+ * Each loop's one moving frame — its `transform` halfway through the period and back (`middle`), or at the end of
+ * one that keeps turning (`end`) — and its period and curve.
+ */
+export const MOTION_LOOP_FRAMES: Record<
+  MotionLoop,
+  { transform: string; at: 'middle' | 'end'; periodMs: number; easing: string }
+> = {
+  float: { transform: 'translateY(-8px)', at: 'middle', periodMs: 6000, easing: 'ease-in-out' },
+  pulse: { transform: 'scale(1.04)', at: 'middle', periodMs: 3000, easing: 'ease-in-out' },
+  spin: { transform: 'rotate(360deg)', at: 'end', periodMs: 12_000, easing: 'linear' },
+  sway: { transform: 'rotate(2deg)', at: 'middle', periodMs: 5000, easing: 'ease-in-out' }
+};
 
 /** The longest a duration, a delay or a stagger may be: past it, a page is waiting on its decoration. */
 export const MOTION_MAX_MS = 10_000;
@@ -140,4 +170,15 @@ export const MOVING_SELECTOR = '[data-motion-enter], [data-motion-stagger] > *, 
  */
 export const MOTION_STILL_CSS = `${MOVING_SELECTOR} { animation: none !important; }`;
 
-export const MOTION_PLAY_CSS = '[data-motion-loop] { animation-play-state: running, running !important; }';
+export const MOTION_PLAY_CSS = [
+  '[data-motion-loop] { animation-play-state: running, running !important; }',
+  // An arrival tied to the scroll is played by the clock here: on a canvas being edited the element is usually in view
+  // already, where a scroll-driven arrival sits finished and Play would show nothing.
+  '[data-motion-on="view"][data-motion-enter], [data-motion-on="view"][data-motion-stagger] > * { animation-timeline: auto, auto !important; }'
+].join('\n');
+
+/** Whether an animation is one of the declared motion's — what replaying the canvas restarts, and nothing else. */
+export const isMotionAnimation = (animation: object): boolean =>
+  'animationName' in animation &&
+  typeof animation.animationName === 'string' &&
+  animation.animationName.startsWith('plitzi-motion-');

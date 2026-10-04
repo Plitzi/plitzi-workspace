@@ -2,7 +2,7 @@ import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { memo, useCallback, use, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
@@ -11,7 +11,7 @@ import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import { MOTION_PLAY_CSS, MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
+import { isMotionAnimation, MOTION_PLAY_CSS, MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver, layoutGridCss } from '@plitzi/sdk-shared/style';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
@@ -73,7 +73,7 @@ const BuilderArea = ({
   } = use(BuilderContext);
   // The scheme the SPACE is painted in — see the `canvas` area in `themeStore`. Not the editor's own.
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
-  const { displayBorderComponents, displayGrid, motionPlaying, zoom } = use(AppContext);
+  const { displayBorderComponents, displayGrid, motionPlaying, motionReplays, zoom } = use(AppContext);
   /**
    * The families the space declares, resolved for the canvas the same way the published page resolves them.
    *
@@ -102,6 +102,22 @@ const BuilderArea = ({
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
   const refContainer = useRef<HTMLDivElement>(null);
+
+  // Replaying restarts what is already running: an arrival that played once sits finished, and turning the motion on
+  // again would not move it. Reading the animations flushes the frame's styles, so the ones just turned on are there.
+  useEffect(() => {
+    if (motionReplays === 0) {
+      return;
+    }
+
+    const frameDocument = ref.current?.contentDocument ?? document;
+    for (const animation of frameDocument.getAnimations()) {
+      if (isMotionAnimation(animation)) {
+        animation.cancel();
+        animation.play();
+      }
+    }
+  }, [motionReplays]);
   const { supportRealTime } = use(BuilderSubscriptionsContext);
   const [[collaborators, currentPageId]] = useBuilderStore(['collaboration.collaborators', 'navigation.currentPageId']);
   const { rootRef } = use(ContainerRootContext);

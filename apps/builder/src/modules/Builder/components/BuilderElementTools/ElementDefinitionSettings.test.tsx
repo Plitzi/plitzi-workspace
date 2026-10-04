@@ -148,7 +148,7 @@ describe('ElementDefinitionSettings / load strategy', () => {
     );
     await flushStorageSync();
 
-    // By its label: the panel has other selects too (Motion's).
+    // By its label: the panel has other selects too (the flag gate's).
     const field = view.queryByLabelText('Load content');
 
     return { ...view, onUpdate, select: field instanceof HTMLSelectElement ? field : null };

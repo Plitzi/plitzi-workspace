@@ -25,8 +25,9 @@ row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item`
   (`{{ list_games.item.slug }}`).
 - A **nested list** sees the outer row: inside `list_features`, `list_games.item` is still the game.
 - A list with `items` is a `<div>` and its `class` styles that root; each row is rendered straight into it, with no
-  wrapper — so a row is never an `<li>`: one written as `container({ subType: 'li' })` is an `<li>` outside any list,
-  which the browser repairs and React then fails to hydrate (`list-row-li`). A grid of cards is all the root's class.
+  wrapper — so a row is never an `<li>`: one written as `container({ subType: 'li' })`, or a component whose root is
+  one, is an `<li>` outside any list, which the browser repairs and React then fails to hydrate (`list-row-li`). A grid
+  of cards is all the root's class.
   A list with no `items` is the plain `<ul>` (`subType: 'ol'` for a numbered one), and a `<ul>` is indented and
   bulleted: `{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` takes that off.
 - Fixed data is `items: [ … ]` on the list itself — no provider needed. Worth it when the rows ARE data — written from

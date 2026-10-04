@@ -28,8 +28,9 @@ image({ src, alt, motion: { loop: 'float' } })                         // keeps 
 Every preset moves only `opacity` and the transforms — an arrival the individual `translate`/`scale` properties, so it
 composes with a `transform` of the element's own, a loop `transform` — and a visitor who asked for less motion gets
 none of it. It is refused where it could not play (`motion-invalid`, `motion-no-tag` on a provider with no tag). In the
-builder it is the **Motion** panel of an element's settings; the canvas holds it still while editing, and **▶** in the
-header (or **Play** in the panel) plays it from the start. Over MCP, `motion` is a field of `upsertElement` and
+builder it is the element's **Motion** tab — each preset a tile that plays it while the pointer rests on it, and the
+choices read back as a sentence; the canvas holds it still while editing, and **▶** in the header (or **Play on the
+canvas** in the tab) plays it from the start. Over MCP, `motion` is a field of `upsertElement` and
 `patchElement`. Anything the presets do not cover is CSS, by the practices below.
 
 ## Why some animations are cheap

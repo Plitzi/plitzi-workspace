@@ -1561,15 +1561,32 @@ class SpaceAuthor {
   }
 
   /**
-   * A row of a list with `items` written as an `<li>`. That list is a `<div>` and renders each row straight into it, so
-   * the row is an `<li>` outside any list: the browser moves it, and React, finding the DOM it did not render, throws
-   * the page's hydration away.
+   * A row of a list with `items` written as an `<li>` — itself, or as the instance of a component whose root is one.
+   * That list is a `<div>` and renders each row straight into it, so the row is an `<li>` outside any list: the browser
+   * moves it, and React, finding the DOM it did not render, throws the page's hydration away.
    */
   private warnListRowItem(element: Element, parent: Element | undefined, where: string): void {
-    const isItem =
-      element.definition.type === 'listItem' ||
-      (element.definition.type === 'container' && element.attributes.subType === 'li');
-    if (!isItem || parent?.definition.type !== 'list' || parent.attributes.source !== 'controlled') {
+    if (parent?.definition.type !== 'list' || parent.attributes.source !== 'controlled') {
+      return;
+    }
+
+    const isLi = (type: string, attributes: Record<string, unknown> | undefined): boolean =>
+      type === 'listItem' || (type === 'container' && attributes?.subType === 'li');
+    const component =
+      element.definition.type === 'reference' && element.attributes.referenceType === 'component'
+        ? this.spec.components?.find(candidate => candidate.id === element.attributes.referenceId)
+        : undefined;
+    if (component && isLi(component.root.type, component.root.attributes)) {
+      this.styleWarnings.push({
+        code: 'list-row-li',
+        message: `${where} places component "${component.id}" as a row of list "${parent.id}", and its root is an \`<li>\` — the list renders as a \`<div>\` with each row straight inside it, so it is an \`<li>\` outside any list, which the browser repairs and React then fails to hydrate. Leave the component's root a plain \`container\` (no \`subType\`).`,
+        elementId: element.id
+      });
+
+      return;
+    }
+
+    if (!isLi(element.definition.type, element.attributes)) {
       return;
     }
 

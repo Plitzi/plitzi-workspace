@@ -1,69 +1,48 @@
-import Button from '@plitzi/plitzi-ui/Button';
-import Input from '@plitzi/plitzi-ui/Input';
-import Select from '@plitzi/plitzi-ui/Select';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import {
-  isMotion,
-  MOTION_ENTERS,
-  MOTION_LOOPS,
-  MOTION_TRIGGERS,
-  motionProblems
-} from '@plitzi/sdk-shared/schema/motion';
+import useReducedMotion from '@plitzi/sdk-elements/canvas/useReducedMotion';
+import { isMotion, motionProblems } from '@plitzi/sdk-shared/schema/motion';
 import AppContext from '@pmodules/App/AppContext';
 
+import MotionPresets from './components/MotionPresets';
+import MotionSection from './components/MotionSection';
+import MotionSummary from './components/MotionSummary';
+import MotionTiming from './components/MotionTiming';
+import { ARRIVES_NONE, describeMotion, draftOf, ENTER_COPY, LOOP_COPY, LOOP_NONE, motionOf } from './helpers';
+
+import type { Draft } from './helpers';
 import type { ElementMotion as Motion } from '@plitzi/sdk-shared/schema/motion';
 
 export type ElementMotionProps = {
   motion?: Motion;
-  /** Whether the element holds children — what `stagger` times one after another. */
+  /** Whether the element holds children — what arriving one by one is about. */
   canHoldItems?: boolean;
+  /** A page does not move: what is in it does. */
+  isPage?: boolean;
   /** `undefined` removes it: the element does not move. */
   onUpdate?: (key: string, value: Motion | undefined, isDefinition?: boolean) => void;
 };
 
-type Timing = 'duration' | 'delay' | 'stagger';
-
-/** What the fields hold while typed: the presets as chosen, the timings as written. */
-type Draft = { enter: string; on: string; loop: string } & Record<Timing, string>;
-
-const draftOf = (motion: Motion | undefined): Draft => ({
-  enter: motion?.enter ?? '',
-  on: motion?.on ?? 'load',
-  loop: motion?.loop ?? '',
-  duration: motion?.duration === undefined ? '' : String(motion.duration),
-  delay: motion?.delay === undefined ? '' : String(motion.delay),
-  stagger: motion?.stagger === undefined ? '' : String(motion.stagger)
-});
-
-/** The draft as a motion: the fields left empty are left out, and `on` only beside an arrival it times. */
-const motionOf = (draft: Draft): Record<string, unknown> => {
-  const timing = (value: string): number | undefined => (value.trim() === '' ? undefined : Number(value));
-  const entries: [string, unknown][] = [
-    ['enter', draft.enter || undefined],
-    ['on', draft.enter && draft.on !== 'load' ? draft.on : undefined],
-    ['duration', timing(draft.duration)],
-    ['delay', timing(draft.delay)],
-    ['stagger', timing(draft.stagger)],
-    ['loop', draft.loop || undefined]
-  ];
-
-  return Object.fromEntries(entries.filter(([, value]) => value !== undefined));
-};
-
 /**
- * How the element arrives — and when, and whether its children follow one by one — and whether it keeps moving. The
- * presets the SDK's stylesheet plays: opacity and transforms only, stilled for a visitor who asked for less motion.
+ * How the element arrives — and when, and whether its children follow one by one — and whether it keeps moving: the
+ * presets the SDK's stylesheet plays, each previewed on its tile, and the choices read back as a sentence. Opacity and
+ * transforms only, stilled for a visitor who asked for less motion.
  *
- * Saved as soon as it is one the page can play; while it is not, the panel says why and the element keeps the one it
- * had. On the canvas the motion is still until played (the header's ▶, or Play here).
+ * Saved as soon as it is one the page can play; while it is not, the tab says why and the element keeps the one it had.
  */
-const ElementMotion = ({ motion, canHoldItems = false, onUpdate }: ElementMotionProps) => {
-  const { replayMotion } = use(AppContext);
+const ElementMotion = ({ motion, canHoldItems = false, isPage = false, onUpdate }: ElementMotionProps) => {
+  const { motionPlaying, replayMotion } = use(AppContext);
+  const still = useReducedMotion();
   const [draft, setDraft] = useState(() => draftOf(motion));
   const written = useMemo(() => motionOf(draft), [draft]);
-  const nothing = Object.keys(written).length === 0;
-  const problems = useMemo(() => (nothing ? [] : motionProblems(written)), [nothing, written]);
+  const problems = useMemo(() => (Object.keys(written).length === 0 ? [] : motionProblems(written)), [written]);
+  const sentence = useMemo(() => {
+    if (Object.keys(written).length === 0) {
+      return 'It does not move: it is where it is from the first paint.';
+    }
+
+    return isMotion(written) ? describeMotion(written) : 'It cannot move like this yet:';
+  }, [written]);
 
   const change = useCallback(
     (key: keyof Draft, value: string) => {
@@ -84,59 +63,54 @@ const ElementMotion = ({ motion, canHoldItems = false, onUpdate }: ElementMotion
   );
 
   const handleEnter = useCallback((value: string) => change('enter', value), [change]);
-  const handleOn = useCallback((value: string) => change('on', value), [change]);
   const handleLoop = useCallback((value: string) => change('loop', value), [change]);
-  const handleDuration = useCallback((value: string) => change('duration', value), [change]);
-  const handleDelay = useCallback((value: string) => change('delay', value), [change]);
-  const handleStagger = useCallback((value: string) => change('stagger', value), [change]);
+
+  if (isPage) {
+    return (
+      <p className="m-0 p-2 text-xs text-gray-500 dark:text-zinc-400">
+        A page does not move — what is in it does. Select a section, a heading or a card to give it motion.
+      </p>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-1" aria-label="Motion">
-      <div className="flex items-end gap-2">
-        <Select size="xs" label="Arrives" value={draft.enter} onChange={handleEnter}>
-          <option value="">Without motion</option>
-          {MOTION_ENTERS.map(name => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </Select>
-        <Select size="xs" label="Keeps moving" value={draft.loop} onChange={handleLoop}>
-          <option value="">No</option>
-          {MOTION_LOOPS.map(name => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </Select>
-        <Button size="xs" intent="secondary" disabled={nothing || problems.length > 0} onClick={replayMotion}>
-          Play
-        </Button>
-      </div>
-      {draft.enter !== '' && (
-        <div className="flex gap-2">
-          <Select size="xs" label="When" value={draft.on} onChange={handleOn}>
-            {MOTION_TRIGGERS.map(trigger => (
-              <option key={trigger} value={trigger}>
-                {trigger === 'view' ? 'As it scrolls into view' : 'As the page loads'}
-              </option>
-            ))}
-          </Select>
-          <Input size="xs" label="Duration (ms)" placeholder="600" value={draft.duration} onChange={handleDuration} />
-          <Input size="xs" label="Delay (ms)" placeholder="0" value={draft.delay} onChange={handleDelay} />
-          {canHoldItems && (
-            <Input
-              size="xs"
-              label="Children one by one (ms)"
-              placeholder="—"
-              title="Its children arrive one after another, this far apart, rather than the element itself."
-              value={draft.stagger}
-              onChange={handleStagger}
-            />
-          )}
-        </div>
+    <div className="flex flex-col" aria-label="Motion">
+      {still && (
+        <span className="border-b border-gray-200 p-2 text-xs text-gray-500 dark:border-zinc-700 dark:text-zinc-400">
+          Your system asks for less motion, so the previews are still — and so is this element for every visitor who
+          asks the same.
+        </span>
       )}
-      {problems.length > 0 && <span className="text-xs text-red-600 dark:text-red-400">{problems.join(' · ')}</span>}
+      <MotionSection title="Arrives">
+        <MotionPresets
+          kind="enter"
+          title="Arrives"
+          none={ARRIVES_NONE}
+          presets={ENTER_COPY}
+          value={draft.enter}
+          still={still}
+          onChange={handleEnter}
+        />
+      </MotionSection>
+      {draft.enter !== '' && (
+        <MotionSection title="Timing">
+          <MotionTiming draft={draft} canHoldItems={canHoldItems} onChange={change} />
+        </MotionSection>
+      )}
+      <MotionSection title="Keeps moving">
+        <MotionPresets
+          kind="loop"
+          title="Keeps moving"
+          none={LOOP_NONE}
+          presets={LOOP_COPY}
+          value={draft.loop}
+          still={still}
+          onChange={handleLoop}
+        />
+      </MotionSection>
+      <MotionSection title="Result">
+        <MotionSummary sentence={sentence} problems={problems} playing={motionPlaying} onPlay={replayMotion} />
+      </MotionSection>
     </div>
   );
 };

@@ -421,8 +421,8 @@ export const AUTHORING_CODES = {
   'list-row-li': {
     kind: 'warned',
     means:
-      'a row of a list with `items` written as an `<li>` — that list is a `<div>`, so it is an `<li>` outside a list',
-    fix: 'a plain `container` (no `subType`)'
+      'a row of a list with `items` written as an `<li>` — or a component whose root is one — that list is a `<div>`, so it is an `<li>` outside a list',
+    fix: 'a plain `container` (no `subType`), the row or the component’s root'
   },
   'list-item-key-missing': {
     kind: 'warned',

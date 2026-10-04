@@ -14,6 +14,7 @@ import Interactions from '@pmodules/Interactions/Interactions';
 
 import BuilderBreadcrumb from '../BuilderBreadcrumb';
 import ElementDefinitionSettings from './ElementDefinitionSettings';
+import ElementMotion from './ElementMotion';
 import ElementSettings from './ElementSettings';
 import NothingSelected from './NothingSelected';
 import ToolsList from '../ToolsList';
@@ -184,6 +185,15 @@ const BuilderElementTools = ({ initialTab = 'style' }: BuilderElementToolsProps)
             id={elementSelected}
             bindings={bindings}
             element={element}
+          />
+        )}
+        {selected === 'motion' && (
+          <ElementMotion
+            key={elementSelected}
+            motion={tempDefinition.motion}
+            canHoldItems={Array.isArray(declared?.items)}
+            isPage={type === 'page'}
+            onUpdate={handleChange}
           />
         )}
         {selected === 'interactions' && (

@@ -79,11 +79,15 @@ for less motion. `view` follows the scroll where the browser has scroll timeline
 
 - **Authoring:** `motion` on any factory; refused where it cannot play (`motion-invalid`, `motion-no-tag`), and carried
   by `specFromSpace` and `compareSpaces`.
-- **Builder:** a **Motion** panel in an element's settings; the canvas holds motion still while editing, and **▶** in the
-  header (or **Play** in the panel) plays it from the start.
+- **Builder:** a **Motion** tab in an element's tools: the presets as chips, a stage that plays the one pointed at (a
+  loop shown stronger than the page plays it, and saying so), when and how long, children one by one, and the choices
+  read back as a sentence — laid out side by side once the sidebar is wide enough. The canvas holds motion still while
+  editing; **▶** in the header (or **Play on the canvas** in the tab) plays it from the start, restarting what already
+  played, and an arrival tied to the scroll plays by the clock there, where it is usually in view already.
 - **MCP:** `motion` on `upsertElement` and `patchElement`, checked the same way; the guide names the presets.
 - **Schema:** `definition.motion` (`ElementMotion`, `@plitzi/sdk-shared/schema/motion` — the presets, `motionProblems`,
-  `motionAttributes`), in both init queries. **The platform's GraphQL schema has to declare `SpaceElementMotion`
+  `motionAttributes`, `isMotionAnimation`, and each preset's frames, which the stylesheet is tested against), in both
+  init queries. **The platform's GraphQL schema has to declare `SpaceElementMotion`
   before this version's builder or SDK queries it.**
 
 ## Plugins that draw
@@ -117,7 +121,7 @@ once (`1001`, going away) rather than waiting out the grace — the ten seconds 
   (`plugin-attribute-reserved`): a factory never hands it to the plugin. A `variant` no class or type style declares is
   `unknown-variant`.
 - **Lists:** a list with `items` is a `<div>` with its rows straight inside, as the docs now say; a row written as an
-  `<li>` is `list-row-li`.
+  `<li>` — or placed as a component whose root is one — is `list-row-li`.
 - **CSS:** `mask-size`, `mask-position`, `mask-repeat`, `mask-composite`, `-webkit-mask-image`,
   `-webkit-background-clip`, `box-decoration-break` and `-webkit-box-decoration-break`.
 - **`plitzi shot`:** `--clip <element>`, `--scroll-to <element>` and `--viewport`; `--frames` takes the same framing.

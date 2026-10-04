@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isMotion, motionAttributes, motionProblems } from './motion';
+import { isMotion, isMotionAnimation, MOTION_PLAY_CSS, motionAttributes, motionProblems } from './motion';
 
 describe('motion', () => {
   it('takes the presets it names, and says what is wrong with anything else', () => {
@@ -29,5 +29,17 @@ describe('motion', () => {
       attributes: { 'data-motion-stagger': 'scale', 'data-motion-on': 'load' },
       style: { '--plitzi-motion-stagger': '60ms' }
     });
+  });
+
+  it('tells the declared motion\'s animations from any other the page runs', () => {
+    // jsdom has no Web Animations: what the check reads of a CSS animation is its name.
+    expect(isMotionAnimation({ animationName: 'plitzi-motion-fade-up' })).toBe(true);
+    expect(isMotionAnimation({ animationName: 'spin-logo' })).toBe(false);
+    expect(isMotionAnimation({})).toBe(false);
+  });
+
+  it('plays an arrival tied to the scroll by the clock on the canvas, where it is usually in view already', () => {
+    expect(MOTION_PLAY_CSS).toContain('[data-motion-on="view"][data-motion-enter]');
+    expect(MOTION_PLAY_CSS).toContain('animation-timeline: auto, auto !important');
   });
 });

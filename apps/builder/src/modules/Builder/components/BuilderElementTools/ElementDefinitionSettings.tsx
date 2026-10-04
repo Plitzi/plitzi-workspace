@@ -10,7 +10,6 @@ import { slugifyElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
 import ElementAnchor from './ElementAnchor';
 import ElementFlagGate from './ElementFlagGate';
-import ElementMotion from './ElementMotion';
 
 import type { Element, ElementLoadStrategy } from '@plitzi/sdk-shared';
 
@@ -183,14 +182,6 @@ const ElementDefinitionSettings = ({
         </div>
       )}
       {definition.type !== 'page' && <ElementAnchor key={id} anchor={definition.anchor} onUpdate={onUpdate} />}
-      {definition.type !== 'page' && (
-        <ElementMotion
-          key={`${id}-motion`}
-          motion={definition.motion}
-          canHoldItems={canHoldItems}
-          onUpdate={onUpdate}
-        />
-      )}
       <ElementFlagGate
         gate={definition.flag}
         flagNames={flagNames}

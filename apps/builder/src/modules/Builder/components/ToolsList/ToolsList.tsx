@@ -11,6 +11,7 @@ const ToolsList = ({ onSelect, selected }: ToolsListProps) => {
       <ToolsListItem id="style" title="Style" onClick={onSelect} active={selected === 'style'} />
       <ToolsListItem id="settings" title="Settings" onClick={onSelect} active={selected === 'settings'} />
       <ToolsListItem id="bindings" title="Bindings" onClick={onSelect} active={selected === 'bindings'} />
+      <ToolsListItem id="motion" title="Motion" onClick={onSelect} active={selected === 'motion'} />
       <ToolsListItem id="interactions" title="Interactions" onClick={onSelect} active={selected === 'interactions'} />
     </ul>
   );

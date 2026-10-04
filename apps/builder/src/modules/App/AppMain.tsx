@@ -51,9 +51,10 @@ const AppMain = ({
   );
   const [displayGrid, setDisplayGrid] = useStorage<boolean>('builder-state.app.displayGrid', false);
   const [motionPlaying, setMotionPlaying] = useState(false);
+  const [motionReplays, setMotionReplays] = useState(0);
   const replayMotion = useCallback(() => {
-    setMotionPlaying(false);
-    requestAnimationFrame(() => setMotionPlaying(true));
+    setMotionPlaying(true);
+    setMotionReplays(count => count + 1);
   }, []);
   const [zoom, setZoom] = useState(1);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('desktop');
@@ -77,6 +78,7 @@ const AppMain = ({
       setDisplayGrid,
       motionPlaying,
       setMotionPlaying,
+      motionReplays,
       replayMotion,
       zoom,
       setZoom,
@@ -96,6 +98,7 @@ const AppMain = ({
       setDisplayGrid,
       motionPlaying,
       setMotionPlaying,
+      motionReplays,
       replayMotion,
       zoom,
       setZoom,

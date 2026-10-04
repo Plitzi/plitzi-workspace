@@ -366,6 +366,25 @@ describe('what an element is written with that reaches nothing', () => {
     ]);
   });
 
+  it('says so of a component placed as a list row whose root is an `<li>`, and not of one whose root is plain', () => {
+    const { warnings } = author(
+      [
+        authoring.list({ id: 'lines', items: [{ n: 1 }], children: [authoring.component('line', { id: 'line-row' })] }),
+        authoring.list({ id: 'cards', items: [{ n: 1 }], children: [authoring.component('card', { id: 'card-row' })] })
+      ],
+      {
+        components: [
+          { id: 'line', root: authoring.container({ id: 'line-root', subType: 'li', children: [authoring.text('x')] }) },
+          { id: 'card', root: authoring.container({ id: 'card-root', children: [authoring.text('y')] }) }
+        ]
+      }
+    );
+    const rowsAsLi = warnings.filter(warning => warning.code === 'list-row-li');
+
+    expect(rowsAsLi.map(warning => warning.elementId)).toEqual(['line-row']);
+    expect(rowsAsLi[0]?.message).toContain('places component "line"');
+  });
+
   it('is quiet about a variant a class of the element declares', () => {
     const pill = authoring.styles('pill', { css: { padding: '4px' }, variants: { active: { color: 'red' } } });
     const { warnings } = author([authoring.text('On', { id: 'on', class: pill, variant: 'active' })]);
