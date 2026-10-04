@@ -31,7 +31,8 @@ const entry: ActionEntry = {
   }
 };
 
-const schema = (attributes: Record<string, unknown>): Schema => ({
+/** `null` is a space that never says: no `rsc` at all, as the builder and the MCP leave it. */
+const schema = (attributes: Record<string, unknown>, rsc: Schema['rsc'] | null): Schema => ({
   flat: {
     home: {
       id: 'home',
@@ -57,12 +58,12 @@ const schema = (attributes: Record<string, unknown>): Schema => ({
   definition: { name: 'test', permanentUrl: 'test' },
   variables: [],
   settings: { customCss: '' },
-  rsc: { enabled: true }
+  ...(rsc ? { rsc } : {})
 });
 
 const req = { method: 'GET', path: '/', query: {}, ctx: {} } as unknown as SSRRequest;
 
-const resolve = (attributes: Record<string, unknown>) => {
+const resolve = (attributes: Record<string, unknown>, rsc: Schema['rsc'] | null = { enabled: true }) => {
   const lookups = { getAction: () => Promise.resolve(entry) };
   const getRscData = connectorRscData({ actions: { lookups, module: createActionsModule({ lookups }) } });
 
@@ -72,7 +73,7 @@ const resolve = (attributes: Record<string, unknown>) => {
     environment: 'main',
     user: undefined,
     ids: undefined,
-    loadOfflineData: () => Promise.resolve({ schema: schema(attributes) })
+    loadOfflineData: () => Promise.resolve({ schema: schema(attributes, rsc) })
   } as unknown as Parameters<typeof getRscData>[0]);
 };
 
@@ -98,7 +99,7 @@ describe('connectorRscData', () => {
       environment: 'main',
       user: undefined,
       ids: undefined,
-      loadOfflineData: () => Promise.resolve({ schema: schema({ action: 'cat-gallery' }) })
+      loadOfflineData: () => Promise.resolve({ schema: schema({ action: 'cat-gallery' }, { enabled: true }) })
     } as unknown as Parameters<typeof getRscData>[0]);
 
     expect(payload.serverData).toEqual({});
@@ -116,6 +117,15 @@ describe('connectorRscData', () => {
 
   // The same answer a connector the space never created gets: an element left out of the payload, not an error
   // that costs the rest of the page its data.
+  // The builder and the MCP never write `rsc`: a space they made with a server element is served like one that says on,
+  // as the page render already decides it. Only `enabled: false` turns it off.
+  it('resolves a space that never says, and nothing for one that turns server data off', async () => {
+    expect((await resolve({ action: 'cat-gallery' }, null)).serverData).toEqual({
+      gallery: { records: [{ url: 'cat.jpg' }] }
+    });
+    expect(await resolve({ action: 'cat-gallery' }, { enabled: false })).toEqual({});
+  });
+
   it('leaves an element naming a connector this deployment cannot read out of the payload', async () => {
     const payload = await resolve({ connector: 'cms' });
 

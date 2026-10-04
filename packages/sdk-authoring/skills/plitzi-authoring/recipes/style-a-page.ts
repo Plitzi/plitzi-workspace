@@ -10,7 +10,7 @@ import type { SpaceSpec } from '@plitzi/sdk-authoring';
 const card = styles('card', {
   css: {
     desktop: { display: 'flex', 'flex-direction': 'column', gap: '8px', padding: '24px', 'border-radius': '16px' },
-    // Tablet (48–64rem) and mobile (below 48rem) each inherit from desktop alone: `compact` is both.
+    // Tablet (48–64rem) and mobile (up to 48rem) each inherit from desktop alone: `compact` is both.
     compact: { padding: '16px' }
   },
   states: { hover: { 'border-color': 'var(--primary)' } }

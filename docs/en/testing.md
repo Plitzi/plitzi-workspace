@@ -85,9 +85,10 @@ failing effect into a console error and leaves the last good tree on screen.
 There are **no committed screenshot baselines**. Screenshots are written to `e2e/.artifacts/screenshots/` to be
 looked at; the assertions that gate a run are the ones that mean the same thing on every machine.
 
-One rule worth knowing before writing a spec: **assert on classes, never on `data-id`.** Those attributes are
-server-side only — they exist so hydration can find what the server rendered — so a check written against them
-passes under SSR and looks like a broken renderer everywhere else.
+One rule worth knowing before writing a spec: **find an element by `data-plitzi-el`, never by `data-id`.** Every
+render carries `data-plitzi-el` — the element's id, the name the space gave it (`settings.testAttributes: false` is the
+only thing that takes it off). `data-id`, `data-name` and `data-type` are the builder's: they appear only with
+debugging on or in the canvas, so a check written against them passes there and fails on the published page.
 
 ### Rendering an arbitrary schema
 

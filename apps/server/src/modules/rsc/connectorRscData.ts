@@ -64,7 +64,8 @@ export const connectorRscData = ({
   return async ({ req, spaceId, environment, user, ids, loadOfflineData, flagOverrides }) => {
     // Joins the read the page render already started rather than asking for the document a second time.
     const offlineData = await loadOfflineData();
-    if (!offlineData?.schema.rsc?.enabled) {
+    // On unless the space turns it off, as the page render decides it: a space the builder or the MCP made never says.
+    if (!offlineData || offlineData.schema.rsc?.enabled === false) {
       return {};
     }
 

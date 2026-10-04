@@ -126,6 +126,14 @@ when an install fails the CLI says which setting names it.
   save the most first. Not problems: the space authors either way. `npm run author -- --json` carries them in
   `suggestions`.
 
+## The folders that are not the source
+
+| Folder | What it is | In git |
+| --- | --- | --- |
+| `public/` | Served to anyone who asks, as it is — data, pictures, a favicon. **It is on the internet**: never a secret, a key, a private document or data only some visitors may read | yes |
+| `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), the space as last authored, screenshots and test output. Rebuilt when missing | no |
+| `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
+
 ## `create --template blank` and `--template catalog`
 
 A space written in the project starts as the welcome tour, with a plugin of the project's own. `--template blank`
@@ -140,17 +148,28 @@ per part under `src/site/`. Both go with `--source local`.
 ```bash
 plitzi check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
 plitzi check /products --state --element catalog-count   # and what it holds: state, sources, one element
+plitzi check / --ssr                       # and what the server's HTML lacks that the hydrated page has
 plitzi shot /about --width 390 --scheme dark
 plitzi shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
-plitzi shot / --compare https://example.com --width 1440   # side by side, and how much differs by section
+plitzi shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
 another project. `check` reports every element the space owes the page that is missing or hidden (with why), broken
-images, sideways scroll, text in the colour behind it, console errors and refused requests — a page's state in a few
-hundred tokens, where a screenshot costs thousands. `shot --compare` writes the two pictures side by side and the
-differences in red, and says the share that differs in each landmark of the page; `--frames` compares pictures taken
-one after another and names what moved. A project `create` writes has them as `npm run check` and `npm run shot`.
+images, sideways scroll, text in the colour behind it, console errors, refused requests and failed flows — and the
+page's data: a binding that reads a path its provider's answer lacks (with the keys it has), a provider that failed,
+the rows each list rendered. A page's state in a few hundred tokens, where a screenshot costs thousands.
+
+`--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
+default, and `shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
+full-page `shot` is the whole page — the pane the SDK scrolls in unrolled, every lazy picture loaded, every arrival
+waiting for the scroll shown as it ends — in `tmp/shots/` unless `--out` says where.
+
+`shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
+is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
+texts both pages have and says what each does differently there — `h1 "Learn CSS" — font-size 68px → 60px · y +19px`.
+`--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
+`npm run check` and `npm run shot`.
 
 ## `fix`
 
@@ -200,18 +219,29 @@ plitzi explain navigate         # a step: its params and the function that write
 plitzi explain onScroll         # a trigger: what it hands its flow, and what fires it
 plitzi explain class-and-css    # a problem's code: what was wrong, what to write instead
 plitzi explain content-attribute # a suggestion's code: what is written the long way, and the short one
-plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers
+plitzi explain bindTemplate     # a helper: how it is written, what it is for, an example
+plitzi explain motion           # the arrivals, triggers and loops the SDK plays
+plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers
 ```
 
 What a name means when authoring, from the catalogues the checks themselves read — the answer to a question that would
 otherwise be a search through the SDK's types. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
 
-## `skills update`
+## `upgrade`
 
-The skills `create` copies into `.claude/skills/` say the version of the package they came from (`version:` in
-`SKILL.md`), and `npm run author` says when the authoring skill is older than the `@plitzi/sdk-authoring` installed.
-`plitzi skills update` replaces each Plitzi skill there with the one of the installed package — whole, so a reference it
-no longer has goes with it — and leaves any other skill alone.
+```bash
+plitzi upgrade                       # what this CLI would change in the project — shown, nothing written
+plitzi upgrade skills --write        # only the skills, each replaced whole from the packages installed
+plitzi upgrade --write --take src/author.ts
+```
+
+A project brought up to the CLI it has now, part by part: `files` (the machinery — `author.ts`, `main.ts`, the
+Playwright and lint configs, `AGENTS.md`), `packages` (`package.json` merged, `@plitzi/*` raised to this version, then
+the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill no longer has goes with it) and
+`renames` (a name a version renamed, at its file and line). A file nobody changed since the CLI wrote it is replaced;
+one the project made its own is a diff, left unless `--take` names it (`all` for every one). `update` is the same
+command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
+older than the `@plitzi/sdk-authoring` installed.
 
 ## `data describe`
 

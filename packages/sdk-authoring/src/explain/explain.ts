@@ -20,6 +20,7 @@ import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import * as interactionSteps from '../interactions/steps';
 import { authoringCodeEntry, AUTHORING_CODES } from '../schema/codes';
 import { BUILTIN_TRANSFORMERS } from '../transformers';
+import { BUILDER_SIGNATURES, builderCall } from './builders';
 import { AUTHORING_HELPERS, MOTION_ENTRY } from './helpers';
 
 import type { AuthoringCodeEntry } from '../schema/codes';
@@ -387,14 +388,14 @@ export const explanationText = (explanation: Explanation): string => {
     case 'step':
       return [
         `${explanation.name} — step (${stepPlace(explanation.type, explanation.answeredBy)}): ${explanation.title}`,
-        ...(explanation.builder ? [`Written: ${explanation.builder}(…)`] : []),
+        ...(explanation.builder ? [`Written: ${builderCall(explanation.builder)}`] : []),
         'Params:',
         ...paramsText(explanation.params)
       ].join('\n');
     case 'trigger':
       return [
         `${explanation.name} — trigger: ${explanation.title}. Fired by ${Array.isArray(explanation.firedBy) ? explanation.firedBy.join(', ') : explanation.firedBy}.`,
-        `Written: ${explanation.builder ? `${explanation.builder}()` : `on('${explanation.name}')`}; name it to read what it hands over — [named('x', …), …] then {{ x.field }}`,
+        `Written: ${explanation.builder ? (BUILDER_SIGNATURES[explanation.builder] ?? `${explanation.builder}()`) : `on('${explanation.name}')`}; name it to read what it hands over — [named('x', …), …] then {{ x.field }}`,
         `Reads: ${explanation.reads.length > 0 ? explanation.reads.join(', ') : '(nothing)'}`,
         ...(explanation.params.length > 0 ? ['Params:', ...paramsText(explanation.params)] : [])
       ].join('\n');

@@ -263,8 +263,9 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
    publishes it, and its mock is wrapped the same way in the builder (`helpers/serverMock.ts`). A binding reads
    `<source>.data.<field>` whichever runtime the provider has, so moving one to the server changes no path.
 4. **Only a page's tree and its layouts are resolved.** `collectServerElements` never walks into a component's tree,
-   so authoring refuses a `runtime: 'server'` element inside one (`server-provider-in-component`); `authorSpace` turns
-   `schema.rsc.enabled` on by itself when the space has a server provider and the spec does not say otherwise.
+   so authoring refuses a `runtime: 'server'` element inside one (`server-provider-in-component`). Server data is on
+   unless the schema says `rsc: { enabled: false }` — the page render and `connectorRscData` read it the same way, so a
+   space the builder or the MCP made (neither writes `rsc`) is served like one that says on.
 
 ### Security
 

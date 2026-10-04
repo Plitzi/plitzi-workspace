@@ -479,8 +479,9 @@ export const AUTHORING_CODES = {
   },
   'server-data-without-rsc': {
     kind: 'warned',
-    means: "a `runtime: 'server'` provider — `connector`, `action` or `query` — in a space whose server data is off",
-    fix: 'drop `rsc: { enabled: false }` (authoring turns it on for a server element), or `rsc: { enabled: true }`'
+    means:
+      "a `runtime: 'server'` provider — `connector`, `action` or `query` — in a space that turns server data off (`rsc: { enabled: false }`)",
+    fix: 'drop `rsc: { enabled: false }`: server data is on unless a space turns it off'
   },
   'route-param-undeclared': {
     kind: 'warned',

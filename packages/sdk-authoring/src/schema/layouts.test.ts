@@ -125,6 +125,13 @@ describe('authorSpace / kept state', () => {
     expect(() => authorSpace(space({}, { keepState: true }))).toThrow(/settings: \{ keepState: true \}/u);
   });
 
+  // The hint is for the field written: a page's search fields are named for what they are, and nothing else is told
+  // about keeping state.
+  it('says where a page field nobody takes goes, and only that', () => {
+    expect(() => authorSpace(space({}, { seo: { title: 'Kinetic' } }))).toThrow(/`seoTitle` and `seoDescription`\.$/u);
+    expect(() => authorSpace(space({}, { seo: { title: 'Kinetic' } }))).not.toThrow(/keepState/u);
+  });
+
   it('writes the keys never to keep into the settings', () => {
     const { schema, warnings } = authorSpace(space({ keepState: true, transientState: ['tourStep'] }));
 

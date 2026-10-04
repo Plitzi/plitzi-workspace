@@ -1,6 +1,6 @@
 /**
  * Link to a section: the section carries an `anchor` — its id in the page; an element's `id` is only its name in the
- * space, `data-id` in the DOM — and a link's `hash` lands on it, from any page, even when the section renders late.
+ * space, `data-plitzi-el` in the DOM — and a link's `hash` lands on it, from any page, even when the section renders late.
  */
 import { container, heading, link, text } from '@plitzi/sdk-authoring';
 

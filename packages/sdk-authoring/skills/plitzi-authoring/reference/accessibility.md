@@ -4,7 +4,8 @@ A screen reader and a browser agent (Claude in Chrome) read a page the same way.
 tree** the browser builds from the markup, where every control is a role and a name. If a control has no name, or a
 click sits on a box that is not a control, those readers can't find it, even though the page looks fine. The linter
 warns about each case below (`control-without-name`, `image-without-alt`, `click-on-static-element`,
-`heading-level-skipped`, `label-ignored`). Fix them the same way you fix any other warning.
+`dropdown-without-control`, `heading-level-skipped`, `label-ignored`, `control-in-decorative`, `embed-without-title`,
+`controls-no-anchor`). Fix them the same way you fix any other warning.
 
 ## Controls have words
 

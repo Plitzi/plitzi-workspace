@@ -1,6 +1,7 @@
 /* eslint-disable quotes -- the expectations quote code, which reads best in the other quotes */
 import { describe, expect, it } from 'vitest';
 
+import { BUILDER_SIGNATURES } from './builders';
 import { BUILDER_NAMES, EXPLAIN_KINDS, explain, explainKindOf, explainList, explanationText } from './explain';
 import { AUTHORING_HELPERS } from './helpers';
 import * as authoring from '../index';
@@ -25,6 +26,49 @@ describe('explain', () => {
     expect(navigate.kind === 'step' && navigate.params.map(param => param.name)).toEqual(
       expect.arrayContaining(['urlType', 'url'])
     );
+  });
+
+  /** A builder called with arguments of its own is written as it is called, not with the document's param names. */
+  it('writes a step the way its builder is called', () => {
+    const written = (name: string): string => explain(name).map(explanationText).join('\n');
+
+    expect(written('delayTime')).toContain('Written: delay(ms)');
+    expect(written('navigate')).toContain('Written: navigate({ … })');
+    expect(written('onInterval')).toContain('Written: onInterval(ms)');
+  });
+
+  it('holds every builder signature to an export taking those arguments', () => {
+    const exports: Record<string, unknown> = { ...authoring };
+    /** The signature's arguments, and how many of them are required (no `?`). */
+    const argumentsOf = (signature: string): { all: number; required: number } => {
+      const args: string[] = [];
+      let depth = 0;
+      let quoted = false;
+      let current = '';
+      for (const character of signature.slice(signature.indexOf('(') + 1, signature.lastIndexOf(')'))) {
+        quoted = character === "'" ? !quoted : quoted;
+        depth += character === '{' ? 1 : character === '}' ? -1 : 0;
+        if (character === ',' && depth === 0 && !quoted) {
+          args.push(current.trim());
+          current = '';
+        } else {
+          current += character;
+        }
+      }
+
+      const all = [...args, current.trim()].filter(arg => arg !== '');
+
+      return { all: all.length, required: all.filter(arg => !arg.endsWith('?')).length };
+    };
+
+    for (const [name, signature] of Object.entries(BUILDER_SIGNATURES)) {
+      const builder = exports[name];
+      expect(typeof builder, name).toBe('function');
+      // A function's `length` stops at its first parameter with a default, and counts an optional one without.
+      const length = typeof builder === 'function' ? builder.length : -1;
+      const { all, required } = argumentsOf(signature);
+      expect(length >= required && length <= all, `${signature} — the builder takes ${String(length)}`).toBe(true);
+    }
   });
 
   it('says both meanings of a name that has two', () => {

@@ -25,7 +25,7 @@ container([hero, grid])             // an array is the children
 | `visible` | a condition (`'src'`, `'!src'`, `{ source, template }`), or `false` to start hidden |
 | `flows` | what happens on click, on submit, on load |
 | `runtime` | `'server'` resolves this provider's data on the server |
-| `loadStrategy` | when the contents mount relative to visibility: `eager` (default), `lazy`, `visible` |
+| `loadStrategy` | when the contents mount relative to visibility: `eager`, `lazy`, `visible`. Left out, the type decides — `eager`, `lazy` for a modal or a dialog |
 | `children` | the tree |
 | `meta` | `meta.label` is the element's name in the builder's tree |
 
@@ -44,7 +44,7 @@ another link — make the card the link, or the button, not both.
 link to the page being shown is `aria-current="page"`; its class's `current` state styles it, so one header in a
 layout lights the right item everywhere.
 
-**An element's `id` is not its HTML id.** It reaches the DOM as `data-id`. For a section a URL can land on, give it
+**An element's `id` is not its HTML id.** It reaches the DOM as `data-plitzi-el`. For a section a URL can land on, give it
 an `anchor` (`anchor: 'plans'` → `id="plans"`: lowercase, digits, `-`) and link to it with `hash`:
 `link({ href: 'home', hash: 'plans' })` goes to `/#plans` and scrolls there, waiting for a section that renders once
 its data arrives. One anchor per page, layouts included; never inside a list row or a component, which would repeat
@@ -78,12 +78,8 @@ A type this SDK does not ship — a plugin — is authored the same way: `define
 
 **What a type takes, answered by the package** instead of the 7,000-line `.d.ts`: every catalogue is exported, keyed by
 type — `elementCatalog` (what it is for), `elementDefaultAttributes`, `elementAttributeNames`, `elementTriggers`,
-`elementCallbacks`, `elementSlots`, `elementSourceTypes`, `elementLeafTypes`, plus `BUILTIN_TRANSFORMERS`. One line
-prints any of them:
-
-```bash
-node --input-type=module -e "import * as a from '@plitzi/sdk-authoring'; const t = 'formControl'; console.log({ attributes: a.elementDefaultAttributes[t], triggers: a.elementTriggers[t], slots: a.elementSlots[t] })"
-```
+`elementCallbacks`, `elementSlots`, `elementSourceTypes`, `elementLeafTypes`, plus `BUILTIN_TRANSFORMERS` — and
+`npx @plitzi/cli explain formControl` prints them for one type.
 
 ## CSS
 
@@ -92,7 +88,7 @@ kebab-case or camelCase (`paddingTop`, as a React style object), and a bare numb
 `fontWeight: 800`, `opacity: 0.5` stay numbers). A property outside the vocabulary is refused.
 
 - `column(gap, extra?)`, `row(gap, extra?)`, `grid(columns, gap, extra?)` for the three layouts every space repeats.
-- **Breakpoints are ranges, not a cascade.** `tablet` is 48–64rem, `mobile` below 48rem, and each inherits only from
+- **Breakpoints are ranges, not a cascade.** `tablet` is 48–64rem, `mobile` up to 48rem, and each inherits only from
   `desktop` — a rule for `tablet` never reaches a phone (`authorSpace` warns `tablet-rule-skips-mobile`). A rule for
   everything narrower than a desktop is `compact`, written to both: `css: { desktop: { … }, compact: { 'grid-template-columns':
   '1fr' }, mobile: { gap: '8px' } }` — what `tablet` or `mobile` say for themselves wins.

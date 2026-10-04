@@ -31,7 +31,7 @@ none of it. It is refused where it could not play (`motion-invalid`, `motion-no-
 builder it is the element's **Motion** tab — each preset a tile that plays it while the pointer rests on it, and the
 choices read back as a sentence; the canvas holds it still while editing, and **▶** in the header (or **Play on the
 canvas** in the tab) plays it from the start. Over MCP, `motion` is a field of `upsertElement` and
-`patchElement`. Anything the presets do not cover is CSS, by the practices below.
+`patchElement`; `npx plitzi explain motion` lists every preset. Anything the presets do not cover is CSS, by the practices below.
 
 ## Why some animations are cheap
 
@@ -104,7 +104,6 @@ builder's problems panel — with each property it animates and the way out of i
 counts only in a loop — once, it is a few frames — and a loop that starts `paused` and runs under `[data-hydrated]` is
 let through; a size, a position, a blur or a shadow counts every time.
 It is a suggestion: nothing blocks, and the page renders as written.
-
 
 Measure with the production SDK: a local server with debugging authorized serves the development build of React,
 whose hydration is about twice as long, so a page that stutters locally may not in production — and one that is smooth

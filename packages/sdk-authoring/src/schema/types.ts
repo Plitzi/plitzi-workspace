@@ -476,9 +476,9 @@ export interface SpaceSpec {
    */
   settings?: Partial<Omit<Schema['settings'], 'customCss'>>;
   /**
-   * Server-resolved data for this space's `runtime: 'server'` elements. Left out, it is on exactly when the space has
-   * one — every `runtime: 'server'` element is answered by the page server, and only with it on. Written out, it is
-   * what it says: `{ enabled: false }` with a server element is warned (`server-data-without-rsc`).
+   * Server-resolved data for this space's `runtime: 'server'` elements: on unless a space turns it off. Left out,
+   * authoring writes `{ enabled: true }` for a space that has a server element; `{ enabled: false }` with one is warned
+   * (`server-data-without-rsc`).
    */
   rsc?: Schema['rsc'];
   mode?: Style['mode'];

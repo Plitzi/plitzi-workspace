@@ -771,7 +771,7 @@ describe('lintSpace', () => {
       expect(warningsOf(documents)).toContain('overlay-never-opened');
     });
 
-    it('server-data-without-rsc is not raised once the space turns server data on, or for a browser provider', () => {
+    it('server-data-without-rsc is not raised unless the space turns server data off, nor for a browser provider', () => {
       const serverOn = withChange(({ schema }) => {
         schema.flat.feed.attributes.connector = 'crm';
         schema.flat.feed.definition.runtime = 'server';
@@ -782,8 +782,15 @@ describe('lintSpace', () => {
         schema.rsc = { enabled: false };
       });
 
+      const unsaid = withChange(({ schema }) => {
+        schema.flat.feed.attributes.connector = 'crm';
+        schema.flat.feed.definition.runtime = 'server';
+        delete schema.rsc;
+      });
+
       expect(warningsOf(serverOn)).not.toContain('server-data-without-rsc');
       expect(warningsOf(browser)).not.toContain('server-data-without-rsc');
+      expect(warningsOf(unsaid)).not.toContain('server-data-without-rsc');
     });
 
     /** The server resolves a provider that names a connector, so it asks something — found by an e2e fixture. */

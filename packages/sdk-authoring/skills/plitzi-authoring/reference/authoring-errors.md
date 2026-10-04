@@ -186,7 +186,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `plugin-attribute-reserved` | a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin | rename it in the plugin (`variant` → `kind`) |
 | `provider-without-source` | an `apiContainer` that asks nothing | a `query` (or `action`, `connector`, `resource`) |
 | `route-param-undeclared` | `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty | add `:x` to the slug, or read `navigation.queryParams.x` |
-| `server-data-without-rsc` | a `runtime: 'server'` provider — `connector`, `action` or `query` — in a space whose server data is off | drop `rsc: { enabled: false }` (authoring turns it on for a server element), or `rsc: { enabled: true }` |
+| `server-data-without-rsc` | a `runtime: 'server'` provider — `connector`, `action` or `query` — in a space that turns server data off (`rsc: { enabled: false }`) | drop `rsc: { enabled: false }`: server data is on unless a space turns it off |
 | `span-holds-block` | a `container` with `subType: 'span'` or `'p'` holding a heading, a paragraph, a list, a form or prose | a `div` (leave `subType` out), or words and inline elements: a `text`, a `link` |
 | `state-key-has-runtime-prefix` | a state key written with `runtime.state.` in front — the state callbacks already write below it | `key: 'cart'`, not `'runtime.state.cart'` |
 | `state-toggled-in-branches` | two `setState` of one key, each under a `when` on that key — the second flips back what the first wrote | `toggleState({ key })`; for something shown by default, a key named for hiding it |

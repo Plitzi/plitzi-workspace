@@ -6,7 +6,7 @@ Plitzi's templates are Twig, run by Plitzi's own interpreter. What a `{{ … }}`
 
 | Written in | What is evaluated | What it can read |
 | --- | --- | --- |
-| a binding's `twigTemplate` transformer | the whole template: conditions, filters, `{% set %}`, loops, tests | `source` (the bound value), `sourceTo`, the globals, the variables by bare name, and every source around the element |
+| a binding's `twigTemplate` transformer | the whole template: conditions, filters, `{% set %}`, loops, tests | `source` (the bound value — undefined until it has one: `{{ source|default('…') }}`), `sourceTo` (the attribute's value before it), the globals, the variables by bare name, and every source around the element |
 | a flow step's params | the whole template | the trigger's payload and earlier steps by name, the globals, sources around the element |
 | an ATTRIBUTE (`href`, `src`, `content`…) | only `{{ name }}` tokens (a filter after the name is allowed) | the globals, the variables and the page's route params by bare name (`{{ apiUrl }}`, `{{ slug }}`), and every source around the element (`{{ list_games.item.slug }}`) |
 

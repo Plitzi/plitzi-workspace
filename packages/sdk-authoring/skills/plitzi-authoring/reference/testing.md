@@ -87,7 +87,7 @@ One code on one element; it comes back in `warnings` with the reason, and an ent
 
 ## What to check
 
-- **Every viewport and both themes.** Desktop, tablet (48–64rem) and mobile (below 48rem); `colorScheme: 'dark'` as well
+- **Every viewport and both themes.** Desktop, tablet (48–64rem) and mobile (up to 48rem); `colorScheme: 'dark'` as well
   as light.
 - **No horizontal scroll on a phone.** A column child grows to its content unless its parent stretches it; a code
   block or a wide table is what finds out.

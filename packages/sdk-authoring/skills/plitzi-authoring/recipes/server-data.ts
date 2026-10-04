@@ -3,7 +3,7 @@
  * by the page server before it answers — so the page arrives with the plans in its HTML, their anchors in place, and
  * nothing to fetch once the browser has it.
  *
- * - `runtime: 'server'` on the provider is the whole switch: authoring turns the space's server data (`rsc`) on for it.
+ * - `runtime: 'server'` on the provider is the whole switch: server data is on unless a space turns it off.
  * - The answer is read exactly as in the browser — `plans.data.…` — so moving a provider between runtimes changes no
  *   binding.
  * - The page server resolves what a page and its layouts hold, never inside a component: the provider stays on the page

@@ -105,6 +105,17 @@ import type {
   StyleItem
 } from '@plitzi/sdk-shared';
 
+/** What a page field nobody takes was probably for: the page's own fields for search, or a setting of the space. */
+const pageFieldHint = (key: string): string => {
+  if (['seo', 'title', 'description'].includes(key)) {
+    return ' A page’s title and description for search engines and shared links are `seoTitle` and `seoDescription`.';
+  }
+
+  return ['keepState', 'transientState', 'paintedState', 'stateStorage'].includes(key)
+    ? ' Keeping state across visits is a setting of the whole space: `settings: { keepState: true }`, with `transientState` for the keys to leave out.'
+    : '';
+};
+
 /** A `styles()` declaration in words: its name, and the line of the author's that wrote it when it is known. */
 const declaredAt = (declaration: StyleDeclaration): string => {
   const at = writtenAt(declaration);
@@ -685,7 +696,7 @@ class SpaceAuthor {
   /**
    * A tablet rule a phone never sees.
    *
-   * The breakpoints are RANGES, not a cascade: `tablet` is 48–64rem, `mobile` is below 48rem, and each inherits
+   * The breakpoints are RANGES, not a cascade: `tablet` is 48–64rem, `mobile` is up to 48rem, and each inherits
    * only from `desktop`. So a layout that collapses to a column at tablet and says nothing for mobile comes back as
    * desktop columns on a phone — the narrowest screen gets the widest layout, and every check passes. A warning and
    * not a refusal, because a rule meant for tablets alone is legal, just rarely what anybody meant.
@@ -705,7 +716,7 @@ class SpaceAuthor {
 
     this.styleWarnings.push({
       code: 'tablet-rule-skips-mobile',
-      message: `${where} sets ${skipped.join(', ')} for tablet but not for mobile. Tablet (48–64rem) and mobile (below 48rem) are separate ranges and mobile inherits desktop, not tablet — so phones get the desktop value back. For both, write it once under \`compact\` (tablet and mobile together); repeat it under \`mobile\` otherwise.`,
+      message: `${where} sets ${skipped.join(', ')} for tablet but not for mobile. Tablet (48–64rem) and mobile (up to 48rem) are separate ranges and mobile inherits desktop, not tablet — so phones get the desktop value back. For both, write it once under \`compact\` (tablet and mobile together); repeat it under \`mobile\` otherwise.`,
       details: { properties: skipped }
     });
   }
@@ -979,12 +990,7 @@ class SpaceAuthor {
 
     for (const page of this.spec.pages) {
       const where = `Page "${page.name}"`;
-      assertKnownKeys(
-        page,
-        PAGE_SPEC_KEYS,
-        where,
-        ' Keeping state across visits is a setting of the whole space: `settings: { keepState: true }`, with `transientState` for the keys to leave out.'
-      );
+      assertKnownKeys(page, PAGE_SPEC_KEYS, where, pageFieldHint);
       assertId(page.id, where);
       if (typeof page.slug !== 'string') {
         throw new AuthoringError(

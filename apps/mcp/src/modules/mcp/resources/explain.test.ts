@@ -6,7 +6,7 @@ describe('plitzi://explain', () => {
   it('explains a name the way the CLI prints it', () => {
     const read = explainResource('plitzi://explain/navigate');
 
-    expect('text' in read && read.text).toContain('Written: navigate(…)');
+    expect('text' in read && read.text).toContain('Written: navigate({ … })');
   });
 
   it('lists a kind by its plural', () => {

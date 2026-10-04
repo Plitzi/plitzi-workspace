@@ -61,7 +61,7 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
 1. **Name what is referred to.** Give an `id` to every element a binding, a flow or a test addresses. Ids are ONE
    namespace for the whole space — layouts and every page share it — so a helper that runs more than once builds inside
    `scope('promos', ref => …)`: every id in it is prefixed (`promos-panel`), and `ref('slides')` names one in full. An `id` is the element's name in the
-   space (`data-id` in the page); the DOM id a URL's `#fragment` lands on is its `anchor`.
+   space (`data-plitzi-el` in the page); the DOM id a URL's `#fragment` lands on is its `anchor`.
 2. **Share with classes, layouts and components, never with copies.** A look used twice is a `styles()` class.
    Chrome shown on several pages — a header, a sidebar, a footer — is a **layout** the pages name, written once. A block
    placed many times with different content — a product card, a testimonial — is a **component** placed with
@@ -91,7 +91,7 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
    checked from the first commit.
 7. **Times in UTC, and say so.** Format with an explicit zone (`|date('j M · H:i', 'UTC')`) and print "UTC" beside it:
    a page rendered on a server and hydrated in a browser in another zone must agree on the hour.
-8. **Breakpoints are ranges.** `tablet` (48–64rem) and `mobile` (below 48rem) each inherit only from `desktop`; a rule
+8. **Breakpoints are ranges.** `tablet` (48–64rem) and `mobile` (up to 48rem) each inherit only from `desktop`; a rule
    meant for both is written under `compact`.
 9. **Never invent data.** Numbers, names and states on screen come from a source. A panel with nothing true to say is
    an empty state, not a placeholder figure. With no backend, the data is JSON the project serves

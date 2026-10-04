@@ -12,7 +12,7 @@ list({ id: 'games', items: 'catalog.data.games', row: r => listItem({ children: 
 list({ id: 'plans', items: ['Free', 'Pro'], children: [listItem({ children: [text({ from: 'plans.item' })] })] })  // fixed
 ```
 
-`items` makes a list controlled: an array of its own, or the source its rows come from. `row` is what it renders once
+`items` (or `from`) makes a list controlled: an array of its own, or the source its rows come from. `row` is what it renders once
 per item — a component's id (placed with the row bound to its `item` prop, or its only prop), or a function handed the
 row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item` for a template
 (`` `/games/{{ ${r.inTemplate.item}.slug }}` ``). A function needs the list's `id`, which names those sources. With

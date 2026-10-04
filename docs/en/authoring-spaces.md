@@ -435,9 +435,10 @@ container({ visible: '!post.found', children: [text('No such post.')] })
 An element is visible by default, and which way its condition flips decides how it is written. One the logic
 REVEALS — an empty state, a "get started" card, an admin-only panel — starts hidden: `visible` starts the element
 HIDDEN and the data then shows it. One a flag HIDES — the labels of a sidebar until it is folded — keeps the default
-and binds the flag, and an absent flag must leave it shown (a template answering `''` writes nothing and keeps it).
-A revealing condition that is more than one value is `visible: { source, template }` — it waits hidden like any
-condition, and the template says `'true'` or `'false'`:
+and an absent flag must leave it shown — `visible: '!state.folded'`, whose inverse of a key nobody has written is
+`true`. Once a source has a value, every answer is a yes or a no — `false`, `0`, `''` and an empty list hide it;
+while it has none, a plain source or a template answering `''` writes nothing and the element keeps how it started. A revealing condition that is more than one value is `visible: { source, template }` — it waits
+hidden like any condition, and the template's answer is read the same way:
 
 ```ts
 container({

@@ -190,10 +190,10 @@ The same server decides its own say over the space's **feature flags**: `createS
 flags the space declares — and is overridden by the SDK's `flags` prop and a tester's dev tools. Declaring the flags
 themselves is the space's (`flags` in the spec; see the authoring skill's feature flags).
 
-## A space's functions (`functions`)
+## Server code (`functions`, `runtime`)
 
-A space's own server code, edited in `functions/` with `pull`, `push`, `try` and `dev`: read
-[reference/functions.md](reference/functions.md) when the task names its functions.
+A space's own server code, edited in `functions/` (`pull`, `push`, `try`, `dev`) or run as its runtime
+(`src/runtime.ts`, `runtime push`): read [reference/functions.md](reference/functions.md) for either.
 
 
 ## When something does not work

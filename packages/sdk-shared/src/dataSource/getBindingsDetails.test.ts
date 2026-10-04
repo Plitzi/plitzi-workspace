@@ -151,6 +151,30 @@ describe('getBindingsDetails', () => {
     expect(result.attributes.text).toBe('hello');
   });
 
+  it('hands a template `source` as the bound value — undefined before it has one — and the current value as `sourceTo`', () => {
+    const element = makeElement(
+      {
+        attributes: [
+          binding({
+            source: 'state.preset',
+            to: 'content',
+            transformers: [
+              {
+                action: 'twigTemplate',
+                // eslint-disable-next-line quotes -- the template quotes a string of its own
+                params: { template: "{{ source|default('fade-up') }} / {{ sourceTo }}" }
+              }
+            ]
+          })
+        ]
+      },
+      { content: 'Text' }
+    );
+
+    expect(getBindingsDetails({ state: {} }, element).attributes.content).toBe('fade-up / Text');
+    expect(getBindingsDetails({ state: { preset: 'scale' } }, element).attributes.content).toBe('scale / Text');
+  });
+
   describe('falsy write predicate (current behavior — no allowEmpty)', () => {
     it('does NOT write an empty string (keeps the design-time value)', () => {
       const element = makeElement(

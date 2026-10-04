@@ -507,10 +507,12 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
     );
   }
 
-  if (element.definition.runtime === 'server' && serverSource && ctx.schema.rsc?.enabled !== true) {
+  // Server data is on unless the space turns it off: the builder and the MCP never write `rsc`, and a space they made
+  // with a server provider is served like one that says `enabled: true`.
+  if (element.definition.runtime === 'server' && serverSource && ctx.schema.rsc?.enabled === false) {
     ctx.warn(
       'server-data-without-rsc',
-      `${where} is resolved on the server (\`runtime: 'server'\`) through its \`${serverSource}\`, but the space turns server data off, so it renders its mock data and never asks. Remove \`rsc: { enabled: false }\` from the space (authoring turns it on for a server element), or set \`rsc: { enabled: true }\`.`,
+      `${where} is resolved on the server (\`runtime: 'server'\`) through its \`${serverSource}\`, but the space turns server data off (\`rsc: { enabled: false }\`), so it renders its mock data and never asks. Remove that: server data is on unless a space turns it off.`,
       element.id,
       { source: serverSource }
     );

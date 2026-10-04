@@ -19,7 +19,7 @@ describe('plitzi explain', () => {
   it('says a step in a few lines: what it takes and the function that writes it', () => {
     const said = printed(() => explainCommand('navigate', {}));
 
-    expect(said).toContain('Written: navigate(…)');
+    expect(said).toContain('Written: navigate({ … })');
     expect(said).toContain("urlType?: 'page' | 'internal' | 'external'");
   });
 

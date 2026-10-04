@@ -678,8 +678,9 @@ The SSR server includes a lightweight RSC endpoint that delivers server-side dat
 
 ### Schema setup
 
-Enable RSC at the top level of your schema (`authorSpace` turns it on by itself for a space with a server provider,
-unless the spec says otherwise):
+Server data is on unless the schema turns it off with `"rsc": { "enabled": false }` — the page render and the
+default `getRscData` (`connectorRscData`) read a missing `rsc` alike. `authorSpace` writes it out for a space with a
+server provider:
 
 ```json
 {

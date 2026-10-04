@@ -339,7 +339,7 @@ ${commands.join('\n')}
 - **Port.** ${port}
 - **Data with no backend** goes in ${code('public/data/*.json')}, served as it is and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}${serverData}.
 - **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.
-${pictures}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site, by section). ${run('visual')} runs the checks as tests.
+${pictures}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
 - **What the page holds, in text:** ${code(`${runCommand(answers.packageManager, 'check')} -- /products --state --element <id>`)} adds its state, every source by name and one element (what it reads, its own state, whether it is on screen); every check already lists the flows that failed. Read it instead of guessing from classes in the DOM.
 
 ## Do not read
@@ -363,7 +363,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 
 - **Nothing unused.** Delete what you made and no longer use — a file, a page, a component, a class, a token, a data file, an import, a plugin folder. No commented-out code, no ${code('console.log')} left from debugging, no copy of a file kept "just in case": git keeps the history.
 - **Scratch goes in ${code(`${PROJECT_TMP}/`)}, or nowhere.** A one-off script, a dump, a picture to look at — never at the root or beside the source, where it reads as part of the project.
-- **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component or a function. Change it where it is defined, and rename everywhere when you rename.
+- **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component, and rows of data are one list. Change it where it is defined, and rename everywhere when you rename.
 - **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space.ts')} already has. Do not start a parallel layout of your own.
 - **Leave it passing.** ${local ? `${run('author')} with zero warnings, ` : ''}${run('typecheck')}, ${run('lint')} and ${run('format')} clean, and the page checked (${run('check')}).
 
@@ -372,7 +372,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 - Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration; ${code('npx plitzi fix --write')} writes the ones with a single reading.
 - After the ${code('@plitzi/*')} packages move, ${code('npx plitzi upgrade')}: what this project's CLI files, scripts, skills and renamed names should now be — ${code('--write')} makes it, a file you changed comes as a diff.
 - ${zeroWarnings}
-- Chrome shared by pages is a layout; a look used twice is a class; a repeated block is a function or a ${code('map')}.
+- Chrome shared by pages is a layout; a look used twice is a class; a block placed again with other content is a component, and rows of data are one ${code('list')} (a short menu may be a ${code('map')} in code).
 - Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.
 - A file per part — the tokens, the layout, each component, each page — short enough to read whole; ${code('src/space.ts')} assembles them. ${code('npx plitzi create <dir> --template catalog')} is a complete example of the shape.
 - Rebuilding a page the user owns: ${code('npx plitzi import <url>')} writes its tokens, outline and lists as a start — then split it into parts and write the content. It reads only a site whose domain the user verified on one of their spaces.

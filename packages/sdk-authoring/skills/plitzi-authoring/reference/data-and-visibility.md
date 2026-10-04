@@ -50,7 +50,7 @@ text('', { bind: [bindTemplate('content', 'computed.level', 'Level {{ source }}'
 
 A computed value reads the globals (`state`, `auth`, `navigation`, `variables`, `theme`, `host`) and the ones declared
 above it — not an element's source: bind that on the element. One `{{ expression }}` gives its value (a number, a
-list); anything else gives text. `authorSpace` refuses a name read before it is declared, or never.
+list); anything else gives text. `authorSpace` refuses a name read before it is declared.
 
 ## Providers
 
@@ -68,7 +68,7 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
   `not isLoading` for an empty state.
 - A query that depends on state is a binding on `query`; it answers `''` (and fetches nothing) until the state exists:
   `"{{ source ? apiUrl ~ '/workspaces/' ~ source ~ '/stats' : '' }}"` with `source: 'state.workspace.id'`.
-- `runtime: 'server'` is resolved by the page server: authoring turns the space's server data (`rsc`) on for it.
+- `runtime: 'server'` is resolved by the page server — server data is on unless a space says `rsc: { enabled: false }`.
   Only a page and its layouts are resolved — never inside a component: keep the provider on the page and hand the
   component its rows as a prop ([recipes/server-data.ts](../recipes/server-data.ts)).
 
@@ -92,10 +92,8 @@ credential that an action or a connector names; data for some visitors only come
 checks who is asking, or a `runtime: 'server'` provider behind one.
 
 **In a server project (`create --mode server`), put the provider on the server** — `runtime: 'server'` — and the page
-server reads the file from `public/` itself: the page arrives
-with those sections in it (and their anchors in place) instead of fetching them once the browser has the page. A
-browser provider leaves the server-rendered HTML without them. A `query` with `{{tokens}}` is still read in the
-browser, against the visitor's route and state.
+server reads the file from `public/` itself: the page arrives with those sections (and their anchors) in it. A `query`
+with `{{tokens}}` is still read in the browser, against the visitor's route and state.
 
 ### Live, cached, refreshed
 
@@ -126,7 +124,7 @@ modalContainer({ visible: false, … })           // starts hidden; a flow opens
 | The logic… | Example | Write |
 | --- | --- | --- |
 | reveals it: hidden until the data says so | empty state, "get started", admin-only panel, error note | `visible: 'src'`, or `visible: false` + a computed binding |
-| hides it: shown unless a flag says otherwise | sidebar labels until the sidebar is folded, a banner until dismissed | a binding with no `visible`; an absent flag must leave it shown |
+| hides it: shown unless a flag says otherwise | sidebar labels until the sidebar is folded, a banner until dismissed | `visible: '!state.folded'` — on screen while nobody has set it |
 
 `visible` starts the element **hidden**, and it appears when its data says so. A revealing condition you have to
 compute is `visible: { source, template }` — it starts hidden too, and the template's value is read as a yes or a
@@ -145,17 +143,19 @@ container({
 
 Rules for a condition's template:
 
-- **A revealing condition starts hidden** — `visible: { source, template }` does that for you. A visibility binding
-  written by hand in `bind` keeps the element on screen until it answers — right for a hiding flag, a flash for a
-  condition on data. `authorSpace` warns `condition-starts-visible` when a computed one on a provider starts on screen.
+- **A visibility binding written by hand in `bind` keeps the element on screen until it answers** — a flash for a
+  condition on data (`condition-starts-visible` warns); `visible` starts it hidden.
 - **A hidden element stays in the DOM** (`plitzi-component--hidden`), its subtree mounted. `loadStrategy: 'visible'`
   mounts the subtree only while it is shown, and `'lazy'` from the first time it is shown (modals do that already).
   Use it on heavy panels that are usually hidden; leave the default on what is usually on screen.
-- **`'true'` shows, `'false'` hides, `''` writes nothing** and leaves the element as it is. Visibility hides only on
-  an explicit false.
-- **Answer what "not known yet" should mean.** For a revealing condition that is `'false'` (`source ? … : 'false'`);
-  for a hiding flag it is `''` — nothing written, the default stays. A sidebar that answered `'false'` for a
-  "folded" state nobody had set yet hid every label of the menu for everybody.
+- **Once its source has a value, the answer is a yes or a no**: `false`, `0`, `''` and an empty list hide it,
+  anything else shows it.
+- **While its source has no value, only a definite answer is written.** `!source` is `true` — shown; a template's
+  `'true'` or `'false'` is written as it says. A plain source, or a template that answers nothing (`''`), writes
+  nothing: the element stays as it started — hidden for `visible`, shown for a binding written by hand.
+- **So a hiding flag is `visible: '!state.folded'`** (or a binding with no `visible`): on screen before anybody has set
+  it. A condition that answers "not known yet" with `'false'` from a value that IS there — a "folded" read off
+  something always set — hid every label of a sidebar for everybody.
 - **Hide the element itself.** Never wrap it in a container that is shown while the inner one is hidden: an empty
   visible wrapper still takes a slot in its parent's `gap`, and leaves a hole in the page.
 

@@ -1,4 +1,4 @@
-# A space's functions (`functions`)
+# A space's server code (`functions`, `runtime`)
 
 A space's own server code — TypeScript tasks its actions run as steps, and routes under `/fn/` — lives in the space;
 `functions/` in a project is a **working copy** of it. The contract (`defineFunctions`, `ctx`) is typed in
@@ -16,3 +16,16 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 - **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or
   `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
 - **The live site runs what the space was last published with.** A push changes the draft; publishing is the person's.
+
+## A space's runtime (`runtime`)
+
+What a function cannot be — Node packages, a connection held open, state across requests — is the space's **runtime**:
+`src/runtime.ts`, default-exporting `defineRuntime` from `@plitzi/sdk-server/runtime` (its `.d.ts` documents it).
+
+- `runtime push` packs it (`--entry` for another file) as the draft's runtime; publishing deploys it. Its source goes
+  up with it, so `create --from` brings it back.
+- `runtime status` (`--json`) says how each environment's runs, and its variables' names. `runtime vars set NAME`
+  reads the value from stdin (`printf %s "$V" | …`), never echo it in a command line; `vars unset NAME` removes one.
+- `runtime size small|medium|large`, `stop`, `start` — the draft's unless `--environment` names a published one.
+- It needs a plan that includes runtimes and a private bucket on the space's CDN; a refusal says which is missing.
+

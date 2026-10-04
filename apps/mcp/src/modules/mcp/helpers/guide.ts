@@ -338,7 +338,7 @@ runtime wires by it — there is no second key and nothing to translate. Creatin
 That name is the **wiring key**: a provider registers its data source as \`<type>_<name>\`, so a \`source\` you write
 against a name resolves to that element at runtime. Rules for a **new** name (both enforced; a violation fails the
 batch):
-- Charset \`[A-Za-z0-9_-]\`, **starting with a letter** (e.g. \`"products-api"\`, \`"food_item"\`). A \`.\` would split
+- Charset \`[A-Za-z0-9_-]\`, **starting with a letter** and not ending in \`-\` (e.g. \`"products-api"\`, \`"food_item"\`). A \`.\` would split
   the \`<type>_<name>.<field>\` source path and the interaction target lookup, so **no dots**. An **underscore is
   allowed**: the FIRST \`_\` separates \`<type>\` from the name and element types are camelCase with none, so
   underscores inside a name are unambiguous (\`list_food_item\` → type \`list\`, name \`food_item\`).
@@ -507,7 +507,7 @@ the API needs a token or the content should be in the HTML), or a browser-side \
 \`{ action, params }\`; the runtime runs them in order and resolves each by its \`action\` alone, so an **unknown
 action is silently skipped** and the raw value passes through. Use the **exact** action names from
 \`plitzi://data-sources\` (\`transformers\`). The most common is **\`twigTemplate\`** to format a value — the incoming
-value is the **\`{{source}}\`** token (NOT \`{{value}}\`); \`{{sourceTo}}\` is the field's previous value. Example —
+value is the **\`{{source}}\`** token (NOT \`{{value}}\`) — undefined until the source has a value, so \`{{ source|default('…') }}\` covers the wait; \`{{sourceTo}}\` is the field's previous value. Example —
 show a number with units:
 \`{ "type": "upsertBinding", "pageRef": "home", "ref": "food-item-time", "category": "attributes",
   "binding": { "to": "content", "source": "list_food-list.item.cookTimeMinutes",

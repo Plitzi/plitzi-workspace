@@ -100,6 +100,7 @@ and a publish is not blocked.
 | `dropdown-without-control` | A dropdown opened from a box or an icon: nothing a keyboard reaches opens it | Make what opens it a `button` |
 | `control-in-decorative` | A button, link or field inside a `decorative` container: Tab reaches it and nothing announces it | Move it out of the illustration |
 | `controls-no-anchor` | A button whose `controls` names an id no element of a saved document carries | Give the element it shows and hides that anchor |
+| `embed-without-title` | An `embed` with no `title`: a frame a screen reader cannot describe | Say what it shows in `title` |
 
 Nothing inside a `decorative` container is held to the other rules: assistive technology is told to skip it.
 

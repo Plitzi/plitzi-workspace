@@ -81,8 +81,10 @@ content; the links say their words and icon themselves, with no suggestion left.
   serves answered the body itself, while the same provider in the browser publishes `{ status, data }` — so moving it
   to the server broke every binding. `publicFileResolver` and the builder's mock now answer `{ status, data }` too:
   `<source>.data.<field>` whichever runtime.
-- **`schema.rsc.enabled` follows the space.** `authorSpace` turns it on when the space has a server provider (a
-  `query` one included) and the spec does not say otherwise; nothing to remember.
+- **Server data is on unless a space turns it off.** The page render read a missing `rsc` as on and the connector
+  resolver as off, so a server provider in a space the builder or the MCP made (neither writes `rsc`) resolved to
+  nothing, silently. Both read it as on now; only `rsc: { enabled: false }` turns it off (and is warned with a server
+  element). `authorSpace` writes `enabled: true` for a space that has one.
 - **Never inside a component.** The page server resolves a page's tree and its layouts only, so a server provider in a
   component rendered nothing, silently. Refused now (`server-provider-in-component`), with the fix: the provider on
   the page, the rows handed in as a prop.
@@ -147,3 +149,24 @@ and the MCP's local screenshots hold motion at its end. The builder's Motion tab
   menu for the language, one for the level — are not offered as a list.
 - **`quiet: ['repeated-shape']`** on an element says a suggestion was left on purpose, and it is not offered again.
   Only suggestions' codes (`quiet-unknown`).
+
+## What the docs say is what the code does
+
+A pass across authoring's own messages, the skills, the MCP guide, `docs/en`, the CLI's README and the website, so an
+agent reading two of them is never told two things:
+
+- **A binding's `source` is the bound value, and only that.** With no value yet it fell back to the attribute's
+  current one — `sourceTo` — so `{{ source|default('…') }}` never took its default and `{{ source ? … }}` read an
+  element's placeholder ("Text") as an answer. It is `undefined` until the source has a value now; `sourceTo` is still
+  the value before.
+- **`explain` writes a step the way its builder is called:** `delay(ms)`, `openModal('modal-id', data?)`,
+  `scrollBy('row-id', { x: '80%' })` — not `delay(…)` above the document's param names, which read as `delay({ time })`.
+- **A page field nobody takes is told what it was probably for** — `seo` → `seoTitle` and `seoDescription` — instead of a
+  hint about keeping state appended to every one.
+- Docs set straight: an element's id is `data-plitzi-el` in the page (`data-id` is the builder's, with debugging on);
+  a visibility condition writes nothing while its source has no value and is a yes or a no once it has one; `mobile`
+  is up to and including 48rem; `loadStrategy` defaults by type (`lazy` for a modal); the accessibility codes listed
+  in full everywhere (`embed-without-title`, `dropdown-without-control`, `controls-no-anchor`); the generated
+  `AGENTS.md` says a repeated block is a component and rows of data a list, as the skill does; `plitzi runtime` is
+  documented in the CLI's README, its skill and the website, which no longer says state across requests needs a
+  server of your own.

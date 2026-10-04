@@ -65,7 +65,7 @@ container({ id: 'hero', class: [card, { opacity: '0.5' }] });  // …plus one th
 container({ css: { padding: '8px' } });                        // rules of its own — never with `class`
 ```
 
-Breakpoints: `desktop` (base), `tablet` (48–64rem), `mobile` (<48rem), `compact` (tablet AND mobile). Each inherits
+Breakpoints: `desktop` (base), `tablet` (48–64rem), `mobile` (≤48rem), `compact` (tablet AND mobile). Each inherits
 from `desktop` alone. States: `hover`, `focus`, `focus-visible`, `active`, `disabled`…. An ancestor's state:
 `ancestors: { [card.name]: { states: { hover: { … } } } }`.
 

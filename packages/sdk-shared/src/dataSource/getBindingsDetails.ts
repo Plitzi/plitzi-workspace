@@ -18,8 +18,11 @@ const getValues = (
 ) => {
   const toPath = bkey === 'initialState' ? `definition.${bkey}.${attrKey}` : `${bkey}.${attrKey}`;
 
+  // `source` is the bound value and nothing else: a source with no value yet is `undefined`, not the attribute's current
+  // value — that is `sourceTo`. Falling back to it made `{{ source|default('x') }}` never take its default and a
+  // `{{ source ? … }}` read an element's placeholder text as an answer.
   return {
-    fromValue: sourcePath ? get(dataSource, sourcePath, get(result, toPath)) : undefined,
+    fromValue: sourcePath ? get(dataSource, sourcePath) : undefined,
     toValue: get(result, toPath, sourcePath ? get(dataSource, sourcePath) : undefined)
   };
 };

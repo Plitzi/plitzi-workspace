@@ -7,7 +7,7 @@ import type { Declarations, TailwindColors } from './utilities';
 import type { AncestorSpec, CssProps, ResponsiveCss, RuleSetSpec } from '../types';
 import type { StyleState } from '@plitzi/sdk-shared';
 
-/** The three ranges a Plitzi style is written for: below 48rem, 48–64rem, and above. */
+/** The three ranges a Plitzi style is written for: up to 48rem, 48–64rem, and above. */
 type Range = 'mobile' | 'tablet' | 'desktop';
 
 /**
@@ -55,7 +55,7 @@ const refuse = (code: 'tw-unknown-class' | 'tw-no-equivalent' | 'tw-class-confli
 };
 
 const BREAKPOINT_HELP =
-  'Plitzi has three ranges — mobile below 48rem, tablet 48–64rem, desktop above — so `md:` (tablet and desktop), `lg:` (desktop), `max-md:` (mobile) and `max-lg:` (mobile and tablet) have an equivalent and the others do not.';
+  'Plitzi has three ranges — mobile up to 48rem, tablet 48–64rem, desktop above — so `md:` (tablet and desktop), `lg:` (desktop), `max-md:` (mobile) and `max-lg:` (mobile and tablet) have an equivalent and the others do not.';
 
 /** The variants a class is written under: `md:hover:bg-x` is `md`, `hover`, `bg-x`. Brackets keep their colons. */
 const splitVariants = (written: string): string[] => {

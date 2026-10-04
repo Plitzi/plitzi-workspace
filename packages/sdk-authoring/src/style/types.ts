@@ -30,7 +30,7 @@ export type StyleRules = StyleObject;
 
 /**
  * Per-breakpoint CSS as an author writes it. Omitted breakpoints inherit `desktop`, as they do in the builder — and
- * only `desktop`: `tablet` (48–64rem) and `mobile` (below 48rem) are disjoint ranges, so a `tablet` rule never
+ * only `desktop`: `tablet` (48–64rem) and `mobile` (up to 48rem) are disjoint ranges, so a `tablet` rule never
  * reaches a phone unless `mobile` repeats it.
  *
  * `compact` is both of them at once — everything narrower than a desktop: the dock that replaces a sidebar, the grid

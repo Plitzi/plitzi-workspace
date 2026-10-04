@@ -164,12 +164,15 @@ export const BINDING_CATEGORIES = ['attributes', 'style', 'initialState'] as con
 export const ACCESS_LEVELS = ['public', 'authenticated'] as const;
 export const STEP_TYPES = ['trigger', 'globalCallback', 'callback', 'utility'] as const;
 
-/** Refuses a field the spec does not take, naming the one it probably meant. */
+/**
+ * Refuses a field the spec does not take, naming the one it probably meant. `hint` is said after it — for the field
+ * written, when it depends on which one: a hint about one field is noise about every other.
+ */
 export function assertKnownKeys(
   value: unknown,
   keys: readonly string[],
   where: string,
-  hint = ''
+  hint: string | ((key: string) => string) = ''
 ): asserts value is Record<string, unknown> {
   if (!isRecord(value)) {
     throw new AuthoringError('element-shape', `${where} is ${value === null ? 'null' : typeof value}, not an object.`);
@@ -179,7 +182,7 @@ export function assertKnownKeys(
     if (!keys.includes(key)) {
       throw new AuthoringError(
         'unknown-field',
-        `${where} has "${key}", which it does not take${didYouMean(key, keys) || '.'} It takes ${keys.join(', ')}.${hint}`
+        `${where} has "${key}", which it does not take${didYouMean(key, keys) || '.'} It takes ${keys.join(', ')}.${typeof hint === 'string' ? hint : hint(key)}`
       );
     }
   }
