@@ -2,7 +2,7 @@
  * A marquee: a row of names that scrolls for ever and stops under the pointer. The items are rendered three times
  * and the keyframe moves the track by a third, so the end meets the start with no jump.
  */
-import { apiContainer, container, list, styles, text } from '@plitzi/sdk-authoring';
+import { apiContainer, container, list, styles, text, listItem } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -45,7 +45,7 @@ export const recipe: SpaceSpec = {
                   class: track,
                   from: 'catalog.data.brands',
                   as: '{{ source|merge(source)|merge(source) }}',
-                  children: [text({ from: 'brands.item' })]
+                  children: [listItem({ children: [text({ from: 'brands.item' })] })]
                 })
               ]
             })

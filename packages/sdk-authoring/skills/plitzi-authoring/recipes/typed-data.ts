@@ -4,7 +4,7 @@
  * `site.data.hero.titel` is a type error, not an empty heading. In a project the sample is the file itself:
  * `import home from '../../public/data/home.json' with { type: 'json' }`.
  */
-import { apiContainer, heading, list, source, styles, text, twig } from '@plitzi/sdk-authoring';
+import { apiContainer, heading, list, source, styles, text, twig, listItem } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -50,11 +50,14 @@ export const recipe: SpaceSpec = {
               class: grid,
               items: site.data.products,
               // The row's item is typed as the sample's: every field any product has.
-              row: product => [
-                text({ from: product.item.title }),
-                text({ from: product.item.price, as: 'price' }),
-                text({ from: product.item.badge, visible: product.item.badge })
-              ]
+              row: product =>
+                listItem({
+                  children: [
+                    text({ from: product.item.title }),
+                    text({ from: product.item.price, as: 'price' }),
+                    text({ from: product.item.badge, visible: product.item.badge })
+                  ]
+                })
             })
           ]
         })

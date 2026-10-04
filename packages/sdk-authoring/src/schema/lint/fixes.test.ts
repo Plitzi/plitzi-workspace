@@ -85,6 +85,15 @@ const broken: Record<string, () => Documents> = {
     withChange(({ schema }) => {
       addElement(schema, { id: 'rows', type: 'list', attributes: { source: 'none', items: [{ title: 'One' }] } });
     }),
+  'list-row-not-li': () =>
+    withChange(({ schema }) => {
+      addElement(schema, { id: 'rows', type: 'list', attributes: { source: 'controlled', items: [{ title: 'One' }] } });
+      addElement(schema, { id: 'row', type: 'container', attributes: {} });
+      const home = schema.flat.rows.definition.rootId;
+      schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(id => id !== 'row');
+      schema.flat.row.definition.parentId = 'rows';
+      schema.flat.rows.definition.items = ['row'];
+    }),
   'overlay-starts-open': () =>
     withChange(({ schema }) => {
       schema.flat.modal.definition.initialState = { visibility: true };

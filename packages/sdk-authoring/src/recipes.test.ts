@@ -9,6 +9,7 @@ import {
   channel,
   delay,
   list,
+  listItem,
   named,
   on,
   onClick,
@@ -211,19 +212,23 @@ describe('the skill’s recipes', () => {
               source: 'controlled',
               bind: { items: 'state.rows' },
               children: [
-                button({
-                  id: 'delete',
-                  content: 'Delete',
-                  flows: [
-                    [
-                      onClick(),
-                      setState({ key: 'pendingDelete', type: 'text', value: '{{ list_rows.item.id }}' }),
-                      delay(5000),
-                      when(
-                        { field: 'state.pendingDelete', operator: '=', value: 'list_rows.item.id', isBinding: true },
-                        runServerAction({ actionId: 'row-delete', input: { id: '{{ list_rows.item.id }}' } })
-                      )
-                    ]
+                listItem({
+                  children: [
+                    button({
+                      id: 'delete',
+                      content: 'Delete',
+                      flows: [
+                        [
+                          onClick(),
+                          setState({ key: 'pendingDelete', type: 'text', value: '{{ list_rows.item.id }}' }),
+                          delay(5000),
+                          when(
+                            { field: 'state.pendingDelete', operator: '=', value: 'list_rows.item.id', isBinding: true },
+                            runServerAction({ actionId: 'row-delete', input: { id: '{{ list_rows.item.id }}' } })
+                          )
+                        ]
+                      ]
+                    })
                   ]
                 })
               ]

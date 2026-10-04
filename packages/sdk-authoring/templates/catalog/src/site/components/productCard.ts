@@ -1,8 +1,9 @@
 /**
  * A product as a card, placed once per product: one component, so a change to the card is a change to every card. It
- * reads the product through its `item` prop and links to the product's own page.
+ * reads the product through its `item` prop and links to the product's own page. Its root is the list's item, an
+ * `<li>`, laid out as a grid of one so the link fills it — the card is as tall as the row it sits in.
  */
-import { heading, link, styles, text } from '@plitzi/sdk-authoring';
+import { heading, link, listItem, styles, text } from '@plitzi/sdk-authoring';
 
 import { t } from '../tokens.ts';
 
@@ -42,15 +43,26 @@ const price = styles('product-price', { fontWeight: 700 });
 export const productCard: ComponentSpec = {
   id: 'product-card',
   props: { item: { type: 'json', description: 'The product: slug, title, summary, price and, maybe, a badge' } },
-  root: link({
-    id: 'card',
-    href: '/products/{{ props.item.slug|url_encode }}',
-    class: card,
+  root: listItem({
+    id: 'card-item',
+    css: { display: 'grid' },
     children: [
-      text({ id: 'card-badge', class: badge, from: 'props.item.badge', visible: 'props.item.badge' }),
-      heading({ id: 'card-title', subType: 'h3', from: 'props.item.title', css: { margin: '0px', fontSize: '18px' } }),
-      text({ id: 'card-summary', class: summary, from: 'props.item.summary' }),
-      text({ id: 'card-price', class: price, from: 'props.item.price', as: 'price' })
+      link({
+        id: 'card',
+        href: '/products/{{ props.item.slug|url_encode }}',
+        class: card,
+        children: [
+          text({ id: 'card-badge', class: badge, from: 'props.item.badge', visible: 'props.item.badge' }),
+          heading({
+            id: 'card-title',
+            subType: 'h3',
+            from: 'props.item.title',
+            css: { margin: '0px', fontSize: '18px' }
+          }),
+          text({ id: 'card-summary', class: summary, from: 'props.item.summary' }),
+          text({ id: 'card-price', class: price, from: 'props.item.price', as: 'price' })
+        ]
+      })
     ]
   })
 };

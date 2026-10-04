@@ -3,7 +3,7 @@
  * A page per product, at `/products/<slug>`: the same file, narrowed to the product the address names — and a message,
  * not an empty page, when no product has that name.
  */
-import { apiContainer, container, heading, link, list, styles, text } from '@plitzi/sdk-authoring';
+import { apiContainer, container, heading, link, list, listItem, styles, text } from '@plitzi/sdk-authoring';
 
 import { PRODUCTS_URL, productsSource } from '../data.ts';
 import { t } from '../tokens.ts';
@@ -40,18 +40,23 @@ export const product: PageSpec = {
             template: "{{ source|find('slug', navigation.routeParams.slug) }}"
           },
           row: r =>
-            container({
-              id: 'product-detail',
-              subType: 'article',
-              class: detail,
+            listItem({
+              id: 'product-item',
               children: [
-                heading({ id: 'product-title', subType: 'h1', from: `${r.item}.title` }),
-                text({ id: 'product-summary', from: `${r.item}.summary` }),
-                text({
-                  id: 'product-price',
-                  from: `${r.item}.price`,
-                  as: 'price',
-                  css: { fontSize: '24px', fontWeight: 700 }
+                container({
+                  id: 'product-detail',
+                  subType: 'article',
+                  class: detail,
+                  children: [
+                    heading({ id: 'product-title', subType: 'h1', from: `${r.item}.title` }),
+                    text({ id: 'product-summary', from: `${r.item}.summary` }),
+                    text({
+                      id: 'product-price',
+                      from: `${r.item}.price`,
+                      as: 'price',
+                      css: { fontSize: '24px', fontWeight: 700 }
+                    })
+                  ]
                 })
               ]
             })

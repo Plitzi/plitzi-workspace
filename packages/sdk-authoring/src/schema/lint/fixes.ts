@@ -2,6 +2,7 @@ import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { closest } from '../suggest';
 import { LintContext } from './context';
+import { isPlainContainer } from './elements';
 import { STATE_PATH_PARAMS } from './flows';
 
 import type { LintCatalogs } from './context';
@@ -287,6 +288,20 @@ const FIXERS: Record<string, Fixer> = {
         op: 'set',
         key: 'source',
         value: 'controlled'
+      });
+    }
+  },
+
+  'list-row-not-li': (element, ctx, report) => {
+    const { parentId } = element.definition;
+    const list = parentId ? ctx.element(parentId) : undefined;
+    if (list?.definition.type === 'list' && list.attributes.source === 'controlled' && isPlainContainer(element)) {
+      element.attributes.subType = 'li';
+      report('The row is now an `<li>` (`subType: li`), an item of the list it renders in.', {
+        on: 'attribute',
+        op: 'set',
+        key: 'subType',
+        value: 'li'
       });
     }
   },

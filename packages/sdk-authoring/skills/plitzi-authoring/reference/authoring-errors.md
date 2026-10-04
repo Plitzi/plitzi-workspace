@@ -174,7 +174,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `image-without-alt` | an image that is not `decorative` and has no `alt` | say what it shows, or `decorative: true` |
 | `label-ignored` | a `label` on a container whose tag is named by what it holds (`li`, a heading) | the words inside, or a landmark tag (`nav`, `section`…) |
 | `list-item-key-missing` | a list's `itemKey` that some of its items lack, or two of them share — the rows fall back to `id`, then position | a field every item has, once each |
-| `list-row-li` | a row of a list with `items` written as an `<li>` — or a component whose root is one — that list is a `<div>`, so it is an `<li>` outside a list | a plain `container` (no `subType`), the row or the component’s root |
+| `list-row-not-li` | a row of a list with `items` that is not an `<li>` — that list is a `<ul>` (or `<ol>`), so the row is a box inside a list, no item to a screen reader | `container({ subType: 'li' })` — or the component's root one, or a wrapper for a link or a button |
 | `overlay-never-opened` | a modal or a dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |
 | `overlay-starts-open` | a modal or a dialog open when the page loads | `visible: false`, opened by `openModal` |
 | `painted-state-without-keep-state` | `paintedState` without `keepState` — nothing is kept for the server to draw with | `settings.keepState: true`, or remove `paintedState` |

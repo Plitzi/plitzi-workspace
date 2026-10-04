@@ -28,12 +28,10 @@ const Settings = ({ subType = 'ul', source = 'none', itemKey = '', onUpdate }: S
           onChange={handleChange('itemKey')}
         />
       )}
-      {source === 'none' && (
-        <Select label="List Type" value={subType} onChange={handleChange('subType')} size="xs">
-          <option value="ul">Unordered</option>
-          <option value="ol">Ordered</option>
-        </Select>
-      )}
+      <Select label="List Type" value={subType} onChange={handleChange('subType')} size="xs">
+        <option value="ul">Unordered</option>
+        <option value="ol">Ordered</option>
+      </Select>
     </div>
   );
 };

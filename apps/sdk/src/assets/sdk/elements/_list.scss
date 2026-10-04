@@ -5,10 +5,13 @@
     padding-left: 40px;
   }
 
+  // A `<ul>` of data rows — cards, results — is a list to a screen reader and a layout to the eye: no markers, which a
+  // row that is a grid of its own would only carry as stray bullets. A class that wants them sets `list-style`.
   .plitzi-component__controlled-list {
     margin-bottom: 10px;
     margin-top: 0;
     padding-left: 40px;
+    list-style: none;
 
     &.controlled-list--build-mode {
       .plitzi-component__controlled-list-item:not(:first-child) {

@@ -371,6 +371,49 @@ const warnItemKey = (ctx: LintContext, element: Element, where: string): void =>
   );
 };
 
+/** An `<li>`: a `listItem`, or a container that says it is one. */
+const isListItem = (element: Element): boolean =>
+  element.definition.type === 'listItem' ||
+  (element.definition.type === 'container' && element.attributes.subType === 'li');
+
+/** A container with no tag of its own named: the row `list-row-not-li` makes an `<li>` without asking. */
+export const isPlainContainer = (element: Element): boolean =>
+  element.definition.type === 'container' &&
+  (element.attributes.subType === undefined || element.attributes.subType === 'div');
+
+/**
+ * The rows of a list with `items`: it is a `<ul>` (an `<ol>` with `subType: 'ol'`) and renders each row straight into
+ * it, so a row that is not an `<li>` is a box inside a list — read by a screen reader as no item at all. A plain
+ * container becomes one with nothing else to decide; anything else — a link, a button, a component whose root is not an
+ * `<li>` — is wrapped, which is the author's to choose, since the wrapper then becomes what the list lays out.
+ */
+const warnRowsNotItems = (ctx: LintContext, list: Element): void => {
+  const tag = list.attributes.subType === 'ol' ? '<ol>' : '<ul>';
+  for (const rowId of list.definition.items ?? []) {
+    const row = ctx.element(rowId);
+    if (!row || isListItem(row)) {
+      continue;
+    }
+
+    const component = ctx.instanceOf(row);
+    const root = component?.flat[component.rootId];
+    if (root && isListItem(root)) {
+      continue;
+    }
+
+    const how = isPlainContainer(row)
+      ? `Write it \`container({ subType: 'li' })\` — its class still lays "${row.id}" out as before.`
+      : component
+        ? `Make the root of component "${component.id}" an \`<li>\` (\`container({ subType: 'li' })\`), or wrap the instance in one.`
+        : `Wrap it in \`container({ subType: 'li', children: [ … ] })\` — the wrapper is then what the list lays out, so move the layout of "${row.id}" onto it.`;
+    ctx.warn(
+      'list-row-not-li',
+      `${ctx.describe(row.id)} is a row of list "${list.id}", which renders as a \`${tag}\`: a row that is not an \`<li>\` is a box inside a list, which a screen reader reads as no item at all. ${how}`,
+      row.id
+    );
+  }
+};
+
 /**
  * What renders, and renders something other than what it plainly means. Refused where there is no other reading — a
  * controlled list with nothing to render — and warned where there is a rare legitimate one.
@@ -393,6 +436,10 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
 
   if (type === 'list' && !bound('items')) {
     warnItemKey(ctx, element, where);
+  }
+
+  if (type === 'list' && attributes.source === 'controlled') {
+    warnRowsNotItems(ctx, element);
   }
 
   const { loadingSlot } = attributes;

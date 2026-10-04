@@ -40,8 +40,8 @@ embed({ src, title })                          // a map, a player: another page 
 svg('<svg …>…</svg>', { label })               // checked, sanitised; currentColor follows the class
 svg(svgFile(new URL('./logo.svg', import.meta.url)))  // a file, compacted: svgFile/svgFiles from '@plitzi/sdk-authoring/node'
 fontAwesome({ icon: 'fa-solid fa-xmark' })
-list({ id: 'rows', items: 'p.data.rows', row: 'row-card' })    // a <div>; a component per row (its `item` prop)
-list({ id: 'rows', items: 'p.data.rows', row: r => text({ from: `${r.item}.title` }) })  // or a tree per row
+list({ id: 'rows', items: 'p.data.rows', row: 'row-card' })    // a <ul>; a component per row, its root an <li>
+list({ id: 'rows', items: 'p.data.rows', row: r => listItem({ children: [text({ from: `${r.item}.title` })] }) })
 carousel({ id: 'hero', items: 'p.data.slides', autoplay: 5000, row: 'slide-card', children: [/* carouselNext('hero') arrows */] })
                                                // rows follow their item's `id`, or `itemKey: 'slug'`
 apiContainer({ id: 'p', query: '/data/x.json', cache: true, children })   // publishes p.data; no box of its own

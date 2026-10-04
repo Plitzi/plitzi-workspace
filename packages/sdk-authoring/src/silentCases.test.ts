@@ -347,26 +347,37 @@ describe('what an element is written with that reaches nothing', () => {
     expect(warnings[1].message).toContain('the plugin’s own `variant`');
   });
 
-  it('says so of a list row written as an `<li>` — the list with items is a `<div>` — and not of a plain one', () => {
+  it('says so of a list row that is not an `<li>` — the list with items is a `<ul>` — and not of one that is', () => {
     const { warnings } = author([
       authoring.list({
         id: 'faq',
         items: [{ q: 'Why?' }],
-        children: [authoring.container({ id: 'faq-row', subType: 'li', children: [authoring.text('x')] })]
+        children: [authoring.container({ id: 'faq-row', children: [authoring.text('x')] })]
       }),
       authoring.list({
-        id: 'plain',
+        id: 'links',
         items: [{ q: 'Why?' }],
-        children: [authoring.container({ children: [authoring.text('y')] })]
+        children: [authoring.link({ id: 'link-row', href: '/about', content: 'About' })]
+      }),
+      authoring.list({
+        id: 'items',
+        items: [{ q: 'Why?' }],
+        children: [authoring.container({ id: 'item-row', subType: 'li', children: [authoring.text('y')] })]
+      }),
+      authoring.list({
+        id: 'entries',
+        items: [{ q: 'Why?' }],
+        children: [authoring.listItem({ id: 'entry-row', children: [authoring.text('z')] })]
       })
     ]);
+    const notItems = warnings.filter(warning => warning.code === 'list-row-not-li');
 
-    expect(warnings.filter(warning => warning.code === 'list-row-li').map(warning => warning.elementId)).toEqual([
-      'faq-row'
-    ]);
+    expect(notItems.map(warning => warning.elementId)).toEqual(['faq-row', 'link-row']);
+    expect(notItems[0]?.message).toContain("container({ subType: 'li' })");
+    expect(notItems[1]?.message).toContain('Wrap it');
   });
 
-  it('says so of a component placed as a list row whose root is an `<li>`, and not of one whose root is plain', () => {
+  it('takes a component placed as a row by its root: an `<li>` root is an item, a plain one is not', () => {
     const { warnings } = author(
       [
         authoring.list({ id: 'lines', items: [{ n: 1 }], children: [authoring.component('line', { id: 'line-row' })] }),
@@ -379,10 +390,10 @@ describe('what an element is written with that reaches nothing', () => {
         ]
       }
     );
-    const rowsAsLi = warnings.filter(warning => warning.code === 'list-row-li');
+    const notItems = warnings.filter(warning => warning.code === 'list-row-not-li');
 
-    expect(rowsAsLi.map(warning => warning.elementId)).toEqual(['line-row']);
-    expect(rowsAsLi[0]?.message).toContain('places component "line"');
+    expect(notItems.map(warning => warning.elementId)).toEqual(['card-row']);
+    expect(notItems[0]?.message).toContain('Make the root of component "card"');
   });
 
   it('is quiet about a variant a class of the element declares', () => {

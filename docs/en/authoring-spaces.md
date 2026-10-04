@@ -536,12 +536,12 @@ resolves to nothing — the button posts an empty id and every layer below repor
 it and says the full name:
 
 ```ts
-list({ id: 'jobRows', source: 'controlled', bind: { items: 'board.jobs' }, children: [
+list({ id: 'jobRows', source: 'controlled', bind: { items: 'board.jobs' }, children: [listItem({ children: [
   button({ content: 'Retry', flows: [[
     onClick(),
     runServerAction({ actionId: 'job-retry', input: { jobId: '{{ list_jobRows.item.id }}' } })  // the row clicked
   ]] })
-] })
+] })] })
 ```
 
 The list publishes one scope per row, so `list_jobRows.item` is the row whose button was pressed, not the first one.

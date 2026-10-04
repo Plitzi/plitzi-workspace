@@ -560,6 +560,24 @@ describe('lintSpace', () => {
       expect(listOf([{ slug: 'a' }, { slug: 'a' }])).toContain('list-item-key-missing');
     });
 
+    it('list-row-not-li', () => {
+      const rowOf = (row: { type: string; attributes: Record<string, unknown> }) =>
+        warningsOf(
+          withChange(({ schema }) => {
+            addElement(schema, { id: 'rows', type: 'list', attributes: { source: 'controlled', items: [{ n: 1 }] } });
+            addElement(schema, { id: 'row', ...row });
+            const home = schema.flat.rows.definition.rootId;
+            schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(id => id !== 'row');
+            schema.flat.row.definition.parentId = 'rows';
+            schema.flat.rows.definition.items = ['row'];
+          })
+        );
+
+      expect(rowOf({ type: 'container', attributes: {} })).toContain('list-row-not-li');
+      expect(rowOf({ type: 'container', attributes: { subType: 'li' } })).not.toContain('list-row-not-li');
+      expect(rowOf({ type: 'listItem', attributes: {} })).not.toContain('list-row-not-li');
+    });
+
     it('attribute-kind', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.go.attributes.disabled = 'true';

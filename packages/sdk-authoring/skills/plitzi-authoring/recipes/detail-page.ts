@@ -3,7 +3,7 @@
  * A page per record: a card links to `/products/<slug>`, and the detail page narrows the same file to the product its
  * address names — with a message, not an empty page, when no product has that name.
  */
-import { apiContainer, heading, link, list, text } from '@plitzi/sdk-authoring';
+import { apiContainer, heading, link, list, text, listItem } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -25,10 +25,14 @@ export const recipe: SpaceSpec = {
               id: 'products',
               items: 'catalog.data.products',
               children: [
-                // An attribute reads a name with filters, spelled in full.
-                link({
-                  href: '/products/{{ list_products.item.slug|url_encode }}',
-                  children: [text({ from: 'products.item.title' })]
+                listItem({
+                  children: [
+                    // An attribute reads a name with filters, spelled in full.
+                    link({
+                      href: '/products/{{ list_products.item.slug|url_encode }}',
+                      children: [text({ from: 'products.item.title' })]
+                    })
+                  ]
                 })
               ]
             })
@@ -54,7 +58,7 @@ export const recipe: SpaceSpec = {
                 source: 'catalog-one.data.products',
                 template: "{{ source|find('slug', navigation.routeParams.slug) }}"
               },
-              children: [heading({ subType: 'h1', from: 'this-product.item.title' })]
+              children: [listItem({ children: [heading({ subType: 'h1', from: 'this-product.item.title' })] })]
             }),
             text('No product by that name.', {
               visible: {

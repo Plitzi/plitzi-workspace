@@ -313,7 +313,7 @@ describe('sources read inside a flow', () => {
                 id: 'jobRows',
                 source: 'controlled',
                 bind: { items: 'board.jobs' },
-                children: [authoring.button({ content: 'Retry', flows: [flow] })]
+                children: [authoring.listItem({ children: [authoring.button({ content: 'Retry', flows: [flow] })] })]
               })
             ]
           })

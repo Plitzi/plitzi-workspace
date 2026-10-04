@@ -8,8 +8,8 @@ list bound to its records (see the provider in data-and-visibility).
 
 ```ts
 list({ id: 'games', class: gameGrid, items: 'catalog.data.games', row: 'game-card' })   // a component per game
-list({ id: 'games', items: 'catalog.data.games', row: r => text({ from: `${r.item}.title` }) })   // or a tree of its own
-list({ id: 'plans', items: ['Free', 'Pro'], children: [text({ from: 'plans.item' })] })  // fixed items
+list({ id: 'games', items: 'catalog.data.games', row: r => listItem({ children: [text({ from: `${r.item}.title` })] }) })
+list({ id: 'plans', items: ['Free', 'Pro'], children: [listItem({ children: [text({ from: 'plans.item' })] })] })  // fixed
 ```
 
 `items` makes a list controlled: an array of its own, or the source its rows come from. `row` is what it renders once
@@ -17,19 +17,20 @@ per item — a component's id (placed with the row bound to its `item` prop, or 
 row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item` for a template
 (`` `/games/{{ ${r.inTemplate.item}.slug }}` ``). A function needs the list's `id`, which names those sources. With
 `items` a typed source's path (`items: site.data.games`, see typed-sources.md), the row is typed too:
-`row: g => text({ from: g.item.title })`, and a field the sample's games lack is a type error.
+`row: g => listItem({ children: [text({ from: g.item.title })] })`, and a field the sample's games lack is a type error.
 
 - Each row publishes **`list_<id>.item`** (the row) and **`list_<id>.index`** (its position, a number from 0 —
   `index + 1` counts, and `==` compares it with text or a number alike). Inside the row,
   bindings read the short form (`'games.item.title'`), templates and attribute tokens the full one
   (`{{ list_games.item.slug }}`).
 - A **nested list** sees the outer row: inside `list_features`, `list_games.item` is still the game.
-- A list with `items` is a `<div>` and its `class` styles that root; each row is rendered straight into it, with no
-  wrapper — so a row is never an `<li>`: one written as `container({ subType: 'li' })`, or a component whose root is
-  one, is an `<li>` outside any list, which the browser repairs and React then fails to hydrate (`list-row-li`). A grid
-  of cards is all the root's class.
-  A list with no `items` is the plain `<ul>` (`subType: 'ol'` for a numbered one), and a `<ul>` is indented and
-  bulleted: `{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` takes that off.
+- A list is a `<ul>` (`subType: 'ol'` for a numbered one) and its `class` styles that root; each row is rendered
+  straight into it, with no wrapper — so **a row is an `<li>`**: `listItem({ class, children })`, a
+  `container({ subType: 'li' })`, or a component whose root is one. Anything else is a box inside a list, no item to a
+  screen reader (`list-row-not-li`; `fixSpace` makes a plain container one). A link or a button is wrapped in a
+  `listItem`, which is then what the list lays out: a card that is a link fills its item with `display: 'grid'` on the
+  `listItem`. A list with `items` has no markers; one without is indented and bulleted, and
+  `{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` takes that off. A grid of cards is the root's class.
 - Fixed data is `items: [ … ]` on the list itself — no provider needed. Worth it when the rows ARE data — written from
   an array, or rows that come and go (`repeated-shape` points at sibling copies). Three cards a person rewords on the
   canvas are easier to edit as three cards than as a JSON array.
@@ -72,7 +73,7 @@ apiContainer({ id: 'catalog', query: '/data/games.json', cache: true, children: 
     source: 'controlled',
     bind: [bindTemplate('items', 'catalog.data.games',
       '{{ source|filter(g => g.slug == navigation.routeParams.slug) }}', { returns: 'value' })],
-    children: [gameDossier()]                       // reads list_game.item
+    children: [listItem({ children: [gameDossier()] })]   // reads list_game.item
   }),
   text('Signal lost — no game by that name.', {
     id: 'game-missing',

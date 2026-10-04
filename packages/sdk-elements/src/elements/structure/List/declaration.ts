@@ -24,8 +24,9 @@ const declaration = elementDeclaration<ListAttributes>()({
       label: 'List',
       type: 'list',
       description:
-        'Repeats a template (its listItem/link child) once per entry of a data array — the way to render a dynamic ' +
-        'collection. Bind its items to a data source (e.g. an apiContainer response).',
+        'Repeats a template (its row: a listItem, or a container with subType "li") once per entry of a data array — ' +
+        'the way to render a dynamic collection, as a <ul> (subType "ol" for a numbered one). Bind its items to a ' +
+        'data source (e.g. an apiContainer response).',
       items: [],
       bindings: {},
       styleSelectors: {

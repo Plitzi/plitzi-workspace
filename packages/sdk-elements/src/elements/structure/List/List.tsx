@@ -24,7 +24,7 @@ const List = ({ ref, className = '', subType = 'ul', children, items = [], sourc
   switch (source) {
     case 'controlled':
       return (
-        <ListControlled ref={ref} className={className} items={items} itemKey={itemKey}>
+        <ListControlled ref={ref} className={className} subType={subType} items={items} itemKey={itemKey}>
           {children}
         </ListControlled>
       );

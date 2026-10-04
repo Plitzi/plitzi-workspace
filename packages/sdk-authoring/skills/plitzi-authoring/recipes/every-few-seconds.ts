@@ -18,7 +18,8 @@ import {
   styles,
   text,
   activeWhen,
-  when
+  when,
+  listItem
 } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
@@ -81,7 +82,7 @@ export const recipe: SpaceSpec = {
               id: 'slides',
               items: SLIDES,
               children: [
-                container({
+                listItem({
                   class: slide,
                   visible: { source: 'slides.index', template: '{{ source == (state.slide ?? 0) }}' },
                   children: [heading({ subType: 'h2', from: 'slides.item.title' }), text({ from: 'slides.item.body' })]
@@ -101,12 +102,16 @@ export const recipe: SpaceSpec = {
               class: dots,
               items: SLIDES,
               children: [
-                button({
-                  content: '',
-                  title: 'Show this offer',
-                  class: dot,
-                  bind: [activeWhen(dot, '{{ list_dots.index == (state.slide ?? 0) }}')],
-                  flows: [[onClick(), setState({ key: 'slide', type: 'number', value: '{{ list_dots.index }}' })]]
+                listItem({
+                  children: [
+                    button({
+                      content: '',
+                      title: 'Show this offer',
+                      class: dot,
+                      bind: [activeWhen(dot, '{{ list_dots.index == (state.slide ?? 0) }}')],
+                      flows: [[onClick(), setState({ key: 'slide', type: 'number', value: '{{ list_dots.index }}' })]]
+                    })
+                  ]
                 })
               ]
             }),

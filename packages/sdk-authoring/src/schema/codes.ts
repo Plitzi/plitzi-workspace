@@ -418,11 +418,11 @@ export const AUTHORING_CODES = {
     means: 'a controlled list with nothing to render',
     fix: "`items: [ … ]` or `bind: { items: 'provider.data.rows' }`"
   },
-  'list-row-li': {
+  'list-row-not-li': {
     kind: 'warned',
     means:
-      'a row of a list with `items` written as an `<li>` — or a component whose root is one — that list is a `<div>`, so it is an `<li>` outside a list',
-    fix: 'a plain `container` (no `subType`), the row or the component’s root'
+      'a row of a list with `items` that is not an `<li>` — that list is a `<ul>` (or `<ol>`), so the row is a box inside a list, no item to a screen reader',
+    fix: "`container({ subType: 'li' })` — or the component's root one, or a wrapper for a link or a button"
   },
   'list-item-key-missing': {
     kind: 'warned',

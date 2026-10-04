@@ -3,7 +3,7 @@
  * Show data with no backend: a JSON file the project serves (`public/data/products.json`), read by a provider — one
  * card per product, a skeleton while it loads, a count, a computed value, and an empty state that never flashes.
  */
-import { apiContainer, container, heading, list, styles, text } from '@plitzi/sdk-authoring';
+import { apiContainer, container, heading, list, styles, text, listItem } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -53,9 +53,15 @@ export const recipe: SpaceSpec = {
               class: grid,
               items: 'catalog.data.products',
               children: [
-                // Inside a row, a binding names the row short (`products.item`), a template in full (`list_products`).
-                heading({ subType: 'h3', class: card, from: 'products.item.title' }),
-                text({ from: 'products.item.price', as: 'price' })
+                // One `<li>` per product. Inside a row, a binding names the row short (`products.item`), a template in
+                // full (`list_products`).
+                listItem({
+                  class: card,
+                  children: [
+                    heading({ subType: 'h3', from: 'products.item.title' }),
+                    text({ from: 'products.item.price', as: 'price' })
+                  ]
+                })
               ]
             }),
             // Revealed by the data, so it starts hidden: nothing flashes while the file loads.

@@ -9,7 +9,7 @@ const site = source('site', home);
 apiContainer({ id: site.id, query: '/data/home.json', children: [
   heading({ from: site.data.hero.title }),
   text({ content: twig`{{ ${site.data.products}|length }} products` }),
-  list({ id: 'products', items: site.data.products, row: p => text({ from: p.item.title }) })
+  list({ id: 'products', items: site.data.products, row: p => listItem({ children: [text({ from: p.item.title })] }) })
 ] })
 ```
 

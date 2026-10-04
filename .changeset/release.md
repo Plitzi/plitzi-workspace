@@ -120,8 +120,10 @@ once (`1001`, going away) rather than waiting out the grace — the ten seconds 
 - **A plugin attribute named as an element field** (`variant`, `class`, `id`…) is warned about
   (`plugin-attribute-reserved`): a factory never hands it to the plugin. A `variant` no class or type style declares is
   `unknown-variant`.
-- **Lists:** a list with `items` is a `<div>` with its rows straight inside, as the docs now say; a row written as an
-  `<li>` — or placed as a component whose root is one — is `list-row-li`.
+- **Lists:** a list with `items` renders as the `<ul>` (or `<ol>`) its `subType` says — it was a `<div>` — with no
+  markers and the same spacing, so a page looks as it did; the builder offers the list type for it too. Its rows are
+  `<li>`s: `list-row-not-li` warns of one that is not — a plain container is made one by `fixSpace`, a link or a button
+  is wrapped — and the recipes, the catalog template and the docs write rows as `listItem`.
 - **CSS:** `mask-size`, `mask-position`, `mask-repeat`, `mask-composite`, `-webkit-mask-image`,
   `-webkit-background-clip`, `box-decoration-break` and `-webkit-box-decoration-break`.
 - **`plitzi shot`:** `--clip <element>`, `--scroll-to <element>` and `--viewport`; `--frames` takes the same framing.

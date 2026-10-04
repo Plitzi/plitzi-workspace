@@ -112,7 +112,7 @@ channel({
   keep: 0,
   bind: { presence: 'computed.me' }, // { name, color }, announced again whenever it changes
   children: [
-    list({ id: 'people', source: 'controlled', bind: { items: 'room.members' }, children: [avatar()] })
+    list({ id: 'people', source: 'controlled', bind: { items: 'room.members' }, children: [listItem({ children: [avatar()] })] })
     // …
   ]
 });

@@ -20,12 +20,21 @@ import type { ReactNode, RefObject } from 'react';
 export type ListControlledProps<T = unknown> = {
   ref?: RefObject<HTMLElement>;
   className: string;
+  /** The list's own tag: a list of data is a list, and each row — an `<li>` — renders straight into it. */
+  subType?: 'ul' | 'ol';
   children: ReactNode;
   items: T[];
   itemKey?: string;
 };
 
-const ListControlled = ({ ref, className = '', children, items = [], itemKey }: ListControlledProps) => {
+const ListControlled = ({
+  ref,
+  className = '',
+  subType = 'ul',
+  children,
+  items = [],
+  itemKey
+}: ListControlledProps) => {
   const {
     id,
     definition: { label }
@@ -63,6 +72,7 @@ const ListControlled = ({ ref, className = '', children, items = [], itemKey }: 
   return (
     <RootElement
       ref={ref}
+      tag={subType}
       className={clsx('plitzi-component__controlled-list', className, {
         'controlled-list--build-mode': !previewMode
       })}

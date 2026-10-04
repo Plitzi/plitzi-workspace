@@ -3,7 +3,7 @@
  * Filter and sort a list: a select writes the chosen category to `state`, and the list is bound through a template
  * that hands over its VALUE — only the matching rows are rendered, with a count and an empty state over the same rows.
  */
-import { apiContainer, formControl, list, named, on, setState, text } from '@plitzi/sdk-authoring';
+import { apiContainer, formControl, list, named, on, setState, text, listItem } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -47,7 +47,7 @@ export const recipe: SpaceSpec = {
               id: 'shown',
               from: 'catalog.data.products',
               as: `{{ ${shown} }}`,
-              children: [text({ from: 'shown.item.title' })]
+              children: [listItem({ children: [text({ from: 'shown.item.title' })] })]
             }),
             text('Nothing in that category.', {
               visible: {

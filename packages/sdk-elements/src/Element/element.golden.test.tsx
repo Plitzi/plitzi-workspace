@@ -7,6 +7,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceContext } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import Text from '../elements/basic/Text/Text';
+import List from '../elements/structure/List/List';
 
 import type { ComponentContextValue, Element, PlitziServiceContextValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
@@ -45,9 +46,19 @@ const moving: Element = {
   definition: { ...element.definition, motion: { enter: 'fade-up', on: 'view', delay: 120, loop: 'float' } }
 };
 
+/** A list of data, and one numbered. */
+const listOf = (id: string, subType?: 'ul' | 'ol'): Element => ({
+  id,
+  attributes: { source: 'controlled', items: [{ id: 'a' }, { id: 'b' }], ...(subType ? { subType } : {}) },
+  definition: { rootId: 'root', label: 'Rows', type: 'list', items: [], styleSelectors: { base: '' } }
+});
+
+const rows = listOf('rows');
+const steps = listOf('steps', 'ol');
+
 const renderTree = (children: ReactNode, settings?: Partial<PlitziServiceContextValue['settings']>) =>
   render(
-    <StoreProvider value={{ schema: { flat: { el1: element, child, moving } }, runtime: { sources: {} } }}>
+    <StoreProvider value={{ schema: { flat: { el1: element, child, moving, rows, steps } }, runtime: { sources: {} } }}>
       <PlitziServiceContext value={{ ...serviceValue, settings: { ...serviceValue.settings, ...settings } }}>
         <ComponentContext
           value={
@@ -115,6 +126,18 @@ describe('Element pipeline (golden)', () => {
         ?.getAttributeNames()
         .filter(name => name.startsWith('data-motion'))
     ).toEqual([]);
+  });
+
+  it('renders a list of data as the list it is — a `<ul>`, or the `<ol>` its subType asks for', () => {
+    const { container } = renderTree(
+      <>
+        <List internalProps={{ id: 'rows', rootId: 'root' }} />
+        <List internalProps={{ id: 'steps', rootId: 'root' }} />
+      </>
+    );
+
+    expect(container.querySelector('[data-plitzi-el="rows"]')?.tagName).toBe('UL');
+    expect(container.querySelector('[data-plitzi-el="steps"]')?.tagName).toBe('OL');
   });
 
   it('leaves the handle off when the deployment turns test attributes off', () => {

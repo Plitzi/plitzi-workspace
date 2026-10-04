@@ -12,7 +12,8 @@ import {
   scrollBy,
   setState,
   styles,
-  text
+  text,
+  listItem
 } from '@plitzi/sdk-authoring';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
@@ -61,7 +62,7 @@ export const recipe: SpaceSpec = {
                   setState({ key: 'rowAtEnd', type: 'boolean', value: '{{ moved.atEnd }}' })
                 ]
               ],
-              children: [text({ class: card, from: 'categories.item' })]
+              children: [listItem({ class: card, children: [text({ from: 'categories.item' })] })]
             }),
             button({
               content: '›',
