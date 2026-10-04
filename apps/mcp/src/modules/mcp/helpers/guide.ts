@@ -150,6 +150,12 @@ button/link needs words (an icon-only button a \`title\`), every field a \`label
 image an \`alt\` or \`decorative: true\`; clicks go on a \`button\`/\`link\`, never a container; headings step down one
 level at a time. \`plitzi_screenshot view:"accessibility"\` shows the tree and what has no name.
 
+**Everything the space holds is public.** Its pages, variables, attributes, flow params and mock data ship to every
+visitor's browser, and a file on a public bucket of its CDN is served to anyone who has its address. A key, a token or
+data only some visitors may read never goes in any of them: a secret is a credential the owner attaches (a connector, an
+action or a function names it, never carries it), and data for some visitors only comes from a \`runtime: "server"\`
+provider or an action that checks who is asking.
+
 **Touched elements must be malformation-free.** Editing an element also checks its CURRENT stored content and BLOCKS
 the save on any \`Pre-existing malformation in element …\` error (a broken transformer, a malformed step, an attribute
 it never reads) — even parts you did not touch. These are NOT from your change (the message says so); fix them in the
@@ -600,6 +606,20 @@ Discover valid actions in \`plitzi://interactions/{env}\`: \`actions\` = observe
 \`elementCallbacks\` / \`utilities\` = the built-in vocabularies with their full param schema, so you know the exact
 node type and valid params per action. An element read lists its flows as ordered nodes (each with its \`id\` and
 \`enabled\`), so a follow-up patch/delete needs no extra read.
+
+## What is public — and where a secret goes
+A space is served to anyone who opens it, and everything it is made of goes with it:
+
+- **The documents.** Every page, layout and component, every schema and style variable, every attribute, binding,
+  flow param and \`mockData\` reaches the visitor's browser with the page. Hiding an element (\`visible: false\`, a
+  flag, a condition) does not remove it from what is sent.
+- **The files.** A file on one of the space's public buckets is on the internet at its address, signed in or not —
+  for pictures, fonts and data every visitor may see.
+
+So a secret — an API key, a token, a password — never goes in a document or a public file. It is a **credential**,
+created by the space owner in the builder, which a connector, an action or a function **names** and never carries.
+Data only some visitors may read comes from a \`runtime: "server"\` provider or a server action whose \`access\` checks
+who is asking — never from a public file or a document the page filters on the client.
 
 ## Connectors — CMS and API integrations
 A **connector** is how a space reads real content from Strapi, WordPress, Contentful, Directus or any REST service.

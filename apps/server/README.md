@@ -177,11 +177,11 @@ runtime, and its files into `public/` — a draft, or any published snapshot (`-
 | `signIn` | `SSRSignInConfig` | — | Sign visitors in by redirect through an OAuth 2.1 authorization server: `GET /auth/sign-in?return=/x` registers this host as a client, sends the browser out with PKCE (state in a `__Host-` cookie), and `/auth/sign-in/callback` redeems the code server to server and hands the token to `exchangeCredential`, which makes the session here. Needs the `exchangeCredential` adapter. |
 | `templateFn` | `SSRTemplateFn` | built-in EJS template | Custom render function. Receives all template params and returns an HTML string. |
 | `plugins` | `Record<string, PluginSource>` | — | Named plugin definitions. Compiled or copied on first use and cached for `pluginsTtlMs`. |
-| `pluginsCacheDir` | `string` | `.sdk-plugins` | Directory where compiled plugin files are stored. |
+| `pluginsCacheDir` | `string` | `tmp/.sdk-plugins` | Directory where compiled plugin files are stored — under `tmp/`, with everything else the server writes for itself. |
 | `pluginsTtlMs` | `number` | `604800000` | TTL in milliseconds for compiled plugins (default: 1 week). |
 | `autoLoadSchemaPlugins` | `boolean` | `true` | Auto-download and cache plugins declared in the schema's `offlineData.plugins` list. A type the deployment registers itself (`plugins`, named in `pluginNames`) is never looked for there: its own build is the one rendered. Set to `false` to manage plugin loading manually. |
 | `allowPrivatePluginHosts` | `boolean` | `false` | Read a schema plugin from a private address (`localhost`, this server's own network). A plugin's address is typed by whoever edits a space, so leave it off anywhere but a development machine whose bucket is local. |
-| `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. |
+| `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. **Everything in it is public:** served to anyone who asks, with no check. |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
 | `images` | `{ domains, cacheDir? }` | — | Pictures from other sites resized at `/_plitzi/img`, for an `image` to offer as a `srcset` (see [Images](#images)). |
 | `ssrOnly` | `boolean` | `false` | Omit client-side JS from the rendered page. Useful for verifying SSR HTML without hydration. |
@@ -398,7 +398,7 @@ createServer({ images: { domains: ['images.example.com', '*.cdn.example.com'] },
 
 An `image` whose `src` is another site's then offers the browser a `srcset` of widths this server makes (320 to 1920
 px) at `/_plitzi/img?url=…&w=…`, in AVIF or WebP when the browser takes them. Everything is kept on disk (`cacheDir`,
-default `.plitzi/images`): each original is downloaded once, and each size is made once from it. A week on, the kept
+default `tmp/images`): each original is downloaded once, and each size is made once from it. A week on, the kept
 files keep answering while the original is asked for with its `ETag` / `Last-Modified` — unchanged, nothing is resized
 again; changed, its sizes are made anew. A picture that could not be fetched is not asked for again for five minutes.
 Only the listed hosts are fetched, every redirect is held to the same
@@ -417,6 +417,10 @@ createServer({
 ```
 
 The lookup order for a request is: `publicDir` → `static` prefix routes → SSR renderer.
+
+**Everything in `publicDir` is on the internet.** A file there is served to anyone who asks for it, as it is — no
+session, no permission, no check. Never put a secret, a key, an `.env`, a private document, a database dump or data only
+some visitors may read in it: that is served by a server action whose `access` checks who is asking.
 
 `/.well-known/` paths follow the same lookup order: served from `publicDir` if a matching file exists, otherwise `404 Not Found`. They are never handled by the SSR renderer.
 
@@ -519,7 +523,7 @@ const server = createServer({
     // From a source file — compiled to ESM with esbuild
     'my-chart': {
       js: '/abs/path/to/MyChart.tsx',
-      css: '/abs/path/to/MyChart.css',  // filesystem path — copied to .sdk-plugins
+      css: '/abs/path/to/MyChart.css',  // filesystem path — copied to tmp/.sdk-plugins
       version: '1.2.0'
     },
     // Pre-compiled local file — copied as-is (version defaults to '1.0.0')

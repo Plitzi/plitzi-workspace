@@ -199,7 +199,7 @@ export type SSRImagesConfig = {
    * to the rule every outbound request is (no private network, every redirect judged).
    */
   domains: readonly string[];
-  /** Where the resized files are kept. Default: `.plitzi/images` under the working directory. */
+  /** Where the resized files are kept. Default: `tmp/images` under the working directory. */
   cacheDir?: string;
 };
 
@@ -995,6 +995,7 @@ export type SSRServerConfig = {
   authCookie?: SSRAuthCookie;
   templateFn?: SSRTemplateFn;
   plugins?: Record<string, PluginSource>;
+  /** Where the plugins it builds are kept. Default: `tmp/.sdk-plugins` under the working directory. */
   pluginsCacheDir?: string;
   pluginsTtlMs?: number;
   /** Auto-download and cache plugins declared in the schema's offlineData.plugins list. Default: true. */

@@ -18,12 +18,11 @@ const QaToolbar = () => (
     />
     <QaDivider />
     <QaToolChip setting="grid" label="Grid" icon="fa-solid fa-table-columns" title="The page's 12, 8 or 4 columns" />
-    <QaToolChip setting="outlines" label="Outlines" icon="fa-regular fa-square" title="Every element's box" />
     <QaToolChip
       setting="xray"
       label="X-ray"
       icon="fa-solid fa-x-ray"
-      title="What is bound to data, shown on a condition, runs a flow, moves or sits behind a flag — named on the page"
+      title="Every element's box, its type and id when pointed at — and what is bound to data, shown on a condition, runs a flow, moves or sits behind a flag, named on the page"
     />
     <QaToolChip
       setting="tabOrder"

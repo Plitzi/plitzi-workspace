@@ -16,14 +16,14 @@ import type { PluginHostOptions } from '@plitzi/sdk-authoring';
  */
 
 /**
- * Writes the declaration out as documents.
+ * Authors the declaration and says what it found: the check an agent and a person run after every change.
  *
- * Nothing in the project reads it — the server and the browser both author at boot — so it exists for the moment
- * the space has to go somewhere else: imported into Plitzi, handed to another server, or checked into a
- * repository with no TypeScript in it.
+ * It writes nothing — the space is \`src/space.ts\`, and the server and the browser both author it at boot. Only the
+ * server asks for the documents, while developing: \`--out <file>\` writes them where it re-reads them on a save.
  */
 const authorScript = (): string => `import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import path from 'node:path';
 
 import { authorSpace, planFixes, refusalOf, SpaceRefusedError } from '@plitzi/sdk-authoring';
 
@@ -32,6 +32,8 @@ import { space } from './space.ts';
 
 // \`--json\` answers in one object, for a tool or an agent; otherwise one line on success, the problems on failure.
 const json = process.argv.includes('--json');
+// \`--out <file>\`: where to write the documents — the server's, while developing. Left out, nothing is written.
+const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : undefined;
 
 /** How many of the warnings and suggestions said have one fix \`plitzi fix\` can write in this source — and the line that says so. */
 const fixableHint = (): string | undefined => {
@@ -82,8 +84,10 @@ const outdated = (): { skill?: string; files?: string; sdk: string } | undefined
 
 try {
   const { schema, style, warnings, suggestions } = authorSpace(space, { plugins: declarations });
-  mkdirSync('space', { recursive: true });
-  writeFileSync('space/offline-data.json', \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);
+  if (out) {
+    mkdirSync(path.dirname(out), { recursive: true });
+    writeFileSync(out, \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);
+  }
 
   const behind = outdated();
   if (json) {
@@ -118,7 +122,7 @@ try {
     }
 
     console.log(
-      \`ok · \${schema.pages.length} pages · \${warnings.length} warnings · \${suggestions.length} suggestions · space/offline-data.json\`
+      \`ok · \${schema.pages.length} pages · \${warnings.length} warnings · \${suggestions.length} suggestions\`
     );
   }
 } catch (error) {

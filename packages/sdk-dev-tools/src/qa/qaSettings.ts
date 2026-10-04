@@ -18,11 +18,12 @@ export interface QaSettings {
   inspect: boolean;
   /** The columns the page is laid out on (`@plitzi/sdk-shared/style`'s layout grid), over it. */
   grid: boolean;
-  /** Every element's box, and its type and id when pointed at. */
-  outlines: boolean;
-  /** What the document wires to each element — data, a condition, a flow, motion, a flag — marked and named on it. */
+  /**
+   * Every element's box, its type and id when pointed at — and what the document wires to each, a condition, a flow,
+   * motion, a flag, marked and named on it.
+   */
   xray: boolean;
-  /** The one kind of wiring the x-ray shows, or all of them. */
+  /** The wiring the x-ray marks: every kind, one, or none — the boxes alone. */
   xrayFilter: XrayFilter;
   /** The order the Tab key walks the page's controls in, numbered on them. */
   tabOrder: boolean;
@@ -41,7 +42,6 @@ export interface QaSettings {
 export const QA_DEFAULTS: QaSettings = {
   inspect: false,
   grid: false,
-  outlines: false,
   xray: false,
   xrayFilter: 'all',
   tabOrder: false,
@@ -55,13 +55,12 @@ export const QA_DEFAULTS: QaSettings = {
 
 /** The tools that are simply on or off. */
 export type QaSwitch =
-  'inspect' | 'grid' | 'outlines' | 'xray' | 'tabOrder' | 'viewport' | 'paused' | 'slowMotion' | 'reducedMotion';
+  'inspect' | 'grid' | 'xray' | 'tabOrder' | 'viewport' | 'paused' | 'slowMotion' | 'reducedMotion';
 
 /** Whether any of it is on: the page is marked only while something is. */
 export const isQaActive = (settings: QaSettings): boolean =>
   settings.inspect ||
   settings.grid ||
-  settings.outlines ||
   settings.xray ||
   settings.tabOrder ||
   settings.viewport ||

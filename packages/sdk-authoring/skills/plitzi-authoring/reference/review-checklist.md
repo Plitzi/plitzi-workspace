@@ -66,6 +66,16 @@ Screen readers and browser agents (Claude in Chrome) work a page through its acc
 - [ ] What only an administrator may read is shown only to administrators — and the check is a real boolean, not
       a template left as text.
 
+## Nothing left behind
+
+- [ ] Nothing you made and no longer use is still there — a page, a component, a class, a token, a data file, an
+      import, a plugin folder. No commented-out code, no debug `console.log`, no copy of a file kept "just in case".
+- [ ] Scratch work — a one-off script, a dump, a picture to look at — went in `tmp/` (never committed) and is gone from
+      everywhere else.
+- [ ] Nothing secret, and nothing only some visitors may read, is in `public/` or in the space's documents: both reach
+      every visitor.
+- [ ] `typecheck`, `lint` and `format` are clean.
+
 ## Proven
 
 - [ ] You looked at it: the visual check ran, on the pages you changed, in both themes.

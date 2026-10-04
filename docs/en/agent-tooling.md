@@ -29,7 +29,7 @@ wrong in a few hundred, and a picture is for when it has said something is.
 
 **The dev server's port.** A server that silently moves to another port breaks `PUBLIC_URL` and every link built from
 it, so a busy port is moved only while developing and only when `PORT` was not set — printed, and written to
-`.plitzi/dev-server.json`, which `check`, `shot` and `visual` read. Which server answers is told by `/health`, named
+`tmp/dev-server.json`, which `check`, `shot` and `visual` read. Which server answers is told by `/health`, named
 after the space; a port held by another project is refused rather than photographed.
 
 **`plitzi check` reads the dev tools, it is not a second one.** The panel already shows state, sources and flow runs to

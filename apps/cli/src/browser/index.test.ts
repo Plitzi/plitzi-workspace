@@ -9,8 +9,8 @@ import { projectOrigin } from './index';
 const projectAt = async (recorded?: { port: number; name: string }): Promise<string> => {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-origin-'));
   if (recorded) {
-    await fs.mkdir(path.join(root, '.plitzi'));
-    await fs.writeFile(path.join(root, '.plitzi/dev-server.json'), JSON.stringify(recorded));
+    await fs.mkdir(path.join(root, 'tmp'));
+    await fs.writeFile(path.join(root, 'tmp/dev-server.json'), JSON.stringify(recorded));
   }
 
   return root;

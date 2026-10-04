@@ -11,7 +11,7 @@ import sharedConfig from '../packages/sdk-shared/eslint.config.mjs';
  */
 export default tsEslint.config({
   extends: [sharedConfig],
-  ignores: ['**/dist/**', '**/.sdk-plugins/**', '**/tmp/**', '**/*.d.ts'],
+  ignores: ['**/dist/**', '**/tmp/**', '**/*.d.ts'],
   languageOptions: {
     globals: { ...globals.browser, ...globals.node },
     parserOptions: {

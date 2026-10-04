@@ -259,15 +259,19 @@ describe('the scaffold', () => {
   });
 
   /**
-   * The server compiles plugins into `.sdk-plugins/` and then imports what it built, so a bare `--watch` sees its
-   * own output land, restarts, compiles again, and never stops.
+   * The server compiles plugins into `tmp/.sdk-plugins/` and then imports what it built, so a bare `--watch` sees its
+   * own output land, restarts, compiles again, and never stops. Everything a project writes for itself is in `tmp/`,
+   * ignored; what the CLI records about it is in `.plitzi/`, committed — a clone without it could not pull or push.
    */
-  it('watches only the source in server mode, and ignores the build it makes', () => {
+  it('watches only the source in server mode, ignores what it writes for itself, and keeps what the CLI records', () => {
     const server = JSON.parse(scaffold(answers())['package.json']) as { scripts: Record<string, string> };
 
     expect(server.scripts['start:dev']).toContain('--watch-path=./src');
-    expect(scaffold(answers())['.gitignore']).toContain('.sdk-plugins');
-    expect(scaffold(answers({ mode: 'client' }))['.gitignore']).not.toContain('.sdk-plugins');
+    for (const mode of ['server', 'client'] as const) {
+      const ignored = scaffold(answers({ mode }))['.gitignore'].split('\n');
+      expect(ignored).toContain('tmp');
+      expect(ignored.some(line => line.startsWith('.plitzi') || line.startsWith('.sdk-plugins'))).toBe(false);
+    }
   });
 
   /** A deploy or a restart closes the server rather than dropping it, so what it is running finishes first. */
@@ -405,15 +409,18 @@ describe('the scaffold', () => {
     const server = scaffold(answers({ mode: 'server' }))['AGENTS.md'];
     const client = scaffold(answers({ mode: 'client', source: 'cloud' }))['AGENTS.md'];
 
-    expect(server).toContain('.plitzi/dev-server.json');
+    expect(server).toContain('tmp/dev-server.json');
     expect(server).toContain('`public/data/*.json`');
     expect(server).toContain('`npm run check -- / --width 1440,390`');
     expect(server).toContain('`npm run shot -- / --width 390`');
-    expect(server).toMatch(/## Do not read\n\n- `space\/offline-data.json`/);
+    expect(server).toMatch(/## Do not read\n\n- `tmp\/`/);
+    expect(server).toContain('`public/` is on the internet.');
+    expect(server).toContain('## Keep the project clean');
     expect(server).toContain('data describe public/data/<file>.json');
     expect(client).toContain('Vite on 5173');
     expect(client).not.toContain('offline-data.json');
     expect(client).not.toContain('.sdk-plugins');
+    expect(client).toContain('`public/` is on the internet.');
   });
 
   /** A project about to be something specific: no tour to delete, no example plugin to rewrite. */

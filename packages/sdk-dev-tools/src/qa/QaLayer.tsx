@@ -237,7 +237,7 @@ const QaLayer = () => {
   return (
     <>
       {settings.grid && <QaGrid box={box} />}
-      {settings.xray && <QaXrayTags filter={settings.xrayFilter} />}
+      {settings.xray && settings.xrayFilter !== 'none' && <QaXrayTags filter={settings.xrayFilter} />}
       {settings.tabOrder && <QaTabOrder />}
       {settings.inspect && <QaInspector />}
       {settings.viewport && <QaViewport box={box} />}

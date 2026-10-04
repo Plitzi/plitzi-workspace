@@ -29,8 +29,16 @@ describe('the server a project starts', () => {
     const main = serverFiles(answers())['src/main.ts'];
 
     expect(main).toContain('await freePort(8080, HOST)');
-    expect(main).toContain("'.plitzi/dev-server.json'");
-    expect(gitignore(answers())).toContain('.plitzi\n');
+    expect(main).toContain("'tmp/dev-server.json'");
+    expect(gitignore(answers())).toContain('tmp\n');
+  });
+
+  it('re-authors a saved space into tmp/, never beside the source', () => {
+    const main = serverFiles(answers())['src/main.ts'];
+
+    expect(main).toContain("path.join(PROJECT_ROOT, 'tmp/space.json')");
+    expect(main).toContain("[path.join(PROJECT_ROOT, 'src/author.ts'), '--out', OFFLINE_DATA]");
+    expect(main).not.toContain('offline-data');
   });
 
   it('answers /health with the space it serves, and a cloud one with the project’s name', () => {

@@ -7,6 +7,7 @@ import { previewFiles } from './preview';
 import { elementFiles, packageSourceFiles } from './source';
 import { visualFiles } from './visual';
 import { managerFiles } from '../packageManager';
+import { PROJECT_TMP } from '../paths';
 import { qualityFilesFor } from '../quality';
 
 import type { ElementShape } from './shape';
@@ -21,7 +22,7 @@ export type { ElementShape, ShapeFlags } from './shape';
 export type { ElementText } from './source';
 
 /** What the build writes, and what is nobody's to format or lint. */
-const OUTPUTS = ['dist', 'visual/.results'];
+const OUTPUTS = ['dist', PROJECT_TMP];
 
 /**
  * Every file of a plugin package: the element, the build that publishes it, a space to preview it in, and what checks

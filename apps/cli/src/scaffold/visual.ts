@@ -1,4 +1,5 @@
 import { runCommand } from './packageManager';
+import { DEV_SERVER_FILE, VISUAL_OUTPUT } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -13,7 +14,7 @@ import type { CreateAnswers, ProjectFiles } from './types';
 const RECORDED = `/** What \`npm start\` wrote down when it took a port: the port, and the name its \`/health\` answers with. */
 const recorded = (): { port?: number; name?: string } => {
   try {
-    const value: unknown = JSON.parse(readFileSync('.plitzi/dev-server.json', 'utf8'));
+    const value: unknown = JSON.parse(readFileSync('${DEV_SERVER_FILE}', 'utf8'));
     if (typeof value !== 'object' || value === null) {
       return {};
     }
@@ -38,7 +39,7 @@ const PORT = Number(process.env.PORT ?? recorded().port ?? ${mode === 'server' ?
 
 export default defineConfig({
   testDir: './visual',
-  outputDir: './visual/.results',
+  outputDir: './${VISUAL_OUTPUT}',
   use: { baseURL: \`http://127.0.0.1:\${PORT}\` },
   // Playwright starts the project itself, so \`${runCommand(packageManager, 'visual')}\` is one command from a
   // cold checkout.

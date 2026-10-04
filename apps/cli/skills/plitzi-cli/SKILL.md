@@ -5,9 +5,9 @@ description: >-
   generates: scaffold a project that renders a space, add elements of your own (plugins) to it, create a plugin package,
   build a plugin into the module + manifest + zip the platform takes, sign in to upload and install it on a space, and
   edit a space's own server code (its functions) in the project, and take a space on Plitzi out as a self-hosted project
-  of its own (`create --from`, kept in step with `pull`). Use whenever the task is to start a Plitzi project, create or
-  change a plugin/custom element, pack, upload or install one, pull/push/try a space's functions, move a space to a
-  server of its own, or work out which space the CLI is connected to.
+  of its own (`create --from`, kept in step with `pull` and `push`). Use whenever the task is to start a Plitzi project,
+  create or change a plugin/custom element, pack, upload or install one, pull/push/try a space's functions, move a space
+  to a server of its own and back, or work out which space the CLI is connected to.
 ---
 
 # The Plitzi CLI
@@ -20,6 +20,7 @@ a signed-in upload. **Reach for it before writing any of those yourself.**
 npx @plitzi/cli create my-site                 # a project that renders a space (--template blank | catalog)
 npx @plitzi/cli create my-board --from pizarra # a space on Plitzi, as a project that serves it alone
 npx @plitzi/cli pull                           # that project brought up to date with its space
+npx @plitzi/cli push                           # its changes back as the draft (or: push space functions)
 npx @plitzi/cli add plugin seat-picker legend  # elements of your own, in the project you are in
 npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can load
 npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
@@ -52,7 +53,6 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
   and social sign-in included — the CLI never sees a password). Tell them a browser tab is waiting, and wait.
 - **One space at a time.** Everything goes to the space `whoami` names; `plitzi space` switches it. No command takes a
   space as a flag, so check `whoami --json` (`{ api, user, space }`) before an upload.
-- **`--no-install`** writes the files without installing, **`--force`** writes into a directory that has work in it.
 - **Read stdout, exit code and stderr apart.** The answer is on stdout (`--json`: one object, one line); errors and
   sign-in prompts are on stderr; exit 1 means it did not do what was asked, or a check found something. A flag value
   that is not one is refused with what it takes — read the message rather than retrying without the flag.
@@ -65,7 +65,7 @@ Where the space lives decides which one an agent uses — the two never take tur
 | --- | --- |
 | In a project, written in code (`src/space.ts`, `--source local`) | this CLI and `@plitzi/sdk-authoring`. No account and no MCP |
 | On Plitzi — edited in the builder, with collaborators, published from there | the Plitzi MCP server: it reads and edits the live space, previews a page and checks every edit with the same linter |
-| On Plitzi, and wanted in code from now on | `create --from <space>`, then `pull` to keep the project in step |
+| On Plitzi, and wanted in code from now on | `create --from <space>`, then `pull` and `push` keep both in step |
 
 The MCP needs a signed-in account. If it asks for authentication and nobody can give it, do not wait on it: a project
 with `--source local` needs neither.
@@ -91,13 +91,14 @@ What a project gives you, so you use it rather than rebuild it:
 | `visual` | a browser asserts every element the space names is visible |
 | `typecheck`, `lint`, `format` | before calling a change done |
 
-**Which port.** `start` takes 8080, or the next free one when something else holds it — printed, and written to
-`.plitzi/dev-server.json`, where `check`, `shot` and `visual` look for it. Set `PORT` to choose one (then a taken port is an
-error). `/health` answers with the space's name: a server that answers as something else is not this project.
+**Which port.** `start` takes 8080, or the next free one — printed, and written to `tmp/dev-server.json` for `check`,
+`shot` and `visual`. `PORT` chooses one (a taken one is then an error). `/health` answers with the space's name.
 
 The data a page reads with no backend goes in `public/data/*.json`, served by the project as it is; in server mode a
 provider with `runtime: 'server'` reads it on the server, so the page arrives with it. To bind to a file, learn its fields
 with `data describe` rather than reading it: a catalogue is half a megabyte, its shape twenty lines.
+
+**`public/` is on the internet** — never a secret there. `tmp/` (ignored) and `.plitzi/` (committed): `AGENTS.md`.
 
 A local space starts as a tour of the platform with a plugin of the project's own; **`--template blank`** starts it as
 tokens, a layout and one empty page instead — the one to pick when the project is about to be a specific site; and
@@ -201,7 +202,7 @@ A space's own server code, edited in `functions/` with `pull`, `push`, `try` and
 | --- | --- |
 | `create` printed questions and wrote nothing | nobody answered the three choices — ask the user, pass them as flags |
 | `start` says the port is in use | `PORT` is set to a taken port — unset it to take the next free one, or choose another |
-| A page that is not this project's, or `shot` refuses the port | another server answers there — `curl 127.0.0.1:<port>/health` names it; `.plitzi/dev-server.json` has this project's port |
+| A page that is not this project's, or `shot` refuses the port | another server answers there — `curl 127.0.0.1:<port>/health` names it; `tmp/dev-server.json` has this project's port |
 | An element renders "Custom Component … Not Found" | the `renderType` names no registered plugin — check the folder name's camelCase |
 | A flow on the plugin's event is refused, or never runs | the event is not in `declaration.ts`, or the plugin is missing from `src/plugins/declarations.ts` |
 | `upload` opens a browser | there is no session, or no space chosen — the person completes it there |

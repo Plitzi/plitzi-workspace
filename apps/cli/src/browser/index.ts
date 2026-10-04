@@ -5,6 +5,8 @@ import { pathToFileURL } from 'node:url';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { DEV_SERVER_FILE } from '../scaffold/paths';
+
 import type { PlitziProject } from '../commands/existingProject';
 
 /**
@@ -99,7 +101,7 @@ export const launchBrowser = async (root: string): Promise<Browser | { problem: 
 /** What `npm start` wrote down when it took a port: the port, and the name its `/health` answers with. */
 const recorded = async (root: string): Promise<{ port?: number; name?: string }> => {
   try {
-    const value: unknown = JSON.parse(await readFile(path.join(root, '.plitzi/dev-server.json'), 'utf8'));
+    const value: unknown = JSON.parse(await readFile(path.join(root, DEV_SERVER_FILE), 'utf8'));
     if (!isRecord(value)) {
       return {};
     }

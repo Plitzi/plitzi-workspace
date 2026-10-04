@@ -1,4 +1,4 @@
-# A space on Plitzi, as a project (`create --from`, `pull`)
+# A space on Plitzi, as a project (`create --from`, `pull`, `push`)
 
 `create --from <space>` (its permanent URL or id) writes a server project holding everything the space is made of, and
 serving it with nothing of Plitzi's — neither its servers nor its CDN:
@@ -21,3 +21,12 @@ and when one file changed on both it writes **nothing** and names them — keep 
 `--force` to take the space's copy. It never touches `.env`, and only adds to `package.json`. What the project was given
 is recorded in `.plitzi/space.json`: commit it. It follows the version the project was made from; `pull --environment
 … --revision …` moves it to another, `--revision latest` lets go of a pin.
+
+`push` is the way back: what changed in the project, as the space's **draft** — publishing stays the builder's. At a
+terminal it lists the parts with what changed ticked; otherwise it sends what changed, or the parts named:
+`push space functions` (`space`, `functions`, `runtime`, `plugins`). Plugins go up first, then the functions, the
+runtime, and the pages, actions and connectors last. It is refused when the draft was edited in the builder since the
+project last had it — pull first, or `--force` to replace it — and a project that never had the space may only take a
+space nobody has worked on without `--force`. It pushes to the space the CLI is connected to, which must be the one
+the project came from, and records what it sent in `.plitzi/space.json`, so `pull` works afterwards — on a project that
+started on its own too.

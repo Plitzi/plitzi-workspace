@@ -13,7 +13,8 @@ yarn-error.log
 .turbo
 .claude
 .cursor
-.sdk-plugins
+# What a server writes for itself — its plugin builds, resized pictures — wherever it runs from.
+tmp
 .mcp.json
 opencode.json
 

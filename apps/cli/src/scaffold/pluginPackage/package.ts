@@ -1,4 +1,5 @@
 import { managerPackageFields } from '../packageManager';
+import { PROJECT_TMP } from '../paths';
 import { REACT_VERSION, SDK_VERSION, SHARED_DEV_DEPENDENCIES, VITE_VERSION } from '../project';
 
 import type { PluginNames } from './names';
@@ -87,7 +88,7 @@ const tsconfig = (): string => `{
 const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases\n!.yarn/versions\n';
 
 const gitignore = ({ packageManager, inProject }: PluginAnswers): string =>
-  `node_modules\ndist\n*.zip\nvisual/.results\n${packageManager === 'yarn' && !inProject ? YARN_IGNORES : ''}`;
+  `node_modules\ndist\n*.zip\n${PROJECT_TMP}\n${packageManager === 'yarn' && !inProject ? YARN_IGNORES : ''}`;
 
 export const packageFiles = (names: PluginNames, answers: PluginAnswers): ProjectFiles => ({
   'package.json': packageJson(names, answers),

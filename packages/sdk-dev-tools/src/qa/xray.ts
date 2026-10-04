@@ -2,14 +2,16 @@ import type { ElementDefinition } from '@plitzi/sdk-shared';
 
 /**
  * What the document wires to an element that its box does not show: where its values come from, what it does when
- * used, whether it may be hidden, how it moves and the flag it exists under. The x-ray marks each on the page, which is
- * what a tester needs to know before asking why something shows, moves or does what it does.
+ * used, whether it may be hidden, how it moves and the flag it exists under. The x-ray draws every element's box — its
+ * type and id when pointed at — and marks each kind of wiring on it, which is what a tester needs to know before
+ * asking why something shows, moves or does what it does.
  */
 export const XRAY_MARKS = ['data', 'visibility', 'flows', 'motion', 'flag'] as const;
 
 export type XrayMark = (typeof XRAY_MARKS)[number];
 
-export type XrayFilter = XrayMark | 'all';
+/** The wiring the x-ray colours: every kind, one, or none — the boxes alone. */
+export type XrayFilter = XrayMark | 'all' | 'none';
 
 /** The attribute the x-ray marks an element with, its value the marks it carries. */
 export const XRAY_ATTRIBUTE = 'data-plitzi-qa-xray';

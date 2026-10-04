@@ -125,6 +125,9 @@ images); where they are missing, the tools say so instead of failing silently.
 - **Secrets never reach the agent.** It writes [connector](./connectors.md) manifests and
   [server actions](./server-actions.md) that *name* a credential; the space owner attaches the secret in the builder.
   An integration an agent builds saves without one and works once the owner adds it.
+- **The agent is told what is public.** Every document of a space and every file on its public buckets reaches anyone
+  who opens it, so the guide sends a secret to a credential and data for some visitors only to a server-rendered
+  provider or an action that checks who asks — never into a page, a variable or a public file.
 - **Names are ids.** The agent names every element it creates, and that name is the element's id and its wiring key.
   Renaming one repoints every binding and interaction that referred to it.
 

@@ -69,12 +69,17 @@ describe('QaViewer', () => {
 
     expect(page().hasAttribute('data-plitzi-qa-page')).toBe(false);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Outlines' }));
+    fireEvent.click(screen.getByRole('button', { name: 'X-ray' }));
 
     expect(page().hasAttribute('data-plitzi-qa-page')).toBe(true);
     expect(document.head.querySelector('style[data-plitzi-qa]')?.textContent).toContain('outline: 1px dashed');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Outlines' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Boxes only' }));
+
+    expect(screen.getByRole('button', { name: 'Boxes only' }).getAttribute('aria-pressed')).toBe('true');
+    expect(document.head.querySelector('style[data-plitzi-qa]')?.textContent).not.toContain('data-plitzi-qa-xray');
+
+    fireEvent.click(screen.getByRole('button', { name: 'X-ray' }));
 
     expect(page().hasAttribute('data-plitzi-qa-page')).toBe(false);
     expect(document.head.querySelector('style[data-plitzi-qa]')).toBeNull();

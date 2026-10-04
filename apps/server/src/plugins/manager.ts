@@ -13,7 +13,8 @@ import type { PluginEntry, PluginSource } from '@plitzi/sdk-shared';
 
 const META_FILE = 'meta.json';
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const DEFAULT_CACHE_DIR = '.sdk-plugins';
+// Under `tmp/`, where a project keeps everything it writes for itself: never committed, rebuilt when missing.
+const DEFAULT_CACHE_DIR = 'tmp/.sdk-plugins';
 
 /** `digest`: the content of `inputs` when the bundle was built — see {@link PluginManager.contentChanged}. */
 type Meta = { compiledAt: number; version?: string; inputs?: string[]; digest?: string };

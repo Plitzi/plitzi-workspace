@@ -1,5 +1,6 @@
 import { tsString } from './quote';
 import { runCommand } from '../packageManager';
+import { VISUAL_OUTPUT } from '../paths';
 
 import type { PluginNames } from './names';
 import type { PluginAnswers, ProjectFiles } from '../types';
@@ -19,7 +20,7 @@ const PORT = 5173;
 
 export default defineConfig({
   testDir: './visual',
-  outputDir: './visual/.results',
+  outputDir: './${VISUAL_OUTPUT}',
   use: { baseURL: \`http://127.0.0.1:\${PORT}\` },
   // Playwright starts the preview itself, so \`${runCommand(packageManager, 'visual')}\` is one command from a cold checkout.
   webServer: {

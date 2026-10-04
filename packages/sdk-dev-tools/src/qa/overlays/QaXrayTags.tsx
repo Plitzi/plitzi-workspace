@@ -16,7 +16,7 @@ type Tag = { id: string; marks: XrayMark[]; left: number; top: number };
 const isMark = (value: string): value is XrayMark => XRAY_MARKS.some(mark => mark === value);
 
 /** The tags for what is in the window now: each marked element's name and marks, at its top-left corner. */
-const tagsOf = (page: Element, filter: XrayFilter): Tag[] => {
+const tagsOf = (page: Element, filter: TaggedFilter): Tag[] => {
   const tags: Tag[] = [];
   const taken = new Set<string>();
   for (const element of page.querySelectorAll(`[${XRAY_ATTRIBUTE}]`)) {
@@ -53,7 +53,10 @@ const tagsOf = (page: Element, filter: XrayFilter): Tag[] => {
   return tags;
 };
 
-export type QaXrayTagsProps = { filter: XrayFilter };
+/** What there are tags for: the boxes alone carry none. */
+type TaggedFilter = Exclude<XrayFilter, 'none'>;
+
+export type QaXrayTagsProps = { filter: TaggedFilter };
 
 /**
  * Every element the x-ray marked, named on its corner with a dot for each thing wired to it — so the page says which of

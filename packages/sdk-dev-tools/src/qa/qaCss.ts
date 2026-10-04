@@ -16,7 +16,8 @@ const PAGE = `[${QA_PAGE_ATTRIBUTE}]`;
 const NAMED =
   ':is([data-type="heading"], [data-type="text"], [data-type="paragraph"], [data-type="button"], [data-type="link"])';
 
-const OUTLINES = `
+/** Every element's box, and its type and id over it while pointed at. */
+const BOXES = `
 ${PAGE} [data-plitzi-el] { outline: 1px dashed rgba(124, 92, 255, 0.5); outline-offset: -1px; }
 ${PAGE} [data-plitzi-el]:hover { outline: 1.5px solid #7c5cff; outline-offset: -1.5px; }
 ${PAGE} ${NAMED}[data-plitzi-el]:hover { position: relative; }
@@ -38,12 +39,13 @@ ${PAGE} ${NAMED}[data-plitzi-el]:hover::after {
 }`;
 
 /**
- * Every element's box faintly, and what carries wiring in the colour of its mark. Rules last win, so they go in reverse:
- * an element with several marks is drawn in the first of them, the order the tab lists them in.
+ * Every element's box, and what carries the wiring asked for in the colour of its mark. Rules last win, so the marks
+ * come after the boxes and in reverse: an element with several is drawn in the first of them, the order the tab lists
+ * them in.
  */
 const xray = (filter: XrayFilter): string =>
   [
-    `${PAGE} [data-plitzi-el] { outline: 1px dashed rgba(127, 127, 127, 0.35); outline-offset: -1px; }`,
+    BOXES,
     ...XRAY_MARKS.filter(mark => filter === 'all' || filter === mark)
       .reverse()
       .map(
@@ -94,7 +96,6 @@ export const qaCss = (settings: QaSettings): string => {
 
   return [
     settings.inspect ? INSPECTING : '',
-    settings.outlines ? OUTLINES : '',
     settings.xray ? xray(settings.xrayFilter) : '',
     settings.paused ? PAUSED : '',
     settings.vision === 'none' ? '' : `${PAGE} { filter: ${VISION_FILTER[settings.vision]}; }`,

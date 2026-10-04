@@ -39,3 +39,38 @@ own changes back but a command per part, and no command at all for its pages. `p
 - `@plitzi/sdk-shared/source`: `SpaceImport` / `SpaceImportResult` (`SPACE_IMPORT_FORMAT`), the push's one shape for
   both ends, beside `SpaceExport`, which gains `draft`.
 - `functions push`, `runtime push` and `upload plugin` keep their behaviour; their cores are what `push` runs.
+
+## A project's folders: `tmp/` for what it writes, `.plitzi/` committed, `public/` said to be public
+
+- **`tmp/` is what a project writes for itself.** `@plitzi/sdk-server` keeps the plugins it builds in `tmp/.sdk-plugins`
+  and resized pictures in `tmp/images` by default (were `.sdk-plugins` and `.plitzi/images`). A project the CLI writes
+  puts the port it took (`tmp/dev-server.json`), the space as last authored while developing (`tmp/space.json`) and
+  Playwright's output (`tmp/visual`) there too, and its `.gitignore` ignores `tmp` — one line for all of it.
+- **`.plitzi/` is committed.** The scaffold ignored it whole, so a clone lost `space.json`, `functions.json` and
+  `scaffold.json` — what `pull`, `push`, `functions push` and `upgrade` stand on. Now it holds only what the CLI records.
+  `npx plitzi upgrade --write` brings an existing project's `.gitignore` up.
+- **No `space/offline-data.json`.** `npm run author` checks the space and writes nothing; the server asks it for the
+  documents with `--out tmp/space.json` while developing. The space is `src/space.ts`, and nothing beside it says
+  otherwise.
+- **`public/` is on the internet.** The generated `README.md` and `AGENTS.md`, the CLI and authoring skills, the MCP
+  guide, `@plitzi/sdk-server`'s README and the docs now say so where data goes: never a secret, a key or data only
+  some visitors may read — in `public/`, or in a space's documents, which reach every visitor too.
+
+## An agent leaves the project clean
+
+`AGENTS.md` gains **Keep the project clean** — nothing unused left behind, scratch work in `tmp/`, one of everything,
+files a reader can find, and `author`, `typecheck`, `lint`, `format` and `check` passing — and the authoring skill's
+review checklist a **Nothing left behind** section.
+
+## The dev tools' X-ray is the outlines too
+
+The QA tab had **Outlines** (every element's box, its type and id when pointed at) and **X-ray** (the same boxes,
+fainter, with what is wired to each). They are one tool now: the X-ray draws every box with its type and id, and marks
+the wiring picked — all of it, one kind, or **Boxes only**.
+
+## A new space that says where to go
+
+The space a new account and `plitzi create` start from keeps its welcome, and gains the three ways to change it — the
+builder, code (with the command to run) and an agent — before the guides, which are shorter. Header, navigation, main
+and footer are landmarks; the grid behind the top fades out instead of ending at an edge; the footer's line spans the
+content; the links say their words and icon themselves, with no suggestion left.

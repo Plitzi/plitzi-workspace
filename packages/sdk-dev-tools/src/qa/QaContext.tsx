@@ -83,7 +83,7 @@ export const QaProvider = ({ children, pageRef, collapsed }: QaProviderProps) =>
 
   /**
    * Closing the panel puts away the tools that act on the page rather than draw over it: the inspector, which takes
-   * the page's clicks, and the checks, which mark its elements. What only draws — the grid, the outlines, a vision
+   * the page's clicks, and the checks, which mark its elements. What only draws — the grid, the x-ray, a vision
    * mode — is a view the tester chose, and stays.
    */
   useEffect(() => {

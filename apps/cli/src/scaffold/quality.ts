@@ -1,3 +1,5 @@
+import { PROJECT_TMP } from './paths';
+
 import type { CreateAnswers, ProjectFiles } from './types';
 
 /**
@@ -28,8 +30,8 @@ const prettierrc = (): string =>
     2
   )}\n`;
 
-/** What a project writes that is nobody's to format or lint: its builds, its authored documents, its test output. */
-export const PROJECT_OUTPUTS = ['dist', 'space', '.sdk-plugins', 'visual/.results', 'visual/screenshots'];
+/** What a project writes that is nobody's to format or lint: its builds, and everything it writes for itself. */
+export const PROJECT_OUTPUTS = ['dist', PROJECT_TMP];
 
 /**
  * What is the agents' and not the project's: the skills copied in, whose recipes are TypeScript no program of the
@@ -38,7 +40,7 @@ export const PROJECT_OUTPUTS = ['dist', 'space', '.sdk-plugins', 'visual/.result
 const AGENT_FILES = '.claude';
 
 export const prettierignore = (outputs: readonly string[]): string =>
-  `${['node_modules', AGENT_FILES, ...outputs.filter(output => output !== '.sdk-plugins')].join('\n')}\n`;
+  `${['node_modules', AGENT_FILES, ...outputs].join('\n')}\n`;
 
 /**
  * Flat config, and only what earns its place.

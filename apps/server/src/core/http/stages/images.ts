@@ -33,7 +33,7 @@ const proxyFor = (images: SSRImagesConfig): Promise<(request: ImageRequest) => P
 
     return createImageProxy({
       domains: images.domains,
-      cacheDir: path.resolve(images.cacheDir ?? '.plitzi/images'),
+      cacheDir: path.resolve(images.cacheDir ?? 'tmp/images'),
       fetch: globalThis.fetch,
       transform
     });

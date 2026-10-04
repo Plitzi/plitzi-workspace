@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 
 import { installCommand, managerFiles, managerPackageFields, runCommand } from './packageManager';
+import { DEV_SERVER_FILE, PROJECT_TMP } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -96,7 +97,7 @@ const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
         /**
          * Watched by PATH, not wholesale.
          *
-         * The server compiles the project's plugins into `.sdk-plugins/` and then IMPORTS what it built, so a
+         * The server compiles the project's plugins into `tmp/.sdk-plugins/` and then IMPORTS what it built, so a
          * bare `--watch` sees its own output land, restarts, compiles again, and never stops. A local space is not
          * among them: `main.ts` re-authors it on save in a process of its own and the open pages load again
          * (`reloadPages`), so only the server's own code and the plugins restart it.
@@ -211,17 +212,16 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
  */
 const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases\n!.yarn/versions\n';
 
-/** Where the page server writes the plugin bundles it builds. A build output, and rebuilt whenever it is missing. */
-const SERVER_IGNORES = '.sdk-plugins\n.plitzi\n';
-
-export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
-  `node_modules\ndist\n.env\nvisual/.results\nvisual/screenshots\n${mode === 'server' ? SERVER_IGNORES : ''}${
-    packageManager === 'yarn' ? YARN_IGNORES : ''
-  }`;
+/**
+ * `tmp/` is everything the project writes for itself (`./paths`); `.plitzi/` is what the CLI records about it, and is
+ * committed — a clone without it could not pull, push or upgrade.
+ */
+export const gitignore = ({ packageManager }: CreateAnswers): string =>
+  `node_modules\ndist\n.env\n${PROJECT_TMP}\n${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`.plitzi/dev-server.json\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code${source === 'local' ? '; a save to the space reloads the open page' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code${source === 'local' ? '; a save to the space reloads the open page' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
     : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
 
 const spaceSection = (answers: CreateAnswers): string => {
@@ -249,9 +249,9 @@ from what is written there, so authoring it twice writes byte-identical document
 
 Nothing is fetched and nothing is signed in to: there is no account, no key and no network in the picture.
 
-\`${runCommand(answers.packageManager, 'author')}\` writes the documents out as \`space/offline-data.json\`, for the moment you want the space
-somewhere else — imported into Plitzi, handed to another server, or checked into a repository with no TypeScript
-in it. Nothing here reads that file; the declaration is the source.`;
+\`${runCommand(answers.packageManager, 'author')}\` authors it and says what it found — warnings, suggestions, what a newer SDK changed. It
+writes nothing: the declaration is the source, and \`npx plitzi push\` puts it on a space in Plitzi when you want it
+there.`;
 };
 
 export const readme = (answers: CreateAnswers): string => `# ${answers.name}
@@ -267,6 +267,16 @@ ${runCommand(answers.packageManager, 'visual')}   # a browser opens the page and
 ${startLine(answers)}
 
 ${spaceSection(answers)}
+
+## Folders that are not the source
+
+- \`public/\` is served to anyone who asks, as it is: every file in it is on the internet once the project is deployed.
+  Data and pictures for every visitor go there — never a secret, a key, a private document or what only some visitors
+  may read.
+- \`${PROJECT_TMP}/\` is what the project writes for itself while it runs — the plugins it builds, the port it took, test
+  output. Ignored by git, and rebuilt whenever it is missing.
+- \`.plitzi/\` is what the CLI records about the project — the space it came from, its functions' working copy, the
+  files \`create\` wrote — so \`plitzi pull\`, \`push\` and \`upgrade\` know where they stand. Commit it.
 
 ## The skills
 
@@ -298,7 +308,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
   const zeroWarnings = local ? `Zero warnings from ${run('author')}.` : 'Zero warnings from authoring.';
   const port =
     answers.mode === 'server'
-      ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code('.plitzi/dev-server.json')}, where ${code('check')}, ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one.`
+      ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code(DEV_SERVER_FILE)}, where ${code('check')}, ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one.`
       : `${run('start')} runs Vite on 5173.`;
   const pictures =
     answers.mode === 'server'
@@ -309,14 +319,8 @@ export const agentsFile = (answers: CreateAnswers): string => {
       ? `; one whose ${code('runtime')} is ${code('server')} is read by the server, and the page arrives with it`
       : '';
   const generated = [
-    ...(local
-      ? [
-          `- ${code('space/offline-data.json')} — what ${run('author')} writes out; the space is ${code('src/space.ts')}.`
-        ]
-      : []),
-    ...(answers.mode === 'server'
-      ? [`- ${code('.sdk-plugins/')} and ${code('.plitzi/')} — built and written by the server.`]
-      : [])
+    `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took${local ? ', the space as last authored' : ''}, test output. Never committed, rebuilt when missing.`,
+    `- ${code('.plitzi/')} — what the CLI records about the project: where it came from, what it wrote. Committed; the CLI's to change.`
   ];
 
   return `# ${answers.name} — notes for agents
@@ -334,6 +338,7 @@ ${commands.join('\n')}
 
 - **Port.** ${port}
 - **Data with no backend** goes in ${code('public/data/*.json')}, served as it is and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}${serverData}.
+- **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.
 ${pictures}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site, by section). ${run('visual')} runs the checks as tests.
 - **What the page holds, in text:** ${code(`${runCommand(answers.packageManager, 'check')} -- /products --state --element <id>`)} adds its state, every source by name and one element (what it reads, its own state, whether it is on screen); every check already lists the flows that failed. Read it instead of guessing from classes in the DOM.
 
@@ -351,6 +356,16 @@ Read ${code('.claude/skills/plitzi-authoring/SKILL.md')} — how a space is writ
 layouts, data, templates and flows. The types of ${code('@plitzi/sdk-authoring')} document every factory and field.
 For a component of your own — a plugin — or anything about packing or uploading one, read
 ${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi add plugin')} writes it in the shape everything reads.
+
+## Keep the project clean
+
+What you leave behind is the next reader's problem — the user's, or the next agent's. Before calling a change done:
+
+- **Nothing unused.** Delete what you made and no longer use — a file, a page, a component, a class, a token, a data file, an import, a plugin folder. No commented-out code, no ${code('console.log')} left from debugging, no copy of a file kept "just in case": git keeps the history.
+- **Scratch goes in ${code(`${PROJECT_TMP}/`)}, or nowhere.** A one-off script, a dump, a picture to look at — never at the root or beside the source, where it reads as part of the project.
+- **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component or a function. Change it where it is defined, and rename everywhere when you rename.
+- **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space.ts')} already has. Do not start a parallel layout of your own.
+- **Leave it passing.** ${local ? `${run('author')} with zero warnings, ` : ''}${run('typecheck')}, ${run('lint')} and ${run('format')} clean, and the page checked (${run('check')}).
 
 ## The rules that go wrong most
 

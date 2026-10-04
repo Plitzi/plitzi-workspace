@@ -138,6 +138,7 @@ written with `defineAction` always does.
   actions, connectors and functions, `main.ts`, and `package.json` with every package the source imports — the SDK and
   React at this CLI's versions, since plugins are rebuilt against the project's own.
 - It downloads the space's files into `public/` and rewrites every CDN address in the code to the project's root.
+  They were public on the space's CDN and stay public here: everything in `public/` is served to anyone who asks.
 - It writes `.env` with a signing key made for the project (`PLITZI_SIGNING_SECRET`: what `ctx.sign` signs with — the
   space's own key stays on Plitzi) and `.env.example` naming every variable and credential.
 - It installs, formats with the project's Prettier (`public/` and `vendor/` are ignored: downloads stay as they came),

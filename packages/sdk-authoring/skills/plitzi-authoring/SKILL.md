@@ -96,6 +96,7 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
 9. **Never invent data.** Numbers, names and states on screen come from a source. A panel with nothing true to say is
    an empty state, not a placeholder figure. With no backend, the data is JSON the project serves
    (`public/data/*.json`) read by an `apiContainer` — see [data and visibility](reference/data-and-visibility.md).
+   `public/` is served to anyone who asks: never a secret or data only some visitors may read there.
 10. **Never hand-write** `flat`, derived ids, `styleSelectors`, `beforeNode`/`afterNode`/`flowId`, or a
     `styleVariant` binding's key — use the factories, `variantFrom` and `activeOn`.
 11. **A switch is named for how it leaves its default.** `toggleState` turns a key nobody has set yet ON, so a key

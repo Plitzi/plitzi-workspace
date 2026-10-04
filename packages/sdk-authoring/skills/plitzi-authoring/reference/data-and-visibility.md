@@ -81,6 +81,12 @@ An offline project (`offlineMode`) still never invents data: the content lives i
 backend, so swapping the file for a real endpoint later changes one `query`. `mockData` is what the BUILDER shows while
 editing; it is not a data source for the running page. Say on the page that demo content is demo content.
 
+**`public/` is on the internet.** Every file in it is served to anyone who asks, as it is, once the project is deployed —
+and so is everything the space's documents hold (pages, variables, attributes, `mockData`): they reach every visitor's
+browser. Never put a secret, a key, a private document or data only some visitors may read in either. A secret is a
+credential that an action or a connector names; data for some visitors only comes from a server action whose `access`
+checks who is asking, or a `runtime: 'server'` provider behind one.
+
 **In a server project (`create --mode server`), put the provider on the server** — `runtime: 'server'`, with
 `rsc: { enabled: true }` on the space — and the page server reads the file from `public/` itself: the page arrives
 with those sections in it (and their anchors in place) instead of fetching them once the browser has the page. A

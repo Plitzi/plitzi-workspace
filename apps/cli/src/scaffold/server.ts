@@ -1,3 +1,5 @@
+import { DEV_SERVER_FILE, DEV_SPACE_FILE, PROJECT_TMP } from './paths';
+
 import type { CreateAnswers, ProjectFiles } from './types';
 
 /**
@@ -56,9 +58,9 @@ const PORT = process.env.PORT
 
 /** Where the server says it is: the port it took, for `npm run shot` and the visual tests to find. */
 const LISTEN_SNIPPET = `server.listen(PORT, HOST);
-mkdirSync(path.join(PROJECT_ROOT, '.plitzi'), { recursive: true });
+mkdirSync(path.join(PROJECT_ROOT, '${PROJECT_TMP}'), { recursive: true });
 writeFileSync(
-  path.join(PROJECT_ROOT, '.plitzi/dev-server.json'),
+  path.join(PROJECT_ROOT, '${DEV_SERVER_FILE}'),
   \`\${JSON.stringify({ name: SERVER_NAME, port: PORT, url: \`http://127.0.0.1:\${PORT}\` }, null, 2)}\\n\`
 );
 console.log(\`pages on http://127.0.0.1:\${PORT}/\`);`;
@@ -101,12 +103,13 @@ for (const warning of warnings) {
 ${PLUGINS}
 
 /**
- * While developing, the documents are served from the file \`npm run author\` writes, which the server reads again
- * whenever it changes — so a save is re-authored and shown without restarting anything (see \`watchSpace\` below). A
- * deployment keeps them in memory, as authored at boot.
+ * While developing, the documents are served from \`${DEV_SPACE_FILE}\`, which the server reads again whenever it changes —
+ * so a save is re-authored into it and shown without restarting anything (see \`watchSpace\` below). A by-product, in
+ * \`tmp/\` with everything else the project writes for itself: the space is \`src/space.ts\`. A deployment keeps the
+ * documents in memory, as authored at boot.
  */
 const DEVELOPING = process.env.NODE_ENV !== 'production';
-const OFFLINE_DATA = path.join(PROJECT_ROOT, 'space/offline-data.json');
+const OFFLINE_DATA = path.join(PROJECT_ROOT, '${DEV_SPACE_FILE}');
 if (DEVELOPING) {
   mkdirSync(path.dirname(OFFLINE_DATA), { recursive: true });
   writeFileSync(OFFLINE_DATA, \`\${JSON.stringify(offlineData, null, 2)}\\n\`);
@@ -126,7 +129,7 @@ const functions = await loadFunctions(new URL('../functions/', import.meta.url))
  * page server makes. A real deployment swaps this for adapters onto its own database, or for
  * \`createCloudAdapters\` to read the live space out of Plitzi — the server never learns the difference.
  */
-// What \`/health\` answers with, and \`.plitzi/dev-server.json\` records: how a tool knows it reached THIS project.
+// What \`/health\` answers with, and \`${DEV_SERVER_FILE}\` records: how a tool knows it reached THIS project.
 const SERVER_NAME = schema.definition.permanentUrl;
 const server = createServer({
   port: PORT,
@@ -175,7 +178,7 @@ const watchSpace = (): void => {
     }
 
     authoring = true;
-    const child = spawn(process.execPath, [path.join(PROJECT_ROOT, 'src/author.ts')], {
+    const child = spawn(process.execPath, [path.join(PROJECT_ROOT, 'src/author.ts'), '--out', OFFLINE_DATA], {
       cwd: PROJECT_ROOT,
       stdio: 'inherit'
     });
@@ -255,7 +258,7 @@ const functions = await loadFunctions(new URL('../functions/', import.meta.url))
  * on every request; a published environment with no \`revision\` serves the latest and releases itself; with a
  * \`revision\` it serves exactly that version, for a deployment that rolls forward on its own schedule.
  */
-// What \`/health\` answers with, and \`.plitzi/dev-server.json\` records: how a tool knows it reached THIS project.
+// What \`/health\` answers with, and \`${DEV_SERVER_FILE}\` records: how a tool knows it reached THIS project.
 const SERVER_NAME = ${JSON.stringify(name)};
 const server = createServer({
   port: PORT,
