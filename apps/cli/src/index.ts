@@ -70,7 +70,10 @@ const widthsOption = (description: string, fallback: number[]): Option =>
   new Option('--width <px,px>', description).argParser(widths).default(fallback, fallback.join(','));
 
 const schemeOption = (): Option =>
-  new Option('--scheme <scheme>', 'The colour scheme').choices(SCHEMES).default('light');
+  new Option(
+    '--scheme <scheme>',
+    'The space’s theme, as a visitor’s toggle sets it. The space’s own default when left out'
+  ).choices(SCHEMES);
 
 const API_OPTION = [
   '--api <url>',
@@ -258,6 +261,7 @@ program
   .addOption(schemeOption())
   .option('--state', 'Also what the page holds: its state, and every source by name')
   .option('--element <id>', 'Also one element: what it reads, its own state, whether it is on screen')
+  .option('--ssr', 'Also the HTML the server sent against the hydrated page: what a server provider sent late')
   .option('--json', 'One object per width, for a tool or an agent')
   .action((path: string | undefined, options: CheckOptions) => check(path, options));
 
@@ -299,7 +303,7 @@ program
       .default(800)
   )
   .addOption(schemeOption())
-  .option('-o, --out <file>', 'Where the picture goes. visual/.shots/<page>-<width>-<scheme>.png by default')
+  .option('-o, --out <file>', 'Where the picture goes. tmp/shots/<page>-<width>-<scheme>.png by default')
   .option('--compare <url>', 'Another site: the same page there, side by side, and how much differs by section')
   .addOption(
     new Option(
@@ -320,10 +324,10 @@ program
   .command('explain')
   .argument(
     '[name]',
-    'An element, a step, a trigger, a problem’s code or a transformer: container, navigate, class-and-css'
+    'An element, a step, a trigger, a problem’s code, a transformer or a helper: container, navigate, class-and-css, bindTemplate, motion'
   )
   .description('What a name means when authoring a space — what it takes, fires, reads and how it is written')
-  .option('--list <kind>', 'Every name of a kind: elements, steps, triggers, codes, transformers')
+  .option('--list <kind>', 'Every name of a kind: elements, steps, triggers, codes, transformers, helpers')
   .option('--json', 'One object, for a tool or an agent')
   .action((name: string | undefined, options: ExplainOptions) => explainCommand(name, options));
 

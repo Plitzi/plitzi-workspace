@@ -3,6 +3,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { useCallback, useMemo, useState, useRef } from 'react';
 
+import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools/chrome';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import DevToolsBody from './DevToolsBody';
@@ -75,7 +76,10 @@ const DevToolsPanel = ({
       autoGrow={false}
       onChange={handleResize}
     >
-      <div className="flex h-full w-full flex-col bg-white text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+      <div
+        className="flex h-full w-full flex-col bg-white text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
+        {...{ [DEV_TOOLS_ATTRIBUTE]: '' }}
+      >
         <DevToolsHeader
           orientation={orientation}
           onChangeOrientation={onChangeOrientation}

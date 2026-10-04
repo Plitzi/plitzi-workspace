@@ -9,6 +9,7 @@ import { markWrittenAt } from '../schema/writtenAt';
 
 import type { BindingSpec, BindingsSpec, ElementSpec, SpecMeta, StepSpec, VisibleCondition } from '../schema';
 import type { SourceName } from './source';
+import type { SuggestionCode } from '../schema/codes';
 import type { ClassList, CssSpec, ElementClassList, StatesSpec } from '../style';
 import type { ElementLoadStrategy, ElementRuntime } from '@plitzi/sdk-shared';
 import type {
@@ -81,6 +82,8 @@ export interface AuthoringProps {
   motion?: ElementMotion;
   /** The feature flag it exists under: `'newCheckout'` while on, `'!newCheckout'` while off. Not a visibility. */
   flag?: string;
+  /** Suggestions it is not offered, written this way on purpose: `quiet: ['repeated-shape']`. Never a problem. */
+  quiet?: SuggestionCode[];
   children?: ElementSpec[];
   /** What the builder shows, not what the runtime reads. */
   meta?: SpecMeta;
@@ -279,6 +282,7 @@ const buildSpec = (
     anchor,
     motion,
     flag,
+    quiet,
     children,
     meta,
     ...attributes
@@ -316,6 +320,7 @@ const buildSpec = (
     ...(anchor === undefined ? {} : { anchor }),
     ...(motion === undefined ? {} : { motion }),
     ...(flag === undefined ? {} : { flag }),
+    ...(quiet === undefined ? {} : { quiet }),
     ...(list
       ? list.children === undefined
         ? {}

@@ -47,8 +47,19 @@ export const TRIGGER_COPY: Record<MotionTrigger, { label: string; hint: string }
   load: { label: 'On load', hint: 'As soon as the page is shown, with the timing below.' },
   view: {
     label: 'In view',
-    hint: 'As the reader scrolls to it, at their pace — fully in a third of the way into view. A browser that cannot follow the scroll plays it on load, with the timing below.'
+    hint: 'Once, the first time the reader scrolls to it, with the timing below — then it stays.'
+  },
+  scroll: {
+    label: 'With scroll',
+    hint: 'With the scroll itself, at the reader’s pace — fully in a third of the way into view, and back out as they scroll up past it. A browser that cannot follow the scroll plays it on load, with the timing below.'
   }
+};
+
+/** When it arrives, as the summary says it. */
+const TRIGGER_PHRASE: Record<MotionTrigger, string> = {
+  load: 'as the page loads',
+  view: 'once, as it comes into view',
+  scroll: 'with the scroll'
 };
 
 /** The gap a person gets on asking for children one by one, before they say another. */
@@ -87,11 +98,11 @@ export const describeMotion = (motion: ElementMotion): string => {
     const subject = motion.stagger === undefined ? 'It' : 'Each child';
     const parts = [`${subject} ${ENTER_COPY[motion.enter].phrase}`];
     if (motion.stagger !== undefined) {
-      parts.push(motion.on === 'view' ? 'one after another' : `one after another, ${ms(motion.stagger)} apart`);
+      parts.push(motion.on === 'scroll' ? 'one after another' : `one after another, ${ms(motion.stagger)} apart`);
     }
 
-    parts.push(motion.on === 'view' ? 'as it is scrolled into view' : 'as the page loads');
-    if (motion.on !== 'view') {
+    parts.push(TRIGGER_PHRASE[motion.on ?? 'load']);
+    if (motion.on !== 'scroll') {
       const timing = [`over ${ms(motion.duration ?? MOTION_DEFAULT_DURATION)}`];
       if (motion.delay) {
         timing.push(`after waiting ${ms(motion.delay)}`);

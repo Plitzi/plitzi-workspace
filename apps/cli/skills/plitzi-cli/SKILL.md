@@ -29,7 +29,7 @@ npx @plitzi/cli whoami                         # who the CLI is signed in as, an
 npx @plitzi/cli data describe public/data/products.json   # a JSON file's fields, types and one row — not read whole
 npx @plitzi/cli upgrade                        # the project up to this CLI: files, package.json, skills, renames (--write)
 npx @plitzi/cli upgrade skills --write         # only one part: files | packages | skills | renames
-npx @plitzi/cli explain navigate               # what a name means: element, step, trigger, problem or suggestion code (--list steps)
+npx @plitzi/cli explain navigate               # what a name means: element, step, trigger, code, helper (bindTemplate, motion)
 npx @plitzi/cli functions pull                 # the space's functions (its own server code) into functions/
 npx @plitzi/cli functions push                 # functions/ back as the space's draft, built and checked
 npx @plitzi/cli functions try feed.read --params '{"limit":3}'   # one task of the saved draft, in the sandbox
@@ -85,9 +85,9 @@ What a project gives you, so you use it rather than rebuild it:
 | `start:dev` | server mode: the server, restarted on save |
 | `author` | author `src/space.ts`: one line when it is fine, every problem at once (file:line, what to change) when not, then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
 | `npx plitzi fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |
-| `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows; `--state` and `--element <id>` say what it holds; `--json` |
-| `npx plitzi import <url>` | a page the user owns, measured as a place to start from: `tokens.ts` (colours light and dark, corners, shadows, Google fonts), `outline.ts` (its blocks and their layout per breakpoint), its repeated lists as `data/*.json`, screenshots per width, and `IMPORT.md` saying what was not carried over. Never the words. Only a site whose domain the user verified on one of their spaces (`_plitzi` TXT, under Domains in the dashboard), or one served from this machine — anything else is refused |
-| `shot -- /path --width 390 --scheme dark` | a picture of one page — `--clip <element>` one element, `--scroll-to <element>` / `--viewport` the screen there, `--frames 4` what moves, `--compare <url>` how much differs from another site by section; refused if the port is another project's |
+| `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows, a binding its data lacks; `--state`, `--element <id>`: what it holds; `--ssr`: what SSR misses; `--json` |
+| `npx plitzi import <url>` | a page the user owns, measured as a place to start from: `tokens.ts` (colours light and dark, corners, shadows, Google fonts), `outline.ts` (its blocks and their layout per breakpoint), its repeated lists as `data/*.json`, screenshots per width, and `IMPORT.md` saying what was not carried over. Never the words. Only a site whose domain the user verified on a space (`_plitzi` TXT, Domains in the dashboard) or served from this machine |
+| `shot -- /path --width 390 --scheme dark` | a picture of one page — `--clip <element>` one element, `--scroll-to <element>` / `--viewport` the screen there, `--frames 4` what moves, `--compare <url>` what differs from another site, by section and by text |
 | `visual` | a browser asserts every element the space names is visible |
 | `typecheck`, `lint`, `format` | before calling a change done |
 

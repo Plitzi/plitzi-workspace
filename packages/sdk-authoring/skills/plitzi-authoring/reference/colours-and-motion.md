@@ -20,7 +20,9 @@ Only `opacity` and `transform` (`translate`, `scale`, `rotate`) animate off the 
 the page hydrates and on a slow phone. Everything else repaints, or lays the page out again, on every frame.
 
 - **A preset first:** `motion: { enter: 'fade-up', on: 'view' }` on any element, `stagger: 60` for children one by one,
-  `loop: 'float'` — played by the SDK, cheap and stilled for reduced motion by construction (motion.md lists them).
+  `loop: 'float'` — played by the SDK, cheap and stilled for reduced motion by construction (`npx plitzi explain motion` lists them; `MOTION_ENTERS` and `MOTION_LOOPS` in code).
+  `on: 'view'` plays once, the first time the element comes into view, and it stays; `on: 'scroll'` follows the scroll
+  both ways — it goes back out as the reader scrolls up past it — so keep it for an effect that is about the scroll.
 
 - **Slide, grow, fade** with `transform` and `opacity` — never `left`, `top`, `width`, `height` or `margin`. Something
   that travels across a box is `transform: translate(%)` on an element as large as the box.

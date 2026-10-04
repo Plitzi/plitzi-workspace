@@ -116,6 +116,7 @@ export const ELEMENT_SPEC_KEYS = [
   'anchor',
   'motion',
   'flag',
+  'quiet',
   'children',
   'meta'
 ] as const satisfies readonly (keyof ElementSpec)[];

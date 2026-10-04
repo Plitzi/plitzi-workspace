@@ -120,13 +120,15 @@ describe('a space that names style declarations', () => {
           { type: 'container', class: styles('badge', { padding: '8px' }) }
         ])
       )
-    ).toThrow(/class "badge" with different rules/);
+    ).toThrow(/The class "badge" is declared twice with different rules: styles\('badge'\), used by container, and/);
   });
 
   it('refuses a declaration that disagrees with the space-wide class of the same name', () => {
     expect(() =>
       authorSpace(spaceWith([{ type: 'container', class: card }], { classes: { card: { padding: '8px' } } }))
-    ).toThrow(/class "card" with different rules/);
+    ).toThrow(
+      /declared twice with different rules: the space-wide `classes` entry "card", and styles\('card'\), used by/
+    );
   });
 
   it('still refuses an element asking for a declaration and rules of its own', () => {
@@ -217,11 +219,13 @@ describe('the order of `classes`', () => {
     ]);
   });
 
-  it('refuses a listed declaration that disagrees with the one the tree names', () => {
+  // Written here, inside the package, the lines are its own and left out: an author's file reads `styles('first') at
+  // src/site/menu.ts:12`, as an element's refusal does.
+  it('refuses a listed declaration that disagrees with the one the tree names, saying where each is', () => {
     const other = styles('first', { color: 'green' });
 
     expect(() => authorSpace(spaceWith([{ type: 'container', class: other }], { classes: { first } }))).toThrow(
-      /declares the class "first" with different rules/
+      /styles\('first'\), listed in the space-wide `classes`, and styles\('first'\), used by container/
     );
   });
 });

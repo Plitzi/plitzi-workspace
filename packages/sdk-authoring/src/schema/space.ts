@@ -26,6 +26,7 @@ import {
 } from '../style';
 import { suggestSpace } from './advice';
 import { contentMoves } from './advice/content';
+import { asAnchor } from './anchor';
 import {
   COMPONENT_SOURCES,
   GLOBAL_SOURCES,
@@ -35,7 +36,7 @@ import {
   toBindingSpecs,
   withVisibility
 } from './bindings';
-import { AuthoringError } from './codes';
+import { AUTHORING_CODES, AuthoringError, isSuggestionCode } from './codes';
 import { flagGateOf } from './flags';
 import { authorFlows, flowStepIds } from './flows';
 import {
@@ -62,6 +63,7 @@ import { didYouMean } from './suggest';
 import { assertSpaceValid, validateSpace } from './validate';
 import { writtenAt, writtenAtPosition } from './writtenAt';
 
+import type { Suggestion } from './advice';
 import type { SourceIndex } from './bindings';
 import type { WarningCode } from './codes';
 import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
@@ -82,7 +84,15 @@ import type {
   StepSpec
 } from './types';
 import type { WrittenPosition } from './writtenAt';
-import type { ClassList, CssSpec, ElementClassList, ResponsiveBlock, StatesSpec, StyleSpec } from '../style';
+import type {
+  ClassList,
+  CssSpec,
+  ElementClassList,
+  ResponsiveBlock,
+  StatesSpec,
+  StyleDeclaration,
+  StyleSpec
+} from '../style';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   DropPosition,
@@ -94,6 +104,13 @@ import type {
   Style,
   StyleItem
 } from '@plitzi/sdk-shared';
+
+/** A `styles()` declaration in words: its name, and the line of the author's that wrote it when it is known. */
+const declaredAt = (declaration: StyleDeclaration): string => {
+  const at = writtenAt(declaration);
+
+  return `styles('${declaration.name}')${at === undefined ? '' : ` at ${at}`}`;
+};
 
 /** The types that render their children once per item: everything inside one is repeated, one copy per row. */
 const REPEATING_TYPES = new Set(['list', 'carouselTrack']);
@@ -177,6 +194,8 @@ class SpaceAuthor {
 
   /** Every class this space declares, whether from `classes` or from a `styles()` declaration found in the tree. */
   private readonly classRules = new Map<string, ResponsiveBlock>();
+  /** Where each class was first declared, in words — what a second declaration that disagrees is told it disagrees with. */
+  private readonly classOrigins = new Map<string, string>();
   /** Every element's own selector, named or derived — each one is that element's alone. */
   private readonly ownSelectors = new Set<string>();
 
@@ -231,13 +250,18 @@ class SpaceAuthor {
       this.options.allow
     );
 
-    // Where each suggestion's first element was written, as a refusal says it: the line to go and change.
-    const suggestions = suggestSpace({ schema, style }).map(suggestion => {
-      const first = suggestion.elementIds.at(0);
-      const at = first === undefined ? undefined : writtenAt(this.specOf(first));
+    // Where each suggestion's first element was written, as a refusal says it: the line to go and change. One an
+    // element it is about quiets (`quiet`) is left out.
+    const quieted = (suggestion: Suggestion): boolean =>
+      suggestion.elementIds.some(id => this.specOf(id)?.quiet?.includes(suggestion.code) === true);
+    const suggestions = suggestSpace({ schema, style })
+      .filter(suggestion => !quieted(suggestion))
+      .map(suggestion => {
+        const first = suggestion.elementIds.at(0);
+        const at = first === undefined ? undefined : writtenAt(this.specOf(first));
 
-      return at === undefined ? suggestion : { ...suggestion, at };
-    });
+        return at === undefined ? suggestion : { ...suggestion, at };
+      });
 
     this.markConditionalByChildren(schema);
 
@@ -248,6 +272,23 @@ class SpaceAuthor {
       warnings: [...this.styleWarnings, ...warnings],
       suggestions
     };
+  }
+
+  /**
+   * An element's `quiet`: suggestions' codes, and only those — a problem is never quieted, and a misspelt code would
+   * quiet nothing while reading as if it did. Writes nothing into the documents: it is about the advice, not the page.
+   */
+  private assertQuiet(quiet: unknown, where: string): void {
+    const suggestions = Object.entries(AUTHORING_CODES)
+      .filter(([, entry]) => entry.kind === 'suggested')
+      .map(([code]) => code);
+    const wrong = (Array.isArray(quiet) ? quiet : [quiet]).filter(code => !isSuggestionCode(code));
+    if (!Array.isArray(quiet) || wrong.length > 0) {
+      throw new AuthoringError(
+        'quiet-unknown',
+        `${where} quiets ${wrong.map(code => JSON.stringify(code)).join(', ')}, which ${wrong.length === 1 ? 'is' : 'are'} no suggestion's code: \`quiet\` is a list of the codes suggestions were offered with — ${suggestions.join(', ')}${didYouMean(String(wrong[0]), suggestions) || '.'}`
+      );
+    }
   }
 
   /** The spec an element was written from, by its id in the documents. */
@@ -268,7 +309,7 @@ class SpaceAuthor {
 
     for (const [name, value] of Object.entries(this.spec.classes ?? {})) {
       if (!isStyleDeclaration(value)) {
-        this.declareClass(name, toBlocks(value), 'The space-wide `classes`');
+        this.declareClass(name, toBlocks(value), `the space-wide \`classes\` entry "${name}"`);
         continue;
       }
 
@@ -279,7 +320,7 @@ class SpaceAuthor {
         );
       }
 
-      this.declareClass(name, value.rules, 'The space-wide `classes`');
+      this.declareClass(name, value.rules, `${declaredAt(value)}, listed in the space-wide \`classes\``);
     }
 
     const layouts = this.spec.layouts ?? [];
@@ -288,10 +329,10 @@ class SpaceAuthor {
     // Before the tree is written, so the stylesheet is whole by the time anything names a class and a name that
     // means two different things is refused at the declaration rather than at whichever use happened to be second.
     components.forEach(component =>
-      this.collectDeclarations(undefined, [component.root], `Component "${component.id}"`)
+      this.collectDeclarations(undefined, [component.root], `component "${component.id}"`)
     );
-    layouts.forEach(layout => this.collectDeclarations(layout.class, layout.body, `Layout "${layout.id}"`));
-    this.spec.pages.forEach(page => this.collectDeclarations(page.class, page.body, `Page "${page.name}"`));
+    layouts.forEach(layout => this.collectDeclarations(layout.class, layout.body, `layout "${layout.id}"`));
+    this.spec.pages.forEach(page => this.collectDeclarations(page.class, page.body, `page "${page.name}"`));
 
     // Same reason, for the other thing an element names by a name declared elsewhere: a binding may read a
     // provider written further down the page than the element reading it. The author's own names are collected in
@@ -347,6 +388,8 @@ class SpaceAuthor {
     // After every page is written, too: a redirect names a page that may be declared further down, by an id authoring
     // derives when it is.
     this.spec.pages.forEach((page, index) => this.writeRedirect(page, pages[index]));
+    // After every element is written: a button may control one declared further down.
+    this.resolveControls();
     if (pages.length === 0) {
       throw new AuthoringError(
         'no-pages',
@@ -365,6 +408,12 @@ class SpaceAuthor {
     };
     style.cache = generateCache(style);
 
+    // Server data is on when the spec says so — or, saying nothing, when anything is resolved on the server: such an
+    // element is never answered without it, and nothing else would turn it on.
+    const serverResolved = [this.flatMap.flat, ...declared.map(component => component.flat)].some(flat =>
+      Object.values(flat).some(element => element.definition.runtime === 'server')
+    );
+    const rsc = this.spec.rsc ?? (serverResolved ? { enabled: true } : undefined);
     const schema: Schema = {
       definition: { name: this.spec.name, permanentUrl: this.spec.permanentUrl },
       flat: this.flatMap.flat,
@@ -376,7 +425,7 @@ class SpaceAuthor {
         ...(this.spec.computed ? { computed: this.spec.computed } : {}),
         ...(this.spec.channels ? { channels: this.spec.channels } : {})
       },
-      ...(this.spec.rsc ? { rsc: this.spec.rsc } : {}),
+      ...(rsc ? { rsc } : {}),
       pages,
       pageFolders,
       components: Object.fromEntries(declared.map(component => [component.id, component]))
@@ -484,10 +533,11 @@ class SpaceAuthor {
    * that means one thing on one page and another somewhere else is a rule that silently depends on which file the
    * bundler reached first, which is the shape of bug this whole surface exists to make impossible.
    */
-  private declareClass(name: string, blocks: ResponsiveBlock, where: string): void {
+  private declareClass(name: string, blocks: ResponsiveBlock, origin: string): void {
     const existing = this.classRules.get(name);
     if (!existing) {
       this.classRules.set(name, blocks);
+      this.classOrigins.set(name, origin);
 
       return;
     }
@@ -495,7 +545,7 @@ class SpaceAuthor {
     if (!sameBlocks(existing, blocks)) {
       throw new AuthoringError(
         'class-conflict',
-        `${where} declares the class "${name}" with different rules to a declaration already made for that name. A class is one rule set per space: rename one of them, or make them agree.`
+        `The class "${name}" is declared twice with different rules: ${this.classOrigins.get(name) ?? 'once before'}, and ${origin}. A class is one rule set per space: rename one of them, or make them agree.`
       );
     }
   }
@@ -507,20 +557,20 @@ class SpaceAuthor {
    * rules stay next to the element they dress — and it means one declared and never named writes nothing at all.
    */
   private collectDeclarations(rootClass: ClassList | undefined, body: ElementSpec[], rootWhere: string): void {
-    const collect = (value: ClassList | undefined, where: string): void => {
+    const collect = (value: ClassList | undefined, usedBy: string): void => {
       for (const ref of value ? classRefs(value) : []) {
         if (typeof ref !== 'string') {
-          this.declareClass(ref.name, ref.rules, where);
+          this.declareClass(ref.name, ref.rules, `${declaredAt(ref)}, used by ${usedBy}`);
         }
       }
     };
 
     const walk = (spec: ElementSpec): void => {
+      const at = writtenAt(spec);
+      const element = `${spec.type}${spec.id === undefined ? '' : ` "${spec.id}"`}${at === undefined ? '' : ` at ${at}`}`;
       // Rules of the element's own on top of its classes are not a declaration: they are written with the element.
-      collect(spec.class === undefined ? undefined : splitClassList(spec.class).refs, `Element "${spec.type}"`);
-      Object.entries(spec.slots ?? {}).forEach(([slot, value]) =>
-        collect(value, `Slot "${slot}" of element "${spec.type}"`)
-      );
+      collect(spec.class === undefined ? undefined : splitClassList(spec.class).refs, element);
+      Object.entries(spec.slots ?? {}).forEach(([slot, value]) => collect(value, `the "${slot}" slot of ${element}`));
       spec.children?.forEach(walk);
     };
 
@@ -810,6 +860,37 @@ class SpaceAuthor {
   }
 
   /**
+   * A button's `controls` names what it shows and hides by that element's id, as every reference here does; the page
+   * needs it by an id the DOM carries — an anchor. The element is given one (its id, when that is one already) and the
+   * button names it. A value that already is an anchor of the space is kept as written.
+   */
+  private resolveControls(): void {
+    const { flat } = this.flatMap;
+    for (const element of Object.values(flat)) {
+      const controls = element.attributes.controls;
+      if (element.definition.type !== 'button' || typeof controls !== 'string' || controls === '') {
+        continue;
+      }
+
+      if (!Object.hasOwn(flat, controls)) {
+        if (Object.values(flat).some(other => other.definition.anchor === controls)) {
+          continue;
+        }
+
+        throw new AuthoringError(
+          'controls-unknown',
+          `Button "${element.id}" controls "${controls}", which is no element of the space${didYouMean(controls, Object.keys(flat)) || '.'} Name the element it shows and hides by its id: \`controls: 'faq-answer'\`.`
+        );
+      }
+
+      const target = flat[controls];
+      const anchor = target.definition.anchor ?? asAnchor(target.id);
+      target.definition.anchor = anchor;
+      element.attributes.controls = anchor;
+    }
+  }
+
+  /**
    * Inserts through `FlatMap`, and refuses to carry on when it declines.
    *
    * It answers `false` rather than throwing — a builder dropping an element somewhere it may not go is not an
@@ -820,9 +901,14 @@ class SpaceAuthor {
   private insert(element: Element, to: string, position: DropPosition, path = to, tree = this.pagesTree): void {
     const earlier = this.authoredAt.get(element.id);
     if (earlier !== undefined) {
+      // A page or a layout holding the name is not a helper called twice: `scope()` would not help, a new name does.
+      const holder = (tree.map.flat[element.id] as Element | undefined)?.definition.type;
+      const root = holder === 'page' ? 'page' : holder === 'layoutContainer' ? 'layout' : undefined;
       throw new AuthoringError(
         'id-taken',
-        `Element "${element.id}" (${element.definition.type}) at ${path} uses a name already taken at ${earlier}. Ids are one namespace for the whole space — layouts and every page share it — so wrap the function called more than once in \`scope('<what it is for>', ref => …)\`, which prefixes every id inside it.`
+        root
+          ? `Element "${element.id}" (${element.definition.type}) at ${path} uses the name of the ${root} at ${earlier} — ids are one namespace for the whole space, pages and layouts included. Give the element a name of its own: \`id: '${element.id}-${element.definition.type.toLowerCase()}'\`.`
+          : `Element "${element.id}" (${element.definition.type}) at ${path} uses a name already taken at ${earlier}. Ids are one namespace for the whole space — layouts and every page share it — so wrap the function called more than once in \`scope('<what it is for>', ref => …)\`, which prefixes every id inside it.`
       );
     }
 
@@ -1552,7 +1638,9 @@ class SpaceAuthor {
 
     const plugin = reserved.includes('variant')
       ? ' If it was meant for the plugin’s own `variant`, that attribute is never set: rename it in the plugin.'
-      : '';
+      : element.definition.type === CUSTOM_TYPE
+        ? ' On a `custom` element `variant` is its style variant, never a prop of the component it hosts: hand the component a prop of another name (`tone`).'
+        : '';
     this.styleWarnings.push({
       code: 'unknown-variant',
       message: `${where} is written with \`variant: '${spec.variant}'\`, which no class of it and no style of its type declares, so nothing applies.${plugin} Declare it — \`styles(name, { variants: { ${spec.variant}: { … } } })\` — or name one that is.`,
@@ -1690,6 +1778,10 @@ class SpaceAuthor {
     this.assertFlowShapes(spec.flows, where);
     if (spec.type === 'reference' && spec.attributes?.referenceType === 'component') {
       this.assertInstance(spec, where);
+    }
+
+    if (spec.quiet !== undefined) {
+      this.assertQuiet(spec.quiet, where);
     }
 
     const isRoot = parentId === '';

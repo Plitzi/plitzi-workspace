@@ -43,7 +43,7 @@ const MotionTiming = ({ draft, canHoldItems, onChange }: MotionTimingProps) => {
           <div
             role="radiogroup"
             aria-labelledby={triggerLabel}
-            className="grid grow grid-cols-2 gap-0.5 rounded-md bg-gray-100 p-0.5 dark:bg-zinc-800"
+            className="grid grow grid-cols-3 gap-0.5 rounded-md bg-gray-100 p-0.5 dark:bg-zinc-800"
           >
             {MOTION_TRIGGERS.map(name => (
               <MotionTriggerOption
@@ -77,7 +77,7 @@ const MotionTiming = ({ draft, canHoldItems, onChange }: MotionTimingProps) => {
           value={draft.delay}
           onChange={handleDelay}
         />
-        {canHoldItems && staggered && trigger === 'load' && (
+        {canHoldItems && staggered && trigger !== 'scroll' && (
           <Input
             size="xs"
             type="number"

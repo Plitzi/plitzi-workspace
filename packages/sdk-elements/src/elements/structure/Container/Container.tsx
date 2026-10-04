@@ -33,6 +33,9 @@ export type ContainerProps = {
     | 'h4'
     | 'h5'
     | 'h6'
+    // A paragraph made of parts — a sentence with a link in it — which a `paragraph` cannot hold. Words and inline
+    // elements only: a block inside a `<p>` closes it early.
+    | 'p'
     // Inline: a dot before a title, a word dressed apart — a container that sits in a line of text instead of breaking it.
     | 'span';
   /**
@@ -49,6 +52,12 @@ export type ContainerProps = {
    * control inside it can still be tabbed to, and is then announced as nothing.
    */
   decorative?: boolean;
+  /**
+   * A part of the page whose words change while somebody is on it — a count, a total, a status — said aloud when they
+   * do (`aria-live`): `polite` once the reader is idle, `assertive` at once, for what cannot wait. Left out, a change is
+   * silent to a screen reader, which reads only what it is moved to.
+   */
+  live?: 'polite' | 'assertive' | '';
   children?: ReactNode;
 };
 
@@ -58,11 +67,13 @@ const Container = ({
   subType = 'div',
   label = '',
   decorative = false,
+  live = '',
   children
 }: ContainerProps) => {
   const named = !decorative && label && NAMEABLE_CONTAINER_TAGS.includes(subType);
   const name = named ? { 'aria-label': label, ...(subType === 'div' ? { role: 'group' } : {}) } : {};
   const hidden = decorative ? { 'aria-hidden': true } : {};
+  const announced = live ? { 'aria-live': live } : {};
 
   return (
     <RootElement
@@ -71,6 +82,7 @@ const Container = ({
       className={clsx(`plitzi-component__container plitzi-component__container-${subType}`, className)}
       {...name}
       {...hidden}
+      {...announced}
     >
       {children}
     </RootElement>

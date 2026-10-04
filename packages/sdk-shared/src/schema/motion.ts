@@ -13,8 +13,12 @@ export const MOTION_ENTERS = ['fade', 'fade-up', 'fade-down', 'slide-left', 'sli
 
 export type MotionEnter = (typeof MOTION_ENTERS)[number];
 
-/** As the page loads, or as the element scrolls into view — tied to the scroll, so it plays at the reader's pace. */
-export const MOTION_TRIGGERS = ['load', 'view'] as const;
+/**
+ * When an arrival plays: as the page loads (`load`); once, as the element first comes into view, and then it stays
+ * (`view`); or with the scroll itself, at the reader's pace — played backwards when the reader scrolls back up past it
+ * (`scroll`).
+ */
+export const MOTION_TRIGGERS = ['load', 'view', 'scroll'] as const;
 
 export type MotionTrigger = (typeof MOTION_TRIGGERS)[number];
 
@@ -26,9 +30,9 @@ export type MotionLoop = (typeof MOTION_LOOPS)[number];
 export interface ElementMotion {
   /** How it arrives. */
   enter?: MotionEnter;
-  /** When it arrives: `load` (the default) or `view`. */
+  /** When it arrives: `load` (the default), `view` (once, as it comes into view) or `scroll` (with the scroll). */
   on?: MotionTrigger;
-  /** How long it takes to arrive, in ms (600 by default). Ignored under `view`, which follows the scroll. */
+  /** How long it takes to arrive, in ms (600 by default). Ignored under `scroll`, which follows the scroll. */
   duration?: number;
   /** How long it waits before it does, in ms. */
   delay?: number;
@@ -96,7 +100,7 @@ export const motionProblems = (value: unknown): string[] => {
   }
 
   if (value.on !== undefined && !isOneOf(MOTION_TRIGGERS, value.on)) {
-    problems.push(`motion.on is ${MOTION_TRIGGERS.join(' or ')}`);
+    problems.push(`motion.on is ${MOTION_TRIGGERS.slice(0, -1).join(', ')} or ${String(MOTION_TRIGGERS.at(-1))}`);
   }
 
   if (value.loop !== undefined && !isOneOf(MOTION_LOOPS, value.loop)) {
@@ -170,11 +174,27 @@ export const MOVING_SELECTOR = '[data-motion-enter], [data-motion-stagger] > *, 
  */
 export const MOTION_STILL_CSS = `${MOVING_SELECTOR} { animation: none !important; }`;
 
+/** The attribute an arrival waiting to be seen (`on: 'view'`) gets once it has been, and then keeps (`revealOnView`). */
+export const MOTION_SEEN_ATTRIBUTE = 'data-motion-seen';
+
+/** Every element whose arrival waits to be seen: what `revealOnView` watches. */
+export const MOTION_VIEW_SELECTOR = '[data-motion-on="view"]';
+
+/** The elements an arrival waiting to be seen moves: the element itself, or a staggered one's children. */
+const VIEW_ARRIVALS = '[data-motion-on="view"][data-motion-enter], [data-motion-on="view"][data-motion-stagger] > *';
+
+/**
+ * Every arrival waiting to be seen, played as if it had been: a surface with nobody scrolling it and no SDK root to
+ * watch it — a preview of an element, a thumbnail — would hold it at its start, unseen.
+ */
+export const MOTION_SEEN_CSS = `${VIEW_ARRIVALS} { animation-play-state: running, running !important; }`;
+
 export const MOTION_PLAY_CSS = [
   '[data-motion-loop] { animation-play-state: running, running !important; }',
-  // An arrival tied to the scroll is played by the clock here: on a canvas being edited the element is usually in view
-  // already, where a scroll-driven arrival sits finished and Play would show nothing.
-  '[data-motion-on="view"][data-motion-enter], [data-motion-on="view"][data-motion-stagger] > * { animation-timeline: auto, auto !important; }'
+  // On a canvas being edited the element is usually in view already: an arrival waiting to be seen plays at once, and
+  // one tied to the scroll is played by the clock — scroll-driven, it would sit finished and Play would show nothing.
+  MOTION_SEEN_CSS,
+  '[data-motion-on="scroll"][data-motion-enter], [data-motion-on="scroll"][data-motion-stagger] > * { animation-timeline: auto, auto !important; }'
 ].join('\n');
 
 /** Whether an animation is one of the declared motion's — what replaying the canvas restarts, and nothing else. */

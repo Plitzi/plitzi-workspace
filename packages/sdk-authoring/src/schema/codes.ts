@@ -174,10 +174,25 @@ export const AUTHORING_CODES = {
     means: 'an id a binding, a template or a test cannot name',
     fix: "a letter first, then letters, digits, `-` and `_`: `'hero-title'`"
   },
+  'controls-no-anchor': {
+    kind: 'warned',
+    means: "a button's `controls` naming no anchor — `aria-controls` points at nothing",
+    fix: 'an `anchor` on the element it shows and hides, and `controls` naming it'
+  },
+  'quiet-unknown': {
+    kind: 'refused',
+    means: "an element's `quiet` naming something that is not a suggestion's code — a problem is never quieted",
+    fix: "the code of the suggestion it was offered: `quiet: ['repeated-shape']`"
+  },
+  'controls-unknown': {
+    kind: 'refused',
+    means: "a button's `controls` naming no element of the space",
+    fix: "the id of the element it shows and hides: `controls: 'faq-answer'`"
+  },
   'id-taken': {
     kind: 'refused',
     means: 'two elements with one id — ids are one namespace for the whole space',
-    fix: "wrap what a helper builds in `scope('promos', ref => …)`: every id inside is prefixed, `ref('slides')` names one"
+    fix: "a name taken by a page or a layout: a name of its own; a helper called twice: `scope('promos', ref => …)`, every id inside prefixed"
   },
   'id-shadows-global': {
     kind: 'refused',
@@ -360,8 +375,8 @@ export const AUTHORING_CODES = {
   },
   'span-holds-block': {
     kind: 'warned',
-    means: "a `container({ subType: 'span' })` holding a heading, a paragraph, a list, a form or prose",
-    fix: 'a `div` (leave `subType` out), or words: a `text` with `display: inline` in its class'
+    means: "a `container` with `subType: 'span'` or `'p'` holding a heading, a paragraph, a list, a form or prose",
+    fix: 'a `div` (leave `subType` out), or words and inline elements: a `text`, a `link`'
   },
   'part-missing': {
     kind: 'refused',
@@ -450,10 +465,22 @@ export const AUTHORING_CODES = {
     means: 'an `apiContainer` that asks nothing',
     fix: 'a `query` (or `action`, `connector`, `resource`)'
   },
+  'path-not-in-data': {
+    kind: 'warned',
+    means:
+      'a binding onto a provider whose answer the author could read (`data`), through a path that answer does not have',
+    fix: 'the path the message lists the keys for — `p.data.plans`, not `p.data.landing.plans`'
+  },
+  'server-provider-in-component': {
+    kind: 'refused',
+    means:
+      "a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's",
+    fix: 'put the provider on the page, around the instance, and hand the component its rows as a prop'
+  },
   'server-data-without-rsc': {
     kind: 'warned',
-    means: "a `runtime: 'server'` provider with a `connector` or `action` in a space that does not turn server data on",
-    fix: '`rsc: { enabled: true }` on the space'
+    means: "a `runtime: 'server'` provider — `connector`, `action` or `query` — in a space whose server data is off",
+    fix: 'drop `rsc: { enabled: false }` (authoring turns it on for a server element), or `rsc: { enabled: true }`'
   },
   'route-param-undeclared': {
     kind: 'warned',
@@ -928,6 +955,10 @@ export type SuggestionCode = {
 }[AuthoringCode];
 
 const isAuthoringCode = (code: string): code is AuthoringCode => Object.hasOwn(AUTHORING_CODES, code);
+
+/** Whether a code is a suggestion's: what an element's `quiet` may name. */
+export const isSuggestionCode = (code: unknown): code is SuggestionCode =>
+  typeof code === 'string' && isAuthoringCode(code) && AUTHORING_CODES[code].kind === 'suggested';
 
 /**
  * The row of a code a problem was reported with — what any tool that relays a problem adds to it (the MCP, the CLI),

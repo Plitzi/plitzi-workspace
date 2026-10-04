@@ -7,7 +7,8 @@ of it; each line is something that has shipped broken before.
 
 - [ ] `authorSpace` returns **zero warnings**. Each one is written code that will not do what it says.
 - [ ] Every **suggestion** is taken, or left for a reason you can say (the copies are about to diverge; three cards a
-      person rewords on the canvas). The ones your change opened up first — [efficiency.md](efficiency.md).
+      person rewords on the canvas) — and then quieted where it is written, `quiet: ['repeated-shape']`, so it stops
+      burying the ones that matter. The ones your change opened up first — [efficiency.md](efficiency.md).
 - [ ] No console errors on any page you touched.
 
 ## Nothing flashes, nothing jumps
@@ -39,7 +40,8 @@ Screen readers and browser agents (Claude in Chrome) work a page through its acc
       a `label` (`hideLabel: true` when the design shows what it is).
 - [ ] Every image has an `alt` saying what it shows, or `decorative: true`.
 - [ ] Every click is on a `button` or a `link`; the whole page can be worked from the keyboard.
-- [ ] A toggle binds `ariaPressed`, a button that opens something `ariaExpanded`.
+- [ ] A toggle binds `ariaPressed`, a button that opens something `ariaExpanded` and names it with `controls`; words
+      that change on their own are in a `live` container.
 - [ ] Headings step down one level at a time; parts of the page a person jumps to are landmarks (`nav`, `main`, a
       labelled `section`).
 - [ ] What a canvas or a plugin draws is also there as elements, with a visible way to reach them.

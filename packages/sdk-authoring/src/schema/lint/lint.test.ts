@@ -7,12 +7,15 @@ import { describe, expect, it } from 'vitest';
 import {
   BUILTIN_GLOBAL_CALLBACKS,
   authorSpace,
+  button,
   component,
   container,
   carousel,
   elementAncestorTypes,
   elementPartTypes,
   lintSpace,
+  list,
+  listItem,
   text
 } from '../../index';
 import {
@@ -325,6 +328,33 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('template-unknown-name');
     });
 
+    /** A source named after an id with a `-` is read whole: a template takes `-` between two letters as part of a name. */
+    it('template-unknown-name names a hyphenated source by its spelling, and reads it whole', () => {
+      const written = (content: string) =>
+        authorSpace({
+          name: 'Plans',
+          permanentUrl: 'plans',
+          pages: [
+            {
+              name: 'Home',
+              slug: '',
+              body: [
+                list({
+                  id: 'study-plans',
+                  items: [{ name: 'A' }],
+                  children: [listItem({ children: [text({ id: 'plan-name', content })] })]
+                })
+              ]
+            }
+          ]
+        });
+
+      expect(() => written('{{ list_study_plans.item.name }}')).toThrow(
+        'The source is "list_study-plans", spelled with its `-`'
+      );
+      expect(written('{{ list_study-plans.item.name }}').warnings).toEqual([]);
+    });
+
     it('template-never-resolved', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.hello.attributes.content = '{{ state.ready ? "Ready" : "Wait" }}';
@@ -520,6 +550,20 @@ describe('lintSpace', () => {
       expect(warningsOf(holdsHeading)).toContain('span-holds-block');
     });
 
+    /** A sentence made of parts is a `p` container; a block inside one is closed off by the browser, not nested. */
+    it('span-holds-block for a paragraph container holding a block', () => {
+      const holdsHeading = withChange(({ schema }) => {
+        schema.flat.box.attributes.subType = 'p';
+        addElement(schema, { id: 'title', type: 'heading', attributes: { subType: 'h2', content: 'Hi' } });
+        const home = homeId(schema);
+        schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(id => id !== 'title');
+        schema.flat.title.definition.parentId = 'box';
+        schema.flat.box.definition.items = [...(schema.flat.box.definition.items ?? []), 'title'];
+      });
+
+      expect(warningsOf(holdsHeading)).toContain('span-holds-block');
+    });
+
     it('loading-slot-unknown', () => {
       const providerWith = (loadingSlot: string) =>
         errorsOf(
@@ -650,6 +694,17 @@ describe('lintSpace', () => {
     it('server-data-without-rsc', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.feed.attributes.connector = 'crm';
+        schema.flat.feed.definition.runtime = 'server';
+        schema.rsc = { enabled: false };
+      });
+
+      expect(warningsOf(documents)).toContain('server-data-without-rsc');
+    });
+
+    /** A provider reading one of the project's own files on the server is answered the same way: only with rsc on. */
+    it('server-data-without-rsc for a server provider with a query', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.feed.attributes.query = '/data/plans.json';
         schema.flat.feed.definition.runtime = 'server';
         schema.rsc = { enabled: false };
       });
@@ -1308,6 +1363,87 @@ describe('lintSpace', () => {
     });
   });
 
+  describe('controls', () => {
+    const faq = (controls: string) =>
+      authorSpace({
+        name: 'Faq',
+        permanentUrl: 'faq',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [
+              button({ id: 'faq-toggle', content: 'Shipping', ariaExpanded: false, controls }),
+              container({ id: 'faq_answer', children: [text('Three days.')] })
+            ]
+          }
+        ]
+      });
+
+    /** Named by its id, as every reference is: the element is given an anchor, and the button names the anchor. */
+    it('resolves an element’s id to an anchor it gives that element', () => {
+      const { schema } = faq('faq_answer');
+
+      expect(schema.flat.faq_answer.definition.anchor).toBe('faq-answer');
+      expect(schema.flat['faq-toggle'].attributes.controls).toBe('faq-answer');
+    });
+
+    it('controls-unknown', () => {
+      expect(() => faq('faq-anser')).toThrow(/controls "faq-anser", which is no element of the space/);
+    });
+
+    it('controls-no-anchor', () => {
+      const { schema, style } = faq('faq_answer');
+      schema.flat['faq-toggle'].attributes.controls = 'nowhere';
+
+      expect(lintSpace({ schema, style }).warnings.map(warning => warning.code)).toContain('controls-no-anchor');
+    });
+  });
+
+  describe('data paths', () => {
+    /** A page reading a JSON file the project serves, the way a `--mode server` project does. */
+    const pricing = (from: string) =>
+      authorSpace({
+        name: 'Pricing',
+        permanentUrl: 'pricing',
+        pages: [
+          {
+            name: 'Home',
+            slug: '',
+            body: [
+              {
+                type: 'apiContainer',
+                id: 'landing',
+                attributes: { query: '/data/landing.json' },
+                children: [text({ id: 'first-plan', from })]
+              }
+            ]
+          }
+        ]
+      });
+    const file = { plans: [{ name: 'Starter' }], compare: {}, faq: [] };
+
+    it('path-not-in-data', () => {
+      const { schema, style } = pricing('landing.data.landing.plans');
+
+      expect(
+        lintSpace({ schema, style }, { data: query => (query === '/data/landing.json' ? file : undefined) }).warnings
+      ).toEqual([
+        expect.objectContaining({
+          code: 'path-not-in-data',
+          message: expect.stringContaining('apiContainer_landing.data has plans, compare, faq') as string
+        })
+      ]);
+    });
+
+    it('path-not-in-data is not raised for a path the answer has, or with nothing to read it against', () => {
+      const { schema, style } = pricing('landing.data.plans');
+
+      expect(lintSpace({ schema, style }, { data: () => file }).warnings).toEqual([]);
+      expect(lintSpace(pricing('landing.data.landing.plans')).warnings).toEqual([]);
+    });
+  });
+
   describe('components', () => {
     /** A page placing a card that requires its title, and the card reading it. */
     const placed = () => {
@@ -1365,6 +1501,14 @@ describe('lintSpace', () => {
       documents.schema.flat['card-1'].attributes.wide = 'true';
 
       expect(errorsOf(documents)).toContain('prop-value');
+    });
+
+    /** The page server resolves a page's and its layouts' server elements, never one inside a component. */
+    it('server-provider-in-component', () => {
+      const documents = placed();
+      documents.schema.components.card.flat['card-root'].definition.runtime = 'server';
+
+      expect(errorsOf(documents)).toContain('server-provider-in-component');
     });
 
     it('reads a component closed: a binding onto the page it is placed on is out of its reach', () => {

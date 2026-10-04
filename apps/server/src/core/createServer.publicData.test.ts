@@ -76,6 +76,8 @@ describe('createServer with public data', () => {
     const payload = await (await fetch(`${BASE}/_rsc?location=/&ids=site`)).text();
 
     expect(payload).toContain(TITLE);
+    // The body under `data`, as a browser request publishes it: a binding reads `site.data.hero` in either runtime.
+    expect(payload).toContain('"data":{"hero":{"title"');
   });
 
   it('renders the page with that data already in it', async () => {

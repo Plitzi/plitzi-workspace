@@ -36,6 +36,11 @@ export type ButtonProps = {
   /** For a button that stays on or off — a filter, a mode: `true` while it is on. Left out, it is a plain button. */
   ariaPressed?: boolean;
   /**
+   * What the button shows and hides — an accordion's panel, a menu — by its anchor (`aria-controls`), so a screen
+   * reader can go from one to the other. Authoring takes the element's id and gives that element the anchor.
+   */
+  controls?: string;
+  /**
    * What the button does, in words — shown as a tooltip on hover, and the button's accessible name when it has no text
    * of its own. An icon-only button without one is announced as nothing at all.
    *
@@ -64,6 +69,7 @@ const Button = ({
   disabled = false,
   ariaExpanded,
   ariaPressed,
+  controls,
   title,
   label
 }: ButtonProps) => {
@@ -87,6 +93,7 @@ const Button = ({
       aria-label={label || undefined}
       aria-expanded={ariaExpanded}
       aria-pressed={ariaPressed}
+      aria-controls={controls || undefined}
     >
       {contentPlacement === 'before' && (
         <ElementWords content={content} icon={icon} iconPlacement={iconPlacement} iconClassName={styleSelectors.icon} />

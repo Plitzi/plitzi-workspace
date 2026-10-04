@@ -58,13 +58,22 @@ describe('ElementMotion', () => {
     expect(replayMotion).toHaveBeenCalled();
   });
 
-  it('times an arrival by the scroll, and says so', () => {
+  it('plays an arrival once as it comes into view, with its timing', () => {
     const { onUpdate } = mount({ motion: { enter: 'fade' } });
     choose('Plays', 'In view');
 
     expect(onUpdate).toHaveBeenLastCalledWith('motion', { enter: 'fade', on: 'view' }, true);
-    expect(summary().textContent).toBe('It fades in, as it is scrolled into view.');
-    expect(screen.getByText(/at their pace/)).toBeTruthy();
+    expect(summary().textContent).toBe('It fades in, once, as it comes into view, over 600 ms.');
+    expect(screen.getByText(/then it stays/)).toBeTruthy();
+  });
+
+  it('times an arrival by the scroll, and says so', () => {
+    const { onUpdate } = mount({ motion: { enter: 'fade' } });
+    choose('Plays', 'With scroll');
+
+    expect(onUpdate).toHaveBeenLastCalledWith('motion', { enter: 'fade', on: 'scroll' }, true);
+    expect(summary().textContent).toBe('It fades in, with the scroll.');
+    expect(screen.getByText(/at the reader’s pace/)).toBeTruthy();
   });
 
   it('asks when and how long only once there is an arrival to time', () => {

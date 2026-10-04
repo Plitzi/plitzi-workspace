@@ -3,7 +3,9 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { HIDE_DEV_TOOLS_CSS } from '@plitzi/sdk-shared/devTools/chrome';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme/themeCookie';
 
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
@@ -46,6 +48,10 @@ export interface BrowserPage {
   evaluate<R, A>(fn: (input: A) => R | Promise<R>, input: A): Promise<R>;
   waitForSelector(selector: string, options: { timeout: number }): Promise<unknown>;
   waitForTimeout(milliseconds: number): Promise<void>;
+  /** A stylesheet added to the page as it is now: what a capture leaves out or holds still. */
+  addStyleTag(options: { content: string }): Promise<unknown>;
+  /** The browser context the page lives in — its cookies, set before the page is asked for. */
+  context(): { addCookies(cookies: { name: string; value: string; url: string }[]): Promise<void> };
   on(event: 'pageerror', listener: (error: Error) => void): unknown;
   on(event: 'console', listener: (message: PageMessage) => void): unknown;
   on(event: 'response', listener: (response: PageResponse) => void): unknown;
@@ -151,3 +157,48 @@ export const dataUrl = (png: Uint8Array): string => `data:image/png;base64,${Buf
 
 /** A data URL's picture back as bytes, to write to a file. */
 export const fromDataUrl = (url: string): Buffer => Buffer.from(url.slice(url.indexOf(',') + 1), 'base64');
+
+export interface ProjectView {
+  width: number;
+  height: number;
+  /** The space's theme, chosen as a visitor's toggle chooses it. Left out, the space's own default. */
+  scheme?: Scheme;
+  reducedMotion?: boolean;
+}
+
+/**
+ * A page for the project's own server, in the theme asked for. The machine's preference alone is not enough: a space
+ * whose default is dark paints dark whatever the machine prefers, as it would for any visitor. So a scheme asked for
+ * is also the space's own choice — the `theme` cookie a visitor's `themeToggle` writes and the server paints `<html>`
+ * by — set before the page is asked for, so the first paint is already in it.
+ */
+export const openProjectPage = async (browser: Browser, origin: string, view: ProjectView): Promise<BrowserPage> => {
+  const page = await browser.newPage({
+    viewport: { width: view.width, height: view.height },
+    colorScheme: view.scheme ?? 'light',
+    reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference'
+  });
+  if (view.scheme) {
+    await page.context().addCookies([{ name: THEME_COOKIE_NAME, value: view.scheme, url: origin }]);
+  }
+
+  return page;
+};
+
+/**
+ * The theme a page was painted in: the class on `<html>` (a space's own choice, or its default), else the one the
+ * machine prefers — which is what a page with neither follows.
+ */
+export const paintedScheme = (page: BrowserPage, machine: Scheme): Promise<Scheme> =>
+  page.evaluate((prefers: Scheme): Scheme => {
+    const { classList } = document.documentElement;
+    if (classList.contains('dark')) {
+      return 'dark';
+    }
+
+    return classList.contains('light') ? 'light' : prefers;
+  }, machine);
+
+/** The page as a visitor sees it: the dev tools' own chrome — the badge, the panel — left out of whatever is looked at. */
+export const withoutDevTools = (page: BrowserPage): Promise<unknown> =>
+  page.addStyleTag({ content: HIDE_DEV_TOOLS_CSS });

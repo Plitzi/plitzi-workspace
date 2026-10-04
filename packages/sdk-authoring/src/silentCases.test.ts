@@ -399,6 +399,15 @@ describe('what an element is written with that reaches nothing', () => {
     expect(notItems[0]?.message).toContain('Make the root of component "card"');
   });
 
+  /** A `custom` with no declaration still says why `variant` never reaches its component. */
+  it('tells a custom element’s author that `variant` is its style variant, not a prop', () => {
+    const { warnings } = author([authoring.custom({ id: 'stat', renderType: 'statCard', variant: 'big' })]);
+
+    expect(warnings.find(warning => warning.code === 'unknown-variant')?.message).toContain(
+      'never a prop of the component it hosts'
+    );
+  });
+
   it('is quiet about a variant a class of the element declares', () => {
     const pill = authoring.styles('pill', { css: { padding: '4px' }, variants: { active: { color: 'red' } } });
     const { warnings } = author([authoring.text('On', { id: 'on', class: pill, variant: 'active' })]);

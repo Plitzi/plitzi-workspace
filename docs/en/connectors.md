@@ -258,6 +258,13 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
      misconfigured) → `emptyObject` + `hasError = true` (deliberately **not** the mock: a production outage is not
      disguised as content).
    - `id in serverData` → the server's slice.
+3. **A provider with only a `query` keeps the browser's shape.** A server provider without a connector or an action —
+   a JSON file the deployment serves, resolved by `publicFileResolver` — is answered `{ status, data }`, as `useApi`
+   publishes it, and its mock is wrapped the same way in the builder (`helpers/serverMock.ts`). A binding reads
+   `<source>.data.<field>` whichever runtime the provider has, so moving one to the server changes no path.
+4. **Only a page's tree and its layouts are resolved.** `collectServerElements` never walks into a component's tree,
+   so authoring refuses a `runtime: 'server'` element inside one (`server-provider-in-component`); `authorSpace` turns
+   `schema.rsc.enabled` on by itself when the space has a server provider and the spec does not say otherwise.
 
 ### Security
 

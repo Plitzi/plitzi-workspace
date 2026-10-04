@@ -135,6 +135,36 @@ describe('authorSpace', () => {
     expect(authorSpace(minimal()).schema.rsc).toBeUndefined();
   });
 
+  /**
+   * A `runtime: 'server'` element is answered by the page server only with server data on — left off, the page was
+   * served with the section empty and nothing said why. Saying nothing now means "on, since something needs it".
+   */
+  it('turns server data on for a space with a server element, unless the spec says otherwise', () => {
+    const served = (rsc?: SpaceSpec['rsc']): SpaceSpec => ({
+      name: 'Served',
+      permanentUrl: 'served',
+      ...(rsc ? { rsc } : {}),
+      pages: [
+        {
+          name: 'Home',
+          slug: '',
+          body: [
+            {
+              type: 'apiContainer',
+              id: 'plans',
+              runtime: 'server',
+              attributes: { query: '/data/plans.json' },
+              children: [text('Plans')]
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(authorSpace(served()).schema.rsc).toEqual({ enabled: true });
+    expect(authorSpace(served({ enabled: false })).schema.rsc).toEqual({ enabled: false });
+  });
+
   it('dresses an element part through the class a slot names', () => {
     const { schema } = authorSpace({
       name: 'Slotted',

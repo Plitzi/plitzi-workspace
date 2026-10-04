@@ -163,6 +163,9 @@ const styleConstants = {
   OVERFLOW_Y: 'overflow-y',
   SCROLLBAR_WIDTH: 'scrollbar-width',
   SCROLLBAR_COLOR: 'scrollbar-color',
+  // What a container query and the `cq*` units measure against: an element is a container only once it says so.
+  CONTAINER_TYPE: 'container-type',
+  CONTAINER_NAME: 'container-name',
   OBJECT_FIT: 'object-fit',
   OBJECT_POSITION: 'object-position',
   COLUMN_WIDTH: 'column-width',
@@ -399,6 +402,8 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   [styleConstants.OVERFLOW_Y]: 'visible',
   [styleConstants.SCROLLBAR_WIDTH]: 'auto',
   [styleConstants.SCROLLBAR_COLOR]: 'auto',
+  [styleConstants.CONTAINER_TYPE]: 'normal',
+  [styleConstants.CONTAINER_NAME]: 'none',
   [styleConstants.OBJECT_FIT]: 'fill',
   [styleConstants.OBJECT_POSITION]: '50% 50%',
   [styleConstants.COLUMN_WIDTH]: 'auto',

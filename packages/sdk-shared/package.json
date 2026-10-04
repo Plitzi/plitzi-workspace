@@ -254,6 +254,10 @@
       "types": "./dist/devTools/DevToolsContext.d.ts",
       "import": "./dist/devTools/DevToolsContext.mjs"
     },
+    "./devTools/chrome": {
+      "types": "./dist/devTools/chrome.d.ts",
+      "import": "./dist/devTools/chrome.mjs"
+    },
     "./devTools/debugCookie": {
       "types": "./dist/devTools/debugCookie.d.ts",
       "import": "./dist/devTools/debugCookie.mjs"
@@ -1138,6 +1142,10 @@
     "./schema/motion": {
       "types": "./dist/schema/motion.d.ts",
       "import": "./dist/schema/motion.mjs"
+    },
+    "./schema/motionReveal": {
+      "types": "./dist/schema/motionReveal.d.ts",
+      "import": "./dist/schema/motionReveal.mjs"
     },
     "./schema/schemaConstants": {
       "types": "./dist/schema/schemaConstants.d.ts",

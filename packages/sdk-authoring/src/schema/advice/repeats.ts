@@ -1,4 +1,6 @@
 /* eslint-disable quotes -- the messages quote code, which reads best in the other quotes */
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { declaredClasses } from './declaredClasses';
 
 import type { Suggestion } from './types';
@@ -26,7 +28,7 @@ const MIN_SHAPE_COPIES = 3;
 /** Two copies are worth a component only when each is this large. */
 const MIN_PAIR = 8;
 
-type Signatures = { exact: string; near: string; shape: string; outside: string; size: number };
+type Signatures = { exact: string; near: string; shape: string; outside: string; wiring: string; size: number };
 
 /** A key for a value, the same whatever order its object keys were written in. */
 const stable = (value: unknown): string => {
@@ -147,6 +149,20 @@ const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, 
     const open = [...own, ...items.flatMap(child => leaving.get(child) ?? [])].filter(read => read.depth < depth(id));
     leaving.set(id, open);
     const outside = stable([...new Set(open.map(read => read.source))].sort());
+    // What the copy is wired to, by name: the sources it reads from outside itself and the state keys its flows write.
+    // Copies wired to different things are different controls written alike — a menu for the language and one for the
+    // level — not one item written again for each row of data.
+    const wired = new Set([
+      ...Object.values(bindings ?? {})
+        .flat()
+        .flatMap(({ source }) => (own.some(read => read.source === source) ? [] : [`read:${source}`])),
+      ...Object.values(interactions ?? {}).flatMap(node => {
+        const key: unknown = isRecord(node.params) ? node.params.key : undefined;
+
+        return typeof key === 'string' ? [`write:${key}`] : [];
+      }),
+      ...children.flatMap(child => child.wiring.split('\n').filter(Boolean))
+    ]);
 
     const body = `${type}|${stable(element.attributes)}|${stable(initialState?.visibility ?? null)}|${stable(reads)}`;
     const signatures = {
@@ -154,6 +170,7 @@ const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, 
       near: `${body}(${children.map(child => child.near).join(',')})`,
       shape: `${type}|${classes}|${flows}(${children.map(child => child.shape).join(',')})`,
       outside,
+      wiring: [...wired].sort().join('\n'),
       size: 1 + children.reduce((sum, child) => sum + child.size, 0)
     };
     memo.set(id, signatures);
@@ -300,6 +317,11 @@ export const suggestRepeats = (schema: Schema, style: Style): Suggestion[] => {
 
     const parents = new Set(fresh.map(id => flat[id].definition.parentId));
     const siblings = parents.size === 1;
+    // Side by side but wired to different sources or state keys: controls that look alike, not rows of one list.
+    if (siblings && new Set(fresh.map(id => signatures.get(id)?.wiring)).size > 1) {
+      continue;
+    }
+
     const type = flat[fresh[0]].definition.type;
     suggestions.push({
       code: 'repeated-shape',

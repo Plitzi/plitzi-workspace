@@ -1,5 +1,6 @@
 import type { Suggestion } from './advice';
 import type { VisibleCondition } from './bindings';
+import type { SuggestionCode } from './codes';
 import type { SpaceHandles } from './handles';
 import type { NotificationsSpec } from './notifications';
 import type {
@@ -215,6 +216,12 @@ export interface ElementSpec {
    * on the server or in the browser. The flag is one {@link SpaceSpec.flags} declares.
    */
   flag?: string;
+  /**
+   * Suggestions this element is not offered, because it is written this way on purpose — `quiet: ['repeated-shape']`
+   * on the root a helper writes three menus from, each reading its own data. A suggestion about several elements is
+   * quiet when any of them says so. Only suggestions: a problem is never quieted.
+   */
+  quiet?: SuggestionCode[];
   children?: ElementSpec[];
   meta?: SpecMeta;
 }
@@ -469,9 +476,9 @@ export interface SpaceSpec {
    */
   settings?: Partial<Omit<Schema['settings'], 'customCss'>>;
   /**
-   * Server-resolved data for this space's `runtime: 'server'` elements. It is off unless a space says otherwise,
-   * so a space whose providers are fed by the server declares `{ enabled: true }` — without it those elements
-   * render from their mock data and nothing anywhere reports a missing switch.
+   * Server-resolved data for this space's `runtime: 'server'` elements. Left out, it is on exactly when the space has
+   * one — every `runtime: 'server'` element is answered by the page server, and only with it on. Written out, it is
+   * what it says: `{ enabled: false }` with a server element is warned (`server-data-without-rsc`).
    */
   rsc?: Schema['rsc'];
   mode?: Style['mode'];
@@ -645,6 +652,13 @@ export interface AuthorSpaceOptions {
   allow?: readonly AllowedBreak[];
   /** The binding transformers and their params. Left out, a transformer nothing implements is written as given. */
   transformers?: Readonly<Record<string, { strictParams?: boolean; params?: ParamSpec }>>;
+  /**
+   * What a provider's `query` answers, when the author can read it — a JSON file the project serves; `publicData` from
+   * `@plitzi/sdk-authoring/node` reads them from `public/`. Every binding onto that provider is held to the answer: a
+   * path it does not have is warned (`path-not-in-data`), with the keys it does. `undefined` for a query it cannot
+   * answer, which is left unchecked.
+   */
+  data?: (query: string) => unknown;
 }
 
 export interface AuthoredSpace {

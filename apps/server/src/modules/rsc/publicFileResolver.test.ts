@@ -40,8 +40,8 @@ describe('publicFileResolver', () => {
   });
 
   it('reads a file the server serves, as the browser would have fetched it', async () => {
-    expect(await resolve('/data/home.json')).toEqual({ hero: { title: 'Hi' } });
-    expect(await resolve('/data/home.json?v=2#top')).toEqual({ hero: { title: 'Hi' } });
+    expect(await resolve('/data/home.json')).toEqual({ status: 200, data: { hero: { title: 'Hi' } } });
+    expect(await resolve('/data/home.json?v=2#top')).toEqual({ status: 200, data: { hero: { title: 'Hi' } } });
   });
 
   it('leaves alone what is not a plain file of its own: a URL, a templated path', async () => {

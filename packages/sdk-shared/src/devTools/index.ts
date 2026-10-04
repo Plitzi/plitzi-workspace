@@ -3,6 +3,7 @@ import DevToolsContext from './DevToolsContext';
 import isInteractionFlow from './interactionLog';
 import PlitziConsole from './utils/PlitziConsole';
 
+export * from './chrome';
 export * from './debugCookie';
 export * from './DevToolsContext';
 export * from './interactionLog';

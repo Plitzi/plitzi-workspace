@@ -1,6 +1,8 @@
+/* eslint-disable quotes -- the expectations quote code, which reads best in the other quotes */
 import { describe, expect, it } from 'vitest';
 
 import { BUILDER_NAMES, EXPLAIN_KINDS, explain, explainKindOf, explainList, explanationText } from './explain';
+import { AUTHORING_HELPERS } from './helpers';
 import * as authoring from '../index';
 
 describe('explain', () => {
@@ -75,4 +77,26 @@ describe('explain', () => {
       expect(authoring, builder).toHaveProperty(builder);
     }
   });
+
+  /** The helpers an agent otherwise looks up in the `.d.ts`: each one a function the package exports. */
+  it('says what a helper is for and how it is written — only helpers the package exports', () => {
+    for (const helper of Object.keys(AUTHORING_HELPERS)) {
+      expect(typeof (authoring as Record<string, unknown>)[helper], helper).toBe('function');
+    }
+
+    expect(explainText('bindTemplate')).toContain(
+      "Written: bindTemplate(to, source, template, { returns?: 'text' | 'value', category? })"
+    );
+    expect(explainList('helper').map(entry => entry.name)).toContain('scope');
+  });
+
+  /** `motion` is a field, not a function: said from the presets the SDK plays, so the list cannot fall behind. */
+  it('says what motion takes, from the presets themselves', () => {
+    expect(explainText('motion')).toContain("enter?: 'fade' | 'fade-up'");
+    expect(explainText('motion')).toContain("loop?: 'float'");
+    expect(authoring.MOTION_ENTERS).toContain('fade-up');
+    expect(authoring.MOTION_LOOPS).toContain('float');
+  });
 });
+
+const explainText = (name: string): string => explain(name).map(explanationText).join('\n');

@@ -6,7 +6,7 @@ import { fail } from './terminal';
 
 /**
  * `plitzi explain <name>`: what a name means when authoring a space — an element, a step, a trigger, a problem's code,
- * a transformer — in a few lines, from the catalogues the checks themselves read. `--list steps` names every one of a
+ * a transformer, a helper (`bindTemplate`, `scope`, `motion`…) — in a few lines, from the catalogues the checks themselves read. `--list steps` names every one of a
  * kind; `--json` answers in one object, for a tool or an agent.
  */
 
@@ -44,7 +44,7 @@ export const explainCommand = (name: string | undefined, options: ExplainOptions
 
   const explanations = explain(name);
   if (explanations.length === 0) {
-    fail(`"${name}" is no element, step, trigger, code or transformer. See what there is: --list ${kinds}.`);
+    fail(`"${name}" is no element, step, trigger, code, transformer or helper. See what there is: --list ${kinds}.`);
 
     return;
   }

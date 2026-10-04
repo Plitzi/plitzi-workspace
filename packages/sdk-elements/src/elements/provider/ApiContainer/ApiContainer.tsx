@@ -17,6 +17,7 @@ import { isEmptyAnswer } from './helpers/isEmptyAnswer';
 import { childrenWhile } from './helpers/loadingSlot';
 import providerOutcome from './helpers/providerOutcome';
 import { queryInputOf } from './helpers/queryInput';
+import { serverMock } from './helpers/serverMock';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
 import useAutoRefresh from './hooks/useAutoRefresh';
 import useProviderPagination from './hooks/useProviderPagination';
@@ -131,7 +132,9 @@ const ApiContainer = ({
   cache = false,
   staleTime = DEFAULT_STALE_TIME,
   gcTime = DEFAULT_GC_TIME,
-  refreshSeconds = 0
+  refreshSeconds = 0,
+  connector = '',
+  action = ''
 }: ApiContainerProps) => {
   const {
     id,
@@ -231,6 +234,9 @@ const ApiContainer = ({
   // payload for somewhere else is neither: nobody has answered for this element yet.
   const hasError = serverMode && rscResolved && !rscPending && elementData === null;
 
+  // A server provider that only has a `query` is answered as a browser request is: `{ status, data }` (`serverMock`).
+  const queryShaped = serverMode && !connector && !action;
+
   // In the builder there is no `/_rsc` for the live space, so a server provider keeps rendering from its mock data.
   const data = useMemo<Record<string, unknown>>(() => {
     if (!serverMode) {
@@ -245,16 +251,8 @@ const ApiContainer = ({
       return emptyObject;
     }
 
-    if (typeof mockData !== 'string') {
-      return mockData;
-    }
-
-    try {
-      return JSON.parse(mockData || '{}') as Record<string, unknown>;
-    } catch {
-      return emptyObject;
-    }
-  }, [serverMode, apiData, elementData, rscResolved, mockData]);
+    return serverMock(mockData, queryShaped);
+  }, [serverMode, apiData, elementData, rscResolved, mockData, queryShaped]);
 
   /**
    * A server provider is never "loading" in the client sense — it does not fetch — but between a route change and

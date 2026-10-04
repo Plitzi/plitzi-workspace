@@ -20,6 +20,7 @@ import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import * as interactionSteps from '../interactions/steps';
 import { authoringCodeEntry, AUTHORING_CODES } from '../schema/codes';
 import { BUILTIN_TRANSFORMERS } from '../transformers';
+import { AUTHORING_HELPERS, MOTION_ENTRY } from './helpers';
 
 import type { AuthoringCodeEntry } from '../schema/codes';
 import type { InteractionCallback, InteractionCallbackParam } from '@plitzi/sdk-shared';
@@ -84,7 +85,8 @@ export type Explanation =
       params: ParamInfo[];
     }
   | { kind: 'code'; name: string; codeKind: AuthoringCodeEntry['kind']; means: string; fix: string }
-  | { kind: 'transformer'; name: string; title: string; description: string; params: ParamInfo[] };
+  | { kind: 'transformer'; name: string; title: string; description: string; params: ParamInfo[] }
+  | { kind: 'helper'; name: string; signature: string; summary: string; example: string };
 
 export type ExplainKind = Explanation['kind'];
 
@@ -94,7 +96,8 @@ export const EXPLAIN_KINDS: Record<ExplainKind, string> = {
   step: 'steps',
   trigger: 'triggers',
   code: 'codes',
-  transformer: 'transformers'
+  transformer: 'transformers',
+  helper: 'helpers'
 };
 
 const isExplainKind = (kind: string): kind is ExplainKind => Object.hasOwn(EXPLAIN_KINDS, kind);
@@ -279,12 +282,19 @@ const explainSteps = (name: string): Explanation[] => {
   return steps;
 };
 
+/** The helpers `explain` knows, `motion` with them: an element's field said as one. */
+const HELPERS: Readonly<Record<string, (typeof AUTHORING_HELPERS)[string]>> = {
+  ...AUTHORING_HELPERS,
+  motion: MOTION_ENTRY
+};
+
 /** Everything a name is — an action can be both a global and an element callback (`setState`), and is said as both. */
 export const explain = (name: string): Explanation[] => {
   const code = authoringCodeEntry(name);
   const element = explainElement(name);
   const trigger = explainTrigger(name);
   const transformer = Object.hasOwn(BUILTIN_TRANSFORMERS, name) ? BUILTIN_TRANSFORMERS[name] : undefined;
+  const helper = Object.hasOwn(HELPERS, name) ? HELPERS[name] : undefined;
 
   return [
     ...(code ? [{ kind: 'code' as const, name, codeKind: code.kind, means: code.means, fix: code.fix }] : []),
@@ -301,7 +311,8 @@ export const explain = (name: string): Explanation[] => {
             params: fromSpec(transformer.params)
           }
         ]
-      : [])
+      : []),
+    ...(helper ? [{ kind: 'helper' as const, name, ...helper }] : [])
   ];
 };
 
@@ -334,6 +345,8 @@ export const explainList = (kind: ExplainKind): { name: string; summary: string 
       );
     case 'transformer':
       return sorted(Object.entries(BUILTIN_TRANSFORMERS).map(([name, entry]) => ({ name, summary: entry.title })));
+    case 'helper':
+      return sorted(Object.entries(HELPERS).map(([name, entry]) => ({ name, summary: entry.summary })));
   }
 };
 
@@ -396,6 +409,12 @@ export const explanationText = (explanation: Explanation): string => {
         `${explanation.name} — transformer: ${explanation.title}. ${explanation.description}`,
         'Params:',
         ...paramsText(explanation.params)
+      ].join('\n');
+    case 'helper':
+      return [
+        `${explanation.name} — helper: ${explanation.summary}`,
+        `Written: ${explanation.signature}`,
+        `Example: ${explanation.example}`
       ].join('\n');
   }
 };

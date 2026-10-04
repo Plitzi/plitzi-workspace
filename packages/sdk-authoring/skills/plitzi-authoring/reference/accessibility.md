@@ -75,7 +75,10 @@ button({ content: 'Grid', bind: { ariaPressed: 'computed.gridOn' }, class: chip 
 button({ content: 'Menu', bind: { ariaExpanded: 'state.menuOpen' }, flows: [[onClick(), toggleState({ key: 'menuOpen' })]] })
 ```
 
-An "active" variant is for the eyes. `ariaPressed` and `ariaExpanded` are for everyone else. Use both.
+An "active" variant is for the eyes. `ariaPressed` and `ariaExpanded` are for everyone else. Use both. A button that
+opens a panel also names it — `controls: 'menu-panel'`, the panel's id (authoring gives the panel the anchor
+`aria-controls` needs; [recipes/accordion.ts](../recipes/accordion.ts)). Words that change while somebody is on the page
+— a count, a total, a status — sit in `container({ live: 'polite', … })`, so a screen reader says them when they change.
 
 ## The page has an outline
 

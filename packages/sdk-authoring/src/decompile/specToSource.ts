@@ -63,6 +63,7 @@ export const ELEMENT_FIELDS = [
   'anchor',
   'motion',
   'flag',
+  'quiet',
   'meta',
   'children'
 ] as const satisfies readonly (keyof ElementSpec)[];

@@ -109,7 +109,9 @@ describe('a project made from a space', () => {
     const main = project.files['src/main.ts'];
 
     expect(main).toContain("path.resolve(import.meta.dirname, '../vendor/plugins')");
-    expect(main).toContain('authorSpace(space, { plugins: declarations, pluginTypes: builtTypes })');
+    expect(main).toContain('  plugins: declarations,\n  pluginTypes: builtTypes,');
+    // Its bindings held to the files it serves, as `npm run author` holds them.
+    expect(main).toContain("data: publicData(new URL('../public/', import.meta.url))");
     expect(main).toContain('plugins: { ...plugins, ...builtPlugins }');
     expect(main).toContain('pluginNames: [...pluginNames, ...Object.keys(builtPlugins)]');
   });

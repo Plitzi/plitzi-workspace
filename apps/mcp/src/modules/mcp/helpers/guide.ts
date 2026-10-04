@@ -350,7 +350,8 @@ batch):
 **Where an element renders** is its \`runtime\`, settable on \`upsertElement\`/\`patchElement\`: \`"shared"\` (the
 default, both sides), \`"client"\` (browser only) or \`"server"\` (SSR only). It matters for one thing above all — an
 \`apiContainer\` reads through a **connector** only when it is \`"server"\` (see *Connectors*). An element read
-reports it only when it is set.
+reports it only when it is set. The page server resolves \`"server"\` elements of a page and its layouts only, never
+inside a component — one there is refused; put the provider on the page and hand the component its rows as a prop.
 
 **Renaming** (\`patchElement\` with \`rename\`) moves the one key: the parent's child list, every binding source and
 every interaction target across the space that named the old one is repointed with it, so nothing comes unwired.
@@ -481,7 +482,9 @@ provider's records into a list element:
 **What an \`apiContainer\` publishes** depends on where it reads. Through a connector (\`runtime: "server"\`) it is the
 fixed shape under *Connectors* — \`.records\` or \`.record\`, \`.pageInfo\`, … With a browser \`query\` it is the
 response: \`.data\` (the parsed body — an API answering \`{ "items": [...] }\` is read as
-\`apiContainer_<name>.data.items\`) and \`.status\` (the HTTP status). Both add \`.isLoading\`, \`.isEmpty\`,
+\`apiContainer_<name>.data.items\`) and \`.status\` (the HTTP status) — and a \`"server"\` provider with only a
+\`query\` (a JSON file the deployment serves) answers in that same shape, so moving it to the server changes no
+binding. Both add \`.isLoading\`, \`.isEmpty\`,
 \`.hasError\` and \`.errorMessage\`.
 
 **Source scope — a source is visible to the provider's DESCENDANTS only.** An element source named
@@ -1009,7 +1012,9 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
 ## Motion — good practices
 A preset first: an element's \`motion\` field (\`upsertElement\`/\`patchElement\`) —
 \`{ "enter": "fade-up", "on": "view" }\`, \`"stagger": 60\` for its children one by one, \`"loop": "float"\` — is
-played by the SDK, cheap and stilled for reduced motion. Enters: fade, fade-up, fade-down, slide-left, slide-right,
+played by the SDK, cheap and stilled for reduced motion. \`on\`: \`load\` (default), \`view\` (once, the first time it
+comes into view, then it stays) or \`scroll\` (follows the scroll both ways — it fades back out as the reader scrolls
+up past it; only for an effect that is about the scroll itself). Enters: fade, fade-up, fade-down, slide-left, slide-right,
 scale; loops: float, pulse, spin, sway. Beyond them, keyframes go in \`customCss\` (\`patchSettings\`), a
 definition names them (\`animation\`). Only \`opacity\` and
 \`transform\` (\`translate\`, \`scale\`, \`rotate\`) animate off the main thread: they stay smooth while the page
@@ -1045,7 +1050,9 @@ tree names nothing is invisible to both, however it looks. So build every page t
   no agent finds them. An empty backdrop that closes a panel is the exception (the panel's close button and Escape
   are the ways everyone has).
 - **State is said, not only styled.** A toggle sets \`ariaPressed\`, a button that opens a panel \`ariaExpanded\`
-  (bind them like any attribute) — an "active" class alone is invisible to both readers.
+  (bind them like any attribute) — an "active" class alone is invisible to both readers. A button that shows and
+  hides a panel names it in \`controls\` (\`aria-controls\`, the panel's anchor), and words that change while a
+  visitor reads them — a count, a total, a status — sit in a \`container\` with \`live: "polite"\` (\`aria-live\`).
 - **A dropdown opens from a \`button\`** among its children, outside the popup (an avatar, a "⋯": the button holds it and
   has a \`title\`). The dropdown marks it and moves the focus in and out; a box or an icon alone opens nothing from a
   keyboard.

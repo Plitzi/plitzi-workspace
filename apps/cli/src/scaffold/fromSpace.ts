@@ -244,7 +244,7 @@ const fromSpaceMain = (options: MainOptions): string => {
 import path from 'node:path';
 
 import { closeOnSignals, consoleLogger, ${local ? 'createJsonAdapters' : 'createCloudAdapters'}, createServer, loadFunctions } from '@plitzi/sdk-server';
-${hasRuntime ? importLine(`{ ${runtimeImports} }`, '@plitzi/sdk-server/runtime') : ''}${local ? `\n${importLine('{ authorSpace }', '@plitzi/sdk-authoring')}` : ''}
+${hasRuntime ? importLine(`{ ${runtimeImports} }`, '@plitzi/sdk-server/runtime') : ''}${local ? `\n${importLine('{ authorSpace }', '@plitzi/sdk-authoring')}${importLine('{ publicData }', '@plitzi/sdk-authoring/node')}` : ''}
 ${importLine('{ lookups }', './actions.ts')}${local ? importLine('{ declarations }', './plugins/declarations.ts') : ''}${runtimeEntry ? importLine('spaceRuntime', runtimeEntry) : ''}${local ? importLine('{ space }', './space.ts') : ''}
 /**
  * The project's settings — the key its actions sign with, the variables the space was given on Plitzi — kept in \`.env\`,
@@ -268,7 +268,10 @@ ${builtPlugins ? BUILT_PLUGINS : ''}${
  * The space, held in this project: \`src/space/\`, authored at boot — saving a page and letting \`--watch\` restart is
  * the whole edit loop, and the warnings are printed where somebody editing it is watching.
  */
-const { schema, style, warnings } = authorSpace(space, { plugins: declarations${builtPlugins ? ', pluginTypes: builtTypes' : ''} });
+const { schema, style, warnings } = authorSpace(space, {
+  plugins: declarations,${builtPlugins ? '\n  pluginTypes: builtTypes,' : ''}
+  data: publicData(new URL('../public/', import.meta.url))
+});
 
 for (const warning of warnings) {
   console.warn(\`[author] \${warning.message}\`);

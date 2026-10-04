@@ -74,6 +74,19 @@ class Refusal extends Error {
 
 const refuse = (status: number, message: string): Refusal => new Refusal(answer(status, message));
 
+/**
+ * A vector picture is sent back to where it is: there is no size of it to make, and an SVG served from this origin is a
+ * document that can run script. The browser loads it from its own host, as it would without this endpoint.
+ */
+const toOriginal = (source: URL): Refusal =>
+  new Refusal({
+    status: 307,
+    headers: { Location: source.href, 'Cache-Control': CACHE_CONTROL },
+    body: ''
+  });
+
+const isVector = (pathname: string): boolean => /\.svgz?$/i.test(pathname);
+
 /** One of each at a time: a second request for what is being made waits for the first. */
 const oneAtATime = <T>(): ((key: string, make: () => Promise<T>) => Promise<T>) => {
   const running = new Map<string, Promise<T>>();
@@ -224,6 +237,11 @@ export const createImageProxy = (options: ImageProxyOptions): ((request: ImageRe
     }
 
     const type = (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+    if (response.ok && type === 'image/svg+xml') {
+      await response.body?.cancel();
+      throw toOriginal(source);
+    }
+
     if (!response.ok || !Object.hasOwn(SOURCE_TYPES, type)) {
       await response.body?.cancel();
       throw refuse(
@@ -325,7 +343,11 @@ export const createImageProxy = (options: ImageProxyOptions): ((request: ImageRe
 
         return fetched;
       } catch (error) {
-        failedUntil.set(urlKey, now() + FAILED_MS);
+        // A vector picture sent back to where it is did not fail: it is simply not this endpoint's to serve.
+        if (!(error instanceof Refusal && error.answer.status === 307)) {
+          failedUntil.set(urlKey, now() + FAILED_MS);
+        }
+
         throw error;
       }
     });
@@ -370,6 +392,10 @@ export const createImageProxy = (options: ImageProxyOptions): ((request: ImageRe
 
     if (!isAllowedImageHost(domains, source.hostname)) {
       return answer(403, `${source.hostname} is not one of the hosts this server takes pictures from.`);
+    }
+
+    if (isVector(source.pathname)) {
+      return toOriginal(source).answer;
     }
 
     const format = transform ? negotiate(accept) : 'original';

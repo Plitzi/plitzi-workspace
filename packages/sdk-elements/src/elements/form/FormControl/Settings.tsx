@@ -16,6 +16,9 @@ type SettingsProps = {
     | 'time'
     | 'email'
     | 'password'
+    | 'search'
+    | 'url'
+    | 'tel'
     | 'select'
     | 'checkbox'
     | 'textarea'
@@ -81,7 +84,7 @@ const Settings = ({
   onUpdate
 }: SettingsProps) => {
   // The subtypes that hold typed text, which are the ones a length, a pattern or a confirmation can mean anything for.
-  const isTyped = ['text', 'textarea', 'number', 'email', 'password'].includes(subType);
+  const isTyped = ['text', 'textarea', 'number', 'email', 'password', 'search', 'url', 'tel'].includes(subType);
 
   const handleChangeName = useCallback((value: string) => onUpdate?.('name', value), [onUpdate]);
 
@@ -192,6 +195,9 @@ const Settings = ({
         <option value="date">Date</option>
         <option value="time">Time</option>
         <option value="email">Email</option>
+        <option value="search">Search</option>
+        <option value="url">URL</option>
+        <option value="tel">Phone</option>
         <option value="password">Password</option>
         <option value="select">Select</option>
         <option value="checkbox">Checkbox</option>

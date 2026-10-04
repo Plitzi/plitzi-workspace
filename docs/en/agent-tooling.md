@@ -16,10 +16,10 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 | Write | `npm run author` | Whether the space authors: one line when it does, every problem at once (file, line, what to change) when not — and, under the warnings, the suggestions: a shorter way to the same page, with the elements it saves |
 | Upgrade | `npx plitzi upgrade [files\|packages\|skills\|renames]` | The project brought up to the CLI it has: the CLI's files (replaced where nobody changed them, a diff where somebody did), `package.json` merged, the skills, every renamed name at its line; `--write` makes it |
 | Repair | `npx plitzi fix` | The problems — and the suggestions — with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
-| Check | `npm run check` (`plitzi check`) | Whether a page of the running server is whole, in text: elements on screen, overflow, contrast, console, refused requests, failed flows |
+| Check | `npm run check` (`plitzi check`) | Whether a page of the running server is whole, in text: elements on screen, overflow, contrast, console, refused requests, failed flows, bindings reading a path their provider's answer lacks, failed providers, rows per list; `--ssr` names what the server's HTML lacks that the hydrated page has |
 | Inspect | `plitzi check --state --element <id>` | What the page holds: its state, every source by name and shape, one element's own state and bindings |
-| Look | `plitzi shot` | A picture — `--compare <url>` against another site by section, `--frames` for what moves |
-| Explain | `plitzi explain <name>` | What an element, a step or a problem code means, from the catalogues the checks read |
+| Look | `plitzi shot` | A picture (in `tmp/shots/`) — `--compare <url>` against another site: each section where it is there, and the texts both have with what each does differently, measured; `--frames` for what moves; a full page has its lazy pictures loaded and its arrivals shown as they end |
+| Explain | `plitzi explain <name>` | What an element, a step, a problem code or a helper (`bindTemplate`, `motion`…) means, from the catalogues the checks read |
 | Start from | `plitzi import <url>` | A page the user already has, measured as tokens, an outline and lists to write from |
 
 Text first, pictures second. A screenshot costs thousands of tokens and still has to be looked at; `check` says what is
@@ -37,6 +37,10 @@ a person. The same data in text is what an agent needs, so the page's dev tools 
 `check` reads it: the flows that failed while the page loaded are problems on every check, and `--state` / `--element`
 print what the page holds. `window.__plitzi.element()`, the panel's **Runtime** tab and `check --element` are one report
 (`sdk-dev-tools/src/agentInspector/report.ts`).
+The sources it reads are also held to the page: `dataIssues` (`@plitzi/sdk-authoring`) walks every binding of
+the page against the answer its provider gave, so a path that answer lacks is said with the keys it has, and a provider
+that failed is said once rather than as every element it left empty. The dev tools' own badge and panel carry
+`data-plitzi-devtools` and are hidden while `check` and `shot` look — what they report is the page a visitor gets.
 
 **`plitzi fix` edits the author's source, not a copy.** Every fix `fixSpace` makes says its change in the spec's own
 words (`FixChange`); `planFixes` places it at the line and column of the call that wrote the element; the CLI edits only
@@ -55,6 +59,19 @@ site is theirs: a verified domain of one of their spaces that covers the host (t
 platform with `GET /account/domains/covering`), or a host that resolves to this machine. A domain of the platform's own
 (`*.plitzi.app`) proves nothing and is never proof. The dark values of the colours are read where each light colour
 was seen, not paired by rank.
+
+**`shot --compare` says why, not only how much.** A percentage alone sent an agent measuring both pages by hand with
+scripts of its own. So the comparison loads every lazy picture on both sides before taking them (`loadImages`: eager,
+the page walked once for loaders that react to the scroll), unrolls the pane the SDK scrolls in so the whole page is
+in the picture (`unrollPage`, the viewport untouched so `100vh` stays one screen), aligns each section of this page with where the same rows
+are on the other (`alignPictures`, over row profiles — a page 400 px longer is said once, with the section where the
+drift starts, instead of every section under it differing), and pairs the texts both pages have (`pageTexts`,
+`compareTexts`): font size, weight, line height, colour, padding, radius, box, and position less the drift of the
+section around it. All of it is `@plitzi/sdk-authoring`, for a suite to use as well.
+
+**`--scheme` is the space's theme.** The machine's preference loses to a space whose default is dark, as it would for
+any visitor. So `check` and `shot` set the `theme` cookie a visitor's toggle writes (`openProjectPage`) when a scheme is
+asked for, and otherwise picture the space's default and name the file by the theme the page was painted in.
 
 **The image proxy serves only declared hosts.** `/_plitzi/img` resizes and converts pictures of the domains a deployment
 lists in `createServer({ images: { domains } })`, with the same guards as every other outbound request of the server,

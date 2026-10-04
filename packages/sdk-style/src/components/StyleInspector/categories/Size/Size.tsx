@@ -1,5 +1,6 @@
 import { memo, useCallback, use } from 'react';
 
+import SizeContainer from './SizeContainer';
 import SizeFit from './SizeFit';
 import SizeOverflow from './SizeOverflow';
 import SizePosition from './SizePosition';
@@ -23,10 +24,19 @@ const dotKeys = [
   'box-sizing',
   'overflow',
   'object-fit',
-  'object-position'
+  'object-position',
+  'container-type',
+  'container-name'
 ] as StyleCategory[];
 
-const advancedKeys = ['aspect-ratio', 'box-sizing', 'object-position', 'object-fit'] as StyleCategory[];
+const advancedKeys = [
+  'aspect-ratio',
+  'box-sizing',
+  'object-position',
+  'object-fit',
+  'container-type',
+  'container-name'
+] as StyleCategory[];
 
 const keyValueSize = ['width', 'height'] as StyleCategory[];
 const keyValueSizeMin = ['min-width', 'min-height'] as StyleCategory[];
@@ -51,7 +61,9 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
     'box-sizing': boxSizing,
     overflow,
     'object-position': objectPosition,
-    'object-fit': objectFit
+    'object-fit': objectFit,
+    'container-type': containerType,
+    'container-name': containerName
   } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('size', isCollapsed), [onCollapse]);
@@ -130,6 +142,7 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
       <CategoryAdvanced>
         <SizePosition value={objectPosition} onChange={handleChange} />
         <SizeFit value={objectFit} onChange={handleChange} />
+        <SizeContainer containerType={containerType} containerName={containerName} onChange={handleChange} />
       </CategoryAdvanced>
     </CategoryContainer>
   );

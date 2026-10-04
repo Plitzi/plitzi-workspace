@@ -26,6 +26,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import { authorSpace, planFixes, refusalOf, SpaceRefusedError } from '@plitzi/sdk-authoring';
+import { publicData } from '@plitzi/sdk-authoring/node';
 
 import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
@@ -83,7 +84,11 @@ const outdated = (): { skill?: string; files?: string; sdk: string } | undefined
 };
 
 try {
-  const { schema, style, warnings, suggestions } = authorSpace(space, { plugins: declarations });
+  // \`data\`: the files of \`public/\` a provider reads, so a binding onto a path one of them does not have is said here.
+  const { schema, style, warnings, suggestions } = authorSpace(space, {
+    plugins: declarations,
+    data: publicData(new URL('../public/', import.meta.url))
+  });
   if (out) {
     mkdirSync(path.dirname(out), { recursive: true });
     writeFileSync(out, \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);

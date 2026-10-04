@@ -3,6 +3,8 @@ import { getPageFullPath } from '@plitzi/sdk-shared/navigation';
 import { isAnchor } from '@plitzi/sdk-shared/schema/anchor';
 import { resolveLayoutChain } from '@plitzi/sdk-shared/schema/layoutChain';
 
+import { asAnchor } from '../anchor';
+
 import type { LintContext } from './context';
 import type { Element } from '@plitzi/sdk-shared';
 
@@ -10,13 +12,6 @@ import type { Element } from '@plitzi/sdk-shared';
 const REPEATERS = new Set(['list']);
 
 const FORMAT = 'lowercase letters, digits and "-", starting with a letter';
-
-/** The anchor someone probably meant: the same words, in the form an anchor takes. */
-const asAnchor = (text: string): string =>
-  text
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/^[^a-z]+|-+$/g, '') || 'section';
 
 const attributeText = (element: Element, key: string): string => {
   const value: unknown = element.attributes[key];
@@ -135,6 +130,27 @@ const lintLinkHash = (
  * tree and every layout around it, which render as one document — on an element that renders, never repeated by a list
  * or a component, and every link to a section naming one that is there.
  */
+/**
+ * A button's `controls` is `aria-controls`: an id the DOM carries, which on a page is an anchor. One naming no anchor
+ * points a screen reader at nothing — authoring resolves an element's id to its anchor, a hand-written document does
+ * not.
+ */
+const lintControls = (ctx: LintContext): void => {
+  const anchors = new Set(Object.values(ctx.flat).flatMap(element => element.definition.anchor ?? []));
+  Object.values(ctx.flat).forEach(element => {
+    const controls = attributeText(element, 'controls');
+    if (element.definition.type !== 'button' || controls === '' || anchors.has(controls)) {
+      return;
+    }
+
+    ctx.warn(
+      'controls-no-anchor',
+      `${ctx.describe(element.id)} controls "${controls}", and no element carries that anchor, so a screen reader is pointed at nothing. Give the element it shows and hides \`anchor: '${asAnchor(controls)}'\` and name that.`,
+      element.id
+    );
+  });
+};
+
 export const lintAnchors = (ctx: LintContext): void => {
   Object.values(ctx.flat).forEach(element => {
     const { anchor } = element.definition;
@@ -142,6 +158,7 @@ export const lintAnchors = (ctx: LintContext): void => {
       lintOwnAnchor(ctx, element, anchor);
     }
   });
+  lintControls(ctx);
 
   if (ctx.component) {
     return;

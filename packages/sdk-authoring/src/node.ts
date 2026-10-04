@@ -8,6 +8,8 @@
  * const logos = svgFiles(new URL('./logos/', import.meta.url));   // { stripe: '<svg…>', shopify: '<svg…>' }
  * svg(logos.stripe, { label: 'Stripe' });
  * svg(svgFile(new URL('./icons/arrow.svg', import.meta.url)));
+ *
+ * authorSpace(space, { data: publicData(new URL('../public/', import.meta.url)) });   // bindings held to the files
  * ```
  */
 import { readdirSync, readFileSync } from 'node:fs';
@@ -42,6 +44,41 @@ export const svgFiles = (folder: string | URL): Record<string, string> => {
       .sort()
       .map(name => [path.basename(name, path.extname(name)), svgFile(path.join(at, name))])
   );
+};
+
+/**
+ * What a provider's `query` answers when it is a JSON file the project serves — `/data/plans.json` read from `public/` —
+ * for `authorSpace`'s `data`: every binding onto that provider is then held to the file. Anything else — another site,
+ * a path with `{{tokens}}`, one that climbs out of the folder, a file that is not there or not JSON — is `undefined`,
+ * and left unchecked. Each file is read once.
+ */
+export const publicData = (folder: string | URL): ((query: string) => unknown) => {
+  const root = path.resolve(pathOf(folder));
+  const read = new Map<string, unknown>();
+
+  return query => {
+    if (!query.startsWith('/') || query.startsWith('//') || query.includes('{{')) {
+      return undefined;
+    }
+
+    const file = path.resolve(root, `.${query.split(/[?#]/)[0]}`);
+    if (!file.startsWith(`${root}${path.sep}`)) {
+      return undefined;
+    }
+
+    if (!read.has(file)) {
+      let value: unknown;
+      try {
+        value = JSON.parse(readFileSync(file, 'utf-8'));
+      } catch {
+        value = undefined;
+      }
+
+      read.set(file, value);
+    }
+
+    return read.get(file);
+  };
 };
 
 export { compactSvg } from './svg/compactSvg';

@@ -154,11 +154,26 @@ $moving: '[data-motion-enter], [data-motion-stagger] > *, [data-motion-loop]';
       0ms;
   }
 
-  // As it scrolls into view: the arrival follows the scroll rather than a clock, at the reader's pace. Where the
-  // browser has no scroll timelines, it plays as the page loads instead — the same arrival, earlier.
-  @supports (animation-timeline: view()) {
+  // Once, as it comes into view: held at its start until the SDK has seen the element on screen
+  // (`data-motion-seen`, set by `revealOnView` and never taken off), then played on the clock — and it stays.
+  [data-motion-on='view']:not([data-motion-seen])[data-motion-enter],
+  [data-motion-on='view']:not([data-motion-seen])[data-motion-stagger] > * {
+    animation-play-state: paused, paused;
+  }
+
+  // A page read without scripts has nobody to see it: shown as it ends rather than held unseen.
+  @media (scripting: none) {
     [data-motion-on='view'][data-motion-enter],
     [data-motion-on='view'][data-motion-stagger] > * {
+      animation: none !important;
+    }
+  }
+
+  // With the scroll: the arrival follows the scroll rather than a clock, at the reader's pace, and goes back as the
+  // reader scrolls back up past it. Where the browser has no scroll timelines, it plays as the page loads instead.
+  @supports (animation-timeline: view()) {
+    [data-motion-on='scroll'][data-motion-enter],
+    [data-motion-on='scroll'][data-motion-stagger] > * {
       animation-timeline: view(), auto;
       animation-range:
         entry calc(var(--plitzi-motion-index, 0) * 4%) cover calc(30% + var(--plitzi-motion-index, 0) * 4%),

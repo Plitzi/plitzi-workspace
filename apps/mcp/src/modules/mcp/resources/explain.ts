@@ -25,7 +25,9 @@ export const explainResource = (uri: string): ExplainRead => {
   const explanations = explain(name);
   if (explanations.length === 0) {
     throw new Error(
-      `"${name}" is no element, step, trigger, code or transformer. List what there is: ${Object.values(EXPLAIN_KINDS)
+      `"${name}" is no element, step, trigger, code, transformer or helper. List what there is: ${Object.values(
+        EXPLAIN_KINDS
+      )
         .map(plural => `${PREFIX}${plural}`)
         .join(', ')}.`
     );

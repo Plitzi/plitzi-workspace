@@ -485,6 +485,19 @@ describe('a name used twice', () => {
       })
     ).toThrow(/uses a name already taken at .*scope\('<what it is for>'/);
   });
+
+  /** A page holding the name is not a helper called twice: `scope()` would not help, a name of its own does. */
+  it('names the page it collides with, and asks for a name rather than a scope', () => {
+    expect(() =>
+      authoring.authorSpace({
+        name: 'Clash',
+        permanentUrl: 'clash',
+        pages: [
+          { id: 'home', name: 'Home', slug: '', body: [authoring.apiContainer({ id: 'home', query: '/x.json' })] }
+        ]
+      })
+    ).toThrow(/uses the name of the page at .*Give the element a name of its own: `id: 'home-apicontainer'`/);
+  });
 });
 
 describe('the element catalogs', () => {

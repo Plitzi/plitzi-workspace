@@ -61,12 +61,16 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
 
 - A provider's source is readable by its **descendants** only. Wrap what reads it; a sibling cannot see it.
 - It publishes `data` plus `isLoading`, `isEmpty`, `hasError`, `errorMessage` — bind a state to those, not to guesses.
+  A `query`'s body is `data` in **either runtime** (`p.data.plans`), so moving a provider to the server changes no
+  binding. A connector publishes `records` (or `record`), an action its output.
   `isEmpty` reads what arrived: a `query`'s body when it is missing, `null`, `''`, `[]` or `{}`; a connector list by
   its `records`; a `singleRecord` provider by its `record`. It is also true before the first answer, so pair it with
   `not isLoading` for an empty state.
 - A query that depends on state is a binding on `query`; it answers `''` (and fetches nothing) until the state exists:
   `"{{ source ? apiUrl ~ '/workspaces/' ~ source ~ '/stats' : '' }}"` with `source: 'state.workspace.id'`.
-- A space with any `runtime: 'server'` provider needs `rsc: { enabled: true }`.
+- `runtime: 'server'` is resolved by the page server: authoring turns the space's server data (`rsc`) on for it.
+  Only a page and its layouts are resolved — never inside a component: keep the provider on the page and hand the
+  component its rows as a prop ([recipes/server-data.ts](../recipes/server-data.ts)).
 
 ### Typed by a sample
 
@@ -87,8 +91,8 @@ browser. Never put a secret, a key, a private document or data only some visitor
 credential that an action or a connector names; data for some visitors only comes from a server action whose `access`
 checks who is asking, or a `runtime: 'server'` provider behind one.
 
-**In a server project (`create --mode server`), put the provider on the server** — `runtime: 'server'`, with
-`rsc: { enabled: true }` on the space — and the page server reads the file from `public/` itself: the page arrives
+**In a server project (`create --mode server`), put the provider on the server** — `runtime: 'server'` — and the page
+server reads the file from `public/` itself: the page arrives
 with those sections in it (and their anchors in place) instead of fetching them once the browser has the page. A
 browser provider leaves the server-rendered HTML without them. A `query` with `{{tokens}}` is still read in the
 browser, against the visitor's route and state.

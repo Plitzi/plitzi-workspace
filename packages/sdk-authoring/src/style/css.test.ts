@@ -64,8 +64,17 @@ describe('css', () => {
     });
   });
 
-  it('refuses a property outside the vocabulary', () => {
+  it('refuses a property outside the vocabulary, and says what to do with a standard one meanwhile', () => {
     expect(() => css({ 'font-smoothing': 'antialiased' })).toThrow(/Unknown CSS property: "font-smoothing"/);
+    expect(() => css({ 'font-smoothing': 'antialiased' })).toThrow(/write it in the space's `customCss`/);
+  });
+
+  /** A container query's `cqw` units measure an element that says it is a container. */
+  it('takes what a container query needs', () => {
+    expect(css({ containerType: 'inline-size', containerName: 'card' })).toEqual({
+      'container-type': 'inline-size',
+      'container-name': 'card'
+    });
   });
 
   it('reports every unknown property at once', () => {

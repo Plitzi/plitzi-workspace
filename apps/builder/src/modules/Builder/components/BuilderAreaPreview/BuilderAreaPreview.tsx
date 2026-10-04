@@ -16,6 +16,7 @@ import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { MOTION_SEEN_CSS } from '@plitzi/sdk-shared/schema/motion';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
@@ -115,7 +116,8 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
     const cssVariables = schemaVariablesToCss(variablesParsed);
     const cacheParsed = processCssTokens(styleCache, variablesParsed);
 
-    return `:root{${cssVariables}}\n${styleFrame}\n@layer plitzi-builder-runtime{${cacheParsed}\n${settings?.customCss ?? ''}}`;
+    // No SDK root watches a preview for what comes into view: an arrival waiting to be seen is played as if seen.
+    return `:root{${cssVariables}}\n${styleFrame}\n${MOTION_SEEN_CSS}\n@layer plitzi-builder-runtime{${cacheParsed}\n${settings?.customCss ?? ''}}`;
   }, [settings?.customCss, styleCache, variablesParsed]);
 
   const { components } = use(ComponentContext);

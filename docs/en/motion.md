@@ -12,7 +12,7 @@ Most of what a page moves is an arrival — a section fading up as it scrolls in
 gentle loop. An element says that with `motion`, and the SDK's stylesheet plays it; no keyframes to write:
 
 ```ts
-container({ motion: { enter: 'fade-up', on: 'view' }, children })     // arrives as it scrolls into view
+container({ motion: { enter: 'fade-up', on: 'view' }, children })     // arrives once, as it comes into view
 container({ class: grid, motion: { enter: 'scale', stagger: 60 }, children: cards })  // its children, one by one
 image({ src, alt, motion: { loop: 'float' } })                         // keeps rising and falling, gently
 ```
@@ -20,8 +20,8 @@ image({ src, alt, motion: { loop: 'float' } })                         // keeps 
 | Field | Values |
 | --- | --- |
 | `enter` | `fade`, `fade-up`, `fade-down`, `slide-left`, `slide-right`, `scale` |
-| `on` | `load` (default) or `view` — tied to the scroll where the browser has scroll timelines, on load where not |
-| `duration`, `delay` | ms (600 and 0 by default); `duration` does not apply under `view`, which follows the scroll |
+| `on` | `load` (default); `view` — once, the first time it comes into view, and then it stays; `scroll` — with the scroll itself, both ways (it goes back out as the reader scrolls up past it), on load where the browser has no scroll timelines |
+| `duration`, `delay` | ms (600 and 0 by default); `duration` does not apply under `scroll`, which follows the scroll |
 | `stagger` | ms between children: they arrive instead of the element, the first 24 one by one |
 | `loop` | `float`, `pulse`, `spin`, `sway` — held until the page is live (`data-hydrated`) |
 

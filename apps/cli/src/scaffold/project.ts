@@ -316,7 +316,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
       : '';
   const serverData =
     answers.mode === 'server'
-      ? `; one whose ${code('runtime')} is ${code('server')} is read by the server, and the page arrives with it`
+      ? `; one whose ${code('runtime')} is ${code('server')} is read by the server, and the page arrives with it — bound the same way (${code('products.data.items')}), on a page or a layout, never inside a component`
       : '';
   const generated = [
     `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took${local ? ', the space as last authored' : ''}, test output. Never committed, rebuilt when missing.`,

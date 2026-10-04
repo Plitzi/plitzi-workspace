@@ -35,6 +35,17 @@ describe('Image Tests', () => {
     expect(baseElement).toBeTruthy();
   });
 
+  /** No picture yet — none given, or a binding still waiting on its data — is drawn by the SDK, with no request at all. */
+  it('draws its placeholder from the SDK when it has no source, never from the network', () => {
+    const { container } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Image src="" />
+      </ElementContext>
+    );
+
+    expect(container.querySelector('img')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml;base64,/);
+  });
+
   /** The fallback loads, so without the marker a broken image and a working one are the same thing on the page. */
   it('draws the fallback for a source that failed, and says which one', () => {
     const { container, rerender } = render(
@@ -77,6 +88,28 @@ describe('Image Tests', () => {
     expect(image?.getAttribute('srcset')).toContain('&w=320 320w');
     expect(image?.getAttribute('sizes')).toBe('360px');
     expect(image?.getAttribute('width')).toBe('1200');
+    published.endpoint = undefined;
+  });
+
+  /** A vector is the same at any width, and a picture marked `resize: false` is kept as its author sized it. */
+  it('keeps a vector and a picture marked not to be resized as they are, with a page server that resizes', () => {
+    published.endpoint = '/_plitzi/img';
+    const { container, rerender } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Image src="https://cdn.test/logo.svg" />
+      </ElementContext>
+    );
+
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('https://cdn.test/logo.svg');
+
+    rerender(
+      <ElementContext value={skipHocEntry()}>
+        <Image src="https://cdn.test/fox.jpg" resize={false} />
+      </ElementContext>
+    );
+
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('https://cdn.test/fox.jpg');
+    expect(container.querySelector('img')?.hasAttribute('srcset')).toBe(false);
     published.endpoint = undefined;
   });
 

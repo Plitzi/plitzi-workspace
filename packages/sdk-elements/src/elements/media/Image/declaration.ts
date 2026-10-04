@@ -15,7 +15,7 @@ const declaration = elementDeclaration<ImageAttributes>()({
   },
   content: {
     attributes: {
-      src: 'https://cdn.plitzi.com/resources/img/placeholder-img.svg',
+      src: '',
       alt: '',
       decorative: false,
       fetchPriority: 'auto',

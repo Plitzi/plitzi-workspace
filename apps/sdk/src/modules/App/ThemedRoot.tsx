@@ -4,6 +4,8 @@ import clsx from 'clsx';
 import { useTheme } from '@plitzi/sdk-shared';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
+import MotionReveal from './MotionReveal';
+
 import type { ReactNode } from 'react';
 
 export type ThemedRootProps = {
@@ -26,7 +28,8 @@ export type ThemedRootProps = {
  *
  * It also says when the page is interactive: `data-hydrated` appears once React has taken over the server's markup
  * (at once for a page rendered in the browser). A space's CSS keys decorative motion that repaints every frame off it
- * — `[data-hydrated] .glow { animation-play-state: running; }` — so the load has the main thread to itself.
+ * — `[data-hydrated] .glow { animation-play-state: running; }` — so the load has the main thread to itself. And it
+ * plays the arrivals that wait to be seen (`MotionReveal`).
  */
 const ThemedRoot = ({ className, scoped = false, children }: ThemedRootProps) => {
   const { theme } = useTheme();
@@ -37,6 +40,7 @@ const ThemedRoot = ({ className, scoped = false, children }: ThemedRootProps) =>
       className={clsx(className, scoped && theme !== 'system' && theme)}
       data-hydrated={hydrated ? '' : undefined}
     >
+      <MotionReveal />
       {children}
     </ContainerRoot>
   );

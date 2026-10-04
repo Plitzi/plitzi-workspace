@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
-import { imageSrcSet, imageUrl, isRemoteImage } from '@plitzi/sdk-shared/helpers/images';
+import { imageSrcSet, imageUrl, isResizableImage } from '@plitzi/sdk-shared/helpers/images';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
@@ -40,14 +40,23 @@ export type ImageProps = {
    *  so nothing jumps. */
   width?: number;
   height?: number;
+  /**
+   * Whether the page server may make sizes of the picture, when it does (`images` in its configuration). `false` keeps
+   * this one as it is — a picture already sized for where it sits, or one its host must serve itself. A vector (SVG) is
+   * never resized.
+   */
+  resize?: boolean;
 };
 
 /** The size a resized picture falls back to, for a browser that reads no `srcset`. */
 const FALLBACK_WIDTH = 1280;
 
+/**
+ * What an image draws when there is no picture to draw — none given yet, or the one given failed. Drawn from the SDK
+ * itself, never fetched: a project with no network, or a page whose image is still waiting on its data, shows it
+ * the same.
+ */
 const fallback = getFallbackSVGBase64();
-
-const PLACEHOLDER = 'https://cdn.plitzi.com/resources/img/placeholder-img.svg';
 
 const Image = ({
   ref,
@@ -59,7 +68,8 @@ const Image = ({
   loadMode,
   sizes = '100vw',
   width,
-  height
+  height,
+  resize = true
 }: ImageProps) => {
   const {
     settings: { previewMode }
@@ -72,7 +82,7 @@ const Image = ({
    * ordinary state of any image fed from an API. The browser treats `src=""` as "the current document", so it
    * re-requests the whole page to put it in an image, and React warns about exactly that.
    */
-  const src = srcProp || PLACEHOLDER;
+  const src = srcProp || fallback;
   const alt = decorative ? '' : altProp;
 
   /**
@@ -96,7 +106,7 @@ const Image = ({
   // server publish no endpoint, and keep the picture as it is.
   const [endpoint] = useCommonStore('images.endpoint');
   const resized =
-    previewMode && endpoint && !broken && isRemoteImage(src)
+    previewMode && endpoint && resize && !broken && isResizableImage(src)
       ? { src: imageUrl(endpoint, src, FALLBACK_WIDTH), srcSet: imageSrcSet(endpoint, src), sizes }
       : { src: shown };
   const dimensions = { ...(width ? { width } : {}), ...(height ? { height } : {}) };

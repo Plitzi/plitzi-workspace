@@ -4,13 +4,27 @@
  * Driver-agnostic like `locate`: `inspectPage` takes anything with an `evaluate`, and the rest is data over specs and
  * handles — so this stays a package that installs nothing and touches no browser until a test hands it one.
  */
+export { dataIssues } from './dataIssues';
+export type { DataIssue, DataIssueCode, DataReport } from './dataIssues';
 export { failedFlowText, readDevTools, readDevToolsInPage } from './devTools';
 export type { DevToolsDriver, DevToolsFlow, DevToolsFlowStep, DevToolsInput, DevToolsReport } from './devTools';
 export { inspectDocument, inspectPage } from './inspect';
 export type { DocumentChecks, InspectOptions, PageEvaluator, PageIssue, PageIssueCode, PageReport } from './inspect';
 export { onScreen } from './onScreen';
-export { comparePictures, diffPictures, pageRegions } from './pictures';
-export type { PictureDiff, PictureDiffInput, PictureDriver, PictureRegion } from './pictures';
+export { loadImages, unrollPage } from './images';
+export type { LoadedImages } from './images';
+export { alignPictures, comparePictures, diffPictures, pageRegions, profilePictures } from './pictures';
+export type {
+  CompareOptions,
+  PictureAlignment,
+  PictureDiff,
+  PictureDiffInput,
+  PictureDriver,
+  PictureRegion,
+  RowProfile
+} from './pictures';
+export { compareTexts, PAGE_TEXT_LIMIT, pageTexts } from './texts';
+export type { PageText, TextComparison, TextDifference } from './texts';
 export { inspectRenders, summariseRenders } from './renders';
 export type { ElementRenders, RenderEvaluator, RenderOptions, RenderReport } from './renders';
 export type { OnScreenOptions } from './onScreen';

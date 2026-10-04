@@ -30,6 +30,11 @@ export type FormControlProps = {
     | 'number'
     | 'email'
     | 'password'
+    /** A search box: the browser draws its clear button, and a phone shows its search key. */
+    | 'search'
+    | 'url'
+    /** A phone number: a phone shows its dial pad. */
+    | 'tel'
     | 'date'
     | 'time'
     | 'checkbox'
@@ -260,7 +265,7 @@ const FormControl = ({
           disabled={disabled}
         />
       )} */}
-      {['text', 'number', 'email', 'password', 'date', 'time', 'color'].includes(subType) && (
+      {['text', 'number', 'email', 'password', 'search', 'url', 'tel', 'date', 'time', 'color'].includes(subType) && (
         <Input
           id={`${rootId}_${id}`}
           name={name}

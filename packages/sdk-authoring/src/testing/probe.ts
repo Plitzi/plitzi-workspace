@@ -194,10 +194,15 @@ export function probePage(input: ProbeInput): ProbeFindings {
    * An image element that failed draws a fallback that loads fine, so the browser alone would call it loaded: it says
    * which source failed in `data-plitzi-failed`. Any other `img` is asked the browser's way — except a lazy one out of
    * sight (below the fold, or beside it in a carousel's track), which has not been asked for yet: it working, not
-   * failing.
+   * failing. An image nobody can see — hidden itself or under something hidden (`visible: false`) — is not asked at
+   * all: a browser may never fetch it, and it is not on the page as far as a visitor can tell.
    */
   const brokenImages = input.images
     ? [...document.querySelectorAll('img')].flatMap(image => {
+        if (hiderOf(image)) {
+          return [];
+        }
+
         const failed = image.getAttribute('data-plitzi-failed');
         const elementId = elementIdOf(image);
         const at = elementId === undefined ? {} : { elementId };

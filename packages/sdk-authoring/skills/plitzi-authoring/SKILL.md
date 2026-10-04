@@ -96,7 +96,7 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
 9. **Never invent data.** Numbers, names and states on screen come from a source. A panel with nothing true to say is
    an empty state, not a placeholder figure. With no backend, the data is JSON the project serves
    (`public/data/*.json`) read by an `apiContainer` — see [data and visibility](reference/data-and-visibility.md).
-   `public/` is served to anyone who asks: never a secret or data only some visitors may read there.
+   `public/` is public: never a secret there.
 10. **Never hand-write** `flat`, derived ids, `styleSelectors`, `beforeNode`/`afterNode`/`flowId`, or a
     `styleVariant` binding's key — use the factories, `variantFrom` and `activeOn`.
 11. **A switch is named for how it leaves its default.** `toggleState` turns a key nobody has set yet ON, so a key
@@ -122,6 +122,8 @@ Each is a whole file that authors with no warning — CI holds it to that. Copy 
 | --- | --- |
 | Show data with no backend: a JSON file, a card per row, a count, an empty state, a computed value | [recipes/show-data.ts](recipes/show-data.ts) |
 | Data typed by a sample of it: completed and checked paths, typed rows | [recipes/typed-data.ts](recipes/typed-data.ts) |
+| Data read by the page server (`--mode server`) | [recipes/server-data.ts](recipes/server-data.ts) |
+| An accordion, one answer open at a time | [recipes/accordion.ts](recipes/accordion.ts) |
 | Filter and sort a list from a select | [recipes/filter-a-list.ts](recipes/filter-a-list.ts) |
 | A page per record (`/products/:slug`), and "not found" | [recipes/detail-page.ts](recipes/detail-page.ts) |
 | Link to a section of a page (`/#plans`) | [recipes/link-to-a-section.ts](recipes/link-to-a-section.ts) |

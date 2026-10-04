@@ -185,11 +185,13 @@ const checkChildren = (ctx: LintContext, element: Element, where: string): void 
 const BLOCK_TYPES = new Set(['heading', 'paragraph', 'list', 'form', 'markdown', 'richText']);
 
 /**
- * A `span` container is for a run of text — a dot before a title, a word dressed apart. A heading or a paragraph
- * inside it breaks that line in two, and no class on the span makes it otherwise.
+ * A `span` container is for a run of text — a dot before a title, a word dressed apart — and a `p` one for a sentence
+ * made of parts, a link in the middle of it. A heading or a paragraph inside either breaks it: a span's line in two, and
+ * a `<p>` the browser closes before the block, so the page it parses is not the one written.
  */
 const warnSpanHoldsBlock = (ctx: LintContext, element: Element, where: string): void => {
-  if (element.definition.type !== 'container' || element.attributes.subType !== 'span') {
+  const tag = element.attributes.subType;
+  if (element.definition.type !== 'container' || (tag !== 'span' && tag !== 'p')) {
     return;
   }
 
@@ -204,7 +206,7 @@ const warnSpanHoldsBlock = (ctx: LintContext, element: Element, where: string): 
 
   ctx.warn(
     'span-holds-block',
-    `${where} is a \`span\` but holds ${blocks.map(child => ctx.describe(child.id)).join(', ')}, which ${blocks.length === 1 ? 'is a block' : 'are blocks'}: a span sits in a line of text, and a block breaks it in two. Make it a \`div\` (leave \`subType\` out), or put words there instead — a \`text\` with \`display: inline\` in its class.`,
+    `${where} is a \`${tag}\` but holds ${blocks.map(child => ctx.describe(child.id)).join(', ')}, which ${blocks.length === 1 ? 'is a block' : 'are blocks'}: ${tag === 'p' ? 'a browser closes a `<p>` before a block, so the page it builds is not the one written' : 'a span sits in a line of text, and a block breaks it in two'}. Make it a \`div\` (leave \`subType\` out), or put words there instead — a \`text\`, a \`link\`, inline.`,
     element.id
   );
 };
@@ -489,14 +491,26 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
   }
 
   // A server provider is answered by the page server's resolver, and that resolver asks only for a space that turned
-  // server data on — without it the provider renders its mock data, and nothing anywhere said why.
-  const serverSource = ['connector', 'action'].find(
+  // server data on — without it the provider renders its mock data, and nothing anywhere said why. Whatever it asks
+  // with: a `query` reading one of the project's own files is answered the same way.
+  const serverSource = ['connector', 'action', 'query'].find(
     key => typeof attributes[key] === 'string' && attributes[key] !== ''
   );
+  // A component's tree is placed by instances, any number of them on one page, and the page server resolves what the
+  // page and its layouts hold — never inside a component. Left there, the provider stays loading for ever, wherever it
+  // is placed.
+  if (element.definition.runtime === 'server' && ctx.component) {
+    ctx.error(
+      'server-provider-in-component',
+      `${where} is resolved on the server (\`runtime: 'server'\`) inside component "${ctx.component.id}", and the page server only resolves what a page and its layouts hold — it would stay loading wherever the component is placed. Put the provider on the page, around the instance, and hand the component what it reads as a prop: \`component('${ctx.component.id}', { props: { rows: … } })\`, its list reading \`props.rows\`.`,
+      element.id
+    );
+  }
+
   if (element.definition.runtime === 'server' && serverSource && ctx.schema.rsc?.enabled !== true) {
     ctx.warn(
       'server-data-without-rsc',
-      `${where} is resolved on the server (\`runtime: 'server'\`) through its \`${serverSource}\`, but the space does not turn server data on, so it renders its mock data and never asks. Add \`rsc: { enabled: true }\` to the space.`,
+      `${where} is resolved on the server (\`runtime: 'server'\`) through its \`${serverSource}\`, but the space turns server data off, so it renders its mock data and never asks. Remove \`rsc: { enabled: false }\` from the space (authoring turns it on for a server element), or set \`rsc: { enabled: true }\`.`,
       element.id,
       { source: serverSource }
     );

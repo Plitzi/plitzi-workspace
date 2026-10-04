@@ -123,6 +123,17 @@ describe('probePage / images', () => {
   });
 });
 
+describe('probePage / images nobody can see', () => {
+  /** A picture under something hidden (`visible: false`) is not on the page as far as a visitor can tell. */
+  it('does not ask after an image that is hidden, or under something hidden', () => {
+    document.body.innerHTML =
+      '<div style="display: none"><img src="/inside.jpg"></div><img src="/itself.jpg" style="visibility: hidden">';
+    document.querySelectorAll('img').forEach(image => Object.defineProperty(image, 'complete', { value: false }));
+
+    expect(probePage({ ...input([]), images: true }).brokenImages).toEqual([]);
+  });
+});
+
 describe('probePage / which element a finding is about', () => {
   it('names the space’s element an image sits in', () => {
     document.body.innerHTML = '<figure data-plitzi-el="hero-photo"><img src="/hero.jpg"></figure>';

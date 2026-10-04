@@ -49,7 +49,7 @@ All of this helps screen readers too. Neither kind of reader needs something the
 | `link` | A link to the page being shown has `aria-current="page"`, from the address the page was rendered at — and the `current` style state to dress it |
 | `themeToggle` | The switch is named by its two labels. The segmented form is a `group` whose options say which one is pressed |
 | `fontAwesome` | Decoration: `aria-hidden`, unless `label` gives it a meaning |
-| `button` | `ariaPressed` and `ariaExpanded` as attributes you can bind. The focus ring is hidden for a pointer only (`:focus:not(:focus-visible)`), never for a keyboard |
+| `button` | `ariaPressed` and `ariaExpanded` as attributes you can bind; `controls` names what it shows and hides (`aria-controls`). The focus ring is hidden for a pointer only (`:focus:not(:focus-visible)`), never for a keyboard |
 
 Beyond the elements, the SDK's own stylesheet: a visitor whose machine asks for less motion
 (`prefers-reduced-motion: reduce`) gets every animation and transition cut to an instant and no smooth scrolling, on
@@ -68,6 +68,8 @@ every space.
 | What an icon means when nothing else says it | `fontAwesome({ icon: 'fa-solid fa-triangle-exclamation', label: 'Overdue' })` |
 | A toggle's state | `button({ bind: { ariaPressed: 'computed.gridOn' } })` |
 | That a button opens something | `button({ bind: { ariaExpanded: 'state.menuOpen' } })` |
+| What a button opens | `button({ controls: 'faq-answer' })`, by the element's id: authoring gives that element the anchor `aria-controls` needs, and refuses an id the space does not have (`controls-unknown`) |
+| That words change while a visitor reads | `container({ live: 'polite' })` (`aria-live`): a count, a total, a status said aloud when it changes; `assertive` for what cannot wait |
 | A part of the page an assistant can jump to | `container({ subType: 'nav', label: 'Main navigation' })`. A `section` with a `label` is a region |
 | A group of controls | `container({ label: 'Filters' })`. A named `div` is a `group` |
 | An illustration built from elements | `container({ decorative: true })`: a mock of a page or a piece of art, left out of the tree (`aria-hidden`). What it shows must be reachable some other way |
@@ -97,6 +99,7 @@ and a publish is not blocked.
 | `label-ignored` | A `label` on a container whose tag takes its name from what it holds (`li`, the headings) | Put the words inside, or use a landmark tag |
 | `dropdown-without-control` | A dropdown opened from a box or an icon: nothing a keyboard reaches opens it | Make what opens it a `button` |
 | `control-in-decorative` | A button, link or field inside a `decorative` container: Tab reaches it and nothing announces it | Move it out of the illustration |
+| `controls-no-anchor` | A button whose `controls` names an id no element of a saved document carries | Give the element it shows and hides that anchor |
 
 Nothing inside a `decorative` container is held to the other rules: assistive technology is told to skip it.
 

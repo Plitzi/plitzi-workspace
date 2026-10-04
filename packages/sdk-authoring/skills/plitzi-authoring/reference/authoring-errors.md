@@ -59,6 +59,7 @@ The space is not written until these are fixed.
 | `computed-not-template` | a computed value that is not a template | `'{{ state.x * 2 }}'` |
 | `computed-reads-element` | a computed value reading an element's source — no element is around the whole space | compute it from the globals and the variables, or bind it on the element |
 | `computed-unknown` | a computed value read before it is declared, or never declared | declare it in `computed`, above the one that reads it |
+| `controls-unknown` | a button's `controls` naming no element of the space | the id of the element it shows and hides: `controls: 'faq-answer'` |
 | `css-property-twice` | one property written twice in a rule set — `paddingTop` beside `'padding-top'` — so one would silently win | keep one |
 | `css-property-unknown` | a CSS property that does not exist | the property it suggests; a custom property starts with `--` |
 | `css-value` | an empty CSS value, or one with `;` or `{}` | one value per property; leave a property out instead of writing it empty |
@@ -84,7 +85,7 @@ The space is not written until these are fixed.
 | `global-callback-undeclared` | a global-callback step builder naming an action no source declares | one of the actions it lists |
 | `id-invalid` | an id a binding, a template or a test cannot name | a letter first, then letters, digits, `-` and `_`: `'hero-title'` |
 | `id-shadows-global` | an element named like a global data source (`state`, `navigation`, `auth`…) | another id |
-| `id-taken` | two elements with one id — ids are one namespace for the whole space | wrap what a helper builds in `scope('promos', ref => …)`: every id inside is prefixed, `ref('slides')` names one |
+| `id-taken` | two elements with one id — ids are one namespace for the whole space | a name taken by a page or a layout: a name of its own; a helper called twice: `scope('promos', ref => …)`, every id inside prefixed |
 | `layout-slot-unknown` | a layout `slot` that is not an element inside that layout | the id of the element in the shell where the body goes |
 | `layout-undeclared` | a page or a layout inside a layout the space does not declare | the layout's id, or declare it in `layouts` |
 | `list-items-ignored` | a list whose items nothing reads — `source: 'none'` renders its children once | `source: 'controlled'` |
@@ -109,6 +110,7 @@ The space is not written until these are fixed.
 | `prop-unknown` | a prop the component does not declare, handed in or read | the prop it suggests, or declare it: `props: { name: { type: 'text' } }` |
 | `prop-value` | a prop handed in with a value its declaration does not take | a value of the declared type, or one of its options |
 | `props-outside-component` | `props.x` read outside a component | read the source it would have come from |
+| `quiet-unknown` | an element's `quiet` naming something that is not a suggestion's code — a problem is never quieted | the code of the suggestion it was offered: `quiet: ['repeated-shape']` |
 | `redirect-target-unknown` | a page that sends visitors it is not for to a page the space does not have | a page's id or slug (`''` is the home page), or a full URL |
 | `row-and-children` | a list with a `row` and `children` — the row is what it renders | one of the two |
 | `row-component` | a list's `row` naming a component the space does not declare, or one with no prop to take the row | a declared component with an `item` prop — or a single prop — for the row |
@@ -117,6 +119,7 @@ The space is not written until these are fixed.
 | `rule-set-mixed` | a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css` | `{ css: { desktop: { … } }, states: { hover: { … } } }` — the rules under `css`, each of the others beside it |
 | `selector-invalid` | a `selector` that is not a CSS class name | letters, digits, `-` and `_` |
 | `selector-taken` | a `selector` that is a declared class, or another element's | `class` to share rules; a selector of an element's own is its alone |
+| `server-provider-in-component` | a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's | put the provider on the page, around the instance, and hand the component its rows as a prop |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |
 | `slot-children` | children handed to an instance outside its slots | `children: { slotName: [ … ] }`; a component with no slots takes no children |
 | `slot-unknown` | a component slot that is not an element of its tree | the id of an element inside the component — usually an empty container |
@@ -161,6 +164,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `condition-starts-visible` | a computed visibility that shows until its data answers | `visible: { source, template }` |
 | `control-in-decorative` | a control inside a `decorative` container — Tab lands on something nothing announces | move it out of the illustration |
 | `control-without-name` | a button or a link with no words, or a field nothing names | `title` on the button, `label` on the link, `label` (with `hideLabel: true`) on the field |
+| `controls-no-anchor` | a button's `controls` naming no anchor — `aria-controls` points at nothing | an `anchor` on the element it shows and hides, and `controls` naming it |
 | `default-content-beside-children` | a button printing its default "Button" beside its children | `content: ''` |
 | `dropdown-without-control` | a dropdown opened from a box or an icon — no keyboard opens it | a `button` as what opens it (`title` if it is only an icon) |
 | `embed-without-title` | an `embed` with no `title` — a frame a screen reader cannot describe | say what it shows in `title` |
@@ -178,11 +182,12 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `overlay-never-opened` | a modal or a dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |
 | `overlay-starts-open` | a modal or a dialog open when the page loads | `visible: false`, opened by `openModal` |
 | `painted-state-without-keep-state` | `paintedState` without `keepState` — nothing is kept for the server to draw with | `settings.keepState: true`, or remove `paintedState` |
+| `path-not-in-data` | a binding onto a provider whose answer the author could read (`data`), through a path that answer does not have | the path the message lists the keys for — `p.data.plans`, not `p.data.landing.plans` |
 | `plugin-attribute-reserved` | a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin | rename it in the plugin (`variant` → `kind`) |
 | `provider-without-source` | an `apiContainer` that asks nothing | a `query` (or `action`, `connector`, `resource`) |
 | `route-param-undeclared` | `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty | add `:x` to the slug, or read `navigation.queryParams.x` |
-| `server-data-without-rsc` | a `runtime: 'server'` provider with a `connector` or `action` in a space that does not turn server data on | `rsc: { enabled: true }` on the space |
-| `span-holds-block` | a `container({ subType: 'span' })` holding a heading, a paragraph, a list, a form or prose | a `div` (leave `subType` out), or words: a `text` with `display: inline` in its class |
+| `server-data-without-rsc` | a `runtime: 'server'` provider — `connector`, `action` or `query` — in a space whose server data is off | drop `rsc: { enabled: false }` (authoring turns it on for a server element), or `rsc: { enabled: true }` |
+| `span-holds-block` | a `container` with `subType: 'span'` or `'p'` holding a heading, a paragraph, a list, a form or prose | a `div` (leave `subType` out), or words and inline elements: a `text`, a `link` |
 | `state-key-has-runtime-prefix` | a state key written with `runtime.state.` in front — the state callbacks already write below it | `key: 'cart'`, not `'runtime.state.cart'` |
 | `state-toggled-in-branches` | two `setState` of one key, each under a `when` on that key — the second flips back what the first wrote | `toggleState({ key })`; for something shown by default, a key named for hiding it |
 | `STYLE_WITHOUT_TAG` | style on a provider that renders no element of its own | `subType: 'div'` on the provider, or style its parent |

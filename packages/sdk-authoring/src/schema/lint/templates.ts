@@ -146,14 +146,18 @@ const checkName = (
     return;
   }
 
-  const known = [...GLOBAL_SOURCES, ...ctx.variables, ...[...ctx.sources].map(([key, value]) => `${value}_${key}`)];
+  const sourceNames = [...ctx.sources].map(([key, value]) => `${value}_${key}`);
+  // An element's id may hold a `-`, and so does its source's name: a template reads `list_study-plans` whole — a `-`
+  // between two letters is part of a name, a minus needs spaces (`a - b`). Said, so the suggestion is not mistrusted.
+  const hyphenated = sourceNames.find(source => source.includes('-') && source.replaceAll('-', '_') === name);
+  const known = [...GLOBAL_SOURCES, ...ctx.variables, ...sourceNames];
   const flattened =
     site.kind === 'attribute'
       ? ` A query parameter is \`navigation.queryParams.${name}\`${site.routeParams.length > 0 ? `; this page's route params are ${site.routeParams.join(', ')}` : ''}.`
       : ' The bound value is `source`.';
   ctx.error(
     'template-unknown-name',
-    `${where} reads "${name}" in "${shorten(template)}", which nothing here answers to${didYouMean(name, known) || '.'} A template reads the globals (${GLOBAL_SOURCES.join(', ')}), the space's variables, and an element's source named in full (\`list_rows\`, \`apiContainer_posts\`) from inside that element.${flattened}`,
+    `${where} reads "${name}" in "${shorten(template)}", which nothing here answers to${hyphenated ? `. The source is "${hyphenated}", spelled with its \`-\`: a template reads a \`-\` between two letters as part of the name (a minus is written with spaces, \`a - b\`).` : didYouMean(name, known) || '.'} A template reads the globals (${GLOBAL_SOURCES.join(', ')}), the space's variables, and an element's source named in full (\`list_rows\`, \`apiContainer_posts\`) from inside that element.${flattened}`,
     id
   );
 };

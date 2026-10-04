@@ -52,4 +52,17 @@ describe('_motion.scss', () => {
     expect(css).toContain(`var(--plitzi-motion-duration, ${String(MOTION_DEFAULT_DURATION)}ms)`);
     expect(css).toContain(MOTION_ENTER_EASING);
   });
+
+  it('holds an arrival waiting to be seen until it is, and ties only `scroll` to the scroll', () => {
+    const flat = css.replace(/\s+/g, ' ');
+
+    expect(flat).toContain(
+      '[data-motion-on=view]:not([data-motion-seen])[data-motion-enter], [data-motion-on=view]:not([data-motion-seen])[data-motion-stagger] > * { animation-play-state: paused, paused; }'
+    );
+    expect(flat).toMatch(/@media \(scripting: none\) \{ \[data-motion-on=view\]\[data-motion-enter\]/);
+    expect(flat).toMatch(
+      /\[data-motion-on=scroll\]\[data-motion-enter\], \[data-motion-on=scroll\]\[data-motion-stagger\] > \* \{ animation-timeline: view\(\), auto;/
+    );
+    expect(flat).not.toMatch(/\[data-motion-on=view\][^{]*\{ animation-timeline/);
+  });
 });

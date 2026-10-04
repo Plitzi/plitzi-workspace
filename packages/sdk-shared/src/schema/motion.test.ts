@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { isMotion, isMotionAnimation, MOTION_PLAY_CSS, motionAttributes, motionProblems } from './motion';
+import {
+  isMotion,
+  isMotionAnimation,
+  MOTION_PLAY_CSS,
+  motionAttributes,
+  motionProblems
+} from './motion';
 
 describe('motion', () => {
   it('takes the presets it names, and says what is wrong with anything else', () => {
@@ -9,7 +15,7 @@ describe('motion', () => {
     expect(motionProblems({ enter: 'bounce', on: 'hover', duration: -1, speed: 2 })).toEqual([
       'motion has no "speed" — it takes enter, on, duration, delay, stagger and loop',
       'motion.enter is one of fade, fade-up, fade-down, slide-left, slide-right, scale',
-      'motion.on is load or view',
+      'motion.on is load, view or scroll',
       'motion.duration is a number of ms from 0 to 10000'
     ]);
     expect(motionProblems({})).toEqual(['motion says nothing to play: give it an `enter`, a `loop`, or both']);
@@ -39,7 +45,13 @@ describe('motion', () => {
   });
 
   it('plays an arrival tied to the scroll by the clock on the canvas, where it is usually in view already', () => {
-    expect(MOTION_PLAY_CSS).toContain('[data-motion-on="view"][data-motion-enter]');
+    expect(MOTION_PLAY_CSS).toContain('[data-motion-on="scroll"][data-motion-enter]');
     expect(MOTION_PLAY_CSS).toContain('animation-timeline: auto, auto !important');
+  });
+
+  it('plays an arrival waiting to be seen at once on the canvas', () => {
+    expect(MOTION_PLAY_CSS).toContain(
+      '[data-motion-on="view"][data-motion-enter], [data-motion-on="view"][data-motion-stagger] > * { animation-play-state: running, running !important; }'
+    );
   });
 });

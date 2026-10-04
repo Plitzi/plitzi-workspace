@@ -33,7 +33,7 @@ paragraph('A paragraph.')
 container([children], { subType: 'section' })  // div, section, nav, header, footer, main, article, li, h1–h6, span…
 link({ href: 'about', content: 'About' })      // a page id, a '/path', or a URL — the mode follows from the href
 link({ href: 'home', hash: 'plans' })          // → /#plans, onto the element with anchor: 'plans'
-container({ motion: { enter: 'fade-up', on: 'view' }, children })  // arrives as it scrolls in; stagger, loop too
+container({ motion: { enter: 'fade-up', on: 'view' }, children })  // arrives once as it comes into view; stagger, loop too
 button({ content: 'Save', flows })             // holds children too: then content: ''
 image({ src, alt })                            // or decorative: true
 embed({ src, title })                          // a map, a player: another page in a frame
@@ -45,6 +45,7 @@ list({ id: 'rows', items: 'p.data.rows', row: r => listItem({ children: [text({ 
 carousel({ id: 'hero', items: 'p.data.slides', autoplay: 5000, row: 'slide-card', children: [/* carouselNext('hero') arrows */] })
                                                // rows follow their item's `id`, or `itemKey: 'slug'`
 apiContainer({ id: 'p', query: '/data/x.json', cache: true, children })   // publishes p.data; no box of its own
+apiContainer({ id: 'p', query: '/data/x.json', runtime: 'server', children }) // read by the page server: still p.data
                                                // loadingSlot: 'p-skeleton' — a child shown until it answers
 form({ id, managedByInteractions: true, flows, children })
 formControl({ name: 'email', label: 'Email', subType: 'email' })          // select: options: [{ label, value }]
@@ -87,7 +88,8 @@ visible: false                                                 // hidden until a
 
 Inside a list row: `rows.item` in a binding, `{{ list_rows.item.x }}` in a template or an attribute,
 `list_rows.index` is a number from 0. A provider's source in a template is `apiContainer_p`… —
-spelled in full, as the element publishes it. Globals: `state`, `navigation` (`routeParams`, `queryParams`),
+spelled in full, as the element publishes it; an id with a `-` keeps it (`list_study-plans`: a minus takes spaces,
+`a - b`). Globals: `state`, `navigation` (`routeParams`, `queryParams`),
 `auth`, `variables`, `computed`, `flags`, `theme`, `host`.
 
 ## Flows

@@ -1,4 +1,5 @@
 import { PREVIEW_TOKEN_PARAM } from '@plitzi/sdk-server/kernel';
+import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
 
 import { outlineOfSnapshot, outlineOfTree } from './accessibilityOutline';
 
@@ -37,6 +38,7 @@ type Page = {
   /** Puppeteer's. */
   emulateMediaFeatures?: (features: { name: string; value: string }[]) => Promise<void>;
   evaluate: <T>(fn: () => T) => Promise<T>;
+  addStyleTag: (options: { content: string }) => Promise<unknown>;
   screenshot: (options: Record<string, unknown>) => Promise<Buffer | Uint8Array>;
   /** Playwright's: the page's accessibility tree, already written as an outline. */
   locator?: (selector: string) => { ariaSnapshot: () => Promise<string> };
@@ -188,6 +190,9 @@ export const createLocalScreenshotClient = async ({
           }
 
           await page.evaluate(FONTS_READY);
+          // The declared motion held at its end: a window grown to the whole page reveals every arrival waiting to be
+          // seen at once, and the picture would catch them halfway in.
+          await page.addStyleTag({ content: MOTION_STILL_CSS });
 
           if (fullPage) {
             const height = Math.min(await page.evaluate(CONTENT_HEIGHT), MAX_HEIGHT);

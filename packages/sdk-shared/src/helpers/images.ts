@@ -18,6 +18,12 @@ export const isImageWidth = (width: number): width is ImageWidth => IMAGE_WIDTHS
 /** A picture another site serves — the only kind there is anything to resize; a path of this site is served as it is. */
 export const isRemoteImage = (src: string): boolean => /^https?:\/\//i.test(src);
 
+/**
+ * Whether the page server makes sizes of a picture: another site's, and not a vector — an SVG is the same at any width,
+ * and the endpoint sends one back to where it is.
+ */
+export const isResizableImage = (src: string): boolean => isRemoteImage(src) && !/\.svgz?(?:[?#]|$)/i.test(src);
+
 /** The address of `src` at `width` on the endpoint. */
 export const imageUrl = (endpoint: string, src: string, width: ImageWidth): string =>
   `${endpoint}?url=${encodeURIComponent(src)}&w=${String(width)}`;

@@ -28,7 +28,22 @@ const page = (id: string, body: ElementSpec[]): PageSpec => ({ id, name: id, slu
 const space = (pages: PageSpec[], extra: Partial<SpaceSpec> = {}): SpaceSpec => ({
   name: 'Advice',
   permanentUrl: 'advice',
-  classes: { top: { display: 'flex' }, brand: {}, nav: {}, navOn: { color: 'red' }, navOff: {}, card: {}, card2: {} },
+  classes: {
+    top: { display: 'flex' },
+    brand: {},
+    nav: {},
+    navOn: { color: 'red' },
+    navOff: {},
+    card: {},
+    card2: {},
+    menu: {},
+    'menu-button': {},
+    'menu-label': {},
+    'menu-hint': {},
+    includes: {},
+    tick: {},
+    line: {}
+  },
   pages,
   ...extra
 });
@@ -144,6 +159,54 @@ describe('suggestions', () => {
     expect(
       codesOf(space([page('home', [container({ children: [tile('A', 'one'), tile('B', 'two'), tile('C', 'one')] })])]))
     ).not.toContain('repeated-shape');
+  });
+
+  // Three filter menus a helper writes: alike, side by side, each reading its own options and keeping its own choice.
+  const menu = (key: string) =>
+    container({
+      class: 'menu',
+      children: [
+        button({
+          class: 'menu-button',
+          content: key,
+          flows: [[onClick(), setState({ key, type: 'text', value: 'open' })]]
+        }),
+        text({ class: 'menu-label', bind: { content: `state.${key}` } }),
+        text({ class: 'menu-hint', content: 'Pick one' })
+      ]
+    });
+
+  it('takes controls wired to different sources and keys for controls, not rows of one list', () => {
+    const menus = space([page('home', [container({ children: [menu('language'), menu('level'), menu('topic')] })])]);
+
+    expect(codesOf(menus)).not.toContain('repeated-shape');
+  });
+
+  it('leaves out a suggestion an element it is about quiets, and refuses a quiet that names no suggestion', () => {
+    const row = (words: string, quiet?: 'repeated-shape') =>
+      container({
+        class: 'includes',
+        ...(quiet ? { quiet: [quiet] } : {}),
+        children: [
+          text({ class: 'tick', content: '✓' }),
+          text({ class: 'line', content: words }),
+          text({ content: '' })
+        ]
+      });
+    const rows = (quiet?: 'repeated-shape') =>
+      space([
+        page('home', [
+          container({
+            children: ['Videos', 'Exercises', 'A certificate', 'Lifetime access'].map(words => row(words, quiet))
+          })
+        ])
+      ]);
+
+    expect(codesOf(rows())).toContain('repeated-shape');
+    expect(codesOf(rows('repeated-shape'))).not.toContain('repeated-shape');
+    expect(() =>
+      authorSpace(space([page('home', [container({ quiet: ['class-and-css' as 'repeated-shape'] })])]))
+    ).toThrow(/quiet-unknown[^]*"class-and-css", which is no suggestion's code/);
   });
 
   it('offers the own content of a button or a link for a text that is its only child', () => {

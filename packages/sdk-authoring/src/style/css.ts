@@ -92,7 +92,9 @@ export const css = (input: CssProps): StyleRules => {
 
           return suggestion ? `"${key}" (did you mean "${suggestion}"?)` : `"${key}"`;
         })
-        .join(', ')}. Plitzi's style vocabulary is a closed list of kebab-case properties.`
+        .join(
+          ', '
+        )}. Plitzi's style vocabulary is a closed list of kebab-case properties — a shorthand is expanded into them. One that is standard CSS and not a typo is not in it yet: write it in the space's \`customCss\`, under the element's class, until it is.`
     );
   }
 

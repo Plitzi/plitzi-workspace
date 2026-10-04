@@ -48,8 +48,10 @@ const declaration = elementDeclaration<ContainerAttributes>()({
       'h4',
       'h5',
       'h6',
+      'p',
       'span'
-    ])
+    ]),
+    live: valuesOf<NonNullable<ContainerProps['live']>>()(['', 'polite', 'assertive'])
   },
   content: {
     attributes: {

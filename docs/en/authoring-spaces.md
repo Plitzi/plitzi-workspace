@@ -800,7 +800,7 @@ const { suggestions } = authorSpace(space);
 | Code | Written the long way | The short way |
 | --- | --- | --- |
 | `repeated-on-pages` | One block at the edge of several pages, the same or styled per page | A layout holding it once; a link marks its own page with the `current` state |
-| `repeated-shape` | One structure written again with other words | A component with props, or one `list` when the copies are sibling rows of data |
+| `repeated-shape` | One structure written again with other words | A component with props, or one `list` when the copies are sibling rows of data — never for siblings that read different sources or write different state keys, which are controls written alike |
 | `content-attribute` | A `button` or `link` whose only child is a `text` | The element's own `content` |
 | `custom-css-class` | `customCss` rules a class's `states` and `ancestors` say | Those, on the class |
 | `custom-css-sdk-default` | A reduced-motion reset, or the theme toggle's icons, in `customCss` | Nothing: the SDK does both |
@@ -808,6 +808,8 @@ const { suggestions } = authorSpace(space);
 | `heavy-animation` | Keyframes animating a size, a position, a blur, a shadow, or a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — see [Motion](./motion.md) |
 
 A suggestion never blocks: it is advice, not the publish gate, and copies about to diverge are a reason to leave it.
+Left on purpose, it is quieted where it is written — `quiet: ['repeated-shape']` on an element it is about — so it
+stops burying the ones that matter; `quiet` takes only suggestions' codes (`quiet-unknown`).
 `suggestSpace({ schema, style })` gives the same list for a document authored anywhere; the MCP server's
 `plitzi_validate` and `plitzi_apply` answer with the ones a batch opened up (never again the ones the space already
 had), and `npm run author` prints them under the warnings. The skill's `reference/efficiency.md` is the agent's version

@@ -41,6 +41,7 @@ export const elementAttributeNames = {
     'ariaPressed',
     'content',
     'contentPlacement',
+    'controls',
     'disabled',
     'icon',
     'iconPlacement',
@@ -51,7 +52,7 @@ export const elementAttributeNames = {
   carousel: ['autoplay', 'itemKey', 'items', 'label', 'loop', 'mode', 'pauseOnHover', 'speed', 'transition'],
   carouselTrack: [],
   channel: ['grant', 'keep', 'presence', 'subType', 'topic'],
-  container: ['decorative', 'label', 'subType'],
+  container: ['decorative', 'label', 'live', 'subType'],
   custom: null,
   dialogContainer: [
     'acceptButtonLabel',
@@ -100,7 +101,7 @@ export const elementAttributeNames = {
     'subType'
   ],
   heading: ['content', 'subType'],
-  image: ['alt', 'decorative', 'fetchPriority', 'height', 'loadMode', 'sizes', 'src', 'width'],
+  image: ['alt', 'decorative', 'fetchPriority', 'height', 'loadMode', 'resize', 'sizes', 'src', 'width'],
   layoutContainer: ['layout', 'layoutContainer', 'subType'],
   link: ['content', 'contentPlacement', 'hash', 'href', 'icon', 'iconPlacement', 'label', 'mode', 'target'],
   list: ['itemKey', 'items', 'source', 'subType'],

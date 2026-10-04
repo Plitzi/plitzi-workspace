@@ -13,6 +13,9 @@ import type { RscElementResolver } from './resolveRscData';
  *
  * Only a plain path inside `publicDir`: a URL, one that climbs out of the folder, or one with `{{tokens}}` (resolved
  * in the browser against the visitor's route and state) is not this resolver's, and the element is left as it was.
+ *
+ * Answered in the shape a browser request publishes — `{ status, data }`, the body under `data` — so a provider reads
+ * `<source>.data.<field>` whichever runtime it has, and moving it to the server changes no binding.
  */
 export const publicFileResolver = (publicDir: string): RscElementResolver => {
   const root = path.resolve(publicDir);
@@ -38,7 +41,7 @@ export const publicFileResolver = (publicDir: string): RscElementResolver => {
     try {
       const data: unknown = JSON.parse(await readFile(file, { encoding: 'utf8', signal }));
 
-      return data;
+      return { status: 200, data };
     } catch {
       // Not there, or not JSON: the provider renders its error state as it would have in the browser.
       return null;

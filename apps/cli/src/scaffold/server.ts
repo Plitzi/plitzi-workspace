@@ -79,6 +79,7 @@ import {
 } from '@plitzi/sdk-server';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
+import { publicData } from '@plitzi/sdk-authoring/node';
 
 import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
@@ -93,7 +94,11 @@ ${PORT_SNIPPET}
  * here for the same reason: this restart is the output somebody editing the space is actually watching.
  */
 // \`declarations\`: what the project's plugins fire, answer and read, so the space's use of them is checked too.
-const { schema, style, warnings } = authorSpace(space, { plugins: declarations });
+// \`data\`: the files of \`public/\` a provider reads, so a binding onto a path one of them does not have is warned.
+const { schema, style, warnings } = authorSpace(space, {
+  plugins: declarations,
+  data: publicData(new URL('../public/', import.meta.url))
+});
 const offlineData = { schema, style };
 
 for (const warning of warnings) {

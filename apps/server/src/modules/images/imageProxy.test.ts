@@ -82,13 +82,22 @@ describe('the image endpoint', () => {
     expect((await serve({ url: 'https://images.example.com/a.jpg', width: '641' })).status).toBe(400);
     expect((await serve({ url: 'file:///etc/passwd', width: '640' })).status).toBe(400);
     expect(fetch).not.toHaveBeenCalled();
+  });
 
-    const svg = await proxyWith(() => Promise.resolve(picture('image/svg+xml', '<svg onload="x()"/>')))({
-      url: 'https://images.example.com/a.svg',
-      width: '640'
-    });
+  /** A vector picture has no size to make, and served from here it is a document that can run script. */
+  it('sends a vector picture back to where it is — by its name, or by the type it arrived with', async () => {
+    const fetch = vi.fn(() => Promise.resolve(picture('image/svg+xml', '<svg onload="x()"/>')));
+    const serve = proxyWith(fetch);
 
-    expect(svg.status).toBe(502);
+    const named = await serve({ url: 'https://images.example.com/logo.svg', width: '640' });
+    const typed = await serve({ url: 'https://images.example.com/logo', width: '640' });
+    const again = await serve({ url: 'https://images.example.com/logo', width: '640' });
+
+    expect(named).toMatchObject({ status: 307, headers: { Location: 'https://images.example.com/logo.svg' } });
+    expect(typed).toMatchObject({ status: 307, headers: { Location: 'https://images.example.com/logo' } });
+    // Not taken for a failure: asked again, it is sent back again rather than refused for a while.
+    expect(again.status).toBe(307);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it('holds a redirect to the allowlist as it holds the first request', async () => {

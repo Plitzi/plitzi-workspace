@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
+import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools/chrome';
 import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
 
 import type { LogType } from '@plitzi/sdk-shared';
@@ -56,7 +57,7 @@ const DevToolsIndicator = ({ className, onOpen }: DevToolsIndicatorProps) => {
      *
      * It still does not scroll away: the container is the viewport-sized box and the space scrolls in a child of it.
      */
-    <div className={clsx('absolute bottom-3 left-3 z-[1000000]', className)}>
+    <div className={clsx('absolute bottom-3 left-3 z-[1000000]', className)} {...{ [DEV_TOOLS_ATTRIBUTE]: '' }}>
       <button
         className={clsx(
           'flex cursor-pointer items-center gap-2 rounded border border-zinc-200 bg-white px-2 py-1.5 text-[12px]/[16px]',

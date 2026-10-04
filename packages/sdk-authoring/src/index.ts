@@ -167,6 +167,8 @@ export * from './transformers';
  * takes them, and should never learn that this boundary exists.
  */
 export * from '@plitzi/sdk-shared/authoring';
+// The motion presets, so what the `.d.ts` names is what the package has: `motion: { enter: MOTION_ENTERS[1] }`.
+export { MOTION_ENTERS, MOTION_LOOPS, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema/motion';
 
 /**
  * What a step may name in a document authored here.

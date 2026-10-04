@@ -402,7 +402,9 @@ default `tmp/images`): each original is downloaded once, and each size is made o
 files keep answering while the original is asked for with its `ETag` / `Last-Modified` — unchanged, nothing is resized
 again; changed, its sizes are made anew. A picture that could not be fetched is not asked for again for five minutes.
 Only the listed hosts are fetched, every redirect is held to the same
-list and to the rule every outbound request follows (no private network), and SVG is refused. Resizing needs `sharp`
+list and to the rule every outbound request follows (no private network). An SVG is never resized nor served from
+this origin: the proxy answers it with a redirect to its own address (`307`), so the picture still shows. An `image`
+with `resize: false` keeps its `src` as written. Resizing needs `sharp`
 (an optional peer): without it pictures are passed through and kept, and the server says so once.
 
 ### Public directory
@@ -676,7 +678,8 @@ The SSR server includes a lightweight RSC endpoint that delivers server-side dat
 
 ### Schema setup
 
-Enable RSC at the top level of your schema:
+Enable RSC at the top level of your schema (`authorSpace` turns it on by itself for a space with a server provider,
+unless the spec says otherwise):
 
 ```json
 {
