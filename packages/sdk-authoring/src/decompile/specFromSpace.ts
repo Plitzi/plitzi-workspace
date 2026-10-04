@@ -10,6 +10,7 @@ import {
 } from '../elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../schema';
+import { isSuggestionCode } from '../schema/codes';
 import { flagSpecOf } from '../schema/flags';
 import { splitNotificationsCss } from '../schema/notifications';
 import { css, modifierClassName } from '../style';
@@ -155,7 +156,8 @@ const DEFINITION_FIELDS = new Set([
   'loadStrategy',
   'flag',
   'anchor',
-  'motion'
+  'motion',
+  'quiet'
 ]);
 
 const PAGE_ATTRIBUTES = new Set([
@@ -1226,6 +1228,7 @@ class SpecReader {
       ...(definition.loadStrategy ? { loadStrategy: definition.loadStrategy } : {}),
       ...(definition.anchor ? { anchor: definition.anchor } : {}),
       ...(definition.motion ? { motion: definition.motion } : {}),
+      ...(definition.quiet ? { quiet: definition.quiet.filter(isSuggestionCode) } : {}),
       ...(definition.flag ? { flag: flagSpecOf(definition.flag) } : {}),
       meta: { label: definition.label },
       ...this.childrenSpec(element)

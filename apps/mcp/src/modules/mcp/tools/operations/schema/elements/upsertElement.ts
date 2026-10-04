@@ -77,6 +77,10 @@ export const upsertElement = (space: Space, env: Env, op: UpsertElement): OpResu
       existing.definition.motion = op.element.motion;
     }
 
+    if (op.element.quiet !== undefined) {
+      existing.definition.quiet = op.element.quiet;
+    }
+
     return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.element.ref] };
   }
 

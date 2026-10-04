@@ -4,6 +4,7 @@ import { button, container, fontAwesome, heading, link, list, text } from '../..
 import { onClick } from '../../elements/steps';
 import { setState, toggleState } from '../../interactions';
 import { authorSpace } from '../space';
+import { suggestSpace } from './index';
 
 import type { ElementSpec, PageSpec, SpaceSpec } from '../types';
 
@@ -204,6 +205,11 @@ describe('suggestions', () => {
 
     expect(codesOf(rows())).toContain('repeated-shape');
     expect(codesOf(rows('repeated-shape'))).not.toContain('repeated-shape');
+
+    // In the document, where the builder's list and the MCP read it: the same suggestion is left out there too.
+    const { schema, style } = authorSpace(rows('repeated-shape'));
+    expect(Object.values(schema.flat).some(element => element.definition.quiet?.includes('repeated-shape'))).toBe(true);
+    expect(suggestSpace({ schema, style }).map(suggestion => suggestion.code)).not.toContain('repeated-shape');
     expect(() =>
       authorSpace(space([page('home', [container({ quiet: ['class-and-css' as 'repeated-shape'] })])]))
     ).toThrow(/quiet-unknown[^]*"class-and-css", which is no suggestion's code/);

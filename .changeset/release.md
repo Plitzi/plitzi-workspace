@@ -140,6 +140,10 @@ motionReveal`), one observer under the SDK's root, marks it `data-motion-seen`. 
 `on: 'scroll'`. A page read without scripts shows them as they end (`@media (scripting: none)`); the builder's previews
 and the MCP's local screenshots hold motion at its end. The builder's Motion tab has the three.
 
+The builder's preview plays motion as the published page does. It held everything at its end, and nothing marked
+the canvas `data-hydrated`, so neither the loops nor a space's own `[data-hydrated]` animations ever started there.
+Now an arrival plays as it comes into view, and the loops and keyframes run.
+
 ## Authoring advice that knows where and when
 
 - **`class-conflict` says where both declarations are:** `styles('md-menu-button') at src/components/dropdown.ts:12,
@@ -148,7 +152,8 @@ and the MCP's local screenshots hold motion at its end. The builder's Motion tab
 - **`repeated-shape` leaves controls alone.** Siblings that read different sources or write different state keys — a
   menu for the language, one for the level — are not offered as a list.
 - **`quiet: ['repeated-shape']`** on an element says a suggestion was left on purpose, and it is not offered again.
-  Only suggestions' codes (`quiet-unknown`).
+  Only suggestions' codes (`quiet-unknown`). It is saved on the element (`definition.quiet`), so the builder's problems
+  panel, the MCP's `upsertElement`/`patchElement` and a project pulled back with `plitzi pull` all leave it alone.
 
 ## What the docs say is what the code does
 

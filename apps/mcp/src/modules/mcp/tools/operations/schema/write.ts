@@ -115,7 +115,8 @@ export const createElement = (
       ...(input.runtime === undefined ? {} : { runtime: input.runtime }),
       ...(input.flag === undefined ? {} : { flag: flagGateOf(input.flag, `Element "${input.ref}"`) }),
       ...(input.anchor === undefined ? {} : { anchor: input.anchor }),
-      ...(isMotion(input.motion) ? { motion: input.motion } : {})
+      ...(isMotion(input.motion) ? { motion: input.motion } : {}),
+      ...(input.quiet === undefined ? {} : { quiet: input.quiet })
     }
   };
   if (!new FlatMap({ flat: space.schema.flat }).addElement(el, anchorId, drop)) {

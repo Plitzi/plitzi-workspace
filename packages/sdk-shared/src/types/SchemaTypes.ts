@@ -129,6 +129,12 @@ export type ElementDefinition = {
   anchor?: string;
   /** How it arrives and whether it keeps moving, played by the SDK's stylesheet. See {@link ElementMotion}. */
   motion?: ElementMotion;
+  /**
+   * The codes of the suggestions this element is not offered, because it is written this way on purpose —
+   * `['repeated-shape']`. Read by the one place suggestions are made (`suggestSpace`), so authoring, the builder and
+   * the MCP leave out the same ones. Never a problem's code.
+   */
+  quiet?: string[];
 };
 
 /**
@@ -391,7 +397,8 @@ type OptionalDefinitionKey =
   | 'loadStrategy'
   | 'flag'
   | 'anchor'
-  | 'motion';
+  | 'motion'
+  | 'quiet';
 
 /**
  * An element as it arrives on the wire. GraphQL answers every field a query names, so one the element does not have

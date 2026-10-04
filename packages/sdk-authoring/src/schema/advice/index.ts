@@ -9,6 +9,18 @@ import type { Schema, Style } from '@plitzi/sdk-shared';
 export type { Suggestion } from './types';
 
 /**
+ * What each element quiets (`definition.quiet`): a suggestion about an element written that way on purpose is left
+ * out — here, so authoring, the builder's list and the MCP leave out the same ones. The pages' tree and every
+ * component's.
+ */
+const quietCodes = (schema: Schema): Map<string, string[]> =>
+  new Map(
+    [schema.flat, ...Object.values(schema.components).map(component => component.flat)]
+      .flatMap(flat => Object.values(flat))
+      .flatMap(element => (element.definition.quiet ? [[element.id, element.definition.quiet] as const] : []))
+  );
+
+/**
  * A shorter way to the same page: what a space's documents could say with fewer elements or less CSS — or, for its
  * animations, a lighter one.
  *
@@ -19,10 +31,15 @@ export type { Suggestion } from './types';
  * that did not know them, or a person who has not met them yet. Each names what to write instead, and the ones about
  * elements say how many it saves, which is what they are ranked by.
  */
-export const suggestSpace = ({ schema, style }: { schema: Schema; style: Style }): Suggestion[] =>
-  [
+export const suggestSpace = ({ schema, style }: { schema: Schema; style: Style }): Suggestion[] => {
+  const quiets = quietCodes(schema);
+
+  return [
     ...suggestRepeats(schema, style),
     ...suggestContent(schema, style),
     ...suggestCustomCss(schema, style),
     ...suggestMotion(schema, style)
-  ].sort((a, b) => b.saves - a.saves);
+  ]
+    .filter(suggestion => !suggestion.elementIds.some(id => quiets.get(id)?.includes(suggestion.code) === true))
+    .sort((a, b) => b.saves - a.saves);
+};

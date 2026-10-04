@@ -691,6 +691,14 @@ describe('lintSpace', () => {
       expect(warningsOf(documents)).toContain('provider-without-source');
     });
 
+    it('quiet-unknown on a document that quiets a problem or a misspelt code', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.hello.definition.quiet = ['repeated-shape', 'class-and-css'];
+      });
+
+      expect(errorsOf(documents)).toContain('quiet-unknown');
+    });
+
     it('server-data-without-rsc', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.feed.attributes.connector = 'crm';

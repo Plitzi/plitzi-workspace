@@ -49,6 +49,7 @@ const InitQuery = /* GraphQL */ `
               stagger
               loop
             }
+            quiet
           }
           attributes
         }

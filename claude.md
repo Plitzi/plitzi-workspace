@@ -340,6 +340,46 @@ After finishing any set of code changes, always run:
 1. `yarn typecheck` — fix all TypeScript errors before considering the task done.
 2. `yarn lint` — fix all ESLint errors (warnings are acceptable).
 
+## Documentation — one owner per fact
+
+The same behaviour is described to several readers in several places, and every place grows. Two that disagree
+cost more than one that is missing: an agent reads both, cannot tell which is right, and writes the wrong one. So
+every fact has ONE owner that states it in full; every other place says it in a line, points to the owner, or is
+generated from it.
+
+| Surface | Reader | Owns | Where |
+| --- | --- | --- | --- |
+| The code | everyone | what is true: behaviour, defaults, names, messages | `AUTHORING_CODES` (`sdk-authoring/src/schema/codes.ts`), the `explain` catalogues, JSDoc, constants (`MOTION_*`, breakpoints) |
+| Authoring skill | an agent writing a space in code | how to write a space | `packages/sdk-authoring/skills/plitzi-authoring/` — `SKILL.md` (rules), `CHEATSHEET.md`, `reference/*` (one subject each), `recipes/*` (whole tested files) |
+| CLI skill | an agent using the CLI | what each command is for, when to use it | `apps/cli/skills/plitzi-cli/` |
+| `AGENTS.md` of a project | an agent in a generated project | that project's port, data, checks — and the few rules that go wrong most, in a line each | `apps/cli/src/scaffold/project.ts` |
+| CLI README | a person | every command and option | `apps/cli/README.md` |
+| MCP guide | an agent editing a live space through JSON ops | the ops and their JSON shapes | `apps/mcp/src/modules/mcp/helpers/guide.ts` |
+| `docs/en` | a contributor | why it is built the way it is, internals | `docs/en/*.md`; `docs/es` translates 8 of them — change both |
+| Package READMEs | someone configuring a package | its configuration (`createServer` options…) | `apps/server/README.md` and the rest |
+| Website docs | a public user of Plitzi | the product, explained | `plitzi-sdk-server/prisma/seeds/spaces/platform/website/pages/docs-*.ts` |
+
+Rules:
+
+- **Change the behaviour, then every surface, in the same change.** Before finishing, search all of them for the old
+  name, value or wording (this repo and `plitzi-sdk-server`'s website pages) and fix each, or delete what restates it.
+- **Code is the source of truth.** Read the code before writing what it does. When a doc and the code disagree,
+  decide which one is wrong — when the doc describes what should happen, fix the code, not the doc.
+- **Generate before you repeat.** A list the code already has (codes, presets, elements, steps, options) is generated
+  or checked against the code (`authoringCodesTable`, `generate:authoring-errors`, `explain`, `motionProblems`),
+  never typed out again. A table of codes in prose names only the codes of its own subject.
+- **Restate in one line, with the owner's words.** Outside its owner a rule is a sentence and a pointer, using the same
+  terms and the same example; never a second explanation of its edge cases.
+- **Messages are documentation.** A refusal, a warning, `explain` and a CLI line are read before any page: they say
+  the fix in the terms the docs use, and a hint applies to the field it is about.
+- **Budgets are part of the design.** Skills are held to token budgets (`apps/cli/src/scaffold/skills.test.ts`):
+  `SKILL.md` 4000, `CHEATSHEET.md` 2500, a reference 3000, a recipe 1500. Over budget, cut what another surface owns
+  — never the rule itself.
+- **Run the checks the docs have:** `apps/cli` `skills.test.ts` (budgets, links), `packages/sdk-authoring`
+  `recipes.test.ts` and `codesPage.test.ts`, `apps/mcp` guide tests, and in `plitzi-sdk-server`
+  `yarn vitest run prisma/seeds/spaces/platform/website` (`docsAccuracy.test.ts`: imports resolve, links exist, the
+  catalogue is whole).
+
 ## Work Preferences
 
 - Incremental changes: share file → analyze → propose → implement.

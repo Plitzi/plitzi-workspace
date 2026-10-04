@@ -810,7 +810,9 @@ const { suggestions } = authorSpace(space);
 
 A suggestion never blocks: it is advice, not the publish gate, and copies about to diverge are a reason to leave it.
 Left on purpose, it is quieted where it is written — `quiet: ['repeated-shape']` on an element it is about — so it
-stops burying the ones that matter; `quiet` takes only suggestions' codes (`quiet-unknown`).
+stops burying the ones that matter. It is kept in the document (`definition.quiet`) and read by `suggestSpace`, so the
+builder's list and the MCP leave out the same ones; the MCP writes it with `quiet` on an element op. `quiet` takes only
+suggestions' codes (`quiet-unknown`).
 `suggestSpace({ schema, style })` gives the same list for a document authored anywhere; the MCP server's
 `plitzi_validate` and `plitzi_apply` answer with the ones a batch opened up (never again the ones the space already
 had), and `npm run author` prints them under the warnings. The skill's `reference/efficiency.md` is the agent's version

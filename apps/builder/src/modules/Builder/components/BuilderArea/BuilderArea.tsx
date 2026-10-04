@@ -28,6 +28,7 @@ import SpaceContainer from '@pmodules/Space/SpaceContainer';
 import BuilderAreaHeader from './BuilderAreaHeader';
 import BuilderAreaOverlay from './BuilderAreaOverlay';
 import BuilderAreaTracking from './BuilderAreaTracking';
+import { liveCanvas } from './liveCanvas';
 import styleFrame from '../../Assets/index-iframe.scss?inline';
 
 import type { ComponentPluginWithHOC, DisplayMode, SpaceFont } from '@plitzi/sdk-shared';
@@ -45,6 +46,18 @@ export type BuilderAreaProps = {
   mobilePreview?: boolean;
   previewMode?: boolean;
   debugMode?: boolean;
+};
+
+/**
+ * How the canvas plays the declared motion. Editing, it is held at its end — or played from the start with Play; in
+ * preview, not at all: the page plays it as a published page does.
+ */
+const canvasMotionCss = (previewMode: boolean, playing: boolean): string => {
+  if (previewMode) {
+    return '';
+  }
+
+  return playing ? MOTION_PLAY_CSS : MOTION_STILL_CSS;
 };
 
 const BuilderArea = ({
@@ -94,10 +107,8 @@ const BuilderArea = ({
   // Apart from the space's own CSS, so turning the grid on or zooming does not process the whole stylesheet again.
   const frameCss = useMemo(
     () =>
-      [css, displayGrid && layoutGridCss(zoom), motionPlaying ? MOTION_PLAY_CSS : MOTION_STILL_CSS]
-        .filter(Boolean)
-        .join('\n'),
-    [css, displayGrid, motionPlaying, zoom]
+      [css, displayGrid && layoutGridCss(zoom), canvasMotionCss(previewMode, motionPlaying)].filter(Boolean).join('\n'),
+    [css, displayGrid, motionPlaying, previewMode, zoom]
   );
   const [iframeActive, setIframeActive] = useState(!multiPagesMode);
   const ref = useRef<HTMLIFrameElement>(null);
@@ -118,6 +129,27 @@ const BuilderArea = ({
       }
     }
   }, [motionReplays]);
+
+  // In preview the canvas is the page. The frame's document is replaced when it loads, so it is made live again.
+  useEffect(() => {
+    if (!previewMode) {
+      return undefined;
+    }
+
+    const frame = ref.current;
+    const rootOf = (): Element => (frame?.contentDocument ?? document).documentElement;
+    let stop = liveCanvas(rootOf());
+    const follow = (): void => {
+      stop();
+      stop = liveCanvas(rootOf());
+    };
+    frame?.addEventListener('load', follow);
+
+    return () => {
+      frame?.removeEventListener('load', follow);
+      stop();
+    };
+  }, [previewMode, iframeActive]);
   const { supportRealTime } = use(BuilderSubscriptionsContext);
   const [[collaborators, currentPageId]] = useBuilderStore(['collaboration.collaborators', 'navigation.currentPageId']);
   const { rootRef } = use(ContainerRootContext);

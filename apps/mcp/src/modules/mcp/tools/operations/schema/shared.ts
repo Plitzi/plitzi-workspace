@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { isSuggestionCode } from '@plitzi/sdk-authoring';
 import { FLAG_GATE_PATTERN } from '@plitzi/sdk-shared/flags';
 import { ANCHOR_PATTERN } from '@plitzi/sdk-shared/schema/anchor';
 import { motionProblems } from '@plitzi/sdk-shared/schema/motion';
@@ -88,6 +89,7 @@ export interface ElementInput {
   anchor?: string;
   /** Checked by `motionProblems`: what arrives here is one, which `isMotion` narrows it to where it is written. */
   motion?: Record<string, unknown>;
+  quiet?: string[];
   children?: ElementInput[];
 }
 
@@ -138,6 +140,16 @@ export const elementMotion = z
   })
   .describe('{enter,on,duration,delay,stagger,loop} — guide: Motion');
 
+/** Suggestions' codes an element is not offered, written that way on purpose; never a problem's code. */
+export const elementQuiet = z
+  .array(z.string())
+  .superRefine((codes, ctx) => {
+    for (const code of codes.filter(code => !isSuggestionCode(code))) {
+      ctx.addIssue({ code: 'custom', message: `"${code}" is no suggestion's code` });
+    }
+  })
+  .describe('Suggestion codes not offered on it, e.g. ["repeated-shape"]');
+
 export const initialStateInput = z.object({
   styleVariant: styleVariantInput
     .optional()
@@ -170,7 +182,8 @@ export const elementShape = {
   runtime: elementRuntime.optional(),
   flag: elementFlag.optional(),
   anchor: elementAnchor.optional(),
-  motion: elementMotion.optional()
+  motion: elementMotion.optional(),
+  quiet: elementQuiet.optional()
 };
 
 export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>

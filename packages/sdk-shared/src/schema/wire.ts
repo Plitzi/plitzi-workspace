@@ -32,6 +32,7 @@ export const elementFromWire = ({ definition, ...element }: WireElement): Elemen
     flag,
     anchor,
     motion,
+    quiet,
     ...required
   } = definition;
 
@@ -48,7 +49,8 @@ export const elementFromWire = ({ definition, ...element }: WireElement): Elemen
       ...(loadStrategy === null || loadStrategy === undefined ? {} : { loadStrategy }),
       ...(flag === null || flag === undefined ? {} : { flag }),
       ...(anchor === null || anchor === undefined ? {} : { anchor }),
-      ...(motion === null || motion === undefined ? {} : { motion: motionFromWire(motion) })
+      ...(motion === null || motion === undefined ? {} : { motion: motionFromWire(motion) }),
+      ...(quiet === null || quiet === undefined ? {} : { quiet })
     }
   };
 };

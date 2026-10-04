@@ -5,7 +5,15 @@ import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
 import { isMotion } from '@plitzi/sdk-shared/schema/motion';
 
 import { empty, fail, findRootByRef, invalidateIndex, resolveRef } from '../../../../helpers';
-import { elementAnchor, elementFlag, elementMotion, elementRuntime, initialStateInput, styleRefs } from '../shared';
+import {
+  elementAnchor,
+  elementFlag,
+  elementMotion,
+  elementQuiet,
+  elementRuntime,
+  initialStateInput,
+  styleRefs
+} from '../shared';
 import { guardNewRef, pageUri, writeInitialState } from '../write';
 
 import type { Space } from '../../../../helpers';
@@ -39,7 +47,8 @@ export const patchElementOp = z
     runtime: elementRuntime.optional(),
     flag: elementFlag.nullable().optional(),
     anchor: elementAnchor.nullable().optional().describe('null removes it'),
-    motion: elementMotion.nullable().optional().describe('null removes it')
+    motion: elementMotion.nullable().optional().describe('null removes it'),
+    quiet: elementQuiet.nullable().optional()
   })
   .describe(
     'Partially update an EXISTING element: only the fields you pass change (props/style/initialState are merged, ' +
@@ -140,6 +149,12 @@ export const patchElement = (space: Space, env: Env, op: PatchElement): OpResult
     Reflect.deleteProperty(el.definition, 'motion');
   } else if (isMotion(op.motion)) {
     el.definition.motion = op.motion;
+  }
+
+  if (op.quiet === null) {
+    Reflect.deleteProperty(el.definition, 'quiet');
+  } else if (op.quiet !== undefined) {
+    el.definition.quiet = op.quiet;
   }
 
   return { ...empty(), updated: 1, staleResources: [pageUri(env, op.pageRef)], elementRefs: [op.ref] };

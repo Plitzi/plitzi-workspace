@@ -463,6 +463,7 @@ class SpaceComparer {
     this.check(at, 'flag', a.definition.flag, b.definition.flag);
     this.check(at, 'anchor', a.definition.anchor, b.definition.anchor);
     this.check(at, 'motion', a.definition.motion, b.definition.motion);
+    this.check(at, 'quiet', a.definition.quiet, b.definition.quiet);
 
     const childrenA = this.childrenOf(this.expected, a);
     const childrenB = this.childrenOf(this.actual, b);

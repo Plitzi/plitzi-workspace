@@ -63,7 +63,6 @@ import { didYouMean } from './suggest';
 import { assertSpaceValid, validateSpace } from './validate';
 import { writtenAt, writtenAtPosition } from './writtenAt';
 
-import type { Suggestion } from './advice';
 import type { SourceIndex } from './bindings';
 import type { WarningCode } from './codes';
 import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
@@ -261,18 +260,13 @@ class SpaceAuthor {
       this.options.allow
     );
 
-    // Where each suggestion's first element was written, as a refusal says it: the line to go and change. One an
-    // element it is about quiets (`quiet`) is left out.
-    const quieted = (suggestion: Suggestion): boolean =>
-      suggestion.elementIds.some(id => this.specOf(id)?.quiet?.includes(suggestion.code) === true);
-    const suggestions = suggestSpace({ schema, style })
-      .filter(suggestion => !quieted(suggestion))
-      .map(suggestion => {
-        const first = suggestion.elementIds.at(0);
-        const at = first === undefined ? undefined : writtenAt(this.specOf(first));
+    // Where each suggestion's first element was written, as a refusal says it: the line to go and change.
+    const suggestions = suggestSpace({ schema, style }).map(suggestion => {
+      const first = suggestion.elementIds.at(0);
+      const at = first === undefined ? undefined : writtenAt(this.specOf(first));
 
-        return at === undefined ? suggestion : { ...suggestion, at };
-      });
+      return at === undefined ? suggestion : { ...suggestion, at };
+    });
 
     this.markConditionalByChildren(schema);
 
@@ -1835,6 +1829,9 @@ class SpaceAuthor {
         ...(spec.loadStrategy ? { loadStrategy: spec.loadStrategy } : {}),
         ...(spec.anchor === undefined ? {} : { anchor: spec.anchor }),
         ...(spec.motion === undefined ? {} : { motion: spec.motion }),
+        // In the document, not only here: the builder and the MCP are offered the suggestions `suggestSpace` makes
+        // from the document, and leave out the same ones.
+        ...(spec.quiet === undefined ? {} : { quiet: [...spec.quiet] }),
         ...(spec.flag === undefined ? {} : { flag: flagGateOf(spec.flag, where) }),
         ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where, tree.globals) } : {}),
         ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})

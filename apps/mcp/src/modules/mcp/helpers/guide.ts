@@ -303,7 +303,8 @@ space already had is not repeated on every batch — and none of them blocks any
   page being shown: the \`current\` state marks it (see *Pages & folders*).
 - \`repeated-shape\` — one structure written again with other words: a **component** with props
   (\`upsertComponent { fromRef }\` turns one copy into it), or, for sibling rows of data, one \`repeatElement\`/\`list\`.
-  A few cards a person rewords by hand can stay cards.
+  A few cards a person rewords by hand can stay cards; siblings that read different data or keep different state are
+  controls written alike, and are not offered.
 - \`content-attribute\` — a \`button\` or \`link\` whose children are only a \`text\` and/or a \`fontAwesome\`: its words
   are its own \`content\` and the icon its \`icon\`. What the text's class adds (\`white-space: nowrap\`) moves to the
   box's class — never the class itself; the icon's class goes in the \`icon\` slot.
@@ -311,7 +312,9 @@ space already had is not repeated on every batch — and none of them blocks any
   \`states\`/\`ancestors\`, the SDK (reduced motion, the theme toggle's icons) or the space's notification look says.
 - \`heavy-animation\` — keyframes that animate a size, a position, a blur, a shadow, or a colour in a loop: they stutter
   while the page loads. Lighter, not shorter — see **Motion — good practices**.
-\`plitzi://explain/<code>\` explains each. Take one unless the copies are about to diverge.
+\`plitzi://explain/<code>\` explains each. Take one unless the copies are about to diverge; one left on purpose is
+quieted on an element it names — \`quiet: ["repeated-shape"]\` on \`upsertElement\`/\`patchElement\` (\`null\` removes it)
+— and is not offered again, here, in the builder or in authoring. Suggestions' codes only.
 
 ## Readers: resources vs plitzi_search vs plitzi_read (do not confuse them)
 Three ways to read, each for a different moment — pick by what you have in hand:

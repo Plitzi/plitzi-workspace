@@ -9,6 +9,7 @@ import { lintFlags } from './flags';
 import { lintFlows } from './flows';
 import { lintMotion } from './motion';
 import { lintPages } from './pages';
+import { lintQuiet } from './quiet';
 import { lintStyle } from './style';
 import { lintComputed } from './templates';
 
@@ -48,6 +49,7 @@ export const lintSpace = (
   lintDataPaths(ctx);
   lintAnchors(ctx);
   lintMotion(ctx);
+  lintQuiet(ctx);
   lintInstances(ctx);
   lintChannels(ctx);
   lintFlows(ctx);
