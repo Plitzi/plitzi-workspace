@@ -64,9 +64,12 @@ describe('probePage / hidden by the width it is drawn at', () => {
       <div data-plitzi-el="bar" class="bottom-bar"></div>
       <div data-plitzi-el="gone" class="gone"></div>`;
 
-    expect(probePage(input(['nav', 'nav-link', 'bar', 'gone'])).hidden).toEqual([
-      { id: 'gone', reason: 'display:none on itself' }
-    ]);
+    const findings = probePage(input(['nav', 'nav-link', 'bar', 'gone']));
+
+    expect(findings.hidden).toEqual([{ id: 'gone', reason: 'display:none on itself' }]);
+    // Said apart: looked at, and hidden at this width on purpose. jsdom computes no `@media` rule, so here the bar —
+    // hidden by its base rule and shown only at another width — is the one hidden; a browser hides the nav too.
+    expect(findings.byWidth).toEqual(['bar']);
   });
 });
 

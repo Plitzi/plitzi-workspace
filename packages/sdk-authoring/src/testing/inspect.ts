@@ -54,6 +54,11 @@ export interface PageReport {
   problems: string[];
   /** The same problems as data — each with its `code` and the element it is about — for a tool to act on. */
   issues: PageIssue[];
+  /**
+   * Owed, and hidden at this width on purpose — a breakpoint's `display: none`, the menu a phone shows instead: not a
+   * problem, and said so a reader knows they were looked at. Checked at the width they show at.
+   */
+  hiddenAtWidth: string[];
 }
 
 const label = (handle: ElementHandle): string => `${handle.type} "${handle.id}"`;
@@ -150,9 +155,16 @@ const inspect = async (
   };
   const deadline = Date.now() + (options.timeout ?? 5000);
   for (;;) {
-    const issues = issuesOf(expected, await driver.evaluate(probePage, input));
+    const findings = await driver.evaluate(probePage, input);
+    const issues = issuesOf(expected, findings);
     if (issues.length === 0 || Date.now() >= deadline) {
-      return { page, checked: expected.length, problems: issues.map(issue => issue.message), issues };
+      return {
+        page,
+        checked: expected.length,
+        problems: issues.map(issue => issue.message),
+        issues,
+        hiddenAtWidth: findings.byWidth
+      };
     }
 
     await pause(100);

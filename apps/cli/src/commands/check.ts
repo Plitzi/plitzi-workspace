@@ -54,6 +54,8 @@ export interface CheckReport {
   /** The problems as sentences — each `issues` entry's `message`. */
   problems: string[];
   issues: CheckIssue[];
+  /** Owed, and hidden at this width by a breakpoint on purpose: looked at, and not a problem. */
+  hiddenAtWidth: string[];
   consoleErrors: string[];
   failedRequests: string[];
   /** Whether the page had its dev tools on, which is what flows, state and elements are read from. */
@@ -134,6 +136,7 @@ const checkAt = async (
       checked: 0,
       problems: [issue.message],
       issues: [issue],
+      hiddenAtWidth: [],
       consoleErrors,
       failedRequests,
       devTools: false
@@ -166,6 +169,7 @@ const checkAt = async (
     checked: report.checked,
     problems: issues.map(issue => issue.message),
     issues,
+    hiddenAtWidth: report.hiddenAtWidth,
     consoleErrors,
     failedRequests,
     devTools: devTools.available,
@@ -212,11 +216,16 @@ const shapeOf = (value: unknown): string => {
 const reportText = (report: CheckReport, asked: DevToolsInput): string => {
   const head = `${report.path} at ${String(report.width)} px`;
   const held = heldText(report, asked);
+  const atWidth =
+    report.hiddenAtWidth.length > 0
+      ? chalk.dim(`  · hidden at this width by a breakpoint, on purpose: ${report.hiddenAtWidth.join(', ')}`)
+      : undefined;
   if (report.ok) {
     return [
       chalk.green(
         `✓ ${head} — ${report.checked > 0 ? `${String(report.checked)} elements on screen, ` : ''}nothing wrong`
       ),
+      ...(atWidth ? [atWidth] : []),
       ...held
     ].join('\n');
   }

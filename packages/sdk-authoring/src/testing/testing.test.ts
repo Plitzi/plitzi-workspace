@@ -49,6 +49,7 @@ const clean: ProbeFindings = {
   marked: true,
   missing: [],
   hidden: [],
+  byWidth: [],
   brokenImages: [],
   overflow: null,
   illegible: []
@@ -161,7 +162,7 @@ describe('testing/inspectPage', () => {
   it('inspects the home page by default and reports what it checked', async () => {
     const report = await inspectPage(driver([clean]), handles);
 
-    expect(report).toEqual({ page: 'home', checked: 6, problems: [], issues: [] });
+    expect(report).toEqual({ page: 'home', checked: 6, problems: [], issues: [], hiddenAtWidth: [] });
   });
 
   /** A provider still answering is a missing element for a few frames — the same retry an assertion would give it. */
@@ -192,7 +193,8 @@ describe('testing/inspectPage', () => {
       page: 'document',
       checked: 0,
       problems: ['an image never loaded: /x.png'],
-      issues: [{ code: 'image-not-loaded', message: 'an image never loaded: /x.png' }]
+      issues: [{ code: 'image-not-loaded', message: 'an image never loaded: /x.png' }],
+      hiddenAtWidth: []
     });
   });
 

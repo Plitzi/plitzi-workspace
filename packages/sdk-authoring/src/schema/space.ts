@@ -239,6 +239,8 @@ class SpaceAuthor {
       return at === undefined ? suggestion : { ...suggestion, at };
     });
 
+    this.markConditionalByChildren(schema);
+
     return {
       schema,
       style,
@@ -1488,6 +1490,29 @@ class SpaceAuthor {
    * rather than filed somewhere plausible: a handle that resolves to the wrong root is worse than one that is absent,
    * which the lookup reports by name.
    */
+  /**
+   * An element whose every child shows only under a condition — four menu panels in one list, each opening on the
+   * state that names it — shows nothing on a bare visit either, and that is it working: it is conditional the way its
+   * children are. Bottom up, so a wrapper of such an element is too. Without it a suite asserting "everything named
+   * is visible" failed on the menu at rest, and the only way past was a condition on the parent that said nothing new.
+   */
+  private markConditionalByChildren(schema: Schema): void {
+    const handles = [...Object.values(this.handles), ...Object.values(this.layoutHandles)].flatMap(root =>
+      Object.values(root.elements)
+    );
+    const byId = new Map(handles.map(handle => [handle.id, handle]));
+    for (let changed = true; changed;) {
+      changed = false;
+      for (const handle of handles) {
+        const items = handle.conditional ? [] : (schema.flat[handle.id].definition.items ?? []);
+        if (items.length > 0 && items.every(child => byId.get(child)?.conditional === true)) {
+          handle.conditional = true;
+          changed = true;
+        }
+      }
+    }
+  }
+
   /** The name an element's plugin is declared under: its own type, or `custom:<renderType>` for one a `custom` hosts. */
   private pluginKeyOf(element: Element): string {
     const { type } = element.definition;

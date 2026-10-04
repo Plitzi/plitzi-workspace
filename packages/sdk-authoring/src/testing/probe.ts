@@ -15,6 +15,8 @@ export interface ProbeFindings {
   marked: boolean;
   missing: string[];
   hidden: { id: string; reason: string }[];
+  /** Owed, and hidden at this width by a breakpoint on purpose — checked at the width it shows at, not a problem. */
+  byWidth: string[];
   /** Each with the element it is in, by id, when one of the space's holds it. */
   brokenImages: { source: string; elementId?: string }[];
   /** `elementIds`: the widest ones the space named, for a tool to point at. */
@@ -144,13 +146,16 @@ export function probePage(input: ProbeInput): ProbeFindings {
 
   const missing: string[] = [];
   const hidden: { id: string; reason: string }[] = [];
+  const byWidth: string[] = [];
   for (const { id, selector } of input.expected) {
     const nodes = [...document.querySelectorAll(selector)];
     if (nodes.length === 0) {
       missing.push(id);
     } else if (!nodes.some(isVisible)) {
       const hider = hiderOf(nodes[0]);
-      if (!hider || !laidOutByWidth(hider.at)) {
+      if (hider && laidOutByWidth(hider.at)) {
+        byWidth.push(id);
+      } else {
         hidden.push({ id, reason: whyHidden(nodes[0]) });
       }
     }
@@ -349,6 +354,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     marked: document.querySelector('[data-plitzi-el]') !== null,
     missing,
     hidden,
+    byWidth,
     brokenImages,
     overflow,
     illegible

@@ -14,8 +14,8 @@ It checks the open page and returns EVERY problem at once, one sentence each, na
 
 - every element the page owes is present and visible — its own and those of the layouts around it
   (`heading "hero-title" is on the page but not visible: display:none on "hero"`). One a breakpoint hides at this
-  width (`mobile: { display: 'none' }`, or shown only at another width) is laid out by width, not missing: it is
-  checked at the width it shows at — run the check at each width you author for;
+  width (`mobile: { display: 'none' }`, or shown only at another width) is laid out by width, not missing: listed in
+  `hiddenAtWidth`, and checked at the width it shows at — run the check at each width you author for;
 - every image arrived — an image element that failed says so (`data-plitzi-failed`), though its fallback loads. A lazy
   image out of sight (below the fold, or beside the screen in a carousel's track) has not been asked for yet, and waits;
 - nothing scrolls sideways (`the page scrolls sideways by 37px — widest: "cards"`);
@@ -36,7 +36,8 @@ the list `inspectPage` holds a page to.
 
 Three flags say what a bare visit cannot promise, and `onScreen` leaves out:
 
-- `conditional` — on screen only under a condition of its own or of an ancestor;
+- `conditional` — on screen only under a condition of its own or of an ancestor, or with every child conditional (a
+  list of flyouts at rest);
 - `repeated` — inside a list row, so rendered once per row: several copies, or none while the list is empty. Address
   one with `.first()` / `.nth(i)`, in a test that knows the data;
 - `boxless` — a provider with no tag, which renders its children and no element of its own; or a plugin whose

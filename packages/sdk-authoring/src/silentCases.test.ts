@@ -219,6 +219,32 @@ describe('handles a generic visual test can trust', () => {
     expect(handles.element('rows').repeated).toBeUndefined();
   });
 
+  it('takes an element whose every child is conditional — a list of flyouts at rest — as conditional too', () => {
+    const { handles } = author([
+      authoring.container({
+        id: 'nav-shell',
+        children: [
+          authoring.list({
+            id: 'nav-flyouts',
+            items: [{ key: 'products' }, { key: 'solutions' }],
+            css: { display: 'contents' },
+            row: () => authoring.container({ visible: 'state.menu', children: [authoring.text('Menu')] })
+          })
+        ]
+      }),
+      authoring.container({
+        id: 'mixed',
+        children: [authoring.text('Always'), authoring.text('Sometimes', { visible: 'state.open' })]
+      })
+    ]);
+
+    expect(handles.element('nav-flyouts').conditional).toBe(true);
+    // A wrapper of nothing but that is the same.
+    expect(handles.element('nav-shell').conditional).toBe(true);
+    // One child that always shows is enough to be owed.
+    expect(handles.element('mixed').conditional).toBeUndefined();
+  });
+
   it('finds a component’s instance by its own name, which its root carries — it has no node of its own', () => {
     const { handles } = authoring.authorSpace(
       space([authoring.component('card', { id: 'first' })], {

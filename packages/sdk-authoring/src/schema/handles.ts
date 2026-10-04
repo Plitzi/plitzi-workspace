@@ -39,6 +39,9 @@ export interface ElementHandle {
    * and they are correctly NOT on a page somebody has only just opened. A suite asserting "everything named is
    * visible" skips these, or it forces the author to leave unnamed exactly what a flow needs to point at.
    *
+   * Also an element whose every child is conditional: with none of them shown it shows nothing either — a list of
+   * flyouts at rest, a `display: contents` wrapper of panels.
+   *
    * Present only when true: almost nothing on a page is conditional, and the handles are serialized.
    */
   conditional?: true;

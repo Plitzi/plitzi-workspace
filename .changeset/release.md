@@ -106,6 +106,10 @@ once (`1001`, going away) rather than waiting out the grace — the ten seconds 
 
 - **A component's instance** is found by its own name: its root carries `data-plitzi-instance`, and the instance's
   handle selects it — `inspectPage` no longer reports every named instance as missing.
+- **Hidden at this width on purpose** — the burger on a desktop, the desktop menu on a phone — is listed apart
+  (`hiddenAtWidth`, and a dim line under `plitzi check`'s ✓) rather than as a problem.
+- **An element whose every child is conditional** — four flyouts in one list, each opening on the state that names
+  it — is conditional too: at rest it shows nothing, and that is it working.
 - **A carousel that scrolls by itself** (`overflow-x: auto`) is not the page scrolling sideways; the page's own pane
   still is.
 - **Templates:** `{{ state.faq ?? -1 }}` — a sign on the right of `??` — reads.
