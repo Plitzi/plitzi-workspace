@@ -1031,7 +1031,8 @@ page's scripts run.
   pulsing glow is a static gradient whose \`opacity\` or \`scale\` changes.
 - Decoration that must animate something else (a custom property, \`background-position\`) starts paused and runs
   once the page is hydrated: \`.glow { animation: glow 8s linear infinite paused; } [data-hydrated] .glow {
-  animation-play-state: running; }\` in \`customCss\`.
+  animation-play-state: running; }\` in \`customCss\`. An entrance of its own that plays once is applied only under
+  \`[data-hydrated]\`, not held paused on its first frame: the builder's canvas never goes live.
 - Entrances: \`opacity\` + a small \`translateY\`, under ~600ms, staggered by tens of ms.
 - One slow ambient loop per screen at most — not one per card: \`infinite\` runs on every visitor's battery.
 - Name what transitions (\`transition: transform 200ms, opacity 200ms\`), never \`all\`; \`will-change\` only on the

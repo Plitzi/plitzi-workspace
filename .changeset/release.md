@@ -142,7 +142,10 @@ and the MCP's local screenshots hold motion at its end. The builder's Motion tab
 
 The builder's preview plays motion as the published page does. It held everything at its end, and nothing marked
 the canvas `data-hydrated`, so neither the loops nor a space's own `[data-hydrated]` animations ever started there.
-Now an arrival plays as it comes into view, and the loops and keyframes run.
+Now an arrival plays as it comes into view, and the loops and keyframes run; **▶** on the canvas being edited runs the
+space's own `[data-hydrated]` loops too. The motion guide adds the rule this needs from a space: an entrance of its own
+that plays once is applied under `[data-hydrated]`, not held paused on its first frame, or a canvas that never goes
+live shows it where it starts.
 
 ## Authoring advice that knows where and when
 

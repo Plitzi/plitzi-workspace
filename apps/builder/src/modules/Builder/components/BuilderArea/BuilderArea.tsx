@@ -130,18 +130,19 @@ const BuilderArea = ({
     }
   }, [motionReplays]);
 
-  // In preview the canvas is the page. The frame's document is replaced when it loads, so it is made live again.
+  // In preview the canvas is the page; while Play runs, it plays like one. The frame's document is replaced when it
+  // loads, so it is made live again.
   useEffect(() => {
-    if (!previewMode) {
+    if (!previewMode && !motionPlaying) {
       return undefined;
     }
 
     const frame = ref.current;
     const rootOf = (): Element => (frame?.contentDocument ?? document).documentElement;
-    let stop = liveCanvas(rootOf());
+    let stop = liveCanvas(rootOf(), { reveal: previewMode });
     const follow = (): void => {
       stop();
-      stop = liveCanvas(rootOf());
+      stop = liveCanvas(rootOf(), { reveal: previewMode });
     };
     frame?.addEventListener('load', follow);
 
@@ -149,7 +150,7 @@ const BuilderArea = ({
       frame?.removeEventListener('load', follow);
       stop();
     };
-  }, [previewMode, iframeActive]);
+  }, [previewMode, motionPlaying, iframeActive]);
   const { supportRealTime } = use(BuilderSubscriptionsContext);
   const [[collaborators, currentPageId]] = useBuilderStore(['collaboration.collaborators', 'navigation.currentPageId']);
   const { rootRef } = use(ContainerRootContext);

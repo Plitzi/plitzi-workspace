@@ -68,6 +68,7 @@ const asElement = (id: string, node: Record<string, unknown>) => {
       flag: isRecord(definition.flag) ? { ...definition.flag, __typename: 'SpaceElementFlagGate' } : null,
       anchor: definition.anchor ?? null,
       motion: isRecord(definition.motion) ? motionOf(definition.motion) : null,
+      quiet: definition.quiet ?? null,
       __typename: 'SpaceElementDefinition'
     },
     __typename: 'SpaceElement'

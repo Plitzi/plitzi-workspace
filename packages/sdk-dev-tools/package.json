@@ -706,6 +706,10 @@
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXray.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXray.mjs"
     },
+    "./components/DevToolsPanel/tabs/QaViewer/QaXrayBoxesRow": {
+      "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXrayBoxesRow.d.ts",
+      "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXrayBoxesRow.mjs"
+    },
     "./components/DevToolsPanel/tabs/QaViewer/QaXrayRow": {
       "types": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXrayRow.d.ts",
       "import": "./dist/components/DevToolsPanel/tabs/QaViewer/QaXrayRow.mjs"

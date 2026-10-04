@@ -33,6 +33,8 @@ the page hydrates and on a slow phone. Everything else repaints, or lays the pag
 - **Main-thread decoration waits for hydration:** a sweep on a custom property, a `background-position` seam — start
   it paused, run it once the SDK's root says `data-hydrated`:
   `'.glow { animation: glow 8s linear infinite paused; } [data-hydrated] .glow { animation-play-state: running; }'`.
+  An entrance of your own that plays once is applied only under `[data-hydrated]`, not held paused on its first frame:
+  the builder's canvas never goes live, and would show it where it starts.
 - **Entrances:** `opacity` + a small `translateY`, under ~600ms, staggered by tens of ms.
 - **One ambient loop per screen**, slow — not one per card. `infinite` runs on every visitor's battery for as long
   as the page is open.

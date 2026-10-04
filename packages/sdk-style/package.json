@@ -594,6 +594,10 @@
       "types": "./dist/components/StyleInspector/categories/Size/Size.d.ts",
       "import": "./dist/components/StyleInspector/categories/Size/Size.mjs"
     },
+    "./components/StyleInspector/categories/Size/SizeContainer": {
+      "types": "./dist/components/StyleInspector/categories/Size/SizeContainer.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Size/SizeContainer.mjs"
+    },
     "./components/StyleInspector/categories/Size/SizeFit": {
       "types": "./dist/components/StyleInspector/categories/Size/SizeFit.d.ts",
       "import": "./dist/components/StyleInspector/categories/Size/SizeFit.mjs"

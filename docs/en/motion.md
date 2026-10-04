@@ -30,7 +30,8 @@ composes with a `transform` of the element's own, a loop `transform` — and a v
 none of it. It is refused where it could not play (`motion-invalid`, `motion-no-tag` on a provider with no tag). In the
 builder it is the element's **Motion** tab — each preset a tile that plays it while the pointer rests on it, and the
 choices read back as a sentence; the canvas holds it still while editing, and **▶** in the header (or **Play on the
-canvas** in the tab) plays it from the start. Over MCP, `motion` is a field of `upsertElement` and
+canvas** in the tab) plays it from the start — the space's own `[data-hydrated]` loops with it. **Preview** plays it as
+the published page does: loops running, arrivals played as they come into view. Over MCP, `motion` is a field of `upsertElement` and
 `patchElement`; `npx plitzi explain motion` lists every preset. Anything the presets do not cover is CSS, by the practices below.
 
 ## Why some animations are cheap
@@ -70,7 +71,10 @@ each of them.
    [data-hydrated] .glow { animation-play-state: running; }
    ```
 
-   The page loads still, then comes alive; nothing stutters.
+   The page loads still, then comes alive; nothing stutters. An entrance of your own that plays **once** as the page
+   goes live is applied under `[data-hydrated]` rather than held paused on its first frame —
+   `[data-hydrated] .disc { animation: unfold 2s backwards; }` — so a page that never goes live (the builder's canvas
+   while editing, one read without scripts) shows it where it ends, not where it starts.
 5. **Entrances are short and cheap.** What appears as the page loads fades and rises — `opacity` and a small
    `translateY`, under ~600 ms, with a stagger of tens of milliseconds between rows. Not a blur that clears, not a
    height that opens.
