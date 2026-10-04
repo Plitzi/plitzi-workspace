@@ -1195,6 +1195,10 @@
       "types": "./dist/source/export.d.ts",
       "import": "./dist/source/export.mjs"
     },
+    "./source/import": {
+      "types": "./dist/source/import.d.ts",
+      "import": "./dist/source/import.mjs"
+    },
     "./source/index": {
       "types": "./dist/source/index.d.ts",
       "import": "./dist/source/index.mjs"

@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { gunzipSync } from 'node:zlib';
 
 import type { Environment } from '@plitzi/sdk-shared';
-import type { SpaceExport } from '@plitzi/sdk-shared/source';
+import type { SpaceExport, SpaceImport } from '@plitzi/sdk-shared/source';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
@@ -64,6 +64,12 @@ export interface FakePlatform {
     pages: Record<string, string>;
     dependencies: Record<string, string>;
     snapshots: Partial<Record<string, Record<number, { pages: Record<string, string>; description: string }>>>;
+    /** Which state its draft is in (`SpaceExport.draft`): a push takes it to the next one. */
+    draft: string;
+    /** Whether its draft holds work of its own: a project that never had it is refused without `force`. */
+    worked: boolean;
+    /** Every push it took, as it arrived. */
+    imports: SpaceImport[];
   };
   close: () => Promise<void>;
 }
@@ -199,6 +205,21 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
             manifest: { hosts: [], tasks: [{ namespace: 'feed', action: 'read' }], routes: [] }
           });
         }
+      } else if (url.pathname === '/spaces/3/import' && req.method === 'PUT') {
+        const sent = JSON.parse(body.toString()) as SpaceImport;
+        const { pizarra } = platform;
+        if (!sent.force && sent.base !== null && sent.base !== pizarra.draft) {
+          json(res, 409, { ok: false, refusal: { code: 'DRAFT_MOVED', error: 'The space’s draft changed' } });
+        } else if (!sent.force && sent.base === null && pizarra.worked) {
+          json(res, 409, { ok: false, refusal: { code: 'DRAFT_NOT_EMPTY', error: 'The space holds work' } });
+        } else if (sent.actions?.some(({ document }) => !document || typeof document !== 'object')) {
+          json(res, 422, { ok: false, problems: ['action "broken": the document must be an object'] });
+        } else {
+          pizarra.imports.push(sent);
+          pizarra.worked = true;
+          pizarra.draft = `draft-${String(pizarra.imports.length + 1)}`;
+          json(res, 200, { ok: true, changed: true, draft: pizarra.draft });
+        }
       } else if (url.pathname === '/spaces/pizarra/export' || url.pathname === '/spaces/3/export') {
         const exported = pizarraExport(url);
         json(res, exported.status, exported.body);
@@ -287,6 +308,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
         format: 1,
         space: { id: 3, name: 'Pizarra', permanentUrl: 'pizarra' },
         version,
+        draft: snapshot ? null : platform.pizarra.draft,
         authoring: url.searchParams.get('source') === 'cloud' ? null : { exportName: 'pizarra', files: pages },
         actions: [],
         connectors: [],
@@ -329,7 +351,14 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     functions: { files: {}, version: 'v0' },
     tried: [],
     runtime: { pushed: [], variables: new Map() },
-    pizarra: { pages: { 'index.ts': 'export const pizarra = {};\n' }, dependencies: {}, snapshots: {} },
+    pizarra: {
+      pages: { 'index.ts': 'export const pizarra = {};\n' },
+      dependencies: {},
+      snapshots: {},
+      draft: 'draft-1',
+      worked: true,
+      imports: []
+    },
     browser: url => {
       const asked = new URL(url).searchParams;
       const scope = asked.get('scope') ?? '';

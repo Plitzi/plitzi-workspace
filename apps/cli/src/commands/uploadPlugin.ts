@@ -13,6 +13,9 @@ import { authorizedRequest } from '../account/session';
 import { sourceFileOf } from '../pack/pack';
 
 import type { AccountOptions } from './account';
+import type { PushOutcome } from './pushOutcome';
+import type { ConnectedSpace, Connection } from '../account/connection';
+import type { Outcome } from '../account/session';
 
 /**
  * `plitzi upload plugin`: a packed plugin put on one of the connected space's CDNs, and installed there — what the
@@ -28,7 +31,7 @@ export interface UploadPluginOptions extends AccountOptions {
   bucket?: string;
 }
 
-interface Bucket {
+export interface Bucket {
   identifier: string;
   name: string;
   /** A private bucket has no public address: it keeps the space's server code, and no page could load a plugin from it. */
@@ -36,7 +39,7 @@ interface Bucket {
   domain: string;
 }
 
-interface Cdn {
+export interface Cdn {
   identifier: string;
   name: string;
   provider: string;
@@ -44,7 +47,7 @@ interface Cdn {
 }
 
 /** Where a plugin can go: a public bucket of one of the space's CDNs. */
-interface Target {
+export interface Target {
   cdn: Cdn;
   bucket: Bucket;
 }
@@ -138,7 +141,7 @@ const manifestOf = (zip: Uint8Array): Manifest | undefined => {
  * The public bucket a plugin goes in — the one `--cdn` and `--bucket` name, the only one there is, or the one picked.
  * A private bucket keeps server code and has no public address, so it is never one.
  */
-const chooseTarget = async (
+export const chooseTarget = async (
   cdns: Cdn[],
   { cdn: givenCdn, bucket: givenBucket }: { cdn?: string; bucket?: string },
   spaceName: string
@@ -211,6 +214,87 @@ const chooseTarget = async (
   }
 };
 
+/** The space's CDNs and their buckets, asked for — or why not, in words. */
+export const listCdns = async (
+  connection: Connection,
+  space: ConnectedSpace
+): Promise<Outcome<{ connection: Connection; cdns: Cdn[] }>> => {
+  const listed = await authorizedRequest<{ cdns?: Cdn[]; error?: string }>(connection, `/spaces/${space.id}/cdns`);
+  if (!listed.ok) {
+    return listed;
+  }
+
+  const { reply } = listed.value;
+  if (reply.status !== 200) {
+    return { ok: false, error: reply.data.error ?? `Could not list ${space.name}'s CDNs (${reply.status}).` };
+  }
+
+  return { ok: true, value: { connection: listed.value.connection, cdns: reply.data.cdns ?? [] } };
+};
+
+/**
+ * A packed plugin uploaded to a bucket of the space and installed there — and its source kept beside it, when it was
+ * packed with one.
+ */
+export const uploadZip = async (
+  connection: Connection,
+  space: ConnectedSpace,
+  { zip, filename, target, source }: { zip: Uint8Array; filename: string; target: Target; source?: Uint8Array }
+): Promise<PushOutcome> => {
+  const manifest = manifestOf(zip);
+  if (!manifest) {
+    fail(`${filename} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi pack plugin.`);
+
+    return 'failed';
+  }
+
+  const { cdn, bucket } = target;
+  const label = `${manifest.root}${manifest.version ? ` ${manifest.version}` : ''}`;
+  console.log(`\nUploading ${chalk.bold(label)} to ${chalk.bold(space.name)}, in ${cdn.name} — ${bucket.name}…`);
+  const query = new URLSearchParams({ filename, bucket: bucket.identifier });
+  const uploaded = await authorizedRequest<{
+    resource?: { path?: string };
+    installed?: 'added' | 'updated';
+    error?: string;
+  }>(connection, `/spaces/${space.id}/cdns/${encodeURIComponent(cdn.identifier)}/plugins?${query}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/zip' },
+    // A copy on an ArrayBuffer of its own: a Buffer may sit on a shared pool, which a request body cannot be.
+    body: new Uint8Array(zip)
+  });
+  if (!uploaded.ok) {
+    fail(uploaded.error);
+
+    return 'failed';
+  }
+
+  const { status, data } = uploaded.value.reply;
+  if (status === 413) {
+    fail(`${filename} is larger than ${connection.api} accepts.`);
+
+    return 'failed';
+  }
+
+  if (status !== 201) {
+    fail(data.error ?? `The upload was refused (${status}).`);
+
+    return 'failed';
+  }
+
+  const installed = data.installed === 'updated' ? `now loads ${label}` : `loads ${label} from now on`;
+  console.log(chalk.green(`${space.name} ${installed}.`));
+  if (data.resource?.path) {
+    console.log(chalk.dim(`  ${data.resource.path}`));
+  }
+
+  console.log(chalk.dim('  Any builder open on the space loads it now.'));
+  if (source) {
+    await keepSource(uploaded.value.connection, space.id, source);
+  }
+
+  return 'pushed';
+};
+
 const uploadPluginCommand = async (zipGiven: string | undefined, options: UploadPluginOptions): Promise<void> => {
   const api = await apiFor(options);
   const zipPath = api ? await chooseZip(zipGiven) : undefined;
@@ -227,8 +311,7 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
     return;
   }
 
-  const manifest = manifestOf(zip);
-  if (!manifest) {
+  if (!manifestOf(zip)) {
     fail(
       `${path.basename(zipPath)} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi pack plugin.`
     );
@@ -242,72 +325,26 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
   }
 
   const { space } = connection;
-  const listed = await authorizedRequest<{ cdns?: Cdn[]; error?: string }>(connection, `/spaces/${space.id}/cdns`);
+  const listed = await listCdns(connection, space);
   if (!listed.ok) {
     fail(listed.error);
 
     return;
   }
 
-  if (listed.value.reply.status !== 200) {
-    fail(listed.value.reply.data.error ?? `Could not list ${space.name}'s CDNs (${listed.value.reply.status}).`);
-
-    return;
-  }
-
-  const target = await chooseTarget(listed.value.reply.data.cdns ?? [], options, space.name);
+  const target = await chooseTarget(listed.value.cdns, options, space.name);
   if (!target) {
     return;
   }
 
-  const { cdn, bucket } = target;
-
-  const label = `${manifest.root}${manifest.version ? ` ${manifest.version}` : ''}`;
-  console.log(`\nUploading ${chalk.bold(label)} to ${chalk.bold(space.name)}, in ${cdn.name} — ${bucket.name}…`);
-  const query = new URLSearchParams({ filename: path.basename(zipPath), bucket: bucket.identifier });
-  const uploaded = await authorizedRequest<{
-    resource?: { path?: string };
-    installed?: 'added' | 'updated';
-    error?: string;
-  }>(listed.value.connection, `/spaces/${space.id}/cdns/${encodeURIComponent(cdn.identifier)}/plugins?${query}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/zip' },
-    // A copy on an ArrayBuffer of its own: a Buffer may sit on a shared pool, which a request body cannot be.
-    body: new Uint8Array(zip)
-  });
-  if (!uploaded.ok) {
-    fail(uploaded.error);
-
-    return;
-  }
-
-  const { status, data } = uploaded.value.reply;
-  if (status === 413) {
-    fail(`${path.basename(zipPath)} is larger than ${api} accepts.`);
-
-    return;
-  }
-
-  if (status !== 201) {
-    fail(data.error ?? `The upload was refused (${status}).`);
-
-    return;
-  }
-
-  const installed = data.installed === 'updated' ? `now loads ${label}` : `loads ${label} from now on`;
-  console.log(chalk.green(`\n${space.name} ${installed}.`));
-  if (data.resource?.path) {
-    console.log(chalk.dim(`  ${data.resource.path}`));
-  }
-
-  console.log(chalk.dim('  Any builder open on the space loads it now.'));
-
   // Packed beside the zip by `plitzi pack plugin`, when its source could be: a zip from elsewhere goes up built only.
   const source = await fs.readFile(sourceFileOf(zipPath)).catch(() => undefined);
-  if (source) {
-    await keepSource(uploaded.value.connection, space.id, source);
-  }
-
+  await uploadZip(listed.value.connection, space, {
+    zip,
+    filename: path.basename(zipPath),
+    target,
+    ...(source ? { source } : {})
+  });
   console.log('');
 };
 

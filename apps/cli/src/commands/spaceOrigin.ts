@@ -7,6 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { isTextFile } from '../scaffold/fromSpace';
 
 import type { Formatter } from './projectFormatter';
+import type { ProjectFromSpace } from '../scaffold/fromSpace';
 
 /**
  * Where a project `plitzi create --from` made came from, and what the space gave it: `.plitzi/space.json`, committed
@@ -31,6 +32,11 @@ export type SpaceOrigin = {
    * revision named when one was (`create --revision`, `pull --revision`).
    */
   version: { environment: string; revision?: number };
+  /**
+   * The draft the project was last given or last pushed (`SpaceExport.draft`): what `plitzi push` names as its base,
+   * so a draft edited in the builder since is never replaced unseen. None while it follows a published environment.
+   */
+  draft?: string;
   /** Every file the space gave the project, by path: the sha256 of what was written. */
   files: Record<string, string>;
   /** The files fetched from the space's CDN, by path: the address each one was fetched from. */
@@ -82,6 +88,7 @@ export const readOrigin = async (root: string): Promise<SpaceOrigin | undefined>
       !isRecord(value.version) ||
       typeof value.version.environment !== 'string' ||
       (value.version.revision !== undefined && typeof value.version.revision !== 'number') ||
+      (value.draft !== undefined && typeof value.draft !== 'string') ||
       !isStrings(value.files) ||
       !isStrings(value.downloads) ||
       !isStrings(value.dependencies)
@@ -98,6 +105,7 @@ export const readOrigin = async (root: string): Promise<SpaceOrigin | undefined>
         environment: value.version.environment,
         ...(typeof value.version.revision === 'number' ? { revision: value.version.revision } : {})
       },
+      ...(typeof value.draft === 'string' ? { draft: value.draft } : {}),
       files: value.files,
       downloads: value.downloads,
       dependencies: value.dependencies
@@ -139,4 +147,20 @@ export const digestsOnDisk = async (
   );
 
   return Object.fromEntries(digests.filter((entry): entry is [string, string] => entry[1] !== undefined));
+};
+
+/**
+ * The files a space gives a project — its text as the project's formatter writes it, its binaries as they are — by
+ * path: what a pull compares with what is on disk, and what a push records as given once the space holds the project.
+ * The files of its CDN are not among them: they are fetched, and only when the space names another address for one.
+ */
+export const givenFiles = async (project: ProjectFromSpace, format: Formatter): Promise<Map<string, Buffer>> => {
+  const given = new Map<string, Buffer>();
+  for (const [file, text] of Object.entries(project.files)) {
+    given.set(file, Buffer.from(await format(file, text)));
+  }
+
+  Object.entries(project.binaries).forEach(([file, base64]) => given.set(file, Buffer.from(base64, 'base64')));
+
+  return given;
 };

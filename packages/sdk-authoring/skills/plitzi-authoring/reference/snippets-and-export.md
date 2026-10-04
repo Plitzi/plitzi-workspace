@@ -31,8 +31,8 @@ Never rewrite an exported space by hand. `specFromSpace({ schema, style })` read
 A server action reads back the same way: `actionSpecFromEntry({ id, document })` gives the `defineAction` spec that writes
 it — only when that spec writes the very same document, otherwise `reason` says why and it stays JSON — and
 `actionToSource(spec)` writes the module. For the whole space as a project — pages, actions, functions, the source of
-its plugins and runtime, its files — use `plitzi create --from <space>` (and `plitzi pull` later) rather than exporting
-the parts by hand.
+its plugins and runtime, its files — use `plitzi create --from <space>` (then `plitzi pull` to bring the space's changes in, and
+`plitzi push` to put the project's back) rather than exporting the parts by hand.
 
 For a document you did not author — an export, a JSON edited by hand — run the gate before serving it:
 `validateSpace({ schema, style })`.

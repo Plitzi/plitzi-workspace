@@ -332,6 +332,28 @@ const placeOf = (paths: readonly string[]) => {
   return (path: string): string => `${prefix}${path}`;
 };
 
+/**
+ * Where the project keeps what the space's runtime and plugins are built from: the module the runtime starts at, and the
+ * files each plugin's elements start at — the paths `create --from` writes them at, which `plitzi push` packs again.
+ */
+export const projectEntries = ({
+  source
+}: Pick<SpaceExport, 'source'>): {
+  runtime: string | null;
+  plugins: { type: string; entries: string[] }[];
+  /** Every file of the source tree, where the project keeps it. */
+  files: string[];
+} => {
+  const place = placeOf(Object.keys(source.files));
+  const runtime = source.runtime?.entries[0];
+
+  return {
+    runtime: runtime ? place(runtime) : null,
+    plugins: source.plugins.map(({ type, entries }) => ({ type, entries: entries.map(place) })),
+    files: Object.keys(source.files).map(place)
+  };
+};
+
 /** The import `src/main.ts` names the runtime's module by. */
 const fromMain = (path: string): string => `./${path.replace(/^src\//, '')}`;
 

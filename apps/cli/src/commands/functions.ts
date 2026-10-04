@@ -16,7 +16,8 @@ import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
 
 import type { AccountOptions } from './account';
-import type { Connection } from '../account/connection';
+import type { PushOutcome } from './pushOutcome';
+import type { ConnectedSpace, Connection } from '../account/connection';
 
 /**
  * `plitzi functions pull | push | try`: a space's functions — its own server code — edited in a project.
@@ -85,6 +86,19 @@ export const writeFunctionsState = async (root: string, state: WorkingCopy): Pro
 /** The files that differ between two copies — added, removed or changed — sorted. */
 const changedFiles = (a: Files, b: Files): string[] =>
   [...new Set([...Object.keys(a), ...Object.keys(b)])].filter(file => a[file] !== b[file]).sort();
+
+/**
+ * What `functions/` holds that the space does not: nothing at all (`none`, no `functions/index.ts`), something changed
+ * since it was pulled from this space or never pulled (`changed`), or exactly what was pulled (`unchanged`).
+ */
+export const functionsChange = async (root: string, spaceId: number): Promise<'none' | 'changed' | 'unchanged'> => {
+  const [local, state] = await Promise.all([readLocal(root), readState(root)]);
+  if (!Object.hasOwn(local, 'index.ts')) {
+    return 'none';
+  }
+
+  return state?.space === spaceId && !changedFiles(local, state.files).length ? 'unchanged' : 'changed';
+};
 
 const taskList = (draft: Pick<Draft, 'manifest'>): string =>
   draft.manifest?.tasks.length
@@ -171,41 +185,43 @@ const printProblems = (problems: Problem[]): void => {
   process.exitCode = 1;
 };
 
-export const pushFunctions = async (options: FunctionsOptions): Promise<void> => {
-  const root = await rootOf();
-  const connection = root && (await connectToSpace(options, 'to push to'));
-  if (!root || !connection || !connection.space) {
-    return;
-  }
-
+/**
+ * `functions/` saved as the draft of the space the connection works in: refused when the space's copy moved on since the
+ * pull, and — for a project that never pulled them — when the space already has functions of its own. `force` replaces
+ * whatever the space holds now, which is what `plitzi push --force` asks of every part.
+ */
+export const pushFunctionsOf = async (
+  root: string,
+  connection: Connection,
+  space: ConnectedSpace,
+  { force = false }: { force?: boolean } = {}
+): Promise<PushOutcome> => {
   const [local, state] = await Promise.all([readLocal(root), readState(root)]);
   if (!Object.hasOwn(local, 'index.ts')) {
     fail('There is no functions/index.ts here: it is where a space’s functions start. Pull them, or write it.');
 
-    return;
+    return 'failed';
+  }
+
+  if (state?.space === space.id && !changedFiles(local, state.files).length) {
+    return 'unchanged';
   }
 
   // A copy of another space's, or none at all: only an empty space may be pushed to without pulling first.
-  let base = state?.space === connection.space.id ? state.version : undefined;
+  let base = state?.space === space.id && !force ? state.version : undefined;
   if (base === undefined) {
-    const draft = await readDraft(connection, connection.space.id);
+    const draft = await readDraft(connection, space.id);
     if (!draft) {
-      return;
+      return 'failed';
     }
 
-    if (Object.keys(draft.files).length) {
-      fail(`${connection.space.name} already has functions. Pull them first: plitzi functions pull.`);
+    if (Object.keys(draft.files).length && !force) {
+      fail(`${space.name} already has functions. Pull them first: plitzi functions pull.`);
 
-      return;
+      return 'failed';
     }
 
     base = draft.version;
-  }
-
-  if (state?.space === connection.space.id && !changedFiles(local, state.files).length) {
-    console.log('Nothing to push: functions/ is what was pulled.');
-
-    return;
   }
 
   const answered = await authorizedRequest<{
@@ -215,7 +231,7 @@ export const pushFunctions = async (options: FunctionsOptions): Promise<void> =>
     problems?: Problem[];
     refusal?: { error: string };
     error?: string;
-  }>(connection, `/spaces/${connection.space.id}/functions`, {
+  }>(connection, `/spaces/${space.id}/functions`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ files: local, base })
@@ -223,37 +239,52 @@ export const pushFunctions = async (options: FunctionsOptions): Promise<void> =>
   if (!answered.ok) {
     fail(answered.error);
 
-    return;
+    return 'failed';
   }
 
   const { reply } = answered.value;
   if (reply.status === 422 && reply.data.problems) {
     printProblems(reply.data.problems);
 
-    return;
+    return 'failed';
   }
 
   if (reply.status === 409) {
     fail(
-      `${connection.space.name}’s functions changed since your pull — in the builder, or from another copy. ` +
+      `${space.name}’s functions changed since your pull — in the builder, or from another copy. ` +
         'Keep your changes aside, pull, and apply them again.'
     );
 
-    return;
+    return 'failed';
   }
 
   if (reply.status !== 200 || !reply.data.version) {
     fail(reply.data.refusal?.error ?? reply.data.error ?? `The functions were not saved (${reply.status}).`);
 
+    return 'failed';
+  }
+
+  await writeFunctionsState(root, { space: space.id, version: reply.data.version, files: local });
+  console.log(
+    chalk.green(`Functions pushed to ${space.name}’s draft — ${taskList({ manifest: reply.data.manifest ?? null })}.`)
+  );
+
+  return 'pushed';
+};
+
+export const pushFunctions = async (options: FunctionsOptions): Promise<void> => {
+  const root = await rootOf();
+  const connection = root && (await connectToSpace(options, 'to push to'));
+  if (!root || !connection || !connection.space) {
     return;
   }
 
-  await writeFunctionsState(root, { space: connection.space.id, version: reply.data.version, files: local });
-  console.log(
-    chalk.green(
-      `Pushed to ${connection.space.name}’s draft — ${taskList({ manifest: reply.data.manifest ?? null })}.`
-    ) + chalk.dim(' The live site runs them once the space is published.')
-  );
+  const outcome = await pushFunctionsOf(root, connection, connection.space);
+  if (outcome === 'unchanged') {
+    console.log('Nothing to push: functions/ is what was pulled.');
+  } else if (outcome === 'pushed') {
+    console.log(chalk.dim('The live site runs them once the space is published.'));
+  }
 };
 
 type RunReport = {

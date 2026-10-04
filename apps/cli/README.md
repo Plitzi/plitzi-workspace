@@ -59,8 +59,8 @@ code (JSON, with the reason said, where one would not read back exactly), its fu
 runtime, and its files downloaded into `public/` with every CDN address rewritten — served by the project with nothing
 of Plitzi's. `.env` gets a signing key made for it and the names of the variables and credentials the space had, never
 their values. It signs in as you and needs a space you may change; the end of `create` says what came across
-differently. What the project was given is recorded in `.plitzi/space.json` — commit it — for [`pull`](#pull). See
-`docs/en/projects-from-spaces.md`.
+differently. What the project was given is recorded in `.plitzi/space.json` — commit it — for [`pull`](#pull) and
+[`push`](#push). See `docs/en/projects-from-spaces.md`.
 
 ## The package manager
 
@@ -236,6 +236,30 @@ did not is kept, one the space no longer has is removed unless you changed it. A
 write **nothing** and name them. Both sides are compared as the project's Prettier writes them. `.env` is never touched;
 `package.json` only gains the packages the space's code now asks for. It follows the version the project was made from —
 the draft, an environment's latest, or a pinned revision.
+
+## `push`
+
+```bash
+plitzi push                                    # at a terminal: tick what goes up — what changed is ticked already
+plitzi push space functions                    # only these: space, functions, runtime, plugins
+plitzi push space --force                      # replace the draft even though it was edited in the builder since
+```
+
+The way back of `pull`: the project put on the space it works with, as its **draft**. With nobody at the terminal it
+sends what changed since the project last had the space. Each part goes up as its own command sends it, in the order
+that names come before what names them:
+
+1. `plugins` — every plugin whose source changed, packed and uploaded to the space's CDN (`--cdn`/`--bucket` when it
+   has several public buckets);
+2. `functions` — `functions/`, as `functions push`;
+3. `runtime` — the runtime module, as `runtime push`;
+4. `space` — `src/space.ts` authored, with the actions `src/actions.ts` serves and the connectors in `src/connectors/`.
+
+The draft is never replaced unseen: when it was edited in the builder since the project's last pull or push, the push
+is refused — pull first, or `--force`. A project that never had the space (one not made with `create --from`) may take a
+space nobody has worked on yet; one that holds work asks for `--force` too. Always the space the CLI is connected to,
+which must be the one the project came from, and never a published environment: publish in the builder. Afterwards
+`.plitzi/space.json` records what was sent, so `pull` keeps working — on a project that started on its own too.
 
 ## `add plugin`
 

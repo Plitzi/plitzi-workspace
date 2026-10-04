@@ -40,7 +40,7 @@ const hasElement = async (folder: string): Promise<boolean> => {
 };
 
 /** The element folders a project keeps in `src/plugins` — the ones with a declaration, which is what packs. */
-const elementFolders = async (project: ExistingProject): Promise<string[]> => {
+export const elementFolders = async (project: Pick<ExistingProject, 'root'>): Promise<string[]> => {
   const dir = path.join(project.root, 'src/plugins');
   let entries: string[] = [];
   try {
@@ -58,7 +58,7 @@ const elementFolders = async (project: ExistingProject): Promise<string[]> => {
 };
 
 /** The `-kebab-` spelling of a type, for the files it names: `seatPicker` writes `seat-picker.mjs`. */
-const fileNameOf = (folder: string): string =>
+export const fileNameOf = (folder: string): string =>
   path
     .basename(folder)
     .replace(/([a-z0-9])([A-Z])/g, '$1-$2')

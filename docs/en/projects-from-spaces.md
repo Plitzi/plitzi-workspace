@@ -1,18 +1,19 @@
-# A space as a project: `plitzi create --from` and `plitzi pull`
+# A space as a project: `plitzi create --from`, `plitzi pull` and `plitzi push`
 
 `plitzi create --from <space>` writes a project that runs a space on Plitzi on a server of your own, with everything
 the space is made of: its pages, styles, actions, functions and runtime, the source of its plugins, and its files.
 The project depends on nothing of Plitzi's, neither its servers nor its CDN. `plitzi pull` then keeps it in step with
-the space as the space goes on being edited.
+the space as the space goes on being edited, and `plitzi push` puts what the project changed back on the space.
 
-It closes a circle. The CLI already puts a project's work on Plitzi (`upload plugin`, `functions push`, `runtime
-push`); this is the way back, for a space that moves to its own server.
+It closes a circle both ways: a space that moves to its own server, and a self-hosted project that goes back up to
+Plitzi — whether it was taken out of a space or started on its own.
 
 ```bash
 plitzi create my-board --from pizarra                 # the draft, as code, served self-hosted
 plitzi create my-board --from pizarra --environment production --revision 3   # a snapshot, as it was frozen
 plitzi create my-board --from pizarra --source cloud  # the pages stay on Plitzi; everything else runs here
 cd my-board && plitzi pull                            # later: what changed on the space, brought in
+plitzi push                                           # and what changed here, put back as the space's draft
 ```
 
 Pizarra is the yardstick: a board works on `localhost` from a fresh `create`, is drawn on, and is kept across a reload.
@@ -176,9 +177,72 @@ A file of the space's CDN is fetched again only when the space names another add
 `package.json` only gains the packages the space's code now asks for (a range the project changed is kept, and said).
 The functions' working copy is refreshed with them, unless a change here to one of them stood.
 
+## `plitzi push`
+
+The way back of `pull`, run in the project: what changed in it put back on the space the CLI is connected to, as the
+space's **draft** — publishing a snapshot stays the builder's.
+
+```bash
+plitzi push                      # at a terminal: every part offered, what changed ticked; with nobody there, what changed
+plitzi push space functions      # only these parts: space, functions, runtime, plugins
+plitzi push space --force        # replace the draft even though it changed since
+```
+
+**What changed.** Since the project last had the space — its last `create --from`, `pull` or `push`, as
+`.plitzi/space.json` records: a plugin or the runtime when a file of its closure (`packSource`'s) is not the one
+recorded; the functions when `functions/` is not what `.plitzi/functions.json` holds; the space when a file of
+`src/space.ts`, `src/space/`, `src/actions*` or `src/connectors/` is not — and the platform says when the draft already
+is what was sent, and writes nothing. A project that never had the space has everything changed.
+
+**The parts, in order.** What is named goes up before what names it, and a part that fails stops the push there (what
+went up before it is said, and recorded):
+
+| Part | What goes up | As |
+|---|---|---|
+| `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `pack plugin` + `upload plugin` (`--cdn`, `--bucket`) |
+| `functions` | `functions/` | `functions push` |
+| `runtime` | the module the runtime starts at (`create --from`'s, else `src/runtime.ts`) | `runtime push` |
+| `space` | `src/space.ts` authored, the actions `src/actions.ts` serves, the manifests in `src/connectors/` | `PUT /spaces/:spaceId/import` |
+
+**Never over somebody's work unseen.** The export carries which state the draft is in (`draft`, a digest of its schema,
+style, actions and connectors); the project records it, and a push names it as its `base`. A draft edited in the
+builder since is refused (`409 DRAFT_MOVED`): pull, and push again — or `--force` to replace it. A project that never
+had the space sends no base, and is refused (`409 DRAFT_NOT_EMPTY`) unless the space is still the blank space it was
+created as, with no actions or connectors: a space made from a template, or edited once, is somebody's work, and takes
+`--force`. `--force` reaches the functions too, whose own check (`functions push`) it passes the same way.
+
+**Which space.** The one the CLI is connected to (`plitzi space`), which must be the one `.plitzi/space.json` names; and
+the draft only — a project following a published environment follows the draft first (`pull --environment main`).
+
+**What it records.** `.plitzi/space.json` as the space now holds the project, so `pull` compares with it from then on —
+but only the files of what was sent, as the space gives them back: a page edited in the builder and not pushed over is
+still the builder's change to the next pull. A project that never had the space records it whole, and from then on
+`pull` works on it as on one `create --from` made; its files laid out differently from `create --from`'s are kept as its
+own (`pull`'s "deleted here" and "changed here").
+
+## The import
+
+`PUT /spaces/:spaceId/import` (`plitzi-sdk-server`'s `services/import`) takes `SpaceImport` (`@plitzi/sdk-shared/source`,
+beside `SpaceExport`) and answers `SpaceImportResult`. Under `spaceManage` — the permission every part it replaces asks
+for in the builder: the settings, the actions, the connectors.
+
+- The schema and style replace the draft's whole; the schema's `definition` stays the space's (its name and address are
+  the row's, never a project's to change). Actions and connectors, when sent, become exactly the ones sent; left out,
+  the space's are left as they are.
+- Refused, with nothing written: `409` when the draft is not the `base`, or with no base holds work; `422` with every
+  problem of what was sent — its shape, an integrity error the schema did not have before (`integrityRegressions`), an
+  action document or connector manifest the engine could not run.
+- Taken: recorded in the change history as the person, schedules reconciled, caches dropped, and `SPACE_UPDATED` /
+  `STYLE_UPDATED` published on the space's channel, so a builder open on it shows it at once. A draft already what was
+  sent is `changed: false`, and nothing is written.
+
 ## Decided
 
 - **Who may take a space out.** Whoever may change it: owner, administrator, writer. Signed in, always.
+- **Who may push one back.** Whoever may manage it (`spaceManage`): a push replaces its settings, actions and
+  connectors, which the builder asks that of.
+- **What a push chooses.** Everything that changed, or the parts named; at a terminal, ticked from a list. Never a
+  published environment.
 - **Files.** Downloaded into the project and served by it: a self-hosted project is its own server and depends on
   nothing of Plitzi's, its CDN included.
 - **SDK versions.** A plugin is rebuilt by the project against the project's own `@plitzi/*`: the snapshot carries the
@@ -199,8 +263,10 @@ The functions' working copy is refreshed with them, unless a change here to one 
 `plitzi create` and `plitzi add plugin` puts its plugin, runtime and functions on Plitzi; `create --from` takes the
 space back out, every source file byte for byte, the action as code and the pages authoring the same documents; that
 project serves it with nothing of Plitzi's; a snapshot comes out as it was frozen after the draft moved on; `pull` keeps
-a change made in the project, writes the space's, and stops on a file changed on both; and the self-hosted project's own
-change goes back up for the next project to take out. A step a later change breaks fails there, named.
+a change made in the project, writes the space's, and stops on a file changed on both; the self-hosted project's own
+change goes back up for the next project to take out; and `plitzi push` puts the whole project back — plugin,
+functions, runtime and pages — sends nothing the second time, and is refused over the builder's edit until `--force`.
+A step a later change breaks fails there, named.
 
 **The same cycle in CI:** `src/services/api/spaceAsProject.test.ts`, in `yarn test`, runs the same steps with the same
 fixtures (`test/e2e/helpers/tallyProject.ts`, `test/e2e/helpers/project.ts`) and only the platform's storage in memory
@@ -209,10 +275,11 @@ sources are the real ones, and so are the CLI and the project it writes and runs
 platform installs: the workspace's build through the portals in development, the released one in the platform's CI.
 
 - `apps/cli`: `pack/source.test.ts` (the closure and guards), `scaffold/fromSpace.test.ts` (what a project holds),
-  `commands/createFrom.test.ts` and `commands/pull.test.ts` (against the CLI's fake platform).
+  `commands/createFrom.test.ts`, `commands/pull.test.ts` and `commands/push.test.ts` (against the CLI's fake platform),
+  `commands/askChecks.test.ts` (the list ticked at a terminal).
 - `sdk-authoring`: `decompile/actions.test.ts` (actions as code, and the module they are written as).
 - `e2e`: `tests/server/fromSpace` — a small platform of its own answers the export, the built CLI writes the project
   inside the workspace (so it runs on the workspace's packages, not npm's), and the project serves the page with its
   plugin rendered on the server, its runtime's route, and its action running its function.
-- `plitzi-sdk-server`: `services/export` (merging), `services/api/export`, `services/sources`, and the seeds' actions
-  read back as code.
+- `plitzi-sdk-server`: `services/export` (merging), `services/api/export`, `services/import` (a push read, the draft's
+  digest), `services/api/import`, `services/sources`, and the seeds' actions read back as code.

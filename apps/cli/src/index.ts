@@ -14,6 +14,7 @@ import { importPage } from './commands/importPage';
 import packPluginCommand from './commands/packPlugin';
 import packSourceCommand from './commands/packSource';
 import { pull } from './commands/pull';
+import { push, PUSH_PARTS } from './commands/push';
 import {
   powerRuntime,
   pushRuntime,
@@ -42,6 +43,7 @@ import type { ImportOptions } from './commands/importPage';
 import type { PackPluginOptions } from './commands/packPlugin';
 import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
+import type { PushOptions } from './commands/push';
 import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
 import type { ShotOptions } from './commands/shot';
 import type { UpgradeOptions } from './commands/upgrade';
@@ -158,6 +160,21 @@ program
   .option('--revision <n>', 'Pin a published revision of it, or latest to follow its newest again')
   .option(...API_OPTION)
   .action((options: PullOptions) => pull(options));
+
+program
+  .command('push')
+  .argument(
+    '[parts...]',
+    `Only these: ${PUSH_PARTS.join(', ')}. None named: what changed — ticked at a terminal, to choose from`
+  )
+  .description(
+    'Put the project back on the space it works with, as its draft: the way back of pull. Refused when the draft changed since'
+  )
+  .option('-f, --force', 'Replace the space’s draft even when it changed since, or holds work this project never had')
+  .option('--cdn <identifier>', 'Which of the space’s CDNs a plugin goes to, when it has several')
+  .option('--bucket <identifier>', 'Which public bucket a plugin goes in, when there are several')
+  .option(...API_OPTION)
+  .action((parts: string[], options: PushOptions) => push(parts, options));
 
 const add = program.command('add').description('Add something to the project you are in');
 

@@ -15,7 +15,8 @@ import { authorizedRequest } from '../account/session';
 import { packSource } from '../pack/source';
 
 import type { AccountOptions } from './account';
-import type { Connection } from '../account/connection';
+import type { PushOutcome } from './pushOutcome';
+import type { ConnectedSpace, Connection } from '../account/connection';
 
 /**
  * `plitzi runtime push | status | vars`: a space's runtime — its own server code, run as a process of its own beside
@@ -50,8 +51,6 @@ type Environment = {
 /** A size a runtime may run at, and whether the space's plan includes it. */
 type Size = { name: string; label: string; cpu: string; memory: string; included: boolean };
 
-const DEFAULT_ENTRY = path.join('src', 'runtime.ts');
-
 type Packer = { packRuntime: (entry: string) => Promise<Uint8Array> };
 
 const isPacker = (value: unknown): value is Packer => isRecord(value) && typeof value.packRuntime === 'function';
@@ -73,26 +72,29 @@ const projectPacker = async (root: string): Promise<Packer | undefined> => {
   return undefined;
 };
 
-/** Packs the project's runtime module and keeps it as the space's draft runtime — which a publish takes live. */
-export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
-  const root = (await projectHere('whose runtime to push'))?.root;
-  const connection = root && (await connectToSpace(options, 'to push to'));
-  if (!root || !connection || !connection.space) {
-    return;
-  }
+export const DEFAULT_RUNTIME_ENTRY = path.join('src', 'runtime.ts');
 
-  const entry = path.resolve(root, options.entry ?? DEFAULT_ENTRY);
+/**
+ * The project's runtime module packed and kept as the draft runtime of the space the connection works in — which a
+ * publish takes live — with the source it was packed from beside it.
+ */
+export const pushRuntimeOf = async (
+  root: string,
+  connection: Connection,
+  space: ConnectedSpace,
+  entry: string
+): Promise<PushOutcome> => {
   try {
     await fs.access(entry);
   } catch {
     fail(`There is no ${path.relative(root, entry)}: the module whose default export is defineRuntime({ start }).`);
 
-    return;
+    return 'failed';
   }
 
   const packer = await projectPacker(root);
   if (!packer) {
-    return;
+    return 'failed';
   }
 
   let bytes: Uint8Array;
@@ -101,42 +103,54 @@ export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
   } catch (error) {
     fail(`It does not pack: ${error instanceof Error ? error.message : String(error)}`);
 
-    return;
+    return 'failed';
   }
 
   const answered = await authorizedRequest<{ ok?: boolean; digest?: string; size?: number; error?: string }>(
     connection,
-    `/spaces/${String(connection.space.id)}/runtime`,
+    `/spaces/${String(space.id)}/runtime`,
     { method: 'PUT', headers: { 'content-type': 'application/octet-stream' }, body: new Uint8Array(bytes) }
   );
   if (!answered.ok) {
     fail(answered.error);
 
-    return;
+    return 'failed';
   }
 
   const { reply } = answered.value;
   if (reply.status !== 200 || !reply.data.digest) {
     fail(reply.data.error ?? `The runtime was not kept (${String(reply.status)}).`);
 
-    return;
+    return 'failed';
   }
 
   console.log(
     chalk.green(
-      `${connection.space.name}’s draft runtime is ${reply.data.digest.slice(0, 12)} ` +
-        `(${(bytes.byteLength / 1024).toFixed(0)} KB).`
+      `${space.name}’s draft runtime is ${reply.data.digest.slice(0, 12)} (${(bytes.byteLength / 1024).toFixed(0)} KB).`
     ) + chalk.dim(' It starts in a moment; publish the space to take it live.')
   );
 
   // Its source beside it (docs/en/projects-from-spaces.md): what it was packed from, so the space can be taken back out as a project.
   try {
     const source = await packSource({ root, kind: 'runtime', name: 'runtime', entries: [entry] });
-    await keepSource(answered.value.connection, connection.space.id, source.bytes);
+    await keepSource(answered.value.connection, space.id, source.bytes);
   } catch (error) {
     console.log(chalk.yellow('  Its source is not kept, so a project taken from the space gets it built only:'));
     console.log(chalk.yellow(`  ${error instanceof Error ? error.message : String(error)}`));
   }
+
+  return 'pushed';
+};
+
+/** Packs the project's runtime module and keeps it as the space's draft runtime — which a publish takes live. */
+export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
+  const root = (await projectHere('whose runtime to push'))?.root;
+  const connection = root && (await connectToSpace(options, 'to push to'));
+  if (!root || !connection || !connection.space) {
+    return;
+  }
+
+  await pushRuntimeOf(root, connection, connection.space, path.resolve(root, options.entry ?? DEFAULT_RUNTIME_ENTRY));
 };
 
 const readRuntime = async (

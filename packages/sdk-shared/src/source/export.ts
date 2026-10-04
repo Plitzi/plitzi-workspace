@@ -29,6 +29,11 @@ export type SpaceExport = {
   space: { id: number; name: string; permanentUrl: string };
   /** The version taken out: the draft (`main`, revision 0), or a snapshot an environment holds. */
   version: Pick<SpaceVersionContents, 'environment' | 'revision' | 'snapshot'>;
+  /**
+   * Which state of the draft's documents this is — its schema, style, actions and connectors — what `plitzi push`
+   * checks the space's draft has not moved on from. `null` for a snapshot, which no push writes.
+   */
+  draft: string | null;
   /** The space as authoring code, by path (`index.ts`, a file per page): none for a project that reads it from Plitzi. */
   authoring: { exportName: string; files: Record<string, string> } | null;
   /**

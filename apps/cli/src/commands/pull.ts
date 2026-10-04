@@ -10,7 +10,7 @@ import { download, fetchExport, functionsOnDisk, notFetched, versionLabel } from
 import { findProject } from './existingProject';
 import { writeFunctionsState } from './functions';
 import { projectFormatter } from './projectFormatter';
-import { digest, digestsOf, readOrigin, writeOrigin } from './spaceOrigin';
+import { digest, digestsOf, givenFiles, readOrigin, writeOrigin } from './spaceOrigin';
 import { fail } from './terminal';
 import { installCommand } from '../scaffold';
 import { projectFromSpace } from '../scaffold/fromSpace';
@@ -189,12 +189,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
 
   const next = projectFromSpace(exported, origin.source);
   const format = await projectFormatter(root);
-  const given = new Map<string, Buffer>();
-  for (const [file, text] of Object.entries(next.files)) {
-    given.set(file, Buffer.from(await format(file, text)));
-  }
-
-  Object.entries(next.binaries).forEach(([file, base64]) => given.set(file, Buffer.from(base64, 'base64')));
+  const given = await givenFiles(next, format);
 
   // A file of the CDN is fetched again only when the space names another address for it, or it is not here. One that
   // is the same, or could not be fetched, is left as it is — never taken for a file the space no longer gives.
@@ -268,10 +263,12 @@ export const pull = async (options: PullOptions): Promise<void> => {
     ...[...untouched].flatMap(file => (origin.files[file] ? [[file, origin.files[file]] as const] : []))
   ]);
   const updated: SpaceOrigin = {
-    ...origin,
+    format: origin.format,
     api,
+    source: origin.source,
     space: exported.space,
     version: asked.version,
+    ...(exported.draft ? { draft: exported.draft } : {}),
     files,
     downloads: Object.fromEntries(
       next.downloads.flatMap(({ url, to }) => {

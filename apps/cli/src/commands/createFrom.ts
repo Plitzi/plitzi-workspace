@@ -12,6 +12,8 @@ import { digestsOnDisk, writeOrigin } from './spaceOrigin';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
 
+import type { Connection } from '../account/connection';
+import type { Outcome } from '../account/session';
 import type { ProjectFromSpace } from '../scaffold/fromSpace';
 import type { SpaceExport } from '@plitzi/sdk-shared/source';
 
@@ -47,8 +49,44 @@ export const versionLabel = ({ environment, revision }: SpaceVersionAsked): stri
 };
 
 /**
- * A version of the space named — its id or its permanent URL — put together as a project, or why not, said and
- * `undefined`. `name` is what it is called in what is printed: `from`, unless a pull names it by its id.
+ * A version of the space named — its id or its permanent URL — put together as a project, asked for on a connection that
+ * is signed in: the export, or why not in words. `name` is what the space is called in them.
+ */
+export const requestExport = async (
+  connection: Connection,
+  from: string,
+  { source, version, name = from }: { source: 'local' | 'cloud'; version: SpaceVersionAsked; name?: string }
+): Promise<Outcome<SpaceExport>> => {
+  const query = new URLSearchParams({
+    source,
+    environment: version.environment,
+    ...(version.revision ? { revision: String(version.revision) } : {})
+  });
+  const answered = await authorizedRequest<unknown>(
+    connection,
+    `/spaces/${encodeURIComponent(from)}/export?${query.toString()}`
+  );
+  if (!answered.ok) {
+    return answered;
+  }
+
+  const { status, data } = answered.value.reply;
+  if (status === 200 && isExport(data)) {
+    return { ok: true, value: data };
+  }
+
+  const said = isRecord(data) && typeof data.error === 'string' ? data.error : undefined;
+  const why: Partial<Record<number, string>> = {
+    403: `You may not take ${name} out: it takes being able to change it — its owner, an administrator or a writer.`,
+    404: said ?? `There is no space ${name} you can reach.`
+  };
+
+  return { ok: false, error: why[status] ?? said ?? `The platform would not hand ${name} over (${String(status)}).` };
+};
+
+/**
+ * A version of the space named put together as a project — signing in first when there is no session — or why not,
+ * said and `undefined`. `name` is what it is called in what is printed: `from`, unless a pull names it by its id.
  */
 export const fetchExport = async (
   api: string,
@@ -61,34 +99,14 @@ export const fetchExport = async (
   }
 
   console.log(`\nTaking ${chalk.bold(name)} (${versionLabel(version)}) out of ${api}…`);
-  const query = new URLSearchParams({
-    source,
-    environment: version.environment,
-    ...(version.revision ? { revision: String(version.revision) } : {})
-  });
-  const answered = await authorizedRequest<unknown>(
-    connection,
-    `/spaces/${encodeURIComponent(from)}/export?${query.toString()}`
-  );
-  if (!answered.ok) {
-    fail(answered.error);
+  const exported = await requestExport(connection, from, { source, version, name });
+  if (!exported.ok) {
+    fail(exported.error);
 
     return undefined;
   }
 
-  const { status, data } = answered.value.reply;
-  if (status === 200 && isExport(data)) {
-    return data;
-  }
-
-  const said = isRecord(data) && typeof data.error === 'string' ? data.error : undefined;
-  const why: Partial<Record<number, string>> = {
-    403: `You may not take ${from} out: it takes being able to change it — its owner, an administrator or a writer.`,
-    404: said ?? `There is no space ${from} you can reach.`
-  };
-  fail(why[status] ?? said ?? `The platform would not hand ${from} over (${String(status)}).`);
-
-  return undefined;
+  return exported.value;
 };
 
 /** A file of the space's CDN, fetched. */
@@ -172,6 +190,7 @@ export const recordOrigin = async (
       environment: exported.version.environment,
       ...(pinned ? { revision: exported.version.revision } : {})
     },
+    ...(exported.draft ? { draft: exported.draft } : {}),
     files,
     downloads: Object.fromEntries(
       project.downloads.filter(({ to }) => Object.hasOwn(files, to)).map(({ url, to }) => [to, url])

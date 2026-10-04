@@ -32,6 +32,7 @@ const exported = (overrides: Partial<SpaceExport> = {}): SpaceExport => ({
   format: 1,
   space: { id: 42, name: 'Pizarra', permanentUrl: 'pizarra' },
   version: { environment: 'main', revision: 0, snapshot: null },
+  draft: 'draft-1',
   authoring: {
     exportName: 'pizarra',
     files: {

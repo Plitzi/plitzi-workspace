@@ -158,7 +158,8 @@ serve it — worth running over anything that arrives as a file.
 A space on Plitzi comes out whole, as a project wired to this server: `npx @plitzi/cli create my-site --from <space>`
 writes its pages as authoring code, its actions as `defineAction` code, its functions, the source of its plugins and
 runtime, and its files into `public/` — a draft, or any published snapshot (`--environment`, `--revision`) — and
-`plitzi pull` keeps it in step. See `docs/en/projects-from-spaces.md` in the workspace.
+`plitzi pull` keeps it in step, and `plitzi push` puts what changed in it back on the space. See
+`docs/en/projects-from-spaces.md` in the workspace.
 
 ## Configuration
 
