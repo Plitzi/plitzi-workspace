@@ -29,8 +29,8 @@ row's names: `r.item` and `r.index` for a binding or `from`, `r.inTemplate.item`
   `container({ subType: 'li' })`, or a component whose root is one. Anything else is a box inside a list, no item to a
   screen reader (`list-row-not-li`; `fixSpace` makes a plain container one). A link or a button is wrapped in a
   `listItem`, which is then what the list lays out: a card that is a link fills its item with `display: 'grid'` on the
-  `listItem`. A list with `items` has no markers; one without is indented and bulleted, and
-  `{ margin: '0px', padding: '0px', 'list-style-type': 'none' }` takes that off. A grid of cards is the root's class.
+  `listItem`. Every list is indented (40px) with 10px below it, and one without `items` is bulleted too:
+  `{ margin: '0px', padding: '0px' }` on the root takes the space off. A grid of cards is the root's class.
 - Fixed data is `items: [ … ]` on the list itself — no provider needed. Worth it when the rows ARE data — written from
   an array, or rows that come and go (`repeated-shape` points at sibling copies). Three cards a person rewords on the
   canvas are easier to edit as three cards than as a JSON array.

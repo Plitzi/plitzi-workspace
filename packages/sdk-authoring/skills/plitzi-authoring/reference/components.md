@@ -56,7 +56,8 @@ pages: [{ name: 'Shop', slug: 'shop', body: [
   a `json` prop `item`, read as `{{ props.item.name }}`.
 - **Slots** are elements of the component's tree that an instance fills. `children: [ … ]` fills a component with one
   slot; `children: { '<slot>': [ … ] }` names the slot for each. What fills a slot is the instance's, not the
-  component's: it is authored on the page and sees the page's sources.
+  component's: it is authored on the page and sees the page's sources. A prop's value is read as a template on the
+  instance, so words that show `{{ … }}` as text (docs, a tutorial) go in a slot — a `markdown` child — not in a prop.
 - **Closed.** Inside, nothing but `props` and the globals (`state`, `auth`, `navigation`, `theme`, `variables`,
   `computed`). A binding inside a component onto a provider of the page is refused — "nothing in this component answers
   to …" — because the component would render differently wherever it was placed. Put the provider inside the component,
