@@ -56,6 +56,8 @@ const exportOf = (source: 'local' | 'cloud'): SpaceExport => {
     format: 1,
     space: { id: 7, name: 'Tally', permanentUrl: 'tally' },
     version: { environment: 'main', revision: 0, snapshot: null },
+    // The draft is what is taken out, so it has a digest; the platform computes it and the CLI only carries it back.
+    draft: 'e2e-draft',
     authoring:
       source === 'local'
         ? {
