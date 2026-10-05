@@ -1,9 +1,12 @@
 import { processTwigParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import { pluginKvPrefix, pluginSigned } from './scope';
 import { fetchOutbound } from '../../helpers/outboundGuard';
+import { prefixKv } from '../actions/runtime/namespaceKv';
 import { countRate } from '../actions/runtime/rateLimit';
 
 import type { FunctionContext, FunctionFetch, FunctionUser } from './contract';
+import type { FunctionScope } from './scope';
 import type { ActionTaskContext } from '../actions/types';
 import type { SSRUser } from '@plitzi/sdk-shared';
 
@@ -36,8 +39,13 @@ const userOf = ({ id, username, email, verified, permissions, roles }: SSRUser):
  * request says `{{credential.<key>}}`. The value is resolved here and never handed to the code.
  */
 const functionFetch =
-  (ctx: ActionTaskContext, hosts: readonly string[]): FunctionFetch =>
+  (ctx: ActionTaskContext, hosts: readonly string[], scope?: FunctionScope): FunctionFetch =>
   async (input, init = {}) => {
+    // The space's credentials are the space's: a plugin it uses was trusted to draw, not to spend them.
+    if (init.credential && scope) {
+      throw new Error(`A plugin's functions name no credential of the space's ("${init.credential}")`);
+    }
+
     const credential = init.credential ? await ctx.credential(init.credential) : undefined;
     if (init.credential && !credential) {
       throw new Error(`Credential "${init.credential}" is not available for this space`);
@@ -100,24 +108,54 @@ const unsigned = () => Promise.reject(new Error('This server signs nothing: its 
 
 /**
  * What a space's code is handed, built from the run's own context: the one place a {@link FunctionContext} is made.
- * A self-hosted server hands it to the code directly; the platform answers the sandbox's calls with it.
+ * A self-hosted server hands it to the code directly; the platform answers the sandbox's calls with it. With a `scope`,
+ * it is a plugin's code, and gets the plugin's corner of the space (`./scope`).
  */
-export const functionContextFor = (ctx: ActionTaskContext, hosts: readonly string[]): FunctionContext => ({
-  spaceId: ctx.spaceId,
-  environment: ctx.environment,
-  runId: ctx.runId,
-  trigger: ctx.trigger,
-  callerId: ctx.callerId,
-  ...(ctx.user ? { user: userOf(ctx.user) } : {}),
-  kv: ctx.kv,
-  rateLimit: (bucket, limit) => countRate(ctx.kv, ctx.callerId, bucket, limit),
-  sign: ctx.sign ?? unsigned,
-  verify: ctx.verify ?? unsigned,
-  fetch: functionFetch(ctx, hosts),
-  publish: ctx.publish ?? unavailable('publish'),
-  grant: ctx.grant ?? unavailable('grant'),
-  revoke: ctx.revoke ?? unavailable('revoke'),
-  log: (...values) => ctx.log(lineOf(values)),
-  emit: ctx.emit,
-  signal: ctx.signal
-});
+export const functionContextFor = (
+  ctx: ActionTaskContext,
+  hosts: readonly string[],
+  scope?: FunctionScope
+): FunctionContext => {
+  const shared = {
+    spaceId: ctx.spaceId,
+    environment: ctx.environment,
+    runId: ctx.runId,
+    trigger: ctx.trigger,
+    callerId: ctx.callerId,
+    ...(ctx.user ? { user: userOf(ctx.user) } : {}),
+    fetch: functionFetch(ctx, hosts, scope),
+    log: (...values: unknown[]) => ctx.log(lineOf(values)),
+    emit: ctx.emit,
+    signal: ctx.signal
+  };
+
+  if (!scope) {
+    return {
+      ...shared,
+      kv: ctx.kv,
+      rateLimit: (bucket, limit) => countRate(ctx.kv, ctx.callerId, bucket, limit),
+      sign: ctx.sign ?? unsigned,
+      verify: ctx.verify ?? unsigned,
+      publish: ctx.publish ?? unavailable('publish'),
+      grant: ctx.grant ?? unavailable('grant'),
+      revoke: ctx.revoke ?? unavailable('revoke')
+    };
+  }
+
+  // A plugin's corner of the space: its own keys and counters, signatures only it verifies, and no channel of the space's.
+  const kv = prefixKv(ctx.kv, pluginKvPrefix(scope.plugin));
+  const { sign, verify } = ctx;
+  const noChannel = () =>
+    Promise.reject(new Error('The functions of a plugin reach none of the realtime channels of its space'));
+
+  return {
+    ...shared,
+    kv,
+    rateLimit: (bucket, limit) => countRate(kv, ctx.callerId, bucket, limit),
+    sign: sign ? value => sign(pluginSigned(scope.plugin, value)) : unsigned,
+    verify: verify ? (value, signature) => verify(pluginSigned(scope.plugin, value), signature) : unsigned,
+    publish: noChannel,
+    grant: noChannel,
+    revoke: noChannel
+  };
+};

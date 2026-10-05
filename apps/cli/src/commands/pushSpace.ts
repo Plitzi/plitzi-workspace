@@ -51,17 +51,9 @@ const projectActions = async (root: string): Promise<SpaceImport['actions'] | { 
   }
 
   const loaded: unknown = await import(pathToFileURL(file).href);
-  const lookups = isRecord(loaded) && isRecord(loaded.lookups) ? loaded.lookups : undefined;
-  if (!lookups || typeof lookups.listActions !== 'function') {
-    return {
-      problem: 'src/actions.ts exports no `lookups` with a listActions: it is where the project’s actions are.'
-    };
-  }
-
-  // The project's own module, checked to be a function above; what it answers is checked below.
-  const listed: unknown = await (lookups.listActions as () => Promise<unknown>)();
+  const listed = isRecord(loaded) ? loaded.actions : undefined;
   if (!Array.isArray(listed)) {
-    return { problem: 'src/actions.ts: lookups.listActions() answers no list.' };
+    return { problem: 'src/actions.ts exports no `actions` list: it is where the project’s actions are.' };
   }
 
   return listed.flatMap((entry: unknown) =>
@@ -77,10 +69,13 @@ const projectActions = async (root: string): Promise<SpaceImport['actions'] | { 
   );
 };
 
-/** The connectors in `src/connectors/`, one manifest a file — `undefined` when there is no such folder. */
+/**
+ * The connectors in `src/connectors/`, one manifest a file — `undefined` when it holds none: a project that never had
+ * any leaves the space's as they are, rather than removing one added in the builder since.
+ */
 const projectConnectors = async (root: string): Promise<SpaceImport['connectors'] | { problem: string }> => {
   const read = await readJsonFolder(path.join(root, 'src/connectors'));
-  if (!read) {
+  if (!read || read.length === 0) {
     return undefined;
   }
 
@@ -101,17 +96,6 @@ const projectConnectors = async (root: string): Promise<SpaceImport['connectors'
             ]
           : []
       );
-};
-
-/** The element types of plugins the project runs as they were built (`vendor/plugins/<type>/`): authored as known. */
-const builtPluginTypes = async (root: string): Promise<string[]> => {
-  try {
-    return (await fs.readdir(path.join(root, 'vendor/plugins'), { withFileTypes: true }))
-      .filter(entry => entry.isDirectory())
-      .map(entry => entry.name);
-  } catch {
-    return [];
-  }
 };
 
 const count = (entries: Entries | undefined, noun: string): string =>
@@ -141,7 +125,7 @@ export const pushSpaceOf = async (
   try {
     const { schema, style } = authorSpace(project.space, {
       plugins: project.plugins,
-      pluginTypes: await builtPluginTypes(root)
+      pluginTypes: project.pluginTypes
     });
     documents = { schema, style };
   } catch (error) {

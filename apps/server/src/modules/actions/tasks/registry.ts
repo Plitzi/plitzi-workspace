@@ -1,6 +1,7 @@
 import { builtinTasks } from './builtins';
 import { dbTasks } from './db';
 import { nativeTasks } from '../../functions/native';
+import { pluginTaskProblem } from '../../functions/scope';
 
 import type { FunctionsDefinition } from '../../functions/contract';
 import type { ActionTask, ActionTaskRegistry, RegisteredTask } from '../types';
@@ -38,6 +39,8 @@ export const taskNameProblem = (
 export type TaskRegistryOptions = {
   /** At least one database driver is registered, so `db.query` has an engine to run against. */
   db?: boolean;
+  /** The server halves of the plugins this server ships, by plugin type: their tasks are `<type>.<action>`. */
+  plugins?: Readonly<Record<string, FunctionsDefinition>>;
 };
 
 /**
@@ -49,7 +52,7 @@ export type TaskRegistryOptions = {
  */
 export const createTaskRegistry = (
   functions: readonly FunctionsDefinition[] = [],
-  { db = false }: TaskRegistryOptions = {}
+  { db = false, plugins = {} }: TaskRegistryOptions = {}
 ): ActionTaskRegistry => {
   const tasks = new Map<string, RegisteredTask>();
 
@@ -70,6 +73,25 @@ export const createTaskRegistry = (
     }
 
     tasks.set(name, { ...task, name, origin: 'deployment' });
+  });
+
+  // A plugin's tasks are named after it, so no two plugins — and no plugin and the deployment — claim one name.
+  Object.entries(plugins).forEach(([plugin, definition]) => {
+    nativeTasks([definition], { plugin }).forEach(task => {
+      const problem =
+        taskNameProblem(task) ??
+        (task.namespace === plugin ? undefined : pluginTaskProblem(plugin, task.namespace, task.action));
+      if (problem) {
+        throw new Error(`[Actions] ${problem}`);
+      }
+
+      const name = taskName(task);
+      if (tasks.has(name)) {
+        throw new Error(`[Actions] Task "${name}" is registered twice`);
+      }
+
+      tasks.set(name, { ...task, name, origin: 'plugin' });
+    });
   });
 
   return {

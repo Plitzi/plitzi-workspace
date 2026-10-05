@@ -6,6 +6,9 @@ export {
   FUNCTION_ROUTES_PREFIX,
   isFunctionRoutePath,
   isFunctionsSourcePath,
+  PLUGIN_FUNCTIONS_SOURCE,
+  PLUGIN_ROUTES_SEGMENT,
+  pluginRoutePath,
   readFunctionsSource
 } from './functions';
 export { triggerAccess, triggerCacheMs, triggerHasStaleVerify, triggerInput, triggerVerify } from './triggerParams';

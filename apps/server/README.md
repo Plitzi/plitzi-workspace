@@ -172,7 +172,7 @@ wires itself.
 | `httpVersion` | `1 \| 2 \| 3` | `2` with `tls`, else `1` | HTTP protocol version. Falls back to the nearest available lower version. |
 | `tls` | `{ key, cert, minVersion? }` | — | TLS key and certificate. Required for versions 2 and 3; optional for version 1. |
 | `devMode` | `boolean` | `false` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). Off, the process must run with `NODE_ENV=production` or React renders with its development build; the server says so once, at `error`. |
-| `devReload` | `boolean` | `false` | Every page this server renders listens for `server.reloadPages()` and loads again — for a project that re-authors its space on save (what `plitzi create` writes into `main.ts`) — and loads again too when it reconnects to a server that restarted (a new process), so a change to the server's code or a plugin reaches the open page. Not turned on by `devMode`: each open page holds a connection for it. |
+| `devReload` | `boolean` | `false` | Every page this server renders listens for `server.reloadPages()` and loads again — for a project that re-authors its space on save (what `plitzi create` writes into `main.ts`) — and loads again too when it reconnects to a server that restarted (a new process), so a change to the server's code reaches the open page. With `devMode` too, a plugin whose source changes is built again and swapped where it is drawn on every open page — the rest of the page, its state included, stays as it was; a plugin whose declaration changed loads the page again. Not turned on by `devMode`: each open page holds a connection for it. |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `flags` | `Record<string, boolean> \| ({ spaceId, environment }) => Record<string, boolean>` | — | This deployment's say over the spaces' feature flags: above what a space declares, below the SDK's `flags` prop and a tester's dev tools, and only for flags the space declares. A function answers per space. Server actions and RSC resolve with it too. See `docs/en/feature-flags.md` in the workspace. |
@@ -677,6 +677,28 @@ server.plugins.register('my-chart', {
 ```
 
 `register` clears any in-memory cache for that plugin name, so the next request triggers a fresh compile/copy. Previously compiled disk files are reused if they are within their TTL; call `server.plugins.invalidate(name)` beforehand to force a full rebuild.
+
+### A plugin's server half
+
+A plugin can bring server code — its `functions/`, written as a space's functions are — whose routes answer under
+`/fn/plugins/<type>/` and whose tasks are steps named `<type>.<action>`, run with a plugin's narrower `ctx` (its own
+corner of `kv`, none of the space's credentials or channels). This server's own plugins hand theirs over by type:
+
+```ts
+import { createServer, loadFunctions } from '@plitzi/sdk-server';
+
+const [board] = await loadFunctions(new URL('./plugins/Board/functions/', import.meta.url));
+
+const server = createServer({ adapters, functions: { native, plugins: { board } } });
+
+// While it runs: a server half loaded again — or, with none, taken away — without a restart.
+server.functions.setPlugin('board', board);
+```
+
+`loadFunctionsSource(files)` loads one from its files rather than a folder: what a packed plugin carries as
+`functions.source.json`. The plugins a space uploaded reach a run through `action.lookups.getPluginFunctions`. The
+whole of it — `ctx`, routes, how a packed plugin carries it — is in
+[functions § a plugin's server half](../../docs/en/functions.md#10-a-plugins-server-half).
 
 ## React Server Components (RSC)
 

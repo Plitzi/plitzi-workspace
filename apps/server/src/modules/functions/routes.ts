@@ -1,10 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
+import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions/functions';
+
 import { answerCall, readCall, responseOf, wireRequestOf, wireResponseFrom } from './capabilities';
 import { functionLimitsFor } from './config';
 import { functionContextFor } from './context';
-import { parseRouteKey } from './manifest';
+import { parseRouteKey, reservedRouteProblem } from './manifest';
 import { FunctionFailure } from './protocol';
+import { pluginOfPath } from './scope';
 import { serverLog } from '../../helpers/serverLog';
 import { ActionRefusal } from '../actions/runtime/errors';
 
@@ -12,6 +15,7 @@ import type { FunctionsConfig } from './config';
 import type { FunctionContext, FunctionRoute, FunctionsDefinition } from './contract';
 import type { RouteKey } from './manifest';
 import type { FunctionUsage, SpaceFunctions } from './protocol';
+import type { FunctionScope } from './scope';
 import type { TaskContextSource } from '../actions/runtime/runAction';
 import type { Environment, SpaceRevision, SSRUser } from '@plitzi/sdk-shared';
 
@@ -116,24 +120,48 @@ const failed = (visit: RouteVisit, key: string, error: unknown): Response => {
 
 export type RouteSources = {
   config: FunctionsConfig;
+  /** The plugins' server halves this server ships, as they are now — a development server replaces them as they change. */
+  plugins?: () => ReadonlyMap<string, FunctionsDefinition>;
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<SpaceFunctions | undefined>;
+  getPluginFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<Record<string, SpaceFunctions> | undefined>;
   taskContext: TaskContextSource;
 };
 
-/**
- * The route a request reaches, if one does: the deployment's own (its native functions') first, then the space's —
- * each run with the same context a task of theirs gets, `trigger: 'route'`.
- */
-export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources) => {
-  const native = (config.native ?? []).flatMap((definition: FunctionsDefinition) =>
-    Object.entries(definition.routes ?? {}).map(([key, handler]) => ({
-      key,
-      handler,
-      hosts: definition.allow?.hosts ?? []
-    }))
-  );
+type NativeRoute = { key: string; handler: FunctionRoute; hosts: readonly string[] };
 
-  const contextOf = (visit: RouteVisit, key: string, hosts: readonly string[]): FunctionContext => {
+/** A definition's routes, as a table this process answers from. */
+const routesOf = (definition: FunctionsDefinition): NativeRoute[] =>
+  Object.entries(definition.routes ?? {}).map(([key, handler]) => ({
+    key,
+    handler,
+    hosts: definition.allow?.hosts ?? []
+  }));
+
+/**
+ * The route a request reaches, if one does: under `/plugins/<type>/`, that plugin's — this server's own, then the one
+ * the space's plugin brought; anywhere else, the deployment's own (its native functions') first, then the space's. Each
+ * runs with the same context a task of theirs gets, `trigger: 'route'` — a plugin's with a plugin's narrower one.
+ */
+export const createRoutes = ({
+  config,
+  plugins = () => new Map(Object.entries(config.plugins ?? {})),
+  getFunctions,
+  getPluginFunctions,
+  taskContext
+}: RouteSources) => {
+  const native = (config.native ?? []).flatMap(routesOf);
+  // `/fn/plugins/` is where plugins answer: a deployment route there would be one no plugin could ever reach past.
+  const reserved = native.find(route => parseRouteKey(route.key)?.segments[0] === PLUGIN_ROUTES_SEGMENT);
+  if (reserved) {
+    throw new Error(`[Functions] ${reservedRouteProblem(reserved.key)}`);
+  }
+
+  const contextOf = (
+    visit: RouteVisit,
+    key: string,
+    hosts: readonly string[],
+    scope?: FunctionScope
+  ): FunctionContext => {
     const runId = randomUUID();
     const ctx = taskContext(
       {
@@ -157,24 +185,32 @@ export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources
             serverLog.info('Functions', `route ${key} of space ${String(visit.spaceId)}: ${line}`);
           }
         },
-        hosts
+        hosts,
+        scope
       ),
       trigger: 'route'
     };
   };
 
-  const nativeRoute = (visit: RouteVisit, method: string, path: string): RouteHandler | undefined => {
+  /** A route of code this process loaded: the deployment's own, or the server half of a plugin it ships. */
+  const loadedRoute = (
+    routes: readonly NativeRoute[],
+    visit: RouteVisit,
+    method: string,
+    path: string,
+    scope?: FunctionScope
+  ): RouteHandler | undefined => {
     const match = matchRoute(
-      native.map(route => route.key),
+      routes.map(route => route.key),
       method,
       path
     );
-    const route = match ? native.find(entry => entry.key === match.key) : undefined;
+    const route = match ? routes.find(entry => entry.key === match.key) : undefined;
     if (!match || !route) {
       return undefined;
     }
 
-    const handler: FunctionRoute = route.handler;
+    const { handler } = route;
 
     return {
       key: match.key,
@@ -182,7 +218,7 @@ export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources
         try {
           return withoutCookies(
             await handler(withoutCredentials(request), {
-              ...contextOf(visit, match.key, route.hosts),
+              ...contextOf(visit, match.key, route.hosts, scope),
               params: match.params
             })
           );
@@ -193,13 +229,22 @@ export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources
     };
   };
 
-  const spaceRoute = async (visit: RouteVisit, method: string, path: string): Promise<RouteHandler | undefined> => {
-    const functions = await getFunctions?.(visit.spaceId, visit.at);
+  /** A route of code the runner runs: the space's own, or the server half of a plugin it uses. */
+  const runnerRoute = (
+    functions: SpaceFunctions | undefined,
+    visit: RouteVisit,
+    method: string,
+    path: string,
+    scope?: FunctionScope
+  ): RouteHandler | undefined => {
     const runner = functions?.runner ?? config.runner;
     const match = functions ? matchRoute(functions.manifest.routes, method, path) : undefined;
     if (!runner || !functions || !match) {
       return undefined;
     }
+
+    // What the usage record calls it: a plugin's route says whose it is.
+    const usageName = scope ? `plugin ${scope.plugin} route ${match.key}` : `route ${match.key}`;
 
     return {
       key: match.key,
@@ -209,7 +254,7 @@ export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources
           return Response.json({ error: refusal }, { status: 429 });
         }
 
-        const fnCtx = contextOf(visit, match.key, functions.manifest.hosts);
+        const fnCtx = contextOf(visit, match.key, functions.manifest.hosts, scope);
         let ok = false;
         let spent: FunctionUsage | undefined;
         try {
@@ -243,16 +288,41 @@ export const createRoutes = ({ config, getFunctions, taskContext }: RouteSources
           return failed(visit, match.key, error);
         } finally {
           if (spent) {
-            config.onUsage?.({ spaceId: visit.spaceId, task: `route ${match.key}`, ok, usage: spent });
+            config.onUsage?.({ spaceId: visit.spaceId, task: usageName, ok, usage: spent });
           }
         }
       }
     };
   };
 
+  const pluginRoute = async (
+    visit: RouteVisit,
+    method: string,
+    { plugin, path }: { plugin: string; path: string }
+  ): Promise<RouteHandler | undefined> => {
+    const scope = { plugin };
+    const own = plugins().get(plugin);
+    if (own) {
+      return loadedRoute(routesOf(own), visit, method, path, scope);
+    }
+
+    const brought = (await getPluginFunctions?.(visit.spaceId, visit.at))?.[plugin];
+
+    return runnerRoute(brought, visit, method, path, scope);
+  };
+
   return {
     /** The route that answers `method path` (the path after `/fn`), for this visit — or none. */
-    routeFor: async (visit: RouteVisit, method: string, path: string): Promise<RouteHandler | undefined> =>
-      nativeRoute(visit, method, path) ?? (await spaceRoute(visit, method, path))
+    routeFor: async (visit: RouteVisit, method: string, path: string): Promise<RouteHandler | undefined> => {
+      const addressed = pluginOfPath(path);
+      if (addressed) {
+        return pluginRoute(visit, method, addressed);
+      }
+
+      return (
+        loadedRoute(native, visit, method, path) ??
+        runnerRoute(await getFunctions?.(visit.spaceId, visit.at), visit, method, path)
+      );
+    }
   };
 };

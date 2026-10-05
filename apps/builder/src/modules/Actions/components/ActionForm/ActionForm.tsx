@@ -192,6 +192,14 @@ const offerCredentials = (params: Record<string, unknown>, credentials: SpaceCre
 /** Where the space's own functions are listed among the steps: apart from the platform's tasks. */
 const SPACE_FUNCTIONS_GROUP = 'Functions';
 
+/** …and the server halves of the plugins it uses, apart again: their steps came with a plugin. */
+const PLUGIN_FUNCTIONS_GROUP = 'Plugins';
+
+const GROUPS: Partial<Record<ActionTaskDescriptor['origin'], string>> = {
+  space: SPACE_FUNCTIONS_GROUP,
+  plugin: PLUGIN_FUNCTIONS_GROUP
+};
+
 const asNodeDefinitions = (tasks: ActionTaskDescriptor[], credentials: SpaceCredential[]): InteractionCallback[] => {
   const triggerParams = triggerParamsFor(credentials);
 
@@ -207,7 +215,7 @@ const asNodeDefinitions = (tasks: ActionTaskDescriptor[], credentials: SpaceCred
       action: task.name,
       title: task.title,
       type: 'task' as const,
-      ...(task.origin === 'space' ? { group: SPACE_FUNCTIONS_GROUP } : {}),
+      ...(GROUPS[task.origin] ? { group: GROUPS[task.origin] } : {}),
       params: offerCredentials(task.params, credentials) as InteractionCallback['params'],
       preview: {}
     }))

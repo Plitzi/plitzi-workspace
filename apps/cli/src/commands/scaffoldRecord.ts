@@ -4,6 +4,10 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { PACKAGE_MANAGERS } from '../scaffold';
+
+import type { PackageManager } from '../scaffold';
+
 /**
  * What the CLI last wrote of a project's machinery (`machineryFiles`): a digest of each file as it was written, never
  * the file — as `.plitzi/space.json` keeps of what a pull wrote. Enough for `plitzi upgrade` to tell a file nobody
@@ -25,6 +29,11 @@ export interface ScaffoldRecord {
    * to date, one that says something else is the project's. Absent in a record from before scripts were kept.
    */
   scripts?: Record<string, string>;
+  /**
+   * The package manager the files were written for — what their commands say. A lockfile says it of a project that
+   * installed; this says it of one that has not yet (`--no-install`), or whose lockfile is not kept.
+   */
+  packageManager?: PackageManager;
 }
 
 const stringRecord = (value: unknown): Record<string, string> =>
@@ -33,6 +42,9 @@ const stringRecord = (value: unknown): Record<string, string> =>
         Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
       )
     : {};
+
+const isPackageManager = (value: unknown): value is PackageManager =>
+  PACKAGE_MANAGERS.some(manager => manager === value);
 
 export const digestOf = (contents: string): string => createHash('sha256').update(contents).digest('hex');
 
@@ -52,7 +64,8 @@ export const readScaffoldRecord = async (root: string): Promise<ScaffoldRecord |
     format: 1,
     cli: parsed.cli,
     files: stringRecord(parsed.files),
-    ...(isRecord(parsed.scripts) ? { scripts: stringRecord(parsed.scripts) } : {})
+    ...(isRecord(parsed.scripts) ? { scripts: stringRecord(parsed.scripts) } : {}),
+    ...(isPackageManager(parsed.packageManager) ? { packageManager: parsed.packageManager } : {})
   };
 };
 
@@ -77,15 +90,21 @@ const sorted = (entries: Record<string, string>): Record<string, string> =>
 export const writeScaffoldRecord = async (
   root: string,
   cli: string,
-  { files, scripts }: { files?: Record<string, string>; scripts?: Record<string, string> }
+  {
+    files,
+    scripts,
+    packageManager
+  }: { files?: Record<string, string>; scripts?: Record<string, string>; packageManager?: PackageManager }
 ): Promise<void> => {
   const previous = await readScaffoldRecord(root);
   const keptScripts = scripts ?? previous?.scripts;
+  const keptManager = packageManager ?? previous?.packageManager;
   const record: ScaffoldRecord = {
     format: 1,
     cli,
     files: sorted(files ?? previous?.files ?? {}),
-    ...(keptScripts ? { scripts: sorted(keptScripts) } : {})
+    ...(keptScripts ? { scripts: sorted(keptScripts) } : {}),
+    ...(keptManager ? { packageManager: keptManager } : {})
   };
   await fs.mkdir(path.join(root, '.plitzi'), { recursive: true });
   await fs.writeFile(path.join(root, SCAFFOLD_RECORD_FILE), `${JSON.stringify(record, null, 2)}\n`);

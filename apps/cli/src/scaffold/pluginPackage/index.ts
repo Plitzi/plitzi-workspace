@@ -16,7 +16,7 @@ import type { PluginAnswers, ProjectFiles } from '../types';
 
 export { pluginNameProblem, pluginNames } from './names';
 export { shapeFromFlags } from './shape';
-export { declarationsRegistry, elementsRegistry } from './source';
+export { declarationsRegistry, elementsRegistry, pluginFunctionsFile } from './source';
 export type { PluginNames } from './names';
 export type { ElementShape, ShapeFlags } from './shape';
 export type { ElementText } from './source';

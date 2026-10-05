@@ -1,3 +1,7 @@
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
@@ -13,11 +17,25 @@ const BASE = `http://127.0.0.1:${PORT}`;
 
 let server: SSRServer | undefined;
 
-const start = async (options: { devMode: boolean; devReload?: boolean }): Promise<SSRServer> => {
+const start = async (
+  options: { devMode: boolean; devReload?: boolean },
+  plugins?: { dir: string; names: string[]; sources: Record<string, string> }
+): Promise<SSRServer> => {
   const started = createServer({
     port: PORT,
     ...options,
-    adapters: createJsonAdapters({ offlineData: { schema: EMPTY_SCHEMA.schema, style: EMPTY_STYLE_SCHEMA } })
+    ...(plugins
+      ? {
+          pluginsCacheDir: path.join(plugins.dir, 'built'),
+          plugins: Object.fromEntries(
+            Object.entries(plugins.sources).map(([name, js]) => [name, { js, action: 'compile' as const, version: '1.0.0' }])
+          )
+        }
+      : {}),
+    adapters: createJsonAdapters({
+      offlineData: { schema: EMPTY_SCHEMA.schema, style: EMPTY_STYLE_SCHEMA },
+      ...(plugins ? { deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames: plugins.names } } : {})
+    })
   });
   started.listen(PORT, '127.0.0.1');
   await vi.waitFor(async () => {
@@ -91,5 +109,47 @@ describe('reloadPages', () => {
     await start({ devMode: true });
     expect(await (await fetch(`${BASE}/`)).text()).not.toContain('/__plitzi/reload');
     expect((await fetch(`${BASE}/__plitzi/reload`)).headers.get('content-type')).not.toContain('text/event-stream');
+  });
+});
+
+/** Reads a dev event stream until `event` has been said, and answers what it said with it. */
+const heard = async (reader: ReadableStreamDefaultReader<Uint8Array> | undefined, event: string): Promise<unknown> => {
+  const decoder = new TextDecoder();
+  let said = '';
+  await vi.waitFor(
+    async () => {
+      const chunk = await reader?.read();
+      said += decoder.decode(chunk?.value);
+      expect(said).toContain(`event: ${event}`);
+    },
+    { timeout: 10_000 }
+  );
+
+  return JSON.parse(new RegExp(`event: ${event}\\ndata: (.*)\\n`).exec(said)?.[1] ?? 'null');
+};
+
+describe('a plugin edited while the server runs', () => {
+  it('is built again and handed to the open pages, which swap it without loading again', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-hot-plugin-'));
+    try {
+      const source = path.join(dir, 'Card.tsx');
+      await fs.writeFile(source, 'export default () => <p>first</p>;\n');
+      await start({ devMode: true, devReload: true }, { dir, names: ['card'], sources: { card: source } });
+
+      const page = await (await fetch(`${BASE}/`)).text();
+      expect(page).toContain('hotPlugins: true');
+      const stream = await fetch(`${BASE}/__plitzi/reload`);
+      const reader = stream.body?.getReader();
+      await heard(reader, 'hello');
+
+      await fs.writeFile(source, 'export default () => <p>second</p>;\n');
+      const swapped = (await heard(reader, 'plugin')) as { key: string; js: string };
+      await reader?.cancel();
+
+      expect(swapped.key).toBe('card');
+      expect(await (await fetch(`${BASE}${swapped.js}`)).text()).toContain('second');
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
   });
 });

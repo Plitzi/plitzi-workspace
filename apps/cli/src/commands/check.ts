@@ -94,7 +94,10 @@ const projectSpace = async (root: string): Promise<Authored | { problem: string 
   }
 
   try {
-    const { handles, schema } = authorSpace(project.space, { plugins: project.plugins });
+    const { handles, schema } = authorSpace(project.space, {
+      plugins: project.plugins,
+      pluginTypes: project.pluginTypes
+    });
 
     return { handles, schema };
   } catch (error) {

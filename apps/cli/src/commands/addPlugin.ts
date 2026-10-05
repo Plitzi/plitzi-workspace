@@ -4,16 +4,20 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { findProject, readPackageJson } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { askChoice, askText, atTerminal, fail, isEmpty, refuseWithoutTerminal, writeFiles } from './terminal';
 import {
   declarationsRegistry,
   elementsRegistry,
+  pluginFunctionsFile,
   pluginNameProblem,
   pluginNames,
   projectDeclarations,
   scaffoldElement,
+  SDK_VERSION,
   shapeFromFlags
 } from '../scaffold';
 
@@ -38,7 +42,52 @@ export interface AddPluginOptions extends ShapeFlags {
   title?: string;
   description?: string;
   force?: boolean;
+  /** With a server half: `functions/index.ts` in the element's folder. */
+  server?: boolean;
 }
+
+/**
+ * A plugin package's server halves are typed by `@plitzi/sdk-server`, which a package that had none never installed:
+ * added to its `devDependencies` — only for the types, the server that loads the plugin runs the code — and said.
+ */
+const requireServerTypes = async (root: string): Promise<void> => {
+  const file = path.join(root, 'package.json');
+  const json: unknown = JSON.parse(await fs.readFile(file, 'utf-8'));
+  if (!isRecord(json)) {
+    return;
+  }
+
+  const declared = [json.dependencies, json.devDependencies, json.peerDependencies].some(
+    list => isRecord(list) && '@plitzi/sdk-server' in list
+  );
+  if (declared) {
+    return;
+  }
+
+  const devDependencies = isRecord(json.devDependencies) ? json.devDependencies : {};
+  json.devDependencies = Object.fromEntries(
+    Object.entries({ ...devDependencies, '@plitzi/sdk-server': SDK_VERSION }).sort(([a], [b]) => a.localeCompare(b))
+  );
+  await fs.writeFile(file, `${JSON.stringify(json, null, 2)}\n`);
+  console.log('\n@plitzi/sdk-server added to devDependencies, for the server half’s types: install to use it.');
+};
+
+/**
+ * Why an element of this project cannot have a server half, if it cannot: only something a server runs can — a
+ * server-mode project, or a plugin package (whatever server loads it runs it).
+ */
+const serverProblem = (project: ExistingProject): string | undefined => {
+  const { plitzi } = project;
+  if (plitzi?.kind === 'plugin' || (plitzi?.kind === 'project' && plitzi.mode === 'server')) {
+    return undefined;
+  }
+
+  return plitzi?.kind === 'project'
+    ? '--server writes a server half, and this project renders in the browser alone: nothing here would run it. ' +
+        'A server-mode project (plitzi create --mode server), or a plugin package, can.'
+    : '--server writes a server half, which runs on @plitzi/sdk-server: add it to a server-mode project made by ' +
+        'plitzi create, or to a plugin package.';
+};
 
 const DEFAULT_NAME = 'my-element';
 
@@ -277,6 +326,13 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
     return;
   }
 
+  const refusedServer = options.server ? serverProblem(project) : undefined;
+  if (refusedServer) {
+    fail(refusedServer);
+
+    return;
+  }
+
   const givenProblem = namesGiven.length > 0 ? namesProblem(namesGiven) : undefined;
   if (givenProblem) {
     fail(givenProblem);
@@ -355,7 +411,10 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
         ''
       );
       // Written as the project's own Prettier writes it, so the first `format` it runs changes nothing.
-      const files = scaffoldElement(name, { title, description, owner: '' }, shape);
+      const files = {
+        ...scaffoldElement(name, { title, description, owner: '' }, shape),
+        ...(options.server ? { 'functions/index.ts': pluginFunctionsFile(elementNames) } : {})
+      };
       const formatted = await Promise.all(
         Object.entries(files).map(
           async ([file, text]) =>
@@ -371,6 +430,15 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
       return `${path.relative(process.cwd(), target)} — the ${elementNames.type} element`;
     });
     console.log(chalk.green(`\n${written.join('\n')}`));
+    if (options.server) {
+      console.log(
+        `\nIts server half is functions/index.ts: routes under /fn/plugins/${addedNames.map(names => names.type).join(', ')}/ ` +
+          '— usePluginRoute(type) in the component names them — and steps <type>.<action>.'
+      );
+      if (project.plitzi?.kind === 'plugin') {
+        await requireServerTypes(project.root);
+      }
+    }
 
     const { plitzi } = project;
     if (plitzi?.kind === 'plugin') {

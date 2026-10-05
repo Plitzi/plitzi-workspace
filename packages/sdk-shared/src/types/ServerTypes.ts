@@ -600,6 +600,8 @@ export type ActionLookupsConfig = {
   getConnector?: (spaceId: number, connectorId: string, at?: SpaceRevision) => Promise<unknown>;
   /** The space's own functions as of that revision — `SpaceFunctions` in `@plitzi/sdk-server/functions`. */
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
+  /** The server halves of the plugins the space uses, by plugin type — a `SpaceFunctions` each. */
+  getPluginFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
   /** The feature flags the space declares as of that revision — what a flow reads as `{{ flags.<name> }}`. */
   getFlags?: (spaceId: number, at?: SpaceRevision) => Promise<Schema['flags']>;
 };
@@ -1204,6 +1206,11 @@ export type SSRServer = {
    * calls once it wrote the new documents, instead of restarting the server. Nothing otherwise.
    */
   reloadPages: () => void;
+  /**
+   * The server halves of the plugins this server ships (`functions.plugins`), replaced while it runs: what a development
+   * server does when a plugin's `functions/` change. `definition` is what `loadFunctions` loads; none takes it away.
+   */
+  readonly functions: { setPlugin: (plugin: string, definition: unknown) => void };
 };
 
 /** A key/value store with per-entry expiry, backing the OAuth layer's short-lived protocol state (registered

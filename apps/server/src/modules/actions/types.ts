@@ -147,9 +147,16 @@ export type ActionLookups = {
   /**
    * The space's own functions as of that revision — the bundle and what it declared when saved, run by the deployment's
    * sandbox (`functions.runner`), or by the space's own runtime when it answers one with a `runner` of its own. Only
-   * asked when a run names a task the deployment does not have, or a request a path under `/api/`.
+   * asked when a run names a task the deployment does not have, or a request a path under `/fn/`.
    */
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<SpaceFunctions | undefined>;
+  /**
+   * The server halves of the plugins the space uses, as of that revision, by plugin type — each built and checked as a
+   * plugin's (`prepareFunctions` with its `scope`) and run in the same sandbox as the space's own, with a plugin's
+   * narrower `ctx`. Asked like `getFunctions`: for a task the deployment does not have, or a path under
+   * `/fn/plugins/<type>/`.
+   */
+  getPluginFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<Record<string, SpaceFunctions> | undefined>;
   /**
    * The feature flags the space declares as of that revision, for a flow that reads `{{ flags.<name> }}`. Only asked
    * for a run whose document names `flags` at all. Absent, such a flow sees no flags — and the server says so.
@@ -258,7 +265,8 @@ export type ActionTask<T extends Record<string, unknown> = Record<string, unknow
  * Whose task it is: the deployment's — shipped with the server, or its own native functions — or the space's, from the
  * functions it saved. The run treats both alike; an editor lists them apart, as the platform's steps and the space's own.
  */
-export type ActionTaskOrigin = 'deployment' | 'space';
+/** Whose step it is: the deployment's, the space's own functions', or the server half of a plugin the space uses. */
+export type ActionTaskOrigin = 'deployment' | 'space' | 'plugin';
 
 export type RegisteredTask = ActionTask<Record<string, unknown>> & { name: string; origin: ActionTaskOrigin };
 

@@ -17,7 +17,7 @@ const nodeReader: FunctionsSourceReader = {
 };
 
 /** Whether a module's default export has a definition's shape: what a server can register without surprises. */
-const isFunctionsDefinition = (value: unknown): value is FunctionsDefinition => {
+export const isFunctionsDefinition = (value: unknown): value is FunctionsDefinition => {
   if (!isRecord(value)) {
     return false;
   }
@@ -51,8 +51,14 @@ export const readFunctionsDir = (dir: string | URL): Promise<FunctionsSource> =>
  * depends on how the server itself runs. A directory with nothing in it is no functions; one that does not build, or
  * whose `index.ts` exports no definition, stops the server with where it is wrong.
  */
-export const loadFunctions = async (dir: string | URL): Promise<FunctionsDefinition[]> => {
-  const source = await readFunctionsDir(dir);
+export const loadFunctions = async (dir: string | URL): Promise<FunctionsDefinition[]> =>
+  loadFunctionsSource(await readFunctionsDir(dir));
+
+/**
+ * The same, from the files themselves (`FunctionsSource`, by their path): what a packed plugin carries as
+ * `functions.source.json`, loaded by a server that runs the plugin as it was packed.
+ */
+export const loadFunctionsSource = async (source: FunctionsSource): Promise<FunctionsDefinition[]> => {
   if (!Object.keys(source).length) {
     return [];
   }

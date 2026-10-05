@@ -177,7 +177,12 @@ ${
 server builds the entry with esbuild, keeps React external so the plugin runs on the one copy the page already
 has, serves the bundle to the browser AND imports it into the render — so the component's markup is in the HTML
 before any JavaScript arrives. A plugin registered any other way renders only after hydration, which is a hole in
-the document for anyone reading the page before then.`
+the document for anyone reading the page before then. With \`start:dev\` running, a saved plugin is swapped into the
+open page without reloading it, and a new folder is registered as it appears.
+
+A plugin can bring server code of its own: \`add plugin board --server\` writes \`Board/functions/index.ts\`, whose
+routes answer under \`/fn/plugins/board/\` — the component names them with \`usePluginRoute('board')\` — with a \`kv\`
+of the plugin's own.`
     : `\`src/main.ts\` hands them to \`render()\`. There is no server here, so each one is part of this project's own
 bundle and Vite hot-replaces it like any other module.`
 }

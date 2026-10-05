@@ -4,6 +4,7 @@ import { openEventStream } from '../sse';
 
 import type { EventStream } from '../sse';
 import type { Stage } from '../types';
+import type { PluginEntry } from '@plitzi/sdk-shared';
 
 /** Where an open page listens for "the space changed: load again", in development. */
 export const DEV_RELOAD_PATH = '/__plitzi/reload';
@@ -45,6 +46,12 @@ export const createDevReload = () => {
     stage,
     /** Every page open on this server loads again. */
     reload: (): void => listening.forEach(stream => stream.send('reload', {})),
+    /**
+     * A plugin built again: every open page imports its new bundle and swaps it where it is drawn (`keyName` is what
+     * the page registered it as), and points its stylesheet at the new one — without loading again.
+     */
+    plugin: ({ keyName, js, css }: PluginEntry): void =>
+      listening.forEach(stream => stream.send('plugin', { key: keyName, js, css })),
     /** The streams ended — the server is going away, and each page reconnects to whichever comes up next. */
     close: (): void => {
       listening.forEach(stream => stream.close());

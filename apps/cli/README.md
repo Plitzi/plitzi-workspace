@@ -140,7 +140,10 @@ project's own, in files it reads: `src/serverOptions.ts` (handed to `createServe
 `action.kv`, `rsc`) and, with `--source local`, `src/actions.ts` (the space's server actions, one `defineAction` each).
 What `main.ts` wires itself — where the space comes from, the plugins, `public/`, `functions/`, the actions' lookups —
 is left out of `serverOptions`' type, and comes after it, so an option there can never unwire it.
-`functions/` holds the project's own server code; `start:dev` restarts on a change to any of them.
+`functions/` holds the project's own server code; `start:dev` restarts on a change to any of them. A plugin is not
+server code to restart for: a save to one is built again and swapped in the open pages where it is drawn — the rest of
+the page, its state included, stays — its server half (`src/plugins/<Name>/functions/`) is loaded again in place, and a
+new plugin folder is registered without a restart.
 
 ## `create --template blank` and `--template catalog`
 
@@ -253,7 +256,9 @@ one the project made its own is a diff, left unless `--take` names it (`all` for
 `.prettierignore` names them, so the project's `format` never turns one into a file `upgrade` believes was changed. A file of the project's own
 that the machinery reads (`src/serverOptions.ts`, `src/actions.ts`) is written when the project has none and the
 `main.ts` reading it is the CLI's, and never replaced. A script is the same: one the CLI wrote and nobody changed takes
-today's command, one the project changed is left and said (`.plitzi/scaffold.json` records both). `update` is the same
+today's command, one the project changed is left and said (`.plitzi/scaffold.json` records both, and the package
+manager the files were written for — what a project not installed yet has no lockfile to say). In a project made from
+a space, `src/main.ts` and `.prettierignore` are the space's: `upgrade` names them and leaves them to `plitzi pull`. `update` is the same
 command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
 older than the `@plitzi/sdk-authoring` installed.
 
@@ -314,7 +319,7 @@ adds), its `Settings.tsx` panel for the builder, and the `index.ts` that puts th
 what the builder shows, and what it is for, and checks every folder is free before writing any.
 
 - **In a project `plitzi create` wrote**, it goes in `src/plugins`, where the project already looks: nothing to
-  register, and `start:dev` restarts onto it. Host it with `custom({ renderType: 'seatPicker' })` in `src/space.ts`
+  register, and a running `start:dev` picks it up without a restart. Host it with `custom({ renderType: 'seatPicker' })` in `src/space.ts`
   — or, when the space lives in Plitzi, with a Custom element in the builder.
 - **In a project written before plugins were found by folder**, it goes in `src/plugins` too, and prints the line to
   add to the `plugins` list in `src/main.ts`.
@@ -338,6 +343,14 @@ started by it reads, fired with the `useTickerEvents()` hook it gets — never o
 is an action a flow can call. `--headless` is an element with nothing to see: hidden on a page, a badge in the builder,
 and `drawsNothing` in its declaration, so a page check does not look for it. The files are written as the project's
 Prettier writes them.
+
+`--server` gives the element a server half: `functions/index.ts` in its folder, written like a space's functions — its
+routes answer under `/fn/plugins/<type>/` (`usePluginRoute(type)` in the component names them), its tasks are steps
+`<type>.<action>`, and it runs with a plugin's own corner of `kv`, none of the space's credentials or channels. In a
+server-mode project or a plugin package (which gets `@plitzi/sdk-server` for the types); a project that renders in the
+browser alone has nothing to run it, and is refused. `pack plugin` carries it as `functions.source.json`, and the
+platform builds and keeps it privately when the plugin is uploaded — see
+[functions § a plugin's server half](../../docs/en/functions.md#10-a-plugins-server-half).
 
 ## `create --plugin`
 

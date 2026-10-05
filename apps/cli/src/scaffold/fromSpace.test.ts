@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { defineAction } from '@plitzi/sdk-authoring';
 
 import { envFromSpace, projectFromSpace } from './fromSpace';
+import { machineryFiles, scaffold } from './index';
 import { SDK_VERSION } from './project';
 
 import type { CreateAnswers } from './types';
@@ -59,7 +60,13 @@ const exported = (overrides: Partial<SpaceExport> = {}): SpaceExport => ({
     plugins: [{ type: 'board', entries: ['plugins/Board/index.ts'] }]
   },
   builtOnly: {
-    plugins: [{ type: 'oldChart', files: [{ url: `${CHART}/plugin-manifest.json`, path: 'plugin-manifest.json' }] }],
+    plugins: [
+      {
+        type: 'oldChart',
+        files: [{ url: `${CHART}/plugin-manifest.json`, path: 'plugin-manifest.json' }],
+        functions: { 'index.ts': 'export default {};\n' }
+      }
+    ],
     runtime: null
   },
   assets: [{ url: WORLD, path: 'assets/a_world.json' }],
@@ -108,12 +115,19 @@ describe('a project made from a space', () => {
   it('runs a plugin it has no source of as it was built, on its server and authored as a plugin’s', () => {
     const main = project.files['src/main.ts'];
 
-    expect(main).toContain("path.resolve(import.meta.dirname, '../vendor/plugins')");
+    expect(main).toContain("path.join(PROJECT_ROOT, 'vendor/plugins')");
     expect(main).toContain('  plugins: declarations,\n  pluginTypes: builtTypes,');
     // Its bindings held to the files it serves, as `npm run author` holds them.
     expect(main).toContain("data: publicData(new URL('../public/', import.meta.url))");
     expect(main).toContain('plugins: { ...plugins, ...builtPlugins }');
-    expect(main).toContain('pluginNames: [...pluginNames, ...Object.keys(builtPlugins)]');
+    expect(main).toContain('pluginNames.push(...Object.keys(builtPlugins));');
+  });
+
+  it('keeps a built plugin’s server half beside it, where its manifest names it, and loads it', () => {
+    expect(JSON.parse(project.files['vendor/plugins/oldChart/functions.source.json'])).toEqual({
+      'index.ts': 'export default {};\n'
+    });
+    expect(project.files['src/main.ts']).toContain('await loadFunctionsSource(');
   });
 
   it('says what its visitors need of a server of its own, where its auth would go', () => {
@@ -127,16 +141,18 @@ describe('a project made from a space', () => {
     expect(project.files['src/actions/board-create.ts']).toContain("map: '/assets/a_world.json'");
     expect(project.files['src/actions/board-clear.json']).toContain('"id": "board-clear"');
     expect(project.files['src/actions.ts']).toContain("import { boardCreateAction } from './actions/board-create.ts';");
-    expect(project.files['src/actions.ts']).toContain('const SPACE_ID = 1;');
+    expect(project.files['src/actions.ts']).toContain('export const actions: ActionEntry[] = [\n  boardCreateAction,');
+    expect(project.files['src/actions.ts']).toContain('export const connectors = new Map(');
     expect(project.files['functions/index.ts']).toBe('export default {};\n');
 
     const main = project.files['src/main.ts'];
     expect(main).toContain("import spaceRuntime from './runtime.ts';");
     expect(main).toContain('await serveRuntime(spaceRuntime, { env: process.env, publicUrl })');
-    expect(main).toContain('functions: { native: [...functions, ...runtime.native] }');
+    expect(main).toContain('functions: { native: [...functions, ...runtime.native], plugins: pluginFunctions }');
     expect(main).toContain("publicDir: path.join(PROJECT_ROOT, 'public')");
     expect(main).toContain('signingSecret: process.env.PLITZI_SIGNING_SECRET');
     expect(main).toContain("process.loadEnvFile(new URL('../.env', import.meta.url))");
+    expect(main).toContain('getConnector: (_spaceId, connectorId) => Promise.resolve(connectors.get(connectorId)),');
 
     const env = envFromSpace(exported(), answers(), SECRET);
     expect(env).toContain(`PLITZI_SIGNING_SECRET=${SECRET}`);
@@ -178,7 +194,43 @@ describe('a project made from a space it reads from Plitzi', () => {
     const env = envFromSpace(exported({ authoring: null }), answers('cloud'), SECRET);
     expect(env).toContain('PLITZI_HOST_KEY=host-key');
     expect(env).toContain(`PLITZI_SIGNING_SECRET=${SECRET}`);
-    expect(project.files['src/actions.ts']).toContain('const SPACE_ID = 1;');
+    // Its actions came across with it, so they run here as a local space's do.
+    expect(project.files['src/main.ts']).toContain('lookups: actionLookups');
+  });
+});
+
+describe('the server a project made from a space runs', () => {
+  const local = projectFromSpace(exported(), 'local').files;
+  const create = scaffold({ ...answers(), fromSpace: false });
+
+  it('is the one `create` writes — its port, health, reloads and settings — with what the space brought besides', () => {
+    const main = local['src/main.ts'];
+
+    for (const shared of [
+      'await freePort(8080, HOST)',
+      'health: { name: SERVER_NAME }',
+      "path.join(PROJECT_ROOT, 'tmp/dev-server.json')",
+      'watchSpace();',
+      'watchPlugins();',
+      "process.loadEnvFile(new URL('../.env', import.meta.url))",
+      'signingSecret: process.env.PLITZI_SIGNING_SECRET'
+    ]) {
+      expect(main).toContain(shared);
+      expect(create['src/main.ts']).toContain(shared);
+    }
+  });
+
+  it('keeps its actions and connectors in folders there from the start, which `start:dev` restarts on', () => {
+    const written = scaffold({ ...answers(), fromSpace: true });
+    expect(written['src/actions/README.md']).toContain('# src/actions/');
+    expect(written['src/connectors/README.md']).toContain('# src/connectors/');
+    // The CLI's, so `upgrade` writes them into a project made before them, with the script that watches them.
+    expect(machineryFiles({ ...answers(), fromSpace: true })).toHaveProperty(['src/connectors/README.md']);
+    const manifest: unknown = JSON.parse(scaffold({ ...answers(), fromSpace: true })['package.json']);
+    expect(manifest).toHaveProperty(
+      ['scripts', 'start:dev'],
+      'node --watch-path=./src/main.ts --watch-path=./src/serverOptions.ts --watch-path=./src/actions.ts --watch-path=./src/actions --watch-path=./src/connectors --watch-path=./functions src/main.ts'
+    );
   });
 });
 

@@ -65,6 +65,8 @@ export class PluginManager {
   /** Maps base plugin name → most recently registered effective key (may include @version) */
   private readonly nameIndex = new Map<string, string>();
   private readonly devMode: boolean = false;
+  /** Who is told what each built plugin was built from — a dev server's watcher (`watchPluginSources`). */
+  private readonly sourceListeners = new Set<(key: string, inputs: readonly string[]) => void>();
 
   constructor(plugins: Record<string, PluginSource>, cacheDir?: string, ttlMs?: number, devMode: boolean = false) {
     assertPluginSources(plugins);
@@ -75,6 +77,45 @@ export class PluginManager {
     for (const key of Object.keys(plugins)) {
       const baseName = key.replace(/@[^@]*$/, '');
       this.nameIndex.set(baseName, key);
+    }
+  }
+
+  /**
+   * Tells `listener` the files every built plugin was built from — those built so far, at once, and each one built or
+   * found built from now on. Only a compiled plugin has any: a copied or downloaded one is not this server's source.
+   */
+  onSources(listener: (key: string, inputs: readonly string[]) => void): () => void {
+    this.sourceListeners.add(listener);
+    this.mem.forEach((cached, key) => {
+      if (cached.inputs?.length) {
+        listener(key, cached.inputs);
+      }
+    });
+
+    return () => {
+      this.sourceListeners.delete(listener);
+    };
+  }
+
+  /**
+   * Builds a plugin again because its source changed — and again after a build that failed, which `prepare` otherwise
+   * never retries: the edit that fixes a syntax error is exactly the one a dev server must not ignore.
+   */
+  async rebuild(name: string): Promise<PluginEntry | null> {
+    const key = this.resolveKey(name) ?? name;
+    this.mem.delete(key);
+    this.failed.delete(key);
+
+    return this.prepare(key);
+  }
+
+  private remember(key: string, cached: CacheEntry): void {
+    this.mem.set(key, cached);
+    const { inputs } = cached;
+    if (inputs?.length) {
+      this.sourceListeners.forEach(listener => {
+        listener(key, inputs);
+      });
     }
   }
 
@@ -392,7 +433,7 @@ export class PluginManager {
           }
 
           const entry = this.toEntry(key, true, cssUrl, source.props, meta.compiledAt);
-          this.mem.set(key, { compiledAt: meta.compiledAt, entry, inputs: meta.inputs });
+          this.remember(key, { compiledAt: meta.compiledAt, entry, inputs: meta.inputs });
 
           return entry;
         }
@@ -489,7 +530,7 @@ export class PluginManager {
       }
 
       const entry = this.toEntry(name, true, cssUrl, source.props, compiledAt);
-      this.mem.set(name, { compiledAt, entry, inputs: buildInputs });
+      this.remember(name, { compiledAt, entry, inputs: buildInputs });
       serverLog.info('SSR', `Plugin "${name}" ready → ${entry.js}`);
       return entry;
     } catch (err) {

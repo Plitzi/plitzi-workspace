@@ -1,6 +1,7 @@
 import { functionContextFor } from './context';
 
 import type { FunctionContext, FunctionsDefinition, FunctionTask } from './contract';
+import type { FunctionScope } from './scope';
 import type { ActionTask, ActionTaskContext } from '../actions/types';
 
 /**
@@ -8,11 +9,14 @@ import type { ActionTask, ActionTaskContext } from '../actions/types';
  * platform's own — run in the process with the run's context narrowed to what a function may see. The same code a
  * space runs in the sandbox, loaded without one.
  */
-export const nativeTasks = (definitions: readonly FunctionsDefinition[] = []): ActionTask<Record<string, unknown>>[] =>
+export const nativeTasks = (
+  definitions: readonly FunctionsDefinition[] = [],
+  scope?: FunctionScope
+): ActionTask<Record<string, unknown>>[] =>
   definitions.flatMap(definition =>
     (definition.tasks ?? []).map(task => {
       const contextFor = (ctx: ActionTaskContext): FunctionContext =>
-        functionContextFor(ctx, definition.allow?.hosts ?? []);
+        functionContextFor(ctx, definition.allow?.hosts ?? [], scope);
       // A catalog is heterogeneous by nature — each task declares its own params, and `FunctionTask<never>` is how a
       // list of them is typed — so the one call into it is widened here, where the params were already resolved
       // against the task's own declaration.

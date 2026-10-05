@@ -5,8 +5,9 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
-import { projectHere, readPackageJson } from './existingProject';
+import { lockfileManager, projectHere, readPackageJson } from './existingProject';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
+import { readOrigin } from './spaceOrigin';
 import { fail, install, writeFiles } from './terminal';
 import { unifiedDiff } from '../fix/diff';
 import { detectManagerVersion, installCommand, machineryFiles, seedFiles } from '../scaffold';
@@ -241,8 +242,11 @@ const planPackages = (text: string, answers: CreateAnswers, wrote: Record<string
 
 // --- files ---------------------------------------------------------------------------------------------------------
 
-/** `seeded`: a file of the project's own that the machinery imports, written because the project had none. */
-type FileStatus = 'current' | 'added' | 'updated' | 'yours' | 'taken' | 'seeded';
+/**
+ * `seeded`: a file of the project's own that the machinery imports, written because the project had none. `space`: one
+ * a space made into a project gave in the CLI's place (`src/main.ts`, from what the space holds) — `plitzi pull`'s.
+ */
+type FileStatus = 'current' | 'added' | 'updated' | 'yours' | 'taken' | 'seeded' | 'space';
 
 interface FilePlan {
   file: string;
@@ -356,7 +360,12 @@ const writeSkills = async (root: string, plans: readonly SkillPlan[], files: Rec
 // --- the command ---------------------------------------------------------------------------------------------------
 
 /** What a project was made with, as far as its machinery cares: none of it reads the key or the environment. */
-const answersFor = async (root: string, plitzi: PlitziProject, manager: CreateAnswers['packageManager']) => {
+const answersFor = async (
+  root: string,
+  plitzi: PlitziProject,
+  manager: CreateAnswers['packageManager'],
+  fromSpace: boolean
+) => {
   const name = (await readPackageJson(root))?.name ?? path.basename(root);
   const managerVersion = detectManagerVersion(manager, root);
   const answers: CreateAnswers = {
@@ -366,7 +375,8 @@ const answersFor = async (root: string, plitzi: PlitziProject, manager: CreateAn
     key: '',
     environment: 'main',
     packageManager: manager,
-    ...(managerVersion === undefined ? {} : { managerVersion })
+    ...(managerVersion === undefined ? {} : { managerVersion }),
+    ...(fromSpace ? { fromSpace } : {})
   };
 
   return answers;
@@ -387,13 +397,14 @@ const statusLine: Record<FileStatus, (file: string) => string> = {
   updated: file => chalk.green(`  ~ ${file}`),
   seeded: file => chalk.green(`  + ${file} (yours from now on: the CLI's files above read it)`),
   taken: file => chalk.yellow(`  ~ ${file} (yours, taken)`),
-  yours: file => chalk.yellow(`  ! ${file} — yours: the CLI's version below; --take ${file} to replace it`)
+  yours: file => chalk.yellow(`  ! ${file} — yours: the CLI's version below; --take ${file} to replace it`),
+  space: file => chalk.dim(`  · ${file} — the space's: plitzi pull writes it as this CLI does`)
 };
 
 const reportText = (report: UpgradeReport): string => {
   const lines = [chalk.bold(`plitzi upgrade → ${report.version}${report.write ? '' : ' (shown; --write makes it)'}`)];
   if (report.files) {
-    const changed = report.files.filter(file => file.status !== 'current');
+    const changed = report.files.filter(file => file.status !== 'current' && file.status !== 'space');
     lines.push(changed.length === 0 ? chalk.green('files: up to date') : 'files:');
     for (const file of changed) {
       lines.push(statusLine[file.status](file.file));
@@ -401,6 +412,8 @@ const reportText = (report: UpgradeReport): string => {
         lines.push(chalk.dim(file.diff));
       }
     }
+
+    lines.push(...report.files.filter(file => file.status === 'space').map(file => statusLine.space(file.file)));
   }
 
   if (report.packages) {
@@ -459,7 +472,11 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
 
   const wanted = new Set<string>(parts.length === 0 ? UPGRADE_PARTS : parts);
   const { root } = project;
-  const manager = project.packageManager ?? 'npm';
+  const record = await readScaffoldRecord(root);
+  // The project's own lockfile first — what it installs with now — then what the CLI wrote it for, which a lockfile of
+  // a folder above it (a monorepo it sits in) does not overrule.
+  const manager = (await lockfileManager([root])) ?? record?.packageManager ?? project.packageManager ?? 'npm';
+  const origin = await readOrigin(root);
   const write = Boolean(options.write);
   const report: UpgradeReport = { version: CLI_VERSION, write };
 
@@ -474,11 +491,15 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     return;
   }
 
-  const answers = plitzi ? await answersFor(root, plitzi, manager) : undefined;
+  const answers = plitzi ? await answersFor(root, plitzi, manager, origin !== undefined) : undefined;
 
   if (answers && wanted.has('files')) {
-    const ours = machineryFiles(answers);
-    const recorded = (await readScaffoldRecord(root))?.files ?? {};
+    // A file the space gave in the CLI's place is the space's, kept by `plitzi pull` — never offered here.
+    const given = new Set(Object.keys(origin?.files ?? {}));
+    const machinery = Object.entries(machineryFiles(answers));
+    const ours = Object.fromEntries(machinery.filter(([file]) => !given.has(file)));
+    const spaces = machinery.filter(([file]) => given.has(file)).map(([file]) => file);
+    const recorded = record?.files ?? {};
     const plans = await planFiles(root, ours, recorded, options.take ?? []);
     const seeds = await planSeeds(root, seedFiles(answers), plans);
     if (write) {
@@ -494,21 +515,24 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
           return plan.file in recorded ? [[plan.file, recorded[plan.file]]] : [];
         })
       );
-      await writeScaffoldRecord(root, CLI_VERSION, { files: digests });
+      await writeScaffoldRecord(root, CLI_VERSION, { files: digests, packageManager: manager });
     }
 
-    report.files = [...plans, ...seeds].map(plan => ({
-      file: plan.file,
-      status: plan.status,
-      ...(plan.status === 'yours' && plan.yours !== undefined
-        ? { diff: unifiedDiff(plan.file, plan.yours, plan.ours) }
-        : {})
-    }));
+    report.files = [
+      ...[...plans, ...seeds].map(plan => ({
+        file: plan.file,
+        status: plan.status,
+        ...(plan.status === 'yours' && plan.yours !== undefined
+          ? { diff: unifiedDiff(plan.file, plan.yours, plan.ours) }
+          : {})
+      })),
+      ...spaces.map(file => ({ file, status: 'space' as const }))
+    ];
   }
 
   if (answers && wanted.has('packages')) {
     const text = await readText(path.join(root, 'package.json'));
-    const wrote = (await readScaffoldRecord(root))?.scripts;
+    const wrote = record?.scripts;
     const plan = text === undefined ? undefined : planPackages(text, answers, wrote);
     if (plan) {
       const { after, recorded, ...rest } = plan;

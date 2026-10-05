@@ -31,10 +31,10 @@ import {
   scaffold
 } from '../scaffold';
 import { envFromSpace, projectFromSpace } from '../scaffold/fromSpace';
-import { CLI_VERSION, packageJson } from '../scaffold/project';
+import { CLI_VERSION, packageJson, withSigningSecret } from '../scaffold/project';
 
 import type { Question } from './terminal';
-import type { CreateAnswers, PackageManager } from '../scaffold';
+import type { CreateAnswers, PackageManager, ProjectFiles } from '../scaffold';
 
 /**
  * A project that renders a Plitzi space, ready to run.
@@ -232,7 +232,8 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     environment,
     ...(revision ? { revision } : {}),
     packageManager,
-    managerVersion: detectManagerVersion(packageManager, await nearestExisting(target))
+    managerVersion: detectManagerVersion(packageManager, await nearestExisting(target)),
+    ...(options.from ? { fromSpace: true } : {})
   };
 
   // Asked for before anything is written: a space that cannot be had leaves no half-made project behind.
@@ -249,26 +250,30 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   const files = Object.fromEntries(
     Object.entries(scaffold(answers)).filter(([file]) => !fromSpace?.omit.includes(file))
   );
-  const written =
+  // The key its actions sign with, made for this project alone: the scaffold is the same for everybody.
+  const signingSecret = randomBytes(32).toString('hex');
+  const written: ProjectFiles =
     exported && fromSpace
       ? {
           ...files,
           ...fromSpace.files,
           'package.json': packageJson(answers, fromSpace.dependencies),
-          '.env': envFromSpace(exported, answers, randomBytes(32).toString('hex'))
+          '.env': envFromSpace(exported, answers, signingSecret)
         }
-      : files;
+      : { ...files, ...(files['.env'] ? { '.env': withSigningSecret(files['.env'], signingSecret) } : {}) };
   await writeFiles(target, written);
   const missing = fromSpace ? await writeFromSpace(target, fromSpace) : [];
   // What of the CLI's machinery was written, by digest: what lets `plitzi upgrade` replace a file nobody touched since.
+  // One the space gave in its place (`src/main.ts` of a project made from one) is the space's: `plitzi pull` keeps it.
   await writeScaffoldRecord(target, CLI_VERSION, {
     files: Object.fromEntries(
       Object.keys(machineryFiles(answers))
-        .filter(file => file in files)
+        .filter(file => file in files && !(fromSpace && file in fromSpace.files))
         .map(file => [file, digestOf(files[file])])
     ),
     // And the scripts it wrote, so `upgrade` can tell one nobody changed from one the project made its own.
-    scripts: scriptsOf(written['package.json'])
+    scripts: scriptsOf(written['package.json']),
+    packageManager
   });
 
   const wantsInstall = options.install !== false;

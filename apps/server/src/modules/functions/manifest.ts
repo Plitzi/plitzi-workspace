@@ -1,8 +1,11 @@
+import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions/functions';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { pluginTaskProblem } from './scope';
 import { taskName, taskNameProblem } from '../actions/tasks/registry';
 
 import type { FunctionLimits } from './protocol';
+import type { FunctionScope } from './scope';
 import type { FunctionsManifest, FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
 
 type TaskParam = FunctionTaskManifest['params'][string];
@@ -16,6 +19,10 @@ export type RouteKey = { method: RouteMethod; segments: string[] };
 const SEGMENT = /^(:[a-zA-Z][a-zA-Z0-9]*|[A-Za-z0-9._~-]+)$/;
 
 const isRouteMethod = (method: string): method is RouteMethod => ROUTE_METHODS.some(known => known === method);
+
+/** Why a space's (or a deployment's) route is refused: `/fn/plugins/` is where plugins answer. */
+export const reservedRouteProblem = (route: string): string =>
+  `Route "${route}" is under /plugins/, where the plugins' routes answer (/fn/plugins/<type>/…)`;
 
 /**
  * A route key, `'<METHOD> /<path>'`: literal segments and `:params`, served under `/fn/`. Anything else — a query, a
@@ -157,7 +164,8 @@ const limitsOf = (
 export const readManifest = (
   value: unknown,
   reserved: ReadonlySet<string>,
-  ceilings: FunctionLimits
+  ceilings: FunctionLimits,
+  scope?: FunctionScope
 ): ManifestReading => {
   const problems: string[] = [];
   const raw = isRecord(value) ? value : {};
@@ -180,6 +188,12 @@ export const readManifest = (
     const nameProblem = taskNameProblem({ namespace, action }, reserved);
     if (nameProblem) {
       problems.push(nameProblem);
+
+      return;
+    }
+
+    if (scope && namespace !== scope.plugin) {
+      problems.push(pluginTaskProblem(scope.plugin, namespace, action));
 
       return;
     }
@@ -224,6 +238,12 @@ export const readManifest = (
     const key = parseRouteKey(route);
     if (!key) {
       problems.push(`Route "${route}" is not "<GET|POST|PUT|PATCH|DELETE> /<path>" of literal segments and :params`);
+
+      return;
+    }
+
+    if (!scope && key.segments[0] === PLUGIN_ROUTES_SEGMENT) {
+      problems.push(reservedRouteProblem(route));
 
       return;
     }

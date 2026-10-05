@@ -1,10 +1,10 @@
 import { actionSpecFromEntry, actionToSource } from '@plitzi/sdk-authoring';
+import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 
-import { KV_FILE } from './paths';
 import { projectDeclarations } from './plugin';
-import { envFile, SDK_VERSION } from './project';
+import { envFile, SDK_VERSION, withSigningSecret } from './project';
 import { PROJECT_OUTPUTS, prettierignore } from './quality';
-import { PLUGINS } from './server';
+import { serverMain } from './server';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { SpaceExport } from '@plitzi/sdk-shared/source';
@@ -108,7 +108,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * The space's server actions, in \`src/actions/\`: one \`defineAction\` each — edit one, and the next start runs it —
  * and, as JSON, any the builder wrote in a form code has no words for. Their ways in say whether they are on.
  */
-const actions: ActionEntry[] = [${names.length > 0 ? `\n  ${names.join(',\n  ')},` : ''}
+export const actions: ActionEntry[] = [${names.length > 0 ? `\n  ${names.join(',\n  ')},` : ''}
   ...read('actions').flatMap(entry =>
     isRecord(entry) && typeof entry.id === 'string' && isRecord(entry.document)
       ? // A document Plitzi checked when it was saved, and that the server checks again on every run.
@@ -117,8 +117,8 @@ const actions: ActionEntry[] = [${names.length > 0 ? `\n  ${names.join(',\n  ')}
   )
 ];
 
-/** The space's connectors, as Plitzi kept them: one JSON manifest each, in \`src/connectors/\`. */
-const connectors = new Map(
+/** The space's connectors, as Plitzi kept them: one JSON manifest each, in \`src/connectors/\`, by id. */
+export const connectors = new Map(
   read('connectors').flatMap(entry =>
     isRecord(entry) && typeof entry.id === 'string' && isRecord(entry.manifest)
       ? // A manifest Plitzi checked when it was saved.
@@ -126,215 +126,6 @@ const connectors = new Map(
       : []
   )
 );
-
-/**
- * The one space this server serves, as its adapters name it — 1, whether they read it from this project or from
- * Plitzi: what the scheduler watches for actions on a clock.
- */
-const SPACE_ID = 1;
-
-export const lookups: ActionLookups = {
-  getAction: (_spaceId, actionId) => Promise.resolve(actions.find(entry => entry.id === actionId)),
-  listActions: () => Promise.resolve(actions),
-  getConnector: (_spaceId, connectorId) => Promise.resolve(connectors.get(connectorId)),
-  listScheduledSpaces: () => Promise.resolve([SPACE_ID])
-};
-`;
-};
-
-type MainOptions = {
-  source: CreateAnswers['source'];
-  /** The runtime's module, from `src/main.ts`, when its source came across. */
-  runtimeEntry?: string;
-  /** Its packed build, when only that did. */
-  packedRuntime: boolean;
-  /** Whether some plugin came across built only, in `vendor/plugins/`. */
-  builtPlugins: boolean;
-  /** The roles the space declares for its visitors. */
-  visitorRoles: readonly string[];
-};
-
-/** What a space with visitor roles needs of a server of its own, said where its auth would be handed over. */
-const visitorsNote = (roles: readonly string[]): string => `
-/**
- * The space declares visitor roles (${roles.join(', ')}). On Plitzi its visitors sign in with their Plitzi account, and
- * hold the roles the space gives them by email. Here nobody signs in until this server does it itself: \`createAuth\`
- * from \`@plitzi/sdk-server/auth\`, handed to \`createServer\` as \`auth\`, over the accounts it keeps — giving each
- * person the permissions of the roles they hold (\`visitorAccess\` from \`@plitzi/sdk-shared/auth/visitorRoles\`, over
- * the space's \`settings.visitorRoles\`). Until then every action that asks for a role refuses. See Self-hosting, in
- * Plitzi's docs.
- */`;
-
-const BUILT_PLUGINS = `
-/**
- * The space's plugins no source of was kept, as they were built: \`vendor/plugins/<type>/\`, each beside the manifest it
- * was published with. They run and render as they are — on the server too — and cannot be changed here: upload one
- * again from its source (\`plitzi upload plugin\`), and \`plitzi pull\` brings its code in their place.
- */
-type BuiltManifest = {
-  version?: string;
-  pluginSchema?: Record<string, unknown>;
-  assets?: Record<string, { src: string; type: string; isMain?: boolean }>;
-};
-
-const VENDOR_PLUGINS_DIR = path.resolve(import.meta.dirname, '../vendor/plugins');
-const built = readdirSync(VENDOR_PLUGINS_DIR, { withFileTypes: true })
-  .filter(entry => entry.isDirectory())
-  .map(entry => {
-    const dir = path.join(VENDOR_PLUGINS_DIR, entry.name);
-    // What \`plitzi pack plugin\` wrote beside the bundle when it was published.
-    const manifest = JSON.parse(readFileSync(path.join(dir, 'plugin-manifest.json'), 'utf-8')) as BuiltManifest;
-    const assets = Object.values(manifest.assets ?? {});
-    const script = assets.find(asset => asset.type === 'script' && asset.isMain) ?? assets.find(asset => asset.type === 'script');
-    const style = assets.find(asset => asset.type === 'style');
-    if (!script) {
-      throw new Error(\`vendor/plugins/\${entry.name}/plugin-manifest.json names no script to run.\`);
-    }
-
-    return {
-      type: entry.name,
-      provides: Object.keys(manifest.pluginSchema ?? {}),
-      source: {
-        js: path.join(dir, script.src),
-        ...(style ? { css: path.join(dir, style.src) } : {}),
-        action: 'copy' as const,
-        version: manifest.version ?? '1.0.0'
-      }
-    };
-  });
-const builtPlugins = Object.fromEntries(built.map(({ type, source }) => [type, source]));
-/** Every element type they provide, for the space's use of them to be authored as a plugin's rather than a typo's. */
-const builtTypes = built.flatMap(({ type, provides }) => [type, ...provides]);
-`;
-
-const runtimeLines = ({ runtimeEntry, packedRuntime }: MainOptions): string => {
-  if (runtimeEntry) {
-    return `/**
- * The space's runtime — its own server code, run by Plitzi beside the space — run here, in this process: its tasks join
- * the functions, and its endpoints answer before anything else. Its variables are this process's environment.
- */
-const runtime = await serveRuntime(spaceRuntime, { env: process.env, publicUrl });`;
-  }
-
-  if (packedRuntime) {
-    return `/**
- * The space's runtime, as it was built: no source of it was kept, so it runs as it is and cannot be changed here. Push
- * it again from its source (\`plitzi runtime push\`), and \`plitzi pull\` brings its code in its place.
- */
-const runtime = await serveRuntime(
-  await loadRuntime(readFileSync(path.join(PROJECT_ROOT, 'vendor/runtime.bundle')), path.join(PROJECT_ROOT, '.runtime')),
-  { env: process.env, publicUrl }
-);`;
-  }
-
-  return '';
-};
-
-const fromSpaceMain = (options: MainOptions): string => {
-  const { source, runtimeEntry, packedRuntime, builtPlugins, visitorRoles } = options;
-  const hasRuntime = Boolean(runtimeEntry) || packedRuntime;
-  const local = source === 'local';
-  const fsImports = ['readdirSync', ...(packedRuntime || builtPlugins ? ['readFileSync'] : [])].join(', ');
-  const allPlugins = builtPlugins ? '{ ...plugins, ...builtPlugins }' : 'plugins';
-  const allNames = builtPlugins ? '[...pluginNames, ...Object.keys(builtPlugins)]' : 'pluginNames';
-  const runtimeImports = [...(packedRuntime ? ['loadRuntime'] : []), ...(hasRuntime ? ['serveRuntime'] : [])].join(
-    ', '
-  );
-
-  return `import { ${fsImports} } from 'node:fs';
-import path from 'node:path';
-
-import { closeOnSignals, consoleLogger, ${local ? 'createJsonAdapters' : 'createCloudAdapters'}, createServer, loadFunctions } from '@plitzi/sdk-server';
-${importLine('{ createFileKv }', '@plitzi/sdk-server/actions')}${hasRuntime ? importLine(`{ ${runtimeImports} }`, '@plitzi/sdk-server/runtime') : ''}${local ? `\n${importLine('{ authorSpace }', '@plitzi/sdk-authoring')}${importLine('{ publicData }', '@plitzi/sdk-authoring/node')}` : ''}
-${importLine('{ lookups }', './actions.ts')}${local ? importLine('{ declarations }', './plugins/declarations.ts') : ''}${runtimeEntry ? importLine('spaceRuntime', runtimeEntry) : ''}${importLine('{ serverOptions }', './serverOptions.ts')}${local ? importLine('{ space }', './space.ts') : ''}
-/**
- * The project's settings — the key its actions sign with, the variables the space was given on Plitzi — kept in \`.env\`,
- * out of git. \`plitzi create\` wrote one with a fresh signing key; \`.env.example\` names the rest.
- */
-try {
-  process.loadEnvFile(new URL('../.env', import.meta.url));
-} catch {
-  // None: the environment the process was started with is all there is.
-}
-
-const PORT = Number(process.env.PORT ?? 8080);
-// Loopback unless told otherwise: a container publishes a port only from an address it listens on (\`HOST=0.0.0.0\`).
-const HOST = process.env.HOST ?? '127.0.0.1';
-/** Where people reach this server: \`PUBLIC_URL\` behind a proxy, its own address otherwise. */
-const publicUrl = (process.env.PUBLIC_URL ?? \`http://127.0.0.1:\${String(PORT)}\`).replace(/\\/+$/, '');
-${builtPlugins ? BUILT_PLUGINS : ''}${
-    local
-      ? `
-/**
- * The space, held in this project: \`src/space/\`, authored at boot — saving a page and letting \`--watch\` restart is
- * the whole edit loop, and the warnings are printed where somebody editing it is watching.
- */
-const { schema, style, warnings } = authorSpace(space, {
-  plugins: declarations,${builtPlugins ? '\n  pluginTypes: builtTypes,' : ''}
-  data: publicData(new URL('../public/', import.meta.url))
-});
-
-for (const warning of warnings) {
-  console.warn(\`[author] \${warning.message}\`);
-}
-`
-      : `
-/** The space's HOST key (Credentials, in the builder): secret, never committed, never shipped in a page. */
-const HOST_KEY = process.env.PLITZI_HOST_KEY ?? '';
-
-if (!HOST_KEY) {
-  throw new Error('Set PLITZI_HOST_KEY in .env — Credentials, in the builder.');
-}
-`
-  }
-${PLUGINS}
-
-/** The space's functions: \`functions/\`, built the way Plitzi builds them and run here, in this process. */
-const functions = await loadFunctions(new URL('../functions/', import.meta.url));
-${hasRuntime ? `\n${runtimeLines(options)}\n` : ''}${visitorRoles.length > 0 ? `${visitorsNote(visitorRoles)}\n` : ''}
-/**
- * Everything the space is, served by this server alone: its pages, its plugins, its server actions (\`src/actions/\`),
- * its functions${hasRuntime ? ' and runtime' : ''}, and its files (\`public/\`, where Plitzi's CDN served them from).
- */
-const server = createServer(
-  {
-    logger: consoleLogger,
-    // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own. What follows is this
-    // file's, and comes after it: the space, its plugins, its files and its code are wired here.
-    ...serverOptions,
-    port: PORT,
-    devMode: process.env.NODE_ENV !== 'production',
-    adapters: ${
-      local
-        ? `createJsonAdapters({
-      offlineData: { schema, style },
-      deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames: ${allNames} }
-    })`
-        : `createCloudAdapters({
-      webKey: HOST_KEY,
-      ...(process.env.PLITZI_SERVER_URL ? { serverUrl: process.env.PLITZI_SERVER_URL } : {}),
-      environment: (process.env.PLITZI_ENVIRONMENT ?? 'main') as 'main' | 'production',
-      deployment: { pluginNames: ${allNames} }
-    })`
-    },
-    plugins: ${allPlugins},
-    publicDir: path.join(PROJECT_ROOT, 'public'),
-    functions: { native: ${hasRuntime ? '[...functions, ...runtime.native]' : 'functions'} },
-    // What \`ctx.sign\` and \`ctx.verify\` sign with: the key that was the space's on Plitzi stays there. What the
-    // actions keep in \`kv\` is in \`${KV_FILE}\`, outliving a restart; \`src/serverOptions.ts\` names another store.
-    action: {
-      signingSecret: process.env.PLITZI_SIGNING_SECRET,
-      kv: createFileKv({ file: path.join(PROJECT_ROOT, '${KV_FILE}') }),
-      ...serverOptions.action,
-      lookups
-    }
-  }${hasRuntime ? ',\n  { preAuth: [runtime.stage] }' : ''}
-);
-
-server.listen(PORT, HOST);
-console.log(\`pages on \${publicUrl}/\`);
-
-closeOnSignals(server${hasRuntime ? ', { afterClose: () => runtime.close() }' : ''});
 `;
 };
 
@@ -370,32 +161,24 @@ export const projectEntries = ({
 /** The import `src/main.ts` names the runtime's module by. */
 const fromMain = (path: string): string => `./${path.replace(/^src\//, '')}`;
 
-/** What the space was given on Plitzi, by name, as `.env.example` lists it — and `.env`, with values where they are known. */
-const settingsLines = (exported: SpaceExport): string[] => [
-  '# What the space was given on Plitzi, by name — the values never leave it. Copy this to .env and fill them in.',
-  '# What the project signs with (ctx.sign): at least 32 characters, secret.',
-  'PLITZI_SIGNING_SECRET=',
-  ...exported.variables.map(name => `${name}=`),
-  ...exported.credentials.map(
-    ({ identifier, name, provider }) => `# ${name} (${provider}): the credential "${identifier}"`
-  ),
-  'PORT=8080',
-  ''
-];
+/** What the space was given on Plitzi, by name: the variables and credentials it needs here too. */
+const spaceSettings = (exported: SpaceExport): string =>
+  [
+    '# What the space was given on Plitzi, by name — the values never leave it. Fill them in here.',
+    ...exported.variables.map(name => `${name}=`),
+    ...exported.credentials.map(
+      ({ identifier, name, provider }) => `# ${name} (${provider}): the credential "${identifier}"`
+    ),
+    ''
+  ].join('\n');
 
 /**
- * The project's own `.env`, ready to run: a signing key made for it — the space's own stays on Plitzi — and the rest
- * left for whoever has the values. Read from Plitzi, the key it is read with comes first, as a project of its own has
- * it. Written once, by `create`: it is the project's, and nothing pulled ever touches it.
+ * The project's own `.env`, ready to run: what every server project is given — a signing key made for it, the space's
+ * own stays on Plitzi; read from Plitzi, the key it is read with first — then what the space was given, left for
+ * whoever has the values. Written once, by `create`: it is the project's, and nothing pulled ever touches it.
  */
-export const envFromSpace = (exported: SpaceExport, answers: CreateAnswers, signingSecret: string): string => {
-  const settings = settingsLines(exported)
-    .join('\n')
-    .replace('PLITZI_SIGNING_SECRET=', `PLITZI_SIGNING_SECRET=${signingSecret}`);
-
-  // Read from Plitzi, the key it is read with and the version it serves come first — the port with them.
-  return answers.source === 'cloud' ? `${envFile(answers)}\n${settings}\n` : `${settings}\nPORT=8080\n`;
-};
+export const envFromSpace = (exported: SpaceExport, answers: CreateAnswers, signingSecret: string): string =>
+  `${withSigningSecret(envFile(answers), signingSecret)}\n${spaceSettings(exported)}`;
 
 /** What a project made from a space holds, from what the platform answered for it — the same for `create` and `pull`. */
 export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswers['source']): ProjectFromSpace => {
@@ -454,17 +237,29 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     files[`functions/${path}`] = text;
   });
 
+  // A built plugin's server half, beside its bundle as \`plitzi pack plugin\` puts it: the platform keeps it privately,
+  // so it came in the export rather than as a file on the CDN.
+  builtOnly.plugins.forEach(({ type, functions: carried }) => {
+    if (carried) {
+      const sorted = Object.fromEntries(Object.entries(carried).sort(([a], [b]) => a.localeCompare(b)));
+      files[`vendor/plugins/${type}/${PLUGIN_FUNCTIONS_SOURCE}`] = `${JSON.stringify(sorted, null, 2)}\n`;
+    }
+  });
+
   const runtimeEntry = source.runtime?.entries[0];
   if (builtOnly.runtime) {
     binaries['vendor/runtime.bundle'] = builtOnly.runtime;
   }
 
-  files['src/main.ts'] = fromSpaceMain({
+  files['src/main.ts'] = serverMain({
     source: spaceSource,
-    ...(runtimeEntry ? { runtimeEntry: fromMain(place(runtimeEntry)) } : {}),
-    packedRuntime: Boolean(builtOnly.runtime),
-    builtPlugins: builtOnly.plugins.length > 0,
-    visitorRoles: exported.visitorRoles
+    name: exported.space.permanentUrl,
+    fromSpace: {
+      ...(runtimeEntry ? { runtimeEntry: fromMain(place(runtimeEntry)) } : {}),
+      packedRuntime: Boolean(builtOnly.runtime),
+      builtPlugins: builtOnly.plugins.length > 0,
+      visitorRoles: exported.visitorRoles
+    }
   });
 
   // The packages the source imports, at the ranges it was written against — but the SDK and React, which are this
@@ -480,7 +275,16 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
       .map(name => [name, SDK_VERSION])
   );
   const variables = [...exported.variables, ...exported.credentials.map(({ identifier }) => identifier)];
-  files['.env.example'] = `${settingsLines(exported).join('\n')}\nPORT=8080\n`;
+  // What `.env` holds, with no value of it: a key the space is read with, the signing key, the space's settings.
+  const example = envFile({
+    name: '',
+    mode: 'server',
+    source: spaceSource,
+    key: '',
+    environment: 'main',
+    packageManager: 'npm'
+  });
+  files['.env.example'] = `${example}\n${spaceSettings(exported)}`;
   // What was downloaded is served as it came: a built plugin's bytes are what its manifest's integrity names.
   files['.prettierignore'] = `${prettierignore(PROJECT_OUTPUTS)}public\nvendor\n`;
 

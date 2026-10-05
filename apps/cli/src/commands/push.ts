@@ -133,8 +133,10 @@ const closureOf = async (
 const SPACE_FILES = ['src/space.ts', 'src/actions.ts'];
 const SPACE_FOLDERS = ['src/space/', 'src/actions/', 'src/connectors/'];
 
+/** A folder's `README.md` is the CLI's note on what the folder is, never part of the space. */
 const isSpaceFile = (file: string): boolean =>
-  SPACE_FILES.includes(file) || SPACE_FOLDERS.some(folder => file.startsWith(folder));
+  SPACE_FILES.includes(file) ||
+  (SPACE_FOLDERS.some(folder => file.startsWith(folder)) && path.basename(file) !== 'README.md');
 
 /** A plugin's type as the project's folder spells it: `src/plugins/SeatPicker` is `seatPicker`. */
 const typeOfFolder = (folder: string): string => {

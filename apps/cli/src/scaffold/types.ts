@@ -34,6 +34,12 @@ export interface CreateAnswers {
    * exemption is written only for a Yarn that has the age gate at all. Unknown means current.
    */
   managerVersion?: string;
+  /**
+   * A project made from a space (`plitzi create --from`): its actions are files of their own in `src/actions/` and its
+   * connectors in `src/connectors/`, and what is the space's — its pages, actions, functions and `src/main.ts` — is
+   * `plitzi pull`'s to bring up to date.
+   */
+  fromSpace?: boolean;
 }
 
 export const CREATE_TEMPLATES = ['welcome', 'blank', 'catalog'] as const;

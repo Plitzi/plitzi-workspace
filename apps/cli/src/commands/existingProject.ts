@@ -144,7 +144,8 @@ const nearestWorkspace = async (from: string): Promise<{ root: string; globs: st
   return undefined;
 };
 
-const lockfileManager = async (dirs: string[]): Promise<PackageManager | undefined> => {
+/** The package manager the first of `dirs` with a lockfile installs with. */
+export const lockfileManager = async (dirs: string[]): Promise<PackageManager | undefined> => {
   for (const dir of dirs) {
     for (const [file, manager] of LOCKFILES) {
       if (await exists(path.join(dir, file))) {

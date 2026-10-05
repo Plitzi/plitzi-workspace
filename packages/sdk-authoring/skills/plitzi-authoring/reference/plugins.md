@@ -33,8 +33,7 @@ by the same name, and so does whatever a binding writes — which is what makes 
 panel edits for a plugin it has no controls for; from code, write attributes. A `settings` that is not JSON renders
 "Settings Malformed" in the page.
 
-Every prop is optional and has a default: an attribute not authored yet, or a binding whose source has not answered,
-is `undefined`, and a plugin that renders nothing then is a hole in the page.
+Every prop is optional with a default: an attribute not authored yet, or a binding not answered yet, is `undefined`.
 
 ## The component
 
@@ -87,6 +86,18 @@ Never write `style` onto an element the plugin does not render: nothing promises
 stacking context, the plugin's. `useDisplayMode()` names the breakpoint showing — `desktop`, `tablet` or `mobile` — at
 the widths the space's styles use, instead of a width of the plugin's own.
 
+## Its own server code
+
+`plitzi add plugin board --server` writes `functions/index.ts` in its folder (the CLI skill). Its routes answer
+under `/fn/plugins/board/`; the component names them, with nothing for the space to wire:
+
+```tsx
+const route = usePluginRoute('board'); // from '@plitzi/plitzi-sdk'
+const url = route('/layout'); // undefined where no server runs code (the canvas)
+```
+
+Its `ctx.kv` is the plugin's own; the space's credentials and channels are not.
+
 ## Talking to other pages
 
 A plugin that moves at the speed of a cursor reads a realtime channel through `useChannel` rather than through flows —
@@ -116,8 +127,7 @@ import { useFlag } from '@plitzi/plitzi-sdk';
 const newChart = useFlag('newChart'); // false for a flag the space does not declare
 ```
 
-Gating the whole plugin needs no code: give its element `flag: 'newChart'`. `useFlag` is for a plugin that changes
-inside — a new mode, an extra panel.
+Gating the whole plugin needs no code: give its element `flag: 'newChart'`.
 
 ## Drawing and animating
 

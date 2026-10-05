@@ -28,6 +28,8 @@ export const MACHINERY: ReadonlySet<string> = new Set([
   'src/plugins/README.md',
   'src/plugins/assets.d.ts',
   'functions/README.md',
+  'src/actions/README.md',
+  'src/connectors/README.md',
   '.yarnrc.yml',
   'pnpm-workspace.yaml'
 ]);

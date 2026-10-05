@@ -17,6 +17,7 @@ answers why it did not start.
 - [7. Security: why one space cannot reach another](#7-security-why-one-space-cannot-reach-another)
 - [8. For a deployment](#8-for-a-deployment)
 - [9. What still needs a server of your own](#9-what-still-needs-a-server-of-your-own)
+- [10. A plugin's server half](#10-a-plugins-server-half)
 
 ## 1. What you write
 
@@ -312,3 +313,50 @@ own — a process beside the platform, on it — or a self-hosted `@plitzi/sdk-s
 - code a deployment wants on its own machines, for any reason — self-hosting stays first-class, and the same
   `defineFunctions` file loads natively there (§8).
 
+## 10. A plugin's server half
+
+A plugin can bring server code of its own — saving what its component arranged, asking an API on its behalf — so the
+use case stays inside the plugin instead of leaking into every space that uses it as functions, actions and flows. It is
+a `functions/` folder in the plugin's main element folder (`src/plugins/Board/functions/index.ts`), written exactly as a
+space's functions are (§1): `plitzi add plugin board --server` starts one.
+
+```ts
+import { defineFunctions } from '@plitzi/sdk-server/functions';
+
+export default defineFunctions({
+  routes: {
+    'GET /layout': async (_request, ctx) => Response.json(await ctx.kv.get(`layout:${ctx.callerId}`)),
+    'POST /layout': async (request, ctx) => {
+      await ctx.kv.set(`layout:${ctx.callerId}`, await request.json());
+
+      return new Response(null, { status: 204 });
+    }
+  }
+});
+```
+
+- **Its routes answer under `/fn/plugins/<type>/`** — `GET /fn/plugins/board/layout` — and the component names them
+  with `usePluginRoute('board')` (`@plitzi/plitzi-sdk`): no flow, no server action, nothing for the space to wire. The
+  hook answers `undefined` where no server runs code (the builder's canvas, an embed), as a `runServerAction` step is
+  inert there. `/fn/plugins/` is the plugins' alone: a space's or a deployment's route under it is refused.
+- **Its tasks are steps named after it**, `board.<action>` — for a space that wants one in a server action. A task
+  named after anything else is refused when it is saved or loaded.
+- **It gets a plugin's `ctx`, narrower than a space's.** The space chose to use the plugin, not to hand it what it
+  keeps: `ctx.kv` and `ctx.rateLimit` are the plugin's own corner of the space's store (`plugin:<type>:…`), what it
+  signs with `ctx.sign` verifies only as its own — it cannot mint a value the space's code would accept — and it names
+  none of the space's credentials and reaches none of its realtime channels. `ctx.fetch` reaches the hosts its own
+  `allow.hosts` declares; `ctx.user`, the limits (§6) and the plan's budget are the space's, as for its own code.
+
+**Where it runs.**
+
+- **A project `plitzi create` writes** loads each plugin folder's `functions/` natively, beside its own `functions/`:
+  `createServer({ functions: { native, plugins: { board: definition } } })`. While developing, a save to it is loaded
+  again in place (`server.functions.setPlugin(type, definition)`) — the server is not restarted.
+- **A packed plugin** carries its server half as source: `plitzi pack plugin` writes `functions.source.json` beside the
+  bundle and names it in the manifest (`functions`). Uploaded to a space, the platform builds and checks it as the
+  plugin's and keeps it in the space's private bucket like the space's own functions — never on the public CDN with
+  the rest of the plugin. An upload whose server half does not check out, or to a space with no private bucket, is
+  refused with what to do. A server of one's own that runs a packed plugin loads it with `loadFunctionsSource`.
+- **A deployment** hands the server halves of the plugins a space uses to a run through
+  `action.lookups.getPluginFunctions(spaceId, at)` — a `SpaceFunctions` per plugin type, run by the same runner as
+  the space's own.

@@ -60,6 +60,8 @@ export interface HttpServerParts {
   beforeFork?: () => Promise<void>;
   /** The open pages told to load again (`SSRServer.reloadPages`) — a page server in `devMode`; nothing elsewhere. */
   reloadPages?: () => void;
+  /** A plugin's server half replaced while the server runs (`SSRServer.functions`) — a page server that runs actions. */
+  setPluginFunctions?: (plugin: string, definition: unknown) => void;
 }
 
 // The only thing every server shares: an HTTP transport and the listen/close lifecycle. It knows nothing about
@@ -100,6 +102,13 @@ export const createHttpServer = (
     cache,
     plugins,
     reloadPages: parts.reloadPages ?? (() => undefined),
+    functions: {
+      setPlugin:
+        parts.setPluginFunctions ??
+        (() => {
+          throw new Error(`[${label}] This server runs no actions, so no plugin's functions`);
+        })
+    },
     listen(port: number, host = '0.0.0.0') {
       // Said where the count is decided: each worker runs this same config, and would repeat it.
       if (plan.requested !== undefined && role !== 'worker') {

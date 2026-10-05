@@ -20,6 +20,7 @@ import type {
   FunctionUsage,
   SpaceFunctions
 } from './protocol';
+import type { FunctionScope } from './scope';
 import type { ActionTask, ActionTaskRegistry, RegisteredTask } from '../actions/types';
 import type { FunctionsManifest, FunctionsProblem, FunctionTimeLimits } from '@plitzi/sdk-shared';
 
@@ -48,7 +49,8 @@ export const spaceTasks = (
   functions: SpaceFunctions,
   runner: FunctionRunner,
   limitsFor: (asked: FunctionTimeLimits) => FunctionLimits,
-  { admit, onUsage }: Pick<FunctionsConfig, 'admit' | 'onUsage'> = {}
+  { admit, onUsage }: Pick<FunctionsConfig, 'admit' | 'onUsage'> = {},
+  scope?: FunctionScope
 ): ActionTask<Record<string, unknown>>[] =>
   functions.manifest.tasks.map(task => {
     const name = taskName(task);
@@ -66,7 +68,7 @@ export const spaceTasks = (
           throw new Error(refusal);
         }
 
-        const fnCtx = functionContextFor(ctx, functions.manifest.hosts);
+        const fnCtx = functionContextFor(ctx, functions.manifest.hosts, scope);
         let ok = false;
         let spent: FunctionUsage | undefined;
         try {
@@ -99,16 +101,19 @@ export const spaceTasks = (
     };
   });
 
-/** The deployment's tasks and a space's, one registry: a space's never answers a name the deployment's already does. */
+/**
+ * The deployment's tasks, a space's and its plugins', one registry: neither ever answers a name the deployment's already
+ * does, and a plugin's are named after it (`<type>.<action>`), so they meet nobody else's.
+ */
 const composeRegistry = (
   base: ActionTaskRegistry,
-  tasks: ActionTask<Record<string, unknown>>[]
+  tasks: { task: ActionTask<Record<string, unknown>>; origin: 'space' | 'plugin' }[]
 ): ActionTaskRegistry => {
   const own = new Map<string, RegisteredTask>();
-  tasks.forEach(task => {
+  tasks.forEach(({ task, origin }) => {
     const name = taskName(task);
-    if (!base.get(name)) {
-      own.set(name, { ...task, name, origin: 'space' });
+    if (!base.get(name) && !own.has(name)) {
+      own.set(name, { ...task, name, origin });
     }
   });
 
@@ -121,8 +126,14 @@ const composeRegistry = (
 const REGISTRY_CACHE = 500;
 
 export type SpaceRegistries = {
-  /** The tasks one run of that space can use: the deployment's, and its own functions' when it has any. */
-  registryFor: (functions: SpaceFunctions | undefined) => ActionTaskRegistry;
+  /**
+   * The tasks one run of that space can use: the deployment's, its own functions' when it has any, and those of the
+   * plugins it uses that bring a server half (by plugin type).
+   */
+  registryFor: (
+    functions: SpaceFunctions | undefined,
+    plugins?: Readonly<Record<string, SpaceFunctions>>
+  ) => ActionTaskRegistry;
 };
 
 /**
@@ -133,21 +144,43 @@ export const createSpaceRegistries = (base: ActionTaskRegistry, config: Function
   const cache = new Map<string, ActionTaskRegistry>();
 
   return {
-    registryFor: functions => {
-      const runner = functions?.runner ?? config.runner;
-      if (!functions || !runner) {
+    registryFor: (functions, plugins = {}) => {
+      // Each with the runner it names, else the deployment's: without one, its code has nowhere to run here.
+      const runnable = [
+        ...(functions ? [{ functions, scope: undefined }] : []),
+        ...Object.entries(plugins).map(([plugin, own]) => ({ functions: own, scope: { plugin } }))
+      ].flatMap(({ functions: found, scope }) => {
+        const runner = found.runner ?? config.runner;
+
+        return runner ? [{ functions: found, runner, scope }] : [];
+      });
+      if (runnable.length === 0) {
         return base;
       }
 
-      // What each task asked is in the bundle; what bounds it is the space's plan and the deployment's.
-      const key = `${functions.bundle.id}:${JSON.stringify(functions.limits ?? {})}`;
+      // What each task asked is in its bundle; what bounds it is the space's plan and the deployment's.
+      const key = runnable
+        .map(
+          ({ functions: found, scope }) =>
+            `${scope?.plugin ?? ''}:${found.bundle.id}:${JSON.stringify(found.limits ?? {})}`
+        )
+        .join('|');
       const found = cache.get(key);
       if (found) {
         return found;
       }
 
-      const limitsFor = (asked: FunctionTimeLimits) => functionLimitsFor(config.limits, functions.limits, asked);
-      const registry = composeRegistry(base, spaceTasks(functions, runner, limitsFor, config));
+      const registry = composeRegistry(
+        base,
+        runnable.flatMap(({ functions: own, runner, scope }) => {
+          const limitsFor = (asked: FunctionTimeLimits) => functionLimitsFor(config.limits, own.limits, asked);
+
+          return spaceTasks(own, runner, limitsFor, config, scope).map(task => ({
+            task,
+            origin: scope ? ('plugin' as const) : ('space' as const)
+          }));
+        })
+      );
       cache.set(key, registry);
       if (cache.size > REGISTRY_CACHE) {
         const oldest = cache.keys().next().value;
@@ -178,13 +211,15 @@ export type PreparedFunctions =
 /**
  * A space's source made ready to save: built, read by the runner, and checked — the only way a space's functions are
  * stored, so what is stored always passed every rule. `reserved` is every namespace the deployment's own tasks use;
- * `ceilings`, the most it gives one invocation — what a task may ask for.
+ * `ceilings`, the most it gives one invocation — what a task may ask for; `scope`, a plugin's server half rather than a
+ * space's (its tasks named after it, its routes its own).
  */
 export const prepareFunctions = async (
   source: FunctionsSource,
   runner: FunctionRunner,
   reserved: ReadonlySet<string>,
-  ceilings: FunctionLimits
+  ceilings: FunctionLimits,
+  scope?: FunctionScope
 ): Promise<PreparedFunctions> => {
   let code: string;
   try {
@@ -208,7 +243,7 @@ export const prepareFunctions = async (
     };
   }
 
-  const { manifest, problems } = readManifest(declared, reserved, ceilings);
+  const { manifest, problems } = readManifest(declared, reserved, ceilings, scope);
 
   return problems.length
     ? { ok: false, problems: problems.map(message => ({ file: 'index.ts', message })) }

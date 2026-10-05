@@ -135,12 +135,20 @@ written with `defineAction` always does.
   not part of a revision: a local project gets the environment's flags as they are now — its own to change from there
   — and a cloud one follows them as they change (see [Feature flags](./feature-flags.md)).
 - It writes the server project, the source tree under `src/` (unless it already was a project's `src/`), the pages,
-  actions, connectors and functions, `main.ts`, and `package.json` with every package the source imports — the SDK and
-  React at this CLI's versions, since plugins are rebuilt against the project's own.
+  actions (`src/actions/`, listed by `src/actions.ts`), connectors (`src/connectors/`) and functions, and `package.json`
+  with every package the source imports — the SDK and React at this CLI's versions, since plugins are rebuilt against
+  the project's own.
+- Its `main.ts` is the one `plitzi create` writes — the same port, `/health`, reloads, `.env` and `kv` in `data/` —
+  with what the space brought besides: its runtime, the plugins only a build of came across, a note on its visitors.
+  It depends on what the space holds, so it is the space's: `plitzi pull` writes it as the CLI pulling does, and
+  `plitzi upgrade` leaves it (and `.prettierignore`, which ignores `public/` and `vendor/`) to `pull`, saying so.
+  `start:dev` restarts on a change to `src/actions/` and `src/connectors/` too; a save to the pages re-authors them in
+  place, as in any local project.
 - It downloads the space's files into `public/` and rewrites every CDN address in the code to the project's root.
   They were public on the space's CDN and stay public here: everything in `public/` is served to anyone who asks.
 - It writes `.env` with a signing key made for the project (`PLITZI_SIGNING_SECRET`: what `ctx.sign` signs with — the
-  space's own key stays on Plitzi) and `.env.example` naming every variable and credential.
+  space's own key stays on Plitzi), as every server project gets one, and `.env.example` naming every variable and
+  credential.
 - It installs, formats with the project's Prettier (`public/` and `vendor/` are ignored: downloads stay as they came),
   and records what the project was given in `.plitzi/space.json`, and the functions as a working copy in
   `.plitzi/functions.json` — so `plitzi functions push` works from the project too.

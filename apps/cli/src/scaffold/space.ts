@@ -21,7 +21,7 @@ import type { PluginHostOptions } from '@plitzi/sdk-authoring';
  * It writes nothing — the space is \`src/space.ts\`, and the server and the browser both author it at boot. Only the
  * server asks for the documents, while developing: \`--out <file>\` writes them where it re-reads them on a save.
  */
-const authorScript = (): string => `import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+const authorScript = (): string => `import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
@@ -36,11 +36,40 @@ const json = process.argv.includes('--json');
 // \`--out <file>\`: where to write the documents — the server's, while developing. Left out, nothing is written.
 const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : undefined;
 
+/**
+ * The element types of the plugins the project runs as they were built (\`vendor/plugins/<type>/\`, a project made from
+ * a space): each folder's type and every element its manifest provides. None in most projects.
+ */
+const builtTypes = (): string[] => {
+  const dir = new URL('../vendor/plugins/', import.meta.url);
+  try {
+    return readdirSync(dir, { withFileTypes: true })
+      .filter(entry => entry.isDirectory())
+      .flatMap(entry => {
+        const manifest: unknown = JSON.parse(readFileSync(new URL(\`\${entry.name}/plugin-manifest.json\`, dir), 'utf-8'));
+        const schema =
+          typeof manifest === 'object' && manifest !== null && 'pluginSchema' in manifest ? manifest.pluginSchema : undefined;
+
+        return [entry.name, ...(typeof schema === 'object' && schema !== null ? Object.keys(schema) : [])];
+      });
+  } catch {
+    return [];
+  }
+};
+
+// What the space is checked against: its plugins' declarations, the built ones' types, and the files of \`public/\` a
+// provider reads — so a binding onto a path one of them does not have is said here.
+const options = {
+  plugins: declarations,
+  pluginTypes: builtTypes(),
+  data: publicData(new URL('../public/', import.meta.url))
+};
+
 /** How many of the warnings and suggestions said have one fix \`plitzi fix\` can write in this source — and the line that says so. */
 const fixableHint = (): string | undefined => {
   let count: number;
   try {
-    count = planFixes(space, { plugins: declarations }).fixes.length;
+    count = planFixes(space, options).fixes.length;
   } catch {
     return undefined;
   }
@@ -84,11 +113,7 @@ const outdated = (): { skill?: string; files?: string; sdk: string } | undefined
 };
 
 try {
-  // \`data\`: the files of \`public/\` a provider reads, so a binding onto a path one of them does not have is said here.
-  const { schema, style, warnings, suggestions } = authorSpace(space, {
-    plugins: declarations,
-    data: publicData(new URL('../public/', import.meta.url))
-  });
+  const { schema, style, warnings, suggestions } = authorSpace(space, options);
   if (out) {
     mkdirSync(path.dirname(out), { recursive: true });
     writeFileSync(out, \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);

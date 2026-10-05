@@ -6,11 +6,13 @@ import normalizePlugins, { normalizePluginSource } from '../../helpers/normalize
 import { reportReactBuild } from '../../helpers/reportReactBuild';
 import { configureServerLog, defaultLogLevel, isLogged, logLevelOf } from '../../helpers/serverLog';
 import { actionsModuleFor } from '../../modules/actions/moduleFor';
+import { isFunctionsDefinition } from '../../modules/functions/load';
 import { realtimeModuleFor } from '../../modules/realtime';
 import { invalidatePluginComponentCache } from '../../modules/ssr/loadPluginComponents';
 import { createMemoryDraftStore, DRAFT_STORE_METHODS } from '../../modules/ssr/preview';
 import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
+import { watchPluginSources } from '../../plugins/watch';
 import { makeHandler } from '../http/dispatcher';
 import { createDevReload } from '../http/stages/devReload';
 import { buildPagePipeline } from '../services/registry';
@@ -81,6 +83,22 @@ export const createPageServer = (
   const realtime = realtimeModuleFor(config);
 
   const devReload = config.devReload ? createDevReload() : undefined;
+  /**
+   * A plugin whose source changed is built again and handed to the open pages, which swap it where it is drawn — the
+   * rest of the page, its state included, stays as it was. Only while developing with `devReload` on: nobody edits a
+   * deployment's plugins under it, and a page that does not listen has nothing to swap.
+   */
+  const stopWatchingPlugins =
+    devReload && config.devMode
+      ? watchPluginSources(pluginManager, key => {
+          invalidatePluginComponentCache();
+          void pluginManager.rebuild(key).then(entry => {
+            if (entry?.js) {
+              devReload.plugin(entry);
+            }
+          });
+        })
+      : undefined;
   // First: a page listening for a reload asks before anything else is looked at, and holds its connection open.
   const stages = [...(devReload ? [devReload.stage] : []), ...buildPagePipeline(services, extensions)];
   const makeHandlerForPort = (port: number) => {
@@ -125,9 +143,21 @@ export const createPageServer = (
     // ends on its own, and would hold the shutdown until the grace cut it.
     onClosing: () => {
       realtime?.close();
+      stopWatchingPlugins?.();
       devReload?.close();
     },
     ...(devReload ? { reloadPages: devReload.reload } : {}),
+    ...(actions
+      ? {
+          setPluginFunctions: (plugin: string, definition: unknown) => {
+            if (definition !== undefined && !isFunctionsDefinition(definition)) {
+              throw new Error(`[SSR] The functions of plugin "${plugin}" are not a definition: defineFunctions({ … })`);
+            }
+
+            actions.setPluginFunctions(plugin, definition);
+          }
+        }
+      : {}),
     onDestroy: async () => {
       // Awaited first, and before the sockets go: the jobs running here are finished rather than abandoned, so a
       // rolling deploy costs no retries. Nothing else is waited for — what is still pending stays in the shared

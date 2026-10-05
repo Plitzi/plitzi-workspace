@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PackError, packPlugin } from './pack';
 import { writeFiles } from '../commands/terminal';
-import { pluginNames, scaffoldElement, scaffoldPlugin } from '../scaffold';
+import { pluginFunctionsFile, pluginNames, scaffoldElement, scaffoldPlugin } from '../scaffold';
 
 /**
  * A plugin is packed for a page that is not this one: the page provides React and the SDK, imports the code from a
@@ -329,6 +329,77 @@ describe('what is refused, and why', () => {
       await expect(pack(dir, [path.join(dir, 'src/plugins/SeatPicker')], os.tmpdir())).rejects.toBeInstanceOf(
         PackError
       );
+    });
+  });
+});
+
+describe('a plugin’s server half', () => {
+  it('travels as its source, named by the manifest, and in the source kept beside the zip', async () => {
+    // Inside this package, so the project's TypeScript resolves to the workspace's as a real project's would.
+    const parent = path.join(import.meta.dirname, '../../node_modules/.tmp');
+    await fs.mkdir(parent, { recursive: true });
+    const dir = await fs.mkdtemp(path.join(parent, 'pack-functions-'));
+    try {
+      await fs.writeFile(
+        path.join(dir, 'package.json'),
+        JSON.stringify({
+          name: 'site',
+          dependencies: { react: '^19.0.0', '@plitzi/plitzi-sdk': '^0.38.0', '@plitzi/sdk-server': '^0.38.0' }
+        })
+      );
+      await element(dir, 'board', 'Board');
+      const folder = path.join(dir, 'src/plugins/Board');
+      await writeFiles(folder, { 'functions/index.ts': pluginFunctionsFile(pluginNames('board')) });
+      const outDir = path.join(dir, 'dist/plugins/board');
+      const zip = path.join(dir, 'dist/board.zip');
+
+      const result = await packPlugin({
+        root: dir,
+        source: { kind: 'elements', folders: [folder] },
+        base: 'board',
+        version: '1.0.0',
+        outDir,
+        zip
+      });
+
+      const manifest = (await readManifest(outDir)) as Manifest & { functions?: string };
+      expect(manifest.functions).toBe('functions.source.json');
+      const carried = JSON.parse(await fs.readFile(path.join(outDir, 'functions.source.json'), 'utf-8')) as Record<
+        string,
+        string
+      >;
+      expect(Object.keys(carried)).toEqual(['index.ts']);
+      expect(carried['index.ts']).toContain('defineFunctions');
+      expect(Object.keys(unzipSync(await fs.readFile(zip)))).toContain('functions.source.json');
+
+      expect(result.source).toEqual({ file: expect.any(String) as string });
+      const kept = 'file' in result.source ? gunzipSync(await fs.readFile(result.source.file)).toString('utf-8') : '';
+      expect(kept).toContain('functions/index.ts');
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('is the main element’s only: another element’s is refused, saying where it goes', async () => {
+    await inTemp(async dir => {
+      await element(dir, 'board', 'Board');
+      await element(dir, 'legend', 'Key');
+      await writeFiles(path.join(dir, 'src/plugins/Legend'), {
+        'functions/index.ts': pluginFunctionsFile(pluginNames('legend'))
+      });
+
+      await expect(
+        packPlugin({
+          root: dir,
+          source: {
+            kind: 'elements',
+            folders: [path.join(dir, 'src/plugins/Board'), path.join(dir, 'src/plugins/Legend')]
+          },
+          base: 'board',
+          version: '1.0.0',
+          outDir: path.join(dir, 'dist/plugins/board')
+        })
+      ).rejects.toThrow(PackError);
     });
   });
 });

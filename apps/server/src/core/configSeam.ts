@@ -62,6 +62,10 @@ const isSpaceFunctions = (value: unknown): value is SpaceFunctions =>
   typeof value.bundle.load === 'function' &&
   isRecord(value.manifest);
 
+/** What `getPluginFunctions` answers: a `SpaceFunctions` per plugin type. */
+const isPluginFunctions = (value: unknown): value is Record<string, SpaceFunctions> =>
+  isRecord(value) && Object.values(value).every(isSpaceFunctions);
+
 /** Why a document is not one this server runs: the first problem its validator found, by where it is. */
 const firstProblem = (errors: readonly { path: string; message: string }[]): string => {
   const first = errors.at(0);
@@ -123,7 +127,7 @@ export const connectorLookupsOf = (config: ConnectorLookupsConfig): ConnectorLoo
  * not one is refused; listed, it is left out and said, so one broken action does not take its space's schedule down.
  */
 export const actionLookupsOf = (config: ActionLookupsConfig): ActionLookups => {
-  const { getConnector, getFunctions, listActions } = config;
+  const { getConnector, getFunctions, getPluginFunctions, listActions } = config;
 
   return {
     getAction: async (spaceId, actionId, at) => {
@@ -175,6 +179,24 @@ export const actionLookupsOf = (config: ActionLookupsConfig): ActionLookups => {
             if (!isSpaceFunctions(found)) {
               throw new Error(
                 `The functions of space ${String(spaceId)} are not what @plitzi/sdk-server/functions builds for one`
+              );
+            }
+
+            return found;
+          }
+        }
+      : {}),
+    ...(getPluginFunctions
+      ? {
+          getPluginFunctions: async (spaceId, at) => {
+            const found = await getPluginFunctions(spaceId, at);
+            if (found === undefined || found === null) {
+              return undefined;
+            }
+
+            if (!isPluginFunctions(found)) {
+              throw new Error(
+                `The plugin functions of space ${String(spaceId)} are not, by plugin type, what @plitzi/sdk-server/functions builds for one`
               );
             }
 

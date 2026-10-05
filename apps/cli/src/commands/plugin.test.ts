@@ -286,6 +286,55 @@ describe('plitzi add plugin', () => {
     expect(process.exitCode).toBeUndefined();
   });
 
+  it('writes a server half with --server, in the element’s folder, run with the plugin’s own routes and steps', async () => {
+    captureErrors();
+    const output = captureOutput();
+    await inTemp(async dir => {
+      await cliProject(dir);
+
+      await from(dir, () => addPlugin(['board'], { server: true }));
+
+      const functions = await fs.readFile(path.join(dir, 'src/plugins/Board/functions/index.ts'), 'utf-8');
+      expect(functions).toContain("import { defineFunctions } from '@plitzi/sdk-server/functions';");
+      expect(functions).toContain('/fn/plugins/board/');
+      expect(functions).toContain("'POST /state'");
+    });
+
+    expect(process.exitCode).toBeUndefined();
+    expect(output()).toContain('usePluginRoute(type)');
+  });
+
+  it('gives a plugin package the server half’s types when it had none', async () => {
+    captureErrors();
+    captureOutput();
+    await inTemp(async dir => {
+      const pkg = path.join(dir, 'seat-picker');
+      await from(dir, () => createPlugin(pkg, { install: false, packageManager: 'npm' }));
+
+      await from(pkg, () => addPlugin(['legend'], { server: true }));
+
+      const json = JSON.parse(await fs.readFile(path.join(pkg, 'package.json'), 'utf-8')) as {
+        devDependencies: Record<string, string>;
+      };
+      expect(json.devDependencies['@plitzi/sdk-server']).toMatch(/^\^\d/);
+      expect(await exists(path.join(pkg, 'src/Legend/functions/index.ts'))).toBe(true);
+    });
+  });
+
+  it('refuses a server half where nothing would run it: a project that renders in the browser alone', async () => {
+    const errors = captureErrors();
+    await inTemp(async dir => {
+      await cliProject(dir, { mode: 'client' });
+
+      await from(dir, () => addPlugin(['board'], { server: true }));
+
+      expect(await exists(path.join(dir, 'src/plugins/Board'))).toBe(false);
+    });
+
+    expect(process.exitCode).toBe(1);
+    expect(errors()).toContain('renders in the browser alone');
+  });
+
   it('leaves a package’s lists alone once somebody changed them, and says what to add', async () => {
     captureErrors();
     const output = captureOutput();

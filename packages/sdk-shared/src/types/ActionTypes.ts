@@ -212,10 +212,10 @@ export type ActionTaskDescriptor = {
   title: string;
   description?: string;
   /**
-   * Whose step it is: the deployment's (`http.request`, `kv.get`…) or one of the space's own functions. A run treats
-   * both alike; the editor lists them apart.
+   * Whose step it is: the deployment's (`http.request`, `kv.get`…), one of the space's own functions, or the server half
+   * of a plugin the space uses (`<type>.<action>`). A run treats them alike; the editor lists them apart.
    */
-  origin: 'deployment' | 'space';
+  origin: 'deployment' | 'space' | 'plugin';
   params: Record<string, unknown>;
 };
 

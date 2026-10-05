@@ -5,6 +5,7 @@ import path from 'node:path';
 import { build } from 'esbuild';
 import { zipSync } from 'fflate';
 
+import { PLUGIN_FUNCTIONS_SOURCE, readFunctionsSource } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { pluginAssetLoaders, pluginImportQueries } from '@plitzi/sdk-shared/plugins/bundle';
 import { inPluginLayer } from '@plitzi/sdk-shared/style/cssLayers';
@@ -223,9 +224,37 @@ const integrityOf = async (file: string): Promise<string> => {
   return `sha384-${createHash('sha384').update(content).digest('base64')}`;
 };
 
-/** The files a plugin is built from: the package's entry, or each element's index. */
-const sourceEntries = (source: PackSource): string[] =>
-  source.kind === 'package' ? [source.entry] : source.folders.map(folder => path.join(folder, 'index.ts'));
+/**
+ * Where a plugin's server half is: \`functions/\` in its MAIN element's folder — the first folder packed, or the
+ * package's \`src/<Main>/\`. One per plugin, run as the plugin's (its routes under \`/fn/plugins/<type>/\`).
+ */
+const functionsDirOf = (source: PackSource, root: string, mainType: string): string =>
+  source.kind === 'package'
+    ? path.join(root, 'src', `${mainType.charAt(0).toUpperCase()}${mainType.slice(1)}`, 'functions')
+    : path.join(source.folders[0], 'functions');
+
+const hasFunctions = (dir: string): Promise<boolean> =>
+  fs
+    .access(path.join(dir, 'index.ts'))
+    .then(() => true)
+    .catch(() => false);
+
+/** Every source file of a server half, by its path inside \`functions/\` — the one rule of what a source is. */
+const readFunctions = (dir: string): Promise<Record<string, string>> =>
+  readFunctionsSource(dir, {
+    list: async folder =>
+      (await fs.readdir(folder, { withFileTypes: true })).map(entry => ({
+        name: entry.name,
+        directory: entry.isDirectory()
+      })),
+    read: file => fs.readFile(file, 'utf8')
+  });
+
+/** The files a plugin is built from: the package's entry, or each element's index — and its server half's. */
+const sourceEntries = (source: PackSource, functionsEntry?: string): string[] => [
+  ...(source.kind === 'package' ? [source.entry] : source.folders.map(folder => path.join(folder, 'index.ts'))),
+  ...(functionsEntry ? [functionsEntry] : [])
+];
 
 /** Where the source snapshot of a plugin goes: beside its zip, named after it. */
 export const sourceFileOf = (zip: string): string => zip.replace(/\.zip$/, '.source.json.gz');
@@ -238,10 +267,11 @@ const writeSource = async (
   name: string,
   source: PackSource,
   root: string,
-  zip: string
+  zip: string,
+  functionsEntry?: string
 ): Promise<PackResult['source']> => {
   try {
-    const { bytes } = await packSource({ root, kind: 'plugin', name, entries: sourceEntries(source) });
+    const { bytes } = await packSource({ root, kind: 'plugin', name, entries: sourceEntries(source, functionsEntry) });
     const file = sourceFileOf(zip);
     await fs.mkdir(path.dirname(file), { recursive: true });
     await fs.writeFile(file, bytes);
@@ -283,6 +313,18 @@ export const packPlugin = async ({
   }
 
   const declarations = await readDeclarations(root, source);
+  const functionsDir = functionsDirOf(source, root, declarations[0].type);
+  const functions = (await hasFunctions(functionsDir)) ? await readFunctions(functionsDir) : undefined;
+  if (source.kind === 'elements') {
+    for (const folder of source.folders.slice(1)) {
+      if (await hasFunctions(path.join(folder, 'functions'))) {
+        throw new PackError(
+          `${path.relative(root, folder)}/functions: a plugin has one server half, its main element's — move it to ` +
+            `${path.relative(root, functionsDir)}, its routes and steps named after "${declarations[0].type}".`
+        );
+      }
+    }
+  }
 
   await fs.rm(outDir, { recursive: true, force: true });
   await fs.mkdir(outDir, { recursive: true });
@@ -349,11 +391,17 @@ export const packPlugin = async ({
       )
     ),
     assets,
-    assetsSettings: {}
+    assetsSettings: {},
+    // Its server half, as source: built by whatever runs the plugin — the platform on upload, a server of one's own.
+    ...(functions ? { functions: PLUGIN_FUNCTIONS_SOURCE } : {})
   };
   await fs.writeFile(path.join(outDir, 'plugin-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  if (functions) {
+    const sorted = Object.fromEntries(Object.entries(functions).sort(([a], [b]) => a.localeCompare(b)));
+    await fs.writeFile(path.join(outDir, PLUGIN_FUNCTIONS_SOURCE), `${JSON.stringify(sorted, null, 2)}\n`);
+  }
 
-  const files = [...built, 'plugin-manifest.json'];
+  const files = [...built, 'plugin-manifest.json', ...(functions ? [PLUGIN_FUNCTIONS_SOURCE] : [])];
   if (zip) {
     // At the zip's root, as the builder reads it: each file is unpacked beside the others at the plugin's address.
     const entries = await Promise.all(
@@ -372,6 +420,12 @@ export const packPlugin = async ({
     files,
     zip,
     typesOutcome,
-    source: await writeSource(main.type, source, sourceRoot, zip ?? path.join(outDir, `${base}.zip`))
+    source: await writeSource(
+      main.type,
+      source,
+      sourceRoot,
+      zip ?? path.join(outDir, `${base}.zip`),
+      functions ? path.join(functionsDir, 'index.ts') : undefined
+    )
   };
 };

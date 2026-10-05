@@ -33,6 +33,7 @@ import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
 import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
+import usePluginRoute from '@plitzi/sdk-shared/server/usePluginRoute';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { styleCacheFromDocument } from '@plitzi/sdk-shared/style';
 import useDisplayMode from '@plitzi/sdk-shared/style/useDisplayMode';
@@ -40,6 +41,7 @@ import useDisplayMode from '@plitzi/sdk-shared/style/useDisplayMode';
 import App from './App';
 import { getEnvironmentServer } from './config';
 import { track } from './modules/Analytics';
+import { createHotPlugins } from './modules/Sdk/hotPlugins';
 
 // SDK Style
 import './assets/plitzi-sdk.scss';
@@ -155,13 +157,24 @@ export type RenderPlugins = Record<
   }
 >;
 
+export type RenderOptions = {
+  /**
+   * Development: the page's plugins can be swapped while it runs (`replacePlugin` on what `render` returns) — what a
+   * server rebuilding a plugin hands an open page, so an edit shows without loading the page again.
+   */
+  hotPlugins?: boolean;
+};
+
 export function render(
   widgetContainer: string,
   params = {} as PlitziSdkProps,
-  plugins: RenderPlugins = {},
+  renderPlugins: RenderPlugins = {},
   debugMode = false,
-  ssrMode = false
+  ssrMode = false,
+  { hotPlugins = false }: RenderOptions = {}
 ) {
+  const hot = hotPlugins ? createHotPlugins(renderPlugins) : undefined;
+  const plugins = hot?.plugins ?? renderPlugins;
   /**
    * The runs the SERVER did while building this page, kept out of what the tree is rendered with.
    *
@@ -244,7 +257,15 @@ export function render(
    * server that swaps a module has to remount the tree, and without a handle its only option was to reload the
    * whole page.
    */
-  return { unmount: () => root.unmount() };
+  return {
+    unmount: () => root.unmount(),
+    /**
+     * Swaps a plugin where it is drawn, with `hotPlugins` on: `false` when it cannot be swapped in place — not
+     * registered by this page, or its declaration changed — and the page should load again.
+     */
+    replacePlugin: (key: string, component: RenderPlugins[string]['component']): boolean =>
+      hot?.replace(key, component) ?? false
+  };
 }
 
 declare global {
@@ -394,6 +415,9 @@ export {
   // no way to ask for a fresh one — so anything that has to keep up with a feed had to fetch it itself from the
   // browser, which is the whole thing a server-resolved element exists to avoid.
   useRscRefresh,
+  // A plugin's own server half (its `functions/`): the URL of one of its routes, `/fn/plugins/<type>/…`, with
+  // nothing for the space to wire.
+  usePluginRoute,
   // A realtime channel, for a plugin that moves at the speed of a cursor: the `channel` element's own connection,
   // read without a flow per message.
   useChannel,

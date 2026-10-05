@@ -88,7 +88,22 @@
 - **`useElementVisible(id)`** (`@plitzi/plitzi-sdk`): whether another element is on the page — its own `visible`, every
   container around it, the breakpoint — kept current while the plugin is mounted, at that plugin's cost alone.
 - **A page open on a development server loads again when the server restarts** (`devReload`): `start:dev` restarting
-  on a change to the server's code or a plugin reached the open page only when somebody reloaded it.
+  on a change to the server's code reached the open page only when somebody reloaded it.
+- **A saved plugin is swapped into the open page** (`devReload`, server mode): the page server rebuilds the plugin
+  whose source changed and the page renders the new component in place, keeping its state — no restart, no reload. A
+  change to its declaration (what the builder and the linter know of it) still reloads the page. `render()` takes
+  `{ hotPlugins: true }` and answers `{ unmount, replacePlugin }`; `PluginManager.rebuild(name)` and `onSources`. A new
+  folder in `src/plugins` is registered without a restart (`server.plugins.register`), from `create` and `create --from` alike.
+- **A plugin brings its own server half.** `functions/index.ts` beside the component — the `defineFunctions` a
+  space's functions use — answers routes under `/fn/plugins/<type>/` and runs steps named `<type>.<action>` (origin
+  `'plugin'`, the builder's **Plugins** group). It runs with a narrower `ctx`: its own `kv` (prefixed
+  `plugin:<type>:`, its `rateLimit` and `sign` too), none of the space's credentials, no realtime publishing or grants;
+  its routes and tasks outside its namespace are refused, as are a space's routes under `/fn/plugins/`. The component
+  reaches its routes with `usePluginRoute(type)` (`@plitzi/plitzi-sdk`; `undefined` where no server runs code).
+  A page server takes them as `functions.plugins` (`{ [type]: FunctionsDefinition }`), swaps one with
+  `server.functions.setPlugin`, and asks a cloud adapter with `actionLookups.getPluginFunctions(spaceId, version)`.
+  `plitzi pack plugin` carries the source in the zip as `functions.source.json` (`PLUGIN_FUNCTIONS_SOURCE`, named by
+  the manifest's `functions`; `loadFunctionsSource` builds it) — kept privately by the platform, never published.
 - **A plugin lays out the space's elements it holds.** `elementChildren(children)` (`@plitzi/plitzi-sdk`) hands
   over each child element with the id it was authored under, for a dock, tabs or a masonry to place in boxes of its
   own — instead of writing styles onto elements it does not render.
@@ -112,8 +127,11 @@
   never replaces it; `create --from` projects read `serverOptions.ts` too.
 - **`upgrade packages` brings up the scripts the CLI wrote and nobody changed** (`.plitzi/scaffold.json` now records
   them); a script the project changed is left and said, as before.
-- `start:dev` restarts on a change to the server's code — `serverOptions.ts`, `actions.ts`, the plugins and
-  `functions/` (whose `README.md` the project now starts with). A function imports its siblings with `.ts`, as `src/`.
+- `start:dev` restarts on a change to the server's code — `serverOptions.ts`, `actions.ts` and `functions/` (whose
+  `README.md` the project now starts with); a plugin is swapped in the open page instead, and its `functions/` set
+  again, without a restart. A function imports its siblings with `.ts`, as `src/`.
+- `add plugin --server` writes the plugin's server half (`functions/index.ts`, a `GET`/`POST /state` example on its
+  `kv`); a package gets `@plitzi/sdk-server` as a devDependency for its types. Refused in a client-mode project.
 - `add plugin`: `--prop rows:list` and `--prop meta:json` for data a binding fills; `--headless` writes
   `drawsNothing: true`; the generated events hook never fires on the builder's canvas.
 - A `channel` with no tag is boxless to a page check, like a provider; an empty list is said to have no rows, with what
@@ -122,6 +140,24 @@
   save outlives a restart, `start:dev`'s included. `action.kv` in `src/serverOptions.ts` names another store.
 - A server-mode project types what its plugins import besides code (`src/plugins/assets.d.ts`): a stylesheet, an image,
   `?raw`, `?inline` — a client-mode one has them from `vite/client`.
+- **A project made from a space runs the server `create` writes.** `create --from` and `pull` write the same
+  `src/main.ts` as `create` (one template), with what the space brought besides — its runtime, its built-only plugins, a
+  note on its visitors: it now takes a free port and writes `tmp/dev-server.json` (which `check`, `shot` and the visual
+  tests read), answers `/health`, and re-authors its pages on save instead of waiting for a restart. Its actions are
+  `src/actions/` and its connectors `src/connectors/`, both there from the start, and `start:dev` restarts on them;
+  `src/actions.ts` exports `actions` and `connectors`, as a `create` project's exports `actions` (`push` reads that).
+  `upgrade` leaves `src/main.ts` and `.prettierignore` of such a project to `pull` and says so — before, it showed them
+  as the project's own, and `--take all` would have put `create`'s server in place of the space's.
+- **A `--source cloud` server project starts.** Its key is in `.env`, which nothing read: `npm start` stopped on "Set
+  PLITZI_HOST_KEY". Every server project's `src/main.ts` now reads `.env` itself (`process.loadEnvFile`), and every
+  one is given a signing key there (`PLITZI_SIGNING_SECRET`, made for it by `create`) — `ctx.sign` refused in a project
+  `create` wrote, a plugin's server half included. `PORT` is no longer written into `.env`, where it pinned 8080. A
+  cloud project keeps its `kv` in `data/kv.json` too.
+- **`upgrade` keeps the package manager a project was written for** (`.plitzi/scaffold.json`) when it has no lockfile
+  of its own yet: a yarn or pnpm project not installed (`--no-install`), or sitting in a monorepo folder, was taken for
+  npm and its `AGENTS.md`, Playwright config and `.gitignore` replaced with npm's commands.
+- `author`, `check`, `fix` and `push` know the element types of a project's built-only plugins
+  (`vendor/plugins/*/plugin-manifest.json`, every element each provides), as its server does.
 - **A new project is formatted from the start**, every template and mode: its first `format` changes nothing. The CLI's
   own files are in its `.prettierignore`, so formatting never turns one into a file `upgrade` believes was changed.
 

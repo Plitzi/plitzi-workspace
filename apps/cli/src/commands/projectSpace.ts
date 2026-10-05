@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -24,11 +25,37 @@ const importProject = async (file: string): Promise<unknown> => import(pathToFil
 export interface ProjectSpace {
   space: SpaceSpec;
   plugins: PluginDeclarationData[];
+  /** The element types of the plugins it runs as they were built, which no declaration of the project's describes. */
+  pluginTypes: string[];
 }
 
 /**
- * The project's own declaration, loaded as its `author` script loads it — `src/space.ts`, and the plugins in
- * `src/plugins/declarations.ts` — for a command that authors it in this process.
+ * The element types of the plugins a project made from a space runs as they were built (`vendor/plugins/<type>/`): each
+ * folder's type and every element its manifest provides — as `src/main.ts` and `src/author.ts` read them. None elsewhere.
+ */
+const builtPluginTypes = async (root: string): Promise<string[]> => {
+  const dir = path.join(root, 'vendor/plugins');
+  const folders = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+
+  return (
+    await Promise.all(
+      folders
+        .filter(entry => entry.isDirectory())
+        .map(async entry => {
+          const text = await fs.readFile(path.join(dir, entry.name, 'plugin-manifest.json'), 'utf-8').catch(() => '');
+          const manifest: unknown = text ? JSON.parse(text) : undefined;
+          const provides =
+            isRecord(manifest) && isRecord(manifest.pluginSchema) ? Object.keys(manifest.pluginSchema) : [];
+
+          return [entry.name, ...provides];
+        })
+    )
+  ).flat();
+};
+
+/**
+ * The project's own declaration, loaded as its `author` script loads it — `src/space.ts`, the plugins in
+ * `src/plugins/declarations.ts` and the built ones' types — for a command that authors it in this process.
  */
 export const loadProjectSpace = async (root: string): Promise<ProjectSpace | { problem: string }> => {
   const module = await importProject(path.join(root, 'src/space.ts'));
@@ -40,5 +67,9 @@ export const loadProjectSpace = async (root: string): Promise<ProjectSpace | { p
   const registry = await importProject(path.join(root, 'src/plugins/declarations.ts')).catch(() => undefined);
   const declarations = isRecord(registry) ? registry.declarations : undefined;
 
-  return { space, plugins: isDeclarations(declarations) ? declarations : [] };
+  return {
+    space,
+    plugins: isDeclarations(declarations) ? declarations : [],
+    pluginTypes: await builtPluginTypes(root)
+  };
 };

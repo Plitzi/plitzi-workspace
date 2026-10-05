@@ -14,6 +14,12 @@ export type FunctionUsageRecord = { spaceId: number; task: string; ok: boolean; 
 export type FunctionsConfig = {
   native?: FunctionsDefinition[];
   /**
+   * The server halves of the plugins this server ships, by plugin type — loaded natively like `native`, but each with a
+   * plugin's narrower `ctx` (its own `kv` and limits, signatures only it verifies, none of the space's credentials or
+   * channels). Their tasks are `<type>.<action>`, their routes answer under `/fn/plugins/<type>/`.
+   */
+  plugins?: Record<string, FunctionsDefinition>;
+  /**
    * Where the spaces' own functions run: `createRemoteRunner` for the runner service, a provider's adapter, or
    * `createIsolateRunner` only where this process holds nothing a space must not reach. Absent, spaces have no
    * functions here — their tasks are not offered and none of their code runs.

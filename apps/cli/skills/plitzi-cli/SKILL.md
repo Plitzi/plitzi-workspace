@@ -81,7 +81,7 @@ What a project gives you, so you use it rather than rebuild it:
 | Script | What it is for |
 | --- | --- |
 | `start` | serve it — in client mode Vite, which hot-replaces on save. The server prints only what goes wrong; `-- --verbose` adds every request |
-| `start:dev` | server mode: restarted on a save to its code. Its options are `src/serverOptions.ts`, its actions `src/actions.ts`; `src/main.ts` is the CLI's |
+| `start:dev` | server mode: restarted on a save to its code; a plugin is swapped in the open page. Options in `src/serverOptions.ts`, actions in `src/actions.ts`; `src/main.ts` is the CLI's |
 | `author` | author `src/space.ts`: one line when it is fine, every problem at once (file:line, what to change) when not, then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
 | `npx plitzi fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |
 | `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows, a binding its data lacks; `--state`, `--element <id>`: what it holds; `--ssr`: what SSR misses; `--json` |
@@ -126,11 +126,10 @@ plitzi add plugin seat-picker --title "Seat Picker" --description "Pick a seat f
 plitzi add plugin ticker --prop interval:number=5000 --prop paused:boolean --trigger onTick:count --callback reset --headless
 ```
 
-**Say its shape and it is written in it**, with nothing to delete: `--prop name:type=default` (string, number,
-boolean; `list`/`json` for data a binding fills) for each attribute — typed, defaulted, bindable, with a control in its panel; `--trigger onTick:count` for
-each event and what a flow reads from it, fired with the `use<Name>Events()` hook it gets; `--callback reset` for
-each action a flow can call; `--headless` for one with nothing to see (hidden on a page, a badge in the builder).
-Without them it writes a counter that shows the three ways an element talks to a space — to be rewritten.
+**Say its shape and it is written in it**: `--prop name:type=default` (string, number, boolean; `list`/`json` for data
+a binding fills) per attribute — typed, bindable, with a control in its panel; `--trigger onTick:count` per event and
+what a flow reads, fired with its `use<Name>Events()` hook; `--callback reset` per action a flow calls; `--headless`
+for one with nothing to see. Without them it writes a counter showing the three ways an element talks to a space.
 
 Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 
@@ -144,14 +143,15 @@ Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 - **Registered by itself**: every folder of `src/plugins` is, under its name in camelCase (`SeatPicker` → `seatPicker`).
   Elsewhere the command prints the line that registers it (for `render()`, `<PlitziSdk>` or a page server).
 - **Host it** with `custom({ renderType: 'seatPicker', … })` in `src/space.ts` — or a Custom element in the builder.
-- **Checked like a built-in element**: `add plugin` also lists its declaration in `src/plugins/declarations.ts`, which
-  every place the project authors the space hands to `authorSpace(space, { plugins: declarations })`. Flows on its
-  events, steps to its actions and its attributes are refused when wrong; `declaredTrigger(declaration, 'onPick')` and
-  `declaredCallback(declaration, 'reset', { on: 'seats' })` build those steps, typed from the declaration. A plugin
-  written by hand is added to that list with its `declaration.ts`.
+- **Checked like a built-in element**: `add plugin` lists its declaration in `src/plugins/declarations.ts`, handed to
+  `authorSpace(space, { plugins: declarations })`: flows on its events, steps to its actions and its attributes are
+  refused when wrong; `declaredTrigger(declaration, 'onPick')` and `declaredCallback(declaration, 'reset', { on: 'seats' })`
+  build them typed. A plugin written by hand is added to that list.
 - **A new event or action** is declared in `declaration.ts` and registered by the component FROM there — never only
   in the component, or neither the builder nor the linter knows it exists.
 - A name that is a built-in type (`button`, `form`) is refused: a space could not tell the two apart.
+- **A server half** (`--server`): `functions/index.ts` in its folder — routes under `/fn/plugins/<type>/`
+  (`usePluginRoute`), steps `<type>.<action>`, its own `kv`, none of the space's credentials.
 
 ## Plugin packages (`create --plugin`)
 

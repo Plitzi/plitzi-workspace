@@ -10,9 +10,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
+import { writeOrigin } from './spaceOrigin';
 import { writeFiles } from './terminal';
 import { upgrade } from './upgrade';
-import { machineryFiles, scaffold } from '../scaffold';
+import { detectManagerVersion, machineryFiles, scaffold } from '../scaffold';
 import { CLI_VERSION } from '../scaffold/project';
 
 import type { UpgradeOptions } from './upgrade';
@@ -153,6 +154,53 @@ describe('plitzi upgrade', () => {
     await run(['files'], { write: true, take: ['src/main.ts'] });
 
     expect(await read('src/serverOptions.ts')).toBe(scaffold(ANSWERS)['src/serverOptions.ts']);
+  });
+
+  /**
+   * A project made from a space has the `src/main.ts` the space gave it — its runtime, its built plugins — which `plitzi
+   * pull` writes as the CLI it runs does. Offering `create`'s in its place would be offering to drop them.
+   */
+  it('leaves a file the space gave to `plitzi pull`, and says so', async () => {
+    await fs.writeFile(file('src/main.ts'), '// the space’s server, with its runtime and plugins from ./plugins/\n');
+    await writeOrigin(root, {
+      format: 1,
+      api: 'https://api.example.com',
+      space: { id: 42, name: 'Pizarra', permanentUrl: 'pizarra' },
+      source: 'local',
+      version: { environment: 'main' },
+      files: { 'src/main.ts': digestOf('// the space’s server, with its runtime and plugins from ./plugins/\n') },
+      downloads: {},
+      dependencies: {}
+    });
+
+    const shown = await run(['files'], { write: true, take: ['all'] });
+    const statuses = Object.fromEntries(
+      recordsIn(shown.files).map((entry): [string, unknown] => [String(entry.file), entry.status])
+    );
+
+    expect(statuses['src/main.ts']).toBe('space');
+    expect(await read('src/main.ts')).toBe('// the space’s server, with its runtime and plugins from ./plugins/\n');
+  });
+
+  /**
+   * A project written for Yarn and not installed yet has no lockfile to say so: what the CLI recorded writing it for
+   * does, or every file quoting a command would be offered back as npm's — and replaced, being the CLI's untouched.
+   */
+  it('keeps the package manager the files were written for when no lockfile says one', async () => {
+    // At the version this machine runs, which is what `.yarnrc.yml` is written for.
+    const managerVersion = detectManagerVersion('yarn', root);
+    const yarn: CreateAnswers = { ...ANSWERS, packageManager: 'yarn', ...(managerVersion ? { managerVersion } : {}) };
+    const files = Object.fromEntries(Object.entries(scaffold(yarn)).filter(([name]) => !name.startsWith('.claude/')));
+    await writeFiles(root, files);
+    await writeScaffoldRecord(root, CLI_VERSION, {
+      files: Object.fromEntries(Object.keys(machineryFiles(yarn)).map(name => [name, digestOf(files[name])])),
+      packageManager: 'yarn'
+    });
+
+    const shown = await run(['files']);
+    const changed = recordsIn(shown.files).filter(entry => entry.status !== 'current');
+
+    expect(changed).toEqual([]);
   });
 
   it('never names the project’s own files — its space, pages and README', async () => {

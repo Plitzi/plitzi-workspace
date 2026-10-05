@@ -59,7 +59,11 @@ export type SpaceExport = {
   };
   /** What there is no source of: kept built, so the project runs it as it is and cannot change it. */
   builtOnly: {
-    plugins: { type: string; files: SpaceExportFile[] }[];
+    /**
+     * Each plugin's built files, and its server half's source when it brings one (by path in its `functions/`): the
+     * platform keeps that privately, so it travels here rather than as a file on the CDN.
+     */
+    plugins: { type: string; files: SpaceExportFile[]; functions?: Record<string, string> }[];
     /** The packed runtime, in base64 — what `@plitzi/sdk-server/runtime` loads. */
     runtime: string | null;
   };

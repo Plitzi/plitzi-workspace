@@ -369,6 +369,36 @@ export { elements };
 export default main;
 `;
 
+/**
+ * The element's server half — \`functions/index.ts\` in its folder — written like a space's functions and run with a
+ * plugin's narrower \`ctx\`: what \`plitzi add plugin --server\` starts it with, an example to change.
+ */
+export const pluginFunctionsFile = ({
+  component,
+  type
+}: PluginNames): string => `import { defineFunctions } from '@plitzi/sdk-server/functions';
+
+/**
+ * ${component}'s server half. Its routes answer under \`/fn/plugins/${type}/\` — \`usePluginRoute('${type}')\` in the
+ * component names them — and its tasks are steps called \`${type}.<action>\`, for a space that wants one in a server
+ * action. \`ctx.kv\` is this plugin's own corner of the space's store; the space's credentials and realtime channels are
+ * not reachable from here.
+ *
+ * Files here import each other by relative path, and \`@plitzi/sdk-server/functions\` — nothing else.
+ */
+export default defineFunctions({
+  routes: {
+    // What the component kept for whoever is asking — signed in, or this address.
+    'GET /state': async (_request, ctx) => Response.json((await ctx.kv.get(\`state:\${ctx.callerId}\`)) ?? null),
+    'POST /state': async (request, ctx) => {
+      await ctx.kv.set(\`state:\${ctx.callerId}\`, await request.json(), 60 * 60 * 24 * 30);
+
+      return new Response(null, { status: 204 });
+    }
+  }
+});
+`;
+
 /** The element alone: its folder's files, by their path inside it. */
 export const elementFiles = (names: PluginNames, text: ElementText, shape?: ElementShape): ProjectFiles => ({
   [`${names.component}.tsx`]: shape ? shapedComponent(names, shape) : component(names),

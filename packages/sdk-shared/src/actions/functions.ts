@@ -7,6 +7,20 @@ import type { FunctionTimeLimits } from '../types/FunctionTypes';
  */
 export const FUNCTION_ROUTES_PREFIX = '/fn';
 
+/** The segment under `/fn` where plugins answer — `/fn/plugins/<type>/…` — and nobody else's routes may. */
+export const PLUGIN_ROUTES_SEGMENT = 'plugins';
+
+/**
+ * A plugin's server half as its package carries it: the source of its \`functions/\`, by path, in this file beside the
+ * bundle (\`plugin-manifest.json\` names it under \`functions\`). Built by whatever runs the plugin — the platform when it
+ * is uploaded, a server of one's own when it loads the packed plugin.
+ */
+export const PLUGIN_FUNCTIONS_SOURCE = 'functions.source.json';
+
+/** Where a plugin's route answers: `pluginRoutePath('board', '/layout')` is `/fn/plugins/board/layout`. */
+export const pluginRoutePath = (plugin: string, path = '/'): string =>
+  `${FUNCTION_ROUTES_PREFIX}/${PLUGIN_ROUTES_SEGMENT}/${encodeURIComponent(plugin)}${path.startsWith('/') ? path : `/${path}`}`;
+
 /**
  * The CPU and time an invocation gets when its task asks for none: what the server runs it with, and what the builder
  * shows as "default". A task asks for more in its `limits`, up to what its deployment allows.

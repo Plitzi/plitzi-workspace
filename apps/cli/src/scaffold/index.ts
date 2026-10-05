@@ -11,6 +11,7 @@ import { visualFiles } from './visual';
 import type { CreateAnswers, ProjectFiles } from './types';
 
 export { projectDeclarations } from './plugin';
+export { SDK_VERSION } from './project';
 
 export {
   PACKAGE_MANAGERS,
@@ -23,6 +24,7 @@ export {
 export {
   declarationsRegistry,
   elementsRegistry,
+  pluginFunctionsFile,
   pluginNameProblem,
   pluginNames,
   scaffoldElement,

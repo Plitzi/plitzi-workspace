@@ -11,8 +11,9 @@ import type { ActionKvStore } from '../types';
  */
 const spaceScope = (spaceId: number): string => `action:${spaceId}:`;
 
-export const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStore => {
-  const scoped = (key: string) => `${spaceScope(spaceId)}${key}`;
+/** Every key `store` is asked for, under `prefix`: a space's own keys, or a plugin's inside the space's. */
+export const prefixKv = (store: ActionKvStore, prefix: string): ActionKvStore => {
+  const scoped = (key: string) => `${prefix}${key}`;
 
   return {
     get: key => store.get(scoped(key)),
@@ -26,6 +27,9 @@ export const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStor
     change: (key, change, lifetime) => store.change(scoped(key), change, lifetime)
   };
 };
+
+export const namespaceKv = (store: ActionKvStore, spaceId: number): ActionKvStore =>
+  prefixKv(store, spaceScope(spaceId));
 
 /**
  * Every key a space's store holds, as patterns over the adapter's keys (`createKvStore`'s `prefix`, `kv:` unless it was

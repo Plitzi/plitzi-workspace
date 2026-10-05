@@ -81,6 +81,18 @@ const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
  */
 const NODE_ENGINES = { node: '>=22.18' };
 
+/** What `start:dev` restarts on: the server's own code — and, in a project made from a space, its actions' folders. */
+const watchPaths = ({ source, fromSpace }: CreateAnswers): string =>
+  [
+    './src/main.ts',
+    './src/serverOptions.ts',
+    ...(source === 'local' || fromSpace ? ['./src/actions.ts'] : []),
+    ...(fromSpace ? ['./src/actions', './src/connectors'] : []),
+    './functions'
+  ]
+    .map(watched => `--watch-path=${watched}`)
+    .join(' ');
+
 /**
  * What `start` means, which is the whole difference between the two modes.
  *
@@ -90,46 +102,47 @@ const NODE_ENGINES = { node: '>=22.18' };
  * restarts the process — and a save to a local space is re-authored in place and the open page reloads. Both are one command; only one of them is HMR, and calling
  * the other one HMR would be a promise the loop does not keep.
  */
-const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
-  ...(mode === 'server'
-    ? {
-        start: 'node src/main.ts',
-        /**
-         * Watched by PATH, not wholesale.
-         *
-         * The server compiles the project's plugins into `tmp/.sdk-plugins/` and then IMPORTS what it built, so a
-         * bare `--watch` sees its own output land, restarts, compiles again, and never stops. A local space is not
-         * among them: `main.ts` re-authors it on save in a process of its own and the open pages load again
-         * (`reloadPages`), so only the server's own code restarts it — its entry, options and actions, the plugins and
-         * `functions/`.
-         */
-        'start:dev':
-          source === 'local'
-            ? 'node --watch-path=./src/main.ts --watch-path=./src/serverOptions.ts --watch-path=./src/actions.ts --watch-path=./src/plugins --watch-path=./functions src/main.ts'
-            : 'node --watch-path=./src --watch-path=./functions src/main.ts',
-        /**
-         * What production runs: the same entry compiled to JavaScript. Node strips types by loading a TypeScript
-         * transformer into the process — ~10 MB a server keeps for its whole life to read one file — so a deployment
-         * runs what `build` emitted and carries no TypeScript at all.
-         */
-        build: 'tsc -p tsconfig.build.json',
-        'start:prod': 'node dist/main.js'
-      }
-    : {
-        start: 'vite',
-        build: 'vite build',
-        preview: 'vite preview'
-      }),
-  ...(source === 'local' ? { author: 'node src/author.ts' } : {}),
-  // One line per error — file(line,col) and the message — rather than a framed excerpt of each.
-  typecheck: 'tsc -p tsconfig.json --noEmit --pretty false',
-  lint: 'eslint .',
-  format: 'prettier --write .',
-  visual: 'playwright test',
-  // The CLI's, on the project's own Playwright: a picture of a page, and whether a page is whole — in text.
-  shot: 'plitzi shot',
-  check: 'plitzi check'
-});
+const scripts = (answers: CreateAnswers): Record<string, string> => {
+  const { mode, source } = answers;
+
+  return {
+    ...(mode === 'server'
+      ? {
+          start: 'node src/main.ts',
+          /**
+           * Watched by PATH, not wholesale.
+           *
+           * The server compiles the project's plugins into `tmp/.sdk-plugins/` and then IMPORTS what it built, so a
+           * bare `--watch` sees its own output land, restarts, compiles again, and never stops. Neither the space nor
+           * the plugins are among them: `main.ts` re-authors a local space on save and the open pages load again
+           * (`reloadPages`), and the server builds a plugin again on save and the open pages swap it where it is drawn
+           * — so only the server's own code restarts it: its entry, options and actions, and `functions/`.
+           */
+          'start:dev': `node ${watchPaths(answers)} src/main.ts`,
+          /**
+           * What production runs: the same entry compiled to JavaScript. Node strips types by loading a TypeScript
+           * transformer into the process — ~10 MB a server keeps for its whole life to read one file — so a deployment
+           * runs what `build` emitted and carries no TypeScript at all.
+           */
+          build: 'tsc -p tsconfig.build.json',
+          'start:prod': 'node dist/main.js'
+        }
+      : {
+          start: 'vite',
+          build: 'vite build',
+          preview: 'vite preview'
+        }),
+    ...(source === 'local' ? { author: 'node src/author.ts' } : {}),
+    // One line per error — file(line,col) and the message — rather than a framed excerpt of each.
+    typecheck: 'tsc -p tsconfig.json --noEmit --pretty false',
+    lint: 'eslint .',
+    format: 'prettier --write .',
+    visual: 'playwright test',
+    // The CLI's, on the project's own Playwright: a picture of a page, and whether a page is whole — in text.
+    shot: 'plitzi shot',
+    check: 'plitzi check'
+  };
+};
 
 /**
  * `extra` is what a project made from a space needs besides (`plitzi create --from`): the packages its plugins and
@@ -222,7 +235,7 @@ export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code${source === 'local' ? '; a save to the space reloads the open page' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space reloads it' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
     : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
 
 const spaceSection = (answers: CreateAnswers): string => {
@@ -404,9 +417,11 @@ What you leave behind is the next reader's problem — the user's, or the next a
  * prefix — ship a server credential to every visitor. The two modes therefore name different variables, because
  * they hold different keys.
  */
-export const envFile = ({ key, environment, revision, mode }: CreateAnswers): string =>
+export const envFile = ({ key, environment, revision, mode, source }: CreateAnswers): string =>
   mode === 'server'
-    ? `# The space's self-hosting key. Secret: never commit it, never ship it in a page.
+    ? `${
+        source === 'cloud'
+          ? `# The space's self-hosting key. Secret: never commit it, never ship it in a page.
 # Credentials, in the builder.
 PLITZI_HOST_KEY=${key}
 
@@ -415,13 +430,29 @@ PLITZI_HOST_KEY=${key}
 PLITZI_ENVIRONMENT=${environment}
 ${revision ? `PLITZI_REVISION=${String(revision)}` : '# PLITZI_REVISION=12'}
 
-PORT=8080
 `
+          : ''
+      }${SERVER_SETTINGS}`
     : `# The space's public render key. It ships in the page by design; the origin the browser states is what
 # protects it — add this project's domain to the space's allowed domains.
 VITE_PLITZI_WEB_KEY=${key}
 VITE_PLITZI_ENVIRONMENT=${environment}
 `;
+
+/**
+ * What every server project is given in `.env`: the key its actions sign with — filled by `plitzi create` with one made
+ * for it (`withSigningSecret`), never by the scaffold, which is the same for everybody — and the port, left to choose.
+ */
+const SERVER_SETTINGS = `# What the project signs with (ctx.sign): at least 32 characters, secret.
+PLITZI_SIGNING_SECRET=
+
+# Left out: 8080, or the next free port while developing.
+# PORT=8080
+`;
+
+/** A `.env` with the signing key `plitzi create` made for the project in its place. */
+export const withSigningSecret = (env: string, secret: string): string =>
+  env.replace(/^PLITZI_SIGNING_SECRET=$/m, `PLITZI_SIGNING_SECRET=${secret}`);
 
 export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   ...managerFiles(answers.packageManager, answers.managerVersion),
@@ -433,5 +464,5 @@ export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   'AGENTS.md': agentsFile(answers),
   // Claude Code reads CLAUDE.md, other agents AGENTS.md: one imports the other, so there is one text to keep true.
   'CLAUDE.md': '@AGENTS.md\n',
-  ...(answers.source === 'cloud' ? { '.env': envFile(answers) } : {})
+  ...(answers.mode === 'server' || answers.source === 'cloud' ? { '.env': envFile(answers) } : {})
 });

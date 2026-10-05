@@ -197,6 +197,10 @@ add
   .option('--trigger <name:fields>', 'An event it fires and what a flow reads — onTick:count. Repeat it', collect, [])
   .option('--callback <name>', 'An action a flow can call on it — reset. Repeat it', collect, [])
   .option('--headless', 'Nothing to see: hidden on a page, a badge in the builder (a clock, a listener)')
+  .option(
+    '--server',
+    'With a server half: functions/ in its folder — routes under /fn/plugins/<type>/, steps <type>.<action>'
+  )
   .option('-f, --force', 'Write into a folder that is not empty')
   .action((names: string[], options: AddPluginOptions) => addPlugin(names, options));
 

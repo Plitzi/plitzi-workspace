@@ -1199,6 +1199,10 @@
       "types": "./dist/server/rsc/useRscSync.d.ts",
       "import": "./dist/server/rsc/useRscSync.mjs"
     },
+    "./server/usePluginRoute": {
+      "types": "./dist/server/usePluginRoute.d.ts",
+      "import": "./dist/server/usePluginRoute.mjs"
+    },
     "./source": {
       "types": "./dist/source/index.d.ts",
       "import": "./dist/source/index.mjs"

@@ -113,7 +113,7 @@
     <% if (locals.plugins && locals.plugins.length > 0) { %>
     <% for (const plugin of locals.plugins) { if (plugin.css) { %>
     <link href="<%= plugin.css %>" rel="preload" as="style" />
-    <link href="<%= plugin.css %>" rel="stylesheet" />
+    <link href="<%= plugin.css %>" rel="stylesheet" data-plitzi-plugin="<%= plugin.keyName %>" />
     <% } } %>
     <% } %>
   </head>
@@ -136,7 +136,29 @@
       const __plitziParams = JSON.parse(__plitziData.textContent);
       // Read once: the page would otherwise hold the space twice, as this text and as what it was parsed into.
       __plitziData.remove();
+      <% if (locals.devReload) { %>
+      const __plitziApp = render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true, { hotPlugins: true });
+      // A plugin the server built again: its new bundle swapped in where it is drawn and its stylesheet pointed at the
+      // new one — the rest of the page stays as it is. One that cannot be swapped in place loads the page again.
+      window.__plitziDevEvents?.addEventListener('plugin', async event => {
+        const { key, js, css } = JSON.parse(event.data);
+        const sheet = css && [...document.querySelectorAll('link[data-plitzi-plugin]')].find(link => link.dataset.plitziPlugin === key);
+        if (sheet) {
+          sheet.href = css;
+        }
+
+        try {
+          const { default: component } = await import(js);
+          if (!__plitziApp?.replacePlugin(key, component)) {
+            location.reload();
+          }
+        } catch (error) {
+          console.error(`[plitzi] plugin "${key}" could not be loaded again`, error);
+        }
+      });
+      <% } else { %>
       render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true);
+      <% } %>
     </script>
     <% } %>
     <% if (locals.devReload) { %>
@@ -145,6 +167,8 @@
     <script>
       (() => {
         const events = new EventSource('/__plitzi/reload');
+        // The page's module script listens here too, for a plugin built again (`plugin`).
+        window.__plitziDevEvents = events;
         let boot;
         events.addEventListener('hello', event => {
           const next = JSON.parse(event.data).boot;

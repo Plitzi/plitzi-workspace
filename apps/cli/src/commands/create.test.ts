@@ -503,6 +503,8 @@ describe('plitzi create', () => {
       const written = await fs.readdir(target);
       expect(written.sort()).toEqual([
         '.claude',
+        // The key its actions sign with, made for it alone.
+        '.env',
         '.gitignore',
         // What the CLI wrote of its machinery, by digest: what `upgrade` replaces a file by.
         '.plitzi',
@@ -530,6 +532,11 @@ describe('plitzi create', () => {
         'serverOptions.ts',
         'space.ts'
       ]);
+      expect(await fs.readFile(path.join(target, '.env'), 'utf-8')).toMatch(/^PLITZI_SIGNING_SECRET=[0-9a-f]{64}$/m);
+      // What the files were written for, before any lockfile says it.
+      expect(JSON.parse(await fs.readFile(path.join(target, '.plitzi/scaffold.json'), 'utf-8'))).toMatchObject({
+        packageManager: 'npm'
+      });
     });
   });
 
