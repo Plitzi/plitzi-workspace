@@ -6,6 +6,7 @@ import {
   failedFlowText,
   inspectDocument,
   inspectPage,
+  openPage,
   readDevTools
 } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
@@ -198,7 +199,8 @@ const checkAt = async (
     }
   });
 
-  const answered = await page.goto(`${origin}${pathname}`, { waitUntil: 'networkidle' }).catch(() => null);
+  // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
+  const answered = await openPage(page, `${origin}${pathname}`);
   if (!answered) {
     const issue: CheckIssue = { code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width };
 

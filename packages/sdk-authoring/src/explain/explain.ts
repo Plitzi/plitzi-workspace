@@ -165,8 +165,13 @@ export const BUILDER_NAMES: Record<string, string> = {
   setState: 'updateElement',
   toggleState: 'toggleElement',
   performQuery: 'reloadApi',
+  cancelQuery: 'cancelApi',
   delayTime: 'delay'
 };
+
+/** The step a builder writes when the builder is not named after it: `reloadApi` is how `performQuery` is written. */
+const stepOfBuilder = (name: string): string | undefined =>
+  Object.entries(BUILDER_NAMES).find(([, builder]) => builder === name)?.[0];
 
 const builderOf = (action: string, type: string): string | undefined => {
   const named = type === 'globalCallback' ? action : (BUILDER_NAMES[action] ?? action);
@@ -296,12 +301,15 @@ export const explain = (name: string): Explanation[] => {
   const trigger = explainTrigger(name);
   const transformer = Object.hasOwn(BUILTIN_TRANSFORMERS, name) ? BUILTIN_TRANSFORMERS[name] : undefined;
   const helper = Object.hasOwn(HELPERS, name) ? HELPERS[name] : undefined;
+  // Asked by the name the code calls it: what `reloadApi(…)` writes is the `performQuery` step.
+  const builtStep = stepOfBuilder(name);
 
   return [
     ...(code ? [{ kind: 'code' as const, name, codeKind: code.kind, means: code.means, fix: code.fix }] : []),
     ...(element ? [element] : []),
     ...(trigger ? [trigger] : []),
     ...explainSteps(name),
+    ...(builtStep ? explainSteps(builtStep) : []),
     ...(transformer
       ? [
           {

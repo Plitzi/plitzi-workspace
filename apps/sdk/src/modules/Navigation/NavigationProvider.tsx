@@ -140,6 +140,9 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
     []
   );
 
+  /** Which navigation is the latest: only it goes anywhere, and only it says where the page is going. */
+  const latestNavigation = useRef(0);
+
   const handleNavigate = useCallback(
     (url: string, isExternal: boolean = false) => {
       if (isExternal && typeof window !== 'undefined') {
@@ -149,6 +152,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       }
 
       const target = resolveTarget(url);
+      const ticket = ++latestNavigation.current;
 
       /**
        * Ask for the destination's data BEFORE going there.
@@ -162,15 +166,29 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
        * server-driven element), so an ordinary page navigates as directly as it always did. The timeout is what
        * keeps a slow or dead endpoint from holding the visitor: past it the page goes anyway, and the provider
        * renders its loading state until the answer lands.
+       *
+       * A second navigation before the first went supersedes it: its prefetch aborts the first one's, and the first
+       * one never goes — clicking A and then B used to pass through A on the way.
        */
       if (!store.get('rsc.enabled')) {
+        store.set('navigation.pendingLocation', '');
         void navigateRef.current?.(target);
 
         return;
       }
 
-      const go = () => navigateRef.current?.(target);
-      void Promise.race([refreshRsc(store, undefined, undefined, target), wait(PREFETCH_TIMEOUT_MS)]).then(go, go);
+      store.set('navigation.pendingLocation', target);
+      const prefetch = refreshRsc(store, undefined, undefined, target).finally(() => {
+        if (latestNavigation.current === ticket) {
+          store.set('navigation.pendingLocation', '');
+        }
+      });
+      const go = () => {
+        if (latestNavigation.current === ticket) {
+          void navigateRef.current?.(target);
+        }
+      };
+      void Promise.race([prefetch, wait(PREFETCH_TIMEOUT_MS)]).then(go, go);
     },
     [resolveTarget, store]
   );

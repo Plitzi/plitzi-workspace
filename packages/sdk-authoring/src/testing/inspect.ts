@@ -148,7 +148,11 @@ const inspect = async (
 ): Promise<PageReport> => {
   const skip = new Set(options.skip ?? []);
   const input: ProbeInput = {
-    expected: expected.map(handle => ({ id: handle.id, selector: handle.selector })),
+    expected: expected.map(handle => ({
+      id: handle.id,
+      selector: handle.selector,
+      ...(handle.type === 'list' ? { list: true as const } : {})
+    })),
     images: !skip.has('images'),
     overflow: !skip.has('overflow'),
     legibility: !skip.has('legibility')

@@ -27,7 +27,8 @@ completed from what the element publishes (`apiContainer_posts`, `list_postList`
 The binding's `source` is completed for you; its template is read as written, so the short name there is refused.
 
 An element re-renders when anything it reads changes: the first part of each binding's `source` and every source its
-templates name. The globals are `variables`, `navigation` (`routeParams`, `queryParams`, `origin`, `currentPageId`),
+templates name. The globals are `variables`, `navigation` (`routeParams`, `queryParams`, `origin`, `currentPageId`,
+`pending` while a link waits for its page's server data),
 `auth` (who is signed in, `status` while that is being found out), `state` (what flows wrote), `theme`
 (`mode`, `resolved`), `host` (the `hostData` an application embedding the space hands the SDK) and `computed` (below).
 
@@ -60,14 +61,19 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
 ```
 
 - A provider's source is readable by its **descendants** only. Wrap what reads it; a sibling cannot see it.
-- It publishes `data` plus `isLoading`, `isEmpty`, `hasError`, `errorMessage` — bind a state to those, not to guesses.
-  A `query`'s body is `data` in **either runtime** (`p.data.plans`), so moving a provider to the server changes no
-  binding. A connector publishes `records` (or `record`), an action its output.
+- It publishes its answer plus `isLoading`, `isEmpty`, `hasError`, `errorMessage` — bind a state to those, not to
+  guesses. A `query`'s body is `data` in **either runtime** (`p.data.plans`), so moving a provider to the server
+  changes no binding. A connector publishes `records` (or `record`). **An action publishes its output at the root**:
+  `apiContainer_board.columns`, never `.data.columns` (warned `action-output-path`).
   `isEmpty` reads what arrived: a `query`'s body when it is missing, `null`, `''`, `[]` or `{}`; a connector list by
   its `records`; a `singleRecord` provider by its `record`. It is also true before the first answer, so pair it with
   `not isLoading` for an empty state.
 - A query that depends on state is a binding on `query`; it answers `''` (and fetches nothing) until the state exists:
-  `"{{ source ? apiUrl ~ '/workspaces/' ~ source ~ '/stats' : '' }}"` with `source: 'state.workspace.id'`.
+  `"{{ source ? apiUrl ~ '/workspaces/' ~ source ~ '/stats' : '' }}"` with `source: 'state.workspace.id'`. A server
+  provider's bound `input` (`bindTemplate('input', 'state.c', '{{ { country: source } }}', { returns: 'value' })`)
+  asks again on every change; `reloadApi('p', { … })` asks once.
+- `isLoading` is true while it is asked again, in either runtime. A newer ask drops the older one; `cancelApi('p')` is a
+  STOP: what is shown stays.
 - `runtime: 'server'` is resolved by the page server — server data is on unless a space says `rsc: { enabled: false }`.
   Only a page and its layouts are resolved — never inside a component: keep the provider on the page and hand the
   component its rows as a prop ([recipes/server-data.ts](../recipes/server-data.ts)).
@@ -79,21 +85,16 @@ see [typed-sources.md](typed-sources.md).
 
 ### Data in a project with no backend
 
-An offline project (`offlineMode`) still never invents data: the content lives in JSON files the project serves
-(`public/data/games.json`, served in either mode) and a provider reads them like any API — `apiContainer({ id: 'catalog', query:
-'/data/games.json', cache: true, children: [ … ] })`. The page binds to `catalog.data.…` exactly as it would to a live
-backend, so swapping the file for a real endpoint later changes one `query`. `mockData` is what the BUILDER shows while
-editing; it is not a data source for the running page. Say on the page that demo content is demo content.
+Content lives in JSON files the project serves (`public/data/games.json`), read like any API — `apiContainer({ id:
+'catalog', query: '/data/games.json', children: [ … ] })` — so a real endpoint later changes one `query`. `mockData` is
+what the BUILDER shows while editing, never the running page's data. Say on the page that demo content is demo content.
 
-**`public/` is on the internet.** Every file in it is served to anyone who asks, as it is, once the project is deployed —
-and so is everything the space's documents hold (pages, variables, attributes, `mockData`): they reach every visitor's
-browser. Never put a secret, a key, a private document or data only some visitors may read in either. A secret is a
-credential that an action or a connector names; data for some visitors only comes from a server action whose `access`
-checks who is asking, or a `runtime: 'server'` provider behind one.
+**`public/` is on the internet**, and so is everything the space's documents hold (pages, variables, attributes,
+`mockData`): never a secret, a key, a private document or data only some visitors may read. A secret is a credential an
+action or a connector names; data for some visitors comes from a server action whose `access` checks who is asking.
 
-**In a server project (`create --mode server`), put the provider on the server** — `runtime: 'server'` — and the page
-server reads the file from `public/` itself: the page arrives with those sections (and their anchors) in it. A `query`
-with `{{tokens}}` is still read in the browser, against the visitor's route and state.
+**In a server project, put the provider on the server** (`runtime: 'server'`): the page arrives with those sections
+(and their anchors) in it. A `query` with `{{tokens}}` is still read in the browser.
 
 ### Live, cached, refreshed
 

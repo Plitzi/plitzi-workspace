@@ -26,7 +26,7 @@ characters. Only what you authored is interpolated.
 
 A binding's template renders TEXT by default. For an attribute that holds a list, a number or a flag — a list's
 `items` above all — hand over the VALUE with `returns: 'value'` (`returnMode: 'value'` on the transformer). The
-template must be a single `{{ expression }}`:
+template must be a single `{{ expression }}`, after any `{% set %}` that name its parts:
 
 ```ts
 list({ id: 'shown', source: 'controlled',
@@ -63,7 +63,8 @@ outside the element that publishes it — each with the name it should have been
   `rows|sort((a, b) => b.score - a.score)`, `rows|filter(r => r.score >= min)`, `rows|map(r => r.name)`.
 - Tests: `is defined`, `is empty`, `is null`, `is iterable`, `is even`, `is odd`, `is same as(x)` (strict: `false` is
   not `'false'`, `0` or an unset value), `is divisible by(n)`, and their `is not` forms. `null` and `none` are literals.
-- Functions: `range`, `min`, `max`, `cycle`.
+- Functions: `range`, `min`, `max`, `cycle`. `abs` is a filter (`x|abs`); floor and ceil are `x|round(0, 'floor')` and
+  `x|round(0, 'ceil')`; a clamp is `min(max(x, low), high)`.
 - **Not supported**: `matches` (no regular expressions are evaluated — use `starts with`, `ends with`, `in`), macros,
   `include`/`extends`, and any filter or function not listed here. `authorSpace` refuses them, and anything else the
   interpreter would read past, rather than letting a template render a value nobody wrote.
@@ -99,6 +100,8 @@ A lookup across two sources — a row joined to the stats around it:
   string stays a string however it looks — a password typed `1234` arrives as `"1234"`. Nothing is guessed from the
   text: to convert, declare the type where the value lands (`setState`'s `type`, the action's input field). Text around
   the tokens is text, unless it makes a JSON object or array — then it is that document (see `json_encode` above).
+  **One exception: a param that is only a JSON filter (`{{ rows|json_encode }}`) is the value it encodes** — the list,
+  not its text — so an action input receiving it is declared `json`; a `text` field refuses it (422).
 
 ## Dates
 

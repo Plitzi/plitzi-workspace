@@ -9,13 +9,8 @@ custom({ id: 'arcade', renderType: 'nebulaRun', shipColor: 'amber', bind: { best
 
 ## Creating one
 
-The CLI writes it, in the shape Plitzi's own elements are written in:
-
-```bash
-npx @plitzi/cli add plugin seat-picker legend # elements of this project (src/plugins/<Name> in a CLI project)
-npx @plitzi/cli create seat-picker --plugin   # a package of its own, with a preview
-npx @plitzi/cli pack plugin                   # built, with its manifest and the zip the builder takes
-```
+The CLI writes it, in the shape Plitzi's own elements are written in: `npx @plitzi/cli add plugin seat-picker` (a
+package of its own and packing it: the CLI skill).
 
 One folder, four files: `SeatPicker.tsx` (the component), `declaration.ts` (its `type`, the `triggers` it fires, the
 `callbacks` it answers to, and the element the builder adds — data only), `Settings.tsx` (its panel in the builder), and
@@ -154,6 +149,10 @@ A plugin says what HAPPENED through its events (`onPick`, with the seat in the p
 decide what that means — write `state`, open a modal, call a server action. Prefer that to writing `state` from inside
 the component: the flow is visible in the space, the builder shows it, and the same act can come from a button too.
 
+- An action's params arrive as written — text, or one `{{ expression }}`'s value: read a number as `Number(params.n)`.
+- To follow what another element shows, bind a prop to the source its `visible` reads — never watch its classes.
+- A name for screen readers is a prop of its own: declare `label`, write it as the root's `aria-label`.
+
 ## Behaving in the builder
 
 The builder draws the element on its canvas while somebody edits the page: a click selects it, a drag moves it, a key
@@ -165,6 +164,11 @@ belongs to the editor.
 - **Never the global `window` or `document`.** The canvas is a frame of its own and the code runs in the builder's
   window: listen, measure and go full screen through the node's own page (`ref.current.ownerDocument`, its
   `defaultView`) or `usePlitziServiceContext().utils.getWindow()`. An `instanceof` check takes its class from there too.
+
+## The plugin's stylesheet and the space's CSS
+
+A plugin's stylesheet wins over the space's classes and `customCss` whatever their specificity: a rule about the
+inside of a plugin goes in the plugin's CSS, and the space reaches it through props and custom properties.
 
 ## Components that draw into DOM they do not render
 

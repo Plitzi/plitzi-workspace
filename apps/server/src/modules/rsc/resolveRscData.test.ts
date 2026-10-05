@@ -88,6 +88,41 @@ describe('resolveRscData', () => {
     expect(result.serverData).toEqual({});
   });
 
+  /** The browser that asked stopped waiting — a newer refresh, a STOP — and the work it asked for stops with it. */
+  it('cancels every element still resolving when whoever asked hangs up', async () => {
+    let seen: AbortSignal | undefined;
+    const asked = new AbortController();
+    const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ signal }) => {
+      seen = signal;
+
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new Error('aborted')));
+        asked.abort();
+      });
+    });
+
+    const result = await resolveRscData({
+      ...base,
+      schema: buildSchema(),
+      req: request('/'),
+      resolveElement,
+      signal: asked.signal
+    });
+
+    expect(seen?.aborted).toBe(true);
+    expect(result.serverData).toEqual({});
+  });
+
+  it('names the setting that gives a slow element more time', async () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const resolveElement = vi.fn<RscElementResolver>().mockImplementation(() => new Promise(() => undefined));
+
+    await resolveRscData({ ...base, schema: buildSchema(), req: request('/'), resolveElement, timeoutMs: 10 });
+
+    expect(JSON.stringify(errors.mock.calls)).toContain('elementTimeoutMs');
+    errors.mockRestore();
+  });
+
   it('leaves the signal alone for an element that answered in time', async () => {
     let seen: AbortSignal | undefined;
     const resolveElement = vi.fn<RscElementResolver>().mockImplementation(({ signal }) => {

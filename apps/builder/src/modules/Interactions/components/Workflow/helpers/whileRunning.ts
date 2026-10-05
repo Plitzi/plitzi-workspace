@@ -1,11 +1,12 @@
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { WhileRunning } from '@plitzi/sdk-shared';
 
-/** The three answers to "fired again while this flow runs", as the trigger's panel offers them. */
+/** The answers to "fired again while this flow runs", as the trigger's panel offers them. */
 export const WHILE_RUNNING_OPTIONS: (Exclude<Option, OptionGroup> & { value: WhileRunning })[] = [
   { value: 'skip', label: 'Ignore the new one (no double submit)' },
   { value: 'queue', label: 'Queue it: run after, in order' },
-  { value: 'parallel', label: 'Run it at the same time' }
+  { value: 'parallel', label: 'Run it at the same time' },
+  { value: 'latest', label: 'Stop the running one, run the new one' }
 ];
 
 const isMode = (value: string | undefined): value is WhileRunning =>

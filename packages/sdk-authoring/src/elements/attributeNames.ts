@@ -52,7 +52,7 @@ export const elementAttributeNames = {
   carousel: ['autoplay', 'itemKey', 'items', 'label', 'loop', 'mode', 'pauseOnHover', 'speed', 'transition'],
   carouselTrack: [],
   channel: ['grant', 'keep', 'presence', 'subType', 'topic'],
-  container: ['decorative', 'label', 'live', 'subType'],
+  container: ['decorative', 'label', 'live', 'subType', 'title'],
   custom: null,
   dialogContainer: [
     'acceptButtonLabel',
@@ -408,7 +408,7 @@ export const elementAttributeNames = {
   tabContainerBody: [],
   tabContainerHeader: [],
   tabContainerItem: [],
-  text: ['content'],
+  text: ['content', 'title'],
   themeToggle: ['darkLabel', 'lightLabel', 'showSystem', 'subType', 'systemLabel'],
   video: ['autoPlay', 'loop', 'muted', 'playsInline', 'src']
 } as const satisfies Readonly<Record<string, readonly string[] | null>>;

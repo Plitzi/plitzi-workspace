@@ -28,6 +28,17 @@ describe('explain', () => {
     );
   });
 
+  /** Asked by the name the code writes it with: `reloadApi(…)` is the `performQuery` step, `cancelApi(…)` `cancelQuery`. */
+  it('answers a builder named otherwise than its step with the step it writes', () => {
+    expect(explain('reloadApi')).toEqual([
+      expect.objectContaining({ kind: 'step', name: 'performQuery', builder: 'reloadApi' })
+    ]);
+    expect(explain('cancelApi')).toEqual([
+      expect.objectContaining({ kind: 'step', name: 'cancelQuery', builder: 'cancelApi' })
+    ]);
+    expect(explain('whileRunning')).toEqual([expect.objectContaining({ kind: 'helper', name: 'whileRunning' })]);
+  });
+
   /** A builder called with arguments of its own is written as it is called, not with the document's param names. */
   it('writes a step the way its builder is called', () => {
     const written = (name: string): string => explain(name).map(explanationText).join('\n');

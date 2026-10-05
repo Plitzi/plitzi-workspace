@@ -9,7 +9,7 @@ import { projectHere, readPackageJson } from './existingProject';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
 import { fail, install, writeFiles } from './terminal';
 import { unifiedDiff } from '../fix/diff';
-import { detectManagerVersion, installCommand, machineryFiles } from '../scaffold';
+import { detectManagerVersion, installCommand, machineryFiles, seedFiles } from '../scaffold';
 import { CLI_VERSION, packageJson } from '../scaffold/project';
 import { SKILL_NAMES, skillFiles, skillVersion } from '../scaffold/skills';
 
@@ -225,7 +225,8 @@ const planPackages = (text: string, answers: CreateAnswers): PackagesPlan => {
 
 // --- files ---------------------------------------------------------------------------------------------------------
 
-type FileStatus = 'current' | 'added' | 'updated' | 'yours' | 'taken';
+/** `seeded`: a file of the project's own that the machinery imports, written because the project had none. */
+type FileStatus = 'current' | 'added' | 'updated' | 'yours' | 'taken' | 'seeded';
 
 interface FilePlan {
   file: string;
@@ -268,6 +269,16 @@ const planFiles = async (
       return { file, status: take.includes('all') || take.includes(file) ? 'taken' : 'yours', ours, yours };
     })
   );
+
+/** The project's own files the machinery imports that it does not have yet — written once, never replaced. */
+const planSeeds = async (root: string, files: Record<string, string>): Promise<FilePlan[]> =>
+  (
+    await Promise.all(
+      Object.entries(files).map(async ([file, ours]): Promise<FilePlan | undefined> =>
+        (await readText(path.join(root, file))) === undefined ? { file, status: 'seeded', ours } : undefined
+      )
+    )
+  ).filter((plan): plan is FilePlan => plan !== undefined);
 
 const WRITES: ReadonlySet<FileStatus> = new Set(['added', 'updated', 'taken']);
 
@@ -346,6 +357,7 @@ const statusLine: Record<FileStatus, (file: string) => string> = {
   current: file => chalk.dim(`  = ${file}`),
   added: file => chalk.green(`  + ${file}`),
   updated: file => chalk.green(`  ~ ${file}`),
+  seeded: file => chalk.green(`  + ${file} (yours from now on: the CLI's files above read it)`),
   taken: file => chalk.yellow(`  ~ ${file} (yours, taken)`),
   yours: file => chalk.yellow(`  ! ${file} — yours: the CLI's version below; --take ${file} to replace it`)
 };
@@ -439,8 +451,9 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     const ours = machineryFiles(answers);
     const recorded = (await readScaffoldRecord(root))?.files ?? {};
     const plans = await planFiles(root, ours, recorded, options.take ?? []);
+    const seeds = await planSeeds(root, seedFiles(answers));
     if (write) {
-      const written = plans.filter(plan => WRITES.has(plan.status));
+      const written = [...plans.filter(plan => WRITES.has(plan.status)), ...seeds];
       await writeFiles(root, Object.fromEntries(written.map(plan => [plan.file, plan.ours])));
       // What is the CLI's version now is recorded as the CLI's; a file left the project's keeps what was recorded.
       const digests = Object.fromEntries(
@@ -455,7 +468,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
       await writeScaffoldRecord(root, CLI_VERSION, digests);
     }
 
-    report.files = plans.map(plan => ({
+    report.files = [...plans, ...seeds].map(plan => ({
       file: plan.file,
       status: plan.status,
       ...(plan.status === 'yours' && plan.yours !== undefined

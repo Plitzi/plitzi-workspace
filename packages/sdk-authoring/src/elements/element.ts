@@ -125,10 +125,13 @@ type ContentShorthand<A> = 'content' extends keyof A
 /**
  * The three ways to call a factory: props, children first, or — for anything with a `content` attribute — the
  * content itself, which is what most of a page is.
+ *
+ * Props LAST: a call no overload accepts is reported by the last one, and an attribute the element does not have is
+ * nearly always the reason — named against the props, not as "'id' does not exist in type ElementSpec[]".
  */
 export type ElementFactory<A> = ContentShorthand<A> & {
-  (props?: ElementProps<A>): ElementSpec;
   (children: ElementSpec[], props?: ElementProps<A>): ElementSpec;
+  (props?: ElementProps<A>): ElementSpec;
 };
 
 /** A target with a scheme of its own — `https:`, `mailto:`, `tel:` — is somewhere outside the space. */

@@ -77,9 +77,20 @@ const MACHINERY = new Set([
   'playwright.config.ts',
   'visual/home.spec.ts',
   'src/plugins/README.md',
+  'functions/README.md',
   '.yarnrc.yml',
   'pnpm-workspace.yaml'
 ]);
 
 export const machineryFiles = (answers: CreateAnswers): ProjectFiles =>
   Object.fromEntries(Object.entries(scaffold(answers)).filter(([file]) => MACHINERY.has(file)));
+
+/**
+ * The project's own files the machinery imports: written by `create`, the project's from then on — and written by
+ * `plitzi upgrade` only into a project that does not have one yet, which an upgraded `main.ts` would otherwise fail to
+ * start without.
+ */
+const SEEDS = new Set(['src/serverOptions.ts', 'src/actions.ts']);
+
+export const seedFiles = (answers: CreateAnswers): ProjectFiles =>
+  Object.fromEntries(Object.entries(scaffold(answers)).filter(([file]) => SEEDS.has(file)));

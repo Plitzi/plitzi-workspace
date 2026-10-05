@@ -242,6 +242,9 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
    cacheadas). Triggers `onApiSuccess` / `onApiError`. En modo cliente, con `cache: true` (desactivado por
    defecto), la respuesta vive en la caché de `@plitzi/sdk-shared/queries` durante `staleTime` segundos (30 por
    defecto); `performQuery` siempre vuelve a pedir — ver "Cached requests" en `docs/en/authoring-spaces.md`.
+   `cancelQuery` descarta la petición en vuelo (`cancelRsc` / `queryCache.cancel`), e `isLoading` es true mientras
+   hay una. En modo server, un `input` enlazado vuelve a pedir cuando cambia (`useInputRefresh`), y lo que pide un
+   refresco gana al `input` con el que se guardó el elemento.
 6. **Render** — `<RootElement tag={subType}>` envuelve un `<StoreProvider>` con los children.
 
 ### Cómo sabe que debe esperar el RSC

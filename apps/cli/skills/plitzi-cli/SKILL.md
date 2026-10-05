@@ -26,9 +26,8 @@ npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can 
 npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
 npx @plitzi/cli upload plugin                  # that zip, on the space you work in, and installed there
 npx @plitzi/cli whoami                         # who the CLI is signed in as, and the space it works in
-npx @plitzi/cli data describe public/data/products.json   # a JSON file's fields, types and one row — not read whole
+npx @plitzi/cli data describe public/data/x.json   # a JSON file's fields, types and one row
 npx @plitzi/cli upgrade                        # the project up to this CLI: files, package.json, skills, renames (--write)
-npx @plitzi/cli upgrade skills --write         # only one part: files | packages | skills | renames
 npx @plitzi/cli explain navigate               # what a name means: element, step, trigger, code, helper (bindTemplate, motion)
 npx @plitzi/cli functions pull                 # the space's functions (its own server code) into functions/
 npx @plitzi/cli functions push                 # functions/ back as the space's draft, built and checked
@@ -36,7 +35,7 @@ npx @plitzi/cli functions try feed.read --params '{"limit":3}'   # one task of t
 npx @plitzi/cli functions dev feed.read --watch                   # the same, from functions/, on this machine
 ```
 
-`plitzi --help` and `plitzi <command> --help` list every flag; what follows is what the help does not say.
+`plitzi <command> --help` lists every flag; what follows is what the help does not say.
 
 ## Running it as an agent
 
@@ -82,7 +81,7 @@ What a project gives you, so you use it rather than rebuild it:
 | Script | What it is for |
 | --- | --- |
 | `start` | serve it — in client mode Vite, which hot-replaces on save. The server prints only what goes wrong; `-- --verbose` adds every request |
-| `start:dev` | server mode: the server, restarted on save |
+| `start:dev` | server mode: restarted on a save to its code. Its options are `src/serverOptions.ts`, its actions `src/actions.ts`; `src/main.ts` is the CLI's |
 | `author` | author `src/space.ts`: one line when it is fine, every problem at once (file:line, what to change) when not, then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
 | `npx plitzi fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |
 | `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows, a binding its data lacks; `--state`, `--element <id>`: what it holds; `--ssr`: what SSR misses; `--json` |
@@ -128,7 +127,7 @@ plitzi add plugin ticker --prop interval:number=5000 --prop paused:boolean --tri
 ```
 
 **Say its shape and it is written in it**, with nothing to delete: `--prop name:type=default` (string, number,
-boolean) for each attribute — typed, defaulted, bindable, with a control in its panel; `--trigger onTick:count` for
+boolean; `list`/`json` for data a binding fills) for each attribute — typed, defaulted, bindable, with a control in its panel; `--trigger onTick:count` for
 each event and what a flow reads from it, fired with the `use<Name>Events()` hook it gets; `--callback reset` for
 each action a flow can call; `--headless` for one with nothing to see (hidden on a page, a badge in the builder).
 Without them it writes a counter that shows the three ways an element talks to a space — to be rewritten.

@@ -1,11 +1,37 @@
 import { describe, expect, it } from 'vitest';
 
-import { processTwigParam, resolveStepParam } from '../index';
+import { processTwigParam, processTwigValue, resolveStepParam } from '../index';
 
 /**
  * What a flow step is handed for a param. The type is the value's own — never guessed from what its text looks like:
  * a password typed as `1234` is text, and so is a zip code, a PIN, an id.
  */
+/**
+ * A value template that names its parts first: the `{% set %}` say nothing of their own, so what it stands for is still
+ * the one expression after them — the list, not the list rendered as text.
+ */
+describe('a value template with {% set %} before its expression', () => {
+  const rows = [
+    { id: 'a', score: 3 },
+    { id: 'b', score: 9 }
+  ];
+
+  it('is the value of its expression, for a bound value and for a step param alike', () => {
+    const template = '{% set min = 5 %}{{ rows|filter(r => r.score >= min) }}';
+
+    expect(processTwigValue(template, { rows })).toEqual([{ id: 'b', score: 9 }]);
+    expect(processTwigParam(template, { rows })).toEqual([{ id: 'b', score: 9 }]);
+  });
+
+  it('tolerates the whitespace around its statements', () => {
+    expect(processTwigValue('{% set n = rows|length %}\n  {{ n * 2 }}\n', { rows })).toBe(4);
+  });
+
+  it('is text when anything else is written around it', () => {
+    expect(processTwigValue('{% set n = 2 %}n is {{ n }}', {})).toBe('n is 2');
+  });
+});
+
 describe('processTwigParam', () => {
   it('hands on one expression’s value exactly as it is', () => {
     expect(processTwigParam('{{ password }}', { password: '1234' })).toBe('1234');

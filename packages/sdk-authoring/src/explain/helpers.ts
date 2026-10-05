@@ -48,6 +48,13 @@ export const AUTHORING_HELPERS: Readonly<Record<string, HelperEntry>> = {
       'Runs a step only when a rule holds — what is conditional in a flow is said on its steps, not by branching.',
     example: "when({ field: 'saved.ok', operator: '=', value: true }, navigate({ to: 'thanks' }))"
   },
+  whileRunning: {
+    signature: "whileRunning('skip' | 'queue' | 'parallel' | 'latest', trigger)",
+    summary:
+      'What a trigger does when it fires again while its flow still runs: ignore it (the default), queue it, run both, ' +
+      'or stop the running one and run the new — `latest`, for a search as you type.',
+    example: "[whileRunning('latest', named('typed', on('onChange'))), runServerAction({ … })]"
+  },
   named: {
     signature: 'named(id, step)',
     summary: 'Names a step, so a later one reads what it produced: `{{ <id>.field }}`.',

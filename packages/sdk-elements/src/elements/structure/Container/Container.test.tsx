@@ -27,6 +27,19 @@ describe('Container Tests', () => {
     expect(baseElement).toBeTruthy();
   });
 
+  it('shows its title to a pointer resting on it, and carries none when it has none', () => {
+    const { container } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Container title="Sea level in metres" />
+        <Container />
+      </ElementContext>
+    );
+    const [titled, plain] = [...container.children];
+
+    expect(titled.getAttribute('title')).toBe('Sea level in metres');
+    expect(plain.hasAttribute('title')).toBe(false);
+  });
+
   it('names a landmark by its label', () => {
     const { getByRole } = render(
       <ElementContext value={skipHocEntry()}>

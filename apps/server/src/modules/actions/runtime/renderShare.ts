@@ -1,3 +1,5 @@
+import { onAbort } from '../../../helpers/onAbort';
+
 /**
  * One answer for the visitors asking the same question at the same moment — and, when the author says so, for the
  * ones asking it a moment later.
@@ -24,14 +26,28 @@
 type Entry = {
   /** The run everyone joining right now is waiting on. */
   inFlight?: Promise<unknown>;
+  /** Stops that run — once nobody is waiting for it any more. */
+  controller?: AbortController;
+  /** How many are still waiting for it. */
+  waiting: number;
   /** What it answered, and until when it may be handed to somebody else. */
   value?: unknown;
   expiresAt?: number;
 };
 
 export type RenderShare = {
-  /** Runs `produce`, or joins whatever is already producing the same key. `ttlMs` of 0 keeps nothing afterwards. */
-  run: (key: string, ttlMs: number, produce: () => Promise<unknown>) => Promise<unknown>;
+  /**
+   * Runs `produce`, or joins whatever is already producing the same key. `ttlMs` of 0 keeps nothing afterwards.
+   *
+   * `signal` is this caller's: aborted, the caller stops waiting — and the run is stopped (`produce`'s own signal)
+   * only once every caller waiting on it has. One visitor who gave up must not cost the others their answer.
+   */
+  run: (
+    key: string,
+    ttlMs: number,
+    produce: (signal: AbortSignal) => Promise<unknown>,
+    signal?: AbortSignal
+  ) => Promise<unknown>;
   /** Entries currently held, for a deployment that wants to see it. */
   size: () => number;
 };
@@ -45,40 +61,84 @@ const sweep = (entries: Map<string, Entry>, now: number) => {
   });
 };
 
+/** What a caller that stopped waiting is answered with: its own end, not the run's. */
+const stoppedWaiting = (): Error =>
+  new DOMException('The render was aborted: its page stopped waiting for it', 'AbortError');
+
+/** One caller waiting on a run in flight, until it answers or the caller gives up — whichever comes first. */
+const wait = (entry: Entry, inFlight: Promise<unknown>, signal: AbortSignal | undefined): Promise<unknown> => {
+  entry.waiting += 1;
+  let waiting = true;
+  const leave = () => {
+    if (!waiting) {
+      return;
+    }
+
+    waiting = false;
+    entry.waiting -= 1;
+    if (entry.waiting === 0) {
+      entry.controller?.abort();
+    }
+  };
+
+  return new Promise((resolve, reject) => {
+    const release = onAbort(signal, () => {
+      leave();
+      reject(stoppedWaiting());
+    });
+    inFlight.then(
+      value => {
+        waiting = false;
+        release();
+        resolve(value);
+      },
+      (error: unknown) => {
+        waiting = false;
+        release();
+        reject(error instanceof Error ? error : new Error(String(error)));
+      }
+    );
+  });
+};
+
 export const createRenderShare = (now: () => number = Date.now): RenderShare => {
   const entries = new Map<string, Entry>();
 
-  const run = async (key: string, ttlMs: number, produce: () => Promise<unknown>): Promise<unknown> => {
+  const run: RenderShare['run'] = async (key, ttlMs, produce, signal) => {
     const existing = entries.get(key);
     if (existing?.inFlight) {
-      return existing.inFlight;
+      return wait(existing, existing.inFlight, signal);
     }
 
     if (existing && existing.expiresAt !== undefined && existing.expiresAt > now()) {
       return existing.value;
     }
 
-    const inFlight = produce();
-    entries.set(key, { inFlight });
-
-    try {
-      const value = await inFlight;
-      sweep(entries, now());
-      // Kept only if the author asked for it. Without a TTL the entry exists for the length of the run and no
-      // longer, which is the whole of "join what is already happening".
-      if (ttlMs > 0) {
-        entries.set(key, { value, expiresAt: now() + ttlMs });
-      } else {
-        entries.delete(key);
+    const controller = new AbortController();
+    const inFlight = produce(controller.signal);
+    const entry: Entry = { inFlight, controller, waiting: 0 };
+    entries.set(key, entry);
+    // Settled once, whoever is still waiting: what is kept afterwards is the run's business, not a caller's.
+    inFlight.then(
+      value => {
+        sweep(entries, now());
+        // Kept only if the author asked for it. Without a TTL the entry exists for the length of the run and no
+        // longer, which is the whole of "join what is already happening".
+        if (ttlMs > 0) {
+          entries.set(key, { value, expiresAt: now() + ttlMs, waiting: 0 });
+        } else if (entries.get(key) === entry) {
+          entries.delete(key);
+        }
+      },
+      () => {
+        // Never kept: an outage that lasted a second must not answer for a minute.
+        if (entries.get(key) === entry) {
+          entries.delete(key);
+        }
       }
+    );
 
-      return value;
-    } catch (error) {
-      // Never kept: an outage that lasted a second must not answer for a minute.
-      entries.delete(key);
-
-      throw error;
-    }
+    return wait(entry, inFlight, signal);
   };
 
   return { run, size: () => entries.size };

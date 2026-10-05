@@ -15,15 +15,27 @@ import type { ElementText } from './source';
  * day one; told the shape, it writes that shape — four files with nothing to delete.
  */
 
-export const PROP_TYPES = ['string', 'number', 'boolean'] as const;
+/** `list` and `json` are data: a list of rows or a record, which a binding fills — `[]` and `{}` until it does. */
+export const PROP_TYPES = ['string', 'number', 'boolean', 'list', 'json'] as const;
 
 export type PropType = (typeof PROP_TYPES)[number];
+
+export type PropValue = string | number | boolean | unknown[] | Record<string, unknown>;
 
 export interface PropShape {
   name: string;
   type: PropType;
-  value: string | number | boolean;
+  value: PropValue;
 }
+
+/** The TypeScript a prop of each type is written with. */
+const TS_TYPES: Record<PropType, string> = {
+  string: 'string',
+  number: 'number',
+  boolean: 'boolean',
+  list: 'unknown[]',
+  json: 'Record<string, unknown>'
+};
 
 export interface TriggerShape {
   name: string;
@@ -56,7 +68,7 @@ const RESERVED_PROPS = ['className', 'children', 'ref', 'key', 'id', 'style'];
 const parseProp = (flag: string): PropShape | string => {
   const match = /^([^:=]+):([^=]+)(?:=(.*))?$/.exec(flag);
   if (!match) {
-    return `--prop ${flag}: write it name:type or name:type=default — interval:number=5000, paused:boolean, label:string=Hi.`;
+    return `--prop ${flag}: write it name:type or name:type=default — interval:number=5000, paused:boolean, label:string=Hi, rows:list.`;
   }
 
   const [, name, type] = match;
@@ -85,6 +97,15 @@ const parseProp = (flag: string): PropShape | string => {
     }
 
     return { name, type: propType, value: given === 'true' };
+  }
+
+  if (propType === 'list' || propType === 'json') {
+    // Data a binding fills: what it holds before then is empty, and written as the binding will write it.
+    if (given !== undefined) {
+      return `--prop ${flag}: a ${propType} is data a binding fills — write it ${name}:${propType}, with no default.`;
+    }
+
+    return { name, type: propType, value: propType === 'list' ? [] : {} };
   }
 
   return { name, type: propType, value: given ?? '' };
@@ -183,8 +204,13 @@ const titleOf = (name: string): string => {
   return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
 };
 
-const literal = (value: string | number | boolean): string =>
-  typeof value === 'string' ? tsString(value) : String(value);
+const literal = (value: PropValue): string => {
+  if (typeof value === 'string') {
+    return tsString(value);
+  }
+
+  return typeof value === 'object' ? JSON.stringify(value) : String(value);
+};
 
 export const shapedDeclaration = (
   { component: name, type }: PluginNames,
@@ -202,7 +228,13 @@ export type ${name}Attributes = Omit<${name}Props, 'className'>;
  */
 const declaration = {
   /** What a space names it by: the \`renderType\` of the \`custom\` element that hosts it. Renaming it orphans every one. */
-  type: '${type}',
+  type: '${type}',${
+    shape.headless
+      ? `
+  /** It draws nothing on a page — it is there for what it does — so a page check never looks for it on screen. */
+  drawsNothing: true,`
+      : ''
+  }
   /** The events it fires; \`preview\` names what a flow started by one reads — shown in the builder, never sent. */
   triggers: {${shape.triggers
     .map(
@@ -286,15 +318,21 @@ ${triggers.map(trigger => `  ${trigger.name}: ${trigger.fields.length > 0 ? `{ $
 export const use${name}Events = () => {
   const { id } = useElement();
   const {
+    settings: { previewMode },
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
   const { interactionsManager } = use(InteractionsContext);
 
   return useCallback(
     <Event extends keyof ${name}Events>(event: Event, payload: ${name}Events[Event]) => {
+      // In the builder the element is being edited, not used: its flows run on a page, never on the canvas.
+      if (!previewMode) {
+        return;
+      }
+
       void interactionsManager.interactionTrigger(id, event, payload);
     },
-    [interactionsManager, id]
+    [interactionsManager, id, previewMode]
   );
 };
 `;
@@ -352,7 +390,11 @@ export const shapedComponent = ({ component: name, title }: PluginNames, shape: 
   const shown = (line: string): string => (headless ? `{!previewMode && ${line}}` : line);
   const body = [
     shown(`<span style={LABEL}>${title}</span>`),
-    ...props.map(prop => shown(`<span>${titleOf(prop.name)}: {String(${prop.name})}</span>`))
+    ...props.map(prop =>
+      shown(
+        `<span>${titleOf(prop.name)}: {${prop.type === 'list' || prop.type === 'json' ? `JSON.stringify(${prop.name})` : `String(${prop.name})`}}</span>`
+      )
+    )
   ]
     .map(line => `      ${line}`)
     .join('\n');
@@ -396,7 +438,7 @@ const CARD: CSSProperties = {
  * or a binding whose source has not answered, is \`undefined\`.
  */
 export interface ${name}Props {
-${props.map(prop => `  ${prop.name}?: ${prop.type};\n`).join('')}  /** Supplied by the runtime, not authored: the classes the element's own style rules are written against. */
+${props.map(prop => `  ${prop.name}?: ${TS_TYPES[prop.type]};\n`).join('')}  /** Supplied by the runtime, not authored: the classes the element's own style rules are written against. */
   className?: string;
 }
 ${eventsSource(name, triggers)}
@@ -427,6 +469,10 @@ export default ${name};
 
 const settingsControl = (prop: PropShape): string => {
   const label = titleOf(prop.name);
+  if (prop.type === 'list' || prop.type === 'json') {
+    return `    <p style={FIELD}>${label}: data — bind it to a source.</p>`;
+  }
+
   if (prop.type === 'boolean') {
     return `    <label style={FIELD}>
       <input type="checkbox" checked={${prop.name}} onChange={event => onUpdate?.('${prop.name}', event.target.checked)} />
@@ -447,11 +493,13 @@ const settingsControl = (prop: PropShape): string => {
 
 export const shapedSettings = ({ component: name }: PluginNames, shape: ElementShape): string => {
   const { props } = shape;
-  const typed = props.some(prop => prop.type !== 'boolean');
+  const typed = props.some(prop => prop.type === 'string' || prop.type === 'number');
+  // Data has no control of its own — a binding fills it — so the panel reads only what it draws a control for.
+  const edited = props.filter(prop => prop.type !== 'list' && prop.type !== 'json');
   const panel =
     props.length === 0
       ? 'const Settings = () => <div style={PANEL}>It has no attributes to set.</div>;'
-      : `const Settings = ({ ${[...props.map(prop => `${prop.name} = ${literal(prop.value)}`), 'onUpdate'].join(', ')} }: SettingsProps) => (
+      : `const Settings = ({ ${[...edited.map(prop => `${prop.name} = ${literal(prop.value)}`), 'onUpdate'].join(', ')} }: SettingsProps) => (
   <div style={PANEL}>
 ${props.map(settingsControl).join('\n')}
   </div>

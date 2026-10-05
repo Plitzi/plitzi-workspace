@@ -125,7 +125,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       type: 'formControl',
       description:
         'A single labelled input (text/select/checkbox/… per its subType) inside a form; captures one field of user ' +
-        'input.',
+        'input. A select offers its `options`: `[{ label, value }, …]` — the text shown, and what the field takes.',
       bindings: {},
       styleSelectors: {
         base: '',

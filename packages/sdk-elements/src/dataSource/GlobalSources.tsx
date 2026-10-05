@@ -23,15 +23,17 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   const { environment } = useRenderSettings();
 
   // --- variables ---
-  const [[variables, routeParams, queryParams, hostname, origin, href, currentPageId]] = useCommonStore([
-    'schema.variables',
-    'navigation.routeParams',
-    'navigation.queryParams',
-    'navigation.hostname',
-    'navigation.origin',
-    'navigation.href',
-    'navigation.currentPageId'
-  ]);
+  const [[variables, routeParams, queryParams, hostname, origin, href, currentPageId, pendingLocation = '']] =
+    useCommonStore([
+      'schema.variables',
+      'navigation.routeParams',
+      'navigation.queryParams',
+      'navigation.hostname',
+      'navigation.origin',
+      'navigation.href',
+      'navigation.currentPageId',
+      'navigation.pendingLocation'
+    ]);
   // Shared with the router, which needs the same answer BEFORE this provider exists: a page that redirects an
   // unauthenticated visitor off-site decides not to render, so nothing below here ever runs to publish them.
   // Resolved again whenever a route param changes, which is most navigations; most variables do not depend on one.
@@ -59,11 +61,12 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
    * `origin` is here and `hostname` is not, and the split is deliberate: `hostname` is what a variable's `when` rule
    * matches on, while `origin` is what a LINK needs — scheme and port included — to name this page absolutely.
    * Without it the only way to write "send me back where I am" was a per-environment variable naming each host.
-   * `href` is the page itself, whole: the link that shares it.
+   * `href` is the page itself, whole: the link that shares it. `pending` is a navigation on its way: a link to a page
+   * resolved on the server waits for that page's data before it goes, and `pendingLocation` is where it is going.
    */
   const navigationValue = useMemo(
-    () => ({ routeParams, queryParams, origin, href, currentPageId }),
-    [routeParams, queryParams, origin, href, currentPageId]
+    () => ({ routeParams, queryParams, origin, href, currentPageId, pending: pendingLocation !== '', pendingLocation }),
+    [routeParams, queryParams, origin, href, currentPageId, pendingLocation]
   );
   const navigationFields = useCallback(() => {
     const fields = getPathsFromObeject({ routeParams, queryParams }).map(path => ({
@@ -72,12 +75,16 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
     })) as SourceField[];
     const originField = { path: 'origin', name: 'Origin' } as SourceField;
     const hrefField = { path: 'href', name: 'This page’s address' } as SourceField;
+    const pendingFields = [
+      { path: 'pending', name: 'A navigation is on its way' },
+      { path: 'pendingLocation', name: 'Where a navigation is going' }
+    ] as SourceField[];
     const currentPageField =
       pages.length > 0
         ? ({ path: 'currentPageId', name: 'Current Page', inputType: 'select', values: pages } as SourceField)
         : ({ path: 'currentPageId', name: 'Current Page' } as SourceField);
 
-    return [...fields, originField, hrefField, currentPageField];
+    return [...fields, originField, hrefField, ...pendingFields, currentPageField];
   }, [routeParams, queryParams, pages]);
   useRegisterSource({ id: 'global', source: 'navigation', name: 'Navigation', fields: navigationFields });
   useCommonStoreSync('runtime.sources.navigation', navigationValue);

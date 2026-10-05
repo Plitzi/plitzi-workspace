@@ -611,7 +611,8 @@ button({
 
 While a flow runs, the same trigger on the same element does not start it again — a second click on Delete during
 those five seconds is ignored, which is what keeps a double click from submitting twice. That is the trigger's
-`whileRunning`, and `skip` is its default; the other two answers are for a trigger that must never lose a firing:
+`whileRunning`, and `skip` is its default; `queue` and `parallel` are for a trigger that must never lose a firing, and
+`latest` for one where only the newest firing matters:
 
 ```ts
 flows: [[whileRunning('queue', named('arrived', on('onArrival'))), addNotification({ … }), …]]
@@ -622,6 +623,7 @@ flows: [[whileRunning('queue', named('arrived', on('onArrival'))), addNotificati
 | `skip` (default) | is ignored — a button that submits |
 | `queue` | runs after the one in progress, in order — a stream of events, each announced |
 | `parallel` | runs at once, beside it — independent firings that do not touch the same state |
+| `latest` | stops the one in progress and runs — a search as you type. The stopped run starts no further step, and the step it waits on is told to stop: a server action is cancelled (on the server too), a request aborted |
 
 It is per flow: two flows on the same click are two things, and one still running says nothing about the other.
 
@@ -682,6 +684,16 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board', refreshSec
 The same refresh `performQuery` runs, so it works for either runtime: a browser request is sent again, a server
 provider asks the server for its own slice again. It pauses while the tab is hidden and never starts a refresh while
 the last one is still in flight. `0`, the default, never does.
+
+While a provider is asked again its `isLoading` is true, in either runtime. A server provider asks one question at a
+time: asking for what is already in flight joins that request, and a newer question drops the one it would overwrite
+— aborted in the browser and on the server, so a slow answer never lands over a newer one. `cancelQuery`
+(`cancelApi('orders')` in code) is that drop on purpose: a STOP button for a slow report; what is shown stays. A
+server provider's `input` bound to the visitor's state asks again whenever it changes, as a bound `query` does.
+
+A link to a page with server data asks for that page's data before it goes (and only then: arriving does not ask
+again). Meanwhile the `navigation` source says `pending: true` and `pendingLocation`; a second link clicked before the
+first went drops the first, which never goes.
 
 A refused request (`4xx`/`5xx`) is shown but never kept. Server-driven providers (`runtime: 'server'`) are not
 part of this: their data arrives with the page. The dev-tools' Store tab lists what the cache holds under

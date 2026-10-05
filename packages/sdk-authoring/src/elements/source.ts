@@ -28,15 +28,30 @@ export type SourcePath<T> = SourceBrand &
       ? { readonly [Key in keyof T]-?: SourcePath<T[Key]> }
       : unknown);
 
-/** What an `apiContainer` publishes: the answer under `data`, and how the asking went. */
-export interface ApiContainerSource<Data> {
-  data: Data;
+/** How a provider's asking went — what every `apiContainer` publishes beside its answer. */
+export interface ProviderState {
   isLoading: boolean;
   isEmpty: boolean;
   hasError: boolean;
   errorMessage: string;
   isStale: boolean;
 }
+
+/** What an `apiContainer` asking a `query` publishes: the answer under `data`, and how the asking went. */
+export interface ApiContainerSource<Data> extends ProviderState {
+  data: Data;
+}
+
+/** What an `apiContainer` fed by a server action publishes: the action's output at its root, beside its state. */
+export type ActionProviderSource<Output> = Output & ProviderState;
+
+const PROVIDER_STATE: ProviderState = {
+  isLoading: false,
+  isEmpty: false,
+  hasError: false,
+  errorMessage: '',
+  isStale: false
+};
 
 /** What a path leads to in the sample, or `UNKNOWN` below a point the sample does not describe (`null`, `[]`). */
 const UNKNOWN = Symbol('plitzi.unknownShape');
@@ -156,17 +171,35 @@ export const source = <Data>(
   sample: Data
 ): SourcePath<ApiContainerSource<Data>> & { readonly id: string } => {
   const full = scoped(id);
-  const published: ApiContainerSource<Data> = {
-    data: sample,
-    isLoading: false,
-    isEmpty: false,
-    hasError: false,
-    errorMessage: '',
-    isStale: false
-  };
+  const published: ApiContainerSource<Data> = { data: sample, ...PROVIDER_STATE };
 
   // A proxy answers any key at all; what makes it this type is the sample, checked as each key is read.
   return pathTo(`apiContainer_${full}`, published, { id: full }) as SourcePath<ApiContainerSource<Data>> & {
+    readonly id: string;
+  };
+};
+
+/**
+ * The `apiContainer` with this id, fed by a server action, as a typed source: the action's OUTPUT is published at its
+ * root — `feed.stories`, never `feed.data.stories` — typed and checked by a sample of that output:
+ *
+ * ```ts
+ * const feed = actionSource('feed', { stories: [{ id: 'a', title: '' }], updatedAt: '' });
+ * apiContainer({ id: feed.id, runtime: 'server', action: 'world-report', children: [
+ *   list({ id: 'stories', items: feed.stories, row: s => listItem({ children: [text({ from: s.item.title })] }) })
+ * ] });
+ * ```
+ *
+ * The output is what the action's last step answers — a sample written by hand, or the type of the task's result.
+ */
+export const actionSource = <Output extends object>(
+  id: string,
+  sample: Output
+): SourcePath<ActionProviderSource<Output>> & { readonly id: string } => {
+  const full = scoped(id);
+  const published: ActionProviderSource<Output> = { ...sample, ...PROVIDER_STATE };
+
+  return pathTo(`apiContainer_${full}`, published, { id: full }) as SourcePath<ActionProviderSource<Output>> & {
     readonly id: string;
   };
 };

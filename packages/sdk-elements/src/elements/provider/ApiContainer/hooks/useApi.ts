@@ -181,6 +181,8 @@ const useApi = ({
     isFetching,
     data,
     refetch: query.refetch,
+    /** Stops the request in flight; the last answer stays on screen. */
+    cancel: query.cancel,
     /**
      * Whether THIS question has been answered — not whether an answer is on screen.
      *

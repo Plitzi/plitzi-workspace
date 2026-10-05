@@ -16,8 +16,15 @@ export * from './element';
 export * from './elements';
 export * from './plugins';
 export { scope } from './scope';
-export { source, twig } from './source';
-export type { ApiContainerSource, SourceName, SourcePath, SourceRow } from './source';
+export { actionSource, source, twig } from './source';
+export type {
+  ActionProviderSource,
+  ApiContainerSource,
+  ProviderState,
+  SourceName,
+  SourcePath,
+  SourceRow
+} from './source';
 export * from './steps';
 
 export type { ElementDeclarationName } from '@plitzi/sdk-elements/elements/declarations';

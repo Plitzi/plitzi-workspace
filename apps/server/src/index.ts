@@ -70,6 +70,6 @@ export type {
 export type { FontStore, StoredFont } from './core/fontStore';
 export type { PubSubAdapter, SSRRealtimeConfig } from '@plitzi/sdk-shared';
 export type { RedisPubSubClients } from './modules/realtime/redisPubSub';
-export type { ResolvedServices } from './core/createServer';
+export type { ResolvedServices, ServerConfig } from './core/createServer';
 export type { Closable, CloseOnSignalsOptions } from './core/server/closeOnSignals';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';

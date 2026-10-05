@@ -645,6 +645,63 @@ describe('InteractionsManager — whileRunning', () => {
 });
 
 /**
+ * A search as you type: only the last question is worth answering. A newer firing stops the run before it — the step
+ * it waits on is told to stop, and nothing after that step runs.
+ */
+describe('InteractionsManager — whileRunning latest', () => {
+  it('stops the run before it and runs the newest to the end', async () => {
+    const manager = new InteractionsManager('page1');
+    const interactions = makeInteractions('el1', 'click', 'wait');
+    interactions.trig = { ...interactions.trig, whileRunning: 'latest' };
+    interactions.cb = { ...interactions.cb, afterNode: 'done' };
+    interactions.done = { ...interactions.cb, id: 'done', action: 'done', beforeNode: 'cb', afterNode: '' };
+    const gates: (() => void)[] = [];
+    const signals: (AbortSignal | undefined)[] = [];
+    const done: number[] = [];
+    manager.subscribe('el1', interactions, triggerDef, {
+      wait: {
+        action: 'wait',
+        title: 'Wait',
+        type: 'callback',
+        params: {},
+        callback: async (_params, context) => {
+          signals.push(context?.signal);
+          await new Promise<void>(resolve => gates.push(resolve));
+        }
+      },
+      done: {
+        action: 'done',
+        title: 'Done',
+        type: 'callback',
+        params: {},
+        callback: () => {
+          done.push(signals.length);
+        }
+      }
+    });
+    const settle = async () => {
+      for (let turn = 0; turn < 10; turn++) {
+        await Promise.resolve();
+      }
+    };
+
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+    void manager.interactionTrigger('el1', 'click', {});
+    await settle();
+
+    expect(signals).toHaveLength(2);
+    expect(signals[0]?.aborted, 'the older run was not told to stop').toBe(true);
+    expect(signals[1]?.aborted).toBe(false);
+
+    gates.forEach(open => open());
+    await settle();
+
+    expect(done, 'the superseded run went on to its next step').toEqual([2]);
+  });
+});
+
+/**
  * A trigger fired while the page mounts: the sources a flow calls register AFTER the element that fired, in the same
  * commit. The flow starts once they have.
  */

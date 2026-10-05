@@ -58,6 +58,11 @@ export type ContainerProps = {
    * silent to a screen reader, which reads only what it is moved to.
    */
   live?: 'polite' | 'assertive' | '';
+  /**
+   * What a pointer resting on it shows — the whole of a value cut short, what a symbol means. Not a name: a screen reader
+   * may not say it, so what matters to someone who cannot hover is in the content or in `label` too.
+   */
+  title?: string;
   children?: ReactNode;
 };
 
@@ -68,6 +73,7 @@ const Container = ({
   label = '',
   decorative = false,
   live = '',
+  title = '',
   children
 }: ContainerProps) => {
   const named = !decorative && label && NAMEABLE_CONTAINER_TAGS.includes(subType);
@@ -80,6 +86,7 @@ const Container = ({
       ref={ref}
       tag={subType}
       className={clsx(`plitzi-component__container plitzi-component__container-${subType}`, className)}
+      title={title || undefined}
       {...name}
       {...hidden}
       {...announced}

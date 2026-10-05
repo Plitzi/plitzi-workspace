@@ -26,6 +26,8 @@ export type UseQueryResult<T> = {
   /** Nothing to render with yet — as opposed to a refresh of something already on screen. */
   isLoading: boolean;
   refetch: () => void;
+  /** Stops the request out, if there is one: what is held stays, and nothing is asked until the next reader or refetch. */
+  cancel: () => void;
 };
 
 const { useStore: useQueriesStore } = createStoreHook<QueriesState>();
@@ -97,7 +99,13 @@ const useQuery = <T>({
     }
   }, [enabled, key]);
 
-  return { data, isFetching, isLoading: isFetching && data === undefined, refetch };
+  const cancel = useCallback(() => {
+    if (key !== undefined) {
+      queryCache.cancel(key);
+    }
+  }, [key]);
+
+  return { data, isFetching, isLoading: isFetching && data === undefined, refetch, cancel };
 };
 
 export default useQuery;

@@ -31,6 +31,154 @@ const matchRscPageId = (schema: Schema | undefined, location: string, authentica
 // the element-keyed path is asserted once here instead of at every call site.
 export const rscDataPath = (id: string) => `rsc.data.${id}` as PathOf<CommonState>;
 
+/** Where the visitor is, spelled the way the server reads it back. */
+export const currentRscLocation = (): string =>
+  typeof window === 'undefined' ? '' : `${window.location.pathname}${window.location.search}`;
+
+/** The key a whole-payload request is asked for under, among the element ids a partial one names. */
+const WHOLE = '*';
+
+/** One request to the endpoint, while it is in flight. */
+type RscRequest = {
+  /** The request's URL: two asks for the same URL are one request. */
+  url: string;
+  /** The elements it asks for; absent for the whole payload. */
+  ids?: readonly string[];
+  /** Whether it asks about where the visitor is now — a navigation's prefetch asks about somewhere else. */
+  here: boolean;
+  seq: number;
+  controller: AbortController;
+  promise: Promise<void>;
+};
+
+/** What one SDK root has asked its endpoint for, and in which order. */
+type RscRequests = {
+  seq: number;
+  inFlight: Set<RscRequest>;
+  /** The last request that asked for each element (or for the whole payload): only its answer is written. */
+  asked: Map<string, number>;
+};
+
+/**
+ * The requests of each SDK root, by the token `useRscSync` seeds in `rsc.instance`.
+ *
+ * Keyed by that token rather than by the store: an element writes through a scoped store of its own, which delegates
+ * `rsc` to the root, so two elements of one page hold different store objects and must still see each other's
+ * requests. A store with no token — one built by hand, a test — is its own root.
+ */
+const requestsByInstance = new Map<string, RscRequests>();
+const requestsByStore = new WeakMap<StoreApi<CommonState>, RscRequests>();
+
+const newRequests = (): RscRequests => ({ seq: 0, inFlight: new Set(), asked: new Map() });
+
+const requestsOf = (store: StoreApi<CommonState>): RscRequests => {
+  const instance = store.get('rsc.instance');
+  if (typeof instance === 'string' && instance) {
+    const known = requestsByInstance.get(instance);
+    if (known) {
+      return known;
+    }
+
+    const created = newRequests();
+    requestsByInstance.set(instance, created);
+
+    return created;
+  }
+
+  const known = requestsByStore.get(store);
+  if (known) {
+    return known;
+  }
+
+  const created = newRequests();
+  requestsByStore.set(store, created);
+
+  return created;
+};
+
+/** The elements a refresh in flight is refreshing right now, for the page on screen — published as `rsc.refreshing`. */
+const publishRefreshing = (store: StoreApi<CommonState>, requests: RscRequests) => {
+  const refreshing: Record<string, boolean> = {};
+  requests.inFlight.forEach(request => {
+    if (!request.here) {
+      return;
+    }
+
+    (request.ids ?? [WHOLE]).forEach(id => {
+      refreshing[id] = true;
+    });
+  });
+
+  store.set('rsc.refreshing', refreshing);
+};
+
+/** Whether `older` asks for nothing `newer` does not ask for again — so its answer can only ever be overwritten. */
+const covers = (newer: readonly string[] | undefined, older: readonly string[] | undefined): boolean =>
+  !newer || (!!older && older.every(id => newer.includes(id)));
+
+/**
+ * Stops what a refresh in flight is asking the server for — the request, and the work behind it on the server — and
+ * leaves the payload as it is.
+ *
+ * `ids` cancels the refreshes of those elements; nothing cancels every refresh in flight, a navigation's included.
+ * What a STOP button is: the visitor is done waiting, and what is on screen stays.
+ */
+export const cancelRsc = (store: StoreApi<CommonState>, ids?: readonly string[]): void => {
+  const requests = requestsOf(store);
+  requests.inFlight.forEach(request => {
+    if (!ids || request.ids?.some(id => ids.includes(id))) {
+      request.controller.abort();
+    }
+  });
+};
+
+/** Every refresh of this root aborted and forgotten — the SDK root that owned them is going away. */
+export const releaseRscRequests = (instance: string): void => {
+  requestsByInstance.get(instance)?.inFlight.forEach(request => request.controller.abort());
+  requestsByInstance.delete(instance);
+};
+
+/**
+ * The answer written, unless a later request asked for the same thing.
+ *
+ * Answers do not arrive in the order they were asked for: a window asked for second can be answered first. Written as
+ * they land, the last to ARRIVE won — a page showing 48 hours under an address that says 6. So each element takes
+ * only the answer of the last request that asked for it; a whole-payload answer keeps, for an element asked for
+ * again after it, what that element has.
+ */
+const writeAnswer = (
+  store: StoreApi<CommonState>,
+  requests: RscRequests,
+  request: RscRequest,
+  serverData: Record<string, unknown>,
+  target: string
+) => {
+  const { ids, seq } = request;
+  store.batch(() => {
+    if (ids?.length) {
+      Object.entries(serverData).forEach(([id, value]) => {
+        if ((requests.asked.get(id) ?? 0) <= seq && (requests.asked.get(WHOLE) ?? 0) <= seq) {
+          store.set(rscDataPath(id), value);
+        }
+      });
+    } else {
+      const current = store.get('rsc.data') ?? {};
+      const askedSince = (id: string) => id !== WHOLE && (requests.asked.get(id) ?? 0) > seq;
+      const next = Object.fromEntries([
+        ...Object.entries(serverData).filter(([id]) => !askedSince(id)),
+        ...Object.entries(current).filter(([id]) => askedSince(id))
+      ]);
+      store.set('rsc.data', next);
+    }
+
+    store.set('rsc.loaded', true);
+    store.set('rsc.stale', false);
+    // What the payload is FOR. An element on a page this does not name knows its own answer has not arrived
+    // yet, instead of reading a missing slice as an answer of "nothing".
+    store.set('rsc.location', target);
+  });
+};
+
 /**
  * Re-fetches RSC data into the store.
  *
@@ -41,11 +189,12 @@ export const rscDataPath = (id: string) => `rsc.data.${id}` as PathOf<CommonStat
  * Pass `ids` to refresh only those elements — the response is merged over the existing payload. Omit them for a full
  * refresh, which replaces it. `params` ride along on the query string; that is how a provider asks for a different
  * page window.
+ *
+ * One request per question, and the newest question wins: asking again for what is already in flight is answered by
+ * the request in flight, and a request whose answer a newer one would overwrite anyway — a whole payload asked for
+ * again, an element asked for again — is aborted, here and on the server. Before this a click on a link asked twice
+ * (its prefetch, then the route change), and a slow answer could land over a newer one.
  */
-/** Where the visitor is, spelled the way the server reads it back. */
-export const currentRscLocation = (): string =>
-  typeof window === 'undefined' ? '' : `${window.location.pathname}${window.location.search}`;
-
 export const refreshRsc = async (
   store: StoreApi<CommonState>,
   ids?: string[],
@@ -57,9 +206,7 @@ export const refreshRsc = async (
    * navigation asks for the destination BEFORE it commits. Absent means where the visitor already is, which is
    * every other caller: the initial load, a pager, an element refreshing itself.
    */
-  location?: string,
-  /** Whether this is the one second asking, after a refusal that renewed the session. */
-  retried = false
+  location?: string
 ): Promise<void> => {
   const { enabled, endpoint } = store.get('rsc') ?? {};
   if (!enabled || !endpoint || typeof window === 'undefined') {
@@ -89,16 +236,49 @@ export const refreshRsc = async (
     return;
   }
 
-  try {
-    // The request goes to `/_rsc`, so the server cannot see which page the visitor is on: route params and the
-    // page parameter both come from the location travelling with it.
-    const search = new URLSearchParams({ location: target });
-    if (ids?.length) {
-      search.set('ids', ids.join(','));
-    }
+  // The request goes to `/_rsc`, so the server cannot see which page the visitor is on: route params and the
+  // page parameter both come from the location travelling with it.
+  const search = new URLSearchParams({ location: target });
+  if (ids?.length) {
+    search.set('ids', ids.join(','));
+  }
 
-    Object.entries(params ?? {}).forEach(([key, value]) => search.set(key, value));
-    const res = await fetch(`${endpoint}?${search.toString()}`, { headers: { Accept: 'application/json' } });
+  Object.entries(params ?? {}).forEach(([key, value]) => search.set(key, value));
+  const url = `${endpoint}?${search.toString()}`;
+
+  const requests = requestsOf(store);
+  const asking = [...requests.inFlight].find(request => request.url === url);
+  if (asking) {
+    return asking.promise;
+  }
+
+  requests.inFlight.forEach(request => {
+    if (covers(ids, request.ids)) {
+      request.controller.abort();
+    }
+  });
+
+  const seq = ++requests.seq;
+  if (ids?.length) {
+    ids.forEach(id => requests.asked.set(id, seq));
+  } else {
+    requests.asked.clear();
+    requests.asked.set(WHOLE, seq);
+  }
+
+  const controller = new AbortController();
+  const request: RscRequest = {
+    url,
+    ...(ids?.length ? { ids } : {}),
+    here: target === currentRscLocation(),
+    seq,
+    controller,
+    promise: Promise.resolve()
+  };
+
+  /** One ask — and, after a refusal that renewed the session, the one second ask. */
+  const ask = async (retried: boolean): Promise<void> => {
+    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal });
     if (!res.ok) {
       // A refused credential is the earliest evidence a session ended, and this is the request a server-driven page
       // makes most often — so it is usually the first thing to find out. Told here, auth renews or signs the visitor
@@ -108,7 +288,7 @@ export const refreshRsc = async (
       // stale over a credential that had only expired.
       const reason = authFailureFromResponse(res.status, await res.json().catch(() => undefined));
       if (reason && (await reportAuthFailure({ reason, url: endpoint })) && !retried) {
-        return await refreshRsc(store, ids, params, location, true);
+        return ask(true);
       }
 
       store.set('rsc.stale', true);
@@ -127,27 +307,31 @@ export const refreshRsc = async (
       recordRenderActionRuns(actionRuns);
     }
 
-    store.batch(() => {
-      if (ids?.length) {
-        Object.entries(serverData ?? {}).forEach(([id, value]) => store.set(rscDataPath(id), value));
-      } else {
-        store.set('rsc.data', serverData ?? {});
+    writeAnswer(store, requests, request, serverData ?? {}, target);
+  };
+
+  request.promise = ask(false)
+    .catch(() => {
+      // Cancelled, or asked again since: the newer question is the one with something to say.
+      if (controller.signal.aborted) {
+        return;
       }
 
-      store.set('rsc.loaded', true);
-      store.set('rsc.stale', false);
-      // What the payload is FOR. An element on a page this does not name knows its own answer has not arrived
-      // yet, instead of reading a missing slice as an answer of "nothing".
-      store.set('rsc.location', target);
+      /**
+       * A refresh that could not reach the server is not an error: the payload is supplemental, and what is on the
+       * page keeps working. But keeping the old data with no way to say so is a page that looks current and is not —
+       * so the fact is published, and an element with somewhere to show it can.
+       */
+      store.set('rsc.stale', true);
+    })
+    .finally(() => {
+      requests.inFlight.delete(request);
+      publishRefreshing(store, requests);
     });
-  } catch {
-    /**
-     * A refresh that could not reach the server is not an error: the payload is supplemental, and what is on the
-     * page keeps working. But keeping the old data with no way to say so is a page that looks current and is not —
-     * so the fact is published, and an element with somewhere to show it can.
-     */
-    store.set('rsc.stale', true);
-  }
+  requests.inFlight.add(request);
+  publishRefreshing(store, requests);
+
+  return request.promise;
 };
 
 export default refreshRsc;

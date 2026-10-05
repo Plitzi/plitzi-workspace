@@ -34,7 +34,7 @@ export default defineConfig({
 
 const spec = (elements: PluginNames[]): string => `import { expect, test } from '@playwright/test';
 
-import { authorSpace, inspectPage } from '@plitzi/sdk-authoring';
+import { authorSpace, inspectPage, openPage } from '@plitzi/sdk-authoring';
 
 import { space } from '../preview/space.ts';
 import { declarations } from '../src/declarations.ts';
@@ -52,7 +52,7 @@ ${elements.map(({ base, title }) => `  { id: '${base}', label: ${tsString(title)
  */
 for (const { id, label } of ELEMENTS) {
   test(\`\${id} renders in a space, and counts\`, async ({ page }) => {
-    await page.goto('/', { waitUntil: 'networkidle' });
+    await openPage(page, '/');
 
     const element = page.locator(\`[data-plitzi-el="\${id}"]\`);
     await expect(element).toBeVisible();
@@ -72,7 +72,7 @@ test('leaves the page whole', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  await openPage(page, '/');
 
   const { handles, warnings } = authorSpace(space, { pluginTypes: declarations.map(declaration => declaration.type) });
   expect(warnings).toEqual([]);

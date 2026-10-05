@@ -31,6 +31,8 @@ same flags, decided on the server. Use the step builders — they fill in where 
   key for hiding it (`sidebarCollapsed`).
 - **A trigger fired again while its flow runs is IGNORED** (`skip`, the default — no double submit). For a stream of
   events that must each run, wrap the trigger: `whileRunning('queue', on('onArrival'))` (in order) or `'parallel'`.
+  Where only the newest firing matters — a search as you type — `whileRunning('latest', …)`: the run in progress
+  stops (no further step; its server action or request is cancelled) and the new one runs.
 - **Each step reads the page as it is when it runs.** A `when` or a `{{ state.x }}` after a `setState` sees the new
   value, and one after a `delay` or a server action sees whatever changed meanwhile. To act on the value from BEFORE
   a write, put the step that reads it first.

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { defineFunctions } from '../../functions/contract';
 import { tasksOf } from '../../functions/testing/tasksOf';
 import { createActionsModule } from '../index';
 
@@ -408,6 +409,70 @@ describe('runAction', () => {
     await expect(runAction(request(buildEntry(), { lineage: ['quote'] }))).rejects.toMatchObject({
       reason: 'recursion'
     });
+  });
+
+  /** A list sent to a text field is nearly always JSON the page meant as text: the refusal says what takes it. */
+  it('says what a value that does not fit its field is, and which type takes it', async () => {
+    const { runAction } = createActionsModule({ lookups });
+    const entry = buildEntry({
+      nodes: {
+        ...buildEntry().document.nodes,
+        start: callTrigger({ input: '{"windows":{"type":"text","required":true}}' })
+      }
+    });
+
+    await expect(runAction(request(entry, { input: { windows: ['a', 'b'] } }))).rejects.toMatchObject({
+      reason: 'invalid_input',
+      message: 'Invalid input: windows (text, got a list; declare the field `json` to take it)'
+    });
+  });
+
+  /**
+   * A task reading many sources catches a failed fetch and goes on — so the budget's refusal looked like a network
+   * error, and nothing named the limit. The step that ran into it says so, and so does the server's log.
+   */
+  it('names the request budget in the step that ran out of it, even when the task caught the refusal', async () => {
+    const warnings = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const sweep: FunctionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'sweep',
+      title: 'Sweep',
+      params: {},
+      run: async (_params, context) => {
+        const read = await Promise.all(
+          ['a', 'b', 'c'].map(source =>
+            context.fetch(`https://${source}.example/feed`).then(
+              () => true,
+              () => false
+            )
+          )
+        );
+
+        return { read: read.filter(Boolean).length };
+      }
+    };
+    const { runAction } = createActionsModule({
+      lookups,
+      functions: {
+        native: [defineFunctions({ allow: { hosts: ['a.example', 'b.example', 'c.example'] }, tasks: [sweep] })]
+      },
+      limits: { maxRequests: 1 },
+      fetchImpl: () => Promise.resolve(new Response('ok'))
+    });
+    const entry = buildEntry({
+      nodes: {
+        start: callTrigger({}, 'sweep'),
+        sweep: node('sweep', { action: 'test.sweep', afterNode: 'out' }),
+        out: node('out', { action: 'flow.output', params: { values: '{"read": {{ sweep.read }}}' } })
+      }
+    });
+
+    const result = await runAction(request(entry));
+
+    expect(result.output).toEqual({ read: 1 });
+    expect(result.steps.find(step => step.id === 'sweep')?.logs?.join(' ')).toContain('1 outbound request budget');
+    expect(JSON.stringify(warnings.mock.calls)).toContain('maxRequests');
+    warnings.mockRestore();
   });
 
   it('refuses missing required input', async () => {

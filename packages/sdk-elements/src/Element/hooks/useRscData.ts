@@ -1,10 +1,13 @@
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
-import { currentRscLocation, rscDataPath } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
+import { useStoreById } from '@plitzi/nexus/react';
+import { cancelRsc, currentRscLocation, rscDataPath } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElement from './useElement';
+
+import type { CommonState } from '@plitzi/sdk-shared';
 
 // Returns the current element's RSC data: its own slice of `rsc.data`, keyed by the ambient element id read from
 // `ElementContext`. Lives here (not in sdk-shared, where the rest of the RSC plumbing is) because resolving "the
@@ -15,16 +18,20 @@ import useElement from './useElement';
 // `pending` is the third case and the one a route change creates: the payload in the store is for another page.
 const useRscData = <T>() => {
   const { id, rootId } = useElement();
-  const [[enabled = false, loaded = false, stale = false, location, value, currentPageId, pages]] = useCommonStore([
-    'rsc.enabled',
-    'rsc.loaded',
-    'rsc.stale',
-    'rsc.location',
-    rscDataPath(id),
-    'navigation.currentPageId',
-    'schema.pages'
-  ]);
+  const [[enabled = false, loaded = false, stale = false, location, value, currentPageId, pages, refreshing]] =
+    useCommonStore([
+      'rsc.enabled',
+      'rsc.loaded',
+      'rsc.stale',
+      'rsc.location',
+      rscDataPath(id),
+      'navigation.currentPageId',
+      'schema.pages',
+      'rsc.refreshing'
+    ]);
   const refresh = useRscRefresh();
+  const store = useStoreById<CommonState>();
+  const cancel = useCallback(() => cancelRsc(store, [id]), [store, id]);
 
   /**
    * Whether the payload in the store is somebody else's: resolved for another address, or this element is on a page
@@ -64,7 +71,11 @@ const useRscData = <T>() => {
     location,
     elementData: (answer as T | undefined) ?? null,
     isServerElement: answer !== undefined,
-    refresh
+    /** A refresh asking about this element — or about the whole payload of this page — is in flight. */
+    refreshing: refreshing?.[id] === true || refreshing?.['*'] === true,
+    refresh,
+    /** Stops this element's refresh in flight, here and on the server; what it shows stays. */
+    cancel
   };
 };
 

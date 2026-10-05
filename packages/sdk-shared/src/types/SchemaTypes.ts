@@ -63,10 +63,12 @@ export type ElementBinding = {
  * - `skip` (the default): the new firing is ignored — what keeps a double click from submitting twice.
  * - `parallel`: every firing runs its own flow, at the same time.
  * - `queue`: every firing runs, one after another, in the order they came — none lost, none overlapping.
+ * - `latest`: every firing runs, and the run before it stops — it starts no further step, and the step it is waiting
+ *   on stops if it can (a server action, a request). A search as you type: only the last question is answered.
  */
-export type WhileRunning = 'skip' | 'parallel' | 'queue';
+export type WhileRunning = 'skip' | 'parallel' | 'queue' | 'latest';
 
-export const WHILE_RUNNING_MODES: readonly WhileRunning[] = ['skip', 'parallel', 'queue'];
+export const WHILE_RUNNING_MODES: readonly WhileRunning[] = ['skip', 'parallel', 'queue', 'latest'];
 
 export type ElementInteraction<T extends Record<string, unknown> = Record<string, unknown>> = {
   id: string;

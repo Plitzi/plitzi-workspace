@@ -151,7 +151,7 @@ The space is not written until these are fixed.
 | `utility-module` | a utility sent to a module — a utility takes none | drop the `on` |
 | `visibility-as-attribute` | `visibility` bound as an attribute, which no element reads | `visible: { source, template }` |
 | `visitor-roles` | `settings.visitorRoles` written in a shape the runtime does not read | the shape the message gives |
-| `while-running` | `whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue` | `[whileRunning('queue', onClick()), …]` |
+| `while-running` | `whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue`, `latest` | `[whileRunning('queue', onClick()), …]` |
 
 ## Warned
 
@@ -159,6 +159,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 
 | Code | What was wrong | Write instead |
 | --- | --- | --- |
+| `action-output-path` | a read of `.data` on a provider fed by a server action — it publishes the action’s output at its root, and `.data` is a `query` provider’s answer | the output’s own field — `apiContainer_feed.stories`, not `apiContainer_feed.data.stories` |
 | `click-on-static-element` | a click flow on a container, text, heading, image or list item — no keyboard reaches it | the flow on a `button` (it holds children) or a `link` |
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
 | `condition-starts-visible` | a computed visibility that shows until its data answers | `visible: { source, template }` |

@@ -56,8 +56,9 @@ const shareKey = (parts: unknown[]): string =>
  * page still learns nothing about what happens on the other side.
  *
  * Its input is the page's own context — route params, then query params — plus whatever the element declares, so
- * an action feeding `/blog/:slug` reads `{{ input.slug }}` and needs nothing else. The action's own input contract
- * still drops everything it did not declare.
+ * an action feeding `/blog/:slug` reads `{{ input.slug }}` and needs nothing else; a refresh's own params (what
+ * `reloadApi` or a bound `input` asked for) come last and win. The action's own input contract still drops everything
+ * it did not declare.
  */
 export const createActionResolver = (lookups: ActionLookups, module: ActionsModule): RscElementResolver => {
   // One per server, so every render of every page shares the same in-flight map and the same reuse window.
@@ -83,7 +84,8 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
       throw new Error(`Action "${actionId}" is not configured for space ${spaceId}`);
     }
 
-    const values = { ...routeParams, ...queryParams, ...input };
+    // What a refresh asked for this time — `reloadApi`'s input, a bound `input` — over what the element was saved with.
+    const values = { ...routeParams, ...queryParams, ...input, ...req.ctx.rscParams };
     // How long an answer may be reused is read off the trigger STEP, like everything else about a way in.
     const trigger = findTriggerNode(entry.document.nodes, 'render');
     const ttlMs = trigger ? triggerCacheMs(triggerParams(trigger)) : 0;
@@ -93,7 +95,8 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
     // The run this render started, when it was the one that started it rather than joining another.
     let ownRunId: string | undefined;
 
-    const startRun = async (): Promise<RenderRun> => {
+    /** `stop` is the shared run's: aborted once nobody is waiting for it, this render included. */
+    const startRun = async (stop: AbortSignal): Promise<RenderRun> => {
       /**
        * A key of its own per render, so two visitors are never each other's duplicate.
        *
@@ -115,12 +118,13 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
       ownRunId = run.runId;
 
       /**
-       * The render giving up ends the run, not just the wait for it.
+       * The renders giving up end the run, not just the wait for it — all of them: a render another visitor joined is
+       * that visitor's answer too.
        *
-       * `resolveRscData` stops waiting when an element's budget is gone, and before this the run carried on to
-       * its own timeout — holding a slot and an outbound connection for a page that had already been answered.
+       * `resolveRscData` stops waiting when an element's budget is gone or the browser hung up, and before this the
+       * run carried on to its own timeout — holding a slot and an outbound connection for a page already answered.
        */
-      const releaseRenderStop = onAbort(signal, () => run.controller.abort());
+      const releaseRenderStop = onAbort(stop, () => run.controller.abort());
       const startedAt = Date.now();
       const summaryOf = (outcome: Pick<ActionRunSummary, 'status' | 'steps' | 'error'>): ActionRunSummary => ({
         actionId: entry.id,
@@ -228,7 +232,7 @@ export const createActionResolver = (lookups: ActionLookups, module: ActionsModu
      */
     try {
       // The share holds whatever it is handed; this resolver is the only thing that ever hands it a `RenderRun`.
-      const { output, summary } = (await share.run(key, ttlMs, startRun)) as RenderRun;
+      const { output, summary } = (await share.run(key, ttlMs, startRun, signal)) as RenderRun;
       record(summary);
 
       return output;

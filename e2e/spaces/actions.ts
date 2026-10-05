@@ -3,6 +3,7 @@ import {
   authorSpace,
   button,
   defineAction,
+  link,
   named,
   onClick,
   paragraph,
@@ -35,7 +36,13 @@ export const ACTION_IDS = {
   offline: 'action-offline',
   offlineText: 'action-offline-text',
   button: 'action-button',
-  status: 'action-status'
+  status: 'action-status',
+  navPage: 'action-nav-page',
+  navAna: 'action-nav-ana',
+  navBob: 'action-nav-bob',
+  navProvider: 'action-nav-provider',
+  navWho: 'action-nav-who',
+  navPending: 'action-nav-pending'
 };
 
 /** What the flow answers, so a spec asserts on a string it can point at rather than on a fixture's prose. */
@@ -124,6 +131,27 @@ export const actionSpace = (debugMode = false): AuthoredSpace =>
             subType: 'section',
             runtime: 'server',
             children: [shows(ACTION_IDS.slowText, `${ACTION_IDS.slow}.errorMessage`)]
+          })
+        ]
+      },
+      /**
+       * Links between two answers of one server provider — what a navigation asks the server for: its destination's
+       * data, before it goes, once.
+       */
+      {
+        id: ACTION_IDS.navPage,
+        name: 'Navigate',
+        slug: 'navigate',
+        body: [
+          link({ id: ACTION_IDS.navAna, href: '/navigate?who=ana', content: 'Ana' }),
+          link({ id: ACTION_IDS.navBob, href: '/navigate?who=bob', content: 'Bob' }),
+          paragraph('', { id: ACTION_IDS.navPending, bind: { content: 'navigation.pending' } }),
+          apiContainer({
+            id: ACTION_IDS.navProvider,
+            action: 'e2e-feed',
+            subType: 'section',
+            runtime: 'server',
+            children: [shows(ACTION_IDS.navWho, `${ACTION_IDS.navProvider}.who`)]
           })
         ]
       }

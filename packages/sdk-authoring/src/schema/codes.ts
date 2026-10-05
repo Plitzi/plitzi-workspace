@@ -465,6 +465,12 @@ export const AUTHORING_CODES = {
     means: 'an `apiContainer` that asks nothing',
     fix: 'a `query` (or `action`, `connector`, `resource`)'
   },
+  'action-output-path': {
+    kind: 'warned',
+    means:
+      'a read of `.data` on a provider fed by a server action — it publishes the action’s output at its root, and `.data` is a `query` provider’s answer',
+    fix: 'the output’s own field — `apiContainer_feed.stories`, not `apiContainer_feed.data.stories`'
+  },
   'path-not-in-data': {
     kind: 'warned',
     means:
@@ -768,7 +774,8 @@ export const AUTHORING_CODES = {
   },
   'while-running': {
     kind: 'refused',
-    means: '`whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue`',
+    means:
+      '`whileRunning` on a step that is not the trigger, or a mode other than `skip`, `parallel`, `queue`, `latest`',
     fix: "`[whileRunning('queue', onClick()), …]`"
   },
   'callback-not-answered': {

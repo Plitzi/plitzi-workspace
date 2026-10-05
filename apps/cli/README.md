@@ -134,6 +134,11 @@ when an install fails the CLI says which setting names it.
 | `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), the space as last authored, screenshots and test output. Rebuilt when missing | no |
 | `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
 
+`src/main.ts` is the CLI's (`upgrade` keeps it current). What the server does besides serving the space is the
+project's own, in files it reads: `src/serverOptions.ts` (handed to `createServer` — `images`, `action.limits`,
+`action.kv`, `rsc`) and, with `--source local`, `src/actions.ts` (the space's server actions, one `defineAction` each).
+`functions/` holds the project's own server code; `start:dev` restarts on a change to any of them.
+
 ## `create --template blank` and `--template catalog`
 
 A space written in the project starts as the welcome tour, with a plugin of the project's own. `--template blank`
@@ -155,7 +160,9 @@ plitzi shot / --compare https://example.com --width 1440   # beside another site
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
-another project. `check` reports every element the space owes the page that is missing or hidden (with why), broken
+another project. They wait for the page to settle — loaded, then half a second with nothing asked for — counting no
+stream that stays open, so a page with a realtime `channel` is checked like any other (`openPage` of
+`@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `check` reports every element the space owes the page that is missing or hidden (with why), broken
 images, sideways scroll, text in the colour behind it, console errors, refused requests and failed flows — and the
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has), a provider that failed,
 the rows each list rendered. A page's state in a few hundred tokens, where a screenshot costs thousands.
@@ -239,7 +246,9 @@ A project brought up to the CLI it has now, part by part: `files` (the machinery
 Playwright and lint configs, `AGENTS.md`), `packages` (`package.json` merged, `@plitzi/*` raised to this version, then
 the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill no longer has goes with it) and
 `renames` (a name a version renamed, at its file and line). A file nobody changed since the CLI wrote it is replaced;
-one the project made its own is a diff, left unless `--take` names it (`all` for every one). `update` is the same
+one the project made its own is a diff, left unless `--take` names it (`all` for every one). A file of the project's own
+that the machinery now reads (`src/serverOptions.ts`, `src/actions.ts`) is written when the project has none, and never
+replaced. `update` is the same
 command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
 older than the `@plitzi/sdk-authoring` installed.
 
@@ -318,9 +327,11 @@ plitzi add plugin ticker --prop interval:number=5000 --prop paused:boolean --tri
 ```
 
 `--prop name:type=default` (string, number or boolean) is an attribute: in the props, the declaration's defaults and
-`bindingsAllowed`, and a control in `Settings.tsx`. `--trigger onTick:count,at` is an event and what a flow started by
-it reads, fired with the `useTickerEvents()` hook it gets. `--callback reset` is an action a flow can call. `--headless`
-is an element with nothing to see: hidden on a page, a badge in the builder. The files are written as the project's
+`bindingsAllowed`, and a control in `Settings.tsx`; `--prop rows:list` and `--prop meta:json` are data a binding fills
+(`unknown[]`, `Record<string, unknown>`, empty until it does). `--trigger onTick:count,at` is an event and what a flow
+started by it reads, fired with the `useTickerEvents()` hook it gets — never on the builder's canvas. `--callback reset`
+is an action a flow can call. `--headless` is an element with nothing to see: hidden on a page, a badge in the builder,
+and `drawsNothing` in its declaration, so a page check does not look for it. The files are written as the project's
 Prettier writes them.
 
 ## `create --plugin`

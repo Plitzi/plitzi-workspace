@@ -10,7 +10,7 @@ import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSo
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
-import { useSdkStore } from '@plitzi/sdk-shared/store';
+import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
 import { isEmptyAnswer } from './helpers/isEmptyAnswer';
@@ -20,6 +20,7 @@ import { queryInputOf } from './helpers/queryInput';
 import { serverMock } from './helpers/serverMock';
 import useApi, { DEFAULT_GC_TIME, DEFAULT_STALE_TIME } from './hooks/useApi';
 import useAutoRefresh from './hooks/useAutoRefresh';
+import useInputRefresh from './hooks/useInputRefresh';
 import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
 import pathFields from '../../../dataSource/pathFields';
@@ -60,6 +61,14 @@ export type ApiContainerProps = {
    * route and query params, and answers whatever its output step returns.
    */
   action?: string;
+  /**
+   * What a server provider asks its action with, on top of the page's own route and query params — a search, a filter.
+   *
+   * Saved, it is what the page server resolves the first paint with. Bound — to a state the visitor changes — every
+   * change asks again with the new value, the way a bound `query` does for a browser provider; `reloadApi` with an
+   * input asks once.
+   */
+  input?: Record<string, unknown> | string;
   /** Which of the connector's read endpoints to execute. Defaults to `list`. */
   endpoint?: string;
   /** Content type / collection read through the connector. */
@@ -134,7 +143,8 @@ const ApiContainer = ({
   gcTime = DEFAULT_GC_TIME,
   refreshSeconds = 0,
   connector = '',
-  action = ''
+  action = '',
+  input
 }: ApiContainerProps) => {
   const {
     id,
@@ -149,7 +159,9 @@ const ApiContainer = ({
     stale: rscStale,
     location: rscLocation,
     elementData,
-    refresh
+    refreshing: rscRefreshing,
+    refresh,
+    cancel: cancelRsc
   } = useRscData<Record<string, unknown>>();
   const sourceName = getSourceName(declaration.sourceType, id);
   const {
@@ -200,6 +212,7 @@ const ApiContainer = ({
     isFetching: isApiFetching,
     data: apiData,
     refetch: apiRefetch,
+    cancel: apiCancel,
     isSuccess,
     isError
   } = useApi({
@@ -260,7 +273,7 @@ const ApiContainer = ({
    * its children only when it can render them truthfully. `renderWhileLoading` is the opt-out, for a provider
    * whose children draw a skeleton from `isLoading`.
    */
-  const isLoading = serverMode ? rscPending : isApiFetching;
+  const isLoading = serverMode ? rscPending || rscRefreshing : isApiFetching;
 
   /**
    * Nothing to render with YET — as opposed to a refresh of something already on screen.
@@ -295,8 +308,8 @@ const ApiContainer = ({
 
   /** A query asked for with `input`: kept, then asked — from its first page. */
   const performQuery = useCallback(
-    async ({ input }: { input?: unknown } = {}) => {
-      const given = queryInputOf(input);
+    async ({ input: asked }: { input?: unknown } = {}) => {
+      const given = queryInputOf(asked);
       if (given) {
         queryInput.current = given;
       }
@@ -305,6 +318,20 @@ const ApiContainer = ({
     },
     [refetch]
   );
+
+  /** The visitor stopped waiting: the request in flight is dropped — on the server too — and what is shown stays. */
+  const cancelQuery = useCallback(() => {
+    if (serverMode) {
+      cancelRsc();
+
+      return;
+    }
+
+    apiCancel();
+  }, [serverMode, cancelRsc, apiCancel]);
+
+  const [savedInput] = useCommonStore(`schema.flat.${id}.attributes.input`, { mode: 'mount' });
+  useInputRefresh({ enabled: serverMode && rscResolved, input, savedInput, performQuery });
 
   /**
    * Only a provider that can already fetch: a server one once a live payload has answered for this page (the
@@ -333,12 +360,21 @@ const ApiContainer = ({
   /**
    * Fired per answer, for either runtime — `data` is a new object each time one lands, so a refresh (a flow's
    * `performQuery`, or `refreshSeconds`) fires the trigger again, the same as a browser refetch does.
+   *
+   * Once per answer and no more: a request cancelled, or one whose loading flag came and went with nothing new,
+   * leaves the same answer standing, and firing for it again would run its flow a second time.
    */
+  const announced = useRef<{ data: unknown; outcome: string } | undefined>(undefined);
   useEffect(() => {
     if (isLoading || !id || !outcome) {
       return undefined;
     }
 
+    if (announced.current?.data === data && announced.current.outcome === outcome) {
+      return undefined;
+    }
+
+    announced.current = { data, outcome };
     void interactionsManager.interactionTrigger(id, outcome === 'success' ? 'onApiSuccess' : 'onApiError', {
       url: query,
       method,
@@ -378,6 +414,7 @@ const ApiContainer = ({
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     const callbacks: Record<string, InteractionCallback> = {
       performQuery: { ...declaration.callbacks.performQuery, title: `Perform Query ${label}`, callback: performQuery },
+      cancelQuery: { ...declaration.callbacks.cancelQuery, title: `Cancel Query ${label}`, callback: cancelQuery },
       loadMore: { ...declaration.callbacks.loadMore, title: `Load More ${label}`, callback: loadMore },
       goToPage: {
         ...declaration.callbacks.goToPage,
@@ -397,7 +434,7 @@ const ApiContainer = ({
     }
 
     return callbacks;
-  }, [label, performQuery, loadMore, goToPage, serverMode, writeRecord]);
+  }, [label, performQuery, cancelQuery, loadMore, goToPage, serverMode, writeRecord]);
 
   const shown = useMemo(
     () => (loadingSlot && previewMode ? childrenWhile(children, loadingSlot, isInitialLoad) : children),

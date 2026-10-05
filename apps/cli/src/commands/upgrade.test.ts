@@ -114,6 +114,28 @@ describe('plitzi upgrade', () => {
     expect(await read('playwright.config.ts')).toBe(ours['playwright.config.ts']);
   });
 
+  /**
+   * A `main.ts` of today reads the project's server options and actions, which a project made before them never had: an
+   * upgrade writes them for it — once, and never over the project's own.
+   */
+  it('writes the project’s own files the machinery reads, only when the project has none', async () => {
+    await fs.rm(file('src/serverOptions.ts'));
+    await fs.writeFile(file('src/actions.ts'), '// mine\n');
+
+    const shown = await run(['files']);
+    const statuses = Object.fromEntries(
+      recordsIn(shown.files).map((entry): [string, unknown] => [String(entry.file), entry.status])
+    );
+    expect(statuses['src/serverOptions.ts']).toBe('seeded');
+    expect(statuses).not.toHaveProperty('src/actions.ts');
+
+    await run(['files'], { write: true });
+
+    expect(await read('src/serverOptions.ts')).toBe(scaffold(ANSWERS)['src/serverOptions.ts']);
+    expect(await read('src/actions.ts')).toBe('// mine\n');
+    expect((await readScaffoldRecord(root))?.files['src/serverOptions.ts'], 'recorded as the CLI’s').toBeUndefined();
+  });
+
   it('never names the project’s own files — its space, pages and README', async () => {
     await fs.writeFile(file('src/space.ts'), '// mine\n');
     await fs.writeFile(file('README.md'), '# mine\n');

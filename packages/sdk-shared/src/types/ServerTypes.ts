@@ -565,6 +565,11 @@ export interface SSRRscContext {
    * against the page it matched and skips it — so a feature that is off puts nothing in the payload.
    */
   flagOverrides?: FlagOverrides;
+  /**
+   * Aborted when whoever asked stops waiting — a browser that hung up, a refresh superseded by a newer one, a STOP — so
+   * what it asked for stops being worked on, here and in the runs it started.
+   */
+  signal?: AbortSignal;
 }
 
 /**
@@ -1181,6 +1186,12 @@ export type SSRContext = {
    * refresh is done, and handed on only to a page whose debugging is authorized.
    */
   actionRuns?: ActionRunSummary[];
+  /**
+   * What a refresh of server data asked for beside the page's own address (`/_rsc?location=…&q=…`): a provider's
+   * `input`, a page window. What the provider asks for this time, so it wins over the `input` the element was saved
+   * with — the query string of the page does not.
+   */
+  rscParams?: Record<string, string>;
 };
 
 export type SSRServer = {

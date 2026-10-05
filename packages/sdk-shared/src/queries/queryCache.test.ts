@@ -28,6 +28,34 @@ afterEach(() => {
 });
 
 describe('QueryCache', () => {
+  /** A STOP: the request is dropped, what was held stays on screen, and the answer that arrives anyway lands nowhere. */
+  it('cancels the request out and keeps the answer it held', async () => {
+    const cache = new QueryCache();
+    const { fetcher, release } = deferredFetcher();
+    const signals: AbortSignal[] = [];
+    const watched = vi.fn((signal: AbortSignal) => {
+      signals.push(signal);
+
+      return fetcher();
+    });
+
+    cache.observe('k', { meta, fetcher: watched, staleTime: 0 });
+    release('first');
+    await flush();
+
+    void cache.refetch('k');
+    expect(cache.getEntry('k')).toMatchObject({ data: 'first', isFetching: true });
+
+    expect(cache.cancel('k')).toBe(true);
+    expect(signals[1].aborted).toBe(true);
+    expect(cache.getEntry('k')).toMatchObject({ data: 'first', isFetching: false });
+
+    release('late');
+    await flush();
+    expect(cache.getEntry('k')?.data).toBe('first');
+    expect(cache.cancel('k'), 'nothing left to cancel').toBe(false);
+  });
+
   it('serves a fresh answer without asking again', async () => {
     const cache = new QueryCache();
     const fetcher = vi.fn(() => Promise.resolve('first'));

@@ -169,7 +169,8 @@ const both = (inner: RuleGroup, outer: RuleGroup): RuleGroup =>
  *
  * `skip` is what happens without this: the new firing is ignored — which is what keeps a double click from submitting
  * twice, and exactly wrong for a stream of events a flow must answer every one of. `queue` runs each firing after the
- * last, in order; `parallel` runs them all at once.
+ * last, in order; `parallel` runs them all at once; `latest` stops the run in progress — the server action or request
+ * it waits on included — and runs the new one: a search as you type, where only the last question matters.
  *
  * ```ts
  * [whileRunning('queue', named('arrived', on('onArrival'))), addNotification({ … }), delay(8000), …]

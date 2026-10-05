@@ -7,6 +7,7 @@ import {
   comparePictures,
   compareTexts,
   loadImages,
+  openPage,
   PAGE_TEXT_LIMIT,
   pageRegions,
   pageTexts,
@@ -175,7 +176,8 @@ const pictureOf = async (
         colorScheme: view.scheme ?? 'light',
         reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference'
       });
-  const answered = await page.goto(url, { waitUntil: 'networkidle' }).catch(() => null);
+  // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
+  const answered = await openPage(page, url);
   if (!answered) {
     return { problem: `Nothing answers at ${url}.` };
   }

@@ -3,12 +3,15 @@
 ## One call: `inspectPage`
 
 ```ts
-import { authorSpace, inspectPage } from '@plitzi/sdk-authoring';
+import { authorSpace, inspectPage, openPage } from '@plitzi/sdk-authoring';
 
 const { handles } = authorSpace(space);
-await page.goto('/');
+await openPage(page, '/');
 expect((await inspectPage(page, handles)).problems).toEqual([]);
 ```
+
+`openPage` waits for the page to settle — loaded, and nothing asked for in half a second — counting no stream that
+stays open: Playwright's `networkidle` never comes on a page with a realtime `channel`.
 
 It checks the open page and returns EVERY problem at once, one sentence each, naming the element and the reason:
 

@@ -2,7 +2,7 @@ import { evaluate, evaluateExpression } from '../Evaluator';
 import { finalizeRaw, flattenContext, renderSimpleTokens } from './helpers';
 import { getNodes, resolveTokens } from '../TemplateCache';
 
-import type { Expression } from '../AST';
+import type { ASTNode, Expression } from '../AST';
 import type { KeepEmptyTokens } from '../Evaluator';
 
 export const processTwig = (
@@ -91,11 +91,48 @@ const renderDocument = (template: string, variables: Record<string, unknown>): u
 };
 
 /**
+ * The value a template stands for, when it has one: one `{{ expression }}` — after any number of `{% set %}` that name
+ * its parts, which say nothing of their own — and nothing else but whitespace. `undefined` for a template that is text.
+ */
+const valueShape = (
+  nodes: readonly ASTNode[] | null | undefined
+): { statements: ASTNode[]; expression: Expression } | undefined => {
+  const meaningful = nodes?.filter(node => node.type !== 'text' || node.value.trim() !== '') ?? [];
+  const last = meaningful.at(-1);
+  const statements = meaningful.slice(0, -1);
+  if (last?.type !== 'variable' || !statements.every(node => node.type === 'set')) {
+    return undefined;
+  }
+
+  return { statements, expression: last.expression };
+};
+
+/**
+ * The expression's value, after the `{% set %}` before it named what it reads — which are kept in `variables`, as a
+ * template rendered to text keeps them.
+ */
+const evaluateShape = (
+  { statements, expression }: { statements: ASTNode[]; expression: Expression },
+  variables: Record<string, unknown>
+): unknown => {
+  const context = 'variables' in variables ? flattenContext(variables) : variables;
+  if (statements.length === 0) {
+    return evaluateExpression(expression, context);
+  }
+
+  const { variables: scope } = evaluate(statements, context);
+  Object.assign(variables, scope);
+
+  return evaluateExpression(expression, scope);
+};
+
+/**
  * A template's VALUE, where it has one: `{{ rows|filter(r => r.open) }}` is the filtered array, `{{ count > 0 }}` a
  * boolean, `{{ total }}` the number it holds.
  *
  * A template that is one `{{ expression }}` and nothing else (surrounding whitespace aside) answers that expression's
- * value untouched. Anything with text around it, or tags, is text by nature and renders as {@link processTwig}.
+ * value untouched — and so does one whose `{% set %}` name the parts of that expression first. Anything with text
+ * around it, or other tags, is text by nature and renders as {@link processTwig}.
  *
  * Unlike `processTwig`'s `asRaw`, nothing goes through JSON on the way: `0`, `false` and `null` come back as
  * themselves, and a string that looks like a number stays a string.
@@ -106,16 +143,13 @@ export const processTwigValue = (template: string, variables: Record<string, unk
   }
 
   const entry = resolveTokens(template);
-  const nodes = entry ? (entry.nodes ?? entry.nodesWithSource) : null;
-  const meaningful = nodes?.filter(node => node.type !== 'text' || node.value.trim() !== '');
-  if (meaningful?.length !== 1 || meaningful[0].type !== 'variable') {
+  const shape = valueShape(entry ? (entry.nodes ?? entry.nodesWithSource) : null);
+  if (!shape) {
     return processTwig(template, variables);
   }
 
   try {
-    const context = 'variables' in variables ? flattenContext(variables) : variables;
-
-    return evaluateExpression(meaningful[0].expression, context);
+    return evaluateShape(shape, variables);
   } catch {
     return template;
   }
@@ -144,8 +178,8 @@ const jsonDocument = (text: string): unknown => {
 /**
  * A flow step's param — in the browser's flows and in a server action's — as the value the step is handed.
  *
- * A param that is one `{{ expression }}` is that expression's value, exactly: a string stays a string however it
- * looks. The type is the VALUE's, never guessed from its text — which is what the step params used to do, rendering
+ * A param that is one `{{ expression }}` (after any `{% set %}` naming its parts) is that expression's value, exactly:
+ * a string stays a string however it looks. The type is the VALUE's, never guessed from its text — which is what the step params used to do, rendering
  * the value to text and reading the text back as JSON: a password typed as `1234` reached the server as a number, and
  * a text field declared `text` on the far side then saw no password at all. What a param should be converted to is
  * the business of whoever declares its type — `setState`'s `type`, an action's input fields — not of the resolver.
@@ -163,9 +197,8 @@ export const processTwigParam = (template: string, variables: Record<string, unk
   }
 
   const entry = resolveTokens(template);
-  const nodes = entry ? (entry.nodes ?? entry.nodesWithSource) : null;
-  const meaningful = nodes?.filter(node => node.type !== 'text' || node.value.trim() !== '');
-  if (meaningful?.length !== 1 || meaningful[0].type !== 'variable') {
+  const shape = valueShape(entry ? (entry.nodes ?? entry.nodesWithSource) : null);
+  if (!shape) {
     // Only text with a quote in it can hold a string literal a value lands in; any other goes straight to the text.
     const document = template.includes('"') ? renderDocument(template, variables) : undefined;
     if (document !== undefined) {
@@ -177,10 +210,9 @@ export const processTwigParam = (template: string, variables: Record<string, unk
     return typeof output === 'string' ? jsonDocument(output) : output;
   }
 
-  const { expression } = meaningful[0];
+  const { expression } = shape;
   try {
-    const context = 'variables' in variables ? flattenContext(variables) : variables;
-    const value = evaluateExpression(expression, context);
+    const value = evaluateShape(shape, variables);
     if (value === undefined) {
       return '';
     }

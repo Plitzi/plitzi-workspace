@@ -1,6 +1,7 @@
 import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 
+import { checkActionOutputReads } from './actionOutput';
 import { GLOBAL_SOURCES } from '../bindings';
 import { didYouMean } from '../suggest';
 
@@ -197,6 +198,8 @@ export const checkTemplate = (
 
     return;
   }
+
+  checkActionOutputReads(ctx, template, where, id);
 
   if (!ctx.catalogs.sourceTypes || site.kind === 'step') {
     return;

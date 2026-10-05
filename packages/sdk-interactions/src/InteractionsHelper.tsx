@@ -242,6 +242,11 @@ const flowCallbacks = async (
   let previous = parentNode;
   let params: Record<string, unknown> = flowParams;
   while (previous) {
+    // Superseded by a newer run of the same flow: the steps it had not started are the newer run's to take.
+    if (context.signal?.aborted) {
+      return executionResults;
+    }
+
     const node = get(nodes, previous.afterNode) as ElementInteraction | undefined;
     if (!node) {
       if (postCallbacksTotal.length > 0) {
@@ -254,7 +259,10 @@ const flowCallbacks = async (
     const startTime = pConsole.getTime().valueOf();
     // Waited on only when the step waits: see `processNode`.
     const pending = processNode(node, callbacksAvailables, params, readGlobals(), context);
-    const { status, result, postCallbacks, whenParams } = isThenable(pending) ? await pending : pending;
+    const outcome = isThenable(pending) ? await pending : pending;
+    const { result, postCallbacks, whenParams } = outcome;
+    // A step stopped because its run was superseded did not fail: it was told to stop.
+    const status = outcome.status === 'failed' && context.signal?.aborted ? 'skipped' : outcome.status;
     executionResults[node.id] = {
       node,
       status,
@@ -344,6 +352,8 @@ const flowTrigger = async (
   readGlobals: ReadGlobals = noGlobals,
   /** The id of the element this fired on, carried through purely so the log can name it. */
   hostElementId?: string,
+  /** Aborted when a newer run of this flow supersedes this one (`whileRunning: 'latest'`). */
+  signal?: AbortSignal,
   postCallbacksTotal = []
 ) => {
   const startTime = pConsole.getTime().valueOf();
@@ -362,7 +372,7 @@ const flowTrigger = async (
     readGlobals,
     postCallbacksTotal,
     {},
-    { hostElementId }
+    { hostElementId, ...(signal ? { signal } : {}) }
   );
   storeLog(triggerNode, startTime, nodesProcessed, flowStatus(nodesProcessed), hostElementId);
 };

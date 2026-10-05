@@ -4,7 +4,8 @@
  * Plain data both ways, because it crosses into the page as a serialized argument and comes back the same way.
  */
 export interface ProbeInput {
-  expected: { id: string; selector: string }[];
+  /** `list`: a list, whose box is only its rows — none drawn is a list with nothing in it, not one hidden. */
+  expected: { id: string; selector: string; list?: true }[];
   images: boolean;
   overflow: boolean;
   legibility: boolean;
@@ -117,10 +118,14 @@ export function probePage(input: ProbeInput): ProbeFindings {
   };
 
   /** Why an element has no box, named by the node that takes it away — which is rarely the element itself. */
-  const whyHidden = (node: Element): string => {
+  const whyHidden = (node: Element, list: boolean): string => {
     const hider = hiderOf(node);
     if (hider) {
       return `${hider.how} on ${hider.at === node ? 'itself' : nameOf(hider.at)}`;
+    }
+
+    if (list && node.childElementCount === 0) {
+      return 'it is a list with no rows — its items are empty, or have not arrived. Show an empty state in its place, or make it `visible` only while it has rows';
     }
 
     if (getComputedStyle(node).display === 'contents') {
@@ -147,7 +152,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
   const missing: string[] = [];
   const hidden: { id: string; reason: string }[] = [];
   const byWidth: string[] = [];
-  for (const { id, selector } of input.expected) {
+  for (const { id, selector, list } of input.expected) {
     const nodes = [...document.querySelectorAll(selector)];
     if (nodes.length === 0) {
       missing.push(id);
@@ -156,7 +161,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
       if (hider && laidOutByWidth(hider.at)) {
         byWidth.push(id);
       } else {
-        hidden.push({ id, reason: whyHidden(nodes[0]) });
+        hidden.push({ id, reason: whyHidden(nodes[0], list === true) });
       }
     }
   }

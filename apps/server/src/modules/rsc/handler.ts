@@ -70,6 +70,10 @@ const ENDPOINT_PARAMS = new Set(['location', 'ids']);
  * is what the same visitor could have put in the page's own address; the cache key is the whole request, so no answer
  * is served for a query it was not made for.
  */
+/** What a refresh asked for beside the endpoint's own parameters. */
+const refreshParams = (req: SSRRequest): Record<string, string> =>
+  Object.fromEntries(Object.entries(req.query).filter(([key]) => !ENDPOINT_PARAMS.has(key)));
+
 export const withPageLocation = (req: SSRRequest): SSRRequest => {
   const location = req.query.location;
   if (!location || !location.startsWith('/') || location.length > MAX_PAGE_LOCATION) {
@@ -77,8 +81,7 @@ export const withPageLocation = (req: SSRRequest): SSRRequest => {
   }
 
   const url = new URL(location, `${req.protocol}://${req.hostname}`);
-  const asked = Object.entries(req.query).filter(([key]) => !ENDPOINT_PARAMS.has(key));
-  const query = Object.fromEntries([...url.searchParams.entries(), ...asked]);
+  const query = { ...Object.fromEntries(url.searchParams.entries()), ...refreshParams(req) };
   const search = new URLSearchParams(query).toString();
 
   return {
@@ -109,7 +112,9 @@ export const handleRsc = async (
   config: SSRPageServerConfig,
 
   _pluginManager: PluginManager,
-  cache?: TtlCache<string>
+  cache?: TtlCache<string>,
+  /** The request's own: a browser that stops waiting stops the elements it asked about. */
+  signal?: AbortSignal
 ): Promise<void> => {
   if (!config.adapters.getRscData) {
     res.setStatus(501);
@@ -137,6 +142,7 @@ export const handleRsc = async (
     : undefined;
   const idsParam = ids?.join(',');
   const pageRequest = withPageLocation(req);
+  req.ctx.rscParams = refreshParams(req);
 
   /**
    * Whether this refresh belongs to somebody looking at a draft.
@@ -209,7 +215,8 @@ export const handleRsc = async (
       user: req.ctx.user,
       ids,
       loadOfflineData,
-      flagOverrides
+      flagOverrides,
+      ...(signal ? { signal } : {})
     });
   } catch (err) {
     serverLog.error('RSC', 'getRscData error', err);

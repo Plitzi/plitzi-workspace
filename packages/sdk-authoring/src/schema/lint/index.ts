@@ -1,4 +1,5 @@
 import { lintAccessibility } from './accessibility';
+import { lintActionOutputBindings } from './actionOutput';
 import { lintAnchors } from './anchors';
 import { lintChannels } from './channels';
 import { lintInstances } from './components';
@@ -47,6 +48,7 @@ export const lintSpace = (
   lintFlags(ctx);
   lintElements(ctx);
   lintDataPaths(ctx);
+  lintActionOutputBindings(ctx);
   lintAnchors(ctx);
   lintMotion(ctx);
   lintQuiet(ctx);

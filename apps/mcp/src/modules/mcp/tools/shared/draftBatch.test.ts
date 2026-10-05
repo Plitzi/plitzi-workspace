@@ -11,7 +11,7 @@ import type { Operation } from '../operations';
 const batches: Record<string, Operation[]> = {
   'a clean edit': [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { subType: 'section' } }],
   'an attribute the element never reads': [
-    { type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: 'Not read' } }
+    { type: 'patchElement', pageRef: 'home', ref: 'c1', props: { caption: 'Not read' } }
   ],
   'a flow that does not start with its trigger': [
     {
@@ -41,7 +41,7 @@ describe('draftBatch — validate and apply agree', () => {
 describe('draftBatch — old issues fixed, new ones refused', () => {
   const withOldTypo = () => {
     const space = buildSpace();
-    space.schema.flat.c1.attributes.title = 'Never read';
+    space.schema.flat.c1.attributes.caption = 'Never read';
 
     return space;
   };
@@ -63,12 +63,12 @@ describe('draftBatch — old issues fixed, new ones refused', () => {
 
   it('refuses the batch’s own mistake, of the same kind as the one it fixed', () => {
     const checked = validate(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { title: 'Still not read' } }] },
+      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', props: { caption: 'Still not read' } }] },
       withOldTypo()
     );
 
     expect(checked.valid).toBe(false);
-    expect(checked.errors.some(error => error.message.includes('"title"'))).toBe(true);
+    expect(checked.errors.some(error => error.message.includes('"caption"'))).toBe(true);
   });
 });
 

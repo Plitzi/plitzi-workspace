@@ -5,15 +5,7 @@ import type { ApiContainerProps } from './ApiContainer';
 import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
-export type ApiContainerAttributes = AuthorableAttributes<ApiContainerProps> & {
-  /**
-   * What this element asks of the action it names, on top of the page's own route and query params.
-   *
-   * Not a component prop, and it never will be: the action runs on the server, so this is read there and the
-   * element only ever sees what came back.
-   */
-  input?: Record<string, unknown>;
-};
+export type ApiContainerAttributes = AuthorableAttributes<ApiContainerProps>;
 
 const declaration = elementDeclaration<ApiContainerAttributes>()({
   type: 'apiContainer',
@@ -69,6 +61,7 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
         }
       }
     },
+    cancelQuery: { action: 'cancelQuery', title: 'Cancel Query', type: 'callback', preview: {}, params: {} },
     loadMore: { action: 'loadMore', title: 'Load More', type: 'callback', preview: {}, params: {} },
     goToPage: {
       action: 'goToPage',

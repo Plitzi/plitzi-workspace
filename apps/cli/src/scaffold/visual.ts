@@ -55,7 +55,7 @@ export default defineConfig({
 
 const authoredSpec = (): string => `import { expect, test } from '@playwright/test';
 
-import { authorSpace, inspectPage } from '@plitzi/sdk-authoring';
+import { authorSpace, inspectPage, openPage } from '@plitzi/sdk-authoring';
 
 import { declarations } from '../src/plugins/declarations.ts';
 import { space } from '../src/space.ts';
@@ -83,7 +83,8 @@ for (const pageHandle of openable) {
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
 
-    await page.goto(pageHandle.path, { waitUntil: 'networkidle' });
+    // Settled, not \`networkidle\`: a page with a live channel keeps its stream open, and never idles.
+    await openPage(page, pageHandle.path);
 
     // Every problem at once, each naming the element and why — which ancestor hid it, what overflowed.
     expect((await inspectPage(page, handles, { page: pageHandle.id })).problems).toEqual([]);
@@ -107,7 +108,9 @@ test('renders the space without errors', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
 
-  await page.goto('/', { waitUntil: 'networkidle' });
+  // \`load\`, not \`networkidle\`: a page with a live channel keeps its stream open and never idles — the assertion below
+  // waits for what it needs.
+  await page.goto('/', { waitUntil: 'load' });
 
   // Every element the SDK renders carries its id, so this is "the space produced something", not "the div exists".
   await expect(page.locator('[data-plitzi-el]').first()).toBeVisible();

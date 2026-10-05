@@ -910,6 +910,10 @@
       "types": "./dist/elements/provider/ApiContainer/hooks/useAutoRefresh.d.ts",
       "import": "./dist/elements/provider/ApiContainer/hooks/useAutoRefresh.mjs"
     },
+    "./elements/provider/ApiContainer/hooks/useInputRefresh": {
+      "types": "./dist/elements/provider/ApiContainer/hooks/useInputRefresh.d.ts",
+      "import": "./dist/elements/provider/ApiContainer/hooks/useInputRefresh.mjs"
+    },
     "./elements/provider/ApiContainer/hooks/useProviderPagination": {
       "types": "./dist/elements/provider/ApiContainer/hooks/useProviderPagination.d.ts",
       "import": "./dist/elements/provider/ApiContainer/hooks/useProviderPagination.mjs"

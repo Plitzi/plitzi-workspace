@@ -26,4 +26,14 @@ describe('Text Tests', () => {
 
     expect(baseElement).toBeTruthy();
   });
+
+  it('shows its title to a pointer resting on it', () => {
+    const { getByText } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Text content="UTC" title="Coordinated Universal Time" />
+      </ElementContext>
+    );
+
+    expect(getByText('UTC').getAttribute('title')).toBe('Coordinated Universal Time');
+  });
 });

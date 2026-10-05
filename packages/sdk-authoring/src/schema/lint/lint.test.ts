@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   BUILTIN_GLOBAL_CALLBACKS,
+  apiContainer,
   authorSpace,
   button,
   component,
@@ -1447,6 +1448,39 @@ describe('lintSpace', () => {
         expect.objectContaining({
           code: 'path-not-in-data',
           message: expect.stringContaining('apiContainer_landing.data has plans, compare, faq') as string
+        })
+      ]);
+    });
+
+    /** An action's provider publishes its output at its root; `.data` is a query provider's answer. */
+    it('action-output-path', () => {
+      const { schema, style } = authorSpace({
+        name: 'Feed',
+        permanentUrl: 'feed',
+        pages: [
+          {
+            id: 'home',
+            name: 'Home',
+            slug: '',
+            body: [
+              apiContainer({
+                id: 'feed',
+                subType: 'section',
+                runtime: 'server',
+                action: 'report',
+                children: [text({ id: 'count', content: '{{ apiContainer_feed.stories|length }}' })]
+              })
+            ]
+          }
+        ]
+      });
+      schema.flat.count.attributes.content = '{{ apiContainer_feed.data.stories|length }}';
+
+      expect(lintSpace({ schema, style }).warnings).toEqual([
+        expect.objectContaining({
+          code: 'action-output-path',
+          elementId: 'count',
+          message: expect.stringContaining('`apiContainer_feed.stories`') as string
         })
       ]);
     });

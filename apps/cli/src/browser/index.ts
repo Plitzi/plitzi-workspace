@@ -10,6 +10,7 @@ import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme/themeCookie';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { PlitziProject } from '../commands/existingProject';
+import type { SettlingEvent, SettlingRequest } from '@plitzi/sdk-authoring';
 
 /**
  * A browser on the project's own Playwright, and the project's own server to point it at — what `plitzi check`,
@@ -55,6 +56,9 @@ export interface BrowserPage {
   on(event: 'pageerror', listener: (error: Error) => void): unknown;
   on(event: 'console', listener: (message: PageMessage) => void): unknown;
   on(event: 'response', listener: (response: PageResponse) => void): unknown;
+  /** What `openPage` follows the page's requests by, to know when it has settled. */
+  on(event: SettlingEvent, listener: (request: SettlingRequest) => void): unknown;
+  off(event: SettlingEvent, listener: (request: SettlingRequest) => void): unknown;
 }
 
 export interface Browser {

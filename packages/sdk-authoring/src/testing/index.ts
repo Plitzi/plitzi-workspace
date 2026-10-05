@@ -29,6 +29,8 @@ export { inspectRenders, summariseRenders } from './renders';
 export type { ElementRenders, RenderEvaluator, RenderOptions, RenderReport } from './renders';
 export type { OnScreenOptions } from './onScreen';
 export type { ProbeFindings, ProbeInput } from './probe';
+export { openPage } from './settle';
+export type { OpenPageOptions, SettlingEvent, SettlingPage, SettlingRequest } from './settle';
 export { pressShortcut, shortcutKey } from './shortcut';
 export type { KeyboardDriver } from './shortcut';
 export { singlePageSpace, withElement } from './variants';

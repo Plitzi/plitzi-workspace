@@ -242,7 +242,9 @@ modes**, chosen in Settings with **Data Source** (`definition.runtime`):
    see "Cached requests" in [Authoring spaces](./authoring-spaces.md). A server-driven provider's `performQuery`
    takes an `input` — `reloadApi(id, { q: '{{ state.search }}' })` in authoring — handed to what resolves it beside
    the page's route and query params (a search, a filter, how many to show), and kept for every page `loadMore` or
-   `goToPage` asks for after it and every refresh, until the next query with an input.
+   `goToPage` asks for after it and every refresh, until the next query with an input — and over the `input` the
+   element was saved with. A bound `input` asks again whenever it changes (`useInputRefresh`). `cancelQuery` drops the
+   request in flight (`cancelRsc` / `queryCache.cancel`), and `isLoading` is true while one is.
 6. **Render** — `<RootElement tag={subType}>` wraps a `<StoreProvider>` with the children.
 
 ### How it knows to wait for the RSC

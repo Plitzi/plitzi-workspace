@@ -100,6 +100,10 @@ describe('inspectTemplate', () => {
     ["{{ s matches '/^H/' }}", '`matches` is not supported'],
     ['{{ source|defualt }}', 'Unknown filter "defualt"'],
     ['{{ now() }}', 'Unknown function "now()"'],
+    // A filter called like a function, and the functions other engines have that are spelled otherwise here.
+    ['{{ abs(delta) }}', 'Unknown function "abs()" — write `value|abs`'],
+    ['{{ floor(x) }}', "write `value|round(0, 'floor')`"],
+    ['{{ clamp(x, 0, 9) }}', 'write `min(max(value, low), high)`'],
     ['{{ a @ b }}', 'Unexpected "@ b"'],
     ['{{ (a + b }}', 'Missing a closing ")"'],
     ['{{ items[0 }}', 'Missing a closing "]"'],

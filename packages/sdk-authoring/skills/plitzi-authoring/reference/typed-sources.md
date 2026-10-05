@@ -18,3 +18,5 @@ apiContainer({ id: site.id, query: '/data/home.json', children: [
   type-checked lint refuses an object in one).
 - A list fed by a path hands its `row` the item typed: every field any item of the sample has.
 - An item of a list is read by position: `site.data.sections[1]`.
+- A provider fed by a server action publishes the action's output at its root: `actionSource('feed', sample)` types
+  it — `feed.stories`, and `feed.data` is a type error — with a sample of what the action's last step answers.

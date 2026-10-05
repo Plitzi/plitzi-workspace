@@ -123,7 +123,8 @@ computed for you). Node types: \`callback\` (an element's own callback — \`ele
 (category/key/value/revertOnFinish) ≠ global \`setState\` (source \`state\`, key/type/value). To turn a step off use
 \`patchInteractionNode {enabled:false}\` — \`deleteInteraction\` removes it (destructive; confirm first). Any param
 **value** can be a binding token \`{{ source }}\` (e.g. notification \`content: "{{ list_<name>.item.name }}"\`).
-Steps read the page as it is when they run; a refiring trigger is ignored unless \`whileRunning: "queue"\`; keyboard
+Steps read the page as it is when they run; a refiring trigger is ignored unless \`whileRunning: "queue"\` (or
+\`"latest"\`: the newest firing stops the running one); keyboard
 shortcuts are the \`onKey\` trigger (\`keys: "shift+f, escape"\`).
 
 **CMS / API integrations** (\`upsertConnector\`): a **connector** is a manifest declaring a provider's base URL,
@@ -487,7 +488,8 @@ fixed shape under *Connectors* — \`.records\` or \`.record\`, \`.pageInfo\`, �
 response: \`.data\` (the parsed body — an API answering \`{ "items": [...] }\` is read as
 \`apiContainer_<name>.data.items\`) and \`.status\` (the HTTP status) — and a \`"server"\` provider with only a
 \`query\` (a JSON file the deployment serves) answers in that same shape, so moving it to the server changes no
-binding. Both add \`.isLoading\`, \`.isEmpty\`,
+binding. Fed by a server **action**, it is the action's output at the root (\`apiContainer_<name>.items\`, never
+\`.data.items\`). All add \`.isLoading\` (true while asked again too), \`.isEmpty\`,
 \`.hasError\` and \`.errorMessage\`.
 
 **Source scope — a source is visible to the provider's DESCENDANTS only.** An element source named
@@ -534,7 +536,8 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
 **Each step reads the page as it is when it runs**: a \`when\` or a \`{{ state.x }}\` after a \`setState\` sees the new
 value, and one after a \`delay\` sees what changed meanwhile. To act on the value from BEFORE a write, put the reading
 step first. **A trigger fired again while its flow runs is ignored** (no double submit); set \`"whileRunning": "queue"\`
-on the trigger node for a stream of events that must each run in order (\`"parallel"\` runs them at once).
+on the trigger node for a stream of events that must each run in order (\`"parallel"\` runs them at once,
+\`"latest"\` stops the running flow — its server action or request too — for a search as you type).
 **Keyboard shortcuts** are a trigger every element has: \`onKey\` with param \`keys\` — \`"f"\`, \`"shift+f"\`,
 \`"mod+k"\` (⌘ on a Mac, Ctrl elsewhere), \`"plus, ="\`, \`"escape"\`. Heard on the whole page while the element is
 mounted, ignored while someone types in a field; the flow reads the key pressed as \`{{ <trigger id>.key }}\`.
@@ -736,7 +739,7 @@ returns **no records** rather than the whole collection — a URL that addressed
 **Paging** is the \`pagination\` prop: \`"none"\`, \`"url"\` (the page number rides the query string, so pages are
 shareable and indexable — prefer it) or \`"append"\` (a "load more" list). Give each list on a page its own
 \`pageParam\` so two lists page independently. The provider also offers the \`loadMore\` and \`goToPage\` callbacks to
-interaction flows, and \`performQuery\` to refetch.
+interaction flows, \`performQuery\` to refetch, and \`cancelQuery\` to drop a request in flight (a STOP).
 
 **Writing back** (a form, a "delete" button): declare the endpoint under \`endpoints.write\`, then call the provider's
 **\`writeRecord\`** callback from an interaction flow — nodeType \`callback\`, \`elementId\` the apiContainer's ref,

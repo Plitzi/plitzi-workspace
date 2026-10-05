@@ -65,14 +65,27 @@ export const createRunFetch = (
   base: typeof fetch,
   signal: AbortSignal,
   limits: ResolvedActionLimits,
-  lineage: string[]
+  lineage: string[],
+  /**
+   * Told once, the first time a request is refused for the budget. A task reading many sources usually catches a
+   * failed fetch and goes on with the rest, which made the budget invisible: twenty sources answered, the rest
+   * "failed" like a network error, and nothing anywhere named the limit.
+   */
+  onBudgetSpent?: (message: string) => void
 ): typeof fetch => {
   let issued = 0;
 
   return async (input, init) => {
     issued += 1;
     if (issued > limits.maxRequests) {
-      throw new ActionRunError('over_capacity', `Action exceeded its ${limits.maxRequests} outbound request budget`);
+      const message =
+        `Action exceeded its ${limits.maxRequests} outbound request budget — request ${issued} and every one after ` +
+        'it were refused. A deployment that needs more raises it: `createServer({ action: { limits: { maxRequests } } })`.';
+      if (issued === limits.maxRequests + 1) {
+        onBudgetSpent?.(message);
+      }
+
+      throw new ActionRunError('over_capacity', message);
     }
 
     const headers = new Headers(init?.headers);

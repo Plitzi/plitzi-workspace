@@ -15,9 +15,14 @@ export type TextProps = {
   ref?: RefObject<HTMLElement>;
   className?: string;
   content?: string | number;
+  /**
+   * What a pointer resting on it shows — the whole of a text cut short, what an abbreviation stands for. A screen reader
+   * may not say it, so nothing only it says should matter.
+   */
+  title?: string;
 };
 
-const Text = ({ ref, content = 'Text', className = '' }: TextProps) => {
+const Text = ({ ref, content = 'Text', className = '', title = '' }: TextProps) => {
   const { id } = useElement();
   const {
     settings: { previewMode },
@@ -46,7 +51,7 @@ const Text = ({ ref, content = 'Text', className = '' }: TextProps) => {
   );
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__text', className)}>
+    <RootElement ref={ref} className={clsx('plitzi-component__text', className)} title={title || undefined}>
       {previewMode && finalContent}
       {!previewMode && (
         <Contenteditable

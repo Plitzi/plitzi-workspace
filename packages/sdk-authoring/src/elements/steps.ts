@@ -206,6 +206,21 @@ export const reloadApi = (target: string, input?: Record<string, string>): StepS
 });
 
 /**
+ * Stops an `apiContainer`'s request in flight, by id — a STOP for a slow report: the request is dropped, on the
+ * server too, and what the container shows stays. Its `isLoading` turns false.
+ *
+ * A newer `reloadApi` of the same container already drops the older one, so this is only for the visitor who is done
+ * waiting. An element callback, so `target` is the CONTAINER's id.
+ */
+export const cancelApi = (target: string): StepSpec => ({
+  type: 'callback',
+  action: 'cancelQuery',
+  title: 'Cancel',
+  on: target,
+  params: {}
+});
+
+/**
  * Opens a `modalContainer`, by id.
  *
  * A modal starts OPEN: declare it `visible: false` — its starting state, not a condition — and open it with this.

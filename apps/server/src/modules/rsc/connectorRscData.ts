@@ -61,7 +61,7 @@ export const connectorRscData = ({
     return resolvePublicFile ? resolvePublicFile(context) : undefined;
   };
 
-  return async ({ req, spaceId, environment, user, ids, loadOfflineData, flagOverrides }) => {
+  return async ({ req, spaceId, environment, user, ids, loadOfflineData, flagOverrides, signal }) => {
     // Joins the read the page render already started rather than asking for the document a second time.
     const offlineData = await loadOfflineData();
     // On unless the space turns it off, as the page render decides it: a space the builder or the MCP made never says.
@@ -78,6 +78,7 @@ export const connectorRscData = ({
       ids,
       resolveElement,
       ...(flagOverrides ? { flagOverrides } : {}),
+      ...(signal ? { signal } : {}),
       ...(elementTimeoutMs === undefined ? {} : { timeoutMs: elementTimeoutMs })
     });
   };

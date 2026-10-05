@@ -46,6 +46,7 @@ carousel({ id: 'hero', items: 'p.data.slides', autoplay: 5000, row: 'slide-card'
                                                // rows follow their item's `id`, or `itemKey: 'slug'`
 apiContainer({ id: 'p', query: '/data/x.json', cache: true, children })   // publishes p.data; no box of its own
 apiContainer({ id: 'p', query: '/data/x.json', runtime: 'server', children }) // read by the page server: still p.data
+apiContainer({ id: 'p', action: 'report', runtime: 'server', children })     // the action's output at p's root: p.rows
                                                // loadingSlot: 'p-skeleton' — a child shown until it answers
 form({ id, managedByInteractions: true, flows, children })
 formControl({ name: 'email', label: 'Email', subType: 'email' })          // select: options: [{ label, value }]
@@ -109,7 +110,7 @@ A flow is `[trigger, …steps]`, in an element's `flows`.
 [onClick(), navigate({ urlType: 'page', url: 'about' })]
 [onClick(), runServerAction({ actionId: 'checkout', input: { id: '{{ list_rows.item.id }}' } })]
 [onClick(), when({ field: 'state.step', operator: '=', value: '2' }, setState({ … }))]
-[whileRunning('queue', onClick()), delay(1000), …]
+[whileRunning('queue', onClick()), delay(1000), …]      // 'latest': a new firing stops the running one
 [named('picked', declaredTrigger(declaration, 'onPick')), …]; declaredCallback(declaration, 'reset', { on: 'seats' })
 ```
 

@@ -229,6 +229,32 @@ export class QueryCache {
     return answer as T | undefined;
   }
 
+  /**
+   * Stops the request out for `key`: the answer it would have brought lands nowhere, and what is held stays on screen.
+   *
+   * What a STOP is — the visitor is done waiting. The query is left as it was before it asked, so the next reader, or
+   * the next `refetch`, asks again.
+   */
+  cancel(key: string): boolean {
+    const runtime = this.runtimes.get(queryId(key));
+    if (!runtime?.controller) {
+      return false;
+    }
+
+    runtime.controller.abort();
+    runtime.controller = undefined;
+    runtime.inFlight = undefined;
+    const path = queryPath(key);
+    const held = this.getEntry(key);
+    if (held) {
+      this.store.setState(`${path}.isFetching`, false);
+    } else {
+      this.markUnasked(runtime);
+    }
+
+    return true;
+  }
+
   /** Asks again for `key` now, whatever the age of what is held — the explicit "reload this". */
   refetch(key: string): Promise<void> {
     const runtime = this.runtimes.get(queryId(key));
@@ -360,8 +386,14 @@ export class QueryCache {
 
     const epoch = this.epochValue;
     const version = runtime.version;
+    const controller = new AbortController();
     const settle = (outcome: { data: unknown } | { error: unknown }): Promise<void> => {
-      if (epoch !== this.epochValue || this.runtimes.get(queryId(key)) !== runtime) {
+      // A new session, a query forgotten, or a request cancelled: its answer is nobody's.
+      if (
+        epoch !== this.epochValue ||
+        this.runtimes.get(queryId(key)) !== runtime ||
+        runtime.controller !== controller
+      ) {
         return Promise.resolve();
       }
 
@@ -388,7 +420,6 @@ export class QueryCache {
       return outdated ? this.fetchActive(runtime) : Promise.resolve();
     };
 
-    const controller = new AbortController();
     runtime.controller = controller;
     runtime.inFlight = observer.fetcher(controller.signal).then(
       data => settle({ data }),

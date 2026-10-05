@@ -39,6 +39,33 @@ const coerce = (type: ActionFieldType, value: unknown): unknown => {
 
 export type FieldValidation = { values: Record<string, unknown>; missing: string[]; invalid: string[] };
 
+/** What a value is, in the words a refusal uses for it. */
+const kindOf = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return 'a list';
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return 'an object';
+  }
+
+  return typeof value === 'string' ? 'text that is not one' : `a ${typeof value}`;
+};
+
+/**
+ * Why a value does not fit its field, said the way the fix is written.
+ *
+ * A list or an object sent to a `text` field is nearly always JSON the page meant as text — a step param that is only a
+ * `|json_encode` is the value it encodes — so the refusal says which type takes it.
+ */
+const misfit = (key: string, type: ActionFieldType, value: unknown): string => {
+  const given = kindOf(value);
+  const hint =
+    type === 'text' && typeof value === 'object' && value !== null ? '; declare the field `json` to take it' : '';
+
+  return `${key} (${type}, got ${given}${hint})`;
+};
+
 /**
  * Coerces a value bag against declared fields.
  *
@@ -63,7 +90,7 @@ export const applyFields = (fields: Record<string, ActionField>, raw: Record<str
 
     const coerced = coerce(field.type, provided);
     if (coerced === undefined) {
-      invalid.push(key);
+      invalid.push(misfit(key, field.type, provided));
 
       return;
     }

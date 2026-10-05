@@ -41,6 +41,27 @@ describe('probePage / display:contents', () => {
   });
 });
 
+/** A list's box is its rows: one with none drawn is empty — said as that, with what to do, not as "no size". */
+describe('probePage / an empty list', () => {
+  it('says the list has no rows, and leaves a list with rows that has no box to the usual reason', () => {
+    sized(100, 20);
+    document.body.innerHTML =
+      '<ul data-plitzi-el="saved" data-empty="1"></ul><ul data-plitzi-el="feed" data-empty="1"><li></li></ul>';
+    const asked = {
+      ...input([]),
+      expected: [
+        { id: 'saved', selector: '[data-plitzi-el="saved"]', list: true as const },
+        { id: 'feed', selector: '[data-plitzi-el="feed"]', list: true as const }
+      ]
+    };
+
+    expect(probePage(asked).hidden).toEqual([
+      { id: 'saved', reason: expect.stringContaining('a list with no rows') as string },
+      { id: 'feed', reason: 'it has no size (0×0)' }
+    ]);
+  });
+});
+
 /** Whether a node or any of its ancestors is `display: none` — which, in a browser, leaves it no box. */
 const hiddenByDisplay = (node: Element): boolean =>
   getComputedStyle(node).display === 'none' || (node.parentElement !== null && hiddenByDisplay(node.parentElement));

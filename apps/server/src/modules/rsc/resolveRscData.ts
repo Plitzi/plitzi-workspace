@@ -2,6 +2,7 @@ import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/fl
 import { collectServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 
 import { matchRscPage } from './matchRscPage';
+import { onAbort } from '../../helpers/onAbort';
 import { serverLog } from '../../helpers/serverLog';
 
 import type { Element, Environment, FlagOverrides, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
@@ -48,6 +49,8 @@ export type ResolveRscDataOptions = {
    * per deployment as `rsc.elementTimeoutMs`.
    */
   timeoutMs?: number;
+  /** Whoever asked stopped waiting: every element still resolving is cancelled, as when its budget runs out. */
+  signal?: AbortSignal;
 };
 
 const DEFAULT_ELEMENT_TIMEOUT_MS = 5000;
@@ -62,17 +65,25 @@ const DEFAULT_ELEMENT_TIMEOUT_MS = 5000;
 const withBudget = async <T>(
   run: (signal: AbortSignal) => Promise<T>,
   timeoutMs: number,
-  label: string
+  label: string,
+  asked?: AbortSignal
 ): Promise<T> => {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
+  const releaseAsked = asked ? onAbort(asked, () => controller.abort()) : undefined;
   try {
     return await Promise.race([
       run(controller.signal),
       new Promise<never>((_resolve, reject) => {
         timer = setTimeout(() => {
           controller.abort();
-          reject(new Error(`RSC resolution timed out after ${timeoutMs}ms for ${label}`));
+          // Says the knob: a cold start reading many sources is the usual reason, and the element arrives empty.
+          reject(
+            new Error(
+              `RSC resolution timed out after ${timeoutMs}ms for ${label} — its section arrives empty. ` +
+                'A slower producer is given more with `createServer({ rsc: { elementTimeoutMs } })`.'
+            )
+          );
         }, timeoutMs);
       })
     ]);
@@ -80,6 +91,8 @@ const withBudget = async <T>(
     if (timer) {
       clearTimeout(timer);
     }
+
+    releaseAsked?.();
   }
 };
 
@@ -99,7 +112,8 @@ export const resolveRscData = async ({
   ids,
   resolveElement,
   flagOverrides,
-  timeoutMs = DEFAULT_ELEMENT_TIMEOUT_MS
+  timeoutMs = DEFAULT_ELEMENT_TIMEOUT_MS,
+  signal
 }: ResolveRscDataOptions): Promise<SSRRscData> => {
   if (schema.rsc?.enabled === false) {
     return {};
@@ -142,14 +156,18 @@ export const resolveRscData = async ({
             signal
           }),
         timeoutMs,
-        `element ${element.id}`
+        `element ${element.id}`,
+        signal
       )
     }))
   );
 
   const serverData = settled.reduce<Record<string, unknown>>((acum, result, index) => {
     if (result.status === 'rejected') {
-      serverLog.error('RSC', `element ${targets[index].id} failed to resolve`, result.reason);
+      // Nobody is waiting for it any more: not a failure of the element.
+      if (!signal?.aborted) {
+        serverLog.error('RSC', `element ${targets[index].id} failed to resolve`, result.reason);
+      }
 
       return acum;
     }

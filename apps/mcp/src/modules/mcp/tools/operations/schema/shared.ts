@@ -4,6 +4,7 @@ import { isSuggestionCode } from '@plitzi/sdk-authoring';
 import { FLAG_GATE_PATTERN } from '@plitzi/sdk-shared/flags';
 import { ANCHOR_PATTERN } from '@plitzi/sdk-shared/schema/anchor';
 import { motionProblems } from '@plitzi/sdk-shared/schema/motion';
+import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementRuntime } from '@plitzi/sdk-shared';
@@ -235,10 +236,7 @@ export const interactionNode = z.object({
   params: z.record(z.string(), z.unknown()).optional(),
   enabled: z.boolean().optional(),
   when: ruleGroup.optional().describe('QueryBuilder RuleGroup gating this step (validated structurally)'),
-  whileRunning: z
-    .enum(['skip', 'parallel', 'queue'])
-    .optional()
-    .describe('Trigger only: a refiring while this flow runs'),
+  whileRunning: z.enum(WHILE_RUNNING_MODES).optional().describe('Trigger only: a refiring while this flow runs'),
   elementId: z
     .string()
     .optional()

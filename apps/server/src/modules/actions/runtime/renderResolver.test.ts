@@ -123,6 +123,22 @@ describe('createActionResolver', () => {
     expect(slice.slug).toBe('hello-world');
   });
 
+  /**
+   * What a refresh asks for — `reloadApi`'s input, a bound `input` — is what the provider wants THIS time, so it wins
+   * over the input the element was saved with. Saved last, a reload could never change what it had been saved asking.
+   */
+  it('asks with what a refresh asked for over the input the element was saved with', async () => {
+    const req = { ctx: { ...buildReq().ctx, rscParams: { slug: 'asked-now' } } } as unknown as SSRRequest;
+    const slice = (await render(
+      resolverFor(),
+      { action: 'post-page', input: { slug: 'saved' } },
+      new AbortController().signal,
+      req
+    )) as { slug: string };
+
+    expect(slice.slug).toBe('asked-now');
+  });
+
   // The element and the action it names were published together, so a page rendered at revision 4 reads the flow
   // as it was at revision 4.
   it('reads the action as of the revision being rendered', async () => {

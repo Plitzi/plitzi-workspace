@@ -13,6 +13,7 @@ export const BUILDER_SIGNATURES: Readonly<Record<string, string>> = {
   resetForm: "resetForm('form-id')",
   setFieldValue: "setFieldValue('form-id', 'field', value)",
   reloadApi: "reloadApi('provider-id', input?)",
+  cancelApi: "cancelApi('provider-id')",
   openModal: "openModal('modal-id', data?)",
   closeModal: "closeModal('modal-id')",
   openDialog: "openDialog('dialog-id', data?)",

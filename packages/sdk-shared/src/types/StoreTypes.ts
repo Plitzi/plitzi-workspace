@@ -118,6 +118,12 @@ export type CommonState = {
     href: string;
     currentPageId: string;
     navigate: (url: string, isExternal?: boolean) => void;
+    /**
+     * Where a navigation is going while it waits for the destination's server data — `''` when none is. A link to a
+     * page resolved on the server asks for that page's data before it goes, and the page on screen stays until then:
+     * this is what a loading bar for it reads.
+     */
+    pendingLocation?: string;
   };
 };
 
@@ -234,6 +240,19 @@ export type RscState = {
    * compare this against where the visitor actually is, and a mismatch means "not mine yet" rather than "gone".
    */
   location?: string;
+  /**
+   * The elements a refresh in flight is asking about for the page on screen, by id — `*` for the whole payload.
+   *
+   * What makes a server provider's `isLoading` true while it is asked again (`performQuery`, `refreshSeconds`, a page
+   * of a pager), as a browser provider's is while it refetches. A navigation's prefetch is for another page, and
+   * marks nothing on this one.
+   */
+  refreshing?: Record<string, boolean>;
+  /**
+   * Names this SDK root, so the refreshes asked through any store under it — each element writes through a scoped store
+   * of its own — are known to each other: one request per question, the newest question winning.
+   */
+  instance?: string;
 };
 
 export type BuilderState = CommonState & {

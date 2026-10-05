@@ -7,6 +7,23 @@ import type { ASTNode, Expression } from './AST';
 /** The functions a template can call, as the evaluator implements them. Anything else evaluates to `''`. */
 const FUNCTIONS = new Set(['cycle', 'max', 'min', 'range']);
 
+/** The functions authors reach for that are written another way here — what the refusal says to write instead. */
+const roundedTo = (mode: string) => `value|round(0, '${mode}')`;
+
+const FUNCTION_SPELLINGS: Readonly<Record<string, string>> = {
+  floor: roundedTo('floor'),
+  ceil: roundedTo('ceil'),
+  clamp: 'min(max(value, low), high)'
+};
+
+/** Why a function is not one, and what to write: a filter called like a function is the usual reason. */
+const unknownFunction = (name: string): string => {
+  const spelling = Object.hasOwn(filters, name) ? `value|${name}` : FUNCTION_SPELLINGS[name];
+  const instead = spelling ? ` — write \`${spelling}\`` : '';
+
+  return `Unknown function "${name}()"${instead}: the functions are ${[...FUNCTIONS].join(', ')}`;
+};
+
 /** What a `for` binds besides its own variables: `{{ loop.index }}`. */
 const LOOP = 'loop';
 
@@ -134,7 +151,7 @@ class Inspector {
         return;
       case 'function':
         if (!FUNCTIONS.has(expr.name)) {
-          this.issues.push(`Unknown function "${expr.name}()": the functions are ${[...FUNCTIONS].join(', ')}`);
+          this.issues.push(unknownFunction(expr.name));
         }
 
         expr.args.forEach(arg => this.expression(arg, scope));

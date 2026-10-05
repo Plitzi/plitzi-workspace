@@ -69,7 +69,9 @@ const headersOf = (given: WebHookParams['headers']): Record<string, string> =>
 
 const send = async (
   { url, authorizationToken, headers: extra, body: given, credentials }: WebHookParams,
-  method: string
+  method: string,
+  /** The flow's: a run superseded by a newer one (`whileRunning: 'latest'`) stops waiting for the answer. */
+  signal?: AbortSignal
 ): Promise<WebHookResponse> => {
   const body = fieldsOf(given);
   const multipart = Object.values(body).some(value => value instanceof Blob);
@@ -81,7 +83,7 @@ const send = async (
     ...authorizationOf(authorizationToken)
   };
 
-  const fetchOptions: RequestInit = { method, headers, credentials };
+  const fetchOptions: RequestInit = { method, headers, credentials, ...(signal ? { signal } : {}) };
   if (!BODILESS_METHODS.has(method)) {
     if (!multipart) {
       fetchOptions.body = JSON.stringify(body);
@@ -115,14 +117,15 @@ const send = async (
 const webHook: InteractionCallback<WebHookParams> = toInteractionCallback<WebHookParams>(
   'webHook',
   webHookSpec,
-  async params => {
+  async (params, context) => {
     const method = (params.method || 'get').toUpperCase();
 
     if (READ_METHODS.has(method)) {
       if (params.cache !== true && params.cache !== 'true') {
-        return { response: await send(params, method) };
+        return { response: await send(params, method, context?.signal) };
       }
 
+      // A cached read is shared with whoever else asks the same thing, so one flow stopping does not stop it.
       const key = requestKey({
         method,
         url: params.url,
@@ -140,7 +143,7 @@ const webHook: InteractionCallback<WebHookParams> = toInteractionCallback<WebHoo
       return { response };
     }
 
-    const response = await send(params, method);
+    const response = await send(params, method, context?.signal);
     if (response.status >= 200 && response.status < 300) {
       void invalidateAfterWrite({
         mode: params.invalidateQueries,

@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 
-import refreshRsc from './refreshRsc';
+import refreshRsc, { cancelRsc } from './refreshRsc';
 import useRscSync from './useRscSync';
 
 import type { CommonState, Element, SchemaRsc, ServerSSR } from '../../types';
@@ -53,10 +53,20 @@ const makeStore = (rsc?: SchemaRsc, currentPageId = 'blog') =>
     navigation: { currentPageId }
   } as unknown as CommonState);
 
+/** A route change as the browser makes it: the address moves, and the navigation provider says where it is now. */
+const goTo = (store: StoreApi<CommonState>, location: string, currentPageId: string) => {
+  window.history.pushState({}, '', location);
+  const [, search = ''] = location.split('?');
+  store.set('navigation.currentPageId', currentPageId);
+  store.set('navigation.queryParams', Object.fromEntries(new URLSearchParams(search)));
+  store.set('navigation.href', `http://localhost${location}`);
+};
+
 describe('useRscSync', () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
+    window.history.pushState({}, '', '/');
     fetchMock.mockReset();
     fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: { a: 1 } }) });
     vi.stubGlobal('fetch', fetchMock);
@@ -121,43 +131,47 @@ describe('useRscSync', () => {
     // Mounted with the payload already in hand, so nothing is owed for the page that was rendered.
     renderSync({ rscPath: '/_rsc', rscData: { serverData: { blogApi: 1 } } }, store);
 
-    act(() => {
-      store.set('navigation.currentPageId', 'home');
-      store.set('runtime.sources.navigation', { routeParams: {}, queryParams: { to: 'home' } });
-    });
+    act(() => goTo(store, '/home?to=home', 'home'));
 
     await waitFor(() => expect(fetchMock).not.toHaveBeenCalled());
 
-    act(() => {
-      store.set('navigation.currentPageId', 'deep');
-      store.set('runtime.sources.navigation', { routeParams: {}, queryParams: { to: 'deep' } });
-    });
+    act(() => goTo(store, '/deep?to=deep', 'deep'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
   });
 
   it('fetches again on coming back to the page it was rendered on', async () => {
     const store = makeStore({ enabled: true });
-    const rendered = { routeParams: {}, queryParams: { to: 'blog' } };
-    store.set('runtime.sources.navigation', rendered);
+    goTo(store, '/blog?to=blog', 'blog');
     renderSync({ rscPath: '/_rsc', rscData: { serverData: { blogApi: 1 } } }, store);
 
-    act(() => {
-      store.set('navigation.currentPageId', 'deep');
-      store.set('runtime.sources.navigation', { routeParams: {}, queryParams: { to: 'deep' } });
-    });
+    act(() => goTo(store, '/deep?to=deep', 'deep'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
     // Back where it started — and the payload for it is gone, replaced by the one fetched above. Treating this as
     // "already loaded" is a page that renders its providers empty and asks nobody for the data.
-    act(() => {
-      store.set('navigation.currentPageId', 'blog');
-      // The very location this was rendered on, to the byte — the case the old check called "already loaded".
-      store.set('runtime.sources.navigation', { ...rendered });
-    });
+    // The very location this was rendered on, to the byte — the case the old check called "already loaded".
+    act(() => goTo(store, '/blog?to=blog', 'blog'));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  /**
+   * A link asks for its destination before it goes (the navigation's prefetch), and the route change that follows is
+   * a location the store already holds the answer for. Asked again, every click cost the server two renders.
+   */
+  it('asks nothing more on arriving where a navigation already asked for', async () => {
+    const store = makeStore({ enabled: true });
+    renderSync({ rscPath: '/_rsc', rscData: { serverData: { blogApi: 1 } } }, store);
+
+    await act(() => refreshRsc(store, undefined, undefined, '/deep?window=24h'));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    act(() => goTo(store, '/deep?window=24h', 'deep'));
+
+    await waitFor(() => expect(store.get('navigation.currentPageId')).toBe('deep'));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   /**
@@ -340,6 +354,76 @@ describe('refreshRsc', () => {
     );
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  /** Two windows asked for one after the other, the first answered last: the page shows the second. */
+  it('writes the answer of the latest request, whatever order the answers land in', async () => {
+    const store = liveStore();
+    const answers: ((value: unknown) => void)[] = [];
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((resolve, reject) => {
+          answers.push(resolve);
+          init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        })
+    );
+    const answer = (index: number, serverData: Record<string, unknown>) =>
+      answers[index]({ ok: true, json: () => Promise.resolve({ serverData }) });
+
+    const first = refreshRsc(store, undefined, { window: '48h' });
+    const second = refreshRsc(store, undefined, { window: '6h' });
+    answer(1, { a: '6h' });
+    answer(0, { a: '48h' });
+    await Promise.all([first, second]);
+
+    expect(store.get('rsc.data')).toEqual({ a: '6h' });
+    expect((fetchMock.mock.calls[0][1] as RequestInit).signal?.aborted, 'the older request was not dropped').toBe(true);
+    expect(store.get('rsc.stale'), 'a superseded request is no failure').toBe(false);
+  });
+
+  it('keeps an element asked for again over a whole payload asked for before it', async () => {
+    const store = liveStore();
+    const answers: ((value: unknown) => void)[] = [];
+    fetchMock.mockImplementation(() => new Promise(resolve => answers.push(resolve)));
+
+    const whole = refreshRsc(store);
+    const own = refreshRsc(store, ['b']);
+    answers[1]({ ok: true, json: () => Promise.resolve({ serverData: { b: 'new' } }) });
+    await own;
+    answers[0]({ ok: true, json: () => Promise.resolve({ serverData: { a: 'whole', b: 'old' } }) });
+    await whole;
+
+    expect(store.get('rsc.data')).toEqual({ a: 'whole', b: 'new' });
+  });
+
+  it('asks once for a question already in flight', async () => {
+    const store = liveStore();
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: { b: 3 } }) });
+
+    await Promise.all([refreshRsc(store, ['b']), refreshRsc(store, ['b'])]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  /** A STOP: the request is dropped — the server hears the abort — and what was on screen stays, not stale. */
+  it('cancels an element’s refresh and leaves its data as it was', async () => {
+    const store = liveStore();
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        })
+    );
+
+    const asked = refreshRsc(store, ['b']);
+    expect(store.get('rsc.refreshing')).toEqual({ b: true });
+
+    cancelRsc(store, ['b']);
+    await asked;
+
+    expect(store.get('rsc.data')).toEqual({ a: 1, b: 2 });
+    expect(store.get('rsc.stale')).toBeFalsy();
+    expect(store.get('rsc.refreshing')).toEqual({});
   });
 
   it('does not gate out the element asking for itself on a page that does have a provider', async () => {

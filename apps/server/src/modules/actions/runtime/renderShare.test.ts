@@ -27,6 +27,50 @@ describe('createRenderShare', () => {
     expect(produce).toHaveBeenCalledTimes(1);
   });
 
+  /**
+   * A visitor who gave up — a refresh superseded, a browser closed — stops waiting at once. The run goes on for the
+   * others joined to it, and stops only when nobody is left waiting.
+   */
+  it('stops the run only when every caller waiting on it has stopped', async () => {
+    const share = createRenderShare();
+    const gate = deferred();
+    let stop: AbortSignal | undefined;
+    const produce = vi.fn((signal: AbortSignal) => {
+      stop = signal;
+
+      return gate.promise;
+    });
+    const first = new AbortController();
+    const second = new AbortController();
+
+    const gaveUp = share.run('k', 0, produce, first.signal);
+    const stayed = share.run('k', 0, produce, second.signal);
+    first.abort();
+
+    await expect(gaveUp).rejects.toThrow(/aborted/);
+    expect(stop?.aborted, 'one visitor leaving stopped the others’ answer').toBe(false);
+
+    gate.resolve({ ok: true });
+    expect(await stayed).toEqual({ ok: true });
+
+    const gate2 = deferred();
+    const alone = new AbortController();
+    const lonely = share.run(
+      'j',
+      0,
+      (signal: AbortSignal) => {
+        stop = signal;
+
+        return gate2.promise;
+      },
+      alone.signal
+    );
+    alone.abort();
+
+    await expect(lonely).rejects.toThrow(/aborted/);
+    expect(stop?.aborted, 'a run nobody waits for went on').toBe(true);
+  });
+
   it('keeps nothing once the run is over, unless a TTL says to', async () => {
     const share = createRenderShare();
     const produce = vi.fn(() => Promise.resolve({ n: produce.mock.calls.length }));

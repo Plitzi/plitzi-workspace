@@ -81,8 +81,12 @@ import {
 import { authorSpace } from '@plitzi/sdk-authoring';
 import { publicData } from '@plitzi/sdk-authoring/node';
 
+import { actions } from './actions.ts';
 import { declarations } from './plugins/declarations.ts';
+import { serverOptions } from './serverOptions.ts';
 import { space } from './space.ts';
+
+import type { ActionLookups } from '@plitzi/sdk-server/actions';
 
 ${PORT_SNIPPET}
 
@@ -128,6 +132,17 @@ if (DEVELOPING) {
 const functions = await loadFunctions(new URL('../functions/', import.meta.url));
 
 /**
+ * The space's server actions — \`src/actions.ts\` — found by their id; and the one space this server serves, which is the
+ * one it runs the actions on a clock for.
+ */
+const SPACE_ID = 1;
+const actionLookups: ActionLookups = {
+  getAction: (_spaceId, actionId) => Promise.resolve(actions.find(entry => entry.id === actionId)),
+  listActions: () => Promise.resolve(actions),
+  listScheduledSpaces: () => Promise.resolve([SPACE_ID])
+};
+
+/**
  * Where the server gets a space from, and the only line that knows.
  *
  * \`createJsonAdapters\` is the file-backed shortcut: hand it a \`{ schema, style }\` and it answers every read a
@@ -144,7 +159,7 @@ const server = createServer({
   health: { name: SERVER_NAME },
   adapters: createJsonAdapters({
     offlineData: DEVELOPING ? OFFLINE_DATA : offlineData,
-    deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames }
+    deployment: { spaceId: SPACE_ID, environment: 'main', revision: 0, pluginNames }
   }),
   plugins,
   // \`public/\` served as it is: the data an apiContainer reads (\`/data/home.json\`), images, a favicon.
@@ -152,7 +167,10 @@ const server = createServer({
   functions: { native: functions },
   // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
   logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
-  logger: consoleLogger
+  logger: consoleLogger,
+  // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own.
+  ...serverOptions,
+  action: { ...serverOptions.action, lookups: actionLookups }
 });
 
 ${LISTEN_SNIPPET}
@@ -167,10 +185,11 @@ closeOnSignals(server);
 /**
  * A save to the space, while developing: re-authored by \`src/author.ts\` in a process of its own — the only way to
  * read every file of it again, which an import never does twice — and every open page loads again once it wrote the
- * new documents. What it refuses is printed and the page keeps the last space that authored. A change to this file or
- * to a plugin restarts the server instead (\`start:dev\` watches those).
+ * new documents. What it refuses is printed and the page keeps the last space that authored. A change to the server's
+ * own code — this file, the server options, the actions, a plugin — restarts the server instead (\`start:dev\` watches
+ * those).
  */
-const RESTARTS = ['main.ts', 'plugins'];
+const RESTARTS = ['main.ts', 'serverOptions.ts', 'actions.ts', 'plugins'];
 const watchSpace = (): void => {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let authoring = false;
@@ -227,6 +246,8 @@ import {
   loadFunctions
 } from '@plitzi/sdk-server';
 
+import { serverOptions } from './serverOptions.ts';
+
 ${PORT_SNIPPET}
 
 ${PLUGINS}
@@ -282,7 +303,9 @@ const server = createServer({
   functions: { native: functions },
   // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
   logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
-  logger: consoleLogger
+  logger: consoleLogger,
+  // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own.
+  ...serverOptions
 });
 
 ${LISTEN_SNIPPET}
@@ -295,8 +318,61 @@ ${LISTEN_SNIPPET}
 closeOnSignals(server);
 `;
 
+/**
+ * What the project's server does besides serving the space, in a file of the project's own: `src/main.ts` is the CLI's
+ * — `plitzi upgrade` keeps it current — and a server that needed its images, its actions' limits or its `kv` had to edit
+ * it, and port the edit by hand at every upgrade.
+ */
+/** What a local project's server options say about its actions — the server runs them itself. */
+const ACTION_OPTIONS_DOC = ` * - \`action: { limits: { maxRequests, timeoutMs } }\` — a server action reading many sources: 20 requests and 10 s a
+ *   run by default. \`action.kv\` — where \`kv\` keeps what it writes; this process's memory by default.
+`;
+
+const serverOptionsModule = (local: boolean): string => `import type { ServerConfig } from '@plitzi/sdk-server';
+
+/** What \`createServer\` takes, every option of it optional: \`src/main.ts\` sets the rest. */
+type ServerOptions = Partial<ServerConfig>;
+
+/**
+ * What this project's server does besides serving the space — yours. \`src/main.ts\` is the CLI's (\`plitzi upgrade\`
+ * keeps it current) and hands these to \`createServer\` over what it sets itself. The ones a project reaches for:
+ *
+ * - \`images: { domains: ['images.example.com'] }\` — pictures from those hosts resized here, with \`sharp\` installed.
+${local ? ACTION_OPTIONS_DOC : ''} * - \`rsc: { elementTimeoutMs }\` — how long a section resolved on the server is waited for: 5 s by default.
+ */
+export const serverOptions: ServerOptions = {};
+`;
+
+/** The space's server actions, in a file of the project's own that `src/main.ts` hands to the server. */
+const actionsModule = (): string => `import type { ActionEntry } from '@plitzi/sdk-authoring';
+
+/**
+ * The space's server actions — what a page asks the server to do (\`runServerAction\`), what feeds a provider before the
+ * HTML (\`apiContainer({ runtime: 'server', action })\`), what runs on a clock (a \`schedule\` trigger). One
+ * \`defineAction({ … })\` from \`@plitzi/sdk-authoring\` each, listed here: \`src/main.ts\` hands them to the server.
+ */
+export const actions: ActionEntry[] = [];
+`;
+
+/** What `functions/` is, in the folder itself — and the folder there from the start, for `start:dev` to watch. */
+const FUNCTIONS_README = `# functions/
+
+This project's own server code: the tasks a server action's steps run (\`task: 'namespace.action'\`) and the routes
+under \`/fn/\`, from \`functions/index.ts\` — \`export default defineFunctions({ tasks, routes, allow })\` from
+\`@plitzi/sdk-server/functions\`. \`src/main.ts\` builds it at boot the way Plitzi builds a space's, and \`start:dev\`
+restarts on a change here. Nothing here, no functions.
+
+\`plitzi functions pull\` writes the space's functions here, and \`push\` sends them back.
+
+A file imports its siblings with their extension — \`import { reader } from './sources.ts'\` — as \`src/\` does: the
+build reads it either way, and a script or a test then runs the same file under Node, with nothing to bundle.
+`;
+
 export const serverFiles = (answers: CreateAnswers): ProjectFiles => ({
   'src/main.ts': answers.source === 'cloud' ? cloudMain(answers.name) : localMain(),
+  'functions/README.md': FUNCTIONS_README,
+  'src/serverOptions.ts': serverOptionsModule(answers.source !== 'cloud'),
+  ...(answers.source === 'cloud' ? {} : { 'src/actions.ts': actionsModule() }),
   // Where data with no backend goes — `public/data/*.json`, read by an apiContainer — served by `publicDir`.
   'public/data/.gitkeep': ''
 });

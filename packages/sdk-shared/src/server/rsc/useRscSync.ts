@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId } from 'react';
 
 import { useStoreById } from '@plitzi/nexus/react';
 
-import refreshRsc, { currentRscLocation } from './refreshRsc';
+import refreshRsc, { currentRscLocation, releaseRscRequests } from './refreshRsc';
 import { useCommonStore, useCommonStoreSync } from '../../store';
 
 import type { CommonState, ServerSSR } from '../../types';
@@ -17,14 +17,22 @@ import type { CommonState, ServerSSR } from '../../types';
  */
 const useRscSync = (ssr?: ServerSSR) => {
   const store = useStoreById<CommonState>();
+  const instance = useId();
   const [schemaRsc] = useCommonStore('schema.rsc', { mode: 'mount' });
   // The server resolves the payload from the visitor's location, so the location is what a refresh keys off — not the
   // page id: `/posts/1` → `/posts/2` is the same page with a different record, and a `?page=` change is a new window.
-  const [navigation] = useCommonStore('runtime.sources.navigation');
+  // Where the visitor is and nothing else: a navigation still on its way is not a new location.
+  const [navigation] = useCommonStore([
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.currentPageId',
+    'navigation.href'
+  ]);
+  const locationKey = JSON.stringify(navigation);
   const { rscData, rscPath: endpoint } = ssr ?? {};
   const enabled = (schemaRsc?.enabled ?? false) && !!endpoint;
 
-  useCommonStoreSync(['rsc.enabled', 'rsc.endpoint'], [enabled, endpoint]);
+  useCommonStoreSync(['rsc.enabled', 'rsc.endpoint', 'rsc.instance'], [enabled, endpoint, instance]);
   // Mount-only: what the server handed over is the starting payload, and every later write belongs to `refreshRsc`.
   // Re-syncing it would replay the initial payload over refreshed data.
   useCommonStoreSync(
@@ -33,25 +41,27 @@ const useRscSync = (ssr?: ServerSSR) => {
     { mode: 'mount' }
   );
 
-  const navigationKey = JSON.stringify(navigation ?? {});
-  /**
-   * The location whose payload is in the store.
-   *
-   * It starts as the one the server rendered, so that first view costs no request — and it MOVES with every
-   * refresh, because a refresh replaces the payload wholesale. Pinned to the mount-time location instead, coming
-   * back to where you started was treated as "already loaded" while the store held some other page's data: the
-   * providers on it published nothing, and the page came back empty with no request made.
-   */
-  const loadedKey = useRef(rscData === undefined ? undefined : navigationKey);
+  useEffect(() => () => releaseRscRequests(instance), [instance]);
 
   useEffect(() => {
-    if (!enabled || navigationKey === loadedKey.current) {
+    if (!enabled) {
       return;
     }
 
-    loadedKey.current = navigationKey;
+    /**
+     * Already answered for where the visitor is: the payload the server rendered the page with, or the one a
+     * navigation asked for before it went. Asked again here, every click on a link cost the server two renders — the
+     * prefetch, then this. The payload MOVES with every refresh, so coming back to where the session started is a
+     * location the store no longer holds, and is asked for.
+     */
+    const answered =
+      store.get('rsc.loaded') && store.get('rsc.location') === currentRscLocation() && !store.get('rsc.stale');
+    if (answered) {
+      return;
+    }
+
     void refreshRsc(store);
-  }, [enabled, navigationKey, store]);
+  }, [enabled, locationKey, store]);
 };
 
 export default useRscSync;

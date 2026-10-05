@@ -322,7 +322,15 @@ export const createActionRunner = (
      */
     const contextFor = (signal: AbortSignal, runFetch: typeof fetch) =>
       taskContextFor(config, { kv, email: emailSender, redactor, signing }, request, signal, runFetch);
-    const buildContext = contextFor(controller.signal, createRunFetch(baseFetch, controller.signal, limits, lineage));
+    /** The request budget ran out: said on the server's log at once, and in the step that hit it. */
+    let budgetSpent: string | undefined;
+    const buildContext = contextFor(
+      controller.signal,
+      createRunFetch(baseFetch, controller.signal, limits, lineage, message => {
+        budgetSpent = message;
+        serverLog.warn('Actions', `"${entry.id}" (run ${runId}): ${message}`);
+      })
+    );
 
     const trace: InteractionNode[] = [];
     const steps: ActionRunStep[] = [];
@@ -395,11 +403,20 @@ export const createActionRunner = (
           logs.push(redact(line.length > MAX_LOG_LINE ? `${line.slice(0, MAX_LOG_LINE)}…` : line));
         }
       };
+      /** The step that spent the budget says so, whether or not it caught the refusal. */
+      const noteBudget = () => {
+        if (budgetSpent) {
+          log(budgetSpent);
+          budgetSpent = undefined;
+        }
+      };
       try {
         const outcome = await runNode(node, scope, registry, stepScope => ({ ...build(stepScope), log }));
         if (late()) {
           return outcome;
         }
+
+        noteBudget();
 
         const endTime = Date.now();
         trace.push({
@@ -420,6 +437,7 @@ export const createActionRunner = (
           throw error;
         }
 
+        noteBudget();
         const endTime = Date.now();
         const message = redact(error instanceof Error ? error.message : String(error));
         trace.push({ node, status: 'failed', result: { error: message }, postCallbacks: [], startTime, endTime });

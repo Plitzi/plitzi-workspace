@@ -28,8 +28,8 @@ An element renders again when something it READS changes, and only then:
   moment-to-moment state inside a plugin and hand the space the outcome (`onCommit`, `onSelectionChange`), not every
   step of it.
 - **`whileRunning`** decides what a trigger fired again does while its flow runs: `skip` (the default) drops it,
-  `queue` runs it after, `parallel` alongside. A burst of events queued behind a slow request is a burst of renders
-  later.
+  `queue` runs it after, `parallel` alongside, `latest` stops the one running. A burst of events queued behind a slow
+  request is a burst of renders later — for a search, `latest`.
 
 ## What mounts
 

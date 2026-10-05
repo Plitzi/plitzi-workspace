@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { apiContainer, authorSpace, heading, list, scope, source, text, twig } from '../index';
+import { actionSource, apiContainer, authorSpace, heading, list, scope, source, text, twig } from '../index';
 
 import type { ElementSpec, SpaceSpec } from '../schema';
 
@@ -80,5 +80,78 @@ describe('source', () => {
 
     expect(scoped.id).toBe('promo-site');
     expect(String(scoped.data.total)).toBe('apiContainer_promo-site.data.total');
+  });
+});
+
+/**
+ * A provider fed by a server action publishes the output at its root — the shape `source` cannot say, since it puts
+ * every answer under `data`. Typed by a sample of the output, `.data` is a type error, as any field the output lacks.
+ */
+describe('actionSource', () => {
+  const feed = actionSource('feed', { stories: [{ id: 'a', title: 'Hello' }], updatedAt: '' });
+
+  it('reads the output at the provider’s root, beside its state', () => {
+    expect(String(feed.stories[0].title)).toBe('apiContainer_feed.stories.0.title');
+    expect(String(feed.isLoading)).toBe('apiContainer_feed.isLoading');
+  });
+
+  it('refuses the query provider’s `data`, which the output does not have', () => {
+    // @ts-expect-error -- an action's provider has no `data` unless its output does.
+    expect(() => String(feed.data)).toThrow(/\[source-field-unknown\]/);
+  });
+
+  it('authors a page reading it with no warning', () => {
+    const { warnings } = authorSpace(
+      page([
+        apiContainer({
+          id: feed.id,
+          subType: 'section',
+          runtime: 'server',
+          action: 'world-report',
+          children: [text({ content: twig`{{ ${feed.stories}|length }} stories` })]
+        })
+      ])
+    );
+
+    expect(warnings).toEqual([]);
+  });
+});
+
+describe('a read of `.data` on an action’s provider', () => {
+  const author = (content: string, bind?: Record<string, string>) =>
+    authorSpace(
+      page([
+        apiContainer({
+          id: 'feed',
+          subType: 'section',
+          runtime: 'server',
+          action: 'world-report',
+          children: [text({ content, ...(bind ? { bind } : {}) })]
+        })
+      ])
+    ).warnings.filter(warning => warning.code === 'action-output-path');
+
+  it('is warned with the path that reads the output, in a template and in a binding', () => {
+    const [inTemplate] = author('{{ apiContainer_feed.data.stories|length }}');
+    expect(inTemplate.message).toContain('`apiContainer_feed.stories`');
+
+    const [inBinding] = author('', { content: 'feed.data.title' });
+    expect(inBinding.message).toContain('`apiContainer_feed.title`');
+  });
+
+  it('is not warned for the output read at its root, nor for a query provider’s `data`', () => {
+    expect(author('{{ apiContainer_feed.stories|length }}')).toEqual([]);
+
+    const { warnings } = authorSpace(
+      page([
+        apiContainer({
+          id: 'site',
+          query: '/data/site.json',
+          subType: 'section',
+          children: [text({ content: '{{ apiContainer_site.data.title }}' })]
+        })
+      ])
+    );
+    expect(warnings.filter(warning => warning.code === 'action-output-path')).toEqual([]);
   });
 });

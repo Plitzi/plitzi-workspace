@@ -261,7 +261,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
        */
       const controller = new AbortController();
       let serverRunId = '';
-      registerActionCanceller(record, () => {
+      const cancel = () => {
         controller.abort();
         updateActionRun(record, { status: 'aborted', endedAt: Date.now(), cancellable: false });
         if (serverRunId) {
@@ -271,7 +271,12 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             () => undefined
           );
         }
-      });
+      };
+      registerActionCanceller(record, cancel);
+      // The flow that asked was superseded by a newer run of itself (`whileRunning: 'latest'`): this run is stopped
+      // the way the dev-tools stop one — the request, and the run on the server.
+      const flowSignal = context?.signal;
+      flowSignal?.addEventListener('abort', cancel, { once: true });
       /**
        * Settles the record and gives up the handle: a run that has ended is not one anybody can stop.
        *
@@ -281,6 +286,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
        * the step asked: every request, the containers it names, or none for an action that only reads.
        */
       const settle = (patch: Parameters<typeof updateActionRun>[1]) => {
+        flowSignal?.removeEventListener('abort', cancel);
         releaseActionCanceller(record);
         updateActionRun(record, { endedAt: Date.now(), cancellable: false, ...patch });
         if (patch.status === 'completed') {

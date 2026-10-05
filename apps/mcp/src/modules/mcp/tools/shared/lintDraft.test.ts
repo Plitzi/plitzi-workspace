@@ -51,21 +51,21 @@ describe('lintDraft', () => {
   it('blocks what the batch got wrong in an element it touched', () => {
     const before = space();
     const draft = drafted(before, next => {
-      next.schema.flat.label.attributes.title = 'Not read';
+      next.schema.flat.label.attributes.caption = 'Not read';
     });
 
     const result = lintDraft(draft, [patch('label')], before);
 
     expect(result.valid).toBe(false);
     expect(result.errors.map(error => error.path)).toEqual(['element "label"']);
-    expect(result.errors[0].message).toContain('"title"');
+    expect(result.errors[0].message).toContain('"caption"');
   });
 
   // An agent over MCP has no skill page to look a code up in: the row of the table comes with the problem.
   it('says each problem with its code, and what to write instead', () => {
     const before = space();
     const draft = drafted(before, next => {
-      next.schema.flat.label.attributes.title = 'Not read';
+      next.schema.flat.label.attributes.caption = 'Not read';
     });
 
     const [error] = lintDraft(draft, [patch('label')], before).errors;
@@ -77,7 +77,7 @@ describe('lintDraft', () => {
   // The agent never takes it for its own change, and cannot save over it without fixing it.
   it('blocks what was already wrong in an element it touched, and says it was already there', () => {
     const broken = drafted(space(), next => {
-      next.schema.flat.label.attributes.title = 'Not read';
+      next.schema.flat.label.attributes.caption = 'Not read';
     });
     const draft = drafted(broken, next => {
       next.schema.flat.label.attributes.content = 'Changed';
@@ -91,7 +91,7 @@ describe('lintDraft', () => {
 
   it('does not hold an element it never touched against it', () => {
     const broken = drafted(space(), next => {
-      next.schema.flat.label.attributes.title = 'Not read';
+      next.schema.flat.label.attributes.caption = 'Not read';
     });
     const draft = drafted(broken, next => {
       next.schema.flat.c1.attributes.subType = 'article';
@@ -160,19 +160,19 @@ describe('lintDraft', () => {
 describe('fixTouched', () => {
   it('fixes an old issue on an element the batch touches, and says so', () => {
     const before = space();
-    before.schema.flat.label.attributes.title = 'Never read';
+    before.schema.flat.label.attributes.caption = 'Never read';
 
     const { space: fixed, fixed: said } = fixTouched(before, [patch('label')]);
 
     expect(fixed.schema.flat.label.attributes).toEqual({ content: 'Hello' });
     expect(said).toHaveLength(1);
-    expect(said[0]).toMatch(/^Fixed a pre-existing problem in element "label" while changing it: .*"title"/);
-    expect(before.schema.flat.label.attributes.title).toBe('Never read');
+    expect(said[0]).toMatch(/^Fixed a pre-existing problem in element "label" while changing it: .*"caption"/);
+    expect(before.schema.flat.label.attributes.caption).toBe('Never read');
   });
 
   it('leaves an element the batch does not touch as it found it', () => {
     const before = space();
-    before.schema.flat.label.attributes.title = 'Never read';
+    before.schema.flat.label.attributes.caption = 'Never read';
 
     const result = fixTouched(before, [patch('c1')]);
 

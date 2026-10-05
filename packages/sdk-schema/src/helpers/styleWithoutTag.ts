@@ -17,14 +17,18 @@ const classHasRules = (style: Pick<Style, 'platform'>, name: string): boolean =>
     breakpoint => Object.hasOwn(breakpoint, name) && Object.values(breakpoint[name].attributes).some(blockHasRules)
   );
 
+/** The providers whose `subType` may be empty — the builder's "Container Tag: None". */
+const TAGLESS_PROVIDERS = new Set(['apiContainer', 'channel']);
+
 /**
- * Whether an element renders no element of its own — an `apiContainer` with no `subType`, the builder's "Container
- * Tag: None". Its children sit straight in its parent, so it has no box: nothing to style, and nothing a test can see.
+ * Whether an element renders no element of its own — an `apiContainer` or a `channel` with no `subType`, the builder's
+ * "Container Tag: None". Its children sit straight in its parent, so it has no box: nothing to style, and nothing a test
+ * can see.
  */
 export const rendersNoTag = (element: Pick<Element, 'attributes' | 'definition'>): boolean => {
   const subType: unknown = element.attributes.subType;
 
-  return element.definition.type === 'apiContainer' && (typeof subType !== 'string' || subType === '');
+  return TAGLESS_PROVIDERS.has(element.definition.type) && (typeof subType !== 'string' || subType === '');
 };
 
 /**

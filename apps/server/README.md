@@ -163,6 +163,9 @@ runtime, and its files into `public/` — a draft, or any published snapshot (`-
 
 ## Configuration
 
+`createServer` takes a `ServerConfig` (exported, as a type, from `@plitzi/sdk-server`) — what a project types its own
+options with: a `plitzi create` project keeps them in `src/serverOptions.ts` as `Partial<ServerConfig>`.
+
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `httpVersion` | `1 \| 2 \| 3` | `2` with `tls`, else `1` | HTTP protocol version. Falls back to the nearest available lower version. |
@@ -782,6 +785,10 @@ type SSRRscData = {
 
 Return `{}` (empty object) when there is no server data for the current request. Each key must match the `id` of a schema element with `runtime: 'server'`.
 
+**One request per question, the newest winning.** The client (`refreshRsc`) joins a refresh already in flight for the same URL, and aborts one a newer refresh would overwrite — a whole payload asked again, an element asked again — so answers never land out of order. `cancelRsc(store, ids)` (an `apiContainer`'s `cancelQuery`) aborts on purpose. The server hears it: `SSRRscContext.signal` aborts when the browser hangs up, and the default `getRscData` stops every element still resolving — an action's render run included, unless another visitor's identical render is still waiting on the same run. A custom adapter does the same with the signal it is handed.
+
+What a refresh asks for besides the location (`/_rsc?location=…&country=fr`) is `req.ctx.rscParams`; the action resolver hands it to the action over the `input` the element was saved with.
+
 ### `/_rsc` endpoint
 
 The server automatically registers `GET /_rsc` when `adapters.getRscData` is provided. The endpoint:
@@ -789,7 +796,7 @@ The server automatically registers `GET /_rsc` when `adapters.getRscData` is pro
 1. Reads `spaceId`, `environment`, and `revision` from the resolved `spaceDeployment` context.
 2. Reads the authenticated user from `ctx.user`.
 3. Reads optional `?ids=elem1,elem2` for partial refresh.
-4. Calls `adapters.getRscData({ req, spaceId, environment, revision, user, ids, loadOfflineData })`.
+4. Calls `adapters.getRscData({ req, spaceId, environment, revision, user, ids, loadOfflineData, signal })`.
 5. Returns a JSON payload:
 
 ```json

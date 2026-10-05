@@ -56,6 +56,8 @@ class InteractionsManager {
    * event: two flows on one click are two things, and one still running says nothing about the other.
    */
   private flowsRunning = new Map<string, Promise<void>>();
+  /** The run a `latest` flow is on now, by the same key: what the next firing stops. */
+  private latestRuns = new Map<string, AbortController>();
   lastUpdate: number;
   private listeners = new Set<InteractionUpdateListener>();
 
@@ -109,14 +111,15 @@ class InteractionsManager {
 
       await Promise.all(
         triggersToRun.map(trigger =>
-          this.runFlow(`${subscriptorId}.${trigger.id}`, trigger.whileRunning ?? 'skip', () =>
+          this.runFlow(`${subscriptorId}.${trigger.id}`, trigger.whileRunning ?? 'skip', signal =>
             flowTrigger(
               trigger,
               interactions,
               this.getCallbacksAvailables(),
               { [trigger.id]: params },
               readGlobals,
-              subscriptorId
+              subscriptorId,
+              signal
             )
           )
         )
@@ -124,7 +127,23 @@ class InteractionsManager {
     };
 
   /** One firing of one flow, as its trigger's `whileRunning` says — see {@link WhileRunning}. */
-  private runFlow(key: string, whileRunning: WhileRunning, run: () => Promise<void>): Promise<void> {
+  private runFlow(
+    key: string,
+    whileRunning: WhileRunning,
+    run: (signal?: AbortSignal) => Promise<void>
+  ): Promise<void> {
+    if (whileRunning === 'latest') {
+      this.latestRuns.get(key)?.abort();
+      const controller = new AbortController();
+      this.latestRuns.set(key, controller);
+
+      return run(controller.signal).finally(() => {
+        if (this.latestRuns.get(key) === controller) {
+          this.latestRuns.delete(key);
+        }
+      });
+    }
+
     const running = this.flowsRunning.get(key);
     if (whileRunning === 'parallel') {
       return run();
@@ -135,7 +154,14 @@ class InteractionsManager {
     }
 
     // Queued behind the run in progress, if any; a run that failed does not stop the ones waiting for it.
-    const next = (running ? running.then(run, run) : run()).finally(() => {
+    const next = (
+      running
+        ? running.then(
+            () => run(),
+            () => run()
+          )
+        : run()
+    ).finally(() => {
       if (this.flowsRunning.get(key) === next) {
         this.flowsRunning.delete(key);
       }

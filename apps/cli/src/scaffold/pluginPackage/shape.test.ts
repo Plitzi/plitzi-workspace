@@ -7,7 +7,7 @@ import { elementFiles } from './source';
 
 const ticker = () => {
   const { shape } = shapeFromFlags({
-    prop: ['interval:number=5000', 'paused:boolean', 'label:string=Tick'],
+    prop: ['interval:number=5000', 'paused:boolean', 'label:string=Tick', 'rows:list', 'meta:json'],
     trigger: ['onTick:count'],
     callback: ['reset'],
     headless: true
@@ -57,6 +57,7 @@ describe('shapeFromFlags', () => {
     expect(shapeFromFlags({ trigger: ['onClick'] }).problem).toMatch(/already fires/);
     expect(shapeFromFlags({ callback: ['setState'] }).problem).toMatch(/already answers/);
     expect(shapeFromFlags({ prop: ['reset:string'], callback: ['reset'] }).problem).toMatch(/named twice/);
+    expect(shapeFromFlags({ prop: ['rows:list=[1]'] }).problem).toMatch(/data a binding fills/);
   });
 });
 
@@ -64,7 +65,9 @@ describe('a shaped element', () => {
   it('declares its attributes, events and actions — what a space is checked against', () => {
     const declaration = ticker()['declaration.ts'];
 
-    expect(declaration).toContain("attributes: { interval: 5000, paused: false, label: 'Tick' }");
+    expect(declaration).toContain("attributes: { interval: 5000, paused: false, label: 'Tick', rows: [], meta: {} }");
+    // Headless: a page check does not look for it on screen.
+    expect(declaration).toContain('drawsNothing: true,');
     expect(declaration).toContain("preview: { count: '' }");
     expect(declaration).toContain("reset: { action: 'reset', title: 'Reset', type: 'callback', params: {} }");
     expect(declaration).toContain("{ path: 'interval', label: 'Interval' }");
@@ -76,6 +79,18 @@ describe('a shaped element', () => {
     expect(component).toContain('export const useTickerEvents = () =>');
     expect(component).toContain('onTick: { count: unknown };');
     expect(component).toContain('...declaration.callbacks.reset');
+    // Never on the canvas: the element is being edited there, not used.
+    expect(component).toContain('if (!previewMode) {');
+  });
+
+  /** Data — rows, a record — is what a binding fills: typed as such, empty until then, and with no control of its own. */
+  it('takes data a binding fills as a list or a record', () => {
+    const { 'Ticker.tsx': component, 'Settings.tsx': settings } = ticker();
+
+    expect(component).toContain('rows?: unknown[];');
+    expect(component).toContain('meta?: Record<string, unknown>;');
+    expect(settings).toContain('Rows: data — bind it to a source.');
+    expect(settings).not.toContain('rows = []');
   });
 
   it('headless, hides itself on a page and shows a badge in the builder', () => {

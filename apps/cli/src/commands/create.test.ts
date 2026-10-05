@@ -322,7 +322,7 @@ describe('the scaffold', () => {
     const spec = scaffold(answers())['visual/home.spec.ts'];
 
     expect(spec).toContain('Object.values(handles.pages)');
-    expect(spec).toContain('page.goto(pageHandle.path');
+    expect(spec).toContain('openPage(page, pageHandle.path');
     // What a bare visit cannot show is not held against the page: a session, a route param, a condition.
     expect(spec).toContain("pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0");
     // The condition, the list row and the boxless provider are set aside by `inspectPage`, from what authoring knows.
@@ -510,6 +510,8 @@ describe('plitzi create', () => {
         'CLAUDE.md',
         'README.md',
         'eslint.config.mjs',
+        // The project's own server code, there from the start so `start:dev` can watch it.
+        'functions',
         'package.json',
         'playwright.config.ts',
         'public',
@@ -519,9 +521,11 @@ describe('plitzi create', () => {
         'visual'
       ]);
       expect((await fs.readdir(path.join(target, 'src'))).sort()).toEqual([
+        'actions.ts',
         'author.ts',
         'main.ts',
         'plugins',
+        'serverOptions.ts',
         'space.ts'
       ]);
     });

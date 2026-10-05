@@ -100,12 +100,13 @@ const scripts = ({ mode, source }: CreateAnswers): Record<string, string> => ({
          * The server compiles the project's plugins into `tmp/.sdk-plugins/` and then IMPORTS what it built, so a
          * bare `--watch` sees its own output land, restarts, compiles again, and never stops. A local space is not
          * among them: `main.ts` re-authors it on save in a process of its own and the open pages load again
-         * (`reloadPages`), so only the server's own code and the plugins restart it.
+         * (`reloadPages`), so only the server's own code restarts it — its entry, options and actions, the plugins and
+         * `functions/`.
          */
         'start:dev':
           source === 'local'
-            ? 'node --watch-path=./src/main.ts --watch-path=./src/plugins src/main.ts'
-            : 'node --watch-path=./src src/main.ts',
+            ? 'node --watch-path=./src/main.ts --watch-path=./src/serverOptions.ts --watch-path=./src/actions.ts --watch-path=./src/plugins --watch-path=./functions src/main.ts'
+            : 'node --watch-path=./src --watch-path=./functions src/main.ts',
         /**
          * What production runs: the same entry compiled to JavaScript. Node strips types by loading a TypeScript
          * transformer into the process — ~10 MB a server keeps for its whole life to read one file — so a deployment
@@ -310,9 +311,9 @@ export const agentsFile = (answers: CreateAnswers): string => {
     answers.mode === 'server'
       ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code(DEV_SERVER_FILE)}, where ${code('check')}, ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one.`
       : `${run('start')} runs Vite on 5173.`;
-  const pictures =
+  const serverNotes =
     answers.mode === 'server'
-      ? `- **Pictures from other sites** are resized by this server once ${code('src/main.ts')} names their hosts — ${code('images: { domains }')} in ${code('createServer')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
+      ? `- **The server is yours in ${code('src/serverOptions.ts')}**, not in ${code('src/main.ts')} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there${local ? `, and the space's server actions are ${code('src/actions.ts')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
       : '';
   const serverData =
     answers.mode === 'server'
@@ -339,7 +340,7 @@ ${commands.join('\n')}
 - **Port.** ${port}
 - **Data with no backend** goes in ${code('public/data/*.json')}, served as it is and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}${serverData}.
 - **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.
-${pictures}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
+${serverNotes}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
 - **What the page holds, in text:** ${code(`${runCommand(answers.packageManager, 'check')} -- /products --state --element <id>`)} adds its state, every source by name and one element (what it reads, its own state, whether it is on screen); every check already lists the flows that failed. Read it instead of guessing from classes in the DOM.
 
 ## Do not read

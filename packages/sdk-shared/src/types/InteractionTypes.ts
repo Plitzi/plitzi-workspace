@@ -79,7 +79,11 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
     }
 );
 
-export type InteractionCallbackPreview = string | Record<string, unknown>;
+/**
+ * What a field a step or a trigger hands its flow looks like — a sample, shown where a flow is written, never sent: `0`
+ * for a count, `false` for a flag, `[]` for a list, as well as the text `''`.
+ */
+export type InteractionCallbackPreview = string | number | boolean | null | unknown[] | Record<string, unknown>;
 
 export type InteractionCallbackPreviews = Record<string, InteractionCallbackPreview>;
 
@@ -93,6 +97,11 @@ export type InteractionCallbackPreviews = Record<string, InteractionCallbackPrev
 export type InteractionCallbackContext = {
   /** Id of the element this flow fired on. Absent for a flow with no host element. */
   hostElementId?: string;
+  /**
+   * Aborted when the flow running this step is superseded — its trigger fired again under `whileRunning: 'latest'`. A
+   * step waiting on something it can stop (a request, a server run) stops it; the flow starts no further step.
+   */
+  signal?: AbortSignal;
 };
 
 export type InteractionCallback<T extends Record<string, unknown> = Record<string, unknown>> = {
