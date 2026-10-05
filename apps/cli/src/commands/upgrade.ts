@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { lockfileManager, projectHere, readPackageJson } from './existingProject';
+import { blockingLegacy } from './legacyLayout';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
 import { readOrigin } from './spaceOrigin';
 import { fail, install, writeFiles } from './terminal';
@@ -515,6 +516,18 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   if (!plitzi && (wanted.has('files') || wanted.has('packages'))) {
     fail(
       'Its files and package.json are those of a project `plitzi create` wrote, and this is not one: `plitzi upgrade skills renames` brings up the rest.'
+    );
+
+    return;
+  }
+
+  // A layout an older CLI left reads as another project — a space still in `src/space.ts` as one on Plitzi — and what
+  // would be written for that one is not this project's: it is moved first.
+  const older = plitzi && (wanted.has('files') || wanted.has('packages')) ? await blockingLegacy(root) : [];
+  if (older.length > 0) {
+    fail(
+      `This project is laid out as an older CLI laid it out (${older.map(place => place.found).join(', ')}), and its files would be written for another project.\n` +
+        'Move it first — npx @plitzi/cli@latest doctor --fix moves it, every import following — then upgrade.'
     );
 
     return;

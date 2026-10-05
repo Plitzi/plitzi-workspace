@@ -6,10 +6,11 @@ import { parseEnv } from 'node:util';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { projectModule } from './projectModules';
+import { editTsConfig, freshSecret, ignoreLines, unignore } from './repairs';
 import { sayer } from './types';
 import { CLI_DIR, MAIN_FILE, PROJECT_STATE, PROJECT_TMP } from '../scaffold/paths';
 
-import type { Check, DoctorContext, Finding } from './types';
+import type { Check, DoctorContext, Finding, Repair } from './types';
 
 /**
  * What the tools read beside the code: the TypeScript configs (what Node can run is what they let through), what git
@@ -90,6 +91,13 @@ const readTsConfig = async (root: string, file: string): Promise<TsConfig | { pr
   };
 };
 
+/** A repair that may be none, spread into a finding's details. */
+const repairOf = async (made: Promise<Repair | undefined>): Promise<{ repair?: Repair }> => {
+  const repair = await made;
+
+  return repair ? { repair } : {};
+};
+
 /**
  * What Node needs of the source, that only the typecheck can hold it to: a relative import names its `.ts` file, a
  * type is imported as one, and nothing is written that stripping the types would leave broken (an `enum`).
@@ -119,13 +127,19 @@ const tsconfigChecks = async ({ root, answers }: DoctorContext): Promise<Finding
   }
 
   const findings: Finding[] = [];
+  const included = (folder: string) =>
+    editTsConfig(root, 'tsconfig.json', `adds "${folder}" to tsconfig.json's "include"`, json => {
+      const include: unknown = json.include;
+      json.include = [...(Array.isArray(include) ? include.filter(entry => typeof entry === 'string') : []), folder];
+    });
   const covers = (folder: string) =>
     config.include.length === 0 || config.include.some(entry => entry === folder || entry.startsWith(`${folder}/`));
   if (!covers('src')) {
     findings.push(
       say.error('tsconfig-src-left-out', 'tsconfig.json leaves src/ out: the typecheck reads none of the project.', {
         file: 'tsconfig.json',
-        fix: 'Add "src" to "include".'
+        fix: 'Add "src" to "include".',
+        ...(await repairOf(included('src')))
       })
     );
   }
@@ -134,7 +148,8 @@ const tsconfigChecks = async ({ root, answers }: DoctorContext): Promise<Finding
     findings.push(
       say.warning('tsconfig-cli-left-out', `tsconfig.json leaves ${CLI_DIR}/ out: the typecheck reads none of it.`, {
         file: 'tsconfig.json',
-        fix: `Add "${CLI_DIR}" to "include".`
+        fix: `Add "${CLI_DIR}" to "include".`,
+        ...(await repairOf(included(CLI_DIR)))
       })
     );
   }
@@ -220,15 +235,6 @@ const gitignoreChecks = async ({ root, answers }: DoctorContext): Promise<Findin
     .map(line => line.trim())
     .filter(line => line && !line.startsWith('#') && !line.startsWith('!'));
   const findings: Finding[] = [];
-  if (!keepsOut(lines, '.env')) {
-    findings.push(
-      say.error('env-not-ignored', '.gitignore does not keep .env out: its secrets would be committed.', {
-        file: '.gitignore',
-        fix: 'Add .env to .gitignore.'
-      })
-    );
-  }
-
   const wanted = [
     { name: 'node_modules', why: 'what is installed' },
     { name: PROJECT_TMP, why: 'what the project writes for itself' },
@@ -239,11 +245,26 @@ const gitignoreChecks = async ({ root, answers }: DoctorContext): Promise<Findin
         ]
       : [])
   ];
-  for (const { name, why } of wanted.filter(({ name }) => !keepsOut(lines, name))) {
+  const missing = wanted.filter(({ name }) => !keepsOut(lines, name));
+  const env = !keepsOut(lines, '.env');
+  // One edit for every line missing: said by each finding, made once.
+  const ignored = ignoreLines(root, [...(env ? ['.env'] : []), ...missing.map(({ name }) => name)]);
+  if (env) {
+    findings.push(
+      say.error('env-not-ignored', '.gitignore does not keep .env out: its secrets would be committed.', {
+        file: '.gitignore',
+        fix: 'Add .env to .gitignore.',
+        repair: ignored
+      })
+    );
+  }
+
+  for (const { name, why } of missing) {
     findings.push(
       say.warning('not-ignored', `.gitignore does not keep ${name}/ out: ${why} would be committed.`, {
         file: '.gitignore',
-        fix: `Add ${name} to .gitignore.`
+        fix: `Add ${name} to .gitignore.`,
+        repair: ignored
       })
     );
   }
@@ -253,7 +274,7 @@ const gitignoreChecks = async ({ root, answers }: DoctorContext): Promise<Findin
       say.error(
         'records-ignored',
         '.gitignore keeps .plitzi/ out: a clone could not pull, push or upgrade without what it records.',
-        { file: '.gitignore', fix: 'Remove .plitzi from .gitignore, and commit it.' }
+        { file: '.gitignore', fix: 'Remove .plitzi from .gitignore, and commit it.', repair: unignore(root, '.plitzi') }
       )
     );
   }
@@ -353,12 +374,15 @@ const envChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> =
 
   const secret = settings.value('PLITZI_SIGNING_SECRET');
   const minimum = await minimumSecret(root);
+  // Only `.env`'s: one the process's own environment sets wins over the file, and is the deployment's to change.
+  const secretRepair =
+    process.env.PLITZI_SIGNING_SECRET === undefined ? { repair: freshSecret(root, 'PLITZI_SIGNING_SECRET') } : {};
   if (!secret) {
     findings.push(
       say.warning(
         'signing-secret-missing',
         `PLITZI_SIGNING_SECRET is not set in ${where}: the space's actions sign nothing (ctx.sign, ctx.verify).`,
-        { file: '.env', fix: 'Set PLITZI_SIGNING_SECRET=$(openssl rand -hex 32) in .env.' }
+        { file: '.env', fix: 'Set PLITZI_SIGNING_SECRET=$(openssl rand -hex 32) in .env.', ...secretRepair }
       )
     );
   } else if (minimum !== undefined && secret.length < minimum) {
@@ -366,7 +390,7 @@ const envChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> =
       say.error(
         'signing-secret-short',
         `PLITZI_SIGNING_SECRET is ${String(secret.length)} characters, and the server wants ${String(minimum)} or more: it does not start.`,
-        { file: '.env', fix: 'Set PLITZI_SIGNING_SECRET=$(openssl rand -hex 32) in .env.' }
+        { file: '.env', fix: 'Set PLITZI_SIGNING_SECRET=$(openssl rand -hex 32) in .env.', ...secretRepair }
       )
     );
   }

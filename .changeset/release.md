@@ -210,7 +210,12 @@
   attribute, no JSX, every package declared — walked with esbuild), each plugin folder against its declaration, the data
   files, `src/functions/` built by the project's own sdk-server, `.plitzi/` and the skills. Each finding has an area, a
   code, the file and its fix; `--json`, `--strict`; exit 1 on an error. It never checks the space — `npm run author`
-  and `check` do — and every report says so. `buildFunctions` and `FunctionsBuildError` are exported from
+  and `check` do — and every report says so. A layout an older CLI left (`src/space.ts`, `src/author.ts`,
+  `functions/` at the root…) is its own area, checked first and alone. `--fix` repairs what is simple and safe —
+  that layout moved with every import, URL and script following (and the scaffold record with it), dead files,
+  `.gitignore`, `"type": "module"`, a watched folder, a signing secret — then checks again; `--dry-run` says what.
+  Each report ends with what to run next. `upgrade` writes no file over an older layout, and says `doctor --fix`.
+  `buildFunctions` and `FunctionsBuildError` are exported from
   `@plitzi/sdk-server/functions-runner`, `MIN_SIGNING_SECRET_LENGTH` from `@plitzi/sdk-server/actions`.
 - **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `pull`, `push`, `pack plugin`,
   `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills

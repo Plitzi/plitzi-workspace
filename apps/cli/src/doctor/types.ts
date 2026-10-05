@@ -9,6 +9,7 @@ import type { CreateAnswers, PackageManager } from '../scaffold';
  * that is `npm run author`'s and `plitzi check`'s.
  */
 export const DOCTOR_AREAS = [
+  'layout',
   'packages',
   'machinery',
   'config',
@@ -40,6 +41,17 @@ export interface Finding {
   file?: string;
   /** What fixes it: a command to run, or the change to make. */
   fix?: string;
+  /**
+   * What `plitzi doctor --fix` does about it by itself, when it is simple and safe to: said, then run. One repair may
+   * answer several findings (a layout moved at once): it runs once.
+   */
+  repair?: Repair;
+}
+
+/** A change the doctor makes itself, with `--fix`: what it does, in a line, and doing it. */
+export interface Repair {
+  says: string;
+  run: () => Promise<void>;
 }
 
 /** What every check reads, gathered once. */
@@ -57,7 +69,7 @@ export interface DoctorContext {
 
 export type Check = (context: DoctorContext) => Promise<Finding[]>;
 
-type Details = Pick<Finding, 'file' | 'fix'>;
+type Details = Pick<Finding, 'file' | 'fix' | 'repair'>;
 
 /** Findings of one area, said in one line each: `const say = sayer('packages'); say.error('code', 'message')`. */
 export const sayer = (area: DoctorArea) => {

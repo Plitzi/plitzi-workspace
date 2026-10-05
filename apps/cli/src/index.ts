@@ -387,6 +387,11 @@ program
   .description(
     'Whether the project the CLI set up is whole — packages, its files, configs, what Node runs, plugins, data files, functions, records — each problem with its fix. Not the space: that is `npm run author`'
   )
+  .option(
+    '--fix',
+    'Repair what is simple and safe — a layout an older CLI left, dead files, .gitignore, a missing secret — then check again'
+  )
+  .option(...DRY_RUN_OPTION)
   .option('--strict', 'Warnings fail too (exit 1): for a CI that keeps the project up to its CLI')
   .option('--json', 'One object, for a tool or an agent')
   .action((options: DoctorOptions) => doctor(options));

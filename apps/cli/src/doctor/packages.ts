@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { editManifest, keepFolder } from './repairs';
 import { sayer } from './types';
 import { compareVersions, floorOf, satisfies, versionOf, versionText } from './versions';
 import { planPackages } from '../commands/upgrade';
@@ -102,7 +103,10 @@ const manifestChecks = (context: DoctorContext): Finding[] => {
         'package.json does not say "type": "module": Node reads every file of the project as CommonJS.',
         {
           file: 'package.json',
-          fix: 'Add "type": "module" to package.json.'
+          fix: 'Add "type": "module" to package.json.',
+          repair: editManifest(context.root, 'sets "type": "module" in package.json', manifest => {
+            manifest.type = 'module';
+          })
         }
       )
     );
@@ -116,7 +120,14 @@ const manifestChecks = (context: DoctorContext): Finding[] => {
         `package.json names no Node version: the project needs Node ${NODE_ENGINES.node}.`,
         {
           file: 'package.json',
-          fix: `Add "engines": { "node": "${NODE_ENGINES.node}" } to package.json.`
+          fix: `Add "engines": { "node": "${NODE_ENGINES.node}" } to package.json.`,
+          repair: editManifest(
+            context.root,
+            `sets "engines": { "node": "${NODE_ENGINES.node}" } in package.json`,
+            manifest => {
+              manifest.engines = { ...(isRecord(manifest.engines) ? manifest.engines : {}), ...NODE_ENGINES };
+            }
+          )
         }
       )
     );
@@ -217,7 +228,9 @@ const scriptTargetChecks = async ({ root, manifest }: DoctorContext): Promise<Fi
             `The script ${name} watches ${folder}, which is not there: Node stops before it starts.`,
             {
               file: 'package.json',
-              fix: `Create ${folder} (with a .gitkeep, so git keeps it), or take the --watch-path out.`
+              fix: `Create ${folder} (with a .gitkeep, so git keeps it), or take the --watch-path out.`,
+              // A folder, or the file a path names: only a folder is made — a missing file is the project's to write.
+              ...(path.extname(folder) === '' ? { repair: keepFolder(root, folder) } : {})
             }
           )
         );

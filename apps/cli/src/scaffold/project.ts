@@ -422,7 +422,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 
 - Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration; ${code('npx plitzi fix --write')} writes the ones with a single reading.
 - After the ${code('@plitzi/*')} packages move, ${code('npx plitzi upgrade')}: what this project's CLI files, scripts, skills and renamed names should now be — ${code('--write')} makes it, a file you changed comes as a diff.
-- After moving, renaming or rewiring files — and before a push — ${code('npx plitzi doctor')}: every problem in the project the CLI set up that would stop it from installing, starting, building or pushing, where it is and what fixes it — the space itself is ${local ? run('author') : 'the builder'}'s, a page ${run('check')}'s. It changes nothing.
+- After moving, renaming or rewiring files — and before a push — ${code('npx plitzi doctor')}: every problem in the project the CLI set up that would stop it from installing, starting, building or pushing, where it is and what fixes it — the space itself is ${local ? run('author') : 'the builder'}'s, a page ${run('check')}'s. ${code('--fix')} repairs the simple ones; then run what it says next.
 - ${zeroWarnings}
 - Chrome shared by pages is a layout; a look used twice is a class; a block placed again with other content is a component, and rows of data are one ${code('list')} (a short menu may be a ${code('map')} in code).
 - Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.

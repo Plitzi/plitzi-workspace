@@ -260,18 +260,35 @@ otherwise be a search through the SDK's types. `--json` answers in one object; o
 
 ```bash
 plitzi doctor                  # every area, each problem with where it is and what fixes it
-plitzi doctor --json           # one object: { ok, counts, areas, findings: [{ area, severity, code, message, file, fix }] }
+plitzi doctor --fix            # repairs what is simple and safe, then checks again
+plitzi doctor --fix --dry-run  # what --fix would repair, nothing done
+plitzi doctor --json           # one object: { ok, counts, areas, findings, repaired, recommendations }
 plitzi doctor --strict         # warnings fail too — for a CI that keeps the project up to its CLI
 ```
 
 Whether the project is whole as the CLI sets it up, read from what it is now rather than from what the CLI once wrote:
 a developer may change any file, and the checks are what each part must be for the project to install, start, build and
 push. It is the CLI's check of the project, not of the space: what the space authors to and warns of is `npm run
-author`'s, and how a page renders `check`'s. Nothing is changed, and nothing leaves the machine. Exit code 1 while
-anything is an error (with `--strict`, a warning).
+author`'s, and how a page renders `check`'s. Exit code 1 while anything is an error (with `--strict`, a warning).
+
+Each finding has an area, a stable `code`, the file and its `fix`; the report ends with **what to run next** — the few
+commands (`plitzi upgrade --write`, an install, `doctor --fix`) that clear most of the list, by how many each fixes.
+
+**`--fix`** makes only what is simple and safe, then examines the project again: a layout an older CLI left, moved (every
+import, `new URL(…, import.meta.url)` and script naming a moved file follows, and what the CLI recorded of its files
+follows them); an older CLI's dead files and caches deleted; `.gitignore` lines added or taken out; `"type": "module"`
+and `engines`; a folder `start:dev` watches; a `PLITZI_SIGNING_SECRET` where there is none (or one too short). What
+replaces a file of the project's, installs, or touches git is recommended, never done — `upgrade --write` and the install
+are a step of their own.
+
+**A project an older CLI made** is the usual patient, and its own installed CLI may predate `doctor`: run the latest one
+from it — `npx @plitzi/cli@latest doctor --fix`, then what it recommends. While its layout is an older one (the space in
+`src/space.ts`, `author` in `src/`, `functions/` at the root), nothing else is checked — read against it, every other
+area would only say what the move fixes — and `upgrade` writes no file until it is moved.
 
 | Area | What is held |
 |---|---|
+| `layout` | where an older CLI kept what this one reads elsewhere (`src/space.ts`, `src/site/`, `src/actions.ts`, `src/author.ts`, `functions/`) and what it left behind (`src/plugins/declarations.ts`, `.sdk-plugins/`, `.plitzi/dev-server.json`) |
 | `packages` | `"type": "module"`, the Node version; every package the project and its scripts need, declared and installed at a version its range allows; the SDK's packages at one version, no older than the CLI; one copy of the SDK and of React (none installed inside another); the scripts — gone, behind the CLI, or the project's own — the file each Node script starts and every folder `start:dev` watches; one lockfile |
 | `machinery` | the CLI's files (`MACHINERY`), as `upgrade` sees them: gone, behind, or the project's own (said, never failed); the scaffold record |
 | `config` | `tsconfig.json` reads `src/` and `plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key |

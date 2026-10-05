@@ -8,6 +8,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { checkConfig } from './config';
 import { checkData } from './data';
 import { checkFunctions } from './functions';
+import { checkLayout } from './layout';
 import { checkMachinery } from './machinery';
 import { checkPackages } from './packages';
 import { checkPlugins } from './plugins';
@@ -21,27 +22,35 @@ import { fail } from '../commands/terminal';
 import { answersFor } from '../commands/upgrade';
 import { CLI_VERSION } from '../scaffold/project';
 
-import type { Check, DoctorArea, DoctorContext, Finding, Severity } from './types';
+import type { Check, DoctorArea, DoctorContext, Finding, Repair, Severity } from './types';
 
 export type { DoctorArea, Finding, Severity } from './types';
 
 /**
  * `plitzi doctor`: whether the project is whole as the CLI sets it up — everything a developer may have changed checked
  * against what makes it install, start, build and push, rather than against what the CLI once wrote. The space itself
- * — what it authors to, and what it warns of — is `npm run author`'s and `plitzi check`'s, never the doctor's. Each
- * problem says where it is and what fixes it; nothing is changed (`plitzi upgrade --write` and the fixes named do that).
+ * — what it authors to, and what it warns of — is `npm run author`'s and `plitzi check`'s, never the doctor's.
+ *
+ * Each problem says where it is and what fixes it. Nothing is changed unless `--fix` says so, and then only what is
+ * simple and safe — a layout an older CLI left, dead files, `.gitignore`, a folder a script watches, a missing secret —
+ * examined again after; what is `upgrade`'s or the install's to do is recommended, never done. A project of an older
+ * CLI is the usual patient: `npx @plitzi/cli@latest doctor --fix`, then what it recommends.
  *
  * Exit code 1 when anything is an error — with `--strict`, a warning too — so a CI step or a pre-commit hook can run it.
  *
  *   plitzi doctor
- *   plitzi doctor --json
- *   plitzi doctor --strict
+ *   plitzi doctor --fix --dry-run
+ *   plitzi doctor --json --strict
  */
 
 export interface DoctorOptions {
   json?: boolean;
   /** Warnings fail too: for a CI that keeps the project up to its CLI. */
   strict?: boolean;
+  /** Repair what is simple and safe to, then examine again. */
+  fix?: boolean;
+  /** With `--fix`: say what it would repair, and repair nothing. */
+  dryRun?: boolean;
 }
 
 /**
@@ -49,9 +58,20 @@ export interface DoctorOptions {
  * without problems: the space is authoring's, a page the browser's.
  */
 export const NOT_CHECKED = [
-  { what: 'the space: what it authors to, refuses and warns of', by: 'npm run author' },
-  { what: 'a page as it renders: on screen, overflow, console, flows', by: 'plitzi check' }
+  { what: 'the space — what it authors to, refuses and warns of', by: 'npm run author' },
+  { what: 'a page as it renders', by: 'plitzi check' }
 ] as const;
+
+/** A finding as it is reported: its repair said, not run. */
+export type ReportedFinding = Omit<Finding, 'repair'> & { repair?: string };
+
+/** What fixes most of what is left, by the command: the next thing to run. */
+export interface Recommendation {
+  command: string;
+  fixes: number;
+}
+
+export type AreaStatus = 'ok' | 'warning' | 'error' | 'skipped';
 
 export interface DoctorReport {
   cli: string;
@@ -62,8 +82,11 @@ export interface DoctorReport {
   ok: boolean;
   strict: boolean;
   counts: Record<Severity, number>;
-  areas: { area: DoctorArea; status: 'ok' | 'warning' | 'error' }[];
-  findings: Finding[];
+  areas: { area: DoctorArea; status: AreaStatus }[];
+  findings: ReportedFinding[];
+  /** What `--fix` repaired before this report was made — or, with `--dry-run`, would have. */
+  repaired: { done: boolean; repairs: string[]; failed: { repair: string; error: string }[] };
+  recommendations: Recommendation[];
 }
 
 const SEVERITY_ORDER: Record<Severity, number> = { error: 0, warning: 1, info: 2 };
@@ -94,32 +117,77 @@ const CHECKS: readonly [DoctorArea, Check][] = [
   ['skills', checkSkills]
 ];
 
-/** Every area checked, in the order they are said. */
-export const examine = async (context: DoctorContext): Promise<Finding[]> => {
-  const findings: Finding[] = [];
-  for (const [area, check] of CHECKS) {
+/**
+ * Every area checked, in the order they are said. A layout an older CLI left, where the commands would not find the
+ * project's parts, is examined alone: read against it, every other area would only say what moving it fixes.
+ */
+export const examine = async (context: DoctorContext): Promise<{ findings: Finding[]; skipped: boolean }> => {
+  const layout = await guarded('layout', () => checkLayout(context));
+  const skipped = layout.some(finding => finding.severity === 'error');
+  const findings = [...layout];
+  for (const [area, check] of skipped ? [] : CHECKS) {
     findings.push(...(await guarded(area, () => check(context))));
   }
 
-  return findings.sort(
-    (a, b) =>
-      DOCTOR_AREAS.indexOf(a.area) - DOCTOR_AREAS.indexOf(b.area) ||
-      SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
-  );
+  return {
+    findings: findings.sort(
+      (a, b) =>
+        DOCTOR_AREAS.indexOf(a.area) - DOCTOR_AREAS.indexOf(b.area) ||
+        SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
+    ),
+    skipped
+  };
 };
 
-export const reportOf = (context: DoctorContext, findings: Finding[], strict: boolean): DoctorReport => {
+const COMMAND = /^(?:plitzi|npx|npm|yarn|pnpm|git)\s/;
+
+/** The command a fix starts with — `plitzi upgrade files --write` of "plitzi upgrade files --write (it records …)". */
+const commandOf = (fix: string | undefined): string | undefined => {
+  const first = fix?.split(/\s[—(]|;|,\s|\s+then\s/)[0].trim();
+
+  return first && COMMAND.test(first) ? first : undefined;
+};
+
+/**
+ * What to run next, by how many problems each command fixes — `upgrade`'s parts counted as one `upgrade --write`, and
+ * what `--fix` repairs as `doctor --fix`: the few commands that clear most of the list.
+ */
+const recommendationsOf = (findings: readonly Finding[], fixed: boolean): Recommendation[] => {
+  const counts = new Map<string, number>();
+  for (const finding of findings.filter(each => each.severity !== 'info')) {
+    const command = finding.repair && !fixed ? 'plitzi doctor --fix' : commandOf(finding.fix);
+    if (!command) {
+      continue;
+    }
+
+    const key = command.startsWith('plitzi upgrade') ? 'plitzi upgrade --write' : command;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return [...counts]
+    .map(([command, fixes]) => ({ command, fixes }))
+    .sort((a, b) => b.fixes - a.fixes || a.command.localeCompare(b.command));
+};
+
+export const reportOf = (
+  context: DoctorContext,
+  { findings, skipped }: { findings: Finding[]; skipped: boolean },
+  { strict, repaired, fixed }: { strict: boolean; repaired: DoctorReport['repaired']; fixed: boolean }
+): DoctorReport => {
   const counts: Record<Severity, number> = { error: 0, warning: 0, info: 0 };
   findings.forEach(finding => {
     counts[finding.severity]++;
   });
   const areas = DOCTOR_AREAS.map(area => {
     const of = findings.filter(finding => finding.area === area);
-    const status: 'ok' | 'warning' | 'error' = of.some(finding => finding.severity === 'error')
-      ? 'error'
-      : of.some(finding => finding.severity === 'warning')
-        ? 'warning'
-        : 'ok';
+    let status: AreaStatus = 'ok';
+    if (of.some(finding => finding.severity === 'error')) {
+      status = 'error';
+    } else if (of.some(finding => finding.severity === 'warning')) {
+      status = 'warning';
+    } else if (skipped && area !== 'layout') {
+      status = 'skipped';
+    }
 
     return { area, status };
   });
@@ -139,33 +207,57 @@ export const reportOf = (context: DoctorContext, findings: Finding[], strict: bo
     strict,
     counts,
     areas,
-    findings
+    findings: findings.map(({ repair, ...finding }) => ({ ...finding, ...(repair ? { repair: repair.says } : {}) })),
+    repaired,
+    recommendations: recommendationsOf(findings, fixed)
   };
 };
 
-const MARK: Record<Severity | 'ok', string> = {
+const MARK: Record<Severity | 'ok' | 'skipped', string> = {
   ok: chalk.green('✓'),
   error: chalk.red('✗'),
   warning: chalk.yellow('!'),
-  info: chalk.dim('·')
+  info: chalk.dim('·'),
+  skipped: chalk.dim('–')
 };
 
 const plural = (count: number, word: string): string => `${String(count)} ${word}${count === 1 ? '' : 's'}`;
 
+const repairedText = (repaired: DoctorReport['repaired']): string[] => {
+  if (repaired.repairs.length === 0 && repaired.failed.length === 0) {
+    return [];
+  }
+
+  return [
+    repaired.done ? chalk.green('Repaired:') : chalk.yellow('--fix would repair (--dry-run: nothing done):'),
+    ...repaired.repairs.map(each => `    ${chalk.green('+')} ${each}`),
+    ...repaired.failed.map(({ repair, error }) => `    ${chalk.red('✗')} ${repair}: ${error}`),
+    ''
+  ];
+};
+
 export const reportText = (report: DoctorReport): string => {
   const { project } = report;
+  // Laid out as an older CLI did, what the project is cannot be told yet: where its space is, least of all.
+  const older = report.areas.some(({ status }) => status === 'skipped');
+  const where = project.source === 'local' ? 'the space in src/space' : 'the space on Plitzi';
   const lines = [
     chalk.bold(
-      `plitzi doctor — ${project.name} (${project.mode}, ${project.source === 'local' ? 'the space in src/space' : 'the space on Plitzi'}${project.space ? `, from ${project.space}` : ''})`
-    )
+      `plitzi doctor — ${project.name} (${project.mode}, ${older ? 'laid out by an older CLI' : where}${project.space ? `, from ${project.space}` : ''})`
+    ),
+    ...repairedText(report.repaired)
   ];
   for (const { area, status } of report.areas) {
-    lines.push(`${MARK[status]} ${area}`);
+    lines.push(
+      status === 'skipped'
+        ? chalk.dim(`${MARK.skipped} ${area} — checked once the layout is this CLI's`)
+        : `${MARK[status]} ${area}`
+    );
     for (const finding of report.findings.filter(each => each.area === area)) {
       const text = `    ${MARK[finding.severity]} ${finding.message}`;
       lines.push(finding.severity === 'info' ? chalk.dim(text) : text);
       if (finding.fix && finding.severity !== 'info') {
-        lines.push(chalk.dim(`      → ${finding.fix}`));
+        lines.push(chalk.dim(`      → ${finding.fix}${finding.repair ? ' (doctor --fix does it)' : ''}`));
       }
     }
   }
@@ -176,11 +268,19 @@ export const reportText = (report: DoctorReport): string => {
     plural(warning, 'warning'),
     ...(info > 0 ? [`${String(info)} noted`] : [])
   ].join(', ');
+  lines.push('');
+  if (report.recommendations.length > 0) {
+    lines.push(
+      chalk.bold('Next:'),
+      ...report.recommendations.map(
+        ({ command, fixes }) => `    ${command}${chalk.dim(` — ${plural(fixes, 'problem')} of these`)}`
+      ),
+      ''
+    );
+  }
+
   lines.push(
-    '',
-    chalk.dim(
-      `The project as the CLI sets it up — not the space: ${report.notChecked.map(({ what, by }) => `${what} is \`${by}\`'s`).join('; ')}.`
-    ),
+    chalk.dim(`Not checked here: ${report.notChecked.map(({ what, by }) => `${what} (\`${by}\`)`).join('; ')}.`),
     report.ok
       ? chalk.green(`Healthy — ${summary}.`)
       : chalk.red(`${summary}${report.strict && error === 0 ? ' (--strict: warnings fail too)' : ''}.`)
@@ -232,13 +332,60 @@ const contextOf = async (): Promise<DoctorContext | undefined> => {
   };
 };
 
+/** Each repair once, though several findings name it (a layout moved at once). */
+const repairsOf = (findings: readonly Finding[]): Repair[] => [
+  ...new Set(findings.flatMap(finding => (finding.repair ? [finding.repair] : [])))
+];
+
+/** Rounds of `--fix`: a repair can uncover the next (the layout moved, the areas it held back are read). */
+const MAX_ROUNDS = 3;
+
 export const doctor = async (options: DoctorOptions): Promise<void> => {
-  const context = await contextOf();
+  let context = await contextOf();
   if (!context) {
     return;
   }
 
-  const report = reportOf(context, await examine(context), Boolean(options.strict));
+  let examined = await examine(context);
+  const repaired: DoctorReport['repaired'] = { done: !options.dryRun, repairs: [], failed: [] };
+  for (let round = 0; options.fix && round < MAX_ROUNDS; round++) {
+    const repairs = repairsOf(examined.findings);
+    if (repairs.length === 0) {
+      break;
+    }
+
+    if (options.dryRun) {
+      repaired.repairs.push(...repairs.map(repair => repair.says));
+      break;
+    }
+
+    for (const repair of repairs) {
+      try {
+        await repair.run();
+        repaired.repairs.push(repair.says);
+      } catch (error) {
+        repaired.failed.push({ repair: repair.says, error: error instanceof Error ? error.message : String(error) });
+      }
+    }
+
+    // Read again from the start: what the project is may be what a repair changed (its layout, its package.json).
+    const next = await contextOf();
+    if (!next) {
+      return;
+    }
+
+    context = next;
+    examined = await examine(context);
+    if (repaired.failed.length > 0) {
+      break;
+    }
+  }
+
+  const report = reportOf(context, examined, {
+    strict: Boolean(options.strict),
+    repaired,
+    fixed: Boolean(options.fix) && !options.dryRun
+  });
   console.log(options.json ? JSON.stringify(report) : reportText(report));
   if (!report.ok) {
     process.exitCode = 1;

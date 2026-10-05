@@ -346,6 +346,19 @@ describe('plitzi upgrade', () => {
     expect(await read('src/space/own.ts')).toBe('export type TemplateSpec = { id: string };\n');
   });
 
+  it('writes no file of a project laid out as an older CLI did, and says what moves it', async () => {
+    await fs.rename(file('src/space/index.ts'), file('src/space.ts'));
+    const main = await read('src/main.ts');
+    const said = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await upgrade(['files'], { write: true });
+
+    expect(String(said.mock.calls.at(0)?.[0])).toContain('doctor --fix');
+    expect(await read('src/main.ts')).toBe(main);
+    expect(process.exitCode).toBe(1);
+    process.exitCode = undefined;
+  });
+
   it('refuses a part it does not know, naming the ones there are', async () => {
     const said = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     await upgrade(['skils'], {});

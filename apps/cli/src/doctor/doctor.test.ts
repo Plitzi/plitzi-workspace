@@ -10,8 +10,9 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { doctor } from '.';
 import create from '../commands/create';
+import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/scaffoldRecord';
 
-import type { DoctorReport } from '.';
+import type { DoctorOptions, DoctorReport } from '.';
 
 /**
  * `plitzi doctor` on a project `plitzi create` wrote, then changed the ways a developer changes one: each change that
@@ -89,7 +90,7 @@ const install = async (): Promise<void> => {
   }
 };
 
-const run = async (options: { strict?: boolean } = {}): Promise<DoctorReport> => {
+const run = async (options: Omit<DoctorOptions, 'json'> = {}): Promise<DoctorReport> => {
   said = [];
   process.exitCode = undefined;
   await doctor({ json: true, ...options });
@@ -167,13 +168,6 @@ describe('plitzi doctor', () => {
 
     expect(findingOf(report, 'plugin-type-mismatch')).toMatchObject({ file: 'src/plugins/StatCard/declaration.ts' });
     expect(findingOf(report, 'plugin-entry-missing')).toMatchObject({ file: 'src/plugins/Legend/index.ts' });
-    console.warn(
-      JSON.stringify(
-        report.findings.filter(f => f.area === 'plugins'),
-        null,
-        1
-      )
-    );
     expect(findingOf(report, 'plugin-does-not-build')?.message).toContain('./Bar');
   });
 
@@ -273,6 +267,99 @@ describe('plitzi doctor', () => {
     expect(process.exitCode).toBeUndefined();
     expect((await run({ strict: true })).ok).toBe(false);
     expect(process.exitCode).toBe(1);
+  });
+
+  /** The project as a 0.38.4 CLI laid it out: the space in `src/space.ts`, `author` in `src/`, its cache at the root. */
+  const olderLayout = async (): Promise<void> => {
+    await fs.rename(path.join(project, 'src/space/index.ts'), path.join(project, 'src/space.ts'));
+    await write('src/site/tokens.ts', 'export const tokens = {};\n');
+    await write(
+      'src/space.ts',
+      `import { tokens } from './site/tokens.ts';\nvoid tokens;\n${await read('src/space.ts')}`
+    );
+    await write('src/main.ts', (await read('src/main.ts')).replace("'./space/index.ts'", "'./space.ts'"));
+    await fs.rename(path.join(project, 'plitzi/author.ts'), path.join(project, 'src/author.ts'));
+    await write('src/author.ts', (await read('src/author.ts')).replace("'../src/space/index.ts'", "'./space.ts'"));
+    const changed = await manifest();
+    const scripts = isRecord(changed.scripts) ? { ...changed.scripts, author: 'node src/author.ts' } : {};
+    await write('package.json', JSON.stringify({ ...changed, scripts }, null, 2));
+    await write('.sdk-plugins/statCard@1.0.0/index.js', '');
+    // Recorded as that CLI wrote them, where it wrote them.
+    const record = await readScaffoldRecord(project);
+    const files = new Map(Object.entries(record?.files ?? {}));
+    files.delete('plitzi/author.ts');
+    files.set('src/author.ts', digestOf(await read('src/author.ts')));
+    files.set('src/main.ts', digestOf(await read('src/main.ts')));
+    await writeScaffoldRecord(project, record?.cli ?? '0.38.4', {
+      files: Object.fromEntries(files),
+      scripts: { ...record?.scripts, author: 'node src/author.ts' }
+    });
+  };
+
+  it('says a layout an older CLI left, and checks nothing else against it', async () => {
+    await olderLayout();
+
+    const report = await run();
+
+    expect(report.findings.filter(finding => finding.code === 'older-layout').map(finding => finding.file)).toEqual([
+      'src/space.ts',
+      'src/site/',
+      'src/author.ts'
+    ]);
+    expect(findingOf(report, 'older-leftover')).toMatchObject({
+      file: '.sdk-plugins/',
+      repair: 'deletes .sdk-plugins/'
+    });
+    expect(report.areas.filter(area => area.status === 'skipped').map(area => area.area)).toContain('packages');
+    // Taken for a project whose space is on Plitzi, it would have been told to set a key it does not need.
+    expect(codes(report)).not.toContain('key-missing');
+    expect(report.recommendations[0]).toEqual({ command: 'plitzi doctor --fix', fixes: 4 });
+  });
+
+  it('says with --fix --dry-run what it would repair, and changes nothing', async () => {
+    await olderLayout();
+
+    const report = await run({ fix: true, dryRun: true });
+
+    expect(report.repaired.done).toBe(false);
+    expect(report.repaired.repairs[0]).toContain('src/space.ts → src/space/index.ts');
+    expect(await read('src/space.ts')).toContain("from './site/tokens.ts'");
+  });
+
+  it('moves an older layout with --fix — every import and script following — and the project is whole again', async () => {
+    await olderLayout();
+    await write('.gitignore', 'node_modules\n');
+
+    const report = await run({ fix: true });
+
+    expect(report.ok).toBe(true);
+    expect(codes(report)).toEqual([]);
+    expect(await read('src/space/index.ts')).toContain("from './tokens.ts'");
+    expect(await read('src/main.ts')).toContain("from './space/index.ts'");
+    expect(await read('plitzi/author.ts')).toContain("from '../src/space/index.ts'");
+    expect(await manifest()).toHaveProperty(['scripts', 'author'], 'node plitzi/author.ts');
+    await expect(fs.access(path.join(project, '.sdk-plugins'))).rejects.toThrow();
+    expect(await read('.gitignore')).toContain('.env');
+    expect(report.repaired.repairs).toEqual(
+      expect.arrayContaining([expect.stringContaining('moves src/space.ts'), 'deletes .sdk-plugins/'])
+    );
+    // The CLI's files moved are still the CLI's: upgrade brings them up to date rather than leaving them as the project's.
+    expect(
+      report.findings.filter(finding => finding.code === 'machinery-yours').map(finding => finding.file)
+    ).not.toEqual(expect.arrayContaining(['src/main.ts']));
+    expect(
+      report.findings.filter(finding => finding.code === 'machinery-yours').map(finding => finding.file)
+    ).not.toEqual(expect.arrayContaining(['plitzi/author.ts']));
+  });
+
+  it('writes a signing secret with --fix where there is none', async () => {
+    await write('.env', '# PORT=8080\n');
+
+    const report = await run({ fix: true });
+
+    expect(report.repaired.repairs).toContain('writes a new PLITZI_SIGNING_SECRET to .env');
+    expect(await read('.env')).toMatch(/^PLITZI_SIGNING_SECRET=[0-9a-f]{64}$/m);
+    expect(findingOf(report, 'signing-secret-missing')).toBeUndefined();
   });
 
   it('refuses a folder that is not a project plitzi create wrote', async () => {

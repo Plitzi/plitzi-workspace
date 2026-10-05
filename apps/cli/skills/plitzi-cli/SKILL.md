@@ -40,7 +40,8 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
 ## Running it as an agent
 
 - **Which check.** The space: `npm run author`. A rendered page: `check`. The project around them (packages,
-  configs, imports, plugins, data, functions): `doctor` — after moving files, before `push`.
+  configs, imports, plugins, data): `doctor`, before `push`; `--fix` repairs the simple ones (an older
+  project: `npx @plitzi/cli@latest doctor --fix`).
 
 - **After the SDK moves, `upgrade`.** It shows the CLI's files, scripts, versions and skills as they should be now, and
   every renamed name at its line. `--write` replaces what nobody changed, merges `package.json` and installs; a file
