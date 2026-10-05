@@ -19,7 +19,7 @@ import { chooseTarget, listCdns, uploadZip } from './uploadPlugin';
 import { PackError, packPlugin } from '../pack';
 import { packSource } from '../pack/source';
 import { projectEntries, projectFromSpace } from '../scaffold/fromSpace';
-import { FUNCTIONS_DIR } from '../scaffold/paths';
+import { ACTIONS_DIR, FUNCTIONS_DIR, SPACE_DIR, SPACE_ENTRY } from '../scaffold/paths';
 
 import type { AccountOptions } from './account';
 import type { DryRunOptions } from './dryRun';
@@ -132,13 +132,12 @@ const closureOf = async (
   }
 };
 
-/** The files the space part is made of, as `create --from` lays them out: the pages, the actions, the connectors. */
-const SPACE_FILES = ['src/space.ts', 'src/actions.ts'];
-const SPACE_FOLDERS = ['src/space/', 'src/actions/', 'src/connectors/'];
+/** The folders the space part is made of: the pages, the actions, the connectors. */
+const SPACE_FOLDERS = [`${SPACE_DIR}/`, `${ACTIONS_DIR}/`, 'src/connectors/'];
 
 /** The space is code and JSON: a folder's `.gitkeep`, or a note beside its files, is never part of it. */
 const isSpaceFile = (file: string): boolean =>
-  SPACE_FILES.includes(file) || (SPACE_FOLDERS.some(folder => file.startsWith(folder)) && /\.(ts|json)$/.test(file));
+  SPACE_FOLDERS.some(folder => file.startsWith(folder)) && /\.(ts|json)$/.test(file);
 
 /** A plugin's type as the project's folder spells it: `src/plugins/SeatPicker` is `seatPicker`. */
 const typeOfFolder = (folder: string): string => {
@@ -169,11 +168,8 @@ const survey = async (
   }
 ): Promise<Pushable[]> => {
   const found: Pushable[] = [];
-  if (source === 'local' && (await exists(path.join(root, 'src/space.ts')))) {
-    const files = [
-      ...(await Promise.all(SPACE_FILES.map(async file => ((await exists(path.join(root, file))) ? [file] : [])))),
-      ...(await Promise.all(SPACE_FOLDERS.map(folder => filesUnder(root, folder))))
-    ].flat();
+  if (source === 'local' && (await exists(path.join(root, SPACE_ENTRY)))) {
+    const files = (await Promise.all(SPACE_FOLDERS.map(folder => filesUnder(root, folder)))).flat();
     const gone = Object.keys(origin?.files ?? {}).some(file => isSpaceFile(file) && !files.includes(file));
     found.push({
       part: 'space',
@@ -264,7 +260,7 @@ const choose = async (found: Pushable[], asked: string[], spaceName: string): Pr
   }
 
   if (found.length === 0) {
-    fail('This project has nothing to push: no src/space.ts, functions/, runtime or plugin.');
+    fail('This project has nothing to push: no src/space/, src/functions/, runtime or plugin.');
 
     return undefined;
   }

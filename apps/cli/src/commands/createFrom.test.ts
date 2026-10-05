@@ -44,8 +44,10 @@ describe('plitzi create --from', () => {
     await create(target, { ...options, api: platform.api, from: 'pizarra' });
 
     expect(process.exitCode).toBeUndefined();
-    expect(await fs.readFile(path.join(target, 'src/space/index.ts'), 'utf-8')).toBe('export const pizarra = {};\n');
-    expect(await fs.readFile(path.join(target, 'src/space.ts'), 'utf-8')).toContain('pizarra as space');
+    const index = await fs.readFile(path.join(target, 'src/space/index.ts'), 'utf-8');
+    expect(index.startsWith('export const pizarra = {};\n')).toBe(true);
+    expect(index).toContain('export { pizarra as space };');
+    expect(await fs.readFile(path.join(target, 'src/space/index.ts'), 'utf-8')).toContain('pizarra as space');
     expect(JSON.parse(await fs.readFile(path.join(target, 'public/assets/world.json'), 'utf-8'))).toEqual({ land: [] });
     await expect(fs.access(path.join(target, 'src/plugins/StatCard/index.ts'))).rejects.toThrow();
     expect(await fs.readFile(path.join(target, '.env'), 'utf-8')).toMatch(/PLITZI_SIGNING_SECRET=[0-9a-f]{64}/);

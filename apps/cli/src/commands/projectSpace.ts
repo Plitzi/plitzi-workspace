@@ -5,6 +5,8 @@ import { pathToFileURL } from 'node:url';
 import { pluginDeclarations } from '@plitzi/sdk-authoring/node';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { SPACE_ENTRY } from '../scaffold/paths';
+
 import type { PluginDeclarationData, SpaceSpec } from '@plitzi/sdk-authoring';
 
 /**
@@ -19,7 +21,7 @@ const isSpaceSpec = (value: unknown): value is SpaceSpec =>
 
 const importProject = async (file: string): Promise<unknown> => import(pathToFileURL(file).href);
 
-/** The space a project declares in `src/space.ts`, with the plugin declarations it is authored with. */
+/** The space a project declares in `src/space/`, with the plugin declarations it is authored with. */
 export interface ProjectSpace {
   space: SpaceSpec;
   plugins: PluginDeclarationData[];
@@ -52,14 +54,14 @@ const builtPluginTypes = async (root: string): Promise<string[]> => {
 };
 
 /**
- * The project's own declaration, loaded as its `author` script loads it — `src/space.ts`, every plugin folder's
+ * The project's own declaration, loaded as its `author` script loads it — `src/space/index.ts`, every plugin folder's
  * `declaration.ts` and the built ones' types — for a command that authors it in this process.
  */
 export const loadProjectSpace = async (root: string): Promise<ProjectSpace | { problem: string }> => {
-  const module = await importProject(path.join(root, 'src/space.ts'));
+  const module = await importProject(path.join(root, SPACE_ENTRY));
   const space = isRecord(module) ? module.space : undefined;
   if (!isSpaceSpec(space)) {
-    return { problem: 'src/space.ts exports no `space`.' };
+    return { problem: `${SPACE_ENTRY} exports no \`space\`.` };
   }
 
   let plugins: PluginDeclarationData[];

@@ -7,14 +7,14 @@ import specSource from './blank/spec.ts?raw';
 import { space as emptySpaceSpec } from './empty/spec';
 import emptySpecSource from './empty/spec.ts?raw';
 import catalogProducts from '../../templates/catalog/src/data/products.json?raw';
-import catalogCard from '../../templates/catalog/src/site/components/productCard.ts?raw';
-import catalogData from '../../templates/catalog/src/site/data.ts?raw';
-import catalogLayout from '../../templates/catalog/src/site/layout.ts?raw';
-import catalogCatalogPage from '../../templates/catalog/src/site/pages/catalog.ts?raw';
-import catalogHomePage from '../../templates/catalog/src/site/pages/home.ts?raw';
-import catalogProductPage from '../../templates/catalog/src/site/pages/product.ts?raw';
-import catalogTokens from '../../templates/catalog/src/site/tokens.ts?raw';
-import catalogSpace from '../../templates/catalog/src/space.ts?raw';
+import catalogCard from '../../templates/catalog/src/space/components/productCard.ts?raw';
+import catalogData from '../../templates/catalog/src/space/data.ts?raw';
+import catalogSpace from '../../templates/catalog/src/space/index.ts?raw';
+import catalogLayout from '../../templates/catalog/src/space/layout.ts?raw';
+import catalogCatalogPage from '../../templates/catalog/src/space/pages/catalog.ts?raw';
+import catalogHomePage from '../../templates/catalog/src/space/pages/home.ts?raw';
+import catalogProductPage from '../../templates/catalog/src/space/pages/product.ts?raw';
+import catalogTokens from '../../templates/catalog/src/space/tokens.ts?raw';
 
 import type { AuthoredSpace, SpaceSpec } from '../schema';
 
@@ -416,14 +416,14 @@ export const catalogTemplateFiles = ({
   const client = mode === 'client';
   const space = name === undefined ? catalogSpace : renameSpace(catalogSpace, name, CATALOG_TEMPLATE_IDENTITY);
   const files: Record<string, string> = {
-    'src/space.ts': client ? inBrowser.space(space) : space,
-    'src/site/tokens.ts': catalogTokens,
-    'src/site/data.ts': client ? inBrowser.data(catalogData) : catalogData,
-    'src/site/layout.ts': catalogLayout,
-    'src/site/components/productCard.ts': catalogCard,
-    'src/site/pages/home.ts': catalogHomePage,
-    'src/site/pages/catalog.ts': catalogCatalogPage,
-    'src/site/pages/product.ts': catalogProductPage,
+    'src/space/index.ts': client ? inBrowser.space(space) : space,
+    'src/space/tokens.ts': catalogTokens,
+    'src/space/data.ts': client ? inBrowser.data(catalogData) : catalogData,
+    'src/space/layout.ts': catalogLayout,
+    'src/space/components/productCard.ts': catalogCard,
+    'src/space/pages/home.ts': catalogHomePage,
+    'src/space/pages/catalog.ts': catalogCatalogPage,
+    'src/space/pages/product.ts': catalogProductPage,
     [client ? 'public/data/products.json' : 'src/data/products.json']: catalogProducts
   };
 

@@ -19,9 +19,23 @@ export const CLI_DIR = 'plitzi';
 
 /**
  * The project's entry point — the page server, or the Vite app — in `src/`, where an entry point is looked for. The
- * CLI's all the same: `plitzi upgrade` keeps it current, and what a project changes goes in `src/serverOptions.ts`.
+ * CLI's all the same: `plitzi upgrade` keeps it current, and what a project changes goes in `src/config/serverOptions.ts`.
  */
 export const MAIN_FILE = 'src/main.ts';
+
+/**
+ * The space, in a folder of its own — it grows a page, a layout, a component at a time — whose `index.ts` exports it as
+ * `space`: what the server, the author script, the visual test and the CLI's checks import.
+ */
+export const SPACE_DIR = 'src/space';
+export const SPACE_ENTRY = `${SPACE_DIR}/index.ts`;
+
+/** The space's server actions, a folder like the space: `index.ts` lists them for the server, one action a file. */
+export const ACTIONS_DIR = 'src/actions';
+export const ACTIONS_ENTRY = `${ACTIONS_DIR}/index.ts`;
+
+/** What the server does besides serving the space: the project's configuration, never its content. */
+export const SERVER_OPTIONS_FILE = 'src/config/serverOptions.ts';
 
 /** What authors the space and says what it found: `npm run author`, and the server's re-authoring on a save. */
 export const AUTHOR_FILE = `${CLI_DIR}/author.ts`;
@@ -29,7 +43,7 @@ export const AUTHOR_FILE = `${CLI_DIR}/author.ts`;
 /**
  * What the running server keeps for the space — its `kv`: saved layouts, counters, a source's cached answer. Not
  * committed either, but not a by-product: it is the deployment's state, so it is never rebuilt and `tmp/` is no place
- * for it. A deployment that keeps it elsewhere says so in `src/serverOptions.ts` (`action.kv`).
+ * for it. A deployment that keeps it elsewhere says so in `src/config/serverOptions.ts` (`action.kv`).
  */
 export const PROJECT_STATE = 'state';
 

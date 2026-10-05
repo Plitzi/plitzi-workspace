@@ -1,4 +1,5 @@
 import {
+  ACTIONS_ENTRY,
   AUTHOR_FILE,
   CLI_DIR,
   DATA_DIR,
@@ -7,7 +8,8 @@ import {
   FUNCTIONS_DIR,
   KV_FILE,
   MAIN_FILE,
-  PROJECT_TMP
+  PROJECT_TMP,
+  SERVER_OPTIONS_FILE
 } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
@@ -311,7 +313,7 @@ const visitorsNote = (roles: readonly string[]): string => `
 const LOCAL_AUTHORING = (builtPlugins: boolean): string => `/**
  * The space, held in this project.
  *
- * \`authorSpace\` turns the declaration in \`src/space.ts\` into the two documents a renderer wants, at boot — and its
+ * \`authorSpace\` turns the declaration in \`src/space/\` into the two documents a renderer wants, at boot — and its
  * warnings are printed here, where somebody editing the space is watching.
  */
 // The declarations of the project's plugins — each folder's \`declaration.ts\` — so the space's use of them is checked.
@@ -345,7 +347,7 @@ if (!HOST_KEY) {
 const DEV_SPACE = `/**
  * While developing, the documents are served from \`${DEV_SPACE_FILE}\`, which the server reads again whenever it changes —
  * so a save is re-authored into it and shown without restarting anything (see \`watchSpace\` below). A by-product, in
- * \`tmp/\` with everything else the project writes for itself: the space is \`src/space.ts\`. A deployment keeps the
+ * \`tmp/\` with everything else the project writes for itself: the space is \`src/space/\`. A deployment keeps the
  * documents in memory, as authored at boot.
  */
 const OFFLINE_DATA = path.join(PROJECT_ROOT, '${DEV_SPACE_FILE}');
@@ -363,7 +365,7 @@ const functions = await loadFunctions(path.join(PROJECT_ROOT, '${FUNCTIONS_DIR}'
 
 /** The space's actions found by their id — and, for a space that came with them, its connectors. */
 const ACTION_LOOKUPS = (connectors: boolean): string => `/**
- * The space's server actions — \`src/actions.ts\` — found by their id${connectors ? ', with its connectors' : ''}; and the one
+ * The space's server actions — \`src/actions/\` — found by their id${connectors ? ', with its connectors' : ''}; and the one
  * space this server serves, which is the one it runs the actions on a clock for.
  */
 const SPACE_ID = 1;
@@ -408,10 +410,10 @@ const WATCH_SPACE = `/**
  * and a plugin's component is swapped in the open pages by the server (\`watchPlugins\` below): only its declaration
  * is the space's business.
  */
-const RESTARTS = ['main.ts', 'serverOptions.ts', 'actions.ts'];
+const RESTARTS = ['main.ts'];
 const authored = (file: string): boolean =>
   !RESTARTS.includes(file) &&
-  !/^(actions|connectors|functions)[\\\\/]/.test(file) &&
+  !/^(config|actions|connectors|functions)[\\\\/]/.test(file) &&
   (!file.startsWith(\`plugins\${path.sep}\`) || path.basename(file) === 'declaration.ts');
 const watchSpace = (): void => {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -492,10 +494,10 @@ export const serverMain = ({ source, name, fromSpace }: ServerMainOptions): stri
   ];
   const runtimeNames = [...(fromSpace?.packedRuntime ? ['loadRuntime'] : []), ...(runtime ? ['serveRuntime'] : [])];
   const ownImports = [
-    ...(actions ? [namedImport(fromSpace ? ['actions', 'connectors'] : ['actions'], './actions.ts')] : []),
+    ...(actions ? [namedImport(fromSpace ? ['actions', 'connectors'] : ['actions'], './actions/index.ts')] : []),
     ...(fromSpace?.runtimeEntry ? [`import spaceRuntime from '${fromSpace.runtimeEntry}';`] : []),
-    namedImport(['serverOptions'], './serverOptions.ts'),
-    ...(local ? [namedImport(['space'], './space.ts')] : [])
+    namedImport(['serverOptions'], './config/serverOptions.ts'),
+    ...(local ? [namedImport(['space'], './space/index.ts')] : [])
   ];
   const plugins = built ? '{ ...plugins, ...builtPlugins }' : 'plugins';
   const native = runtime ? '[...functions, ...runtime.native]' : 'functions';
@@ -516,7 +518,7 @@ export const serverMain = ({ source, name, fromSpace }: ServerMainOptions): stri
   // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
   logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
   logger: consoleLogger,
-  // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own. What follows is this
+  // What the server does besides serving the space — \`${SERVER_OPTIONS_FILE}\`, the project's own. What follows is this
   // file's, and comes after it: the space, its plugins, its files and its code are wired here.
   ...serverOptions,
   port: PORT,
@@ -533,7 +535,7 @@ export const serverMain = ({ source, name, fromSpace }: ServerMainOptions): stri
   functions: { native: ${native}, plugins: pluginFunctions },
   // What \`ctx.sign\` and \`ctx.verify\` sign with: \`PLITZI_SIGNING_SECRET\`, in \`.env\`. What the actions and functions
   // keep in \`kv\` is in \`${KV_FILE}\`, outliving a restart; a deployment with several processes, or a database, names
-  // its own store in \`src/serverOptions.ts\` (\`action.kv\`).
+  // its own store in \`${SERVER_OPTIONS_FILE}\` (\`action.kv\`).
   action: {
     signingSecret: process.env.PLITZI_SIGNING_SECRET,
     kv: createFileKv({ file: path.join(PROJECT_ROOT, '${KV_FILE}') }),
@@ -608,7 +610,7 @@ type SetByMain =
   | 'functions'
   | 'action';
 
-/** What \`createServer\` takes but for what \`${MAIN_FILE}\` sets — and an action's \`lookups\`: \`src/actions.ts\`. */
+/** What \`createServer\` takes but for what \`${MAIN_FILE}\` sets — and an action's \`lookups\`: \`${ACTIONS_ENTRY}\`. */
 type ServerOptions = Partial<Omit<ServerConfig, SetByMain>> & {
   action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
 };
@@ -643,8 +645,8 @@ export const serverFiles = (answers: CreateAnswers): ProjectFiles => ({
   [`${DATA_DIR}/.gitkeep`]: '',
   // Served to anyone as it is: pictures, a favicon.
   'public/.gitkeep': '',
-  'src/serverOptions.ts': serverOptionsModule(answers.source !== 'cloud'),
-  ...(answers.source === 'cloud' ? {} : { 'src/actions.ts': actionsModule() }),
+  [SERVER_OPTIONS_FILE]: serverOptionsModule(answers.source !== 'cloud'),
+  ...(answers.source === 'cloud' ? {} : { [ACTIONS_ENTRY]: actionsModule() }),
   // A project made from a space: the folders its actions and connectors are, there for `start:dev` to watch.
-  ...(answers.fromSpace ? { 'src/actions/.gitkeep': '', 'src/connectors/.gitkeep': '' } : {})
+  ...(answers.fromSpace ? { 'src/connectors/.gitkeep': '' } : {})
 });

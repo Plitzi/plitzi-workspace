@@ -122,38 +122,41 @@ describe('plitzi upgrade', () => {
    * upgrade writes them for it — once, and never over the project's own.
    */
   it('writes the project’s own files the machinery reads, only when the project has none', async () => {
-    await fs.rm(file('src/serverOptions.ts'));
-    await fs.writeFile(file('src/actions.ts'), '// mine\n');
+    await fs.rm(file('src/config/serverOptions.ts'));
+    await fs.writeFile(file('src/actions/index.ts'), '// mine\n');
 
     const shown = await run(['files']);
     const statuses = Object.fromEntries(
       recordsIn(shown.files).map((entry): [string, unknown] => [String(entry.file), entry.status])
     );
-    expect(statuses['src/serverOptions.ts']).toBe('seeded');
-    expect(statuses).not.toHaveProperty('src/actions.ts');
+    expect(statuses['src/config/serverOptions.ts']).toBe('seeded');
+    expect(statuses).not.toHaveProperty('src/actions/index.ts');
 
     await run(['files'], { write: true });
 
-    expect(await read('src/serverOptions.ts')).toBe(scaffold(ANSWERS)['src/serverOptions.ts']);
-    expect(await read('src/actions.ts')).toBe('// mine\n');
-    expect((await readScaffoldRecord(root))?.files['src/serverOptions.ts'], 'recorded as the CLI’s').toBeUndefined();
+    expect(await read('src/config/serverOptions.ts')).toBe(scaffold(ANSWERS)['src/config/serverOptions.ts']);
+    expect(await read('src/actions/index.ts')).toBe('// mine\n');
+    expect(
+      (await readScaffoldRecord(root))?.files['src/config/serverOptions.ts'],
+      'recorded as the CLI’s'
+    ).toBeUndefined();
   });
 
   /** Beside a `main.ts` the project kept as its own, nothing reads them: they are written with the CLI's `main.ts`. */
   it('writes them only beside the CLI’s own file that reads them', async () => {
-    await fs.rm(file('src/serverOptions.ts'));
+    await fs.rm(file('src/config/serverOptions.ts'));
     // Still a project the CLI knows — it finds its plugins in `src/plugins` — with a server of its own.
     await fs.writeFile(file('src/main.ts'), `// my own server, with its plugins from './plugins/'\n`);
 
     const shown = await run(['files'], { write: true });
     const named = recordsIn(shown.files).map(entry => entry.file);
 
-    expect(named).not.toContain('src/serverOptions.ts');
-    await expect(fs.access(file('src/serverOptions.ts'))).rejects.toThrow();
+    expect(named).not.toContain('src/config/serverOptions.ts');
+    await expect(fs.access(file('src/config/serverOptions.ts'))).rejects.toThrow();
 
     await run(['files'], { write: true, take: ['src/main.ts'] });
 
-    expect(await read('src/serverOptions.ts')).toBe(scaffold(ANSWERS)['src/serverOptions.ts']);
+    expect(await read('src/config/serverOptions.ts')).toBe(scaffold(ANSWERS)['src/config/serverOptions.ts']);
   });
 
   /**
@@ -204,13 +207,13 @@ describe('plitzi upgrade', () => {
   });
 
   it('never names the project’s own files — its space, pages and README', async () => {
-    await fs.writeFile(file('src/space.ts'), '// mine\n');
+    await fs.writeFile(file('src/space/index.ts'), '// mine\n');
     await fs.writeFile(file('README.md'), '# mine\n');
 
     const shown = await run(['files']);
     const named = recordsIn(shown.files).map(entry => entry.file);
 
-    expect(named).not.toContain('src/space.ts');
+    expect(named).not.toContain('src/space/index.ts');
     expect(named).not.toContain('README.md');
     expect(named).not.toContain('package.json');
   });
@@ -313,17 +316,17 @@ describe('plitzi upgrade', () => {
 
   it('finds a renamed name where it is written, and renames it — an import only where it is the package’s', async () => {
     await fs.mkdir(file('src/plugins/Ticker'), { recursive: true });
-    await fs.mkdir(file('src/site'), { recursive: true });
+    await fs.mkdir(file('src/space'), { recursive: true });
     await fs.writeFile(
       file('src/plugins/Ticker/declaration.ts'),
       'export default { builder: { canTemplate: true } };\n'
     );
     await fs.writeFile(
-      file('src/site/snippet.ts'),
+      file('src/space/snippet.ts'),
       "import { authorTemplate } from '@plitzi/sdk-authoring';\n\nexport const hero = authorTemplate({});\n"
     );
     // A name of the project's own, which only happens to be spelled like the old export.
-    await fs.writeFile(file('src/site/own.ts'), 'export type TemplateSpec = { id: string };\n');
+    await fs.writeFile(file('src/space/own.ts'), 'export type TemplateSpec = { id: string };\n');
 
     const shown = await run(['renames']);
     expect(shown.renames).toEqual([
@@ -332,15 +335,15 @@ describe('plitzi upgrade', () => {
         line: 1,
         name: 'canTemplate'
       }),
-      expect.objectContaining({ file: path.join('src', 'site', 'snippet.ts'), line: 1, name: 'authorTemplate' }),
-      expect.objectContaining({ file: path.join('src', 'site', 'snippet.ts'), line: 3, name: 'authorTemplate' })
+      expect.objectContaining({ file: path.join('src', 'space', 'snippet.ts'), line: 1, name: 'authorTemplate' }),
+      expect.objectContaining({ file: path.join('src', 'space', 'snippet.ts'), line: 3, name: 'authorTemplate' })
     ]);
 
     await run(['renames'], { write: true });
 
     expect(await read('src/plugins/Ticker/declaration.ts')).toBe('export default { builder: { canSnippet: true } };\n');
-    expect(await read('src/site/snippet.ts')).toContain('authorSnippet({})');
-    expect(await read('src/site/own.ts')).toBe('export type TemplateSpec = { id: string };\n');
+    expect(await read('src/space/snippet.ts')).toContain('authorSnippet({})');
+    expect(await read('src/space/own.ts')).toBe('export type TemplateSpec = { id: string };\n');
   });
 
   it('refuses a part it does not know, naming the ones there are', async () => {

@@ -10,7 +10,7 @@ Search this page for the code in brackets — \`[class-and-css]\` — rather tha
 \`npx @plitzi/cli explain class-and-css\`.
 
 \`authorSpace\` reports everything it cannot write in one run, as a \`SpaceRefusedError\` whose \`refusals\` each carry
-a \`code\`, the line of your code that wrote the element (\`src/site/home.ts:417\`) and the nearest named element
+a \`code\`, the line of your code that wrote the element (\`src/space/pages/home.ts:417\`) and the nearest named element
 (\`"store-footer" › container[1]\`). **Do what the message says.** Never cast past a check, silence it, or move the
 logic into a plugin to avoid it — the check exists because that declaration renders something other than what it says.
 

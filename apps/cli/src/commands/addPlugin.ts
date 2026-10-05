@@ -212,7 +212,7 @@ const placement = (project: PlitziProject, added: PluginNames[]): string => {
     );
   }
 
-  return `Put them on a page in src/space.ts: ${added
+  return `Put them on a page in src/space/: ${added
     .map(names => `custom({ id: '${names.base}', renderType: '${names.type}' })`)
     .join(', ')}.`;
 };

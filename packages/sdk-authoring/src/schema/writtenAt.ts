@@ -1,5 +1,5 @@
 /**
- * Where in the author's own code an element was written — `src/site/layout.ts:417` — for a refusal to point at.
+ * Where in the author's own code an element was written — `src/space/layout.ts:417` — for a refusal to point at.
  *
  * A factory (`container(…)`, `text(…)`) keeps an `Error` on the spec it returns, under a symbol nothing enumerates: it
  * does not travel with the spec through a spread, a clone or `JSON.stringify`, and the stack it carries is only

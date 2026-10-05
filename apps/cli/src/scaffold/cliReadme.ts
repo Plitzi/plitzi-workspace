@@ -65,7 +65,7 @@ JSON the browser fetches — \`query: '/data/products.json'\` — and so public,
 const FROM_SPACE = `## \`src/actions/\` and \`src/connectors/\` — what the space was made of
 
 The space's server actions — one \`defineAction({ … })\` per file, or JSON where code has no words for one — and its
-connectors, one JSON manifest each. \`src/actions.ts\` hands them to the server, and \`start:dev\` restarts on a change
+connectors, one JSON manifest each. \`src/actions/index.ts\` hands them to the server, and \`start:dev\` restarts on a change
 to either. \`plitzi pull\` brings the space's copies again; \`plitzi push\` sends them back.
 `;
 
@@ -80,7 +80,7 @@ looked for. One changed is shown as a diff and left, so changing one is taking i
 
 - \`${MAIN_FILE}\` (in \`src/\`) — the entry point: ${server ? 'the page server — the space, its plugins, its data, its code, wired' : 'the Vite app that renders the space'}.${
     answers.source === 'local'
-      ? `\n- \`${AUTHOR_FILE}\` — \`npm run author\`: authors \`src/space.ts\` and says what it found${server ? '; the server runs it on every save' : ''}.`
+      ? `\n- \`${AUTHOR_FILE}\` — \`npm run author\`: authors \`src/space/\` and says what it found${server ? '; the server runs it on every save' : ''}.`
       : ''
   }${
     server
@@ -88,6 +88,6 @@ looked for. One changed is shown as a diff and left, so changing one is taking i
       : `\n- \`${CLI_DIR}/preflight.css\` — the page's base styles.`
   }
 
-${server ? 'What the server does besides serving the space is yours, in `src/serverOptions.ts`.\n\n' : ''}${PLUGINS(answers)}
+${server ? 'What the server does besides serving the space is yours, in `src/config/serverOptions.ts`.\n\n' : ''}${PLUGINS(answers)}
 ${server ? `${FUNCTIONS}\n` : ''}${DATA(answers)}${answers.fromSpace ? `\n${FROM_SPACE}` : ''}`;
 };

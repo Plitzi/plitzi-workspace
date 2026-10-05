@@ -164,7 +164,7 @@ runtime, and its files into `public/` — a draft, or any published snapshot (`-
 ## Configuration
 
 `createServer` takes a `ServerConfig` (exported, as a type, from `@plitzi/sdk-server`) — what a project types its own
-options with: a `plitzi create` project keeps them in `src/serverOptions.ts`, typed from it less what its `main.ts`
+options with: a `plitzi create` project keeps them in `src/config/serverOptions.ts`, typed from it less what its `main.ts`
 wires itself.
 
 | Option | Type | Default | Description |

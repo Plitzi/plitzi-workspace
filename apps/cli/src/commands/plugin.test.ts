@@ -240,7 +240,7 @@ describe('plitzi add plugin', () => {
     });
 
     expect(output()).toContain('In the builder, add a Custom element with the render type "seatPicker"');
-    expect(output()).not.toContain('src/space.ts');
+    expect(output()).not.toContain('src/space/index.ts');
   });
 
   it('adds to a plugin package, and lists the element where the package publishes its elements', async () => {

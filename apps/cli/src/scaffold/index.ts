@@ -1,7 +1,7 @@
 import { clientFiles } from './client';
 import { cliReadme } from './cliReadme';
 import { MACHINERY } from './machinery';
-import { CLI_DIR, MAIN_FILE } from './paths';
+import { ACTIONS_ENTRY, CLI_DIR, MAIN_FILE, SERVER_OPTIONS_FILE } from './paths';
 import { pluginFiles } from './plugin';
 import { projectFiles } from './project';
 import { qualityFiles } from './quality';
@@ -66,8 +66,8 @@ export const machineryFiles = (answers: CreateAnswers): ProjectFiles =>
  * the CLI's — written by this upgrade or already current: beside a `main.ts` the project made its own, nothing reads it.
  */
 const SEEDS: Readonly<Record<string, string>> = {
-  'src/serverOptions.ts': MAIN_FILE,
-  'src/actions.ts': MAIN_FILE
+  [SERVER_OPTIONS_FILE]: MAIN_FILE,
+  [ACTIONS_ENTRY]: MAIN_FILE
 };
 
 export const seedFiles = (answers: CreateAnswers): { file: string; contents: string; readBy: string }[] =>

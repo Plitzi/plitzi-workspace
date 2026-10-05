@@ -97,12 +97,12 @@ describe('writtenAt', () => {
         'Error',
         '    at buildSpec (/work/node_modules/@plitzi/sdk-authoring/dist/index.js:120:5)',
         '    at node:internal/modules/run:1:1',
-        '    at heroSection (file:///work/src/site/home.ts:417:12)',
+        '    at heroSection (file:///work/src/space/pages/home.ts:417:12)',
         '    at main (/work/src/space.ts:9:3)'
       ].join('\n')
     );
 
-    expect(at).toBe('src/site/home.ts:417');
+    expect(at).toBe('src/space/pages/home.ts:417');
   });
 
   it('is nothing for a spec no factory wrote, or in production', () => {

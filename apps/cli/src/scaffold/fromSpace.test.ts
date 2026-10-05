@@ -105,7 +105,8 @@ describe('a project made from a space', () => {
   });
 
   it('holds the space as code, serving its files from the project instead of Plitzi’s CDN', () => {
-    expect(project.files['src/space.ts']).toContain("export { pizarra as space } from './space/index.ts';");
+    // Exported as `space` too: the name the server, the author script and the checks import it by.
+    expect(project.files['src/space/index.ts']).toContain('export { pizarra as space };');
     expect(project.files['src/space/pages/home.ts']).toContain("src: '/assets/a_world.json'");
     expect(project.downloads).toEqual([
       { url: WORLD, to: 'public/assets/a_world.json' },
@@ -142,9 +143,11 @@ describe('a project made from a space', () => {
     );
     expect(project.files['src/actions/board-create.ts']).toContain("map: '/assets/a_world.json'");
     expect(project.files['src/actions/board-clear.json']).toContain('"id": "board-clear"');
-    expect(project.files['src/actions.ts']).toContain("import { boardCreateAction } from './actions/board-create.ts';");
-    expect(project.files['src/actions.ts']).toContain('export const actions: ActionEntry[] = [\n  boardCreateAction,');
-    expect(project.files['src/actions.ts']).toContain('export const connectors = new Map(');
+    expect(project.files['src/actions/index.ts']).toContain("import { boardCreateAction } from './board-create.ts';");
+    expect(project.files['src/actions/index.ts']).toContain(
+      'export const actions: ActionEntry[] = [\n  boardCreateAction,'
+    );
+    expect(project.files['src/actions/index.ts']).toContain('export const connectors = new Map(');
     expect(project.files['src/functions/index.ts']).toBe('export default {};\n');
 
     const main = project.files['src/main.ts'];
@@ -191,7 +194,7 @@ describe('a project made from a space it reads from Plitzi', () => {
   const project = projectFromSpace(exported({ authoring: null }), 'cloud');
 
   it('writes no pages, reads them with its key, and watches the space by the name its adapters give it', () => {
-    expect(project.files['src/space.ts']).toBeUndefined();
+    expect(project.files['src/space/index.ts']).toBeUndefined();
     expect(project.files['src/main.ts']).toContain('createCloudAdapters');
     const env = envFromSpace(exported({ authoring: null }), answers('cloud'), SECRET);
     expect(env).toContain('PLITZI_HOST_KEY=host-key');
@@ -224,7 +227,6 @@ describe('the server a project made from a space runs', () => {
 
   it('keeps its actions and connectors in folders there from the start, which `start:dev` restarts on', () => {
     const written = scaffold({ ...answers(), fromSpace: true });
-    expect(written['src/actions/.gitkeep']).toBe('');
     expect(written['src/connectors/.gitkeep']).toBe('');
     expect(written['plitzi/README.md']).toContain('## `src/actions/` and `src/connectors/`');
     // The CLI's, so `upgrade` writes them into a project made before them, with the script that watches them.
@@ -232,7 +234,7 @@ describe('the server a project made from a space runs', () => {
     const manifest: unknown = JSON.parse(scaffold({ ...answers(), fromSpace: true })['package.json']);
     expect(manifest).toHaveProperty(
       ['scripts', 'start:dev'],
-      'node --watch-path=./src/main.ts --watch-path=./src/serverOptions.ts --watch-path=./src/actions.ts --watch-path=./src/actions --watch-path=./src/connectors --watch-path=./src/functions src/main.ts'
+      'node --watch-path=./src/main.ts --watch-path=./src/config --watch-path=./src/actions --watch-path=./src/connectors --watch-path=./src/functions src/main.ts'
     );
   });
 });

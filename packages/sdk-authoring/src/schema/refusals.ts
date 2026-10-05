@@ -4,7 +4,7 @@ import { AuthoringError } from './codes';
 export type SpaceRefusal = {
   /** The nearest named element and the steps from it — `"store-footer" › container[1]`. Empty for the space itself. */
   place: string;
-  /** The line of the author's own code that wrote it — `src/site/layout.ts:417` — when a factory recorded one. */
+  /** The line of the author's own code that wrote it — `src/space/layout.ts:417` — when a factory recorded one. */
   at?: string;
   /** What `authoring-errors.md` files it under — a code of `AUTHORING_CODES`, or a structural one of `validateSchema`. */
   code?: string;

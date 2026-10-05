@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CATALOG_TEMPLATE_IDENTITY, catalogTemplateFiles } from './index';
-import { space } from '../../templates/catalog/src/space';
+import { space } from '../../templates/catalog/src/space/index';
 import { authorSpace, validateSpace } from '../schema';
 
 /** The catalog template is a project's first files: it has to author clean, and be the site it says it is. */
@@ -26,15 +26,15 @@ describe('templates/catalog', () => {
 
     expect(space).toMatchObject(CATALOG_TEMPLATE_IDENTITY);
     expect(Object.keys(files)).toContain('src/data/products.json');
-    expect(files['src/space.ts']).toContain("name: 'Paper Shop',");
-    expect(files['src/space.ts']).toContain("permanentUrl: 'paper-shop',");
-    expect(files['src/site/data.ts']).toContain("from '@plitzi/sdk-authoring'");
+    expect(files['src/space/index.ts']).toContain("name: 'Paper Shop',");
+    expect(files['src/space/index.ts']).toContain("permanentUrl: 'paper-shop',");
+    expect(files['src/space/data.ts']).toContain("from '@plitzi/sdk-authoring'");
     expect(Object.values(files).filter(source => source.includes('eslint-disable'))).toEqual([]);
   });
 
   it('reads its data on the server, from the project’s own `src/data/` — which nothing serves', () => {
     expect(schema.flat['home-products'].definition.runtime).toBe('server');
-    expect(catalogTemplateFiles()['src/site/data.ts']).toContain("from '../data/products.json'");
+    expect(catalogTemplateFiles()['src/space/data.ts']).toContain("from '../data/products.json'");
   });
 
   it('has a project with no server fetch it from `public/`, in the browser', () => {
@@ -42,9 +42,9 @@ describe('templates/catalog', () => {
 
     expect(Object.keys(files)).toContain('public/data/products.json');
     expect(Object.keys(files)).not.toContain('src/data/products.json');
-    expect(files['src/site/data.ts']).toContain("from '../../public/data/products.json'");
-    expect(files['src/site/data.ts']).toContain("export const PRODUCTS = { query: '/data/products.json' } as const;");
-    expect(files['src/site/data.ts']).not.toContain('src/data');
-    expect(files['src/space.ts']).toContain('`public/data/products.json`, served by this project');
+    expect(files['src/space/data.ts']).toContain("from '../../public/data/products.json'");
+    expect(files['src/space/data.ts']).toContain("export const PRODUCTS = { query: '/data/products.json' } as const;");
+    expect(files['src/space/data.ts']).not.toContain('src/data');
+    expect(files['src/space/index.ts']).toContain('`public/data/products.json`, served by this project');
   });
 });

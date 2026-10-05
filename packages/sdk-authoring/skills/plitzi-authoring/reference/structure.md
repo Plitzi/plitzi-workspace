@@ -1,6 +1,6 @@
 # Structuring a space that grows
 
-A one-screen space fits in `src/space.ts`. Past a few pages, split it by what changes together — a file per part, short
+A one-screen space fits in `src/space/index.ts`. Past a few pages, split it by what changes together — a file per part, short
 enough to read whole — and keep every repeated thing in exactly one place. `npx @plitzi/cli create shop --template
 catalog` writes a complete small site in this shape (tokens, a layout, a card component, typed data, a page per file)
 to read before writing one.

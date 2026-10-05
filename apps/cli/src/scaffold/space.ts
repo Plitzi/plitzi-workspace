@@ -1,6 +1,6 @@
 import { blankSpaceSource, catalogTemplateFiles, emptySpaceSource } from '@plitzi/sdk-authoring';
 
-import { AUTHOR_FILE, DATA_DIR } from './paths';
+import { AUTHOR_FILE, DATA_DIR, SPACE_ENTRY } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { PluginHostOptions } from '@plitzi/sdk-authoring';
@@ -10,7 +10,7 @@ import type { PluginHostOptions } from '@plitzi/sdk-authoring';
  *
  * Not imported from `@plitzi/sdk-authoring` at run time, and that is the whole point: a project whose space came
  * from a package could only ever render Plitzi's blank space, and the first thing anybody wants is to make it
- * theirs. What lands in `src/space.ts` is the declaration itself — a tree, some CSS, a palette — so editing the
+ * theirs. What lands in `src/space/` is the declaration itself — a tree, some CSS, a palette — so editing the
  * space is editing this project.
  *
  * It is the same source the platform authors a new space from, so what `plitzi create` starts you with and what
@@ -28,7 +28,7 @@ const namedImports = (names: readonly string[], from: string): string =>
 /**
  * Authors the declaration and says what it found: the check an agent and a person run after every change.
  *
- * It writes nothing — the space is \`src/space.ts\`, and the server and the browser both author it at boot. Only the
+ * It writes nothing — the space is \`src/space/\`, and the server and the browser both author it at boot. Only the
  * server asks for the documents, while developing: \`--out <file>\` writes them where it re-reads them on a save.
  */
 const authorScript = ({
@@ -43,7 +43,7 @@ import path from 'node:path';
 import { authorSpace, planFixes, refusalOf, SpaceRefusedError } from '@plitzi/sdk-authoring';
 ${namedImports(mode === 'server' ? ['pluginDeclarations', 'projectData', 'publicData'] : ['pluginDeclarations', 'publicData'], '@plitzi/sdk-authoring/node')}
 
-import { space } from '../src/space.ts';
+import { space } from '../${SPACE_ENTRY}';
 
 // \`--json\` answers in one object, for a tool or an agent; otherwise one line on success, the problems on failure.
 const json = process.argv.includes('--json');
@@ -227,7 +227,7 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
 
   if (answers.template === 'blank') {
     return {
-      'src/space.ts': emptySpaceSource({ name: answers.name }),
+      [SPACE_ENTRY]: emptySpaceSource({ name: answers.name }),
       [AUTHOR_FILE]: authorScript(answers),
       // A project with no server keeps its data where the browser fetches it; a server's is `src/data/` (`serverFiles`).
       ...(answers.mode === 'client' ? { 'public/data/.gitkeep': '' } : {})
@@ -235,7 +235,7 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
   }
 
   return {
-    'src/space.ts': blankSpaceSource({ name: answers.name, plugin: pluginHost(answers) }),
+    [SPACE_ENTRY]: blankSpaceSource({ name: answers.name, plugin: pluginHost(answers) }),
     [AUTHOR_FILE]: authorScript(answers),
     // As the project's own formatter writes it — a short list on one line — so its first `format` changes nothing.
     ...(answers.mode === 'client'

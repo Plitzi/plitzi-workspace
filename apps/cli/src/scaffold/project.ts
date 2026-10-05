@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 
 import { installCommand, managerFiles, managerPackageFields, runCommand } from './packageManager';
 import {
+  ACTIONS_DIR,
   AUTHOR_FILE,
   CLI_DIR,
   DATA_DIR,
@@ -67,7 +68,7 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
    */
   '@plitzi/plitzi-sdk': SDK_VERSION,
   ...(mode === 'server' ? { '@plitzi/sdk-server': SDK_VERSION } : {}),
-  // Authoring is what turns `src/space.ts` into documents, so a local project always needs it. A cloud one never
+  // Authoring is what turns `src/space/` into documents, so a local project always needs it. A cloud one never
   // does: its space is a document Plitzi holds, and nothing here builds one.
   ...(source === 'local' ? { '@plitzi/sdk-authoring': SDK_VERSION } : {}),
   react: REACT_VERSION,
@@ -95,9 +96,9 @@ const NODE_ENGINES = { node: '>=22.18' };
 const watchPaths = ({ source, fromSpace }: CreateAnswers): string =>
   [
     `./${MAIN_FILE}`,
-    './src/serverOptions.ts',
-    ...(source === 'local' || fromSpace ? ['./src/actions.ts'] : []),
-    ...(fromSpace ? ['./src/actions', './src/connectors'] : []),
+    './src/config',
+    ...(source === 'local' || fromSpace ? [`./${ACTIONS_DIR}`] : []),
+    ...(fromSpace ? ['./src/connectors'] : []),
     `./${FUNCTIONS_DIR}`
   ]
     .map(watched => `--watch-path=${watched}`)
@@ -268,7 +269,7 @@ anything real, and set \`PLITZI_REVISION\` to pin one exact version.
 
   return `## Where the space comes from
 
-This project. \`src/space.ts\` is a copy of the space Plitzi gives a new account — declared as a tree, some CSS
+This project. \`src/space/\` holds a copy of the space Plitzi gives a new account — declared as a tree, some CSS
 and a palette rather than exported as a document, so it is yours to change. Every id and selector name is derived
 from what is written there, so authoring it twice writes byte-identical documents.
 
@@ -312,7 +313,7 @@ ${spaceSection(answers)}
     answers.mode === 'server'
       ? `
 - \`${PROJECT_STATE}/\` is what the server keeps for the space: its \`kv\` (\`${KV_FILE}\`) — saved layouts, counters, cached answers.
-  The deployment's state, kept across restarts and never rebuilt; ignored by git. \`action.kv\` in \`src/serverOptions.ts\`
+  The deployment's state, kept across restarts and never rebuilt; ignored by git. \`action.kv\` in \`src/config/serverOptions.ts\`
   keeps it elsewhere.`
       : ''
   }
@@ -338,7 +339,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
   const run = (script: string): string => code(runCommand(answers.packageManager, script));
   const local = answers.source === 'local';
   const where = local
-    ? `The space is ${code('src/space.ts')}, declared with ${code('@plitzi/sdk-authoring')}. Edit that; never the JSON it produces.`
+    ? `The space is ${code('src/space/')}, declared with ${code('@plitzi/sdk-authoring')}. Edit that; never the JSON it produces.`
     : 'The space lives in Plitzi and is edited in the builder (or by an agent over MCP); this project serves it.';
   const commands = [
     `| ${code(installCommand(answers.packageManager))} | install |`,
@@ -353,7 +354,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
       : `${run('start')} runs Vite on 5173.`;
   const serverNotes =
     answers.mode === 'server'
-      ? `- **The server is yours in ${code('src/serverOptions.ts')}**, not in ${code(MAIN_FILE)} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('main.ts')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions.ts')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
+      ? `- **The server is yours in ${code('src/config/serverOptions.ts')}**, not in ${code(MAIN_FILE)} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('main.ts')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions/')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/config/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
       : '';
   const dataNote =
     answers.mode === 'server'
@@ -364,7 +365,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
     `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took${local ? ', the space as last authored' : ''}, test output. Never committed, rebuilt when missing.`,
     ...(answers.mode === 'server'
       ? [
-          `- ${code(`${PROJECT_STATE}/`)} — what the server keeps for the space: its ${code('kv')} (${code(KV_FILE)}). The deployment's state — never committed, never rebuilt; ${code('action.kv')} in ${code('src/serverOptions.ts')} keeps it elsewhere.`
+          `- ${code(`${PROJECT_STATE}/`)} — what the server keeps for the space: its ${code('kv')} (${code(KV_FILE)}). The deployment's state — never committed, never rebuilt; ${code('action.kv')} in ${code('src/config/serverOptions.ts')} keeps it elsewhere.`
         ]
       : []),
     `- ${code('.plitzi/')} — what the CLI records about the project: where it came from, what it wrote. Committed; the CLI's to change.`
@@ -412,7 +413,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 - **Nothing unused.** Delete what you made and no longer use — a file, a page, a component, a class, a token, a data file, an import, a plugin folder. No commented-out code, no ${code('console.log')} left from debugging, no copy of a file kept "just in case": git keeps the history.
 - **Scratch goes in ${code(`${PROJECT_TMP}/`)}, or nowhere.** A one-off script, a dump, a picture to look at — never at the root or beside the source, where it reads as part of the project.
 - **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component, and rows of data are one list. Change it where it is defined, and rename everywhere when you rename.
-- **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space.ts')} already has. Do not start a parallel layout of your own.
+- **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space/')} already has. Do not start a parallel layout of your own.
 - **Leave it passing.** ${local ? `${run('author')} with zero warnings, ` : ''}${run('typecheck')}, ${run('lint')} and ${run('format')} clean, and the page checked (${run('check')}).
 
 ## The rules that go wrong most
@@ -422,7 +423,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 - ${zeroWarnings}
 - Chrome shared by pages is a layout; a look used twice is a class; a block placed again with other content is a component, and rows of data are one ${code('list')} (a short menu may be a ${code('map')} in code).
 - Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.
-- A file per part — the tokens, the layout, each component, each page — short enough to read whole; ${code('src/space.ts')} assembles them. ${code('npx plitzi create <dir> --template catalog')} is a complete example of the shape.
+- A file per part — the tokens, the layout, each component, each page — short enough to read whole, in ${code('src/space/')}; its ${code('index.ts')} assembles them. ${code('npx plitzi create <dir> --template catalog')} is a complete example of the shape.
 - Rebuilding a page the user owns, when they ask for it: ${code('npx plitzi import <url>')} writes its tokens, outline and lists as a start — then split it into parts and write the content. A site served from this machine needs nothing; any other needs ${code('--account')}, which signs in to the user's Plitzi account to find its domain verified on one of their spaces — ask them first. This project otherwise reaches no account.
 - Elements are visible by default. One the logic REVEALS starts hidden (${code('visible')}, or ${code('visible: false')} plus a computed binding) so nothing flashes while loading; one a flag HIDES stays shown while the flag is unset.
 - Inside a template a source is spelled in full (${code('apiContainer_stats')}); an attribute only resolves ${code('{{ name|filter }}')}.

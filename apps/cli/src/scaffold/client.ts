@@ -113,7 +113,7 @@ const localMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
-import { space } from './space.ts';
+import { space } from './space/index.ts';
 
 import '../${CLI_DIR}/preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
@@ -131,7 +131,7 @@ const declarations = Object.values(
 /**
  * The space, held in this project.
  *
- * \`src/space.ts\` is a declaration — a tree, some CSS, a palette — and \`authorSpace\` turns it into the two
+ * \`src/space/\` is a declaration — a tree, some CSS, a palette — and \`authorSpace\` turns it into the two
  * documents the SDK renders. Editing it is editing the site.
  */
 const mount = (spec: SpaceSpec) =>
@@ -170,7 +170,7 @@ let mounted = mount(space);
  * has state worth not losing: a form half filled in, a menu open, a scroll position.
  */
 if (import.meta.hot) {
-  import.meta.hot.accept('./space', updated => {
+  import.meta.hot.accept('./space/index.ts', updated => {
     // Cast because the dev server cannot know the shape of a module it is swapping; the name is this file's own.
     const next = (updated as { space?: SpaceSpec } | undefined)?.space;
     if (!next) {

@@ -11,16 +11,17 @@ import { SPACE_IMPORT_FORMAT } from '@plitzi/sdk-shared/source';
 import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
+import { ACTIONS_ENTRY } from '../scaffold/paths';
 
 import type { PushOutcome } from './pushOutcome';
 import type { ConnectedSpace, Connection } from '../account/connection';
 import type { SpaceImport } from '@plitzi/sdk-shared/source';
 
 /**
- * The space part of `plitzi push`: the project's `src/space.ts`, authored as `npm run author` authors it, with the
+ * The space part of `plitzi push`: the project's `src/space/`, authored as `npm run author` authors it, with the
  * server actions and connectors the project keeps — put back as the space's draft (`PUT /spaces/:id/import`).
  *
- * The actions are the ones the project serves: what `src/actions.ts` lists, as `create --from` writes it. The
+ * The actions are the ones the project serves: what `src/actions/index.ts` lists. The
  * connectors are the manifests in `src/connectors/`. A project without either keeps none of its own, and the space's
  * are left as they are.
  */
@@ -41,9 +42,9 @@ const readJsonFolder = async (dir: string): Promise<{ file: string; value: unkno
   );
 };
 
-/** The project's server actions, as its `src/actions.ts` serves them — `undefined` when it has no such module. */
+/** The project's server actions, as its `src/actions/index.ts` serves them — `undefined` when it has no such module. */
 const projectActions = async (root: string): Promise<SpaceImport['actions'] | { problem: string }> => {
-  const file = path.join(root, 'src/actions.ts');
+  const file = path.join(root, ACTIONS_ENTRY);
   try {
     await fs.access(file);
   } catch {
@@ -53,7 +54,7 @@ const projectActions = async (root: string): Promise<SpaceImport['actions'] | { 
   const loaded: unknown = await import(pathToFileURL(file).href);
   const listed = isRecord(loaded) ? loaded.actions : undefined;
   if (!Array.isArray(listed)) {
-    return { problem: 'src/actions.ts exports no `actions` list: it is where the project’s actions are.' };
+    return { problem: `${ACTIONS_ENTRY} exports no \`actions\` list: it is where the project’s actions are.` };
   }
 
   return listed.flatMap((entry: unknown) =>

@@ -62,7 +62,7 @@ Where the space lives decides which one an agent uses — the two never take tur
 
 | The space | Use |
 | --- | --- |
-| In a project, written in code (`src/space.ts`, `--source local`) | this CLI and `@plitzi/sdk-authoring`. No account and no MCP |
+| In a project, written in code (`src/space/`, `--source local`) | this CLI and `@plitzi/sdk-authoring`. No account and no MCP |
 | On Plitzi — edited in the builder, with collaborators, published from there | the Plitzi MCP server: it reads and edits the live space, previews a page and checks every edit with the same linter |
 | On Plitzi, and wanted in code from now on | `create --from <space>`, then `pull` and `push` keep both in step |
 
@@ -73,7 +73,7 @@ with `--source local` needs neither.
 
 | | `--source local` | `--source cloud` |
 | --- | --- | --- |
-| `--mode server` | A page server of your own, rendering the space in `src/space.ts`. No account | Your page server, rendering the live space from Plitzi (secret self-hosting key in `.env`) |
+| `--mode server` | A page server of your own, rendering the space in `src/space/`. No account | Your page server, rendering the live space from Plitzi (secret self-hosting key in `.env`) |
 | `--mode client` | Vite + the SDK in the browser, no server, no account | The SDK fetches the space with the public render key |
 
 What a project gives you, so you use it rather than rebuild it:
@@ -81,8 +81,8 @@ What a project gives you, so you use it rather than rebuild it:
 | Script | What it is for |
 | --- | --- |
 | `start` | serve it — in client mode Vite, which hot-replaces on save. The server prints only what goes wrong; `-- --verbose` adds every request |
-| `start:dev` | server mode: restarted on a save to its code; a plugin is swapped in the open page. Options in `src/serverOptions.ts`, actions in `src/actions.ts`; `plitzi/` is the CLI's, never edit it |
-| `author` | author `src/space.ts`: one line when it is fine, every problem at once (file:line, what to change) when not, then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
+| `start:dev` | server mode: restarted on a save to its code; a plugin is swapped in the open page. Options in `src/config/serverOptions.ts`, actions in `src/actions/`; `plitzi/` is the CLI's, never edit it |
+| `author` | author `src/space/`: one line when it is fine, every problem at once (file:line, what to change) when not, then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
 | `npx plitzi fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |
 | `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows, a binding its data lacks; `--state`, `--element <id>`: what it holds; `--ssr`: what SSR misses; `--json` |
 | `npx plitzi import <url>` | a page the user owns, as a start: `tokens.ts`, `outline.ts` (blocks and layout per breakpoint), lists as `data/*.json`, screenshots, `IMPORT.md`. Never the words. **Only when the user asks** — never on your own. A site not on this machine needs `--account`, which signs in to their Plitzi account (domain verified on a space): ask first |
@@ -143,7 +143,7 @@ Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 
 - **Registered by itself**: every folder of `src/plugins` is, under its name in camelCase (`SeatPicker` → `seatPicker`).
   Elsewhere the command prints the line that registers it (for `render()`, `<PlitziSdk>` or a page server).
-- **Host it** with `custom({ renderType: 'seatPicker', … })` in `src/space.ts` — or a Custom element in the builder.
+- **Host it** with `custom({ renderType: 'seatPicker', … })` in `src/space/` — or a Custom element in the builder.
 - **Checked like a built-in element**: its folder's `declaration.ts` is found by itself and handed to
   `authorSpace(space, { plugins })`: flows on its events, steps to its actions and its attributes are
   refused when wrong; `declaredTrigger(declaration, 'onPick')` and `declaredCallback(declaration, 'reset', { on: 'seats' })`

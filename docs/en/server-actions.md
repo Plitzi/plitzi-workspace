@@ -781,7 +781,7 @@ createServer({ action: { lookups, kv: createSqliteKv({ file: 'state/kv.sqlite' }
 for ONE process, which reads the file when it starts and owns it after. `createSqliteKv` is a table in a SQLite file
 over Node's own `node:sqlite` (Node 22.13+, which prints an `ExperimentalWarning` when it loads): every operation is
 one atomic statement, so replicas on one machine, or a server started with `workers`, share it safely. A project
-`plitzi create` writes starts with `createFileKv` in `state/kv.json`, and names another in `src/serverOptions.ts`.
+`plitzi create` writes starts with `createFileKv` in `state/kv.json`, and names another in `src/config/serverOptions.ts`.
 
 The keys an adapter receives are the server's — prefixed per space (`kv:action:<spaceId>:…`) — and are not a
 contract: an adapter stores them as it gets them, and keeps them all.

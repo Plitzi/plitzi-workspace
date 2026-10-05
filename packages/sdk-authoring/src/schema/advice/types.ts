@@ -12,6 +12,6 @@ export interface Suggestion {
   /** The elements it is about, the first being the one to look at. Empty for one about the stylesheet. */
   elementIds: string[];
   saves: number;
-  /** Where the first of them was written: `src/site/home.ts:42`. Absent when no factory wrote it. */
+  /** Where the first of them was written: `src/space/pages/home.ts:42`. Absent when no factory wrote it. */
   at?: string;
 }

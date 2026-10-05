@@ -1948,7 +1948,7 @@ export interface PlannedFix {
   code: string;
   message: string;
   elementId: string | null;
-  /** Where the element was written: `src/site/home.ts:42`. Absent for an element no factory wrote. */
+  /** Where the element was written: `src/space/pages/home.ts:42`. Absent for an element no factory wrote. */
   at?: string;
   /** The same place exactly — the factory's name, at its line and column — which is what the edit is made at. */
   position?: WrittenPosition;

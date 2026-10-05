@@ -22,8 +22,8 @@ Pizarra is the yardstick: a board works on `localhost` from a fresh `create`, is
 
 | Part | Where it comes from | What lands in the project | How it runs |
 |---|---|---|---|
-| Pages, styles, variables, settings | **local:** the saved space, decompiled. **cloud:** read live with the space's host key | **local:** `src/space/`, authoring code, a file per page (`src/space.ts` re-exports it). **cloud:** nothing; the key goes in `.env` | `createJsonAdapters` over the authored space, or `createCloudAdapters` |
-| Actions | the space's action documents | `src/actions/<id>.ts`, one `defineAction` call each, where it reads back exactly; `src/actions/<id>.json` where it does not | `action.lookups` in `src/actions.ts` |
+| Pages, styles, variables, settings | **local:** the saved space, decompiled. **cloud:** read live with the space's host key | **local:** `src/space/`, authoring code, a file per page, its `index.ts` exporting it as `space` too. **cloud:** nothing; the key goes in `.env` | `createJsonAdapters` over the authored space, or `createCloudAdapters` |
+| Actions | the space's action documents | `src/actions/<id>.ts`, one `defineAction` call each, where it reads back exactly; `src/actions/<id>.json` where it does not | `action.lookups`, from `src/actions/index.ts` |
 | Connectors | the space's connector manifests | `src/connectors/<id>.json` | the same lookups |
 | Functions | the stored source, unchanged | `src/functions/` | `loadFunctions`, in the project's process |
 | Runtime | its source snapshot | `src/runtime.ts` and every file it imports | `serveRuntime`, in the project's process |
@@ -135,7 +135,7 @@ written with `defineAction` always does.
   not part of a revision: a local project gets the environment's flags as they are now — its own to change from there
   — and a cloud one follows them as they change (see [Feature flags](./feature-flags.md)).
 - It writes the server project, the source tree under `src/` (unless it already was a project's `src/`), the pages,
-  actions (`src/actions/`, listed by `src/actions.ts`), connectors (`src/connectors/`) and functions, and `package.json`
+  actions (`src/actions/`, listed by its `index.ts`), connectors (`src/connectors/`) and functions, and `package.json`
   with every package the source imports — the SDK and React at this CLI's versions, since plugins are rebuilt against
   the project's own.
 - Its `main.ts` is the one `plitzi create` writes — the same port, `/health`, reloads, `.env` and `kv` in `data/` —
@@ -200,7 +200,7 @@ plitzi push space --force        # replace the draft even though it changed sinc
 **What changed.** Since the project last had the space — its last `create --from`, `pull` or `push`, as
 `.plitzi/space.json` records: a plugin or the runtime when a file of its closure (`packSource`'s) is not the one
 recorded; the functions when `src/functions/` is not what `.plitzi/functions.json` holds; the space when a file of
-`src/space.ts`, `src/space/`, `src/actions*` or `src/connectors/` is not — and the platform says when the draft already
+`src/space/`, `src/actions/` or `src/connectors/` is not — and the platform says when the draft already
 is what was sent, and writes nothing. A project that never had the space has everything changed.
 
 **The parts, in order.** What is named goes up before what names it, and a part that fails stops the push there (what
@@ -211,7 +211,7 @@ went up before it is said, and recorded):
 | `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `pack plugin` + `upload plugin` (`--cdn`, `--bucket`) |
 | `functions` | `src/functions/` | `functions push` |
 | `runtime` | the module the runtime starts at (`create --from`'s, else `src/runtime.ts`) | `runtime push` |
-| `space` | `src/space.ts` authored, the actions `src/actions.ts` serves, the manifests in `src/connectors/` | `PUT /spaces/:spaceId/import` |
+| `space` | `src/space/` authored, the actions `src/actions/index.ts` serves, the manifests in `src/connectors/` | `PUT /spaces/:spaceId/import` |
 
 **Never over somebody's work unseen.** The export carries which state the draft is in (`draft`, a digest of its schema,
 style, actions and connectors); the project records it, and a push names it as its `base`. A draft edited in the

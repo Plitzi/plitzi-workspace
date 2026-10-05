@@ -28,7 +28,7 @@ import type { CSSProperties } from 'react';
 /**
  * The props ARE the element's attributes.
  *
- * Whatever \`src/space.ts\` writes on the \`custom\` element that hosts this arrives here by the same name — and so
+ * Whatever \`src/space/\` writes on the \`custom\` element that hosts this arrives here by the same name — and so
  * does whatever a binding writes later, which is what makes a plugin a live component rather than a static one.
  * Everything is optional and everything has a default: an attribute that has not been authored yet, or a binding
  * whose source has not answered, is \`undefined\`, and a plugin that renders nothing in that moment is a hole in
@@ -89,7 +89,7 @@ const StatCard = ({ label = 'Metric', value = 0, unit = '', series, className }:
    * \`RootElement\` is the root, and not a \`div\`.
    *
    * It is what makes this an ELEMENT rather than a component that happens to be on the page: the element's id and
-   * classes land on it, so the CSS authored on it in \`src/space.ts\` applies, the builder can select it, a test
+   * classes land on it, so the CSS authored on it in \`src/space/\` applies, the builder can select it, a test
    * can find it by name, and interactions fire on it. A plain tag renders the same pixels and none of that.
    *
    * Its \`style\` is inline, and inline outranks every class: what \`CARD\` sets — its display, its padding — the CSS

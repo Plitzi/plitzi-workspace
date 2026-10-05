@@ -33,7 +33,7 @@ bar.
    ```ts
    import { authorSpace } from '@plitzi/sdk-authoring';
 
-   import { space } from './src/space.ts';
+   import { space } from './src/space/index.ts';
 
    try {
      const { schema, warnings, suggestions } = authorSpace(space, { plugins: [] /* your declarations */ });

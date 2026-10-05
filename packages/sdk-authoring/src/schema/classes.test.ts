@@ -220,7 +220,7 @@ describe('the order of `classes`', () => {
   });
 
   // Written here, inside the package, the lines are its own and left out: an author's file reads `styles('first') at
-  // src/site/menu.ts:12`, as an element's refusal does.
+  // src/space/menu.ts:12`, as an element's refusal does.
   it('refuses a listed declaration that disagrees with the one the tree names, saying where each is', () => {
     const other = styles('first', { color: 'green' });
 

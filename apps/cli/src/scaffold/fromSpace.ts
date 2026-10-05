@@ -1,7 +1,7 @@
 import { actionSpecFromEntry, actionToSource } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 
-import { FUNCTIONS_DIR, MAIN_FILE } from './paths';
+import { ACTIONS_ENTRY, FUNCTIONS_DIR, MAIN_FILE, SPACE_ENTRY } from './paths';
 import { envFile, SDK_VERSION, withSigningSecret } from './project';
 import { PROJECT_OUTPUTS, prettierignore } from './quality';
 import { serverMain } from './server';
@@ -47,12 +47,17 @@ const decode = (base64: string): string => Buffer.from(base64, 'base64').toStrin
 /** One import line of the generated code. */
 const importLine = (names: string, from: string): string => `import ${names} from '${from}';\n`;
 
-/** `export { pizarra as space }`: the name the project's own code imports the space under, whatever it was exported as. */
-const spaceEntry = (exportName: string): string => `/**
- * The space, as Plitzi kept it, written out as the code that authors it (\`./space/\`): a file per page, the shared
- * classes in \`styles.ts\`. It is this project's now — edit it, and the next start renders the change.
+/**
+ * The space's `index.ts`, as Plitzi wrote it, exporting it as `space` too — the name the project's server, author
+ * script and checks import it by, whatever the space was exported as (`pizarra`).
  */
-export { ${exportName} as space } from './space/index.ts';
+const spaceIndex = (source: string, exportName: string): string =>
+  exportName === 'space'
+    ? source
+    : `${source.trimEnd()}
+
+/** The space, as Plitzi kept it — this project's now: edit it, and the next start renders the change. */
+export { ${exportName} as space };
 `;
 
 /** An action written as code: its file, and the name the file exports it under. */
@@ -71,7 +76,7 @@ const codedImports = (coded: readonly CodedAction[]): { lines: string; names: st
 
     return {
       name,
-      line: importLine(`{ ${name === exportName ? name : `${exportName} as ${name}`} }`, `./actions/${identifier}.ts`)
+      line: importLine(`{ ${name === exportName ? name : `${exportName} as ${name}`} }`, `./${identifier}.ts`)
     };
   });
 
@@ -89,7 +94,7 @@ import type { ActionLookups } from '@plitzi/sdk-server/actions';
 type ActionEntry = NonNullable<Awaited<ReturnType<ActionLookups['getAction']>>>;
 type Connector = NonNullable<Awaited<ReturnType<NonNullable<ActionLookups['getConnector']>>>>;
 
-/** The JSON documents of a folder beside this file: none when there is no such folder. */
+/** The JSON documents of a folder, from this one's: none when there is no such folder. */
 const read = (folder: string): unknown[] => {
   const dir = path.join(import.meta.dirname, folder);
   try {
@@ -109,7 +114,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * and, as JSON, any the builder wrote in a form code has no words for. Their ways in say whether they are on.
  */
 export const actions: ActionEntry[] = [${names.length > 0 ? `\n  ${names.join(',\n  ')},` : ''}
-  ...read('actions').flatMap(entry =>
+  ...read('.').flatMap(entry =>
     isRecord(entry) && typeof entry.id === 'string' && isRecord(entry.document)
       ? // A document Plitzi checked when it was saved, and that the server checks again on every run.
         [{ id: entry.id, document: entry.document as ActionEntry['document'] }]
@@ -119,7 +124,7 @@ export const actions: ActionEntry[] = [${names.length > 0 ? `\n  ${names.join(',
 
 /** The space's connectors, as Plitzi kept them: one JSON manifest each, in \`src/connectors/\`, by id. */
 export const connectors = new Map(
-  read('connectors').flatMap(entry =>
+  read('../connectors').flatMap(entry =>
     isRecord(entry) && typeof entry.id === 'string' && isRecord(entry.manifest)
       ? // A manifest Plitzi checked when it was saved.
         [[entry.id, entry.manifest as Connector] as const]
@@ -202,7 +207,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     Object.entries(exported.authoring.files).forEach(([path, text]) => {
       files[`src/space/${path}`] = local(text);
     });
-    files['src/space.ts'] = spaceEntry(exported.authoring.exportName);
+    files[SPACE_ENTRY] = spaceIndex(files[SPACE_ENTRY] ?? '', exported.authoring.exportName);
   }
 
   // As the code that declares each one where it reads back exactly, and as the JSON it is where it does not.
@@ -224,7 +229,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
   exported.connectors.forEach(({ identifier, name, manifest }) => {
     files[`src/connectors/${identifier}.json`] = `${JSON.stringify({ id: identifier, name, manifest }, null, 2)}\n`;
   });
-  files['src/actions.ts'] = actionsModule(coded);
+  files[ACTIONS_ENTRY] = actionsModule(coded);
   const functions = Object.fromEntries(
     Object.entries(exported.functions.files).map(([path, text]) => [path, local(text)])
   );

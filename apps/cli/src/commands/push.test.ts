@@ -31,6 +31,9 @@ let project: string;
 const space = (title: string): string =>
   `export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: '${title}', slug: '', isDefault: true, body: [] }] };\n`;
 
+/** The space's index as a person edits it: the page changed, the name the project imports it by kept. */
+const edited = (title: string): string => `${space(title)}export { pizarra as space };\n`;
+
 const read = (file: string): Promise<string> => fs.readFile(path.join(project, file), 'utf-8');
 
 const write = async (file: string, text: string): Promise<void> => {
@@ -92,7 +95,7 @@ afterEach(async () => {
 describe('plitzi push', () => {
   it('puts the space back as the draft it came from, and remembers the draft it made', async () => {
     expect((await readOrigin(project))?.draft).toBe('draft-1');
-    await write('src/space/index.ts', space('Welcome'));
+    await write('src/space/index.ts', edited('Welcome'));
 
     await push(['space'], {});
 
@@ -130,7 +133,7 @@ describe('plitzi push', () => {
     expect(platform.functions.version).toBe('v2');
     expect(platform.pizarra.imports).toHaveLength(0);
 
-    await write('src/space/index.ts', space('Welcome'));
+    await write('src/space/index.ts', edited('Welcome'));
     await push([], {});
 
     expect(platform.functions.version).toBe('v2');
@@ -167,7 +170,7 @@ describe('plitzi push', () => {
   it('records only what it sent: a change the builder made elsewhere is still the next pull’s', async () => {
     const before = (await readOrigin(project))?.files['src/functions/index.ts'];
     platform.functions = { files: { 'index.ts': 'export default { theirs: {} };\n' }, version: 'v2' };
-    await write('src/space/index.ts', space('Welcome'));
+    await write('src/space/index.ts', edited('Welcome'));
 
     await push(['space'], {});
 

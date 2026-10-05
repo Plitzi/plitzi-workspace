@@ -36,6 +36,5 @@ export const MACHINERY: ReadonlySet<string> = new Set([
   // The folders of `src/` a script watches, kept there while they are empty.
   'src/plugins/.gitkeep',
   `${FUNCTIONS_DIR}/.gitkeep`,
-  'src/actions/.gitkeep',
   'src/connectors/.gitkeep'
 ]);

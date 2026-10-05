@@ -118,9 +118,9 @@
 - **`check`, `shot` and the generated visual tests settle instead of waiting for `networkidle`**, which never came on a
   page with a realtime channel: `openPage` (`@plitzi/sdk-authoring`) waits for load, then quiet, counting no stream
   that stays open.
-- **The server is the project's in `src/serverOptions.ts`; `src/main.ts` stays the CLI's.** `create` writes
-  `src/serverOptions.ts` (handed to `createServer`, typed from `ServerConfig`, now exported by
-  `@plitzi/sdk-server`) and, with `--source local`, `src/actions.ts` (the space's server actions), which `main.ts` wires
+- **The server is the project's in `src/config/serverOptions.ts`; `src/main.ts` stays the CLI's.** `create` writes
+  `src/config/serverOptions.ts` (handed to `createServer`, typed from `ServerConfig`, now exported by
+  `@plitzi/sdk-server`) and, with `--source local`, `src/actions/index.ts` (the space’s server actions), which `main.ts` wires
   for calls, renders and schedules. What `main.ts` wires itself (the space's adapters, the plugins, `public/`,
   `src/data/`, `src/functions/`, the actions' lookups) is left out of `serverOptions`' type and comes after it, so no option unwires it.
   `upgrade` writes either file into a project that has none — only when the `main.ts` reading it is the CLI's — and
@@ -137,7 +137,7 @@
 - A `channel` with no tag is boxless to a page check, like a provider; an empty list is said to have no rows, with what
   to do, instead of "no size (0×0)".
 - **A server-mode project keeps its `kv` in `state/kv.json`** (`createFileKv`; ignored by git): what the space's actions
-  save outlives a restart, `start:dev`'s included. `action.kv` in `src/serverOptions.ts` names another store.
+  save outlives a restart, `start:dev`'s included. `action.kv` in `src/config/serverOptions.ts` names another store.
 - A server-mode project types what its plugins import besides code (`plitzi/assets.d.ts`): a stylesheet, an image,
   `?raw`, `?inline` — a client-mode one has them from `vite/client`.
 - **A project made from a space runs the server `create` writes.** `create --from` and `pull` write the same
@@ -145,7 +145,7 @@
   note on its visitors: it now takes a free port and writes `tmp/dev-server.json` (which `check`, `shot` and the visual
   tests read), answers `/health`, and re-authors its pages on save instead of waiting for a restart. Its actions are
   `src/actions/` and its connectors `src/connectors/`, both there from the start, and `start:dev` restarts on them;
-  `src/actions.ts` exports `actions` and `connectors`, as a `create` project's exports `actions` (`push` reads that).
+  `src/actions/index.ts` exports `actions` and `connectors`, as a `create` project’s exports `actions` (`push` reads that).
   `upgrade` leaves `src/main.ts` and `.prettierignore` of such a project to `pull` and says so — before, it showed them
   as the project's own, and `--take all` would have put `create`'s server in place of the space's.
 - **A `--source cloud` server project starts.** Its key is in `.env`, which nothing read: `npm start` stopped on "Set
@@ -181,6 +181,11 @@
   Vite's `import.meta.glob` in client mode).
 - `functions.plugins` is in `SSRServerConfig`'s type and checked as the server starts: a project passing its plugins'
   server halves did not typecheck.
+- **A project's source is folders that grow.** The space is `src/space/` — its `index.ts` exports it as `space` and
+  assembles the rest (the catalog template's `src/site/` is `src/space/` now; `create --from` writes the space's own
+  `index.ts` there, exported as `space` too). The server actions are `src/actions/` — `index.ts` lists them, one action
+  a file, as `create --from` already had them — and what the server does besides serving the space is
+  `src/config/serverOptions.ts`. `start:dev` watches `src/config` and `src/actions` whole.
 - **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `pull`, `push`, `pack plugin`,
   `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills
   update`: each file it would write (`+` new, `~` replaced, `-` removed), what it would install or run, what it would

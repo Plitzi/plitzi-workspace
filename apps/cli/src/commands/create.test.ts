@@ -70,16 +70,16 @@ describe('the scaffold', () => {
   it('gives a local project the space as its own source', () => {
     const files = scaffold(answers());
 
-    expect(files['src/space.ts']).toContain("from '@plitzi/sdk-authoring'");
-    expect(files['src/space.ts']).toContain("name: 'demo'");
+    expect(files['src/space/index.ts']).toContain("from '@plitzi/sdk-authoring'");
+    expect(files['src/space/index.ts']).toContain("name: 'demo'");
     // Relative imports would resolve to nothing outside the package the copy came from.
-    expect(files['src/space.ts']).not.toMatch(/from '\.\./);
+    expect(files['src/space/index.ts']).not.toMatch(/from '\.\./);
   });
 
   it('gives a cloud project no space, and reads the live one instead', () => {
     const files = scaffold(answers({ source: 'cloud', key: 'k' }));
 
-    expect(files['src/space.ts']).toBeUndefined();
+    expect(files['src/space/index.ts']).toBeUndefined();
     expect(files['src/main.ts']).toContain('createCloudAdapters');
   });
 
@@ -103,7 +103,7 @@ describe('the scaffold', () => {
   it('accepts the space module for hot replacement in the browser', () => {
     const files = scaffold(answers({ mode: 'client' }));
 
-    expect(files['src/main.ts']).toContain("import.meta.hot.accept('./space'");
+    expect(files['src/main.ts']).toContain("import.meta.hot.accept('./space/index.ts'");
     expect(files['src/main.ts']).toContain('mounted?.unmount()');
   });
 
@@ -192,7 +192,7 @@ describe('the scaffold', () => {
 
   /** The space is named after the project, and the url it derives every id from has to stay a DNS label. */
   it('names the space after the project, slugging what ids are derived from', () => {
-    const source = scaffold(answers({ name: 'My Site' }))['src/space.ts'];
+    const source = scaffold(answers({ name: 'My Site' }))['src/space/index.ts'];
 
     expect(source).toContain("name: 'My Site'");
     expect(source).toContain("permanentUrl: 'my-site'");
@@ -213,8 +213,8 @@ describe('the scaffold', () => {
     expect(files['src/plugins/StatCard/index.ts']).toContain('export default StatCard');
     expect(files['plitzi/README.md']).toContain('renderType');
     // The element that renders it, and the attributes that reach the component as props.
-    expect(files['src/space.ts']).toContain("renderType: 'statCard'");
-    expect(files['src/space.ts']).toContain("label: 'Requests today'");
+    expect(files['src/space/index.ts']).toContain("renderType: 'statCard'");
+    expect(files['src/space/index.ts']).toContain("label: 'Requests today'");
   });
 
   // A client project serves `public/`, so its numbers come from a data file through a provider — never invented.
@@ -222,8 +222,8 @@ describe('the scaffold', () => {
     const files = scaffold(answers({ mode: 'client' }));
 
     expect(JSON.parse(files['public/data/stats.json'])).toMatchObject({ value: 12480 });
-    expect(files['src/space.ts']).toContain("query: '/data/stats.json'");
-    expect(files['src/space.ts']).toContain("value: 'stats.data.value'");
+    expect(files['src/space/index.ts']).toContain("query: '/data/stats.json'");
+    expect(files['src/space/index.ts']).toContain("value: 'stats.data.value'");
   });
 
   it('pictures and checks a page from the command line, with the CLI it installs', () => {
@@ -351,7 +351,7 @@ describe('the scaffold', () => {
         verbatimModuleSyntax: true,
         erasableSyntaxOnly: true
       });
-      expect(files['plitzi/author.ts']).toContain("from '../src/space.ts'");
+      expect(files['plitzi/author.ts']).toContain("from '../src/space/index.ts'");
     }
 
     const server = JSON.parse(scaffold(answers({ mode: 'server' }))['package.json']) as {
@@ -431,8 +431,8 @@ describe('the scaffold', () => {
     for (const mode of ['server', 'client'] as const) {
       const files = scaffold(answers({ mode, template: 'blank' }));
 
-      expect(files['src/space.ts']).toContain("layout: { id: 'site', slot: 'site-main' }");
-      expect(files['src/space.ts']).toContain("permanentUrl: 'demo'");
+      expect(files['src/space/index.ts']).toContain("layout: { id: 'site', slot: 'site-main' }");
+      expect(files['src/space/index.ts']).toContain("permanentUrl: 'demo'");
       // A server reads its data from `src/data/`, never served; a project with no server fetches it from `public/`.
       expect(files[mode === 'server' ? 'src/data/.gitkeep' : 'public/data/.gitkeep']).toBe('');
       expect(files[mode === 'server' ? 'public/data/.gitkeep' : 'src/data/.gitkeep']).toBeUndefined();
@@ -449,11 +449,11 @@ describe('the scaffold', () => {
     for (const mode of ['server', 'client'] as const) {
       const files = scaffold(answers({ mode, template: 'catalog' }));
 
-      expect(files['src/space.ts']).toContain("permanentUrl: 'demo'");
-      expect(files['src/site/pages/product.ts']).toContain("slug: 'products/:slug'");
+      expect(files['src/space/index.ts']).toContain("permanentUrl: 'demo'");
+      expect(files['src/space/pages/product.ts']).toContain("slug: 'products/:slug'");
       const data = mode === 'server' ? 'src/data/products.json' : 'public/data/products.json';
       expect(JSON.parse(files[data])).toHaveProperty('products');
-      expect(files['plitzi/author.ts']).toContain("from '../src/space.ts'");
+      expect(files['plitzi/author.ts']).toContain("from '../src/space/index.ts'");
       expect(Object.keys(files).filter(file => file.startsWith('src/plugins/StatCard'))).toEqual([]);
     }
   });
@@ -529,7 +529,10 @@ describe('plitzi create', () => {
         'visual'
       ]);
       expect((await fs.readdir(path.join(target, 'src'))).sort()).toEqual([
-        'actions.ts',
+        // The space's server actions: one a file, as they grow.
+        'actions',
+        // What the server does besides serving the space.
+        'config',
         // The project's own data, read by its server and never served.
         'data',
         // The project's own server code, there from the start so `start:dev` can watch it.
@@ -537,8 +540,8 @@ describe('plitzi create', () => {
         // The entry point: the CLI's, in src/ where an entry point is looked for.
         'main.ts',
         'plugins',
-        'serverOptions.ts',
-        'space.ts'
+        // The space, as it grows: its index.ts assembles the rest.
+        'space'
       ]);
       expect(await fs.readFile(path.join(target, '.env'), 'utf-8')).toMatch(/^PLITZI_SIGNING_SECRET=[0-9a-f]{64}$/m);
       // What the files were written for, before any lockfile says it.
@@ -691,7 +694,7 @@ describe('plitzi create', () => {
       };
       // server + local: the Node tier's server package, and the space in the project.
       expect(manifest.dependencies).toHaveProperty('@plitzi/sdk-server');
-      expect(await fs.readFile(path.join(dir, 'src', 'space.ts'), 'utf-8')).toContain('SpaceSpec');
+      expect(await fs.readFile(path.join(dir, 'src', 'space', 'index.ts'), 'utf-8')).toContain('SpaceSpec');
       expect(await fs.readFile(path.join(dir, 'README.md'), 'utf-8')).toContain('pnpm');
     });
   });

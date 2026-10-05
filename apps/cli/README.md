@@ -103,7 +103,7 @@ when an install fails the CLI says which setting names it.
 
 ## What lands in the project
 
-- **The space, as yours.** A local project gets `src/space.ts` — a _copy_ of the space Plitzi gives a new
+- **The space, as yours.** A local project gets `src/space/index.ts` — a _copy_ of the space Plitzi gives a new
   account, declared as a tree, some CSS and a palette rather than exported as a document. It is the same
   declaration the platform authors a new space from, so what you start with and what signing up gives you cannot
   come apart — and unlike a document, you can read and change it.
@@ -140,7 +140,7 @@ when an install fails the CLI says which setting names it.
 | `src/data/` | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read | yes |
 | `src/functions/` | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot | yes |
 | `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), the space as last authored, screenshots and test output. Rebuilt when missing | no |
-| `state/` | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
+| `state/` | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/config/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
 | `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
 
 **`plitzi/` is the CLI's; `src/` is yours — but `src/main.ts`.** `plitzi/` holds `author.ts`, the types plugins import
@@ -148,8 +148,9 @@ when an install fails the CLI says which setting names it.
 each folder of `src/` is. `src/main.ts`, the entry point, is the CLI's too, kept in `src/` where an entry point is
 looked for; `upgrade` keeps all of them current, and the build compiles `src/` into `dist/main.js`. A plugin is declared by its folder: the server, `author` and `check` find every
 `src/plugins/<Name>/declaration.ts` (`pluginDeclarations` from `@plitzi/sdk-authoring/node`). What the server does
-besides serving the space is the project's own, in files it reads: `src/serverOptions.ts` (handed to `createServer` — `images`, `action.limits`,
-`action.kv`, `rsc`) and, with `--source local`, `src/actions.ts` (the space's server actions, one `defineAction` each).
+besides serving the space is the project's own, in files it reads: `src/config/serverOptions.ts` (handed to `createServer` —
+`images`, `action.limits`, `action.kv`, `rsc`) and, with `--source local`, `src/actions/index.ts` (the space's server
+actions, one `defineAction` each, a file each as they grow).
 What `main.ts` wires itself — where the space comes from, the plugins, `public/`, `src/data/`, `src/functions/`, the
 actions' lookups — is left out of `serverOptions`' type, and comes after it, so an option there can never unwire it.
 `src/functions/` holds the project's own server code; `start:dev` restarts on a change to any of them. A plugin is not
@@ -164,7 +165,7 @@ starts it as tokens for both themes, a layout whose `site-main` the pages render
 a folder for its data and no example plugin — for a project that is about to be a specific site. `--template catalog`
 starts it as a complete small shop to read and change: a layout with a menu, a product card component, the products
 in `src/data/products.json` read on the server as a typed source (`public/data/products.json`, fetched by the browser,
-in client mode), a catalog filtered by category, and a page per product — a file per part under `src/site/`. Both go
+in client mode), a catalog filtered by category, and a page per product — a file per part under `src/space/`. Both go
 with `--source local`.
 
 ## `check` and `shot`
@@ -269,7 +270,7 @@ the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill
 `renames` (a name a version renamed, at its file and line). A file nobody changed since the CLI wrote it is replaced;
 one the project made its own is a diff, left unless `--take` names it (`all` for every one). The generated
 `.prettierignore` names them, so the project's `format` never turns one into a file `upgrade` believes was changed. A file of the project's own
-that the machinery reads (`src/serverOptions.ts`, `src/actions.ts`) is written when the project has none and the
+that the machinery reads (`src/config/serverOptions.ts`, `src/actions/index.ts`) is written when the project has none and the
 `main.ts` reading it is the CLI's, and never replaced. A script is the same: one the CLI wrote and nobody changed takes
 today's command, one the project changed is left and said (`.plitzi/scaffold.json` records both, and the package
 manager the files were written for — what a project not installed yet has no lockfile to say). In a project made from
@@ -317,7 +318,7 @@ that names come before what names them:
    has several public buckets);
 2. `functions` — `src/functions/`, as `functions push`;
 3. `runtime` — the runtime module, as `runtime push`;
-4. `space` — `src/space.ts` authored, with the actions `src/actions.ts` serves and the connectors in `src/connectors/`.
+4. `space` — `src/space/` authored, with the actions `src/actions/index.ts` serves and the connectors in `src/connectors/`.
 
 The draft is never replaced unseen: when it was edited in the builder since the project's last pull or push, the push
 is refused — pull first, or `--force`. A project that never had the space (one not made with `create --from`) may take a
@@ -334,7 +335,7 @@ adds), its `Settings.tsx` panel for the builder, and the `index.ts` that puts th
 what the builder shows, and what it is for, and checks every folder is free before writing any.
 
 - **In a project `plitzi create` wrote**, it goes in `src/plugins`, where the project already looks: nothing to
-  register, and a running `start:dev` picks it up without a restart. Host it with `custom({ renderType: 'seatPicker' })` in `src/space.ts`
+  register, and a running `start:dev` picks it up without a restart. Host it with `custom({ renderType: 'seatPicker' })` in `src/space/`
   — or, when the space lives in Plitzi, with a Custom element in the builder.
 - **In a plugin package**, it goes in `src/`, and is added to `src/elements.ts` and `src/declarations.ts`, from which
   the package publishes it.

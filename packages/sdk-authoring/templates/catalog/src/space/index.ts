@@ -1,16 +1,16 @@
 /* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * The space, assembled: a file per part, so each stays short enough to read whole — the tokens, the layout every page
- * shares, the product card, and one file per page. Add a page under `site/pages` and list it here.
+ * shares, the product card, and one file per page. Add a page under `pages/` and list it here.
  *
  * The products are `src/data/products.json`, the project's own: a provider on each page reads it on the server.
  */
-import { productCard } from './site/components/productCard.ts';
-import { layout } from './site/layout.ts';
-import { catalog } from './site/pages/catalog.ts';
-import { home } from './site/pages/home.ts';
-import { product } from './site/pages/product.ts';
-import { variables } from './site/tokens.ts';
+import { productCard } from './components/productCard.ts';
+import { layout } from './layout.ts';
+import { catalog } from './pages/catalog.ts';
+import { home } from './pages/home.ts';
+import { product } from './pages/product.ts';
+import { variables } from './tokens.ts';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
