@@ -48,14 +48,24 @@ describe('siteOwnership', () => {
   });
 
   it('takes a site a verified domain of one of the person’s spaces covers', async () => {
-    expect(await siteOwnership(new URL('https://www.shop.example.com/pricing'), { api: platform.api })).toEqual({
+    expect(
+      await siteOwnership(new URL('https://www.shop.example.com/pricing'), { api: platform.api, account: true })
+    ).toEqual({
       ok: true,
       said: 'shop.example.com, verified for Website'
     });
   });
 
+  /** A project of its own reaches no account because a command ran: only when the person asks for it. */
+  it('asks no account unless told to — not even to say whether one would answer — and says how to ask', async () => {
+    const answer = await siteOwnership(new URL('https://www.shop.example.com/'), { api: 'http://127.0.0.1:1' });
+
+    expect(answer.ok).toBe(false);
+    expect('problem' in answer ? answer.problem : '').toContain('run it again with --account');
+  });
+
   it('refuses any other site, saying how to show it is theirs', async () => {
-    const answer = await siteOwnership(new URL('https://example.org/'), { api: platform.api });
+    const answer = await siteOwnership(new URL('https://example.org/'), { api: platform.api, account: true });
 
     expect(answer.ok).toBe(false);
     expect('problem' in answer ? answer.problem : '').toContain('publish the `_plitzi` TXT record');

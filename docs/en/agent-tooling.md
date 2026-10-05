@@ -55,8 +55,10 @@ child with an id, options or a class of the space's own stays, said.
 **`plitzi import` reads only a site that is the user's.** Its risk is reuse of somebody else's site, so it carries no
 words — tokens, the outline of the blocks with their layout per breakpoint, the repeated lists as JSON rows to replace,
 screenshots, and `IMPORT.md` saying what was not carried over — and it opens a page only when the user has shown the
-site is theirs: a verified domain of one of their spaces that covers the host (the `_plitzi` TXT record, asked of the
-platform with `GET /account/domains/covering`), or a host that resolves to this machine. A domain of the platform's own
+site is theirs: a host that resolves to this machine, asking nobody; or, with `--account`, a verified domain of one of
+their spaces that covers the host (the `_plitzi` TXT record, asked of the platform with `GET /account/domains/covering`,
+signed in). The account is reached only when that flag asks for it — a local project otherwise reaches none — and the
+skill tells an agent to run `import` only when the user asks, and to ask before `--account`. A domain of the platform's own
 (`*.plitzi.app`) proves nothing and is never proof. The dark values of the colours are read where each light colour
 was seen, not paired by rank.
 

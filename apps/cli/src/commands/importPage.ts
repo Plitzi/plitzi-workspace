@@ -11,7 +11,7 @@ import { siteOwnership } from './siteOwnership';
 import { fail } from './terminal';
 import { launchBrowser } from '../browser';
 
-import type { AccountOptions } from './account';
+import type { OwnershipOptions } from './siteOwnership';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk-authoring';
 
@@ -21,13 +21,14 @@ import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk
  * layout per breakpoint, the lists it repeats as JSON rows, the pictures it shows, and a screenshot per width. Never
  * its words: the structure is what takes longest to work out by hand, and the content is the owner's.
  *
- * Only a site that is the person's: a verified domain of one of their spaces covering it (`siteOwnership`), or one
- * served from this machine.
+ * Only a site that is the person's: one served from this machine, or — asked of their Plitzi account, with `--account`
+ * — one a verified domain of one of their spaces covers (`siteOwnership`).
  *
- *   plitzi import https://example.com/pricing --out src/pricing
+ *   plitzi import http://localhost:3000/pricing --out src/pricing
+ *   plitzi import https://example.com/pricing --account
  */
 
-export interface ImportOptions extends AccountOptions {
+export interface ImportOptions extends OwnershipOptions {
   out?: string;
   /** Validated where the flag is declared (`widths` in options.ts). */
   width?: number[];

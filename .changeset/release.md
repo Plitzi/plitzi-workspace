@@ -158,6 +158,10 @@
   npm and its `AGENTS.md`, Playwright config and `.gitignore` replaced with npm's commands.
 - `author`, `check`, `fix` and `push` know the element types of a project's built-only plugins
   (`vendor/plugins/*/plugin-manifest.json`, every element each provides), as its server does.
+- **`import` reaches Plitzi only when told to.** A site not served from this machine needs `--account` — ask the
+  person's Plitzi account whether one of their spaces verified its domain, signing in — and without it is refused,
+  saying so, before any request: an agent running `import` in a local project opened a sign-in nobody asked for. The
+  CLI skill and the generated `AGENTS.md` say to run `import` only when the user asks, and to ask before `--account`.
 - **A new project is formatted from the start**, every template and mode: its first `format` changes nothing. The CLI's
   own files are in its `.prettierignore`, so formatting never turns one into a file `upgrade` believes was changed.
 

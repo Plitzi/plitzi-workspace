@@ -289,6 +289,10 @@ program
     widthsOption('The widths it is measured at: the widest is desktop, then tablet and mobile', [1440, 768, 390])
   )
   .option('-f, --force', 'Write over what --out already holds')
+  .option(
+    '--account',
+    'A site not served from this machine: ask your Plitzi account whether one of your spaces verified its domain (signs in)'
+  )
   .option('--json', 'One object, for a tool or an agent')
   .option(...API_OPTION)
   .action((url: string, options: ImportOptions) => importPage(url, options));
