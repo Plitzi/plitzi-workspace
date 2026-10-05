@@ -137,6 +137,8 @@ when an install fails the CLI says which setting names it.
 `src/main.ts` is the CLI's (`upgrade` keeps it current). What the server does besides serving the space is the
 project's own, in files it reads: `src/serverOptions.ts` (handed to `createServer` — `images`, `action.limits`,
 `action.kv`, `rsc`) and, with `--source local`, `src/actions.ts` (the space's server actions, one `defineAction` each).
+What `main.ts` wires itself — where the space comes from, the plugins, `public/`, `functions/`, the actions' lookups —
+is left out of `serverOptions`' type, and comes after it, so an option there can never unwire it.
 `functions/` holds the project's own server code; `start:dev` restarts on a change to any of them.
 
 ## `create --template blank` and `--template catalog`
@@ -247,8 +249,9 @@ Playwright and lint configs, `AGENTS.md`), `packages` (`package.json` merged, `@
 the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill no longer has goes with it) and
 `renames` (a name a version renamed, at its file and line). A file nobody changed since the CLI wrote it is replaced;
 one the project made its own is a diff, left unless `--take` names it (`all` for every one). A file of the project's own
-that the machinery now reads (`src/serverOptions.ts`, `src/actions.ts`) is written when the project has none, and never
-replaced. `update` is the same
+that the machinery reads (`src/serverOptions.ts`, `src/actions.ts`) is written when the project has none and the
+`main.ts` reading it is the CLI's, and never replaced. A script is the same: one the CLI wrote and nobody changed takes
+today's command, one the project changed is left and said (`.plitzi/scaffold.json` records both). `update` is the same
 command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
 older than the `@plitzi/sdk-authoring` installed.
 

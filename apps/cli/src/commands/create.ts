@@ -6,7 +6,7 @@ import chalk from 'chalk';
 
 import { apiFor } from './account';
 import { fetchExport, recordOrigin, versionLabel, writeFromSpace } from './createFrom';
-import { digestOf, writeScaffoldRecord } from './scaffoldRecord';
+import { digestOf, scriptsOf, writeScaffoldRecord } from './scaffoldRecord';
 import {
   ask,
   atTerminal,
@@ -249,8 +249,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   const files = Object.fromEntries(
     Object.entries(scaffold(answers)).filter(([file]) => !fromSpace?.omit.includes(file))
   );
-  await writeFiles(
-    target,
+  const written =
     exported && fromSpace
       ? {
           ...files,
@@ -258,19 +257,19 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
           'package.json': packageJson(answers, fromSpace.dependencies),
           '.env': envFromSpace(exported, answers, randomBytes(32).toString('hex'))
         }
-      : files
-  );
+      : files;
+  await writeFiles(target, written);
   const missing = fromSpace ? await writeFromSpace(target, fromSpace) : [];
   // What of the CLI's machinery was written, by digest: what lets `plitzi upgrade` replace a file nobody touched since.
-  await writeScaffoldRecord(
-    target,
-    CLI_VERSION,
-    Object.fromEntries(
+  await writeScaffoldRecord(target, CLI_VERSION, {
+    files: Object.fromEntries(
       Object.keys(machineryFiles(answers))
         .filter(file => file in files)
         .map(file => [file, digestOf(files[file])])
-    )
-  );
+    ),
+    // And the scripts it wrote, so `upgrade` can tell one nobody changed from one the project made its own.
+    scripts: scriptsOf(written['package.json'])
+  });
 
   const wantsInstall = options.install !== false;
   const installed = wantsInstall && (await install(packageManager, target));

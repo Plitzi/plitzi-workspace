@@ -88,7 +88,12 @@
 - **The server is the project's in `src/serverOptions.ts`; `src/main.ts` stays the CLI's.** `create` writes
   `src/serverOptions.ts` (handed to `createServer`, typed `Partial<ServerConfig>` — now exported by
   `@plitzi/sdk-server`) and, with `--source local`, `src/actions.ts` (the space's server actions), which `main.ts` wires
-  for calls, renders and schedules. `upgrade` writes either one into a project that has none, and never replaces it.
+  for calls, renders and schedules. What `main.ts` wires itself (the space's adapters, the plugins, `public/`,
+  `functions/`, the actions' lookups) is left out of `serverOptions`' type and comes after it, so no option unwires it.
+  `upgrade` writes either file into a project that has none — only when the `main.ts` reading it is the CLI's — and
+  never replaces it; `create --from` projects read `serverOptions.ts` too.
+- **`upgrade packages` brings up the scripts the CLI wrote and nobody changed** (`.plitzi/scaffold.json` now records
+  them); a script the project changed is left and said, as before.
 - `start:dev` restarts on a change to the server's code — `serverOptions.ts`, `actions.ts`, the plugins and
   `functions/` (whose `README.md` the project now starts with). A function imports its siblings with `.ts`, as `src/`.
 - `add plugin`: `--prop rows:list` and `--prop meta:json` for data a binding fills; `--headless` writes

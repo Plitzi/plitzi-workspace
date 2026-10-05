@@ -152,6 +152,12 @@ const actionLookups: ActionLookups = {
 // What \`/health\` answers with, and \`${DEV_SERVER_FILE}\` records: how a tool knows it reached THIS project.
 const SERVER_NAME = schema.definition.permanentUrl;
 const server = createServer({
+  // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
+  logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
+  logger: consoleLogger,
+  // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own. What follows is this
+  // file's, and comes after it: the space, its plugins, its files and its code are wired here.
+  ...serverOptions,
   port: PORT,
   devMode: process.env.NODE_ENV !== 'production',
   // A save to the space re-authors it and the open pages load again (\`watchSpace\` below).
@@ -165,11 +171,6 @@ const server = createServer({
   // \`public/\` served as it is: the data an apiContainer reads (\`/data/home.json\`), images, a favicon.
   publicDir: path.join(PROJECT_ROOT, 'public'),
   functions: { native: functions },
-  // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
-  logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
-  logger: consoleLogger,
-  // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own.
-  ...serverOptions,
   action: { ...serverOptions.action, lookups: actionLookups }
 });
 
@@ -287,6 +288,12 @@ const functions = await loadFunctions(new URL('../functions/', import.meta.url))
 // What \`/health\` answers with, and \`${DEV_SERVER_FILE}\` records: how a tool knows it reached THIS project.
 const SERVER_NAME = ${JSON.stringify(name)};
 const server = createServer({
+  // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
+  logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
+  logger: consoleLogger,
+  // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own. What follows is this
+  // file's, and comes after it: the space, its plugins, its files and its code are wired here.
+  ...serverOptions,
   port: PORT,
   devMode: process.env.NODE_ENV !== 'production',
   health: { name: SERVER_NAME },
@@ -301,11 +308,7 @@ const server = createServer({
   // \`public/\` served as it is: the data an apiContainer reads (\`/data/home.json\`), images, a favicon.
   publicDir: path.join(PROJECT_ROOT, 'public'),
   functions: { native: functions },
-  // What went wrong and nothing else: \`npm start -- --verbose\` adds a line for every request.
-  logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
-  logger: consoleLogger,
-  // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own.
-  ...serverOptions
+  action: serverOptions.action
 });
 
 ${LISTEN_SNIPPET}
@@ -330,12 +333,19 @@ const ACTION_OPTIONS_DOC = ` * - \`action: { limits: { maxRequests, timeoutMs } 
 
 const serverOptionsModule = (local: boolean): string => `import type { ServerConfig } from '@plitzi/sdk-server';
 
-/** What \`createServer\` takes, every option of it optional: \`src/main.ts\` sets the rest. */
-type ServerOptions = Partial<ServerConfig>;
+/** What \`src/main.ts\` sets itself — where the space comes from, its plugins, its files, its code — so not this file's. */
+type SetByMain =
+  'port' | 'devMode' | 'devReload' | 'health' | 'adapters' | 'plugins' | 'publicDir' | 'functions' | 'action';
+
+/** What \`createServer\` takes but for what \`src/main.ts\` sets — and an action's \`lookups\`: \`src/actions.ts\`. */
+type ServerOptions = Partial<Omit<ServerConfig, SetByMain>> & {
+  action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
+};
 
 /**
  * What this project's server does besides serving the space — yours. \`src/main.ts\` is the CLI's (\`plitzi upgrade\`
- * keeps it current) and hands these to \`createServer\` over what it sets itself. The ones a project reaches for:
+ * keeps it current) and hands these to \`createServer\`; what it sets itself is not offered here, and wins if written.
+ * The ones a project reaches for:
  *
  * - \`images: { domains: ['images.example.com'] }\` — pictures from those hosts resized here, with \`sharp\` installed.
 ${local ? ACTION_OPTIONS_DOC : ''} * - \`rsc: { elementTimeoutMs }\` — how long a section resolved on the server is waited for: 5 s by default.

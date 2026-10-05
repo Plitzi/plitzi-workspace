@@ -24,7 +24,8 @@ import type { CreateAnswers } from '../scaffold';
  *   nobody changed since the CLI wrote it is replaced; one the project made its own is shown as a diff and left, unless
  *   `--take` names it.
  * - `packages`: `package.json` merged — the scripts and dependencies it lacks added, `@plitzi/*` raised to this
- *   version. A script or a dependency the project has is never changed; then the install.
+ *   version. A dependency the project has is never changed, nor a script it changed — one the CLI wrote and nobody touched
+ *   since (the scaffold record) takes today's command; then the install.
  * - `skills`: `.claude/skills/plitzi-*` from the packages installed, each replaced whole.
  * - `renames`: a name a version renamed, still written in the source (`canTemplate`), at its file and line — and with
  *   `--write`, renamed.
@@ -135,8 +136,12 @@ interface PackagesPlan {
   added: { section: Section; name: string; range: string }[];
   raised: { section: Section; name: string; from: string; to: string }[];
   scripts: { name: string; command: string }[];
+  /** Scripts the CLI wrote and nobody changed since, brought up to what it writes now. */
+  updatedScripts: { name: string; from: string; to: string }[];
   /** Scripts the project wrote otherwise: left as they are, and said. */
   ownScripts: { name: string; yours: string; ours: string }[];
+  /** The CLI's scripts as the project has them afterwards — what the record says the CLI wrote. */
+  recorded: Record<string, string>;
   /** The merged file, when anything changes. */
   after?: string;
 }
@@ -166,20 +171,31 @@ const stringsOf = (value: unknown): Record<string, string> =>
       )
     : {};
 
-const planPackages = (text: string, answers: CreateAnswers): PackagesPlan => {
+/**
+ * `package.json` brought up to the CLI. `wrote` is what the CLI wrote of its scripts (the scaffold record): one the
+ * project still has as written is the CLI's and takes today's command; one it changed is its own and is only said.
+ */
+const planPackages = (text: string, answers: CreateAnswers, wrote: Record<string, string> = {}): PackagesPlan => {
   const parsed: unknown = JSON.parse(text);
   const ours: unknown = JSON.parse(packageJson(answers));
   const project = isRecord(parsed) ? { ...parsed } : {};
   const scaffold = isRecord(ours) ? ours : {};
-  const plan: PackagesPlan = { added: [], raised: [], scripts: [], ownScripts: [] };
+  const plan: PackagesPlan = { added: [], raised: [], scripts: [], updatedScripts: [], ownScripts: [], recorded: {} };
 
   const scripts = stringsOf(project.scripts);
   for (const [name, command] of Object.entries(stringsOf(scaffold.scripts))) {
     if (!(name in scripts)) {
       plan.scripts.push({ name, command });
       scripts[name] = command;
+    } else if (scripts[name] !== command && wrote[name] === scripts[name]) {
+      plan.updatedScripts.push({ name, from: scripts[name], to: command });
+      scripts[name] = command;
     } else if (scripts[name] !== command) {
       plan.ownScripts.push({ name, yours: scripts[name], ours: command });
+    }
+
+    if (scripts[name] === command) {
+      plan.recorded[name] = command;
     }
   }
 
@@ -205,7 +221,7 @@ const planPackages = (text: string, answers: CreateAnswers): PackagesPlan => {
     }
   }
 
-  if (plan.added.length + plan.raised.length + plan.scripts.length === 0) {
+  if (plan.added.length + plan.raised.length + plan.scripts.length + plan.updatedScripts.length === 0) {
     return plan;
   }
 
@@ -270,17 +286,29 @@ const planFiles = async (
     })
   );
 
-/** The project's own files the machinery imports that it does not have yet — written once, never replaced. */
-const planSeeds = async (root: string, files: Record<string, string>): Promise<FilePlan[]> =>
-  (
-    await Promise.all(
-      Object.entries(files).map(async ([file, ours]): Promise<FilePlan | undefined> =>
-        (await readText(path.join(root, file))) === undefined ? { file, status: 'seeded', ours } : undefined
-      )
-    )
-  ).filter((plan): plan is FilePlan => plan !== undefined);
-
 const WRITES: ReadonlySet<FileStatus> = new Set(['added', 'updated', 'taken']);
+
+/**
+ * The project's own files the machinery imports that it does not have yet — written once, never replaced, and only
+ * beside a machinery file of the CLI's that reads them: one the project kept as its own reads nothing of them.
+ */
+const planSeeds = async (
+  root: string,
+  seeds: { file: string; contents: string; readBy: string }[],
+  plans: readonly FilePlan[]
+): Promise<FilePlan[]> => {
+  const theCli = (file: string) =>
+    plans.some(plan => plan.file === file && (WRITES.has(plan.status) || plan.status === 'current'));
+  const planned = await Promise.all(
+    seeds.map(async ({ file, contents, readBy }): Promise<FilePlan | undefined> =>
+      theCli(readBy) && (await readText(path.join(root, file))) === undefined
+        ? { file, status: 'seeded', ours: contents }
+        : undefined
+    )
+  );
+
+  return planned.filter((plan): plan is FilePlan => plan !== undefined);
+};
 
 // --- skills --------------------------------------------------------------------------------------------------------
 
@@ -348,7 +376,7 @@ interface UpgradeReport {
   version: string;
   write: boolean;
   files?: { file: string; status: FileStatus; diff?: string }[];
-  packages?: Omit<PackagesPlan, 'after'> & { install?: 'done' | 'failed' | 'needed' };
+  packages?: Omit<PackagesPlan, 'after' | 'recorded'> & { install?: 'done' | 'failed' | 'needed' };
   skills?: SkillPlan[];
   renames?: RenameFound[];
 }
@@ -376,13 +404,14 @@ const reportText = (report: UpgradeReport): string => {
   }
 
   if (report.packages) {
-    const { added, raised, scripts, ownScripts, install: installed } = report.packages;
-    const none = added.length + raised.length + scripts.length === 0;
+    const { added, raised, scripts, updatedScripts, ownScripts, install: installed } = report.packages;
+    const none = added.length + raised.length + scripts.length + updatedScripts.length === 0;
     lines.push(none ? chalk.green('packages: up to date') : 'packages:');
     lines.push(
       ...raised.map(entry => chalk.green(`  ~ ${entry.name} ${entry.from} → ${entry.to}`)),
       ...added.map(entry => chalk.green(`  + ${entry.name} ${entry.range} (${entry.section})`)),
       ...scripts.map(entry => chalk.green(`  + script ${entry.name}: ${entry.command}`)),
+      ...updatedScripts.map(entry => chalk.green(`  ~ script ${entry.name}: ${entry.to}`)),
       ...ownScripts.map(entry =>
         chalk.dim(`  = script ${entry.name} is yours ("${entry.yours}"; the CLI writes "${entry.ours}")`)
       )
@@ -451,7 +480,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     const ours = machineryFiles(answers);
     const recorded = (await readScaffoldRecord(root))?.files ?? {};
     const plans = await planFiles(root, ours, recorded, options.take ?? []);
-    const seeds = await planSeeds(root, seedFiles(answers));
+    const seeds = await planSeeds(root, seedFiles(answers), plans);
     if (write) {
       const written = [...plans.filter(plan => WRITES.has(plan.status)), ...seeds];
       await writeFiles(root, Object.fromEntries(written.map(plan => [plan.file, plan.ours])));
@@ -465,7 +494,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
           return plan.file in recorded ? [[plan.file, recorded[plan.file]]] : [];
         })
       );
-      await writeScaffoldRecord(root, CLI_VERSION, digests);
+      await writeScaffoldRecord(root, CLI_VERSION, { files: digests });
     }
 
     report.files = [...plans, ...seeds].map(plan => ({
@@ -479,9 +508,10 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
 
   if (answers && wanted.has('packages')) {
     const text = await readText(path.join(root, 'package.json'));
-    const plan = text === undefined ? undefined : planPackages(text, answers);
+    const wrote = (await readScaffoldRecord(root))?.scripts;
+    const plan = text === undefined ? undefined : planPackages(text, answers, wrote);
     if (plan) {
-      const { after, ...rest } = plan;
+      const { after, recorded, ...rest } = plan;
       let installed: 'done' | 'failed' | 'needed' | undefined;
       if (after !== undefined) {
         installed = 'needed';
@@ -491,6 +521,11 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
             installed = (await install(manager, root)) ? 'done' : 'failed';
           }
         }
+      }
+
+      // Recorded even when nothing changed: a project from before scripts were kept learns which are still the CLI's.
+      if (write) {
+        await writeScaffoldRecord(root, CLI_VERSION, { scripts: recorded });
       }
 
       report.packages = { ...rest, ...(installed === undefined ? {} : { install: installed }) };

@@ -84,7 +84,9 @@ describe('plitzi upgrade', () => {
     // The project's own: no record says the CLI wrote it so.
     await fs.writeFile(file('playwright.config.ts'), '// tuned by hand\n');
     await fs.rm(file('eslint.config.mjs'));
-    await writeScaffoldRecord(root, '0.37.9', { 'src/author.ts': digestOf('// the author script of an older CLI\n') });
+    await writeScaffoldRecord(root, '0.37.9', {
+      files: { 'src/author.ts': digestOf('// the author script of an older CLI\n') }
+    });
 
     const shown = await run(['files']);
     const statuses = Object.fromEntries(
@@ -134,6 +136,23 @@ describe('plitzi upgrade', () => {
     expect(await read('src/serverOptions.ts')).toBe(scaffold(ANSWERS)['src/serverOptions.ts']);
     expect(await read('src/actions.ts')).toBe('// mine\n');
     expect((await readScaffoldRecord(root))?.files['src/serverOptions.ts'], 'recorded as the CLI’s').toBeUndefined();
+  });
+
+  /** Beside a `main.ts` the project kept as its own, nothing reads them: they are written with the CLI's `main.ts`. */
+  it('writes them only beside the CLI’s own file that reads them', async () => {
+    await fs.rm(file('src/serverOptions.ts'));
+    // Still a project the CLI knows — it finds its plugins in `src/plugins` — with a server of its own.
+    await fs.writeFile(file('src/main.ts'), `// my own server, with its plugins from './plugins/'\n`);
+
+    const shown = await run(['files'], { write: true });
+    const named = recordsIn(shown.files).map(entry => entry.file);
+
+    expect(named).not.toContain('src/serverOptions.ts');
+    await expect(fs.access(file('src/serverOptions.ts'))).rejects.toThrow();
+
+    await run(['files'], { write: true, take: ['src/main.ts'] });
+
+    expect(await read('src/serverOptions.ts')).toBe(scaffold(ANSWERS)['src/serverOptions.ts']);
   });
 
   it('never names the project’s own files — its space, pages and README', async () => {
@@ -187,6 +206,40 @@ describe('plitzi upgrade', () => {
       dependencies: { '@plitzi/plitzi-sdk': `^${CLI_VERSION}`, 'left-pad': '^1.3.0' },
       devDependencies: { '@plitzi/cli': `^${CLI_VERSION}` }
     });
+  });
+
+  /**
+   * A script the CLI wrote and nobody changed is the CLI's: it takes what the CLI writes today — `start:dev` watching
+   * the files a project now has. One the project changed stays its own; and only the CLI's are recorded as such.
+   */
+  it('brings up the scripts the CLI wrote and nobody changed, and leaves a changed one to the project', async () => {
+    const manifest: unknown = JSON.parse(await read('package.json'));
+    if (!isRecord(manifest) || !isRecord(manifest.scripts)) {
+      throw new Error('the scaffold wrote no scripts');
+    }
+
+    const older = {
+      ...manifest.scripts,
+      'start:dev': 'node --watch-path=./src/main.ts src/main.ts',
+      lint: 'eslint src'
+    };
+    await fs.writeFile(file('package.json'), `${JSON.stringify({ ...manifest, scripts: older }, null, 2)}\n`);
+    // An older CLI wrote `start:dev` as it is now; `lint` the project changed since.
+    await writeScaffoldRecord(root, '0.38.4', {
+      scripts: { ...(manifest.scripts as Record<string, string>), 'start:dev': older['start:dev'] }
+    });
+
+    const shown = await run(['packages'], { write: true });
+
+    expect(shown.packages).toMatchObject({
+      updatedScripts: [{ name: 'start:dev', from: older['start:dev'], to: manifest.scripts['start:dev'] }],
+      ownScripts: [{ name: 'lint', yours: 'eslint src' }]
+    });
+    const written: unknown = JSON.parse(await read('package.json'));
+    expect(written).toMatchObject({ scripts: { 'start:dev': manifest.scripts['start:dev'], lint: 'eslint src' } });
+    const recorded = (await readScaffoldRecord(root))?.scripts;
+    expect(recorded?.['start:dev']).toBe(manifest.scripts['start:dev']);
+    expect(recorded, 'the project’s own script recorded as the CLI’s').not.toHaveProperty('lint');
   });
 
   it('brings every Plitzi skill to the installed version, whole, and leaves the project’s own skills alone', async () => {

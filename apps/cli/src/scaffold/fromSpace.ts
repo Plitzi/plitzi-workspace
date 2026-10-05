@@ -297,6 +297,10 @@ ${hasRuntime ? `\n${runtimeLines(options)}\n` : ''}${visitorRoles.length > 0 ? `
  */
 const server = createServer(
   {
+    logger: consoleLogger,
+    // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own. What follows is this
+    // file's, and comes after it: the space, its plugins, its files and its code are wired here.
+    ...serverOptions,
     port: PORT,
     devMode: process.env.NODE_ENV !== 'production',
     adapters: ${
@@ -316,10 +320,7 @@ const server = createServer(
     publicDir: path.join(PROJECT_ROOT, 'public'),
     functions: { native: ${hasRuntime ? '[...functions, ...runtime.native]' : 'functions'} },
     // What \`ctx.sign\` and \`ctx.verify\` sign with: the key that was the space's on Plitzi stays there.
-    logger: consoleLogger,
-    // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own.
-    ...serverOptions,
-    action: { ...serverOptions.action, lookups, signingSecret: process.env.PLITZI_SIGNING_SECRET }
+    action: { signingSecret: process.env.PLITZI_SIGNING_SECRET, ...serverOptions.action, lookups }
   }${hasRuntime ? ',\n  { preAuth: [runtime.stage] }' : ''}
 );
 

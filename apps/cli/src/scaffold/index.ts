@@ -86,11 +86,16 @@ export const machineryFiles = (answers: CreateAnswers): ProjectFiles =>
   Object.fromEntries(Object.entries(scaffold(answers)).filter(([file]) => MACHINERY.has(file)));
 
 /**
- * The project's own files the machinery imports: written by `create`, the project's from then on — and written by
- * `plitzi upgrade` only into a project that does not have one yet, which an upgraded `main.ts` would otherwise fail to
- * start without.
+ * The project's own files the machinery imports, by the machinery file that reads them: written by `create`, the
+ * project's from then on. `plitzi upgrade` writes one into a project that has none only when the file reading it is
+ * the CLI's — written by this upgrade or already current: beside a `main.ts` the project made its own, nothing reads it.
  */
-const SEEDS = new Set(['src/serverOptions.ts', 'src/actions.ts']);
+const SEEDS: Readonly<Record<string, string>> = {
+  'src/serverOptions.ts': 'src/main.ts',
+  'src/actions.ts': 'src/main.ts'
+};
 
-export const seedFiles = (answers: CreateAnswers): ProjectFiles =>
-  Object.fromEntries(Object.entries(scaffold(answers)).filter(([file]) => SEEDS.has(file)));
+export const seedFiles = (answers: CreateAnswers): { file: string; contents: string; readBy: string }[] =>
+  Object.entries(scaffold(answers)).flatMap(([file, contents]) =>
+    Object.hasOwn(SEEDS, file) ? [{ file, contents, readBy: SEEDS[file] }] : []
+  );

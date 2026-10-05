@@ -313,7 +313,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
       : `${run('start')} runs Vite on 5173.`;
   const serverNotes =
     answers.mode === 'server'
-      ? `- **The server is yours in ${code('src/serverOptions.ts')}**, not in ${code('src/main.ts')} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there${local ? `, and the space's server actions are ${code('src/actions.ts')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
+      ? `- **The server is yours in ${code('src/serverOptions.ts')}**, not in ${code('src/main.ts')} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('main.ts')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions.ts')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
       : '';
   const serverData =
     answers.mode === 'server'
