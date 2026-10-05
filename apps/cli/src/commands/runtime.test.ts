@@ -72,9 +72,14 @@ afterEach(async () => {
 describe('plitzi runtime', () => {
   it('packs the module with the project’s own sdk-server, and keeps it as the draft runtime', async () => {
     await installSdkServer();
-    await fs.writeFile(path.join(project, 'src', 'greeting.ts'), 'export const greet = (name: string) => name;\n');
+    // A folder, as it grows: the module beside the one it imports.
+    await fs.mkdir(path.join(project, 'src', 'runtime'), { recursive: true });
     await fs.writeFile(
-      path.join(project, 'src', 'runtime.ts'),
+      path.join(project, 'src', 'runtime', 'greeting.ts'),
+      'export const greet = (name: string) => name;\n'
+    );
+    await fs.writeFile(
+      path.join(project, 'src', 'runtime', 'index.ts'),
       'import { greet } from "./greeting";\nexport default { start: () => ({ said: greet("x") }) };\n'
     );
 
@@ -93,7 +98,7 @@ describe('plitzi runtime', () => {
   it('says where the module should be when there is none, and sends nothing', async () => {
     await pushRuntime({ api: platform.api });
 
-    expect(said.err).toContain('There is no src/runtime.ts');
+    expect(said.err).toContain('There is no src/runtime/index.ts');
     expect(platform.runtime.pushed).toEqual([]);
   });
 

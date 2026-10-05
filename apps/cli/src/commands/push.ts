@@ -8,6 +8,7 @@ import { askChecks } from './askChecks';
 import { requestExport, versionLabel } from './createFrom';
 import { sayDryRun } from './dryRun';
 import { findProject, readPackageJson } from './existingProject';
+import { filesUnder } from './filesUnder';
 import { functionsChange, pushFunctionsOf } from './functions';
 import { elementFolders, fileNameOf } from './packPlugin';
 import { projectFormatter } from './projectFormatter';
@@ -77,19 +78,6 @@ const exists = async (file: string): Promise<boolean> => {
     return true;
   } catch {
     return false;
-  }
-};
-
-/** Every file under a folder of the project, by its path in the project: none when there is no such folder. */
-const filesUnder = async (root: string, folder: string): Promise<string[]> => {
-  try {
-    const entries = await fs.readdir(path.join(root, folder), { recursive: true, withFileTypes: true });
-
-    return entries
-      .filter(entry => entry.isFile())
-      .map(entry => path.relative(root, path.join(entry.parentPath, entry.name)));
-  } catch {
-    return [];
   }
 };
 
@@ -191,11 +179,9 @@ const survey = async (
   }
 
   const entries = before && projectEntries(before);
-  // Where the space's runtime starts in the project, as `create --from` wrote it — or where `plitzi create` puts one.
-  const candidates = [...(entries?.runtime ? [entries.runtime] : []), DEFAULT_RUNTIME_ENTRY];
-  const present = await Promise.all(candidates.map(entry => exists(path.join(root, entry))));
-  const runtimeEntry = candidates.find((_entry, index) => present[index]);
-  if (runtimeEntry) {
+  // Where the space's runtime is, as `plitzi add runtime` and `create --from` write it alike.
+  if (await exists(path.join(root, DEFAULT_RUNTIME_ENTRY))) {
+    const runtimeEntry = DEFAULT_RUNTIME_ENTRY;
     const entry = path.join(root, runtimeEntry);
     const files = await closureOf(root, 'runtime', 'runtime', [entry]);
     found.push({
@@ -526,7 +512,11 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
     } else if (item.part === 'runtime') {
       outcome = await pushRuntimeOf(root, connection, space, item.entry);
     } else {
-      const pushed = await pushSpaceOf(root, connection, space, { base: origin?.draft ?? null, force });
+      const pushed = await pushSpaceOf(root, connection, space, {
+        base: origin?.draft ?? null,
+        force,
+        downloads: origin?.downloads ?? {}
+      });
       outcome = pushed.outcome;
       draft = pushed.draft;
     }

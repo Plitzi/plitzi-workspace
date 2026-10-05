@@ -92,6 +92,9 @@ const answers = (source: CreateAnswers['source'] = 'local'): CreateAnswers => ({
 
 const SECRET = 's'.repeat(64);
 
+/** The server every server project runs, a project made from a space included. */
+const serverMain = scaffold({ ...answers(), fromSpace: true })['src/main.ts'];
+
 describe('a project made from a space', () => {
   const project = projectFromSpace(exported(), 'local');
 
@@ -114,8 +117,14 @@ describe('a project made from a space', () => {
     ]);
   });
 
+  /** Its server is every project's: what it brought besides is read from where it lands, so `upgrade` keeps it. */
+  it('writes no server of its own — the one every project has runs what the space brought', () => {
+    expect(project.files['src/main.ts']).toBeUndefined();
+    expect(project.files['.prettierignore']).toBeUndefined();
+  });
+
   it('runs a plugin it has no source of as it was built, on its server and authored as a plugin’s', () => {
-    const main = project.files['src/main.ts'];
+    const main = serverMain;
 
     expect(main).toContain("path.join(PROJECT_ROOT, 'vendor/plugins')");
     expect(main).toContain('  plugins: await pluginDeclarations(PLUGINS_DIR),\n  pluginTypes: builtTypes,');
@@ -130,11 +139,13 @@ describe('a project made from a space', () => {
     expect(JSON.parse(project.files['vendor/plugins/oldChart/functions.source.json'])).toEqual({
       'index.ts': 'export default {};\n'
     });
-    expect(project.files['src/main.ts']).toContain('await loadFunctionsSource(');
+    expect(serverMain).toContain('await loadFunctionsSource(');
   });
 
   it('says what its visitors need of a server of its own, where its auth would go', () => {
-    expect(project.files['src/main.ts']).toContain('The space declares visitor roles (editor).');
+    expect(project.report).toEqual(
+      expect.arrayContaining([expect.stringContaining('`createAuth` from @plitzi/sdk-server/auth as `auth`')])
+    );
   });
 
   it('runs its actions, functions and runtime on its own server, signing with a key of its own', () => {
@@ -150,10 +161,14 @@ describe('a project made from a space', () => {
     expect(project.files['src/actions/index.ts']).toContain('export const connectors = new Map(');
     expect(project.files['src/functions/index.ts']).toBe('export default {};\n');
 
-    const main = project.files['src/main.ts'];
-    expect(main).toContain("import spaceRuntime from './runtime.ts';");
+    // Its runtime where every project keeps one, handing over the module its source starts at.
+    expect(project.files['src/runtime/index.ts']).toContain("export { default } from '../runtime.ts';");
+    const main = serverMain;
+    expect(main).toContain('await loadRuntimeModule(');
     expect(main).toContain('await serveRuntime(spaceRuntime, { env: process.env, publicUrl })');
-    expect(main).toContain('functions: { native: [...functions, ...runtime.native], plugins: pluginFunctions }');
+    expect(main).toContain(
+      'functions: { native: [...functions, ...(runtime?.native ?? [])], plugins: pluginFunctions }'
+    );
     expect(main).toContain("publicDir: path.join(PROJECT_ROOT, 'public')");
     expect(main).toContain('signingSecret: process.env.PLITZI_SIGNING_SECRET');
     expect(main).toContain("process.loadEnvFile(new URL('../.env', import.meta.url))");
@@ -195,21 +210,21 @@ describe('a project made from a space it reads from Plitzi', () => {
 
   it('writes no pages, reads them with its key, and watches the space by the name its adapters give it', () => {
     expect(project.files['src/space/index.ts']).toBeUndefined();
-    expect(project.files['src/main.ts']).toContain('createCloudAdapters');
+    expect(scaffold({ ...answers('cloud'), fromSpace: true })['src/main.ts']).toContain('createCloudAdapters');
     const env = envFromSpace(exported({ authoring: null }), answers('cloud'), SECRET);
     expect(env).toContain('PLITZI_HOST_KEY=host-key');
     expect(env).toContain(`PLITZI_SIGNING_SECRET=${SECRET}`);
-    // Its actions came across with it, so they run here as a local space's do.
-    expect(project.files['src/main.ts']).toContain('lookups: actionLookups');
+    // Its actions came across with it, so they run here as a local space's do — a cloud one of its own has none.
+    expect(scaffold({ ...answers('cloud'), fromSpace: true })['src/main.ts']).toContain('lookups: actionLookups');
+    expect(scaffold({ ...answers('cloud') })['src/main.ts']).not.toContain('lookups: actionLookups');
   });
 });
 
 describe('the server a project made from a space runs', () => {
-  const local = projectFromSpace(exported(), 'local').files;
   const create = scaffold({ ...answers(), fromSpace: false });
 
   it('is the one `create` writes — its port, health, reloads and settings — with what the space brought besides', () => {
-    const main = local['src/main.ts'];
+    const main = scaffold({ ...answers(), fromSpace: true, runtime: true })['src/main.ts'];
 
     for (const shared of [
       'await freePort(8080, HOST)',
@@ -255,6 +270,7 @@ describe('the source of a project that already had a src/', () => {
 
     expect(project.files['src/plugins/Card/index.ts']).toBe('export {};\n');
     expect(project.files['src/src/plugins/Card/index.ts']).toBeUndefined();
-    expect(project.files['src/main.ts']).not.toContain('serveRuntime');
+    // No runtime came across: nothing to hand over.
+    expect(project.files['src/runtime/index.ts']).toBeUndefined();
   });
 });

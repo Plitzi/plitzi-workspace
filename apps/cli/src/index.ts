@@ -3,6 +3,7 @@ import { Option, program } from 'commander';
 import { SCHEMES } from './browser';
 import { login, logout, space, whoami } from './commands/account';
 import addPlugin from './commands/addPlugin';
+import addRuntime from './commands/addRuntime';
 import { check } from './commands/check';
 import create from './commands/create';
 import createPlugin from './commands/createPlugin';
@@ -32,6 +33,7 @@ import { CLI_VERSION } from './scaffold/project';
 
 import type { AccountOptions, WhoamiOptions } from './commands/account';
 import type { AddPluginOptions } from './commands/addPlugin';
+import type { AddRuntimeOptions } from './commands/addRuntime';
 import type { CheckOptions } from './commands/check';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
@@ -214,6 +216,15 @@ add
   .option('-f, --force', 'Write into a folder that is not empty')
   .option(...DRY_RUN_OPTION)
   .action((names: string[], options: AddPluginOptions) => addPlugin(names, options));
+
+add
+  .command('runtime')
+  .description(
+    'The space’s runtime in src/runtime/: its own server code, run by this project’s server and by Plitzi (plitzi runtime push)'
+  )
+  .option('-f, --force', 'Write over a runtime the project already has')
+  .option(...DRY_RUN_OPTION)
+  .action((options: AddRuntimeOptions) => addRuntime(options));
 
 const pack = program.command('pack').description('Build something of this project into what the platform takes');
 
@@ -444,7 +455,7 @@ const runtime = program
 runtime
   .command('push')
   .description('Pack this project’s runtime module and keep it as the space’s draft runtime')
-  .option('--entry <path>', 'The module whose default export is defineRuntime(…)', 'src/runtime.ts')
+  .option('--entry <path>', 'The module whose default export is defineRuntime(…)', 'src/runtime/index.ts')
   .option(...API_OPTION)
   .option(...DRY_RUN_OPTION)
   .action((options: RuntimeOptions) => pushRuntime(options));

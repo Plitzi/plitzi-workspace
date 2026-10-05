@@ -274,7 +274,8 @@ that the machinery reads (`src/config/serverOptions.ts`, `src/actions/index.ts`)
 `main.ts` reading it is the CLI's, and never replaced. A script is the same: one the CLI wrote and nobody changed takes
 today's command, one the project changed is left and said (`.plitzi/scaffold.json` records both, and the package
 manager the files were written for — what a project not installed yet has no lockfile to say). In a project made from
-a space, `src/main.ts` and `.prettierignore` are the space's: `upgrade` names them and leaves them to `plitzi pull`. `update` is the same
+a space, a file the space gave over one of the CLI's would be the space's, and `upgrade` would leave it to `plitzi pull` —
+none does: `src/main.ts` runs whatever the space brought, from where it lands. `update` is the same
 command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
 older than the `@plitzi/sdk-authoring` installed.
 
@@ -325,6 +326,11 @@ is refused — pull first, or `--force`. A project that never had the space (one
 space nobody has worked on yet; one that holds work asks for `--force` too. Always the space the CLI is connected to,
 which must be the one the project came from, and never a published environment: publish in the builder. Afterwards
 `.plitzi/space.json` records what was sent, so `pull` keeps working — on a project that started on its own too.
+
+The space goes back with its files where Plitzi serves them: a path `create --from` or `pull` wrote for a file of its
+CDN (`/assets/a.png`, served from `public/`) is sent as that file's CDN address again. What would not reach Plitzi is
+said before anything is sent, with what to do: a provider reading the project's own data (`/data/…`, `src/data/` —
+Plitzi keeps none of a project's), and a file of `public/` the space names that is not on its CDN.
 
 ## `add plugin`
 
@@ -416,7 +422,7 @@ in the code keeps it from being written — said, and never stopping the build.
 ## `pack source`
 
 ```bash
-plitzi pack source src/runtime.ts --kind runtime --name runtime -o runtime.source.json.gz
+plitzi pack source src/runtime/index.ts --kind runtime --name runtime -o runtime.source.json.gz
 ```
 
 What `upload plugin` and `runtime push` keep, written to a file to look at: the closure of the entries named, gzipped.
@@ -456,7 +462,7 @@ certificate authorities the system trusts, as the browser beside it does.
 ## `runtime`
 
 ```bash
-plitzi runtime push                                   # pack src/runtime.ts and keep it as the space's draft runtime
+plitzi runtime push                                   # pack src/runtime/index.ts and keep it as the space's draft runtime
 plitzi runtime status                                 # how each environment's runtime is, and its variables' names; --json
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
@@ -470,8 +476,9 @@ connection kept open, memory that outlives a request, Node and its packages (`do
 
 **Its code lives in a project of yours** — a folder, usually a repository — and nowhere else: the builder shows how a
 runtime runs and sets its variables, but it does not hold its code and cannot change it. The project has
-`src/runtime.ts` (or `--entry`), whose default export is `defineRuntime(…)`, and `@plitzi/sdk-server` installed: a
-project from `plitzi create` in server mode has it; `examples/self-hosting/10-runtime` is the smallest one to start
+`src/runtime/index.ts` (or `--entry`), whose default export is `defineRuntime(…)`, and `@plitzi/sdk-server` installed:
+`plitzi add runtime` writes it in a project from `plitzi create` in server mode, whose `src/main.ts` runs it too —
+`/hello` answers on `npm start` — and whose `start:dev` restarts on it; `examples/self-hosting/10-runtime` is the smallest one to start
 from, and it runs as a server of its own too.
 
 `push` packs the module with the project's own `@plitzi/sdk-server` — the module and every package it imports, bar

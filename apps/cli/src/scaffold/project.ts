@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { installCommand, managerFiles, managerPackageFields, runCommand } from './packageManager';
 import {
   ACTIONS_DIR,
+  RUNTIME_DIR,
   AUTHOR_FILE,
   CLI_DIR,
   DATA_DIR,
@@ -93,12 +94,13 @@ const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
 const NODE_ENGINES = { node: '>=22.18' };
 
 /** What `start:dev` restarts on: the server's own code — and, in a project made from a space, its actions' folders. */
-const watchPaths = ({ source, fromSpace }: CreateAnswers): string =>
+const watchPaths = ({ source, fromSpace, runtime }: CreateAnswers): string =>
   [
     `./${MAIN_FILE}`,
     './src/config',
     ...(source === 'local' || fromSpace ? [`./${ACTIONS_DIR}`] : []),
     ...(fromSpace ? ['./src/connectors'] : []),
+    ...(runtime ? [`./${RUNTIME_DIR}`] : []),
     `./${FUNCTIONS_DIR}`
   ]
     .map(watched => `--watch-path=${watched}`)
@@ -113,7 +115,7 @@ const watchPaths = ({ source, fromSpace }: CreateAnswers): string =>
  * restarts the process — and a save to a local space is re-authored in place and the open page reloads. Both are one command; only one of them is HMR, and calling
  * the other one HMR would be a promise the loop does not keep.
  */
-const scripts = (answers: CreateAnswers): Record<string, string> => {
+export const projectScripts = (answers: CreateAnswers): Record<string, string> => {
   const { mode, source } = answers;
 
   return {
@@ -167,7 +169,7 @@ export const packageJson = (answers: CreateAnswers, extra: Record<string, string
       version: '0.0.0',
       private: true,
       type: 'module',
-      scripts: scripts(answers),
+      scripts: projectScripts(answers),
       dependencies: Object.fromEntries(
         Object.entries({ ...extra, ...dependencies(answers) }).sort(([a], [b]) => a.localeCompare(b))
       ),

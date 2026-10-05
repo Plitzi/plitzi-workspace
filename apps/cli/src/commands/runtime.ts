@@ -14,6 +14,7 @@ import { keepSource } from './keepSource';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
 import { packSource } from '../pack/source';
+import { RUNTIME_ENTRY } from '../scaffold/paths';
 
 import type { AccountOptions } from './account';
 import type { DryRunOptions } from './dryRun';
@@ -74,7 +75,7 @@ const projectPacker = async (root: string): Promise<Packer | undefined> => {
   return undefined;
 };
 
-export const DEFAULT_RUNTIME_ENTRY = path.join('src', 'runtime.ts');
+export const DEFAULT_RUNTIME_ENTRY = RUNTIME_ENTRY;
 
 /**
  * The project's runtime module packed and kept as the draft runtime of the space the connection works in — which a

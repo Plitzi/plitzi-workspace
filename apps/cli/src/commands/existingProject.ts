@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { fail } from './terminal';
 import { declarationsRegistry, elementsRegistry } from '../scaffold';
-import { MAIN_FILE, SPACE_ENTRY } from '../scaffold/paths';
+import { MAIN_FILE, RUNTIME_ENTRY, SPACE_ENTRY } from '../scaffold/paths';
 
 import type { PackageManager } from '../scaffold';
 
@@ -33,6 +33,8 @@ export interface PlitziProject {
   mode: 'server' | 'client';
   /** Whether the space is `src/space/` (`local`) or lives in Plitzi and is edited in the builder (`cloud`). */
   source: 'local' | 'cloud';
+  /** Whether it has a runtime of the space's: `src/runtime/index.ts`, or one that came built only. */
+  runtime: boolean;
 }
 
 /** A package `plitzi create --plugin` wrote. */
@@ -205,7 +207,8 @@ const plitziProject = async (
   return {
     kind: 'project',
     mode: server ? 'server' : 'client',
-    source: (await exists(path.join(root, SPACE_ENTRY))) ? 'local' : 'cloud'
+    source: (await exists(path.join(root, SPACE_ENTRY))) ? 'local' : 'cloud',
+    runtime: (await exists(path.join(root, RUNTIME_ENTRY))) || (await exists(path.join(root, 'vendor/runtime.bundle')))
   };
 };
 

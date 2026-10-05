@@ -20,7 +20,8 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 ## A space's runtime (`runtime`)
 
 What a function cannot be — Node packages, a connection held open, state across requests — is the space's **runtime**:
-`src/runtime.ts`, default-exporting `defineRuntime` from `@plitzi/sdk-server/runtime` (its `.d.ts` documents it).
+`src/runtime/index.ts` (`plitzi add runtime`), default-exporting `defineRuntime` from `@plitzi/sdk-server/runtime` (its
+`.d.ts` documents it). The project's server runs it as Plitzi does, so try it with `npm start` before pushing.
 
 - `runtime push` packs it (`--entry` for another file) as the draft's runtime; publishing deploys it. Its source goes
   up with it, so `create --from` brings it back.

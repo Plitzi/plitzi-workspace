@@ -6,8 +6,10 @@ import chalk from 'chalk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
 import { SPACE_IMPORT_FORMAT } from '@plitzi/sdk-shared/source';
 
+import { filesUnder } from './filesUnder';
 import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
@@ -104,6 +106,63 @@ const count = (entries: Entries | undefined, noun: string): string =>
 
 export type SpacePush = { outcome: PushOutcome; draft?: string };
 
+/** Where the project keeps what the space serves to anyone: `public/<path>` answers `/<path>`. */
+const PUBLIC_DIR = 'public';
+
+/** `path` as a whole token of the text: never the tail of an address that already holds it (`…/pizarra/assets/a.png`). */
+const tokenOf = (path: string): RegExp =>
+  new RegExp(`(?<![\\w.:/-])${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w.-])`, 'g');
+
+/**
+ * The project's paths to the space's files put back as the addresses they have on its CDN. \`create --from\` and
+ * \`pull\` write each CDN address as the project's own path (\`/assets/a.png\`, served from \`public/\`), and the space on
+ * Plitzi serves no such path: sent as they are, its pictures and data would point at nothing.
+ */
+const onItsCdn = (text: string, downloads: Readonly<Record<string, string>>): string =>
+  Object.entries(downloads)
+    .filter(([to]) => to.startsWith(`${PUBLIC_DIR}/`))
+    .map(([to, url]) => [to.slice(PUBLIC_DIR.length), url] as const)
+    .sort(([a], [b]) => b.length - a.length)
+    .reduce((written, [project, url]) => written.replace(tokenOf(project), url), text);
+
+/**
+ * What of the space would not reach Plitzi with it, said before it is sent — never left to be found on a page that
+ * renders empty there:
+ * - a provider reading the project's own data (\`/data/…\`, \`src/data/\`): Plitzi keeps no data of a project's;
+ * - a file of \`public/\` the space names that is not on its CDN: Plitzi serves no project's \`public/\`.
+ */
+const notCarried = async (
+  root: string,
+  text: string,
+  documents: SpaceImport['documents'],
+  downloads: Readonly<Record<string, string>>
+): Promise<string[]> => {
+  const reads = Object.values(documents.schema.flat).flatMap(element => {
+    const query = element.attributes.query;
+
+    return typeof query === 'string' && query.startsWith(PROJECT_DATA_PREFIX) ? [`${element.id} reads ${query}`] : [];
+  });
+  const carried = new Set(Object.keys(downloads));
+  const named = (await filesUnder(root, `${PUBLIC_DIR}/`)).filter(
+    file => !carried.has(file) && !file.endsWith('.gitkeep') && tokenOf(file.slice(PUBLIC_DIR.length)).test(text)
+  );
+
+  return [
+    ...(reads.length > 0
+      ? [
+          `The project's own data (src/data/) stays here — Plitzi keeps none of a project's, so these read nothing there: ${reads.join(', ')}. ` +
+            'On Plitzi, read it through a connector or a server action.'
+        ]
+      : []),
+    ...(named.length > 0
+      ? [
+          `These files of public/ are not on the space's CDN, so the space names files Plitzi does not serve: ${named.join(', ')}. ` +
+            'Upload them under Resources in the builder and name their addresses, or keep them self-hosted.'
+        ]
+      : [])
+  ];
+};
+
 /**
  * The project's space sent as the draft of the space the connection works in: refused when the draft moved on since
  * `base` (the draft the project last had), or — with no base — when the space holds work of its own; `force` takes it
@@ -113,7 +172,16 @@ export const pushSpaceOf = async (
   root: string,
   connection: Connection,
   space: ConnectedSpace,
-  { base, force }: { base: string | null; force: boolean }
+  {
+    base,
+    force,
+    downloads
+  }: {
+    base: string | null;
+    force: boolean;
+    /** What the project took from the space's CDN, by where it put it: what its paths are put back as. */
+    downloads: Readonly<Record<string, string>>;
+  }
 ): Promise<SpacePush> => {
   const project = await loadProjectSpace(root);
   if ('problem' in project) {
@@ -154,6 +222,11 @@ export const pushSpaceOf = async (
     base,
     force
   };
+  const body = onItsCdn(JSON.stringify(sent), downloads);
+  for (const warning of await notCarried(root, body, documents, downloads)) {
+    console.log(chalk.yellow(warning));
+  }
+
   const answered = await authorizedRequest<{
     ok?: boolean;
     changed?: boolean;
@@ -164,7 +237,7 @@ export const pushSpaceOf = async (
   }>(connection, `/spaces/${String(space.id)}/import`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(sent)
+    body
   });
   if (!answered.ok) {
     fail(answered.error);

@@ -360,7 +360,7 @@ const writeSkills = async (root: string, plans: readonly SkillPlan[], files: Rec
 // --- the command ---------------------------------------------------------------------------------------------------
 
 /** What a project was made with, as far as its machinery cares: none of it reads the key or the environment. */
-const answersFor = async (
+export const answersFor = async (
   root: string,
   plitzi: PlitziProject,
   manager: CreateAnswers['packageManager'],
@@ -376,7 +376,8 @@ const answersFor = async (
     environment: 'main',
     packageManager: manager,
     ...(managerVersion === undefined ? {} : { managerVersion }),
-    ...(fromSpace ? { fromSpace } : {})
+    ...(fromSpace ? { fromSpace } : {}),
+    ...(plitzi.runtime ? { runtime: true } : {})
   };
 
   return answers;

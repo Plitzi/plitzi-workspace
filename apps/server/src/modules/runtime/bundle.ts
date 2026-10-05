@@ -114,6 +114,30 @@ export const inspectRuntime = (bytes: Uint8Array): { entry: string; files: strin
 
 const isRuntime = (value: unknown): value is SpaceRuntime => isRecord(value) && typeof value.start === 'function';
 
+/** A module's default export, held to what a runtime is — or refused, saying how to write one. */
+const runtimeOf = (loaded: unknown): SpaceRuntime => {
+  const runtime = isRecord(loaded) ? loaded.default : undefined;
+  if (!isRuntime(runtime)) {
+    throw new Error('A runtime module exports its runtime by default: export default defineRuntime({ start: … })');
+  }
+
+  return runtime;
+};
+
+/**
+ * A project's runtime module, as a server of its own runs it — `src/runtime/index.ts`, or what `build` compiled it to —
+ * or nothing when the project has none: a project starts one by writing it (`plitzi add runtime`), with nothing to wire.
+ */
+export const loadRuntimeModule = async (file: string): Promise<SpaceRuntime | undefined> => {
+  try {
+    await fs.access(file);
+  } catch {
+    return undefined;
+  }
+
+  return runtimeOf(await import(pathToFileURL(file).href));
+};
+
 /**
  * A packed runtime written into `dir` and imported: its module's default export. `dir` must be inside the host's own
  * project, so the packages the bundle leaves to the host resolve to the host's — one copy of each.
@@ -124,11 +148,6 @@ export const loadRuntime = async (bytes: Uint8Array, dir: string): Promise<Space
   await Promise.all(
     Object.entries(files).map(([name, content]) => fs.writeFile(path.join(dir, name), Buffer.from(content, 'base64')))
   );
-  const loaded: unknown = await import(pathToFileURL(path.join(dir, entry)).href);
-  const runtime = isRecord(loaded) ? loaded.default : undefined;
-  if (!isRuntime(runtime)) {
-    throw new Error('A runtime module exports its runtime by default: export default defineRuntime({ start: … })');
-  }
 
-  return runtime;
+  return runtimeOf(await import(pathToFileURL(path.join(dir, entry)).href));
 };

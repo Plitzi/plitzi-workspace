@@ -26,7 +26,7 @@ Pizarra is the yardstick: a board works on `localhost` from a fresh `create`, is
 | Actions | the space's action documents | `src/actions/<id>.ts`, one `defineAction` call each, where it reads back exactly; `src/actions/<id>.json` where it does not | `action.lookups`, from `src/actions/index.ts` |
 | Connectors | the space's connector manifests | `src/connectors/<id>.json` | the same lookups |
 | Functions | the stored source, unchanged | `src/functions/` | `loadFunctions`, in the project's process |
-| Runtime | its source snapshot | `src/runtime.ts` and every file it imports | `serveRuntime`, in the project's process |
+| Runtime | its source snapshot | every file it imports, and `src/runtime/index.ts` handing over the module they start at | `serveRuntime`, in the project's process |
 | Plugins | each plugin's source snapshot | `src/plugins/<Name>/` and the shared files they import | registered with `action: 'compile'`: built here, rendered on the server, one copy of React |
 | Files | the space's public buckets | `public/`, every CDN address in the code rewritten to the project's own | served by the project (`publicDir`) |
 | Variables, credentials | names only | `.env.example` names them; `.env` holds a signing key made for the project | the project's environment |
@@ -138,10 +138,10 @@ written with `defineAction` always does.
   actions (`src/actions/`, listed by its `index.ts`), connectors (`src/connectors/`) and functions, and `package.json`
   with every package the source imports — the SDK and React at this CLI's versions, since plugins are rebuilt against
   the project's own.
-- Its `main.ts` is the one `plitzi create` writes — the same port, `/health`, reloads, `.env` and `kv` in `data/` —
-  with what the space brought besides: its runtime, the plugins only a build of came across, a note on its visitors.
-  It depends on what the space holds, so it is the space's: `plitzi pull` writes it as the CLI pulling does, and
-  `plitzi upgrade` leaves it (and `.prettierignore`, which ignores `public/` and `vendor/`) to `pull`, saying so.
+- Its `src/main.ts` is the one every server project has — the same port, `/health`, reloads, `.env` and `kv` in
+  `state/` — and runs what the space brought besides from where it lands: its runtime (`src/runtime/`, or built only
+  in `vendor/runtime.bundle`), the plugins only a build of came across (`vendor/plugins/`). It is the CLI's, as in any
+  project: `plitzi upgrade` keeps it current. Its visitors' sign-in is said in the report, with what to write.
   `start:dev` restarts on a change to `src/actions/` and `src/connectors/` too; a save to the pages re-authors them in
   place, as in any local project.
 - It downloads the space's files into `public/` and rewrites every CDN address in the code to the project's root.
@@ -210,7 +210,7 @@ went up before it is said, and recorded):
 |---|---|---|
 | `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `pack plugin` + `upload plugin` (`--cdn`, `--bucket`) |
 | `functions` | `src/functions/` | `functions push` |
-| `runtime` | the module the runtime starts at (`create --from`'s, else `src/runtime.ts`) | `runtime push` |
+| `runtime` | `src/runtime/index.ts` and what it imports | `runtime push` |
 | `space` | `src/space/` authored, the actions `src/actions/index.ts` serves, the manifests in `src/connectors/` | `PUT /spaces/:spaceId/import` |
 
 **Never over somebody's work unseen.** The export carries which state the draft is in (`draft`, a digest of its schema,
@@ -253,7 +253,7 @@ for in the builder: the settings, the actions, the connectors.
 - **What a push chooses.** Everything that changed, or the parts named; at a terminal, ticked from a list. Never a
   published environment.
 - **Files.** Downloaded into the project and served by it: a self-hosted project is its own server and depends on
-  nothing of Plitzi's, its CDN included.
+  nothing of Plitzi's, its CDN included. `push` sends each path it wrote for one back as the file's CDN address.
 - **SDK versions.** A plugin is rebuilt by the project against the project's own `@plitzi/*`: the snapshot carries the
   ranges its source was written against, and the report lists every one that differs from the project's.
 
@@ -262,8 +262,12 @@ for in the builder: the settings, the actions, the connectors.
 - **Visitors and sign-in.** A space with visitor roles signs its visitors in with their Plitzi account, and gives roles
   by email; who holds them stays on Plitzi. Self-hosted, nobody signs in until the server does it itself (`createAuth`
   from `@plitzi/sdk-server/auth`, over accounts it keeps, giving each person the permissions of their roles with
-  `visitorAccess`). The project's `main.ts` carries a note saying so where `auth` would be handed over, and the report
-  repeats it. Writing that sign-in for the project is a separate decision.
+  `visitorAccess`), handed to the server as `auth` in `src/config/serverOptions.ts`. The report says so. Writing that sign-in for the project is a separate decision.
+
+- **A project's data and its own files, on Plitzi.** `src/data/` (read on the server, never served) and a file added to
+  `public/` have no home on Plitzi yet: `push` says which providers read data and which files it does not have, before
+  sending. Carrying them is platform work — the data kept privately and versioned with the space, as its functions are,
+  and resolved by Plitzi's SSR as `dataDir` resolves it here; the files uploaded to the space's CDN by `push`.
 
 ## Where it is tested
 

@@ -193,7 +193,7 @@ themselves is the space's (`flags` in the spec; see the authoring skill's featur
 ## Server code (`functions`, `runtime`)
 
 A space's own server code, edited in `src/functions/` (`pull`, `push`, `try`, `dev`) or run as its runtime
-(`src/runtime.ts`, `runtime push`): read [reference/functions.md](reference/functions.md) for either.
+(`src/runtime/`, `add runtime`, `runtime push`): read [reference/functions.md](reference/functions.md) for either.
 
 
 ## When something does not work

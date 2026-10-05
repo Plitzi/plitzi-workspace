@@ -35,6 +35,12 @@ const prettierrc = (): string =>
 export const PROJECT_OUTPUTS = ['dist', PROJECT_TMP];
 
 /**
+ * What a project serves as it came, so neither the formatter nor the lint touches it: `public/`, and `vendor/` — the
+ * plugins and runtime a space came with built only, whose bytes are what their manifests' integrity names.
+ */
+const PROJECT_SERVED = ['public', 'vendor'];
+
+/**
  * What is the agents' and not the project's: the skills copied in, whose recipes are TypeScript no program of the
  * project includes — linted with types, they would stop the lint before its first file.
  */
@@ -99,4 +105,4 @@ export const qualityFilesFor = (globals: 'node' | 'browser', outputs: readonly s
 });
 
 export const qualityFiles = ({ mode }: CreateAnswers): ProjectFiles =>
-  qualityFilesFor(mode === 'server' ? 'node' : 'browser', PROJECT_OUTPUTS);
+  qualityFilesFor(mode === 'server' ? 'node' : 'browser', [...PROJECT_OUTPUTS, ...PROJECT_SERVED]);

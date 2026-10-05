@@ -1,4 +1,4 @@
-import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import chalk from 'chalk';
@@ -7,6 +7,7 @@ import { darkScheme, importedFiles, importProbe } from '@plitzi/sdk-authoring';
 
 import { sayDryRun } from './dryRun';
 import { projectHere } from './existingProject';
+import { filesUnder } from './filesUnder';
 import { projectFormatter } from './projectFormatter';
 import { siteOwnership } from './siteOwnership';
 import { fail } from './terminal';
@@ -77,15 +78,6 @@ const measure = async (
     probe: await page.evaluate(importProbe, { depth: OUTLINE_DEPTH, read }),
     screen: await page.screenshot({ fullPage: true })
   };
-};
-
-/** Every file under a folder, by its path inside it — none when there is no such folder. */
-const filesUnder = async (folder: string): Promise<string[]> => {
-  const entries = await readdir(folder, { recursive: true, withFileTypes: true }).catch(() => []);
-
-  return entries
-    .filter(entry => entry.isFile())
-    .map(entry => path.relative(folder, path.join(entry.parentPath, entry.name)));
 };
 
 const count = (amount: number, one: string, many = `${one}s`): string =>

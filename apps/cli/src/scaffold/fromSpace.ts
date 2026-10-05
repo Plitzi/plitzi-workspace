@@ -1,10 +1,10 @@
+import { posix } from 'node:path';
+
 import { actionSpecFromEntry, actionToSource } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 
-import { ACTIONS_ENTRY, FUNCTIONS_DIR, MAIN_FILE, SPACE_ENTRY } from './paths';
+import { ACTIONS_ENTRY, FUNCTIONS_DIR, RUNTIME_ENTRY, SPACE_ENTRY } from './paths';
 import { envFile, SDK_VERSION, withSigningSecret } from './project';
-import { PROJECT_OUTPUTS, prettierignore } from './quality';
-import { serverMain } from './server';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { SpaceExport } from '@plitzi/sdk-shared/source';
@@ -163,8 +163,13 @@ export const projectEntries = ({
   };
 };
 
-/** The import `src/main.ts` names the runtime's module by. */
-const fromMain = (path: string): string => `./${path.replace(/^src\//, '')}`;
+/** `src/runtime/index.ts` handing over the module a space's runtime source starts at, where that is somewhere else. */
+const runtimeIndex = (from: string): string => `/**
+ * The space's runtime, where the server and \`plitzi runtime push\` look for it: its source, as it came, starts at
+ * \`${from}\`.
+ */
+export { default } from '${from.startsWith('.') ? from : `./${from}`}';
+`;
 
 /** What the space was given on Plitzi, by name: the variables and credentials it needs here too. */
 const spaceSettings = (exported: SpaceExport): string =>
@@ -251,16 +256,12 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     binaries['vendor/runtime.bundle'] = builtOnly.runtime;
   }
 
-  files[MAIN_FILE] = serverMain({
-    source: spaceSource,
-    name: exported.space.permanentUrl,
-    fromSpace: {
-      ...(runtimeEntry ? { runtimeEntry: fromMain(place(runtimeEntry)) } : {}),
-      packedRuntime: Boolean(builtOnly.runtime),
-      builtPlugins: builtOnly.plugins.length > 0,
-      visitorRoles: exported.visitorRoles
-    }
-  });
+  // Where the server and \`plitzi runtime push\` look for it: \`src/runtime/index.ts\`, handing over the module the source
+  // starts at when that is somewhere else.
+  const runtimeAt = runtimeEntry ? place(runtimeEntry) : undefined;
+  if (runtimeAt && runtimeAt !== RUNTIME_ENTRY) {
+    files[RUNTIME_ENTRY] = runtimeIndex(posix.relative(posix.dirname(RUNTIME_ENTRY), runtimeAt));
+  }
 
   // The packages the source imports, at the ranges it was written against — but the SDK and React, which are this
   // CLI's: the plugins are rebuilt against the project's, and the report says when that is a different version.
@@ -285,8 +286,6 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     packageManager: 'npm'
   });
   files['.env.example'] = `${example}\n${spaceSettings(exported)}`;
-  // What was downloaded is served as it came: a built plugin's bytes are what its manifest's integrity names.
-  files['.prettierignore'] = `${prettierignore(PROJECT_OUTPUTS)}public\nvendor\n`;
 
   const lines: string[] = [
     ...report.conflicts.map(
@@ -319,7 +318,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     ...asJson,
     ...(exported.visitorRoles.length > 0
       ? [
-          `Its visitors (${exported.visitorRoles.join(', ')}) signed in with Plitzi: here nobody signs in until the server does it itself — see the note in src/main.ts`
+          `Its visitors (${exported.visitorRoles.join(', ')}) signed in with Plitzi: here nobody signs in until the server does it itself — \`createAuth\` from @plitzi/sdk-server/auth as \`auth\` in src/config/serverOptions.ts, over the accounts it keeps, each person given the permissions of the roles they hold (\`visitorAccess\`); until then every action that asks for a role refuses`
         ]
       : []),
     ...report.corrections,

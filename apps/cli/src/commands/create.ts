@@ -226,7 +226,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     return;
   }
 
-  const answers: CreateAnswers = {
+  const asked: CreateAnswers = {
     name,
     mode,
     source,
@@ -249,6 +249,9 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
     return;
   }
 
+  // A space that came with a runtime gives the project one: the server runs it, and `start:dev` restarts on it.
+  const answers: CreateAnswers =
+    exported?.source.runtime || exported?.builtOnly.runtime ? { ...asked, runtime: true } : asked;
   const fromSpace = exported ? projectFromSpace(exported, source) : undefined;
   const files = Object.fromEntries(
     Object.entries(scaffold(answers)).filter(([file]) => !fromSpace?.omit.includes(file))

@@ -4,7 +4,7 @@ import { gzipSync } from 'node:zlib';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { inspectRuntime, loadRuntime, packRuntime } from './bundle';
+import { inspectRuntime, loadRuntime, loadRuntimeModule, packRuntime } from './bundle';
 import { defineRuntime } from './contract';
 import { RUNTIME_DESCRIBE_PATH, startSpaceRuntime } from './host';
 import { createRuntimeProxyStage } from './stages';
@@ -246,6 +246,20 @@ describe('a packed runtime', () => {
 
     expect(inspectRuntime(bytes)).toEqual({ entry: 'runtime.mjs', files: ['runtime.mjs'] });
     expect(() => inspectRuntime(new Uint8Array([1, 2, 3]))).toThrow('not gzipped JSON');
+  });
+
+  it('is run from its module in a project of its own, and is nothing where the project has none', async () => {
+    await fs.mkdir(path.join(work, 'module'), { recursive: true });
+    await fs.writeFile(
+      path.join(work, 'module/index.ts'),
+      'export default { start: ({ env }) => ({ said: `hi ${String(env.NAME)}` }) };\n'
+    );
+    await fs.writeFile(path.join(work, 'module/not.ts'), 'export const start = () => ({});\n');
+
+    const loaded = await loadRuntimeModule(path.join(work, 'module/index.ts'));
+    expect(await loaded?.start({ env: { NAME: 'Ana' }, publicUrl: 'http://x' })).toMatchObject({ said: 'hi Ana' });
+    expect(await loadRuntimeModule(path.join(work, 'module/missing.ts'))).toBeUndefined();
+    await expect(loadRuntimeModule(path.join(work, 'module/not.ts'))).rejects.toThrow('exports its runtime by default');
   });
 
   it('is refused holding a file outside its own folder', async () => {

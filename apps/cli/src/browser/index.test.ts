@@ -47,7 +47,9 @@ describe('projectOrigin', () => {
     vi.stubGlobal('fetch', fetched);
     vi.stubEnv('PORT', '5180');
 
-    expect(await projectOrigin(await projectAt(), { kind: 'project', mode: 'client', source: 'local' })).toEqual({
+    expect(
+      await projectOrigin(await projectAt(), { kind: 'project', mode: 'client', source: 'local', runtime: false })
+    ).toEqual({
       origin: 'http://127.0.0.1:5180'
     });
     expect(fetched).not.toHaveBeenCalled();

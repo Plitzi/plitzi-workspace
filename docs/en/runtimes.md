@@ -61,13 +61,14 @@ anything under `/_`, `/auth`, `/.well-known`.
 
 **Its code lives in a project of yours** — a folder, usually a repository — and is sent from there: the builder shows
 how a runtime runs and sets its variables, but it does not hold its code and cannot change it. The project needs
-`src/runtime.ts` (the module above) and `@plitzi/sdk-server` installed: one made with `plitzi create` in server mode
-has it, and [`examples/self-hosting/10-runtime`](../../examples/self-hosting/10-runtime) is the smallest one to start
+`src/runtime/index.ts` (the module above, a file each beside it as it grows) and `@plitzi/sdk-server` installed:
+`plitzi add runtime` writes it in a project `plitzi create` made in server mode — whose server runs it too, so what
+is pushed is what was tried — and [`examples/self-hosting/10-runtime`](../../examples/self-hosting/10-runtime) is the smallest one to start
 from — it also runs as a server of its own. From that project, signed in (`plitzi login`) with the space chosen
 (`plitzi space`):
 
 ```bash
-plitzi runtime push                  # packs src/runtime.ts (or --entry) and keeps it as the space's draft runtime
+plitzi runtime push                  # packs src/runtime/index.ts (or --entry) and keeps it as the space's draft runtime
 plitzi runtime status                # how each environment's runtime is, and its variables' names
 printf %s "$URL" | plitzi runtime vars set REDIS_URL   # a value from stdin stays out of the shell history
 plitzi runtime vars unset REDIS_URL
@@ -81,8 +82,8 @@ plitzi runtime start                 # started again — one stopped by hand, or
   together.
 - **Its source goes up with it.** `plitzi runtime push` also keeps the source it was packed from — every file of the
   project the module reaches, followed from its entry, and the packages they import — in the same private bucket, and
-  a publish freezes it with the code. That is what `plitzi create --from` brings back as `src/runtime.ts` and the files
-  it imports, run in the project's own process with `serveRuntime`: see [A space as a project](./projects-from-spaces.md).
+  a publish freezes it with the code. That is what `plitzi create --from` brings back — the files it imports, and
+  `src/runtime/index.ts` handing over the module they start at — run in the project's own process: see [A space as a project](./projects-from-spaces.md).
   A source that cannot be kept (a credential in it, a file outside the project) never undoes the push; the CLI says why.
 - **The builder shows it.** **Server → Runtime**, in the left sidebar: each environment's code, whether it runs, why not, its tasks
   and endpoints — and the variables, by name. A value is written and never read back.

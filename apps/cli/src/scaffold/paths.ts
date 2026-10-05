@@ -30,6 +30,10 @@ export const MAIN_FILE = 'src/main.ts';
 export const SPACE_DIR = 'src/space';
 export const SPACE_ENTRY = `${SPACE_DIR}/index.ts`;
 
+/** The space's runtime — its own server code, run as a process of its own on the platform — a folder like the space. */
+export const RUNTIME_DIR = 'src/runtime';
+export const RUNTIME_ENTRY = `${RUNTIME_DIR}/index.ts`;
+
 /** The space's server actions, a folder like the space: `index.ts` lists them for the server, one action a file. */
 export const ACTIONS_DIR = 'src/actions';
 export const ACTIONS_ENTRY = `${ACTIONS_DIR}/index.ts`;

@@ -1,4 +1,4 @@
-import { AUTHOR_FILE, CLI_DIR, DATA_DIR, FUNCTIONS_DIR, MAIN_FILE } from './paths';
+import { AUTHOR_FILE, CLI_DIR, DATA_DIR, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR } from './paths';
 
 import type { CreateAnswers } from './types';
 
@@ -49,6 +49,13 @@ it at boot the way Plitzi builds a space's, and \`start:dev\` restarts on a chan
 with their extension — \`import { reader } from './sources.ts'\`.
 `;
 
+const RUNTIME = `## \`${RUNTIME_DIR}/\` — the space's runtime, when it has one
+
+Its own server code, run as a process of its own beside the space on Plitzi — Node, its packages, a connection held
+open — and by \`${MAIN_FILE}\` here, in its process: \`npx @plitzi/cli add runtime\` writes \`index.ts\`, and
+\`plitzi runtime push\` sends the module it is, tried here first.
+`;
+
 const DATA = ({ mode }: CreateAnswers): string =>
   mode === 'server'
     ? `## \`${DATA_DIR}/\` — the project's own data
@@ -89,5 +96,5 @@ looked for. One changed is shown as a diff and left, so changing one is taking i
   }
 
 ${server ? 'What the server does besides serving the space is yours, in `src/config/serverOptions.ts`.\n\n' : ''}${PLUGINS(answers)}
-${server ? `${FUNCTIONS}\n` : ''}${DATA(answers)}${answers.fromSpace ? `\n${FROM_SPACE}` : ''}`;
+${server ? `${FUNCTIONS}\n${RUNTIME}\n` : ''}${DATA(answers)}${answers.fromSpace ? `\n${FROM_SPACE}` : ''}`;
 };

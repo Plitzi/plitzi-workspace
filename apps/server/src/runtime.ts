@@ -16,6 +16,7 @@ export type { SpaceRuntimeDescription, SpaceRuntimeHost, SpaceRuntimeHostOptions
 export {
   inspectRuntime,
   loadRuntime,
+  loadRuntimeModule,
   MAX_RUNTIME_BUNDLE_BYTES,
   packRuntime,
   runtimeBundleId

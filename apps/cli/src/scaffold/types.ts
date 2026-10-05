@@ -40,6 +40,8 @@ export interface CreateAnswers {
    * `plitzi pull`'s to bring up to date.
    */
   fromSpace?: boolean;
+  /** Whether the project has a runtime of the space's (`src/runtime/`): `start:dev` restarts on a change to it. */
+  runtime?: boolean;
 }
 
 export const CREATE_TEMPLATES = ['welcome', 'blank', 'catalog'] as const;

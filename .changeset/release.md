@@ -140,14 +140,12 @@
   save outlives a restart, `start:dev`'s included. `action.kv` in `src/config/serverOptions.ts` names another store.
 - A server-mode project types what its plugins import besides code (`plitzi/assets.d.ts`): a stylesheet, an image,
   `?raw`, `?inline` — a client-mode one has them from `vite/client`.
-- **A project made from a space runs the server `create` writes.** `create --from` and `pull` write the same
-  `src/main.ts` as `create` (one template), with what the space brought besides — its runtime, its built-only plugins, a
-  note on its visitors: it now takes a free port and writes `tmp/dev-server.json` (which `check`, `shot` and the visual
-  tests read), answers `/health`, and re-authors its pages on save instead of waiting for a restart. Its actions are
-  `src/actions/` and its connectors `src/connectors/`, both there from the start, and `start:dev` restarts on them;
-  `src/actions/index.ts` exports `actions` and `connectors`, as a `create` project’s exports `actions` (`push` reads that).
-  `upgrade` leaves `src/main.ts` and `.prettierignore` of such a project to `pull` and says so — before, it showed them
-  as the project's own, and `--take all` would have put `create`'s server in place of the space's.
+- **A project made from a space runs the server `create` writes.** It has the same `src/main.ts` as any project: it
+  now takes a free port and writes `tmp/dev-server.json` (which `check`, `shot` and the visual tests read), answers
+  `/health`, and re-authors its pages on save instead of waiting for a restart. Its actions are `src/actions/` and its
+  connectors `src/connectors/`, both there from the start, and `start:dev` restarts on them; `src/actions/index.ts`
+  exports `actions` and `connectors`, as a `create` project's does (`push` reads that). Before, `upgrade` showed its
+  `main.ts` as the project's own, and `--take all` would have put `create`'s server in place of the space's.
 - **A `--source cloud` server project starts.** Its key is in `.env`, which nothing read: `npm start` stopped on "Set
   PLITZI_HOST_KEY". Every server project's `src/main.ts` now reads `.env` itself (`process.loadEnvFile`), and every
   one is given a signing key there (`PLITZI_SIGNING_SECRET`, made for it by `create`) — `ctx.sign` refused in a project
@@ -186,6 +184,18 @@
   `index.ts` there, exported as `space` too). The server actions are `src/actions/` — `index.ts` lists them, one action
   a file, as `create --from` already had them — and what the server does besides serving the space is
   `src/config/serverOptions.ts`. `start:dev` watches `src/config` and `src/actions` whole.
+- **One server for every project, kept by `upgrade`.** `src/main.ts` runs what a project holds from where it lands — a
+  runtime in `src/runtime/` (or built only, `vendor/runtime.bundle`), plugins built only (`vendor/plugins/`), the
+  actions' connectors — so `create --from` writes no `main.ts` or `.prettierignore` of its own any more, and `upgrade`
+  keeps both current in projects made from a space too. `loadRuntimeModule` (`@plitzi/sdk-server/runtime`): a project's
+  runtime module, or nothing when it has none.
+- **`plitzi add runtime`** writes `src/runtime/index.ts` — run by the project's server (`npm start` answers its
+  endpoints) and sent by `plitzi runtime push`, whose default entry it is now — and has `start:dev` restart on it. A
+  space taken out with a runtime gets `src/runtime/index.ts` handing over the module its source starts at.
+- **`push` sends the space's files back as their CDN addresses.** `create --from` and `pull` write each CDN address as
+  the project's path (`/assets/a.png`, served from `public/`); `push` sent those paths as they were, and the space's
+  pictures and data pointed at nothing on Plitzi. It also says, before sending, what Plitzi would not have: providers
+  reading the project's own data (`src/data/`) and files of `public/` the space names that are not on its CDN.
 - **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `pull`, `push`, `pack plugin`,
   `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills
   update`: each file it would write (`+` new, `~` replaced, `-` removed), what it would install or run, what it would

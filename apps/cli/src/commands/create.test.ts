@@ -280,7 +280,7 @@ describe('the scaffold', () => {
       const main = scaffold(answers({ source }))['src/main.ts'];
 
       expect(main).toMatch(/import \{[^}]*\bcloseOnSignals\b[^}]*\} from '@plitzi\/sdk-server';/);
-      expect(main).toContain('closeOnSignals(server);');
+      expect(main).toContain('closeOnSignals(server, { afterClose: () => runtime?.close() });');
     }
 
     // A browser project has no server to close.

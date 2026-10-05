@@ -1,3 +1,4 @@
+/* eslint-disable quotes -- the cases are source code, which reads best in the other quotes */
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -106,6 +107,33 @@ describe('plitzi push', () => {
     expect('connectors' in sent).toBe(false);
     expect(JSON.stringify(sent.documents.schema)).toContain('Welcome');
     expect((await readOrigin(project))?.draft).toBe('draft-2');
+  });
+
+  /**
+   * `create --from` wrote the space's CDN addresses as the project's paths, which Plitzi does not serve: they go back as
+   * the addresses they were — and what would not reach Plitzi at all is said before anything is sent.
+   */
+  it('sends the space’s files back as their CDN addresses, and says what Plitzi would not have', async () => {
+    const world = `${platform.api}/files/pizarra/assets/world.json`;
+    const said: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
+    await write(
+      'src/space/index.ts',
+      "export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
+        "{ type: 'apiContainer', id: 'world', attributes: { query: '/assets/world.json' } }," +
+        "{ type: 'apiContainer', id: 'stock', runtime: 'server', attributes: { query: '/data/stock.json' } }," +
+        "{ type: 'image', id: 'logo', attributes: { src: '/logo.png' } }" +
+        '] }] };\nexport { pizarra as space };\n'
+    );
+    await write('public/logo.png', 'png');
+
+    await push(['space'], {});
+
+    const sent = JSON.stringify(platform.pizarra.imports.at(-1));
+    expect(sent).toContain(`"query":"${world}"`);
+    expect(sent).not.toContain('"query":"/assets/world.json"');
+    expect(said.join('\n')).toContain('stock reads /data/stock.json');
+    expect(said.join('\n')).toContain('public/logo.png');
   });
 
   it('refuses a draft edited since the project had it, and replaces it with --force', async () => {

@@ -87,7 +87,7 @@ describe('plitzi pull', () => {
 
     expect(origin).toMatchObject({ api: platform.api, space: { id: 3, permanentUrl: 'pizarra' }, source: 'local' });
     expect(Object.keys(origin?.files ?? {})).toEqual(
-      expect.arrayContaining(['src/space/pages/home.ts', 'src/main.ts', 'public/assets/world.json'])
+      expect.arrayContaining(['src/space/pages/home.ts', 'src/actions/index.ts', 'public/assets/world.json'])
     );
     expect(JSON.parse(await read('.plitzi/functions.json'))).toMatchObject({ space: 3, version: 'v1' });
   });
