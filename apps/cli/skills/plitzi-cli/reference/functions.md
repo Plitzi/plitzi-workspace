@@ -1,16 +1,16 @@
 # A space's server code (`functions`, `runtime`)
 
 A space's own server code — TypeScript tasks its actions run as steps, and routes under `/fn/` — lives in the space;
-`functions/` in a project is a **working copy** of it. The contract (`defineFunctions`, `ctx`) is typed in
+`src/functions/` in a project is a **working copy** of it. The contract (`defineFunctions`, `ctx`) is typed in
 `@plitzi/sdk-server/functions`, whose `.d.ts` documents every field; what matters for the CLI:
 
 - **Pull before you edit, push when done.** `pull` refuses to overwrite what is not pushed (`--force` throws it
   away); `push` refuses when the space changed since the pull — someone saved in the builder. Then: keep your changes
   aside, `pull`, apply them again, `push`. Never `--force` over somebody else's work to get past it.
-- **A push is checked, not just stored.** A problem comes back as `functions/<file>:<line> <message>` and nothing is
+- **A push is checked, not just stored.** A problem comes back as `src/functions/<file>:<line> <message>` and nothing is
   saved — fix it and push again. `index.ts` must default-export `defineFunctions({ … })`; files import each other by
   relative path and `@plitzi/sdk-server/functions`, nothing else.
-- **`try` runs the saved draft for real** (its fetches and writes happen). `dev` runs `functions/` on this machine with
+- **`try` runs the saved draft for real** (its fetches and writes happen). `dev` runs `src/functions/` on this machine with
   the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
   nothing to the space; `PLITZI_FUNCTIONS_CREDENTIALS='{"stripe":{"apiKey":"…"}}'` gives it credentials to name.
 - **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or

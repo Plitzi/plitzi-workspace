@@ -773,15 +773,15 @@ source's cached answer — and, in development, every save that restarts the ser
 import { createFileKv } from '@plitzi/sdk-server/actions';
 import { createSqliteKv } from '@plitzi/sdk-server/sqlite';
 
-createServer({ action: { lookups, kv: createFileKv({ file: 'data/kv.json' }) } });   // one process, a readable file
-createServer({ action: { lookups, kv: createSqliteKv({ file: 'data/kv.sqlite' }) } }); // every process on the file
+createServer({ action: { lookups, kv: createFileKv({ file: 'state/kv.json' }) } });   // one process, a readable file
+createServer({ action: { lookups, kv: createSqliteKv({ file: 'state/kv.sqlite' }) } }); // every process on the file
 ```
 
 `createFileKv` keeps the Map in one JSON file, written whole (through a temporary file) as soon as anything changes —
 for ONE process, which reads the file when it starts and owns it after. `createSqliteKv` is a table in a SQLite file
 over Node's own `node:sqlite` (Node 22.13+, which prints an `ExperimentalWarning` when it loads): every operation is
 one atomic statement, so replicas on one machine, or a server started with `workers`, share it safely. A project
-`plitzi create` writes starts with `createFileKv` in `data/kv.json`, and names another in `src/serverOptions.ts`.
+`plitzi create` writes starts with `createFileKv` in `state/kv.json`, and names another in `src/serverOptions.ts`.
 
 The keys an adapter receives are the server's — prefixed per space (`kv:action:<spaceId>:…`) — and are not a
 contract: an adapter stores them as it gets them, and keeps them all.

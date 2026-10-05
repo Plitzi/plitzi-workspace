@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { publicFileResolver } from './publicFileResolver';
+import { dataFileResolver, publicFileResolver } from './publicFileResolver';
 
 import type { RscResolveContext } from './resolveRscData';
 import type { Element } from '@plitzi/sdk-shared';
@@ -60,5 +60,34 @@ describe('publicFileResolver', () => {
   it('answers a missing or unreadable file with the provider’s error state', async () => {
     expect(await resolve('/data/missing.json')).toBeNull();
     expect(await resolve('/data/broken.json')).toBeNull();
+  });
+});
+
+describe('dataFileResolver', () => {
+  let dataDir: string;
+  const resolveData = (query: unknown) =>
+    dataFileResolver(dataDir)({ element: provider(query), signal: new AbortController().signal } as RscResolveContext);
+
+  beforeAll(() => {
+    dataDir = mkdtempSync(path.join(tmpdir(), 'plitzi-data-'));
+    mkdirSync(path.join(dataDir, 'shop'), { recursive: true });
+    writeFileSync(path.join(dataDir, 'products.json'), JSON.stringify([{ id: 1, cost: 4 }]));
+    writeFileSync(path.join(dataDir, 'shop/hours.json'), JSON.stringify({ open: 9 }));
+  });
+
+  afterAll(() => {
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it('reads `/data/<file>` from the project’s own folder, which nothing serves', async () => {
+    expect(await resolveData('/data/products.json')).toEqual({ status: 200, data: [{ id: 1, cost: 4 }] });
+    expect(await resolveData('/data/shop/hours.json')).toEqual({ status: 200, data: { open: 9 } });
+  });
+
+  it('is not asked for anything outside `/data/`, nor out of its folder', async () => {
+    expect(await resolveData('/products.json')).toBeUndefined();
+    expect(await resolveData('/data/../products.json')).toBeUndefined();
+    expect(await resolveData('/data/%2e%2e/secret.json')).toBeUndefined();
+    expect(await resolveData('/data/missing.json')).toBeNull();
   });
 });

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { publicData } from './node';
+import { projectData, publicData } from './node';
 
 const root = mkdtempSync(path.join(tmpdir(), 'plitzi-public-data-'));
 mkdirSync(path.join(root, 'public/data'), { recursive: true });
@@ -30,5 +30,19 @@ describe('publicData', () => {
     expect(answer('/../secret.json')).toBeUndefined();
     expect(answer('/data/missing.json')).toBeUndefined();
     expect(answer('/data/broken.json')).toBeUndefined();
+  });
+});
+
+describe('projectData', () => {
+  const answer = projectData(path.join(root, 'public/data'));
+
+  it('answers `/data/<file>` from the folder the server reads it from', () => {
+    expect(answer('/data/plans.json')).toEqual({ plans: [{ name: 'Starter' }] });
+  });
+
+  it('answers nothing outside `/data/`, nor out of its folder', () => {
+    expect(answer('/plans.json')).toBeUndefined();
+    expect(answer('/data/../secret.json')).toBeUndefined();
+    expect(answer('/data/../../secret.json')).toBeUndefined();
   });
 });

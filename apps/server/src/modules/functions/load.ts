@@ -45,7 +45,7 @@ export const readFunctionsDir = (dir: string | URL): Promise<FunctionsSource> =>
   readFunctionsSource(typeof dir === 'string' ? dir : fileURLToPath(dir), nodeReader);
 
 /**
- * A server's own functions from a directory — a project's `functions/`, the working copy `plitzi functions` keeps —
+ * A server's own functions from a directory — a project's `src/functions/`, the working copy `plitzi functions` keeps —
  * built exactly as the platform builds a space's (the same rules, one bundle) and loaded natively, for
  * `createServer({ functions: { native } })`. The same on `node src/main.ts` and on a compiled server: nothing here
  * depends on how the server itself runs. A directory with nothing in it is no functions; one that does not build, or

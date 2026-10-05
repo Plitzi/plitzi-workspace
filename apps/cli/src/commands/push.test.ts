@@ -122,7 +122,7 @@ describe('plitzi push', () => {
   });
 
   it('sends only what changed when nobody is there to choose — and in the order that names come before their names', async () => {
-    await write('functions/index.ts', 'export default { feed: {} };\n');
+    await write('src/functions/index.ts', 'export default { feed: {} };\n');
 
     await push([], {});
 
@@ -138,7 +138,7 @@ describe('plitzi push', () => {
   });
 
   it('asks at a terminal, with what changed ticked, and sends what is ticked', async () => {
-    await write('functions/index.ts', 'export default { feed: {} };\n');
+    await write('src/functions/index.ts', 'export default { feed: {} };\n');
     askChecks.mockImplementation((_question, options) =>
       Promise.resolve(options.filter(option => option.label.startsWith('space')).map(({ value }) => value))
     );
@@ -165,13 +165,13 @@ describe('plitzi push', () => {
   });
 
   it('records only what it sent: a change the builder made elsewhere is still the next pull’s', async () => {
-    const before = (await readOrigin(project))?.files['functions/index.ts'];
+    const before = (await readOrigin(project))?.files['src/functions/index.ts'];
     platform.functions = { files: { 'index.ts': 'export default { theirs: {} };\n' }, version: 'v2' };
     await write('src/space/index.ts', space('Welcome'));
 
     await push(['space'], {});
 
-    expect((await readOrigin(project))?.files['functions/index.ts']).toBe(before);
+    expect((await readOrigin(project))?.files['src/functions/index.ts']).toBe(before);
   });
 
   it('names what it cannot send, before sending anything', async () => {

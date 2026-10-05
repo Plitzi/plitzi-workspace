@@ -4,11 +4,13 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
+import { sayDryRun } from './dryRun';
 import { findProject, readPackageJson } from './existingProject';
 import { askText, atTerminal, fail, refuseWithoutTerminal } from './terminal';
-import { PackError, packPlugin } from '../pack';
+import { PackError, packPlugin, sourceFileOf } from '../pack';
 import { pluginNames } from '../scaffold';
 
+import type { DryRunOptions } from './dryRun';
 import type { ExistingProject } from './existingProject';
 import type { PackSource } from '../pack';
 
@@ -21,7 +23,7 @@ import type { PackSource } from '../pack';
  *   the rest its `plugins`.
  */
 
-export interface PackPluginOptions {
+export interface PackPluginOptions extends DryRunOptions {
   out?: string;
   zip?: boolean;
   pluginVersion?: string;
@@ -158,6 +160,17 @@ const packPluginCommand = async (foldersGiven: string[], options: PackPluginOpti
     options.zip === false
       ? undefined
       : path.join(inPackage ? project.root : path.dirname(outDir), `${base}-${version}.zip`);
+
+  if (options.dryRun) {
+    const relative = (file: string): string => path.relative(process.cwd(), file) || '.';
+    sayDryRun(`plitzi pack plugin — ${base} ${version}`, [
+      `build ${inPackage ? 'the package’s elements (src/index.ts)' : folders.map(relative).join(', ')}, with any server half its folder has`,
+      `+ ${relative(outDir)}/ — the module and plugin-manifest.json${inPackage ? ', and types/' : ''}`,
+      ...(zip ? [`+ ${relative(zip)}`, `+ ${relative(sourceFileOf(zip))} — its source, when it can be kept`] : [])
+    ]);
+
+    return;
+  }
 
   try {
     // A package also gets its type declarations, for a project that installs it; elements of a project go to the builder.

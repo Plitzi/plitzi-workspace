@@ -3,7 +3,7 @@
  * The space, assembled: a file per part, so each stays short enough to read whole — the tokens, the layout every page
  * shares, the product card, and one file per page. Add a page under `site/pages` and list it here.
  *
- * The products are `public/data/products.json`, served by this project; a provider on each page reads it like any API.
+ * The products are `src/data/products.json`, the project's own: a provider on each page reads it on the server.
  */
 import { productCard } from './site/components/productCard.ts';
 import { layout } from './site/layout.ts';

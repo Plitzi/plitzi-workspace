@@ -66,7 +66,7 @@ const load = (file: string): Map<string, KvEntry> => {
  * edit by hand while the server is stopped.
  *
  * ```ts
- * createServer({ action: { kv: createFileKv({ file: 'data/kv.json' }) } });
+ * createServer({ action: { kv: createFileKv({ file: 'state/kv.json' }) } });
  * ```
  *
  * The rules are the in-process store's, to the letter (`createMapKv`): the file is only where the map is kept. Every

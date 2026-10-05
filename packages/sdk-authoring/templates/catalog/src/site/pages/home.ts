@@ -2,7 +2,7 @@
 import { apiContainer, container, heading, link, list, styles, text } from '@plitzi/sdk-authoring';
 
 import { grid } from './catalog.ts';
-import { PRODUCTS_URL, productsSource } from '../data.ts';
+import { PRODUCTS, productsSource } from '../data.ts';
 import { t } from '../tokens.ts';
 
 import type { PageSpec } from '@plitzi/sdk-authoring';
@@ -44,7 +44,7 @@ export const home: PageSpec = {
     }),
     apiContainer({
       id: featured.id,
-      query: PRODUCTS_URL,
+      ...PRODUCTS,
       cache: true,
       children: [
         heading('Featured', { id: 'home-featured-title', subType: 'h2' }),

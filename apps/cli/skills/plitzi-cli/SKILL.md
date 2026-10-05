@@ -26,13 +26,13 @@ npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can 
 npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
 npx @plitzi/cli upload plugin                  # that zip, on the space you work in, and installed there
 npx @plitzi/cli whoami                         # who the CLI is signed in as, and the space it works in
-npx @plitzi/cli data describe public/data/x.json   # a JSON file's fields, types and one row
+npx @plitzi/cli data describe src/data/x.json      # a JSON file's fields, types and one row
 npx @plitzi/cli upgrade                        # the project up to this CLI: files, package.json, skills, renames (--write)
 npx @plitzi/cli explain navigate               # what a name means: element, step, trigger, code, helper (bindTemplate, motion)
-npx @plitzi/cli functions pull                 # the space's functions (its own server code) into functions/
-npx @plitzi/cli functions push                 # functions/ back as the space's draft, built and checked
+npx @plitzi/cli functions pull                 # the space's functions (its own server code) into src/functions/
+npx @plitzi/cli functions push                 # src/functions/ back as the space's draft, built and checked
 npx @plitzi/cli functions try feed.read --params '{"limit":3}'   # one task of the saved draft, in the sandbox
-npx @plitzi/cli functions dev feed.read --watch                   # the same, from functions/, on this machine
+npx @plitzi/cli functions dev feed.read --watch                   # the same, from src/functions/, on this machine
 ```
 
 `plitzi <command> --help` lists every flag; what follows is what the help does not say.
@@ -93,15 +93,16 @@ What a project gives you, so you use it rather than rebuild it:
 **Which port.** `start` takes 8080, or the next free one — printed, and written to `tmp/dev-server.json` for `check`,
 `shot` and `visual`. `PORT` chooses one (a taken one is then an error). `/health` answers with the space's name.
 
-The data a page reads with no backend goes in `public/data/*.json`, served by the project as it is; in server mode a
-provider with `runtime: 'server'` reads it on the server, so the page arrives with it. To bind to a file, learn its fields
-with `data describe` rather than reading it: a catalogue is half a megabyte, its shape twenty lines.
+Data with no backend, server mode: `src/data/*.json`, never served — a provider with `runtime: 'server'` and `query:
+'/data/x.json'` reads it on the server (a browser one is refused). Client mode: `public/data/`, fetched — public. Learn a
+file's fields with `data describe`, never by reading it.
 
-**`public/` is on the internet**: never a secret there. `tmp/`, `data/` (its `kv`) ignored; `.plitzi/` committed.
+**`public/` is on the internet**: never a secret there. `tmp/`, `state/` (its `kv`) ignored; `.plitzi/` committed.
+`--dry-run` on any command that writes or sends says what it would do, and does none of it.
 
 A local space starts as a tour of the platform with a plugin of the project's own; **`--template blank`** starts it as
 tokens, a layout and one empty page instead — the one to pick when the project is about to be a specific site; and
-**`--template catalog`** as a complete small shop (layout, card component, data in `public/data`, a filtered list, a
+**`--template catalog`** as a complete small shop (layout, card component, data in `src/data`, a filtered list, a
 page per product), a file per part — the one to read when unsure how a whole site is put together.
 
 The space itself is written with `@plitzi/sdk-authoring` — see the `plitzi-authoring` skill, which `create` copies into
@@ -191,7 +192,7 @@ themselves is the space's (`flags` in the spec; see the authoring skill's featur
 
 ## Server code (`functions`, `runtime`)
 
-A space's own server code, edited in `functions/` (`pull`, `push`, `try`, `dev`) or run as its runtime
+A space's own server code, edited in `src/functions/` (`pull`, `push`, `try`, `dev`) or run as its runtime
 (`src/runtime.ts`, `runtime push`): read [reference/functions.md](reference/functions.md) for either.
 
 

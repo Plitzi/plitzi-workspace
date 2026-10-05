@@ -6,7 +6,9 @@ import chalk from 'chalk';
 
 import { apiFor } from './account';
 import { fetchExport, recordOrigin, versionLabel, writeFromSpace } from './createFrom';
-import { digestOf, scriptsOf, writeScaffoldRecord } from './scaffoldRecord';
+import { filesWouldWrite, sayDryRun } from './dryRun';
+import { digestOf, SCAFFOLD_RECORD_FILE, scriptsOf, writeScaffoldRecord } from './scaffoldRecord';
+import { ORIGIN_FILE } from './spaceOrigin';
 import {
   ask,
   atTerminal,
@@ -33,6 +35,7 @@ import {
 import { envFromSpace, projectFromSpace } from '../scaffold/fromSpace';
 import { CLI_VERSION, packageJson, withSigningSecret } from '../scaffold/project';
 
+import type { DryRunOptions } from './dryRun';
 import type { Question } from './terminal';
 import type { CreateAnswers, PackageManager, ProjectFiles } from '../scaffold';
 
@@ -44,7 +47,7 @@ import type { CreateAnswers, PackageManager, ProjectFiles } from '../scaffold';
  * instead, so the first minute is `install` then `start`.
  */
 
-export interface CreateOptions {
+export interface CreateOptions extends DryRunOptions {
   mode?: string;
   source?: string;
   key?: string;
@@ -261,6 +264,20 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
           '.env': envFromSpace(exported, answers, signingSecret)
         }
       : { ...files, ...(files['.env'] ? { '.env': withSigningSecret(files['.env'], signingSecret) } : {}) };
+  if (options.dryRun) {
+    const wantsInstall = options.install !== false;
+    sayDryRun(`plitzi create ${target}`, [
+      ...(await filesWouldWrite(target, [...Object.keys(written), ...Object.keys(fromSpace?.binaries ?? {})])),
+      ...(fromSpace?.downloads ?? []).map(({ url, to }) => `+ ${to} — fetched from ${url}`),
+      `+ ${SCAFFOLD_RECORD_FILE} — what the CLI wrote, for \`plitzi upgrade\``,
+      ...(exported ? [`+ ${ORIGIN_FILE} — the space it came from, for \`plitzi pull\` and \`push\``] : []),
+      ...(wantsInstall ? [`run ${installCommand(packageManager)}`] : []),
+      ...(wantsInstall && wasEmpty ? [`run ${runCommand(packageManager, 'format')}`] : [])
+    ]);
+
+    return;
+  }
+
   await writeFiles(target, written);
   const missing = fromSpace ? await writeFromSpace(target, fromSpace) : [];
   // What of the CLI's machinery was written, by digest: what lets `plitzi upgrade` replace a file nobody touched since.

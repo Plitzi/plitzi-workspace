@@ -379,7 +379,9 @@ describe('the scaffold', () => {
       outDir: 'dist',
       rewriteRelativeImportExtensions: true
     });
-    expect(build.exclude).toEqual(['src/plugins']);
+    // Built at boot from their source, by the server: never compiled ahead.
+    expect(build.exclude).toEqual(['src/plugins', 'src/functions']);
+    expect(files['src/main.ts']).toContain("await loadFunctions(path.join(PROJECT_ROOT, 'src/functions'))");
     // The same folder from `src/main.ts` and from `dist/main.js`.
     expect(files['src/main.ts']).toContain("const PLUGINS_DIR = path.join(PROJECT_ROOT, 'src/plugins');");
     expect(scaffold(answers({ mode: 'client' }))['tsconfig.build.json']).toBeUndefined();
@@ -410,13 +412,14 @@ describe('the scaffold', () => {
     const client = scaffold(answers({ mode: 'client', source: 'cloud' }))['AGENTS.md'];
 
     expect(server).toContain('tmp/dev-server.json');
-    expect(server).toContain('`public/data/*.json`');
+    expect(server).toContain('`src/data/*.json`: the server reads it and never serves it');
     expect(server).toContain('`npm run check -- / --width 1440,390`');
     expect(server).toContain('`npm run shot -- / --width 390`');
     expect(server).toMatch(/## Do not read\n\n- `tmp\/`/);
     expect(server).toContain('`public/` is on the internet.');
     expect(server).toContain('## Keep the project clean');
-    expect(server).toContain('data describe public/data/<file>.json');
+    expect(server).toContain('data describe src/data/<file>.json');
+    expect(scaffold(answers({ mode: 'client' }))['AGENTS.md']).toContain('data describe public/data/<file>.json');
     expect(client).toContain('Vite on 5173');
     expect(client).not.toContain('offline-data.json');
     expect(client).not.toContain('.sdk-plugins');
@@ -430,7 +433,9 @@ describe('the scaffold', () => {
 
       expect(files['src/space.ts']).toContain("layout: { id: 'site', slot: 'site-main' }");
       expect(files['src/space.ts']).toContain("permanentUrl: 'demo'");
-      expect(files['public/data/.gitkeep']).toBe('');
+      // A server reads its data from `src/data/`, never served; a project with no server fetches it from `public/`.
+      expect(files[mode === 'server' ? 'src/data/.gitkeep' : 'public/data/.gitkeep']).toBe('');
+      expect(files[mode === 'server' ? 'public/data/.gitkeep' : 'src/data/.gitkeep']).toBeUndefined();
       expect(files['public/data/stats.json']).toBeUndefined();
       expect(Object.keys(files).filter(file => file.startsWith('src/plugins/'))).toEqual([
         // What a server-mode project's plugins import besides code: a client-mode one has `vite/client`.
@@ -448,7 +453,8 @@ describe('the scaffold', () => {
 
       expect(files['src/space.ts']).toContain("permanentUrl: 'demo'");
       expect(files['src/site/pages/product.ts']).toContain("slug: 'products/:slug'");
-      expect(JSON.parse(files['public/data/products.json'])).toHaveProperty('products');
+      const data = mode === 'server' ? 'src/data/products.json' : 'public/data/products.json';
+      expect(JSON.parse(files[data])).toHaveProperty('products');
       expect(files['src/author.ts']).toContain("from './space.ts'");
       expect(Object.keys(files).filter(file => file.startsWith('src/plugins/StatCard'))).toEqual([]);
     }
@@ -514,8 +520,6 @@ describe('plitzi create', () => {
         'CLAUDE.md',
         'README.md',
         'eslint.config.mjs',
-        // The project's own server code, there from the start so `start:dev` can watch it.
-        'functions',
         'package.json',
         'playwright.config.ts',
         'public',
@@ -527,6 +531,10 @@ describe('plitzi create', () => {
       expect((await fs.readdir(path.join(target, 'src'))).sort()).toEqual([
         'actions.ts',
         'author.ts',
+        // The project's own data, read by its server and never served.
+        'data',
+        // The project's own server code, there from the start so `start:dev` can watch it.
+        'functions',
         'main.ts',
         'plugins',
         'serverOptions.ts',
@@ -537,6 +545,23 @@ describe('plitzi create', () => {
       expect(JSON.parse(await fs.readFile(path.join(target, '.plitzi/scaffold.json'), 'utf-8'))).toMatchObject({
         packageManager: 'npm'
       });
+    });
+  });
+
+  it('says with --dry-run what it would write and run, and writes nothing', async () => {
+    await inTemp(async dir => {
+      const target = path.join(dir, 'my-site');
+      const said: string[] = [];
+      vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
+      await create(target, { packageManager: 'npm', mode: 'server', source: 'local', dryRun: true });
+      vi.restoreAllMocks();
+
+      const out = said.join('\n');
+      expect(out).toContain('+ src/main.ts');
+      expect(out).toContain('+ src/functions/README.md');
+      expect(out).toContain('+ .claude/skills/plitzi-authoring/');
+      expect(out).toContain('run npm install');
+      await expect(fs.access(target)).rejects.toThrow();
     });
   });
 

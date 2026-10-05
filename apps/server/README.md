@@ -186,6 +186,7 @@ wires itself.
 | `autoLoadSchemaPlugins` | `boolean` | `true` | Auto-download and cache plugins declared in the schema's `offlineData.plugins` list. A type the deployment registers itself (`plugins`, named in `pluginNames`) is never looked for there: its own build is the one rendered. Set to `false` to manage plugin loading manually. |
 | `allowPrivatePluginHosts` | `boolean` | `false` | Read a schema plugin from a private address (`localhost`, this server's own network). A plugin's address is typed by whoever edits a space, so leave it off anywhere but a development machine whose bucket is local. |
 | `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. **Everything in it is public:** served to anyone who asks, with no check. |
+| `dataDir` | `string` | — | The project's own data, never served: a provider resolved on the server (`runtime: 'server'`) whose `query` is `/data/<file>` reads `<dataDir>/<file>`. See [Project data](#project-data). |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
 | `images` | `{ domains, cacheDir? }` | — | Pictures from other sites resized at `/_plitzi/img`, for an `image` to offer as a `srcset` (see [Images](#images)). |
 | `ssrOnly` | `boolean` | `false` | Omit client-side JS from the rendered page. Useful for verifying SSR HTML without hydration. |
@@ -429,6 +430,21 @@ session, no permission, no check. Never put a secret, a key, an `.env`, a privat
 some visitors may read in it: that is served by a server action whose `access` checks who is asking.
 
 `/.well-known/` paths follow the same lookup order: served from `publicDir` if a matching file exists, otherwise `404 Not Found`. They are never handled by the SSR renderer.
+
+### Project data
+
+A project with no backend keeps its data as JSON files, and `dataDir` is where they stay off the internet: nothing
+serves the folder. A provider resolved on the server whose `query` is `/data/<file>` reads `<dataDir>/<file>` before the
+page is answered — in the shape a browser request publishes (`{ status, data }`), so a binding reads `<source>.data.…`
+in either runtime — and the page arrives with it. A browser asking for the same path gets a page, never the file.
+
+```ts
+createServer({ dataDir: path.join(PROJECT_ROOT, 'src/data'), adapters: { ... } });
+```
+
+`/data/…` is the data folder's first; a server provider reading another path is answered from `publicDir`, as the
+browser would be. What a provider reads goes into the page it renders, whole: data a page must not carry — a price
+list's costs, another visitor's rows — is a server action's to read, answering only what is shown.
 
 ## Compression
 

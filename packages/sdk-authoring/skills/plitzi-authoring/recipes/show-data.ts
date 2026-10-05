@@ -1,7 +1,8 @@
 /* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
- * Show data with no backend: a JSON file the project serves (`public/data/products.json`), read by a provider — one
- * card per product, a skeleton while it loads, a count, a computed value, and an empty state that never flashes.
+ * Show data with no backend, in a project with no server: a JSON file the browser fetches (`public/data/products.json`,
+ * public), read by a provider — one card per product, a skeleton while it loads, a count, a computed value, and an
+ * empty state that never flashes. A server project reads its `src/data/` on the server instead (`server-data.ts`).
  */
 import { apiContainer, container, heading, list, styles, text, listItem } from '@plitzi/sdk-authoring';
 

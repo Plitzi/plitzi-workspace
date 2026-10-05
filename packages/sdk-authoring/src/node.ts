@@ -10,11 +10,14 @@
  * svg(svgFile(new URL('./icons/arrow.svg', import.meta.url)));
  *
  * authorSpace(space, { data: publicData(new URL('../public/', import.meta.url)) });   // bindings held to the files
+ * authorSpace(space, { serverData: projectData(new URL('./data/', import.meta.url)) }); // …and read on the server only
  * ```
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
 
 import { compactSvg } from './svg/compactSvg';
 
@@ -46,22 +49,17 @@ export const svgFiles = (folder: string | URL): Record<string, string> => {
   );
 };
 
-/**
- * What a provider's `query` answers when it is a JSON file the project serves — `/data/plans.json` read from `public/` —
- * for `authorSpace`'s `data`: every binding onto that provider is then held to the file. Anything else — another site,
- * a path with `{{tokens}}`, one that climbs out of the folder, a file that is not there or not JSON — is `undefined`,
- * and left unchecked. Each file is read once.
- */
-export const publicData = (folder: string | URL): ((query: string) => unknown) => {
+/** A JSON file under `prefix`, read once from the same path inside `folder`; `undefined` for anything else. */
+const fileReader = (folder: string | URL, prefix: string): ((query: string) => unknown) => {
   const root = path.resolve(pathOf(folder));
   const read = new Map<string, unknown>();
 
   return query => {
-    if (!query.startsWith('/') || query.startsWith('//') || query.includes('{{')) {
+    if (!query.startsWith(prefix) || query.startsWith('//') || query.includes('{{')) {
       return undefined;
     }
 
-    const file = path.resolve(root, `.${query.split(/[?#]/)[0]}`);
+    const file = path.resolve(root, `.${query.split(/[?#]/)[0].slice(prefix.length - 1)}`);
     if (!file.startsWith(`${root}${path.sep}`)) {
       return undefined;
     }
@@ -80,5 +78,21 @@ export const publicData = (folder: string | URL): ((query: string) => unknown) =
     return read.get(file);
   };
 };
+
+/**
+ * What a provider's `query` answers when it is a JSON file the project serves — `/data/plans.json` read from `public/` —
+ * for `authorSpace`'s `data`: every binding onto that provider is then held to the file. Anything else — another site,
+ * a path with `{{tokens}}`, one that climbs out of the folder, a file that is not there or not JSON — is `undefined`,
+ * and left unchecked. Each file is read once.
+ */
+export const publicData = (folder: string | URL): ((query: string) => unknown) => fileReader(folder, '/');
+
+/**
+ * What a provider's `/data/<file>` query answers from the project's own data — `src/data/`, which its server reads and
+ * never serves (`dataDir`) — for `authorSpace`'s `serverData`: bindings are held to the file, and a provider reading
+ * one from the browser is refused.
+ */
+export const projectData = (folder: string | URL): ((query: string) => unknown) =>
+  fileReader(folder, PROJECT_DATA_PREFIX);
 
 export { compactSvg } from './svg/compactSvg';

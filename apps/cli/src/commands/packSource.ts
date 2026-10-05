@@ -3,13 +3,15 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { sayDryRun } from './dryRun';
 import { findProject } from './existingProject';
 import { fail } from './terminal';
 import { packSource } from '../pack/source';
 
+import type { DryRunOptions } from './dryRun';
 import type { SourceSnapshotKind } from '@plitzi/sdk-shared/source';
 
-export interface PackSourceOptions {
+export interface PackSourceOptions extends DryRunOptions {
   kind: SourceSnapshotKind;
   name: string;
   /** The project the paths are relative to: the nearest package.json's folder unless named. */
@@ -37,6 +39,17 @@ const packSourceCommand = async (entries: string[], options: PackSourceOptions):
       entries: entries.map(entry => path.resolve(entry))
     });
     const out = path.resolve(options.out);
+    if (options.dryRun) {
+      sayDryRun(`plitzi source — ${options.name}`, [
+        `+ ${path.relative(process.cwd(), out)} (${(bytes.byteLength / 1024).toFixed(0)} KB) — the source snapshot of:`,
+        ...Object.keys(snapshot.files)
+          .sort()
+          .map(file => `    ${file}`)
+      ]);
+
+      return;
+    }
+
     await fs.mkdir(path.dirname(out), { recursive: true });
     await fs.writeFile(out, bytes);
     console.log(

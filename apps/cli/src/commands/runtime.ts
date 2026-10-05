@@ -8,6 +8,7 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { connectToSpace } from './account';
+import { sayDryRun } from './dryRun';
 import { projectHere } from './existingProject';
 import { keepSource } from './keepSource';
 import { fail } from './terminal';
@@ -15,6 +16,7 @@ import { authorizedRequest } from '../account/session';
 import { packSource } from '../pack/source';
 
 import type { AccountOptions } from './account';
+import type { DryRunOptions } from './dryRun';
 import type { PushOutcome } from './pushOutcome';
 import type { ConnectedSpace, Connection } from '../account/connection';
 
@@ -30,7 +32,7 @@ export interface RuntimeStatusOptions extends AccountOptions {
   json?: boolean;
 }
 
-export interface RuntimeOptions extends AccountOptions {
+export interface RuntimeOptions extends AccountOptions, DryRunOptions {
   /** The runtime module: whose default export is `defineRuntime(…)`. `src/runtime.ts` by default. */
   entry?: string;
 }
@@ -82,7 +84,8 @@ export const pushRuntimeOf = async (
   root: string,
   connection: Connection,
   space: ConnectedSpace,
-  entry: string
+  entry: string,
+  { dryRun = false }: DryRunOptions = {}
 ): Promise<PushOutcome> => {
   try {
     await fs.access(entry);
@@ -104,6 +107,14 @@ export const pushRuntimeOf = async (
     fail(`It does not pack: ${error instanceof Error ? error.message : String(error)}`);
 
     return 'failed';
+  }
+
+  if (dryRun) {
+    sayDryRun(`plitzi runtime push — to ${space.name}’s draft`, [
+      `→ ${path.relative(root, entry)}, packed: ${(bytes.byteLength / 1024).toFixed(0)} KB, and the source it was packed from`
+    ]);
+
+    return 'shown';
   }
 
   const answered = await authorizedRequest<{ ok?: boolean; digest?: string; size?: number; error?: string }>(
@@ -150,7 +161,9 @@ export const pushRuntime = async (options: RuntimeOptions): Promise<void> => {
     return;
   }
 
-  await pushRuntimeOf(root, connection, connection.space, path.resolve(root, options.entry ?? DEFAULT_RUNTIME_ENTRY));
+  await pushRuntimeOf(root, connection, connection.space, path.resolve(root, options.entry ?? DEFAULT_RUNTIME_ENTRY), {
+    dryRun: options.dryRun
+  });
 };
 
 const readRuntime = async (
@@ -238,13 +251,19 @@ export const runtimeStatus = async (options: RuntimeStatusOptions): Promise<void
 };
 
 /** Starts an environment's runtime again, or stops it — kept stopped until started. */
-export const powerRuntime = async (power: 'start' | 'stop', options: AccountOptions & { environment?: string }) => {
+export const powerRuntime = async (power: 'start' | 'stop', options: RuntimeOptions & { environment?: string }) => {
   const connection = await connectToSpace(options, 'to configure');
   if (!connection?.space) {
     return;
   }
 
   const environment = options.environment ?? 'main';
+  if (options.dryRun) {
+    sayDryRun(`plitzi runtime ${power} — ${connection.space.name}`, [`${power} ${environment}’s runtime`]);
+
+    return;
+  }
+
   const answered = await authorizedRequest<{ error?: string }>(
     connection,
     `/spaces/${String(connection.space.id)}/runtime/${power}`,
@@ -273,13 +292,21 @@ export const powerRuntime = async (power: 'start' | 'stop', options: AccountOpti
 };
 
 /** Chooses the size an environment's runtime runs at — one the space's plan includes — and it starts again at it. */
-export const setRuntimeSize = async (size: string, options: AccountOptions & { environment?: string }) => {
+export const setRuntimeSize = async (size: string, options: RuntimeOptions & { environment?: string }) => {
   const connection = await connectToSpace(options, 'to configure');
   if (!connection?.space) {
     return;
   }
 
   const environment = options.environment ?? 'main';
+  if (options.dryRun) {
+    sayDryRun(`plitzi runtime size — ${connection.space.name}`, [
+      `${environment}’s runtime at ${size}, started again at it`
+    ]);
+
+    return;
+  }
+
   const answered = await authorizedRequest<{ error?: string }>(
     connection,
     `/spaces/${String(connection.space.id)}/runtime/size`,
@@ -317,9 +344,18 @@ const readStdin = async (): Promise<string> => {
  * Sets one of the runtime's variables — the runtime starts again with it. Without a value it is read from standard
  * input (`printf %s "$URL" | plitzi runtime vars set REDIS_URL`), which keeps a secret out of the shell's history.
  */
-export const setRuntimeVariable = async (name: string, value: string | undefined, options: AccountOptions) => {
+export const setRuntimeVariable = async (name: string, value: string | undefined, options: RuntimeOptions) => {
   const connection = await connectToSpace(options, 'to configure');
   if (!connection?.space) {
+    return;
+  }
+
+  // Never read, not even from standard input: a dry run says what would be set, and holds no secret.
+  if (options.dryRun) {
+    sayDryRun(`plitzi runtime vars set — ${connection.space.name}`, [
+      `${name}, ${value === undefined ? 'its value read from standard input' : 'to the value given'} — the runtime started again with it`
+    ]);
+
     return;
   }
 
@@ -345,9 +381,17 @@ export const setRuntimeVariable = async (name: string, value: string | undefined
   console.log(chalk.green(`${name} set — the runtime starts again with it.`));
 };
 
-export const unsetRuntimeVariable = async (name: string, options: AccountOptions) => {
+export const unsetRuntimeVariable = async (name: string, options: RuntimeOptions) => {
   const connection = await connectToSpace(options, 'to configure');
   if (!connection?.space) {
+    return;
+  }
+
+  if (options.dryRun) {
+    sayDryRun(`plitzi runtime vars unset — ${connection.space.name}`, [
+      `${name} removed — the runtime started again without it`
+    ]);
+
     return;
   }
 

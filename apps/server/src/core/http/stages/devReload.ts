@@ -18,7 +18,7 @@ export const DEV_RELOAD_PATH = '/__plitzi/reload';
  * — a published one, or a platform's — would pay for and get nothing from. The template listens only then too.
  *
  * Each connection is greeted with this process's `boot`, and a page that reconnects to a different one loads again: the
- * server restarted — `start:dev` saw its code change (`main.ts`, its options, its actions, a plugin, `functions/`) — and
+ * server restarted — `start:dev` saw its code change (`main.ts`, its options, its actions, `src/functions/`) — and
  * what is on screen was built by the one before. Without it the page kept the old plugin until somebody reloaded it,
  * which reads as "my change did nothing".
  */

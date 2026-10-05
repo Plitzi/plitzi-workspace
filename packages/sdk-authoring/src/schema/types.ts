@@ -659,6 +659,13 @@ export interface AuthorSpaceOptions {
    * answer, which is left unchecked.
    */
   data?: (query: string) => unknown;
+  /**
+   * The project's own data, which only the server reads (`dataDir`): what a provider's `/data/<file>` query answers —
+   * `projectData` from `@plitzi/sdk-authoring/node` reads them from `src/data/`. Bindings onto it are held to the answer
+   * as with `data`, and a provider asking for `/data/…` from the browser is refused (`server-data-in-browser`): no
+   * browser is answered.
+   */
+  serverData?: (query: string) => unknown;
 }
 
 export interface AuthoredSpace {

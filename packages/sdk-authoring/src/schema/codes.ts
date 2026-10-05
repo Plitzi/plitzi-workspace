@@ -483,6 +483,12 @@ export const AUTHORING_CODES = {
       "a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's",
     fix: 'put the provider on the page, around the instance, and hand the component its rows as a prop'
   },
+  'server-data-in-browser': {
+    kind: 'refused',
+    means:
+      "a provider asking for the project's own data (`/data/…`, read by its server from `src/data/` and never served) from the browser",
+    fix: "`runtime: 'server'` on the provider: the page arrives with the data in it"
+  },
   'server-data-without-rsc': {
     kind: 'warned',
     means:

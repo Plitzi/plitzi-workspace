@@ -1,7 +1,7 @@
 /**
- * Data in a server project (`create --mode server`): a JSON file the project serves (`public/data/plans.json`), read
- * by the page server before it answers — so the page arrives with the plans in its HTML, their anchors in place, and
- * nothing to fetch once the browser has it.
+ * Data in a server project (`create --mode server`): a JSON file of the project's own (`src/data/plans.json`, answering
+ * `/data/plans.json`), read by the page server before it answers and never served — so the page arrives with the plans
+ * in its HTML, their anchors in place, and nothing to fetch once the browser has it.
  *
  * - `runtime: 'server'` on the provider is the whole switch: server data is on unless a space turns it off.
  * - The answer is read exactly as in the browser — `plans.data.…` — so moving a provider between runtimes changes no

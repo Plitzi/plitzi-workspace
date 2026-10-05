@@ -10,7 +10,7 @@ import { fakePlatform } from '../account/fakePlatform';
 import type { FakePlatform } from '../account/fakePlatform';
 
 /**
- * `plitzi functions`: `functions/` as a working copy of the space's source — pulled, pushed against the version it was
+ * `plitzi functions`: `src/functions/` as a working copy of the space's source — pulled, pushed against the version it was
  * pulled at, and never silently overwriting either side.
  */
 
@@ -27,11 +27,11 @@ vi.mock('../account/oauth', async importOriginal => ({
 const { devFunction, pullFunctions, pushFunctions, tryFunction } = await import('./functions');
 
 const write = async (file: string, text: string) => {
-  await fs.mkdir(path.dirname(path.join(project, 'functions', file)), { recursive: true });
-  await fs.writeFile(path.join(project, 'functions', file), text);
+  await fs.mkdir(path.dirname(path.join(project, 'src/functions', file)), { recursive: true });
+  await fs.writeFile(path.join(project, 'src/functions', file), text);
 };
 
-const read = (file: string) => fs.readFile(path.join(project, 'functions', file), 'utf8');
+const read = (file: string) => fs.readFile(path.join(project, 'src/functions', file), 'utf8');
 
 beforeEach(async () => {
   home = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-functions-'));
@@ -67,7 +67,7 @@ afterEach(async () => {
 });
 
 describe('plitzi functions', () => {
-  it('pulls the space’s files into functions/, and pushes them back against that version', async () => {
+  it('pulls the space’s files into src/functions/, and pushes them back against that version', async () => {
     platform.functions = {
       files: { 'index.ts': 'export default {};', 'lib/feed.ts': 'export const a = 1;' },
       version: 'v4'
@@ -84,6 +84,22 @@ describe('plitzi functions', () => {
     });
     expect(said.out).toContain('feed.read');
     expect(process.exitCode).toBeUndefined();
+  });
+
+  it('says what a pull and a push would do with --dry-run, and does neither', async () => {
+    platform.functions = { files: { 'index.ts': 'export default {};' }, version: 'v1' };
+
+    await pullFunctions({ api: platform.api, dryRun: true });
+
+    expect(said.out).toContain('+ src/functions/index.ts');
+    await expect(read('index.ts')).rejects.toThrow();
+
+    await pullFunctions({ api: platform.api });
+    await write('index.ts', 'export default { mine: true };');
+    await pushFunctions({ api: platform.api, dryRun: true });
+
+    expect(said.out).toContain('→ src/functions/index.ts');
+    expect(platform.functions).toEqual({ files: { 'index.ts': 'export default {};' }, version: 'v1' });
   });
 
   it('refuses to pull over what is not pushed, unless told to', async () => {
@@ -119,7 +135,7 @@ describe('plitzi functions', () => {
 
     await pushFunctions({ api: platform.api });
 
-    expect(said.err).toContain('functions/index.ts:2 Expected ";"');
+    expect(said.err).toContain('src/functions/index.ts:2 Expected ";"');
     expect(process.exitCode).toBe(1);
   });
 
@@ -144,7 +160,7 @@ describe('plitzi functions dev', () => {
   };
 
   // Loading the project's own runner — sdk-server, its bundler and an isolate — takes two seconds on a laptop alone.
-  it('runs a task from functions/ in an isolate, with nothing sent to the space', async () => {
+  it('runs a task from src/functions/ in an isolate, with nothing sent to the space', async () => {
     await installSdkServer();
     await write(
       'index.ts',

@@ -20,6 +20,12 @@ npx @plitzi/cli upload plugin                  # that zip, on the space you work
 - **The same flag means the same thing everywhere:** `-o, --out` where it writes, `-f, --force` to write over what is
   there, `-e, --environment` for which version of the space, `--width` for the widths a page is looked at (one, or
   several separated by commas), `--api` for the platform, `--json` for a tool or an agent.
+- **`--dry-run` says what it would do, and does none of it** — on every command that writes or sends: `create`,
+  `add plugin`, `pull`, `push`, `pack plugin`, `source`, `import`, `upload plugin`, `functions pull`/`push`,
+  `runtime push`/`start`/`stop`/`size`/`vars`, `skills update`. Each file it would write (`+` new, `~` replaced, `-`
+  removed), what it would install or run, what it would send and where. It still reads what it needs to say so — the
+  project, the files it would send, the space it would pull, signing in for that. `upgrade` and `fix` only show until
+  `--write`.
 
 ## `create`
 
@@ -102,8 +108,8 @@ when an install fails the CLI says which setting names it.
   declaration the platform authors a new space from, so what you start with and what signing up gives you cannot
   come apart — and unlike a document, you can read and change it.
 - **A live loop.** In client mode a save is a hot module replacement: the space module is swapped and the tree
-  remounted, so the page updates without reloading. In server mode `--watch` restarts the process and the next
-  request renders the change.
+  remounted, so the page updates without reloading. In server mode `start:dev` re-authors a saved space and the open
+  page loads again, swaps a saved plugin where it is drawn, and restarts only for the server's own code.
 - **A plugin of the project's own.** `src/plugins/StatCard` is a React component the space renders through a
   `custom` element — the one thing about Plitzi a page of built-in elements cannot show. Every folder of
   `src/plugins` is registered by itself, under its name in camelCase, so `plitzi add plugin` is all a new one takes. Its props ARE the
@@ -130,17 +136,19 @@ when an install fails the CLI says which setting names it.
 
 | Folder | What it is | In git |
 | --- | --- | --- |
-| `public/` | Served to anyone who asks, as it is — data, pictures, a favicon. **It is on the internet**: never a secret, a key, a private document or data only some visitors may read | yes |
+| `public/` | Served to anyone who asks, as it is — pictures, a favicon, and in client mode the data the browser fetches (`public/data/`). **It is on the internet**: never a secret, a key, a private document or data only some visitors may read | yes |
+| `src/data/` | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read | yes |
+| `src/functions/` | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot | yes |
 | `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), the space as last authored, screenshots and test output. Rebuilt when missing | no |
-| `data/` | Server mode: what the server keeps for the space — its `kv` in `data/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's data: kept across restarts, never rebuilt. `action.kv` in `src/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
+| `state/` | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
 | `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
 
 `src/main.ts` is the CLI's (`upgrade` keeps it current). What the server does besides serving the space is the
 project's own, in files it reads: `src/serverOptions.ts` (handed to `createServer` — `images`, `action.limits`,
 `action.kv`, `rsc`) and, with `--source local`, `src/actions.ts` (the space's server actions, one `defineAction` each).
-What `main.ts` wires itself — where the space comes from, the plugins, `public/`, `functions/`, the actions' lookups —
-is left out of `serverOptions`' type, and comes after it, so an option there can never unwire it.
-`functions/` holds the project's own server code; `start:dev` restarts on a change to any of them. A plugin is not
+What `main.ts` wires itself — where the space comes from, the plugins, `public/`, `src/data/`, `src/functions/`, the
+actions' lookups — is left out of `serverOptions`' type, and comes after it, so an option there can never unwire it.
+`src/functions/` holds the project's own server code; `start:dev` restarts on a change to any of them. A plugin is not
 server code to restart for: a save to one is built again and swapped in the open pages where it is drawn — the rest of
 the page, its state included, stays — its server half (`src/plugins/<Name>/functions/`) is loaded again in place, and a
 new plugin folder is registered without a restart.
@@ -149,10 +157,11 @@ new plugin folder is registered without a restart.
 
 A space written in the project starts as the welcome tour, with a plugin of the project's own. `--template blank`
 starts it as tokens for both themes, a layout whose `site-main` the pages render in, and one empty page — with
-`public/data/` and no example plugin — for a project that is about to be a specific site. `--template catalog` starts
-it as a complete small shop to read and change: a layout with a menu, a product card component, the products in
-`public/data/products.json` read as a typed source, a catalog filtered by category, and a page per product — a file
-per part under `src/site/`. Both go with `--source local`.
+a folder for its data and no example plugin — for a project that is about to be a specific site. `--template catalog`
+starts it as a complete small shop to read and change: a layout with a menu, a product card component, the products
+in `src/data/products.json` read on the server as a typed source (`public/data/products.json`, fetched by the browser,
+in client mode), a catalog filtered by category, and a page per product — a file per part under `src/site/`. Both go
+with `--source local`.
 
 ## `check` and `shot`
 
@@ -267,8 +276,8 @@ older than the `@plitzi/sdk-authoring` installed.
 ## `data describe`
 
 ```bash
-plitzi data describe public/data/products.json          # its shape, and one row of its longest list
-plitzi data describe public/data/products.json --json   # { shape, example }
+plitzi data describe src/data/products.json          # its shape, and one row of its longest list
+plitzi data describe src/data/products.json --json   # { shape, example }
 ```
 
 The fields of a JSON file, their types and which rows have them — `price?: number  (in 812 of 879)` — so a page can
@@ -302,7 +311,7 @@ that names come before what names them:
 
 1. `plugins` — every plugin whose source changed, packed and uploaded to the space's CDN (`--cdn`/`--bucket` when it
    has several public buckets);
-2. `functions` — `functions/`, as `functions push`;
+2. `functions` — `src/functions/`, as `functions push`;
 3. `runtime` — the runtime module, as `runtime push`;
 4. `space` — `src/space.ts` authored, with the actions `src/actions.ts` serves and the connectors in `src/connectors/`.
 
@@ -485,10 +494,10 @@ plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'  # one task of
 plitzi functions dev seismic.feed --params '{}' --watch            # on this machine, as the platform runs it
 ```
 
-A space's own server code — tasks its actions run as steps, routes under `/fn/` — and `functions/` is a working copy
+A space's own server code — tasks its actions run as steps, routes under `/fn/` — and `src/functions/` is a working copy
 of it: `.plitzi/functions.json` keeps what was pulled, so `pull` refuses to overwrite what is not pushed (`--force`
 throws it away) and `push` refuses when the space moved on since. A problem comes back as
-`functions/<file>:<line> <message>`. `dev` runs with the project's own `@plitzi/sdk-server` (`isolated-vm` and
+`src/functions/<file>:<line> <message>`. `dev` runs with the project's own `@plitzi/sdk-server` (`isolated-vm` and
 `core-js` beside it); credentials come from `PLITZI_FUNCTIONS_CREDENTIALS`. See `docs/en/functions.md`.
 
 ## Credentials

@@ -119,6 +119,7 @@ The space is not written until these are fixed.
 | `rule-set-mixed` | a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css` | `{ css: { desktop: { … } }, states: { hover: { … } } }` — the rules under `css`, each of the others beside it |
 | `selector-invalid` | a `selector` that is not a CSS class name | letters, digits, `-` and `_` |
 | `selector-taken` | a `selector` that is a declared class, or another element's | `class` to share rules; a selector of an element's own is its alone |
+| `server-data-in-browser` | a provider asking for the project's own data (`/data/…`, read by its server from `src/data/` and never served) from the browser | `runtime: 'server'` on the provider: the page arrives with the data in it |
 | `server-provider-in-component` | a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's | put the provider on the page, around the instance, and hand the component its rows as a prop |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |
 | `slot-children` | children handed to an instance outside its slots | `children: { slotName: [ … ] }`; a component with no slots takes no children |

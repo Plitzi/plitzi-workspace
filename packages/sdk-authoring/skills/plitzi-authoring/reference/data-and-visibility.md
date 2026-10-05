@@ -85,16 +85,17 @@ see [typed-sources.md](typed-sources.md).
 
 ### Data in a project with no backend
 
-Content lives in JSON files the project serves (`public/data/games.json`), read like any API — `apiContainer({ id:
-'catalog', query: '/data/games.json', children: [ … ] })` — so a real endpoint later changes one `query`. `mockData` is
-what the BUILDER shows while editing, never the running page's data. Say on the page that demo content is demo content.
+Content lives in JSON files read like any API — `apiContainer({ id: 'catalog', query: '/data/games.json', children:
+[ … ] })` — so a real endpoint later changes one `query`. `mockData` is only what the BUILDER shows. Say demo is demo.
+
+- **Server project:** `src/data/games.json` answers `/data/games.json`, read by the server, never served. The provider
+  is `runtime: 'server'` (the page arrives with it); a browser one is refused (`server-data-in-browser`).
+- **No server:** `public/data/`, fetched — public.
 
 **`public/` is on the internet**, and so is everything the space's documents hold (pages, variables, attributes,
-`mockData`): never a secret, a key, a private document or data only some visitors may read. A secret is a credential an
-action or a connector names; data for some visitors comes from a server action whose `access` checks who is asking.
-
-**In a server project, put the provider on the server** (`runtime: 'server'`): the page arrives with those sections
-(and their anchors) in it. A `query` with `{{tokens}}` is still read in the browser.
+`mockData`) and what a provider reads into a page: never a secret, a key or data only some visitors may read. A secret
+is a credential an action or a connector names; data for some visitors, or fields a page must not carry, comes from a
+server action answering only what is shown, its `access` checking who asks.
 
 ### Live, cached, refreshed
 

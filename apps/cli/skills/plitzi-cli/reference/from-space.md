@@ -6,7 +6,7 @@ serving it with nothing of Plitzi's — neither its servers nor its CDN:
 - its pages as authoring code in `src/space/` (`--source cloud` writes none: they stay on Plitzi, read with a key);
 - its actions in `src/actions/` — each a `defineAction` call where the document reads back exactly, JSON where it does
   not (the report says why) — and its connectors as JSON;
-- its functions in `functions/`, its runtime and plugins as the source they were built from, under `src/`;
+- its functions in `src/functions/`, its runtime and plugins as the source they were built from, under `src/`;
 - its files downloaded into `public/`, every CDN address rewritten to the project's own;
 - `.env` with a signing key made for it, and the names of the variables and credentials it needs — never their values.
 

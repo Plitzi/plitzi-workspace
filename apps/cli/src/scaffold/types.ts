@@ -23,7 +23,7 @@ export interface CreateAnswers {
   /**
    * What a local space starts as: `welcome` (the default), a tour of the platform with a plugin of the project's own;
    * `blank` — tokens, a layout and one empty page, for a project about to be something specific; or `catalog` — a
-   * shop to read and change: a layout, a card component, data in `public/data`, a filtered list and a page per item,
+   * shop to read and change: a layout, a card component, data in `src/data` (`public/data` with no server), a filtered list and a page per item,
    * a file per part.
    */
   template?: CreateTemplate;

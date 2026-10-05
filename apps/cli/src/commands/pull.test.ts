@@ -108,8 +108,23 @@ describe('plitzi pull', () => {
     await expect(read('src/space/pages/about.ts')).rejects.toThrow();
     expect(await read('src/space/index.ts')).toContain('// mine');
     expect(JSON.parse(await read('package.json'))).toMatchObject({ dependencies: { zod: '^4.0.0' } });
-    expect(await read('functions/index.ts')).toContain('feed');
+    expect(await read('src/functions/index.ts')).toContain('feed');
     expect(JSON.parse(await read('.plitzi/functions.json'))).toMatchObject({ version: 'v2' });
+  });
+
+  it('says with --dry-run what it would write, remove and keep, and touches nothing', async () => {
+    platform.pizarra.pages['pages/home.ts'] = "export const homePage = { name: 'Home, again' };\n";
+    delete platform.pizarra.pages['pages/about.ts'];
+    const said: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
+    const before = await read('src/space/pages/home.ts');
+
+    await pull({ dryRun: true });
+
+    expect(said.join('\n')).toContain('~ src/space/pages/home.ts');
+    expect(said.join('\n')).toContain('- src/space/pages/about.ts');
+    expect(await read('src/space/pages/home.ts')).toBe(before);
+    expect(await read('src/space/pages/about.ts')).toBeDefined();
   });
 
   it('writes nothing when a file changed here and on the space — and takes the space’s with --force', async () => {

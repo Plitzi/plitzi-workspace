@@ -11,6 +11,7 @@ import { projectFormatter } from './projectFormatter';
 import { digestsOnDisk, writeOrigin } from './spaceOrigin';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
+import { FUNCTIONS_DIR } from '../scaffold/paths';
 
 import type { Connection } from '../account/connection';
 import type { Outcome } from '../account/session';
@@ -149,7 +150,7 @@ export const functionsOnDisk = async (root: string, project: ProjectFromSpace): 
   Object.fromEntries(
     await Promise.all(
       Object.keys(project.functions.files).map(
-        async file => [file, await fs.readFile(path.join(root, 'functions', file), 'utf-8')] as const
+        async file => [file, await fs.readFile(path.join(root, FUNCTIONS_DIR, file), 'utf-8')] as const
       )
     )
   );

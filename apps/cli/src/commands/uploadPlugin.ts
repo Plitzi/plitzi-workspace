@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { unzipSync } from 'fflate';
 
 import { apiFor, connectionWithSpace } from './account';
+import { sayDryRun } from './dryRun';
 import { findProject } from './existingProject';
 import { keepSource } from './keepSource';
 import { askPick, atTerminal, fail, refuseWithoutTerminal } from './terminal';
@@ -13,6 +14,7 @@ import { authorizedRequest } from '../account/session';
 import { sourceFileOf } from '../pack/pack';
 
 import type { AccountOptions } from './account';
+import type { DryRunOptions } from './dryRun';
 import type { PushOutcome } from './pushOutcome';
 import type { ConnectedSpace, Connection } from '../account/connection';
 import type { Outcome } from '../account/session';
@@ -26,7 +28,7 @@ import type { Outcome } from '../account/session';
  * first upload is one command too.
  */
 
-export interface UploadPluginOptions extends AccountOptions {
+export interface UploadPluginOptions extends AccountOptions, DryRunOptions {
   cdn?: string;
   bucket?: string;
 }
@@ -239,7 +241,13 @@ export const listCdns = async (
 export const uploadZip = async (
   connection: Connection,
   space: ConnectedSpace,
-  { zip, filename, target, source }: { zip: Uint8Array; filename: string; target: Target; source?: Uint8Array }
+  {
+    zip,
+    filename,
+    target,
+    source,
+    dryRun = false
+  }: { zip: Uint8Array; filename: string; target: Target; source?: Uint8Array; dryRun?: boolean }
 ): Promise<PushOutcome> => {
   const manifest = manifestOf(zip);
   if (!manifest) {
@@ -250,6 +258,15 @@ export const uploadZip = async (
 
   const { cdn, bucket } = target;
   const label = `${manifest.root}${manifest.version ? ` ${manifest.version}` : ''}`;
+  if (dryRun) {
+    sayDryRun(`plitzi upload plugin — ${space.name}`, [
+      `→ ${filename}, ${label} (${(zip.byteLength / 1024).toFixed(0)} KB), to ${cdn.name} — ${bucket.name}`,
+      `install it on ${space.name}${source ? ', with the source it was packed from' : ', built only: no source beside it'}`
+    ]);
+
+    return 'shown';
+  }
+
   console.log(`\nUploading ${chalk.bold(label)} to ${chalk.bold(space.name)}, in ${cdn.name} — ${bucket.name}…`);
   const query = new URLSearchParams({ filename, bucket: bucket.identifier });
   const uploaded = await authorizedRequest<{
@@ -343,7 +360,8 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
     zip,
     filename: path.basename(zipPath),
     target,
-    ...(source ? { source } : {})
+    ...(source ? { source } : {}),
+    dryRun: options.dryRun
   });
   console.log('');
 };

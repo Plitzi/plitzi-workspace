@@ -1,6 +1,6 @@
 import { createActionResolver } from '../actions/runtime/renderResolver';
 import { createConnectorResolver } from '../connectors';
-import { publicFileResolver } from './publicFileResolver';
+import { dataFileResolver, publicFileResolver } from './publicFileResolver';
 import { resolveRscData } from './resolveRscData';
 
 import type { ActionsModule } from '../actions';
@@ -28,18 +28,22 @@ export const connectorRscData = ({
   connectors,
   actions,
   publicDir,
+  dataDir,
   elementTimeoutMs
 }: {
   connectors?: ConnectorLookups;
   actions?: { lookups: ActionLookups; module: ActionsModule };
   /** Where the server's static files are: a provider whose `query` is one of them is read from disk. */
   publicDir?: string;
+  /** The project's own data, never served: a provider whose `query` is `/data/<file>` is read from it. */
+  dataDir?: string;
   /** The deployment's per-element ceiling, when it set one. `resolveRscData` decides the default. */
   elementTimeoutMs?: number;
 }): NonNullable<SSRAdapters['getRscData']> => {
   const resolveConnector = connectors ? createConnectorResolver(connectors) : undefined;
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
   const resolvePublicFile = publicDir ? publicFileResolver(publicDir) : undefined;
+  const resolveDataFile = dataDir ? dataFileResolver(dataDir) : undefined;
 
   /**
    * An element names ONE producer, and which one decides how its data is fetched.
@@ -58,7 +62,10 @@ export const connectorRscData = ({
       return resolveAction ? resolveAction(context) : undefined;
     }
 
-    return resolvePublicFile ? resolvePublicFile(context) : undefined;
+    // The project's data first: `/data/…` is its, wherever `publicDir` has a folder of that name.
+    const fromData = resolveDataFile ? await resolveDataFile(context) : undefined;
+
+    return fromData !== undefined ? fromData : resolvePublicFile ? resolvePublicFile(context) : undefined;
   };
 
   return async ({ req, spaceId, environment, user, ids, loadOfflineData, flagOverrides, signal }) => {

@@ -5,7 +5,7 @@
  */
 import { apiContainer, container, heading, link, list, listItem, styles, text } from '@plitzi/sdk-authoring';
 
-import { PRODUCTS_URL, productsSource } from '../data.ts';
+import { PRODUCTS, productsSource } from '../data.ts';
 import { t } from '../tokens.ts';
 
 import type { PageSpec } from '@plitzi/sdk-authoring';
@@ -25,7 +25,7 @@ export const product: PageSpec = {
     link({ id: 'product-back', href: '/products', class: back, content: '← All products' }),
     apiContainer({
       id: products.id,
-      query: PRODUCTS_URL,
+      ...PRODUCTS,
       cache: true,
       children: [
         list({

@@ -16,7 +16,7 @@ import {
   text
 } from '@plitzi/sdk-authoring';
 
-import { CATEGORIES, PRODUCTS_URL, productsSource } from '../data.ts';
+import { CATEGORIES, PRODUCTS, productsSource } from '../data.ts';
 import { t } from '../tokens.ts';
 
 import type { PageSpec } from '@plitzi/sdk-authoring';
@@ -59,7 +59,7 @@ export const catalog: PageSpec = {
     heading('Products', { id: 'catalog-title', subType: 'h1' }),
     apiContainer({
       id: products.id,
-      query: PRODUCTS_URL,
+      ...PRODUCTS,
       cache: true,
       children: [
         container({

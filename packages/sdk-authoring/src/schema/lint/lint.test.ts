@@ -1485,6 +1485,30 @@ describe('lintSpace', () => {
       ]);
     });
 
+    /** The project's own data (`src/data/`) is read by its server alone: a browser read is answered nothing. */
+    it('server-data-in-browser', () => {
+      const { schema, style } = pricing('landing.data.plans');
+      const serverData = (query: string) => (query === '/data/landing.json' ? file : undefined);
+
+      expect(lintSpace({ schema, style }, { serverData }).errors).toEqual([
+        expect.objectContaining({
+          code: 'server-data-in-browser',
+          elementId: 'landing',
+          message: expect.stringContaining('Give it `runtime:') as string
+        })
+      ]);
+
+      schema.flat.landing.definition.runtime = 'server';
+      expect(lintSpace({ schema, style }, { serverData }).errors).toEqual([]);
+      // Held to the file as `data` is.
+      schema.flat['first-plan'].definition.bindings = {
+        attributes: [{ id: 'b', to: 'content', source: 'apiContainer_landing.data.landing.plans' }]
+      };
+      expect(lintSpace({ schema, style }, { serverData }).warnings.map(warning => warning.code)).toContain(
+        'path-not-in-data'
+      );
+    });
+
     it('path-not-in-data is not raised for a path the answer has, or with nothing to read it against', () => {
       const { schema, style } = pricing('landing.data.plans');
 

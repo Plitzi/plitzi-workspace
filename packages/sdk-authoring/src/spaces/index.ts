@@ -6,7 +6,7 @@ import { space as blankSpaceSpec } from './blank/spec';
 import specSource from './blank/spec.ts?raw';
 import { space as emptySpaceSpec } from './empty/spec';
 import emptySpecSource from './empty/spec.ts?raw';
-import catalogProducts from '../../templates/catalog/public/data/products.json?raw';
+import catalogProducts from '../../templates/catalog/src/data/products.json?raw';
 import catalogCard from '../../templates/catalog/src/site/components/productCard.ts?raw';
 import catalogData from '../../templates/catalog/src/site/data.ts?raw';
 import catalogLayout from '../../templates/catalog/src/site/layout.ts?raw';
@@ -380,22 +380,51 @@ export const toPortableSource = (source: string): string => {
 export const CATALOG_TEMPLATE_IDENTITY = { name: 'Catalog', permanentUrl: 'catalog' } as const;
 
 /**
- * The catalog template as a project's files, by path: a shop with a layout, a product card, a home, a filtered
- * catalog and a page per product, its data in `public/data/products.json` — a file per part, as a space bigger than
- * one screen is written. The files are the template's own (`templates/catalog`), the ones its test authors; they
- * import `@plitzi/sdk-authoring` by name already, so the copy is the file.
+ * What a project with no server makes of the template's data: the file in `public/`, where the browser fetches it —
+ * and so public, as everything there is — and the providers asking for it from the browser.
  */
-export const catalogTemplateFiles = ({ name }: { name?: string } = {}): Record<string, string> => {
+const inBrowser = {
+  data: (source: string): string =>
+    source
+      .replace("'../data/products.json'", "'../../public/data/products.json'")
+      .replace(
+        /\/\*\*\n \* How a page asks for the products[\s\S]*?\*\/\nexport const PRODUCTS = \{ query: '\/data\/products\.json', runtime: 'server' \} as const;/,
+        "/**\n * How a page asks for the products: the browser fetches `public/data/products.json`, public as all of `public/` is.\n */\nexport const PRODUCTS = { query: '/data/products.json' } as const;"
+      )
+      .replace(
+        "one JSON file of the project's own (`src/data/products.json`)",
+        'one JSON file the project serves (`public/data/products.json`)'
+      ),
+  space: (source: string): string =>
+    source.replace(
+      "The products are `src/data/products.json`, the project's own: a provider on each page reads it on the server.",
+      'The products are `public/data/products.json`, served by this project; a provider on each page fetches it.'
+    )
+};
+
+/**
+ * The catalog template as a project's files, by path: a shop with a layout, a product card, a home, a filtered
+ * catalog and a page per product — a file per part, as a space bigger than one screen is written. Its data is the
+ * project's own, `src/data/products.json`, read on the server; a project with no server (`mode: 'client'`) has it in
+ * `public/data/`, fetched by the browser. The files are the template's own (`templates/catalog`), the ones its test
+ * authors; they import `@plitzi/sdk-authoring` by name already, so the copy is the file.
+ */
+export const catalogTemplateFiles = ({
+  name,
+  mode = 'server'
+}: { name?: string; mode?: 'server' | 'client' } = {}): Record<string, string> => {
+  const client = mode === 'client';
+  const space = name === undefined ? catalogSpace : renameSpace(catalogSpace, name, CATALOG_TEMPLATE_IDENTITY);
   const files: Record<string, string> = {
-    'src/space.ts': name === undefined ? catalogSpace : renameSpace(catalogSpace, name, CATALOG_TEMPLATE_IDENTITY),
+    'src/space.ts': client ? inBrowser.space(space) : space,
     'src/site/tokens.ts': catalogTokens,
-    'src/site/data.ts': catalogData,
+    'src/site/data.ts': client ? inBrowser.data(catalogData) : catalogData,
     'src/site/layout.ts': catalogLayout,
     'src/site/components/productCard.ts': catalogCard,
     'src/site/pages/home.ts': catalogHomePage,
     'src/site/pages/catalog.ts': catalogCatalogPage,
     'src/site/pages/product.ts': catalogProductPage,
-    'public/data/products.json': catalogProducts
+    [client ? 'public/data/products.json' : 'src/data/products.json']: catalogProducts
   };
 
   // This repository's lint wants single quotes even where a template quotes its own strings; a project's does not,

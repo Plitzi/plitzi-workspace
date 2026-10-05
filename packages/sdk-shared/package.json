@@ -1187,6 +1187,10 @@
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.mjs"
     },
+    "./server/rsc/projectData": {
+      "types": "./dist/server/rsc/projectData.d.ts",
+      "import": "./dist/server/rsc/projectData.mjs"
+    },
     "./server/rsc/refreshRsc": {
       "types": "./dist/server/rsc/refreshRsc.d.ts",
       "import": "./dist/server/rsc/refreshRsc.mjs"

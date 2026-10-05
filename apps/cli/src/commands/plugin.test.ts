@@ -219,6 +219,25 @@ describe('plitzi add plugin', () => {
     expect(output()).toContain('Declared in src/plugins/declarations.ts');
   });
 
+  it('says with --dry-run what it would write — the element, its server half, the list — and writes nothing', async () => {
+    captureErrors();
+    const output = captureOutput();
+    await inTemp(async dir => {
+      await cliProject(dir);
+      const before = await fs.readFile(path.join(dir, 'src/plugins/declarations.ts'), 'utf-8');
+
+      await from(dir, () => addPlugin(['board'], { server: true, dryRun: true }));
+
+      expect(await exists(path.join(dir, 'src/plugins/Board'))).toBe(false);
+      expect(await fs.readFile(path.join(dir, 'src/plugins/declarations.ts'), 'utf-8')).toBe(before);
+    });
+
+    expect(process.exitCode).toBeUndefined();
+    expect(output()).toContain('+ src/plugins/Board/Board.tsx');
+    expect(output()).toContain('+ src/plugins/Board/functions/index.ts');
+    expect(output()).toContain('~ src/plugins/declarations.ts');
+  });
+
   it('leaves a declarations list somebody changed to them, and says what to add', async () => {
     captureErrors();
     const output = captureOutput();

@@ -963,7 +963,15 @@ export type SSRServerConfig = {
     minVersion?: 'TLSv1' | 'TLSv1.1' | 'TLSv1.2' | 'TLSv1.3';
   };
   environment?: ServerEnvironment;
+  /** Served to anyone who asks, as it is: pictures, a favicon, what a page fetches in the browser. */
   publicDir?: string;
+  /**
+   * The project's own data, never served as files: a provider resolved on the server (`runtime: 'server'`) whose
+   * `query` is `/data/<file>` reads `<dataDir>/<file>`, and the page arrives with it. Nobody downloads the folder; what
+   * a provider reads goes into the page it renders, though — data a page must not carry is a server action's to read,
+   * answering only what is shown.
+   */
+  dataDir?: string;
   static?: Record<string, string>;
   devMode?: boolean;
   /**

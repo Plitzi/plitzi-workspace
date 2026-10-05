@@ -18,6 +18,7 @@ import type { Schema, SSRServer } from '@plitzi/sdk-shared';
  */
 
 const PORT = 39314;
+const DATA_PORT = 39315;
 const BASE = `http://127.0.0.1:${PORT}`;
 const TITLE = 'Hello from public/data';
 
@@ -88,5 +89,41 @@ describe('createServer with public data', () => {
 
   it('still serves the file itself, for a provider that reads it in the browser', async () => {
     expect(await (await fetch(`${BASE}/data/home.json`)).json()).toEqual({ hero: { title: TITLE } });
+  });
+});
+
+describe('createServer with the project’s own data', () => {
+  const DATA_BASE = `http://127.0.0.1:${DATA_PORT}`;
+  let dataDir: string;
+  let dataServer: SSRServer;
+
+  beforeAll(async () => {
+    dataDir = mkdtempSync(path.join(tmpdir(), 'plitzi-data-dir-'));
+    writeFileSync(path.join(dataDir, 'home.json'), JSON.stringify({ hero: { title: TITLE }, cost: 'internal' }));
+    dataServer = createServer({
+      port: DATA_PORT,
+      adapters: createJsonAdapters({ offlineData: { schema, style: EMPTY_STYLE_SCHEMA } }),
+      dataDir
+    });
+    dataServer.listen(DATA_PORT, '127.0.0.1');
+    await vi.waitFor(async () => {
+      expect((await fetch(`${DATA_BASE}/_rsc?location=/&ids=site`)).status).toBe(200);
+    });
+  });
+
+  afterAll(async () => {
+    await dataServer.close();
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it('renders the page with a file of `dataDir` in it, read as `/data/<file>`', async () => {
+    expect(await (await fetch(`${DATA_BASE}/`)).text()).toContain(TITLE);
+  });
+
+  it('never serves the file: its path is a page’s, like any other the space does not have', async () => {
+    const answer = await fetch(`${DATA_BASE}/data/home.json`);
+
+    expect(answer.headers.get('content-type')).toContain('text/html');
+    expect(await answer.text()).toMatch(/^<!doctype html>/);
   });
 });

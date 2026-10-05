@@ -1,13 +1,17 @@
 /**
- * The data the pages read: one JSON file the project serves (`public/data/products.json`). Its contents type every
+ * The data the pages read: one JSON file of the project's own (`src/data/products.json`). Its contents type every
  * path a page writes — `products.data.products` — so a misspelt field is a type error, not an empty card. Swapping the
- * file for a real endpoint later changes `PRODUCTS_URL`, and nothing else.
+ * file for a real endpoint later changes `PRODUCTS`, and nothing else.
  */
 import { source } from '@plitzi/sdk-authoring';
 
-import sample from '../../public/data/products.json' with { type: 'json' };
+import sample from '../data/products.json' with { type: 'json' };
 
-export const PRODUCTS_URL = '/data/products.json';
+/**
+ * How a page asks for the products: on the server, which reads `src/data/` and never serves it — the page arrives
+ * with them in it.
+ */
+export const PRODUCTS = { query: '/data/products.json', runtime: 'server' } as const;
 
 /** The categories the catalog filters by, in the order its select offers them. */
 export const CATEGORIES = [

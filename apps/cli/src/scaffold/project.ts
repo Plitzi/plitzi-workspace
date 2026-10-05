@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 
 import { installCommand, managerFiles, managerPackageFields, runCommand } from './packageManager';
-import { DEV_SERVER_FILE, KV_FILE, PROJECT_DATA, PROJECT_TMP } from './paths';
+import { DATA_DIR, DEV_SERVER_FILE, FUNCTIONS_DIR, KV_FILE, PROJECT_STATE, PROJECT_TMP } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -88,7 +88,7 @@ const watchPaths = ({ source, fromSpace }: CreateAnswers): string =>
     './src/serverOptions.ts',
     ...(source === 'local' || fromSpace ? ['./src/actions.ts'] : []),
     ...(fromSpace ? ['./src/actions', './src/connectors'] : []),
-    './functions'
+    `./${FUNCTIONS_DIR}`
   ]
     .map(watched => `--watch-path=${watched}`)
     .join(' ');
@@ -116,7 +116,7 @@ const scripts = (answers: CreateAnswers): Record<string, string> => {
            * bare `--watch` sees its own output land, restarts, compiles again, and never stops. Neither the space nor
            * the plugins are among them: `main.ts` re-authors a local space on save and the open pages load again
            * (`reloadPages`), and the server builds a plugin again on save and the open pages swap it where it is drawn
-           * — so only the server's own code restarts it: its entry, options and actions, and `functions/`.
+           * — so only the server's own code restarts it: its entry, options and actions, and `src/functions/`.
            */
           'start:dev': `node ${watchPaths(answers)} src/main.ts`,
           /**
@@ -183,7 +183,8 @@ export const tsconfigBuild = (): string =>
         rewriteRelativeImportExtensions: true
       },
       include: ['src'],
-      exclude: ['src/plugins']
+      // Built at boot from their source, by the server itself: never compiled ahead.
+      exclude: ['src/plugins', 'src/functions']
     },
     null,
     2
@@ -231,7 +232,7 @@ const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases
  * the CLI records about it, and is committed — a clone without it could not pull, push or upgrade.
  */
 export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
-  `node_modules\ndist\n.env\n${PROJECT_TMP}\n${mode === 'server' ? `${PROJECT_DATA}\n` : ''}${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
+  `node_modules\ndist\n.env\n${PROJECT_TMP}\n${mode === 'server' ? `${PROJECT_STATE}\n` : ''}${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
@@ -285,14 +286,20 @@ ${spaceSection(answers)}
 ## Folders that are not the source
 
 - \`public/\` is served to anyone who asks, as it is: every file in it is on the internet once the project is deployed.
-  Data and pictures for every visitor go there — never a secret, a key, a private document or what only some visitors
-  may read.
+  Pictures and files meant for every visitor go there — never a secret, a key, a private document or what only some
+  visitors may read.${
+    answers.mode === 'server'
+      ? `
+- \`${DATA_DIR}/\` is the project's own data: JSON its server reads for a provider (\`query: '/data/<file>'\`,
+  \`runtime: 'server'\`) and never serves.`
+      : ''
+  }
 - \`${PROJECT_TMP}/\` is what the project writes for itself while it runs — the plugins it builds, the port it took, test
   output. Ignored by git, and rebuilt whenever it is missing.${
     answers.mode === 'server'
       ? `
-- \`${PROJECT_DATA}/\` is what the server keeps for the space: its \`kv\` (\`${KV_FILE}\`) — saved layouts, counters, cached answers.
-  The deployment's data, kept across restarts and never rebuilt; ignored by git. \`action.kv\` in \`src/serverOptions.ts\`
+- \`${PROJECT_STATE}/\` is what the server keeps for the space: its \`kv\` (\`${KV_FILE}\`) — saved layouts, counters, cached answers.
+  The deployment's state, kept across restarts and never rebuilt; ignored by git. \`action.kv\` in \`src/serverOptions.ts\`
   keeps it elsewhere.`
       : ''
   }
@@ -335,15 +342,16 @@ export const agentsFile = (answers: CreateAnswers): string => {
     answers.mode === 'server'
       ? `- **The server is yours in ${code('src/serverOptions.ts')}**, not in ${code('src/main.ts')} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('main.ts')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions.ts')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
       : '';
-  const serverData =
+  const dataNote =
     answers.mode === 'server'
-      ? `; one whose ${code('runtime')} is ${code('server')} is read by the server, and the page arrives with it — bound the same way (${code('products.data.items')}), on a page or a layout, never inside a component`
-      : '';
+      ? `- **Data with no backend** goes in ${code(`${DATA_DIR}/*.json`)}: the server reads it and never serves it. An ${code('apiContainer')} whose ${code('runtime')} is ${code('server')} and ${code('query')} ${code('/data/products.json')} reads it, and the page arrives with it — bound as ${code('products.data.items')}, on a page or a layout, never inside a component. ${local ? `A browser provider asking for ${code('/data/…')} is refused by ${run('author')}. ` : ''}What a provider reads is in the page it renders: data a page must not carry is read in a server action, which answers only what is shown.`
+      : `- **Data with no backend** goes in ${code('public/data/*.json')}, fetched by the browser — public like everything in ${code('public/')} — and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}.`;
+  const dataFiles = answers.mode === 'server' ? `${DATA_DIR}/<file>.json` : 'public/data/<file>.json';
   const generated = [
     `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took${local ? ', the space as last authored' : ''}, test output. Never committed, rebuilt when missing.`,
     ...(answers.mode === 'server'
       ? [
-          `- ${code(`${PROJECT_DATA}/`)} — what the server keeps for the space: its ${code('kv')} (${code(KV_FILE)}). The deployment's data — never committed, never rebuilt; ${code('action.kv')} in ${code('src/serverOptions.ts')} keeps it elsewhere.`
+          `- ${code(`${PROJECT_STATE}/`)} — what the server keeps for the space: its ${code('kv')} (${code(KV_FILE)}). The deployment's state — never committed, never rebuilt; ${code('action.kv')} in ${code('src/serverOptions.ts')} keeps it elsewhere.`
         ]
       : []),
     `- ${code('.plitzi/')} — what the CLI records about the project: where it came from, what it wrote. Committed; the CLI's to change.`
@@ -363,7 +371,7 @@ ${commands.join('\n')}
 ## This project
 
 - **Port.** ${port}
-- **Data with no backend** goes in ${code('public/data/*.json')}, served as it is and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}${serverData}.
+${dataNote}
 - **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.
 ${serverNotes}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
 - **What the page holds, in text:** ${code(`${runCommand(answers.packageManager, 'check')} -- /products --state --element <id>`)} adds its state, every source by name and one element (what it reads, its own state, whether it is on screen); every check already lists the flows that failed. Read it instead of guessing from classes in the DOM.
@@ -372,7 +380,7 @@ ${serverNotes}- **Check a page in text first:** ${code(`${runCommand(answers.pac
 
 ${[
   ...generated,
-  `- A large ${code('public/data/*.json')} — ${code('npx plitzi data describe public/data/<file>.json')} prints its fields, their types and one row.`,
+  `- A large data file — ${code(`npx plitzi data describe ${dataFiles}`)} prints its fields, their types and one row.`,
   `- The bundles in ${code('node_modules/@plitzi/*/dist/*.js')}. ${code('npx plitzi explain <name>')} says what an element, a step or a problem's code is; the ${code('.d.ts')} beside them documents the rest — search it, never read it whole.`
 ].join('\n')}
 

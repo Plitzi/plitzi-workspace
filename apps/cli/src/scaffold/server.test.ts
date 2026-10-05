@@ -18,11 +18,13 @@ const answers = (over: Partial<CreateAnswers> = {}): CreateAnswers => ({
 });
 
 describe('the server a project starts', () => {
-  it('serves public/ — the data with no backend — with nothing to add to main.ts', () => {
+  it('serves public/ to anyone, and reads its own data from src/data/, which it never serves', () => {
     const files = serverFiles(answers());
 
     expect(files['src/main.ts']).toContain("publicDir: path.join(PROJECT_ROOT, 'public')");
-    expect(files['public/data/.gitkeep']).toBe('');
+    expect(files['src/main.ts']).toContain("dataDir: path.join(PROJECT_ROOT, 'src/data')");
+    expect(files['src/data/.gitkeep']).toBe('');
+    expect(files['public/data/.gitkeep']).toBeUndefined();
   });
 
   it('starts beside whatever holds 8080 while developing, and says where it went', () => {

@@ -157,7 +157,7 @@ plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'
 plitzi functions dev seismic.feed --params '{}' --watch   # on this machine, as the platform runs it
 ```
 
-`functions/` is a working copy: `.plitzi/functions.json` keeps what was pulled, so a pull knows what it would
+`src/functions/` is a working copy: `.plitzi/functions.json` keeps what was pulled, so a pull knows what it would
 overwrite. `dev` runs the files with the project's own `@plitzi/sdk-server` (install `isolated-vm` and `core-js` beside
 it) — the same build, checks, isolates and limits as the platform; nothing reaches the space. Credentials for `dev`
 come from `PLITZI_FUNCTIONS_CREDENTIALS`, a JSON object of credential id → its keys.
@@ -252,12 +252,12 @@ more is a problem when the functions are saved, never quietly cut down; the buil
 Everything here is `@plitzi/sdk-server`'s.
 
 **A self-hosted server's own functions** are loaded natively — trusted code, in the process. `loadFunctions` builds a
-`functions/` folder the way the platform builds a space's (same files, same imports, same checks) and loads it:
+folder of them (`src/functions/` in a project the CLI writes) the way the platform builds a space's (same files, same imports, same checks) and loads it:
 
 ```ts
 import { createServer, loadFunctions } from '@plitzi/sdk-server';
 
-const functions = await loadFunctions(new URL('../functions/', import.meta.url));
+const functions = await loadFunctions(path.join(PROJECT_ROOT, 'src/functions'));
 
 createServer({ /* … */ functions: { native: functions } });
 ```
@@ -349,7 +349,7 @@ export default defineFunctions({
 
 **Where it runs.**
 
-- **A project `plitzi create` writes** loads each plugin folder's `functions/` natively, beside its own `functions/`:
+- **A project `plitzi create` writes** loads each plugin folder's `functions/` natively, beside its own `src/functions/`:
   `createServer({ functions: { native, plugins: { board: definition } } })`. While developing, a save to it is loaded
   again in place (`server.functions.setPlugin(type, definition)`) — the server is not restarted.
 - **A packed plugin** carries its server half as source: `plitzi pack plugin` writes `functions.source.json` beside the

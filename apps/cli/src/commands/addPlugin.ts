@@ -6,6 +6,7 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { filesWouldWrite, sayDryRun } from './dryRun';
 import { findProject, readPackageJson } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { askChoice, askText, atTerminal, fail, isEmpty, refuseWithoutTerminal, writeFiles } from './terminal';
@@ -21,6 +22,7 @@ import {
   shapeFromFlags
 } from '../scaffold';
 
+import type { DryRunOptions } from './dryRun';
 import type { ExistingProject, PlitziProject } from './existingProject';
 import type { PluginNames, ShapeFlags } from '../scaffold';
 
@@ -37,7 +39,7 @@ import type { PluginNames, ShapeFlags } from '../scaffold';
  * - any other project is asked where its components live, and told how to register the element.
  */
 
-export interface AddPluginOptions extends ShapeFlags {
+export interface AddPluginOptions extends ShapeFlags, DryRunOptions {
   dir?: string;
   title?: string;
   description?: string;
@@ -398,6 +400,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
     const answer = async (question: string, given: string | undefined, fallback: string): Promise<string> =>
       given ?? (rl ? askText(rl, question, fallback) : fallback);
     const added = [];
+    const wouldWrite: string[] = [];
     for (const { name, names: elementNames, target } of planned) {
       const called = single ? 'it' : name;
       const title = await answer(
@@ -421,8 +424,31 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
             [file, await format(path.relative(project.root, path.join(target, file)), text)] as const
         )
       );
-      await writeFiles(target, Object.fromEntries(formatted));
+      if (options.dryRun) {
+        wouldWrite.push(...formatted.map(([file]) => path.relative(project.root, path.join(target, file))));
+      } else {
+        await writeFiles(target, Object.fromEntries(formatted));
+      }
+
       added.push({ names: { ...elementNames, title }, target });
+    }
+
+    if (options.dryRun) {
+      const { plitzi } = project;
+      const lists =
+        plitzi?.kind === 'plugin' && plitzi.components
+          ? ['src/elements.ts', 'src/declarations.ts']
+          : plitzi?.kind === 'project' && plitzi.source === 'local' && plitzi.declared
+            ? ['src/plugins/declarations.ts']
+            : [];
+      sayDryRun(`plitzi add plugin ${names.join(' ')}`, [
+        ...(await filesWouldWrite(project.root, [...wouldWrite, ...lists])),
+        ...(options.server && plitzi?.kind === 'plugin'
+          ? ['~ package.json — @plitzi/sdk-server as a devDependency, for the server half’s types, when it has none']
+          : [])
+      ]);
+
+      return;
     }
 
     const addedNames = added.map(({ names: elementNames }) => elementNames);

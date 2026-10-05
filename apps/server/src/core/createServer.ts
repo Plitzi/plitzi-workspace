@@ -58,7 +58,7 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
  *  caches or plugin manager this one does. */
 /**
  * Fills in `getRscData` from whatever can produce a server element's data — `connectors`, `action.lookups`, the
- * files of `publicDir` — when the deployment did not write one.
+ * files of `dataDir` and `publicDir` — when the deployment did not write one.
  *
  * The lookups are already here and the assembly is entirely this package's — a resolver over `resolveRscData`.
  * Leaving it out meant every deployment passed the same lookups twice: once as config, for the write endpoint,
@@ -75,11 +75,12 @@ const withConnectorRsc = <
     action?: SSRActionConfig;
     rsc?: SSRRscConfig;
     publicDir?: string;
+    dataDir?: string;
   }
 >(
   config: T
 ): T => {
-  if (config.adapters.getRscData || (!config.connectors && !config.action?.lookups && !config.publicDir)) {
+  if (config.adapters.getRscData || (!config.connectors && !config.action?.lookups && !config.publicDir && !config.dataDir)) {
     return config;
   }
 
@@ -95,6 +96,7 @@ const withConnectorRsc = <
     connectors: config.connectors ? connectorLookupsOf(config.connectors) : undefined,
     actions,
     publicDir: config.publicDir,
+    dataDir: config.dataDir,
     elementTimeoutMs: config.rsc?.elementTimeoutMs
   });
 

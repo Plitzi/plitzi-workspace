@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { connectToSpace } from './account';
 import { askChecks } from './askChecks';
 import { requestExport, versionLabel } from './createFrom';
+import { sayDryRun } from './dryRun';
 import { findProject, readPackageJson } from './existingProject';
 import { functionsChange, pushFunctionsOf } from './functions';
 import { elementFolders, fileNameOf } from './packPlugin';
@@ -18,8 +19,10 @@ import { chooseTarget, listCdns, uploadZip } from './uploadPlugin';
 import { PackError, packPlugin } from '../pack';
 import { packSource } from '../pack/source';
 import { projectEntries, projectFromSpace } from '../scaffold/fromSpace';
+import { FUNCTIONS_DIR } from '../scaffold/paths';
 
 import type { AccountOptions } from './account';
+import type { DryRunOptions } from './dryRun';
 import type { Formatter } from './projectFormatter';
 import type { PushOutcome } from './pushOutcome';
 import type { SpaceOrigin } from './spaceOrigin';
@@ -32,7 +35,7 @@ import type { SourceSnapshotKind, SpaceExport } from '@plitzi/sdk-shared/source'
  * (docs/en/projects-from-spaces.md). Whatever changed since the project last had the space, or the parts named:
  *
  * - `plugins` — each plugin whose source changed, packed and uploaded to the space's CDN, as `plitzi upload plugin`;
- * - `functions` — `functions/`, as `plitzi functions push`;
+ * - `functions` — `src/functions/`, as `plitzi functions push`;
  * - `runtime` — the runtime module, packed, as `plitzi runtime push`;
  * - `space` — the pages, styles, actions and connectors, as the space's draft.
  *
@@ -51,7 +54,7 @@ export type PushPart = (typeof PUSH_PARTS)[number];
 /** What goes up first: what the rest names. */
 const ORDER: readonly PushPart[] = ['plugins', 'functions', 'runtime', 'space'];
 
-export interface PushOptions extends AccountOptions {
+export interface PushOptions extends AccountOptions, DryRunOptions {
   /** Replace the space's draft even when it moved on since the project last had it, or holds work of its own. */
   force?: boolean;
   /** Which of the space's CDNs a plugin goes to, and which public bucket: asked for when there are several. */
@@ -189,7 +192,7 @@ const survey = async (
 
   const functions = await functionsChange(root, spaceId);
   if (functions !== 'none') {
-    found.push({ part: 'functions', label: 'functions — functions/', changed: functions === 'changed' });
+    found.push({ part: 'functions', label: `functions — ${FUNCTIONS_DIR}/`, changed: functions === 'changed' });
   }
 
   const entries = before && projectEntries(before);
@@ -386,7 +389,7 @@ const recordPush = async (
       return true;
     }
 
-    if (file.startsWith('functions/')) {
+    if (file.startsWith(`${FUNCTIONS_DIR}/`)) {
       return parts.has('functions');
     }
 
@@ -488,6 +491,17 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
   }
 
   const force = options.force ?? false;
+  if (options.dryRun) {
+    sayDryRun(
+      `plitzi push — to ${space.name}’s draft`,
+      [...chosen]
+        .sort((a, b) => ORDER.indexOf(a.part) - ORDER.indexOf(b.part))
+        .map(item => `→ ${item.label}${force ? ' (--force: over whatever the space holds now)' : ''}`)
+    );
+
+    return;
+  }
+
   const sent: Pushable[] = [];
   const settled: Pushable[] = [];
   const unchanged: string[] = [];

@@ -1,6 +1,7 @@
 import { actionSpecFromEntry, actionToSource } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 
+import { FUNCTIONS_DIR } from './paths';
 import { projectDeclarations } from './plugin';
 import { envFile, SDK_VERSION, withSigningSecret } from './project';
 import { PROJECT_OUTPUTS, prettierignore } from './quality';
@@ -26,7 +27,7 @@ export type ProjectFromSpace = {
   downloads: { url: string; to: string }[];
   /** The packages the project installs beyond the scaffold's: what its source imports, and the SDK it is written on. */
   dependencies: Record<string, string>;
-  /** Its functions as written in `functions/`, with the version of them Plitzi gave: `plitzi functions` reads both. */
+  /** Its functions as written in `src/functions/`, with the version of them Plitzi gave: `plitzi functions` reads both. */
   functions: { version: string; files: Record<string, string> };
   /** The scaffold's example files a project from a space does not have. */
   omit: string[];
@@ -234,7 +235,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     Object.entries(exported.functions.files).map(([path, text]) => [path, local(text)])
   );
   Object.entries(functions).forEach(([path, text]) => {
-    files[`functions/${path}`] = text;
+    files[`${FUNCTIONS_DIR}/${path}`] = text;
   });
 
   // A built plugin's server half, beside its bundle as \`plitzi pack plugin\` puts it: the platform keeps it privately,

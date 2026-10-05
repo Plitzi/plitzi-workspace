@@ -1,6 +1,6 @@
 export { createServer, resolveServices } from './core/createServer';
 export { closeOnSignals } from './core/server/closeOnSignals';
-// A project's own `functions/`, built as the platform builds a space's and loaded natively: `functions: { native }`.
+// A project's own `src/functions/`, built as the platform builds a space's and loaded natively: `functions: { native }`.
 export { loadFunctions, loadFunctionsSource, readFunctionsDir } from './modules/functions/load';
 export { freePort } from './core/freePort';
 export { registerHealthCheck, buildHealthPayload } from './core/health';

@@ -1,7 +1,7 @@
 # Data typed by a sample
 
 `source('site', home)` names a provider's source from a sample of its answer — the JSON file it reads, imported
-(`import home from '../../public/data/home.json' with { type: 'json' }`). Every path is then completed by the editor
+(`import home from '../data/home.json' with { type: 'json' }` — `src/data/`, or `public/data/` with no server). Every path is then completed by the editor
 and checked: `site.data.hero.titel` is a type error, and refused `source-field-unknown` if it gets past the types.
 
 ```ts

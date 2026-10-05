@@ -1,4 +1,4 @@
-import { DEV_SERVER_FILE, DEV_SPACE_FILE, KV_FILE, PROJECT_TMP } from './paths';
+import { DATA_DIR, DEV_SERVER_FILE, DEV_SPACE_FILE, FUNCTIONS_DIR, KV_FILE, PROJECT_TMP } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -48,7 +48,7 @@ const pluginNames = Object.keys(plugins);
 
 /**
  * A plugin's server half: its \`functions/\` folder (\`src/plugins/Board/functions/index.ts\`), written like the
- * project's own \`functions/\` and loaded with what a plugin may reach — its own corner of \`kv\`, its routes under
+ * project's own \`src/functions/\` and loaded with what a plugin may reach — its own corner of \`kv\`, its routes under
  * \`/fn/plugins/<name>/\` (\`usePluginRoute\` in the component), its tasks named \`<name>.<action>\`. A folder without
  * one is a component and nothing else.
  */
@@ -305,10 +305,12 @@ const LOCAL_AUTHORING = (builtPlugins: boolean): string => `/**
  * warnings are printed here, where somebody editing the space is watching.
  */
 // \`declarations\`: what the project's plugins fire, answer and read, so the space's use of them is checked too.
-// \`data\`: the files of \`public/\` a provider reads, so a binding onto a path one of them does not have is warned.
+// \`serverData\` and \`data\`: the files a provider reads — the project's own and \`public/\` — so a binding onto a path
+// one of them does not have is warned.
 const { schema, style, warnings } = authorSpace(space, {
   plugins: declarations,${builtPlugins ? '\n  pluginTypes: builtTypes,' : ''}
-  data: publicData(new URL('../public/', import.meta.url))
+  serverData: projectData(path.join(PROJECT_ROOT, '${DATA_DIR}')),
+  data: publicData(path.join(PROJECT_ROOT, 'public'))
 });
 const offlineData = { schema, style };
 
@@ -343,11 +345,11 @@ if (DEVELOPING) {
 }`;
 
 const FUNCTIONS = `/**
- * This project's own server code: \`functions/\` — what \`plitzi functions pull\` writes and \`push\` sends — built
- * the way Plitzi builds a space's and run here, in this process. Nothing there, no functions; code that does not build
- * stops the server with the file and line.
+ * This project's own server code: \`${FUNCTIONS_DIR}/\` — what \`plitzi functions pull\` writes and \`push\` sends —
+ * built the way Plitzi builds a space's and run here, in this process, from its source (as \`start:prod\` does too).
+ * Nothing there, no functions; code that does not build stops the server with the file and line.
  */
-const functions = await loadFunctions(new URL('../functions/', import.meta.url));`;
+const functions = await loadFunctions(path.join(PROJECT_ROOT, '${FUNCTIONS_DIR}'));`;
 
 /** The space's actions found by their id — and, for a space that came with them, its connectors. */
 const ACTION_LOOKUPS = (connectors: boolean): string => `/**
@@ -392,14 +394,14 @@ const WATCH_SPACE = `/**
  * A save to the space, while developing: re-authored by \`src/author.ts\` in a process of its own — the only way to
  * read every file of it again, which an import never does twice — and every open page loads again once it wrote the
  * new documents. What it refuses is printed and the page keeps the last space that authored. A change to the server's
- * own code — this file, the server options, the actions — restarts the server instead (\`start:dev\` watches those),
+ * own code — this file, the server options, the actions, its functions — restarts the server instead (\`start:dev\` watches those),
  * and a plugin's component is swapped in the open pages by the server (\`watchPlugins\` below): only its declaration
  * is the space's business.
  */
 const RESTARTS = ['main.ts', 'serverOptions.ts', 'actions.ts'];
 const authored = (file: string): boolean =>
   !RESTARTS.includes(file) &&
-  !/^(actions|connectors)[\\\\/]/.test(file) &&
+  !/^(actions|connectors|functions)[\\\\/]/.test(file) &&
   (!file.startsWith(\`plugins\${path.sep}\`) || ['declaration.ts', 'declarations.ts'].includes(path.basename(file)));
 const watchSpace = (): void => {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -515,8 +517,10 @@ export const serverMain = ({ source, name, fromSpace }: ServerMainOptions): stri
   health: { name: SERVER_NAME },
   adapters: ${adapters},
   plugins: ${plugins},
-  // \`public/\` served as it is: the data an apiContainer reads (\`/data/home.json\`), images, a favicon.
+  // \`public/\` served as it is, to anyone: images, a favicon.
   publicDir: path.join(PROJECT_ROOT, 'public'),
+  // The project's own data, never served: a provider resolved on the server asks for \`/data/<file>\`.
+  dataDir: path.join(PROJECT_ROOT, '${DATA_DIR}'),
   functions: { native: ${native}, plugins: pluginFunctions },
   // What \`ctx.sign\` and \`ctx.verify\` sign with: \`PLITZI_SIGNING_SECRET\`, in \`.env\`. What the actions and functions
   // keep in \`kv\` is in \`${KV_FILE}\`, outliving a restart; a deployment with several processes, or a database, names
@@ -533,7 +537,7 @@ import path from 'node:path';
 
 ${namedImport(serverNames, '@plitzi/sdk-server')}
 import { createFileKv } from '@plitzi/sdk-server/actions';
-${runtime ? `${namedImport(runtimeNames, '@plitzi/sdk-server/runtime')}\n` : ''}${local ? `\n${namedImport(['authorSpace'], '@plitzi/sdk-authoring')}\n${namedImport(['publicData'], '@plitzi/sdk-authoring/node')}\n` : ''}
+${runtime ? `${namedImport(runtimeNames, '@plitzi/sdk-server/runtime')}\n` : ''}${local ? `\n${namedImport(['authorSpace'], '@plitzi/sdk-authoring')}\n${namedImport(['projectData', 'publicData'], '@plitzi/sdk-authoring/node')}\n` : ''}
 ${ownImports.join('\n')}
 
 ${actions ? `${namedImport(['ActionLookups'], '@plitzi/sdk-server/actions', true)}\n` : ''}${namedImport(['FunctionsDefinition'], '@plitzi/sdk-server/functions', true)}
@@ -584,7 +588,16 @@ const serverOptionsModule = (local: boolean): string => `import type { ServerCon
 
 /** What \`src/main.ts\` sets itself — where the space comes from, its plugins, its files, its code — so not this file's. */
 type SetByMain =
-  'port' | 'devMode' | 'devReload' | 'health' | 'adapters' | 'plugins' | 'publicDir' | 'functions' | 'action';
+  | 'port'
+  | 'devMode'
+  | 'devReload'
+  | 'health'
+  | 'adapters'
+  | 'plugins'
+  | 'publicDir'
+  | 'dataDir'
+  | 'functions'
+  | 'action';
 
 /** What \`createServer\` takes but for what \`src/main.ts\` sets — and an action's \`lookups\`: \`src/actions.ts\`. */
 type ServerOptions = Partial<Omit<ServerConfig, SetByMain>> & {
@@ -613,11 +626,11 @@ const actionsModule = (): string => `import type { ActionEntry } from '@plitzi/s
 export const actions: ActionEntry[] = [];
 `;
 
-/** What `functions/` is, in the folder itself — and the folder there from the start, for `start:dev` to watch. */
-const FUNCTIONS_README = `# functions/
+/** What `src/functions/` is, in the folder itself — and the folder there from the start, for `start:dev` to watch. */
+const FUNCTIONS_README = `# ${FUNCTIONS_DIR}/
 
 This project's own server code: the tasks a server action's steps run (\`task: 'namespace.action'\`) and the routes
-under \`/fn/\`, from \`functions/index.ts\` — \`export default defineFunctions({ tasks, routes, allow })\` from
+under \`/fn/\`, from \`index.ts\` here — \`export default defineFunctions({ tasks, routes, allow })\` from
 \`@plitzi/sdk-server/functions\`. \`src/main.ts\` builds it at boot the way Plitzi builds a space's, and \`start:dev\`
 restarts on a change here. Nothing here, no functions.
 
@@ -646,13 +659,15 @@ actions call. \`src/actions.ts\` hands them to the server, and \`start:dev\` res
 
 export const serverFiles = (answers: CreateAnswers): ProjectFiles => ({
   'src/main.ts': serverMain({ source: answers.source, name: answers.name }),
-  'functions/README.md': FUNCTIONS_README,
+  [`${FUNCTIONS_DIR}/README.md`]: FUNCTIONS_README,
+  // The project's own data: read by its server, never served.
+  [`${DATA_DIR}/.gitkeep`]: '',
+  // Served to anyone as it is: pictures, a favicon.
+  'public/.gitkeep': '',
   'src/serverOptions.ts': serverOptionsModule(answers.source !== 'cloud'),
   ...(answers.source === 'cloud' ? {} : { 'src/actions.ts': actionsModule() }),
   // A project made from a space: the folders its actions and connectors are, there for `start:dev` to watch.
   ...(answers.fromSpace
     ? { 'src/actions/README.md': ACTIONS_README, 'src/connectors/README.md': CONNECTORS_README }
-    : {}),
-  // Where data with no backend goes — `public/data/*.json`, read by an apiContainer — served by `publicDir`.
-  'public/data/.gitkeep': ''
+    : {})
 });

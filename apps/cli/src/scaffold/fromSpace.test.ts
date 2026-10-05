@@ -118,7 +118,8 @@ describe('a project made from a space', () => {
     expect(main).toContain("path.join(PROJECT_ROOT, 'vendor/plugins')");
     expect(main).toContain('  plugins: declarations,\n  pluginTypes: builtTypes,');
     // Its bindings held to the files it serves, as `npm run author` holds them.
-    expect(main).toContain("data: publicData(new URL('../public/', import.meta.url))");
+    expect(main).toContain("serverData: projectData(path.join(PROJECT_ROOT, 'src/data')),");
+    expect(main).toContain("data: publicData(path.join(PROJECT_ROOT, 'public'))");
     expect(main).toContain('plugins: { ...plugins, ...builtPlugins }');
     expect(main).toContain('pluginNames.push(...Object.keys(builtPlugins));');
   });
@@ -143,7 +144,7 @@ describe('a project made from a space', () => {
     expect(project.files['src/actions.ts']).toContain("import { boardCreateAction } from './actions/board-create.ts';");
     expect(project.files['src/actions.ts']).toContain('export const actions: ActionEntry[] = [\n  boardCreateAction,');
     expect(project.files['src/actions.ts']).toContain('export const connectors = new Map(');
-    expect(project.files['functions/index.ts']).toBe('export default {};\n');
+    expect(project.files['src/functions/index.ts']).toBe('export default {};\n');
 
     const main = project.files['src/main.ts'];
     expect(main).toContain("import spaceRuntime from './runtime.ts';");
@@ -229,7 +230,7 @@ describe('the server a project made from a space runs', () => {
     const manifest: unknown = JSON.parse(scaffold({ ...answers(), fromSpace: true })['package.json']);
     expect(manifest).toHaveProperty(
       ['scripts', 'start:dev'],
-      'node --watch-path=./src/main.ts --watch-path=./src/serverOptions.ts --watch-path=./src/actions.ts --watch-path=./src/actions --watch-path=./src/connectors --watch-path=./functions src/main.ts'
+      'node --watch-path=./src/main.ts --watch-path=./src/serverOptions.ts --watch-path=./src/actions.ts --watch-path=./src/actions --watch-path=./src/connectors --watch-path=./src/functions src/main.ts'
     );
   });
 });

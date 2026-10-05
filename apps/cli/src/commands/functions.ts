@@ -11,41 +11,43 @@ import { readFunctionsSource } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { connectToSpace } from './account';
+import { filesWouldWrite, sayDryRun } from './dryRun';
 import { projectHere } from './existingProject';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
+import { FUNCTIONS_DIR } from '../scaffold/paths';
 
 import type { AccountOptions } from './account';
+import type { DryRunOptions } from './dryRun';
 import type { PushOutcome } from './pushOutcome';
 import type { ConnectedSpace, Connection } from '../account/connection';
 
 /**
  * `plitzi functions pull | push | try`: a space's functions — its own server code — edited in a project.
  *
- * The project's `functions/` is a WORKING COPY of the space's source, never a second source: pull writes the space's
+ * The project's `src/functions/` is a WORKING COPY of the space's source, never a second source: pull writes the space's
  * files into it, push sends them back and is refused when the space's copy moved on since the pull, so neither the
  * builder nor a project silently undoes the other. What was pulled is kept in `.plitzi/functions.json` — the version the
  * platform gave and the files as they were — which is how a pull knows it would overwrite something not pushed yet.
  */
 
-export interface FunctionsOptions extends AccountOptions {
+export interface FunctionsOptions extends AccountOptions, DryRunOptions {
   force?: boolean;
   params?: string;
 }
 
-const FUNCTIONS_DIR = 'functions';
 const STATE_FILE = path.join('.plitzi', 'functions.json');
 
 type Files = Record<string, string>;
-/** What `functions pull` last wrote into `functions/`, and the version of the space's functions it was. */
+/** What `functions pull` last wrote into `src/functions/`, and the version of the space's functions it was. */
 export type WorkingCopy = { space: number; version: string; files: Files };
 type Draft = { files: Files; version: string; manifest: { tasks: { namespace: string; action: string }[] } | null };
 type Problem = { file?: string; line?: number; column?: number; message: string };
 
-/** The project's root: where `functions/` and `.plitzi/` go. Undefined — said — outside a project. */
+/** The project's root: where `src/functions/` and `.plitzi/` go. Undefined — said — outside a project. */
 const rootOf = async (): Promise<string | undefined> => (await projectHere('whose functions these are'))?.root;
 
-/** Every source file under `functions/`, by its path there — read by the one rule of what a source is. */
+/** Every source file under `src/functions/`, by its path there — read by the one rule of what a source is. */
 const readLocal = (root: string): Promise<Files> =>
   readFunctionsSource(path.join(root, FUNCTIONS_DIR), {
     list: async dir =>
@@ -88,7 +90,7 @@ const changedFiles = (a: Files, b: Files): string[] =>
   [...new Set([...Object.keys(a), ...Object.keys(b)])].filter(file => a[file] !== b[file]).sort();
 
 /**
- * What `functions/` holds that the space does not: nothing at all (`none`, no `functions/index.ts`), something changed
+ * What `src/functions/` holds that the space does not: nothing at all (`none`, no `src/functions/index.ts`), something changed
  * since it was pulled from this space or never pulled (`changed`), or exactly what was pulled (`unchanged`).
  */
 export const functionsChange = async (root: string, spaceId: number): Promise<'none' | 'changed' | 'unchanged'> => {
@@ -133,7 +135,7 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
   const [local, state] = await Promise.all([readLocal(root), readState(root)]);
   const unpushed = state ? changedFiles(local, state.files) : Object.keys(local);
   if (!options.force && (state?.space ?? connection.space.id) !== connection.space.id) {
-    fail('functions/ is a copy of another space’s. Pull into another project, or pass --force to replace it.');
+    fail(`${FUNCTIONS_DIR}/ is a copy of another space’s. Pull into another project, or pass --force to replace it.`);
 
     return;
   }
@@ -153,6 +155,19 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
   }
 
   const base = path.join(root, FUNCTIONS_DIR);
+  if (options.dryRun) {
+    sayDryRun(`plitzi functions pull — ${connection.space.name}`, [
+      ...(await filesWouldWrite(base, Object.keys(draft.files))).map(line =>
+        line.replace(/^(.) /, `$1 ${FUNCTIONS_DIR}/`)
+      ),
+      ...Object.keys(local)
+        .filter(file => !Object.hasOwn(draft.files, file))
+        .map(file => `- ${FUNCTIONS_DIR}/${file}`)
+    ]);
+
+    return;
+  }
+
   await Promise.all(
     Object.keys(local)
       .filter(file => !Object.hasOwn(draft.files, file))
@@ -168,9 +183,9 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
   console.log(
     count
       ? chalk.green(
-          `Pulled ${count} file${count === 1 ? '' : 's'} of ${connection.space.name}’s functions into functions/ — ${taskList(draft)}.`
+          `Pulled ${count} file${count === 1 ? '' : 's'} of ${connection.space.name}’s functions into ${FUNCTIONS_DIR}/ — ${taskList(draft)}.`
         )
-      : `${chalk.bold(connection.space.name)} has no functions yet. Write functions/index.ts and plitzi functions push.`
+      : `${chalk.bold(connection.space.name)} has no functions yet. Write ${FUNCTIONS_DIR}/index.ts and plitzi functions push.`
   );
 };
 
@@ -178,15 +193,15 @@ const printProblems = (problems: Problem[]): void => {
   console.error(chalk.red('The functions were not saved:'));
   problems.forEach(({ file, line, column, message }) => {
     const where = file
-      ? `functions/${file}${line ? `:${String(line)}${column ? `:${String(column)}` : ''}` : ''}`
-      : 'functions';
+      ? `${FUNCTIONS_DIR}/${file}${line ? `:${String(line)}${column ? `:${String(column)}` : ''}` : ''}`
+      : FUNCTIONS_DIR;
     console.error(`  ${chalk.bold(where)} ${message}`);
   });
   process.exitCode = 1;
 };
 
 /**
- * `functions/` saved as the draft of the space the connection works in: refused when the space's copy moved on since the
+ * `src/functions/` saved as the draft of the space the connection works in: refused when the space's copy moved on since the
  * pull, and — for a project that never pulled them — when the space already has functions of its own. `force` replaces
  * whatever the space holds now, which is what `plitzi push --force` asks of every part.
  */
@@ -194,11 +209,11 @@ export const pushFunctionsOf = async (
   root: string,
   connection: Connection,
   space: ConnectedSpace,
-  { force = false }: { force?: boolean } = {}
+  { force = false, dryRun = false }: { force?: boolean; dryRun?: boolean } = {}
 ): Promise<PushOutcome> => {
   const [local, state] = await Promise.all([readLocal(root), readState(root)]);
   if (!Object.hasOwn(local, 'index.ts')) {
-    fail('There is no functions/index.ts here: it is where a space’s functions start. Pull them, or write it.');
+    fail(`There is no ${FUNCTIONS_DIR}/index.ts here: it is where a space’s functions start. Pull them, or write it.`);
 
     return 'failed';
   }
@@ -222,6 +237,17 @@ export const pushFunctionsOf = async (
     }
 
     base = draft.version;
+  }
+
+  if (dryRun) {
+    sayDryRun(`plitzi functions push — to ${space.name}’s draft`, [
+      ...Object.keys(local)
+        .sort()
+        .map(file => `→ ${FUNCTIONS_DIR}/${file}`),
+      `against version ${base}${force ? ' (--force: over whatever the space holds now)' : ''}`
+    ]);
+
+    return 'shown';
   }
 
   const answered = await authorizedRequest<{
@@ -279,9 +305,9 @@ export const pushFunctions = async (options: FunctionsOptions): Promise<void> =>
     return;
   }
 
-  const outcome = await pushFunctionsOf(root, connection, connection.space);
+  const outcome = await pushFunctionsOf(root, connection, connection.space, { dryRun: options.dryRun });
   if (outcome === 'unchanged') {
-    console.log('Nothing to push: functions/ is what was pulled.');
+    console.log(`Nothing to push: ${FUNCTIONS_DIR}/ is what was pulled.`);
   } else if (outcome === 'pushed') {
     console.log(chalk.dim('The live site runs them once the space is published.'));
   }
@@ -446,7 +472,7 @@ const rerunWithoutNodeSnapshot = (): Promise<number> =>
   });
 
 /**
- * `plitzi functions dev <task>`: the task run from `functions/` on this machine, as the platform would run it — and,
+ * `plitzi functions dev <task>`: the task run from `src/functions/` on this machine, as the platform would run it — and,
  * with `--watch`, again every time a file is saved. Nothing reaches the space: its draft is what `push` sends.
  */
 export const devFunction = async (task: string, options: FunctionsDevOptions): Promise<void> => {
@@ -473,7 +499,7 @@ export const devFunction = async (task: string, options: FunctionsDevOptions): P
     }
 
     if (!loaded.tasks.includes(task)) {
-      fail(`functions/ declares no task ${task}. It declares: ${loaded.tasks.join(', ') || 'none'}.`);
+      fail(`${FUNCTIONS_DIR}/ declares no task ${task}. It declares: ${loaded.tasks.join(', ') || 'none'}.`);
 
       return;
     }
@@ -486,7 +512,7 @@ export const devFunction = async (task: string, options: FunctionsDevOptions): P
     return;
   }
 
-  console.log(chalk.dim('\nWatching functions/ — every save runs it again. ^C to stop.'));
+  console.log(chalk.dim(`\nWatching ${FUNCTIONS_DIR}/ — every save runs it again. ^C to stop.`));
   let pending: NodeJS.Timeout | undefined;
   watch(path.join(root, FUNCTIONS_DIR), { recursive: true }, () => {
     clearTimeout(pending);

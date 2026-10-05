@@ -5,12 +5,14 @@ import chalk from 'chalk';
 
 import { darkScheme, importedFiles, importProbe } from '@plitzi/sdk-authoring';
 
+import { sayDryRun } from './dryRun';
 import { projectHere } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { siteOwnership } from './siteOwnership';
 import { fail } from './terminal';
 import { launchBrowser } from '../browser';
 
+import type { DryRunOptions } from './dryRun';
 import type { OwnershipOptions } from './siteOwnership';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk-authoring';
@@ -28,7 +30,7 @@ import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk
  *   plitzi import https://example.com/pricing --account
  */
 
-export interface ImportOptions extends OwnershipOptions {
+export interface ImportOptions extends OwnershipOptions, DryRunOptions {
   out?: string;
   /** Validated where the flag is declared (`widths` in options.ts). */
   width?: number[];
@@ -151,6 +153,17 @@ export const importPage = async (address: string, options: ImportOptions): Promi
     if (ownership.problem) {
       fail(ownership.problem);
     }
+
+    return;
+  }
+
+  if (options.dryRun) {
+    sayDryRun(`plitzi import ${url.href}`, [
+      `${url.hostname} is yours: ${ownership.said}`,
+      `measure it at ${widths.join(', ')} px, light and dark, in the project's Playwright`,
+      `${existing.length > 0 ? '~' : '+'} ${out}/ — tokens.ts, outline.ts, data/*.json, assets.json, screens/, IMPORT.md`,
+      ...(existing.length > 0 ? [`  over ${String(existing.length)} files an earlier import left (--force)`] : [])
+    ]);
 
     return;
   }

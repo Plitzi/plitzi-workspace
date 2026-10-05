@@ -36,6 +36,7 @@ import type { CheckOptions } from './commands/check';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
 import type { DataDescribeOptions } from './commands/data';
+import type { DryRunOptions } from './commands/dryRun';
 import type { ExplainOptions } from './commands/explain';
 import type { FixOptions } from './commands/fix';
 import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
@@ -74,6 +75,12 @@ const schemeOption = (): Option =>
     '--scheme <scheme>',
     'The space’s theme, as a visitor’s toggle sets it. The space’s own default when left out'
   ).choices(SCHEMES);
+
+/** What every command that writes or sends takes: say what it would do, and do none of it. */
+const DRY_RUN_OPTION = [
+  '--dry-run',
+  'Say what it would do — files, installs, what it sends — and do none of it'
+] as const;
 
 const API_OPTION = [
   '--api <url>',
@@ -137,6 +144,7 @@ program
     '-y, --yes',
     'At a terminal: take the defaults for any choice not passed. Without one, every choice must be passed'
   )
+  .option(...DRY_RUN_OPTION)
   .action((directory: string | undefined, options: CreateOptions & CreatePluginOptions & { plugin?: boolean }) => {
     if (!options.plugin) {
       return create(directory, options);
@@ -162,6 +170,7 @@ program
   )
   .option('--revision <n>', 'Pin a published revision of it, or latest to follow its newest again')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((options: PullOptions) => pull(options));
 
 program
@@ -177,6 +186,7 @@ program
   .option('--cdn <identifier>', 'Which of the space’s CDNs a plugin goes to, when it has several')
   .option('--bucket <identifier>', 'Which public bucket a plugin goes in, when there are several')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((parts: string[], options: PushOptions) => push(parts, options));
 
 const add = program.command('add').description('Add something to the project you are in');
@@ -202,6 +212,7 @@ add
     'With a server half: functions/ in its folder — routes under /fn/plugins/<type>/, steps <type>.<action>'
   )
   .option('-f, --force', 'Write into a folder that is not empty')
+  .option(...DRY_RUN_OPTION)
   .action((names: string[], options: AddPluginOptions) => addPlugin(names, options));
 
 const pack = program.command('pack').description('Build something of this project into what the platform takes');
@@ -217,6 +228,7 @@ pack
     '--source-root <folder>',
     'The project its source is kept relative to, when the elements are a project of their own inside this one'
   )
+  .option(...DRY_RUN_OPTION)
   .action((folders: string[], options: PackPluginOptions) => packPluginCommand(folders, options));
 
 pack
@@ -229,6 +241,7 @@ pack
   .requiredOption('--name <name>', 'The plugin’s type, or runtime')
   .option('--root <folder>', 'The project the paths are relative to. Defaults to the nearest package.json’s folder.')
   .requiredOption('-o, --out <file>', 'Where the gzipped snapshot goes')
+  .option(...DRY_RUN_OPTION)
   .action((entries: string[], options: PackSourceOptions) => packSourceCommand(entries, options));
 
 program
@@ -295,6 +308,7 @@ program
   )
   .option('--json', 'One object, for a tool or an agent')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((url: string, options: ImportOptions) => importPage(url, options));
 
 program
@@ -362,13 +376,16 @@ skills
   .description(
     'Bring them up to the Plitzi packages this project has installed, each replaced whole (`upgrade skills --write`)'
   )
-  .action(() => upgrade(['skills'], { write: true }));
+  .option(...DRY_RUN_OPTION)
+  .action((options: DryRunOptions) => upgrade(['skills'], { write: !options.dryRun }));
 
-const data = program.command('data').description('The JSON a project serves (public/data), without reading it whole');
+const data = program
+  .command('data')
+  .description('The JSON a project reads — src/data with a server, public/data without — without reading it whole');
 
 data
   .command('describe')
-  .argument('<file>', 'A JSON file: public/data/products.json')
+  .argument('<file>', 'A JSON file: src/data/products.json')
   .description('Its shape — every field, its type, whether every row has it — and one row of its longest list')
   .option('--json', 'One object: { shape, example }')
   .action((file: string, options: DataDescribeOptions) => dataDescribe(file, options));
@@ -382,6 +399,7 @@ upload
   .option('--cdn <identifier>', 'Which of the space’s CDNs the bucket is in.')
   .option('--bucket <identifier>', 'Which public bucket the plugin goes in. Asked for when there are several.')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((zip: string | undefined, options: UploadPluginOptions) => uploadPluginCommand(zip, options));
 
 const functions = program
@@ -393,12 +411,14 @@ functions
   .description('Write the space’s functions into functions/ — refused when that would overwrite what is not pushed')
   .option('-f, --force', 'Overwrite what is not pushed, or a copy of another space')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((options: FunctionsOptions) => pullFunctions(options));
 
 functions
   .command('push')
   .description('Save functions/ as the space’s draft: built and checked on the platform, refused if it moved on since')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((options: FunctionsOptions) => pushFunctions(options));
 
 functions
@@ -426,6 +446,7 @@ runtime
   .description('Pack this project’s runtime module and keep it as the space’s draft runtime')
   .option('--entry <path>', 'The module whose default export is defineRuntime(…)', 'src/runtime.ts')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((options: RuntimeOptions) => pushRuntime(options));
 
 runtime
@@ -445,6 +466,7 @@ for (const power of ['start', 'stop'] as const) {
     )
     .option('-e, --environment <name>', 'The environment: main (the draft) or a published one', 'main')
     .option(...API_OPTION)
+    .option(...DRY_RUN_OPTION)
     .action((options: RuntimeOptions & { environment?: string }) => powerRuntime(power, options));
 }
 
@@ -454,6 +476,7 @@ runtime
   .argument('<size>', 'small, medium or large — plitzi runtime status says which the plan includes')
   .option('-e, --environment <name>', 'The environment: main (the draft) or a published one', 'main')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((size: string, options: RuntimeOptions & { environment?: string }) => setRuntimeSize(size, options));
 
 const vars = runtime.command('vars').description('What the runtime starts with — written, never read back');
@@ -464,6 +487,7 @@ vars
   .argument('<name>', 'The variable, in capitals: REDIS_URL')
   .argument('[value]', 'Its value — read from standard input when left out, which keeps it out of the shell history')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((name: string, value: string | undefined, options: RuntimeOptions) =>
     setRuntimeVariable(name, value, options)
   );
@@ -473,6 +497,7 @@ vars
   .description('Take a variable away from the runtime')
   .argument('<name>', 'The variable')
   .option(...API_OPTION)
+  .option(...DRY_RUN_OPTION)
   .action((name: string, options: RuntimeOptions) => unsetRuntimeVariable(name, options));
 
 program.parse(process.argv);

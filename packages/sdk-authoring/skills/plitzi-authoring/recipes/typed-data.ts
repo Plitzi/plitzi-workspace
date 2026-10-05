@@ -2,7 +2,7 @@
 /**
  * Data typed by a sample of it: `source()` turns the JSON the page reads into names the editor completes and checks —
  * `site.data.hero.titel` is a type error, not an empty heading. In a project the sample is the file itself:
- * `import home from '../../public/data/home.json' with { type: 'json' }`.
+ * `import home from '../data/home.json' with { type: 'json' }` — `src/data/`, or `public/data/` with no server.
  */
 import { apiContainer, heading, list, source, styles, text, twig, listItem } from '@plitzi/sdk-authoring';
 

@@ -7,6 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { apiFor } from './account';
 import { download, fetchExport, functionsOnDisk, notFetched, versionLabel } from './createFrom';
+import { filesWouldWrite, sayDryRun } from './dryRun';
 import { findProject } from './existingProject';
 import { writeFunctionsState } from './functions';
 import { projectFormatter } from './projectFormatter';
@@ -14,8 +15,10 @@ import { digest, digestsOf, givenFiles, readOrigin, writeOrigin } from './spaceO
 import { fail } from './terminal';
 import { installCommand } from '../scaffold';
 import { projectFromSpace } from '../scaffold/fromSpace';
+import { FUNCTIONS_DIR } from '../scaffold/paths';
 
 import type { AccountOptions } from './account';
+import type { DryRunOptions } from './dryRun';
 import type { SpaceOrigin } from './spaceOrigin';
 import type { PackageManager } from '../scaffold';
 
@@ -29,7 +32,7 @@ import type { PackageManager } from '../scaffold';
  * the first, and only adds to the second the packages the space's code now asks for.
  */
 
-export interface PullOptions extends AccountOptions {
+export interface PullOptions extends AccountOptions, DryRunOptions {
   force?: boolean;
   /** Follow another version from now on: the draft (`main`) or a published environment. */
   environment?: string;
@@ -231,6 +234,25 @@ export const pull = async (options: PullOptions): Promise<void> => {
   const of = (verdict: Verdict): string[] =>
     [...verdicts].filter(([, value]) => value === verdict).map(([file]) => file);
   const conflicts = of('conflict');
+  if (options.dryRun) {
+    const packageText = await fs.readFile(path.join(root, 'package.json'), 'utf-8');
+    const manifest: unknown = JSON.parse(packageText);
+    const { changed } = mergeDependencies(isRecord(manifest) ? manifest : {}, next.dependencies, origin.dependencies);
+    sayDryRun(`plitzi pull — ${origin.space.name}, ${versionLabel(asked.version)}`, [
+      ...(await filesWouldWrite(root, of('write'))),
+      ...of('remove').map(file => `- ${file}`),
+      ...of('keep').map(file => `= ${file} — changed here, kept`),
+      ...conflicts.map(
+        file =>
+          `! ${file} — changed here and on the space: ${options.force ? 'the space’s copy taken' : 'nothing pulled'}`
+      ),
+      ...missing.map(line => `! ${line}`),
+      ...(changed.length > 0 ? [`~ package.json — ${changed.join(', ')}`] : [])
+    ]);
+
+    return;
+  }
+
   if (conflicts.length > 0 && !options.force) {
     fail(
       `Nothing was pulled: these changed here and on ${origin.space.name} too:${list(conflicts)}\n` +
@@ -286,7 +308,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
   await writeOrigin(root, updated);
 
   // The functions as a working copy of the space's again — unless a change here to one of them still stands.
-  const functionsKept = of('keep').some(file => file.startsWith('functions/'));
+  const functionsKept = of('keep').some(file => file.startsWith(`${FUNCTIONS_DIR}/`));
   if (!functionsKept) {
     await writeFunctionsState(root, {
       space: exported.space.id,

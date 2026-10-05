@@ -25,7 +25,7 @@ Pizarra is the yardstick: a board works on `localhost` from a fresh `create`, is
 | Pages, styles, variables, settings | **local:** the saved space, decompiled. **cloud:** read live with the space's host key | **local:** `src/space/`, authoring code, a file per page (`src/space.ts` re-exports it). **cloud:** nothing; the key goes in `.env` | `createJsonAdapters` over the authored space, or `createCloudAdapters` |
 | Actions | the space's action documents | `src/actions/<id>.ts`, one `defineAction` call each, where it reads back exactly; `src/actions/<id>.json` where it does not | `action.lookups` in `src/actions.ts` |
 | Connectors | the space's connector manifests | `src/connectors/<id>.json` | the same lookups |
-| Functions | the stored source, unchanged | `functions/` | `loadFunctions`, in the project's process |
+| Functions | the stored source, unchanged | `src/functions/` | `loadFunctions`, in the project's process |
 | Runtime | its source snapshot | `src/runtime.ts` and every file it imports | `serveRuntime`, in the project's process |
 | Plugins | each plugin's source snapshot | `src/plugins/<Name>/` and the shared files they import | registered with `action: 'compile'`: built here, rendered on the server, one copy of React |
 | Files | the space's public buckets | `public/`, every CDN address in the code rewritten to the project's own | served by the project (`publicDir`) |
@@ -199,7 +199,7 @@ plitzi push space --force        # replace the draft even though it changed sinc
 
 **What changed.** Since the project last had the space — its last `create --from`, `pull` or `push`, as
 `.plitzi/space.json` records: a plugin or the runtime when a file of its closure (`packSource`'s) is not the one
-recorded; the functions when `functions/` is not what `.plitzi/functions.json` holds; the space when a file of
+recorded; the functions when `src/functions/` is not what `.plitzi/functions.json` holds; the space when a file of
 `src/space.ts`, `src/space/`, `src/actions*` or `src/connectors/` is not — and the platform says when the draft already
 is what was sent, and writes nothing. A project that never had the space has everything changed.
 
@@ -209,7 +209,7 @@ went up before it is said, and recorded):
 | Part | What goes up | As |
 |---|---|---|
 | `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `pack plugin` + `upload plugin` (`--cdn`, `--bucket`) |
-| `functions` | `functions/` | `functions push` |
+| `functions` | `src/functions/` | `functions push` |
 | `runtime` | the module the runtime starts at (`create --from`'s, else `src/runtime.ts`) | `runtime push` |
 | `space` | `src/space.ts` authored, the actions `src/actions.ts` serves, the manifests in `src/connectors/` | `PUT /spaces/:spaceId/import` |
 

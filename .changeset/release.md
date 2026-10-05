@@ -122,12 +122,12 @@
   `src/serverOptions.ts` (handed to `createServer`, typed from `ServerConfig`, now exported by
   `@plitzi/sdk-server`) and, with `--source local`, `src/actions.ts` (the space's server actions), which `main.ts` wires
   for calls, renders and schedules. What `main.ts` wires itself (the space's adapters, the plugins, `public/`,
-  `functions/`, the actions' lookups) is left out of `serverOptions`' type and comes after it, so no option unwires it.
+  `src/data/`, `src/functions/`, the actions' lookups) is left out of `serverOptions`' type and comes after it, so no option unwires it.
   `upgrade` writes either file into a project that has none — only when the `main.ts` reading it is the CLI's — and
   never replaces it; `create --from` projects read `serverOptions.ts` too.
 - **`upgrade packages` brings up the scripts the CLI wrote and nobody changed** (`.plitzi/scaffold.json` now records
   them); a script the project changed is left and said, as before.
-- `start:dev` restarts on a change to the server's code — `serverOptions.ts`, `actions.ts` and `functions/` (whose
+- `start:dev` restarts on a change to the server's code — `serverOptions.ts`, `actions.ts` and `src/functions/` (whose
   `README.md` the project now starts with); a plugin is swapped in the open page instead, and its `functions/` set
   again, without a restart. A function imports its siblings with `.ts`, as `src/`.
 - `add plugin --server` writes the plugin's server half (`functions/index.ts`, a `GET`/`POST /state` example on its
@@ -136,7 +136,7 @@
   `drawsNothing: true`; the generated events hook never fires on the builder's canvas.
 - A `channel` with no tag is boxless to a page check, like a provider; an empty list is said to have no rows, with what
   to do, instead of "no size (0×0)".
-- **A server-mode project keeps its `kv` in `data/kv.json`** (`createFileKv`; ignored by git): what the space's actions
+- **A server-mode project keeps its `kv` in `state/kv.json`** (`createFileKv`; ignored by git): what the space's actions
   save outlives a restart, `start:dev`'s included. `action.kv` in `src/serverOptions.ts` names another store.
 - A server-mode project types what its plugins import besides code (`src/plugins/assets.d.ts`): a stylesheet, an image,
   `?raw`, `?inline` — a client-mode one has them from `vite/client`.
@@ -152,7 +152,7 @@
   PLITZI_HOST_KEY". Every server project's `src/main.ts` now reads `.env` itself (`process.loadEnvFile`), and every
   one is given a signing key there (`PLITZI_SIGNING_SECRET`, made for it by `create`) — `ctx.sign` refused in a project
   `create` wrote, a plugin's server half included. `PORT` is no longer written into `.env`, where it pinned 8080. A
-  cloud project keeps its `kv` in `data/kv.json` too.
+  cloud project keeps its `kv` in `state/kv.json` too.
 - **`upgrade` keeps the package manager a project was written for** (`.plitzi/scaffold.json`) when it has no lockfile
   of its own yet: a yarn or pnpm project not installed (`--no-install`), or sitting in a monorepo folder, was taken for
   npm and its `AGENTS.md`, Playwright config and `.gitignore` replaced with npm's commands.
@@ -162,6 +162,21 @@
   person's Plitzi account whether one of their spaces verified its domain, signing in — and without it is refused,
   saying so, before any request: an agent running `import` in a local project opened a sign-in nobody asked for. The
   CLI skill and the generated `AGENTS.md` say to run `import` only when the user asks, and to ask before `--account`.
+- **A server project's data is no longer on the internet.** It was `public/data/*.json`, served to anyone as a file;
+  it is `src/data/*.json`, which the server reads and never serves (`dataDir`, new in `createServer`): a provider with
+  `runtime: 'server'` and `query: '/data/<file>'` reads it, and the page arrives with it. `projectData`
+  (`@plitzi/sdk-authoring/node`) and `authorSpace`'s `serverData` hold bindings to those files, and a provider asking
+  for `/data/…` from the browser is refused (`server-data-in-browser`): nothing would answer it. What a provider reads
+  is still in the page it renders — data a page must not carry is a server action's to read. A client-mode project
+  keeps `public/data/`, which the browser has to fetch. The catalog template follows the mode
+  (`catalogTemplateFiles({ mode })`). `public/` holds only what is meant for everyone.
+- **The project's own server code is `src/functions/`**, with the rest of its source — typechecked with it, left out of
+  `tsconfig.build.json` (the server builds it at boot). `functions pull`/`push`/`dev`, `push`, `pull` and `create
+  --from` follow. The `kv` folder is `state/` (it was `data/`, beside a data folder that was something else).
+- **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `pull`, `push`, `pack plugin`,
+  `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills
+  update`: each file it would write (`+` new, `~` replaced, `-` removed), what it would install or run, what it would
+  send and where, and none of it done. It still reads what it needs to say so.
 - **A new project is formatted from the start**, every template and mode: its first `format` changes nothing. The CLI's
   own files are in its `.prettierignore`, so formatting never turns one into a file `upgrade` believes was changed.
 

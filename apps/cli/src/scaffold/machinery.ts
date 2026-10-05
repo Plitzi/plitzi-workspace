@@ -27,7 +27,7 @@ export const MACHINERY: ReadonlySet<string> = new Set([
   'visual/home.spec.ts',
   'src/plugins/README.md',
   'src/plugins/assets.d.ts',
-  'functions/README.md',
+  'src/functions/README.md',
   'src/actions/README.md',
   'src/connectors/README.md',
   '.yarnrc.yml',
