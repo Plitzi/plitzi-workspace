@@ -47,6 +47,7 @@ const exported = (overrides: Partial<SpaceExport> = {}): SpaceExport => ({
   ],
   connectors: [],
   functions: { version: 'v1', files: { 'index.ts': 'export default {};\n' } },
+  data: { version: 'd1', files: { 'stock.json': `{ "map": "${WORLD}" }` } },
   source: {
     files: {
       'runtime.ts': encode("import { model } from './board/model.ts';\nexport default model;\n"),

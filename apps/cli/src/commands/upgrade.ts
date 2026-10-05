@@ -15,6 +15,7 @@ import { CLI_VERSION, packageJson } from '../scaffold/project';
 import { SKILL_NAMES, skillFiles, skillVersion } from '../scaffold/skills';
 
 import type { PlitziProject } from './existingProject';
+import type { SpaceOrigin } from './spaceOrigin';
 import type { CreateAnswers } from '../scaffold';
 
 /**
@@ -133,7 +134,7 @@ const renamesIn = (file: string, text: string): RenameFound[] =>
 
 type Section = 'dependencies' | 'devDependencies';
 
-interface PackagesPlan {
+export interface PackagesPlan {
   added: { section: Section; name: string; range: string }[];
   raised: { section: Section; name: string; from: string; to: string }[];
   scripts: { name: string; command: string }[];
@@ -176,7 +177,11 @@ const stringsOf = (value: unknown): Record<string, string> =>
  * `package.json` brought up to the CLI. `wrote` is what the CLI wrote of its scripts (the scaffold record): one the
  * project still has as written is the CLI's and takes today's command; one it changed is its own and is only said.
  */
-const planPackages = (text: string, answers: CreateAnswers, wrote: Record<string, string> = {}): PackagesPlan => {
+export const planPackages = (
+  text: string,
+  answers: CreateAnswers,
+  wrote: Record<string, string> = {}
+): PackagesPlan => {
   const parsed: unknown = JSON.parse(text);
   const ours: unknown = JSON.parse(packageJson(answers));
   const project = isRecord(parsed) ? { ...parsed } : {};
@@ -246,9 +251,9 @@ const planPackages = (text: string, answers: CreateAnswers, wrote: Record<string
  * `seeded`: a file of the project's own that the machinery imports, written because the project had none. `space`: one
  * a space made into a project gave in the CLI's place (`src/main.ts`, from what the space holds) — `plitzi pull`'s.
  */
-type FileStatus = 'current' | 'added' | 'updated' | 'yours' | 'taken' | 'seeded' | 'space';
+export type FileStatus = 'current' | 'added' | 'updated' | 'yours' | 'taken' | 'seeded' | 'space';
 
-interface FilePlan {
+export interface FilePlan {
   file: string;
   status: FileStatus;
   /** What the CLI writes now. */
@@ -314,15 +319,38 @@ const planSeeds = async (
   return planned.filter((plan): plan is FilePlan => plan !== undefined);
 };
 
+/**
+ * The machinery as `upgrade` sees it: each file the CLI writes, by what it is to the project (`FileStatus`), the
+ * project's own files it reads that the project lacks (`seeds`), and the files a space gave in the CLI's place, which
+ * are `plitzi pull`'s (`spaces`). What `plitzi doctor` reads too, so both say the same of every file.
+ */
+export const machineryPlan = async (
+  root: string,
+  answers: CreateAnswers,
+  { origin, recorded, take = [] }: { origin?: SpaceOrigin; recorded: Record<string, string>; take?: readonly string[] }
+): Promise<{ plans: FilePlan[]; seeds: FilePlan[]; spaces: string[] }> => {
+  // A file the space gave in the CLI's place is the space's, kept by `plitzi pull` — never offered here.
+  const given = new Set(Object.keys(origin?.files ?? {}));
+  const machinery = Object.entries(machineryFiles(answers));
+  const ours = Object.fromEntries(machinery.filter(([file]) => !given.has(file)));
+  const plans = await planFiles(root, ours, recorded, take);
+
+  return {
+    plans,
+    seeds: await planSeeds(root, seedFiles(answers), plans),
+    spaces: machinery.filter(([file]) => given.has(file)).map(([file]) => file)
+  };
+};
+
 // --- skills --------------------------------------------------------------------------------------------------------
 
-interface SkillPlan {
+export interface SkillPlan {
   name: string;
   was?: string;
   now?: string;
 }
 
-const planSkills = async (root: string): Promise<{ plans: SkillPlan[]; files: Record<string, string> }> => {
+export const planSkills = async (root: string): Promise<{ plans: SkillPlan[]; files: Record<string, string> }> => {
   const files = skillFiles(SKILL_NAMES, root);
   const plans: SkillPlan[] = [];
   for (const name of SKILL_NAMES) {
@@ -495,14 +523,12 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   const answers = plitzi ? await answersFor(root, plitzi, manager, origin !== undefined) : undefined;
 
   if (answers && wanted.has('files')) {
-    // A file the space gave in the CLI's place is the space's, kept by `plitzi pull` — never offered here.
-    const given = new Set(Object.keys(origin?.files ?? {}));
-    const machinery = Object.entries(machineryFiles(answers));
-    const ours = Object.fromEntries(machinery.filter(([file]) => !given.has(file)));
-    const spaces = machinery.filter(([file]) => given.has(file)).map(([file]) => file);
     const recorded = record?.files ?? {};
-    const plans = await planFiles(root, ours, recorded, options.take ?? []);
-    const seeds = await planSeeds(root, seedFiles(answers), plans);
+    const { plans, seeds, spaces } = await machineryPlan(root, answers, {
+      ...(origin ? { origin } : {}),
+      recorded,
+      take: options.take ?? []
+    });
     if (write) {
       const written = [...plans.filter(plan => WRITES.has(plan.status)), ...seeds];
       await writeFiles(root, Object.fromEntries(written.map(plan => [plan.file, plan.ours])));

@@ -33,6 +33,7 @@ const isExport = (value: unknown): value is SpaceExport =>
   isRecord(value.builtOnly) &&
   isRecord(value.report) &&
   isRecord(value.functions) &&
+  isRecord(value.data) &&
   Array.isArray(value.actions) &&
   Array.isArray(value.assets) &&
   Array.isArray(value.visitorRoles);
@@ -196,7 +197,8 @@ export const recordOrigin = async (
     downloads: Object.fromEntries(
       project.downloads.filter(({ to }) => Object.hasOwn(files, to)).map(({ url, to }) => [to, url])
     ),
-    dependencies: project.dependencies
+    dependencies: project.dependencies,
+    data: exported.data.version
   });
   await writeFunctionsState(root, {
     space: exported.space.id,

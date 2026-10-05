@@ -48,6 +48,11 @@ export type SpaceExport = {
    */
   functions: { version: string; files: Record<string, string> };
   /**
+   * The space's own data, by path in `src/data/` (JSON its providers read on the server, never served), and the version
+   * of it this is — what `plitzi push` checks the space's copy has not moved on from.
+   */
+  data: { version: string; files: Record<string, string> };
+  /**
    * The source its plugins and runtime were built from, merged: every file by its path in the project (bytes in
    * base64), the packages they need, and where each build starts.
    */

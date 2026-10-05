@@ -275,6 +275,7 @@ the old `action.tasks`: a deployment's own tasks and a space's are written the s
 | `createRemoteRunner({ url, secret })` | The page server's client to it: one WebSocket per invocation, over which every call the code makes comes back and is answered by the replica holding the run — so replicas share nothing about it |
 | `createIsolateRunner()` | The isolates in the page server's own process — for tests, or a deployment whose process holds nothing a space must not reach |
 | `createLocalFunctions()` | What `plitzi functions dev` runs: build, check and try a source on this machine |
+| `buildFunctions(source)` | The build every runner runs first, alone — no isolate: a bundle, or `FunctionsBuildError` with each problem by file and line. What `plitzi doctor` checks a project's `src/functions/` with |
 
 Wherever isolates run, Node must start with **`--no-node-snapshot`** (`NODE_OPTIONS=--no-node-snapshot`):
 isolated-vm crashes beside Node's own startup snapshot, so the runner refuses to start without it and says so.

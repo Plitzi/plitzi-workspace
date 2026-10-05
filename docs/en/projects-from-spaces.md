@@ -193,13 +193,14 @@ space's **draft** — publishing a snapshot stays the builder's.
 
 ```bash
 plitzi push                      # at a terminal: every part offered, what changed ticked; with nobody there, what changed
-plitzi push space functions      # only these parts: space, functions, runtime, plugins
+plitzi push space functions      # only these parts: space, functions, data, runtime, plugins, files
 plitzi push space --force        # replace the draft even though it changed since
 ```
 
 **What changed.** Since the project last had the space — its last `create --from`, `pull` or `push`, as
 `.plitzi/space.json` records: a plugin or the runtime when a file of its closure (`packSource`'s) is not the one
-recorded; the functions when `src/functions/` is not what `.plitzi/functions.json` holds; the space when a file of
+recorded; the functions when `src/functions/` is not what `.plitzi/functions.json` holds; the data or the files when a
+file of `src/data/` or `public/assets/` is not the one recorded; the space when a file of
 `src/space/`, `src/actions/` or `src/connectors/` is not — and the platform says when the draft already
 is what was sent, and writes nothing. A project that never had the space has everything changed.
 
@@ -209,7 +210,9 @@ went up before it is said, and recorded):
 | Part | What goes up | As |
 |---|---|---|
 | `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `pack plugin` + `upload plugin` (`--cdn`, `--bucket`) |
+| `files` | each changed file of `public/assets/`, at the same path under the space's `assets/` — images, sounds, videos, JSON | `POST /spaces/:spaceId/cdns/:identifier/assets?path=` |
 | `functions` | `src/functions/` | `functions push` |
+| `data` | `src/data/` whole, its CDN addresses put back | `PUT /spaces/:spaceId/data` |
 | `runtime` | `src/runtime/index.ts` and what it imports | `runtime push` |
 | `space` | `src/space/` authored, the actions `src/actions/index.ts` serves, the manifests in `src/connectors/` | `PUT /spaces/:spaceId/import` |
 
@@ -218,7 +221,8 @@ style, actions and connectors); the project records it, and a push names it as i
 builder since is refused (`409 DRAFT_MOVED`): pull, and push again — or `--force` to replace it. A project that never
 had the space sends no base, and is refused (`409 DRAFT_NOT_EMPTY`) unless the space is still the blank space it was
 created as, with no actions or connectors: a space made from a template, or edited once, is somebody's work, and takes
-`--force`. `--force` reaches the functions too, whose own check (`functions push`) it passes the same way.
+`--force`. `--force` reaches the functions and the data too, whose own checks (the version the project last had) it
+passes the same way.
 
 **Which space.** The one the CLI is connected to (`plitzi space`), which must be the one `.plitzi/space.json` names; and
 the draft only — a project following a published environment follows the draft first (`pull --environment main`).
@@ -252,8 +256,15 @@ for in the builder: the settings, the actions, the connectors.
   connectors, which the builder asks that of.
 - **What a push chooses.** Everything that changed, or the parts named; at a terminal, ticked from a list. Never a
   published environment.
-- **Files.** Downloaded into the project and served by it: a self-hosted project is its own server and depends on
-  nothing of Plitzi's, its CDN included. `push` sends each path it wrote for one back as the file's CDN address.
+- **Files.** Downloaded into the project's `public/assets/` and served by it: a self-hosted project is its own server
+  and depends on nothing of Plitzi's, its CDN included. `public/assets/<path>` is the CDN's `<space>/assets/<path>`, both
+  ways: `push` puts a changed one there (named exactly, replacing what the path held) and sends each path to one as its
+  CDN address; the rest of `public/` is the project's own.
+- **Data.** `src/data/` is the space's own data on Plitzi (`SpaceData`, one row per version, its files kept in the
+  space's private bucket as its functions are): saved whole by `push` (`PUT /spaces/:spaceId/data`, under
+  `spaceManage`; each file JSON at a plain path, 8 MB in all), frozen with each publish, and read by the page server of
+  the version it renders (`getData` among the action lookups, resolved as `dataDir` resolves it self-hosted). The
+  export carries it, so `create --from` and `pull` write it back.
 - **SDK versions.** A plugin is rebuilt by the project against the project's own `@plitzi/*`: the snapshot carries the
   ranges its source was written against, and the report lists every one that differs from the project's.
 
@@ -262,12 +273,8 @@ for in the builder: the settings, the actions, the connectors.
 - **Visitors and sign-in.** A space with visitor roles signs its visitors in with their Plitzi account, and gives roles
   by email; who holds them stays on Plitzi. Self-hosted, nobody signs in until the server does it itself (`createAuth`
   from `@plitzi/sdk-server/auth`, over accounts it keeps, giving each person the permissions of their roles with
-  `visitorAccess`), handed to the server as `auth` in `src/config/serverOptions.ts`. The report says so. Writing that sign-in for the project is a separate decision.
-
-- **A project's data and its own files, on Plitzi.** `src/data/` (read on the server, never served) and a file added to
-  `public/` have no home on Plitzi yet: `push` says which providers read data and which files it does not have, before
-  sending. Carrying them is platform work — the data kept privately and versioned with the space, as its functions are,
-  and resolved by Plitzi's SSR as `dataDir` resolves it here; the files uploaded to the space's CDN by `push`.
+  `visitorAccess`), handed to the server as `auth` in `src/config/serverOptions.ts`. The report says so. Writing that
+  sign-in for the project is a separate decision.
 
 ## Where it is tested
 

@@ -205,7 +205,7 @@ const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): 
       : [
           '`renderType` is the name it is registered under in `src/main.ts`; every other attribute arrives in',
           'the component as a prop of the same name — written here, or bound to a source. See',
-          '`src/plugins/README.md`.'
+          '`plitzi/README.md`.'
         ]),
     ...(fed.length > 0
       ? [

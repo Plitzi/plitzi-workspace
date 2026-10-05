@@ -39,6 +39,9 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
 
 ## Running it as an agent
 
+- **Which check.** The space: `npm run author`. A rendered page: `check`. The project around them (packages,
+  configs, imports, plugins, data, functions): `doctor` — after moving files, before `push`.
+
 - **After the SDK moves, `upgrade`.** It shows the CLI's files, scripts, versions and skills as they should be now, and
   every renamed name at its line. `--write` replaces what nobody changed, merges `package.json` and installs; a file
   you changed comes as a diff — `--take <file>` once read.
@@ -85,7 +88,7 @@ What a project gives you, so you use it rather than rebuild it:
 | `author` | author `src/space/`: one line when it is fine, every problem at once (file:line, what to change) when not, then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
 | `npx plitzi fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |
 | `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows, a binding its data lacks; `--state`, `--element <id>`: what it holds; `--ssr`: what SSR misses; `--json` |
-| `npx plitzi import <url>` | a page the user owns, as a start: `tokens.ts`, `outline.ts` (blocks and layout per breakpoint), lists as `data/*.json`, screenshots, `IMPORT.md`. Never the words. **Only when the user asks** — never on your own. A site not on this machine needs `--account`, which signs in to their Plitzi account (domain verified on a space): ask first |
+| `npx plitzi import <url>` | a page the user owns, as a start: `tokens.ts`, `outline.ts` (blocks and layout per breakpoint), lists as `data/*.json`, screenshots, `IMPORT.md`. Never the words. **Only when the user asks.** A site not on this machine needs `--account` (their Plitzi account, its domain verified on a space): ask first |
 | `shot -- /path --width 390 --scheme dark` | a picture of one page — `--clip <element>` one element, `--scroll-to <element>` / `--viewport` the screen there, `--frames 4` what moves, `--compare <url>` what differs from another site, by section and by text |
 | `visual` | a browser asserts every element the space names is visible |
 | `typecheck`, `lint`, `format` | before calling a change done |
@@ -98,7 +101,7 @@ Data with no backend, server mode: `src/data/*.json`, never served — a provide
 file's fields with `data describe`, never by reading it.
 
 **`public/` is on the internet**: never a secret there. `tmp/`, `state/` (its `kv`) ignored; `.plitzi/` committed.
-`--dry-run` on any command that writes or sends says what it would do, and does none of it.
+`--dry-run` on a command that writes or sends says what it would do, and does none of it.
 
 A local space starts as a tour of the platform with a plugin of the project's own; **`--template blank`** starts it as
 tokens, a layout and one empty page instead — the one to pick when the project is about to be a specific site; and
@@ -203,8 +206,7 @@ A space's own server code, edited in `src/functions/` (`pull`, `push`, `try`, `d
 | `create` printed questions and wrote nothing | nobody answered the three choices — ask the user, pass them as flags |
 | `start` says the port is in use | `PORT` is set to a taken port — unset it to take the next free one, or choose another |
 | A page that is not this project's, or `shot` refuses the port | another server answers there — `curl 127.0.0.1:<port>/health` names it; `tmp/dev-server.json` has this project's port |
-| An element renders "Custom Component … Not Found" | the `renderType` names no registered plugin — check the folder name's camelCase |
-| A flow on the plugin's event is refused, or never runs | the event is not in its `declaration.ts`, or the folder has none (`export default` the declaration) |
+| "Custom Component … Not Found", or a flow on a plugin's event never runs | `doctor` names the folder whose type or declaration is off |
 | `upload` opens a browser | there is no session, or no space chosen — the person completes it there |
 | The upload went to the wrong space | `plitzi space` chooses another; check `whoami` first |
 | `pull` wrote nothing and named files | they changed here and on the space — set your changes aside and pull again, or `--force` |

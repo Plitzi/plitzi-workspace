@@ -602,6 +602,12 @@ export type ActionLookupsConfig = {
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
   /** The server halves of the plugins the space uses, by plugin type — a `SpaceFunctions` each. */
   getPluginFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
+  /**
+   * The space's own data as of that revision — what a project keeps in `src/data/`, kept privately and frozen with each
+   * publish — as its files' text by path (`products.json`). A provider resolved on the server whose `query` is
+   * `/data/<file>` reads it, as `dataDir` reads a folder; no browser is answered it.
+   */
+  getData?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
   /** The feature flags the space declares as of that revision — what a flow reads as `{{ flags.<name> }}`. */
   getFlags?: (spaceId: number, at?: SpaceRevision) => Promise<Schema['flags']>;
 };

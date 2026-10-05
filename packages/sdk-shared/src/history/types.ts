@@ -1,5 +1,5 @@
 /** Which of a space's documents a change was made to: its schema, its style, or its functions' source. */
-export type ChangeDocument = 'schema' | 'style' | 'functions';
+export type ChangeDocument = 'schema' | 'style' | 'functions' | 'data';
 
 /**
  * Where a change came from: a person in the builder, an agent over MCP, the builder's co-worker, the autofix, a GraphQL

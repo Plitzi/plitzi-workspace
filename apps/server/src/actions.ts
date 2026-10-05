@@ -42,6 +42,7 @@ export { checkAction } from './modules/actions/runtime/check';
 export type { ActionCheckDeps } from './modules/actions/runtime/check';
 export { ActionRefusal, ActionRunError } from './modules/actions/runtime/errors';
 export { DEFAULT_LIMITS } from './modules/actions/runtime/limits';
+export { MIN_SIGNING_SECRET_LENGTH } from './modules/actions/runtime/signing';
 export { createTaskRegistry, taskName } from './modules/actions/tasks/registry';
 export { describeCatalog, describeTask } from './modules/actions/taskCatalog';
 

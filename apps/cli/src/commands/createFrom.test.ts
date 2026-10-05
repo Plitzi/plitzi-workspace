@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { readOrigin } from './spaceOrigin';
 import { writeConnection } from '../account/connection';
 import { fakePlatform } from '../account/fakePlatform';
 
@@ -47,10 +48,19 @@ describe('plitzi create --from', () => {
     const index = await fs.readFile(path.join(target, 'src/space/index.ts'), 'utf-8');
     expect(index.startsWith('export const pizarra = {};\n')).toBe(true);
     expect(index).toContain('export { pizarra as space };');
-    expect(await fs.readFile(path.join(target, 'src/space/index.ts'), 'utf-8')).toContain('pizarra as space');
     expect(JSON.parse(await fs.readFile(path.join(target, 'public/assets/world.json'), 'utf-8'))).toEqual({ land: [] });
     await expect(fs.access(path.join(target, 'src/plugins/StatCard/index.ts'))).rejects.toThrow();
     expect(await fs.readFile(path.join(target, '.env'), 'utf-8')).toMatch(/PLITZI_SIGNING_SECRET=[0-9a-f]{64}/);
+  });
+
+  it('writes the space’s data to src/data/, where its server providers read it', async () => {
+    const target = path.join(home, 'board');
+    platform.data = { files: { 'catalog/products.json': '[{"id":1}]' }, version: 'd4' };
+
+    await create(target, { ...options, api: platform.api, from: 'pizarra' });
+
+    expect(await fs.readFile(path.join(target, 'src/data/catalog/products.json'), 'utf-8')).toBe('[{"id":1}]');
+    expect(await readOrigin(target)).toMatchObject({ data: 'd4' });
   });
 
   it('writes nothing for a space the person may not change', async () => {

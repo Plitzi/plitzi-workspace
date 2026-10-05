@@ -136,6 +136,79 @@ describe('plitzi push', () => {
     expect(said.join('\n')).toContain('public/logo.png');
   });
 
+  it('sends src/data/ as the space’s data, refused when the space’s moved on, and taken with --force', async () => {
+    await write('src/data/products.json', `{"map":"/assets/world.json"}`);
+    await write('src/data/shop/stock.json', '[]');
+
+    await push(['data'], {});
+
+    expect(process.exitCode).toBeUndefined();
+    expect(platform.data.files).toEqual({
+      'products.json': `{"map":"${platform.api}/files/pizarra/assets/world.json"}`,
+      'shop/stock.json': '[]'
+    });
+    expect((await readOrigin(project))?.data).toBe(platform.data.version);
+
+    platform.data = { files: {}, version: 'd9' };
+    await write('src/data/shop/stock.json', '[1]');
+    await push(['data'], {});
+
+    expect(process.exitCode).toBe(1);
+    expect(platform.data.files).toEqual({});
+
+    process.exitCode = undefined;
+    await push(['data'], { force: true });
+
+    expect(platform.data.files).toMatchObject({ 'shop/stock.json': '[1]' });
+  });
+
+  it('puts public/assets/ on the space’s CDN at the same paths, and the space names them there', async () => {
+    const said: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
+    await write('public/assets/img/logo.png', 'png');
+    await write('public/assets/notes.txt', 'text');
+    await write(
+      'src/space/index.ts',
+      "export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
+        "{ type: 'image', id: 'logo', attributes: { src: '/assets/img/logo.png' } }" +
+        '] }] };\nexport { pizarra as space };\n'
+    );
+
+    await push(['files', 'space'], {});
+
+    expect(process.exitCode).toBeUndefined();
+    expect(platform.assets).toEqual({ 'img/logo.png': { contentType: 'image/png', bytes: 3 } });
+    expect(said.join('\n')).toContain('Not sent');
+    expect(said.join('\n')).toContain('public/assets/notes.txt');
+    expect(JSON.stringify(platform.pizarra.imports.at(-1))).toContain(
+      '"src":"https://cdn.example.com/pizarra/assets/img/logo.png"'
+    );
+    // Remembered as taken from the CDN: the next push names it there too, and sends it again only once it changes.
+    expect((await readOrigin(project))?.downloads).toMatchObject({
+      'public/assets/img/logo.png': 'https://cdn.example.com/pizarra/assets/img/logo.png'
+    });
+  });
+
+  it('says a file of public/assets/ the space names is not on its CDN when the files part stays behind', async () => {
+    const said: string[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
+    await write('public/assets/img/logo.png', 'png');
+    await write('src/data/stock.json', '[]');
+    await write(
+      'src/space/index.ts',
+      "export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
+        "{ type: 'image', id: 'logo', attributes: { src: '/assets/img/logo.png' } }," +
+        "{ type: 'apiContainer', id: 'stock', runtime: 'server', attributes: { query: '/data/stock.json' } }" +
+        '] }] };\nexport { pizarra as space };\n'
+    );
+
+    await push(['space'], {});
+
+    expect(said.join('\n')).toContain('plitzi push files space');
+    // src/data/ holds what it reads: nothing to say of it.
+    expect(said.join('\n')).not.toContain('stock reads');
+  });
+
   it('refuses a draft edited since the project had it, and replaces it with --force', async () => {
     platform.pizarra.draft = 'draft-from-the-builder';
 
@@ -180,6 +253,8 @@ describe('plitzi push', () => {
     expect(question).toContain('Pizarra');
     expect(options.map(({ label, checked }) => [label.split(' ')[0], checked])).toEqual([
       ['space', false],
+      // What it took from the space's CDN, unchanged.
+      ['files', false],
       ['functions', true]
     ]);
     expect(platform.pizarra.imports).toHaveLength(1);
@@ -210,7 +285,7 @@ describe('plitzi push', () => {
 
     expect(process.exitCode).toBe(1);
     expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain(
-      'plitzi push sends space, functions, runtime, plugins — not pages'
+      'plitzi push sends space, functions, data, runtime, plugins, files — not pages'
     );
 
     process.exitCode = undefined;

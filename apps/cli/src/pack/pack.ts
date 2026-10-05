@@ -225,8 +225,8 @@ const integrityOf = async (file: string): Promise<string> => {
 };
 
 /**
- * Where a plugin's server half is: \`functions/\` in its MAIN element's folder — the first folder packed, or the
- * package's \`src/<Main>/\`. One per plugin, run as the plugin's (its routes under \`/fn/plugins/<type>/\`).
+ * Where a plugin's server half is: `functions/` in its MAIN element's folder — the first folder packed, or the
+ * package's `src/<Main>/`. One per plugin, run as the plugin's (its routes under `/fn/plugins/<type>/`).
  */
 const functionsDirOf = (source: PackSource, root: string, mainType: string): string =>
   source.kind === 'package'

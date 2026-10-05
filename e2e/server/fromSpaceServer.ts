@@ -68,6 +68,7 @@ const exportOf = (source: 'local' | 'cloud'): SpaceExport => {
     actions: [{ identifier: addOne.id, name: addOne.document.name, document: addOne.document }],
     connectors: [],
     functions: { version: 'v1', files: FUNCTION_FILES },
+    data: { version: 'e2e-data', files: {} },
     source: {
       files: Object.fromEntries(Object.entries(SOURCE_FILES).map(([file, text]) => [file, encode(text)])),
       dependencies: {},
@@ -142,6 +143,38 @@ const created = await new Promise<{ status: number | null; output: string }>(res
 });
 if (created.status !== 0) {
   throw new Error(`[e2e] plitzi create --from failed:\n${created.output}`);
+}
+
+/**
+ * Whole as `plitzi doctor` holds a project to — what Node runs, its plugin, its space, data, functions and records —
+ * before it is started. Its packages are the workspace's, not installed for it, so what is installed is not asked.
+ */
+const examined = await new Promise<{ status: number | null; output: string }>(resolve => {
+  const cli = spawn('node', [CLI, 'doctor', '--json'], {
+    cwd: PROJECT_DIR,
+    env: { ...process.env, XDG_CONFIG_HOME: CONFIG_DIR }
+  });
+  let output = '';
+  cli.stdout.on('data', (chunk: Buffer) => (output += chunk.toString('utf-8')));
+  cli.once('close', status => resolve({ status, output }));
+});
+const report: unknown = JSON.parse(examined.output);
+const errors =
+  typeof report === 'object' && report !== null && 'findings' in report && Array.isArray(report.findings)
+    ? report.findings.filter(
+        (finding: unknown) =>
+          typeof finding === 'object' &&
+          finding !== null &&
+          'severity' in finding &&
+          finding.severity === 'error' &&
+          'area' in finding &&
+          finding.area !== 'packages'
+      )
+    : [];
+if (errors.length > 0) {
+  throw new Error(
+    `[e2e] plitzi doctor finds the project create --from wrote broken:\n${JSON.stringify(errors, null, 2)}`
+  );
 }
 
 // The project's own start, as its README says — no install: inside the workspace it resolves the workspace's packages.

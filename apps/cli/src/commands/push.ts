@@ -11,7 +11,9 @@ import { findProject, readPackageJson } from './existingProject';
 import { filesUnder } from './filesUnder';
 import { functionsChange, pushFunctionsOf } from './functions';
 import { elementFolders, fileNameOf } from './packPlugin';
+import { PUBLIC_ASSETS_DIR, projectAssetFiles, projectDataFiles } from './projectFiles';
 import { projectFormatter } from './projectFormatter';
+import { pushDataOf, pushFilesOf } from './pushProjectFiles';
 import { pushSpaceOf } from './pushSpace';
 import { DEFAULT_RUNTIME_ENTRY, pushRuntimeOf } from './runtime';
 import { digest, digestsOf, givenFiles, readOrigin, writeOrigin } from './spaceOrigin';
@@ -20,7 +22,7 @@ import { chooseTarget, listCdns, uploadZip } from './uploadPlugin';
 import { PackError, packPlugin } from '../pack';
 import { packSource } from '../pack/source';
 import { projectEntries, projectFromSpace } from '../scaffold/fromSpace';
-import { ACTIONS_DIR, FUNCTIONS_DIR, SPACE_DIR, SPACE_ENTRY } from '../scaffold/paths';
+import { ACTIONS_DIR, DATA_DIR, FUNCTIONS_DIR, SPACE_DIR, SPACE_ENTRY } from '../scaffold/paths';
 
 import type { AccountOptions } from './account';
 import type { DryRunOptions } from './dryRun';
@@ -48,12 +50,12 @@ import type { SourceSnapshotKind, SpaceExport } from '@plitzi/sdk-shared/source'
  * is refused, and `--force` replaces it.
  */
 
-export const PUSH_PARTS = ['space', 'functions', 'runtime', 'plugins'] as const;
+export const PUSH_PARTS = ['space', 'functions', 'data', 'runtime', 'plugins', 'files'] as const;
 
 export type PushPart = (typeof PUSH_PARTS)[number];
 
-/** What goes up first: what the rest names. */
-const ORDER: readonly PushPart[] = ['plugins', 'functions', 'runtime', 'space'];
+/** What goes up first: what the rest names — the files before the data and the pages that name their addresses. */
+const ORDER: readonly PushPart[] = ['plugins', 'files', 'functions', 'data', 'runtime', 'space'];
 
 export interface PushOptions extends AccountOptions, DryRunOptions {
   /** Replace the space's draft even when it moved on since the project last had it, or holds work of its own. */
@@ -67,7 +69,8 @@ export interface PushOptions extends AccountOptions, DryRunOptions {
 type Pushable =
   | { part: 'space' | 'functions'; label: string; changed: boolean }
   | { part: 'runtime'; label: string; changed: boolean; entry: string; files: string[] }
-  | { part: 'plugins'; label: string; changed: boolean; folders: string[]; files: string[] };
+  | { part: 'plugins'; label: string; changed: boolean; folders: string[]; files: string[] }
+  | { part: 'data' | 'files'; label: string; changed: boolean; files: string[] };
 
 const isPart = (value: string): value is PushPart => PUSH_PARTS.some(part => part === value);
 
@@ -170,6 +173,40 @@ const survey = async (
           files.filter(file => isSpaceFile(file)),
           format
         ))
+    });
+  }
+
+  // The space's data, where the project's server reads it: `src/data/`, or what the project had of it and removed.
+  const data = await projectDataFiles(root);
+  const dataGone = Object.keys(origin?.files ?? {}).some(
+    file => file.startsWith(`${DATA_DIR}/`) && !data.includes(file)
+  );
+  if (data.length > 0 || dataGone) {
+    found.push({
+      part: 'data',
+      label: `data — ${DATA_DIR}/`,
+      changed: dataGone || (await changedSince(root, origin, data, format)),
+      files: data
+    });
+  }
+
+  // The files its space serves from the CDN: what of `public/assets/` is new, or not what was recorded.
+  const assets = await projectAssetFiles(root);
+  const changedAssets: string[] = [];
+  for (const file of assets) {
+    const here = await digestsOf(root, file, format);
+    const was = origin?.files[file];
+    if (!was || !here || (here.raw !== was && here.formatted !== was)) {
+      changedAssets.push(file);
+    }
+  }
+
+  if (assets.length > 0) {
+    found.push({
+      part: 'files',
+      label: `files — ${PUBLIC_ASSETS_DIR}/${changedAssets.length > 0 ? ` (${String(changedAssets.length)} changed)` : ''}`,
+      changed: changedAssets.length > 0,
+      files: changedAssets
     });
   }
 
@@ -327,7 +364,9 @@ const recordPush = async (
     source,
     found,
     sent,
-    draft
+    draft,
+    uploaded,
+    dataVersion
   }: {
     origin: SpaceOrigin | undefined;
     source: 'local' | 'cloud';
@@ -336,6 +375,10 @@ const recordPush = async (
     /** What the space now holds as the project does: what was sent, and the space part when it already did. */
     sent: Pushable[];
     draft: string | undefined;
+    /** What this push put on the space's CDN, by the file's path in the project: its address there. */
+    uploaded: Readonly<Record<string, string>>;
+    /** The data's version, when this push sent it. */
+    dataVersion: string | undefined;
   }
 ): Promise<void> => {
   const exported = await requestExport(connection, String(space.id), {
@@ -374,6 +417,10 @@ const recordPush = async (
       return parts.has('functions');
     }
 
+    if (file.startsWith(`${DATA_DIR}/`)) {
+      return parts.has('data');
+    }
+
     return !code.has(file) && !file.startsWith('vendor/') && parts.has('space');
   };
   const files: Record<string, string> = Object.fromEntries(
@@ -384,6 +431,13 @@ const recordPush = async (
       files[file] = digest(bytes);
     }
   });
+  // What went up to the CDN is what the space serves now: recorded as the project has it, at the address it took.
+  for (const file of Object.keys(uploaded)) {
+    const here = await digestsOf(root, file, format);
+    if (here) {
+      files[file] = here.formatted;
+    }
+  }
 
   // Only a push of the space makes its draft the project's: one that sent anything else leaves it to be refused, as a
   // draft the project never had, until the project has it.
@@ -396,8 +450,9 @@ const recordPush = async (
     version: { environment: 'main' },
     ...(recorded ? { draft: recorded } : {}),
     files,
-    downloads: origin?.downloads ?? {},
-    dependencies: !origin || parts.has('runtime') || parts.has('plugins') ? next.dependencies : origin.dependencies
+    downloads: { ...(origin?.downloads ?? {}), ...uploaded },
+    dependencies: !origin || parts.has('runtime') || parts.has('plugins') ? next.dependencies : origin.dependencies,
+    ...(dataVersion ? { data: dataVersion } : origin?.data ? { data: origin.data } : {})
   });
 };
 
@@ -488,35 +543,54 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
   const unchanged: string[] = [];
   let draft: string | undefined;
   let target: Target | undefined;
+  // Where each file of the project is on the space's CDN — what it took from there, and what this push puts there.
+  const downloads: Record<string, string> = { ...(origin?.downloads ?? {}) };
+  const uploaded: Record<string, string> = {};
+  let dataVersion: string | undefined;
   const version = (await readPackageJson(root))?.version ?? '0.0.0';
+  const targetOnce = async (): Promise<Target | undefined> => {
+    if (!target) {
+      const listed = await listCdns(connection, space);
+      if (!listed.ok) {
+        fail(listed.error);
+
+        return undefined;
+      }
+
+      target = await chooseTarget(listed.value.cdns, options, space.name);
+    }
+
+    return target;
+  };
   for (const item of [...chosen].sort((a, b) => ORDER.indexOf(a.part) - ORDER.indexOf(b.part))) {
     let outcome: PushOutcome;
     if (item.part === 'plugins') {
-      if (!target) {
-        const listed = await listCdns(connection, space);
-        if (!listed.ok) {
-          fail(listed.error);
-
-          return;
-        }
-
-        target = await chooseTarget(listed.value.cdns, options, space.name);
-        if (!target) {
-          return;
-        }
+      const at = await targetOnce();
+      if (!at) {
+        return;
       }
 
-      outcome = await pushPlugin(root, connection, space, { folders: item.folders, target, version });
+      outcome = await pushPlugin(root, connection, space, { folders: item.folders, target: at, version });
+    } else if (item.part === 'files') {
+      const at = await targetOnce();
+      if (!at) {
+        return;
+      }
+
+      const pushed = await pushFilesOf(root, connection, space, { files: item.files, target: at });
+      Object.assign(uploaded, pushed.uploaded);
+      Object.assign(downloads, pushed.uploaded);
+      outcome = pushed.outcome;
+    } else if (item.part === 'data') {
+      const pushed = await pushDataOf(root, connection, space, { base: origin?.data, force, downloads });
+      dataVersion = pushed.version;
+      outcome = pushed.outcome;
     } else if (item.part === 'functions') {
       outcome = await pushFunctionsOf(root, connection, space, { force });
     } else if (item.part === 'runtime') {
       outcome = await pushRuntimeOf(root, connection, space, item.entry);
     } else {
-      const pushed = await pushSpaceOf(root, connection, space, {
-        base: origin?.draft ?? null,
-        force,
-        downloads: origin?.downloads ?? {}
-      });
+      const pushed = await pushSpaceOf(root, connection, space, { base: origin?.draft ?? null, force, downloads });
       outcome = pushed.outcome;
       draft = pushed.draft;
     }
@@ -524,7 +598,15 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
     if (outcome === 'failed') {
       if (sent.length > 0) {
         console.log(chalk.yellow(`\nPushed before it stopped: ${sent.map(done => done.label).join('; ')}.`));
-        await recordPush(root, connection, space, { origin, source, found, sent: settled, draft });
+        await recordPush(root, connection, space, {
+          origin,
+          source,
+          found,
+          sent: settled,
+          draft,
+          uploaded,
+          dataVersion
+        });
       }
 
       return;
@@ -544,7 +626,7 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
   }
 
   if (settled.length > 0) {
-    await recordPush(root, connection, space, { origin, source, found, sent: settled, draft });
+    await recordPush(root, connection, space, { origin, source, found, sent: settled, draft, uploaded, dataVersion });
   }
 
   if (unchanged.length > 0) {

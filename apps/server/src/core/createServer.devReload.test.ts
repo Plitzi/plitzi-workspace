@@ -28,7 +28,10 @@ const start = async (
       ? {
           pluginsCacheDir: path.join(plugins.dir, 'built'),
           plugins: Object.fromEntries(
-            Object.entries(plugins.sources).map(([name, js]) => [name, { js, action: 'compile' as const, version: '1.0.0' }])
+            Object.entries(plugins.sources).map(([name, js]) => [
+              name,
+              { js, action: 'compile' as const, version: '1.0.0' }
+            ])
           )
         }
       : {}),

@@ -15,7 +15,7 @@ import { digest, digestsOf, givenFiles, readOrigin, writeOrigin } from './spaceO
 import { fail } from './terminal';
 import { installCommand } from '../scaffold';
 import { projectFromSpace } from '../scaffold/fromSpace';
-import { FUNCTIONS_DIR } from '../scaffold/paths';
+import { DATA_DIR, FUNCTIONS_DIR } from '../scaffold/paths';
 
 import type { AccountOptions } from './account';
 import type { DryRunOptions } from './dryRun';
@@ -280,6 +280,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
     await fs.writeFile(packageFile, `${JSON.stringify(dependencies.manifest, null, 2)}\n`);
   }
 
+  const dataKept = of('keep').some(file => file.startsWith(`${DATA_DIR}/`));
   const files = Object.fromEntries([
     ...[...given].map(([file, bytes]) => [file, digest(bytes)] as const),
     ...[...untouched].flatMap(file => (origin.files[file] ? [[file, origin.files[file]] as const] : []))
@@ -303,7 +304,10 @@ export const pull = async (options: PullOptions): Promise<void> => {
         return before && Object.hasOwn(files, to) ? [[to, before]] : [];
       })
     ),
-    dependencies: next.dependencies
+    dependencies: next.dependencies,
+    // The space's data as the project now has it — unless a change here to it still stands, which pushes over the
+    // version it was made on, and is refused when the space's moved on since.
+    ...(dataKept ? (origin.data ? { data: origin.data } : {}) : { data: exported.data.version })
   };
   await writeOrigin(root, updated);
 

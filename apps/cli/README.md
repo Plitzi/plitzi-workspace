@@ -256,6 +256,36 @@ plitzi explain --list steps     # every one of a kind: elements, steps, triggers
 What a name means when authoring, from the catalogues the checks themselves read — the answer to a question that would
 otherwise be a search through the SDK's types. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
 
+## `doctor`
+
+```bash
+plitzi doctor                  # every area, each problem with where it is and what fixes it
+plitzi doctor --json           # one object: { ok, counts, areas, findings: [{ area, severity, code, message, file, fix }] }
+plitzi doctor --strict         # warnings fail too — for a CI that keeps the project up to its CLI
+```
+
+Whether the project is whole as the CLI sets it up, read from what it is now rather than from what the CLI once wrote:
+a developer may change any file, and the checks are what each part must be for the project to install, start, build and
+push. It is the CLI's check of the project, not of the space: what the space authors to and warns of is `npm run
+author`'s, and how a page renders `check`'s. Nothing is changed, and nothing leaves the machine. Exit code 1 while
+anything is an error (with `--strict`, a warning).
+
+| Area | What is held |
+|---|---|
+| `packages` | `"type": "module"`, the Node version; every package the project and its scripts need, declared and installed at a version its range allows; the SDK's packages at one version, no older than the CLI; one copy of the SDK and of React (none installed inside another); the scripts — gone, behind the CLI, or the project's own — the file each Node script starts and every folder `start:dev` watches; one lockfile |
+| `machinery` | the CLI's files (`MACHINERY`), as `upgrade` sees them: gone, behind, or the project's own (said, never failed); the scaffold record |
+| `config` | `tsconfig.json` reads `src/` and `plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key |
+| `sources` | what Node runs as written — `src/main.ts`, `src/config/`, `src/actions/`, `src/space/`, `src/runtime/`, `plitzi/author.ts`, the plugins' declarations, and all they import: every relative import a file that is there, with its extension; JSON imported `with { type: 'json' }`; no JSX; every package declared (a devDependency, in what production runs, is said); what the server loads by name exported (`space`, `actions`, the runtime's default) |
+| `plugins` | each folder of `src/plugins/`: an `index.ts` that builds and exports its component, its packages declared; a `declaration.ts` whose `type` is the folder's (`StatCard` → `statCard`); one folder a type; none shadowed by a built copy in `vendor/plugins/` |
+| `data` | every file of `src/data/` and `public/data/` JSON — what the server answers with and `push` sends |
+| `functions` | `src/functions/` built by the project's own `@plitzi/sdk-server` (`buildFunctions`), as every runner builds them |
+| `records` | `.plitzi/space.json`, `scaffold.json` and `functions.json` readable, and of the same space |
+| `skills` | `.claude/skills/plitzi-*` as the packages installed write them |
+
+It loads the plugins' declarations and the project's own `@plitzi/sdk-server` to ask them — as the server does — and
+never starts the server or the runtime. A check that cannot finish is said as an error
+of its area, never a crash.
+
 ## `upgrade`
 
 ```bash
@@ -307,7 +337,7 @@ the draft, an environment's latest, or a pinned revision.
 
 ```bash
 plitzi push                                    # at a terminal: tick what goes up — what changed is ticked already
-plitzi push space functions                    # only these: space, functions, runtime, plugins
+plitzi push space functions                    # only these: space, functions, data, runtime, plugins, files
 plitzi push space --force                      # replace the draft even though it was edited in the builder since
 ```
 
@@ -317,9 +347,13 @@ that names come before what names them:
 
 1. `plugins` — every plugin whose source changed, packed and uploaded to the space's CDN (`--cdn`/`--bucket` when it
    has several public buckets);
-2. `functions` — `src/functions/`, as `functions push`;
-3. `runtime` — the runtime module, as `runtime push`;
-4. `space` — `src/space/` authored, with the actions `src/actions/index.ts` serves and the connectors in `src/connectors/`.
+2. `files` — each changed file of `public/assets/`, put at the same path under the space's `assets/` on its CDN
+   (images, sounds, videos and JSON; any other type is named and stays here);
+3. `functions` — `src/functions/`, as `functions push`;
+4. `data` — `src/data/` whole, as the space's own data: kept privately, read by its server providers, frozen with each
+   publish — refused when the space's copy changed since the project last had it, unless `--force`;
+5. `runtime` — the runtime module, as `runtime push`;
+6. `space` — `src/space/` authored, with the actions `src/actions/index.ts` serves and the connectors in `src/connectors/`.
 
 The draft is never replaced unseen: when it was edited in the builder since the project's last pull or push, the push
 is refused — pull first, or `--force`. A project that never had the space (one not made with `create --from`) may take a
@@ -327,10 +361,11 @@ space nobody has worked on yet; one that holds work asks for `--force` too. Alwa
 which must be the one the project came from, and never a published environment: publish in the builder. Afterwards
 `.plitzi/space.json` records what was sent, so `pull` keeps working — on a project that started on its own too.
 
-The space goes back with its files where Plitzi serves them: a path `create --from` or `pull` wrote for a file of its
-CDN (`/assets/a.png`, served from `public/`) is sent as that file's CDN address again. What would not reach Plitzi is
-said before anything is sent, with what to do: a provider reading the project's own data (`/data/…`, `src/data/` —
-Plitzi keeps none of a project's), and a file of `public/` the space names that is not on its CDN.
+The space goes back with its files where Plitzi serves them: a path to a file of `public/assets/` (`/assets/a.png`) —
+one `create --from` or `pull` wrote, or one the `files` part put on the CDN — is sent as that file's CDN address. Only
+`public/assets/` goes to the CDN: the rest of `public/` is the project's own server's. What would not reach Plitzi is
+said before anything is sent, with what to do: a provider reading a file `src/data/` does not hold, a file of
+`public/assets/` the space names that is not on its CDN yet, and one of `public/` outside `assets/`.
 
 ## `add plugin`
 

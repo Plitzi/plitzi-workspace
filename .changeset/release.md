@@ -193,9 +193,25 @@
   endpoints) and sent by `plitzi runtime push`, whose default entry it is now — and has `start:dev` restart on it. A
   space taken out with a runtime gets `src/runtime/index.ts` handing over the module its source starts at.
 - **`push` sends the space's files back as their CDN addresses.** `create --from` and `pull` write each CDN address as
-  the project's path (`/assets/a.png`, served from `public/`); `push` sent those paths as they were, and the space's
-  pictures and data pointed at nothing on Plitzi. It also says, before sending, what Plitzi would not have: providers
-  reading the project's own data (`src/data/`) and files of `public/` the space names that are not on its CDN.
+  the project's path (`/assets/a.png`, served from `public/assets/`); `push` sent those paths as they were, and the
+  space's pictures and data pointed at nothing on Plitzi. It also says, before sending, what Plitzi would not have: a
+  provider reading a file `src/data/` does not hold, and a file the space names that is not on its CDN.
+- **`push` sends a project's data and its files.** Two new parts: `data` — `src/data/` whole, kept by Plitzi as the
+  space's own data (private, frozen with each publish, read by the page server of the version it renders; refused when
+  the space's copy changed since the project last had it, unless `--force`) — and `files` — each changed file of
+  `public/assets/`, put at the same path under the space's `assets/` on its CDN, so a pull brings it back where it was.
+  `create --from` and `pull` write the space's data into `src/data/`. `getData` joins the action lookups
+  (`ActionLookupsConfig`), and the page server resolves `/data/<file>` through it when there is no `dataDir`.
+- **`plitzi doctor`**: whether the project the CLI set up is whole, checked against what it is now — a developer may
+  change any file. Packages (declared, installed at versions that agree, one copy of the SDK and of React), the CLI's
+  files and scripts (as `upgrade` sees them, one planner for both), the file each Node script starts and every folder
+  `start:dev` watches, the TypeScript configs, `.gitignore` and `.env` (never in git; the signing secret as long as the
+  project's server wants it), the code Node runs as written (relative imports with their extension, JSON with its
+  attribute, no JSX, every package declared — walked with esbuild), each plugin folder against its declaration, the data
+  files, `src/functions/` built by the project's own sdk-server, `.plitzi/` and the skills. Each finding has an area, a
+  code, the file and its fix; `--json`, `--strict`; exit 1 on an error. It never checks the space — `npm run author`
+  and `check` do — and every report says so. `buildFunctions` and `FunctionsBuildError` are exported from
+  `@plitzi/sdk-server/functions-runner`, `MIN_SIGNING_SECRET_LENGTH` from `@plitzi/sdk-server/actions`.
 - **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `pull`, `push`, `pack plugin`,
   `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills
   update`: each file it would write (`+` new, `~` replaced, `-` removed), what it would install or run, what it would

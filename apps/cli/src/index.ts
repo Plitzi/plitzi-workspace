@@ -27,6 +27,7 @@ import {
 import { shot } from './commands/shot';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
+import { doctor } from './doctor';
 import { positiveInteger, width, widths } from './options';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { CLI_VERSION } from './scaffold/project';
@@ -51,6 +52,7 @@ import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
 import type { ShotOptions } from './commands/shot';
 import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
+import type { DoctorOptions } from './doctor';
 
 /**
  * The command line for Plitzi.
@@ -379,6 +381,15 @@ program
   .option('--no-install', 'Write package.json and leave the install to you')
   .option('--json', 'One object, for a tool or an agent')
   .action((parts: string[], options: UpgradeOptions) => upgrade(parts, options));
+
+program
+  .command('doctor')
+  .description(
+    'Whether the project the CLI set up is whole — packages, its files, configs, what Node runs, plugins, data files, functions, records — each problem with its fix. Not the space: that is `npm run author`'
+  )
+  .option('--strict', 'Warnings fail too (exit 1): for a CI that keeps the project up to its CLI')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((options: DoctorOptions) => doctor(options));
 
 const skills = program.command('skills').description('The Plitzi skills an agent reads in .claude/skills/');
 

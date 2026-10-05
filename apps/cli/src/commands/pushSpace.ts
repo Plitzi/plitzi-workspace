@@ -6,14 +6,14 @@ import chalk from 'chalk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
 import { SPACE_IMPORT_FORMAT } from '@plitzi/sdk-shared/source';
 
 import { filesUnder } from './filesUnder';
+import { PUBLIC_ASSETS_DIR, PUBLIC_DIR, dataReadsOf, onItsCdn, projectDataFiles, tokenOf } from './projectFiles';
 import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
-import { ACTIONS_ENTRY } from '../scaffold/paths';
+import { ACTIONS_ENTRY, DATA_DIR } from '../scaffold/paths';
 
 import type { PushOutcome } from './pushOutcome';
 import type { ConnectedSpace, Connection } from '../account/connection';
@@ -106,30 +106,13 @@ const count = (entries: Entries | undefined, noun: string): string =>
 
 export type SpacePush = { outcome: PushOutcome; draft?: string };
 
-/** Where the project keeps what the space serves to anyone: `public/<path>` answers `/<path>`. */
-const PUBLIC_DIR = 'public';
-
-/** `path` as a whole token of the text: never the tail of an address that already holds it (`…/pizarra/assets/a.png`). */
-const tokenOf = (path: string): RegExp =>
-  new RegExp(`(?<![\\w.:/-])${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w.-])`, 'g');
-
-/**
- * The project's paths to the space's files put back as the addresses they have on its CDN. \`create --from\` and
- * \`pull\` write each CDN address as the project's own path (\`/assets/a.png\`, served from \`public/\`), and the space on
- * Plitzi serves no such path: sent as they are, its pictures and data would point at nothing.
- */
-const onItsCdn = (text: string, downloads: Readonly<Record<string, string>>): string =>
-  Object.entries(downloads)
-    .filter(([to]) => to.startsWith(`${PUBLIC_DIR}/`))
-    .map(([to, url]) => [to.slice(PUBLIC_DIR.length), url] as const)
-    .sort(([a], [b]) => b.length - a.length)
-    .reduce((written, [project, url]) => written.replace(tokenOf(project), url), text);
-
 /**
  * What of the space would not reach Plitzi with it, said before it is sent — never left to be found on a page that
  * renders empty there:
- * - a provider reading the project's own data (\`/data/…\`, \`src/data/\`): Plitzi keeps no data of a project's;
- * - a file of \`public/\` the space names that is not on its CDN: Plitzi serves no project's \`public/\`.
+ * - a provider reading a file of the project's data (`/data/…`) that `src/data/` does not hold: `plitzi push` sends
+ *   the data there is, and there is none of that file;
+ * - a file of `public/` the space names that is not on its CDN: only `public/assets/` goes there (the `files` part),
+ *   and Plitzi serves no project's `public/`.
  */
 const notCarried = async (
   root: string,
@@ -137,27 +120,34 @@ const notCarried = async (
   documents: SpaceImport['documents'],
   downloads: Readonly<Record<string, string>>
 ): Promise<string[]> => {
-  const reads = Object.values(documents.schema.flat).flatMap(element => {
-    const query = element.attributes.query;
-
-    return typeof query === 'string' && query.startsWith(PROJECT_DATA_PREFIX) ? [`${element.id} reads ${query}`] : [];
-  });
+  const held = new Set(await projectDataFiles(root));
+  const reads = dataReadsOf(documents.schema.flat)
+    .filter(read => !held.has(`${DATA_DIR}/${read.file}`))
+    .map(read => `${read.elementId} reads ${read.query}`);
   const carried = new Set(Object.keys(downloads));
   const named = (await filesUnder(root, `${PUBLIC_DIR}/`)).filter(
     file => !carried.has(file) && !file.endsWith('.gitkeep') && tokenOf(file.slice(PUBLIC_DIR.length)).test(text)
   );
+  const assets = named.filter(file => file.startsWith(`${PUBLIC_ASSETS_DIR}/`));
+  const elsewhere = named.filter(file => !file.startsWith(`${PUBLIC_ASSETS_DIR}/`));
 
   return [
     ...(reads.length > 0
       ? [
-          `The project's own data (src/data/) stays here — Plitzi keeps none of a project's, so these read nothing there: ${reads.join(', ')}. ` +
-            'On Plitzi, read it through a connector or a server action.'
+          `These read data ${DATA_DIR}/ does not hold, so they read nothing on Plitzi: ${reads.join(', ')}. ` +
+            `Add the files to ${DATA_DIR}/ and push the data part.`
         ]
       : []),
-    ...(named.length > 0
+    ...(assets.length > 0
       ? [
-          `These files of public/ are not on the space's CDN, so the space names files Plitzi does not serve: ${named.join(', ')}. ` +
-            'Upload them under Resources in the builder and name their addresses, or keep them self-hosted.'
+          `These files of ${PUBLIC_ASSETS_DIR}/ are not on the space's CDN yet, so the space names files Plitzi does not serve: ${assets.join(', ')}. ` +
+            'Push the files part with it (plitzi push files space).'
+        ]
+      : []),
+    ...(elsewhere.length > 0
+      ? [
+          `Only ${PUBLIC_ASSETS_DIR}/ goes to the space's CDN, so the space names files Plitzi does not serve: ${elsewhere.join(', ')}. ` +
+            `Move them under ${PUBLIC_ASSETS_DIR}/ and name them there, or keep them self-hosted.`
         ]
       : [])
   ];

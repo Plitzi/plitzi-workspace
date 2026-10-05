@@ -825,7 +825,8 @@ Two things your adapter does owe:
 ### Signing
 
 `signingSecret` (on the actions' config — `createServer({ action: { signingSecret } })`) is what a space's functions
-sign with: `ctx.sign` and `ctx.verify`. At least 32 characters, and the **same on every replica**, since a key one of
+sign with: `ctx.sign` and `ctx.verify`. At least `MIN_SIGNING_SECRET_LENGTH` (32, from `@plitzi/sdk-server/actions`)
+characters — the server does not start with a shorter one — and the **same on every replica**, since a key one of
 them signed is verified by whichever the next request reaches. Each space and environment signs with a key derived
 from it, so the secret itself signs nothing and no space can vouch for another. Without it a space's `ctx.sign` is
 refused with the reason, rather than signing with a key each replica made up for itself.

@@ -158,6 +158,11 @@ export type ActionLookups = {
    */
   getPluginFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<Record<string, SpaceFunctions> | undefined>;
   /**
+   * The space's own data as of that revision: its files' text by path (`products.json`), for a provider resolved on the
+   * server whose `query` is `/data/<file>` — the platform's `dataDir`. Absent, such a provider reads nothing here.
+   */
+  getData?: (spaceId: number, at?: SpaceRevision) => Promise<Record<string, string> | undefined>;
+  /**
    * The feature flags the space declares as of that revision, for a flow that reads `{{ flags.<name> }}`. Only asked
    * for a run whose document names `flags` at all. Absent, such a flow sees no flags — and the server says so.
    */

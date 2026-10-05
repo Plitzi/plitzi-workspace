@@ -1,6 +1,6 @@
 import { createActionResolver } from '../actions/runtime/renderResolver';
 import { createConnectorResolver } from '../connectors';
-import { dataFileResolver, publicFileResolver } from './publicFileResolver';
+import { dataFileResolver, dataLookupResolver, publicFileResolver } from './publicFileResolver';
 import { resolveRscData } from './resolveRscData';
 
 import type { ActionsModule } from '../actions';
@@ -43,7 +43,12 @@ export const connectorRscData = ({
   const resolveConnector = connectors ? createConnectorResolver(connectors) : undefined;
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
   const resolvePublicFile = publicDir ? publicFileResolver(publicDir) : undefined;
-  const resolveDataFile = dataDir ? dataFileResolver(dataDir) : undefined;
+  const dataLookup = actions?.lookups.getData;
+  const resolveDataFile = dataDir
+    ? dataFileResolver(dataDir)
+    : dataLookup
+      ? dataLookupResolver((spaceId, at) => dataLookup(spaceId, at))
+      : undefined;
 
   /**
    * An element names ONE producer, and which one decides how its data is fetched.
@@ -62,7 +67,8 @@ export const connectorRscData = ({
       return resolveAction ? resolveAction(context) : undefined;
     }
 
-    // The project's data first: `/data/…` is its, wherever `publicDir` has a folder of that name.
+    // The project's data first — its folder, or the space's as the platform keeps it: `/data/…` is its, wherever
+    // `publicDir` has a folder of that name.
     const fromData = resolveDataFile ? await resolveDataFile(context) : undefined;
 
     return fromData !== undefined ? fromData : resolvePublicFile ? resolvePublicFile(context) : undefined;

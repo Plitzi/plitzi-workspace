@@ -3,7 +3,7 @@ import { posix } from 'node:path';
 import { actionSpecFromEntry, actionToSource } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 
-import { ACTIONS_ENTRY, FUNCTIONS_DIR, RUNTIME_ENTRY, SPACE_ENTRY } from './paths';
+import { ACTIONS_ENTRY, DATA_DIR, FUNCTIONS_DIR, RUNTIME_ENTRY, SPACE_ENTRY } from './paths';
 import { envFile, SDK_VERSION, withSigningSecret } from './project';
 
 import type { CreateAnswers, ProjectFiles } from './types';
@@ -240,6 +240,10 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
   );
   Object.entries(functions).forEach(([path, text]) => {
     files[`${FUNCTIONS_DIR}/${path}`] = text;
+  });
+  // Its data, where the project's server reads it — CDN addresses in it written as the project's paths, as everywhere.
+  Object.entries(exported.data.files).forEach(([path, text]) => {
+    files[`${DATA_DIR}/${path}`] = local(text);
   });
 
   // A built plugin's server half, beside its bundle as \`plitzi pack plugin\` puts it: the platform keeps it privately,

@@ -66,6 +66,10 @@ const isSpaceFunctions = (value: unknown): value is SpaceFunctions =>
 const isPluginFunctions = (value: unknown): value is Record<string, SpaceFunctions> =>
   isRecord(value) && Object.values(value).every(isSpaceFunctions);
 
+/** What `getData` answers: the space's data files' text, by path. */
+const isProjectData = (value: unknown): value is Record<string, string> =>
+  isRecord(value) && Object.values(value).every(text => typeof text === 'string');
+
 /** Why a document is not one this server runs: the first problem its validator found, by where it is. */
 const firstProblem = (errors: readonly { path: string; message: string }[]): string => {
   const first = errors.at(0);
@@ -127,7 +131,7 @@ export const connectorLookupsOf = (config: ConnectorLookupsConfig): ConnectorLoo
  * not one is refused; listed, it is left out and said, so one broken action does not take its space's schedule down.
  */
 export const actionLookupsOf = (config: ActionLookupsConfig): ActionLookups => {
-  const { getConnector, getFunctions, getPluginFunctions, listActions } = config;
+  const { getConnector, getData, getFunctions, getPluginFunctions, listActions } = config;
 
   return {
     getAction: async (spaceId, actionId, at) => {
@@ -180,6 +184,22 @@ export const actionLookupsOf = (config: ActionLookupsConfig): ActionLookups => {
               throw new Error(
                 `The functions of space ${String(spaceId)} are not what @plitzi/sdk-server/functions builds for one`
               );
+            }
+
+            return found;
+          }
+        }
+      : {}),
+    ...(getData
+      ? {
+          getData: async (spaceId, at) => {
+            const found = await getData(spaceId, at);
+            if (found === undefined || found === null) {
+              return undefined;
+            }
+
+            if (!isProjectData(found)) {
+              throw new Error(`The data of space ${String(spaceId)} is not its files' text by path`);
             }
 
             return found;

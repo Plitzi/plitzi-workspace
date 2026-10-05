@@ -43,6 +43,11 @@ export type SpaceOrigin = {
   downloads: Record<string, string>;
   /** The packages the space's code asked for, at the ranges written into `package.json`. */
   dependencies: Record<string, string>;
+  /**
+   * The version of the space's data (`src/data/`) the project last had — what `plitzi push` names as its base, so data
+   * pushed from another copy since is never replaced unseen. None while the project never had the space's data.
+   */
+  data?: string;
 };
 
 const isStrings = (value: unknown): value is Record<string, string> =>
@@ -91,7 +96,8 @@ export const readOrigin = async (root: string): Promise<SpaceOrigin | undefined>
       (value.draft !== undefined && typeof value.draft !== 'string') ||
       !isStrings(value.files) ||
       !isStrings(value.downloads) ||
-      !isStrings(value.dependencies)
+      !isStrings(value.dependencies) ||
+      (value.data !== undefined && typeof value.data !== 'string')
     ) {
       return undefined;
     }
@@ -108,7 +114,8 @@ export const readOrigin = async (root: string): Promise<SpaceOrigin | undefined>
       ...(typeof value.draft === 'string' ? { draft: value.draft } : {}),
       files: value.files,
       downloads: value.downloads,
-      dependencies: value.dependencies
+      dependencies: value.dependencies,
+      ...(typeof value.data === 'string' ? { data: value.data } : {})
     };
   } catch {
     return undefined;

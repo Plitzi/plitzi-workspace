@@ -54,6 +54,10 @@ export interface FakePlatform {
   functions: { files: Record<string, string>; version: string };
   /** Every task tried, with its params. */
   tried: { task: string; params: unknown }[];
+  /** Space 3's data — its files' text by path — and which copy of it this is. */
+  data: { files: Record<string, string>; version: string };
+  /** Every file put on space 3's CDN under `assets/`, by its path there. */
+  assets: Record<string, { contentType: string; bytes: number }>;
   /** Space 3's runtime: every push as it arrived, and its variables — a value the platform keeps and never shows. */
   runtime: { pushed: FakeUpload[]; variables: Map<string, string> };
   /**
@@ -174,7 +178,11 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
         json(res, 200, { space: { id: 3, name: 'Website', permanentUrl: 'website' } });
       } else if (url.pathname === '/spaces/3/cdns') {
         json(res, 200, { cdns: platform.cdns });
-      } else if (url.pathname.startsWith('/spaces/3/cdns/') && req.method === 'POST') {
+      } else if (
+        url.pathname.startsWith('/spaces/3/cdns/') &&
+        !url.pathname.endsWith('/assets') &&
+        req.method === 'POST'
+      ) {
         platform.uploads.push({
           path: `${url.pathname}${url.search}`,
           contentType: req.headers['content-type'] ?? '',
@@ -205,6 +213,33 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
             manifest: { hosts: [], tasks: [{ namespace: 'feed', action: 'read' }], routes: [] }
           });
         }
+      } else if (url.pathname === '/spaces/3/data' && req.method === 'PUT') {
+        const sent = JSON.parse(body.toString()) as { files: Record<string, string>; base?: string };
+        const broken = Object.entries(sent.files).find(([, text]) => {
+          try {
+            JSON.parse(text);
+
+            return false;
+          } catch {
+            return true;
+          }
+        });
+        if (sent.base !== undefined && sent.base !== platform.data.version) {
+          json(res, 409, { ok: false, refusal: { status: 409, error: 'moved on', limit: 'version' } });
+        } else if (broken) {
+          json(res, 422, { ok: false, problems: [{ file: broken[0], message: 'is not JSON' }] });
+        } else {
+          platform.data = { files: sent.files, version: `d${String(Number(platform.data.version.slice(1)) + 1)}` };
+          json(res, 200, { ok: true, version: platform.data.version });
+        }
+      } else if (
+        url.pathname.startsWith('/spaces/3/cdns/') &&
+        url.pathname.endsWith('/assets') &&
+        req.method === 'POST'
+      ) {
+        const at = url.searchParams.get('path') ?? '';
+        platform.assets[at] = { contentType: req.headers['content-type'] ?? '', bytes: body.byteLength };
+        json(res, 201, { resource: {}, url: `https://cdn.example.com/pizarra/assets/${at}` });
       } else if (url.pathname === '/spaces/3/import' && req.method === 'PUT') {
         const sent = JSON.parse(body.toString()) as SpaceImport;
         const { pizarra } = platform;
@@ -313,6 +348,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
         actions: [],
         connectors: [],
         functions: platform.functions,
+        data: platform.data,
         source: { files: {}, dependencies: platform.pizarra.dependencies, runtime: null, plugins: [] },
         builtOnly: { plugins: [], runtime: null },
         assets: [{ url: `${platform.api}/files/pizarra/assets/world.json`, path: 'assets/world.json' }],
@@ -349,6 +385,8 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     renewable: new Set(),
     expiresIn: 3600,
     functions: { files: {}, version: 'v0' },
+    data: { files: {}, version: 'd0' },
+    assets: {},
     tried: [],
     runtime: { pushed: [], variables: new Map() },
     pizarra: {

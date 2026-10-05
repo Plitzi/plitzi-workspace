@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { dataFileResolver, publicFileResolver } from './publicFileResolver';
+import { dataFileResolver, dataLookupResolver, publicFileResolver } from './publicFileResolver';
 
 import type { RscResolveContext } from './resolveRscData';
 import type { Element } from '@plitzi/sdk-shared';
@@ -89,5 +89,38 @@ describe('dataFileResolver', () => {
     expect(await resolveData('/data/../products.json')).toBeUndefined();
     expect(await resolveData('/data/%2e%2e/secret.json')).toBeUndefined();
     expect(await resolveData('/data/missing.json')).toBeNull();
+  });
+});
+
+describe('dataLookupResolver', () => {
+  const asked: unknown[] = [];
+  const resolveFrom = (query: unknown, deployment?: { environment: string; revision: number }) =>
+    dataLookupResolver((spaceId, at) => {
+      asked.push({ spaceId, at });
+
+      return Promise.resolve({ 'products.json': JSON.stringify([{ id: 1 }]), 'broken.json': '{ nope' });
+    })({
+      element: provider(query),
+      spaceId: 7,
+      environment: 'main',
+      req: { ctx: { spaceDeployment: deployment } },
+      signal: new AbortController().signal
+    } as unknown as RscResolveContext);
+
+  it('reads `/data/<file>` from the space’s data, of the version being rendered', async () => {
+    expect(await resolveFrom('/data/products.json', { environment: 'production', revision: 3 })).toEqual({
+      status: 200,
+      data: [{ id: 1 }]
+    });
+    expect(asked.at(-1)).toEqual({ spaceId: 7, at: { environment: 'production', revision: 3 } });
+    // The draft when no deployment says otherwise.
+    await resolveFrom('/data/products.json');
+    expect(asked.at(-1)).toEqual({ spaceId: 7, at: { environment: 'main', revision: 0 } });
+  });
+
+  it('answers a missing or unreadable file with the provider’s error state, and nothing outside `/data/`', async () => {
+    expect(await resolveFrom('/data/missing.json')).toBeNull();
+    expect(await resolveFrom('/data/broken.json')).toBeNull();
+    expect(await resolveFrom('/products.json')).toBeUndefined();
   });
 });

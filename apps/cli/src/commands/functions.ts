@@ -36,7 +36,7 @@ export interface FunctionsOptions extends AccountOptions, DryRunOptions {
   params?: string;
 }
 
-const STATE_FILE = path.join('.plitzi', 'functions.json');
+export const FUNCTIONS_STATE_FILE = path.join('.plitzi', 'functions.json');
 
 type Files = Record<string, string>;
 /** What `functions pull` last wrote into `src/functions/`, and the version of the space's functions it was. */
@@ -48,7 +48,7 @@ type Problem = { file?: string; line?: number; column?: number; message: string 
 const rootOf = async (): Promise<string | undefined> => (await projectHere('whose functions these are'))?.root;
 
 /** Every source file under `src/functions/`, by its path there — read by the one rule of what a source is. */
-const readLocal = (root: string): Promise<Files> =>
+export const readFunctionsFiles = (root: string): Promise<Files> =>
   readFunctionsSource(path.join(root, FUNCTIONS_DIR), {
     list: async dir =>
       (await fs.readdir(dir, { withFileTypes: true })).map(entry => ({
@@ -58,9 +58,10 @@ const readLocal = (root: string): Promise<Files> =>
     read: file => fs.readFile(file, 'utf8')
   });
 
-const readState = async (root: string): Promise<WorkingCopy | undefined> => {
+/** What `functions pull` last recorded (`.plitzi/functions.json`), or undefined when there is none or it is not one. */
+export const readFunctionsState = async (root: string): Promise<WorkingCopy | undefined> => {
   try {
-    const value: unknown = JSON.parse(await fs.readFile(path.join(root, STATE_FILE), 'utf8'));
+    const value: unknown = JSON.parse(await fs.readFile(path.join(root, FUNCTIONS_STATE_FILE), 'utf8'));
     if (
       !isRecord(value) ||
       typeof value.space !== 'number' ||
@@ -82,7 +83,7 @@ const readState = async (root: string): Promise<WorkingCopy | undefined> => {
 
 export const writeFunctionsState = async (root: string, state: WorkingCopy): Promise<void> => {
   await fs.mkdir(path.join(root, '.plitzi'), { recursive: true });
-  await fs.writeFile(path.join(root, STATE_FILE), `${JSON.stringify(state, null, 2)}\n`);
+  await fs.writeFile(path.join(root, FUNCTIONS_STATE_FILE), `${JSON.stringify(state, null, 2)}\n`);
 };
 
 /** The files that differ between two copies — added, removed or changed — sorted. */
@@ -94,7 +95,7 @@ const changedFiles = (a: Files, b: Files): string[] =>
  * since it was pulled from this space or never pulled (`changed`), or exactly what was pulled (`unchanged`).
  */
 export const functionsChange = async (root: string, spaceId: number): Promise<'none' | 'changed' | 'unchanged'> => {
-  const [local, state] = await Promise.all([readLocal(root), readState(root)]);
+  const [local, state] = await Promise.all([readFunctionsFiles(root), readFunctionsState(root)]);
   if (!Object.hasOwn(local, 'index.ts')) {
     return 'none';
   }
@@ -132,7 +133,7 @@ export const pullFunctions = async (options: FunctionsOptions): Promise<void> =>
     return;
   }
 
-  const [local, state] = await Promise.all([readLocal(root), readState(root)]);
+  const [local, state] = await Promise.all([readFunctionsFiles(root), readFunctionsState(root)]);
   const unpushed = state ? changedFiles(local, state.files) : Object.keys(local);
   if (!options.force && (state?.space ?? connection.space.id) !== connection.space.id) {
     fail(`${FUNCTIONS_DIR}/ is a copy of another space’s. Pull into another project, or pass --force to replace it.`);
@@ -211,7 +212,7 @@ export const pushFunctionsOf = async (
   space: ConnectedSpace,
   { force = false, dryRun = false }: { force?: boolean; dryRun?: boolean } = {}
 ): Promise<PushOutcome> => {
-  const [local, state] = await Promise.all([readLocal(root), readState(root)]);
+  const [local, state] = await Promise.all([readFunctionsFiles(root), readFunctionsState(root)]);
   if (!Object.hasOwn(local, 'index.ts')) {
     fail(`There is no ${FUNCTIONS_DIR}/index.ts here: it is where a space’s functions start. Pull them, or write it.`);
 
@@ -491,7 +492,7 @@ export const devFunction = async (task: string, options: FunctionsDevOptions): P
 
   const local = runner.createLocalFunctions({ credentials: localCredentials() });
   const run = async (): Promise<void> => {
-    const loaded = await local.load(await readLocal(root));
+    const loaded = await local.load(await readFunctionsFiles(root));
     if (!loaded.ok) {
       printProblems(loaded.problems);
 

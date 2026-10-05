@@ -40,7 +40,8 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
 
 1. **Read before you write.** Open `src/space/index.ts` (and whatever it imports) and find the layout, the classes and the
    helpers already there. Extend them; do not add a second way of doing something the space already does.
-2. **Change the declaration, then author it.** `npm run author` (or restart the server) runs `authorSpace`. It checks
+2. **Change the declaration, then author it.** `npm run author` (or a restart) runs `authorSpace` — not `doctor`, which
+   is the project's. It checks
    everything — every field, value, template, name, param and page link — and a refusal says what to write instead:
    do exactly that. Never work around a check, cast past it, or move the logic into a plugin to escape it. The first
    refusals come one at a time; the linter's come as ONE list — fix every line of it before running again. How it

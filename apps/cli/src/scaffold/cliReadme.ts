@@ -83,7 +83,8 @@ export const cliReadme = (answers: CreateAnswers): string => {
 
 What the project needs of the CLI besides its entry point, kept apart from \`src/\`. \`plitzi upgrade\` brings these files
 up to the CLI it has — and \`${MAIN_FILE}\` with them, which stays in \`src/\` because that is where an entry point is
-looked for. One changed is shown as a diff and left, so changing one is taking it over.
+looked for. One changed is shown as a diff and left, so changing one is taking it over. \`plitzi doctor\` holds the
+whole project to what follows — and to what Node, the server and \`push\` need of it — and says what to fix.
 
 - \`${MAIN_FILE}\` (in \`src/\`) — the entry point: ${server ? 'the page server — the space, its plugins, its data, its code, wired' : 'the Vite app that renders the space'}.${
     answers.source === 'local'

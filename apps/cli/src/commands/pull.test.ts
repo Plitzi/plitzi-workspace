@@ -112,6 +112,34 @@ describe('plitzi pull', () => {
     expect(JSON.parse(await read('.plitzi/functions.json'))).toMatchObject({ version: 'v2' });
   });
 
+  it('brings the space’s data to src/data/, with its CDN addresses as the project’s paths', async () => {
+    platform.data = {
+      files: { 'products.json': `{"map":"${platform.api}/files/pizarra/assets/world.json"}`, 'shop/stock.json': '[]' },
+      version: 'd1'
+    };
+
+    await pull({});
+
+    expect(process.exitCode).toBeUndefined();
+    expect(JSON.parse(await read('src/data/products.json'))).toEqual({ map: '/assets/world.json' });
+    expect(await read('src/data/shop/stock.json')).toBe('[]');
+    expect((await readOrigin(project))?.data).toBe('d1');
+  });
+
+  it('keeps a change here to the data, and the data version it was made from', async () => {
+    platform.data = { files: { 'products.json': '[]' }, version: 'd1' };
+    await pull({});
+    await write('src/data/products.json', '[{"id":1}]');
+    platform.data = { files: { 'products.json': '[]', 'more.json': '{}' }, version: 'd2' };
+
+    await pull({});
+
+    expect(await read('src/data/products.json')).toBe('[{"id":1}]');
+    expect(await read('src/data/more.json')).toBe('{}');
+    // Still what the change was made from: a push of it is refused if the space's moved on, never silently over it.
+    expect((await readOrigin(project))?.data).toBe('d1');
+  });
+
   it('says with --dry-run what it would write, remove and keep, and touches nothing', async () => {
     platform.pizarra.pages['pages/home.ts'] = "export const homePage = { name: 'Home, again' };\n";
     delete platform.pizarra.pages['pages/about.ts'];

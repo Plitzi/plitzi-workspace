@@ -80,7 +80,10 @@ const withConnectorRsc = <
 >(
   config: T
 ): T => {
-  if (config.adapters.getRscData || (!config.connectors && !config.action?.lookups && !config.publicDir && !config.dataDir)) {
+  if (
+    config.adapters.getRscData ||
+    (!config.connectors && !config.action?.lookups && !config.publicDir && !config.dataDir)
+  ) {
     return config;
   }
 

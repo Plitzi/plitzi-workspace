@@ -4,6 +4,7 @@ import path from 'node:path';
 import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
 
 import type { RscElementResolver } from './resolveRscData';
+import type { SpaceRevision } from '@plitzi/sdk-shared';
 
 /** Where a provider's `query` is a path: a URL, a protocol-relative one or one with `{{tokens}}` is not. */
 const pathOf = (query: unknown): string | undefined => {
@@ -60,3 +61,37 @@ export const publicFileResolver = (publicDir: string): RscElementResolver => fil
  * served as a file: nobody downloads the folder. What the provider reads is in the page it renders.
  */
 export const dataFileResolver = (dataDir: string): RscElementResolver => fileResolver(dataDir, PROJECT_DATA_PREFIX);
+
+/**
+ * A server provider whose `query` is `/data/<file>`, answered from the space's own data as Plitzi keeps it — of the
+ * version being rendered, read off the same deployment record an action's run is (`req.ctx.spaceDeployment`), so a
+ * published page reads the data it was published with. What `dataFileResolver` is for a folder, for a platform.
+ */
+export const dataLookupResolver = (
+  getData: (spaceId: number, at: SpaceRevision) => Promise<Record<string, string> | undefined>
+): RscElementResolver => {
+  return async ({ element, spaceId, environment, req }) => {
+    const pathname = pathOf(element.attributes.query);
+    if (pathname === undefined || !pathname.startsWith(PROJECT_DATA_PREFIX)) {
+      return undefined;
+    }
+
+    const deployment = req.ctx.spaceDeployment;
+    const files = await getData(spaceId, {
+      environment: deployment?.environment ?? environment,
+      revision: deployment?.revision ?? 0
+    });
+    const text = files?.[pathname.slice(PROJECT_DATA_PREFIX.length)];
+    if (text === undefined) {
+      return null;
+    }
+
+    try {
+      const data: unknown = JSON.parse(text);
+
+      return { status: 200, data };
+    } catch {
+      return null;
+    }
+  };
+};
