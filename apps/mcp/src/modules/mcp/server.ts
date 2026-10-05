@@ -99,14 +99,15 @@ export const createMcpServer = async ({
     // The catalog is optional reference data (plugin type semantics); a failure to load it must never block the
     // space read, so it is fetched best-effort and degrades to built-in-only type descriptions. Connectors are
     // read the same way: a deployment that wires no connector adapter still edits pages and styles.
-    const [schema, style, catalog, connectors, actions, actionTasks, functions] = await Promise.all([
+    const [schema, style, catalog, connectors, actions, actionTasks, functions, data] = await Promise.all([
       adapters.getSchema?.(id, MCP_ENV),
       adapters.getStyle?.(id, MCP_ENV),
       adapters.getComponentCatalog?.(id, MCP_ENV).catch(() => undefined),
       adapters.getConnectors?.(id).catch(() => undefined),
       adapters.getActions?.(id).catch(() => undefined),
       adapters.getActionTasks?.(id).catch(() => undefined),
-      adapters.getFunctions?.(id).catch(() => undefined)
+      adapters.getFunctions?.(id).catch(() => undefined),
+      adapters.getData?.(id).catch(() => undefined)
     ]);
     if (!schema || !style) {
       throw new Error(emptySpaceMessage);
@@ -119,7 +120,8 @@ export const createMcpServer = async ({
       connectors: connectors ?? [],
       actions: actions ?? [],
       actionTasks,
-      ...(functions ? { functions } : {})
+      ...(functions ? { functions } : {}),
+      ...(data ? { data } : {})
     };
   };
 
@@ -133,7 +135,8 @@ export const createMcpServer = async ({
     saveAction,
     deleteAction,
     saveFunctions,
-    tryFunction
+    tryFunction,
+    saveData
   } = adapters;
   // A stateless server builds itself per request, and a request is one tool call: everything it writes is one batch.
   const write: SSRWriteContext = { userId: grant?.userId, batch: randomUUID() };
@@ -146,7 +149,8 @@ export const createMcpServer = async ({
     deleteAction: deleteAction ? id => deleteAction(requireWritableSpaceId(), id) : undefined,
     saveFunctions: saveFunctions
       ? (files, base) => saveFunctions(requireWritableSpaceId(), files, base, write)
-      : undefined
+      : undefined,
+    saveData: saveData ? (files, base) => saveData(requireWritableSpaceId(), files, base, write) : undefined
   };
 
   // Load the space at most once per request, and only on first read/write — never for the handshake.

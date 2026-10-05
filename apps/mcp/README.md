@@ -77,6 +77,7 @@ The server is stateless: it resolves the space per request and reads and writes 
 | `getConnectors` / `saveConnector` / `deleteConnector` | for connectors | The space's connector manifests, read and written by the connector operations. |
 | `getActions` / `getActionTasks` / `saveAction` / `deleteAction` | for actions | The space's server actions, and the catalog of tasks a step may run — the deployment's and the space's own functions, each with its `origin`. |
 | `getFunctions` / `saveFunctions` / `tryFunction` | for functions | The space's functions: read for `plitzi://functions/{env}`, saved (built and checked, refused from an older copy) by `upsertFunctionFile` / `deleteFunctionFile`, and run by `plitzi_try_function`. |
+| `getData` / `saveData` | for data | The space's data — JSON its server providers read as `/data/<file>`: read for `plitzi://data/{env}`, saved whole (each file checked, refused from an older copy) by `upsertDataFile` / `deleteDataFile`. |
 
 Schema and style are read as **separate documents** on purpose: `getOfflineData` is SSR-shaped and strips
 `style.platform`, which the style resources need.

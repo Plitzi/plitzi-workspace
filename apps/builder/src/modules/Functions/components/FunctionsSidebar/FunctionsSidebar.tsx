@@ -1,15 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { FUNCTION_ROUTES_PREFIX } from '@plitzi/sdk-shared/actions';
+import { FileItem, FolderItem, NewFile, SidebarSection, fileRows } from '@pmodules/FileTree';
 
-import FileItem from './components/FileItem';
-import FolderItem from './components/FolderItem';
-import NewFile from './components/NewFile';
 import NewTask from './components/NewTask';
 import RouteItem from './components/RouteItem';
-import SidebarSection from './components/SidebarSection';
 import TaskItem from './components/TaskItem';
-import { cpuOf, fileRows, routeParts, taskNameOf, usualNamespace } from '../../helpers';
+import { cpuOf, newFileName, routeParts, taskNameOf, usualNamespace } from '../../helpers';
 
 import type { NewTask as NewTaskSpec } from '../../editor/source';
 import type { ListedRoute, ListedTask } from '../../helpers';
@@ -60,7 +57,7 @@ const FunctionsSidebar = ({
 }: FunctionsSidebarProps) => {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [isAddingFile, setIsAddingFile] = useState(false);
-  const rows = useMemo(() => fileRows(files), [files]);
+  const rows = useMemo(() => fileRows(files, 'index.ts'), [files]);
 
   const handleStartTask = useCallback(() => setIsAddingTask(true), []);
 
@@ -139,7 +136,9 @@ const FunctionsSidebar = ({
         </div>
       </SidebarSection>
       <SidebarSection title="Files" count={files.length} actionTitle="New file" onAction={handleStartFile}>
-        {isAddingFile && <NewFile onAdd={handleAddFile} onCancel={handleStopFile} />}
+        {isAddingFile && (
+          <NewFile placeholder="lib/feed.ts" nameOf={newFileName} onAdd={handleAddFile} onCancel={handleStopFile} />
+        )}
         <div className="flex flex-col gap-0.5">
           {rows.map(row => (
             <div key={`${row.kind}:${row.path}`}>

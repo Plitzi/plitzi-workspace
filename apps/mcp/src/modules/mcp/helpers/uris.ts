@@ -44,6 +44,10 @@ export const actionTasksUri = (env: Env): string => `plitzi://actions/${env}/tas
 export const functionsUri = (env: Env): string => `plitzi://functions/${env}`;
 export const functionFileUri = (env: Env, path: string): string => `plitzi://functions/${env}/${path}`;
 
+// --- Data (the space's own JSON, read by its server providers: one draft per space) ---
+export const dataUri = (env: Env): string => `plitzi://data/${env}`;
+export const dataFileUri = (env: Env, path: string): string => `plitzi://data/${env}/${path}`;
+
 // --- Folders ---
 export const foldersUri = (env: Env): string => `plitzi://folders/${env}`;
 export const folderUri = (env: Env, ref: string): string => `plitzi://folders/${env}/${ref}`;

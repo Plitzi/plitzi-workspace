@@ -264,7 +264,8 @@ for in the builder: the settings, the actions, the connectors.
   space's private bucket as its functions are): saved whole by `push` (`PUT /spaces/:spaceId/data`, under
   `spaceManage`; each file JSON at a plain path, 8 MB in all), frozen with each publish, and read by the page server of
   the version it renders (`getData` among the action lookups, resolved as `dataDir` resolves it self-hosted). The
-  export carries it, so `create --from` and `pull` write it back.
+  export carries it, so `create --from` and `pull` write it back. The same draft is edited in the builder (Server ›
+  Data, `SpaceData` / `SpaceSaveData`) and by an agent (`upsertDataFile` over MCP): one write path, one history.
 - **SDK versions.** A plugin is rebuilt by the project against the project's own `@plitzi/*`: the snapshot carries the
   ranges its source was written against, and the report lists every one that differs from the project's.
 

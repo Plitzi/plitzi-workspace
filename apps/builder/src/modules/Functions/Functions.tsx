@@ -4,6 +4,7 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import AppContext from '@pmodules/App/AppContext';
+import { isSaveKey, saveState } from '@pmodules/FileTree';
 
 import FunctionInspector from './components/FunctionInspector';
 import FunctionsEditor from './components/FunctionsEditor';
@@ -15,12 +16,10 @@ import FunctionsSidebar from './components/FunctionsSidebar';
 import FunctionsWelcome from './components/FunctionsWelcome';
 import useFunctionsTypeScript from './editor/useFunctionsTypeScript';
 import {
-  isSaveKey,
   limitsBlockedBy,
   listedHosts,
   listedRoutes,
   listedTasks,
-  saveState,
   STARTER_FILES,
   taskAt,
   taskNameOf,

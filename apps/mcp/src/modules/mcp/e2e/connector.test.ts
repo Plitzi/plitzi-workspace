@@ -83,7 +83,12 @@ const widgetOperations = [
 // Raised from 202.8k for an element's `quiet` — the suggestions it is not offered, persisted so the builder and the MCP
 // leave out what authoring does: a field of the element and of its patch, ~0.8k across the four tools, registered once
 // (`ElementQuiet`) with a one-line description.
-const TOOLS_BUDGET_BYTES = 203_700;
+//
+// Raised from 203.7k for the space's data — `upsertDataFile` and `deleteDataFile`, the ops an agent writes the JSON its
+// server providers read with: ~1.1k across the tools that carry the op union, their words the fewest that say a path is
+// read as `/data/<path>`; the rest is in the guide's Data section. Set with ~0.7k of room, so a description clarified
+// in passing does not have to raise it again.
+const TOOLS_BUDGET_BYTES = 205_500;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

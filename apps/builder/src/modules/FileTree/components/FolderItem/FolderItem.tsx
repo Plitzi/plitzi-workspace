@@ -1,4 +1,4 @@
-import { FILE_INDENT_PX } from '../../../../helpers';
+import { FILE_INDENT_PX } from '../../helpers';
 
 export type FolderItemProps = { name: string; depth: number };
 

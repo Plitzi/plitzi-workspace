@@ -19,6 +19,7 @@ import SpaceUpdateConnectorMutation from './Space/connectors/SpaceUpdateConnecto
 import SpaceAddCredentialMutation from './Space/credentials/SpaceAddCredentialMutation';
 import SpaceRemoveCredentialMutation from './Space/credentials/SpaceRemoveCredentialMutation';
 import SpaceUpdateCredentialMutation from './Space/credentials/SpaceUpdateCredentialMutation';
+import SpaceSaveDataMutation from './Space/data/SpaceSaveDataMutation';
 import SpacePublishFlagsMutation from './Space/flags/SpacePublishFlagsMutation';
 import SpaceRemoveFlagMutation from './Space/flags/SpaceRemoveFlagMutation';
 import SpaceSetFlagMutation from './Space/flags/SpaceSetFlagMutation';
@@ -98,6 +99,7 @@ import type { TSpaceUpdateComponentMutation } from './Space/components/SpaceUpda
 import type { TSpaceAddConnectorMutation } from './Space/connectors/SpaceAddConnectorMutation';
 import type { TSpaceRemoveConnectorMutation } from './Space/connectors/SpaceRemoveConnectorMutation';
 import type { TSpaceUpdateConnectorMutation } from './Space/connectors/SpaceUpdateConnectorMutation';
+import type { TSpaceSaveDataMutation } from './Space/data/SpaceSaveDataMutation';
 import type { TSpacePublishFlagsMutation } from './Space/flags/SpacePublishFlagsMutation';
 import type { TSpaceAddPageFolderMutation } from './Space/folders/SpaceAddPageFolderMutation';
 import type { TSpaceRemovePageFolderMutation } from './Space/folders/SpaceRemovePageFolderMutation';
@@ -164,6 +166,7 @@ export type BuilderMutationsMap = {
   SpaceUpdateAction: TSpaceUpdateActionMutation;
   SpaceRemoveAction: TSpaceRemoveActionMutation;
   SpaceRunAction: TSpaceRunActionMutation;
+  SpaceSaveData: TSpaceSaveDataMutation;
   SpaceSaveFunctions: TSpaceSaveFunctionsMutation;
   SpaceRemoveFunctions: TSpaceRemoveFunctionsMutation;
   SpaceInstallTemplateFunctions: TSpaceInstallTemplateFunctionsMutation;
@@ -249,6 +252,7 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceUpdateAction: SpaceUpdateActionMutation,
   SpaceRemoveAction: SpaceRemoveActionMutation,
   SpaceRunAction: SpaceRunActionMutation,
+  SpaceSaveData: SpaceSaveDataMutation,
   SpaceSaveFunctions: SpaceSaveFunctionsMutation,
   SpaceRemoveFunctions: SpaceRemoveFunctionsMutation,
   SpaceInstallTemplateFunctions: SpaceInstallTemplateFunctionsMutation,

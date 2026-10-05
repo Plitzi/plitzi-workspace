@@ -3,14 +3,14 @@ import { z } from 'zod';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
-import { functionFileUri, functionsUri } from '../../helpers';
+import { dataFileUri, dataUri, functionFileUri, functionsUri } from '../../helpers';
 import { environment, operations } from '../operations';
 import { draftBatch } from '../shared/draftBatch';
 import { defineTool } from '../shared/tool';
 
 import type { Space } from '../../helpers';
 import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../../types';
-import type { FunctionsSaveResult } from '@plitzi/sdk-shared';
+import type { DataSaveResult, FunctionsSaveResult } from '@plitzi/sdk-shared';
 
 export const applyShape = {
   environment,
@@ -43,6 +43,21 @@ const functionsErrors = (saved: Exclude<FunctionsSaveResult, { ok: true }>, env:
           path: 'functions',
           message: saved.refusal.error,
           hint: `Read ${functionsUri(env)} again and redo the change on the current files`
+        }
+      ];
+
+const dataErrors = (saved: Exclude<DataSaveResult, { ok: true }>, env: Env): ValidationError[] =>
+  'problems' in saved
+    ? saved.problems.map(problem => ({
+        path: `data/${problem.file}`,
+        message: problem.message,
+        hint: `Fix it with upsertDataFile, or deleteDataFile; read ${dataFileUri(env, problem.file)} for the file`
+      }))
+    : [
+        {
+          path: 'data',
+          message: saved.refusal.error,
+          hint: `Read ${dataUri(env)} again and redo the change on the current files`
         }
       ];
 
@@ -105,6 +120,32 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
           changed: [],
           errors: functionsErrors(saved, env),
           warnings: noWarnings(warnings)
+        };
+      }
+    } else {
+      persisted = false;
+    }
+  }
+
+  // The data next, for the same reason: what it is checked for as it is saved (a path, the weight, a newer copy) can
+  // still refuse the batch, before the documents are written.
+  if (outcome.changedData && draft.data) {
+    if (persisters?.saveData) {
+      const saved = await persisters.saveData(draft.data.files, space.data?.version ?? '');
+      if (!saved.ok) {
+        return {
+          applied: false,
+          persisted: false,
+          summary: { created: 0, updated: 0, deleted: 0 },
+          changed: [],
+          errors: dataErrors(saved, env),
+          // Stores are saved one by one: the functions of this batch, saved just above, stay saved.
+          warnings: noWarnings([
+            ...(outcome.changedFunctions && persisters.saveFunctions
+              ? ['The functions of this batch were saved; the data was not — apply the data again once fixed']
+              : []),
+            ...warnings
+          ])
         };
       }
     } else {

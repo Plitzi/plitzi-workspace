@@ -178,6 +178,11 @@ export const registerResources = (
       'The space’s own server code: which files it is, and the tasks, routes and hosts it declares — its tasks are ' +
         'steps like any server task'
     ],
+    [
+      'Data',
+      `plitzi://data/${env}`,
+      'The space’s own data: JSON files its server providers read as `/data/<file>`, never served — which files there are'
+    ],
     // Aliases under the plitzi://schema/{env} root, so the analogous shape agents reach for also resolves (I3).
     ['Style definitions (schema alias)', `plitzi://schema/${env}/definitions`, 'Alias of plitzi://definitions/{env}'],
     [
@@ -256,6 +261,7 @@ export const registerResources = (
       'One action document in full: its access rule, triggers, declared credentials and connectors, and every step'
     ],
     ['Function file', `plitzi://functions/${env}/{+path}`, 'One file of the space’s functions, whole'],
+    ['Data file', `plitzi://data/${env}/{+path}`, 'One file of the space’s data, parsed'],
     ['Style definition', `plitzi://definitions/${env}/{ref}`, 'One style definition (CSS) by class ref'],
     [
       'Global style',

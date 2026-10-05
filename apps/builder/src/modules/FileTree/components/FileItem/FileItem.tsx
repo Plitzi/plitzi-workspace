@@ -2,7 +2,7 @@ import Button from '@plitzi/plitzi-ui/Button';
 import clsx from 'clsx';
 import { useCallback } from 'react';
 
-import { FILE_INDENT_PX } from '../../../../helpers';
+import { FILE_INDENT_PX } from '../../helpers';
 
 import type { MouseEvent } from 'react';
 
@@ -12,7 +12,7 @@ export type FileItemProps = {
   depth: number;
   selected: boolean;
   modified: boolean;
-  /** `index.ts` is what everything starts from: it is never removed. */
+  /** Whether it may be removed — not the file everything starts from (the functions' `index.ts`). */
   removable: boolean;
   onSelect: (file: string) => void;
   onRemove: (file: string) => void;

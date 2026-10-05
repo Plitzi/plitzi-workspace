@@ -2,6 +2,7 @@ import { readActionResource } from './actions';
 import { canonicalUri } from './canonical';
 import { readConnectorResource } from './connectors';
 import { readCoreResource } from './core';
+import { readDataResource } from './data';
 import { readFunctionsResource } from './functions';
 import { readPrimerResource } from './primer';
 import { readRenderResource } from './renderGuide';
@@ -23,7 +24,8 @@ const resolvers = [
   readStyleResource,
   readConnectorResource,
   readActionResource,
-  readFunctionsResource
+  readFunctionsResource,
+  readDataResource
 ];
 
 /** Resolve a resource URI to its versioned envelope, or null if unknown / not found. */

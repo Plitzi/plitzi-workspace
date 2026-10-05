@@ -242,6 +242,8 @@ Never download a whole tree you do not need.
   action may be built from.
 - \`plitzi://functions/{env}\` — the space's **functions**, its own server code: which files, and the tasks, routes and
   hosts they declare. \`plitzi://functions/{env}/{+path}\` reads one file whole. See *Functions* below.
+- \`plitzi://data/{env}\` — the space's **data**: JSON files its server providers read, never served.
+  \`plitzi://data/{env}/{+path}\` reads one, parsed. See *Data* below.
 - \`plitzi://changes/{env}\` — the space's **change history**, read-only and newest first: who made each change (a
   person in the builder, an agent, the autofix), when, and every element, class, token or font it touched, whole, before
   and after. \`/{id}\` for the history of one of them — how you find what changed an element you are asked about, or
@@ -797,6 +799,19 @@ any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\`
 - **Try it** with \`plitzi_try_function { task, params }\` before a page relies on it: the value, the logs, the error.
   The live site runs what the space was last published with, never the draft. Running functions is part of the paid
   plans: on another plan they save, and a run answers why it did not start — tell the user rather than work around it.
+
+## Data
+JSON the space's pages read on the server and never serve — a catalog, prices, a menu: what a page needs whole and
+nobody edits element by element.
+
+- **Read** it as a provider does: \`apiContainer\` with \`runtime: "server"\` and \`query: "/data/products.json"\` reads
+  \`products.json\` of \`plitzi://data/{env}\`, and the page arrives with it. A browser provider reading \`/data/…\` is
+  refused — the data is the server's.
+- **Write** it with \`upsertDataFile { path, content }\` (the whole file, as JSON text; \`deleteDataFile { path }\`
+  removes one): a path of plain segments ending in \`.json\`. Saved whole, with the batch: a newer copy (somebody saved
+  since you read it) refuses it — read it again.
+- **What a provider reads is in the page it renders**: data a page must not carry belongs in a server action, which
+  answers only what is shown. The live site reads what the space was last published with, never the draft.
 
 ## Realtime channels
 Pages that see each other — cursors, presence, a shared board, a game. Three parts, all needed:

@@ -767,6 +767,10 @@
       "types": "./dist/network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/credentials/SpaceUpdateCredentialMutation.mjs"
     },
+    "./network/graphql/builder/Mutations/Space/data/SpaceSaveDataMutation": {
+      "types": "./dist/network/graphql/builder/Mutations/Space/data/SpaceSaveDataMutation.d.ts",
+      "import": "./dist/network/graphql/builder/Mutations/Space/data/SpaceSaveDataMutation.mjs"
+    },
     "./network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation": {
       "types": "./dist/network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation.d.ts",
       "import": "./dist/network/graphql/builder/Mutations/Space/flags/SpacePublishFlagsMutation.mjs"
@@ -982,6 +986,10 @@
     "./network/graphql/builder/Queries/Space/SpaceCredentialsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceCredentialsQuery.d.ts",
       "import": "./dist/network/graphql/builder/Queries/Space/SpaceCredentialsQuery.mjs"
+    },
+    "./network/graphql/builder/Queries/Space/SpaceDataQuery": {
+      "types": "./dist/network/graphql/builder/Queries/Space/SpaceDataQuery.d.ts",
+      "import": "./dist/network/graphql/builder/Queries/Space/SpaceDataQuery.mjs"
     },
     "./network/graphql/builder/Queries/Space/SpaceDeploymentsQuery": {
       "types": "./dist/network/graphql/builder/Queries/Space/SpaceDeploymentsQuery.d.ts",
@@ -1425,6 +1433,9 @@
     },
     "./types/DataSourceTypes": {
       "types": "./dist/types/DataSourceTypes.d.ts"
+    },
+    "./types/DataTypes": {
+      "types": "./dist/types/DataTypes.d.ts"
     },
     "./types/DevToolsTypes": {
       "types": "./dist/types/DevToolsTypes.d.ts"

@@ -202,6 +202,13 @@
   `public/assets/`, put at the same path under the space's `assets/` on its CDN, so a pull brings it back where it was.
   `create --from` and `pull` write the space's data into `src/data/`. `getData` joins the action lookups
   (`ActionLookupsConfig`), and the page server resolves `/data/<file>` through it when there is no `dataDir`.
+- **A space's data is edited in the builder and by agents.** The builder's Server view has a **Data** tab: the JSON
+  files the space's server providers read (`/data/<file>`), a file list and a JSON editor, saved whole against the
+  copy it read (⌘S; a newer copy is refused, a broken file named). The MCP reads it as `plitzi://data/{env}` and writes
+  it with `upsertDataFile` / `deleteDataFile` (`getData` / `saveData` among the adapters; a file that is not JSON is
+  refused as it is written), and the guide has a Data section. One write path for the builder, agents and `plitzi push`
+  (`SpaceData` / `SpaceSaveData` over GraphQL, under `spaceManage`), one history. `DataDraft` / `DataSaveResult` are
+  in `@plitzi/sdk-shared`. The builder's file list is shared by Functions and Data (`modules/FileTree`).
 - **`plitzi doctor`**: whether the project the CLI set up is whole, checked against what it is now — a developer may
   change any file. Packages (declared, installed at versions that agree, one copy of the SDK and of React), the CLI's
   files and scripts (as `upgrade` sees them, one planner for both), the file each Node script starts and every folder

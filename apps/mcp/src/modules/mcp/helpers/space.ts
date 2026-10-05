@@ -6,6 +6,7 @@ import type {
   ActionTaskDescriptor,
   ComponentCatalog,
   ConnectorEntry,
+  DataDraft,
   Element,
   FunctionsDraft,
   PageFolder,
@@ -29,6 +30,9 @@ export interface Space {
   /** The space's own functions — their source files, which copy of them this is, and what they declare. Absent when
    *  the deployment offers no functions: then there is nothing to read and every function op is refused. */
   functions?: FunctionsDraft;
+  /** The space's own data — JSON its server providers read (`/data/<file>`), never served — and which copy of it this
+   *  is. Absent when the deployment offers no data: then there is nothing to read and every data op is refused. */
+  data?: DataDraft;
   catalog?: ComponentCatalog;
   /**
    * The whole document, when `schema` is a view of one tree of it — a component's, which an op addressed to a
@@ -45,6 +49,7 @@ export const cloneSpace = (space: Space): Space => ({
   connectors: structuredClone(space.connectors),
   actions: structuredClone(space.actions),
   ...(space.functions ? { functions: structuredClone(space.functions) } : {}),
+  ...(space.data ? { data: structuredClone(space.data) } : {}),
   ...(space.actionTasks ? { actionTasks: space.actionTasks } : {}),
   ...(space.catalog ? { catalog: space.catalog } : {})
 });

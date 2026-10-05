@@ -107,8 +107,9 @@ calls as a small one:
 The resources (`plitzi://…`) are the catalog the agent browses: pages, layouts and components, element types, style classes,
 tokens, fonts, variables, [feature flags](./feature-flags.md) (`plitzi://flags/{env}`, written with `upsertFlag` /
 `deleteFlag` and gated with `flag` on an element or a page), settings, the interaction and data-source vocabularies,
-connectors, server actions and the space's functions (written with the `upsertFunctionFile` / `deleteFunctionFile`
-operations of `plitzi_apply`). The
+connectors, server actions, the space's functions (written with the `upsertFunctionFile` / `deleteFunctionFile`
+operations of `plitzi_apply`) and its data (`plitzi://data/{env}`: the JSON its server providers read as
+`/data/<file>`, written with `upsertDataFile` / `deleteDataFile`). The
 full list, with what each one answers, is the agent's manual at `plitzi://guide`.
 
 `plitzi_preview` and `plitzi_screenshot` need the deployment's SSR render service (and the screenshot service for

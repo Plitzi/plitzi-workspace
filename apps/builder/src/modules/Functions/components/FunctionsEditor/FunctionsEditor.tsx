@@ -3,7 +3,9 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import clsx from 'clsx';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 
-import { EDITOR_CLASS_NAME, lineRange } from '../../helpers';
+import { EDITOR_CLASS_NAME } from '@pmodules/FileTree';
+
+import { lineRange } from '../../helpers';
 
 import type { EditorTarget } from '../../helpers';
 import type { Extension } from '@codemirror/state';

@@ -14,6 +14,7 @@ import type {
 } from './ActionTypes';
 import type { Environment } from './CommonTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
+import type { DataDraft, DataSaveResult } from './DataTypes';
 import type { FunctionsDraft, FunctionsSaveResult } from './FunctionTypes';
 import type { SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
@@ -437,6 +438,17 @@ export type SSRAdapters = {
     params: Record<string, unknown>,
     write: SSRWriteContext
   ) => Promise<ActionRunReport>;
+  /** The space's own data: the draft's JSON files its server providers read (`/data/<file>`), and which copy they are.
+   *  When omitted, the MCP offers no data resource and refuses the data ops. */
+  getData?: (spaceId: number) => Promise<DataDraft | undefined>;
+  /** Save the draft's data, whole: every file JSON at a plain path. `base` is the version the agent read, and data that
+   *  moved on since is refused rather than overwritten. */
+  saveData?: (
+    spaceId: number,
+    files: Record<string, string>,
+    base: string,
+    write: SSRWriteContext
+  ) => Promise<DataSaveResult>;
   /** Persist the element schema mutated by the MCP `apply` tool. When omitted, `apply` reports `persisted: false`. */
   saveSchema?: (spaceId: number, environment: Environment, schema: Schema, write: SSRWriteContext) => Promise<void>;
   /** Persist the style document mutated by the MCP `apply` tool — store it as given. `style.cache` arrives already

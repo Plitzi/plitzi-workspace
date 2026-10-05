@@ -4,6 +4,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Actions from '@pmodules/Actions/Actions';
 import Connectors from '@pmodules/Connectors/Connectors';
 import Credentials from '@pmodules/Credentials';
+import Data from '@pmodules/Data';
 import Functions from '@pmodules/Functions';
 import Runtime from '@pmodules/Runtime';
 
@@ -14,14 +15,15 @@ import type { PanelSection } from '../../components/PanelSections';
 const SECTIONS: [PanelSection, ...PanelSection[]] = [
   { id: 'actions', label: 'Actions', content: <Actions /> },
   { id: 'functions', label: 'Functions', content: <Functions /> },
+  { id: 'data', label: 'Data', content: <Data /> },
   { id: 'connectors', label: 'Connectors', content: <Connectors /> },
   { id: 'credentials', label: 'Credentials', content: <Credentials /> },
   { id: 'runtime', label: 'Runtime', content: <Runtime /> }
 ];
 
 /**
- * Everything of the space that runs on a server — its actions, functions, connectors, the credentials they use and its
- * runtime — under one entry of the sidebar. Whether the space HAS a server to run them is said here, once, above them
+ * Everything of the space that runs on a server — its actions, functions, the data its pages read there, connectors,
+ * the credentials they use and its runtime — under one entry of the sidebar. Whether the space HAS a server to run them is said here, once, above them
  * all.
  */
 const ContainerServer = () => {

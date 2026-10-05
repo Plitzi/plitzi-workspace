@@ -2,6 +2,7 @@ import { componentView, fail, findComponentByRef, pageUri } from '../../helpers'
 import { isStyleOp } from '../operations';
 import * as actions from '../operations/actions';
 import * as connectors from '../operations/connectors';
+import * as data from '../operations/data';
 import * as functions from '../operations/functions';
 import * as schema from '../operations/schema';
 import * as style from '../operations/style';
@@ -130,6 +131,10 @@ const executeOp = (space: Space, env: Env, op: Operation): OpResult => {
       return functions.upsertFunctionFile(space, env, op);
     case 'deleteFunctionFile':
       return functions.deleteFunctionFile(space, env, op);
+    case 'upsertDataFile':
+      return data.upsertDataFile(space, env, op);
+    case 'deleteDataFile':
+      return data.deleteDataFile(space, env, op);
     default:
       return fail('type', `Unknown operation "${(op as { type: string }).type}"`, 'See the Operation union');
   }
@@ -151,7 +156,8 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
     deletedConnectors: [],
     changedActions: [],
     deletedActions: [],
-    changedFunctions: false
+    changedFunctions: false,
+    changedData: false
   };
   const stale = new Set<string>();
   const elements = new Set<string>();
@@ -193,6 +199,10 @@ export const applyOperations = (space: Space, env: Env, ops: Operation[]): Mutat
       case 'upsertFunctionFile':
       case 'deleteFunctionFile':
         outcome.changedFunctions = true;
+        break;
+      case 'upsertDataFile':
+      case 'deleteDataFile':
+        outcome.changedData = true;
         break;
       default:
         if (isStyleOp(op.type)) {

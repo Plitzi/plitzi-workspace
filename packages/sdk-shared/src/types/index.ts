@@ -11,6 +11,7 @@ export * from './NavigationTypes';
 export * from './CollectionTypes';
 export * from './ConnectorTypes';
 export * from './ActionTypes';
+export * from './DataTypes';
 export * from './FunctionTypes';
 export * from './RealtimeTypes';
 export * from './ComponentTypes';
