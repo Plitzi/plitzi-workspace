@@ -231,6 +231,23 @@
 - **A new project is formatted from the start**, every template and mode: its first `format` changes nothing. The CLI's
   own files are in its `.prettierignore`, so formatting never turns one into a file `upgrade` believes was changed.
 
+## Builder
+
+- **Elements is one category at a time.** A row of chips — each category with its count, and the space's components as
+  one more — picks what the panel shows, remembered between sessions, so the panel stays the same height however many
+  elements plugins add. A search looks through every category and the components at once. Each element is a tile: its
+  icon, its whole name, and what it is on hover. Container, Button, Form, Form Control, Dropdown Popup, List Item, Rich
+  Text, Dialog Container and Tab Container Item have icons of their own (`sdk-elements`), none shared with another
+  element or with the component and snippet icons.
+- **Layers reads as a tree and is driven from the keyboard.** A guide per depth, a chevron that turns, the component's
+  name beside an element that is one, and the selected row kept in view. ↑/↓, Home/End, → to open or go in, ← to close
+  or go up. A row under a closed ancestor is no longer shown. (plitzi-ui's `Tree`.)
+- **Motion and preview no longer share an icon.** Playing the page's motion is a wand, which pulses while it plays;
+  preview is an eye, and a pen to go back to editing.
+- **A component's settings fit their modal.** Each prop is one row — its name, its type, remove — with what a binding
+  writes to read it (`{{ props.<name> }}`) or what is wrong with it beneath; props and slots are titled sections, and
+  a slot shows its id.
+
 ## Packages
 
 - **Every package declares what it imports, and nothing more.** `react` is a peer of `sdk-auth`, `sdk-event-bridge`,

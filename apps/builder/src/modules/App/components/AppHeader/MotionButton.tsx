@@ -23,13 +23,14 @@ const MotionButton = () => {
 
   return (
     <Icon
-      className={clsx('h-5 w-5', motionPlaying && 'text-violet-600 dark:text-violet-400')}
+      className={clsx('h-5 w-5', motionPlaying && 'animate-pulse text-violet-600 dark:text-violet-400')}
       onClick={handleClick}
       title={motionPlaying ? 'Motion: playing — click to hold it still' : 'Motion: still — click to play it'}
       aria-pressed={motionPlaying}
       cursor="pointer"
     >
-      <i className={motionPlaying ? 'fas fa-pause' : 'fas fa-play'} />
+      {/* Its own icon, never play/pause: those are the preview's, and two of them side by side read as one. */}
+      <i className="fa-solid fa-wand-magic-sparkles" />
     </Icon>
   );
 };

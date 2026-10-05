@@ -152,7 +152,8 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       verified: true,
       license: 'MIT',
       website: 'https://plitzi.com',
-      backgroundColor: '#4422ee'
+      backgroundColor: '#4422ee',
+      icon: 'fa-solid fa-i-cursor'
     },
     defaultStyle: {
       name: 'Form Control',

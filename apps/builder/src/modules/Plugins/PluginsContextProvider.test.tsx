@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { use } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -13,8 +13,13 @@ import PluginsContextProvider from './PluginsContextProvider';
 import type { ComponentContextValue, ComponentDefinition, PluginsContextValue } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
 
-// The catalog under test is the elements': the space's components at its foot read a store these tests do not mount.
+// The catalog under test is the elements': the space's components — their chip and their list — read a store these
+// tests do not mount, and a space with none is all they need of it.
 vi.mock('@pmodules/Components', () => ({ default: () => null }));
+vi.mock('@plitzi/sdk-shared/store', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/store')>()),
+  useBuilderStore: () => [{}]
+}));
 
 // Only what the catalog and the stylesheet map read of an installed plugin; the full type describes far more.
 const plugin = (type: string, label: string) =>
@@ -66,6 +71,8 @@ const renderBuilder = () => {
   // Registered the way `add` registers one, into the registry the catalog reads.
   contexts.components?.registerDefinition(installed);
   view.rerender(tree());
+  // The catalog shows one category at a time, and the built-in elements' comes first: the plugins' is opened.
+  fireEvent.click(view.getByRole('tab', { name: /Plugins/ }));
 
   return { ...view, contexts, mutate, deliver };
 };

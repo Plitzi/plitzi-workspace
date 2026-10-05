@@ -98,7 +98,7 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
       license: 'MIT',
       website: 'https://plitzi.com',
       backgroundColor: '#4422ee',
-      icon: 'fa-regular fa-clone'
+      icon: 'fa-regular fa-message'
     },
     defaultStyle: {
       name: 'Dialog Container',

@@ -69,30 +69,45 @@ const PropRow = ({ index, entry, problem, onChange, onRemove }: PropRowProps) =>
   const handleRemove = useCallback(() => onRemove(index), [index, onRemove]);
 
   return (
-    <Flex direction="column" gap={1} className="rounded border border-gray-200 p-2 dark:border-zinc-700">
-      <Flex gap={2} items="end">
-        <Input value={name} label="Name" placeholder="title" onChange={handleName} size="xs" className="grow basis-0" />
-        <Select2 value={prop.type} label="Kind" onChange={handleType} options={TYPES} />
+    <Flex
+      direction="column"
+      gap={2}
+      className="rounded-md border border-gray-200 bg-gray-50/60 p-2.5 dark:border-zinc-700 dark:bg-zinc-800/40"
+    >
+      {/* One line for what identifies the prop: its name flexes, its kind keeps the width its longest label needs. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_9rem_auto] items-end gap-2">
+        <Input value={name} label="Name" placeholder="title" onChange={handleName} size="sm" />
+        <Select2 value={prop.type} label="Kind" onChange={handleType} options={TYPES} size="sm" clearable={false} />
         <Icon
           icon="fas fa-trash-alt"
           onClick={handleRemove}
-          title="Remove"
+          title="Remove this prop"
           size="sm"
           cursor="pointer"
           intent="danger"
+          className="mb-2"
         />
-      </Flex>
-      <Input value={prop.description} label="What it is for" onChange={handleDescription} size="xs" />
+      </div>
+      {name && !problem && (
+        <span className="-mt-1 font-mono text-[11px] text-gray-500 dark:text-zinc-400">{`{{ props.${name} }}`}</span>
+      )}
+      {problem && <span className="-mt-1 text-xs text-red-500">{problem}</span>}
+      <Input
+        value={prop.description}
+        label="What it is for"
+        placeholder="Shown to whoever fills it in"
+        onChange={handleDescription}
+        size="sm"
+      />
       {prop.type === 'select' && (
         <Input
           value={(prop.options ?? []).join(', ')}
           label="Choices, comma separated"
           onChange={handleOptions}
-          size="xs"
+          size="sm"
         />
       )}
       <Checkbox checked={prop.required === true} onChange={handleRequired} label="Required" size="xs" />
-      {problem && <span className="text-xs text-red-500">{problem}</span>}
     </Flex>
   );
 };

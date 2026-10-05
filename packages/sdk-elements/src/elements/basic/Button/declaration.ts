@@ -56,7 +56,7 @@ const declaration = elementDeclaration<ButtonAttributes>()({
       license: 'MIT',
       website: 'https://plitzi.com',
       backgroundColor: '#4422ee',
-      icon: 'fa-solid fa-stop'
+      icon: 'fa-solid fa-hand-pointer'
     },
     defaultStyle: {
       name: 'Button',

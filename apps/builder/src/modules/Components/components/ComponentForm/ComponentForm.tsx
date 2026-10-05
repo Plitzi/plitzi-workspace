@@ -8,6 +8,7 @@ import { propNameProblem } from '@plitzi/sdk-schema/helpers/components';
 
 import PropsEditor from '../PropsEditor';
 import SlotChoice from './SlotChoice';
+import FormSection from '../FormSection';
 
 import type { PropEntry } from '../PropsEditor';
 import type { PageFolder, SpaceComponentDeclaration } from '@plitzi/sdk-shared';
@@ -85,22 +86,23 @@ const ComponentForm = ({ declaration, slotChoices = [], pageFolders = [], onClos
         </Form.Select>
         <PropsEditor value={entries} onChange={setEntries} />
         {slotChoices.length > 0 && (
-          <Flex direction="column" gap={1}>
-            <span className="text-sm font-semibold">Slots — where an instance’s children go</span>
-            {slotChoices.map(choice => (
-              <SlotChoice
-                key={choice.id}
-                id={choice.id}
-                label={choice.label}
-                checked={slots.includes(choice.id)}
-                onToggle={handleToggleSlot}
-              />
-            ))}
-          </Flex>
+          <FormSection title="Slots" hint="Where an instance’s own children go — none, and it takes no children.">
+            <Flex direction="column" gap={1.5}>
+              {slotChoices.map(choice => (
+                <SlotChoice
+                  key={choice.id}
+                  id={choice.id}
+                  label={choice.label}
+                  checked={slots.includes(choice.id)}
+                  onToggle={handleToggleSlot}
+                />
+              ))}
+            </Flex>
+          </FormSection>
         )}
       </Form.Body>
       <Form.Footer justify="end">
-        <Button onClick={onClose} size="sm">
+        <Button onClick={onClose} size="sm" intent="secondary">
           Cancel
         </Button>
         <Button type="submit" size="sm" disabled={invalid}>

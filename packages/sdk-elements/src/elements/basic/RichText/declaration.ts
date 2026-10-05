@@ -48,7 +48,7 @@ const declaration = elementDeclaration<RichTextAttributes>()({
       license: 'MIT',
       website: 'https://plitzi.com',
       backgroundColor: '#4422ee',
-      icon: 'fa-solid fa-align-left'
+      icon: 'fa-solid fa-file-lines'
     },
     defaultStyle: {
       name: 'Rich Text',

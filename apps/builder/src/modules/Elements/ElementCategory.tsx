@@ -1,38 +1,32 @@
-import Heading from '@plitzi/plitzi-ui/Heading';
-import { get } from '@plitzi/plitzi-ui/helpers';
-import { useMemo } from 'react';
-
 import Element from './Element';
+import { categoryDisplay } from './ElementHelper';
 
 import type { ComponentDefinition } from '@plitzi/sdk-shared';
 
 export type ElementCategoryProps = {
-  components?: ComponentDefinition[];
-  category?: string;
+  components: ComponentDefinition[];
+  category: string;
+  /** Said above the grid — when a search lists several categories at once. */
+  titled?: boolean;
 };
 
-const ElementCategory = ({ components, category = '' }: ElementCategoryProps) => {
-  const componentsToRender = useMemo(
-    () => components?.filter(component => get(component, 'builder.canDragDrop', true)),
-    [components]
-  );
-
-  if (componentsToRender?.length === 0) {
-    return undefined;
-  }
+/** The elements of one category, as a compact grid to drag from. */
+const ElementCategory = ({ components, category, titled = false }: ElementCategoryProps) => {
+  const display = categoryDisplay(category);
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="border-t border-gray-200 dark:border-zinc-700" />
-      <Heading as="h6" className="capitalize">
-        {category}
-      </Heading>
-      <div className="flex flex-wrap gap-2">
-        {componentsToRender?.map((component, key) => (
-          <Element key={key} component={component} />
+    <section className="flex flex-col gap-1" aria-label={display.label}>
+      {titled && (
+        <span className="px-1 text-[10px] font-semibold tracking-wide text-gray-400 uppercase dark:text-zinc-500">
+          {display.label}
+        </span>
+      )}
+      <div className="grid grid-cols-3 gap-1">
+        {components.map(component => (
+          <Element key={component.definition.type} component={component} />
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 

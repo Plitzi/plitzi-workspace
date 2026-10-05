@@ -1,6 +1,5 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import Flex from '@plitzi/plitzi-ui/Flex';
-import Heading from '@plitzi/plitzi-ui/Heading';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo } from 'react';
 
@@ -74,10 +73,11 @@ const Components = ({ filter }: ComponentsProps) => {
     : 'No components yet. Make one with New, or from an element: right click → Save as component.';
 
   return (
-    <Flex direction="column" gap={2}>
-      <div className="border-t border-gray-200 dark:border-zinc-700" />
+    <Flex direction="column" gap={1}>
       <Flex items="center" justify="between" gap={2}>
-        <Heading as="h6">Components</Heading>
+        <span className="px-1 text-[10px] font-semibold tracking-wide text-gray-400 uppercase dark:text-zinc-500">
+          Components
+        </span>
         <Button size="xs" title="New component" onClick={handleAdd} iconPlacement="before">
           <Button.Icon icon="fa-solid fa-plus" />
           New
@@ -93,7 +93,7 @@ const Components = ({ filter }: ComponentsProps) => {
             pageFolders={pageFolders}
           />
         ))}
-        {listed.length === 0 && <span className="text-sm text-gray-500 dark:text-zinc-400">{emptyMessage}</span>}
+        {listed.length === 0 && <span className="px-1 text-xs text-gray-500 dark:text-zinc-400">{emptyMessage}</span>}
       </Flex>
     </Flex>
   );

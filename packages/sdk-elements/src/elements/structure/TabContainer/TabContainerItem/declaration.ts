@@ -43,7 +43,7 @@ const declaration = elementDeclaration<TabContainerItemAttributes>()({
       license: 'MIT',
       website: 'https://plitzi.com',
       backgroundColor: '#4422ee',
-      icon: 'fa-solid fa-table-columns'
+      icon: 'fa-regular fa-folder'
     },
     defaultStyle: {
       name: 'Tab Container Item',

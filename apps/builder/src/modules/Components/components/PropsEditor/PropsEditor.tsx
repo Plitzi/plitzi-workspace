@@ -1,10 +1,10 @@
 import Button from '@plitzi/plitzi-ui/Button';
-import Flex from '@plitzi/plitzi-ui/Flex';
 import { useCallback } from 'react';
 
 import { propNameProblem } from '@plitzi/sdk-schema/helpers/components';
 
 import PropRow from './PropRow';
+import FormSection from '../FormSection';
 
 import type { PropEntry } from './PropRow';
 
@@ -43,8 +43,17 @@ const PropsEditor = ({ value, onChange }: PropsEditorProps) => {
   );
 
   return (
-    <Flex direction="column" gap={2}>
-      <span className="text-sm font-semibold">Props</span>
+    <FormSection
+      title="Props"
+      hint={
+        <>
+          What an instance hands in, read inside the component as <code>{'{{ props.<name> }}'}</code>.
+        </>
+      }
+    >
+      {value.length === 0 && (
+        <span className="text-xs text-gray-500 dark:text-zinc-400">None: every instance renders the same.</span>
+      )}
       {value.map((entry, index) => (
         <PropRow
           key={index}
@@ -55,11 +64,11 @@ const PropsEditor = ({ value, onChange }: PropsEditorProps) => {
           onRemove={handleRemove}
         />
       ))}
-      <Button size="xs" onClick={handleAdd} iconPlacement="before">
+      <Button size="xs" intent="secondary" onClick={handleAdd} iconPlacement="before" className="self-start">
         <Button.Icon icon="fa-solid fa-plus" />
         Add prop
       </Button>
-    </Flex>
+    </FormSection>
   );
 };
 

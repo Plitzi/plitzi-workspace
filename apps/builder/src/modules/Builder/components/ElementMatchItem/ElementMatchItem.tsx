@@ -47,7 +47,7 @@ const ElementMatchItem = ({ match, rootLabel, active = false, onSelect, onHover 
       <i
         className={clsx(
           'w-3 shrink-0 text-center text-[10px] opacity-70',
-          get(componentDefinitions.current, `${match.type}.market.icon`, 'fa-regular fa-square')
+          get(componentDefinitions.current, `${match.type}.market.icon`, 'fa-solid fa-shapes')
         )}
       />
       <span className="min-w-0 grow basis-0 truncate text-xs">

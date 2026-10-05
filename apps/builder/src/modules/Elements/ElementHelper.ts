@@ -1,4 +1,4 @@
-import { set, pick, cloneDeep } from '@plitzi/plitzi-ui/helpers';
+import { set, pick, cloneDeep, get } from '@plitzi/plitzi-ui/helpers';
 
 import { documentIds } from '@plitzi/sdk-schema/helpers/components';
 import { randomElementId } from '@plitzi/sdk-schema/helpers/elementId';
@@ -65,25 +65,72 @@ export const getInitialItems = (
   return { directItems, items: result };
 };
 
-/** The catalog as the elements panel lists it: every definition whose label matches `filter`, grouped by category. */
+/** The categories in the order the panel lists them: what a page is made of first, the escape hatches last. */
+const CATEGORY_ORDER = ['basic', 'structure', 'form', 'media', 'provider'];
+const LAST_CATEGORY = 'advanced';
+
+/** How each known category is shown: a name and an icon. A plugin's own category reads as it is written. */
+const CATEGORY_DISPLAY: Readonly<Partial<Record<string, { label: string; icon: string }>>> = {
+  basic: { label: 'Basic', icon: 'fa-solid fa-font' },
+  structure: { label: 'Structure', icon: 'fa-solid fa-table-cells-large' },
+  form: { label: 'Form', icon: 'fa-solid fa-rectangle-list' },
+  media: { label: 'Media', icon: 'fa-solid fa-photo-film' },
+  provider: { label: 'Data', icon: 'fa-solid fa-plug' },
+  advanced: { label: 'Advanced', icon: 'fa-solid fa-code' }
+};
+
+/** How a category is shown: its name and icon — a plugin's own category by the name it gave. */
+export const categoryDisplay = (category: string): { label: string; icon: string } =>
+  CATEGORY_DISPLAY[category] ?? { label: category, icon: 'fa-solid fa-puzzle-piece' };
+
+const rankOf = (category: string): number => {
+  if (category === LAST_CATEGORY) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+
+  const known = CATEGORY_ORDER.indexOf(category);
+
+  return known === -1 ? CATEGORY_ORDER.length : known;
+};
+
+/** A definition's description, cut to its first sentence: what the panel says of it on hover. */
+export const summaryOf = (definition: ComponentDefinition): string => {
+  // Declared with the element (what authoring and the MCP describe it by), though the schema's type does not name it.
+  const declared = definition.definition;
+  const description = 'description' in declared && typeof declared.description === 'string' ? declared.description : '';
+  const end = description.search(/[.:](\s|$)/);
+
+  return end === -1 ? description : description.slice(0, end + 1);
+};
+
+/**
+ * The catalog as the elements panel lists it: every definition an author can drag in whose label or type matches
+ * `filter`, grouped by category — the categories in the panel's order, the elements in each by their label.
+ */
 export const definitionsByCategory = (
   definitions: Record<string, ComponentDefinition>,
   filter: string
-): Record<string, ComponentDefinition[]> => {
-  const needle = filter.toLowerCase();
-  const byCategory: Record<string, ComponentDefinition[]> = {};
+): [string, ComponentDefinition[]][] => {
+  const needle = filter.trim().toLowerCase();
+  const byCategory = new Map<string, ComponentDefinition[]>();
   for (const definition of Object.values(definitions)) {
-    if (!definition.definition.label.toLowerCase().includes(needle)) {
+    const { label, type } = definition.definition;
+    if (!get(definition, 'builder.canDragDrop', true)) {
+      continue;
+    }
+
+    if (needle && !label.toLowerCase().includes(needle) && !type.toLowerCase().includes(needle)) {
       continue;
     }
 
     const { category } = definition.market;
-    if (!(byCategory[category] as ComponentDefinition[] | undefined)) {
-      byCategory[category] = [];
-    }
-
-    byCategory[category].push(definition);
+    byCategory.set(category, [...(byCategory.get(category) ?? []), definition]);
   }
 
-  return byCategory;
+  return [...byCategory]
+    .map(([category, list]): [string, ComponentDefinition[]] => [
+      category,
+      [...list].sort((a, b) => a.definition.label.localeCompare(b.definition.label))
+    ])
+    .sort(([a], [b]) => rankOf(a) - rankOf(b) || a.localeCompare(b));
 };

@@ -86,7 +86,8 @@ const declaration = elementDeclaration<FormAttributes>()({
       verified: true,
       license: 'MIT',
       website: 'https://plitzi.com',
-      backgroundColor: '#4422ee'
+      backgroundColor: '#4422ee',
+      icon: 'fa-solid fa-rectangle-list'
     },
     defaultStyle: {
       name: 'Form',

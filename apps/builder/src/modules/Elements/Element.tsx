@@ -1,7 +1,7 @@
 import Icon from '@plitzi/plitzi-ui/Icon';
 import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo';
-import Text from '@plitzi/plitzi-ui/Text';
 
+import { summaryOf } from './ElementHelper';
 import useDragElement from './hooks/useDragElement';
 
 import type { ComponentDefinition } from '@plitzi/sdk-shared';
@@ -10,21 +10,27 @@ export type ElementProps = {
   component: ComponentDefinition;
 };
 
-const Element = ({
-  component: {
+/** One element of the catalog, dragged onto the canvas or into Layers: its icon, its whole name, what it is on hover. */
+const Element = ({ component }: ElementProps) => {
+  const {
     market: { icon },
     definition: { label, type }
-  }
-}: ElementProps) => {
+  } = component;
   const { onDragStart } = useDragElement({ type });
+  const summary = summaryOf(component);
 
   return (
-    <div className="flex cursor-grabbing flex-col items-center gap-2" draggable onDragStart={onDragStart} title={label}>
-      <div className="flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg border border-gray-300 bg-white p-1.5 dark:border-zinc-600 dark:bg-zinc-800">
+    <div
+      className="group flex cursor-grab flex-col items-center gap-1.5 rounded-lg border border-transparent px-1 py-2 text-center transition-colors hover:border-gray-200 hover:bg-gray-50 active:cursor-grabbing dark:hover:border-zinc-700 dark:hover:bg-zinc-800/70"
+      draggable
+      onDragStart={onDragStart}
+      title={summary ? `${label} — ${summary}` : label}
+    >
+      <div className="group-hover:bg-primary-50 group-hover:text-primary-600 dark:group-hover:bg-primary-400/15 dark:group-hover:text-primary-300 flex size-9 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-600 transition-colors dark:bg-zinc-800 dark:text-zinc-300">
         {icon && typeof icon === 'string' && !icon.startsWith('http') && <Icon intent="custom" icon={icon} />}
         {icon && typeof icon === 'string' && icon.startsWith('http') && (
           <Icon intent="custom">
-            <img src={icon} draggable={false} />
+            <img src={icon} draggable={false} alt="" />
           </Icon>
         )}
         {icon && typeof icon !== 'string' && <Icon intent="custom">{icon}</Icon>}
@@ -34,11 +40,9 @@ const Element = ({
           </Icon>
         )}
       </div>
-      <div className="flex w-20 items-center justify-center overflow-hidden text-center">
-        <Text isTruncated size="xs">
-          {label}
-        </Text>
-      </div>
+      <span className="line-clamp-2 w-full text-[11px] leading-tight break-words text-gray-700 dark:text-zinc-300">
+        {label}
+      </span>
     </div>
   );
 };

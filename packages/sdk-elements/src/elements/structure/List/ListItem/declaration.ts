@@ -41,7 +41,7 @@ const declaration = elementDeclaration<ListItemAttributes>()({
       license: 'MIT',
       website: 'https://plitzi.com',
       backgroundColor: '#4422ee',
-      icon: 'fa-solid fa-list'
+      icon: 'fa-solid fa-grip-lines'
     },
     defaultStyle: {
       name: 'List Item',

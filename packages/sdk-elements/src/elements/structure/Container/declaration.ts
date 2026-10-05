@@ -88,7 +88,7 @@ const declaration = elementDeclaration<ContainerAttributes>()({
       license: 'MIT',
       website: 'https://plitzi.com',
       backgroundColor: '#4422ee',
-      icon: 'fa-regular fa-square'
+      icon: 'fa-solid fa-crop-simple'
     },
     defaultStyle: {
       name: 'Container',

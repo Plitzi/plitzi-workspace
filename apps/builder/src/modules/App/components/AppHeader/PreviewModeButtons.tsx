@@ -27,7 +27,7 @@ const PreviewModeButtons = () => {
         className="text-green-500"
       />
       <IconGroup.Icon
-        icon={previewMode ? 'fa-solid fa-pause' : 'fa-solid fa-play'}
+        icon={previewMode ? 'fa-solid fa-pen' : 'fa-solid fa-eye'}
         title={previewTitle}
         cursor="pointer"
         onClick={handleClickPreviewMode}

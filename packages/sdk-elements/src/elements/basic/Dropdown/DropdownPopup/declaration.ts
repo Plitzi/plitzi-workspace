@@ -39,7 +39,7 @@ const declaration = elementDeclaration<DropdownPopupAttributes>()({
       license: 'MIT',
       website: 'https://plitzi.com',
       backgroundColor: '#4422ee',
-      icon: ''
+      icon: 'fa-regular fa-window-restore'
     },
     defaultStyle: {
       name: 'Dropdown Popup',
