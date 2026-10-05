@@ -9,7 +9,7 @@ import addPlugin from './addPlugin';
 import createPlugin from './createPlugin';
 import { coveredByWorkspace, findProject } from './existingProject';
 import packPluginCommand from './packPlugin';
-import { projectDeclarations, scaffold } from '../scaffold';
+import { scaffold } from '../scaffold';
 
 import type { CreateAnswers } from '../scaffold';
 
@@ -207,16 +207,11 @@ describe('plitzi add plugin', () => {
           expect(await exists(path.join(dir, 'src/plugins', folder, file)), `${folder}/${file}`).toBe(true);
         }
       }
-
-      expect(await fs.readFile(path.join(dir, 'src/plugins/declarations.ts'), 'utf-8')).toBe(
-        projectDeclarations(['SeatPicker', 'Legend', 'PriceTag'])
-      );
     });
 
     expect(process.exitCode).toBeUndefined();
-    expect(output()).toContain('Registered: src/main.ts finds every folder of src/plugins.');
+    expect(output()).toContain('Registered and declared: the project finds every folder of src/plugins');
     expect(output()).toContain("custom({ id: 'legend', renderType: 'legend' })");
-    expect(output()).toContain('Declared in src/plugins/declarations.ts');
   });
 
   it('says with --dry-run what it would write — the element, its server half, the list — and writes nothing', async () => {
@@ -224,35 +219,16 @@ describe('plitzi add plugin', () => {
     const output = captureOutput();
     await inTemp(async dir => {
       await cliProject(dir);
-      const before = await fs.readFile(path.join(dir, 'src/plugins/declarations.ts'), 'utf-8');
 
       await from(dir, () => addPlugin(['board'], { server: true, dryRun: true }));
 
       expect(await exists(path.join(dir, 'src/plugins/Board'))).toBe(false);
-      expect(await fs.readFile(path.join(dir, 'src/plugins/declarations.ts'), 'utf-8')).toBe(before);
     });
 
     expect(process.exitCode).toBeUndefined();
     expect(output()).toContain('+ src/plugins/Board/Board.tsx');
+    expect(output()).toContain('+ src/plugins/Board/declaration.ts');
     expect(output()).toContain('+ src/plugins/Board/functions/index.ts');
-    expect(output()).toContain('~ src/plugins/declarations.ts');
-  });
-
-  it('leaves a declarations list somebody changed to them, and says what to add', async () => {
-    captureErrors();
-    const output = captureOutput();
-    await inTemp(async dir => {
-      await cliProject(dir);
-      const changed = `${projectDeclarations([])}// mine\n`;
-      await write(path.join(dir, 'src/plugins/declarations.ts'), changed);
-
-      await from(dir, () => addPlugin(['seat-picker'], {}));
-
-      expect(await fs.readFile(path.join(dir, 'src/plugins/declarations.ts'), 'utf-8')).toBe(changed);
-    });
-
-    expect(output()).toContain('src/plugins/declarations.ts is missing or not the list the CLI wrote');
-    expect(output()).toContain('SeatPicker/declaration.ts');
   });
 
   it('sends a project whose space lives in Plitzi to the builder to place it', async () => {
@@ -265,24 +241,6 @@ describe('plitzi add plugin', () => {
 
     expect(output()).toContain('In the builder, add a Custom element with the render type "seatPicker"');
     expect(output()).not.toContain('src/space.ts');
-  });
-
-  it('tells a project from before plugins were found by folder the line its list needs', async () => {
-    captureErrors();
-    const output = captureOutput();
-    await inTemp(async dir => {
-      await cliProject(dir);
-      await write(
-        path.join(dir, 'src/main.ts'),
-        "const plugins = { statCard: { js: path.resolve(PROJECT_ROOT, 'src/plugins/StatCard/index.ts'), action: 'compile' as const } };"
-      );
-
-      await from(dir, () => addPlugin(['seat-picker'], {}));
-
-      expect(await exists(path.join(dir, 'src/plugins/SeatPicker/index.ts'))).toBe(true);
-    });
-
-    expect(output()).toContain("seatPicker: { js: path.resolve(PROJECT_ROOT, 'src/plugins/SeatPicker/index.ts')");
   });
 
   it('adds to a plugin package, and lists the element where the package publishes its elements', async () => {
@@ -411,12 +369,7 @@ describe('plitzi add plugin', () => {
       await from(dir, () => addPlugin(['button'], {}));
       await from(dir, () => addPlugin(['legend', 'price-tag'], { title: 'Key' }));
 
-      expect(await fs.readdir(path.join(dir, 'src/plugins'))).toEqual([
-        'README.md',
-        'StatCard',
-        'assets.d.ts',
-        'declarations.ts'
-      ]);
+      expect(await fs.readdir(path.join(dir, 'src/plugins'))).toEqual(['StatCard']);
     });
 
     expect(errors()).toContain('would both be "seatPicker"');

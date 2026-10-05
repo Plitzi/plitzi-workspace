@@ -2,7 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { fail } from './terminal';
-import { declarationsRegistry, elementsRegistry, projectDeclarations } from '../scaffold';
+import { declarationsRegistry, elementsRegistry } from '../scaffold';
+import { MAIN_FILE } from '../scaffold/paths';
 
 import type { PackageManager } from '../scaffold';
 
@@ -32,16 +33,6 @@ export interface PlitziProject {
   mode: 'server' | 'client';
   /** Whether the space is `src/space.ts` (`local`) or lives in Plitzi and is edited in the builder (`cloud`). */
   source: 'local' | 'cloud';
-  /**
-   * Whether its entry point registers every folder of `src/plugins` by itself. A project from before that lists its
-   * plugins in `src/main.ts`, and a new one has to be added to that list.
-   */
-  discovers: boolean;
-  /**
-   * The plugins listed in `src/plugins/declarations.ts`, which the space is authored with — or `undefined` when the
-   * project has no such list, or it is no longer the one the CLI wrote and so is not the CLI's to rewrite.
-   */
-  declared?: string[];
 }
 
 /** A package `plitzi create --plugin` wrote. */
@@ -190,29 +181,11 @@ const packageComponents = async (root: string): Promise<string[] | undefined> =>
 };
 
 /**
- * A project's declared plugins, read off `src/plugins/declarations.ts` — and trusted only when writing them back out
- * gives the file byte for byte, as with a plugin package's lists.
- */
-const projectDeclared = async (root: string): Promise<string[] | undefined> => {
-  const listed = await readText(path.join(root, 'src/plugins/declarations.ts'));
-  if (listed === undefined) {
-    return undefined;
-  }
-
-  const components = [...listed.matchAll(/^import \w+ from '\.\/(\w+)\/declaration\.ts';$/gm)].map(
-    ([, folder]) => folder
-  );
-
-  return projectDeclarations(components) === listed ? components : undefined;
-};
-
-/**
  * What `plitzi create` wrote, if it did — told by what the project depends on and the files it keeps, never by its
  * name.
  *
  * - A plugin package publishes the SDK as a peer and keeps its elements' lists in `src/`.
- * - A project renders a space: the SDK is a dependency and `src/main.ts` registers the project's plugins — by folder
- *   in a project written since that was how, by a list written in the file before then.
+ * - A project renders a space: the SDK is a dependency, and the CLI's entry point is `src/main.ts`.
  */
 const plitziProject = async (
   root: string,
@@ -223,8 +196,7 @@ const plitziProject = async (
   }
 
   const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
-  const main = await readText(path.join(root, 'src/main.ts'));
-  if (!('@plitzi/plitzi-sdk' in dependencies) || main === undefined || !/src\/plugins|\.\/plugins\//.test(main)) {
+  if (!('@plitzi/plitzi-sdk' in dependencies) || !(await exists(path.join(root, MAIN_FILE)))) {
     return undefined;
   }
 
@@ -233,11 +205,7 @@ const plitziProject = async (
   return {
     kind: 'project',
     mode: server ? 'server' : 'client',
-    source: (await exists(path.join(root, 'src/space.ts'))) ? 'local' : 'cloud',
-    discovers: server
-      ? main.includes('readdirSync(PLUGINS_DIR')
-      : main.includes('import.meta.glob<{ default: RenderPlugins[string]'),
-    declared: await projectDeclared(root)
+    source: (await exists(path.join(root, 'src/space.ts'))) ? 'local' : 'cloud'
   };
 };
 

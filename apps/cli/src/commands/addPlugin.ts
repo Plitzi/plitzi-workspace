@@ -16,7 +16,6 @@ import {
   pluginFunctionsFile,
   pluginNameProblem,
   pluginNames,
-  projectDeclarations,
   scaffoldElement,
   SDK_VERSION,
   shapeFromFlags
@@ -33,8 +32,7 @@ import type { PluginNames, ShapeFlags } from '../scaffold';
  *
  * Where it goes and what registering it takes depends on what the project is, and each case is answered as itself:
  *
- * - a project `plitzi create` wrote finds every folder of `src/plugins` by itself;
- * - one written before that lists its plugins in `src/main.ts`, and is told the line to add;
+ * - a project `plitzi create` wrote finds every folder of `src/plugins` by itself — the component and its declaration;
  * - a plugin package gets the element in `src/` and in the two lists it publishes its elements from;
  * - any other project is asked where its components live, and told how to register the element.
  */
@@ -204,21 +202,6 @@ const registration = (added: { names: PluginNames; target: string }[]): string =
   ].join('\n');
 };
 
-/** The lines a project from before plugins were found by folder adds to the list in its `src/main.ts`. */
-const mainEntries = (project: PlitziProject, added: PluginNames[]): string =>
-  project.mode === 'server'
-    ? added
-        .map(
-          names =>
-            `  ${names.type}: { js: path.resolve(PROJECT_ROOT, 'src/plugins/${names.component}/index.ts'), action: 'compile' as const, version: '1.0.0' },`
-        )
-        .join('\n')
-    : [
-        ...added.map(names => `import ${names.component} from './plugins/${names.component}';`),
-        '',
-        ...added.map(names => `  ${names.type}: { component: ${names.component} },`)
-      ].join('\n');
-
 /** How to put the elements on a page, in the project they were added to. */
 const placement = (project: PlitziProject, added: PluginNames[]): string => {
   if (project.source === 'cloud') {
@@ -258,37 +241,6 @@ const listInPackage = async (root: string, components: string[] | undefined, add
       `Look at ${several ? 'them' : 'it'} in the preview with ${added
         .map(names => `element('${names.type}', { id: '${names.base}' })`)
         .join(', ')} in preview/space.ts.`
-  );
-};
-
-/**
- * A project's `src/plugins/declarations.ts`, extended with what was added — so the space is checked against the new
- * plugins' events, actions and attributes from its next authoring on. A list somebody changed is theirs to extend.
- */
-const declareInProject = async (project: PlitziProject, root: string, added: PluginNames[]): Promise<void> => {
-  if (project.source !== 'local') {
-    return;
-  }
-
-  const { declared } = project;
-  if (!declared) {
-    console.log(
-      chalk.yellow(
-        '\nsrc/plugins/declarations.ts is missing or not the list the CLI wrote, so it is yours to change: import ' +
-          `${added.map(names => `${names.component}/declaration.ts`).join(', ')} there and add ${added.length > 1 ? 'them' : 'it'} to ` +
-          '`declarations` — what `authorSpace(space, { plugins: declarations })` checks the space against.'
-      )
-    );
-
-    return;
-  }
-
-  await writeFiles(root, {
-    'src/plugins/declarations.ts': projectDeclarations([...declared, ...added.map(names => names.component)])
-  });
-  console.log(
-    `\nDeclared in src/plugins/declarations.ts: flows on ${added.length > 1 ? 'their' : 'its'} events and the attributes written on ` +
-      `${added.length > 1 ? 'them' : 'it'} are checked when the space is authored.`
   );
 };
 
@@ -435,12 +387,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
 
     if (options.dryRun) {
       const { plitzi } = project;
-      const lists =
-        plitzi?.kind === 'plugin' && plitzi.components
-          ? ['src/elements.ts', 'src/declarations.ts']
-          : plitzi?.kind === 'project' && plitzi.source === 'local' && plitzi.declared
-            ? ['src/plugins/declarations.ts']
-            : [];
+      const lists = plitzi?.kind === 'plugin' && plitzi.components ? ['src/elements.ts', 'src/declarations.ts'] : [];
       sayDryRun(`plitzi add plugin ${names.join(' ')}`, [
         ...(await filesWouldWrite(project.root, [...wouldWrite, ...lists])),
         ...(options.server && plitzi?.kind === 'plugin'
@@ -469,13 +416,9 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
     const { plitzi } = project;
     if (plitzi?.kind === 'plugin') {
       await listInPackage(project.root, plitzi.components, addedNames);
-    } else if (plitzi?.kind === 'project' && plitzi.discovers) {
-      console.log(`\nRegistered: src/main.ts finds every folder of src/plugins. ${placement(plitzi, addedNames)}`);
-      await declareInProject(plitzi, project.root, addedNames);
     } else if (plitzi?.kind === 'project') {
       console.log(
-        '\nThis project lists its plugins in src/main.ts (projects created since find them by folder). Add to its ' +
-          `\`plugins\`:\n\n${chalk.dim(mainEntries(plitzi, addedNames))}\n\n${placement(plitzi, addedNames)}`
+        `\nRegistered and declared: the project finds every folder of src/plugins, its declaration.ts with it. ${placement(plitzi, addedNames)}`
       );
     } else {
       await registerElsewhere(project.root, added);

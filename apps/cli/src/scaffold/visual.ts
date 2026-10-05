@@ -56,8 +56,8 @@ export default defineConfig({
 const authoredSpec = (): string => `import { expect, test } from '@playwright/test';
 
 import { authorSpace, inspectPage, openPage } from '@plitzi/sdk-authoring';
+import { pluginDeclarations } from '@plitzi/sdk-authoring/node';
 
-import { declarations } from '../src/plugins/declarations.ts';
 import { space } from '../src/space.ts';
 
 /**
@@ -72,7 +72,9 @@ import { space } from '../src/space.ts';
  * left to tests of its own: a page behind a session or with a route param (\`post/{{slug}}\`). What shows only under a
  * condition, renders once per list row or has no box of its own, \`inspectPage\` sets aside by itself.
  */
-const { handles } = authorSpace(space, { plugins: declarations });
+const { handles } = authorSpace(space, {
+  plugins: await pluginDeclarations(new URL('../src/plugins/', import.meta.url))
+});
 
 const openable = Object.values(handles.pages).filter(
   pageHandle => pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0

@@ -211,7 +211,7 @@ describe('the scaffold', () => {
 
     expect(files['src/plugins/StatCard/StatCard.tsx']).toContain('export interface StatCardProps');
     expect(files['src/plugins/StatCard/index.ts']).toContain('export default StatCard');
-    expect(files['src/plugins/README.md']).toContain('renderType');
+    expect(files['plitzi/README.md']).toContain('renderType');
     // The element that renders it, and the attributes that reach the component as props.
     expect(files['src/space.ts']).toContain("renderType: 'statCard'");
     expect(files['src/space.ts']).toContain("label: 'Requests today'");
@@ -343,7 +343,7 @@ describe('the scaffold', () => {
       };
       const { compilerOptions } = JSON.parse(files['tsconfig.json']) as { compilerOptions: Record<string, unknown> };
 
-      expect(scripts.author).toBe('node src/author.ts');
+      expect(scripts.author).toBe('node plitzi/author.ts');
       expect(devDependencies.tsx).toBeUndefined();
       expect(engines.node).toBe('>=22.18');
       expect(compilerOptions).toMatchObject({
@@ -351,7 +351,7 @@ describe('the scaffold', () => {
         verbatimModuleSyntax: true,
         erasableSyntaxOnly: true
       });
-      expect(files['src/author.ts']).toContain("from './space.ts'");
+      expect(files['plitzi/author.ts']).toContain("from '../src/space.ts'");
     }
 
     const server = JSON.parse(scaffold(answers({ mode: 'server' }))['package.json']) as {
@@ -437,12 +437,10 @@ describe('the scaffold', () => {
       expect(files[mode === 'server' ? 'src/data/.gitkeep' : 'public/data/.gitkeep']).toBe('');
       expect(files[mode === 'server' ? 'public/data/.gitkeep' : 'src/data/.gitkeep']).toBeUndefined();
       expect(files['public/data/stats.json']).toBeUndefined();
-      expect(Object.keys(files).filter(file => file.startsWith('src/plugins/'))).toEqual([
-        // What a server-mode project's plugins import besides code: a client-mode one has `vite/client`.
-        ...(mode === 'server' ? ['src/plugins/assets.d.ts'] : []),
-        'src/plugins/README.md',
-        'src/plugins/declarations.ts'
-      ]);
+      // The folder, kept for `add plugin` and the server; what it is, `plitzi/README.md` says.
+      expect(Object.keys(files).filter(file => file.startsWith('src/plugins/'))).toEqual(['src/plugins/.gitkeep']);
+      // What a server-mode project's plugins import besides code: a client-mode one has `vite/client`.
+      expect(Object.keys(files).includes('plitzi/assets.d.ts')).toBe(mode === 'server');
     }
   });
 
@@ -455,7 +453,7 @@ describe('the scaffold', () => {
       expect(files['src/site/pages/product.ts']).toContain("slug: 'products/:slug'");
       const data = mode === 'server' ? 'src/data/products.json' : 'public/data/products.json';
       expect(JSON.parse(files[data])).toHaveProperty('products');
-      expect(files['src/author.ts']).toContain("from './space.ts'");
+      expect(files['plitzi/author.ts']).toContain("from '../src/space.ts'");
       expect(Object.keys(files).filter(file => file.startsWith('src/plugins/StatCard'))).toEqual([]);
     }
   });
@@ -477,7 +475,7 @@ describe('the scaffold', () => {
     expect(files['.claude/skills/plitzi-authoring/SKILL.md']).toMatch(
       /^name: plitzi-authoring\nversion: \d+\.\d+\.\d+$/m
     );
-    expect(files['src/author.ts']).toContain('npx plitzi upgrade');
+    expect(files['plitzi/author.ts']).toContain('npx plitzi upgrade');
     // The references the skill links to travel with it, or every link in it points at nothing.
     expect(files['.claude/skills/plitzi-authoring/reference/layouts.md']).toContain('activeOn');
     expect(files['.claude/skills/plitzi-authoring/reference/review-checklist.md']).toBeDefined();
@@ -522,6 +520,8 @@ describe('plitzi create', () => {
         'eslint.config.mjs',
         'package.json',
         'playwright.config.ts',
+        // The CLI's part: the entry point, the author script, the types plugins import, and what src/ holds.
+        'plitzi',
         'public',
         'src',
         'tsconfig.build.json',
@@ -530,11 +530,11 @@ describe('plitzi create', () => {
       ]);
       expect((await fs.readdir(path.join(target, 'src'))).sort()).toEqual([
         'actions.ts',
-        'author.ts',
         // The project's own data, read by its server and never served.
         'data',
         // The project's own server code, there from the start so `start:dev` can watch it.
         'functions',
+        // The entry point: the CLI's, in src/ where an entry point is looked for.
         'main.ts',
         'plugins',
         'serverOptions.ts',
@@ -558,7 +558,7 @@ describe('plitzi create', () => {
 
       const out = said.join('\n');
       expect(out).toContain('+ src/main.ts');
-      expect(out).toContain('+ src/functions/README.md');
+      expect(out).toContain('+ plitzi/README.md');
       expect(out).toContain('+ .claude/skills/plitzi-authoring/');
       expect(out).toContain('run npm install');
       await expect(fs.access(target)).rejects.toThrow();

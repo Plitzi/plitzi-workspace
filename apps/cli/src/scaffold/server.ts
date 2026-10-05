@@ -1,4 +1,14 @@
-import { DATA_DIR, DEV_SERVER_FILE, DEV_SPACE_FILE, FUNCTIONS_DIR, KV_FILE, PROJECT_TMP } from './paths';
+import {
+  AUTHOR_FILE,
+  CLI_DIR,
+  DATA_DIR,
+  DEV_SERVER_FILE,
+  DEV_SPACE_FILE,
+  FUNCTIONS_DIR,
+  KV_FILE,
+  MAIN_FILE,
+  PROJECT_TMP
+} from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -18,7 +28,7 @@ export const PLUGINS = `/**
  * \`action: 'compile'\` is what makes them SERVER-rendered. The server builds the entry with esbuild, keeps React
  * external so the plugin runs on the one copy this page already has, serves the bundle to the browser AND imports
  * it into the render — so the component's markup is in the HTML before any JavaScript arrives. See
- * \`src/plugins/README.md\`.
+ * \`${CLI_DIR}/README.md\`.
  */
 // From the project root, so the path holds whether this file runs as \`src/main.ts\` or compiled as \`dist/main.js\`.
 const PROJECT_ROOT = path.resolve(import.meta.dirname, '..');
@@ -165,7 +175,7 @@ console.log(\`pages on http://127.0.0.1:\${PORT}/\`);`;
  * plugins only a build of came across, and the visitors it signed in on Plitzi.
  */
 export type SpaceExtras = {
-  /** The runtime's module, from `src/main.ts`, when its source came across. */
+  /** The runtime's module, as `src/main.ts` imports it, when its source came across. */
   runtimeEntry?: string;
   /** Its packed build, when only that did. */
   packedRuntime: boolean;
@@ -304,11 +314,11 @@ const LOCAL_AUTHORING = (builtPlugins: boolean): string => `/**
  * \`authorSpace\` turns the declaration in \`src/space.ts\` into the two documents a renderer wants, at boot — and its
  * warnings are printed here, where somebody editing the space is watching.
  */
-// \`declarations\`: what the project's plugins fire, answer and read, so the space's use of them is checked too.
+// The declarations of the project's plugins — each folder's \`declaration.ts\` — so the space's use of them is checked.
 // \`serverData\` and \`data\`: the files a provider reads — the project's own and \`public/\` — so a binding onto a path
 // one of them does not have is warned.
 const { schema, style, warnings } = authorSpace(space, {
-  plugins: declarations,${builtPlugins ? '\n  pluginTypes: builtTypes,' : ''}
+  plugins: await pluginDeclarations(PLUGINS_DIR),${builtPlugins ? '\n  pluginTypes: builtTypes,' : ''}
   serverData: projectData(path.join(PROJECT_ROOT, '${DATA_DIR}')),
   data: publicData(path.join(PROJECT_ROOT, 'public'))
 });
@@ -391,7 +401,7 @@ const CLOSE = (runtime: boolean): string => `/**
 closeOnSignals(server${runtime ? ', { afterClose: () => runtime.close() }' : ''});`;
 
 const WATCH_SPACE = `/**
- * A save to the space, while developing: re-authored by \`src/author.ts\` in a process of its own — the only way to
+ * A save to the space, while developing: re-authored by \`${AUTHOR_FILE}\` in a process of its own — the only way to
  * read every file of it again, which an import never does twice — and every open page loads again once it wrote the
  * new documents. What it refuses is printed and the page keeps the last space that authored. A change to the server's
  * own code — this file, the server options, the actions, its functions — restarts the server instead (\`start:dev\` watches those),
@@ -402,7 +412,7 @@ const RESTARTS = ['main.ts', 'serverOptions.ts', 'actions.ts'];
 const authored = (file: string): boolean =>
   !RESTARTS.includes(file) &&
   !/^(actions|connectors|functions)[\\\\/]/.test(file) &&
-  (!file.startsWith(\`plugins\${path.sep}\`) || ['declaration.ts', 'declarations.ts'].includes(path.basename(file)));
+  (!file.startsWith(\`plugins\${path.sep}\`) || path.basename(file) === 'declaration.ts');
 const watchSpace = (): void => {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let authoring = false;
@@ -415,7 +425,7 @@ const watchSpace = (): void => {
     }
 
     authoring = true;
-    const child = spawn(process.execPath, [path.join(PROJECT_ROOT, 'src/author.ts'), '--out', OFFLINE_DATA], {
+    const child = spawn(process.execPath, [path.join(PROJECT_ROOT, '${AUTHOR_FILE}'), '--out', OFFLINE_DATA], {
       cwd: PROJECT_ROOT,
       stdio: 'inherit'
     });
@@ -483,7 +493,6 @@ export const serverMain = ({ source, name, fromSpace }: ServerMainOptions): stri
   const runtimeNames = [...(fromSpace?.packedRuntime ? ['loadRuntime'] : []), ...(runtime ? ['serveRuntime'] : [])];
   const ownImports = [
     ...(actions ? [namedImport(fromSpace ? ['actions', 'connectors'] : ['actions'], './actions.ts')] : []),
-    ...(local ? [namedImport(['declarations'], './plugins/declarations.ts')] : []),
     ...(fromSpace?.runtimeEntry ? [`import spaceRuntime from '${fromSpace.runtimeEntry}';`] : []),
     namedImport(['serverOptions'], './serverOptions.ts'),
     ...(local ? [namedImport(['space'], './space.ts')] : [])
@@ -537,7 +546,7 @@ import path from 'node:path';
 
 ${namedImport(serverNames, '@plitzi/sdk-server')}
 import { createFileKv } from '@plitzi/sdk-server/actions';
-${runtime ? `${namedImport(runtimeNames, '@plitzi/sdk-server/runtime')}\n` : ''}${local ? `\n${namedImport(['authorSpace'], '@plitzi/sdk-authoring')}\n${namedImport(['projectData', 'publicData'], '@plitzi/sdk-authoring/node')}\n` : ''}
+${runtime ? `${namedImport(runtimeNames, '@plitzi/sdk-server/runtime')}\n` : ''}${local ? `\n${namedImport(['authorSpace'], '@plitzi/sdk-authoring')}\n${namedImport(['pluginDeclarations', 'projectData', 'publicData'], '@plitzi/sdk-authoring/node')}\n` : ''}
 ${ownImports.join('\n')}
 
 ${actions ? `${namedImport(['ActionLookups'], '@plitzi/sdk-server/actions', true)}\n` : ''}${namedImport(['FunctionsDefinition'], '@plitzi/sdk-server/functions', true)}
@@ -586,7 +595,7 @@ const ACTION_OPTIONS_DOC = ` * - \`action: { limits: { maxRequests, timeoutMs } 
 
 const serverOptionsModule = (local: boolean): string => `import type { ServerConfig } from '@plitzi/sdk-server';
 
-/** What \`src/main.ts\` sets itself — where the space comes from, its plugins, its files, its code — so not this file's. */
+/** What \`${MAIN_FILE}\` sets itself — where the space comes from, its plugins, its files, its code — so not this file's. */
 type SetByMain =
   | 'port'
   | 'devMode'
@@ -599,13 +608,13 @@ type SetByMain =
   | 'functions'
   | 'action';
 
-/** What \`createServer\` takes but for what \`src/main.ts\` sets — and an action's \`lookups\`: \`src/actions.ts\`. */
+/** What \`createServer\` takes but for what \`${MAIN_FILE}\` sets — and an action's \`lookups\`: \`src/actions.ts\`. */
 type ServerOptions = Partial<Omit<ServerConfig, SetByMain>> & {
   action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
 };
 
 /**
- * What this project's server does besides serving the space — yours. \`src/main.ts\` is the CLI's (\`plitzi upgrade\`
+ * What this project's server does besides serving the space — yours. \`${MAIN_FILE}\` is the CLI's (\`plitzi upgrade\`
  * keeps it current) and hands these to \`createServer\`; what it sets itself is not offered here, and wins if written.
  * The ones a project reaches for:
  *
@@ -621,45 +630,15 @@ const actionsModule = (): string => `import type { ActionEntry } from '@plitzi/s
 /**
  * The space's server actions — what a page asks the server to do (\`runServerAction\`), what feeds a provider before the
  * HTML (\`apiContainer({ runtime: 'server', action })\`), what runs on a clock (a \`schedule\` trigger). One
- * \`defineAction({ … })\` from \`@plitzi/sdk-authoring\` each, listed here: \`src/main.ts\` hands them to the server.
+ * \`defineAction({ … })\` from \`@plitzi/sdk-authoring\` each, listed here: \`${MAIN_FILE}\` hands them to the server.
  */
 export const actions: ActionEntry[] = [];
 `;
 
-/** What `src/functions/` is, in the folder itself — and the folder there from the start, for `start:dev` to watch. */
-const FUNCTIONS_README = `# ${FUNCTIONS_DIR}/
-
-This project's own server code: the tasks a server action's steps run (\`task: 'namespace.action'\`) and the routes
-under \`/fn/\`, from \`index.ts\` here — \`export default defineFunctions({ tasks, routes, allow })\` from
-\`@plitzi/sdk-server/functions\`. \`src/main.ts\` builds it at boot the way Plitzi builds a space's, and \`start:dev\`
-restarts on a change here. Nothing here, no functions.
-
-\`plitzi functions pull\` writes the space's functions here, and \`push\` sends them back.
-
-A file imports its siblings with their extension — \`import { reader } from './sources.ts'\` — as \`src/\` does: the
-build reads it either way, and a script or a test then runs the same file under Node, with nothing to bundle.
-`;
-
-/** What `src/actions/` is, in the folder itself — and the folder there from the start, for `start:dev` to watch. */
-const ACTIONS_README = `# src/actions/
-
-The space's server actions: one \`defineAction({ … })\` from \`@plitzi/sdk-authoring\` per file, and, as JSON, any the
-builder wrote in a form code has no words for. \`src/actions.ts\` lists them for the server, and \`start:dev\` restarts
-on a change here.
-
-\`plitzi pull\` brings the space's copies again; \`plitzi push\` sends them back.
-`;
-
-/** What `src/connectors/` is, in the folder itself — there from the start, for `start:dev` to watch. */
-const CONNECTORS_README = `# src/connectors/
-
-The space's connectors, as Plitzi kept them: one JSON manifest each, \`{ id, name, manifest }\`, which the space's
-actions call. \`src/actions.ts\` hands them to the server, and \`start:dev\` restarts on a change here.
-`;
-
 export const serverFiles = (answers: CreateAnswers): ProjectFiles => ({
-  'src/main.ts': serverMain({ source: answers.source, name: answers.name }),
-  [`${FUNCTIONS_DIR}/README.md`]: FUNCTIONS_README,
+  [MAIN_FILE]: serverMain({ source: answers.source, name: answers.name }),
+  // There from the start, for \`start:dev\` to watch: what it is, \`plitzi/README.md\` says.
+  [`${FUNCTIONS_DIR}/.gitkeep`]: '',
   // The project's own data: read by its server, never served.
   [`${DATA_DIR}/.gitkeep`]: '',
   // Served to anyone as it is: pictures, a favicon.
@@ -667,7 +646,5 @@ export const serverFiles = (answers: CreateAnswers): ProjectFiles => ({
   'src/serverOptions.ts': serverOptionsModule(answers.source !== 'cloud'),
   ...(answers.source === 'cloud' ? {} : { 'src/actions.ts': actionsModule() }),
   // A project made from a space: the folders its actions and connectors are, there for `start:dev` to watch.
-  ...(answers.fromSpace
-    ? { 'src/actions/README.md': ACTIONS_README, 'src/connectors/README.md': CONNECTORS_README }
-    : {})
+  ...(answers.fromSpace ? { 'src/actions/.gitkeep': '', 'src/connectors/.gitkeep': '' } : {})
 });

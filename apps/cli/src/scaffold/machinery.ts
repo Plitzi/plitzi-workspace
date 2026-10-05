@@ -1,3 +1,5 @@
+import { CLI_DIR, FUNCTIONS_DIR, MAIN_FILE } from './paths';
+
 /**
  * The files of a project that are this CLI's machinery rather than the project's own: what `plitzi upgrade` keeps up
  * with the CLI. Named, not inferred, so a file the scaffold starts a project with — its space, pages, plugins, data,
@@ -10,9 +12,13 @@
  * the CLI wrote them and `upgrade` still knows them for its own.
  */
 export const MACHINERY: ReadonlySet<string> = new Set([
-  'src/author.ts',
-  'src/main.ts',
-  'src/preflight.css',
+  // The entry point, in `src/` where one is looked for — and the CLI's folder, everything in it.
+  MAIN_FILE,
+  `${CLI_DIR}/author.ts`,
+  `${CLI_DIR}/preflight.css`,
+  `${CLI_DIR}/assets.d.ts`,
+  `${CLI_DIR}/README.md`,
+  // What the tools find at the project's root.
   'index.html',
   'vite.config.ts',
   'tsconfig.json',
@@ -25,11 +31,11 @@ export const MACHINERY: ReadonlySet<string> = new Set([
   'eslint.config.mjs',
   'playwright.config.ts',
   'visual/home.spec.ts',
-  'src/plugins/README.md',
-  'src/plugins/assets.d.ts',
-  'src/functions/README.md',
-  'src/actions/README.md',
-  'src/connectors/README.md',
   '.yarnrc.yml',
-  'pnpm-workspace.yaml'
+  'pnpm-workspace.yaml',
+  // The folders of `src/` a script watches, kept there while they are empty.
+  'src/plugins/.gitkeep',
+  `${FUNCTIONS_DIR}/.gitkeep`,
+  'src/actions/.gitkeep',
+  'src/connectors/.gitkeep'
 ]);

@@ -1,8 +1,7 @@
 import { actionSpecFromEntry, actionToSource } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 
-import { FUNCTIONS_DIR } from './paths';
-import { projectDeclarations } from './plugin';
+import { FUNCTIONS_DIR, MAIN_FILE } from './paths';
 import { envFile, SDK_VERSION, withSigningSecret } from './project';
 import { PROJECT_OUTPUTS, prettierignore } from './quality';
 import { serverMain } from './server';
@@ -204,11 +203,6 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
       files[`src/space/${path}`] = local(text);
     });
     files['src/space.ts'] = spaceEntry(exported.authoring.exportName);
-    const folders = Object.keys(files)
-      .map(path => /^src\/plugins\/([^/]+)\/declaration\.ts$/.exec(path)?.[1])
-      .filter((folder): folder is string => folder !== undefined)
-      .sort();
-    files['src/plugins/declarations.ts'] = projectDeclarations(folders);
   }
 
   // As the code that declares each one where it reads back exactly, and as the JSON it is where it does not.
@@ -252,7 +246,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     binaries['vendor/runtime.bundle'] = builtOnly.runtime;
   }
 
-  files['src/main.ts'] = serverMain({
+  files[MAIN_FILE] = serverMain({
     source: spaceSource,
     name: exported.space.permanentUrl,
     fromSpace: {

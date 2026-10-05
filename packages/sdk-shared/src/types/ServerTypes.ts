@@ -1045,7 +1045,17 @@ export type SSRServerConfig = {
    * `@plitzi/sdk-server/functions`. `native` is trusted code loaded in the process (a self-hosted server's tasks, or a
    * platform's own); `runner` runs each space's functions, isolated.
    */
-  functions?: { native?: unknown[]; runner?: unknown; limits?: Record<string, number> };
+  /**
+   * The server's code: its own (`native`), the server halves of the plugins it ships (`plugins`, by plugin type), the
+   * runner the spaces' code runs on, and the ceilings. Built by `@plitzi/sdk-server/functions` (`loadFunctions`), and
+   * checked as the server starts.
+   */
+  functions?: {
+    native?: unknown[];
+    plugins?: Record<string, unknown>;
+    runner?: unknown;
+    limits?: Record<string, number>;
+  };
   /** Realtime channels the spaces declare — see {@link SSRRealtimeConfig}. On, in memory, when absent. */
   realtime?: SSRRealtimeConfig;
   /** Connector manifest and credential lookups — see {@link ConnectorLookupsConfig}. They serve the RSC read path

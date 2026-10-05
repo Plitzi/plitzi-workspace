@@ -13,13 +13,15 @@
  * authorSpace(space, { serverData: projectData(new URL('./data/', import.meta.url)) }); // …and read on the server only
  * ```
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
 
 import { compactSvg } from './svg/compactSvg';
+
+import type { PluginDeclarationData } from './schema/types';
 
 const pathOf = (where: string | URL): string => (where instanceof URL ? fileURLToPath(where) : where);
 
@@ -94,5 +96,45 @@ export const publicData = (folder: string | URL): ((query: string) => unknown) =
  */
 export const projectData = (folder: string | URL): ((query: string) => unknown) =>
   fileReader(folder, PROJECT_DATA_PREFIX);
+
+/** The file a plugin folder declares itself in, as `plitzi add plugin` writes it. */
+const DECLARATION_FILE = 'declaration.ts';
+
+/**
+ * The declaration of every plugin under `folder` — `src/plugins/<Name>/declaration.ts`, its default export — for
+ * `authorSpace`'s `plugins`: what each fires, answers and reads. Found by folder, as the server finds the plugins
+ * themselves, so a plugin is declared by being there and no list can forget one. A folder without the file is a
+ * component and nothing else; one whose default export is not a declaration is refused, naming the file. In folder
+ * order, so the same folders always author the same space.
+ */
+export const pluginDeclarations = async (folder: string | URL): Promise<PluginDeclarationData[]> => {
+  const root = pathOf(folder);
+  const files = existsSync(root)
+    ? readdirSync(root, { withFileTypes: true })
+        .filter(entry => entry.isDirectory())
+        .map(entry => path.join(root, entry.name, DECLARATION_FILE))
+        .filter(file => existsSync(file))
+        .sort()
+    : [];
+
+  return Promise.all(
+    files.map(async file => {
+      const loaded: unknown = await import(pathToFileURL(file).href);
+      const declaration: unknown =
+        typeof loaded === 'object' && loaded !== null && 'default' in loaded ? loaded.default : undefined;
+      if (
+        typeof declaration !== 'object' ||
+        declaration === null ||
+        !('type' in declaration) ||
+        typeof declaration.type !== 'string'
+      ) {
+        throw new Error(`${file} exports no declaration by default: \`export default { type: '…', … }\`.`);
+      }
+
+      // A record with its `type`: `authorSpace` checks every other field, and says which is wrong.
+      return declaration as PluginDeclarationData;
+    })
+  );
+};
 
 export { compactSvg } from './svg/compactSvg';

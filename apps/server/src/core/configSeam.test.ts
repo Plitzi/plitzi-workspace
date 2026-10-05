@@ -105,5 +105,8 @@ describe('the code a deployment hands in', () => {
     expect(functionsConfigOf({ runner, limits: { cpuMs: 50 } })).toEqual({ runner, limits: { cpuMs: 50 } });
     expect(functionsConfigOf(undefined)).toBeUndefined();
     expect(() => functionsConfigOf({ runner: { invoke: () => null } })).toThrow('`functions` is not what');
+    // The plugins' server halves, by type: each a definition, as `loadFunctions` builds one.
+    expect(functionsConfigOf({ plugins: { board: { routes: {} } } })).toEqual({ plugins: { board: { routes: {} } } });
+    expect(() => functionsConfigOf({ plugins: { board: 'index.ts' } })).toThrow('`plugins` by type');
   });
 });

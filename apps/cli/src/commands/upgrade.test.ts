@@ -81,12 +81,12 @@ describe('plitzi upgrade', () => {
   it('replaces what the CLI wrote and nobody changed, adds what is missing, and only shows what is the project’s', async () => {
     const ours = machineryFiles(ANSWERS);
     // Written by an older CLI, untouched since: its digest is the one recorded.
-    await fs.writeFile(file('src/author.ts'), '// the author script of an older CLI\n');
+    await fs.writeFile(file('plitzi/author.ts'), '// the author script of an older CLI\n');
     // The project's own: no record says the CLI wrote it so.
     await fs.writeFile(file('playwright.config.ts'), '// tuned by hand\n');
     await fs.rm(file('eslint.config.mjs'));
     await writeScaffoldRecord(root, '0.37.9', {
-      files: { 'src/author.ts': digestOf('// the author script of an older CLI\n') }
+      files: { 'plitzi/author.ts': digestOf('// the author script of an older CLI\n') }
     });
 
     const shown = await run(['files']);
@@ -94,22 +94,22 @@ describe('plitzi upgrade', () => {
       recordsIn(shown.files).map((entry): [string, unknown] => [String(entry.file), entry.status])
     );
     expect(statuses).toMatchObject({
-      'src/author.ts': 'updated',
+      'plitzi/author.ts': 'updated',
       'playwright.config.ts': 'yours',
       'eslint.config.mjs': 'added',
       'tsconfig.json': 'current'
     });
     // Shown is not written.
-    expect(await read('src/author.ts')).toBe('// the author script of an older CLI\n');
+    expect(await read('plitzi/author.ts')).toBe('// the author script of an older CLI\n');
 
     await run(['files'], { write: true });
 
-    expect(await read('src/author.ts')).toBe(ours['src/author.ts']);
+    expect(await read('plitzi/author.ts')).toBe(ours['plitzi/author.ts']);
     expect(await read('eslint.config.mjs')).toBe(ours['eslint.config.mjs']);
     expect(await read('playwright.config.ts')).toBe('// tuned by hand\n');
     const record = await readScaffoldRecord(root);
     expect(record?.cli).toBe(CLI_VERSION);
-    expect(record?.files['src/author.ts']).toBe(digestOf(ours['src/author.ts']));
+    expect(record?.files['plitzi/author.ts']).toBe(digestOf(ours['plitzi/author.ts']));
     expect(record?.files['playwright.config.ts']).toBeUndefined();
 
     await run(['files'], { write: true, take: ['playwright.config.ts'] });

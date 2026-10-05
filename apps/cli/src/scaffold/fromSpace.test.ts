@@ -99,7 +99,8 @@ describe('a project made from a space', () => {
     expect(project.files['src/runtime.ts']).toContain("from './board/model.ts'");
     expect(project.files['src/board/model.ts']).toBe('export const model = 1;\n');
     expect(project.binaries['src/plugins/Board/hand.woff2']).toBe(Buffer.from([0, 1, 2]).toString('base64'));
-    expect(project.files['src/plugins/declarations.ts']).toContain("from './Board/declaration.ts'");
+    // Declared by being there: the server and the author script find each folder's `declaration.ts`.
+    expect(project.files['src/plugins/declarations.ts']).toBeUndefined();
     expect(project.omit).toContain('src/plugins/StatCard/index.ts');
   });
 
@@ -116,7 +117,7 @@ describe('a project made from a space', () => {
     const main = project.files['src/main.ts'];
 
     expect(main).toContain("path.join(PROJECT_ROOT, 'vendor/plugins')");
-    expect(main).toContain('  plugins: declarations,\n  pluginTypes: builtTypes,');
+    expect(main).toContain('  plugins: await pluginDeclarations(PLUGINS_DIR),\n  pluginTypes: builtTypes,');
     // Its bindings held to the files it serves, as `npm run author` holds them.
     expect(main).toContain("serverData: projectData(path.join(PROJECT_ROOT, 'src/data')),");
     expect(main).toContain("data: publicData(path.join(PROJECT_ROOT, 'public'))");
@@ -223,10 +224,11 @@ describe('the server a project made from a space runs', () => {
 
   it('keeps its actions and connectors in folders there from the start, which `start:dev` restarts on', () => {
     const written = scaffold({ ...answers(), fromSpace: true });
-    expect(written['src/actions/README.md']).toContain('# src/actions/');
-    expect(written['src/connectors/README.md']).toContain('# src/connectors/');
+    expect(written['src/actions/.gitkeep']).toBe('');
+    expect(written['src/connectors/.gitkeep']).toBe('');
+    expect(written['plitzi/README.md']).toContain('## `src/actions/` and `src/connectors/`');
     // The CLI's, so `upgrade` writes them into a project made before them, with the script that watches them.
-    expect(machineryFiles({ ...answers(), fromSpace: true })).toHaveProperty(['src/connectors/README.md']);
+    expect(machineryFiles({ ...answers(), fromSpace: true })).toHaveProperty(['src/connectors/.gitkeep']);
     const manifest: unknown = JSON.parse(scaffold({ ...answers(), fromSpace: true })['package.json']);
     expect(manifest).toHaveProperty(
       ['scripts', 'start:dev'],

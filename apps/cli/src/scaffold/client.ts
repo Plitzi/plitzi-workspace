@@ -1,3 +1,5 @@
+import { CLI_DIR, MAIN_FILE } from './paths';
+
 import type { CreateAnswers, ProjectFiles } from './types';
 
 /**
@@ -17,7 +19,7 @@ const indexHtml = ({ name }: CreateAnswers): string => `<!doctype html>
   </head>
   <body>
     <div id="plitzi-root"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/${MAIN_FILE}"></script>
   </body>
 </html>
 `;
@@ -89,15 +91,18 @@ const PLUGINS = `/**
  * \`src/plugins/StatCard\` is what a space's \`custom({ renderType: 'statCard' })\` renders, and its attributes arrive
  * as the component's props. \`plitzi add plugin\` writes a new one there, and Vite picks it up. There is no server
  * here, so the plugins are part of this project's bundle and hot-replaced like any other module; see
- * \`src/plugins/README.md\`.
+ * \`${CLI_DIR}/README.md\`.
  */
 const pluginModules = import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.ts', {
   eager: true
 });
 
+/** The folder a plugin's file is in: \`./plugins/StatCard/index.ts\` is \`StatCard\`. */
+const folderOf = (file: string): string => file.split('/').at(-2) ?? '';
+
 const plugins: RenderPlugins = Object.fromEntries(
   Object.entries(pluginModules).map(([file, module]) => {
-    const folder = file.split('/')[2];
+    const folder = folderOf(file);
 
     return [\`\${folder.charAt(0).toLowerCase()}\${folder.slice(1)}\`, { component: module.default }];
   })
@@ -108,16 +113,20 @@ const localMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 
-import { declarations } from './plugins/declarations.ts';
 import { space } from './space.ts';
 
-import './preflight.css';
+import '../${CLI_DIR}/preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
 
 import type { RenderPlugins } from '@plitzi/plitzi-sdk';
-import type { SpaceSpec } from '@plitzi/sdk-authoring';
+import type { PluginDeclarationData, SpaceSpec } from '@plitzi/sdk-authoring';
 
 ${PLUGINS}
+
+/** What each plugin fires, answers and reads — its folder's \`declaration.ts\` — for the space's use of it to be checked. */
+const declarations = Object.values(
+  import.meta.glob<PluginDeclarationData>('./plugins/*/declaration.ts', { eager: true, import: 'default' })
+);
 
 /**
  * The space, held in this project.
@@ -176,7 +185,7 @@ if (import.meta.hot) {
 
 const cloudMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
-import './preflight.css';
+import '../${CLI_DIR}/preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
 
 import type { RenderPlugins } from '@plitzi/plitzi-sdk';
@@ -212,6 +221,6 @@ render(
 export const clientFiles = (answers: CreateAnswers): ProjectFiles => ({
   'index.html': indexHtml(answers),
   'vite.config.ts': viteConfig(),
-  'src/preflight.css': preflightCss(),
-  'src/main.ts': answers.source === 'cloud' ? cloudMain() : localMain()
+  [`${CLI_DIR}/preflight.css`]: preflightCss(),
+  [MAIN_FILE]: answers.source === 'cloud' ? cloudMain() : localMain()
 });

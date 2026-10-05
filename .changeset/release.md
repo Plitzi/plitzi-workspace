@@ -138,7 +138,7 @@
   to do, instead of "no size (0×0)".
 - **A server-mode project keeps its `kv` in `state/kv.json`** (`createFileKv`; ignored by git): what the space's actions
   save outlives a restart, `start:dev`'s included. `action.kv` in `src/serverOptions.ts` names another store.
-- A server-mode project types what its plugins import besides code (`src/plugins/assets.d.ts`): a stylesheet, an image,
+- A server-mode project types what its plugins import besides code (`plitzi/assets.d.ts`): a stylesheet, an image,
   `?raw`, `?inline` — a client-mode one has them from `vite/client`.
 - **A project made from a space runs the server `create` writes.** `create --from` and `pull` write the same
   `src/main.ts` as `create` (one template), with what the space brought besides — its runtime, its built-only plugins, a
@@ -173,6 +173,14 @@
 - **The project's own server code is `src/functions/`**, with the rest of its source — typechecked with it, left out of
   `tsconfig.build.json` (the server builds it at boot). `functions pull`/`push`/`dev`, `push`, `pull` and `create
   --from` follow. The `kv` folder is `state/` (it was `data/`, beside a data folder that was something else).
+- **What is the CLI's is in `plitzi/`, apart from `src/`.** `plitzi/author.ts`, `plitzi/assets.d.ts` (server mode) or
+  `plitzi/preflight.css` (client mode), and `plitzi/README.md` — which says what each folder of `src/` is, instead of a
+  README in every one. `src/main.ts` stays where an entry point is looked for, the CLI's all the same.
+  `src/plugins/declarations.ts` is gone: a plugin is declared by its folder's `declaration.ts`, found by the server,
+  `author`, `check`, `fix`, `push` and the visual test alike (`pluginDeclarations` from `@plitzi/sdk-authoring/node`;
+  Vite's `import.meta.glob` in client mode).
+- `functions.plugins` is in `SSRServerConfig`'s type and checked as the server starts: a project passing its plugins'
+  server halves did not typecheck.
 - **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `pull`, `push`, `pack plugin`,
   `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills
   update`: each file it would write (`+` new, `~` replaced, `-` removed), what it would install or run, what it would

@@ -81,7 +81,7 @@ What a project gives you, so you use it rather than rebuild it:
 | Script | What it is for |
 | --- | --- |
 | `start` | serve it — in client mode Vite, which hot-replaces on save. The server prints only what goes wrong; `-- --verbose` adds every request |
-| `start:dev` | server mode: restarted on a save to its code; a plugin is swapped in the open page. Options in `src/serverOptions.ts`, actions in `src/actions.ts`; `src/main.ts` is the CLI's |
+| `start:dev` | server mode: restarted on a save to its code; a plugin is swapped in the open page. Options in `src/serverOptions.ts`, actions in `src/actions.ts`; `plitzi/` is the CLI's, never edit it |
 | `author` | author `src/space.ts`: one line when it is fine, every problem at once (file:line, what to change) when not, then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
 | `npx plitzi fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |
 | `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows, a binding its data lacks; `--state`, `--element <id>`: what it holds; `--ssr`: what SSR misses; `--json` |
@@ -144,8 +144,8 @@ Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 - **Registered by itself**: every folder of `src/plugins` is, under its name in camelCase (`SeatPicker` → `seatPicker`).
   Elsewhere the command prints the line that registers it (for `render()`, `<PlitziSdk>` or a page server).
 - **Host it** with `custom({ renderType: 'seatPicker', … })` in `src/space.ts` — or a Custom element in the builder.
-- **Checked like a built-in element**: `add plugin` lists its declaration in `src/plugins/declarations.ts`, handed to
-  `authorSpace(space, { plugins: declarations })`: flows on its events, steps to its actions and its attributes are
+- **Checked like a built-in element**: its folder's `declaration.ts` is found by itself and handed to
+  `authorSpace(space, { plugins })`: flows on its events, steps to its actions and its attributes are
   refused when wrong; `declaredTrigger(declaration, 'onPick')` and `declaredCallback(declaration, 'reset', { on: 'seats' })`
   build them typed. A plugin written by hand is added to that list.
 - **A new event or action** is declared in `declaration.ts` and registered by the component FROM there — never only
@@ -204,7 +204,7 @@ A space's own server code, edited in `src/functions/` (`pull`, `push`, `try`, `d
 | `start` says the port is in use | `PORT` is set to a taken port — unset it to take the next free one, or choose another |
 | A page that is not this project's, or `shot` refuses the port | another server answers there — `curl 127.0.0.1:<port>/health` names it; `tmp/dev-server.json` has this project's port |
 | An element renders "Custom Component … Not Found" | the `renderType` names no registered plugin — check the folder name's camelCase |
-| A flow on the plugin's event is refused, or never runs | the event is not in `declaration.ts`, or the plugin is missing from `src/plugins/declarations.ts` |
+| A flow on the plugin's event is refused, or never runs | the event is not in its `declaration.ts`, or the folder has none (`export default` the declaration) |
 | `upload` opens a browser | there is no session, or no space chosen — the person completes it there |
 | The upload went to the wrong space | `plitzi space` chooses another; check `whoami` first |
 | `pull` wrote nothing and named files | they changed here and on the space — set your changes aside and pull again, or `--force` |

@@ -214,10 +214,11 @@ const isFunction = (value: unknown): boolean => typeof value === 'function';
 const isDbDriver = (value: unknown): value is ActionDbDriver =>
   isRecord(value) && typeof value.engine === 'string' && isFunction(value.query);
 
-/** The functions config as `@plitzi/sdk-server/functions` builds it: native definitions, a runner, ceilings. */
+/** The functions config as `@plitzi/sdk-server/functions` builds it: native and plugin definitions, a runner, ceilings. */
 const isFunctionsConfig = (value: unknown): value is NonNullable<ActionsConfig['functions']> =>
   isRecord(value) &&
   (value.native === undefined || (Array.isArray(value.native) && value.native.every(isRecord))) &&
+  (value.plugins === undefined || (isRecord(value.plugins) && Object.values(value.plugins).every(isRecord))) &&
   (value.runner === undefined ||
     (isRecord(value.runner) && isFunction(value.runner.describe) && isFunction(value.runner.invoke))) &&
   (value.limits === undefined || isRecord(value.limits));
@@ -246,7 +247,7 @@ export const functionsConfigOf = (config: unknown): ActionsConfig['functions'] =
 
   if (!isFunctionsConfig(config)) {
     throw new Error(
-      '`functions` is not what @plitzi/sdk-server/functions configures: `native` definitions, a `runner` with `describe` and `invoke`, `limits`.'
+      '`functions` is not what @plitzi/sdk-server/functions configures: `native` definitions, `plugins` by type, a `runner` with `describe` and `invoke`, `limits`.'
     );
   }
 

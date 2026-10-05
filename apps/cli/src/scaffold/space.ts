@@ -1,8 +1,6 @@
-import path from 'node:path';
-
 import { blankSpaceSource, catalogTemplateFiles, emptySpaceSource } from '@plitzi/sdk-authoring';
 
-import { DATA_DIR } from './paths';
+import { AUTHOR_FILE, DATA_DIR } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { PluginHostOptions } from '@plitzi/sdk-authoring';
@@ -21,7 +19,7 @@ import type { PluginHostOptions } from '@plitzi/sdk-authoring';
 
 /** What the server-mode script adds: the project's own data, which only its server reads. */
 const SERVER_DATA_NOTE = ', and a browser asking for the data in src/data is refused';
-const DATA_URL = `'./${path.basename(DATA_DIR)}/'`;
+const DATA_URL = `'../${DATA_DIR}/'`;
 
 /** One named import line of the generated script. */
 const namedImports = (names: readonly string[], from: string): string =>
@@ -43,10 +41,9 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import { authorSpace, planFixes, refusalOf, SpaceRefusedError } from '@plitzi/sdk-authoring';
-${namedImports(mode === 'server' ? ['projectData', 'publicData'] : ['publicData'], '@plitzi/sdk-authoring/node')}
+${namedImports(mode === 'server' ? ['pluginDeclarations', 'projectData', 'publicData'] : ['pluginDeclarations', 'publicData'], '@plitzi/sdk-authoring/node')}
 
-import { declarations } from './plugins/declarations.ts';
-import { space } from './space.ts';
+import { space } from '../src/space.ts';
 
 // \`--json\` answers in one object, for a tool or an agent; otherwise one line on success, the problems on failure.
 const json = process.argv.includes('--json');
@@ -77,7 +74,7 @@ const builtTypes = (): string[] => {
 // What the space is checked against: its plugins' declarations, the built ones' types, and the files a provider reads
 // — so a binding onto a path one of them does not have is said here${mode === 'server' ? SERVER_DATA_NOTE : ''}.
 const options = {
-  plugins: declarations,
+  plugins: await pluginDeclarations(new URL('../src/plugins/', import.meta.url)),
   pluginTypes: builtTypes(),${mode === 'server' ? `\n  serverData: projectData(new URL(${DATA_URL}, import.meta.url)),` : ''}
   data: publicData(new URL('../public/', import.meta.url))
 };
@@ -224,14 +221,14 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
   if (answers.template === 'catalog') {
     return {
       ...catalogTemplateFiles({ name: answers.name, mode: answers.mode }),
-      'src/author.ts': authorScript(answers)
+      [AUTHOR_FILE]: authorScript(answers)
     };
   }
 
   if (answers.template === 'blank') {
     return {
       'src/space.ts': emptySpaceSource({ name: answers.name }),
-      'src/author.ts': authorScript(answers),
+      [AUTHOR_FILE]: authorScript(answers),
       // A project with no server keeps its data where the browser fetches it; a server's is `src/data/` (`serverFiles`).
       ...(answers.mode === 'client' ? { 'public/data/.gitkeep': '' } : {})
     };
@@ -239,7 +236,7 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
 
   return {
     'src/space.ts': blankSpaceSource({ name: answers.name, plugin: pluginHost(answers) }),
-    'src/author.ts': authorScript(answers),
+    [AUTHOR_FILE]: authorScript(answers),
     // As the project's own formatter writes it — a short list on one line — so its first `format` changes nothing.
     ...(answers.mode === 'client'
       ? {

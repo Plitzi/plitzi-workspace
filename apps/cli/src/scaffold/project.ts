@@ -1,7 +1,17 @@
 import { createRequire } from 'node:module';
 
 import { installCommand, managerFiles, managerPackageFields, runCommand } from './packageManager';
-import { DATA_DIR, DEV_SERVER_FILE, FUNCTIONS_DIR, KV_FILE, PROJECT_STATE, PROJECT_TMP } from './paths';
+import {
+  AUTHOR_FILE,
+  CLI_DIR,
+  DATA_DIR,
+  DEV_SERVER_FILE,
+  FUNCTIONS_DIR,
+  KV_FILE,
+  MAIN_FILE,
+  PROJECT_STATE,
+  PROJECT_TMP
+} from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -84,7 +94,7 @@ const NODE_ENGINES = { node: '>=22.18' };
 /** What `start:dev` restarts on: the server's own code — and, in a project made from a space, its actions' folders. */
 const watchPaths = ({ source, fromSpace }: CreateAnswers): string =>
   [
-    './src/main.ts',
+    `./${MAIN_FILE}`,
     './src/serverOptions.ts',
     ...(source === 'local' || fromSpace ? ['./src/actions.ts'] : []),
     ...(fromSpace ? ['./src/actions', './src/connectors'] : []),
@@ -108,7 +118,7 @@ const scripts = (answers: CreateAnswers): Record<string, string> => {
   return {
     ...(mode === 'server'
       ? {
-          start: 'node src/main.ts',
+          start: `node ${MAIN_FILE}`,
           /**
            * Watched by PATH, not wholesale.
            *
@@ -118,7 +128,7 @@ const scripts = (answers: CreateAnswers): Record<string, string> => {
            * (`reloadPages`), and the server builds a plugin again on save and the open pages swap it where it is drawn
            * — so only the server's own code restarts it: its entry, options and actions, and `src/functions/`.
            */
-          'start:dev': `node ${watchPaths(answers)} src/main.ts`,
+          'start:dev': `node ${watchPaths(answers)} ${MAIN_FILE}`,
           /**
            * What production runs: the same entry compiled to JavaScript. Node strips types by loading a TypeScript
            * transformer into the process — ~10 MB a server keeps for its whole life to read one file — so a deployment
@@ -132,7 +142,7 @@ const scripts = (answers: CreateAnswers): Record<string, string> => {
           build: 'vite build',
           preview: 'vite preview'
         }),
-    ...(source === 'local' ? { author: 'node src/author.ts' } : {}),
+    ...(source === 'local' ? { author: `node ${AUTHOR_FILE}` } : {}),
     // One line per error — file(line,col) and the message — rather than a framed excerpt of each.
     typecheck: 'tsc -p tsconfig.json --noEmit --pretty false',
     lint: 'eslint .',
@@ -215,7 +225,7 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
         lib: ['ES2023', 'DOM', 'DOM.Iterable'],
         jsx: 'react-jsx'
       },
-      include: ['src', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])]
+      include: [CLI_DIR, 'src', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])]
     },
     null,
     2
@@ -285,6 +295,9 @@ ${spaceSection(answers)}
 
 ## Folders that are not the source
 
+- \`${CLI_DIR}/\` is the CLI's part of the project — ${answers.source === 'local' ? 'the script that authors the space, ' : ''}${answers.mode === 'server' ? 'the types plugins import' : 'the base styles of the page'}
+  — kept current by \`plitzi upgrade\`, as is \`${MAIN_FILE}\`, the entry point. Everything else you write is in \`src/\`;
+  \`${CLI_DIR}/README.md\` says what each of its folders is.
 - \`public/\` is served to anyone who asks, as it is: every file in it is on the internet once the project is deployed.
   Pictures and files meant for every visitor go there — never a secret, a key, a private document or what only some
   visitors may read.${
@@ -340,7 +353,7 @@ export const agentsFile = (answers: CreateAnswers): string => {
       : `${run('start')} runs Vite on 5173.`;
   const serverNotes =
     answers.mode === 'server'
-      ? `- **The server is yours in ${code('src/serverOptions.ts')}**, not in ${code('src/main.ts')} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('main.ts')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions.ts')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
+      ? `- **The server is yours in ${code('src/serverOptions.ts')}**, not in ${code(MAIN_FILE)} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('main.ts')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions.ts')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
       : '';
   const dataNote =
     answers.mode === 'server'
@@ -370,6 +383,7 @@ ${commands.join('\n')}
 
 ## This project
 
+- **Yours is \`src/\` — but \`${MAIN_FILE}\`, the entry point — and \`${CLI_DIR}/\` is the CLI's**: \`plitzi upgrade\` replaces them, so never edit them. \`${CLI_DIR}/README.md\` says what each folder of \`src/\` is.
 - **Port.** ${port}
 ${dataNote}
 - **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.

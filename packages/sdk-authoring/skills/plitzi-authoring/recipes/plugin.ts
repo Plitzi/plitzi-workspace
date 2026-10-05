@@ -24,7 +24,7 @@ const declaration = {
 
 const seatPicker = defineElement<{ rows?: number }>(declaration);
 
-// `authorSpace(recipe, { plugins })` — in a project, `src/plugins/declarations.ts` lists them all.
+// `authorSpace(recipe, { plugins })` — in a project, every `src/plugins/<Name>/declaration.ts`, found by folder.
 export const plugins: PluginDeclarationData[] = [declaration];
 
 export const recipe: SpaceSpec = {

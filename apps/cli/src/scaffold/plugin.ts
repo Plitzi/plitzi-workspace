@@ -1,5 +1,7 @@
 import { PLUGIN_INLINED_ASSETS } from '@plitzi/sdk-shared/plugins/bundle';
 
+import { CLI_DIR } from './paths';
+
 import type { CreateAnswers, ProjectFiles } from './types';
 
 /**
@@ -163,78 +165,6 @@ export * from './StatCard';
 export default StatCard;
 `;
 
-const readme = ({ mode }: CreateAnswers): string => `# Plugins
-
-Components of your own, rendered by the space.
-
-Every folder here is one, registered under its name in camelCase: \`StatCard\` is the \`renderType\` \`statCard\`. The
-space hosts it with a \`custom\` element naming that type — see \`custom({ renderType: 'statCard', … })\` in
-\`src/space.ts\` — and the element's attributes arrive as the component's props.
-
-${
-  mode === 'server'
-    ? `\`src/main.ts\` registers each one with \`action: 'compile'\`, which is what makes it **server-rendered**: the
-server builds the entry with esbuild, keeps React external so the plugin runs on the one copy the page already
-has, serves the bundle to the browser AND imports it into the render — so the component's markup is in the HTML
-before any JavaScript arrives. A plugin registered any other way renders only after hydration, which is a hole in
-the document for anyone reading the page before then. With \`start:dev\` running, a saved plugin is swapped into the
-open page without reloading it, and a new folder is registered as it appears.
-
-A plugin can bring server code of its own: \`add plugin board --server\` writes \`Board/functions/index.ts\`, whose
-routes answer under \`/fn/plugins/board/\` — the component names them with \`usePluginRoute('board')\` — with a \`kv\`
-of the plugin's own.`
-    : `\`src/main.ts\` hands them to \`render()\`. There is no server here, so each one is part of this project's own
-bundle and Vite hot-replaces it like any other module.`
-}
-
-## Adding another
-
-\`\`\`bash
-npx @plitzi/cli add plugin seat-picker
-\`\`\`
-
-It asks what to call it and writes \`src/plugins/SeatPicker/\`: the component, the panel the builder edits it with, and
-the \`index.ts\` that hands both over. Then put a \`custom({ renderType: 'seatPicker', … })\` in \`src/space.ts\`.
-
-By hand it is the same three files: \`YourThing/YourThing.tsx\` — a component whose props are the attributes you want
-to author — and \`YourThing/index.ts\` with an \`export default\`.
-
-## Three things that bite
-
-**Render \`RootElement\`, not a \`div\`.** It is what makes a plugin an _element_: the id and classes the space
-gave it land on what you render, so the CSS authored on the element applies, the builder can select it, and a test
-can find it by name. A plain tag renders the same pixels and none of that.
-
-**Do not render anything that differs between the server and the first client render** — a clock, a random number,
-anything read out of \`window\`. React answers a hydration mismatch by discarding the whole tree, so it does not
-break the plugin, it blanks the page. Put live values in an effect.
-
-**Do not name colours.** The page carries a palette and a light/dark theme; a plugin that hard-codes \`#111\` is
-invisible on one of them. Use \`currentColor\` and the space's own \`var(--…)\` variables.
-`;
-
-const declarationName = (component: string): string => `${component.charAt(0).toLowerCase()}${component.slice(1)}`;
-
-/**
- * `src/plugins/declarations.ts`: the declaration of every plugin that has one, which `authorSpace` holds the space to —
- * a flow on an event a plugin never fires, or an attribute it does not read, is refused instead of written. Written
- * from the folders' names alone, so the CLI can tell a list it wrote from one somebody changed, and add to the first.
- */
-export const projectDeclarations = (components: string[]): string => {
-  const names = components.map(declarationName);
-  const list = `export const declarations: PluginDeclarationData[] = [${names.join(', ')}];`;
-
-  return `${components.map(component => `import ${declarationName(component)} from './${component}/declaration.ts';`).join('\n')}${components.length ? '\n\n' : ''}import type { PluginDeclarationData } from '@plitzi/sdk-authoring';
-
-/**
- * Every plugin's declaration, handed to \`authorSpace\` wherever the space is authored: its flows on a plugin's events,
- * its steps to a plugin's actions and its attributes are checked like a built-in element's. \`plitzi add plugin\`
- * writes this list; a plugin written by hand is added with its \`declaration.ts\`.
- */
-${list.length <= 120 ? list : `export const declarations: PluginDeclarationData[] = [\n${names.map(name => `  ${name}`).join(',\n')}\n];`}
-`;
-};
-
 /**
  * What a plugin imports besides code, typed as the server's bundler hands it over (`@plitzi/sdk-shared/plugins/bundle`):
  * a stylesheet for its effect, an image or a font as the data URI it is carried as, a file whole with `?raw` or
@@ -260,12 +190,9 @@ declare module '*?inline' {
 `;
 
 export const pluginFiles = (answers: CreateAnswers): ProjectFiles => ({
-  ...(answers.mode === 'server' ? { 'src/plugins/assets.d.ts': assetDeclarations() } : {}),
-  // Only the tour hosts the example: elsewhere the folder, its README and its registry are what `add plugin` fills.
+  ...(answers.mode === 'server' ? { [`${CLI_DIR}/assets.d.ts`]: assetDeclarations() } : {}),
+  // Only the tour hosts the example: elsewhere the folder is there for `add plugin` to fill, and the server to read.
   ...((answers.template ?? 'welcome') === 'welcome'
     ? { 'src/plugins/StatCard/StatCard.tsx': component(), 'src/plugins/StatCard/index.ts': barrel() }
-    : {}),
-  'src/plugins/README.md': readme(answers),
-  // Only where the space is authored here: a space kept in Plitzi is checked by the builder instead.
-  ...(answers.source === 'local' ? { 'src/plugins/declarations.ts': projectDeclarations([]) } : {})
+    : { 'src/plugins/.gitkeep': '' })
 });

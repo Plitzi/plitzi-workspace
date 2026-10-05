@@ -11,6 +11,22 @@
 export const PROJECT_TMP = 'tmp';
 
 /**
+ * The CLI's own part of a project — the script that authors the space, the types its plugins import besides code, the
+ * page's base styles — apart from `src/`, which is the project's: `plitzi upgrade` keeps this folder current, and a
+ * person reads `src/` without wading through it.
+ */
+export const CLI_DIR = 'plitzi';
+
+/**
+ * The project's entry point — the page server, or the Vite app — in `src/`, where an entry point is looked for. The
+ * CLI's all the same: `plitzi upgrade` keeps it current, and what a project changes goes in `src/serverOptions.ts`.
+ */
+export const MAIN_FILE = 'src/main.ts';
+
+/** What authors the space and says what it found: `npm run author`, and the server's re-authoring on a save. */
+export const AUTHOR_FILE = `${CLI_DIR}/author.ts`;
+
+/**
  * What the running server keeps for the space — its `kv`: saved layouts, counters, a source's cached answer. Not
  * committed either, but not a by-product: it is the deployment's state, so it is never rebuilt and `tmp/` is no place
  * for it. A deployment that keeps it elsewhere says so in `src/serverOptions.ts` (`action.kv`).

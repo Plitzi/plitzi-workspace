@@ -1,5 +1,7 @@
 import { clientFiles } from './client';
+import { cliReadme } from './cliReadme';
 import { MACHINERY } from './machinery';
+import { CLI_DIR, MAIN_FILE } from './paths';
 import { pluginFiles } from './plugin';
 import { projectFiles } from './project';
 import { qualityFiles } from './quality';
@@ -10,7 +12,6 @@ import { visualFiles } from './visual';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
-export { projectDeclarations } from './plugin';
 export { SDK_VERSION } from './project';
 
 export {
@@ -52,7 +53,8 @@ export const scaffold = (answers: CreateAnswers): ProjectFiles => ({
   ...pluginFiles(answers),
   ...(answers.mode === 'server' ? serverFiles(answers) : clientFiles(answers)),
   ...visualFiles(answers),
-  ...skillFiles()
+  ...skillFiles(),
+  [`${CLI_DIR}/README.md`]: cliReadme(answers)
 });
 
 export const machineryFiles = (answers: CreateAnswers): ProjectFiles =>
@@ -64,8 +66,8 @@ export const machineryFiles = (answers: CreateAnswers): ProjectFiles =>
  * the CLI's — written by this upgrade or already current: beside a `main.ts` the project made its own, nothing reads it.
  */
 const SEEDS: Readonly<Record<string, string>> = {
-  'src/serverOptions.ts': 'src/main.ts',
-  'src/actions.ts': 'src/main.ts'
+  'src/serverOptions.ts': MAIN_FILE,
+  'src/actions.ts': MAIN_FILE
 };
 
 export const seedFiles = (answers: CreateAnswers): { file: string; contents: string; readBy: string }[] =>

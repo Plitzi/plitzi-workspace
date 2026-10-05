@@ -39,7 +39,7 @@ describe('the server a project starts', () => {
     const main = serverFiles(answers())['src/main.ts'];
 
     expect(main).toContain("path.join(PROJECT_ROOT, 'tmp/space.json')");
-    expect(main).toContain("[path.join(PROJECT_ROOT, 'src/author.ts'), '--out', OFFLINE_DATA]");
+    expect(main).toContain("[path.join(PROJECT_ROOT, 'plitzi/author.ts'), '--out', OFFLINE_DATA]");
     expect(main).not.toContain('offline-data');
   });
 

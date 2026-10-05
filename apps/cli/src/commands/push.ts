@@ -136,10 +136,9 @@ const closureOf = async (
 const SPACE_FILES = ['src/space.ts', 'src/actions.ts'];
 const SPACE_FOLDERS = ['src/space/', 'src/actions/', 'src/connectors/'];
 
-/** A folder's `README.md` is the CLI's note on what the folder is, never part of the space. */
+/** The space is code and JSON: a folder's `.gitkeep`, or a note beside its files, is never part of it. */
 const isSpaceFile = (file: string): boolean =>
-  SPACE_FILES.includes(file) ||
-  (SPACE_FOLDERS.some(folder => file.startsWith(folder)) && path.basename(file) !== 'README.md');
+  SPACE_FILES.includes(file) || (SPACE_FOLDERS.some(folder => file.startsWith(folder)) && /\.(ts|json)$/.test(file));
 
 /** A plugin's type as the project's folder spells it: `src/plugins/SeatPicker` is `seatPicker`. */
 const typeOfFolder = (folder: string): string => {

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { pluginDeclarations } from '@plitzi/sdk-authoring/node';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import type { PluginDeclarationData, SpaceSpec } from '@plitzi/sdk-authoring';
@@ -16,9 +17,6 @@ const isSpaceSpec = (value: unknown): value is SpaceSpec =>
   typeof value.permanentUrl === 'string' &&
   Array.isArray(value.pages);
 
-const isDeclarations = (value: unknown): value is PluginDeclarationData[] =>
-  Array.isArray(value) && value.every(entry => isRecord(entry) && typeof entry.type === 'string');
-
 const importProject = async (file: string): Promise<unknown> => import(pathToFileURL(file).href);
 
 /** The space a project declares in `src/space.ts`, with the plugin declarations it is authored with. */
@@ -31,7 +29,7 @@ export interface ProjectSpace {
 
 /**
  * The element types of the plugins a project made from a space runs as they were built (`vendor/plugins/<type>/`): each
- * folder's type and every element its manifest provides — as `src/main.ts` and `src/author.ts` read them. None elsewhere.
+ * folder's type and every element its manifest provides — as `src/main.ts` and `plitzi/author.ts` read them. None elsewhere.
  */
 const builtPluginTypes = async (root: string): Promise<string[]> => {
   const dir = path.join(root, 'vendor/plugins');
@@ -54,8 +52,8 @@ const builtPluginTypes = async (root: string): Promise<string[]> => {
 };
 
 /**
- * The project's own declaration, loaded as its `author` script loads it — `src/space.ts`, the plugins in
- * `src/plugins/declarations.ts` and the built ones' types — for a command that authors it in this process.
+ * The project's own declaration, loaded as its `author` script loads it — `src/space.ts`, every plugin folder's
+ * `declaration.ts` and the built ones' types — for a command that authors it in this process.
  */
 export const loadProjectSpace = async (root: string): Promise<ProjectSpace | { problem: string }> => {
   const module = await importProject(path.join(root, 'src/space.ts'));
@@ -64,12 +62,12 @@ export const loadProjectSpace = async (root: string): Promise<ProjectSpace | { p
     return { problem: 'src/space.ts exports no `space`.' };
   }
 
-  const registry = await importProject(path.join(root, 'src/plugins/declarations.ts')).catch(() => undefined);
-  const declarations = isRecord(registry) ? registry.declarations : undefined;
+  let plugins: PluginDeclarationData[];
+  try {
+    plugins = await pluginDeclarations(path.join(root, 'src/plugins'));
+  } catch (error) {
+    return { problem: error instanceof Error ? error.message : String(error) };
+  }
 
-  return {
-    space,
-    plugins: isDeclarations(declarations) ? declarations : [],
-    pluginTypes: await builtPluginTypes(root)
-  };
+  return { space, plugins, pluginTypes: await builtPluginTypes(root) };
 };

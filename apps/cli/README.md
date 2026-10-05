@@ -143,8 +143,12 @@ when an install fails the CLI says which setting names it.
 | `state/` | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
 | `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
 
-`src/main.ts` is the CLI's (`upgrade` keeps it current). What the server does besides serving the space is the
-project's own, in files it reads: `src/serverOptions.ts` (handed to `createServer` — `images`, `action.limits`,
+**`plitzi/` is the CLI's; `src/` is yours — but `src/main.ts`.** `plitzi/` holds `author.ts`, the types plugins import
+(`assets.d.ts`, server mode) or the page's base styles (`preflight.css`, client mode), and a `README.md` saying what
+each folder of `src/` is. `src/main.ts`, the entry point, is the CLI's too, kept in `src/` where an entry point is
+looked for; `upgrade` keeps all of them current, and the build compiles `src/` into `dist/main.js`. A plugin is declared by its folder: the server, `author` and `check` find every
+`src/plugins/<Name>/declaration.ts` (`pluginDeclarations` from `@plitzi/sdk-authoring/node`). What the server does
+besides serving the space is the project's own, in files it reads: `src/serverOptions.ts` (handed to `createServer` — `images`, `action.limits`,
 `action.kv`, `rsc`) and, with `--source local`, `src/actions.ts` (the space's server actions, one `defineAction` each).
 What `main.ts` wires itself — where the space comes from, the plugins, `public/`, `src/data/`, `src/functions/`, the
 actions' lookups — is left out of `serverOptions`' type, and comes after it, so an option there can never unwire it.
@@ -256,7 +260,7 @@ otherwise be a search through the SDK's types. `--json` answers in one object; o
 ```bash
 plitzi upgrade                       # what this CLI would change in the project — shown, nothing written
 plitzi upgrade skills --write        # only the skills, each replaced whole from the packages installed
-plitzi upgrade --write --take src/author.ts
+plitzi upgrade --write --take plitzi/author.ts
 ```
 
 A project brought up to the CLI it has now, part by part: `files` (the machinery — `author.ts`, `main.ts`, the
@@ -332,8 +336,6 @@ what the builder shows, and what it is for, and checks every folder is free befo
 - **In a project `plitzi create` wrote**, it goes in `src/plugins`, where the project already looks: nothing to
   register, and a running `start:dev` picks it up without a restart. Host it with `custom({ renderType: 'seatPicker' })` in `src/space.ts`
   — or, when the space lives in Plitzi, with a Custom element in the builder.
-- **In a project written before plugins were found by folder**, it goes in `src/plugins` too, and prints the line to
-  add to the `plugins` list in `src/main.ts`.
 - **In a plugin package**, it goes in `src/`, and is added to `src/elements.ts` and `src/declarations.ts`, from which
   the package publishes it.
 - **In any other project**, it asks which folder holds the project's components (`--dir` answers it) and prints how
