@@ -12,7 +12,14 @@ import useImagesSync from '@plitzi/sdk-shared/server/actions/useImagesSync';
 import useRealtimeSync from '@plitzi/sdk-shared/server/actions/useRealtimeSync';
 import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
-import { fontLinkAssets, fontsToHead, fontUrlResolver, markStyleCache } from '@plitzi/sdk-shared/style';
+import {
+  fontLinkAssets,
+  fontsToHead,
+  fontUrlResolver,
+  markStyleCache,
+  PLUGIN_CSS_LAYER,
+  RUNTIME_CSS_LAYER
+} from '@plitzi/sdk-shared/style';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
@@ -70,7 +77,9 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
     // Marked so a server-rendered page can leave the cache out of its payload and read it back from here.
     const cssParsed = `.plitzi-sdk{${cssVariables}}\n${markStyleCache(cacheParsed)}\n${schemaSettings.customCss}\n${externalStyle}`;
 
-    return `@layer plitzi-sdk-runtime{${cssParsed}}`;
+    // The order said again before the block, for a page that loads no `plitzi-sdk.css` to say it first: a plugin's
+    // stylesheet arriving later would otherwise land in a layer of its own above the space's.
+    return `@layer ${PLUGIN_CSS_LAYER}, ${RUNTIME_CSS_LAYER};@layer ${RUNTIME_CSS_LAYER}{${cssParsed}}`;
   }, [variables, styleCache, schemaSettings.customCss, externalStyle]);
 
   // The canvas renders into an iframe, whose head only the rail can reach.

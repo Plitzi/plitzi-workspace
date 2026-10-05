@@ -29,7 +29,7 @@ const broken: Record<string, () => Documents> = {
   'unknown-attribute': () =>
     withChange(({ schema }) => {
       schema.flat.hello.attributes.contnet = 'Typo';
-      schema.flat.hello.attributes.title = 'Never read';
+      schema.flat.hello.attributes.caption = 'Never read';
       Reflect.deleteProperty(schema.flat.hello.attributes, 'content');
     }),
   'attribute-kind': () =>
@@ -150,7 +150,7 @@ describe('fixSpace', () => {
   it('fixes only the codes asked for', () => {
     const documents = withChange(({ schema }) => {
       schema.flat['to-about'].attributes.href = 'mailto:hello@example.com';
-      addElement(schema, { id: 'extra', type: 'text', attributes: { content: 'x', title: 'Never read' } });
+      addElement(schema, { id: 'extra', type: 'text', attributes: { content: 'x', caption: 'Never read' } });
     });
 
     const { applied } = fixSpace(documents, {}, ['page-target-url']);
@@ -160,15 +160,15 @@ describe('fixSpace', () => {
 
   it('fixes only the elements asked for, and leaves the rest as it found them', () => {
     const documents = withChange(({ schema }) => {
-      addElement(schema, { id: 'mine', type: 'text', attributes: { content: 'x', title: 'Never read' } });
-      addElement(schema, { id: 'theirs', type: 'text', attributes: { content: 'y', title: 'Never read' } });
+      addElement(schema, { id: 'mine', type: 'text', attributes: { content: 'x', caption: 'Never read' } });
+      addElement(schema, { id: 'theirs', type: 'text', attributes: { content: 'y', caption: 'Never read' } });
     });
 
     const { schema, applied } = fixSpace(documents, {}, undefined, ['mine']);
 
     expect(applied.map(fix => fix.elementId)).toEqual(['mine']);
     expect(schema.flat.mine.attributes).toEqual({ content: 'x' });
-    expect(schema.flat.theirs.attributes).toEqual({ content: 'y', title: 'Never read' });
+    expect(schema.flat.theirs.attributes).toEqual({ content: 'y', caption: 'Never read' });
   });
 
   it('has a case for every code it can fix', () => {

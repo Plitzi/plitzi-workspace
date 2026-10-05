@@ -149,8 +149,8 @@ A plugin says what HAPPENED through its events (`onPick`, with the seat in the p
 decide what that means — write `state`, open a modal, call a server action. Prefer that to writing `state` from inside
 the component: the flow is visible in the space, the builder shows it, and the same act can come from a button too.
 
-- An action's params arrive as written — text, or one `{{ expression }}`'s value: read a number as `Number(params.n)`.
-- To follow what another element shows, bind a prop to the source its `visible` reads — never watch its classes.
+- A param declared `number` or `boolean` arrives as one, written or bound; any other arrives as written.
+- To act when another element appears, `useElementVisible('tools')` (`@plitzi/plitzi-sdk`) — never watch classes.
 - A name for screen readers is a prop of its own: declare `label`, write it as the root's `aria-label`.
 
 ## Behaving in the builder
@@ -167,8 +167,8 @@ belongs to the editor.
 
 ## The plugin's stylesheet and the space's CSS
 
-A plugin's stylesheet wins over the space's classes and `customCss` whatever their specificity: a rule about the
-inside of a plugin goes in the plugin's CSS, and the space reaches it through props and custom properties.
+A plugin's stylesheet ships in a layer below the space's (`plitzi-sdk-plugin`, written by the build): the space's
+classes and `customCss` win over it whatever their specificity, as over a built-in element's defaults.
 
 ## Components that draw into DOM they do not render
 

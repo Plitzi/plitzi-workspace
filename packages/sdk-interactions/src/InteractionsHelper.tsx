@@ -4,6 +4,7 @@ import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import { MAX_PARAM_PASSES, resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import { coerceDeclaredParams } from './helpers/coerceDeclaredParams';
 import utility from './utility';
 
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -188,7 +189,7 @@ const processNode = (
     const paramsToCallback = {
       ...flowParams,
       ...globalParams,
-      ...processParams(type, params, flowParams, globalParams, action)
+      ...coerceDeclaredParams(receptor.params, processParams(type, params, flowParams, globalParams, action))
     };
     const { callback, postCallback } = receptor;
     const done = (result: unknown): NodeOutcome => {

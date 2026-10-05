@@ -30,6 +30,10 @@
       "types": "./dist/InteractionsSourcesProvider.d.ts",
       "import": "./dist/InteractionsSourcesProvider.mjs"
     },
+    "./helpers/coerceDeclaredParams": {
+      "types": "./dist/helpers/coerceDeclaredParams.d.ts",
+      "import": "./dist/helpers/coerceDeclaredParams.mjs"
+    },
     "./hooks/useInteractions": {
       "types": "./dist/hooks/useInteractions.d.ts",
       "import": "./dist/hooks/useInteractions.mjs"

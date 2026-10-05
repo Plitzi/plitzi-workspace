@@ -365,7 +365,8 @@ plitzi pack plugin src/plugins/SeatPicker src/plugins/Legend   # several in one 
 
 It writes one ES module (esbuild; React and the SDK kept out — the page provides them; images and fonts inside, since
 a page imports the module from a blob URL), `plugin-manifest.json` written from the elements' declarations with each
-file's integrity hash, and the zip the builder takes: upload it under Resources, as a plugin. A package also gets its
+file's integrity hash, and the zip the builder takes — its stylesheet in the \`plitzi-sdk-plugin\` cascade layer, below
+the space's styles, so a space's classes and \`customCss\` win over it: upload it under Resources, as a plugin. A package also gets its
 type declarations, written with its own TypeScript. Or serve the build at a versioned address with CORS open, and list
 it in a space's plugins as `{ type, resource }`.
 

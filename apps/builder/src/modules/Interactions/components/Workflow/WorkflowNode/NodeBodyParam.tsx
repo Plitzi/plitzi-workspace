@@ -117,7 +117,7 @@ const NodeBodyParam = ({
         </label>
       )}
       <div className="flex grow basis-0">
-        {!isBinding && type === 'text' && (
+        {!isBinding && (type === 'text' || type === 'number') && (
           <Input
             className="w-full"
             size="xs"

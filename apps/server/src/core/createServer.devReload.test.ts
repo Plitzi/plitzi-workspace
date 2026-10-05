@@ -51,6 +51,35 @@ describe('reloadPages', () => {
     await reader?.cancel();
   });
 
+  /** A page reconnecting to a server that restarted — its code changed under it — is told by a boot it has not seen. */
+  it('greets every page with the boot of the process answering it, a new one after a restart', async () => {
+    const boots: string[] = [];
+    const greeting = async (): Promise<void> => {
+      const stream = await fetch(`${BASE}/__plitzi/reload`);
+      const reader = stream.body?.getReader();
+      const decoder = new TextDecoder();
+      let said = '';
+      await vi.waitFor(async () => {
+        const chunk = await reader?.read();
+        said += decoder.decode(chunk?.value);
+        expect(said).toContain('event: hello');
+      });
+      const data = /event: hello\ndata: (.*)\n/.exec(said)?.[1] ?? '{}';
+      boots.push((JSON.parse(data) as { boot: string }).boot);
+      await reader?.cancel();
+    };
+
+    await start({ devMode: true, devReload: true });
+    await greeting();
+    await greeting();
+    await server?.close();
+    await start({ devMode: true, devReload: true });
+    await greeting();
+
+    expect(boots[0]).toBe(boots[1]);
+    expect(boots[2]).not.toBe(boots[0]);
+  });
+
   it('is a page the template listens on only when asked for — a development server alone does not', async () => {
     await start({ devMode: true, devReload: true });
     const page = await (await fetch(`${BASE}/`)).text();

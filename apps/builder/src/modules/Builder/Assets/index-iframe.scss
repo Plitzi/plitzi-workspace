@@ -1,6 +1,7 @@
 @use '@plitzi/plitzi-ui/Toast/Assets/index.scss' as Toast;
 
-@layer theme, base, plitzi-builder-base, plitzi-sdk-base, components, utilities, plitzi-builder-runtime, plitzi-sdk-runtime, plitzi-sdk-plugin;
+// As the page orders them (plitzi-sdk.scss): a plugin's stylesheet below the space's.
+@layer theme, base, plitzi-builder-base, plitzi-sdk-base, components, utilities, plitzi-builder-runtime, plitzi-sdk-plugin, plitzi-sdk-runtime;
 
 @layer plitzi-builder-base {
   body {

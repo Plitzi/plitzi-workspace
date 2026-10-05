@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { compilePlugin } from './compile';
-import { copyPlugin } from './copy';
+import { copyPlugin, copyPluginStylesheet } from './copy';
 import { detectAction, isComponentSource } from './detect';
 import { assertPluginSources } from './validate';
 import { writeFileAtomic } from '../helpers/atomicFile';
@@ -438,7 +438,7 @@ export class PluginManager {
           if (this.isWebUrl(cssPath)) {
             cssUrl = cssPath;
           } else {
-            await copyPlugin(cssPath, dir, 'index.css');
+            await copyPluginStylesheet(cssPath, dir);
             cssUrl = `${this.urlPrefix}/${name}/index.css`;
           }
         }
@@ -452,16 +452,11 @@ export class PluginManager {
         if (cssPath) {
           const isRemote = cssPath.startsWith('http://') || cssPath.startsWith('https://');
           if (isRemote) {
-            const cssRes = await fetch(cssPath);
-            if (!cssRes.ok) {
-              throw new Error(`HTTP ${cssRes.status} downloading ${cssPath}`);
-            }
-
-            await writeFileAtomic(path.join(dir, 'index.css'), await cssRes.text());
+            await copyPluginStylesheet(cssPath, dir);
           } else if (this.isWebUrl(cssPath)) {
             cssUrl = cssPath; // absolute local path — serve as-is
           } else {
-            await copyPlugin(cssPath, dir, 'index.css');
+            await copyPluginStylesheet(cssPath, dir);
           }
 
           cssUrl = `${this.urlPrefix}/${name}/index.css`;
@@ -472,7 +467,7 @@ export class PluginManager {
           if (this.isWebUrl(cssPath)) {
             cssUrl = cssPath;
           } else {
-            await copyPlugin(cssPath, dir, 'index.css');
+            await copyPluginStylesheet(cssPath, dir);
             cssUrl = `${this.urlPrefix}/${name}/index.css`;
           }
         }

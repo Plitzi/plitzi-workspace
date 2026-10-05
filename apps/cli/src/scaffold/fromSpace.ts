@@ -245,7 +245,7 @@ import path from 'node:path';
 
 import { closeOnSignals, consoleLogger, ${local ? 'createJsonAdapters' : 'createCloudAdapters'}, createServer, loadFunctions } from '@plitzi/sdk-server';
 ${hasRuntime ? importLine(`{ ${runtimeImports} }`, '@plitzi/sdk-server/runtime') : ''}${local ? `\n${importLine('{ authorSpace }', '@plitzi/sdk-authoring')}${importLine('{ publicData }', '@plitzi/sdk-authoring/node')}` : ''}
-${importLine('{ lookups }', './actions.ts')}${local ? importLine('{ declarations }', './plugins/declarations.ts') : ''}${runtimeEntry ? importLine('spaceRuntime', runtimeEntry) : ''}${local ? importLine('{ space }', './space.ts') : ''}
+${importLine('{ lookups }', './actions.ts')}${local ? importLine('{ declarations }', './plugins/declarations.ts') : ''}${runtimeEntry ? importLine('spaceRuntime', runtimeEntry) : ''}${importLine('{ serverOptions }', './serverOptions.ts')}${local ? importLine('{ space }', './space.ts') : ''}
 /**
  * The project's settings — the key its actions sign with, the variables the space was given on Plitzi — kept in \`.env\`,
  * out of git. \`plitzi create\` wrote one with a fresh signing key; \`.env.example\` names the rest.
@@ -316,8 +316,10 @@ const server = createServer(
     publicDir: path.join(PROJECT_ROOT, 'public'),
     functions: { native: ${hasRuntime ? '[...functions, ...runtime.native]' : 'functions'} },
     // What \`ctx.sign\` and \`ctx.verify\` sign with: the key that was the space's on Plitzi stays there.
-    action: { lookups, signingSecret: process.env.PLITZI_SIGNING_SECRET },
-    logger: consoleLogger
+    logger: consoleLogger,
+    // What the server does besides serving the space — \`src/serverOptions.ts\`, the project's own.
+    ...serverOptions,
+    action: { ...serverOptions.action, lookups, signingSecret: process.env.PLITZI_SIGNING_SECRET }
   }${hasRuntime ? ',\n  { preAuth: [runtime.stage] }' : ''}
 );
 

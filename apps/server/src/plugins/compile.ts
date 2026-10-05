@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import esbuild from 'esbuild';
 
+import { inPluginLayer } from '@plitzi/sdk-shared/style/cssLayers';
+
 import { writeFileAtomic } from '../helpers/atomicFile';
 
 const EXTERNAL = [
@@ -75,7 +77,12 @@ export const compilePlugin = async (
   });
 
   await fs.mkdir(outDir, { recursive: true });
-  await Promise.all(result.outputFiles.map(output => writeFileAtomic(output.path, output.contents)));
+  await Promise.all(
+    result.outputFiles.map(output =>
+      // The plugin's stylesheet in its layer, below the space's: written so, every way it reaches a page agrees.
+      writeFileAtomic(output.path, output.path.endsWith('.css') ? inPluginLayer(output.text) : output.contents)
+    )
+  );
   const hasCSS = result.outputFiles.some(output => path.basename(output.path) === 'index.css');
 
   return { hasCSS, inputs: sourceInputs(result.metafile) };

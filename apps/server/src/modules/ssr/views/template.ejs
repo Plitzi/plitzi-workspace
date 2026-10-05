@@ -140,9 +140,22 @@
     </script>
     <% } %>
     <% if (locals.devReload) { %>
-    <%# Development only: the server says the space changed (re-authored, `reloadPages`), and the page loads again. %>
+    <%# Development only: the server says the space changed (re-authored, `reloadPages`), and the page loads again — and
+        so does a page that reconnects to a server that restarted (a different `boot`): its code changed under it. %>
     <script>
-      new EventSource('/__plitzi/reload').addEventListener('reload', () => location.reload());
+      (() => {
+        const events = new EventSource('/__plitzi/reload');
+        let boot;
+        events.addEventListener('hello', event => {
+          const next = JSON.parse(event.data).boot;
+          if (boot && boot !== next) {
+            location.reload();
+          }
+
+          boot = next;
+        });
+        events.addEventListener('reload', () => location.reload());
+      })();
     </script>
     <% } %>
   </body>

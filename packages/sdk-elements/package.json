@@ -130,6 +130,10 @@
       "types": "./dist/Element/hooks/useElementState.d.ts",
       "import": "./dist/Element/hooks/useElementState.mjs"
     },
+    "./Element/hooks/useElementVisible": {
+      "types": "./dist/Element/hooks/useElementVisible.d.ts",
+      "import": "./dist/Element/hooks/useElementVisible.mjs"
+    },
     "./Element/hooks/useInternalClassName": {
       "types": "./dist/Element/hooks/useInternalClassName.d.ts",
       "import": "./dist/Element/hooks/useInternalClassName.mjs"

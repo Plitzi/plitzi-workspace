@@ -6,6 +6,7 @@ import { build } from 'esbuild';
 import { zipSync } from 'fflate';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { inPluginLayer } from '@plitzi/sdk-shared/style/cssLayers';
 
 import { packSource } from './source';
 import { emitTypeDeclarations } from './typeDeclarations';
@@ -307,6 +308,12 @@ export const packPlugin = async ({
   });
 
   const built = (await fs.readdir(outDir)).filter(file => file.endsWith('.mjs') || file.endsWith('.css')).sort();
+  // The stylesheet in the plugins' layer, below the space's — before anything is hashed or zipped.
+  for (const file of built.filter(name => name.endsWith('.css'))) {
+    const css = path.join(outDir, file);
+    await fs.writeFile(css, inPluginLayer(await fs.readFile(css, 'utf8')));
+  }
+
   const assets = Object.fromEntries(
     await Promise.all(
       built.map(async (file): Promise<[string, ManifestAsset]> => [

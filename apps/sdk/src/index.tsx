@@ -20,6 +20,7 @@ import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider'
 import useFlag from '@plitzi/sdk-elements/dataSource/useFlag';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
+import useElementVisible from '@plitzi/sdk-elements/Element/hooks/useElementVisible';
 import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
@@ -379,6 +380,8 @@ export {
   ReplicaProvider,
   useElement,
   useRscData,
+  // Whether another element is on the page, for a plugin that acts when it appears: a window a flow opened.
+  useElementVisible,
   // The other half of `useRscData`. An element whose data is resolved on the server could read the payload and had
   // no way to ask for a fresh one — so anything that has to keep up with a feed had to fetch it itself from the
   // browser, which is the whole thing a server-resolved element exists to avoid.

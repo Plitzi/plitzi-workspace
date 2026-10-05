@@ -64,6 +64,22 @@
 - `explain` answers a builder's name (`reloadApi`, `cancelApi`) with its step, and knows `whileRunning`.
 - `container` and `text` take a `title`. A trigger's `preview` may hold numbers, flags, lists and `null`.
 
+## Plugins
+
+- **A plugin's stylesheet sits below the space's.** The cascade order is now `… utilities, plitzi-sdk-plugin,
+  plitzi-sdk-runtime`, and whatever builds a plugin writes its CSS into `plitzi-sdk-plugin` (`inPluginLayer` from
+  `@plitzi/sdk-shared/style`): `plitzi pack plugin`, a server compiling one (`action: 'compile'`), and the stylesheet a
+  server copies or downloads for one. A space's classes and `customCss` now win over what the plugin's author shipped,
+  whatever the specificity — as they do over a built-in element. A plugin packed before this ships unlayered and still
+  wins until it is packed again.
+- **Declared param types reach the callback.** A param declared `number` (new, a text box in the builder) or `boolean`
+  is handed over as one — written `5000`, or bound to text that says it; an empty number as nothing, so the component's
+  default applies.
+- **`useElementVisible(id)`** (`@plitzi/plitzi-sdk`): whether another element is on the page — its own `visible`, every
+  container around it, the breakpoint — kept current while the plugin is mounted, at that plugin's cost alone.
+- **A page open on a development server loads again when the server restarts** (`devReload`): `start:dev` restarting
+  on a change to the server's code or a plugin reached the open page only when somebody reloaded it.
+
 ## CLI and page checks
 
 - **`check`, `shot` and the generated visual tests settle instead of waiting for `networkidle`**, which never came on a

@@ -1,7 +1,8 @@
 @use './sdk' as sdkComponents;
 @use '@plitzi/plitzi-ui/Toast/Assets/index.scss' as toast;
 
-@layer theme, base, plitzi-sdk-base, components, utilities, plitzi-sdk-runtime, plitzi-sdk-plugin;
+// A plugin's stylesheet below the space's: what the space writes about an element wins over what its author shipped.
+@layer theme, base, plitzi-sdk-base, components, utilities, plitzi-sdk-plugin, plitzi-sdk-runtime;
 
 /* What a visitor who asked for less motion gets — written once, applied by the media query and by the QA class. */
 @mixin reduced-motion($root) {

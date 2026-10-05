@@ -1299,6 +1299,10 @@
       "types": "./dist/style/breakpoints.d.ts",
       "import": "./dist/style/breakpoints.mjs"
     },
+    "./style/cssLayers": {
+      "types": "./dist/style/cssLayers.d.ts",
+      "import": "./dist/style/cssLayers.mjs"
+    },
     "./style/displayModes": {
       "types": "./dist/style/displayModes.d.ts",
       "import": "./dist/style/displayModes.mjs"

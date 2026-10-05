@@ -132,6 +132,8 @@ describe('packing element folders', () => {
       expect((await fs.readdir(outDir)).sort()).toEqual(['plugin-manifest.json', 'seat-picker.css', 'seat-picker.mjs']);
       expect(await fs.readFile(path.join(outDir, 'seat-picker.mjs'), 'utf-8')).toContain('data:image/svg+xml');
       expect((await readManifest(outDir)).assets['seat-picker.css']).toMatchObject({ type: 'style', isMain: true });
+      // Below the space's styles: what a space writes about the element wins over what its author shipped.
+      expect(await fs.readFile(path.join(outDir, 'seat-picker.css'), 'utf-8')).toMatch(/^@layer plitzi-sdk-plugin\{/);
     });
   });
 });

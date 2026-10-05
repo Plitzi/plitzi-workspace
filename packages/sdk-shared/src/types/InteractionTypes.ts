@@ -35,7 +35,7 @@ export type InteractionNode = {
 };
 
 export type InteractionParamType =
-  'boolean' | 'select' | 'text' | 'textarea' | 'codemirror-text' | 'codemirror-json' | 'elements';
+  'boolean' | 'select' | 'text' | 'number' | 'textarea' | 'codemirror-text' | 'codemirror-json' | 'elements';
 
 export type InteractionCallbackParamValues<T extends Record<string, unknown> = Record<string, unknown>> = T;
 
@@ -50,6 +50,8 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
   credentialProvider?: SpaceCredentialProvider;
 } & (
   | { type: 'text'; defaultValue?: string | number }
+  /** Written as text — a number or a template — and handed to the callback as a number. */
+  | { type: 'number'; defaultValue?: number }
   | { type: 'textarea'; defaultValue?: string | number }
   | { type: 'codemirror-text'; defaultValue?: string }
   | { type: 'codemirror-json'; defaultValue?: string }

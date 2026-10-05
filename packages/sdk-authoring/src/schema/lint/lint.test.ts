@@ -519,7 +519,7 @@ describe('lintSpace', () => {
 
     it('unknown-attribute', () => {
       const documents = withChange(({ schema }) => {
-        schema.flat.hello.attributes.title = 'Greeting';
+        schema.flat.hello.attributes.caption = 'Greeting';
       });
 
       expect(errorsOf(documents)).toContain('unknown-attribute');
