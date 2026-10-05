@@ -40,6 +40,11 @@
       "import": "./dist/mongo.js",
       "default": "./dist/mongo.js"
     },
+    "./sqlite": {
+      "types": "./dist/sqlite.d.ts",
+      "import": "./dist/sqlite.js",
+      "default": "./dist/sqlite.js"
+    },
     "./handlers": {
       "types": "./dist/handlers.d.ts",
       "import": "./dist/handlers.js",

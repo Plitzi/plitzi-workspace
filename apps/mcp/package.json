@@ -32,8 +32,6 @@
     "@modelcontextprotocol/sdk": "^1.32.0",
     "@plitzi/plitzi-sdk": "workspace:*",
     "@plitzi/sdk-authoring": "workspace:*",
-    "@plitzi/sdk-elements": "workspace:*",
-    "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",

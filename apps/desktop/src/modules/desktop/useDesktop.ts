@@ -63,6 +63,4 @@ const bridge = (): DesktopBridge | undefined => (typeof window === 'undefined' ?
 
 export const useDesktop = (): DesktopBridge => useMemo(() => bridge() ?? fallback, []);
 
-export const isDesktop = (): boolean => bridge() !== undefined;
-
 export default useDesktop;

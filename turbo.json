@@ -3,7 +3,6 @@
   "globalDependencies": [
     "**/.env.*local",
     ".prettierrc",
-    "babel.config.js",
     "packages/sdk-shared/eslint.config.mjs",
     "packages/sdk-shared/tsconfig.json",
     "packages/sdk-shared/tsconfig.app.json",

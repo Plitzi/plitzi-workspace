@@ -132,6 +132,7 @@ when an install fails the CLI says which setting names it.
 | --- | --- | --- |
 | `public/` | Served to anyone who asks, as it is — data, pictures, a favicon. **It is on the internet**: never a secret, a key, a private document or data only some visitors may read | yes |
 | `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), the space as last authored, screenshots and test output. Rebuilt when missing | no |
+| `data/` | Server mode: what the server keeps for the space — its `kv` in `data/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's data: kept across restarts, never rebuilt. `action.kv` in `src/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
 | `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
 
 `src/main.ts` is the CLI's (`upgrade` keeps it current). What the server does besides serving the space is the
@@ -248,7 +249,8 @@ A project brought up to the CLI it has now, part by part: `files` (the machinery
 Playwright and lint configs, `AGENTS.md`), `packages` (`package.json` merged, `@plitzi/*` raised to this version, then
 the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill no longer has goes with it) and
 `renames` (a name a version renamed, at its file and line). A file nobody changed since the CLI wrote it is replaced;
-one the project made its own is a diff, left unless `--take` names it (`all` for every one). A file of the project's own
+one the project made its own is a diff, left unless `--take` names it (`all` for every one). The generated
+`.prettierignore` names them, so the project's `format` never turns one into a file `upgrade` believes was changed. A file of the project's own
 that the machinery reads (`src/serverOptions.ts`, `src/actions.ts`) is written when the project has none and the
 `main.ts` reading it is the CLI's, and never replaced. A script is the same: one the CLI wrote and nobody changed takes
 today's command, one the project changed is left and said (`.plitzi/scaffold.json` records both). `update` is the same
@@ -366,10 +368,11 @@ plitzi pack plugin src/plugins/SeatPicker             # an element of a self-hos
 plitzi pack plugin src/plugins/SeatPicker src/plugins/Legend   # several in one plugin, the first its main
 ```
 
-It writes one ES module (esbuild; React and the SDK kept out — the page provides them; images and fonts inside, since
-a page imports the module from a blob URL), `plugin-manifest.json` written from the elements' declarations with each
-file's integrity hash, and the zip the builder takes — its stylesheet in the \`plitzi-sdk-plugin\` cascade layer, below
-the space's styles, so a space's classes and \`customCss\` win over it: upload it under Resources, as a plugin. A package also gets its
+It writes one ES module (esbuild; React and the SDK kept out — the page provides them; images, fonts and any file
+imported whole — `worker.js?raw` for its text, `engine.wasm?inline` for a data URI — inside, since a page imports the
+module from a blob URL), `plugin-manifest.json` written from the elements' declarations with each file's integrity
+hash, and the zip the builder takes — its stylesheet in the `plitzi-sdk-plugin` cascade layer, below the space's
+styles, so a space's classes and `customCss` win over it: upload it under Resources, as a plugin. A package also gets its
 type declarations, written with its own TypeScript. Or serve the build at a versioned address with CORS open, and list
 it in a space's plugins as `{ type, resource }`.
 

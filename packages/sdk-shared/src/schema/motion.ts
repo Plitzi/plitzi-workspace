@@ -199,7 +199,7 @@ const KEYS = new Set(['enter', 'on', 'duration', 'delay', 'stagger', 'loop']);
 /** What is wrong with a value given as an element's `motion`, one sentence each — empty when it is one. */
 export const motionProblems = (value: unknown): string[] => {
   if (!isRecord(value)) {
-    return ['motion is an object: `{ enter: \'fade-up\', on: \'view\' }`'];
+    return ['motion is an object: `{ enter: "fade-up", on: "view" }`'];
   }
 
   const problems: string[] = [];

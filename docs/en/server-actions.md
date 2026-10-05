@@ -766,6 +766,26 @@ many you run. **Four things need it to be shared**, and each of them degrades si
 run), replay (a redelivery runs the work again), and the webhook rate limit. A cluster passes an **adapter** over
 whatever it already runs — Redis, Memcached, a table:
 
+**Kept across a restart, with no database.** The in-process Map goes with the process: a saved layout, a counter, a
+source's cached answer — and, in development, every save that restarts the server. Two stores need nothing installed:
+
+```ts
+import { createFileKv } from '@plitzi/sdk-server/actions';
+import { createSqliteKv } from '@plitzi/sdk-server/sqlite';
+
+createServer({ action: { lookups, kv: createFileKv({ file: 'data/kv.json' }) } });   // one process, a readable file
+createServer({ action: { lookups, kv: createSqliteKv({ file: 'data/kv.sqlite' }) } }); // every process on the file
+```
+
+`createFileKv` keeps the Map in one JSON file, written whole (through a temporary file) as soon as anything changes —
+for ONE process, which reads the file when it starts and owns it after. `createSqliteKv` is a table in a SQLite file
+over Node's own `node:sqlite` (Node 22.13+, which prints an `ExperimentalWarning` when it loads): every operation is
+one atomic statement, so replicas on one machine, or a server started with `workers`, share it safely. A project
+`plitzi create` writes starts with `createFileKv` in `data/kv.json`, and names another in `src/serverOptions.ts`.
+
+The keys an adapter receives are the server's — prefixed per space (`kv:action:<spaceId>:…`) — and are not a
+contract: an adapter stores them as it gets them, and keeps them all.
+
 On Redis there is nothing to write — `sdk-server` ships the adapter, over any client that speaks the commands
 (ioredis does):
 
@@ -785,8 +805,8 @@ const kv: ActionKvAdapter = {
 };
 ```
 
-`createMemoryKv` (in-process), `createRedisKv` and the MySQL and Mongo adapters implement all six, and are held to
-one contract in `sdk-server`'s own tests — racing writers included.
+`createMemoryKv` (in-process), `createFileKv`, `createSqliteKv`, `createRedisKv` and the MySQL and Mongo adapters
+implement all six, and are held to one contract in `sdk-server`'s own tests — racing writers included.
 
 Six operations over strings, and **no rule to remember**. How a counter behaves is the server's, the same for
 every deployment — the key prefixing, the JSON round trip, and the one that a rate limit lives or dies by: a

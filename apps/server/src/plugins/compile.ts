@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import esbuild from 'esbuild';
 
+import { pluginAssetLoaders, pluginImportQueries } from '@plitzi/sdk-shared/plugins/bundle';
 import { inPluginLayer } from '@plitzi/sdk-shared/style/cssLayers';
 
 import { writeFileAtomic } from '../helpers/atomicFile';
@@ -15,25 +16,6 @@ const EXTERNAL = [
   '@plitzi/plitzi-sdk',
   '@plitzi/sdk-shared'
 ];
-
-/**
- * Assets a stylesheet drags in with it, inlined.
- *
- * A plugin that imports a library's CSS — a map, a date picker, an editor — imports its images too, and without a
- * loader for them the build fails on a file the author never wrote. Inlined as data URIs rather than emitted
- * beside the bundle, because the plugin is served as exactly two files and a third that nothing routes to would
- * be a stylesheet with broken references in it.
- */
-const ASSET_LOADERS: Record<string, esbuild.Loader> = {
-  '.png': 'dataurl',
-  '.jpg': 'dataurl',
-  '.jpeg': 'dataurl',
-  '.gif': 'dataurl',
-  '.svg': 'dataurl',
-  '.webp': 'dataurl',
-  '.woff': 'dataurl',
-  '.woff2': 'dataurl'
-};
 
 /**
  * Everything that went into the bundle, so a server can tell when any of it has moved on: a dev server as it is
@@ -50,7 +32,8 @@ const sourceInputs = (metafile: esbuild.Metafile | undefined): string[] =>
   metafile
     ? Object.keys(metafile.inputs)
         .filter(input => !input.includes('node_modules'))
-        .map(input => path.resolve(input))
+        // A file imported whole (`?raw`, `?inline`) is listed under its loader's namespace: the file is what changes.
+        .map(input => path.resolve(input.replace(/^plitzi-(raw|inline):/, '')))
     : [];
 
 export const compilePlugin = async (
@@ -63,7 +46,10 @@ export const compilePlugin = async (
     bundle: true,
     format: 'esm',
     external: EXTERNAL,
-    loader: ASSET_LOADERS,
+    // Inside the bundle, as `plitzi pack` carries them: the plugin is served as its module and its stylesheet, and a
+    // third file nothing carries would be a broken reference — images and fonts, a `?raw` worker, an `?inline` module.
+    loader: pluginAssetLoaders(),
+    plugins: [pluginImportQueries()],
     outdir: outDir,
     entryNames: 'index',
     jsx: 'automatic',

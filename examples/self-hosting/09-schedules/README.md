@@ -67,7 +67,7 @@ see [On Mongo or MySQL](#on-mongo-or-mysql) below.
 
 **So is `kv`, and it is not optional past one replica.** A worker takes a job's single-flight key before running
 it, and with the default in-process Map each replica holds its own keys — so a stalled replica waking up would run
-the job a second time. [`src/store/kv.ts`](./src/store/kv.ts) keeps them in the same file.
+the job a second time. `createSqliteKv` (`@plitzi/sdk-server/sqlite`) keeps them in the same file, in a table of its own.
 
 **Three keys wire it**, in [`src/main.ts`](./src/main.ts):
 
@@ -111,9 +111,9 @@ code; the operator's **Run again** and **Cancel** are two more actions.
 ## On Mongo or MySQL
 
 This example keeps its queue in a SQLite file so it runs with nothing installed, and so the adapter is there to read.
-A deployment that already runs Mongo or MySQL does not write [`src/store/queue.ts`](./src/store/queue.ts) or
-[`src/store/kv.ts`](./src/store/kv.ts): `@plitzi/sdk-server` has both, written against the same contract and tested
-against the same rules. They use the connection you already have and keep nothing of their own — Mongo gets the
+A deployment that already runs Mongo or MySQL does not write [`src/store/queue.ts`](./src/store/queue.ts):
+`@plitzi/sdk-server` has the queue and the `kv` for both, written against the same contract and tested against the
+same rules. They use the connection you already have and keep nothing of their own — Mongo gets the
 indexes its queries need, MySQL gets three tables on first use.
 
 Only the two stores change in [`src/main.ts`](./src/main.ts); the actions, the tasks and the page stay as they are.

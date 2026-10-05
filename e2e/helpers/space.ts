@@ -30,9 +30,6 @@ export const RSC_NODE_IDS = Object.values(RSC_IDS);
  *  holding them, which renders empty without them. For `expectPageWhole` wherever those components are absent. */
 export const WITHOUT_RSC = { ignore: [...RSC_NODE_IDS, 'rsc-section'] };
 
-/** Locates an element by schema id. Server-rendered pages only — see the note at the top of this file. */
-export const serverElement = (page: Page, id: string): Locator => page.locator(`[data-id="${id}"]`);
-
 /** Locates an element by the id its server data is keyed under. Present in both render paths, because the client
  *  needs it to reattach a partial refresh to the right node. */
 export const rscElement = (page: Page, id: string): Locator => page.locator(`[data-rsc-id="${id}"]`);

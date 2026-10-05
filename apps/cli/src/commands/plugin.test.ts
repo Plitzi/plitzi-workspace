@@ -343,7 +343,12 @@ describe('plitzi add plugin', () => {
       await from(dir, () => addPlugin(['button'], {}));
       await from(dir, () => addPlugin(['legend', 'price-tag'], { title: 'Key' }));
 
-      expect(await fs.readdir(path.join(dir, 'src/plugins'))).toEqual(['README.md', 'StatCard', 'declarations.ts']);
+      expect(await fs.readdir(path.join(dir, 'src/plugins'))).toEqual([
+        'README.md',
+        'StatCard',
+        'assets.d.ts',
+        'declarations.ts'
+      ]);
     });
 
     expect(errors()).toContain('would both be "seatPicker"');

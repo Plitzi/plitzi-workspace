@@ -3,7 +3,7 @@
 ## One call: `inspectPage`
 
 ```ts
-import { authorSpace, inspectPage, openPage } from '@plitzi/sdk-authoring';
+import { answerAction, authorSpace, inspectPage, openPage } from '@plitzi/sdk-authoring';
 
 const { handles } = authorSpace(space);
 await openPage(page, '/');
@@ -12,6 +12,10 @@ expect((await inspectPage(page, handles)).problems).toEqual([]);
 
 `openPage` waits for the page to settle — loaded, and nothing asked for in half a second — counting no stream that
 stays open: Playwright's `networkidle` never comes on a page with a realtime `channel`.
+
+A test that would SAVE something answers that action itself, before opening the page, so it never writes the server's
+`kv` the next test (or the developer) reads: `await answerAction(page, 'wall', { windows: [] })` — or a function of the
+input. Every other call goes through.
 
 It checks the open page and returns EVERY problem at once, one sentence each, naming the element and the reason:
 

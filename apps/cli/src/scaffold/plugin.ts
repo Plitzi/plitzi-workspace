@@ -1,3 +1,5 @@
+import { PLUGIN_INLINED_ASSETS } from '@plitzi/sdk-shared/plugins/bundle';
+
 import type { CreateAnswers, ProjectFiles } from './types';
 
 /**
@@ -228,7 +230,32 @@ ${list.length <= 120 ? list : `export const declarations: PluginDeclarationData[
 `;
 };
 
+/**
+ * What a plugin imports besides code, typed as the server's bundler hands it over (`@plitzi/sdk-shared/plugins/bundle`):
+ * a stylesheet for its effect, an image or a font as the data URI it is carried as, a file whole with `?raw` or
+ * `?inline`. A client-mode project has these from `vite/client`; a server-mode one has no Vite to ask.
+ */
+const assetDeclarations = (): string => `/**
+ * What a plugin imports besides code, as the bundle carries it (\`plitzi upgrade\` keeps this file):
+ * - \`import './Map.css'\` — the plugin's stylesheet, shipped beside it.
+ * - \`import pin from './pin.svg'\` — an image or a font, as a data URI.
+ * - \`import source from 'lib/dist/worker.js?raw'\` — a file's text: a worker, started from a Blob.
+ * - \`import url from './engine.wasm?inline'\` — a file as a data URI: a WebAssembly module, fetched and instantiated.
+ */
+declare module '*.css';
+${PLUGIN_INLINED_ASSETS.map(extension => `declare module '*${extension}' {\n  const url: string;\n  export default url;\n}`).join('\n')}
+declare module '*?raw' {
+  const text: string;
+  export default text;
+}
+declare module '*?inline' {
+  const url: string;
+  export default url;
+}
+`;
+
 export const pluginFiles = (answers: CreateAnswers): ProjectFiles => ({
+  ...(answers.mode === 'server' ? { 'src/plugins/assets.d.ts': assetDeclarations() } : {}),
   // Only the tour hosts the example: elsewhere the folder, its README and its registry are what `add plugin` fills.
   ...((answers.template ?? 'welcome') === 'welcome'
     ? { 'src/plugins/StatCard/StatCard.tsx': component(), 'src/plugins/StatCard/index.ts': barrel() }

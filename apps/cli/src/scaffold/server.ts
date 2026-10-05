@@ -1,4 +1,4 @@
-import { DEV_SERVER_FILE, DEV_SPACE_FILE, PROJECT_TMP } from './paths';
+import { DEV_SERVER_FILE, DEV_SPACE_FILE, KV_FILE, PROJECT_TMP } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -77,6 +77,7 @@ import {
   freePort,
   loadFunctions
 } from '@plitzi/sdk-server';
+import { createFileKv } from '@plitzi/sdk-server/actions';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 import { publicData } from '@plitzi/sdk-authoring/node';
@@ -171,7 +172,13 @@ const server = createServer({
   // \`public/\` served as it is: the data an apiContainer reads (\`/data/home.json\`), images, a favicon.
   publicDir: path.join(PROJECT_ROOT, 'public'),
   functions: { native: functions },
-  action: { ...serverOptions.action, lookups: actionLookups }
+  // What the space's actions keep in \`kv\`, in \`${KV_FILE}\`: it outlives a restart, \`start:dev\`'s included. A
+  // deployment with several processes, or a database, names its own store in \`src/serverOptions.ts\` (\`action.kv\`).
+  action: {
+    kv: createFileKv({ file: path.join(PROJECT_ROOT, '${KV_FILE}') }),
+    ...serverOptions.action,
+    lookups: actionLookups
+  }
 });
 
 ${LISTEN_SNIPPET}

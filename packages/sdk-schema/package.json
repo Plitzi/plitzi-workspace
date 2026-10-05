@@ -63,7 +63,7 @@
     "@plitzi/plitzi-ui": "^1.6.29",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
-    "prop-types": "^15.8.1"
+    "immer": "^11.1.21"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

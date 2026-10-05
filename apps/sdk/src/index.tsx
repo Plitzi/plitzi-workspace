@@ -18,6 +18,7 @@ import {
 } from '@plitzi/sdk-elements/canvas';
 import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
 import useFlag from '@plitzi/sdk-elements/dataSource/useFlag';
+import elementChildren from '@plitzi/sdk-elements/Element/helpers/elementChildren';
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import useElementVisible from '@plitzi/sdk-elements/Element/hooks/useElementVisible';
@@ -34,6 +35,7 @@ import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-
 import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { styleCacheFromDocument } from '@plitzi/sdk-shared/style';
+import useDisplayMode from '@plitzi/sdk-shared/style/useDisplayMode';
 
 import App from './App';
 import { getEnvironmentServer } from './config';
@@ -47,6 +49,7 @@ if (import.meta.env.PROD) {
 
 import type { CanvasHandle, CanvasOptions, CanvasSize, Frame } from '@plitzi/sdk-elements/canvas';
 import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
+import type { ElementChild } from '@plitzi/sdk-elements/Element/helpers/elementChildren';
 import type { ChannelHandle } from '@plitzi/sdk-elements/realtime/useChannel';
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
@@ -382,6 +385,11 @@ export {
   useRscData,
   // Whether another element is on the page, for a plugin that acts when it appears: a window a flow opened.
   useElementVisible,
+  // A plugin that lays out the space's elements put inside it — a dock, tabs, a masonry: each child with its id, to
+  // wrap in a box of its own rather than restyling an element that is not its own.
+  elementChildren,
+  // Which of the space's breakpoints the page shows, by the widths its styles are compiled at.
+  useDisplayMode,
   // The other half of `useRscData`. An element whose data is resolved on the server could read the payload and had
   // no way to ask for a fresh one — so anything that has to keep up with a feed had to fetch it itself from the
   // browser, which is the whole thing a server-resolved element exists to avoid.
@@ -416,6 +424,7 @@ export type {
   InteractionCallbackParamValues,
   PluginDeclaration,
   ChannelHandle,
+  ElementChild,
   RealtimeMember,
   RealtimeMessage,
   CanvasHandle,

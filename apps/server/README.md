@@ -164,7 +164,8 @@ runtime, and its files into `public/` — a draft, or any published snapshot (`-
 ## Configuration
 
 `createServer` takes a `ServerConfig` (exported, as a type, from `@plitzi/sdk-server`) — what a project types its own
-options with: a `plitzi create` project keeps them in `src/serverOptions.ts` as `Partial<ServerConfig>`.
+options with: a `plitzi create` project keeps them in `src/serverOptions.ts`, typed from it less what its `main.ts`
+wires itself.
 
 | Option | Type | Default | Description |
 |---|---|---|---|
@@ -519,6 +520,8 @@ All fields are optional and combined with AND logic. Calling `invalidate()` with
 ## Plugins
 
 Plugins are React component bundles that extend the Plitzi schema renderer. They are defined globally at server config level, compiled or copied on first use, and cached on disk for one week. The `getSpaceDeployment` adapter controls which plugins each space gets access to via `pluginNames`.
+
+A compiled plugin is one module and its stylesheet, built as `plitzi pack plugin` builds it: React and the SDK kept out, and everything else inside — images and fonts as data URIs, and a file imported whole the way Vite imports it (`worker.js?raw` for its text, `engine.wasm?inline` for a data URI).
 
 ```ts
 import type { SSRSpaceDeployment } from '@plitzi/sdk-server';
@@ -1259,7 +1262,9 @@ ends any other event stream, lets what is being answered finish, and cuts whatev
 (`SHUTDOWN_GRACE_MS`). A page left open on a board, or an agent's app listening, no longer holds a Ctrl+C or a
 SIGTERM until something kills the process.
 
-`@plitzi/sdk-server/mysql` has the same pair over a `mysql2` pool (`createMysqlJobQueue`, `createMysqlKv`). Anything
+`@plitzi/sdk-server/mysql` has the same pair over a `mysql2` pool (`createMysqlJobQueue`, `createMysqlKv`). With no
+database at all, `kv` survives a restart in a file: `createFileKv` (`@plitzi/sdk-server/actions`, one process, JSON) or
+`createSqliteKv` (`@plitzi/sdk-server/sqlite`, any number of processes on the file). Anything
 else is the `ActionJobQueue` contract written against your store — see
 [server actions § self-hosted](https://github.com/plitzi/plitzi-workspace/blob/main/docs/en/server-actions.md#13-for-a-self-hosted-deployment).
 

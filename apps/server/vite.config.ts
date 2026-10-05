@@ -89,6 +89,9 @@ export default defineConfig(({ mode }) => {
           // Job queue and key/value adapters over a Mongo database the deployment owns. Its own entry for the same
           // reason: a deployment that stores its jobs elsewhere never loads anything that knows what Mongo is.
           mongo: path.resolve(root, 'src/mongo.ts'),
+          // A key/value store in a SQLite file. Its own entry because it loads `node:sqlite`, which still warns that it
+          // is experimental when it loads: a deployment that keeps its keys elsewhere never hears about it.
+          sqlite: path.resolve(root, 'src/sqlite.ts'),
           ssr: path.resolve(root, 'src/ssr.ts'),
           // Server actions. Own entry so a deployment writing its own tasks imports the contract alone, and a
           // server that runs none never loads the runner or the task set to find that out.

@@ -86,7 +86,7 @@ que seguir entendiendo para siempre. Un conector escrito con el layout viejo se 
 
 ### Presets
 
-El builder trae documentos de partida (`apps/builder/src/modules/Connectors/presets.ts`): **Strapi v5**, **WordPress
+El builder trae documentos de partida (`packages/sdk-shared/src/connectors/presets.ts`): **Strapi v5**, **WordPress
 REST**, **Directus**, **Contentful CDA** y **Blank**. Son documentos, no adaptadores: rellenan el editor y cada campo
 sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca con un release.
 
@@ -107,7 +107,7 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
                        │  projection.ts ── recorta el slice a lo que la página bindea         │
                        │  resolveRscData.ts ── resuelve cada elemento runtime:"server"        │
                        │  rsc/handler.ts ── /_rsc (refresh, ?location=)                       │
-                       │  actions/handler.ts ── POST /_action (escrituras)                    │
+                       │  actions/connectorWrite.ts ── POST /_action (escrituras)             │
                        └───────────────┬─────────────────────────────────────────────────────┘
                                        │  payload RSC (serverData) / respuestas
                                        ▼
@@ -136,7 +136,7 @@ sigue siendo editable. Un preset obsoleto se corrige editando una fila, nunca co
   aislamiento de fallos.
 - **`rsc/handler.ts`** — `GET /_rsc`: reescribe la petición con `?location=` para resolver la página correcta en los
   refrescos cliente.
-- **`actions/handler.ts`** — `POST /_action`: el navegador envía `{ elementId, action, recordId, values }`; el
+- **`actions/connectorWrite.ts`** — `POST /_action`: el navegador envía `{ elementId, action, recordId, values }`; el
   servidor valida que el elemento sea `runtime: 'server'`, tenga conector y que el conector declare la acción.
 
 ### Builder — `apps/builder/src/modules/Connectors/`
@@ -493,9 +493,9 @@ indexable).
 | Publicación del endpoint RSC | `apps/server/src/core/services/resolve.ts` (`resolveRscEndpoint`) |
 | Matcher de rutas (cliente/servidor) | `packages/sdk-shared/src/navigation/matchPath.ts` + `routes.ts` |
 | Endpoint `/_rsc` | `apps/server/src/modules/rsc/handler.ts` |
-| Endpoint `/_action` | `apps/server/src/modules/actions/handler.ts` |
+| Endpoint `/_action` | `apps/server/src/modules/actions/connectorWrite.ts` |
 | Panel del builder | `apps/builder/src/modules/Connectors/` |
-| Presets | `apps/builder/src/modules/Connectors/presets.ts` |
+| Presets | `packages/sdk-shared/src/connectors/presets.ts` |
 | Credencial CMS | `apps/builder/src/modules/Space/Models/SpaceCredentialForm.tsx` |
 | Elemento provider | `packages/sdk-elements/src/elements/provider/ApiContainer/ApiContainer.tsx` |
 | Settings del provider | `packages/sdk-elements/src/elements/provider/ApiContainer/Settings.tsx` |

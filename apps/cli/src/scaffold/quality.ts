@@ -1,3 +1,4 @@
+import { MACHINERY } from './machinery';
 import { PROJECT_TMP } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
@@ -40,7 +41,7 @@ export const PROJECT_OUTPUTS = ['dist', PROJECT_TMP];
 const AGENT_FILES = '.claude';
 
 export const prettierignore = (outputs: readonly string[]): string =>
-  `${['node_modules', AGENT_FILES, ...outputs].join('\n')}\n`;
+  `${['node_modules', AGENT_FILES, ...outputs].join('\n')}\n\n# The CLI's own files: \`plitzi upgrade\` keeps them as it writes them.\n${[...MACHINERY].join('\n')}\n`;
 
 /**
  * Flat config, and only what earns its place.

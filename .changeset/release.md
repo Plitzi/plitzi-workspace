@@ -43,6 +43,8 @@
   carries the `signal`. Offered in the builder and the MCP.
 - `onApiSuccess` / `onApiError` fire once per answer: a cancelled request or a loading flag that came and went no
   longer runs the flow again.
+- **A debounce is `whileRunning('latest')` and a `delay` first**: `delayTime` ends its wait the moment its run is
+  superseded, so only the last firing gets past it. Its `time` is a number.
 
 ## Server actions
 
@@ -51,6 +53,12 @@
 - **`invalid_input` says what the value was and which type takes it** — `windows (text, got a list; declare the field
   \`json\` to take it)`. The templates reference documents that a param that is only `|json_encode` is the value it
   encodes.
+- **`kv` survives a restart with no database.** `createFileKv({ file })` (`@plitzi/sdk-server/actions`) keeps the
+  in-process store in one JSON file, written whole as soon as anything changes — for one process.
+  `createSqliteKv({ file } | { db })` (`@plitzi/sdk-server/sqlite`, new entry) is a table in a SQLite file over
+  `node:sqlite`, every operation one statement, shared safely by every process on the file. Both pass the adapter
+  contract every store is held to. The `09-schedules` example uses it rather than its own copy, whose counters read
+  `22.0`.
 
 ## Authoring
 
@@ -63,6 +71,8 @@
 - An unknown attribute is reported against the element's props, not as "'id' does not exist in type ElementSpec[]".
 - `explain` answers a builder's name (`reloadApi`, `cancelApi`) with its step, and knows `whileRunning`.
 - `container` and `text` take a `title`. A trigger's `preview` may hold numbers, flags, lists and `null`.
+- `answerAction(page, actionId, output)` (testing): a test that would save something answers that server action in
+  the browser — the server's `kv`, and what the developer kept, are never written. A stream step gets its `done` frame.
 
 ## Plugins
 
@@ -79,6 +89,14 @@
   container around it, the breakpoint — kept current while the plugin is mounted, at that plugin's cost alone.
 - **A page open on a development server loads again when the server restarts** (`devReload`): `start:dev` restarting
   on a change to the server's code or a plugin reached the open page only when somebody reloaded it.
+- **A plugin lays out the space's elements it holds.** `elementChildren(children)` (`@plitzi/plitzi-sdk`) hands
+  over each child element with the id it was authored under, for a dock, tabs or a masonry to place in boxes of its
+  own — instead of writing styles onto elements it does not render.
+- **`useDisplayMode()`** (`@plitzi/plitzi-sdk`): `desktop`, `tablet` or `mobile`, at the widths the space's styles are
+  compiled at — not a breakpoint of the plugin's own.
+- **A file a library needs whole travels inside the bundle**, imported as Vite imports it: `worker.js?raw` (its text — a
+  worker from a Blob), `engine.wasm?inline` (a base64 data URI). `plitzi pack` and a server compiling a plugin share
+  one build (`@plitzi/sdk-shared/plugins/bundle`), so a server now inlines `.avif`, `.ttf` and `.otf` as `pack` did.
 
 ## CLI and page checks
 
@@ -86,7 +104,7 @@
   page with a realtime channel: `openPage` (`@plitzi/sdk-authoring`) waits for load, then quiet, counting no stream
   that stays open.
 - **The server is the project's in `src/serverOptions.ts`; `src/main.ts` stays the CLI's.** `create` writes
-  `src/serverOptions.ts` (handed to `createServer`, typed `Partial<ServerConfig>` — now exported by
+  `src/serverOptions.ts` (handed to `createServer`, typed from `ServerConfig`, now exported by
   `@plitzi/sdk-server`) and, with `--source local`, `src/actions.ts` (the space's server actions), which `main.ts` wires
   for calls, renders and schedules. What `main.ts` wires itself (the space's adapters, the plugins, `public/`,
   `functions/`, the actions' lookups) is left out of `serverOptions`' type and comes after it, so no option unwires it.
@@ -100,3 +118,18 @@
   `drawsNothing: true`; the generated events hook never fires on the builder's canvas.
 - A `channel` with no tag is boxless to a page check, like a provider; an empty list is said to have no rows, with what
   to do, instead of "no size (0×0)".
+- **A server-mode project keeps its `kv` in `data/kv.json`** (`createFileKv`; ignored by git): what the space's actions
+  save outlives a restart, `start:dev`'s included. `action.kv` in `src/serverOptions.ts` names another store.
+- A server-mode project types what its plugins import besides code (`src/plugins/assets.d.ts`): a stylesheet, an image,
+  `?raw`, `?inline` — a client-mode one has them from `vite/client`.
+- **A new project is formatted from the start**, every template and mode: its first `format` changes nothing. The CLI's
+  own files are in its `.prettierignore`, so formatting never turns one into a file `upgrade` believes was changed.
+
+## Packages
+
+- **Every package declares what it imports, and nothing more.** `react` is a peer of `sdk-auth`, `sdk-event-bridge`,
+  `sdk-interactions`, `sdk-style` and `sdk-variables`; `sdk-schema` depends on `immer`, `sdk-elements` on
+  `@dr.pogodin/react-helmet`, `sdk-plugins` on `@plitzi/plitzi-ui`, `sdk-style` on `@plitzi/sdk-event-bridge` and
+  `sdk-dev-tools` on `@plitzi/sdk-plugins` — each worked only because `@plitzi/plitzi-sdk` brought them, and failed
+  installed alone or under a strict linker. `prop-types` and the `@plitzi/*` dependencies nothing imported are gone, so
+  `sdk-mcp` no longer installs the element library its code says it does not depend on.

@@ -97,7 +97,7 @@ The data a page reads with no backend goes in `public/data/*.json`, served by th
 provider with `runtime: 'server'` reads it on the server, so the page arrives with it. To bind to a file, learn its fields
 with `data describe` rather than reading it: a catalogue is half a megabyte, its shape twenty lines.
 
-**`public/` is on the internet** — never a secret there. `tmp/` (ignored) and `.plitzi/` (committed): `AGENTS.md`.
+**`public/` is on the internet**: never a secret there. `tmp/`, `data/` (its `kv`) ignored; `.plitzi/` committed.
 
 A local space starts as a tour of the platform with a plugin of the project's own; **`--template blank`** starts it as
 tokens, a layout and one empty page instead — the one to pick when the project is about to be a specific site; and

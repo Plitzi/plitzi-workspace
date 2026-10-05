@@ -10,6 +10,16 @@
 
 export const PROJECT_TMP = 'tmp';
 
+/**
+ * What the running server keeps for the space — its `kv`: saved layouts, counters, a source's cached answer. Not
+ * committed either, but not a by-product: it is the deployment's data, so it is never rebuilt and `tmp/` is no place
+ * for it. A deployment that keeps it elsewhere says so in `src/serverOptions.ts` (`action.kv`).
+ */
+export const PROJECT_DATA = 'data';
+
+/** The `kv` a project's server keeps, as one JSON file (`createFileKv`). */
+export const KV_FILE = `${PROJECT_DATA}/kv.json`;
+
 /** The port `npm start` took and the name its `/health` answers with: what `check`, `shot` and `visual` find it by. */
 export const DEV_SERVER_FILE = `${PROJECT_TMP}/dev-server.json`;
 

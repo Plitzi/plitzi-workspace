@@ -48,13 +48,15 @@ export { describeCatalog, describeTask } from './modules/actions/taskCatalog';
 /**
  * The `kv` seam: an ADAPTER a deployment fills, and the logic that sits on top of it.
  *
- * There is deliberately nothing here that talks to a store — no Redis, no database, no client of any kind. A
- * deployment passes five string operations over whatever it already runs, and `createKvStore` supplies everything
- * that decides how a counter behaves, so the rule a rate limit depends on is written once rather than once per
- * deployment. The in-process Map is the same shape, which is why the default and a cluster's store behave
- * identically instead of nearly so.
+ * There is deliberately no client of any store here: a deployment passes six string operations over whatever it
+ * already runs (`createRedisKv` wraps a client it opened), and `createKvStore` supplies everything that decides how a
+ * counter behaves, so the rule a rate limit depends on is written once rather than once per deployment. The
+ * in-process Map is the same shape, which is why the default and a cluster's store behave identically instead of
+ * nearly so — and `createFileKv` is that Map kept in a JSON file, for one process that must survive a restart.
  */
 export { createMemoryKv } from './modules/actions/runtime/memoryKv';
+export { createFileKv } from './modules/actions/runtime/fileKv';
+export type { FileKv, FileKvOptions } from './modules/actions/runtime/fileKv';
 export { createKvStore } from './modules/actions/runtime/kvStore';
 export { createRedisKv } from './modules/actions/runtime/redisKv';
 export type { RedisKvClient, RedisKvOptions } from './modules/actions/runtime/redisKv';

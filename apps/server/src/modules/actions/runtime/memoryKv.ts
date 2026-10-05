@@ -1,18 +1,9 @@
 import type { StoreMethods } from '../../../core/server/fleet/channel';
 import type { ActionKvAdapter } from '../types';
 
-type Entry = { value: string; expiresAt?: number };
+/** A value and, when it has one, the instant (epoch ms) it stops being one. */
+export type KvEntry = { value: string; expiresAt?: number };
 
-/**
- * The `kv` tasks' fallback store: in this process, and nowhere else.
- *
- * Real enough for a single replica and for local work, and deliberately not pretending otherwise — a deployment
- * running several replicas passes an adapter over something shared, because a counter that only counts its own
- * replica is a rate limit that multiplies by the number of them.
- *
- * An adapter like any other: it stores strings and obeys no rules of its own. What a counter DOES lives in
- * `createKvStore`, so the in-process store and a deployment's own behave identically rather than nearly so.
- */
 /** How many writes go by before the map is swept. Cheap enough to be unnoticeable, often enough to bound it. */
 const SWEEP_EVERY = 256;
 
@@ -26,8 +17,16 @@ export const KV_METHODS: StoreMethods<ActionKvAdapter> = {
   swap: true
 };
 
-export const createMemoryKv = (): ActionKvAdapter => {
-  const entries = new Map<string, Entry>();
+/**
+ * The store's rules over a map somebody holds: what `createMemoryKv` is, and what a store that keeps the map
+ * somewhere (`createFileKv`) is too — so the two answer identically and differ only in where the map lives.
+ *
+ * An adapter like any other: it stores strings and obeys no rules of its own. What a counter DOES lives in
+ * `createKvStore`, so the in-process store and a deployment's own behave identically rather than nearly so.
+ *
+ * `changed` is told after every write that changed the map — an expired entry swept or read past included.
+ */
+export const createMapKv = (entries: Map<string, KvEntry>, changed: () => void = () => undefined): ActionKvAdapter => {
   let writes = 0;
 
   /**
@@ -43,14 +42,18 @@ export const createMemoryKv = (): ActionKvAdapter => {
     }
 
     const now = Date.now();
+    const before = entries.size;
     entries.forEach((entry, key) => {
       if (entry.expiresAt !== undefined && entry.expiresAt <= now) {
         entries.delete(key);
       }
     });
+    if (entries.size !== before) {
+      changed();
+    }
   };
 
-  const read = (key: string): Entry | undefined => {
+  const read = (key: string): KvEntry | undefined => {
     const entry = entries.get(key);
     if (!entry) {
       return undefined;
@@ -60,6 +63,7 @@ export const createMemoryKv = (): ActionKvAdapter => {
     // has to do it too, or the same code reads a stale counter here and an absent one in production.
     if (entry.expiresAt !== undefined && entry.expiresAt <= Date.now()) {
       entries.delete(key);
+      changed();
 
       return undefined;
     }
@@ -69,16 +73,23 @@ export const createMemoryKv = (): ActionKvAdapter => {
 
   const expiry = (ttlSeconds?: number) => (ttlSeconds === undefined ? undefined : Date.now() + ttlSeconds * 1000);
 
+  const write = (key: string, entry: KvEntry) => {
+    entries.set(key, entry);
+    changed();
+    sweep();
+  };
+
   return {
     get: key => Promise.resolve(read(key)?.value),
     set: (key, value, ttlSeconds) => {
-      entries.set(key, { value, expiresAt: expiry(ttlSeconds) });
-      sweep();
+      write(key, { value, expiresAt: expiry(ttlSeconds) });
 
       return Promise.resolve();
     },
     delete: key => {
-      entries.delete(key);
+      if (entries.delete(key)) {
+        changed();
+      }
 
       return Promise.resolve();
     },
@@ -86,8 +97,7 @@ export const createMemoryKv = (): ActionKvAdapter => {
       const current = read(key);
       const base = Number(current?.value ?? 0);
       const next = (Number.isFinite(base) ? base : 0) + amount;
-      entries.set(key, { value: String(next), expiresAt: current?.expiresAt });
-      sweep();
+      write(key, { value: String(next), expiresAt: current?.expiresAt });
 
       return Promise.resolve(next);
     },
@@ -95,6 +105,7 @@ export const createMemoryKv = (): ActionKvAdapter => {
       const current = read(key);
       if (current) {
         entries.set(key, { ...current, expiresAt: expiry(ttlSeconds) });
+        changed();
       }
 
       return Promise.resolve();
@@ -104,10 +115,19 @@ export const createMemoryKv = (): ActionKvAdapter => {
         return Promise.resolve(false);
       }
 
-      entries.set(key, { value: next, expiresAt: expiry(ttlSeconds) });
-      sweep();
+      write(key, { value: next, expiresAt: expiry(ttlSeconds) });
 
       return Promise.resolve(true);
     }
   };
 };
+
+/**
+ * The `kv` tasks' fallback store: in this process, and nowhere else — gone when it stops.
+ *
+ * Real enough for a single replica and for local work, and deliberately not pretending otherwise — a deployment
+ * running several replicas passes an adapter over something shared, because a counter that only counts its own
+ * replica is a rate limit that multiplies by the number of them. One that must survive a restart passes
+ * `createFileKv` (one process) or `createSqliteKv` (`@plitzi/sdk-server/sqlite`).
+ */
+export const createMemoryKv = (): ActionKvAdapter => createMapKv(new Map());

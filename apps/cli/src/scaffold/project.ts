@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 
 import { installCommand, managerFiles, managerPackageFields, runCommand } from './packageManager';
-import { DEV_SERVER_FILE, PROJECT_TMP } from './paths';
+import { DEV_SERVER_FILE, KV_FILE, PROJECT_DATA, PROJECT_TMP } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -214,11 +214,11 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
 const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases\n!.yarn/versions\n';
 
 /**
- * `tmp/` is everything the project writes for itself (`./paths`); `.plitzi/` is what the CLI records about it, and is
- * committed — a clone without it could not pull, push or upgrade.
+ * `tmp/` is everything the project writes for itself and `data/` what its server keeps (`./paths`); `.plitzi/` is what
+ * the CLI records about it, and is committed — a clone without it could not pull, push or upgrade.
  */
-export const gitignore = ({ packageManager }: CreateAnswers): string =>
-  `node_modules\ndist\n.env\n${PROJECT_TMP}\n${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
+export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
+  `node_modules\ndist\n.env\n${PROJECT_TMP}\n${mode === 'server' ? `${PROJECT_DATA}\n` : ''}${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
@@ -275,7 +275,14 @@ ${spaceSection(answers)}
   Data and pictures for every visitor go there — never a secret, a key, a private document or what only some visitors
   may read.
 - \`${PROJECT_TMP}/\` is what the project writes for itself while it runs — the plugins it builds, the port it took, test
-  output. Ignored by git, and rebuilt whenever it is missing.
+  output. Ignored by git, and rebuilt whenever it is missing.${
+    answers.mode === 'server'
+      ? `
+- \`${PROJECT_DATA}/\` is what the server keeps for the space: its \`kv\` (\`${KV_FILE}\`) — saved layouts, counters, cached answers.
+  The deployment's data, kept across restarts and never rebuilt; ignored by git. \`action.kv\` in \`src/serverOptions.ts\`
+  keeps it elsewhere.`
+      : ''
+  }
 - \`.plitzi/\` is what the CLI records about the project — the space it came from, its functions' working copy, the
   files \`create\` wrote — so \`plitzi pull\`, \`push\` and \`upgrade\` know where they stand. Commit it.
 
@@ -321,6 +328,11 @@ export const agentsFile = (answers: CreateAnswers): string => {
       : '';
   const generated = [
     `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took${local ? ', the space as last authored' : ''}, test output. Never committed, rebuilt when missing.`,
+    ...(answers.mode === 'server'
+      ? [
+          `- ${code(`${PROJECT_DATA}/`)} — what the server keeps for the space: its ${code('kv')} (${code(KV_FILE)}). The deployment's data — never committed, never rebuilt; ${code('action.kv')} in ${code('src/serverOptions.ts')} keeps it elsewhere.`
+        ]
+      : []),
     `- ${code('.plitzi/')} — what the CLI records about the project: where it came from, what it wrote. Committed; the CLI's to change.`
   ];
 

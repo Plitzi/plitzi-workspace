@@ -241,7 +241,3 @@ export const answerGraphQL = (raw: string | null, space: OfflineDataRaw): unknow
 
   return Array.isArray(body) ? answers : answers[0];
 };
-
-/** Operation names this mock answers with real data rather than an acknowledgement. Exported so a spec can assert
- *  it is not silently relying on the fallback. */
-export const mockedOperations = Object.keys(handlers);

@@ -161,7 +161,9 @@ const hostSource = (plugin: PluginHostOptions, pad: string): string => {
         `  id: '${plugin.data.id}',`,
         `  query: '${plugin.data.query}',`,
         '  cache: true,',
-        `  children: [${host(`${pad}  `)}]`,
+        '  children: [',
+        `    ${host(`${pad}    `)}`,
+        '  ]',
         '})'
       ].join(`\n${pad}`)
     : host(pad);
@@ -188,34 +190,40 @@ const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): 
 
   const asElement = plugins.every(plugin => plugin.as === 'element');
   const fed = plugins.flatMap(plugin => (plugin.data ? [plugin.data.query] : []));
-  const element = `children: [
-            heroEyebrow,
-            heroTitle,
-            heroLede,
-            heroActions,
-            /**
-             * ${plugins.length === 1 ? 'A component' : 'Components'} of YOUR OWN, rendered by the space.
-             *${
-               asElement
-                 ? `
-             * An element of a plugin's own type — what the builder adds when somebody drops the plugin on a page, and
-             * how a space that loads it from its manifest hosts it. Every attribute arrives in the component as a prop
-             * of the same name — written here, or bound to a source.`
-                 : `
-             * \`renderType\` is the name it is registered under in \`src/main.ts\`; every other attribute arrives in
-             * the component as a prop of the same name — written here, or bound to a source. See
-             * \`src/plugins/README.md\`.`
-             }${
-               fed.length > 0
-                 ? `
-             *
-             * Its numbers come from \`public${fed.join('`, `public')}\`, read by the provider around it like any API: data a
-             * project with no backend serves itself, rather than figures written into the page.`
-                 : ''
-             }
-             */
-            ${plugins.map(plugin => hostSource(plugin, '            ')).join(',\n            ')}
-          ]`;
+  // As deep as the anchor sits: the declaration's own indentation, so the copy reads as written rather than reflowed.
+  const indent = /^\s*/.exec(source.split('\n').find(line => line.includes(PLUGIN_ANCHOR)) ?? '')?.[0] ?? '';
+  const pad = `${indent}  `;
+  const comment = [
+    `${plugins.length === 1 ? 'A component' : 'Components'} of YOUR OWN, rendered by the space.`,
+    '',
+    ...(asElement
+      ? [
+          "An element of a plugin's own type — what the builder adds when somebody drops the plugin on a page, and",
+          'how a space that loads it from its manifest hosts it. Every attribute arrives in the component as a prop',
+          'of the same name — written here, or bound to a source.'
+        ]
+      : [
+          '`renderType` is the name it is registered under in `src/main.ts`; every other attribute arrives in',
+          'the component as a prop of the same name — written here, or bound to a source. See',
+          '`src/plugins/README.md`.'
+        ]),
+    ...(fed.length > 0
+      ? [
+          '',
+          `Its numbers come from \`public${fed.join('`, `public')}\`, read by the provider around it like any API: data a`,
+          'project with no backend serves itself, rather than figures written into the page.'
+        ]
+      : [])
+  ];
+  const element = [
+    'children: [',
+    ...['heroEyebrow,', 'heroTitle,', 'heroLede,', 'heroActions,'].map(line => `${pad}${line}`),
+    `${pad}/**`,
+    ...comment.map(line => (line ? `${pad} * ${line}` : `${pad} *`)),
+    `${pad} */`,
+    `${pad}${plugins.map(plugin => hostSource(plugin, pad)).join(`,\n${pad}`)}`,
+    `${indent}]`
+  ].join('\n');
 
   const imports = [
     ...(fed.length > 0 ? ['apiContainer'] : []),

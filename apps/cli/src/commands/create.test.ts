@@ -433,6 +433,8 @@ describe('the scaffold', () => {
       expect(files['public/data/.gitkeep']).toBe('');
       expect(files['public/data/stats.json']).toBeUndefined();
       expect(Object.keys(files).filter(file => file.startsWith('src/plugins/'))).toEqual([
+        // What a server-mode project's plugins import besides code: a client-mode one has `vite/client`.
+        ...(mode === 'server' ? ['src/plugins/assets.d.ts'] : []),
         'src/plugins/README.md',
         'src/plugins/declarations.ts'
       ]);

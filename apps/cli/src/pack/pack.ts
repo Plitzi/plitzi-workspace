@@ -6,6 +6,7 @@ import { build } from 'esbuild';
 import { zipSync } from 'fflate';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { pluginAssetLoaders, pluginImportQueries } from '@plitzi/sdk-shared/plugins/bundle';
 import { inPluginLayer } from '@plitzi/sdk-shared/style/cssLayers';
 
 import { packSource } from './source';
@@ -31,9 +32,6 @@ import type { BuildOptions } from 'esbuild';
 
 /** What the page provides, and the plugin imports rather than carries. */
 const EXTERNAL = ['react', 'react-dom', 'react/*', 'react-dom/*', '@plitzi/plitzi-sdk', '@plitzi/plitzi-sdk/*'];
-
-/** Kept inside the one file: a path relative to a blob URL points nowhere. */
-const INLINED = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.avif', '.woff', '.woff2', '.ttf', '.otf'];
 
 /** Where the elements come from. */
 export type PackSource =
@@ -300,7 +298,10 @@ export const packPlugin = async ({
     // A browser has no `process`: what a dependency reads from it is decided here, once.
     define: { 'process.env.NODE_ENV': JSON.stringify('production') },
     external: EXTERNAL,
-    loader: Object.fromEntries(INLINED.map(extension => [extension, 'dataurl' as const])),
+    // Kept inside the one file — a path relative to a blob URL points nowhere: images and fonts, and a file imported
+    // whole with `?raw` (a worker's source) or `?inline` (a WebAssembly module).
+    loader: pluginAssetLoaders(),
+    plugins: [pluginImportQueries()],
     outfile: path.join(outDir, `${base}.mjs`),
     logLevel: 'silent'
   }).catch((error: unknown) => {

@@ -68,7 +68,24 @@ const stop = state.subscribe(next => save(next));      // called after every cha
 ```
 
 `state` is the current value, `setState` replaces it (or takes an updater), `setStateByKey` writes one key,
-`clearState` empties it, `subscribe` listens. Bindings on `state.*` re-render at once.
+`clearState` empties it, `subscribe` listens. Bindings on `state.*` re-render at once. With the space's `keepState`
+on ([kept state](kept-state.md)), what a plugin writes there — its layout, a choice — is back after a reload too.
+
+## Laying out the space's elements
+
+A plugin that arranges elements — a dock, tabs, a masonry — HOLDS them: they are its children in the space
+(`custom({ renderType: 'dock', children: [feed, tools] })`, or dropped into it in the builder), and the component
+places each in a box of its own, by the id it was authored under:
+
+```tsx
+import { elementChildren } from '@plitzi/plitzi-sdk';
+
+{elementChildren(children).map(({ id, node }) => <section key={id} style={placed[id]}>{node}</section>)}
+```
+
+Never write `style` onto an element the plugin does not render: nothing promises to keep it. Its boxes share one
+stacking context, the plugin's. `useDisplayMode()` names the breakpoint showing — `desktop`, `tablet` or `mobile` — at
+the widths the space's styles use, instead of a width of the plugin's own.
 
 ## Talking to other pages
 
@@ -104,8 +121,8 @@ inside — a new mode, an extra panel.
 
 ## Drawing and animating
 
-A canvas, WebGL or a loop of its own: `useCanvas2d`, `useWebGL`, `useWebGL2` and `useAnimationFrame` — see
-[drawing](drawing.md).
+A canvas, WebGL or a loop of its own: `useCanvas2d`, `useWebGL`, `useWebGL2` and `useAnimationFrame` — and keeping one
+with thousands of shapes fast — see [drawing](drawing.md).
 
 ## Registering
 
@@ -161,6 +178,8 @@ belongs to the editor.
 - **Outside preview, do nothing on your own.** `usePlitziServiceContext().settings.previewMode` is `false` while the
   page is edited. Declared interactions are already held back then; your own click handlers, timers, global listeners,
   permission prompts and map gestures are not — gate them on `previewMode`, and still render something to select.
+- **A drag lives in state, not in refs read while rendering** (the project's lint refuses that): keep the gesture
+  in `useState`, mirror the latest props into a ref inside an effect, and attach `pointermove` on `pointerdown`.
 - **Never the global `window` or `document`.** The canvas is a frame of its own and the code runs in the builder's
   window: listen, measure and go full screen through the node's own page (`ref.current.ownerDocument`, its
   `defaultView`) or `usePlitziServiceContext().utils.getWindow()`. An `instanceof` check takes its class from there too.
@@ -170,6 +189,10 @@ belongs to the editor.
 A plugin's stylesheet ships in a layer below the space's (`plitzi-sdk-plugin`, written by the build): the space's
 classes and `customCss` win over it whatever their specificity, as over a built-in element's defaults.
 
+A file a library needs whole is imported as Vite imports it, and travels inside the bundle: `worker.js?raw` is its
+text (a worker, started from `URL.createObjectURL(new Blob([source]))`), `engine.wasm?inline` a data URI. Images and
+fonts a stylesheet names are carried the same way.
+
 ## Components that draw into DOM they do not render
 
 A map, a chart library, anything that positions its own markers or popups: its roots are the library's to place. Never
@@ -177,27 +200,3 @@ give them a class that sets `position` — the element falls into the page's flo
 the look in the plugin's own stylesheet (imported CSS ships beside the bundle) and take colours from custom properties
 the space sets (`--seat-accent: var(--accent)` in `customCss`); a canvas or WebGL layer resolves them through a probe
 element with `getComputedStyle(probe).color`, again whenever `theme.resolved` changes (bind it as a prop).
-
-## Components that draw a lot
-
-A canvas with thousands of shapes on it — a whiteboard, a diagram, a map of points — is judged on a slower machine than
-yours: sixty frames a second here says nothing about a four-year-old laptop. What keeps one fast is doing work in
-proportion to what CHANGED, not to what is there:
-
-- **Two layers.** Paint what stands still on one canvas and leave it; clear and draw the one over it every frame, with
-  only what moves: the cursor, the selection, what is being dragged.
-- **Repaint the part that changed.** Something added, edited or removed repaints the area it was and is in, clipped,
-  with whatever reaches into it — not the whole board. A pan moves the picture already painted by whole device pixels
-  and paints the edges it uncovers.
-- **Draw a dragged group once.** Everything picked up moves by the same amount at every step: draw it to a canvas of its
-  own when the drag begins and copy that into place after.
-- **Cache per object, not per frame.** Treat elements as immutable and key what is derived from one — its bounds, its
-  shape, a resolved connector — on the object itself (a `WeakMap`), so nothing is worked out twice for the same thing.
-- **Hand the space outcomes, not motion.** A stroke finished, a selection changed: a trigger each. Firing one at every
-  pointer move runs a flow and renders the page at every pointer move.
-- **Measure with a bench, throttled.** A script that drives the real thing in a browser with the CPU slowed
-  (`Emulation.setCPUThrottlingRate`) and reports script time per frame, not only frames per second — and a test that
-  counts WORK (full repaints, strokes drawn during a drag), which holds on any machine where a timing does not.
-
-Pizarra, the collaborative whiteboard on the platform (`pizarra.plitzi.app`), does all of it on a board of thousands
-of elements.

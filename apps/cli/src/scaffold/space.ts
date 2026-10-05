@@ -194,6 +194,11 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
   return {
     'src/space.ts': blankSpaceSource({ name: answers.name, plugin: pluginHost(answers) }),
     'src/author.ts': authorScript(),
-    ...(answers.mode === 'client' ? { 'public/data/stats.json': `${JSON.stringify(STATS, null, 2)}\n` } : {})
+    // As the project's own formatter writes it — a short list on one line — so its first `format` changes nothing.
+    ...(answers.mode === 'client'
+      ? {
+          'public/data/stats.json': `{\n  "value": ${String(STATS.value)},\n  "series": ${JSON.stringify(STATS.series).replaceAll(',', ', ')}\n}\n`
+        }
+      : {})
   };
 };

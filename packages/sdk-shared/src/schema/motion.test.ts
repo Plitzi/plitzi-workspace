@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  isMotion,
-  isMotionAnimation,
-  MOTION_PLAY_CSS,
-  motionAttributes,
-  motionProblems
-} from './motion';
+import { isMotion, isMotionAnimation, MOTION_PLAY_CSS, motionAttributes, motionProblems } from './motion';
 
 describe('motion', () => {
   it('takes the presets it names, and says what is wrong with anything else', () => {
@@ -37,7 +31,7 @@ describe('motion', () => {
     });
   });
 
-  it('tells the declared motion\'s animations from any other the page runs', () => {
+  it('tells the animations of the declared motion from any other the page runs', () => {
     // jsdom has no Web Animations: what the check reads of a CSS animation is its name.
     expect(isMotionAnimation({ animationName: 'plitzi-motion-fade-up' })).toBe(true);
     expect(isMotionAnimation({ animationName: 'spin-logo' })).toBe(false);

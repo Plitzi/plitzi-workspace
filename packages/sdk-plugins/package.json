@@ -37,8 +37,8 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/sdk-shared": "workspace:*",
-    "prop-types": "^15.8.1"
+    "@plitzi/plitzi-ui": "^1.6.29",
+    "@plitzi/sdk-shared": "workspace:*"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

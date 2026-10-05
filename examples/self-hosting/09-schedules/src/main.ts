@@ -3,12 +3,12 @@ import { fileURLToPath } from 'node:url';
 
 import { closeOnSignals, consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-server';
 import { createRejectLogger, createRunLogger } from '@plitzi/sdk-server/actions';
+import { createSqliteKv } from '@plitzi/sdk-server/sqlite';
 
 import { lookups, SPACE_ID } from './actions.ts';
 import { offlineData } from './space.ts';
 import { createActivityLog } from './store/activity.ts';
 import { openDatabase } from './store/database.ts';
-import { createSqliteKv } from './store/kv.ts';
 import { createSqliteJobQueue } from './store/queue.ts';
 import { createFunctions } from './tasks.ts';
 
@@ -32,7 +32,8 @@ const RUN_TIMEOUT_MS = Number(process.env.RUN_TIMEOUT_MS ?? 30_000);
 
 const db = openDatabase(DATABASE);
 const queue = createSqliteJobQueue(db);
-const kv = createSqliteKv(db);
+// The SDK's own SQLite store, in the queue's file: a stalled replica waking up finds the single-flight keys taken.
+const kv = createSqliteKv({ db, table: 'kv' });
 const activity = createActivityLog(db);
 
 const runLogger = createRunLogger(consoleLogger);

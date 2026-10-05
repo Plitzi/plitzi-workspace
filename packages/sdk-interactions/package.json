@@ -188,6 +188,7 @@
   "sideEffects": false,
   "devDependencies": {
     "eslint": "^9.39.5",
+    "react": "^19.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.3.2",
     "vitest": "^5.0.3"
@@ -195,10 +196,10 @@
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.29",
     "@plitzi/sdk-auth": "workspace:*",
-    "@plitzi/sdk-dev-tools": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
-    "@plitzi/sdk-navigation": "workspace:*",
-    "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19"
   }
 }

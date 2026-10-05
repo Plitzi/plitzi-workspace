@@ -4,6 +4,8 @@
  * Driver-agnostic like `locate`: `inspectPage` takes anything with an `evaluate`, and the rest is data over specs and
  * handles — so this stays a package that installs nothing and touches no browser until a test hands it one.
  */
+export { answerAction } from './answerAction';
+export type { ActionAnswer, AnsweredRequest, AnsweredRoute, AnswerActionOptions, RoutingPage } from './answerAction';
 export { dataIssues } from './dataIssues';
 export type { DataIssue, DataIssueCode, DataReport } from './dataIssues';
 export { failedFlowText, readDevTools, readDevToolsInPage } from './devTools';

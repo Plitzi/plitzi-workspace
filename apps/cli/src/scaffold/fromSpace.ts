@@ -1,5 +1,6 @@
 import { actionSpecFromEntry, actionToSource } from '@plitzi/sdk-authoring';
 
+import { KV_FILE } from './paths';
 import { projectDeclarations } from './plugin';
 import { envFile, SDK_VERSION } from './project';
 import { PROJECT_OUTPUTS, prettierignore } from './quality';
@@ -244,7 +245,7 @@ const fromSpaceMain = (options: MainOptions): string => {
 import path from 'node:path';
 
 import { closeOnSignals, consoleLogger, ${local ? 'createJsonAdapters' : 'createCloudAdapters'}, createServer, loadFunctions } from '@plitzi/sdk-server';
-${hasRuntime ? importLine(`{ ${runtimeImports} }`, '@plitzi/sdk-server/runtime') : ''}${local ? `\n${importLine('{ authorSpace }', '@plitzi/sdk-authoring')}${importLine('{ publicData }', '@plitzi/sdk-authoring/node')}` : ''}
+${importLine('{ createFileKv }', '@plitzi/sdk-server/actions')}${hasRuntime ? importLine(`{ ${runtimeImports} }`, '@plitzi/sdk-server/runtime') : ''}${local ? `\n${importLine('{ authorSpace }', '@plitzi/sdk-authoring')}${importLine('{ publicData }', '@plitzi/sdk-authoring/node')}` : ''}
 ${importLine('{ lookups }', './actions.ts')}${local ? importLine('{ declarations }', './plugins/declarations.ts') : ''}${runtimeEntry ? importLine('spaceRuntime', runtimeEntry) : ''}${importLine('{ serverOptions }', './serverOptions.ts')}${local ? importLine('{ space }', './space.ts') : ''}
 /**
  * The project's settings — the key its actions sign with, the variables the space was given on Plitzi — kept in \`.env\`,
@@ -319,8 +320,14 @@ const server = createServer(
     plugins: ${allPlugins},
     publicDir: path.join(PROJECT_ROOT, 'public'),
     functions: { native: ${hasRuntime ? '[...functions, ...runtime.native]' : 'functions'} },
-    // What \`ctx.sign\` and \`ctx.verify\` sign with: the key that was the space's on Plitzi stays there.
-    action: { signingSecret: process.env.PLITZI_SIGNING_SECRET, ...serverOptions.action, lookups }
+    // What \`ctx.sign\` and \`ctx.verify\` sign with: the key that was the space's on Plitzi stays there. What the
+    // actions keep in \`kv\` is in \`${KV_FILE}\`, outliving a restart; \`src/serverOptions.ts\` names another store.
+    action: {
+      signingSecret: process.env.PLITZI_SIGNING_SECRET,
+      kv: createFileKv({ file: path.join(PROJECT_ROOT, '${KV_FILE}') }),
+      ...serverOptions.action,
+      lookups
+    }
   }${hasRuntime ? ',\n  { preAuth: [runtime.stage] }' : ''}
 );
 

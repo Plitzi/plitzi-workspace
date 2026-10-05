@@ -54,14 +54,6 @@ const ACCESS: Record<number, { roles: string[]; permissions: string[] }> = {
 
 const find = (predicate: (row: Row) => boolean): Row | undefined => rows.find(predicate);
 
-/** Every session this process issued is forgotten. Between flow specs, so one test's sign-in cannot be what makes
- *  the next one pass. */
-export const resetSessions = (): void => {
-  rows.forEach(row => {
-    row.session = undefined;
-  });
-};
-
 export const accounts: IdentityAdapters & AccountAdapters = {
   /** Looked up BY THE TOKEN, not by user id. Keeping the current session on the row is what makes signing out
    *  actually sign somebody out: a token that no longer matches a row is dead, however valid its signature. */

@@ -85,7 +85,7 @@ keep understanding forever. A connector written in the old layout is recreated, 
 
 ### Presets
 
-The builder ships starting documents (`apps/builder/src/modules/Connectors/presets.ts`): **Strapi v5**, **WordPress
+The builder ships starting documents (`packages/sdk-shared/src/connectors/presets.ts`): **Strapi v5**, **WordPress
 REST**, **Directus**, **Contentful CDA** and **Blank**. They are documents, not adapters: they fill the editor and
 every field stays editable. An outdated preset is fixed by editing a row, never with a release.
 
@@ -106,7 +106,7 @@ every field stays editable. An outdated preset is fixed by editing a row, never 
                        │  projection.ts ── trims the slice to what the page binds             │
                        │  resolveRscData.ts ── resolves every runtime:"server" element        │
                        │  rsc/handler.ts ── /_rsc (refresh, ?location=)                       │
-                       │  actions/handler.ts ── POST /_action (writes)                        │
+                       │  actions/connectorWrite.ts ── POST /_action (writes)                 │
                        └───────────────┬─────────────────────────────────────────────────────┘
                                        │  RSC payload (serverData) / responses
                                        ▼
@@ -135,8 +135,8 @@ every field stays editable. An outdated preset is fixed by editing a row, never 
   and failure isolation.
 - **`rsc/handler.ts`** — `GET /_rsc`: rewrites the request with `?location=` to resolve the right page on client
   refreshes.
-- **`actions/handler.ts`** — `POST /_action`: the browser sends `{ elementId, action, recordId, values }`; the server
-  checks the element is `runtime: 'server'`, has a connector, and that the connector declares the action.
+- **`actions/connectorWrite.ts`** — `POST /_action`: the browser sends `{ elementId, action, recordId, values }`; the
+  server checks the element is `runtime: 'server'`, has a connector, and that the connector declares the action.
 
 ### Builder — `apps/builder/src/modules/Connectors/`
 
@@ -501,9 +501,9 @@ indexable).
 | RSC endpoint publication | `apps/server/src/core/services/resolve.ts` (`resolveRscEndpoint`) |
 | Route matcher (client/server) | `packages/sdk-shared/src/navigation/matchPath.ts` + `routes.ts` |
 | `/_rsc` endpoint | `apps/server/src/modules/rsc/handler.ts` |
-| `/_action` endpoint | `apps/server/src/modules/actions/handler.ts` |
+| `/_action` endpoint | `apps/server/src/modules/actions/connectorWrite.ts` |
 | Builder panel | `apps/builder/src/modules/Connectors/` |
-| Presets | `apps/builder/src/modules/Connectors/presets.ts` |
+| Presets | `packages/sdk-shared/src/connectors/presets.ts` |
 | CMS credential | `apps/builder/src/modules/Space/Models/SpaceCredentialForm.tsx` |
 | Provider element | `packages/sdk-elements/src/elements/provider/ApiContainer/ApiContainer.tsx` |
 | Provider settings | `packages/sdk-elements/src/elements/provider/ApiContainer/Settings.tsx` |
