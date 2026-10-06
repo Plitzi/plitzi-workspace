@@ -5,6 +5,8 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback } from 'react';
 
+import { TYPES, isPropType } from './helpers';
+
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { ComponentProp } from '@plitzi/sdk-shared';
 import type { ChangeEvent } from 'react';
@@ -18,17 +20,6 @@ export type PropRowProps = {
   onChange: (index: number, entry: PropEntry) => void;
   onRemove: (index: number) => void;
 };
-
-const TYPES: { value: ComponentProp['type']; label: string }[] = [
-  { value: 'text', label: 'Text' },
-  { value: 'textarea', label: 'Long text' },
-  { value: 'number', label: 'Number' },
-  { value: 'boolean', label: 'Yes / no' },
-  { value: 'select', label: 'One of' },
-  { value: 'json', label: 'Data' }
-];
-
-const isPropType = (value: string): value is ComponentProp['type'] => TYPES.some(type => type.value === value);
 
 const PropRow = ({ index, entry, problem, onChange, onRemove }: PropRowProps) => {
   const { name, prop } = entry;
@@ -71,43 +62,52 @@ const PropRow = ({ index, entry, problem, onChange, onRemove }: PropRowProps) =>
   return (
     <Flex
       direction="column"
-      gap={2}
-      className="rounded-md border border-gray-200 bg-gray-50/60 p-2.5 dark:border-zinc-700 dark:bg-zinc-800/40"
+      gap={1.5}
+      className="rounded-md border border-gray-200 bg-gray-50/60 p-2 dark:border-zinc-700 dark:bg-zinc-800/40"
     >
-      {/* One line for what identifies the prop: its name flexes, its kind keeps the width its longest label needs. */}
-      <div className="grid grid-cols-[minmax(0,1fr)_9rem_auto] items-end gap-2">
-        <Input value={name} label="Name" placeholder="title" onChange={handleName} size="sm" />
-        <Select2 value={prop.type} label="Kind" onChange={handleType} options={TYPES} size="sm" clearable={false} />
+      {/* What identifies the prop on one line: its name flexes, its kind keeps the width its longest label needs. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_8rem_auto_auto] items-end gap-2">
+        <Input value={name} label="Name" placeholder="title" onChange={handleName} size="xs" />
+        <Select2 value={prop.type} label="Kind" onChange={handleType} options={TYPES} size="xs" clearable={false} />
+        <Checkbox
+          checked={prop.required === true}
+          onChange={handleRequired}
+          label="Required"
+          size="xs"
+          className="mb-1.5"
+        />
         <Icon
           icon="fas fa-trash-alt"
           onClick={handleRemove}
           title="Remove this prop"
-          size="sm"
+          size="xs"
           cursor="pointer"
           intent="danger"
           className="mb-2"
         />
       </div>
       {name && !problem && (
-        <span className="-mt-1 font-mono text-[11px] text-gray-500 dark:text-zinc-400">{`{{ props.${name} }}`}</span>
+        <span className="font-mono text-[11px] text-gray-500 dark:text-zinc-400">{`{{ props.${name} }}`}</span>
       )}
-      {problem && <span className="-mt-1 text-xs text-red-500">{problem}</span>}
-      <Input
-        value={prop.description}
-        label="What it is for"
-        placeholder="Shown to whoever fills it in"
-        onChange={handleDescription}
-        size="sm"
-      />
-      {prop.type === 'select' && (
+      {problem && <span className="text-xs text-red-500">{problem}</span>}
+      {/* What it is for, and — for a choice — its options beside it. */}
+      <div className={prop.type === 'select' ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-1'}>
         <Input
-          value={(prop.options ?? []).join(', ')}
-          label="Choices, comma separated"
-          onChange={handleOptions}
-          size="sm"
+          value={prop.description}
+          label="What it is for"
+          placeholder="Shown to whoever fills it in"
+          onChange={handleDescription}
+          size="xs"
         />
-      )}
-      <Checkbox checked={prop.required === true} onChange={handleRequired} label="Required" size="xs" />
+        {prop.type === 'select' && (
+          <Input
+            value={(prop.options ?? []).join(', ')}
+            label="Choices, comma separated"
+            onChange={handleOptions}
+            size="xs"
+          />
+        )}
+      </div>
     </Flex>
   );
 };

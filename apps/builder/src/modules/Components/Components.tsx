@@ -7,7 +7,7 @@ import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 
-import ComponentForm from './components/ComponentForm';
+import ComponentForm, { COMPONENT_MODAL } from './components/ComponentForm';
 import ComponentItem from './components/ComponentItem';
 import { componentLabel, emptyComponent, instanceCounts } from './helpers';
 
@@ -54,7 +54,9 @@ const Components = ({ filter }: ComponentsProps) => {
         <Modal.Body>
           <ComponentForm pageFolders={pageFolders} onSubmit={onSubmit} onClose={onClose} />
         </Modal.Body>
-      )
+      ),
+      undefined,
+      COMPONENT_MODAL
     );
 
     if (declaration) {

@@ -13,7 +13,7 @@ import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import { componentLabel } from '../../helpers';
 import { slotChoicesOf } from '../../slotChoices';
-import ComponentForm from '../ComponentForm';
+import ComponentForm, { COMPONENT_MODAL } from '../ComponentForm';
 
 import type { PageFolder, SpaceComponent, SpaceComponentDeclaration } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';
@@ -66,7 +66,9 @@ const ComponentItem = ({ component, instances, open, pageFolders }: ComponentIte
               onClose={onClose}
             />
           </Modal.Body>
-        )
+        ),
+        undefined,
+        COMPONENT_MODAL
       );
 
       if (declaration) {

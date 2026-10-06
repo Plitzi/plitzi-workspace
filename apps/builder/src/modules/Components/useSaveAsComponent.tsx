@@ -7,7 +7,7 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import { REUSE } from '@pmodules/Builder/helpers/reuse';
 import { makeIdMinter } from '@pmodules/Elements/ElementHelper';
 
-import ComponentForm from './components/ComponentForm';
+import ComponentForm, { COMPONENT_MODAL } from './components/ComponentForm';
 import { componentIdFor } from './helpers';
 import { slotChoicesOf } from './slotChoices';
 
@@ -43,7 +43,9 @@ const useSaveAsComponent = () => {
               onClose={onClose}
             />
           </Modal.Body>
-        )
+        ),
+        undefined,
+        COMPONENT_MODAL
       );
 
       if (!declaration) {

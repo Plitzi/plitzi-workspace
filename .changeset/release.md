@@ -247,9 +247,10 @@
   or go up. A row under a closed ancestor is no longer shown. (plitzi-ui's `Tree`.)
 - **Motion and preview no longer share an icon.** Playing the page's motion is a wand, which pulses while it plays;
   preview is an eye, and a pen to go back to editing.
-- **A component's settings fit their modal.** Each prop is one row — its name, its type, remove — with what a binding
-  writes to read it (`{{ props.<name> }}`) or what is wrong with it beneath; props and slots are titled sections, and
-  a slot shows its id.
+- **A component's settings fit their modal, however many props it has.** The modal is wider; the name and folder
+  share a line, and each prop is one compact row — its name, its kind, required, remove — with what a binding writes to
+  read it (`{{ props.<name> }}`) or what is wrong with it, and what it is for, beneath. The fields scroll and the buttons
+  stay in view. Props and slots are titled sections, and a slot shows its id.
 
 ## Packages
 
