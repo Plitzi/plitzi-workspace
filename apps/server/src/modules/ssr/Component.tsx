@@ -19,6 +19,7 @@ export type ComponentProps = {
   plugins?: Record<string, SSRPlugin>;
   ssrResult?: SSRRenderResult;
   sdkDevToolsStylePath?: string;
+  sdkIconsStylePath?: string;
   debugMode?: boolean;
   /** Set when the metering adapter degrades this render: the account behind this space is over its quota. */
   overQuota?: boolean;
@@ -41,6 +42,7 @@ const Component = ({
   plugins,
   ssrResult,
   sdkDevToolsStylePath,
+  sdkIconsStylePath,
   debugMode = false,
   overQuota,
   theme,
@@ -61,6 +63,7 @@ const Component = ({
       offlineMode={!!offlineData && Object.keys(offlineData).length > 0}
       offlineData={offlineData}
       sdkDevToolsStylePath={sdkDevToolsStylePath}
+      sdkIconsStylePath={sdkIconsStylePath}
       debugMode={debugMode}
       {...(overQuota === undefined ? {} : { overQuota })}
       {...(theme === undefined ? {} : { theme })}

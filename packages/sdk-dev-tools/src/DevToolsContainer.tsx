@@ -41,6 +41,11 @@ export type DevToolsContainerProps = {
   instanceId?: string;
   devToolsStyle?: string;
   devToolsStyleLink?: string;
+  /**
+   * Font Awesome's sheet, linked inside the panel's shadow root beside its own: a page's stylesheets stop at the root,
+   * and the panel's icons are classes of that sheet (its fonts are the page's, declared by the same sheet there).
+   */
+  devToolsIconsLink?: string;
   renderMode?: 'default' | 'shadow';
   /**
    * What scrolls while the panel is folded away.
@@ -70,7 +75,8 @@ const DevToolsContainer = ({
   scroll = 'container',
   qa = false,
   devToolsStyle = '',
-  devToolsStyleLink = ''
+  devToolsStyleLink = '',
+  devToolsIconsLink = ''
 }: DevToolsContainerProps) => {
   const { resolvedTheme } = useTheme();
   const [orientation, setOrientation] = useStorage<Orientation>(
@@ -160,6 +166,7 @@ const DevToolsContainer = ({
           )}
           {renderMode === 'shadow' && (
             <ContainerShadow>
+              {devToolsIconsLink && <ContainerShadow.Link href={devToolsIconsLink} />}
               {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
               <ContainerShadow.Content>
                 <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />

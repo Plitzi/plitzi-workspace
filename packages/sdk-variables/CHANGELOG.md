@@ -1,5 +1,21 @@
 # @plitzi/sdk-variables
 
+## 0.38.6
+
+### Patch Changes
+
+- 3bce653: ## Fixes
+
+  - **The dev tools draw their icons again.** The panel lives in a shadow root of its own, which the page's stylesheets
+    never reach, and Font Awesome moved to a sheet of its own in 0.38.5 (`plitzi-sdk-icons.css`): the badge and every tab
+    lost their icons. The panel now links that sheet inside its root, beside its own. Where it is served is the SDK's
+    new `sdkIconsStylePath` — the page server sends `/sdk-assets/plitzi-sdk-icons.css`, the same sheet the document
+    links — which the `iframe` and `shadow` render modes read too: they had `/plitzi-sdk-icons.css` hard-coded, a path a
+    page server does not serve.
+
+- Updated dependencies [3bce653]
+  - @plitzi/sdk-shared@0.38.6
+
 ## 0.38.5
 
 ### Patch Changes

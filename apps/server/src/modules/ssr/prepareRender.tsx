@@ -209,6 +209,7 @@ export const prepareRender = async (
   const version = config.assetVersion ?? sdkAssetVersion();
   const v = version ? `?v=${version}` : '';
   const sdkDevToolsStylePath = `/sdk-assets/plitzi-sdk-devtools.css${v}`;
+  const sdkIconsStylePath = `/sdk-assets/plitzi-sdk-icons.css${v}`;
 
   /**
    * Two facts, and they have to leave this server separately.
@@ -308,6 +309,7 @@ export const prepareRender = async (
       renderMode: 'raw',
       server,
       sdkDevToolsStylePath,
+      sdkIconsStylePath,
       ...(theme ? { theme } : {}),
       ...(paintedState ? { state: paintedState } : {}),
       ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
@@ -393,6 +395,7 @@ export const prepareRender = async (
       environment: req.ctx.spaceDeployment?.environment ?? environment,
       debugMode: debugRendered,
       sdkDevToolsStylePath,
+      sdkIconsStylePath,
       overQuota,
       theme,
       ...(paintedState ? { state: paintedState } : {}),
@@ -404,7 +407,7 @@ export const prepareRender = async (
       title: DEFAULT_TITLE,
       jsPath: `/sdk-assets/plitzi-sdk.js${v}`,
       cssPath: `/sdk-assets/plitzi-sdk.css${v}`,
-      iconsCssPath: `/sdk-assets/plitzi-sdk-icons.css${v}`,
+      iconsCssPath: sdkIconsStylePath,
       spaceDocumentPath,
       react: vendorJs,
       reactJsx: vendorJs,

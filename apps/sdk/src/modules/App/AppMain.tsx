@@ -33,8 +33,8 @@ import type {
   SdkState
 } from '@plitzi/sdk-shared';
 
-// Font Awesome's sheet: the build emits it beside the stylesheet (`iconsPlugin`), and development serves it at the
-// same path.
+// Font Awesome's sheet where the build emits it beside the stylesheet (`iconsPlugin`) and development serves it — what a
+// page that says nothing else is told. A page server serving the SDK elsewhere says where (`sdkIconsStylePath`).
 const iconsUrl = '/plitzi-sdk-icons.css';
 
 export type AppMainProps = {
@@ -52,6 +52,7 @@ export type AppMainProps = {
   renderMode?: RenderMode;
   sdkStylePath?: string;
   sdkDevToolsStylePath?: string;
+  sdkIconsStylePath?: string;
   previewMode?: boolean;
   debugMode?: boolean;
   /** Set by the server that metered this render: the account behind this space is over its quota. */
@@ -90,6 +91,7 @@ const AppMain = ({
   renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
   sdkStylePath = './plitzi-sdk.css',
   sdkDevToolsStylePath,
+  sdkIconsStylePath = iconsUrl,
   previewMode = true,
   debugMode = false,
   overQuota = false,
@@ -190,7 +192,7 @@ const AppMain = ({
       revision={revision}
     >
       <SchemaContextProvider>
-        <PluginsContextProvider sdkStylePath={styleUrl ? styleUrl : sdkStylePath} sdkIconsPath={iconsUrl}>
+        <PluginsContextProvider sdkStylePath={styleUrl ? styleUrl : sdkStylePath} sdkIconsPath={sdkIconsStylePath}>
           <SdkStyleContextProvider>
             <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
               <AuthContextProvider server={server}>
@@ -202,6 +204,7 @@ const AppMain = ({
                         enabled={debugMode}
                         instanceId={instanceId}
                         devToolsStyleLink={sdkDevToolsStylePath ? sdkDevToolsStylePath : devtoolsCssUrl}
+                        devToolsIconsLink={sdkIconsStylePath}
                         renderMode="shadow"
                         scroll="document"
                         qa

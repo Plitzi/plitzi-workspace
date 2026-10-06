@@ -338,6 +338,9 @@ export type PlitziSdkProps = {
   overQuota?: boolean;
   externalStyle?: string;
   sdkDevToolsStylePath?: string;
+  /** Where Font Awesome's sheet is served, for the panels the SDK draws in a root of their own (the dev tools, the
+   *  `iframe` and `shadow` render modes). Defaults to `/plitzi-sdk-icons.css`, beside the SDK's own stylesheet. */
+  sdkIconsStylePath?: string;
   /** Where this render reports SPA navigations and interactions, and with what key. Injected by a server that
    *  renders the page; derived from `server` + `webKey` for a client-side render; absent means report nothing. */
   analytics?: AnalyticsConfig;

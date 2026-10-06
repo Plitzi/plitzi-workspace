@@ -254,6 +254,19 @@ describe('prepareRender / the RSC gate', () => {
   });
 });
 
+describe('prepareRender / the icon sheet', () => {
+  // A panel the SDK draws in a root of its own — the dev tools — sees none of the page's stylesheets: it is told where
+  // the icon sheet is, the same one the document links, in the render and in what the browser hydrates with.
+  it('tells the SDK where Font Awesome is, as it tells the document', async () => {
+    const { componentProps, templateParams } = await render('/');
+    const payload = JSON.parse(templateParams.offlineData) as { sdkIconsStylePath?: string };
+
+    expect(templateParams.iconsCssPath).toMatch(/^\/sdk-assets\/plitzi-sdk-icons\.css/);
+    expect(componentProps.sdkIconsStylePath).toBe(templateParams.iconsCssPath);
+    expect(payload.sdkIconsStylePath).toBe(templateParams.iconsCssPath);
+  });
+});
+
 describe('prepareRender / the document the crawler reads', () => {
   it('titles the document with what the addressed page declares', async () => {
     const { templateParams } = await render('/');
