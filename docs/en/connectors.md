@@ -378,10 +378,13 @@ and the client only hydrates.
 
 ### 7.3 Later navigation
 
-When the visitor navigates client-side to `/posts/456`, `useRscSync` notices because its key is the **location** (it
-reads `runtime.sources.navigation`, not the `currentPageId`: `/posts/1` → `/posts/2` is the same page with another
-record) and does `GET /_rsc?location=/posts/456`; the handler rewrites the request to that page (`rsc/handler.ts`),
-the whole resolution runs again and the new slice is **merged** into `rsc.data`.
+When the visitor follows a link to `/posts/456`, the navigation asks for the destination's data **before** going
+there: `GET /_rsc?location=/posts/456` (`refreshRsc` with the target; `navigation.pendingLocation` says where it is
+going meanwhile). The handler rewrites the request to that page (`rsc/handler.ts`), the whole resolution runs again
+and the new slice is **merged** into `rsc.data`. `useRscSync` keys off the **location** — the navigation's route and
+query params and `href`, not the `currentPageId`: `/posts/1` → `/posts/2` is the same page with another record — and
+asks only for a location the store does not hold (`rsc.location`), so the route change that follows reuses what the
+prefetch brought: one render per click, not two.
 
 ### 7.4 Edge cases
 

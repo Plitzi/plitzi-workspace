@@ -30,6 +30,7 @@ import uploadPluginCommand from './commands/uploadPlugin';
 import { doctor } from './doctor';
 import { positiveInteger, width, widths } from './options';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
+import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
 
 import type { AccountOptions, WhoamiOptions } from './commands/account';
@@ -431,11 +432,13 @@ upload
 
 const functions = program
   .command('functions')
-  .description('The space’s own server code: functions/ in this project is a working copy of it');
+  .description(`The space’s own server code: ${FUNCTIONS_DIR}/ in this project is a working copy of it`);
 
 functions
   .command('pull')
-  .description('Write the space’s functions into functions/ — refused when that would overwrite what is not pushed')
+  .description(
+    `Write the space’s functions into ${FUNCTIONS_DIR}/ — refused when that would overwrite what is not pushed`
+  )
   .option('-f, --force', 'Overwrite what is not pushed, or a copy of another space')
   .option(...API_OPTION)
   .option(...DRY_RUN_OPTION)
@@ -443,7 +446,9 @@ functions
 
 functions
   .command('push')
-  .description('Save functions/ as the space’s draft: built and checked on the platform, refused if it moved on since')
+  .description(
+    `Save ${FUNCTIONS_DIR}/ as the space’s draft: built and checked on the platform, refused if it moved on since`
+  )
   .option(...API_OPTION)
   .option(...DRY_RUN_OPTION)
   .action((options: FunctionsOptions) => pushFunctions(options));
@@ -459,9 +464,11 @@ functions
 functions
   .command('dev')
   .argument('<task>', 'The task, <namespace>.<action>')
-  .description('Run one task from functions/ on this machine, as the platform runs it — nothing reaches the space')
+  .description(
+    `Run one task from ${FUNCTIONS_DIR}/ on this machine, as the platform runs it — nothing reaches the space`
+  )
   .option('--params <json>', 'Its params, as a JSON object')
-  .option('-w, --watch', 'Run it again every time a file of functions/ is saved')
+  .option('-w, --watch', `Run it again every time a file of ${FUNCTIONS_DIR}/ is saved`)
   .action((task: string, options: FunctionsDevOptions) => devFunction(task, options));
 
 const runtime = program

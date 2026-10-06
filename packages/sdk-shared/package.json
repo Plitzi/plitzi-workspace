@@ -1151,6 +1151,10 @@
       "types": "./dist/schema/layoutChain.d.ts",
       "import": "./dist/schema/layoutChain.mjs"
     },
+    "./schema/markdownHeadings": {
+      "types": "./dist/schema/markdownHeadings.d.ts",
+      "import": "./dist/schema/markdownHeadings.mjs"
+    },
     "./schema/motion": {
       "types": "./dist/schema/motion.d.ts",
       "import": "./dist/schema/motion.mjs"
@@ -1520,7 +1524,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.30",
+    "@plitzi/plitzi-ui": "^1.6.31",
     "date-fns": "^4.4.0",
     "immer": "^11.1.21",
     "zod": "^4.6.5"

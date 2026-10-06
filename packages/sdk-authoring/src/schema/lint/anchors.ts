@@ -1,9 +1,8 @@
 import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 import { getPageFullPath } from '@plitzi/sdk-shared/navigation';
-import { isAnchor } from '@plitzi/sdk-shared/schema/anchor';
+import { anchorOf, isAnchor } from '@plitzi/sdk-shared/schema/anchor';
 import { resolveLayoutChain } from '@plitzi/sdk-shared/schema/layoutChain';
-
-import { asAnchor } from '../anchor';
+import { markdownHeadings } from '@plitzi/sdk-shared/schema/markdownHeadings';
 
 import type { LintContext } from './context';
 import type { Element } from '@plitzi/sdk-shared';
@@ -19,7 +18,10 @@ const attributeText = (element: Element, key: string): string => {
   return typeof value === 'string' ? value : '';
 };
 
-/** Every anchor a rendered page carries — its own tree and the layouts around it — with the elements that carry it. */
+/**
+ * Every anchor a rendered page carries — its own tree and the layouts around it — with the elements that carry it: an
+ * element's own `anchor`, and the `id` of every heading a Markdown element renders.
+ */
 const anchorsOfPage = (ctx: LintContext, pageId: string): Map<string, string[]> => {
   const page = ctx.element(pageId);
   const chain = page
@@ -28,10 +30,16 @@ const anchorsOfPage = (ctx: LintContext, pageId: string): Map<string, string[]> 
   const roots = new Set([pageId, ...chain.map(link => link.layout)]);
   const anchors = new Map<string, string[]>();
   Object.values(ctx.flat).forEach(element => {
-    const { anchor } = element.definition;
-    if (anchor && roots.has(element.definition.rootId)) {
-      anchors.set(anchor, [...(anchors.get(anchor) ?? []), element.id]);
+    if (!roots.has(element.definition.rootId)) {
+      return;
     }
+
+    const own = element.definition.anchor ? [element.definition.anchor] : [];
+    const headings =
+      element.definition.type === 'markdown'
+        ? markdownHeadings(attributeText(element, 'content')).map(heading => heading.anchor)
+        : [];
+    [...own, ...headings].forEach(anchor => anchors.set(anchor, [...(anchors.get(anchor) ?? []), element.id]));
   });
 
   return anchors;
@@ -43,7 +51,7 @@ const lintOwnAnchor = (ctx: LintContext, element: Element, anchor: string): void
   if (!isAnchor(anchor)) {
     ctx.error(
       'anchor-invalid',
-      `${where} has the anchor ${JSON.stringify(anchor)}. An anchor is the element's id in the URL (\`/page#anchor\`): ${FORMAT} — "${asAnchor(anchor)}".`,
+      `${where} has the anchor ${JSON.stringify(anchor)}. An anchor is the element's id in the URL (\`/page#anchor\`): ${FORMAT} — "${anchorOf(anchor)}".`,
       element.id
     );
   }
@@ -145,7 +153,7 @@ const lintControls = (ctx: LintContext): void => {
 
     ctx.warn(
       'controls-no-anchor',
-      `${ctx.describe(element.id)} controls "${controls}", and no element carries that anchor, so a screen reader is pointed at nothing. Give the element it shows and hides \`anchor: '${asAnchor(controls)}'\` and name that.`,
+      `${ctx.describe(element.id)} controls "${controls}", and no element carries that anchor, so a screen reader is pointed at nothing. Give the element it shows and hides \`anchor: '${anchorOf(controls)}'\` and name that.`,
       element.id
     );
   });

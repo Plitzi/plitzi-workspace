@@ -150,6 +150,10 @@ const server = createServer(
 `examples/self-hosting/10-runtime`'s `main.ts` is exactly this: the server the platform would be (its `kv`, its
 actions) and its runtime loaded into it, its variables this process's environment.
 
+A project the CLI wrote finds its module with `loadRuntimeModule(file)` (`@plitzi/sdk-server/runtime`):
+`src/runtime/index.ts`, or what `build` compiled it to — or `undefined` when the project has none, so a project starts
+one by writing it (`plitzi add runtime`), with nothing to wire.
+
 ## 6. For a deployment
 
 A deployment of the platform runs the runtimes with an orchestrator, in its api role:

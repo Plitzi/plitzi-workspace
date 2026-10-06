@@ -221,9 +221,9 @@ and \`patchDefinition\` still changes only some CSS of one class.
 
 ## Fit the panel — go wide, stay short
 
-The widget renders in a **side panel** (Claude Desktop, ChatGPT, the Plitzi builder), so it gets a usable width but
-very little height: everything past the first screenful costs the user a scroll. Height is the scarce resource —
-spend width instead.
+The widget renders in a **side panel** (Claude Desktop, ChatGPT), so it gets a usable width but very little
+height: everything past the first screenful costs the user a scroll. Height is the scarce resource — spend width
+instead.
 
 Plain containers are blocks, so doing nothing stacks children **vertically** and produces exactly the tall,
 half-empty widget to avoid. Choose the axis every time:
@@ -252,9 +252,9 @@ it — and reach for \`max-width\` only to stop one lone card from stretching ac
 
 ## Match the host theme — never hardcode a light palette
 
-The widget is embedded in the host's own UI (Claude Desktop, ChatGPT, the builder), and that UI **may be in dark
-mode**. A widget painted with fixed light colours is the most common way to ship something unusable: a white card
-in a dark chat glares, and — worse — text left at a dark default disappears against the host's dark background.
+The widget is embedded in the host's own UI (Claude Desktop, ChatGPT), and that UI **may be in dark mode**. A
+widget painted with fixed light colours is the most common way to ship something unusable: a white card in a dark
+chat glares, and — worse — text left at a dark default disappears against the host's dark background.
 
 The host publishes its palette as CSS variables on the page, so use them for every colour, with a
 \`light-dark(<light>, <dark>)\` fallback for hosts that send none:

@@ -944,7 +944,7 @@
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.30",
+    "@plitzi/plitzi-ui": "^1.6.31",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",

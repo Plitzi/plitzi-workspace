@@ -4,8 +4,9 @@ The page server for Plitzi spaces: server-side rendering, React Server Component
 HTTP kernel they run on. Ships as an HTTP/2 server by default, with support for HTTP/1.1 and HTTP/3.
 
 This package serves **pages**. The AI surface — the MCP server, its tool engine and the draft-preview
-endpoint — lives in [`@plitzi/sdk-mcp`](../mcp/README.md), which builds on this one. A deployment that only
-renders pages never installs it, and never loads it.
+endpoint — lives in [`@plitzi/sdk-mcp`](../mcp/README.md), which depends on this one's narrow entries (the kernel,
+OAuth, and the renderer for draft preview alone), never the other way round. A deployment that only renders pages
+never installs it, and never loads it.
 
 ## Installation
 
@@ -201,6 +202,20 @@ wires itself.
 | `logger` | `ServerLogger` | the console | Where it says it: one structured `ServerLogEvent` stream. `consoleLogger` prints each as one line. |
 | `onListenError` | `(error, { port, host, label }) => void` | exits non-zero | What to do when the server cannot take its port. By default it prints what went wrong and what to do about it, then exits — a process whose server never bound is not running. Supply this to keep it alive and decide yourself. |
 | `workers` | `boolean \| number \| 'auto'` | `'auto'` under `NODE_ENV=production`, else `false` | How many processes serve the port: one per core, a number (lowered to the cores there are), or one. `SDK_SERVER_WORKERS` sets it when the config does not. See [Using every core](#using-every-core). |
+| `action` | `SSRActionConfig` | — | The space's server actions: the write endpoint (`path`, default `/_action`), `lookups` (`ActionLookupsConfig`: `getAction`, `getFunctions`, `getPluginFunctions`, `getData`…), `kv`, `jobs`, `limits`, `email`, `signingSecret`, `onRun` / `onReject`. Absent, the server serves reads only. See `docs/en/server-actions.md` § 13 in the workspace. |
+| `functions` | `{ native?, plugins?, runner?, limits? }` | — | The server's code (`FunctionsConfig` in `@plitzi/sdk-server/functions`, checked as the server starts): its own tasks and routes (`native`, from `loadFunctions`), the server halves of the plugins it ships (`plugins`, by plugin type — see [A plugin's server half](#a-plugins-server-half)), the `runner` the spaces' functions run on, and the per-invocation `limits`. See `docs/en/functions.md` § 8 in the workspace. |
+| `connectors` | `ConnectorLookupsConfig` | — | `getConnector` and `getCredential` for the space's connectors, read by the RSC read path and the `/_action` write endpoint alike. See `docs/en/connectors.md` in the workspace. |
+| `auth` | `Auth` | — | A `createAuth(...)` result: fills the three auth adapters in and brings the cookie naming. See [User authentication](#user-authentication). |
+| `sessionRenewal` | `{ url } \| false` | on with `auth` | Where a page request whose access cookie died, its refresh cookie alive, renews before it is rendered. |
+| `authCookie` | `SSRAuthCookie` | — | Name, domain, `sameSite`, `secure`, `refreshPath` (`/auth`) and `hintSuffix` (`_hint`) of the session cookies. `auth` brings its own; set here, a piece wins over it. |
+| `exchangePath` | `string \| false` | `'/auth/exchange'` | Where a browser-obtained credential is handed over; served only with the `exchangeCredential` adapter. |
+| `debugMode` | `boolean` | `devMode`, or the space's `devTools` | Authorizes debugging on the pages this server renders. Set, it decides for every space: `false` is a refusal no space turns around. |
+| `frameOptions` | `'DENY' \| 'SAMEORIGIN' \| string[] \| false` | `'DENY'` | Who may embed the pages in a frame (CSP `frame-ancestors`, and `X-Frame-Options`); `false` omits both headers. A space adapter's `frameAncestors` derives it per space — see [Space adapters](#space-adapters-a-space-per-domain). |
+| `fonts` | `{ baseUrl?, dir? }` | `baseUrl: '/fonts'` | Where the font files a space uploaded are addressed, and with `dir` served from this server under `/fonts/*`. See `docs/en/fonts.md` in the workspace. |
+| `environment` | `'production' \| 'staging' \| 'development' \| 'local'` | `'production'` | The Plitzi tier whose endpoints the rendered pages are handed. |
+| `services` | `{ ssr?, rsc? }` | `ssr` on, `rsc` with `getRscData` | Which request-handling services are mounted. |
+| `preview` / `draftStore` | `SSRPreviewConfig` / `DraftStore` | off / in memory | The draft-preview endpoint (`enabled`, `path` `/__preview`, `secret`, `ttlMs`) and the store behind its tokens — share one across replicas. The rest of draft preview is `@plitzi/sdk-mcp`'s: see its [Draft preview](../mcp/README.md#draft-preview). |
+| `port` / `host` | `number` / `string` | — | Not read: `server.listen(port, host?)` takes where it binds (`host` defaults to `0.0.0.0`). |
 
 ### HTTP version behaviour
 
@@ -301,6 +316,10 @@ const server = createServer({
 
 server.listen(3001);
 ```
+
+Beside the page adapters it offers `getSchema` and `getStyle`, read from the same file, and — when `offlineData` is a
+path — `saveSchema` and `saveStyle`, each writing its document back into the file. So an MCP server
+([`@plitzi/sdk-mcp`](../mcp/README.md#adapters)) can run over it, with a `getGrant` of yours beside it.
 
 ### `JsonAdaptersConfig`
 
@@ -442,6 +461,9 @@ in either runtime — and the page arrives with it. A browser asking for the sam
 createServer({ dataDir: path.join(PROJECT_ROOT, 'src/data'), adapters: { ... } });
 ```
 
+Without a `dataDir`, `/data/<file>` is answered from `action.lookups.getData(spaceId, at)` — the space's own data, as
+its files' text by path, as of the version being rendered: what a cloud deployment keeps for a space (`plitzi push`).
+
 `/data/…` is the data folder's first; a server provider reading another path is answered from `publicDir`, as the
 browser would be. What a provider reads goes into the page it renders, whole: data a page must not carry — a price
 list's costs, another visitor's rows — is a server action's to read, answering only what is shown.
@@ -539,8 +561,10 @@ Plugins are React component bundles that extend the Plitzi schema renderer. They
 
 A compiled plugin is one module and its stylesheet, built as `plitzi pack plugin` builds it: React and the SDK kept out, and everything else inside — images and fonts as data URIs, and a file imported whole the way Vite imports it (`worker.js?raw` for its text, `engine.wasm?inline` for a data URI).
 
+Whatever stylesheet the server writes for a plugin — compiled, copied or downloaded — goes into the `plitzi-sdk-plugin` cascade layer (`inPluginLayer` from `@plitzi/sdk-shared/style`), below the space's own: a space's classes and `customCss` win over what the plugin shipped, whatever the specificity. A `css` given as a web path (`/builder-assets/…`) is linked as it is.
+
 ```ts
-import type { SSRSpaceDeployment } from '@plitzi/sdk-server';
+import type { SSRSpaceDeployment } from '@plitzi/sdk-shared';
 
 const server = createServer({
   plugins: {
@@ -763,7 +787,7 @@ Implement `getRscData` in your adapters to serve data from the `/_rsc` endpoint.
 When `ids` is provided the client is performing a **partial refresh** — only return data for those element IDs. When `ids` is absent, return data for all elements (full fetch):
 
 ```ts
-import type { SSRAdapters, SSRRscContext, SSRRscData } from '@plitzi/sdk-server';
+import type { SSRAdapters, SSRRscContext, SSRRscData } from '@plitzi/sdk-shared';
 
 const getRscData = async ({ user, ids, loadOfflineData }: SSRRscContext): Promise<SSRRscData> => {
   // Only serve data when the schema has RSC enabled. `loadOfflineData` joins the read the page render already
@@ -872,6 +896,7 @@ createServer({
 | `enabled` | `boolean` | `true` (when adapter provided) | Activate or deactivate the RSC endpoint. |
 | `path` | `string` | `'/_rsc'` | URL path for the RSC endpoint. |
 | `cacheTtlMs` | `number` | `30000` | TTL in milliseconds for the RSC response cache. Set to `0` to disable RSC caching. Ignored for the `main` environment. |
+| `elementTimeoutMs` | `number` | `5000` | How long one server element may take before the page is answered without it — and what it was resolving is cancelled. The page's ceiling, winning over the producer's own (`action.limits.timeoutMs`). A section cut by it says to raise this. |
 
 ### Consuming RSC data in plugins
 
@@ -1166,7 +1191,7 @@ Credential comparison uses `crypto.timingSafeEqual` to prevent timing attacks. I
 Register request-scoped middleware to run before the SSR renderer. Middlewares execute in the order they are declared and can short-circuit by not calling `next()`.
 
 ```ts
-import type { SSRMiddleware } from '@plitzi/sdk-server';
+import type { SSRMiddleware } from '@plitzi/sdk-shared';
 
 const corsMiddleware: SSRMiddleware = (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'https://app.example.com');
@@ -1358,7 +1383,7 @@ URLs become `/sdk-assets/plitzi-sdk.js?v=<assetVersion>`. This is separate from 
 By default the server uses its built-in EJS template. You can replace it with any function that receives the template params and returns an HTML string:
 
 ```ts
-import type { SSRTemplateFn } from '@plitzi/sdk-server';
+import type { SSRTemplateFn } from '@plitzi/sdk-shared';
 
 const templateFn: SSRTemplateFn = ({ html, offlineData, jsPath, cssPath, plugins, react, reactDom, reactDomClient, reactJsx }) => `
   <!doctype html>
@@ -1497,6 +1522,27 @@ package, not a snippet.
 
 ## Exported types
 
+What this package's own code defines is exported from it:
+
+```ts
+import type {
+  ServerConfig,
+  SSRContext,
+  PipelineExtensions,
+  JsonAdaptersConfig,
+  AuthAdapters,
+  AuthAdaptersConfig,
+  CloudAdaptersConfig,
+  SpaceAdaptersConfig
+} from '@plitzi/sdk-server';
+```
+
+`ServerConfig` is what `createServer` takes — `SSRServerConfig` with the page adapters required, plus `auth` and
+`sessionRenewal` — and what a project types its own options with. `SSRContext` here is the request context a pipeline
+stage sees.
+
+The shapes the server shares with the SDK and `@plitzi/sdk-mcp` are `@plitzi/sdk-shared`'s:
+
 ```ts
 import type {
   SSRAdapters,
@@ -1505,13 +1551,13 @@ import type {
   SSRResponseHelpers,
   SSRMiddleware,
   SSRMiddlewareNext,
-  SSRContext,
   SSRSpaceDeployment,
   SSRTemplateProps,
   SSRTemplateFn,
   SSRCredential,
   SSRUser,
   SSRHeaders,
+  SSRRscContext,
   SSRRscData,
   SSRRscConfig,
   SSRServer,
@@ -1522,9 +1568,6 @@ import type {
   PluginEntry,
   PluginRegistry,
   CacheFilter,
-  CacheManager,
-  JsonAdaptersConfig,
-  AuthAdapters,
-  AuthAdaptersConfig
-} from '@plitzi/sdk-server';
+  CacheManager
+} from '@plitzi/sdk-shared';
 ```

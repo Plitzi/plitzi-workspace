@@ -43,14 +43,15 @@ apps/
   builder/   @plitzi/plitzi-builder   el editor visual
   sdk/       @plitzi/plitzi-sdk       el runtime que renderiza un space
   server/    @plitzi/sdk-server       servidor de páginas: SSR, RSC, plugins, conectores
-  mcp/       @plitzi/sdk-mcp          la superficie de IA, construida sobre apps/server
+  mcp/       @plitzi/sdk-mcp          la superficie de IA, que depende de las entradas estrechas de apps/server
   cli/       @plitzi/cli              crea un proyecto o un paquete de plugin; sube plugins, functions y runtimes; saca un space (create --from, pull)
   desktop/   @plitzi/plitzi-desktop   el cliente de escritorio
 packages/
   sdk-*                               librerías compartidas, consumidas por las apps y entre sí
 ```
 
-`apps/mcp` se apoya en `apps/server`: un despliegue que solo renderiza páginas nunca lo instala. Esa separación
+`apps/mcp` depende de `apps/server` — de sus entradas estrechas (`/kernel`, `/oauth`, `/ssr` solo para la vista
+previa de borradores), nunca al revés: un despliegue que solo renderiza páginas nunca lo instala. Esa separación
 es deliberada — mantenla al añadir código.
 
 Los paquetes se retienen mejor agrupados por **para qué sirven** que en orden alfabético:

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { compareSpaces } from '../decompile/compareSpaces';
 import { specFromSpace } from '../decompile/specFromSpace';
-import { apiContainer, authorSpace, container, heading, link, list, text } from '../index';
+import { apiContainer, authorSpace, container, heading, link, list, markdown, text } from '../index';
 
 import type { ComponentSpec, ElementSpec, SpaceSpec } from './types';
 
@@ -73,6 +73,27 @@ describe('anchor', () => {
     expect(() => authorSpace(space([plans, apiContainer({ id: 'data', anchor: 'data', query: '/x.json' })]))).toThrow(
       /\[anchor-no-tag\]/
     );
+  });
+
+  it('counts every heading a Markdown element renders as a section a link can go to', () => {
+    const prose = markdown('## Plans\n\nText.\n\n```md\n## Not a heading\n```', { id: 'prose' });
+
+    expect(() => authorSpace(space([prose]))).not.toThrow();
+    expect(() =>
+      authorSpace(
+        space([prose], {
+          pages: [
+            { id: 'home', name: 'Home', slug: '', layout: { id: 'main-layout', slot: 'main-slot' }, body: [prose] },
+            {
+              id: 'about',
+              name: 'About',
+              slug: 'about',
+              body: [link({ id: 'back', href: 'home', mode: 'page', hash: 'not-a-heading', children: [text('No')] })]
+            }
+          ]
+        })
+      )
+    ).toThrow(/\[anchor-missing\][^]*"plans"/);
   });
 
   it('refuses a link to a section the page does not have, naming the ones it does', () => {

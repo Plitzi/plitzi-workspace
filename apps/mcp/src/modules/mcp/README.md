@@ -79,8 +79,8 @@ apps/
 ├── index.ts         # The app registry: the `apps` list + registerApps (what server.ts calls)
 ├── apps.test.ts
 ├── shared/
-│   ├── app.ts       # McpApp + registerApp: bundle the view, inline it in the shell, register the resource
-│   └── shell.ejs    # The page shell every app shares (mounts the view on #app)
+│   ├── registerApp.ts # registerApp: bundle the view, inline it in the shell, register the resource
+│   └── shell.ejs      # The page shell every app shares (mounts the view on #app)
 ├── example/         # The reference app: the same shape stripped to the minimum (not in `apps`)
 └── render/          # One folder per app
     ├── index.ts     # Its definition: uri, name, title, description, entry, styles — COMPILED
@@ -118,8 +118,8 @@ owns its whole origin, so MCP answers at the root — no `/mcp` path.
 
 ### `tools/` — the write side
 
-One file per top-level tool (`apply`, `validate`, `search`, `read`, `render`, `preview`, `screenshot`), registered
-from `tools/index.ts` into the `tools` array. Every tool that takes operations runs them through
+One file per top-level tool (`apply`, `validate`, `search`, `read`, `render`, `preview`, `screenshot`,
+`tryFunction`), registered from `tools/index.ts` into the `tools` array. Every tool that takes operations runs them through
 [`shared/draftBatch.ts`](tools/shared/draftBatch.ts) — expand, validate the input, apply to a copy, lint the copy —
 so `plitzi_validate` answers exactly what `plitzi_apply` would — errors, warnings and the `suggestions` the batch opened
 up ([`shared/newSuggestions.ts`](tools/shared/newSuggestions.ts): only ones the space did not already have) — and
@@ -127,7 +127,7 @@ up ([`shared/newSuggestions.ts`](tools/shared/newSuggestions.ts): only ones the 
 
 ```
 tools/
-├── index.ts                 # The tool registry (single source both hosts register from)
+├── index.ts                 # The tool registry (the single source the server registers from)
 ├── apply/                   # validate → apply → persist atomically (dispatch + write result)
 ├── shared/
 │   ├── tool.ts              # ToolDef descriptor
@@ -143,7 +143,9 @@ tools/
     │   ├── shared.ts write.ts operations.ts translator.ts index.ts
     │   └── definitions/  globalStyles/  idStyles/  variables/  fonts/
     ├── connectors/          # upsert/patch/deleteConnector — a third store, one row per connector
-    └── actions/             # upsert/patch/deleteAction — a fourth, one row per server action
+    ├── actions/             # upsert/patch/deleteAction — a fourth, one row per server action
+    ├── functions/           # upsert/deleteFunctionFile — the space's functions, saved whole
+    └── data/                # upsert/deleteDataFile — the space's data files, saved whole
 ```
 
 Each op file exports **its zod schema (`<name>Op`) and its handler (`<name>`)**. `operations.ts` bundles the
@@ -185,9 +187,9 @@ already there (reported as `Pre-existing malformation in element …`, so the ag
   unsets a key). Mirror this in any new op pair.
 - **Atomic + optimistic concurrency.** `plitzi_apply` persists nothing if any op fails; callers pass
   `expectedResourceVersions` and get a conflict if the live data drifted.
-- **Catalogs are observed, not declared.** SSR has no plugin manifest, so unseen ≠ invalid → warn. The built-in
-  catalogs (`builtinComponents`, `builtinCallbacks`) are the exception: hand-maintained mirrors of the SDK, so a
-  change to the `sdk-interactions` sources or built-in types must be mirrored here.
+- **Catalogs are observed, not declared.** A plugin may add a type, action or source the MCP has not seen, so
+  unseen ≠ invalid → warn. The built-in vocabularies are the exception, and none of them is kept here: they come
+  from `@plitzi/sdk-authoring`, read off the SDK's own declarations and sources (see [`catalogs/`](#catalogs--reference-data-not-logic)).
 - **Code style** follows the repo standard: TS strict, no `any`/casts without reason, `import type`, alphabetized
   import groups, blank line after `if` blocks and before `return`. Comments explain **why**, never what.
 

@@ -43,14 +43,15 @@ apps/
   builder/   @plitzi/plitzi-builder   the visual editor
   sdk/       @plitzi/plitzi-sdk       the runtime that renders a space
   server/    @plitzi/sdk-server       page server: SSR, RSC, plugins, connectors
-  mcp/       @plitzi/sdk-mcp          the AI surface, built on top of apps/server
+  mcp/       @plitzi/sdk-mcp          the AI surface, depending on apps/server's narrow entries
   cli/       @plitzi/cli              scaffold a project or a plugin package; ship plugins, functions, runtimes; take a space out (create --from, pull)
   desktop/   @plitzi/plitzi-desktop   the desktop client
 packages/
   sdk-*                               shared libraries, consumed by the apps and by each other
 ```
 
-`apps/mcp` builds on `apps/server`: a deployment that only renders pages never installs it. That separation is
+`apps/mcp` depends on `apps/server` — on its narrow entries (`/kernel`, `/oauth`, `/ssr` for draft preview alone),
+never the other way round: a deployment that only renders pages never installs it. That separation is
 deliberate — keep it when adding code.
 
 The packages are easier to hold in mind grouped by what they are *for* than alphabetically:

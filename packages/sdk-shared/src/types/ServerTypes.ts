@@ -1055,11 +1055,6 @@ export type SSRServerConfig = {
   /** Write endpoint for server-driven providers. Absent means the server serves reads only. */
   action?: SSRActionConfig;
   /**
-   * Code of this server's own, and the sandbox for the spaces' — shaped as `FunctionsConfig` in
-   * `@plitzi/sdk-server/functions`. `native` is trusted code loaded in the process (a self-hosted server's tasks, or a
-   * platform's own); `runner` runs each space's functions, isolated.
-   */
-  /**
    * The server's code: its own (`native`), the server halves of the plugins it ships (`plugins`, by plugin type), the
    * runner the spaces' code runs on, and the ceilings. Built by `@plitzi/sdk-server/functions` (`loadFunctions`), and
    * checked as the server starts.

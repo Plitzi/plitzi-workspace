@@ -5,10 +5,10 @@ edit a space, the tool engine behind it, the widget renderer, and the draft-prev
 
 Connecting an agent and what it can do once connected: [AI agents and the MCP server](../../docs/en/mcp.md).
 
-It is a sibling of [`@plitzi/sdk-server`](../server/README.md), not a layer on top of it. That package serves
-pages; this one serves agents. They share only the HTTP kernel, which this package imports from
-`@plitzi/sdk-server/kernel` — a narrow entry that carries the dispatcher and the transports and nothing else, so
-a page-only deployment installs none of this and an MCP deployment loads no page renderer.
+It depends on [`@plitzi/sdk-server`](../server/README.md), never the other way round: that package serves pages,
+this one serves agents. It imports only that package's narrow entries — the HTTP kernel (`/kernel`, the dispatcher
+and the transports), OAuth (`/oauth`) and, for draft preview alone, the renderer (`/ssr`) — so a page-only
+deployment installs none of this and a dedicated MCP server loads no page renderer.
 
 ## Installation
 
@@ -75,16 +75,41 @@ The server is stateless: it resolves the space per request and reads and writes 
 | `getOfflineData(spaceId, env, rev)` | for preview | Read side of draft-preview. Only the preview endpoint calls it. |
 | `getComponentCatalog(spaceId, env)` | no | The element types the space's plugins add, for the catalog resources. |
 | `getConnectors` / `saveConnector` / `deleteConnector` | for connectors | The space's connector manifests, read and written by the connector operations. |
-| `getActions` / `getActionTasks` / `saveAction` / `deleteAction` | for actions | The space's server actions, and the catalog of tasks a step may run — the deployment's and the space's own functions, each with its `origin`. |
+| `getActions` / `getActionTasks` / `saveAction` / `deleteAction` | for actions | The space's server actions, and the catalog of tasks a step may run — the deployment's, the space's own functions and its plugins' server halves, each with its `origin` (`deployment`, `space` or `plugin`). |
 | `getFunctions` / `saveFunctions` / `tryFunction` | for functions | The space's functions: read for `plitzi://functions/{env}`, saved (built and checked, refused from an older copy) by `upsertFunctionFile` / `deleteFunctionFile`, and run by `plitzi_try_function`. |
 | `getData` / `saveData` | for data | The space's data — JSON its server providers read as `/data/<file>`: read for `plitzi://data/{env}`, saved whole (each file checked, refused from an older copy) by `upsertDataFile` / `deleteDataFile`. |
 
 Schema and style are read as **separate documents** on purpose: `getOfflineData` is SSR-shaped and strips
 `style.platform`, which the style resources need.
 
+`createJsonAdapters({ offlineData })` from `@plitzi/sdk-server` offers `getSchema` and `getStyle` over a
+`{ schema, style }` JSON and — when given a path — `saveSchema` and `saveStyle`, each writing its document back into
+the file, so an MCP can run over it with a `getGrant` of yours beside it. It comes from the package root, which loads
+the page server too; a dedicated MCP that keeps its weight down writes those four itself, as
+[self-hosting/06](../../examples/self-hosting/06-mcp-server) does.
+
 Without a `getGrant` that resolves, the server still answers its public surface — the handshake, the tool list,
 the guide, the CSS-property catalog — and asks for a space only when a tool or resource needs one. A grant that
 resolves with `canWrite: false` reads everything and is refused at every write tool.
+
+## Options
+
+What MCP itself serves is `McpOptions` (`src/options.ts`), the **second** argument — to `createServer` here, and to
+`mcpExtensions(options)` for a page server — never a section of the server config, which a page-only deployment
+types its renderer with.
+
+| Option | Default | Purpose |
+|---|---|---|
+| `path` | `/mcp` | Where MCP answers inside a server that also serves pages. A dedicated MCP server owns its whole origin and ignores it. |
+| `renderStreaming` | `true` | Whether the `plitzi_render` view paints from the tool arguments while the host still streams them. `false` keeps the view blank until the finished widget arrives. |
+| `proxy` | off | `McpProxyOptions`: with a `secret`, every external URL a render authored is rewritten to this server's signed endpoint (`path`, default `/__proxy`) and fetched here — the origins a widget needs cannot be declared ahead. `baseUrl`, `maxBytes` (8 MiB), `ttl` (7 days), `tools` (`['plitzi_render']`), `enabled`. |
+| `previewClient` | off | `{ url, secret? }`: the SSR `/preview` endpoint, for an MCP server that runs apart from the renderer. Without it the preview tools report `PREVIEW_UNAVAILABLE`. |
+| `screenshot` | off | `{ serviceUrl, renderBaseUrl }`: the browser service `plitzi_screenshot` renders through, and the SSR base it navigates to. Without it the tool is not registered. |
+| `oauth` | off | OAuth 2.1 for remote connectors — see [OAuth](#oauth). |
+
+```ts
+createServer({ adapters }, { screenshot: { serviceUrl, renderBaseUrl }, proxy: { secret } });
+```
 
 ## Tools
 
@@ -98,6 +123,9 @@ resolves with `canWrite: false` reads everything and is refused at every write t
 | `plitzi_screenshot` | read | Render a draft to a PNG (desktop, mobile or both) through the screenshot service |
 | `plitzi_render` | read | Render a self-contained UI widget, offline, with no space |
 | `plitzi_try_function` | write | Run one task of the space's functions against the draft, in the sandbox: its value, logs and error |
+
+The server advertises each tool's access as its `readOnlyHint` annotation, so a host can run a read without asking
+and ask before a write.
 
 Reads follow a filesystem model: list cheap, read one item in detail on demand. Agents are told never to
 hand-build a URI — every write and search response hands back the URI to use next.
@@ -119,16 +147,13 @@ engine's job, not the renderer's.
 
 ## OAuth
 
-Opt-in and inert unless configured. With `oauth` set, an unauthenticated JSON-RPC call gets a `401` plus a
+Opt-in and inert unless configured. With `oauth` set (an [option](#options), not part of the server config), an unauthenticated JSON-RPC call gets a `401` plus a
 `WWW-Authenticate` challenge pointing at the discovery document — which is what makes a host such as Claude
 Desktop start the flow. Without it, the server stays anonymous, discovery answers `404`, and every caller reaches
 the public surface.
 
 ```ts
-createServer({
-  adapters,
-  oauth: { adapters: oauthAdapters, issuer, guest: { target: widgetsOnlyTarget } }
-});
+createServer({ adapters }, { oauth: { adapters: oauthAdapters, issuer, guest: { target: widgetsOnlyTarget } } });
 ```
 
 Publish the connector URL **with a path** (`https://host/mcp`), not the bare origin.

@@ -104,6 +104,9 @@ calls as a small one:
 | `plitzi_render` | Show the user an offline widget; never touches the space |
 | `plitzi_try_function` | Run one task of the space's [functions](./functions.md) against the draft, in the sandbox: its value, logs and error |
 
+Every tool but `plitzi_apply` and `plitzi_try_function` is marked `readOnlyHint` (from its `access`), so a host can run
+it without asking and ask before the two that change something.
+
 The resources (`plitzi://…`) are the catalog the agent browses: pages, layouts and components, element types, style classes,
 tokens, fonts, variables, [feature flags](./feature-flags.md) (`plitzi://flags/{env}`, written with `upsertFlag` /
 `deleteFlag` and gated with `flag` on an element or a page), settings, the interaction and data-source vocabularies,

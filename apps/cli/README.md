@@ -21,8 +21,8 @@ npx @plitzi/cli upload plugin                  # that zip, on the space you work
   there, `-e, --environment` for which version of the space, `--width` for the widths a page is looked at (one, or
   several separated by commas), `--api` for the platform, `--json` for a tool or an agent.
 - **`--dry-run` says what it would do, and does none of it** — on every command that writes or sends: `create`,
-  `add plugin`, `pull`, `push`, `pack plugin`, `source`, `import`, `upload plugin`, `functions pull`/`push`,
-  `runtime push`/`start`/`stop`/`size`/`vars`, `skills update`. Each file it would write (`+` new, `~` replaced, `-`
+  `add plugin`, `add runtime`, `pull`, `push`, `pack plugin`, `source`, `import`, `upload plugin`, `functions pull`/
+  `push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills update`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
   removed), what it would install or run, what it would send and where. It still reads what it needs to say so — the
   project, the files it would send, the space it would pull, signing in for that. `upgrade` and `fix` only show until
   `--write`.
@@ -139,6 +139,7 @@ when an install fails the CLI says which setting names it.
 | `public/` | Served to anyone who asks, as it is — pictures, a favicon, and in client mode the data the browser fetches (`public/data/`). **It is on the internet**: never a secret, a key, a private document or data only some visitors may read | yes |
 | `src/data/` | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read | yes |
 | `src/functions/` | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot | yes |
+| `vendor/plugins/` | The plugins the project runs as they were built, with no source (a project made from a space gets them), each folder with its `plugin-manifest.json`. The server runs them, and `author`, `check`, `fix` and `push` know every element type each provides | yes |
 | `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), the space as last authored, screenshots and test output. Rebuilt when missing | no |
 | `state/` | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/config/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
 | `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
@@ -550,8 +551,8 @@ running one would stop, and why a stopped one is.
 ## `functions`
 
 ```bash
-plitzi functions pull                                              # the space's functions into functions/
-plitzi functions push                                              # functions/ saved as the space's draft, built and checked
+plitzi functions pull                                              # the space's functions into src/functions/
+plitzi functions push                                              # src/functions/ saved as the space's draft, built and checked
 plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'  # one task of the saved draft, in the sandbox
 plitzi functions dev seismic.feed --params '{}' --watch            # on this machine, as the platform runs it
 ```
@@ -564,7 +565,12 @@ throws it away) and `push` refuses when the space moved on since. A problem come
 
 ## Credentials
 
-`create` never mints one. A cloud project's key comes from Credentials in the builder, is written to `.env`, and
-`.gitignore` is written in the same breath. Server and browser take **different** keys and the scaffold names
-them differently on purpose: a server gets the secret self-hosting key, a browser gets the public render key,
+`create` never mints a key to Plitzi. A cloud project's key comes from Credentials in the builder, is written to
+`.env`, and `.gitignore` is written in the same breath. Server and browser take **different** keys and the scaffold
+names them differently on purpose: a server gets the secret self-hosting key, a browser gets the public render key,
 whose protection is the origin it is presenting from.
+
+Every server project's `src/main.ts` reads `.env` itself (`process.loadEnvFile`), so `npm start` needs nothing else.
+`create` gives each one a signing key there, made for it: `PLITZI_SIGNING_SECRET`, what `ctx.sign` and `ctx.verify`
+sign with — at least 32 characters (`doctor --fix` writes one where it is missing). `PORT` is left commented out: 8080,
+or the next free port while developing.

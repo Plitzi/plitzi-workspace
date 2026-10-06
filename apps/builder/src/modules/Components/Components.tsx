@@ -19,7 +19,7 @@ export type ComponentsProps = {
 };
 
 /**
- * The space's components, at the foot of the element catalog: placed the way an element is, by dragging it onto a
+ * The space's components, a category of the element catalog: placed the way an element is, by dragging it onto a
  * page — with what each is called and how many places render it. Edited by opening it in the canvas, where its tree is
  * edited like a page's.
  */

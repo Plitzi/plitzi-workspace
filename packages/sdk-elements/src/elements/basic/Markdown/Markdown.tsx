@@ -3,6 +3,7 @@ import MarkdownUI from '@plitzi/plitzi-ui/Markdown';
 import clsx from 'clsx';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { uniqueAnchor } from '@plitzi/sdk-shared/schema/anchor';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -10,9 +11,9 @@ import RootElement from '../../../Element/RootElement';
 import type { RefObject } from 'react';
 
 export type MarkdownProps = {
-  ref: RefObject<HTMLElement>;
-  className: string;
-  content: string;
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  content?: string;
 };
 
 const Markdown = ({ ref, content = 'Markdown', className = '' }: MarkdownProps) => {
@@ -29,7 +30,8 @@ const Markdown = ({ ref, content = 'Markdown', className = '' }: MarkdownProps) 
         className
       )}
     >
-      <MarkdownUI>{content}</MarkdownUI>
+      {/* Every heading is a section a link can name — `/page#its-words` — with the anchor authoring checks links against. */}
+      <MarkdownUI headingAnchor={uniqueAnchor}>{content}</MarkdownUI>
     </RootElement>
   );
 };

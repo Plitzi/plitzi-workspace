@@ -13,8 +13,8 @@ text({ bind: [{ to: 'content', source: 'posts.title', when: { … } }] })       
 
 `from` binds what the type shows — a text's, heading's, paragraph's or button's `content`, an image's `src`, a link's
 `href`, a list's `items` — and leaves it empty until the data answers. `as` shows it through a template (`source` is
-the value), or a format the space names once in `formats: { price: "{{ source|currency('USD') }}" }` (filters
-`currency` and `percent` are there for exactly this). `bind` is for every other attribute;
+the value), or a format the space names once in `formats: { price: "{{ source|currency('USD') }}" }` (the
+`currency` and `percent` filters). `bind` is for every other attribute;
 `bindTemplate(to, source, template, { category?, returns? })` is the computed attribute — a template over the value
 at `source`. `returns: 'value'` hands over what a single `{{ expression }}` evaluates to instead of its text: a list's
 `items`, a number, a flag (see [lists](lists.md)).
@@ -28,7 +28,7 @@ The binding's `source` is completed for you; its template is read as written, so
 
 An element re-renders when anything it reads changes: the first part of each binding's `source` and every source its
 templates name. The globals are `variables`, `navigation` (`routeParams`, `queryParams`, `origin`, `currentPageId`,
-`pending` while a link waits for its page's server data),
+`pending` / `pendingLocation` while a link waits for its page's server data),
 `auth` (who is signed in, `status` while that is being found out), `state` (what flows wrote), `theme`
 (`mode`, `resolved`), `host` (the `hostData` an application embedding the space hands the SDK) and `computed` (below).
 

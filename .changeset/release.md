@@ -99,6 +99,9 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
   whose slots are filled alike on purpose stop being offered as a repeat, and an exported instance that carries one
   typechecks.
 - `container` and `text` take a `title`. A trigger's `preview` may hold numbers, flags, lists and `null`.
+- **A Markdown element's headings are sections a link can name.** Each renders with the anchor its words read as
+  (`## Server data` → `#server-data`, numbered when repeated), and a link's `hash` may name one: `anchor-missing` counts
+  them, so a table of contents built from the Markdown is checked like any other link.
 - `answerAction(page, actionId, output)` (testing): a test that would save something answers that server action in
   the browser — the server's `kv`, and what the developer kept, are never written. A stream step gets its `done` frame.
 
@@ -155,9 +158,9 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
   never replaces it; `create --from` projects read `serverOptions.ts` too.
 - **`upgrade packages` brings up the scripts the CLI wrote and nobody changed** (`.plitzi/scaffold.json` now records
   them); a script the project changed is left and said, as before.
-- `start:dev` restarts on a change to the server's code — `serverOptions.ts`, `actions.ts` and `src/functions/` (whose
-  `README.md` the project now starts with); a plugin is swapped in the open page instead, and its `functions/` set
-  again, without a restart. A function imports its siblings with `.ts`, as `src/`.
+- `start:dev` restarts on a change to the server's code — `src/main.ts`, `src/config/`, `src/actions/` and
+  `src/functions/` (there from the start, kept by a `.gitkeep`); a plugin is swapped in the open page instead, and its
+  `functions/` set again, without a restart. A function imports its siblings with `.ts`, as `src/`.
 - `add plugin --server` writes the plugin's server half (`functions/index.ts`, a `GET`/`POST /state` example on its
   `kv`); a package gets `@plitzi/sdk-server` as a devDependency for its types. Refused in a client-mode project.
 - `add plugin`: `--prop rows:list` and `--prop meta:json` for data a binding fills; `--headless` writes
@@ -252,9 +255,9 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
   Each report ends with what to run next. `upgrade` writes no file over an older layout, and says `doctor --fix`.
   `buildFunctions` and `FunctionsBuildError` are exported from
   `@plitzi/sdk-server/functions-runner`, `MIN_SIGNING_SECRET_LENGTH` from `@plitzi/sdk-server/actions`.
-- **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `pull`, `push`, `pack plugin`,
-  `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills
-  update`: each file it would write (`+` new, `~` replaced, `-` removed), what it would install or run, what it would
+- **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `add runtime`, `pull`, `push`,
+  `pack plugin`, `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/
+  `vars`, `skills update`, `doctor --fix`: each file it would write (`+` new, `~` replaced, `-` removed), what it would install or run, what it would
   send and where, and none of it done. It still reads what it needs to say so.
 - **A new project is formatted from the start**, every template and mode: its first `format` changes nothing. The CLI's
   own files are in its `.prettierignore`, so formatting never turns one into a file `upgrade` believes was changed.
@@ -279,9 +282,17 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
 
 ## Packages
 
+- **`GET /auth/continue` takes `?fallback=`**: where to go when `redirect` is refused, vetted by the same check. A sign-in
+  screen's way back sends its site there, so leaving without signing in never lands on "you are signed in".
+- **Markdown renders headings you can link to and code you can copy.** A heading carries its anchor and a `#` link to
+  itself; a fenced block a header with its language and a **Copy** button. The anchor is `@plitzi/sdk-shared`'s:
+  `anchorOf`, `uniqueAnchor` and `markdownHeadings` (`schema/anchor`, `schema/markdownHeadings`) — what the element
+  renders, what authoring checks a link against and what a table of contents is built from are one function. Needs
+  `@plitzi/plitzi-ui` 1.6.31 (its `Markdown` takes `headingAnchor`).
 - **Every package declares what it imports, and nothing more.** `react` is a peer of `sdk-auth`, `sdk-event-bridge`,
   `sdk-interactions`, `sdk-style` and `sdk-variables`; `sdk-schema` depends on `immer`, `sdk-elements` on
   `@dr.pogodin/react-helmet`, `sdk-plugins` on `@plitzi/plitzi-ui`, `sdk-style` on `@plitzi/sdk-event-bridge` and
   `sdk-dev-tools` on `@plitzi/sdk-plugins` — each worked only because `@plitzi/plitzi-sdk` brought them, and failed
-  installed alone or under a strict linker. `prop-types` and the `@plitzi/*` dependencies nothing imported are gone, so
-  `sdk-mcp` no longer installs the element library its code says it does not depend on.
+  installed alone or under a strict linker. `prop-types` and the `@plitzi/*` dependencies nothing imported are gone:
+  `sdk-mcp` no longer declares `@plitzi/sdk-elements`, which its code does not import — it still arrives through
+  `@plitzi/plitzi-sdk`.

@@ -68,7 +68,7 @@ export interface ToolSpec<Shape extends ZodRawShape> {
   runPublic?: (input: z.infer<ZodObject<Shape>>, env: Env) => unknown;
 }
 
-/** What the registry holds and the hosts register from: the same metadata plus a type-erased `execute` that
+/** What the registry holds and the server registers from: the same metadata plus a type-erased `execute` that
  *  validates raw args against the shape and delegates to the typed `run`. Produced by `defineTool`. */
 export interface ToolDef {
   name: string;

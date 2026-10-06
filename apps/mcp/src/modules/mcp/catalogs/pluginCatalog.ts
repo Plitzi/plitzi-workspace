@@ -11,8 +11,8 @@ import type { ComponentCatalog, ComponentCatalogEntry, PluginManifest, PluginSch
  *
  * The BUILT-IN types are not here: their structural half (attributes, style selectors, default styles) comes from
  * `@plitzi/sdk-elements`, which this package deliberately does not depend on — a React element library is the
- * heaviest possible import for a server that renders nothing. Deployments merge those in themselves; the curated
- * semantics for them live in `builtinComponents.ts`.
+ * heaviest possible import for a server that renders nothing. Deployments merge those in themselves; what each one is
+ * for is `elementCatalog`, read off the declarations by `@plitzi/sdk-authoring`.
  */
 
 // Plugin resources are versioned, immutable URLs, so their manifests are safe to hold. A short TTL is what keeps a

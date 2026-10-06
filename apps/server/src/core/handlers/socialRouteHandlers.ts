@@ -95,11 +95,16 @@ export const createSocialAuthRouteHandlers = ({
        * uses: a relative path or an allowed origin is honoured, anything else silently becomes the default. A
        * missing or unresolved parameter lands on the default too, which is what makes it safe for a template to
        * pass a token it could not fill in.
+       *
+       * `?fallback=` is where to go instead when `redirect` is refused, vetted by the same judgement — a way BACK
+       * from the screen, whose default ("you are signed in") is the wrong place for somebody who never signed in.
        */
       method: 'GET',
       path: '/continue',
       handle: (req, res) => {
-        res.redirect(social.sanitizeRedirect(req.query?.redirect));
+        const redirect: unknown = req.query?.redirect;
+        const vetted = social.sanitizeRedirect(redirect);
+        res.redirect(vetted === redirect ? vetted : social.sanitizeRedirect(req.query?.fallback));
 
         return Promise.resolve();
       }

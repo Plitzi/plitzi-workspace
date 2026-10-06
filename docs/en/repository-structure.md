@@ -42,7 +42,7 @@ plitzi-workspace/
 | `apps/builder` | Main UI to design and edit Plitzi spaces |
 | `apps/sdk` | SDK bundle consumed by spaces and the SSR server |
 | `apps/server` | HTTP server for SSR, RSC, plugins, and static assets |
-| `apps/mcp` | MCP server and AI tooling, built on `apps/server` — a page-only deployment never installs it |
+| `apps/mcp` | MCP server and AI tooling, depending on `apps/server`'s narrow entries (never the reverse) — a page-only deployment never installs it |
 
 ## Packages
 

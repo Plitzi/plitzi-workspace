@@ -241,7 +241,7 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
 const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases\n!.yarn/versions\n';
 
 /**
- * `tmp/` is everything the project writes for itself and `data/` what its server keeps (`./paths`); `.plitzi/` is what
+ * `tmp/` is everything the project writes for itself and `state/` what its server keeps (`./paths`); `.plitzi/` is what
  * the CLI records about it, and is committed — a clone without it could not pull, push or upgrade.
  */
 export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>

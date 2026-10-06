@@ -663,6 +663,12 @@ trigger**, over a shared `kv` adapter written out in full, in
 queue and a `kv` the deployment keeps itself — both seams written out over one SQLite file, with two replicas
 sharing it — are in [`09-schedules`](../../examples/self-hosting/09-schedules).
 
+**How the server reaches a space** is `action.lookups` (`ActionLookupsConfig`), each read as of the version a run
+belongs to: `getAction` (required) and `listActions`, `listScheduledSpaces`, `getCredential`, `getConnector`,
+`getFunctions` (the space's [functions](./functions.md)), `getPluginFunctions` (its plugins' server halves), `getData`
+(the space's own data, its files' text by path — what a server provider reads as `/data/<file>` when the server has no
+`dataDir`) and `getFlags`.
+
 Also yours: the key/value store behind `kv` (in-process by default, which counts only its own replica — a cluster
 supplies a shared one), the database drivers `db.query` may use, the limits on what `email.send` may send, the
 per-run limits, and what a run costs.

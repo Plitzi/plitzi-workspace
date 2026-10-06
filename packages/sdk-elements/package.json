@@ -1310,7 +1310,7 @@
   "dependencies": {
     "@dr.pogodin/react-helmet": "^3.3.2",
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.30",
+    "@plitzi/plitzi-ui": "^1.6.31",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",

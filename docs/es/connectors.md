@@ -241,10 +241,13 @@ modos**, elegidos en Settings con **Data Source** (`definition.runtime`):
    (parámetros `action` + `recordId`, hace `POST /_action`; al terminar invalida las peticiones de navegador
    cacheadas). Triggers `onApiSuccess` / `onApiError`. En modo cliente, con `cache: true` (desactivado por
    defecto), la respuesta vive en la caché de `@plitzi/sdk-shared/queries` durante `staleTime` segundos (30 por
-   defecto); `performQuery` siempre vuelve a pedir — ver "Cached requests" en `docs/en/authoring-spaces.md`.
-   `cancelQuery` descarta la petición en vuelo (`cancelRsc` / `queryCache.cancel`), e `isLoading` es true mientras
-   hay una. En modo server, un `input` enlazado vuelve a pedir cuando cambia (`useInputRefresh`), y lo que pide un
-   refresco gana al `input` con el que se guardó el elemento.
+   defecto); `performQuery` siempre vuelve a pedir — ver "Cached requests" en `docs/en/authoring-spaces.md`. El
+   `performQuery` de un provider servido por el servidor recibe un `input` — `reloadApi(id, { q: '{{ state.search }}' })`
+   en authoring — que se entrega a lo que lo resuelve junto a los route y query params de la página (una búsqueda, un
+   filtro, cuántos mostrar), y se conserva para cada página que `loadMore` o `goToPage` pidan después y para cada
+   refresco, hasta la siguiente consulta con un `input` — y por encima del `input` con el que se guardó el elemento. Un
+   `input` enlazado vuelve a pedir cada vez que cambia (`useInputRefresh`). `cancelQuery` descarta la petición en vuelo
+   (`cancelRsc` / `queryCache.cancel`), e `isLoading` es true mientras hay una.
 6. **Render** — `<RootElement tag={subType}>` envuelve un `<StoreProvider>` con los children.
 
 ### Cómo sabe que debe esperar el RSC
@@ -370,10 +373,13 @@ HTML y el cliente solo hace *hydrate*.
 
 ### 7.3 Navegación posterior
 
-Si el visitante navega en SPA a `/posts/456`, `useRscSync` lo detecta porque su clave es la **ubicación** (lee
-`runtime.sources.navigation`, no el `currentPageId`: `/posts/1` → `/posts/2` es la misma página con otro registro) y
-hace `GET /_rsc?location=/posts/456`; el handler reescribe la petición a esa página (`rsc/handler.ts`), se repite toda
-la resolución y el slice nuevo se **fusiona** en `rsc.data`.
+Si el visitante sigue un enlace a `/posts/456`, la navegación pide los datos del destino **antes** de ir:
+`GET /_rsc?location=/posts/456` (`refreshRsc` con el destino; `navigation.pendingLocation` dice adónde va mientras
+tanto). El handler reescribe la petición a esa página (`rsc/handler.ts`), se repite toda la resolución y el slice nuevo
+se **fusiona** en `rsc.data`. `useRscSync` tiene como clave la **ubicación** — los route y query params de la navegación
+y su `href`, no el `currentPageId`: `/posts/1` → `/posts/2` es la misma página con otro registro — y solo pide una
+ubicación que el store no tiene (`rsc.location`), así que el cambio de ruta que sigue reutiliza lo que trajo el
+prefetch: un render por clic, no dos.
 
 ### 7.4 Casos borde
 

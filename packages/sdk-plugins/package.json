@@ -37,7 +37,7 @@
   "type": "module",
   "sideEffects": false,
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.30",
+    "@plitzi/plitzi-ui": "^1.6.31",
     "@plitzi/sdk-shared": "workspace:*"
   },
   "devDependencies": {

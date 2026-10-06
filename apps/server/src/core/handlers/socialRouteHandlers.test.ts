@@ -246,6 +246,37 @@ describe('social auth route handlers', () => {
     expect(state.redirected).toBe('https://app.test/');
   });
 
+  /**
+   * The way back from the screen names where to go if its destination is refused: the default is where somebody lands
+   * once signed in, which is the wrong page for somebody leaving without. The fallback is vetted like the destination,
+   * so it cannot be the open redirect the destination is refused for being.
+   */
+  it('goes to a vetted fallback when the destination is refused, and to the default when that is refused too', async () => {
+    const sanitizeRedirect = vi.fn((target: unknown) =>
+      typeof target === 'string' && target.startsWith('https://app.test/') ? target : 'https://app.test/done'
+    );
+    const routes = createSocialAuthRouteHandlers({
+      social: socialStub({ sanitizeRedirect }),
+      cookies,
+      issueSession: () => Promise.resolve(session)
+    });
+    const go = async (query: Record<string, string>) => {
+      const { res, state } = response();
+      await run(routes, '/continue', request('/continue', query), res);
+
+      return state.redirected;
+    };
+
+    expect(await go({ redirect: 'https://app.test/docs', fallback: 'https://app.test/' })).toBe(
+      'https://app.test/docs'
+    );
+    expect(await go({ redirect: 'app.test', fallback: 'https://app.test/' })).toBe('https://app.test/');
+    expect(await go({ redirect: 'https://evil.test/', fallback: 'https://evil.test/back' })).toBe(
+      'https://app.test/done'
+    );
+    expect(await go({ redirect: 'https://evil.test/' })).toBe('https://app.test/done');
+  });
+
   it('hangs every route on a router as a GET', () => {
     const get = vi.fn();
     mountSocialAuthRoutes(

@@ -9,6 +9,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
+import { anchorOf } from '@plitzi/sdk-shared/schema/anchor';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
@@ -26,7 +27,6 @@ import {
 } from '../style';
 import { suggestSpace } from './advice';
 import { contentMoves } from './advice/content';
-import { asAnchor } from './anchor';
 import {
   COMPONENT_SOURCES,
   GLOBAL_SOURCES,
@@ -897,7 +897,7 @@ class SpaceAuthor {
       }
 
       const target = flat[controls];
-      const anchor = target.definition.anchor ?? asAnchor(target.id);
+      const anchor = target.definition.anchor ?? anchorOf(target.id);
       target.definition.anchor = anchor;
       element.attributes.controls = anchor;
     }

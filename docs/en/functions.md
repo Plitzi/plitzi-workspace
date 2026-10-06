@@ -146,13 +146,14 @@ in the middle (TypeScript that knows `ctx`: completion, hover, errors as you typ
   saved.
 
 A space with none starts from one file and one task already written. In an action's step picker the space's functions
-are listed under **Functions**, apart from the platform's **Tasks** (the catalog's `origin`: `space` or `deployment`).
+are listed under **Functions** and the server halves of its plugins under **Plugins**, apart from the platform's
+**Tasks** (the catalog's `origin`: `space`, `plugin` or `deployment`).
 
 **In a project**, with the CLI:
 
 ```bash
-plitzi functions pull        # the space's files into functions/ — refused if it would overwrite what is not pushed
-plitzi functions push        # functions/ as the space's draft — refused if the space moved on since the pull
+plitzi functions pull        # the space's files into src/functions/ — refused if it would overwrite what is not pushed
+plitzi functions push        # src/functions/ as the space's draft — refused if the space moved on since the pull
 plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'
 plitzi functions dev seismic.feed --params '{}' --watch   # on this machine, as the platform runs it
 ```
@@ -353,8 +354,8 @@ export default defineFunctions({
 - **A project `plitzi create` writes** loads each plugin folder's `functions/` natively, beside its own `src/functions/`:
   `createServer({ functions: { native, plugins: { board: definition } } })`. While developing, a save to it is loaded
   again in place (`server.functions.setPlugin(type, definition)`) — the server is not restarted.
-- **A packed plugin** carries its server half as source: `plitzi pack plugin` writes `functions.source.json` beside the
-  bundle and names it in the manifest (`functions`). Uploaded to a space, the platform builds and checks it as the
+- **A packed plugin** carries its server half as source: `plitzi pack plugin` writes `functions.source.json`
+  (`PLUGIN_FUNCTIONS_SOURCE`, `@plitzi/sdk-shared/actions`) beside the bundle and names it in the manifest (`functions`). Uploaded to a space, the platform builds and checks it as the
   plugin's and keeps it in the space's private bucket like the space's own functions — never on the public CDN with
   the rest of the plugin. An upload whose server half does not check out, or to a space with no private bucket, is
   refused with what to do. A server of one's own that runs a packed plugin loads it with `loadFunctionsSource`.
