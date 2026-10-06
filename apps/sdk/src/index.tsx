@@ -41,6 +41,7 @@ import useDisplayMode from '@plitzi/sdk-shared/style/useDisplayMode';
 import App from './App';
 import { getEnvironmentServer } from './config';
 import { track } from './modules/Analytics';
+import { deferredPlugin } from './modules/Sdk/deferredPlugins';
 import { createHotPlugins } from './modules/Sdk/hotPlugins';
 
 // SDK Style
@@ -49,6 +50,7 @@ if (import.meta.env.PROD) {
   void import('./assets/plitzi-sdk-devtools.scss');
 }
 
+import type { DeferredPlugin, PluginComponent } from './modules/Sdk/deferredPlugins';
 import type { CanvasHandle, CanvasOptions, CanvasSize, Frame } from '@plitzi/sdk-elements/canvas';
 import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
 import type { ElementChild } from '@plitzi/sdk-elements/Element/helpers/elementChildren';
@@ -141,20 +143,24 @@ const withDocumentStyleCache = <P extends PlitziSdkProps>(params: P, root: HTMLE
  * caller for it made the parameter impossible to satisfy without a cast: everybody registering a component of
  * their own has a React component and nothing else, which is also exactly what `<Sdk.Plugin component>` declares.
  */
+type RenderPluginBase = {
+  props?: Record<string, unknown>;
+  clientOnly?: boolean;
+};
+
 export type RenderPlugins = Record<
   string,
-  {
-    /**
-     * A plugin's props ARE the hosting element's attributes, which this package cannot know — so the parameter is
-     * left open. Narrowed to `ComponentPluginFC` with its default `unknown`, it refuses every component anybody
-     * actually writes: a component declaring `{ label?: string }` has nothing in common with the runtime-supplied
-     * props alone, and TypeScript reads that as a mistake rather than as the intended widening.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    component: ComponentPluginFC<any>;
-    props?: Record<string, unknown>;
-    clientOnly?: boolean;
-  }
+  | (RenderPluginBase & {
+      /**
+       * A plugin's props ARE the hosting element's attributes, which this package cannot know — so the parameter is
+       * left open. Narrowed to `ComponentPluginFC` with its default `unknown`, it refuses every component anybody
+       * actually writes: a component declaring `{ label?: string }` has nothing in common with the runtime-supplied
+       * props alone, and TypeScript reads that as a mistake rather than as the intended widening.
+       */
+      component: PluginComponent;
+    })
+  /** One the page draws none of — see `deferredPlugin`. */
+  | (RenderPluginBase & DeferredPlugin)
 >;
 
 export type RenderOptions = {
@@ -173,8 +179,19 @@ export function render(
   ssrMode = false,
   { hotPlugins = false }: RenderOptions = {}
 ) {
-  const hot = hotPlugins ? createHotPlugins(renderPlugins) : undefined;
-  const plugins = hot?.plugins ?? renderPlugins;
+  const registered = Object.fromEntries(
+    Object.entries(renderPlugins).map(([key, plugin]) => {
+      if ('component' in plugin) {
+        return [key, plugin];
+      }
+
+      const { load, css, declaration, ...rest } = plugin;
+
+      return [key, { ...rest, component: deferredPlugin(key, { load, css, declaration }) }];
+    })
+  );
+  const hot = hotPlugins ? createHotPlugins(registered) : undefined;
+  const plugins = hot?.plugins ?? registered;
   /**
    * The runs the SERVER did while building this page, kept out of what the tree is rendered with.
    *
@@ -263,8 +280,7 @@ export function render(
      * Swaps a plugin where it is drawn, with `hotPlugins` on: `false` when it cannot be swapped in place — not
      * registered by this page, or its declaration changed — and the page should load again.
      */
-    replacePlugin: (key: string, component: RenderPlugins[string]['component']): boolean =>
-      hot?.replace(key, component) ?? false
+    replacePlugin: (key: string, component: PluginComponent): boolean => hot?.replace(key, component) ?? false
   };
 }
 

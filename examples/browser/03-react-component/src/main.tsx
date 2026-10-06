@@ -4,6 +4,7 @@ import App from './App';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk-icons.css';
 
 // Your app owns the root. Plitzi is mounted by App, as one component among yours.
 createRoot(document.getElementById('root') as HTMLElement).render(<App />);

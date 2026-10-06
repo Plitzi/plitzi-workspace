@@ -2,10 +2,4 @@
 
 @import '@plitzi/plitzi-ui/style.css';
 
-@layer components {
-  // @import '@fortawesome/fontawesome-free/css/all.min.css';
-  @import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
-  @import '@fortawesome/fontawesome-free/css/solid.min.css';
-  @import '@fortawesome/fontawesome-free/css/regular.min.css';
-  @import '@fortawesome/fontawesome-free/css/brands.min.css';
-}
+// The icons are the page's own `plitzi-sdk-icons.css`: the panel only ever opens on a page that loads it.

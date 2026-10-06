@@ -2,6 +2,7 @@ import { actionStage } from './action';
 import { functionRoutesStage } from './functionRoutes';
 import { realtimeStage } from './realtime';
 import { rscStage } from './rsc';
+import { spaceDocumentStage } from './spaceDocument';
 import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
 import { fontAssetsStage } from '../http/stages/fontAssets';
@@ -50,6 +51,10 @@ export const buildPagePipeline = (
   // After the deployment's own data stages, so a route of its own under `/api/` is its own; before the pages, which
   // never own `/api` (its slug is refused).
   stages.push(functionRoutesStage);
+
+  if (services.ssr) {
+    stages.push(spaceDocumentStage);
+  }
 
   stages.push(services.ssr ? ssrStage : notFoundStage);
 

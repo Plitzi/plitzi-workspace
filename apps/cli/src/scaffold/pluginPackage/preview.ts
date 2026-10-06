@@ -50,6 +50,7 @@ import { space } from './space.ts';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk-icons.css';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 

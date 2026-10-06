@@ -34,10 +34,10 @@
 
     <%
       /*
-        Two origins the document reaches for whatever the space declares: the icon font below, and the favicon.
-        Named here so the space's own fonts can skip whichever of them it would otherwise ask for twice.
+        The one origin the document reaches for whatever the space declares: the favicon's. Named here so the space's
+        own fonts can skip it rather than ask for it twice. A font host is preconnected only when the space uses one.
       */
-      const staticOrigins = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com', 'https://cdn.plitzi.com'];
+      const staticOrigins = ['https://cdn.plitzi.com'];
     %>
     <% for (const origin of staticOrigins) { %>
     <link rel="preconnect" href="<%= origin %>" crossorigin />
@@ -94,24 +94,23 @@
     </script>
     <% } %>
 
-    <link
-      rel="preload"
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      as="style"
-      onload="this.onload=null;this.rel='stylesheet';"
-    />
-    <noscript>
-      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    </noscript>
-
+    <%# The space, fetched beside the page while the scripts load, rather than carried in it. %>
+    <% if (locals.spaceDocumentPath) { %>
+    <link id="plitzi-space" href="<%= locals.spaceDocumentPath %>" rel="preload" as="fetch" crossorigin="anonymous" />
+    <% } %>
     <link href="<%= locals.cssPath || '' %>" rel="preload" as="style" />
     <link href="<%= locals.cssPath || '' %>" rel="stylesheet" />
+    <%# The icons are a sheet of their own, after the SDK's: their fonts are files fetched only for a style a page uses. %>
+    <% if (locals.iconsCssPath) { %>
+    <link href="<%= locals.iconsCssPath %>" rel="stylesheet" />
+    <% } %>
     <% if (locals.builderCssPath) { %>
     <link href="<%= locals.builderCssPath %>" rel="preload" as="style" />
     <link href="<%= locals.builderCssPath %>" rel="stylesheet" />
     <% } %>
     <% if (locals.plugins && locals.plugins.length > 0) { %>
-    <% for (const plugin of locals.plugins) { if (plugin.css) { %>
+    <%# A deferred plugin's stylesheet is loaded with its code, by the page that draws it. %>
+    <% for (const plugin of locals.plugins) { if (plugin.css && !plugin.deferred) { %>
     <link href="<%= plugin.css %>" rel="preload" as="style" />
     <link href="<%= plugin.css %>" rel="stylesheet" data-plitzi-plugin="<%= plugin.keyName %>" />
     <% } } %>
@@ -121,6 +120,59 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="plitzi" class="plitzi-root-container"><%- locals.html || '' %></div>
+    <%# An arrival that waits to be seen (`motion: { on: 'view' }`) is held at its start until the SDK sees it — after
+        its scripts, the space and hydration. One on screen as the page arrives would be content nobody can see until
+        then: seen here instead, as soon as it is parsed. Named by where it is rather than by `data-id`, which every
+        instance of a component shares; and in a sheet of its own rather than the element's `data-motion-seen`, which
+        React would hydrate as markup the server never drew. The sheet goes once the SDK has seen what it showed. %>
+    <script>
+      (() => {
+        const root = document.getElementById('plitzi');
+        const held = root.querySelectorAll('[data-motion-on="view"]:not([data-motion-seen])');
+        if (held.length === 0 || typeof IntersectionObserver !== 'function') {
+          return;
+        }
+
+        const sheet = document.head.appendChild(document.createElement('style'));
+        const shown = [];
+        const pathOf = element => {
+          const steps = [];
+          for (let node = element; node !== root; node = node.parentElement) {
+            steps.unshift(`:nth-child(${[...node.parentElement.children].indexOf(node) + 1})`);
+          }
+
+          return `#plitzi > ${steps.join(' > ')}:not([data-motion-seen])`;
+        };
+        const seen = new IntersectionObserver(entries => {
+          for (const { isIntersecting, target } of entries) {
+            if (isIntersecting) {
+              seen.unobserve(target);
+              shown.push(target);
+              const at = pathOf(target);
+              sheet.append(`${at}[data-motion-enter], ${at}[data-motion-stagger] > * { animation-play-state: running, paused; }\n`);
+            }
+          }
+        });
+        held.forEach(element => seen.observe(element));
+        const offScreen = element => {
+          const { top, bottom } = element.getBoundingClientRect();
+
+          return bottom <= 0 || top >= innerHeight;
+        };
+        const live = new MutationObserver(() => {
+          if (!root.querySelector('[data-hydrated]')) {
+            return;
+          }
+
+          seen.disconnect();
+          if (shown.every(element => !element.isConnected || element.hasAttribute('data-motion-seen') || offScreen(element))) {
+            sheet.remove();
+            live.disconnect();
+          }
+        });
+        live.observe(root, { attributes: true, subtree: true, attributeFilter: ['data-hydrated', 'data-motion-seen'] });
+      })();
+    </script>
     <% if (!locals.ssrOnly) { %>
     <%# The payload is data, so it travels as JSON: parsing it as a JavaScript literal cost the browser several times
         what JSON.parse does, on megabytes of it. Escaped by the server — no `<` reaches this block. %>
@@ -128,14 +180,27 @@
     <script type="module">
       import { render } from '<%= locals.jsPath || '' %>';
       <% const activePlugins = (locals.plugins || []).filter(p => p.js); %>
-      <% for (const plugin of activePlugins) { %>
+      <% const json = value => JSON.stringify(value ?? null).replace(/</g, '\\u003c'); %>
+      <% for (const plugin of activePlugins) { if (!plugin.deferred) { %>
       import { default as <%= plugin.varName %> } from '<%= plugin.js %>';
-      <% } %>
-      const __plitziPlugins = { <%- activePlugins.map(p => `'${p.keyName}': {component: ${p.varName}, props: ${JSON.stringify(p.props)}, clientOnly: ${p.ssr === false}}`).join(', ') %> };
+      <% } } %>
+      <%# What the page draws, imported before it hydrates; the rest declared, and imported when a page draws it. %>
+      const __plitziPlugins = { <%- activePlugins.map(p => p.deferred
+        ? `'${p.keyName}': {load: () => import('${p.js}'), css: ${json(p.css)}, declaration: ${json(p.deferred)}, props: ${json(p.props)}, clientOnly: ${p.ssr === false}}`
+        : `'${p.keyName}': {component: ${p.varName}, props: ${json(p.props)}, clientOnly: ${p.ssr === false}}`).join(', ') %> };
       const __plitziData = document.getElementById('plitzi-ssr-data');
       const __plitziParams = JSON.parse(__plitziData.textContent);
       // Read once: the page would otherwise hold the space twice, as this text and as what it was parsed into.
       __plitziData.remove();
+      const __plitziSpace = document.getElementById('plitzi-space');
+      if (__plitziSpace) {
+        const response = await fetch(__plitziSpace.href);
+        if (!response.ok) {
+          throw new Error(`[plitzi] The space could not be loaded (${response.status}): the page stays as the server drew it.`);
+        }
+
+        __plitziParams.offlineData = await response.json();
+      }
       <% if (locals.devReload) { %>
       const __plitziApp = render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true, { hotPlugins: true });
       // A plugin the server built again: its new bundle swapped in where it is drawn and its stylesheet pointed at the

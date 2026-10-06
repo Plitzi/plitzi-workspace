@@ -4,6 +4,7 @@ import { offlineData } from './space';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk-icons.css';
 
 /**
  * The same space, rendered by the browser alone.

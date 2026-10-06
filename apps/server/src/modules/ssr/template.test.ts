@@ -50,20 +50,45 @@ describe('the SSR document / fonts', () => {
     expect(html.indexOf('/fonts/a.woff2')).toBeLessThan(html.indexOf('/fonts/sheet.css'));
   });
 
-  it('does not repeat a preconnect the document already makes for its icon font', () => {
+  it('reaches a font host only when the space uses one, and once', () => {
+    const fonts = (preconnect: { href: string; crossorigin?: boolean }[]) =>
+      head(render({ preconnect, links: [], faces: '', origins: [] }));
+    const google = fonts([
+      { href: 'https://fonts.googleapis.com' },
+      { href: 'https://fonts.gstatic.com', crossorigin: true }
+    ]);
+
+    expect(google.match(/rel="preconnect" href="https:\/\/fonts\.gstatic\.com"/g)).toHaveLength(1);
+    expect(fonts([])).not.toContain('fonts.gstatic.com');
+    expect(fonts([])).not.toContain('fonts.googleapis.com');
+  });
+});
+
+describe('the SSR document / icons', () => {
+  it('links the icon sheet after the SDK stylesheet, so the layer order the SDK declares is the one that holds', () => {
     const html = head(
-      render({
-        preconnect: [
-          { href: 'https://fonts.googleapis.com' },
-          { href: 'https://fonts.gstatic.com', crossorigin: true }
-        ],
-        links: [],
-        faces: '',
-        origins: []
+      compileTemplate()({
+        html: '<div />',
+        offlineData: '{}',
+        ssrOnly: true,
+        cssPath: '/sdk-assets/plitzi-sdk.css',
+        iconsCssPath: '/sdk-assets/plitzi-sdk-icons.css'
       })
     );
 
-    expect(html.match(/rel="preconnect" href="https:\/\/fonts\.gstatic\.com"/g)).toHaveLength(1);
+    expect(html).toContain('<link href="/sdk-assets/plitzi-sdk-icons.css" rel="stylesheet" />');
+    expect(html.indexOf('plitzi-sdk-icons.css')).toBeGreaterThan(html.lastIndexOf('plitzi-sdk.css'));
+  });
+});
+
+describe('the SSR document / arrivals on screen', () => {
+  it('sees what is on screen as the page is parsed, before any module, and on a page with no script too', () => {
+    const html = compileTemplate()({ html: '<div />', offlineData: '{}', ssrOnly: true });
+    const early = html.indexOf('[data-motion-on="view"]:not([data-motion-seen])');
+
+    expect(early).toBeGreaterThan(html.indexOf('id="plitzi"'));
+    expect(html).toContain('new IntersectionObserver');
+    expect(html).not.toContain('type="module"');
   });
 });
 
@@ -113,6 +138,38 @@ describe('the SSR document / bootstrap', () => {
       ])
       // eslint-disable-next-line quotes -- the expected source quotes its own path, which reads best in the other quotes
     ).toContain("import { default as chart } from '/sdk-plugins/chart/index.js'");
+  });
+
+  it('sends a plugin the page does not draw as its declaration, its code and stylesheet loaded when drawn', () => {
+    const html = bootstrap('{}', [
+      {
+        name: 'chart',
+        keyName: 'chart',
+        varName: 'chart',
+        js: '/sdk-plugins/chart/index.js',
+        css: '/c.css',
+        props: {}
+      },
+      {
+        name: 'editor',
+        keyName: 'editor',
+        varName: 'editor',
+        js: '/sdk-plugins/editor/index.js',
+        css: '/e.css',
+        props: { label: '</script>' },
+        ssr: true,
+        deferred: { version: '2.0.0', plugins: { editorToolbar: {} } }
+      }
+    ]);
+
+    expect(html).toContain('data-plitzi-plugin="chart"');
+    expect(html).not.toContain('/e.css" rel="stylesheet"');
+    expect(html).not.toContain('import { default as editor }');
+    expect(html).toContain(
+      // eslint-disable-next-line quotes -- the expected source quotes its own path, which reads best in the other quotes
+      `'editor': {load: () => import('/sdk-plugins/editor/index.js'), css: "/e.css", declaration: {"version":"2.0.0","plugins":{"editorToolbar":{}}}`
+    );
+    expect(html).not.toContain('"</script>"');
   });
 
   it('ships no bootstrap for a page that renders on the server only', () => {

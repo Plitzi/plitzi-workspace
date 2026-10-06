@@ -27,6 +27,15 @@ describe('hydrationPayload', () => {
     expect(hydrationPayload(undefined, { offlineMode: true })).toBe(serializedWhole(undefined, { offlineMode: true }));
   });
 
+  it('leaves the space out when it travels apart, and says the stylesheet is still in the page', () => {
+    const styled = { schema: {}, style: { cache: '.a{color:red}' } } as unknown as OfflineDataRaw;
+
+    expect(JSON.parse(hydrationPayload(styled, { offlineMode: true }, { apart: true }))).toEqual({
+      offlineMode: true,
+      styleCacheInDocument: true
+    });
+  });
+
   it('serializes a space once, and a new space object anew', () => {
     const first = space('first');
     const payload = hydrationPayload(first, {});

@@ -43,6 +43,32 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
   `saveOfflineData` is gone from `SSRAdapters`; nothing called it, and it was the JSON adapters' only write, so an MCP
   over them could neither read nor save.
 
+## Lighter pages: icons on their own
+
+- **Font Awesome is a stylesheet of its own**, `plitzi-sdk-icons.css`, with its fonts as files beside it
+  (`webfonts/`) instead of base64 inside `plitzi-sdk.css` — which drops from 287 KB to 103 KB. A page fetches a face
+  only when it shows an icon of that style, and a new SDK version no longer downloads the fonts again. The page server
+  links it after `plitzi-sdk.css` (`SSRTemplateProps.iconsCssPath`), the SDK's iframe and shadow modes load it beside
+  the stylesheet, and the package exports it: **a project that imports `@plitzi/plitzi-sdk/plitzi-sdk.css` imports
+  `@plitzi/plitzi-sdk/plitzi-sdk-icons.css` too** — `plitzi upgrade` adds it to `src/main.ts`, and a new project has
+  it. The MCP's rendered widgets inline the sheet, fonts and all, only for a widget that draws an icon.
+- **Material Icons is no longer loaded.** Nothing in Plitzi used it; every page paid a request to Google for it.
+- **A page loads only the plugins it draws.** The page server sends the rest as their declaration
+  (`PluginEntry.deferred`, `pluginDeclarationOf` in `@plitzi/sdk-shared/plugins/declaration`); the SDK registers each
+  as a stand-in that knows its types from the start, and loads its code and stylesheet the first time one of its
+  elements is drawn — on a page reached by navigating too, with no server involved. What a page draws is
+  `pageElementTypes` (`@plitzi/sdk-shared/schema/pageElements`): the page, its layouts, the components and references
+  it holds. `render()` takes a plugin as `{ load, css, declaration }` beside `{ component }`.
+- **The space travels beside the page, not inside it.** The page names it (`<link id="plitzi-space">`,
+  `SSRTemplateProps.spaceDocumentPath`), the browser fetches it while the scripts load, and the page server answers
+  `/_plitzi/space/<hash>.json` behind the same gates as its pages — `immutable`, since the name is its content's hash:
+  one download for every page and every visit until the space changes. The website's docs page went from 2.6 MB to
+  0.5 MB. Still the whole space, so every navigation after the first page stays in the browser. A draft preview and a
+  deployment's own `templateFn` keep it inline.
+- **An arrival on screen plays as the page arrives.** A `motion: { on: 'view' }` element already in view was held
+  invisible until the SDK hydrated — the page's content, and a page rendered `ssrOnly` forever. The page server's
+  document now sees it as soon as it is parsed, and hands over to the SDK once the page is live.
+
 ## Server data: one request per question, the newest winning, and a way to stop
 
 - **A link asks for its page's server data once.** The navigation's prefetch already brought it; the route change that

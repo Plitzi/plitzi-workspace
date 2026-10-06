@@ -117,6 +117,7 @@ import { space } from './space/index.ts';
 
 import '../${CLI_DIR}/preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk-icons.css';
 
 import type { RenderPlugins } from '@plitzi/plitzi-sdk';
 import type { PluginDeclarationData, SpaceSpec } from '@plitzi/sdk-authoring';
@@ -187,6 +188,7 @@ const cloudMain = (): string => `import { render } from '@plitzi/plitzi-sdk';
 
 import '../${CLI_DIR}/preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk-icons.css';
 
 import type { RenderPlugins } from '@plitzi/plitzi-sdk';
 

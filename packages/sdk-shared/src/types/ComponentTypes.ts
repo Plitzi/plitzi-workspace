@@ -25,6 +25,20 @@ export type ComponentPlugin<T = unknown> = ComponentPluginFC<T> & {
   initialItems?: string[];
 };
 
+/**
+ * What a plugin says about itself apart from its code — its definition, its sub-plugins' — as data a page can carry.
+ *
+ * A page is sent with the plugins it draws and only the declarations of the rest: the space knows every type it has
+ * (an element's defaults, a sub-plugin's name) from the start, and a plugin's code is fetched when a page that draws
+ * it is opened.
+ */
+export type PluginDeclaration = {
+  content?: ComponentDefinition;
+  version?: string;
+  initialItems?: string[];
+  plugins?: Record<string, PluginDeclaration>;
+};
+
 export type ComponentPluginWithHOC<T = unknown> = ComponentPluginFC<T & { internalProps: InternalPropsSTG1 }> & {
   content: ComponentDefinition;
   type: string;

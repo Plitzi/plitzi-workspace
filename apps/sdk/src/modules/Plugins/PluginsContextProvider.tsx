@@ -14,12 +14,14 @@ export type PluginsContextProviderProps = {
   children: React.ReactNode;
   plugins?: Record<string, ComponentDefinition>;
   sdkStylePath?: string;
+  sdkIconsPath?: string;
 };
 
 const PluginsContextProvider = ({
   children,
   plugins: pluginsProp,
-  sdkStylePath = './plitzi-sdk.css'
+  sdkStylePath = './plitzi-sdk.css',
+  sdkIconsPath = './plitzi-sdk-icons.css'
 }: PluginsContextProviderProps) => {
   const { renderMode } = useRenderSettings();
   const [temporalCustomStyles, setTemporalCustomStyles] = useState<Record<string, Asset>>({});
@@ -110,6 +112,11 @@ const PluginsContextProvider = ({
         id: 'static-99',
         params: { type: 'text/css', href: sdkStylePath, rel: 'stylesheet' }
       };
+      extraAssets['static-100'] = {
+        type: 'link',
+        id: 'static-100',
+        params: { type: 'text/css', href: sdkIconsPath, rel: 'stylesheet' }
+      };
     }
 
     return {
@@ -118,7 +125,7 @@ const PluginsContextProvider = ({
       ...pluginStyleAssets,
       ...temporalCustomStyles
     };
-  }, [pluginCustomStyleAssets, pluginStyleAssets, temporalCustomStyles, renderMode, sdkStylePath]);
+  }, [pluginCustomStyleAssets, pluginStyleAssets, temporalCustomStyles, renderMode, sdkStylePath, sdkIconsPath]);
 
   const pluginsContextValue = useMemo(
     () => ({

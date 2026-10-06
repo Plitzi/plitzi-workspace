@@ -1095,6 +1095,10 @@
       "types": "./dist/plugins/bundle.d.ts",
       "import": "./dist/plugins/bundle.mjs"
     },
+    "./plugins/declaration": {
+      "types": "./dist/plugins/declaration.d.ts",
+      "import": "./dist/plugins/declaration.mjs"
+    },
     "./queries": {
       "types": "./dist/queries/index.d.ts",
       "import": "./dist/queries/index.mjs"
@@ -1162,6 +1166,10 @@
     "./schema/motionReveal": {
       "types": "./dist/schema/motionReveal.d.ts",
       "import": "./dist/schema/motionReveal.mjs"
+    },
+    "./schema/pageElements": {
+      "types": "./dist/schema/pageElements.d.ts",
+      "import": "./dist/schema/pageElements.mjs"
     },
     "./schema/schemaConstants": {
       "types": "./dist/schema/schemaConstants.d.ts",

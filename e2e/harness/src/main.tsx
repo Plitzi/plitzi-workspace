@@ -4,6 +4,7 @@ import Harness from './Harness';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk-icons.css';
 
 const container = document.getElementById('harness-root');
 

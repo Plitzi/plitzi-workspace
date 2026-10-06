@@ -20,7 +20,7 @@ image({ src, alt, motion: { loop: 'float' } })                         // keeps 
 | Field | Values |
 | --- | --- |
 | `enter` | gentle: `fade`, `fade-up`, `fade-down`, `slide-left`, `slide-right`, `scale` · bold: `slide-up`, `zoom-in`, `zoom-out`, `tilt`, `spin-in` · springy: `pop`, `bounce-in` |
-| `on` | `load` (default); `view` — once, the first time it comes into view, and then it stays; `scroll` — with the scroll itself, both ways (it goes back out as the reader scrolls up past it), on load where the browser has no scroll timelines |
+| `on` | `load` (default); `view` — once, the first time it comes into view, and then it stays (on a server-rendered page, one on screen as it arrives plays then, not when the scripts do); `scroll` — with the scroll itself, both ways (it goes back out as the reader scrolls up past it), on load where the browser has no scroll timelines |
 | `duration`, `delay` | ms (600 and 0 by default); `duration` does not apply under `scroll`, which follows the scroll |
 | `stagger` | ms between children: they arrive instead of the element, the first 24 one by one |
 | `loop` | `float`, `pulse`, `spin`, `sway`, `drift`, `orbit` — ambient · `bounce`, `wobble`, `heartbeat` — to draw the eye; held until the page is live (`data-hydrated`) |

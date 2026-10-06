@@ -33,6 +33,10 @@ import type {
   SdkState
 } from '@plitzi/sdk-shared';
 
+// Font Awesome's sheet: the build emits it beside the stylesheet (`iconsPlugin`), and development serves it at the
+// same path.
+const iconsUrl = '/plitzi-sdk-icons.css';
+
 export type AppMainProps = {
   revision?: number;
   webKey?: string;
@@ -186,7 +190,7 @@ const AppMain = ({
       revision={revision}
     >
       <SchemaContextProvider>
-        <PluginsContextProvider sdkStylePath={styleUrl ? styleUrl : sdkStylePath}>
+        <PluginsContextProvider sdkStylePath={styleUrl ? styleUrl : sdkStylePath} sdkIconsPath={iconsUrl}>
           <SdkStyleContextProvider>
             <EventBridgeContextProvider onInit={onInitEventBridge} debugMode={debugMode}>
               <AuthContextProvider server={server}>

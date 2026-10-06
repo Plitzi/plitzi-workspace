@@ -73,6 +73,7 @@ function ejsPlugin(devMode?: boolean): Plugin {
             title: 'Plitzi Demo',
             jsPath: '/plitzi-sdk.js',
             cssPath: '/plitzi-sdk.css',
+            iconsCssPath: `/${ICONS_CSS}`,
             react: devMode ? '/plitzi-sdk-dev-vendor.js' : '/plitzi-sdk-vendor.js',
             reactJsx: devMode ? '/plitzi-sdk-dev-vendor.js' : '/plitzi-sdk-vendor.js',
             reactDom: devMode ? '/plitzi-sdk-dev-vendor.js' : '/plitzi-sdk-vendor.js',
@@ -87,6 +88,91 @@ function ejsPlugin(devMode?: boolean): Plugin {
   };
 }
 
+/** The icon sets the SDK draws `fontAwesome` elements with, in the order their rules have to be read. */
+const ICON_SHEETS = ['fontawesome', 'solid', 'regular', 'brands'] as const;
+
+const ICONS_CSS = 'plitzi-sdk-icons.css';
+
+const FONT_URL = /url\(\.\.\/webfonts\/([\w.-]+)\)/g;
+
+/**
+ * The icon stylesheet: Font Awesome's rules in the SDK's `components` layer, its fonts as files beside it.
+ *
+ * In `plitzi-sdk.css` they were inlined — a library build inlines every asset a stylesheet names — so each page waited
+ * on some 400 KB of base64 fonts before it could paint a word, and downloaded them again on every version. As files, a
+ * face is fetched only when an icon of its style is on the page, in parallel, and cached on its own. The URLs are
+ * relative, so the sheet works wherever the SDK's assets are served from: the page server, a CDN, a static export.
+ *
+ * The sheet opens with the SDK's own layer order, read from `plitzi-sdk.scss` — not from the built stylesheet, where
+ * the minifier spreads the one statement over each layer's first use: whichever of the two a page loads first,
+ * `components` stays where the SDK put it.
+ */
+const iconsAsset = (layerOrder: string): { css: string; fonts: Map<string, Buffer> } => {
+  const require = createRequire(import.meta.url);
+  const fonts = new Map<string, Buffer>();
+  const rules = ICON_SHEETS.map(sheet => {
+    const file = require.resolve(`@fortawesome/fontawesome-free/css/${sheet}.min.css`);
+
+    return fs.readFileSync(file, 'utf8').replace(FONT_URL, (_match, font: string) => {
+      fonts.set(font, fs.readFileSync(path.join(path.dirname(file), '..', 'webfonts', font)));
+
+      return `url(webfonts/${font})`;
+    });
+  }).join('\n');
+
+  return { css: `${layerOrder}\n@layer components {\n${rules}\n}\n`, fonts };
+};
+
+const LAYER_ORDER = /@layer\s+[\w-]+(?:\s*,\s*[\w-]+)+\s*;/;
+
+const sourceLayerOrder = (): string => {
+  const scss = fs.readFileSync(path.resolve(import.meta.dirname, 'src/assets/plitzi-sdk.scss'), 'utf8');
+  const order = LAYER_ORDER.exec(scss)?.[0];
+  if (!order) {
+    throw new Error('plitzi-sdk.scss declares no layer order for the icon stylesheet to follow');
+  }
+
+  return order;
+};
+
+function iconsPlugin(): Plugin {
+  return {
+    name: 'plitzi-icons',
+
+    configureServer(server) {
+      // The development page asks for the same sheet the build makes, so it is made the same way.
+      server.middlewares.use((req, res, next) => {
+        const url = req.url?.split('?')[0] ?? '';
+        const isFont = url.startsWith('/webfonts/');
+        if (url !== `/${ICONS_CSS}` && !isFont) {
+          next();
+
+          return;
+        }
+
+        const { css, fonts } = iconsAsset(sourceLayerOrder());
+        const font = isFont ? fonts.get(url.slice('/webfonts/'.length)) : undefined;
+        if (isFont && !font) {
+          next();
+
+          return;
+        }
+
+        res.setHeader('Content-Type', font ? 'font/woff2' : 'text/css');
+        res.end(font ?? css);
+      });
+    },
+
+    generateBundle() {
+      const { css, fonts } = iconsAsset(sourceLayerOrder());
+      this.emitFile({ type: 'asset', fileName: ICONS_CSS, source: css });
+      for (const [font, source] of fonts) {
+        this.emitFile({ type: 'asset', fileName: `webfonts/${font}`, source });
+      }
+    }
+  };
+}
+
 function renameCssPlugin(): Plugin {
   return {
     name: 'vite-plugin-rename-css',
@@ -94,7 +180,9 @@ function renameCssPlugin(): Plugin {
 
     closeBundle() {
       const outDir = path.resolve(import.meta.dirname, 'dist');
-      const cssFiles = fs.readdirSync(outDir).filter(f => f.endsWith('.css') && f !== 'plitzi-sdk-devtools.css');
+      const cssFiles = fs
+        .readdirSync(outDir)
+        .filter(f => f.endsWith('.css') && f !== 'plitzi-sdk-devtools.css' && f !== ICONS_CSS);
 
       for (const file of cssFiles) {
         const targetPath = path.join(outDir, 'plitzi-sdk.css');
@@ -241,6 +329,7 @@ export default defineConfig(({ mode, command }) => {
         description: '',
         jsPath: devMode ? '/src/index.tsx' : '/plitzi-sdk.js',
         cssPath: '/plitzi-sdk.css',
+        iconsCssPath: `/${ICONS_CSS}`,
         react: devMode ? '/src/vendor-entry.ts' : '/plitzi-sdk-vendor.js',
         reactJsx: devMode ? '/src/vendor-entry.ts' : '/plitzi-sdk-vendor.js',
         reactDom: devMode ? '/src/vendor-entry.ts' : '/plitzi-sdk-vendor.js',
@@ -249,13 +338,14 @@ export default defineConfig(({ mode, command }) => {
       }),
       command === 'build' && !devMode && cleanOwnOutputPlugin(),
       command === 'build' && ejsPlugin(devMode),
+      iconsPlugin(),
       command === 'build' && renameCssPlugin(),
       command === 'build' && devToolsChunkPlugin(),
       !isWatch &&
         viteCompression({
           algorithm: 'gzip',
           deleteOriginFile: onlyGzip,
-          filter: /plitzi-sdk(-devtools(-[\w-]+)?)?\.(js|css)$/
+          filter: /plitzi-sdk(-devtools(-[\w-]+)?|-icons)?\.(js|css)$/
         }),
       dts({
         entryRoot: 'src',

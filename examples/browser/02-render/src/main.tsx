@@ -3,6 +3,7 @@ import { render } from '@plitzi/plitzi-sdk';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+import '@plitzi/plitzi-sdk/plitzi-sdk-icons.css';
 
 /** The whole example.
  *

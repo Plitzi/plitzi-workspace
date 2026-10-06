@@ -13,6 +13,7 @@ import type {
   ActionTriggerType
 } from './ActionTypes';
 import type { Environment } from './CommonTypes';
+import type { PluginDeclaration } from './ComponentTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { DataDraft, DataSaveResult } from './DataTypes';
 import type { FunctionsDraft, FunctionsSaveResult } from './FunctionTypes';
@@ -146,6 +147,11 @@ export type PluginEntry = {
    * against, and the mismatch throws away the whole tree it happens in.
    */
   ssr?: boolean;
+  /**
+   * What the plugin declares, when this page draws none of its types: its code and stylesheet are left out of the
+   * document and loaded when a page that draws it is opened. Absent, the page loads it up front.
+   */
+  deferred?: PluginDeclaration;
 };
 
 export type SSRTemplateProps = {
@@ -154,6 +160,13 @@ export type SSRTemplateProps = {
   description?: string;
   jsPath?: string;
   cssPath?: string;
+  /** Font Awesome's rules, after `cssPath`; its fonts are files beside it, fetched only for a style the page uses. */
+  iconsCssPath?: string;
+  /**
+   * Where the page fetches the space from, when it travels beside the document rather than in its payload: the
+   * page preloads it, and the bootstrap reads it before hydrating.
+   */
+  spaceDocumentPath?: string;
   builderJsPath?: string;
   builderCssPath?: string;
   plugins?: PluginEntry[];

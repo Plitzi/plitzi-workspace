@@ -1430,6 +1430,7 @@ return {
 | `title` | `string` | Page `<title>`. Defaults to `'Plitzi App'`. |
 | `jsPath` | `string` | URL for the SDK JS module. Defaults to `/sdk-assets/plitzi-sdk.js`. |
 | `cssPath` | `string` | URL for the SDK stylesheet. Defaults to `/sdk-assets/plitzi-sdk.css`. |
+| `iconsCssPath` | `string` | URL for Font Awesome's stylesheet, linked after `cssPath`; its fonts are files beside it. Defaults to `/sdk-assets/plitzi-sdk-icons.css`. |
 | `builderJsPath` | `string` | URL for the builder JS module. Omitted by default. |
 | `builderCssPath` | `string` | URL for the builder stylesheet. Omitted by default. |
 | `plugins` | `PluginEntry[]` | Plugin entries to inject. Normally set automatically via `pluginNames`. |

@@ -22,13 +22,8 @@
   }
 }
 
-@layer components {
-  // @import '@fortawesome/fontawesome-free/css/all.min.css';
-  @import '@fortawesome/fontawesome-free/css/fontawesome.min.css';
-  @import '@fortawesome/fontawesome-free/css/solid.min.css';
-  @import '@fortawesome/fontawesome-free/css/regular.min.css';
-  @import '@fortawesome/fontawesome-free/css/brands.min.css';
-}
+// Font Awesome is not in this sheet: `plitzi-sdk-icons.css`, built beside it, carries its rules and its fonts as files
+// (see `iconsPlugin` in vite.config.ts) — inlined here they were most of what a page waited on before it painted.
 
 @import './tailwind.css';
 

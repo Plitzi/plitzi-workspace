@@ -1,5 +1,7 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
+import { pluginDeclarationOf, pluginTypesOf } from '@plitzi/sdk-shared/plugins/declaration';
+import { pageElementTypes } from '@plitzi/sdk-shared/schema/pageElements';
 import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state/paintedState';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
@@ -9,6 +11,7 @@ import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
 import { reportMissingPlugins } from './reportMissingPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
+import { publishSpaceDocument } from './spaceDocument';
 import { imagesPathOf } from '../../core/http/stages/images';
 import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
 import { sdkAssetVersion } from '../../core/sdkAssets';
@@ -17,7 +20,7 @@ import { buildServerInfo } from '../../helpers/buildServerInfo';
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { authorizesDebugging } from '../../helpers/debugAuthorization';
 import { requestFlagOverrides } from '../../helpers/flagOverrides';
-import { hydrationPayload } from '../../helpers/hydrationPayload';
+import { hydrationPayload, spaceDocument } from '../../helpers/hydrationPayload';
 import { createOfflineDataLoader } from '../../helpers/offlineDataLoader';
 import { ssrPaintedCookieName } from '../../helpers/paintedCookie';
 import { readCookie } from '../../helpers/readCookie';
@@ -32,13 +35,16 @@ import type { PluginManager } from '../../plugins/manager';
 import type {
   Environment,
   OfflineDataRaw,
+  PluginDeclaration,
   PluginEntry,
   SSRPageServerConfig,
+  SSRPlugin,
   SSRRequest,
   SSRTemplateProps,
   Style,
   Theme
 } from '@plitzi/sdk-shared';
+import type { FC } from 'react';
 
 /** Last resort only: used for a page that declares no SEO title and a deployment that supplies none either. */
 const DEFAULT_TITLE = 'Plitzi App';
@@ -53,6 +59,21 @@ const declaredTheme = (style: Partial<Pick<Style, 'theme'>> | undefined): Theme 
   const declared = style?.theme?.default;
 
   return declared && declared !== 'system' ? declared : undefined;
+};
+
+// A plugin's declaration is read off the component the process imported once, so it is made once per component.
+const declarations = new WeakMap<FC, PluginDeclaration>();
+
+const declarationOf = (component: FC): PluginDeclaration => {
+  const known = declarations.get(component);
+  if (known) {
+    return known;
+  }
+
+  const declaration = pluginDeclarationOf(component);
+  declarations.set(component, declaration);
+
+  return declaration;
 };
 
 export type RenderPrep = {
@@ -265,20 +286,38 @@ export const prepareRender = async (
    */
   const { server: serverFlags, qa: forcedFlags } = flagOverrides;
 
-  const offlineDataStr = hydrationPayload(offlineData, {
-    offlineMode: true,
-    environment,
-    renderMode: 'raw',
-    server,
-    sdkDevToolsStylePath,
-    ...(theme ? { theme } : {}),
-    ...(paintedState ? { state: paintedState } : {}),
-    ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
-    ...(overQuota ? { overQuota } : {}),
-    ...(actionRuns ? { actionRuns } : {}),
-    ...(serverFlags ? { serverFlags } : {}),
-    ...(forcedFlags ? { forcedFlags } : {})
-  });
+  /**
+   * The space travels beside the page rather than in it, fetched while the scripts are — see `spaceDocument`.
+   *
+   * Not for a draft, which no other process could produce when the fetch reaches it, and not for a deployment's own
+   * template, which was written for the space inline; a page with no script needs no space at all.
+   */
+  const spaceDocumentPath =
+    offlineData !== undefined &&
+    offlineDataOverride === undefined &&
+    config.templateFn === undefined &&
+    config.ssrOnly !== true
+      ? publishSpaceDocument(spaceId, environment, spaceDocument(offlineData))
+      : undefined;
+
+  const offlineDataStr = hydrationPayload(
+    offlineData,
+    {
+      offlineMode: true,
+      environment,
+      renderMode: 'raw',
+      server,
+      sdkDevToolsStylePath,
+      ...(theme ? { theme } : {}),
+      ...(paintedState ? { state: paintedState } : {}),
+      ...(clientAnalytics ? { analytics: clientAnalytics } : {}),
+      ...(overQuota ? { overQuota } : {}),
+      ...(actionRuns ? { actionRuns } : {}),
+      ...(serverFlags ? { serverFlags } : {}),
+      ...(forcedFlags ? { forcedFlags } : {})
+    },
+    { apart: spaceDocumentPath !== undefined }
+  );
 
   const pluginNames = req.ctx.spaceDeployment?.pluginNames ?? [];
   const pluginSources = req.ctx.spaceDeployment?.pluginSources;
@@ -320,7 +359,30 @@ export const prepareRender = async (
   // `pluginComponents` is the exact set this render had a component for, so it is the only honest answer to
   // "was this plugin in the HTML" — it accounts for the ones served from a CDN and for the ones whose import
   // failed, without either of them having to declare it.
-  const templatePlugins = templateEntries?.map(entry => ({ ...entry, ssr: entry.keyName in pluginComponents }));
+  /**
+   * The plugins this page draws none of: the browser is sent what they declare, and loads one when a page that draws
+   * it is opened. Their code is what the first paint waited on — a page of the website downloaded the builder's.
+   *
+   * Only one the server holds the component of can wait, since its declaration is read from it; a page matched to
+   * nothing, which cannot say what it draws, waits for none.
+   */
+  const pageTypes =
+    schema !== undefined && pageMatch !== undefined ? pageElementTypes(schema, pageMatch.pageId) : undefined;
+  const deferredOf = (entry: PluginEntry): PluginDeclaration | undefined => {
+    const plugin = pageTypes && entry.js ? (pluginComponents[entry.keyName] as SSRPlugin | undefined) : undefined;
+    if (!plugin) {
+      return undefined;
+    }
+
+    const declaration = declarationOf(plugin.component);
+
+    return pluginTypesOf(entry.keyName, declaration).some(type => pageTypes?.has(type)) ? undefined : declaration;
+  };
+  const templatePlugins = templateEntries?.map(entry => {
+    const deferred = deferredOf(entry);
+
+    return { ...entry, ssr: entry.keyName in pluginComponents, ...(deferred ? { deferred } : {}) };
+  });
   const vendorJs = (debugAuthorized ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
 
   return {
@@ -342,6 +404,8 @@ export const prepareRender = async (
       title: DEFAULT_TITLE,
       jsPath: `/sdk-assets/plitzi-sdk.js${v}`,
       cssPath: `/sdk-assets/plitzi-sdk.css${v}`,
+      iconsCssPath: `/sdk-assets/plitzi-sdk-icons.css${v}`,
+      spaceDocumentPath,
       react: vendorJs,
       reactJsx: vendorJs,
       reactDom: vendorJs,
