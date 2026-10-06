@@ -5,7 +5,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import Text from '@plitzi/plitzi-ui/Text';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
-import { useCallback, use, useMemo, useState } from 'react';
+import { useCallback, use, useMemo } from 'react';
 
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
@@ -25,6 +25,8 @@ export type DirectoryProps = {
   isRootFolder?: boolean;
   currentPageId?: string;
   nestedLevel?: number;
+  isCollapsed?: (folderId: string) => boolean;
+  onCollapse?: (folderId: string, collapsed: boolean) => void;
 };
 
 const Directory = ({
@@ -36,7 +38,9 @@ const Directory = ({
   currentPageId,
   nestedLevel = 0,
   pageFolders,
-  elements
+  elements,
+  isCollapsed,
+  onCollapse
 }: DirectoryProps) => {
   const { showModal, showDialog } = useModal();
   const { addToast } = useToast();
@@ -52,7 +56,8 @@ const Directory = ({
         .sort((folderA, folderB) => (folderA.name > folderB.name ? 1 : -1)),
     [id, pageFolders]
   );
-  const [collapsed, setCollapsed] = useState(!(items.length > 0 || directories.length > 0));
+  const collapsed = isCollapsed?.(id) ?? true;
+  const handleCollapse = useCallback((value: boolean) => onCollapse?.(id, value), [onCollapse, id]);
 
   const handleClickSettings = useCallback(
     async (e: MouseEvent) => {
@@ -135,10 +140,8 @@ const Directory = ({
     [pageFolders, items.length, directories, showDialog, id, addToast, eventBridge]
   );
 
-  const handleCollapse = useCallback((isCollapsed: boolean) => setCollapsed(isCollapsed), []);
-
   return (
-    <ContainerCollapsable collapsed={!(items.length > 0 || directories.length > 0)} onChange={handleCollapse} gap={1}>
+    <ContainerCollapsable collapsed={collapsed} onChange={handleCollapse} gap={1}>
       <ContainerCollapsable.Header
         placement="right"
         iconCollapsed={<Icon size="sm" icon="fa-solid fa-angle-left" />}
@@ -180,6 +183,8 @@ const Directory = ({
               pageFolders={pageFolders}
               elements={elements}
               nestedLevel={nestedLevel + 1}
+              isCollapsed={isCollapsed}
+              onCollapse={onCollapse}
             />
           ))}
       </ContainerCollapsable.Content>

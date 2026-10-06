@@ -309,6 +309,8 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
 
 ## Builder
 
+- **The pages panel keeps its folders as you left them** — open or closed, per space, across reloads — the way the
+  style inspector keeps its sections. A folder starts closed.
 - **Usages**, a panel beside Layers: where each component, class, token, space variable and data source is used,
   page by page — what reads it and which elements — and which nothing uses, by authoring's own rule. A click selects
   the element, inside a component too.

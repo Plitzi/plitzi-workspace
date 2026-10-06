@@ -1,7 +1,9 @@
 import Flex from '@plitzi/plitzi-ui/Flex';
-import { useMemo } from 'react';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
+import { useCallback, useMemo } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
+import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import Directory from './Directory';
 import DirectoryHeader from './DirectoryHeader';
@@ -12,6 +14,22 @@ const AppDirectory = () => {
     'schema.pageFolders',
     'navigation.currentPageId'
   ]);
+  const { webId } = useBuilderNetwork();
+  // Which folders are open, the way the style inspector keeps its sections: one record, every folder closed until it is
+  // opened. Keyed by space too, since two spaces can have a folder of one id.
+  const [collapsedCache, setCollapsedCache] = useStorage<Record<string, boolean | undefined>>(
+    'builder-state.pageFolders.collapsedCache',
+    {}
+  );
+  const keyOf = useCallback((folderId: string) => `${String(webId)}:${folderId || 'root'}`, [webId]);
+  const isCollapsed = useCallback(
+    (folderId: string) => collapsedCache[keyOf(folderId)] ?? true,
+    [collapsedCache, keyOf]
+  );
+  const handleCollapse = useCallback(
+    (folderId: string, collapsed: boolean) => setCollapsedCache(state => ({ ...state, [keyOf(folderId)]: collapsed })),
+    [setCollapsedCache, keyOf]
+  );
   const elements = useMemo(
     () =>
       Object.values(flat)
@@ -56,6 +74,8 @@ const AppDirectory = () => {
         pageFolders={pageFolders}
         elements={elements}
         isRootFolder
+        isCollapsed={isCollapsed}
+        onCollapse={handleCollapse}
       />
     </Flex>
   );
