@@ -1407,9 +1407,6 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/types/index.mjs"
     },
-    "./types/AITypes": {
-      "types": "./dist/types/AITypes.d.ts"
-    },
     "./types/ActionTypes": {
       "types": "./dist/types/ActionTypes.d.ts"
     },
@@ -1451,9 +1448,6 @@
     },
     "./types/InteractionTypes": {
       "types": "./dist/types/InteractionTypes.d.ts"
-    },
-    "./types/McpTypes/index": {
-      "types": "./dist/types/McpTypes/index.d.ts"
     },
     "./types/NavigationTypes": {
       "types": "./dist/types/NavigationTypes.d.ts"
@@ -1525,7 +1519,6 @@
     "build:prod": "vite build && node ./scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.0",
     "@plitzi/nexus": "^1.4.0",
     "@plitzi/plitzi-ui": "^1.6.30",
     "date-fns": "^4.4.0",

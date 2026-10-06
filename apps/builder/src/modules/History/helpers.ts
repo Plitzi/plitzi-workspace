@@ -89,7 +89,6 @@ export const formatValue = (value: unknown): string => {
 export const ORIGIN_LABEL: Record<ChangeOrigin, string> = {
   builder: 'Builder',
   mcp: 'Agent',
-  coworker: 'Co-worker',
   autofix: 'Autofix',
   api: 'API',
   system: 'System'
@@ -98,7 +97,6 @@ export const ORIGIN_LABEL: Record<ChangeOrigin, string> = {
 export const ORIGIN_TONE: Record<ChangeOrigin, string> = {
   builder: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
   mcp: 'bg-primary-100 text-primary-700 dark:bg-primary-400/15 dark:text-primary-300',
-  coworker: 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
   autofix: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
   api: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200',
   system: 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
@@ -136,7 +134,7 @@ export const formatClock = (at: number): string => CLOCK.format(new Date(at));
 /** Who, as a timeline says it: the person, or the kind of writer when no person was behind it. */
 export const authorLabel = (change: ChangeRecord): string => change.author.name || ORIGIN_LABEL[change.origin];
 
-export const ORIGIN_FILTERS: ('' | ChangeOrigin)[] = ['', 'builder', 'mcp', 'coworker', 'autofix'];
+export const ORIGIN_FILTERS: ('' | ChangeOrigin)[] = ['', 'builder', 'mcp', 'autofix'];
 
 /** A choice of the "made by" filter: an origin, or no filter at all. */
 export const originFilterLabel = (origin: '' | ChangeOrigin): string => (origin ? ORIGIN_LABEL[origin] : 'Anyone');

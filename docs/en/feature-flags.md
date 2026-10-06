@@ -108,8 +108,6 @@ A self-hosted server on `createCloudAdapters` asks `SpaceLatestRevision` on its 
 - The **Feature Flags** panel declares flags and their rules (`SpaceSetFlag`, `SpaceRemoveFlag`), forces any of them in
   the canvas (the builder store's `qa` layer, never saved) and publishes them.
 - An element's tools set its gate; the tree marks gated elements.
-- The builder's own flags (`assistanceAI`, …) are Plitzi's: declared in `plitzi-sdk-server/src/config/platformFlags.ts`,
-  overridden by `PLATFORM_FLAGS`, resolved per person and delivered in the builder's first query (`PlatformFlags`).
 - The SDK dev tools' **Flags** tab shows each flag's value and the layer (and rule) that decided it, and forces it.
 
 ## Authoring, linting and agents

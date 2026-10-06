@@ -10,9 +10,9 @@ import type { ActionRunReport } from '@plitzi/sdk-shared';
 import type { ZodObject, ZodRawShape } from 'zod';
 
 /** Everything a tool needs at call time: the loaded space, the target environment, and the persisters (only the
- *  write tools use them). Built by whoever hosts the tools — the standalone MCP server or the in-process AI
- *  engine — so a tool's behavior never touches spaceId resolution or adapters directly. `spaceId`, `preview` and
- *  `screenshot` are present only when the host wired them (the visual-preview tools need them). */
+ *  write tools use them). Built by whoever hosts the tools — the MCP server, or a host calling them in-process — so
+ *  a tool's behavior never touches spaceId resolution or adapters directly. `spaceId`, `preview` and `screenshot`
+ *  are present only when the host wired them (the visual-preview tools need them). */
 export interface ToolContext {
   space: Space;
   env: Env;
@@ -44,7 +44,8 @@ export const imageResult = (images: ScreenshotImage[], meta: unknown): CallToolR
 
 /** What a tool author writes: identity, the input schema that is the contract sent to the agent, and a typed
  *  `run` (its args are inferred from `inputShape`, so no cast). `access` marks whether it persists — a 'write'
- *  tool previews (dryRun) in plan mode and can persist in build mode; a 'read' tool never writes. */
+ *  tool can persist (or only preview, with `dryRun`); a 'read' tool never writes. The server advertises it as the
+ *  tool's `readOnlyHint`. */
 export interface ToolSpec<Shape extends ZodRawShape> {
   name: string;
   title: string;

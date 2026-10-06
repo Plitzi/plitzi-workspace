@@ -8,6 +8,7 @@ import {
   createMcpLog,
   emptySpace,
   emptySpaceMessage,
+  isCallToolResult,
   noSpaceErrorCode,
   NoSpaceError,
   readOnlyGrantErrorCode,
@@ -18,7 +19,6 @@ import {
 import { proxyForTool } from './proxy';
 import { registerResources } from './resources';
 import { tools } from './tools';
-import { isCallToolResult } from '../ai/toolkit';
 
 import type { Space } from './helpers';
 import type { ResourceProxy } from './proxy';
@@ -253,7 +253,13 @@ export const createMcpServer = async ({
       }
     };
 
-    const config = { title: tool.title, description: tool.description, inputSchema: tool.inputShape };
+    const config = {
+      title: tool.title,
+      description: tool.description,
+      inputSchema: tool.inputShape,
+      // A host may run a tool that only reads without asking the person first; one that writes, it should ask.
+      annotations: { readOnlyHint: tool.access === 'read' }
+    };
     if (tool.ui) {
       // MCP Apps: advertise the interactive view (its ui:// resource is always registered — see registerRenderApp).
       // registerAppTool also mirrors the URI onto the legacy flat `ui/resourceUri` key older hosts still read.

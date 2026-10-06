@@ -103,7 +103,7 @@ Reads follow a filesystem model: list cheap, read one item in detail on demand. 
 hand-build a URI — every write and search response hands back the URI to use next.
 
 The tool functions are exported directly (`apply`, `search`, `read`, `validate`, `tools`), so a consumer can run
-them in-process and wrap them as its own agent's tools instead of speaking MCP over HTTP.
+them in-process instead of speaking MCP over HTTP.
 
 ## Draft preview
 
@@ -178,7 +178,7 @@ MCP server, [self-hosting/07](../../examples/self-hosting/07-ssr-preview) is the
 | Import | Carries |
 |---|---|
 | `@plitzi/sdk-mcp/server` | The dedicated MCP server and its clients. What an MCP deployment wires. |
-| `@plitzi/sdk-mcp` | Everything above plus the pipeline stages, `createPreview`, the tool engine and the AI engine. |
+| `@plitzi/sdk-mcp` | Everything above plus the pipeline stages, `createPreview` and the tool engine. |
 
 The split is about weight, not taste: ESM re-exports load eagerly, so the barrel pulls the draft-preview path and
 the renderer it reaches into. A `no-restricted-imports` rule and a test in `src/packageBoundary.test.ts` keep this

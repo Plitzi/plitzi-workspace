@@ -142,7 +142,6 @@ Everything an agent knows about Plitzi comes from text this package serves, so t
 | Quickstart | `helpers/guide.ts` → `guideQuickstart` | Inside the primer, on cold start |
 | The guide | `helpers/guide.ts` → `guideText` (`plitzi://guide`) | On demand, the full reference |
 | Operation and field descriptions | the `.describe()` on each op's zod schema | In every tool's input schema |
-| Co-worker prompt block | `helpers/agentPrompt.ts` | Concatenated into the builder co-worker's system prompt |
 | Widget guide | `resources/renderGuide.ts` (`plitzi://render/guide`) and `skills/plitzi-render` | Before a `plitzi_render` call |
 
 Whatever can be generated is: the interaction callbacks and their params, the global binding sources and the

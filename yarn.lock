@@ -2860,7 +2860,6 @@ __metadata:
     "@plitzi/sdk-variables": "workspace:*"
     "@tailwindcss/forms": "npm:^0.5.11"
     "@tailwindcss/postcss": "npm:^4.3.3"
-    "@tanstack/react-virtual": "npm:^3.14.13"
     "@typescript/vfs": "npm:^1.6.5"
     "@valtown/codemirror-ts": "npm:^2.3.1"
     apollo-upload-client: "npm:^20.0.0"
@@ -3322,7 +3321,6 @@ __metadata:
   dependencies:
     "@apollo/client": "npm:^4.3.1"
     "@eslint/js": "npm:^10.0.1"
-    "@modelcontextprotocol/sdk": "npm:^1.32.0"
     "@plitzi/nexus": "npm:^1.4.0"
     "@plitzi/plitzi-ui": "npm:^1.6.30"
     "@testing-library/dom": "npm:^10.4.2"
@@ -3962,25 +3960,6 @@ __metadata:
     postcss: "npm:^8.5.16"
     tailwindcss: "npm:4.3.3"
   checksum: 10c0/50b33643a4ba50c0d2ea0fd769d16072b0b3d2f31180df667fe5ad4ef60464b5f00931cfd5f2de2116a91219edb7a2dbd4c073b5c2f23393eab6ef1163db8dbf
-  languageName: node
-  linkType: hard
-
-"@tanstack/react-virtual@npm:^3.14.13":
-  version: 3.14.13
-  resolution: "@tanstack/react-virtual@npm:3.14.13"
-  dependencies:
-    "@tanstack/virtual-core": "npm:3.17.11"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-  checksum: 10c0/c29c35757b71797bdb8de5e45357e567471b8180d90810d7bdd108798f9c200557fcf2018234fcd452b236cbfb2a5394c570a733071a6a33aaed67bfdc060910
-  languageName: node
-  linkType: hard
-
-"@tanstack/virtual-core@npm:3.17.11":
-  version: 3.17.11
-  resolution: "@tanstack/virtual-core@npm:3.17.11"
-  checksum: 10c0/7773d373ee7eae2660b0e7bcbcc6fc4a9af632d42f6b6b32525302ec239306543802c865942654c3aff7f9bda460141a1f0b0a11b994f2029cb1257cd1b60ba6
   languageName: node
   linkType: hard
 

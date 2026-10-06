@@ -13,7 +13,7 @@ here". Undo stays the builder's, and fixing a bad change is an ordinary edit.
 
 One record per save that changed something, taken where every writer passes — `save()` on the `Space` and `Style`
 models in `plitzi-sdk-server` — so nothing can write around it: the builder's mutations, `SpaceUpdateSchema`, an agent
-over MCP, the builder's co-worker, the autofix, seeds and scripts.
+over MCP, the autofix, seeds and scripts.
 
 A record holds:
 
@@ -23,7 +23,7 @@ A record holds:
 | `at` | When, in milliseconds |
 | `document` | `schema` or `style` |
 | `author` | The person it was made for (`userId`, and their name as it is now) — none for a seed or a script |
-| `origin` | `builder`, `mcp` (an agent), `coworker`, `autofix`, `api` (a GraphQL client that is not a person) or `system` |
+| `origin` | `builder`, `mcp` (an agent), `autofix`, `api` (a GraphQL client that is not a person) or `system` |
 | `client` | The builder tab it came from |
 | `batch` | Shared by everything one request saved: one builder request, one `plitzi_apply`, one autofix run |
 | `entries` | Each entity changed: `{ kind, id, op, before?, after? }` |
@@ -48,7 +48,7 @@ The save does not know who asked; the request does. Attribution travels in an `A
 - **GraphQL** — `attributeChanges` (`services/history/attribution.ts`) around every request: the signed-in person as
   `builder`, a client with no person as `api`, the tab from `plitzi-instance-id`.
 - **MCP** — `saveSchema`/`saveStyle` receive an `SSRWriteContext` (`userId`, `batch`) from `@plitzi/sdk-mcp`, one
-  batch per tool call, recorded as `mcp`; the in-process co-worker bridge records the same writes as `coworker`.
+  batch per tool call, recorded as `mcp`.
 - **Autofix** — `SpaceFixIssues` runs its fixes as `autofix`, for whoever asked.
 
 A save with no context is recorded as `system` rather than dropped. Recording never fails a save: the save has already
@@ -73,7 +73,7 @@ listed as changed because a child was added to it, removed from it or moved: tha
 Unfolded, a row lists each of its saves in a compact column — its number and time of day, its lines, and for an edit
 each field before and after (an add, a removal or a move is already said by its line). A line about an element still in
 the space is a link to it. Filters: who made
-it (person, agent, co-worker, autofix), **only the selected element** (that element's own history), and **since the
+it (person, agent, autofix), **only the selected element** (that element's own history), and **since the
 last snapshot**. Every row carries its change number (`#50`, or `#48–50` for a row of several saves), and each
 published revision is drawn as a marker right above the last change it includes — "Revision 4 · includes up to #50" —
 so what sits below it shipped in that revision and what sits above did not. The marker is derived when the history is

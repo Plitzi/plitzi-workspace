@@ -73,14 +73,9 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
     [eventBridge]
   );
 
-  const [platformFlags] = useBuilderStore('platformFlags');
-  // The active ids are read once, as the panels open; the platform's flags are kept, because they arrive with the
-  // editor's first query and decide which panels exist at all.
-  const popups = useMemo(
-    () => getPopups({ activeIds: popupsActiveLeft, platformFlags }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [platformFlags]
-  );
+  // The active ids are read once, as the panels open: what the person opens afterwards is the panels' own state.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const popups = useMemo(() => getPopups({ activeIds: popupsActiveLeft }), []);
 
   return (
     <div className="flex grow flex-col overflow-auto">

@@ -312,8 +312,8 @@ The ones `sdk-server` ships:
 | `email` | `send` — one plain-text message, through an SMTP server the space holds as a credential |
 | `stream` | `emit` — progress for a streaming caller |
 
-Plus whatever the deployment registered. On Plitzi's own: `ai.complete`, and `db.query` when a database driver is
-available. And the space's own: the tasks its [functions](./functions.md) declare, in the same catalog.
+Plus whatever the deployment registered. On Plitzi's own: `db.query` when a database driver is available. And the
+space's own: the tasks its [functions](./functions.md) declare, in the same catalog.
 
 ### Two people at once: `setIf`, lists and rate limits
 

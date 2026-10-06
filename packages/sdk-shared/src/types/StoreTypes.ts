@@ -285,12 +285,6 @@ export type BuilderState = CommonState & {
    * Editor-only and never published: `navigation` still holds the resolved values, which is what the page reads.
    */
   urlTest?: { routeParams: RouteParams; queryParams: QueryParams; hostname: string };
-  /**
-   * The builder's OWN feature flags — Plitzi's, not the space's: which parts of the editor this person is shown, as the
-   * platform resolved them for them when the editor opened (`PlatformFlags` in the builder's first query). Never
-   * authored, never published.
-   */
-  platformFlags?: Record<string, boolean>;
   displayMode: DisplayMode;
   selector?: string;
   styleSelector?: string;

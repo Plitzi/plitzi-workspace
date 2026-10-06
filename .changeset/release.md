@@ -18,6 +18,27 @@
 '@plitzi/sdk-server': patch
 ---
 
+## Agents work through the MCP: the builder's AI chat is gone
+
+An agent reaches a space through the MCP, from whatever harness the person already uses; Plitzi no longer runs one of
+its own inside the builder. **Breaking** for whoever imported what that chat was built on:
+
+- **The builder's Assistant panel is removed**, with its conversations, attachments, previews and provider settings.
+- **`@plitzi/sdk-mcp` no longer exports the in-process AI engine**: `AIEngine`, `toolResponseOk`, `toolResponseErr`,
+  `zodToJsonSchema`, `getAllowedModes`, `bindTools`, `isToolActive`, `resolveToolHandler`, `isCallToolResult`,
+  `toolResponseFromResult` and `buildAgentGuide`. The MCP server, its tools and `@plitzi/sdk-mcp/server` are unchanged;
+  the tool functions are still exported to run in-process.
+- **`@plitzi/sdk-shared` drops the chat's types** — `AITypes` (`AiContext`, `AiMode`, `AiMessageAttachment`,
+  `AiUsage`, …) and `McpTypes` (`McpTool`, `McpToolHandler`, `McpContent`, …), with their `./types/AITypes` and
+  `./types/McpTypes/index` subpaths — and no longer depends on `@modelcontextprotocol/sdk`.
+- **A change's `origin` is never `coworker`**: `ChangeOrigin` is `builder`, `mcp`, `autofix`, `api` or `system`, and
+  the History panel's filter follows.
+- **The builder's platform flags are gone**: `PlatformFlags` is no longer part of the builder's first query, nor
+  `platformFlags` of its store — `assistanceAI` was the only one.
+- **Plitzi's own deployment no longer offers the `ai.complete` task** to flows.
+- **Each MCP tool says whether it only reads** (`readOnlyHint`, from the tool's `access`), so a host can run a read
+  without asking and ask before a write. Until now `access` was read only by the builder's chat.
+
 ## Server data: one request per question, the newest winning, and a way to stop
 
 - **A link asks for its page's server data once.** The navigation's prefetch already brought it; the route change that

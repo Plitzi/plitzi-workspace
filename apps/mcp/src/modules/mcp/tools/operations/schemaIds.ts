@@ -43,8 +43,7 @@ import {
  *  because the `definitions` entry and the ref cost more than the single copy they replace (measured, and reverted).
  *
  *  The ids are the names the MODEL reads in the refs, so they are written for it: `Element`, not `ElementInput`.
- *  This runs once, at module load of the op vocabulary, so every conversion path benefits — the MCP tools list and
- *  the co-worker's own tool-schema converter alike. */
+ *  This runs once, at module load of the op vocabulary, so every conversion path benefits. */
 const SHARED_SCHEMAS: [z.ZodType, string][] = [
   [elementInput, 'Element'],
   // In every element, a page and a patch: pasted, its description is the size of a small op.

@@ -1,8 +1,6 @@
 import type { PluginRaw, SchemaRaw, Style } from '../../../../types';
 
 export type TInitQuery = {
-  /** The editor's own feature flags, resolved by the platform for whoever opened it. */
-  PlatformFlags?: Record<string, boolean>;
   Space?: {
     definition: SchemaRaw['definition'];
     plugins: PluginRaw[];
@@ -13,7 +11,6 @@ export type TInitQuery = {
 
 const InitQuery = /* GraphQL */ `
   query InitQuery($environment: String!, $revision: Int) {
-    PlatformFlags
     Space(environment: $environment, revision: $revision) {
       definition {
         name

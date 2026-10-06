@@ -89,8 +89,6 @@ const initQuery = (space: OfflineDataRaw) => {
 
   return {
     data: {
-      // The editor's own flags, as the platform resolves them for whoever opened it: none, on a mocked platform.
-      PlatformFlags: {},
       Space: {
         definition: { name: 'E2E Space', permanentUrl: 'e2e-space', __typename: 'SpaceDefinition' },
         schema: {

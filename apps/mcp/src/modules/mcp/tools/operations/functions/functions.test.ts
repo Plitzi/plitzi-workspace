@@ -119,7 +119,7 @@ describe('plitzi_try_function', () => {
     expect(tryIt).toHaveBeenCalledWith('feed.read', { n: 1 });
   });
 
-  it('runs nothing in plan mode', async () => {
+  it('runs nothing on a dry run', async () => {
     const tryIt = vi.fn(() => Promise.resolve(report));
 
     expect(await tryFunction({ task: 'feed.read', dryRun: true }, ctx(tryIt))).toMatchObject({ ran: false });

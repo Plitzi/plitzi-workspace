@@ -47,7 +47,6 @@
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-style": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",
-    "@tanstack/react-virtual": "^3.14.13",
     "@typescript/vfs": "^1.6.5",
     "@valtown/codemirror-ts": "^2.3.1",
     "apollo-upload-client": "^20.0.0",

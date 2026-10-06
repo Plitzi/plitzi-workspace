@@ -5,6 +5,7 @@ import { getToolUiResourceUri, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { RENDER_APP_URI } from '../apps';
+import { tools as registry } from '../tools';
 import { readAppPage, startMcpEndpoint } from './index';
 
 import type { McpEndpoint } from './index';
@@ -192,6 +193,25 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
     const schema = JSON.stringify(tools.find(tool => tool.name === 'plitzi_render')?.inputSchema);
     expect(schema).toContain('repeatElement');
     expect(schema).toContain('upsertDefinitions');
+  });
+
+  // What lets a host run a read without asking first, and ask before a write: each tool's own `access`, said once.
+  it('marks each tool read-only exactly when it never writes', async () => {
+    const attached = await startMcpEndpoint({ spaceId: 1 });
+    try {
+      const { tools } = await attached.client.listTools();
+      const access = new Map(registry.map(tool => [tool.name, tool.access]));
+
+      expect(tools.length).toBeGreaterThan(0);
+      for (const tool of tools) {
+        expect(tool.annotations?.readOnlyHint, tool.name).toBe(access.get(tool.name) === 'read');
+      }
+
+      expect(tools.find(tool => tool.name === 'plitzi_read')?.annotations?.readOnlyHint).toBe(true);
+      expect(tools.find(tool => tool.name === 'plitzi_apply')?.annotations?.readOnlyHint).toBe(false);
+    } finally {
+      await attached.close();
+    }
   });
 
   // Measured on a connection WITH a space: that is the full listing, and the one the budget is about — the guest

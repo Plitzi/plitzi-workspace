@@ -106,7 +106,7 @@ Recorded as given, because they frame why mobile matters:
 - **Strengths.** The schema-as-data decision is the most valuable one in the project: it is what enables the MCP,
   the JSON→authoring export, templates, the single linter with four consumers, and offline rendering. Logic is
   declarative (interactions, bindings, twig, server actions, named sources), not arbitrary JSX. AI is designed in (the
-  MCP co-worker, generated guide, visual preview, "never silent" authoring).
+  MCP agent, generated guide, visual preview, "never silent" authoring).
 - **AI positioning.** Code generators (Lovable, Bolt, v0) produce code someone must maintain. Plitzi produces a
   validated schema an agent can author and a person can keep editing visually, with backend and hosting included.
 - **Market.** Bubble — the closest comparable — shows people pay to build web-apps without code, and it has moved

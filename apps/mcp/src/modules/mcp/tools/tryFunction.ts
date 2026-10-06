@@ -22,7 +22,7 @@ export const tryFunction = async (
   if (input.dryRun) {
     return {
       ran: false,
-      reason: 'Trying a function runs its code for real — its fetches and its writes — so not in plan mode'
+      reason: 'Trying a function runs its code for real — its fetches and its writes — so a dry run does not run it'
     };
   }
 

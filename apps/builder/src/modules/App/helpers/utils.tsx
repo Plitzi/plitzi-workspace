@@ -3,7 +3,6 @@ import Variable from '@plitzi/plitzi-ui/icons/Variable';
 import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 
 import StyleAdvanceEditor from '@plitzi/sdk-style/StyleAdvanceEditor';
-import AiChat from '@pmodules/AI';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Elements from '@pmodules/Elements';
 import Flags from '@pmodules/Flags';
@@ -96,12 +95,9 @@ const ASSET_SECTIONS: [PanelSection, ...PanelSection[]] = [
 ];
 
 export const getPopups = ({
-  activeIds = [],
-  platformFlags = {}
+  activeIds = []
 }: {
   activeIds?: string[];
-  /** The editor's own feature flags, as the platform resolved them for whoever opened it. */
-  platformFlags?: Record<string, boolean>;
 }): {
   left: PopupInstance[];
   right: PopupInstance[];
@@ -153,24 +149,6 @@ export const getPopups = ({
     fullView('server', 7, activeIds, 'fa-solid fa-server', 'Server'),
     fullView('settings', 8, activeIds, 'fas fa-cog', 'Settings')
   ];
-
-  if (platformFlags.assistanceAI) {
-    left.push({
-      id: 'assistant',
-      component: <AiChat />,
-      active: activeIds.includes('assistant'),
-      settings: {
-        icon: <Sidebar.Icon className="p-1" icon="fa-solid fa-star" title="Assistant" />,
-        title: 'Assistant',
-        width: 400,
-        allowLeftSide: true,
-        allowRightSide: true,
-        allowFloatingSide: true,
-        allowClose: false,
-        resizeHandles: ['se']
-      }
-    });
-  }
 
   return { left, right: [], floating: [] };
 };

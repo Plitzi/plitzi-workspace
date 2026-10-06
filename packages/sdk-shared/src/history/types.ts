@@ -2,10 +2,10 @@
 export type ChangeDocument = 'schema' | 'style' | 'functions' | 'data';
 
 /**
- * Where a change came from: a person in the builder, an agent over MCP, the builder's co-worker, the autofix, a GraphQL
- * client that is not a person, or a writer with nothing to say (a seed, a script).
+ * Where a change came from: a person in the builder, an agent over MCP, the autofix, a GraphQL client that is not a
+ * person, or a writer with nothing to say (a seed, a script).
  */
-export type ChangeOrigin = 'builder' | 'mcp' | 'coworker' | 'autofix' | 'api' | 'system';
+export type ChangeOrigin = 'builder' | 'mcp' | 'autofix' | 'api' | 'system';
 
 /**
  * What one entry is about. Schema: an element (pages and layouts are elements too), a page folder, a schema variable,

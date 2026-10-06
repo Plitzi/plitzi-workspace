@@ -1,5 +1,5 @@
-/** Everything this package offers: the MCP server, the tool engine that backs it, the AI engine a consumer wraps
- *  its own agent around, and the stages that mount all of it inside somebody else's page server.
+/** Everything this package offers: the MCP server, the tool engine that backs it, and the stages that mount all of
+ *  it inside somebody else's page server.
  *
  *  A dedicated MCP deployment wants `@plitzi/sdk-mcp/server` instead — this barrel also pulls the draft-preview
  *  endpoint, which reaches into the SSR renderer. */
@@ -12,26 +12,12 @@ export { previewStage } from './stages/preview';
 export { createWidgetProxyStage } from './stages/proxy';
 export { createPreview } from './preview/createPreview';
 
-export {
-  AIEngine,
-  toolResponseOk,
-  toolResponseErr,
-  zodToJsonSchema,
-  getAllowedModes,
-  bindTools,
-  isToolActive,
-  resolveToolHandler,
-  isCallToolResult,
-  toolResponseFromResult
-} from './modules/ai';
-
-// mcp-ai server + its tool functions (also runnable in-process, e.g. wrapped as agent tools by a consumer).
+// mcp-ai server + its tool functions (also runnable in-process, by a host that calls them itself).
 export {
   createMcpServer,
   handleMcp,
   serveMcp,
   readMcpBody,
-  buildAgentGuide,
   createHttpPreviewClient,
   createHttpScreenshotClient,
   createLocalScreenshotClient,

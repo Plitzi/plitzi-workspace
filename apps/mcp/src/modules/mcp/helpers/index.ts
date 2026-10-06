@@ -1,4 +1,4 @@
-export * from './agentPrompt';
+export * from './callToolResult';
 export * from './components';
 export * from './computeVersion';
 export * from './space';

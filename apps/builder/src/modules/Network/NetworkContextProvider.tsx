@@ -10,7 +10,6 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
-import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 
@@ -52,7 +51,6 @@ const NetworkContextProvider = ({
   const [error, setError] = useState<string | undefined>(undefined);
   const { registerDefinition } = use(ComponentContext);
   const [internalData, setInternalData] = useState({} as NetworkInternalContextValue);
-  const setStore = useBuilderStoreSetter();
 
   const query = useCallback(
     async <T extends keyof BuilderQueriesMap>(
@@ -169,8 +167,7 @@ const NetworkContextProvider = ({
     try {
       const response = await query('Init', { environment }, 'network-only', true);
       if (response.success && response.result) {
-        const { Space, PlatformFlags } = response.result;
-        setStore('platformFlags', PlatformFlags ?? {});
+        const { Space } = response.result;
         if (!Space) {
           setError('Space Not Found');
           setLoading(false);
@@ -201,7 +198,7 @@ const NetworkContextProvider = ({
     } finally {
       setLoading(false);
     }
-  }, [environment, query, registerDefinition, setStore]);
+  }, [environment, query, registerDefinition]);
 
   useEffect(() => {
     void initQuery();

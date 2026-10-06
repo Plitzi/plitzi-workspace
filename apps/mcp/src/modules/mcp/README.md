@@ -1,8 +1,7 @@
 # MCP module (`modules/mcp`)
 
 The Model Context Protocol server that lets an AI agent **read and edit a Plitzi space**. It exposes the space
-to any MCP client — the standalone MCP role of this server, and the in-process co-worker bridge in
-`modules/ai` — through a small set of tools and a browsable catalog of resources.
+to any MCP client through a small set of tools and a browsable catalog of resources.
 
 What it is for, how an agent connects and what it can rely on: [AI agents and the MCP server](../../../../../docs/en/mcp.md).
 This README is how it is built.
@@ -35,7 +34,7 @@ mcp/
 ├── localScreenshotClient.ts # The same, against a browser this process launches (dev / self-hosted)
 │
 ├── catalogs/                # Reference VOCABULARIES the server validates + advertises against
-├── helpers/                 # Space access, versioning, the agent's texts (guide, agentPrompt), URIs, logging
+├── helpers/                 # Space access, versioning, the agent's texts (guide), URIs, logging
 ├── resources/               # The read side — the plitzi://… resource catalog
 ├── tools/                   # The tools — apply / validate / search / read / render / preview / screenshot
 ├── apps/                    # MCP Apps: one folder per app (definition + view) over a shared bundler/registrar

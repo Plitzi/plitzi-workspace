@@ -1,97 +1,109 @@
 # RFC 0022 — Sketch to page ("make it real")
 
-- **Status:** Proposal — to be discussed before any work starts
+- **Status:** Proposal, revised — under review; no work started
 - **Author:** Carlos Rodriguez
-- **Date:** 2026-10-01
-- **Scope:** the builder (`apps/builder`, a sketch surface and the AI chat), the co-worker's MCP tools (`apps/mcp`),
-  the preview service, and optionally Pizarra (`plitzi-sdk-server` seed) as a second place a sketch can come from
+- **Date:** 2026-10-01 (revised 2026-10-06)
+- **Scope:** the builder (`apps/builder`: the sketch, the review), the MCP (`apps/mcp`: what an agent reads and
+  proposes with), the page server's preview and screenshots, and `plitzi-sdk-server` (where sketches and proposals are
+  kept, metering, the plan's ceiling)
 
 ---
 
 ## 1. Summary
 
-A person draws what a page should look like — boxes for a header, a hero, a grid of cards, a form — and Plitzi turns
-the drawing into a real page of the space: real elements, the space's own classes and colour tokens, its components,
-bindings where the sketch says where data goes. The result is not a picture of a page; it is the page, editable in the
-builder like any other.
+A person draws what a page should look like — boxes for a header, a hero, a grid of cards, a form — or drops in a
+picture of one, and an agent turns it into a real page of the space: real elements, the space's own classes and colour
+tokens, its components. The result is not a picture of a page; it is the page, editable in the builder like any other.
 
-This is tldraw's "Make Real", but where the output is a Plitzi space rather than a throwaway HTML file. That is the
-point: everything downstream — publishing, the builder, components, server actions, export to a project — already
-works on what this produces.
+This is tldraw's "Make Real", but where the output is a Plitzi space rather than a throwaway HTML file. Everything
+downstream — publishing, the builder, components, server actions, export to a project — already works on what this
+produces.
 
-It was first suggested as a Pizarra feature. It belongs to the **builder**: the builder is where a page is made, its
-users are the ones asking "draw it and make it", and the output is a page of the space being edited — not something on
-a whiteboard.
+**The agent is not Plitzi's.** It is whatever the person already works with — Claude Code or any other harness —
+connected to the space through the MCP. The builder is where the person draws and decides; the MCP is where the agent
+reads the sketch and proposes; the loop between "propose" and "look at it again" is the agent's own. Plitzi runs no
+model for this.
 
 ## 2. What exists already
 
 | Piece | Where | What it gives this feature |
 | --- | --- | --- |
-| AI chat with attachments | `apps/builder/src/modules/AI` (`AiAttachment`) | An image can already be handed to the co-worker |
-| Wireframe preview in the chat | `AIWireframePreview` | A way to show a proposed layout before it is applied |
-| Authoring through the MCP | `apps/mcp` (`upsertPage`, `upsertElement`, `upsertComponent`, styles, bindings) | The only write path a model needs — validated, refused with the fix in the message |
-| Visual preview + screenshots | `services/preview` (SSR `/__preview` + screenshot service) | A picture of what was built, to compare with the sketch |
-| `sdk-authoring` + lint | `packages/sdk-authoring` | Everything written is held to the same rules as hand-written authoring |
+| Authoring through the MCP | `apps/mcp` (`plitzi_apply`: pages, elements, components, styles, bindings) | The ops a proposal is made of — validated, refused with the fix in the message, `dryRun` without writing |
+| Screenshots as images the model sees | `plitzi_screenshot` (`imageResult`), the screenshot service | A picture of what a proposal builds, from unsaved operations, at desktop and mobile widths |
+| `sdk-authoring` + lint | `packages/sdk-authoring` | Everything proposed is held to the same rules as hand-written authoring |
 | Components (ex-RFC 0021) | `schema.components` | Repeated sketched blocks can become one component with props |
-| Pizarra frames + its MCP | `prisma/seeds/spaces/demo/pizarra` | A second, collaborative place to draw — and an agent that already reads frames |
+| The space's private bucket | `space_cdn_bucket` (functions, data) | Where a sketch's picture is kept |
+| Change history | `space_changes` | Where an accepted proposal lands, one batch, naming the sketch it came from |
+| Pizarra's canvas | `plitzi-sdk-server` seed `demo/pizarra` | The model the sketch pad takes after: rough.js strokes, colours by name, tool keys, smart guides |
 
-Nothing in that list has to change shape. The feature is a surface to draw on, a pipeline, and a review loop.
-
-## 3. The proposal
+## 3. The design
 
 ### 3.1 Where the sketch comes from
 
-1. **A sketch pad in the builder** — a panel (or a mode of the canvas) with a few tools: rectangle, text, line,
-   image placeholder, "list of these", and a pen for annotations. Deliberately small: it is a wireframe, not a design
-   tool.
-2. **A picture** — pasted or dropped into the AI chat (a photo of a whiteboard, a screenshot of another site, a
-   Figma export). Works today as an attachment; this RFC gives it a dedicated "Make it real" action.
-3. **A Pizarra frame** (later, optional) — "Send to Plitzi" on a frame: the frame's elements are already structured
-   data (boxes, texts, groups), which is a better input than pixels.
+1. **A picture** (phase 1) — uploaded, pasted or dropped into the page's sketch panel in the builder: a photo of a
+   whiteboard, a screenshot of another site, a Figma export.
+2. **The sketch pad** (phase 2) — a small surface in the builder: rectangle, text, line, image placeholder, "list of
+   these", and a pen for annotations. Deliberately small: a wireframe, not a design tool.
+3. **A Pizarra frame** (phase 3) — "Send to Plitzi" on a frame.
 
-Structured input (1 and 3) is read as data first and as an image second; a picture (2) only as an image.
+A sketch from the pad is structured data (what each box is, the text in it, which block repeats) and a picture; a
+picture is only a picture. The agent reads both when both exist, the data first.
 
-### 3.2 The pipeline
+**The pad is the builder's own, after Pizarra's.** Pizarra's canvas is ~17k lines whose core is woven with its
+collaboration (remote cursors, veils, votes, sounds), and it is a seed plugin, not a platform package. The pad mirrors
+what makes it pleasant — a 2D `<canvas>` drawn with rough.js and perfect-freehand, colours stored by name so the
+drawing follows the theme, the same tool keys, smart guides, the left tool bar — over a model of its own built for
+wireframes, with the "list of these" Pizarra does not have.
 
-1. **Read the sketch** into a layout intent: regions and their roles (header, hero, card grid, form, footer), the
-   text written in them, repeated blocks, annotations ("logo here", "list of products").
-2. **Map the intent onto the space**: its layouts (a page that should sit in the existing layout does), its classes
-   and tokens (never new colours when the space has them), its components (a repeated block that matches one is an
-   instance; one that does not may become a new component), its data (a "list of products" next to a connector the
-   space has becomes a bound list).
-3. **Write it** through the MCP's ops, as a draft page (or into the selected container), in one batch — refused as a
-   whole if any op is refused, with the refusal fed back to the model.
-4. **Look at it**: render the result with the preview service and compare it with the sketch. Up to N rounds
-   (proposed: 2) of "this region is missing / out of order / wrong size" before showing it to the person.
-5. **Hand it over**: the person sees sketch and result side by side and accepts (the draft becomes the page),
-   iterates ("make the hero taller", or a new annotation drawn on the screenshot), or discards it.
+### 3.2 The flow
 
-### 3.3 Iterating by drawing on the result
+1. **Sketch** — the person makes a sketch on a page and picks its target: a new page (the default) or the selected
+   container. It is kept in the space (`requested`).
+2. **Ask** — "Make it real" gives the person the line to hand their agent, naming `plitzi://sketches/{id}`.
+3. **Read** — the agent reads the sketch through the MCP: its data, its target, and its picture as an image.
+4. **Propose** — the agent calls `plitzi_propose` with the operations that build it. The MCP validates them as a dry
+   run, renders them at desktop and mobile without saving anything, keeps the proposal with the versions of the space
+   it was made against, and answers with the screenshots — so the agent can compare with the sketch and propose again.
+   The space is not touched.
+5. **Review** — the builder shows the latest proposal as it arrives: the sketch beside the screenshots, the components
+   the agent suggests (each to tick, never made silently), and the agent's notes (a form left unbound, a picture it
+   could not place).
+6. **Decide** — **Accept** applies the proposal in one batch: one change-history entry naming the sketch. If the space
+   changed under it, accepting is refused and the proposal is to be redone. **Discard** leaves nothing in the space.
+   **Iterate** (phase 2) is drawing on a screenshot: the marks are a new revision of the sketch, which the agent reads
+   with the proposal it amends, so the second pass edits instead of rebuilding.
 
-The screenshot of the result can be drawn on: circle the grid and write "3 columns", cross out a block. Those marks
-are a new sketch whose target is the existing page, so the second pass edits instead of rebuilding.
+### 3.3 Why a proposal is not a page
 
-## 4. Decisions to take
+A draft page written into the space and deleted on discard would fill the change history with work nobody kept, clear
+the builder's undo stack on every write that reaches it by subscription, and — being disabled to stay unpublished —
+most likely not be reachable by the preview that has to screenshot it (the preview routes as a published page does,
+and drops disabled pages; inferred from the code, not tried). A proposal is operations kept beside the sketch and rendered
+from a copy, which the preview already does; only accepting writes.
+
+## 4. Decisions
 
 | # | Question | Proposed |
 | --- | --- | --- |
-| D1 | Builder-only first, or Pizarra too? | Builder first; Pizarra's "Send to Plitzi" as phase 3 |
-| D2 | A sketch pad of our own, or images only at first? | Images first (it is nearly free: attachments exist), pad in phase 2 |
-| D3 | Output: a new page, or into the selection? | Both: a new draft page by default, into the selected container when one is selected |
-| D4 | Self-review rounds against the screenshot | 2, configurable per plan |
-| D5 | Create components from repeated blocks automatically? | Propose them in the review, never silently |
-| D6 | Which model, and how it is metered | The co-worker's model and the existing AI metering; a "make real" counts as one run |
-| D7 | Where the sketch is kept | With the page's change history entry, so "what was this made from" survives |
+| D1 | Builder-only first, or Pizarra too? | Builder first; Pizarra's "Send to Plitzi" is phase 3 |
+| D2 | A sketch pad of our own, or images only at first? | Pictures in phase 1; the pad, after Pizarra's, in phase 2 |
+| D3 | Output: a new page, or into the selection? | Both: a new page by default, into the selected container when one is selected — as a proposal, written on accept |
+| D4 | How much self-review | The agent's own loop; the MCP refuses past the plan's ceiling of proposals per sketch (a `plan` column) |
+| D5 | Create components from repeated blocks automatically? | Proposed with the proposal, ticked in the review, never silently |
+| D6 | How it is metered | Each `plitzi_propose` is one `sketch_proposal` — the renders are what it costs Plitzi; the model is the agent's |
+| D7 | Where the sketch is kept | In the space, its picture in the private bucket; the accepted batch's history entry names it |
 
 ## 5. Phases
 
-1. **Picture → page**: "Make it real" on an image attachment; draft page; side-by-side review; accept/discard.
-2. **Sketch pad + structured reading**; iterate by drawing on the screenshot; component proposals.
-3. **Pizarra → Plitzi**: a frame sent to a space through the Pizarra agent or a connector.
+1. **Picture → page**: a picture as the sketch; `plitzi://sketches`, `plitzi_propose`; the review; accept and discard;
+   metering and the plan's ceiling.
+2. **The sketch pad**; structured reading; iterating by drawing on a screenshot; component proposals.
+3. **Pizarra → Plitzi**: a frame sent to a space.
 
-## 6. Left open
+## 6. Settled from the open questions
 
-- Whether the sketch pad should reuse Pizarra's canvas (it is a seed plugin, not a platform package) or be its own
-  small element.
-- How a sketched form maps to a server action the space does not have yet (propose one? leave the submit unbound?).
-- Responsive intent: a sketch is one width. Infer tablet/mobile, or ask for a second sketch?
+- **The pad** is the builder's own, after Pizarra's (§3.1).
+- **A sketched form** keeps its fields and its button; its submit is left unbound and the proposal says so — wiring it
+  to a server action is the person's next request, not a guess.
+- **Responsive intent**: a sketch is one width. The page is built for it and adapted to mobile by the agent; the
+  review shows both screenshots, so a wrong guess is seen before it is accepted.

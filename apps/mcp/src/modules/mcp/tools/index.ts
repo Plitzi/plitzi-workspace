@@ -20,8 +20,8 @@ export { applyOperations } from './apply/dispatch';
 export { validateOperations } from './shared/validator';
 export { operation } from './operations';
 
-/** The MCP tool registry — the single source both hosts (the standalone server and the in-process AI bridge)
- *  register from. Adding a tool is: create its file with a ToolDef descriptor and append it here. */
+/** The MCP tool registry — the single source the server registers from. Adding a tool is: create its file with a
+ *  ToolDef descriptor and append it here. */
 export const tools: ToolDef[] = [
   applyTool,
   validateTool,
