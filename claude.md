@@ -215,25 +215,25 @@ const Button = ({ label, onClick }: ButtonProps) => { ... };
 **Máximo 2 niveles de nesting.** Un sub-componente puede tener su propia subcarpeta `components/` con la estructura completa (carpeta + barrel), pero los componentes dentro de ese segundo nivel no pueden tener otra subcarpeta `components/` propia.
 
 ```
-// Correcto — hasta 2 niveles
-ChatMessage/                              ← raíz
+// Correcto — hasta 2 niveles (modules/Space en el builder)
+Space/                                    ← raíz
   components/
-    AIBrandPreview/                       ← nivel 1
-      AIBrandPreview.tsx
+    SpaceIssues/                          ← nivel 1
+      SpaceIssues.tsx
       index.ts
       components/
-        BrandColors/                      ← nivel 2 ✓
-          BrandColors.tsx
+        IssueGroup/                       ← nivel 2 ✓
+          IssueGroup.tsx
           index.ts
 
 // Incorrecto — 3 niveles
-ChatMessage/
+Space/
   components/
-    AIBrandPreview/                       ← nivel 1
+    SpaceIssues/                          ← nivel 1
       components/
-        BrandColors/                      ← nivel 2
+        IssueGroup/                       ← nivel 2
           components/
-            ColorSwatch/                  ← nivel 3, NO permitido
+            IssueRow/                     ← nivel 3, NO permitido
 ```
 
 Exception: tiny sub-components (a few lines, self-contained, no logic) do not need their own folder unless they are reused in multiple places. Inline them or keep them in the same file only when they are trivial and unique to that parent.
