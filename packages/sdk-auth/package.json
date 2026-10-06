@@ -96,7 +96,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.29",
+    "@plitzi/plitzi-ui": "^1.6.30",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"
   },

@@ -1527,7 +1527,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.0",
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.29",
+    "@plitzi/plitzi-ui": "^1.6.30",
     "date-fns": "^4.4.0",
     "immer": "^11.1.21",
     "zod": "^4.6.5"

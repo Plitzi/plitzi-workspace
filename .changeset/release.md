@@ -70,6 +70,9 @@
   `x|round(0, 'floor')`, `min(max(x, low), high)`).
 - An unknown attribute is reported against the element's props, not as "'id' does not exist in type ElementSpec[]".
 - `explain` answers a builder's name (`reloadApi`, `cancelApi`) with its step, and knows `whileRunning`.
+- A component's instance takes `quiet`, like any element — `component(id, { quiet: ['repeated-shape'] })`: instances
+  whose slots are filled alike on purpose stop being offered as a repeat, and an exported instance that carries one
+  typechecks.
 - `container` and `text` take a `title`. A trigger's `preview` may hold numbers, flags, lists and `null`.
 - `answerAction(page, actionId, output)` (testing): a test that would save something answers that server action in
   the browser — the server's `kv`, and what the developer kept, are never written. A stream step gets its `done` frame.

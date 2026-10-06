@@ -19,8 +19,9 @@ const { warnings, suggestions } = authorSpace(space);
 is a bug to fix; a suggestion is a shorter way to the same page — take it unless you have a reason not to, and the
 reason is usually that the copies are about to diverge. `npx @plitzi/cli explain repeated-on-pages` explains any code.
 
-Left on purpose, say so where it is written — `quiet` on an element it is about, and it is not offered again, in the
-builder or over MCP either (it is kept in the document):
+Left on purpose, say so where it is written — `quiet` on an element it is about (a component's instance too:
+`component(id, { quiet })`), and it is not offered again, in the builder or over MCP either (it is kept in the
+document):
 
 ```ts
 const includes = (words: string) => container({ class: row, quiet: ['repeated-shape'], children: [tick, text(words)] });

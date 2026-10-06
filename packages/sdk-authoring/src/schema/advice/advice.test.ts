@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { button, container, fontAwesome, heading, link, list, text } from '../../elements';
+import { button, component, container, fontAwesome, heading, link, list, text } from '../../elements';
 import { onClick } from '../../elements/steps';
 import { setState, toggleState } from '../../interactions';
 import { authorSpace } from '../space';
@@ -181,6 +181,42 @@ describe('suggestions', () => {
     const menus = space([page('home', [container({ children: [menu('language'), menu('level'), menu('topic')] })])]);
 
     expect(codesOf(menus)).not.toContain('repeated-shape');
+  });
+
+  // Instances of one component whose slots are filled alike are offered as a repeat too — and, written that way on
+  // purpose, an instance quiets it like any element: what the export prints, `component(id, { quiet })`, authors.
+  it('leaves out a repeat of component instances that the instances quiet', () => {
+    const framed = (quiet?: 'repeated-shape') =>
+      space(
+        [
+          page('home', [
+            container({
+              children: ['Videos', 'Exercises', 'A certificate', 'Lifetime access'].map(words =>
+                component('frame', {
+                  ...(quiet ? { quiet: [quiet] } : {}),
+                  children: [
+                    text({ class: 'tick', content: '✓' }),
+                    text({ class: 'line', content: words }),
+                    text({ content: '' })
+                  ]
+                })
+              )
+            })
+          ])
+        ],
+        {
+          components: [
+            {
+              id: 'frame',
+              slots: ['frame-body'],
+              root: container({ id: 'frame-root', class: 'includes', children: [container({ id: 'frame-body' })] })
+            }
+          ]
+        }
+      );
+
+    expect(codesOf(framed())).toContain('repeated-shape');
+    expect(codesOf(framed('repeated-shape'))).not.toContain('repeated-shape');
   });
 
   it('leaves out a suggestion an element it is about quiets, and refuses a quiet that names no suggestion', () => {

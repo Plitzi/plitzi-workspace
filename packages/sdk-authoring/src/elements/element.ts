@@ -431,7 +431,7 @@ export const element = <A extends object = never, T extends string = string>(
 /** How an instance is authored: what it hands in, what fills its slots, and the authoring fields any element takes. */
 export type ComponentInstanceProps = Pick<
   AuthoringProps,
-  'id' | 'class' | 'css' | 'states' | 'selector' | 'bind' | 'visible' | 'flows' | 'meta'
+  'id' | 'class' | 'css' | 'states' | 'selector' | 'bind' | 'visible' | 'flows' | 'meta' | 'quiet'
 > & {
   /** The props the component declares, by name. A prop is an attribute of the instance: `bind` can land on one too. */
   props?: Record<string, unknown>;
