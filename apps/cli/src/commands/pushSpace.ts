@@ -182,10 +182,7 @@ export const pushSpaceOf = async (
 
   let documents: SpaceImport['documents'];
   try {
-    const { schema, style } = authorSpace(project.space, {
-      plugins: project.plugins,
-      pluginTypes: project.pluginTypes
-    });
+    const { schema, style } = authorSpace(project.space, project.authoring);
     documents = { schema, style };
   } catch (error) {
     fail(

@@ -82,10 +82,7 @@ export const authoringFindings = async (root: string): Promise<LintFinding[]> =>
 
   let suggestions: Suggestion[];
   try {
-    suggestions = authorSpace(project.space, {
-      plugins: project.plugins,
-      pluginTypes: project.pluginTypes
-    }).suggestions;
+    suggestions = authorSpace(project.space, project.authoring).suggestions;
   } catch (error) {
     return [
       finding(

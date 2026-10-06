@@ -98,6 +98,8 @@
 
 ## check and lint
 
+- **`plitzi check`, `push`, `lint` and `fix` hold the space to what `npm run author` and the server do**: its data
+  files too, so `push` no longer sends a space whose browser provider reads `src/data/` (`server-data-in-browser`).
 - **`plitzi check` lists each list's rows as drawn and as held in its source** (`feed 4 of 8 rows`,
   `hits not rendered (16 in its source)`). In `--json`, `lists` is now `{ id: { rendered, source } }`.
 - **`plitzi check` no longer reports bindings inside a container the page isn't showing**, nor text "in the colour

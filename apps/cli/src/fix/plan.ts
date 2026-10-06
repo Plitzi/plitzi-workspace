@@ -14,9 +14,9 @@ export const fixKey = (fix: Pick<PlannedFix, 'code' | 'elementId' | 'message'>):
 export const problemKey = (problem: Pick<PlanProblem, 'code' | 'elementId'>): string =>
   `${problem.code} ${problem.elementId ?? ''}`;
 
-export const projectPlan = ({ space, plugins, pluginTypes }: ProjectSpace): ProjectPlan => {
+export const projectPlan = ({ space, authoring }: ProjectSpace): ProjectPlan => {
   try {
-    return planFixes(space, { plugins, pluginTypes });
+    return planFixes(space, authoring);
   } catch (error) {
     return { problem: `the space is not written as far as its documents — ${refusalOf(error).message.split('\n')[0]}` };
   }

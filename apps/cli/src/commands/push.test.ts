@@ -136,6 +136,25 @@ describe('plitzi push', () => {
     expect(said.join('\n')).toContain('public/logo.png');
   });
 
+  it('refuses what `npm run author` refuses: a browser provider reading src/data/, which is never served', async () => {
+    const said: string[] = [];
+    vi.spyOn(console, 'error').mockImplementation((line: unknown) => said.push(String(line)));
+    const imports = platform.pizarra.imports.length;
+    await write('src/data/stock.json', '[]');
+    await write(
+      'src/space/index.ts',
+      "export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
+        "{ type: 'apiContainer', id: 'stock', attributes: { query: '/data/stock.json' } }" +
+        '] }] };\nexport { pizarra as space };\n'
+    );
+
+    await push(['space'], {});
+
+    expect(process.exitCode).toBe(1);
+    expect(platform.pizarra.imports).toHaveLength(imports);
+    expect(said.join('\n')).toContain('server-data-in-browser');
+  });
+
   it('sends src/data/ as the space’s data, refused when the space’s moved on, and taken with --force', async () => {
     await write('src/data/products.json', `{"map":"/assets/world.json"}`);
     await write('src/data/shop/stock.json', '[]');

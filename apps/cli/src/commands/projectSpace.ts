@@ -6,7 +6,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { SPACE_ENTRY } from '../scaffold/paths';
 
-import type { PluginDeclarationData, SpaceSpec } from '@plitzi/sdk-authoring';
+import type { SpaceSpec } from '@plitzi/sdk-authoring';
+import type { ProjectAuthoring } from '@plitzi/sdk-authoring/node';
 
 /**
  * What the module exports as `space`, taken as a declaration when it has the shape of one. `authorSpace` checks the
@@ -23,9 +24,11 @@ const importProject = async (file: string): Promise<unknown> => import(pathToFil
 /** The space a project declares in `src/space/`, with the plugin declarations it is authored with. */
 export interface ProjectSpace {
   space: SpaceSpec;
-  plugins: PluginDeclarationData[];
-  /** The element types of the plugins it runs as they were built, which no declaration of the project's describes. */
-  pluginTypes: string[];
+  /**
+   * What the space is checked against — its plugins, its built plugins, its data files — as `npm run author` and the
+   * server check it, so the CLI's checks never pass a space they refuse.
+   */
+  authoring: ProjectAuthoring;
 }
 
 /**
@@ -41,9 +44,7 @@ export const loadProjectSpace = async (root: string): Promise<ProjectSpace | { p
   }
 
   try {
-    const { plugins, pluginTypes } = await projectAuthoring(root);
-
-    return { space, plugins, pluginTypes };
+    return { space, authoring: await projectAuthoring(root) };
   } catch (error) {
     return { problem: error instanceof Error ? error.message : String(error) };
   }
