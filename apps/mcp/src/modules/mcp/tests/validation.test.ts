@@ -5,7 +5,7 @@ import { operation, validate } from '../tools';
 
 import type { Operation } from '../tools';
 
-describe('mcp-ai validator (teaching errors)', () => {
+describe('MCP validator (teaching errors)', () => {
   it('rejects camelCase CSS and suggests the kebab key', () => {
     const result = validate(
       { operations: [{ type: 'upsertDefinition', ref: 'btn', desktop: { backgroundColor: '#000' } }] },
@@ -35,7 +35,7 @@ describe('mcp-ai validator (teaching errors)', () => {
   });
 });
 
-describe('mcp-ai variable-reference validation', () => {
+describe('MCP variable-reference validation', () => {
   it('accepts a known space schema variable', () => {
     const r = validate({ operations: [varOp('home', 'text', '{{apiUrl}}/x')] }, buildSpace());
     expect(r.valid).toBe(true);
@@ -91,7 +91,7 @@ describe('mcp-ai variable-reference validation', () => {
   });
 });
 
-describe('mcp-ai deep validation of when (RuleGroup) and transformers', () => {
+describe('MCP deep validation of when (RuleGroup) and transformers', () => {
   const withWhen = (when: unknown): unknown => ({
     type: 'upsertBinding',
     pageRef: 'home',
@@ -168,7 +168,7 @@ describe('mcp-ai deep validation of when (RuleGroup) and transformers', () => {
   });
 });
 
-describe('mcp-ai pre-existing malformation audit (blocks save until fixed)', () => {
+describe('MCP pre-existing malformation audit (blocks save until fixed)', () => {
   it('blocks an unrelated valid edit while a touched element has a pre-existing malformed transformer', () => {
     const r = validate(
       { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'txt', initialState: { visibility: true } }] },
@@ -210,7 +210,7 @@ describe('mcp-ai pre-existing malformation audit (blocks save until fixed)', () 
   });
 });
 
-describe('mcp-ai type-aware props (I5)', () => {
+describe('MCP type-aware props (I5)', () => {
   it('refuses a prop a built-in type never reads', () => {
     const r = validate(
       {
@@ -241,7 +241,7 @@ describe('mcp-ai type-aware props (I5)', () => {
   });
 });
 
-describe('mcp-ai style on a provider with no tag', () => {
+describe('MCP style on a provider with no tag', () => {
   const styled = (props: Record<string, unknown>): Operation[] => [
     { type: 'upsertDefinition', ref: 'stack', desktop: { display: 'flex', 'row-gap': '32px' } },
     {

@@ -16,8 +16,8 @@ import type { IncomingMessage, Server } from 'node:http';
  * sending anybody off-site on the way back.
  */
 
-const PORT = 39341;
-const ISSUER_PORT = 39342;
+const PORT = 39343;
+const ISSUER_PORT = 39344;
 const base = `http://127.0.0.1:${String(PORT)}`;
 const issuer = `http://127.0.0.1:${String(ISSUER_PORT)}`;
 

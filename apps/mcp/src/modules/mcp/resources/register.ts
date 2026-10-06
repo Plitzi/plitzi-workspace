@@ -63,7 +63,7 @@ export const registerResources = (
   server.registerResource(
     'Guide',
     'plitzi://guide',
-    { description: 'How to read and write this space with mcp-ai', mimeType: 'text/markdown' },
+    { description: 'How to read and write this space through this server', mimeType: 'text/markdown' },
     () =>
       emitStatic('plitzi://guide', () => ({
         contents: [{ uri: 'plitzi://guide', mimeType: 'text/markdown', text: guideText }]

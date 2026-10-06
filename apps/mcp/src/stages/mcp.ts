@@ -25,7 +25,7 @@ const serveMcp = async (ctx: Parameters<Stage>[0], options: McpOptions): Promise
   });
 };
 
-// AI-native MCP (mcp-ai) mounted alongside other services: only answers under its path, so page/RSC routes
+// The MCP mounted alongside other services: only answers under its path, so page/RSC routes
 // fall through. Stateless — resolves its own spaceId from the request token via the adapters.
 export const createMcpStage = (options: McpOptions = {}): Stage => {
   const path = options.path ?? DEFAULT_PATH;

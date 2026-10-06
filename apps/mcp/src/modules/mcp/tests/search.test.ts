@@ -6,7 +6,7 @@ import { search } from '../tools';
 
 import type { Space } from '../helpers';
 
-describe('mcp-ai search', () => {
+describe('MCP search', () => {
   it('finds elements by attribute value and reports their page ref', () => {
     const res = search({ query: 'section' }, buildSpace(), 'main');
     expect(res.results.some(r => r.ref === 'c1' && r.pageRef === 'home')).toBe(true);
@@ -48,7 +48,7 @@ describe('mcp-ai search', () => {
   });
 });
 
-describe('mcp-ai search pagination', () => {
+describe('MCP search pagination', () => {
   const buildBusySpace = (count: number): Space => {
     const space = buildSpace();
     const flat = space.schema.flat as unknown as Record<string, unknown>;
@@ -112,7 +112,7 @@ describe('mcp-ai search pagination', () => {
   });
 });
 
-describe('mcp-ai search returns matching definitions', () => {
+describe('MCP search returns matching definitions', () => {
   it('returns definitions whose ref matches the query, with full CSS', () => {
     const res = search({ query: 'box' }, buildSpace(), 'main');
     expect(res.definitions?.find(d => d.ref === 'box')?.desktop).toEqual({ display: 'flex' });

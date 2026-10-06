@@ -12,7 +12,7 @@ const noPlugins: PluginRegistry = {
   invalidate: () => Promise.resolve()
 };
 
-/** The server this package makes: the lean mcp-ai pipeline over the bare context — no render template, caches
+/** The server this package makes: the lean MCP pipeline over the bare context — no render template, caches
  *  or plugin manager. `config` is the HTTP server's (port, TLS, health, logger, adapters); `options` is what MCP
  *  itself serves, and lives here rather than in that config because the server does not need to know. Pair it with
  *  the MCP adapters (getGrant + getSchema/getStyle/saveSchema/saveStyle) — the page adapters are not required, and

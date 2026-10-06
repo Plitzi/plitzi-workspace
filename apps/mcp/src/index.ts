@@ -12,7 +12,7 @@ export { previewStage } from './stages/preview';
 export { createWidgetProxyStage } from './stages/proxy';
 export { createPreview } from './preview/createPreview';
 
-// mcp-ai server + its tool functions (also runnable in-process, by a host that calls them itself).
+// The MCP server + its tool functions (also runnable in-process, by a host that calls them itself).
 export {
   createMcpServer,
   handleMcp,

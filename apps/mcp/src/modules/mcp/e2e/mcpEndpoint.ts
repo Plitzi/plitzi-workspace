@@ -37,7 +37,8 @@ export interface McpEndpointOptions {
   /** Attach a space to the connection, the way an authorized connector's token does — the server then offers its
    *  editing surface. Omitted, the endpoint is the guest one: no space, so only what works without one. */
   spaceId?: number;
-  /** The deployment switch a consumer sets as `mcpAi.renderStreaming`. Omitted, the server's own default stands. */
+  /** The deployment switch a consumer sets as `McpOptions.renderStreaming`. Omitted, the server's own default
+   *  stands. */
   renderStreaming?: boolean;
 }
 

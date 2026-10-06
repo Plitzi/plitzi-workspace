@@ -14,9 +14,9 @@ export type McpRequestOptions = {
   preview?: PreviewClient;
   screenshot?: ScreenshotClient;
   logger?: ServerLogger;
-  /** Deployment switch for the plitzi_render view (see `mcpAi.renderStreaming`). Defaults to true. */
+  /** Deployment switch for the plitzi_render view (see `McpOptions.renderStreaming`). Defaults to true. */
   renderStreaming?: boolean;
-  /** Where a rendered widget loads everything external from (see `mcpAi.proxy`). Absent → the URLs an agent
+  /** Where a rendered widget loads everything external from (see `McpOptions.proxy`). Absent → the URLs an agent
    *  authored travel to the host exactly as written. */
   proxy?: ResourceProxy;
 };

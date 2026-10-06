@@ -7,7 +7,7 @@ import { apply, validate } from '../tools';
 import type { Space } from '../helpers';
 import type { AIFolder, AIPageSkeleton, AIPageSummary } from '../types';
 
-describe('mcp-ai settings (space-level customCss + auth config)', () => {
+describe('MCP settings (space-level customCss + auth config)', () => {
   it('patchSettings merges customCss without dropping other settings', async () => {
     const cap = capturing(buildSpace());
     const css = '@keyframes spin { to { transform: rotate(360deg); } }';
@@ -161,7 +161,7 @@ describe('mcp-ai settings (space-level customCss + auth config)', () => {
   });
 });
 
-describe('mcp-ai page enable/disable (attributes.enabled)', () => {
+describe('MCP page enable/disable (attributes.enabled)', () => {
   it('a new page defaults to enabled', async () => {
     const cap = capturing(buildSpace());
     await apply({ operations: [{ type: 'upsertPage', ref: 'about', label: 'About' }] }, buildSpace(), cap.persisters);
@@ -194,7 +194,7 @@ describe('mcp-ai page enable/disable (attributes.enabled)', () => {
   });
 });
 
-describe('mcp-ai page slug is relative (leading slash stripped)', () => {
+describe('MCP page slug is relative (leading slash stripped)', () => {
   it('strips a leading slash so the slug persists relative on create', async () => {
     const cap = capturing(buildSpace());
     await apply(
@@ -219,7 +219,7 @@ describe('mcp-ai page slug is relative (leading slash stripped)', () => {
   });
 });
 
-describe('mcp-ai patchElement (I3/R3 — partial merge)', () => {
+describe('MCP patchElement (I3/R3 — partial merge)', () => {
   it('changes only the listed prop, preserving the rest', async () => {
     const space = buildSpace();
     space.schema.flat.home.definition.items = ['c1', 'img'];
@@ -269,7 +269,7 @@ describe('mcp-ai patchElement (I3/R3 — partial merge)', () => {
   });
 });
 
-describe('mcp-ai page folders (create, nest, delete, move)', () => {
+describe('MCP page folders (create, nest, delete, move)', () => {
   it('creates a folder (ref becomes its id) and lists it, slug and all', async () => {
     const cap = capturing(buildSpace());
     const res = await apply(
@@ -371,7 +371,7 @@ describe('mcp-ai page folders (create, nest, delete, move)', () => {
   });
 });
 
-describe('mcp-ai page.folder is always "" (root) or a valid id', () => {
+describe('MCP page.folder is always "" (root) or a valid id', () => {
   const folderOf = (space: Space, ref: string): unknown =>
     Object.values(space.schema.flat).find(el => el.id === ref)?.attributes.folder;
 
@@ -439,7 +439,7 @@ describe('mcp-ai page.folder is always "" (root) or a valid id', () => {
   });
 });
 
-describe('mcp-ai element names (the name IS the id, and the runtime wiring key)', () => {
+describe('MCP element names (the name IS the id, and the runtime wiring key)', () => {
   it('stores the chosen name as the element id, which is also its key in the document', async () => {
     const cap = capturing(buildSpace());
     await apply(
@@ -616,7 +616,7 @@ describe('mcp-ai element names (the name IS the id, and the runtime wiring key)'
   });
 });
 
-describe('mcp-ai write response element versions (R1)', () => {
+describe('MCP write response element versions (R1)', () => {
   it('returns each element with its own uri and stateVersion, ready for the next edit', async () => {
     const res = await apply(
       {

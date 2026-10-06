@@ -7,7 +7,7 @@ import { apply, search, validate } from '../tools';
 import type { Space } from '../helpers';
 import type { AIDefinition, AIElementDetail } from '../types';
 
-describe('mcp-ai global element styles (editable site-wide selectors like `button { … }`)', () => {
+describe('MCP global element styles (editable site-wide selectors like `button { … }`)', () => {
   const globalOp = {
     type: 'upsertGlobalStyle',
     componentType: 'button',
@@ -92,7 +92,7 @@ describe('mcp-ai global element styles (editable site-wide selectors like `butto
   });
 });
 
-describe('mcp-ai id styles (editable single-element selectors like `#hero { … }`)', () => {
+describe('MCP id styles (editable single-element selectors like `#hero { … }`)', () => {
   const idOp = { type: 'upsertIdStyle', targetId: 'hero', desktop: { 'min-height': '100vh' } } as const;
 
   it('creates a type "id" selector keyed by the DOM id', async () => {
@@ -168,7 +168,7 @@ describe('mcp-ai id styles (editable single-element selectors like `#hero { … 
   });
 });
 
-describe('mcp-ai style variants + element state', () => {
+describe('MCP style variants + element state', () => {
   it('an element read exposes availableVariants of its attached classes', () => {
     const el = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1')?.data as AIElementDetail;
     expect(el.availableVariants).toEqual({ box: ['lg'] });
@@ -232,7 +232,7 @@ describe('mcp-ai style variants + element state', () => {
   });
 });
 
-describe('mcp-ai patchDefinition (partial CSS merge)', () => {
+describe('MCP patchDefinition (partial CSS merge)', () => {
   it('merges one declaration, preserving the rest of the definition', async () => {
     const cap = capturing(buildSpace());
     const res = await apply(
@@ -327,7 +327,7 @@ describe('mcp-ai patchDefinition (partial CSS merge)', () => {
   });
 });
 
-describe('mcp-ai class ops never touch a global element style (false-positive guard)', () => {
+describe('MCP class ops never touch a global element style (false-positive guard)', () => {
   const spaceWithGlobal = (): Space => {
     const space = buildSpace();
     space.style.platform.desktop.button = {
@@ -378,7 +378,7 @@ describe('mcp-ai class ops never touch a global element style (false-positive gu
   });
 });
 
-describe('mcp-ai CSS shorthand expansion (I4)', () => {
+describe('MCP CSS shorthand expansion (I4)', () => {
   it('accepts border-radius / padding shorthands and persists them as longhands', async () => {
     const cap = capturing(buildSpace());
     const res = await apply(
@@ -415,7 +415,7 @@ describe('mcp-ai CSS shorthand expansion (I4)', () => {
 // The batched form of upsertDefinition: one op carries every class, keyed by name. It exists purely to stop a
 // widget from spending a third of its tokens on repeated `{"type":"upsertDefinition","ref":…}` envelopes, so what
 // matters is that it writes EXACTLY what the single ops write.
-describe('mcp-ai upsertDefinitions (one op, many classes)', () => {
+describe('MCP upsertDefinitions (one op, many classes)', () => {
   const batch = {
     type: 'upsertDefinitions',
     definitions: {
@@ -521,7 +521,7 @@ describe('mcp-ai upsertDefinitions (one op, many classes)', () => {
 // Edge cases of the batched form. The point of each: an empty batch is a mistake worth naming, an upsert REPLACES
 // (it does not merge), and every corner of a definition — breakpoints, states, variants, named slots — has to ride
 // through the batch exactly as it does through the single op.
-describe('mcp-ai upsertDefinitions edge cases', () => {
+describe('MCP upsertDefinitions edge cases', () => {
   it('names an empty batch instead of silently doing nothing', async () => {
     const cap = capturing(buildSpace());
     const res = await apply(
@@ -605,7 +605,7 @@ describe('mcp-ai upsertDefinitions edge cases', () => {
   });
 });
 
-describe('mcp-ai ancestor conditions (`.card:hover .icon` as part of the class)', () => {
+describe('MCP ancestor conditions (`.card:hover .icon` as part of the class)', () => {
   const hover = { card: { states: { hover: { desktop: { transform: 'translateX(3px)' } } } } };
 
   const withHover = async () => {

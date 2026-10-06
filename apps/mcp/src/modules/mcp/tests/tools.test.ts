@@ -8,7 +8,7 @@ import { tools } from '../tools';
 
 import type { Persisters, SearchResponse } from '../tools';
 
-describe('mcp-ai tool registry (defineTool descriptors)', () => {
+describe('MCP tool registry (defineTool descriptors)', () => {
   const ctx = () => ({ space: buildSpace(), env: 'main' as const, persisters: {} as Persisters });
 
   it('registers every tool with name, modes metadata and an execute', () => {
@@ -39,7 +39,7 @@ describe('mcp-ai tool registry (defineTool descriptors)', () => {
   });
 });
 
-describe('mcp-ai draft store (preview tokens)', () => {
+describe('MCP draft store (preview tokens)', () => {
   it('returns the stashed draft exactly once, then nothing', () => {
     const store = createMemoryDraftStore();
     const data = { schema: buildSpace().schema, style: buildSpace().style };
@@ -64,7 +64,7 @@ describe('mcp-ai draft store (preview tokens)', () => {
   });
 });
 
-describe('mcp-ai createPreview (draft build, pre-render error paths)', () => {
+describe('MCP createPreview (draft build, pre-render error paths)', () => {
   const configWith = (offline: unknown) =>
     ({ adapters: { getOfflineData: () => Promise.resolve(offline) } }) as unknown as Parameters<
       typeof createPreview
@@ -123,7 +123,7 @@ describe('mcp-ai createPreview (draft build, pre-render error paths)', () => {
   });
 });
 
-describe('mcp-ai plitzi_preview tool', () => {
+describe('MCP plitzi_preview tool', () => {
   const previewToolDef = () => tools.find(t => t.name === 'plitzi_preview');
 
   it('is registered as a read tool', () => {
@@ -152,7 +152,7 @@ describe('mcp-ai plitzi_preview tool', () => {
   });
 });
 
-describe('mcp-ai plitzi_screenshot tool', () => {
+describe('MCP plitzi_screenshot tool', () => {
   const screenshotToolDef = () => tools.find(t => t.name === 'plitzi_screenshot');
   const okPreview = {
     render: () =>

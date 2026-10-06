@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { buildSpace } from './helpers';
 import { validate } from '../tools';
 
-describe('mcp-ai CSS shorthand auto-expansion', () => {
+describe('MCP CSS shorthand auto-expansion', () => {
   it('expands overflow: hidden to overflow-x and overflow-y', () => {
     const r = validate(
       { operations: [{ type: 'upsertDefinition', ref: 'box', desktop: { overflow: 'hidden' } }] },
@@ -630,7 +630,7 @@ describe('mcp-ai CSS shorthand auto-expansion', () => {
   });
 });
 
-describe('mcp-ai malformed CSS shorthands', () => {
+describe('MCP malformed CSS shorthands', () => {
   it('accepts the elliptical border-radius form (expanded per corner)', () => {
     const r = validate(
       { operations: [{ type: 'upsertDefinition', ref: 'br', desktop: { 'border-radius': '10px / 5px' } }] },

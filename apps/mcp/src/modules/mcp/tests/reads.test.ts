@@ -22,7 +22,7 @@ import type {
 } from '../types';
 import type { Schema } from '@plitzi/sdk-shared';
 
-describe('mcp-ai reads (filesystem model)', () => {
+describe('MCP reads (filesystem model)', () => {
   it('derives element types from the observed space, never invented', () => {
     const reg = buildTypeRegistry(buildSpace().schema);
     expect(Object.keys(reg.types).sort()).toEqual(['container', 'page']);
@@ -178,7 +178,7 @@ describe('mcp-ai reads (filesystem model)', () => {
   });
 });
 
-describe('mcp-ai page skeleton route params', () => {
+describe('MCP page skeleton route params', () => {
   it('exposes route params derived from the slug', () => {
     const sk = readResource(
       (() => {
@@ -199,7 +199,7 @@ describe('mcp-ai page skeleton route params', () => {
   });
 });
 
-describe('mcp-ai page styles resource (all styles a page uses in one read)', () => {
+describe('MCP page styles resource (all styles a page uses in one read)', () => {
   it('collects the class definitions the page elements attach, deduplicated and with CSS', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/pages/home/styles');
     const styles = res?.data as AIPageStyles;
@@ -222,7 +222,7 @@ describe('mcp-ai page styles resource (all styles a page uses in one read)', () 
   });
 });
 
-describe('mcp-ai batch read (many uris in one call)', () => {
+describe('MCP batch read (many uris in one call)', () => {
   it('reads several uris at once, returning data or a teachable error per uri', () => {
     const res = read(
       { uris: ['plitzi://schema/main/elements/c1', 'plitzi://schema/main/elements/does-not-exist'] },
@@ -242,7 +242,7 @@ describe('mcp-ai batch read (many uris in one call)', () => {
   });
 });
 
-describe('mcp-ai slim primer (cold-start payload)', () => {
+describe('MCP slim primer (cold-start payload)', () => {
   it('drops schema-variable subValues (kept only on the dedicated resource)', () => {
     const primer = readResource(buildSpace(), 'main', 'plitzi://primer/main')?.data as {
       schemaVariables: Record<string, AISchemaVariable>;
@@ -265,7 +265,7 @@ describe('mcp-ai slim primer (cold-start payload)', () => {
   });
 });
 
-describe('mcp-ai resolved style inlined in element detail', () => {
+describe('MCP resolved style inlined in element detail', () => {
   it('inlines the CSS of each attached definition under resolvedStyle', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://schema/main/elements/c1');
     const el = res?.data as AIElementDetail;
@@ -311,7 +311,7 @@ describe('mcp-ai resolved style inlined in element detail', () => {
   });
 });
 
-describe('mcp-ai URI aliases under schema root', () => {
+describe('MCP URI aliases under schema root', () => {
   it('resolves a definition through the plitzi://schema/{env}/definitions/{ref} alias', () => {
     const canonical = readResource(buildSpace(), 'main', 'plitzi://definitions/main/box');
     const alias = readResource(buildSpace(), 'main', 'plitzi://schema/main/definitions/box');
@@ -331,7 +331,7 @@ describe('mcp-ai URI aliases under schema root', () => {
   });
 });
 
-describe('mcp-ai primer bootstrap (R4)', () => {
+describe('MCP primer bootstrap (R4)', () => {
   it('bundles guide, types, css and summaries in one read', () => {
     const res = readResource(buildSpace(), 'main', 'plitzi://primer/main');
     const primer = res?.data as {
@@ -351,7 +351,7 @@ describe('mcp-ai primer bootstrap (R4)', () => {
   });
 });
 
-describe('mcp-ai primer stays readable on a large space', () => {
+describe('MCP primer stays readable on a large space', () => {
   // A space grows the primer's summaries with it — pages with pages, definitions with style classes, interactions
   // with flows — and their sum does not converge. Past the budget the tail becomes pointers to the resources that
   // already serve those sections whole, so the read that STARTS the work stays a read an agent can finish.
@@ -413,7 +413,7 @@ describe('mcp-ai primer stays readable on a large space', () => {
   });
 });
 
-describe('mcp-ai resource error messages (I2)', () => {
+describe('MCP resource error messages (I2)', () => {
   it('teaches valid templates for a malformed URI shape', () => {
     const msg = resourceErrorMessage('main', 'plitzi://schema/main/element/home/c1');
     const parsed = JSON.parse(msg) as { error: string; validTemplates: string[] };

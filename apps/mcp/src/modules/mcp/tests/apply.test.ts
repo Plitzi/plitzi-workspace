@@ -9,7 +9,7 @@ import type { Operation } from '../tools';
 import type { AIPageSkeleton } from '../types';
 import type { SSRAdapters } from '@plitzi/sdk-shared';
 
-describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
+describe('MCP apply (writes + dryRun + diff + full elements + OCC)', () => {
   const ops: Operation[] = [
     { type: 'upsertDefinition', ref: 'btn-hero', desktop: { 'background-color': '#3b82f6' } },
     {
@@ -128,7 +128,7 @@ describe('mcp-ai apply (writes + dryRun + diff + full elements + OCC)', () => {
   });
 });
 
-describe('mcp-ai schema integrity gate (validateSchema)', () => {
+describe('MCP schema integrity gate (validateSchema)', () => {
   it('rejects a batch that would create a cycle, and rolls back', async () => {
     const cap = capturing(buildSpace());
     const res = await apply(
@@ -161,7 +161,7 @@ describe('mcp-ai schema integrity gate (validateSchema)', () => {
   });
 });
 
-describe('mcp-ai AI-facing contract', () => {
+describe('MCP AI-facing contract', () => {
   it('parses valid operations and rejects unknown types via zod', () => {
     expect(
       operation.safeParse({ type: 'upsertElement', pageRef: 'home', element: { ref: 'x', type: 'container' } }).success
@@ -194,7 +194,7 @@ describe('mcp-ai AI-facing contract', () => {
 // repeatElement: one template + its rows, instead of N near-identical subtrees. It is sugar — the batch is rewritten
 // into the upsertElement it stands for BEFORE validation — so these tests pin the two things that makes it usable:
 // the refs a row gets (predictable, so a later op can address them) and what happens to a row missing a field.
-describe('mcp-ai repeatElement (list from a template + rows)', () => {
+describe('MCP repeatElement (list from a template + rows)', () => {
   const repeat: Operation = {
     type: 'repeatElement',
     pageRef: 'home',
@@ -352,7 +352,7 @@ describe('mcp-ai repeatElement (list from a template + rows)', () => {
 
 // The rest of what a real repeat runs into: where it hangs the wrapper, the shapes a placeholder can take, whether
 // a generated row is addressable afterwards, and the two ways a batch of rows can be wrong.
-describe('mcp-ai repeatElement edge cases', () => {
+describe('MCP repeatElement edge cases', () => {
   const rows = (op: Partial<Operation> = {}): Operation =>
     ({
       type: 'repeatElement',

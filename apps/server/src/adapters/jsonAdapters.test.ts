@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createJsonAdapters } from './jsonAdapters';
+import { offlineDataOf } from '../modules/ssr/testing/offlineData';
 
 const spaceWithTitle = (title: string) => ({ schema: { settings: { title } }, style: {} });
 
@@ -46,19 +47,56 @@ describe('createJsonAdapters — reading the space', () => {
     const stamp = new Date('2026-01-01T00:00:00Z');
     writeFileSync(file, JSON.stringify(spaceWithTitle('first'), null, 2));
     utimesSync(file, stamp, stamp);
-    const { getOfflineData, saveOfflineData } = createJsonAdapters({ offlineData: file });
+    const { getOfflineData, saveSchema } = createJsonAdapters({ offlineData: file });
     const read = await getOfflineData(1, 'main');
     if (!read) {
       throw new Error('the space did not load');
     }
 
     // The same bytes, stamped with the same time: what a save inside the same clock tick looks like to a stat.
-    await saveOfflineData?.(1, 'main', { ...read });
+    await saveSchema?.(1, 'main', { ...read.schema }, { batch: 'test' });
     utimesSync(file, stamp, stamp);
 
     const after = await getOfflineData(1, 'main');
 
     expect(after).not.toBe(read);
     expect(after).toEqual(read);
+  });
+});
+
+describe('createJsonAdapters — the MCP over the same file', () => {
+  it('reads the schema and the style out of it', async () => {
+    const { getSchema, getStyle } = createJsonAdapters({ offlineData: file });
+
+    expect(await getSchema?.(1, 'main')).toEqual({ settings: { title: 'first' } });
+    expect(await getStyle?.(1, 'main')).toEqual({});
+  });
+
+  it('writes each document back without touching the other', async () => {
+    const { getOfflineData, saveSchema, saveStyle } = createJsonAdapters({ offlineData: file });
+    const read = await getOfflineData(1, 'main');
+    if (!read) {
+      throw new Error('the space did not load');
+    }
+
+    await saveSchema?.(
+      1,
+      'main',
+      { ...read.schema, settings: { ...read.schema.settings, customCss: '.saved{}' } },
+      { batch: 'test' }
+    );
+    await saveStyle?.(1, 'main', { ...read.style, cache: '.a{}' }, { batch: 'test' });
+
+    expect(await getOfflineData(1, 'main')).toEqual({
+      schema: { settings: { title: 'first', customCss: '.saved{}' } },
+      style: { cache: '.a{}' }
+    });
+  });
+
+  it('offers no write for a space it was handed rather than a file', () => {
+    const adapters = createJsonAdapters({ offlineData: offlineDataOf() });
+
+    expect(adapters.saveSchema).toBeUndefined();
+    expect(adapters.saveStyle).toBeUndefined();
   });
 });

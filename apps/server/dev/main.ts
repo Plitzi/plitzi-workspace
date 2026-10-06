@@ -94,20 +94,10 @@ const getRscData = async ({ user, ids }: SSRRscContext): Promise<SSRRscData> => 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Persists writes back to the sample space (git-restore to reset). A real platform adapter must also recompute
-// style.cache; the SDK renderer reads that cache.
-const saveOfflineData = (_spaceId: number, _environment: string, data: OfflineDataRaw): Promise<void> => {
-  writeFileSync(spacePath(), JSON.stringify({ schema: data.schema }, null, 2));
-  writeFileSync(stylePath(), JSON.stringify(data.style, null, 2));
-
-  return Promise.resolve();
-};
-
 const adapters: SSRPageAdapters = {
   getOfflineData,
   getSpaceDeployment,
   getRscData,
-  saveOfflineData,
   getGrant,
   getSchema,
   getStyle,

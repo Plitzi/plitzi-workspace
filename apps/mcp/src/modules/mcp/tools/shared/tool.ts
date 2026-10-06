@@ -20,7 +20,7 @@ export interface ToolContext {
   spaceId?: number;
   preview?: PreviewClient;
   screenshot?: ScreenshotClient;
-  /** Where a rendered widget loads its external resources from, when the host wired one (see `mcpAi.proxy`). Only
+  /** Where a rendered widget loads its external resources from, when the host wired one (see `McpOptions.proxy`). Only
    *  plitzi_render uses it: a widget renders inside the host's sandbox, where an undeclared origin cannot be
    *  reached at all. */
   proxy?: ResourceProxy;

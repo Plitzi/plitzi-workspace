@@ -2,7 +2,14 @@ import { readFileSync, statSync, writeFileSync } from 'node:fs';
 
 import { serverLog } from '../helpers/serverLog';
 
-import type { OfflineDataRaw, SSRPageAdapters, SSRRequest, SSRSpaceDeployment } from '@plitzi/sdk-shared';
+import type {
+  OfflineDataRaw,
+  Schema,
+  SSRPageAdapters,
+  SSRRequest,
+  SSRSpaceDeployment,
+  Style
+} from '@plitzi/sdk-shared';
 
 /**
  * Where a space comes from, and nothing else. Who is looking at it is `createAuthAdapters` (or the auth kernel's
@@ -12,7 +19,7 @@ export type JsonAdaptersConfig = {
   /**
    * The space: a path to a `{ schema, style }` JSON, a function returning one per request, or the data itself for a
    * consumer that already holds it (composed at startup, fetched once, built in a test). Only a path can be written
-   * back to, so `saveOfflineData` is offered only when one was given.
+   * back to, so `saveSchema` and `saveStyle` are offered only when one was given.
    */
   offlineData: OfflineDataRaw | string | ((spaceId: number, environment: string, revision?: number) => string);
   deployment?: string | SSRSpaceDeployment | Record<string, SSRSpaceDeployment>;
@@ -74,17 +81,31 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters 
     }
   };
 
-  const saveOfflineData = (spaceId: number, environment: string, data: OfflineDataRaw): Promise<void> => {
+  // The MCP reads and writes the schema and the style as separate documents; here both live in the one file.
+  const getSchema = async (spaceId: number, environment: string): Promise<Schema | undefined> =>
+    (await getOfflineData(spaceId, environment))?.schema;
+
+  const getStyle = async (spaceId: number, environment: string): Promise<Style | undefined> =>
+    (await getOfflineData(spaceId, environment))?.style;
+
+  const writeBack = (spaceId: number, environment: string, change: Partial<OfflineDataRaw>): Promise<void> => {
     const filePath = pathFor(spaceId, environment);
     if (!filePath) {
       return Promise.resolve();
     }
 
-    writeFileSync(filePath, JSON.stringify(data, null, 2));
+    const current = json.read(filePath) as OfflineDataRaw;
+    writeFileSync(filePath, JSON.stringify({ ...current, ...change }, null, 2));
     json.forget(filePath);
 
     return Promise.resolve();
   };
+
+  const saveSchema = (spaceId: number, environment: string, schema: Schema): Promise<void> =>
+    writeBack(spaceId, environment, { schema });
+
+  const saveStyle = (spaceId: number, environment: string, style: Style): Promise<void> =>
+    writeBack(spaceId, environment, { style });
 
   const getSpaceDeployment = (req: SSRRequest): Promise<SSRSpaceDeployment> => {
     const { deployment } = config;
@@ -121,6 +142,8 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters 
   return {
     getOfflineData,
     getSpaceDeployment,
-    ...(canSave ? { saveOfflineData } : {})
+    getSchema,
+    getStyle,
+    ...(canSave ? { saveSchema, saveStyle } : {})
   };
 };

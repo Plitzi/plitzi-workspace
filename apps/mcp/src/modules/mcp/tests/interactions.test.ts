@@ -26,7 +26,7 @@ const clickTrigger = (next: string) => ({
   }
 });
 
-describe('mcp-ai interactions', () => {
+describe('MCP interactions', () => {
   // Interactions are wired by the element's id, which is also how the flow is addressed here.
   // A button beside the container: what an element setState writes has to be something the element reads, and a
   // button reads `content` and `disabled`.

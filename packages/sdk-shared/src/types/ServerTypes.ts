@@ -377,10 +377,6 @@ export type SSRAdapters = {
   /** Which space, environment and revision a request resolves to. Optional here for the same reason as
    *  `getOfflineData`: MCP resolves its space from the request token (`getGrant`), never from the host. */
   getSpaceDeployment?: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
-  /** Persist a space mutated by the mcp-ai `apply` tool — store it as given; derived caches (notably `style.cache`)
-   *  arrive already compiled. When omitted, mcp-ai runs read/preview/validate only and `apply` reports
-   *  `persisted: false`. */
-  saveOfflineData?: (spaceId: number, environment: string, data: OfflineDataRaw) => Promise<void>;
   /** Resolve the grant the MCP request operates under, from the verified `Authorization` bearer. The consumer
    *  owns the JWT secret and the authorization model, so it decides here; the MCP service stays stateless.
    *  Returns undefined when the token is missing or invalid. Required for the `mcp` service to serve any

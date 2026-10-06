@@ -48,7 +48,7 @@ const withLayout = async (): Promise<Space> => {
   return cap.saved();
 };
 
-describe('mcp-ai shared layouts', () => {
+describe('MCP shared layouts', () => {
   it('lists the shells and the pages rendered inside each', async () => {
     const space = await withLayout();
     const layouts = readResource(space, 'main', 'plitzi://schema/main/layouts')?.data as AILayoutSummary[];

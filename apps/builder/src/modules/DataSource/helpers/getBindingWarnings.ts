@@ -4,7 +4,7 @@ import type { BindingTransformer, SourceMeta } from '@plitzi/sdk-shared';
 
 // Mirrors the interaction node-warning convention (see Interactions/.../nodeWarnings). `danger` — the binding is
 // broken and produces nothing at runtime (no source, or a source out of scope). `warning` — the binding still runs
-// but is misconfigured (an unknown transformer that gets skipped). Kept independent of the mcp-ai validator: the
+// but is misconfigured (an unknown transformer that gets skipped). Kept independent of the MCP's validator: the
 // builder checks against the sources it actually renders from.
 export type WarningLevel = 'warning' | 'danger';
 
@@ -37,7 +37,7 @@ export type GetBindingWarningsProps = {
 };
 
 // Problems with a SAVED binding, each tagged with a severity, surfaced in the builder so the user sees a binding is
-// malformed. Mirrors the mcp-ai validator: a source not in scope for this element never resolves, and an unknown
+// malformed. Mirrors the MCP's validator: a source not in scope for this element never resolves, and an unknown
 // transformer action is silently skipped.
 const getBindingWarnings = ({
   source = '',

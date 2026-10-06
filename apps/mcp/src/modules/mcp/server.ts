@@ -45,10 +45,10 @@ export interface McpServerContext {
   /** Structured request-log sink. When set, every tool call and resource read emits an McpLogEvent to it (the
    *  consumer renders them); otherwise logging falls back to the console when MCP_DEBUG=1. */
   logger?: ServerLogger;
-  /** May the plitzi_render view paint from tool arguments the host is still streaming (see `mcpAi.renderStreaming`)?
-   *  Defaults to true. */
+  /** May the plitzi_render view paint from tool arguments the host is still streaming (see
+   *  `McpOptions.renderStreaming`)? Defaults to true. */
   renderStreaming?: boolean;
-  /** Where a rendered widget loads everything external from (see `mcpAi.proxy`). It reaches two places: the render
+  /** Where a rendered widget loads everything external from (see `McpOptions.proxy`). It reaches two places: the render
    *  tool, which rewrites the URLs the agent authored, and the App's CSP, which declares the origin those URLs
    *  point at. Absent → neither happens, and a widget's resources load only where the host allows their origin. */
   proxy?: ResourceProxy;

@@ -308,7 +308,7 @@ server.listen(3001);
 |---|---|---|
 | `offlineData` | `string` | Path to a single JSON file used for every request. |
 | `offlineData` | `(spaceId, environment, revision?) => string` | Function returning the path for the requested space. |
-| `offlineData` | `OfflineDataRaw` | The space itself, for a consumer that already holds it. Read-only: `saveOfflineData` is offered only for a path. |
+| `offlineData` | `OfflineDataRaw` | The space itself, for a consumer that already holds it. Read-only: `saveSchema` and `saveStyle` are offered only for a path. |
 | `deployment` | `string` | Path to a JSON file containing an `SSRSpaceDeployment` object. |
 | `deployment` | `SSRSpaceDeployment` | Inline deployment object used for every request. |
 | `deployment` | `Record<hostname, SSRSpaceDeployment>` | Per-hostname map. Use `'*'` as a catch-all. |

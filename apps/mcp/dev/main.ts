@@ -24,7 +24,7 @@ const stylePath = () => path.resolve(__dirname, 'sample', 'style.json');
 const readSchema = (): Schema => (JSON.parse(readFileSync(spacePath(), 'utf-8')) as { schema: Schema }).schema;
 const readStyle = (): Style => JSON.parse(readFileSync(stylePath(), 'utf-8')) as Style;
 
-// mcp-ai reads and writes schema and style as separate documents (see SSRAdapters). These file-backed adapters
+// The MCP reads and writes schema and style as separate documents (see SSRAdapters). These file-backed adapters
 // always resolve spaceId=1, and writes land back in the sample space — git-restore it to reset a session.
 const getGrant = () => Promise.resolve({ spaceId: 1, scope: 'agent' as const, canWrite: true });
 const getSchema = (): Promise<Schema> => Promise.resolve(readSchema());
@@ -40,7 +40,7 @@ const saveStyle = (_spaceId: number, _environment: string, style: Style): Promis
   return Promise.resolve();
 };
 
-// getOfflineData and getSpaceDeployment are what an SSR renderer reads; mcp-ai calls neither, but the adapter
+// getOfflineData and getSpaceDeployment are what an SSR renderer reads; the MCP calls neither, but the adapter
 // shape is shared by every Plitzi server.
 const getOfflineData = () => Promise.resolve({ schema: readSchema(), style: readStyle() });
 const getSpaceDeployment = (): Promise<SSRSpaceDeployment> =>

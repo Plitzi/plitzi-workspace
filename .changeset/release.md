@@ -38,6 +38,10 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
 - **Plitzi's own deployment no longer offers the `ai.complete` task** to flows.
 - **Each MCP tool says whether it only reads** (`readOnlyHint`, from the tool's `access`), so a host can run a read
   without asking and ask before a write. Until now `access` was read only by the builder's chat.
+- **The MCP works over the JSON adapters.** `createJsonAdapters` offers `getSchema` and `getStyle`, and — for a space
+  read from a path — `saveSchema` and `saveStyle`, each writing its document back into the file. **Breaking**:
+  `saveOfflineData` is gone from `SSRAdapters`; nothing called it, and it was the JSON adapters' only write, so an MCP
+  over them could neither read nor save.
 
 ## Server data: one request per question, the newest winning, and a way to stop
 

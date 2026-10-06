@@ -34,7 +34,7 @@ const ErrorPanel = ({ title, details }: { title: string; details: string }) => (
  *  wholesale when the result lands. A host that streams nothing paints none of this and keeps the static text. */
 const SKELETON_BAR_WIDTHS = ['92%', '78%', '85%', '64%', '88%', '72%'];
 
-// The deployment's own switch (mcpAi.renderStreaming), handed over by the page. Absent means on: a page built
+// The deployment's own switch (McpOptions.renderStreaming), handed over by the page. Absent means on: a page built
 // before the setting existed carries none, and a host that streams no arguments paints the same either way.
 const streamingEnabled =
   (globalThis as { __PLITZI_VIEW__?: { streaming?: boolean } }).__PLITZI_VIEW__?.streaming !== false;

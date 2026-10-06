@@ -51,7 +51,7 @@ const withCard = async (): Promise<Space> => {
   return space;
 };
 
-describe('mcp-ai components', () => {
+describe('MCP components', () => {
   it('declares a component, fills it through pageRef, and writes its tree beside the pages', async () => {
     const space = await withCard();
 

@@ -59,7 +59,7 @@ const provider = (props: Record<string, unknown>, runtime?: 'server' | 'client' 
   element: { ref: 'posts-api', type: 'apiContainer', ...(runtime ? { runtime } : {}), props }
 });
 
-describe('mcp-ai connectors', () => {
+describe('MCP connectors', () => {
   it('creates a connector and persists it as its own row, without touching the schemas', async () => {
     const space = buildSpace();
     const { persisters, saved } = capturing(space);
@@ -188,7 +188,7 @@ describe('mcp-ai connectors', () => {
   });
 });
 
-describe('mcp-ai provider elements (the connector half that lives in the schema)', () => {
+describe('MCP provider elements (the connector half that lives in the schema)', () => {
   it('stores runtime on create and reports it back on an element read', async () => {
     const space = withConnector();
     const { persisters, saved } = capturing(space);
@@ -282,7 +282,7 @@ describe('mcp-ai provider elements (the connector half that lives in the schema)
   });
 });
 
-describe('mcp-ai connector op vocabulary', () => {
+describe('MCP connector op vocabulary', () => {
   // plitzi_render authors an offline widget — no space, no server, nothing to persist a connector row to — so
   // offering the op there would advertise a write that silently goes nowhere (and carry the manifest schemas into
   // every listing for nothing).
@@ -295,7 +295,7 @@ describe('mcp-ai connector op vocabulary', () => {
   });
 });
 
-describe('mcp-ai connector deletion', () => {
+describe('MCP connector deletion', () => {
   it('names the elements a deletion would leave without data', async () => {
     const space = withConnector();
     const { persisters, saved } = capturing(space);

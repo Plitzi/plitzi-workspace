@@ -11,7 +11,7 @@ import type { ChannelDeclarations, OfflineDataRaw, SSRServer } from '@plitzi/sdk
  * pipeline — space, auth, channels — the stream goes through.
  */
 
-const PORT = 39314;
+const PORT = 39316;
 const BASE = `127.0.0.1:${PORT}`;
 
 const channels: ChannelDeclarations = {

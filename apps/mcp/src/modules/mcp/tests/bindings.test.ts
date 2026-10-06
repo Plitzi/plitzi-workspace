@@ -76,7 +76,7 @@ const scopeSpace = (): Space => ({
   actions: []
 });
 
-describe('mcp-ai binding source scope (descendants only)', () => {
+describe('MCP binding source scope (descendants only)', () => {
   const bind = (ref: string) =>
     validate(
       {
@@ -108,7 +108,7 @@ describe('mcp-ai binding source scope (descendants only)', () => {
   });
 });
 
-describe('mcp-ai binding transformers', () => {
+describe('MCP binding transformers', () => {
   const withTransformer = (action: string, params: Record<string, string>) =>
     validate(
       {
@@ -151,7 +151,7 @@ describe('mcp-ai binding transformers', () => {
   });
 });
 
-describe('mcp-ai data bindings', () => {
+describe('MCP data bindings', () => {
   it('upserts, patches and deletes a binding; reads reflect each step', async () => {
     const cap = capturing(scopeSpace());
     let res = await apply(
