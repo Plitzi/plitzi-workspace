@@ -5,10 +5,11 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createAuth } from './auth/createAuth';
 import { createServer } from './createServer';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
+import { offlineDataOf } from '../modules/ssr/testing/offlineData';
 
 import type { AccountAdapters, AccountRecord } from './auth/api';
 import type { IdentityAdapters } from './auth/identity';
-import type { OfflineDataRaw, SSRServer, SSRSession } from '@plitzi/sdk-shared';
+import type { SSRServer, SSRSession } from '@plitzi/sdk-shared';
 
 /**
  * The auth flows over real HTTP, through the pipeline a deployment actually gets.
@@ -95,7 +96,7 @@ const auth = createAuth({
   }
 });
 
-const offlineData = { schema: { elements: {} }, style: {} } as unknown as OfflineDataRaw;
+const offlineData = offlineDataOf();
 
 let server: SSRServer;
 
@@ -206,6 +207,25 @@ afterAll(async () => {
 });
 
 describe('createServer with auth', () => {
+  /**
+   * The page has to be told where it signs in, or a space that declares nothing gets a form that posts nowhere: the
+   * flows answer here, and nothing the page could read said so.
+   */
+  it('tells the pages it renders where they sign in', async () => {
+    const html = await (await fetch(`${BASE}/`)).text();
+
+    expect(html).toContain(
+      JSON.stringify({
+        userProvider: 'basic',
+        loginUrl: '/auth/login',
+        userUrl: '/auth/session',
+        logoutUrl: '/auth/logout',
+        refreshUrl: '/auth/refresh',
+        sessionHintCookie: 'test_session_hint'
+      })
+    );
+  });
+
   it('answers a sign-in with the grant, not just a status', async () => {
     const res = await post('/auth/login', { username: 'ada', password: 'password' });
 

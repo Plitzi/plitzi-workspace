@@ -34,6 +34,10 @@
       "types": "./dist/helpers/publishedSession.d.ts",
       "import": "./dist/helpers/publishedSession.mjs"
     },
+    "./helpers/resolveAuthSettings": {
+      "types": "./dist/helpers/resolveAuthSettings.d.ts",
+      "import": "./dist/helpers/resolveAuthSettings.mjs"
+    },
     "./helpers/sessionHint": {
       "types": "./dist/helpers/sessionHint.d.ts",
       "import": "./dist/helpers/sessionHint.mjs"
@@ -96,7 +100,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.31",
+    "@plitzi/plitzi-ui": "^1.6.32",
     "@plitzi/sdk-navigation": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"
   },

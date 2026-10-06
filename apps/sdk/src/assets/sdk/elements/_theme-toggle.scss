@@ -1,0 +1,32 @@
+@mixin styles {
+  // Real buttons with the browser's own look taken off — a grey, square control on a page that drew none of it. They
+  // keep the colour and the type of the words around them; a class gives them their own, and the chosen option is the
+  // option slot's `current` state.
+  .plitzi-component__theme-toggle,
+  .plitzi-component__theme-toggle-option {
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-top: 0;
+    display: inline-flex;
+    align-items: center;
+    background-color: transparent;
+    color: inherit;
+    font-style: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+  }
+
+  .plitzi-component__theme-toggle-option {
+    row-gap: 4px;
+    column-gap: 4px;
+  }
+}

@@ -1,6 +1,6 @@
 import { blankTemplateFiles, catalogTemplateFiles, emptySpaceSource } from '@plitzi/sdk-authoring';
 
-import { AUTHOR_FILE, DATA_DIR, SPACE_DIR, SPACE_ENTRY } from './paths';
+import { AUTHOR_FILE, SPACE_DIR, SPACE_ENTRY } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { PluginHostOptions } from '@plitzi/sdk-authoring';
@@ -17,67 +17,28 @@ import type { PluginHostOptions } from '@plitzi/sdk-authoring';
  * signing up gives you cannot come apart.
  */
 
-/** What the server-mode script adds: the project's own data, which only its server reads. */
-const SERVER_DATA_NOTE = ', and a browser asking for the data in src/data is refused';
-const DATA_URL = `'../${DATA_DIR}/'`;
-
-/** One named import line of the generated script. */
-const namedImports = (names: readonly string[], from: string): string =>
-  `import { ${names.join(', ')} } from '${from}';`;
-
 /**
  * Authors the declaration and says what it found: the check an agent and a person run after every change.
  *
  * It writes nothing — the space is \`src/space/\`, and the server and the browser both author it at boot. Only the
- * server asks for the documents, while developing: \`--out <file>\` writes them where it re-reads them on a save.
+ * server asks for the documents, while developing: it runs this on a save with \`--ipc\`, and is handed them back.
  */
-const authorScript = ({
-  mode
-}: Pick<
-  CreateAnswers,
-  'mode'
->): string => `import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+const authorScript = (): string => `import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import path from 'node:path';
 
 import { authorSpace, planFixes, refusalOf, SpaceRefusedError } from '@plitzi/sdk-authoring';
-${namedImports(mode === 'server' ? ['pluginDeclarations', 'projectData', 'publicData'] : ['pluginDeclarations', 'publicData'], '@plitzi/sdk-authoring/node')}
+import { projectAuthoring } from '@plitzi/sdk-authoring/node';
 
 import { space } from '../${SPACE_ENTRY}';
 
 // \`--json\` answers in one object, for a tool or an agent; otherwise one line on success, the problems on failure.
 const json = process.argv.includes('--json');
-// \`--out <file>\`: where to write the documents — the server's, while developing. Left out, nothing is written.
-const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : undefined;
+// \`--ipc\`: the project's server ran this on a save, while developing, and is handed the documents it serves next.
+const ipc = process.argv.includes('--ipc');
 
-/**
- * The element types of the plugins the project runs as they were built (\`vendor/plugins/<type>/\`, a project made from
- * a space): each folder's type and every element its manifest provides. None in most projects.
- */
-const builtTypes = (): string[] => {
-  const dir = new URL('../vendor/plugins/', import.meta.url);
-  try {
-    return readdirSync(dir, { withFileTypes: true })
-      .filter(entry => entry.isDirectory())
-      .flatMap(entry => {
-        const manifest: unknown = JSON.parse(readFileSync(new URL(\`\${entry.name}/plugin-manifest.json\`, dir), 'utf-8'));
-        const schema =
-          typeof manifest === 'object' && manifest !== null && 'pluginSchema' in manifest ? manifest.pluginSchema : undefined;
-
-        return [entry.name, ...(typeof schema === 'object' && schema !== null ? Object.keys(schema) : [])];
-      });
-  } catch {
-    return [];
-  }
-};
-
-// What the space is checked against: its plugins' declarations, the built ones' types, and the files a provider reads
-// — so a binding onto a path one of them does not have is said here${mode === 'server' ? SERVER_DATA_NOTE : ''}.
-const options = {
-  plugins: await pluginDeclarations(new URL('../src/plugins/', import.meta.url)),
-  pluginTypes: builtTypes(),${mode === 'server' ? `\n  serverData: projectData(new URL(${DATA_URL}, import.meta.url)),` : ''}
-  data: publicData(new URL('../public/', import.meta.url))
-};
+// What the space is checked against — what the server checks it against too: its plugins' declarations, the built
+// ones' types, and the files a provider reads, so a binding onto a path one of them does not have is said here.
+const options = await projectAuthoring(new URL('..', import.meta.url));
 
 /** How many of the warnings and suggestions said have one fix \`plitzi fix\` can write in this source — and the line that says so. */
 const fixableHint = (): string | undefined => {
@@ -128,11 +89,6 @@ const outdated = (): { skill?: string; files?: string; sdk: string } | undefined
 
 try {
   const { schema, style, warnings, suggestions } = authorSpace(space, options);
-  if (out) {
-    mkdirSync(path.dirname(out), { recursive: true });
-    writeFileSync(out, \`\${JSON.stringify({ schema, style }, null, 2)}\\n\`);
-  }
-
   const behind = outdated();
   if (json) {
     console.log(
@@ -169,6 +125,11 @@ try {
       \`ok · \${schema.pages.length} pages · \${warnings.length} warnings · \${suggestions.length} suggestions\`
     );
   }
+
+  // Last: an open channel keeps this process alive, so it is let go once the documents are on their way.
+  if (ipc) {
+    process.send?.({ schema, style }, () => process.disconnect?.());
+  }
 } catch (error) {
   // The message is the whole report — every problem, where it was written and what to change. The stack would only
   // point inside @plitzi/sdk-authoring.
@@ -185,6 +146,10 @@ try {
   }
 
   process.exitCode = 1;
+  // Nothing to hand over: the server keeps serving the last space that authored.
+  if (ipc) {
+    process.disconnect?.();
+  }
 }
 `;
 
@@ -221,14 +186,14 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
   if (answers.template === 'catalog') {
     return {
       ...catalogTemplateFiles({ name: answers.name, mode: answers.mode }),
-      [AUTHOR_FILE]: authorScript(answers)
+      [AUTHOR_FILE]: authorScript()
     };
   }
 
   if (answers.template === 'blank') {
     return {
       [SPACE_ENTRY]: emptySpaceSource({ name: answers.name }),
-      [AUTHOR_FILE]: authorScript(answers),
+      [AUTHOR_FILE]: authorScript(),
       // A project with no server keeps its data where the browser fetches it; a server's is `src/data/` (`serverFiles`).
       ...(answers.mode === 'client' ? { 'public/data/.gitkeep': '' } : {})
     };
@@ -236,7 +201,7 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
 
   return {
     ...blankTemplateFiles({ name: answers.name, dir: SPACE_DIR, plugin: pluginHost(answers) }),
-    [AUTHOR_FILE]: authorScript(answers),
+    [AUTHOR_FILE]: authorScript(),
     // As the project's own formatter writes it — a short list on one line — so its first `format` changes nothing.
     ...(answers.mode === 'client'
       ? {

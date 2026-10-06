@@ -24,20 +24,38 @@ const codesOf = (written: string | undefined): Set<string> | 'all' => {
   return codes.length === 0 ? 'all' : new Set(codes);
 };
 
+/** One `plitzi-lint-disable` comment: where it is written, what it reaches and the codes it names. */
+export interface Directive {
+  /** From 1, as a finding's. */
+  line: number;
+  column: number;
+  /** `file` for the whole file; otherwise the one line it is about. */
+  scope: 'file' | 'line' | 'next-line';
+  codes: Set<string> | 'all';
+}
+
+export const directivesIn = (text: string): Directive[] =>
+  [...text.matchAll(DIRECTIVE)].map(match => {
+    const before = text.slice(0, match.index);
+    const scope = match.at(1);
+
+    return {
+      line: before.split('\n').length,
+      column: match.index - before.lastIndexOf('\n'),
+      scope: scope === undefined ? 'file' : scope === '-next-line' ? 'next-line' : 'line',
+      codes: codesOf(match.at(2))
+    };
+  });
+
 const directivesOf = (text: string): Disabled => {
   const disabled: Disabled = { file: { all: false, codes: new Set() }, lines: new Map() };
-  for (const match of text.matchAll(DIRECTIVE)) {
-    const line = text.slice(0, match.index).split('\n').length;
-    const codes = codesOf(match.at(2));
-    const scope = match.at(1);
-    if (scope === undefined) {
-      if (codes === 'all') {
-        disabled.file.all = true;
-      } else {
-        codes.forEach(code => disabled.file.codes.add(code));
-      }
+  for (const { line, scope, codes } of directivesIn(text)) {
+    if (scope !== 'file') {
+      disabled.lines.set(scope === 'next-line' ? line + 1 : line, codes);
+    } else if (codes === 'all') {
+      disabled.file.all = true;
     } else {
-      disabled.lines.set(scope === '-next-line' ? line + 1 : line, codes);
+      codes.forEach(code => disabled.file.codes.add(code));
     }
   }
 
@@ -46,7 +64,8 @@ const directivesOf = (text: string): Disabled => {
 
 /**
  * The findings the source did not say to leave out. Only this command's own: what authoring suggests is quieted on the
- * element (`quiet: ['repeated-shape']`), where the builder and the MCP read it too.
+ * element (`quiet: ['repeated-shape']`), where the builder and the MCP read it too — a comment naming one is a finding
+ * of its own (`disable-names-suggestion`).
  */
 export const withoutDisabled = (findings: readonly LintFinding[], files: readonly SpaceSourceFile[]): LintFinding[] => {
   const byFile = new Map(files.map(source => [source.file, directivesOf(source.text)]));

@@ -1,12 +1,18 @@
 import queryCache from './queryCache';
+import { refreshServerQueries } from './serverQueries';
 
 import type { QueryMeta } from './queryCache';
+import type { ServerQuery } from './serverQueries';
 
 export { QueryCache, GC_TIME, queryId, queryPath } from './queryCache';
+export { registerServerQuery } from './serverQueries';
 export { default as useQuery } from './useQuery';
+export { default as useServerQuery } from './useServerQuery';
 
 export type { QueriesState, QueryEntry, QueryMeta, QueryObserverOptions } from './queryCache';
+export type { ServerQuery } from './serverQueries';
 export type { UseQueryOptions, UseQueryResult } from './useQuery';
+export type { UseServerQueryOptions } from './useServerQuery';
 
 /** Relative URLs resolve against the page; outside a browser there is no page, and only absolute ones resolve. */
 const base = (): string | undefined => (typeof location === 'undefined' ? undefined : location.href);
@@ -20,7 +26,18 @@ const originOf = (url: string): string | undefined => {
 };
 
 /**
- * Every query that could have read what `url` just wrote: the ones on the same origin.
+ * A query matcher put to the server queries: a server provider reads as a query tagged with its own id and asking
+ * its `query`. One with no URL — a connector, an action — cannot be picked by URL at all: read as asking for nothing,
+ * it would be the prefix of every URL.
+ */
+const serverMatcher =
+  (matches: (meta: QueryMeta) => boolean, byUrl: boolean) =>
+  ({ id, url }: ServerQuery): boolean =>
+    (!byUrl || url !== undefined) && matches({ url: url ?? '', tags: [id] });
+
+/**
+ * Every query that could have read what `url` just wrote: the ones on the same origin — a server provider's too, when
+ * it reads a URL.
  *
  * The origin, not the path: `POST /api/cart/items` changes what `GET /api/cart` answers, and no path rule tells
  * those apart from two unrelated resources. Another origin is another backend, and nothing it writes shows up here.
@@ -31,7 +48,11 @@ export const invalidateQueriesForWrite = (url: string): Promise<void> => {
     return Promise.resolve();
   }
 
-  return queryCache.invalidate((meta: QueryMeta) => originOf(meta.url) === origin);
+  const sameOrigin = (meta: QueryMeta) => originOf(meta.url) === origin;
+
+  return Promise.all([queryCache.invalidate(sameOrigin), refreshServerQueries(serverMatcher(sameOrigin, true))]).then(
+    () => undefined
+  );
 };
 
 /** Ids written as a step writes them — `orders, members` — into a list, blanks dropped. */
@@ -76,9 +97,21 @@ export const matchesQuery = ({ url, elements }: QuerySelector) => {
     (!elements?.length || elements.some(id => meta.tags?.includes(id) ?? false));
 };
 
-/** The `invalidateQueries` step, and anything else that knows which data changed. */
-export const invalidateQueries = (selector: QuerySelector = {}): Promise<void> =>
-  selector.url || selector.elements?.length ? queryCache.invalidate(matchesQuery(selector)) : queryCache.invalidate();
+/**
+ * The `invalidateQueries` step, and anything else that knows which data changed.
+ *
+ * Both halves of the page's data: the cached browser requests, and the providers the page server answers, which
+ * never pass through the cache. Either is marked and asks when shown if nobody is looking at it now.
+ */
+export const invalidateQueries = (selector: QuerySelector = {}): Promise<void> => {
+  const picked = Boolean(selector.url) || Boolean(selector.elements?.length);
+  const matches = picked ? matchesQuery(selector) : undefined;
+
+  return Promise.all([
+    queryCache.invalidate(matches),
+    refreshServerQueries(matches && serverMatcher(matches, Boolean(selector.url)))
+  ]).then(() => undefined);
+};
 
 /**
  * One key for one request, whoever makes it — an api container and a webhook step asking the same thing share the

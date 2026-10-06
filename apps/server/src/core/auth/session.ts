@@ -77,6 +77,9 @@ export const sessionCookieParams = (hostname: string, config: SSRAuthCookie = {}
   };
 };
 
+/** The readable companion cookie's name — the one a page is told to look for (`server.auth.sessionHintCookie`). */
+export const sessionHintCookieName = (params: SessionCookieParams): string => `${params.name}${params.hintSuffix}`;
+
 /**
  * The value of the readable companion cookie: `<access expiry>.<refresh expiry>`, unix seconds, refresh optional.
  *
@@ -183,7 +186,7 @@ export const writeSessionCookies = (
 
   cookies.push(
     serializeCookie(
-      `${params.name}${params.hintSuffix}`,
+      sessionHintCookieName(params),
       sessionHintValue(session.expiresAt, session.refreshExpiresAt),
       // Outlives the access credential deliberately: it is the renewal window that says whether a session can
       // still be recovered, and a hint that expired with the access token would report one as gone.
@@ -203,7 +206,7 @@ export const clearSessionCookies = (req: { hostname: string }, res: CookieSink, 
   appendCookies(res, [
     serializeCookie(params.name, '', 0, params),
     serializeCookie(`${params.name}_refresh`, '', 0, params, { path: params.refreshPath }),
-    serializeCookie(`${params.name}${params.hintSuffix}`, '', 0, params, { httpOnly: false })
+    serializeCookie(sessionHintCookieName(params), '', 0, params, { httpOnly: false })
   ]);
 };
 
@@ -275,7 +278,7 @@ export const readSessionHint = (
 ): SessionHint | undefined => {
   const params = sessionCookieParams(req.hostname, config);
 
-  return parseSessionHint(readCookie(req, `${params.name}${params.hintSuffix}`));
+  return parseSessionHint(readCookie(req, sessionHintCookieName(params)));
 };
 
 /**

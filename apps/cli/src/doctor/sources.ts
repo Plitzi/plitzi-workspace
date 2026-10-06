@@ -12,6 +12,7 @@ import {
   ACTIONS_ENTRY,
   AUTHOR_FILE,
   MAIN_FILE,
+  PLUGINS_DIR,
   RUNTIME_ENTRY,
   SERVER_OPTIONS_FILE,
   SPACE_ENTRY
@@ -27,8 +28,6 @@ import type { Check, DoctorContext, Finding } from './types';
  */
 
 const say = sayer('sources');
-
-const PLUGINS_DIR = 'src/plugins';
 
 const exists = (file: string): Promise<boolean> =>
   fs.stat(file).then(

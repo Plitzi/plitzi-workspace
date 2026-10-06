@@ -278,11 +278,7 @@ export const createAccountStore = (db: Queryable, t: Tables): IdentityAdapters &
       return row ? toRecord(row) : undefined;
     },
 
-    /**
-     * `refreshExpiresAt` comes off the ROW. A store that keeps it inside a session object and forgets to lift it out
-     * has every renewal refused as expired — which does not fail at login, it fails a day later, silently, when the
-     * access token ages out and the session that looked fine simply ends.
-     */
+    /** `refreshExpiresAt` comes off the ROW: it is the deadline renewal honours, over the token's own expiry. */
     findByRefreshToken: async (token: string): Promise<AccountRecord | undefined> => {
       const row = await selectOne<AccountRow>(
         db,

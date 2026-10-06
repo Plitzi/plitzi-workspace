@@ -21,7 +21,8 @@ const authValue = {
   authenticated: true
 } as unknown as AuthContextValue;
 
-const registrationFor = (authProvider?: string): { id: string; names: string[] } => {
+/** The provider is the auth context's — the space's own, or the one the server that rendered it serves. */
+const registrationFor = (provider: string): { id: string; names: string[] } => {
   let registered: Record<string, InteractionCallback> = {};
   let moduleId = '';
   const interactions = {
@@ -33,9 +34,9 @@ const registrationFor = (authProvider?: string): { id: string; names: string[] }
   } as unknown as InteractionsContextValue;
 
   render(
-    <AuthContext value={authValue}>
+    <AuthContext value={{ ...authValue, provider }}>
       <InteractionsContext value={interactions}>
-        <AuthInteractions authProvider={authProvider} />
+        <AuthInteractions />
       </InteractionsContext>
     </AuthContext>
   );
@@ -43,7 +44,7 @@ const registrationFor = (authProvider?: string): { id: string; names: string[] }
   return { id: moduleId, names: Object.keys(registered) };
 };
 
-const registeredFor = (authProvider?: string): string[] => registrationFor(authProvider).names;
+const registeredFor = (provider: string): string[] => registrationFor(provider).names;
 
 describe('AuthInteractions', () => {
   it('offers the auth callbacks on the built-in provider', () => {
@@ -80,5 +81,25 @@ describe('AuthInteractions', () => {
 
   it('offers nothing when the space does not authenticate', () => {
     expect(registeredFor('')).toEqual([]);
+  });
+
+  // The regression this pins: a space that declared nothing used to be offered `login` as if it were on `basic`, and
+  // the action then refused with `missing` without a request or a word in the console.
+  it('offers nothing outside an auth provider at all', () => {
+    let registered: Record<string, InteractionCallback> | undefined;
+    const interactions = {
+      interactionsManager: {},
+      useInteractions: ({ callbacks }: { callbacks?: Record<string, InteractionCallback> }) => {
+        registered = callbacks;
+      }
+    } as unknown as InteractionsContextValue;
+
+    render(
+      <InteractionsContext value={interactions}>
+        <AuthInteractions />
+      </InteractionsContext>
+    );
+
+    expect(registered).toEqual({});
   });
 });

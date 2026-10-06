@@ -184,13 +184,16 @@ export const addNotification = (params: {
  * The action is `login` and not `authLogin`: the module is already `auth`, and the runtime registers these three
  * under the bare names. The function keeps its prefix only because this surface is exported flat, where a `login`
  * would be too vague to read at an import.
+ *
+ * What it answered is `ok` and `reason`, not a server action's `status`: named, a later step asks
+ * `when({ field: 'signedIn.ok', operator: '=', value: true }, …)` — `whenSucceeded` / `whenFailed` never hold for it.
  */
 export const authLogin = (
   params:
-    | { mode: 'normal'; username: string; password: string }
+    | { mode?: 'normal'; username: string; password: string }
     | { mode: 'token'; token: string }
     | { mode: 'mfa'; mfaToken: string; code: string }
-): StepSpec => globalStep('login', params);
+): StepSpec => globalStep('login', { mode: 'normal', ...params });
 
 export const authLogout = (): StepSpec => globalStep('logout');
 
@@ -217,8 +220,9 @@ export const runServerAction = (params: {
   mode?: 'await' | 'detached' | 'stream';
   idempotencyKey?: string;
   /**
-   * What a completed run refreshes among the page's browser requests: `all` (the default — only the server knows
-   * what an action wrote), the containers named in `invalidateElements`, or `none` for an action that only reads.
+   * What a completed run refreshes among the page's providers, browser and server-driven alike: `all` (the default —
+   * only the server knows what an action wrote), the containers named in `invalidateElements`, or `none` for an
+   * action that only reads.
    */
   invalidateQueries?: 'all' | 'elements' | 'none';
   /** Api container ids — with `invalidateQueries: 'elements'`. */
@@ -228,10 +232,12 @@ export const runServerAction = (params: {
 export const cancelServerAction = (params: { runId: string }): StepSpec => globalStep('cancelServerAction', params);
 
 /**
- * Tells the page's browser requests the data behind them changed, so the api containers showing them ask again.
+ * Tells the page's providers the data behind them changed, so the api containers showing it ask again — a browser
+ * request, or a server-driven provider (`runtime: 'server'`) asking the page server for its slice.
  *
- * `elements` names the containers by id — the way to reach one whose URL is a template — and `url` the requests
- * whose URL starts with it; given both, a request must match both. With neither, every request on the page.
+ * `elements` names the containers by id — the way to reach one whose URL is a template, or a server provider fed by
+ * a connector or an action — and `url` the requests whose URL starts with it; given both, a request must match both.
+ * With neither, every provider on the page.
  */
 export const invalidateQueries = (params: { elements?: string[]; url?: string } = {}): StepSpec =>
   globalStep('invalidateQueries', { url: '', elements: [], ...params });

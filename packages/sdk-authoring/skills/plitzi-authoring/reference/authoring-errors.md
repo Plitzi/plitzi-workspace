@@ -59,6 +59,7 @@ The space is not written until these are fixed.
 | `computed-not-template` | a computed value that is not a template | `'{{ state.x * 2 }}'` |
 | `computed-reads-element` | a computed value reading an element's source — no element is around the whole space | compute it from the globals and the variables, or bind it on the element |
 | `computed-unknown` | a computed value read before it is declared, or never declared | declare it in `computed`, above the one that reads it |
+| `condition-field-unpublished` | a `when` asking a step of its flow for a key it never publishes — `whenSucceeded` / `whenFailed` on anything but `runServerAction` | a key the step publishes (`explain <step>`): after `authLogin`, `when({ field: 'signedIn.ok', operator: '=', value: true }, …)` |
 | `controls-unknown` | a button's `controls` naming no element of the space | the id of the element it shows and hides: `controls: 'faq-answer'` |
 | `css-property-twice` | one property written twice in a rule set — `paddingTop` beside `'padding-top'` — so one would silently win | keep one |
 | `css-property-unknown` | a CSS property that does not exist | the property it suggests; a custom property starts with `--` |
@@ -208,6 +209,7 @@ Nothing is wrong: the page renders as written. Each is a shorter way to the same
 
 | Code | Written the long way | The short way |
 | --- | --- | --- |
+| `class-overrides-class` | one class's shorthand erasing the longhand another class on the same element writes out — `padding` over `padding-top` — because the stylesheet writes it later: classes in the order they are first met, a breakpoint's rules after the base, never the order of a class list | the longhands the shorthand means instead of it (`padding-left`, `padding-right`), so it leaves the other class's alone — or `quiet: ['class-overrides-class']` when the shorthand is meant to win |
 | `content-attribute` | a button or a link whose children are only its words and an icon — a `text`, a `fontAwesome` — elements more than it needs | its own `content` and `icon` (`link({ href, content: 'Docs', icon: 'fa-solid fa-arrow-right', iconPlacement: 'after' })`); the icon's class goes on the `icon` slot, and what the text's class adds on the box's class, never the class itself |
 | `custom-css-class` | a `customCss` rule a class can hold — `.card:hover`, `.panel .icon` | the class's own `states` or `ancestors`, where the style editor reads it back and a breakpoint can change it |
 | `custom-css-notifications` | the toasts dressed with `.Toastify__toast` rules in `customCss` | `notifications: { font, fontSize, border, shadow, padding, background, text, radius }` |

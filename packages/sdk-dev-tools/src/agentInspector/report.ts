@@ -19,8 +19,14 @@ export type ElementReport = {
   box?: { x: number; y: number; width: number; height: number };
 };
 
-/** A value as JSON can carry it: functions left out, a cycle cut, depth bounded. */
-export const plain = (value: unknown, depth = 0, seen = new WeakSet<object>()): unknown => {
+/**
+ * A value as JSON can carry it: functions left out, a cycle cut, depth bounded.
+ *
+ * Only a true cycle is cut — an object inside itself, on the path being read. One value reached twice is printed twice:
+ * a list publishes the array its provider answered, and cutting the second sight of it read as the provider holding
+ * nothing.
+ */
+export const plain = (value: unknown, depth = 0, path = new WeakSet<object>()): unknown => {
   if (typeof value === 'function') {
     return undefined;
   }
@@ -29,20 +35,21 @@ export const plain = (value: unknown, depth = 0, seen = new WeakSet<object>()): 
     return value;
   }
 
-  if (seen.has(value) || depth > 12) {
+  if (path.has(value) || depth > 12) {
     return '[…]';
   }
 
-  seen.add(value);
-  if (Array.isArray(value)) {
-    return value.map(item => plain(item, depth + 1, seen));
-  }
+  path.add(value);
+  const copy: unknown = Array.isArray(value)
+    ? value.map(item => plain(item, depth + 1, path))
+    : Object.fromEntries(
+        Object.entries(value)
+          .map(([key, item]): [string, unknown] => [key, plain(item, depth + 1, path)])
+          .filter(([, item]) => item !== undefined)
+      );
+  path.delete(value);
 
-  return Object.fromEntries(
-    Object.entries(value)
-      .map(([key, item]) => [key, plain(item, depth + 1, seen)])
-      .filter(([, item]) => item !== undefined)
-  );
+  return copy;
 };
 
 export const recordAt = (value: unknown, ...path: string[]): Record<string, unknown> => {

@@ -1,4 +1,5 @@
 import { colourNotToken } from './colourNotToken';
+import { disableNamesSuggestion } from './disableNamesSuggestion';
 import { fileTooLong } from './fileTooLong';
 import { inlineRecords } from './inlineRecords';
 import { pagesInOneFile } from './pagesInOneFile';
@@ -18,5 +19,6 @@ export const RULES: readonly Rule[] = [
   repeatedCss,
   specialCaseInMap,
   colourNotToken,
-  positionalId
+  positionalId,
+  disableNamesSuggestion
 ];

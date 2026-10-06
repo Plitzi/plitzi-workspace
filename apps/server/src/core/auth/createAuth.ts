@@ -14,7 +14,7 @@ import type { CredentialCarrier } from './credentials';
 import type { IdentityAdapters, IdentityConfig } from './identity';
 import type { CookieSink } from './session';
 import type { TokenConfig } from './tokens';
-import type { SSRAuthCookie, SSRSession, SSRUser } from '@plitzi/sdk-shared';
+import type { ServerAuth, SSRAuthCookie, SSRSession, SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * Everything a deployment says about its own auth, in one object.
@@ -118,6 +118,15 @@ export const createAuth = (config: AuthConfig) => {
 
   const basePath = config.basePath ?? '/auth';
 
+  const pageAuth: Omit<ServerAuth, 'sessionHintCookie'> = {
+    userProvider: 'basic',
+    loginUrl: `${basePath}/login`,
+    userUrl: `${basePath}/session`,
+    logoutUrl: `${basePath}/logout`,
+    ...(api.capabilities.refresh ? { refreshUrl: `${basePath}/refresh` } : {}),
+    ...(api.capabilities.mfa ? { mfaUrl: `${basePath}/mfa/complete` } : {})
+  };
+
   const policy: AuthPolicy = {
     rules: [...(config.rules ?? []), ...authPolicyRules(basePath)],
     fallback: config.fallback ?? 'actor'
@@ -189,6 +198,12 @@ export const createAuth = (config: AuthConfig) => {
     /** Where these flows were mounted, so whatever serves them reads it here rather than defaulting to `/auth`
      *  on its own — a host that guessed would serve the routes somewhere the policy above does not guard. */
     basePath,
+    /**
+     * What a page server tells the pages it renders about these flows (`server.auth`), so a space signs in here with
+     * nothing to declare: the HTTP+JSON shape the SDK's `basic` provider speaks, at this `basePath`, with renewal and
+     * the second factor only where this deployment offers them.
+     */
+    pageAuth,
     /** The naming this was built with, so a page server takes it from here instead of being told a second time. */
     cookieConfig: config.cookie,
     /**

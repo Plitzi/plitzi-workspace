@@ -9,11 +9,11 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { SPACE_IMPORT_FORMAT } from '@plitzi/sdk-shared/source';
 
 import { filesUnder } from './filesUnder';
-import { PUBLIC_ASSETS_DIR, PUBLIC_DIR, dataReadsOf, onItsCdn, projectDataFiles, tokenOf } from './projectFiles';
+import { PUBLIC_ASSETS_DIR, dataReadsOf, onItsCdn, projectDataFiles, tokenOf } from './projectFiles';
 import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
-import { ACTIONS_ENTRY, DATA_DIR } from '../scaffold/paths';
+import { ACTIONS_ENTRY, DATA_DIR, PUBLIC_DIR } from '../scaffold/paths';
 
 import type { PushOutcome } from './pushOutcome';
 import type { ConnectedSpace, Connection } from '../account/connection';

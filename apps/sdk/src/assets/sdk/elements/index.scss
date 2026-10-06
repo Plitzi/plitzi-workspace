@@ -26,12 +26,13 @@
 @use './reference' as reference;
 @use './modal-container' as modalContainer;
 @use './text' as text;
+@use './theme-toggle' as themeToggle;
+@use './pagination' as pagination;
 @use './dropdown' as dropdown;
 @use './markdown' as markdown;
 @use './node-html' as nodeHtml;
 
 @mixin styles {
-  @include image.styles;
   @include image.styles;
   @include video.styles;
   @include embed.styles;
@@ -60,6 +61,8 @@
   @include reference.styles;
   @include modalContainer.styles;
   @include text.styles;
+  @include themeToggle.styles;
+  @include pagination.styles;
   @include dropdown.styles;
   @include markdown.styles;
   @include nodeHtml.styles;

@@ -166,7 +166,7 @@ const DialogContainer = ({
           </div>
           <button
             type="button"
-            className="dialog-container__close"
+            className={clsx('dialog-container__close', styleSelectors.headerCloseButton)}
             aria-label="Close"
             title="Close"
             onClick={handleClickCancel}
@@ -174,7 +174,7 @@ const DialogContainer = ({
             <i className="fa-solid fa-xmark" aria-hidden="true" />
           </button>
         </div>
-        <div className={clsx('dialog-container__body', styleSelectors.body)}>
+        <div className={clsx('dialog-container__body', styleSelectors.bodyContainer)}>
           <StoreProvider inherit="live" name={`Dialog:${id}`} value={storeContext}>
             {children}
           </StoreProvider>

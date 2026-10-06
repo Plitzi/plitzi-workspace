@@ -7,6 +7,52 @@ import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare'
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type DialogContainerAttributes = AuthorableAttributes<DialogContainerProps>;
 
+const closeButtonStyle = {
+  default: {
+    height: '28px',
+    width: '28px',
+    'padding-top': '4px',
+    'padding-bottom': '4px',
+    'padding-left': '4px',
+    'padding-right': '4px',
+    display: 'flex',
+    'justify-content': 'center',
+    'align-items': 'center',
+    'flex-shrink': '0',
+    'border-top-left-radius': '4px',
+    'border-top-right-radius': '4px',
+    'border-bottom-left-radius': '4px',
+    'border-bottom-right-radius': '4px',
+    'background-color': 'transparent',
+    color: 'inherit',
+    'font-style': 'inherit',
+    'font-weight': 'inherit',
+    'line-height': 'inherit',
+    'font-family': 'inherit',
+    'font-size': 'inherit',
+    cursor: 'pointer'
+  }
+};
+
+const footerButtonStyle = {
+  'min-height': '30px',
+  'min-width': '30px',
+  'padding-top': '6px',
+  'padding-bottom': '6px',
+  'padding-left': '12px',
+  'padding-right': '12px',
+  'border-top-left-radius': '4px',
+  'border-top-right-radius': '4px',
+  'border-bottom-left-radius': '4px',
+  'border-bottom-right-radius': '4px',
+  'background-color': '#4422ee',
+  color: 'white',
+  'line-height': '24px',
+  'font-size': '16px',
+  outline: 'none',
+  cursor: 'pointer'
+};
+
 const declaration = elementDeclaration<DialogContainerAttributes>()({
   type: 'dialogContainer',
   sourceType: 'dialogContainer',
@@ -106,11 +152,12 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
       style: {
         base: {
           default: {
-            position: 'absolute',
+            position: 'fixed',
             top: '0',
             bottom: '0',
             left: '0',
-            right: '0'
+            right: '0',
+            'z-index': '200'
           }
         },
         backgroundContainer: {
@@ -120,6 +167,7 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
             left: '0',
             top: '0',
             position: 'absolute',
+            'z-index': '210',
             'background-color': 'black',
             opacity: '0.5'
           }
@@ -131,8 +179,11 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
             position: 'absolute',
             top: '50%',
             left: '50%',
+            'z-index': '250',
             width: '500px',
-            height: '300px',
+            'max-width': 'calc(100vw - 32px)',
+            'max-height': 'calc(100dvh - 32px)',
+            overflow: 'auto',
             'background-color': 'light-dark(white, oklch(0.21 0.006 285.885))',
             transform: 'translate3d(-50%, -50%, 0px)',
             'padding-top': '20px',
@@ -156,27 +207,16 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
           default: {
             'font-size': '20px',
             'font-weight': '500',
-            'line-height': '1.2',
-            color: '#333'
+            'line-height': '1.2'
           }
         },
-        headerCloseButton: {
-          default: {
-            height: '20px',
-            width: '20px',
-            padding: '4px',
-            display: 'flex',
-            'justify-content': 'center',
-            'align-items': 'center',
-            cursor: 'pointer'
-          }
-        },
+        headerCloseButton: closeButtonStyle,
         bodyContainer: {
           default: {
             display: 'flex',
             'flex-direction': 'column',
             'flex-grow': '1',
-            'flex-basis': '0'
+            'flex-basis': 'auto'
           }
         },
         footerContainer: {
@@ -185,7 +225,10 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
             'justify-content': 'flex-end',
             'margin-top': '8px'
           }
-        }
+        },
+        acceptButton: { default: footerButtonStyle },
+        // The second of the two, so it keeps its distance from the first.
+        cancelButton: { default: { ...footerButtonStyle, 'margin-left': '12px' } }
       },
       subTypes: {}
     },

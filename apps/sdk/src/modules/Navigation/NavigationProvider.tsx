@@ -178,7 +178,7 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       }
 
       store.set('navigation.pendingLocation', target);
-      const prefetch = refreshRsc(store, undefined, undefined, target).finally(() => {
+      const prefetch = refreshRsc(store, undefined, undefined, { location: target }).finally(() => {
         if (latestNavigation.current === ticket) {
           store.set('navigation.pendingLocation', '');
         }

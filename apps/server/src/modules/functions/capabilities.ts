@@ -265,6 +265,8 @@ export const readCall = (value: unknown): FunctionCall => {
         value: stringArg(call.value, 'A value'),
         signature: stringArg(call.signature, 'A signature')
       };
+    case 'data':
+      return { op: 'data', file: stringArg(call.file, 'A file') };
     case 'log':
       return { op: 'log', values: Array.isArray(call.values) ? call.values : [] };
     case 'emit':
@@ -296,6 +298,8 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
       return ctx.sign(call.value);
     case 'verify':
       return ctx.verify(call.value, call.signature);
+    case 'data':
+      return ctx.data(call.file);
     case 'log':
       ctx.log(...call.values);
 

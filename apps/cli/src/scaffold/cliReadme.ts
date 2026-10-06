@@ -1,4 +1,4 @@
-import { AUTHOR_FILE, CLI_DIR, DATA_DIR, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR } from './paths';
+import { AUTHOR_FILE, CLI_DIR, DATA_DIR, ENV_FILE, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR } from './paths';
 
 import type { CreateAnswers } from './types';
 
@@ -16,10 +16,10 @@ checked against every folder's, found by folder like the plugins themselves.
 
 ${
   mode === 'server'
-    ? `\`${MAIN_FILE}\` registers each one with \`action: 'compile'\`, which is what makes it **server-rendered**: the
-server builds the entry with esbuild, keeps React external so the plugin runs on the one copy the page already has,
-serves the bundle to the browser AND imports it into the render — so the component's markup is in the HTML before
-any JavaScript arrives. With \`start:dev\` running, a saved plugin is swapped into the open page without reloading it,
+    ? `The server (\`serveProject\`, which \`${MAIN_FILE}\` starts) registers each one with \`action: 'compile'\`, which is
+what makes it **server-rendered**: the server builds the entry with esbuild, keeps React external so the plugin runs
+on the one copy the page already has, serves the bundle to the browser AND imports it into the render — so the
+component's markup is in the HTML before any JavaScript arrives. With \`start:dev\` running, a saved plugin is swapped into the open page without reloading it,
 and a new folder is registered as it appears.
 
 A plugin can bring server code of its own: \`add plugin board --server\` writes \`Board/functions/index.ts\`, whose
@@ -43,7 +43,7 @@ the builder edits it with, and the \`index.ts\` that hands them over.
 const FUNCTIONS = `## \`${FUNCTIONS_DIR}/\` — the project's own server code
 
 The tasks a server action's steps run (\`task: 'namespace.action'\`) and the routes under \`/fn/\`, from \`index.ts\` —
-\`export default defineFunctions({ tasks, routes, allow })\` from \`@plitzi/sdk-server/functions\`. \`${MAIN_FILE}\` builds
+\`export default defineFunctions({ tasks, routes, allow })\` from \`@plitzi/sdk-server/functions\`. The server builds
 it at boot the way Plitzi builds a space's, and \`start:dev\` restarts on a change there. Nothing there, no functions.
 \`plitzi functions pull\` writes the space's functions there, and \`push\` sends them back. A file imports its siblings
 with their extension — \`import { reader } from './sources.ts'\`.
@@ -52,7 +52,7 @@ with their extension — \`import { reader } from './sources.ts'\`.
 const RUNTIME = `## \`${RUNTIME_DIR}/\` — the space's runtime, when it has one
 
 Its own server code, run as a process of its own beside the space on Plitzi — Node, its packages, a connection held
-open — and by \`${MAIN_FILE}\` here, in its process: \`npx @plitzi/cli add runtime\` writes \`index.ts\`, and
+open — and by the server here, in its process: \`npx @plitzi/cli add runtime\` writes \`index.ts\`, and
 \`plitzi runtime push\` sends the module it is, tried here first.
 `;
 
@@ -82,13 +82,17 @@ export const cliReadme = (answers: CreateAnswers): string => {
   return `# ${CLI_DIR}/ — the CLI's part of this project
 
 What the project needs of the CLI besides its entry point, kept apart from \`src/\`. \`plitzi upgrade\` brings these files
-up to the CLI it has — and \`${MAIN_FILE}\` with them, which stays in \`src/\` because that is where an entry point is
-looked for. One changed is shown as a diff and left, so changing one is taking it over. \`plitzi doctor\` holds the
+up to the CLI it has — and \`${MAIN_FILE}\`${server ? ` and \`${ENV_FILE}\`` : ''} with them, in \`src/\` because that is where an entry
+point is looked for. One changed is shown as a diff and left, so changing one is taking it over. \`plitzi doctor\` holds the
 whole project to what follows — and to what Node, the server and \`push\` need of it — and says what to fix.
 
-- \`${MAIN_FILE}\` (in \`src/\`) — the entry point: ${server ? 'the page server — the space, its plugins, its data, its code, wired' : 'the Vite app that renders the space'}.${
+- \`${MAIN_FILE}\` (in \`src/\`) — the entry point: ${server ? 'the page server — the space authored and handed to `serveProject` (`@plitzi/sdk-server/project`), which wires its plugins, its data and its code from where they are' : 'the Vite app that renders the space'}.${
+    server
+      ? `\n- \`${ENV_FILE}\` — reads \`.env\` into the process. The entry point imports it first, so what it imports after finds its settings in \`process.env\` as it loads.`
+      : ''
+  }${
     answers.source === 'local'
-      ? `\n- \`${AUTHOR_FILE}\` — \`npm run author\`: authors \`src/space/\` and says what it found${server ? '; the server runs it on every save' : ''}.`
+      ? `\n- \`${AUTHOR_FILE}\` — \`npm run author\`: authors \`src/space/\` and says what it found${server ? '; the server runs it on every save, and is handed the documents it serves next' : ''}.`
       : ''
   }${
     server

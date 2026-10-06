@@ -1,3 +1,7 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { createLocalFunctions } from './local';
@@ -31,5 +35,39 @@ describe('functions on this machine', () => {
     });
 
     expect(loaded).toMatchObject({ ok: false, problems: [{ file: 'index.ts', line: 1 }] });
+  });
+});
+
+describe('ctx.data, in the sandbox', () => {
+  const READER = {
+    'index.ts': `export default {
+  tasks: [{ namespace: 'shop', action: 'cheapest', title: 'Cheapest', params: {}, run: async (_params, ctx) => {
+    const products = await ctx.data('shop/products.json');
+    return products.reduce((low, product) => (product.cost < low.cost ? product : low)).id;
+  } }, { namespace: 'shop', action: 'missing', title: 'Missing', params: {}, run: (_params, ctx) => ctx.data('nope.json') }]
+};`
+  };
+
+  it('reads one file of the project’s data, parsed — a call back to the platform like kv', async () => {
+    const dataDir = mkdtempSync(path.join(tmpdir(), 'plitzi-fn-data-'));
+    try {
+      mkdirSync(path.join(dataDir, 'shop'));
+      writeFileSync(
+        path.join(dataDir, 'shop/products.json'),
+        JSON.stringify([
+          { id: 'a', cost: 4 },
+          { id: 'b', cost: 2 }
+        ])
+      );
+      const local = createLocalFunctions({ dataDir });
+      await local.load(READER);
+
+      expect((await local.tryTask('shop.cheapest', {})).output.value).toBe('b');
+      const missing = await local.tryTask('shop.missing', {});
+      expect(missing.status).toBe('failed');
+      expect(JSON.stringify(missing.steps)).toContain('\\"nope.json\\" is not a file of this space\'s data');
+    } finally {
+      rmSync(dataDir, { recursive: true, force: true });
+    }
   });
 });

@@ -122,9 +122,22 @@ export class AuthManager<U = Record<string, unknown>> {
     return this.provider.init(bootstrap);
   }
 
-  /** With no provider there is nothing to sign in against, which is a refusal like any other — and has to say so. */
+  /**
+   * With no provider there is nothing to sign in against, which is a refusal like any other — and has to say so, to
+   * the page and to whoever is reading its console: `missing` alone looks exactly like a form left empty.
+   */
   login(...args: Parameters<AuthProvider<U>['login']>): Promise<LoginResult> {
-    return this.provider?.login(...args) ?? Promise.resolve<LoginResult>({ ok: false, reason: 'missing' });
+    if (!this.provider) {
+      console.warn(
+        this.providerType
+          ? `[plitzi] auth.login: no auth provider is registered as "${this.providerType}". Register it with registerAuthProvider before the SDK mounts, or set the userProvider of the space to one that exists ("basic", "server").`
+          : '[plitzi] auth.login: this space has no auth provider to sign in with. Serve it from createServer({ auth }), which needs nothing declared, or declare userProvider in the space settings ("server" on the Plitzi platform, "basic" with loginUrl for your own API).'
+      );
+
+      return Promise.resolve({ ok: false, reason: 'missing' });
+    }
+
+    return this.provider.login(...args);
   }
 
   refresh(): Promise<TokenResult | undefined> {

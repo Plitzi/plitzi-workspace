@@ -118,6 +118,38 @@ describe('plitzi upgrade', () => {
   });
 
   /**
+   * The server an older CLI wrote into `main.ts` — three hundred lines that re-authored a saved space through
+   * `tmp/space.json` — is today's `serveProject` call, and its author script hands the documents over IPC instead of
+   * `--out`. Both are the CLI's: replaced whole, and nothing of the project's goes with them.
+   */
+  it('brings an older server and author script up to today’s, keeping every file of the project’s own', async () => {
+    const ours = machineryFiles(ANSWERS);
+    const olderMain = "const OFFLINE_DATA = path.join(PROJECT_ROOT, 'tmp/space.json');\n";
+    const olderAuthor =
+      "const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : undefined;\n";
+    const ownOptions =
+      "// SetByMain, as an older CLI typed it\nexport const serverOptions = { images: { domains: ['img.example.com'] } };\n";
+    await fs.writeFile(file('src/main.ts'), olderMain);
+    await fs.writeFile(file('plitzi/author.ts'), olderAuthor);
+    await fs.writeFile(file('src/config/serverOptions.ts'), ownOptions);
+    const space = await read('src/space/index.ts');
+    const actions = await read('src/actions/index.ts');
+    await writeScaffoldRecord(root, '0.38.5', {
+      files: { 'src/main.ts': digestOf(olderMain), 'plitzi/author.ts': digestOf(olderAuthor) }
+    });
+
+    await run(['files'], { write: true });
+
+    expect(await read('src/main.ts')).toBe(ours['src/main.ts']);
+    expect(await read('src/main.ts')).toContain('await serveProject({');
+    expect(await read('plitzi/author.ts')).toBe(ours['plitzi/author.ts']);
+    expect(await read('plitzi/author.ts')).not.toContain('--out');
+    expect(await read('src/config/serverOptions.ts')).toBe(ownOptions);
+    expect(await read('src/space/index.ts')).toBe(space);
+    expect(await read('src/actions/index.ts')).toBe(actions);
+  });
+
+  /**
    * A `main.ts` of today reads the project's server options and actions, which a project made before them never had: an
    * upgrade writes them for it — once, and never over the project's own.
    */

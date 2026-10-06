@@ -24,7 +24,10 @@ const declaration = elementDeclaration<ImageAttributes>()({
     definition: {
       label: 'Image',
       type: 'image',
-      description: 'Displays an image from a URL.',
+      description:
+        'Displays an image from a URL. It starts 140px wide and as tall as the picture is for that width (`height: ' +
+        'auto`, never wider than where it sits): a class that sets only a `width` or an `aspect-ratio` is obeyed, and ' +
+        '`object-fit` decides how the picture fills a box that sets both.',
       bindings: {},
       styleSelectors: {
         base: ''
@@ -59,7 +62,8 @@ const declaration = elementDeclaration<ImageAttributes>()({
           default: {
             display: 'block',
             width: '140px',
-            height: '140px'
+            height: 'auto',
+            'max-width': '100%'
           }
         }
       }

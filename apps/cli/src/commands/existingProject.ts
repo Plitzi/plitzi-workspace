@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { fail } from './terminal';
 import { declarationsRegistry, elementsRegistry } from '../scaffold';
-import { MAIN_FILE, RUNTIME_ENTRY, SPACE_ENTRY } from '../scaffold/paths';
+import { MAIN_FILE, RUNTIME_BUNDLE, RUNTIME_ENTRY, SPACE_ENTRY } from '../scaffold/paths';
 
 import type { PackageManager } from '../scaffold';
 
@@ -208,7 +208,7 @@ const plitziProject = async (
     kind: 'project',
     mode: server ? 'server' : 'client',
     source: (await exists(path.join(root, SPACE_ENTRY))) ? 'local' : 'cloud',
-    runtime: (await exists(path.join(root, RUNTIME_ENTRY))) || (await exists(path.join(root, 'vendor/runtime.bundle')))
+    runtime: (await exists(path.join(root, RUNTIME_ENTRY))) || (await exists(path.join(root, RUNTIME_BUNDLE)))
   };
 };
 

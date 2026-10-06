@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createJsonAdapters } from './jsonAdapters';
-import { offlineDataOf } from '../modules/ssr/testing/offlineData';
+import { offlineDataOf, oneEmptyPage } from '../modules/ssr/testing/offlineData';
 
 const spaceWithTitle = (title: string) => ({ schema: { settings: { title } }, style: {} });
 
@@ -91,6 +91,42 @@ describe('createJsonAdapters — the MCP over the same file', () => {
       schema: { settings: { title: 'first', customCss: '.saved{}' } },
       style: { cache: '.a{}' }
     });
+  });
+
+  it('serves what a function answers on every request: documents a process replaces while it runs', async () => {
+    const titled = (title: string) =>
+      offlineDataOf({ ...oneEmptyPage, definition: { name: title, permanentUrl: 'held' } });
+    let held = titled('authored at boot');
+    const { getOfflineData, getSchema } = createJsonAdapters({ offlineData: () => held });
+
+    expect(await getOfflineData(1, 'main')).toBe(held);
+    held = titled('authored again');
+
+    expect((await getSchema?.(1, 'main'))?.definition.name).toBe('authored again');
+  });
+
+  it('reads the file a function answers with a path', async () => {
+    const asked: [number, string, number | undefined][] = [];
+    const { getOfflineData } = createJsonAdapters({
+      offlineData: (spaceId, environment, revision) => {
+        asked.push([spaceId, environment, revision]);
+
+        return file;
+      }
+    });
+
+    expect(await getOfflineData(3, 'production', 7)).toMatchObject({ schema: { settings: { title: 'first' } } });
+    expect(asked).toEqual([[3, 'production', 7]]);
+  });
+
+  it('refuses to save a space a function answered held in memory, and writes nothing', async () => {
+    const held = offlineDataOf();
+    const { saveSchema } = createJsonAdapters({ offlineData: () => held });
+
+    await expect(saveSchema?.(1, 'main', { ...held.schema, pages: [] }, { batch: 'test' })).rejects.toThrow(
+      'held in memory, not in a file'
+    );
+    expect(held.schema).toBe(oneEmptyPage);
   });
 
   it('offers no write for a space it was handed rather than a file', () => {

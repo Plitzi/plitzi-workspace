@@ -1,3 +1,4 @@
+import { sessionCookieParams, sessionHintCookieName } from '../core/auth/session';
 import { requestOrigin } from '../core/requestParser';
 
 import type { Server, ServerSSR, SSRRequest, SSRServerConfig } from '@plitzi/sdk-shared';
@@ -66,6 +67,7 @@ export const buildServerInfo = (req: SSRRequest, config: SSRServerConfig, ssr: S
   const origin = requestOrigin(req) || `${req.protocol}://${req.hostname}`;
   const host = origin.slice(`${req.protocol}://`.length);
   const user = req.ctx.user;
+  const { pageAuth } = config;
 
   return getEnvironment(config.environment, {
     basePath: '/',
@@ -103,6 +105,13 @@ export const buildServerInfo = (req: SSRRequest, config: SSRServerConfig, ssr: S
           },
           accessToken: user.token,
           expiresAt: user.expiresAt
+        }
+      : undefined,
+    // The hint cookie's name depends on the host the page was asked for, so it is named here, per request.
+    auth: pageAuth
+      ? {
+          ...pageAuth,
+          sessionHintCookie: sessionHintCookieName(sessionCookieParams(req.hostname, config.authCookie))
         }
       : undefined,
     ssr

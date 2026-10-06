@@ -153,6 +153,7 @@ Each is a whole file that authors with no warning — CI holds it to that. Copy 
 | [components.md](reference/components.md) | One block placed many times — a card, a tier, a testimonial: props, slots, binding a row into one, why it is closed |
 | [data-and-visibility.md](reference/data-and-visibility.md) | Bindings, providers, offline data, loading/empty/error states, live data, caching, showing and hiding, kept state |
 | [kept-state.md](reference/kept-state.md) | State that outlives a reload: `keepState`, transient and painted keys |
+| [auth.md](reference/auth.md) | Signing people in: providers, `authLogin`, `auth.*`, visitor roles |
 | [feature-flags.md](reference/feature-flags.md) | Switching a part of the space on or off — a beta, a rollout, the old version kept until the new one ships |
 | [lists.md](reference/lists.md) | Rendering rows, filtering and sorting them, a detail page for one record, carousels |
 | [typed-sources.md](reference/typed-sources.md) | Data typed by a sample of it: `source()`, typed rows, `twig` for templates |
@@ -162,9 +163,9 @@ Each is a whole file that authors with no warning — CI holds it to that. Copy 
 | [flows.md](reference/flows.md) | Clicks, submits, page loads, every few seconds, server actions, modals, state |
 | [realtime.md](reference/realtime.md) | Pages that see each other: channels, presence, cursors, a shared board, who may hear a topic |
 | [plugins.md](reference/plugins.md) | A component of your own: props, binding them, writing state, channels, registering, behaving in the builder |
-| [drawing.md](reference/drawing.md) | A plugin that draws or animates: a canvas sized to the device, WebGL shaders that say why they failed, a loop that stops when nobody sees it |
+| [drawing.md](reference/drawing.md) | A plugin that draws or animates: a canvas sized to the device, WebGL, a loop that stops when unseen |
 | [structure.md](reference/structure.md) | A space bigger than one screen: files, helpers, naming, keeping it short |
-| [testing.md](reference/testing.md) | Any test: `inspectPage` (one call, every problem), handles, fixtures, catching a flash from the first frame, shortcuts, counting renders |
+| [testing.md](reference/testing.md) | Any test: `inspectPage`, handles, fixtures, catching a flash from the first frame, shortcuts, counting renders |
 | [performance.md](reference/performance.md) | A page with many elements, a busy flow, something that feels slow: what renders, what it costs, how to measure it |
 | [snippets-and-export.md](reference/snippets-and-export.md) | Publishing a snippet; turning an exported JSON — or a server action — into code |
 | [accessibility.md](reference/accessibility.md) | Icon buttons, fields, images, clickable cards, toggles, headings, landmarks, a canvas — anything a screen reader or a browser agent has to use |

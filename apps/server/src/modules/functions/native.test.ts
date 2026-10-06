@@ -4,6 +4,7 @@ import { defineFunctions } from './contract';
 import { createActionsModule } from '../actions';
 
 import type { FunctionContext, FunctionTask } from './contract';
+import type { ActionLookups } from '../actions/types';
 import type { ActionEntry, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
@@ -50,8 +51,14 @@ const runProbe = async (
   {
     hosts = [],
     fetchImpl,
-    credential
-  }: { hosts?: string[]; fetchImpl?: typeof fetch; credential?: Record<string, string> } = {}
+    credential,
+    getData
+  }: {
+    hosts?: string[];
+    fetchImpl?: typeof fetch;
+    credential?: Record<string, string>;
+    getData?: ActionLookups['getData'];
+  } = {}
 ) => {
   const probe: FunctionTask<Record<string, never>> = {
     namespace: 'probe',
@@ -61,7 +68,11 @@ const runProbe = async (
     run: (_params, ctx) => run(ctx)
   };
   const module = createActionsModule({
-    lookups: { getAction: () => Promise.resolve(undefined), getCredential: () => Promise.resolve(credential) },
+    lookups: {
+      getAction: () => Promise.resolve(undefined),
+      getCredential: () => Promise.resolve(credential),
+      ...(getData ? { getData } : {})
+    },
     functions: { native: [defineFunctions({ allow: { hosts }, tasks: [probe] })] },
     ...(fetchImpl ? { fetchImpl } : {})
   });
@@ -73,7 +84,8 @@ const runProbe = async (
     spaceId: 3,
     environment: 'main',
     trigger: 'call',
-    runId: 'run-1'
+    runId: 'run-1',
+    at: { environment: 'production', revision: 4 }
   });
 
   return result;
@@ -162,5 +174,41 @@ describe('a function’s context', () => {
 
     expect(result.status).toBe('failed');
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe('ctx.data', () => {
+  const errorOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+  it('reads one file of the space’s data, parsed, as of the run’s version — looked up once per run', async () => {
+    const getData = vi.fn(() => Promise.resolve({ 'prices.json': '{"cost": 4}', 'notes.json': '{ nope' }));
+    const result = await runProbe(
+      async ctx => {
+        // The file this test wrote: its shape is known here, and nowhere a type could carry it.
+        const first = (await ctx.data('prices.json')) as { cost: number };
+        first.cost = 99;
+
+        return {
+          again: await ctx.data('prices.json'),
+          missing: await ctx.data('/data/prices.json').then(() => 'read', errorOf),
+          broken: await ctx.data('notes.json').then(() => 'read', errorOf)
+        };
+      },
+      { getData }
+    );
+
+    expect(result.output.value).toEqual({
+      again: { cost: 4 },
+      missing: expect.stringContaining('"/data/prices.json" is not a file of this space\'s data') as string,
+      broken: expect.stringContaining('is not JSON') as string
+    });
+    expect(getData).toHaveBeenCalledTimes(1);
+    expect(getData).toHaveBeenCalledWith(3, { environment: 'production', revision: 4 });
+  });
+
+  it('is refused, saying why, on a server that keeps no data', async () => {
+    const result = await runProbe(ctx => ctx.data('prices.json').then(() => 'read', errorOf));
+
+    expect(result.output.value).toContain('This server keeps no data for its spaces');
   });
 });

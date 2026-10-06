@@ -11,12 +11,21 @@
  *
  * authorSpace(space, { data: publicData(new URL('../public/', import.meta.url)) });   // bindings held to the files
  * authorSpace(space, { serverData: projectData(new URL('./data/', import.meta.url)) }); // …and read on the server only
+ * authorSpace(space, await projectAuthoring(new URL('..', import.meta.url)));            // all of a CLI project's
  * ```
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import {
+  DATA_DIR,
+  PLUGIN_MANIFEST_FILE,
+  PLUGINS_DIR,
+  PUBLIC_DIR,
+  VENDOR_PLUGINS_DIR
+} from '@plitzi/sdk-shared/project/paths';
 import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
 
 import { compactSvg } from './svg/compactSvg';
@@ -135,6 +144,70 @@ export const pluginDeclarations = async (folder: string | URL): Promise<PluginDe
       return declaration as PluginDeclarationData;
     })
   );
+};
+
+/** The manifest of a plugin run as it was built, read; nothing when it cannot be — the server says why when it boots. */
+const manifestOf = (file: string): Record<string, unknown> => {
+  try {
+    const manifest: unknown = JSON.parse(readFileSync(file, 'utf-8'));
+
+    return isRecord(manifest) ? manifest : {};
+  } catch {
+    return {};
+  }
+};
+
+/**
+ * The element types of the plugins a project runs as they were built (`vendor/plugins/<type>/`, a project made from a
+ * space): each folder's type and every element its manifest provides (`pluginSchema`). None in most projects.
+ */
+const builtPluginTypes = (folder: string): string[] =>
+  existsSync(folder)
+    ? readdirSync(folder, { withFileTypes: true })
+        .filter(entry => entry.isDirectory())
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .flatMap(entry => {
+          const { pluginSchema } = manifestOf(path.join(folder, entry.name, PLUGIN_MANIFEST_FILE));
+
+          return [entry.name, ...(isRecord(pluginSchema) ? Object.keys(pluginSchema) : [])];
+        })
+    : [];
+
+/** What a project `@plitzi/cli` writes checks its space against: the part of `authorSpace`'s options its files say. */
+export type ProjectAuthoring = {
+  plugins: PluginDeclarationData[];
+  pluginTypes: string[];
+  serverData?: (query: string) => unknown;
+  data: (query: string) => unknown;
+};
+
+/**
+ * What `authorSpace` checks the space of a project `@plitzi/cli` writes against, read from the project at `root` — so
+ * its server, `npm run author` and the CLI's checks hold the space to the same thing:
+ *
+ * - `plugins`: every plugin folder's declaration (`src/plugins/<Name>/declaration.ts`, `pluginDeclarations`);
+ * - `pluginTypes`: the element types of the plugins it runs as they were built (`vendor/plugins/`);
+ * - `serverData`: the project's own data, which only its server reads (`src/data/`, `projectData`) — a server-mode
+ *   project's; one with no server has no such folder, and its providers read `public/data/` from the browser;
+ * - `data`: the JSON files it serves (`public/`, `publicData`).
+ *
+ * A folder the project does not have is nothing to check against. `root` is the project's folder — from `src/main.ts`
+ * or `plitzi/author.ts`, `new URL('..', import.meta.url)`, which holds for a compiled `dist/main.js` too.
+ *
+ * ```ts
+ * authorSpace(space, await projectAuthoring(new URL('..', import.meta.url)));
+ * ```
+ */
+export const projectAuthoring = async (root: string | URL): Promise<ProjectAuthoring> => {
+  const at = pathOf(root);
+  const serverData = path.join(at, DATA_DIR);
+
+  return {
+    plugins: await pluginDeclarations(path.join(at, PLUGINS_DIR)),
+    pluginTypes: builtPluginTypes(path.join(at, VENDOR_PLUGINS_DIR)),
+    ...(existsSync(serverData) ? { serverData: projectData(serverData) } : {}),
+    data: publicData(path.join(at, PUBLIC_DIR))
+  };
 };
 
 export { compactSvg } from './svg/compactSvg';

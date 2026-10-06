@@ -7,6 +7,7 @@ import esbuild from 'esbuild';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { sayer } from './types';
+import { PLUGIN_MANIFEST_FILE, PLUGINS_DIR, VENDOR_PLUGINS_DIR } from '../scaffold/paths';
 
 import type { Check, Finding } from './types';
 
@@ -19,10 +20,7 @@ import type { Check, Finding } from './types';
 
 const say = sayer('plugins');
 
-const PLUGINS_DIR = 'src/plugins';
-const VENDOR_PLUGINS = 'vendor/plugins';
-
-/** What the server registers a folder as (`pluginName` in `src/main.ts`). */
+/** What the server registers a folder as (`serveProject`, `@plitzi/sdk-server/project`). */
 export const pluginTypeOf = (folder: string): string => `${folder.charAt(0).toLowerCase()}${folder.slice(1)}`;
 
 const exists = (file: string): Promise<boolean> =>
@@ -224,8 +222,8 @@ const checkFolder = async (
 const checkVendor = async (root: string): Promise<Finding[]> =>
   (
     await Promise.all(
-      (await foldersOf(path.join(root, VENDOR_PLUGINS))).map(async folder => {
-        const file = path.join(VENDOR_PLUGINS, folder, 'plugin-manifest.json');
+      (await foldersOf(path.join(root, VENDOR_PLUGINS_DIR))).map(async folder => {
+        const file = path.join(VENDOR_PLUGINS_DIR, folder, PLUGIN_MANIFEST_FILE);
         try {
           const manifest: unknown = JSON.parse(await fs.readFile(path.join(root, file), 'utf-8'));
 
@@ -277,13 +275,16 @@ export const checkPlugins: Check = async ({ root, manifest }) => {
     }
   }
 
-  const built = await foldersOf(path.join(root, VENDOR_PLUGINS));
+  const built = await foldersOf(path.join(root, VENDOR_PLUGINS_DIR));
   for (const type of built.filter(each => byType.has(each))) {
     findings.push(
       say.error(
         'plugin-shadowed',
-        `${type} is both ${VENDOR_PLUGINS}/${type} (as it was built) and a folder of ${PLUGINS_DIR}: the server runs the built one, and a change to the source shows nowhere.`,
-        { file: `${VENDOR_PLUGINS}/${type}`, fix: `Remove ${VENDOR_PLUGINS}/${type}: the source is the plugin now.` }
+        `${type} is both ${VENDOR_PLUGINS_DIR}/${type} (as it was built) and a folder of ${PLUGINS_DIR}: the server runs the built one, and a change to the source shows nowhere.`,
+        {
+          file: `${VENDOR_PLUGINS_DIR}/${type}`,
+          fix: `Remove ${VENDOR_PLUGINS_DIR}/${type}: the source is the plugin now.`
+        }
       )
     );
   }

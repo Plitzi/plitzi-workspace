@@ -7,7 +7,7 @@ import {
   verifyPassword as defaultVerifyPassword
 } from './passwords';
 import { createMemoryRateLimit, fleetRateLimit } from './throttle';
-import { authFailureMessage } from './tokens';
+import { authFailureMessage, userIdOf } from './tokens';
 import {
   generateRecoveryCodes,
   generateTotpSecret,
@@ -39,7 +39,10 @@ export interface AccountRecord {
   verified: boolean;
   /** Absent for accounts that have no password — one created through an identity provider, for instance. */
   passwordHash?: string;
-  /** Unix seconds, for the refresh credential this account currently holds. */
+  /**
+   * Unix seconds the refresh credential being renewed dies at, reported by `findByRefreshToken` — an override: left
+   * out, the credential's own expiry decides.
+   */
   refreshExpiresAt?: number;
   /**
    * Unix seconds the session being renewed BEGAN, for `lifetimes.session` — the cap on how long one may live
@@ -1180,12 +1183,24 @@ export const createAuthApi = ({
 
       /**
        * Every refusal below ends the session in this browser, because each of them means the credential it just
-       * presented can never work again: no such row, past its deadline, or an account that may not hold one. What
-       * is being cleared is not authority — the row is already gone — it is the browser's reason to keep asking.
+       * presented can never work again: not one this deployment signed, no such row, past its deadline, or an
+       * account that may not hold one. What is being cleared is not authority — the row is already gone — it is the
+       * browser's reason to keep asking.
+       *
+       * The token carries its own deadline, so the store is asked only whether it still holds the row — the switch
+       * that revokes it. A `refreshExpiresAt` it reports overrides that deadline, and a store that keeps none needs
+       * to report nothing.
        */
+      const lapsed = { ...refuse(401, 'Invalid or expired refresh token', 'expired'), endSession: true };
+      const verified = tokens.verifyRefreshToken(refreshToken);
+      if (!verified.ok) {
+        return lapsed;
+      }
+
       const account = await adapters.findByRefreshToken?.(refreshToken);
-      if (!account || !account.refreshExpiresAt || account.refreshExpiresAt < Math.floor(Date.now() / 1000)) {
-        return { ...refuse(401, 'Invalid or expired refresh token', 'expired'), endSession: true };
+      const deadline = account?.refreshExpiresAt ?? verified.payload.exp;
+      if (!account || account.id !== userIdOf(verified.payload) || deadline === undefined || deadline < now()) {
+        return lapsed;
       }
 
       if (!account.active) {

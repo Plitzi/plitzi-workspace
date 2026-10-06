@@ -48,6 +48,9 @@ const declaration = elementDeclaration<DropdownPopupAttributes>()({
         base: {
           default: {
             'background-color': 'light-dark(white, oklch(0.21 0.006 285.885))',
+            // Room to see and pick the panel while it is still empty.
+            'min-height': '24px',
+            'min-width': '24px',
             'padding-right': '4px',
             'padding-bottom': '4px',
             'padding-left': '4px',

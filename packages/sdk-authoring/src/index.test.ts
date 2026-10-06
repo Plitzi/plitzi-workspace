@@ -88,6 +88,34 @@ describe('the step vocabulary', () => {
     expect(authored.warnings).toEqual([]);
   });
 
+  /** `mode` is the catalogue's default when left out, as it is everywhere else the step is written. */
+  it('signs in with a username and password unless told otherwise', () => {
+    expect(authoring.authLogin({ username: 'ada', password: 'pw' }).params).toEqual({
+      mode: 'normal',
+      username: 'ada',
+      password: 'pw'
+    });
+  });
+
+  /** A sign-in answers `ok`, never a server action's `status`: `whenSucceeded` on it would never run. */
+  it('refuses asking a sign-in for a status it never publishes, and accepts asking it what it answered', () => {
+    const signIn = authoring.named('signedIn', authoring.authLogin({ username: 'ada', password: 'pw' }));
+    const welcome = authoring.addNotification({ content: 'Welcome back' });
+
+    expect(() =>
+      authoring.authorSpace(spaceWith([authoring.onClick(), signIn, authoring.whenSucceeded('signedIn', welcome)]))
+    ).toThrow(/condition-field-unpublished[\s\S]*field: 'signedIn\.ok'/);
+    expect(
+      authoring.authorSpace(
+        spaceWith([
+          authoring.onClick(),
+          signIn,
+          authoring.when({ field: 'signedIn.ok', operator: '=', value: true }, welcome)
+        ])
+      ).warnings
+    ).toEqual([]);
+  });
+
   /** The exact shape that shipped: a real action, named on a module that never registered it. */
   it('refuses a global callback on the wrong module', () => {
     expect(() =>

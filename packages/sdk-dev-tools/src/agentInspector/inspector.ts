@@ -1,3 +1,5 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { elementReport, plain, recordAt } from './report';
 
 import type { FlowRun } from './flowRuns';
@@ -38,6 +40,10 @@ const HELP = `window.__plitzi — this page, in text (debug mode only):
   flows(limit = 20)    the last flows that ran: trigger, element, status, every step with its time and error
   watch(on = true)     one console line per flow as it ends`;
 
+/** Whether a store's own value of a source is laid over one inherited from above: the merged value has keys it lacks. */
+const extendsInherited = (own: unknown, merged: unknown): boolean =>
+  isRecord(own) && isRecord(merged) && Object.keys(merged).some(key => !Object.hasOwn(own, key));
+
 export const createAgentInspector = ({
   root,
   writeState,
@@ -55,11 +61,23 @@ export const createAgentInspector = ({
   setState: writeState,
   sources: name => {
     // Each store's own layer: a provider's source is in the store it seeds, and reading merged states would list a
-    // parent's sources once per scope below it.
-    const all: Record<string, unknown> = {};
+    // parent's sources once per scope below it. A layer that extends a source a store above it holds is a scope's
+    // view of that source — a list's row publishes `{ item, index }` under the list's own name — and never stands in
+    // for it, whichever store registered first.
+    const sources: Record<string, unknown> = {};
+    const scoped: Record<string, unknown> = {};
     for (const store of [root, ...stores()]) {
-      Object.assign(all, recordAt(store.getOwnState(), 'runtime', 'sources'));
+      const inherited = recordAt(store.getState(), 'runtime', 'sources');
+      for (const [key, own] of Object.entries(recordAt(store.getOwnState(), 'runtime', 'sources'))) {
+        if (extendsInherited(own, inherited[key])) {
+          scoped[key] = own;
+        } else {
+          sources[key] = own;
+        }
+      }
     }
+
+    const all = { ...scoped, ...sources };
 
     return plain(name === undefined ? all : all[name]);
   },

@@ -408,6 +408,67 @@ const conditionRules = (group: unknown): { field: string; operator: unknown; val
   return [...rule, ...rules];
 };
 
+/** A condition field read as a step's id and the key asked of it: `signedIn.errors.username` asks `signedIn` for `errors`. */
+const STEP_FIELD = /^([A-Za-z_][\w-]*)\.([^.[\]]+)/;
+
+/**
+ * The keys a step puts in the flow scope, as its catalogue declares them — or nothing when it declares none: a plugin's
+ * step, a callback this process does not know, or a global callback sent to a module other than the one that declares
+ * it (`global-callback-module` already says so).
+ */
+const publishedBy = (ctx: LintContext, step: ElementInteraction): readonly string[] | undefined => {
+  const vocabulary = ctx.catalogs.vocabulary;
+  if (step.type === 'globalCallback' && vocabulary && Object.hasOwn(vocabulary.globalCallbacks, step.action)) {
+    const declared = vocabulary.globalCallbacks[step.action];
+
+    return declared.source === step.elementId && declared.preview ? Object.keys(declared.preview) : undefined;
+  }
+
+  if (step.type === 'utility' && vocabulary && Object.hasOwn(vocabulary.utilities, step.action)) {
+    const { preview } = vocabulary.utilities[step.action];
+
+    return preview ? Object.keys(preview) : undefined;
+  }
+
+  return undefined;
+};
+
+/**
+ * A condition asking a step of its own flow for a key that step never publishes. The field is never there, so the rule
+ * never holds — and nothing says so: `whenSucceeded('signedIn', …)` after a sign-in never runs, and `whenFailed` always
+ * does, whatever the answer was. `status` is a server action's alone; every other step is asked what it publishes.
+ */
+const checkConditionFields = (
+  ctx: LintContext,
+  node: ElementInteraction,
+  steps: ReadonlyMap<string, ElementInteraction>,
+  where: string,
+  hostId: string
+): void => {
+  for (const { field, operator } of conditionRules(node.when)) {
+    const [, id = '', key = ''] = STEP_FIELD.exec(field) ?? [];
+    const step = steps.get(id);
+    const published = step && publishedBy(ctx, step);
+    if (!step || !published || published.includes(key)) {
+      continue;
+    }
+
+    const status =
+      key === 'status'
+        ? ' `whenSucceeded` / `whenFailed` read a server action’s `status` (`runServerAction`); any other step is asked what it publishes.'
+        : '';
+    const instead = published.includes('ok')
+      ? ` — ask \`when({ field: '${id}.ok', operator: '${operator === '!=' ? '!=' : '='}', value: true }, …)\``
+      : '';
+    const publishes = published.length ? ` It publishes ${published.join(', ')}${instead}.` : ' It publishes nothing.';
+    ctx.error(
+      'condition-field-unpublished',
+      `${where}: step "${node.id}" runs only when \`${field}\`, which step "${id}" (${step.action}) never publishes: the field is never there, so the rule answers the same whatever the step did.${status}${publishes}`,
+      hostId
+    );
+  }
+};
+
 /** A form's submitted field, as a step reads it: `sent.values.code`. */
 const FORM_VALUE = /\.values\.[^.]+$/;
 
@@ -517,6 +578,7 @@ export const lintFlows = (ctx: LintContext): void => {
 
       warnToggleInBranches(ctx, flow, where, host.id);
       const stepIds = new Set(flow.map(node => node.id));
+      const steps = new Map(flow.map(node => [node.id, node]));
       for (const node of flow) {
         if (!STEP_TYPE_NAMES.has(node.type)) {
           ctx.error(
@@ -535,6 +597,7 @@ export const lintFlows = (ctx: LintContext): void => {
         warnStatePaths(ctx, node, where, host.id);
         warnBlankFormValue(ctx, node, where, host.id);
         checkWhileRunning(ctx, node, where, host.id);
+        checkConditionFields(ctx, node, steps, where, host.id);
         if (node.type === 'trigger') {
           checkTrigger(ctx, node, where, host);
           continue;

@@ -201,6 +201,7 @@ const Settings = ({
         <option value="password">Password</option>
         <option value="select">Select</option>
         <option value="checkbox">Checkbox</option>
+        <option value="switch">Switch</option>
         <option value="textarea">Long Text</option>
         <option value="hidden">Hidden</option>
         <option value="color">Color</option>

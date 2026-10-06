@@ -57,7 +57,7 @@ const declaration = elementDeclaration<ListAttributes>()({
     defaultStyle: {
       name: 'List',
       displayMode: 'desktop',
-      style: { base: { default: {} } },
+      style: { base: { default: { 'margin-top': '0px', 'margin-bottom': '10px', 'padding-left': '40px' } } },
       subTypes: {
         ul: {
           name: 'List UL',

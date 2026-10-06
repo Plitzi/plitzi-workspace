@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { AuthManager, registerAuthProvider } from './AuthManager';
 
@@ -46,6 +46,7 @@ describe('a space that names no provider', () => {
   });
 
   it('answers every call without a provider behind it', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const manager = new AuthManager('', () => undefined, {});
 
     expect(manager.getProvider()).toBeUndefined();
@@ -54,6 +55,28 @@ describe('a space that names no provider', () => {
     await expect(manager.refresh()).resolves.toBeUndefined();
     await expect(manager.revalidate()).resolves.toBe(false);
     await expect(manager.logout()).resolves.toBeUndefined();
+    warn.mockRestore();
+  });
+
+  /**
+   * The regression this pins: a sign-in form on a space with no provider answered `missing` — with no request and no
+   * line in the console, which reads exactly like a form left empty. Whoever opens the console is told what to set.
+   */
+  it('says why a sign-in went nowhere, and what to configure', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await new AuthManager('', () => undefined, {}).login({ username: 'ada', password: 'pw' });
+    await new AuthManager('acme-sso', () => undefined, {}).login({ username: 'ada', password: 'pw' });
+
+    expect(warn).toHaveBeenNthCalledWith(
+      1,
+      expect.stringMatching(/^\[plitzi\] auth\.login: .*createServer\(\{ auth \}\).*userProvider/u)
+    );
+    expect(warn).toHaveBeenNthCalledWith(
+      2,
+      expect.stringMatching(/^\[plitzi\] auth\.login: .*"acme-sso".*registerAuthProvider/u)
+    );
+    warn.mockRestore();
   });
 
   it('does the same for a name nobody registered', async () => {

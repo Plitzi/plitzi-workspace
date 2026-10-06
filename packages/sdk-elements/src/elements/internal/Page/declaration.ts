@@ -74,12 +74,12 @@ const declaration = elementDeclaration<PageAttributes>()({
             'min-height': '100%',
             'min-width': '100%',
             'font-family': 'Arial',
-            color: '#333',
+            // The SDK's floor in either scheme, and no background: the browser's canvas already follows the scheme.
+            color: 'light-dark(#333, oklch(0.92 0.004 286.32))',
             'font-size': '14px',
             'font-weight': 400,
             'line-height': '16px',
-            'text-align': 'left',
-            'background-color': '#ffffff'
+            'text-align': 'left'
           }
         }
       }

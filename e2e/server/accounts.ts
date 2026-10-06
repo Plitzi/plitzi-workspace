@@ -104,14 +104,8 @@ export const accounts: IdentityAdapters & AccountAdapters = {
 
   loadAccess: userId => Promise.resolve(ACCESS[userId] ?? { roles: [], permissions: [] }),
 
-  /** `refreshExpiresAt` is lifted out of the session on purpose: the server asks the ACCOUNT when its renewal
-   *  credential dies. Leave it off and every renewal is refused as expired — the session works until the access
-   *  token ages out and then quietly ends. */
-  findByRefreshToken: token => {
-    const row = find(candidate => candidate.session?.refreshToken === token);
-
-    return Promise.resolve(row ? { ...row, refreshExpiresAt: row.session?.refreshExpiresAt } : undefined);
-  }
+  /** The token carries its own expiry, so the row is only the revocation switch. */
+  findByRefreshToken: token => Promise.resolve(find(candidate => candidate.session?.refreshToken === token))
 };
 
 export const verifyPassword = (password: string, stored: string): Promise<boolean> =>

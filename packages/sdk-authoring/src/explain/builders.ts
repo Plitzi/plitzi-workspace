@@ -7,6 +7,8 @@
  */
 export const BUILDER_SIGNATURES: Readonly<Record<string, string>> = {
   delay: 'delay(ms)',
+  authLogout: 'authLogout()',
+  authRefreshDetails: 'authRefreshDetails()',
   on: "on('onArrival', params?)",
   onKey: "onKey('mod+k, escape')",
   onInterval: 'onInterval(ms)',

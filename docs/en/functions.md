@@ -80,6 +80,7 @@ Everything a function does besides computing goes through `ctx` — the same obj
 | `ctx.sign(value)`, `ctx.verify(value, signature)` | HMAC-SHA-256 with a key of the space's own that the platform keeps: a link, an invitation, a key handed to a page. The code never holds the key, and what one space or environment signed no other verifies |
 | `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare |
 | `ctx.publish`, `ctx.grant`, `ctx.revoke` | The space's realtime channels, as the server — see [Realtime channels](./realtime.md) |
+| `ctx.data(file)` | One file of the space's data — a project's `src/data/<file>`, `ctx.data('products.json')` — parsed, as of the version the run belongs to; read-only. What a page must not carry is read here and answered only as far as it is shown. The platform's `getData` answers it, or a self-hosted server's `dataDir`. Functions never import it: a path out of `functions/` is refused at build, naming `ctx.data` |
 | `ctx.user` | Who asked — `id`, `username`, `email`, `verified`, `roles`, `permissions` — never their session |
 | `ctx.callerId` | `user:<id>` or `ip:<address>`: what a limit per person keys on |
 | `ctx.log(...)` | A line on the step that ran it: shown by Try, and in the run history |
@@ -346,7 +347,8 @@ export default defineFunctions({
 - **It gets a plugin's `ctx`, narrower than a space's.** The space chose to use the plugin, not to hand it what it
   keeps: `ctx.kv` and `ctx.rateLimit` are the plugin's own corner of the space's store (`plugin:<type>:…`), what it
   signs with `ctx.sign` verifies only as its own — it cannot mint a value the space's code would accept — and it names
-  none of the space's credentials and reaches none of its realtime channels. `ctx.fetch` reaches the hosts its own
+  none of the space's credentials and reaches none of its realtime channels or its data (`ctx.data` is refused: the
+  data is what the space's pages must not carry, and the plugin's `fetch` could carry it anywhere). `ctx.fetch` reaches the hosts its own
   `allow.hosts` declares; `ctx.user`, the limits (§6) and the plan's budget are the space's, as for its own code.
 
 **Where it runs.**

@@ -162,18 +162,82 @@ runtime, and its files into `public/` — a draft, or any published snapshot (`-
 `plitzi pull` keeps it in step, and `plitzi push` puts what changed in it back on the space. See
 `docs/en/projects-from-spaces.md` in the workspace.
 
+## Projects
+
+A project `npx @plitzi/cli create --mode server` writes runs this server through `serveProject`, from
+`@plitzi/sdk-server/project` — its own entry, so a server that is not such a project never loads it. The project's
+`src/main.ts` hands it what is the project's, and `serveProject` wires everything else from where the project keeps it
+(the layout is `@plitzi/sdk-shared/project/paths`'s):
+
+```ts
+import './env.ts'; // first: what follows reads its settings from `process.env` as it loads
+
+import { serveProject } from '@plitzi/sdk-server/project';
+
+import { authorSpace } from '@plitzi/sdk-authoring';
+import { projectAuthoring } from '@plitzi/sdk-authoring/node';
+
+import { actions, connectors } from './actions/index.ts';
+import { serverOptions } from './config/serverOptions.ts';
+import { space } from './space/index.ts';
+
+await serveProject({
+  entry: import.meta.url,
+  space: authorSpace(space, await projectAuthoring(new URL('..', import.meta.url))),
+  actions,
+  connectors,
+  serverOptions
+});
+```
+
+| Option | What it is |
+|---|---|
+| `entry` | The entry point's `import.meta.url` — `src/main.ts`, or `dist/main.js` once built. The project is its folder's parent, and the runtime is looked for beside it (`runtime/index.ts`, or `.js`). |
+| `space` | The space held in the project: `authorSpace`'s documents, served from memory. Its `warnings` are printed at boot. |
+| `cloud` | Instead of `space`: `{ name }` — the space stays in Plitzi and is read with `createCloudAdapters`, from `PLITZI_HOST_KEY` (required), `PLITZI_ENVIRONMENT` (`main` by default), `PLITZI_REVISION` and `PLITZI_SERVER_URL`. `name` is what `/health` answers with. |
+| `actions`, `connectors` | The space's server actions, found by their id, and the connectors they call. Left out, the server runs no actions. |
+| `serverOptions` | The project's `src/config/serverOptions.ts`, typed `ProjectServerOptions`: what `createServer` takes but for what `serveProject` wires, spread before it — `logLevel` and `logger` (`warn`, to the console; `--verbose` on the command line: `info`), `auth`, `images`, `rsc`, `action.limits`, `action.kv` are the project's to set. |
+
+What it wires from the project:
+
+- **The port.** `PORT`, or 8080 — while developing, the next free one from there (`freePort`). `HOST`, loopback by
+  default (`0.0.0.0` in a container). `PUBLIC_URL` is where people reach it, behind a proxy.
+- **Its plugins.** Every folder of `src/plugins` under its name in camelCase, built from its `index.ts` and rendered
+  on the server (`action: 'compile'`), with its server half (`functions/`); every plugin of `vendor/plugins`, run as it
+  was built, beside its `plugin-manifest.json` — and the deployment's `pluginNames` naming them all.
+- **Its code.** `src/functions/` (`loadFunctions`), and the space's runtime — `src/runtime/`, or
+  `vendor/runtime.bundle` — in this process, its endpoints answered before anything else.
+- **Its files.** `public/` served as it is, `src/data/` read and never served (`dataDir`), the `kv` in `state/kv.json`
+  (`createFileKv`), `PLITZI_SIGNING_SECRET` what `ctx.sign` signs with.
+- **Where it is.** `/health` answers with the space's permanent URL (or the cloud `name`), and `tmp/dev-server.json`
+  records the name, the port and the URL for `plitzi check`, `shot` and `visual`. A signal closes it (`closeOnSignals`).
+
+While developing — `NODE_ENV` other than `production` — `devMode` and `devReload` are on, and:
+
+- **A save to the space is authored again** by the project's `plitzi/author.ts`, in a process of its own (an import is
+  never read twice in one process), run with `--ipc`: it hands the documents back over the IPC channel, the server
+  swaps them in memory and every open page loads again (`reloadPages`). What the script refuses it prints, and the page
+  keeps the last space that authored. A save to the server's own code — `main.ts`, `env.ts`, `src/config/`,
+  `src/actions/`, `src/connectors/`, `src/functions/`, `src/runtime/` — is `start:dev`'s to restart on; of a plugin,
+  only its `declaration.ts` is the space's.
+- **A plugin folder added** is registered and the open pages load again; one removed is turned off; a plugin's
+  `functions/` changed is loaded again in place. A plugin's component changed is the server's own `devReload`.
+
+It answers `{ server, url, close }`: the `SSRServer`, where it listens, and what stops it — watching, the server and the
+runtime — for a caller that stops it itself.
+
 ## Configuration
 
 `createServer` takes a `ServerConfig` (exported, as a type, from `@plitzi/sdk-server`) — what a project types its own
-options with: a `plitzi create` project keeps them in `src/config/serverOptions.ts`, typed from it less what its `main.ts`
-wires itself.
+options with: a `plitzi create` project keeps them in `src/config/serverOptions.ts`, typed `ProjectServerOptions` — it less
+what `serveProject` wires itself (see [Projects](#projects)).
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `httpVersion` | `1 \| 2 \| 3` | `2` with `tls`, else `1` | HTTP protocol version. Falls back to the nearest available lower version. |
 | `tls` | `{ key, cert, minVersion? }` | — | TLS key and certificate. Required for versions 2 and 3; optional for version 1. |
 | `devMode` | `boolean` | `false` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). Off, the process must run with `NODE_ENV=production` or React renders with its development build; the server says so once, at `error`. |
-| `devReload` | `boolean` | `false` | Every page this server renders listens for `server.reloadPages()` and loads again — for a project that re-authors its space on save (what `plitzi create` writes into `main.ts`) — and loads again too when it reconnects to a server that restarted (a new process), so a change to the server's code reaches the open page. With `devMode` too, a plugin whose source changes is built again and swapped where it is drawn on every open page — the rest of the page, its state included, stays as it was; a plugin whose declaration changed loads the page again. Not turned on by `devMode`: each open page holds a connection for it. |
+| `devReload` | `boolean` | `false` | Every page this server renders listens for `server.reloadPages()` and loads again — for a project that re-authors its space on save (what `serveProject` does while developing) — and loads again too when it reconnects to a server that restarted (a new process), so a change to the server's code reaches the open page. With `devMode` too, a plugin whose source changes is built again and swapped where it is drawn on every open page — the rest of the page, its state included, stays as it was; a plugin whose declaration changed loads the page again. Not turned on by `devMode`: each open page holds a connection for it. |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `flags` | `Record<string, boolean> \| ({ spaceId, environment }) => Record<string, boolean>` | — | This deployment's say over the spaces' feature flags: above what a space declares, below the SDK's `flags` prop and a tester's dev tools, and only for flags the space declares. A function answers per space. Server actions and RSC resolve with it too. See `docs/en/feature-flags.md` in the workspace. |
@@ -187,7 +251,7 @@ wires itself.
 | `autoLoadSchemaPlugins` | `boolean` | `true` | Auto-download and cache plugins declared in the schema's `offlineData.plugins` list. A type the deployment registers itself (`plugins`, named in `pluginNames`) is never looked for there: its own build is the one rendered. Set to `false` to manage plugin loading manually. |
 | `allowPrivatePluginHosts` | `boolean` | `false` | Read a schema plugin from a private address (`localhost`, this server's own network). A plugin's address is typed by whoever edits a space, so leave it off anywhere but a development machine whose bucket is local. |
 | `publicDir` | `string` | — | Absolute path to a directory served at the root URL level (e.g. `robots.txt`, `favicon.png`). Files are checked before `static` prefix routes. **Everything in it is public:** served to anyone who asks, with no check. |
-| `dataDir` | `string` | — | The project's own data, never served: a provider resolved on the server (`runtime: 'server'`) whose `query` is `/data/<file>` reads `<dataDir>/<file>`. See [Project data](#project-data). |
+| `dataDir` | `string` | — | The project's own data, never served: a provider resolved on the server (`runtime: 'server'`) whose `query` is `/data/<file>` reads `<dataDir>/<file>`, and a function reads it with `ctx.data(file)` — the space's `getData` when the deployment gives none. See [Project data](#project-data). |
 | `static` | `Record<string, string>` | — | URL prefix → filesystem path mappings for static file serving. |
 | `images` | `{ domains, cacheDir? }` | — | Pictures from other sites resized at `/_plitzi/img`, for an `image` to offer as a `srcset` (see [Images](#images)). |
 | `ssrOnly` | `boolean` | `false` | Omit client-side JS from the rendered page. Useful for verifying SSR HTML without hydration. |
@@ -206,6 +270,7 @@ wires itself.
 | `functions` | `{ native?, plugins?, runner?, limits? }` | — | The server's code (`FunctionsConfig` in `@plitzi/sdk-server/functions`, checked as the server starts): its own tasks and routes (`native`, from `loadFunctions`), the server halves of the plugins it ships (`plugins`, by plugin type — see [A plugin's server half](#a-plugins-server-half)), the `runner` the spaces' functions run on, and the per-invocation `limits`. See `docs/en/functions.md` § 8 in the workspace. |
 | `connectors` | `ConnectorLookupsConfig` | — | `getConnector` and `getCredential` for the space's connectors, read by the RSC read path and the `/_action` write endpoint alike. See `docs/en/connectors.md` in the workspace. |
 | `auth` | `Auth` | — | A `createAuth(...)` result: fills the three auth adapters in and brings the cookie naming. See [User authentication](#user-authentication). |
+| `pageAuth` | `Omit<ServerAuth, 'sessionHintCookie'>` | from `auth` | What the rendered pages are told about signing in (`server.auth`): the provider and its endpoints, the hint cookie added per host. Name it when `/auth` is served by another host. |
 | `sessionRenewal` | `{ url } \| false` | on with `auth` | Where a page request whose access cookie died, its refresh cookie alive, renews before it is rendered. |
 | `authCookie` | `SSRAuthCookie` | — | Name, domain, `sameSite`, `secure`, `refreshPath` (`/auth`) and `hintSuffix` (`_hint`) of the session cookies. `auth` brings its own; set here, a piece wins over it. |
 | `exchangePath` | `string \| false` | `'/auth/exchange'` | Where a browser-obtained credential is handed over; served only with the `exchangeCredential` adapter. |
@@ -318,7 +383,7 @@ server.listen(3001);
 ```
 
 Beside the page adapters it offers `getSchema` and `getStyle`, read from the same file, and — when `offlineData` is a
-path — `saveSchema` and `saveStyle`, each writing its document back into the file. So an MCP server
+path, or a function that may answer one — `saveSchema` and `saveStyle`, each writing its document back into the file. So an MCP server
 ([`@plitzi/sdk-mcp`](../mcp/README.md#adapters)) can run over it, with a `getGrant` of yours beside it.
 
 ### `JsonAdaptersConfig`
@@ -326,7 +391,7 @@ path — `saveSchema` and `saveStyle`, each writing its document back into the f
 | Option | Type | Description |
 |---|---|---|
 | `offlineData` | `string` | Path to a single JSON file used for every request. |
-| `offlineData` | `(spaceId, environment, revision?) => string` | Function returning the path for the requested space. |
+| `offlineData` | `(spaceId, environment, revision?) => string \| OfflineDataRaw` | Function answering per request: the path for the requested space, or the documents themselves — a process that replaces them while it runs (`serveProject` re-authoring a space). A save to documents it answered is refused: there is no file. |
 | `offlineData` | `OfflineDataRaw` | The space itself, for a consumer that already holds it. Read-only: `saveSchema` and `saveStyle` are offered only for a path. |
 | `deployment` | `string` | Path to a JSON file containing an `SSRSpaceDeployment` object. |
 | `deployment` | `SSRSpaceDeployment` | Inline deployment object used for every request. |
@@ -461,12 +526,16 @@ in either runtime — and the page arrives with it. A browser asking for the sam
 createServer({ dataDir: path.join(PROJECT_ROOT, 'src/data'), adapters: { ... } });
 ```
 
-Without a `dataDir`, `/data/<file>` is answered from `action.lookups.getData(spaceId, at)` — the space's own data, as
-its files' text by path, as of the version being rendered: what a cloud deployment keeps for a space (`plitzi push`).
+The data is read through one lookup, `action.lookups.getData(spaceId, at)` — the space's own data as its files' text by
+path, as of the version being rendered or run: what a cloud deployment keeps for a space (`plitzi push`). Given none,
+`createServer` derives it from `dataDir` (its `.json` files, read again once they change), so the folder and the
+platform are read the same way.
 
 `/data/…` is the data folder's first; a server provider reading another path is answered from `publicDir`, as the
 browser would be. What a provider reads goes into the page it renders, whole: data a page must not carry — a price
-list's costs, another visitor's rows — is a server action's to read, answering only what is shown.
+list's costs, another visitor's rows — is a server action's to read, answering only what is shown. A function reads
+it with `ctx.data('products.json')` (parsed, read-only, as of the run's version); importing it from `functions/` is
+refused when they are built.
 
 ## Compression
 
@@ -726,7 +795,7 @@ server.plugins.register('my-chart', {
 
 A plugin can bring server code — its `functions/`, written as a space's functions are — whose routes answer under
 `/fn/plugins/<type>/` and whose tasks are steps named `<type>.<action>`, run with a plugin's narrower `ctx` (its own
-corner of `kv`, none of the space's credentials or channels). This server's own plugins hand theirs over by type:
+corner of `kv`, none of the space's credentials, channels or data). This server's own plugins hand theirs over by type:
 
 ```ts
 import { createServer, loadFunctions } from '@plitzi/sdk-server';
@@ -879,7 +948,7 @@ The server automatically registers `GET /_rsc` when `adapters.getRscData` is pro
 }
 ```
 
-**Cache-Control**: `no-store` for the `main` environment; `private, max-age=30` for other environments when `rsc.cacheTtlMs > 0`. Responses also include `X-Cache: HIT` or `X-Cache: MISS` for observability.
+**Cache-Control**: `no-store` for the `main` environment; `private, max-age=30` for other environments when `rsc.cacheTtlMs > 0`. Responses also include `X-Cache: HIT` or `X-Cache: MISS` for observability. A request sent with `Cache-Control: no-cache` is resolved again rather than read from the cache, and its answer replaces the cached one — the SDK sends it for a refresh that exists because something changed (a write, `invalidateQueries`, `performQuery`); a `refreshSeconds` timer goes through the cache.
 
 The endpoint returns `400` if `spaceId` is missing or invalid, `500` if `getRscData` throws, and `501` if the adapter is not configured.
 
@@ -952,7 +1021,10 @@ which meant the ordinary deployment went without, because nobody configures what
 `api.rateLimit` to put one counter behind a fleet.
 
 `auth` on the server is the whole of the wiring: it mounts the `/auth` flows, answers the identity adapters a page
-server asks for, and carries the cookie naming with it — so there is no second place to keep in step. Everything is
+server asks for, and carries the cookie naming with it — so there is no second place to keep in step. It also tells
+every page it renders where it signs in (`server.auth`: `userProvider: 'basic'`, `loginUrl`, `userUrl`, `logoutUrl`,
+`refreshUrl` and `mfaUrl` where offered, and `sessionHintCookie` named for the host), so the space declares nothing. A
+setting the space does declare wins, and a space that names another provider ignores the server's altogether. Everything is
 still exported separately (`createTokens`, `createIdentity`, `createAuthApi`, `authRoutes`, …) for a deployment that
 wants to assemble or replace one piece.
 
@@ -1011,7 +1083,7 @@ Postgres, MySQL, Mongo or an identity service:
 | `clearSession(target)` | signing out |
 | `loadAccess(userId)` | the roles and permissions a grant answers with |
 | `findByUsername(username)` | password sign-in |
-| `findByRefreshToken(token)` | renewal. Answer with `refreshExpiresAt`, or every renewal is refused as expired |
+| `findByRefreshToken(token)` | renewal — the row is its revocation switch. `refreshExpiresAt` overrides the token's own expiry |
 | `findMembership(userId, spaceId)` | space-level permission checks (`auth.can`) |
 | `createAccount`, `findByEmail`, `setResetToken`, `sendMail`, … | signup, password reset, verification |
 

@@ -5,7 +5,8 @@ import path from 'node:path';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { pluginDeclarations, projectData, publicData } from './node';
+import { authorSpace } from '.';
+import { pluginDeclarations, projectAuthoring, projectData, publicData } from './node';
 
 const root = mkdtempSync(path.join(tmpdir(), 'plitzi-public-data-'));
 mkdirSync(path.join(root, 'public/data'), { recursive: true });
@@ -70,5 +71,66 @@ describe('pluginDeclarations', () => {
     writeFileSync(path.join(plugins, 'Broken/declaration.ts'), 'export const type = 1;\n');
 
     await expect(pluginDeclarations(plugins)).rejects.toThrow(/Broken\/declaration\.ts exports no declaration/);
+  });
+});
+
+describe('projectAuthoring', () => {
+  const project = mkdtempSync(path.join(tmpdir(), 'plitzi-project-authoring-'));
+  mkdirSync(path.join(project, 'src/plugins/Board'), { recursive: true });
+  writeFileSync(path.join(project, 'src/plugins/Board/declaration.ts'), "export default { type: 'board' };\n");
+  mkdirSync(path.join(project, 'src/data'), { recursive: true });
+  writeFileSync(path.join(project, 'src/data/products.json'), JSON.stringify({ items: [{ name: 'Lamp' }] }));
+  mkdirSync(path.join(project, 'public/data'), { recursive: true });
+  writeFileSync(path.join(project, 'public/data/plans.json'), JSON.stringify({ plans: [] }));
+  for (const [type, manifest] of [
+    ['chart', { pluginSchema: { chart: {}, chartLegend: {} } }],
+    ['map', { version: '2.0.0' }]
+  ] as const) {
+    mkdirSync(path.join(project, 'vendor/plugins', type), { recursive: true });
+    writeFileSync(path.join(project, 'vendor/plugins', type, 'plugin-manifest.json'), JSON.stringify(manifest));
+  }
+  mkdirSync(path.join(project, 'vendor/plugins/unread'), { recursive: true });
+
+  afterAll(() => {
+    rmSync(project, { recursive: true, force: true });
+  });
+
+  it('is what the project says: its declarations, the built plugins’ types and the data its providers read', async () => {
+    const options = await projectAuthoring(project);
+
+    expect(options.plugins.map(declaration => declaration.type)).toEqual(['board']);
+    // Each built folder's type and every element its manifest provides; one with no manifest read is its folder alone.
+    expect(options.pluginTypes).toEqual(['chart', 'chart', 'chartLegend', 'map', 'unread']);
+    expect(options.serverData?.('/data/products.json')).toEqual({ items: [{ name: 'Lamp' }] });
+    expect(options.data('/data/plans.json')).toEqual({ plans: [] });
+  });
+
+  it("takes the project’s folder as a URL too — what `new URL('..', import.meta.url)` is", async () => {
+    const options = await projectAuthoring(new URL(`file://${project}/`));
+
+    expect(options.plugins.map(declaration => declaration.type)).toEqual(['board']);
+  });
+
+  it('checks against nothing a project does not have — and a project with no server reads no data of its own', async () => {
+    const empty = mkdtempSync(path.join(tmpdir(), 'plitzi-project-authoring-empty-'));
+    try {
+      const options = await projectAuthoring(empty);
+
+      expect(options.plugins).toEqual([]);
+      expect(options.pluginTypes).toEqual([]);
+      expect(options).not.toHaveProperty('serverData');
+      expect(options.data('/data/plans.json')).toBeUndefined();
+    } finally {
+      rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
+  it('is options `authorSpace` takes whole', async () => {
+    const authored = authorSpace(
+      { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', body: [] }] },
+      await projectAuthoring(project)
+    );
+
+    expect(authored.schema.definition.permanentUrl).toBe('shop');
   });
 });

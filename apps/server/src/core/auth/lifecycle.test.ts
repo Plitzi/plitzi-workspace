@@ -43,8 +43,13 @@ const actorFor = (account: AccountRecord, permissions: string[] = []): Actor => 
   expiresAt: Math.floor(Date.now() / 1000) + 3600
 });
 
+const TOKENS = { secret: 'test-secret', issuer: 'https://test' };
+
+/** A refresh credential `build`'s deployment signed, as renewal verifies one before asking the store about it. */
+const refreshTokenFor = (userId: number): string => createTokens(TOKENS).generateRefreshToken(userId);
+
 const build = (adapters: Partial<AccountAdapters> = {}, config: AuthApiConfig = {}) => {
-  const tokens = createTokens({ secret: 'test-secret', issuer: 'https://test' });
+  const tokens = createTokens(TOKENS);
   const full: AccountAdapters = {
     saveSession: () => Promise.resolve(),
     clearSession: () => Promise.resolve(),
@@ -1229,24 +1234,24 @@ describe('the longest a session may live', () => {
       config: {}
     });
 
-    return { api, clearSession };
+    return { api, clearSession, refreshToken: tokens.generateRefreshToken(ada.id) };
   };
 
   /** The renewal window is already an idle timeout. This is the other half: the session that renews forever. */
   it('ends a session that has been renewing past the cap', async () => {
-    const { api, clearSession } = capped(Math.floor(Date.now() / 1000) - 7200);
-    const outcome = await api.refresh('r-1');
+    const { api, clearSession, refreshToken } = capped(Math.floor(Date.now() / 1000) - 7200);
+    const outcome = await api.refresh(refreshToken);
 
     expect(outcome).toMatchObject({ ok: false, status: 401 });
     expect(body(outcome)).toMatchObject({ reason: 'expired' });
     // Ended, not merely refused — otherwise the row lingers until its refresh token ages out.
-    expect(clearSession).toHaveBeenCalledWith({ refreshToken: 'r-1' });
+    expect(clearSession).toHaveBeenCalledWith({ refreshToken });
   });
 
   it('renews one that is still inside it', async () => {
-    const { api } = capped(Math.floor(Date.now() / 1000) - 60);
+    const { api, refreshToken } = capped(Math.floor(Date.now() / 1000) - 60);
 
-    expect(await api.refresh('r-1')).toMatchObject({ ok: true });
+    expect(await api.refresh(refreshToken)).toMatchObject({ ok: true });
   });
 
   it('is off by default, so a session renews for as long as somebody uses it', async () => {
@@ -1255,7 +1260,7 @@ describe('the longest a session may live', () => {
         Promise.resolve({ ...ada, refreshExpiresAt: Math.floor(Date.now() / 1000) + 9999, sessionStartedAt: 0 })
     });
 
-    expect(await api.refresh('r-1')).toMatchObject({ ok: true });
+    expect(await api.refresh(refreshTokenFor(ada.id))).toMatchObject({ ok: true });
   });
 });
 
@@ -1615,17 +1620,19 @@ describe('links that expire', () => {
  */
 describe('a refusal that ends the session', () => {
   const live = { ...ada, refreshExpiresAt: Math.floor(Date.now() / 1000) + 3600 };
+  const refreshToken = refreshTokenFor(ada.id);
 
   it('says so when the credential can never work again', async () => {
-    const gone = await build({ findByRefreshToken: () => Promise.resolve(undefined) }).refresh('r');
+    const forged = await build({ findByRefreshToken: () => Promise.resolve(live) }).refresh('r');
+    const gone = await build({ findByRefreshToken: () => Promise.resolve(undefined) }).refresh(refreshToken);
     const lapsed = await build({
       findByRefreshToken: () => Promise.resolve({ ...ada, refreshExpiresAt: 1 })
-    }).refresh('r');
+    }).refresh(refreshToken);
     const blocked = await build({
       findByRefreshToken: () => Promise.resolve({ ...live, active: false })
-    }).refresh('r');
+    }).refresh(refreshToken);
 
-    for (const outcome of [gone, lapsed, blocked]) {
+    for (const outcome of [forged, gone, lapsed, blocked]) {
       expect(outcome).toMatchObject({ ok: false, status: 401 });
       expect(!outcome.ok && outcome.endSession).toBe(true);
     }
@@ -1633,8 +1640,8 @@ describe('a refusal that ends the session', () => {
 
   /** A renewal that worked, and one that was never offered, have nothing to clear. */
   it('says nothing of the sort when there is a session to keep', async () => {
-    const renewed = await build({ findByRefreshToken: () => Promise.resolve(live) }).refresh('r');
-    const notOffered = await build().refresh('r');
+    const renewed = await build({ findByRefreshToken: () => Promise.resolve(live) }).refresh(refreshToken);
+    const notOffered = await build().refresh(refreshToken);
     const noToken = await build({ findByRefreshToken: () => Promise.resolve(live) }).refresh('');
 
     expect(renewed.ok).toBe(true);

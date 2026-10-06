@@ -80,7 +80,7 @@ describe('the scaffold', () => {
     const files = scaffold(answers({ source: 'cloud', key: 'k' }));
 
     expect(files['src/space/index.ts']).toBeUndefined();
-    expect(files['src/main.ts']).toContain('createCloudAdapters');
+    expect(files['src/main.ts']).toContain("  cloud: { name: 'demo' },");
   });
 
   it('renders on a server or in the browser, and says so in what it installs', () => {
@@ -248,9 +248,8 @@ describe('the scaffold', () => {
     const server = scaffold(answers())['src/main.ts'];
     const client = scaffold(answers({ mode: 'client' }))['src/main.ts'];
 
-    expect(server).toContain("action: 'compile' as const");
-    expect(server).toContain('readdirSync(PLUGINS_DIR, { withFileTypes: true })');
-    expect(server).toContain("path.join(PLUGINS_DIR, entry.name, 'index.ts')");
+    // `serveProject` registers each folder of `src/plugins`, built on the server and rendered there.
+    expect(server).toContain("import { serveProject } from '@plitzi/sdk-server/project';");
     expect(client).toContain(
       "import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.ts'"
     );
@@ -272,19 +271,6 @@ describe('the scaffold', () => {
       expect(ignored).toContain('tmp');
       expect(ignored.some(line => line.startsWith('.plitzi') || line.startsWith('.sdk-plugins'))).toBe(false);
     }
-  });
-
-  /** A deploy or a restart closes the server rather than dropping it, so what it is running finishes first. */
-  it('closes its server when the process is told to stop, local or cloud', () => {
-    for (const source of ['local', 'cloud'] as const) {
-      const main = scaffold(answers({ source }))['src/main.ts'];
-
-      expect(main).toMatch(/import \{[^}]*\bcloseOnSignals\b[^}]*\} from '@plitzi\/sdk-server';/);
-      expect(main).toContain('closeOnSignals(server, { afterClose: () => runtime?.close() });');
-    }
-
-    // A browser project has no server to close.
-    expect(scaffold(answers({ mode: 'client' }))['src/main.ts']).not.toContain('closeOnSignals');
   });
 
   /** One answer to "how should this be laid out", and no fight between the two tools on save. */
@@ -369,6 +355,7 @@ describe('the scaffold', () => {
     const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
     const build = JSON.parse(files['tsconfig.build.json']) as {
       compilerOptions: Record<string, unknown>;
+      include: string[];
       exclude: string[];
     };
 
@@ -379,19 +366,14 @@ describe('the scaffold', () => {
       outDir: 'dist',
       rewriteRelativeImportExtensions: true
     });
+    // A space importing a plugin's declaration reaches its component and the stylesheet it imports.
+    expect(build.include).toEqual(['src', 'plitzi/assets.d.ts']);
     // Built at boot from their source, by the server: never compiled ahead.
     expect(build.exclude).toEqual(['src/plugins', 'src/functions']);
-    expect(files['src/main.ts']).toContain("await loadFunctions(path.join(PROJECT_ROOT, 'src/functions'))");
-    // The same folder from `src/main.ts` and from `dist/main.js`.
-    expect(files['src/main.ts']).toContain("const PLUGINS_DIR = path.join(PROJECT_ROOT, 'src/plugins');");
+    // The same project from `src/main.ts` and from `dist/main.js`: the entry point's folder's parent.
+    expect(files['src/main.ts']).toContain('  entry: import.meta.url,');
+    expect(files['src/main.ts']).toContain("projectAuthoring(new URL('..', import.meta.url))");
     expect(scaffold(answers({ mode: 'client' }))['tsconfig.build.json']).toBeUndefined();
-  });
-
-  it('listens where the deployment says, loopback when it says nothing', () => {
-    const main = scaffold(answers({ mode: 'server' }))['src/main.ts'];
-
-    expect(main).toContain("const HOST = process.env.HOST ?? '127.0.0.1';");
-    expect(main).toContain('server.listen(PORT, HOST);');
   });
 
   // Claude Code finds the skill on its own; any other agent looks for AGENTS.md, and CLAUDE.md imports it.
@@ -539,6 +521,8 @@ describe('plitzi create', () => {
         'config',
         // The project's own data, read by its server and never served.
         'data',
+        // What reads `.env`, the CLI's too: the entry point imports it before anything else.
+        'env.ts',
         // The project's own server code, there from the start so `start:dev` can watch it.
         'functions',
         // The entry point: the CLI's, in src/ where an entry point is looked for.

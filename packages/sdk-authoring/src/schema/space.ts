@@ -25,7 +25,7 @@ import {
   splitClassList,
   toBlocks
 } from '../style';
-import { suggestSpace } from './advice';
+import { suggestClassOverrides, suggestSpace, withoutQuieted } from './advice';
 import { contentMoves } from './advice/content';
 import {
   COMPONENT_SOURCES,
@@ -63,6 +63,7 @@ import { didYouMean } from './suggest';
 import { assertSpaceValid, validateSpace } from './validate';
 import { writtenAt, writtenAtPosition } from './writtenAt';
 
+import type { Suggestion, WornClass, WornList } from './advice';
 import type { SourceIndex } from './bindings';
 import type { WarningCode } from './codes';
 import type { ElementHandle, LayoutHandle, PageHandle } from './handles';
@@ -101,7 +102,8 @@ import type {
   SpaceComponent,
   SpaceFont,
   Style,
-  StyleItem
+  StyleItem,
+  StyleMode
 } from '@plitzi/sdk-shared';
 
 /** What a page field nobody takes was probably for: the page's own fields for search, or a setting of the space. */
@@ -206,6 +208,10 @@ class SpaceAuthor {
   private readonly classRules = new Map<string, ResponsiveBlock>();
   /** Where each class was first declared, in words — what a second declaration that disagrees is told it disagrees with. */
   private readonly classOrigins = new Map<string, () => string>();
+  /** Where each class's rules were written, in words — what `class-overrides-class` names it by. */
+  private readonly classWritten = new Map<string, () => string>();
+  /** Each element's own rules on top of its classes (`<id>--own`), and where they were written. */
+  private readonly ownRules = new Map<string, { blocks: ResponsiveBlock; written: () => string }>();
   /** Every element's own selector, named or derived — each one is that element's alone. */
   private readonly ownSelectors = new Set<string>();
 
@@ -261,7 +267,10 @@ class SpaceAuthor {
     );
 
     // Where each suggestion's first element was written, as a refusal says it: the line to go and change.
-    const suggestions = suggestSpace({ schema, style }).map(suggestion => {
+    const suggestions = [
+      ...suggestSpace({ schema, style }),
+      ...withoutQuieted(schema, this.classOverrides(schema, style.mode ?? 'desktop-first'))
+    ].map(suggestion => {
       const first = suggestion.elementIds.at(0);
       const at = first === undefined ? undefined : writtenAt(this.specOf(first));
 
@@ -296,6 +305,37 @@ class SpaceAuthor {
     }
   }
 
+  /**
+   * Every node wearing more than one class — the classes and an element's own rules on top of them — read for a class
+   * whose shorthand erases another's longhand (`suggestClassOverrides`), with the shorthands only authoring still knows.
+   */
+  private classOverrides(schema: Schema, mode: StyleMode): Suggestion[] {
+    const order = new Map([...this.classRules.keys()].map((name, index) => [name, index]));
+    const worn = (name: string): WornClass[] => {
+      const blocks = this.classRules.get(name);
+      const written = this.classWritten.get(name);
+      if (blocks && written) {
+        return [{ name, blocks, order: order.get(name) ?? 0, written }];
+      }
+
+      // An element's own rules are written after every class, so they come last in each breakpoint's rules.
+      const own = this.ownRules.get(name);
+
+      return own ? [{ name, blocks: own.blocks, order: order.size, written: own.written }] : [];
+    };
+    const lists: WornList[] = [schema.flat, ...Object.values(schema.components).map(component => component.flat)]
+      .flatMap(flat => Object.values(flat))
+      .flatMap(element =>
+        Object.values(element.definition.styleSelectors).flatMap(selector => {
+          const classes = [...new Set(selector.split(' ').filter(Boolean))].flatMap(worn);
+
+          return classes.length > 1 ? [{ elementId: element.id, classes }] : [];
+        })
+      );
+
+    return suggestClassOverrides(lists, mode);
+  }
+
   /** The spec an element was written from, by its id in the documents. */
   specOf(id: string): ElementSpec | undefined {
     return this.specs.get(id);
@@ -314,7 +354,12 @@ class SpaceAuthor {
 
     for (const [name, value] of Object.entries(this.spec.classes ?? {})) {
       if (!isStyleDeclaration(value)) {
-        this.declareClass(name, toBlocks(value), () => `the space-wide \`classes\` entry "${name}"`);
+        this.declareClass(
+          name,
+          toBlocks(value),
+          () => `the space-wide \`classes\` entry "${name}"`,
+          () => `the space-wide \`classes\` entry "${name}"`
+        );
         continue;
       }
 
@@ -325,7 +370,12 @@ class SpaceAuthor {
         );
       }
 
-      this.declareClass(name, value.rules, () => `${declaredAt(value)}, listed in the space-wide \`classes\``);
+      this.declareClass(
+        name,
+        value.rules,
+        () => `${declaredAt(value)}, listed in the space-wide \`classes\``,
+        () => declaredAt(value)
+      );
     }
 
     const layouts = this.spec.layouts ?? [];
@@ -541,11 +591,12 @@ class SpaceAuthor {
    * `origin` says where, and is only asked for when there is a conflict to report: reading where an element was written
    * means formatting a stack, which every element of every space would otherwise pay for on every write.
    */
-  private declareClass(name: string, blocks: ResponsiveBlock, origin: () => string): void {
+  private declareClass(name: string, blocks: ResponsiveBlock, origin: () => string, written: () => string): void {
     const existing = this.classRules.get(name);
     if (!existing) {
       this.classRules.set(name, blocks);
       this.classOrigins.set(name, origin);
+      this.classWritten.set(name, written);
 
       return;
     }
@@ -568,7 +619,12 @@ class SpaceAuthor {
     const collect = (value: ClassList | undefined, usedBy: () => string): void => {
       for (const ref of value ? classRefs(value) : []) {
         if (typeof ref !== 'string') {
-          this.declareClass(ref.name, ref.rules, () => `${declaredAt(ref)}, used by ${usedBy()}`);
+          this.declareClass(
+            ref.name,
+            ref.rules,
+            () => `${declaredAt(ref)}, used by ${usedBy()}`,
+            () => declaredAt(ref)
+          );
         }
       }
     };
@@ -867,7 +923,16 @@ class SpaceAuthor {
 
     const name = modifierClassName(spec.id);
     this.assertOwnSelector(name, where);
-    this.writeSelector(name, toBlocks(modifiers[0]), where);
+    const blocks = toBlocks(modifiers[0]);
+    this.writeSelector(name, blocks, where);
+    this.ownRules.set(name, {
+      blocks,
+      written: () => {
+        const at = writtenAt(spec);
+
+        return `the own rules of "${spec.id ?? name}"${at === undefined ? '' : ` at ${at}`}`;
+      }
+    });
 
     return name;
   }

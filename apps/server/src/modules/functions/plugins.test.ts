@@ -164,6 +164,28 @@ describe('a plugin’s server half, shipped by the server', () => {
     expect((await run(channel, 'board.probe')).output.value).toContain('none of the realtime channels');
   });
 
+  /** What a space keeps in its data is what its pages must not carry; a plugin's `fetch` could carry it anywhere. */
+  it('reads none of the space’s data', async () => {
+    const module = moduleWith({
+      lookups: {
+        getAction: () => Promise.resolve(undefined),
+        getData: () => Promise.resolve({ 'prices.json': '{"cost": 4}' })
+      },
+      functions: {
+        plugins: {
+          board: boardWith(ctx =>
+            ctx.data('prices.json').then(
+              () => 'read',
+              (error: unknown) => (error instanceof Error ? error.message : String(error))
+            )
+          )
+        }
+      }
+    });
+
+    expect((await run(module, 'board.probe')).output.value).toContain('read none of the data of its space');
+  });
+
   it('answers its routes under /plugins/<type>/, with the same corner of kv', async () => {
     const module = moduleWith({ functions: { plugins: { board: boardWith(() => undefined) } } });
     await module.kv(SPACE).set('plugin:board:layout', { columns: 3 });

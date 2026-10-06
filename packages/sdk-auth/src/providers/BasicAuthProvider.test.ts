@@ -574,10 +574,24 @@ describe('credentials that do not arrive as strings', () => {
  */
 describe('a space that declared no endpoint', () => {
   it('does not sign in against the page it is rendered on', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const provider = new BasicAuthProvider({ ...plitziApi, loginUrl: '' });
 
     expect(await provider.login({ username: 'ada', password: 'pw' })).toMatchObject({ ok: false });
     expect(mockFetch).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  // `missing` alone reads exactly like a form left empty, so whoever opens the console is told what to configure.
+  it('says in the console which setting is missing', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    await new BasicAuthProvider({ ...plitziApi, loginUrl: '' }).login({ username: 'ada', password: 'pw' });
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[plitzi\] auth\.login: .*loginUrl.*createServer\(\{ auth \}\)/u)
+    );
+    warn.mockRestore();
   });
 
   it('does not renew or ask for identity against it either', async () => {

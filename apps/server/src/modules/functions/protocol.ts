@@ -72,6 +72,7 @@ export type FunctionCall =
   | { op: 'rateLimit'; bucket: string; limit: RateLimit }
   | { op: 'sign'; value: string }
   | { op: 'verify'; value: string; signature: string }
+  | { op: 'data'; file: string }
   /** Each value as the guest could send it: JSON, with what JSON cannot say already said as text. */
   | { op: 'log'; values: unknown[] }
   | { op: 'emit'; chunk: unknown };

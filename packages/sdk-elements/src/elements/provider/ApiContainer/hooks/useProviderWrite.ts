@@ -50,8 +50,9 @@ const useProviderWrite = ({ elementId, enabled, actionPath = '/_action', onDone 
       }
 
       const payload = (await response.json()) as { record: unknown };
-      // Which backend the connector wrote to is the server's to know, so every browser request may now be answering
-      // from before the write.
+      // Which backend the connector wrote to is the server's to know, so every request of the page — browser and
+      // server-driven alike — may now be answering from before the write. This provider is among them; its own
+      // refresh is the one awaited, and the two ask the same question, which goes out once.
       void invalidateQueries();
       await onDone?.();
 

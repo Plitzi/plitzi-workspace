@@ -951,12 +951,16 @@ describe('processSelector / the current state', () => {
   const cacheOf = (block: StyleBlock, name = 'navLink'): string =>
     processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
 
-  it('selects the link to the page being shown, which a hover still answers', () => {
+  it('selects the chosen one of a set — the page shown, a pressed toggle, a selected tab — which a hover still answers', () => {
     const cache = cacheOf({
       default: { color: 'gray' },
       states: { hover: { color: 'black' }, current: { color: 'red' } }
     });
 
-    expect(cache).toBe('.navLink{color:gray;&[aria-current="page"]{color:red;}&:hover{color:black;}}');
+    expect(cache).toBe(
+      '.navLink{color:gray;' +
+        '&:is([aria-current]:not([aria-current="false"]),[aria-pressed="true"],[aria-selected="true"]){color:red;}' +
+        '&:hover{color:black;}}'
+    );
   });
 });

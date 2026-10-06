@@ -71,6 +71,11 @@ export type FunctionContext = {
   grant: (topic: string, ttlSeconds?: number) => Promise<string>;
   /** Takes a grant back — or every grant for the topic, naming none. */
   revoke: (topic: string, grant?: string) => Promise<void>;
+  /**
+   * One file of the space's data — a project's `src/data/<file>` — parsed, as of the version the run belongs to: what
+   * a page must not carry, read here and answered only as far as it is shown. Read-only. `ctx.data('products.json')`.
+   */
+  data: (file: string) => Promise<unknown>;
   /** A line for whoever reads the run: the builder's Try, and the deployment's logs. */
   log: (...values: unknown[]) => void;
   /** Progress for a caller that asked for a stream — a no-op when nobody did. */

@@ -22,9 +22,10 @@ export const writeInvalidationParams = (
   invalidateQueries: {
     type: 'select',
     description:
-      'What to refresh once the write succeeded, so the page shows the new data: the cached requests to the same ' +
-      'site, all of them, only the api containers named in `invalidateElements`, or none for a step that only reads. ' +
-      'Containers on screen ask again at once; the rest when they are shown.',
+      'What to refresh once the write succeeded, so the page shows the new data: the requests to the same site, ' +
+      'every provider on the page, only the api containers named in `invalidateElements`, or none for a step that ' +
+      'only reads. Server-driven containers are refreshed too, asking the server past its cache. Containers on ' +
+      'screen ask again at once; the rest when they are shown.',
     default: modes[0],
     options: [...modes],
     optionLabels: Object.fromEntries(modes.map(mode => [mode, LABELS[mode]])),

@@ -54,7 +54,7 @@ describe('plitzi add runtime', () => {
       expect.stringContaining('--watch-path=./src/runtime')
     );
     // The server already runs whatever is there: nothing of the CLI's changes.
-    expect(await read('src/main.ts')).toContain('await loadRuntimeModule(');
+    expect(await read('src/main.ts')).toContain('await serveProject({');
   });
 
   it('leaves a start:dev the project made its own, and says what to add to it', async () => {

@@ -138,9 +138,9 @@ prefix-indexed (`token(191)`) instead; the comparison stays exact, because MySQL
 **Unix seconds are `BIGINT`, never `INT`.** A signed `INT` runs out on 19 January 2038, and a lifetime `render`
 credential is precisely the row that gets written with a far-future date.
 
-**`refreshExpiresAt` has to come off the row.** `findByRefreshToken` must report it. A store that keeps it inside a
-session object and forgets to lift it out has every renewal refused as `expired` — which does not fail at login. It
-fails a day later, when the access token ages out and a session that looked fine simply ends.
+**`refreshExpiresAt` comes off the row.** `findByRefreshToken` reports it, and it is what decides how long a
+renewal may happen. A store that leaves it out falls back to the refresh token's own expiry, so the column is the place
+to shorten one — the row itself is what revokes it.
 
 **A cleared single-use token is `NULL`, not `''`.** The flows clear a reset token by setting it to the empty
 string. Stored as an empty string it becomes a value that *matches*, so a reset link carrying no token at all would

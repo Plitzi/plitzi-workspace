@@ -52,6 +52,17 @@ const meterRsc = async (
   }
 };
 
+/**
+ * Whether the browser asked for the server's answer as of now — a refresh that exists because something changed (a
+ * write, an explicit reload), which the answer kept for the last `cacheTtlMs` would undo.
+ *
+ * It skips reading the cache, never writing it: the answer it gets is the newest there is, and the next visitor is
+ * served it. Nobody gains anything they could not already have by changing the query string, which misses the cache
+ * as well.
+ */
+const asksFresh = (req: SSRRequest): boolean =>
+  (req.headers['cache-control'] ?? '').split(',').some(directive => directive.trim().toLowerCase() === 'no-cache');
+
 /** The endpoint's own parameters: what it is asked about, never input to what it resolves. */
 const ENDPOINT_PARAMS = new Set(['location', 'ids']);
 
@@ -105,6 +116,7 @@ export const withPageLocation = (req: SSRRequest): SSRRequest => {
  * - main environment: no-store (development, always fresh)
  * - Authenticated requests: Cache-Control: private, max-age=<ttl>
  * - Unauthenticated requests: Cache-Control: public, max-age=<ttl>
+ * - A request carrying `Cache-Control: no-cache` is resolved again, and its answer replaces the one cached.
  */
 export const handleRsc = async (
   req: SSRRequest,
@@ -177,7 +189,7 @@ export const handleRsc = async (
     environment !== 'main' && !uncached
       ? buildRscCacheKey(spaceId, environment, revision, req.ctx.user?.id, idsParam, req)
       : undefined;
-  const cached = cacheKey ? cache?.get(cacheKey) : undefined;
+  const cached = cacheKey && !asksFresh(req) ? cache?.get(cacheKey) : undefined;
 
   // An RSC read is a server request of its own — a partial refresh the page asks for after it loaded — so it
   // is metered like one, at whatever a deployment prices a data refresh against a whole page. Before the

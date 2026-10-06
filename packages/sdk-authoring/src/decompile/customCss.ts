@@ -44,14 +44,24 @@ export interface CustomCssFold {
   remaining: string;
 }
 
-// The states written as a pseudo-class — what `.card:hover` names — and `current`, which a selector names as the attribute
-// a link to this page carries and `targetOf` reads as `:current`. `.panel:hidden` is no CSS, and not the hidden state.
+// The states written as a pseudo-class — what `.card:hover` names — and `current`, which a selector names by the
+// attributes of the chosen one of a set and `targetOf` reads as `:current`. `.panel:hidden` is no CSS, and not the
+// hidden state.
 const STATE_SET = new Set<string>(
   STYLE_STATES.filter(state => state === 'current' || stateSuffix(state) === `:${state}`)
 );
 
-/** `[aria-current="page"]`, in either quotes, written as the state it is, so one pattern reads every state. */
-const asStateNames = (selector: string): string => selector.replaceAll(/\[aria-current=(["'])page\1\]/g, ':current');
+/**
+ * The `current` state as a selector writes it: the whole of it, as the style compiler does, or one of the attributes it
+ * stands for — `[aria-current='page']` on a nav link, `[aria-pressed='true']` on a toggle, `[aria-selected='true']` on a
+ * tab — in either quotes. The chosen one of a set carries one of them, so a rule on any of them is the class's current
+ * state.
+ */
+const CURRENT_ATTRIBUTES = /\[aria-current=(["'])page\1\]|\[aria-(?:pressed|selected)=(["'])true\2\]/g;
+
+/** Every way of writing the `current` state, written as the state it is, so one pattern reads every state. */
+const asStateNames = (selector: string): string =>
+  selector.replaceAll(stateSuffix('current'), ':current').replaceAll(CURRENT_ATTRIBUTES, ':current');
 
 const isStyleState = (state: string): state is StyleState => STATE_SET.has(state);
 

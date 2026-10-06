@@ -48,7 +48,7 @@ Name the trigger (`named('changed', on('onChange'))`) and read its payload as `{
 
 | Trigger                                                                                                | Payload                                                 |
 | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| `onChange` (formControl)                                                                               | `value` (a boolean for a checkbox), `name`              |
+| `onChange` (formControl)                                                                               | `value` (a boolean for a checkbox or switch), `name`    |
 | `onSubmit` (form)                                                                                      | `values` (by control `name`), `actionUrl`, `method`     |
 | `onPageLoad` (page)                                                                                    | `pageId`, `routeParams`, `queryParams`                  |
 | `onApiSuccess` / `onApiError` (apiContainer)                                                           | `url`, `method`, `status`, `data`                       |
@@ -60,6 +60,10 @@ Name the trigger (`named('changed', on('onChange'))`) and read its payload as `{
 
 `named('quote', step)` is how a later step reads an earlier one: `{{ quote.output.total }}`. The trigger too:
 `named('submitted', onSubmit())` → `{{ submitted.values.email }}`. Unnamed steps get ids nothing can refer to.
+
+`whenSucceeded` / `whenFailed` read a server action's `status` (`runServerAction` only); any other step is asked what
+it publishes (`npx @plitzi/cli explain login` lists it) — after `named('signedIn', authLogin(…))`,
+`when({ field: 'signedIn.ok', operator: '=', value: true }, …)`.
 
 A step's params are templates, evaluated in full (conditions, loops, filters). A source in them is named in full:
 a row's button posts `{ jobId: '{{ list_jobRows.item.id }}' }` — the row that was clicked; the short name is refused.
@@ -75,7 +79,7 @@ so `when({ field: 'sent.values.code', operator: '=', value: '' }, …)` never ho
 ## Writes and what they refresh
 
 `webHook` (not GET) refreshes every request to its own site when it succeeds; `runServerAction` refreshes
-everything. Say what it should refresh — `invalidateQueries: 'elements', invalidateElements: ['orders']` — or
+everything, server-driven providers included. Say what it should refresh — `invalidateQueries: 'elements', invalidateElements: ['orders']` — or
 `'none'` for a step that only reads, or when a refresh would make the page act on the new answer mid-flow.
 
 ## Triggers belong to the element that fires them

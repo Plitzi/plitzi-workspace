@@ -73,6 +73,8 @@ export type Explanation =
       /** The element types that answer to it, for an element callback. */
       answeredBy?: string[];
       params: ParamInfo[];
+      /** What a later step reads of it, named: `{{ <step>.field }}` — and the only fields a `when` can ask it about. */
+      reads: string[];
     }
   | {
       kind: 'trigger';
@@ -169,12 +171,24 @@ export const BUILDER_NAMES: Record<string, string> = {
   delayTime: 'delay'
 };
 
+/**
+ * The builder of a global callback not named after its action. Apart from {@link BUILDER_NAMES} because that table is
+ * the element callbacks': `setState` the global callback is written `setState(…)`, the element one `updateElement(…)`.
+ * The auth builders keep a prefix the actions do not have — a bare `login` would be too vague at an import.
+ */
+export const GLOBAL_CALLBACK_BUILDERS: Record<string, string> = {
+  login: 'authLogin',
+  logout: 'authLogout',
+  refreshDetails: 'authRefreshDetails'
+};
+
 /** The step a builder writes when the builder is not named after it: `reloadApi` is how `performQuery` is written. */
 const stepOfBuilder = (name: string): string | undefined =>
-  Object.entries(BUILDER_NAMES).find(([, builder]) => builder === name)?.[0];
+  Object.entries({ ...BUILDER_NAMES, ...GLOBAL_CALLBACK_BUILDERS }).find(([, builder]) => builder === name)?.[0];
 
 const builderOf = (action: string, type: string): string | undefined => {
-  const named = type === 'globalCallback' ? action : (BUILDER_NAMES[action] ?? action);
+  const named =
+    type === 'globalCallback' ? (GLOBAL_CALLBACK_BUILDERS[action] ?? action) : (BUILDER_NAMES[action] ?? action);
 
   return builders.has(named) ? named : undefined;
 };
@@ -251,7 +265,8 @@ const explainSteps = (name: string): Explanation[] => {
       title: step.title,
       type: 'globalCallback',
       ...(builder ? { builder } : {}),
-      params: fromSpec(step.params)
+      params: fromSpec(step.params),
+      reads: Object.keys(step.preview ?? {})
     });
   }
 
@@ -259,16 +274,19 @@ const explainSteps = (name: string): Explanation[] => {
   const definition = definitionIn(typeCallbackDefinitions, name);
   if (shared || definition) {
     const builder = builderOf(name, 'callback');
+    // A type's own callback is said from its definition; the ones every element answers to, from their declaration.
+    const own = shared ? undefined : definition;
     steps.push({
       kind: 'step',
       name,
-      title: shared ? BUILTIN_ELEMENT_CALLBACKS[name].title : (definition?.title ?? name),
+      title: own ? own.title : BUILTIN_ELEMENT_CALLBACKS[name].title,
       type: 'callback',
       ...(builder ? { builder } : {}),
       answeredBy: Object.entries(elementCallbacks)
         .filter(([, callbacks]) => callbacks.includes(name))
         .map(([type]) => type),
-      params: definition && !shared ? fromCallback(definition) : fromSpec(BUILTIN_ELEMENT_CALLBACKS[name].params)
+      params: own ? fromCallback(own) : fromSpec(BUILTIN_ELEMENT_CALLBACKS[name].params),
+      reads: Object.keys((own ? own.preview : BUILTIN_ELEMENT_CALLBACKS[name].preview) ?? {})
     });
   }
 
@@ -281,7 +299,8 @@ const explainSteps = (name: string): Explanation[] => {
       title: utility.title,
       type: 'utility',
       ...(builder ? { builder } : {}),
-      params: fromSpec(utility.params)
+      params: fromSpec(utility.params),
+      reads: Object.keys(utility.preview ?? {})
     });
   }
 
@@ -398,7 +417,8 @@ export const explanationText = (explanation: Explanation): string => {
         `${explanation.name} — step (${stepPlace(explanation.type, explanation.answeredBy)}): ${explanation.title}`,
         ...(explanation.builder ? [`Written: ${builderCall(explanation.builder)}`] : []),
         'Params:',
-        ...paramsText(explanation.params)
+        ...paramsText(explanation.params),
+        `Reads: ${explanation.reads.length > 0 ? `${explanation.reads.join(', ')} — named('x', …), then {{ x.${explanation.reads[0]} }} or when({ field: 'x.${explanation.reads[0]}', … })` : '(nothing)'}`
       ].join('\n');
     case 'trigger':
       return [

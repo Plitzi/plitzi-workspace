@@ -41,7 +41,12 @@ print what the page holds. `window.__plitzi.element()`, the panel's **Runtime** 
 (`sdk-dev-tools/src/agentInspector/report.ts`).
 The sources it reads are also held to the page: `dataIssues` (`@plitzi/sdk-authoring`) walks every binding of
 the page against the answer its provider gave, so a path that answer lacks is said with the keys it has, and a provider
-that failed is said once rather than as every element it left empty. The dev tools' own badge and panel carry
+that failed is said once rather than as every element it left empty. What is inside an element the page is not showing
+— a `visible` of its own that says no — is not mounted, so `check` hands those to `dataIssues` (`hidden`) and only their
+own condition is read. A list's rows are counted twice: what its source holds (`dataIssues`, before the binding's
+transformers) and the copies of its row the page draws, so a filtered list reads `4 of 8 rows`. `sources()` cuts only a
+true cycle — a list republishes the array its provider answered — and a row's `{ item, index }`, published under its
+list's name, never stands in for the list's `{ items }`. The dev tools' own badge and panel carry
 `data-plitzi-devtools` and are hidden while `check` and `shot` look — what they report is the page a visitor gets.
 
 **`plitzi fix` edits the author's source, not a copy.** Every fix `fixSpace` makes says its change in the spec's own

@@ -7,6 +7,23 @@ import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare'
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type ButtonAttributes = AuthorableAttributes<ButtonProps>;
 
+/** Every kind of button starts the same: `_button.scss` in the SDK, which is what it renders. */
+const buttonStyle = {
+  'padding-top': '6px',
+  'padding-left': '12px',
+  'padding-right': '12px',
+  'padding-bottom': '6px',
+  cursor: 'pointer',
+  'font-size': '16px',
+  // A ratio, not a length: 24px at the default 16px, and the same proportion for a class that resizes the text. A fixed
+  // 24px left every small button — a chip, a row, a tab — a line taller than its text.
+  'line-height': '1.5',
+  'border-top-left-radius': '4px',
+  'border-top-right-radius': '4px',
+  'border-bottom-left-radius': '4px',
+  'border-bottom-right-radius': '4px'
+};
+
 const declaration = elementDeclaration<ButtonAttributes>()({
   type: 'button',
   attributeValues: {
@@ -61,77 +78,11 @@ const declaration = elementDeclaration<ButtonAttributes>()({
     defaultStyle: {
       name: 'Button',
       displayMode: 'desktop',
-      style: { base: { default: {} } },
+      style: { base: { default: buttonStyle } },
       subTypes: {
-        button: {
-          name: 'Default Button',
-          displayMode: 'desktop',
-          style: {
-            base: {
-              default: {
-                'padding-top': '6px',
-                'padding-left': '12px',
-                'padding-right': '12px',
-                'padding-bottom': '6px',
-                cursor: 'pointer',
-                'font-size': '16px',
-                // A ratio, not a length: 24px at the default 16px, and the same proportion for a class that resizes
-                // the text. A fixed 24px left every small button — a chip, a row, a tab — a line taller than its text.
-                'line-height': '1.5',
-                'border-top-left-radius': '4px',
-                'border-top-right-radius': '4px',
-                'border-bottom-left-radius': '4px',
-                'border-bottom-right-radius': '4px'
-              }
-            }
-          }
-        },
-        reset: {
-          name: 'Reset Button',
-          displayMode: 'desktop',
-          style: {
-            base: {
-              default: {
-                'padding-top': '6px',
-                'padding-left': '12px',
-                'padding-right': '12px',
-                'padding-bottom': '6px',
-                cursor: 'pointer',
-                'font-size': '16px',
-                // A ratio, not a length: 24px at the default 16px, and the same proportion for a class that resizes
-                // the text. A fixed 24px left every small button — a chip, a row, a tab — a line taller than its text.
-                'line-height': '1.5',
-                'border-top-left-radius': '4px',
-                'border-top-right-radius': '4px',
-                'border-bottom-left-radius': '4px',
-                'border-bottom-right-radius': '4px'
-              }
-            }
-          }
-        },
-        submit: {
-          name: 'Submit Button',
-          displayMode: 'desktop',
-          style: {
-            base: {
-              default: {
-                'padding-top': '6px',
-                'padding-left': '12px',
-                'padding-right': '12px',
-                'padding-bottom': '6px',
-                cursor: 'pointer',
-                'font-size': '16px',
-                // A ratio, not a length: 24px at the default 16px, and the same proportion for a class that resizes
-                // the text. A fixed 24px left every small button — a chip, a row, a tab — a line taller than its text.
-                'line-height': '1.5',
-                'border-top-left-radius': '4px',
-                'border-top-right-radius': '4px',
-                'border-bottom-left-radius': '4px',
-                'border-bottom-right-radius': '4px'
-              }
-            }
-          }
-        }
+        button: { name: 'Default Button', displayMode: 'desktop', style: { base: { default: buttonStyle } } },
+        reset: { name: 'Reset Button', displayMode: 'desktop', style: { base: { default: buttonStyle } } },
+        submit: { name: 'Submit Button', displayMode: 'desktop', style: { base: { default: buttonStyle } } }
       }
     },
     settings: {}

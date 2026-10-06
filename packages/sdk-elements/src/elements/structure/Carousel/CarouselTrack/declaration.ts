@@ -48,7 +48,10 @@ const declaration = elementDeclaration<CarouselTrackAttributes>()({
       displayMode: 'desktop',
       style: {
         base: {
-          default: {}
+          default: {
+            position: 'relative',
+            overflow: 'hidden'
+          }
         }
       }
     },

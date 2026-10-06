@@ -1,0 +1,264 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import {
+  DATA_DIR,
+  DEV_SERVER_FILE,
+  FUNCTIONS_DIR,
+  KV_FILE,
+  PROJECT_TMP,
+  PUBLIC_DIR,
+  RUNTIME_BUNDLE
+} from '@plitzi/sdk-shared/project/paths';
+
+import { projectPlugins, watchProjectPlugins } from './plugins';
+import { watchSpace } from './watchSpace';
+import { createCloudAdapters } from '../../adapters/cloudAdapters';
+import { createJsonAdapters } from '../../adapters/jsonAdapters';
+import { createServer } from '../../core/createServer';
+import { freePort } from '../../core/freePort';
+import { closeOnSignals } from '../../core/server/closeOnSignals';
+import { consoleLogger } from '../../helpers/serverLog';
+import { createFileKv } from '../actions/runtime/fileKv';
+import { loadFunctions } from '../functions/load';
+import { loadRuntime, loadRuntimeModule } from '../runtime/bundle';
+import { serveRuntime } from '../runtime/stages';
+
+import type { AuthoredDocuments } from './watchSpace';
+import type { ServerConfig } from '../../core/createServer';
+import type { ActionLookups } from '../actions/types';
+import type { ConnectorManifest } from '../connectors';
+import type { ActionEntry, Environment, SSRPageAdapters, SSRServer } from '@plitzi/sdk-shared';
+
+/** What `serveProject` sets itself, from the project's layout — so never the project's options'. */
+type SetByProject =
+  | 'port'
+  | 'devMode'
+  | 'devReload'
+  | 'health'
+  | 'adapters'
+  | 'plugins'
+  | 'publicDir'
+  | 'dataDir'
+  | 'functions'
+  | 'action';
+
+/**
+ * What a project's server does besides serving its space — its `src/config/serverOptions.ts`: what `createServer`
+ * takes, but for what `serveProject` wires from the project's layout, and an action's `lookups`, which are the
+ * project's `src/actions/`. `logLevel` and `logger` are the project's to change; `action.kv` too.
+ */
+export type ProjectServerOptions = Partial<Omit<ServerConfig, SetByProject>> & {
+  action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
+};
+
+/** A space authored in the project — `authorSpace(space, await projectAuthoring(…))` — and what it warned of. */
+export type ProjectSpace = AuthoredDocuments & { warnings?: readonly { message: string }[] };
+
+type ServeProjectBase = {
+  /** The entry point's `import.meta.url` — `src/main.ts`, or `dist/main.js` once built: the project is its folder's parent. */
+  entry: string;
+  /** The space's server actions (`src/actions/`), found by their id. Left out, the server runs none. */
+  actions?: readonly ActionEntry[];
+  /** The connectors those actions call, by id. */
+  connectors?: ReadonlyMap<string, ConnectorManifest>;
+  /** `src/config/serverOptions.ts`: spread before what `serveProject` wires, which wins where both say something. */
+  serverOptions?: ProjectServerOptions;
+};
+
+export type ServeProjectOptions = ServeProjectBase &
+  (
+    | {
+        /** The space, held in the project: served from memory, and — while developing — authored again on a save. */
+        space: ProjectSpace;
+        cloud?: never;
+      }
+    | {
+        /**
+         * The space stays in Plitzi, read with `PLITZI_HOST_KEY` (and `PLITZI_ENVIRONMENT`, `PLITZI_REVISION`,
+         * `PLITZI_SERVER_URL`): `name` is what `/health` answers with — no space document says it here.
+         */
+        cloud: { name: string };
+        space?: never;
+      }
+  );
+
+/** The project's server, running. */
+export type ServedProject = {
+  server: SSRServer;
+  /** Where it listens, as `tmp/dev-server.json` records it: `http://127.0.0.1:<port>`. */
+  url: string;
+  /** Stops watching, closes the server and the runtime — what a signal does, for a caller that stops it itself. */
+  close: () => Promise<void>;
+};
+
+const ENVIRONMENTS: readonly Environment[] = ['main', 'production', 'staging', 'development'];
+
+const isEnvironment = (value: string): value is Environment => ENVIRONMENTS.some(environment => environment === value);
+
+/** The one space a project's server serves, which is the one it runs the actions on a clock for. */
+const SPACE_ID = 1;
+
+/**
+ * The space's HOST key — not the public one a published page embeds. They are different credentials on purpose: the
+ * public `render` key is readable by anyone who views source, and what keeps a copied one from working is that a
+ * browser states the origin it presents from. A server has no such statement to make, so it gets a key whose
+ * protection is that it is secret: issued once, never committed, never shipped in a page, revocable on its own.
+ */
+const cloudAdapters = (pluginNames: string[]): SSRPageAdapters => {
+  const webKey = process.env.PLITZI_HOST_KEY ?? '';
+  if (!webKey) {
+    throw new Error('Set PLITZI_HOST_KEY in .env — Credentials, in the builder.');
+  }
+
+  const environment = process.env.PLITZI_ENVIRONMENT ?? 'main';
+  if (!isEnvironment(environment)) {
+    throw new Error(`PLITZI_ENVIRONMENT is "${environment}": one of ${ENVIRONMENTS.join(', ')}.`);
+  }
+
+  // `main` is what the builder is editing, read live; a published environment serves its latest release, and
+  // `PLITZI_REVISION` pins one exact version.
+  return createCloudAdapters({
+    webKey,
+    ...(process.env.PLITZI_SERVER_URL ? { serverUrl: process.env.PLITZI_SERVER_URL } : {}),
+    environment,
+    ...(process.env.PLITZI_REVISION ? { revision: Number(process.env.PLITZI_REVISION) } : {}),
+    deployment: { pluginNames }
+  });
+};
+
+const actionLookups = (
+  actions: readonly ActionEntry[],
+  connectors: ReadonlyMap<string, ConnectorManifest>
+): ActionLookups => ({
+  getAction: (_spaceId, actionId) => Promise.resolve(actions.find(entry => entry.id === actionId)),
+  listActions: () => Promise.resolve([...actions]),
+  getConnector: (_spaceId, connectorId) => Promise.resolve(connectors.get(connectorId)),
+  listScheduledSpaces: () => Promise.resolve([SPACE_ID])
+});
+
+/**
+ * The server of a project `@plitzi/cli` writes — its `src/main.ts` hands it the space, its actions and its options,
+ * and everything else comes from where the project keeps it:
+ *
+ * - the port: `PORT`, or 8080 — the next free one from there while developing; `HOST`, loopback by default;
+ * - its plugins: every folder of `src/plugins` built from its source and server-rendered, every one of `vendor/plugins`
+ *   as it was built, each with its server half;
+ * - its code: `src/functions/`, and the space's runtime (`src/runtime/`, or `vendor/runtime.bundle`) in this process;
+ * - `public/` served as it is, `src/data/` read and never served, `kv` kept in `state/kv.json`;
+ * - `/health` answering with the space's permanent URL (or the cloud project's name), and the port it took written to
+ *   `tmp/dev-server.json` for `check`, `shot` and `visual` to find;
+ * - a signal closes it, finishing what runs.
+ *
+ * While developing (`NODE_ENV` other than `production`), a save to the space is authored again by the project's
+ * `plitzi/author.ts`, in a process of its own, which hands the documents back over IPC: the server swaps them in memory
+ * and every open page loads again. A plugin folder added is registered, one removed turned off, and a plugin's
+ * `functions/` loaded again.
+ */
+export const serveProject = async (options: ServeProjectOptions): Promise<ServedProject> => {
+  const { entry, actions, connectors = new Map<string, ConnectorManifest>(), serverOptions = {} } = options;
+  const entryFile = fileURLToPath(entry);
+  const root = path.resolve(path.dirname(entryFile), '..');
+  const developing = process.env.NODE_ENV !== 'production';
+
+  // Loopback unless told otherwise: a container publishes a port only from an address it listens on (`HOST=0.0.0.0`).
+  const host = process.env.HOST ?? '127.0.0.1';
+  // `PORT` set: that port, and an error if it is taken. Not set, while developing: 8080 or the next free one.
+  const port = process.env.PORT ? Number(process.env.PORT) : developing ? await freePort(8080, host) : 8080;
+  /** Where people reach this server: `PUBLIC_URL` behind a proxy, its own address otherwise. */
+  const publicUrl = (process.env.PUBLIC_URL ?? `http://127.0.0.1:${String(port)}`).replace(/\/+$/, '');
+
+  const plugins = await projectPlugins(root);
+  const { space } = options;
+  // What the server serves of a space held in the project: replaced, while developing, by each save authored again.
+  const held = space && { documents: { schema: space.schema, style: space.style } };
+  for (const warning of space?.warnings ?? []) {
+    console.warn(`[author] ${warning.message}`);
+  }
+
+  const adapters = held
+    ? createJsonAdapters({
+        offlineData: () => held.documents,
+        deployment: { spaceId: SPACE_ID, environment: 'main', revision: 0, pluginNames: plugins.names }
+      })
+    : cloudAdapters(plugins.names);
+  const functionsDir = path.join(root, FUNCTIONS_DIR);
+  const functions = existsSync(functionsDir) ? await loadFunctions(functionsDir) : [];
+
+  // The space's runtime, run here: its tasks join the functions, and its endpoints answer before anything else. Its
+  // variables are this process's environment. One that came across built only runs as it was built.
+  const runtimeBundle = path.join(root, RUNTIME_BUNDLE);
+  const spaceRuntime =
+    (await loadRuntimeModule(path.join(path.dirname(entryFile), `runtime/index${path.extname(entryFile)}`))) ??
+    (existsSync(runtimeBundle)
+      ? await loadRuntime(readFileSync(runtimeBundle), path.join(root, PROJECT_TMP, 'runtime'))
+      : undefined);
+  const runtime = spaceRuntime && (await serveRuntime(spaceRuntime, { env: process.env, publicUrl }));
+
+  // What `/health` answers with, and `tmp/dev-server.json` records: how a tool knows it reached THIS project.
+  const name = space ? space.schema.definition.permanentUrl : options.cloud.name;
+  const server = createServer(
+    {
+      // What went wrong and nothing else: `npm start -- --verbose` adds a line for every request.
+      logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
+      logger: consoleLogger,
+      ...serverOptions,
+      port,
+      devMode: developing,
+      devReload: developing,
+      health: { name },
+      adapters,
+      plugins: plugins.sources,
+      publicDir: path.join(root, PUBLIC_DIR),
+      dataDir: path.join(root, DATA_DIR),
+      functions: { native: [...functions, ...(runtime?.native ?? [])], plugins: plugins.functions },
+      // What `ctx.sign` and `ctx.verify` sign with: `PLITZI_SIGNING_SECRET`. What the actions and functions keep in
+      // `kv` outlives a restart; a deployment with several processes names its own store (`action.kv`).
+      action: {
+        signingSecret: process.env.PLITZI_SIGNING_SECRET,
+        kv: createFileKv({ file: path.join(root, KV_FILE) }),
+        ...serverOptions.action,
+        ...(actions ? { lookups: actionLookups(actions, connectors) } : {})
+      }
+    },
+    { preAuth: runtime ? [runtime.stage] : [] }
+  );
+
+  server.listen(port, host);
+  const url = `http://127.0.0.1:${String(port)}`;
+  mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });
+  writeFileSync(path.join(root, DEV_SERVER_FILE), `${JSON.stringify({ name, port, url }, null, 2)}\n`);
+  console.log(`pages on ${url}/`);
+
+  const watching = developing
+    ? [
+        ...(held
+          ? [
+              watchSpace(root, authored => {
+                held.documents = authored;
+                server.reloadPages();
+              })
+            ]
+          : []),
+        watchProjectPlugins(root, server, plugins)
+      ]
+    : [];
+  const close = async (): Promise<void> => {
+    watching.forEach(stop => stop());
+    await server.close();
+    await runtime?.close();
+  };
+  // A deploy, a restart or ^C closes the server instead of dropping it: requests in flight are answered, and the jobs
+  // it runs finish first. A second ^C exits at once.
+  const stopListening = closeOnSignals({ close });
+
+  return {
+    server,
+    url,
+    close: async () => {
+      stopListening();
+      await close();
+    }
+  };
+};

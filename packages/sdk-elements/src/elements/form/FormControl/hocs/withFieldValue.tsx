@@ -154,7 +154,7 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
 
     const handleChange = useCallback(
       (e: ChangeEvent<HTMLInputElement>) => {
-        const checkable = e.target.type === 'radio' || e.target.type === 'checkbox' || subType === 'switch';
+        const checkable = e.target.type === 'radio' || e.target.type === 'checkbox';
         if (!setFieldValue) {
           setOwnValue(checkable ? String(e.target.checked) : e.target.value);
 
@@ -163,7 +163,7 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
 
         setFieldValue(name, checkable ? e.target.checked : e.target.value);
       },
-      [setFieldValue, name, subType]
+      [setFieldValue, name]
     );
 
     // A standalone control has no submit to guard, so there is nothing for its rules to stop.

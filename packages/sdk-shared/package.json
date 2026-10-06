@@ -1099,6 +1099,10 @@
       "types": "./dist/plugins/declaration.d.ts",
       "import": "./dist/plugins/declaration.mjs"
     },
+    "./project/paths": {
+      "types": "./dist/project/paths.d.ts",
+      "import": "./dist/project/paths.mjs"
+    },
     "./queries": {
       "types": "./dist/queries/index.d.ts",
       "import": "./dist/queries/index.mjs"
@@ -1111,9 +1115,17 @@
       "types": "./dist/queries/queryCache.d.ts",
       "import": "./dist/queries/queryCache.mjs"
     },
+    "./queries/serverQueries": {
+      "types": "./dist/queries/serverQueries.d.ts",
+      "import": "./dist/queries/serverQueries.mjs"
+    },
     "./queries/useQuery": {
       "types": "./dist/queries/useQuery.d.ts",
       "import": "./dist/queries/useQuery.mjs"
+    },
+    "./queries/useServerQuery": {
+      "types": "./dist/queries/useServerQuery.d.ts",
+      "import": "./dist/queries/useServerQuery.mjs"
     },
     "./realtime": {
       "types": "./dist/realtime/index.d.ts",
@@ -1532,7 +1544,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.31",
+    "@plitzi/plitzi-ui": "^1.6.32",
     "date-fns": "^4.4.0",
     "immer": "^11.1.21",
     "zod": "^4.6.5"

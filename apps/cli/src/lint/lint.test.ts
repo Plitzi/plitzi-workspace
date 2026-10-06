@@ -192,6 +192,34 @@ describe('plitzi lint', () => {
     expect(relayed.every(each => each.docs === `npx plitzi explain ${each.code}`)).toBe(true);
   }, 30_000);
 
+  it('says a comment naming a suggestion silences nothing, and how a suggestion is quieted', async () => {
+    await write('src/space/index.ts', SPACE_INDEX);
+    await write(
+      'src/space/pages/home.ts',
+      page(
+        [
+          '    // plitzi-lint-disable-next-line content-attribute -- the words stay a text',
+          "    link({ id: 'home-docs', href: '/docs', children: [text('Docs', { id: 'home-docs-text' })] })"
+        ].join('\n'),
+        "import { link, text } from '@plitzi/sdk-authoring';"
+      )
+    );
+
+    const report = await run();
+
+    expect(only(report, 'content-attribute')).toMatchObject([{ line: 9, origin: 'authoring' }]);
+    expect(only(report, 'disable-names-suggestion')).toMatchObject([
+      { file: 'src/space/pages/home.ts', line: 8, column: 8, origin: 'source' }
+    ]);
+    expect(only(report, 'disable-names-suggestion')[0].message).toContain("quiet: ['content-attribute']");
+
+    said = [];
+    await lint({});
+    expect(said.join('\n')).toContain(
+      "Authoring's suggestions (content-attribute) are quieted on the element they are about — `quiet: ['content-attribute']`"
+    );
+  }, 30_000);
+
   it('leaves authoring’s literal-colour to colour-not-token, which says each colour at its line', async () => {
     const source = [
       "import { container, styles } from '@plitzi/sdk-authoring';",

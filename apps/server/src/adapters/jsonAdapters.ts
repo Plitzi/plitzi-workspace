@@ -17,13 +17,18 @@ import type {
  */
 export type JsonAdaptersConfig = {
   /**
-   * The space: a path to a `{ schema, style }` JSON, a function returning one per request, or the data itself for a
-   * consumer that already holds it (composed at startup, fetched once, built in a test). Only a path can be written
-   * back to, so `saveSchema` and `saveStyle` are offered only when one was given.
+   * The space: a path to a `{ schema, style }` JSON, the data itself for a consumer that already holds it (composed at
+   * startup, fetched once, built in a test), or a function answering either per request — a path per space, or the
+   * documents a process holds and replaces while it runs (a project re-authoring its space on a save). Only a path can
+   * be written back to: `saveSchema` and `saveStyle` are not offered for the data itself, and refuse a function's
+   * answer that is not a path.
    */
-  offlineData: OfflineDataRaw | string | ((spaceId: number, environment: string, revision?: number) => string);
+  offlineData: OfflineDataRaw | string | OfflineDataSource;
   deployment?: string | SSRSpaceDeployment | Record<string, SSRSpaceDeployment>;
 };
+
+/** Where the space a request asks for is: a JSON file's path, or the documents themselves. */
+export type OfflineDataSource = (spaceId: number, environment: string, revision?: number) => string | OfflineDataRaw;
 
 const isDeploymentObject = (v: NonNullable<JsonAdaptersConfig['deployment']>): v is SSRSpaceDeployment =>
   typeof v === 'object' && ('spaceId' in v || 'environment' in v || 'error' in v);
@@ -54,13 +59,8 @@ const createJsonReader = () => {
 
 export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters => {
   const json = createJsonReader();
-  const pathFor = (spaceId: number, environment: string, revision?: number): string | undefined => {
-    if (typeof config.offlineData === 'function') {
-      return config.offlineData(spaceId, environment, revision);
-    }
-
-    return typeof config.offlineData === 'string' ? config.offlineData : undefined;
-  };
+  const sourceFor = (spaceId: number, environment: string, revision?: number): string | OfflineDataRaw =>
+    typeof config.offlineData === 'function' ? config.offlineData(spaceId, environment, revision) : config.offlineData;
 
   const getOfflineData = (
     spaceId: number,
@@ -68,12 +68,10 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters 
     revision?: number
   ): Promise<OfflineDataRaw | undefined> => {
     try {
-      const filePath = pathFor(spaceId, environment, revision);
-      if (!filePath) {
-        return Promise.resolve(config.offlineData as OfflineDataRaw);
-      }
+      const source = sourceFor(spaceId, environment, revision);
 
-      return Promise.resolve(json.read(filePath) as OfflineDataRaw);
+      // The file's text is what the server wrote or somebody exported: read as the documents it holds.
+      return Promise.resolve(typeof source === 'string' ? (json.read(source) as OfflineDataRaw) : source);
     } catch (err: unknown) {
       serverLog.error('JsonAdapters', 'Failed to read offlineData', err);
 
@@ -89,9 +87,13 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters 
     (await getOfflineData(spaceId, environment))?.style;
 
   const writeBack = (spaceId: number, environment: string, change: Partial<OfflineDataRaw>): Promise<void> => {
-    const filePath = pathFor(spaceId, environment);
-    if (!filePath) {
-      return Promise.resolve();
+    const filePath = sourceFor(spaceId, environment);
+    if (typeof filePath !== 'string') {
+      return Promise.reject(
+        new Error(
+          `Space ${String(spaceId)} (${environment}) is held in memory, not in a file: there is nowhere to save it.`
+        )
+      );
     }
 
     const current = json.read(filePath) as OfflineDataRaw;
@@ -136,7 +138,8 @@ export const createJsonAdapters = (config: JsonAdaptersConfig): SSRPageAdapters 
   };
 
   // No path, nowhere to write: the adapter is simply not offered, which is the same rule everything else follows —
-  // an absent adapter means the capability is absent, rather than one that throws when somebody finds it.
+  // an absent adapter means the capability is absent. A function may answer a path, so it is offered, and refuses
+  // the space it answers held in memory.
   const canSave = typeof config.offlineData !== 'object';
 
   return {

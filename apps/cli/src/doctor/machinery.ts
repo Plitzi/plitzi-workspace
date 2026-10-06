@@ -1,7 +1,7 @@
 import { sayer } from './types';
 import { compareVersions, versionOf } from './versions';
 import { machineryPlan } from '../commands/upgrade';
-import { AUTHOR_FILE, MAIN_FILE } from '../scaffold/paths';
+import { AUTHOR_FILE, ENV_FILE, MAIN_FILE } from '../scaffold/paths';
 import { CLI_VERSION } from '../scaffold/project';
 
 import type { Check, Finding } from './types';
@@ -16,6 +16,7 @@ const say = sayer('machinery');
 /** Without these the project does not start, author, build or type-check: gone, they are errors. */
 const ESSENTIAL: ReadonlySet<string> = new Set([
   MAIN_FILE,
+  ENV_FILE,
   AUTHOR_FILE,
   'tsconfig.json',
   'tsconfig.build.json',

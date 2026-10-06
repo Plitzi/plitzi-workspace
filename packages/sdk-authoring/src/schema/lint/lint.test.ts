@@ -1017,6 +1017,48 @@ describe('lintSpace', () => {
       expect(warningsOf(fine)).not.toContain('form-value-compared-to-blank');
     });
 
+    /** `whenSucceeded` after a sign-in: `login` answers `ok` and `reason`, never a server action's `status`. */
+    it('condition-field-unpublished', () => {
+      const guarded = (id: string, field: string, operator: '=' | '!=') =>
+        step(id, 'globalCallback', 'addNotification', {
+          elementId: 'space',
+          params: { content: 'Signed in' },
+          when: { combinator: 'and', rules: [{ field, operator, value: 'completed' }] }
+        });
+      const flowAfter = (head: ReturnType<typeof step>, ...rules: [string, '=' | '!='][]) =>
+        withChange(({ schema }) => {
+          setFlow(schema, 'go', [
+            onClick(),
+            head,
+            ...rules.map(([field, operator], index) => guarded(`then-${String(index)}`, field, operator))
+          ]);
+        });
+      const signedIn = step('signedIn', 'globalCallback', 'login', {
+        elementId: 'auth',
+        params: { mode: 'normal', username: 'ada', password: 'secret' }
+      });
+      const unpublished = (documents: ReturnType<typeof withChange>) =>
+        lintSpace(documents).errors.filter(issue => issue.code === 'condition-field-unpublished');
+
+      const login = unpublished(flowAfter(signedIn, ['signedIn.status', '='], ['signedIn.status', '!=']));
+      expect(login).toHaveLength(2);
+      expect(login[0].message).toContain('It publishes ok, reason, mfaToken');
+      expect(login[0].message).toMatch(/`when\(\{ field: 'signedIn\.ok', operator: '=', value: true \}, …\)`/);
+      expect(login[1].message).toMatch(/`when\(\{ field: 'signedIn\.ok', operator: '!=', value: true \}, …\)`/);
+
+      // What the step does publish, however deep the field goes, is asked as written.
+      expect(unpublished(flowAfter(signedIn, ['signedIn.ok', '='], ['signedIn.errors.username', '!=']))).toEqual([]);
+      const quote = step('quote', 'globalCallback', 'runServerAction', {
+        elementId: 'actions',
+        params: { actionId: 'shipping-quote', input: {}, mode: 'await' }
+      });
+      expect(unpublished(flowAfter(quote, ['quote.status', '='], ['quote.output.total', '!=']))).toEqual([]);
+
+      // A plugin's step says nothing about what it publishes, and a field naming no step of the flow is not a step's.
+      const picked = step('picked', 'globalCallback', 'pickColor', { elementId: 'colorPicker' });
+      expect(unpublished(flowAfter(picked, ['picked.status', '='], ['elsewhere.status', '=']))).toEqual([]);
+    });
+
     it('unknown-global-callback', () => {
       const documents = withChange(({ schema }) => {
         setFlow(schema, 'go', [onClick(), step('teleport', 'globalCallback', 'teleport', { elementId: 'state' })]);

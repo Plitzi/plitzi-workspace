@@ -48,10 +48,9 @@ const declaration = elementDeclaration<TextAttributes>()({
       displayMode: 'desktop',
       style: {
         base: {
+          // Only how it flows: its size and line height are the words around it, which a span inside a heading or a
+          // button has to keep.
           default: {
-            'font-size': '14px',
-            // A ratio landing on the same pixels at this size: a class that resizes the text keeps the proportion.
-            'line-height': '1.714',
             display: 'inline'
           }
         }

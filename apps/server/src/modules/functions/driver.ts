@@ -127,6 +127,7 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       rateLimit: (bucket: string, limit: unknown) => call({ op: 'rateLimit', bucket, limit }),
       sign: (value: string) => call({ op: 'sign', value }),
       verify: (value: string, signature: string) => call({ op: 'verify', value, signature }),
+      data: (file: string) => call({ op: 'data', file }),
       log,
       emit: (chunk: unknown) => {
         call({ op: 'emit', chunk }).catch(() => undefined);

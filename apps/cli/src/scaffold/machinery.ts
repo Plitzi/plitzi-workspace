@@ -1,4 +1,4 @@
-import { CLI_DIR, FUNCTIONS_DIR, MAIN_FILE } from './paths';
+import { CLI_DIR, ENV_FILE, FUNCTIONS_DIR, MAIN_FILE } from './paths';
 
 /**
  * The files of a project that are this CLI's machinery rather than the project's own: what `plitzi upgrade` keeps up
@@ -12,8 +12,9 @@ import { CLI_DIR, FUNCTIONS_DIR, MAIN_FILE } from './paths';
  * the CLI wrote them and `upgrade` still knows them for its own.
  */
 export const MACHINERY: ReadonlySet<string> = new Set([
-  // The entry point, in `src/` where one is looked for — and the CLI's folder, everything in it.
+  // The entry point, in `src/` where one is looked for, and what it imports first — and the CLI's folder, all of it.
   MAIN_FILE,
+  ENV_FILE,
   `${CLI_DIR}/author.ts`,
   `${CLI_DIR}/preflight.css`,
   `${CLI_DIR}/assets.d.ts`,

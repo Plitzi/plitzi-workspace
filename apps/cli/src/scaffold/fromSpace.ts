@@ -3,7 +3,16 @@ import { posix } from 'node:path';
 import { actionSpecFromEntry, actionToSource, blankTemplateFiles } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 
-import { ACTIONS_ENTRY, DATA_DIR, FUNCTIONS_DIR, RUNTIME_ENTRY, SPACE_DIR, SPACE_ENTRY } from './paths';
+import {
+  ACTIONS_ENTRY,
+  DATA_DIR,
+  FUNCTIONS_DIR,
+  RUNTIME_BUNDLE,
+  RUNTIME_ENTRY,
+  SPACE_DIR,
+  SPACE_ENTRY,
+  VENDOR_PLUGINS_DIR
+} from './paths';
 import { envFile, SDK_VERSION, withSigningSecret } from './project';
 
 import type { CreateAnswers, ProjectFiles } from './types';
@@ -258,13 +267,13 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
   builtOnly.plugins.forEach(({ type, functions: carried }) => {
     if (carried) {
       const sorted = Object.fromEntries(Object.entries(carried).sort(([a], [b]) => a.localeCompare(b)));
-      files[`vendor/plugins/${type}/${PLUGIN_FUNCTIONS_SOURCE}`] = `${JSON.stringify(sorted, null, 2)}\n`;
+      files[`${VENDOR_PLUGINS_DIR}/${type}/${PLUGIN_FUNCTIONS_SOURCE}`] = `${JSON.stringify(sorted, null, 2)}\n`;
     }
   });
 
   const runtimeEntry = source.runtime?.entries[0];
   if (builtOnly.runtime) {
-    binaries['vendor/runtime.bundle'] = builtOnly.runtime;
+    binaries[RUNTIME_BUNDLE] = builtOnly.runtime;
   }
 
   // Where the server and \`plitzi runtime push\` look for it: \`src/runtime/index.ts\`, handing over the module the source
@@ -321,15 +330,15 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     }),
     ...builtOnly.plugins.map(
       ({ type }) =>
-        `${type}: no source of this plugin was kept, so it runs as it was built (vendor/plugins/${type}/) and cannot be changed — upload it again from its source with plitzi upload plugin`
+        `${type}: no source of this plugin was kept, so it runs as it was built (${VENDOR_PLUGINS_DIR}/${type}/) and cannot be changed — upload it again from its source with plitzi upload plugin`
     ),
     ...(builtOnly.runtime
-      ? ['The runtime came across built only (vendor/runtime.bundle): it runs, and cannot be changed']
+      ? [`The runtime came across built only (${RUNTIME_BUNDLE}): it runs, and cannot be changed`]
       : []),
     ...asJson,
     ...(exported.visitorRoles.length > 0
       ? [
-          `Its visitors (${exported.visitorRoles.join(', ')}) signed in with Plitzi: here nobody signs in until the server does it itself — \`createAuth\` from @plitzi/sdk-server/auth as \`auth\` in src/config/serverOptions.ts, over the accounts it keeps, each person given the permissions of the roles they hold (\`visitorAccess\`); until then every action that asks for a role refuses`
+          `Its visitors (${exported.visitorRoles.join(', ')}) signed in with Plitzi: here nobody signs in until the server does it itself — \`createAuth\` from @plitzi/sdk-server/auth as \`auth\` in src/config/serverOptions.ts, over the accounts it keeps, each person given the permissions of the roles they hold (\`visitorAccess\`), and \`userProvider: 'server'\` taken out of the space's settings so its pages sign in there with nothing declared; until then every action that asks for a role refuses`
         ]
       : []),
     ...report.corrections,
@@ -342,7 +351,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     downloads: [
       ...assets.map(({ url, path }) => ({ url, to: `public/${path}` })),
       ...builtOnly.plugins.flatMap(({ type, files: built }) =>
-        built.map(({ url, path }) => ({ url, to: `vendor/plugins/${type}/${path}` }))
+        built.map(({ url, path }) => ({ url, to: `${VENDOR_PLUGINS_DIR}/${type}/${path}` }))
       )
     ],
     dependencies: { ...extra, ...plitzi },

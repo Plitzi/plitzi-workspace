@@ -40,3 +40,34 @@ describe('buildServerInfo', () => {
     expect(buildServerInfo(request('evil.example"><script>'), config, ssr).location?.origin).toBe('http://');
   });
 });
+
+/**
+ * What the page is told about signing in. A project served by `createServer({ auth })` declared nothing in its space
+ * and got a sign-in form that did nothing: the server served `/auth` and never said so.
+ */
+describe('buildServerInfo — the sign-in it serves', () => {
+  const pageAuth = {
+    userProvider: 'basic',
+    loginUrl: '/auth/login',
+    userUrl: '/auth/session',
+    logoutUrl: '/auth/logout'
+  };
+
+  it('hands the page the endpoints, and the hint cookie named for the host it was asked on', () => {
+    const withAuth = {
+      ...config,
+      pageAuth,
+      authCookie: { name: (hostname: string) => (hostname === 'acme.test' ? 'acme_session' : 'other_session') }
+    } as SSRServerConfig;
+
+    expect(buildServerInfo(request('acme.test'), withAuth, ssr).auth).toEqual({
+      ...pageAuth,
+      sessionHintCookie: 'acme_session_hint'
+    });
+    expect(buildServerInfo(request('other.test'), withAuth, ssr).auth?.sessionHintCookie).toBe('other_session_hint');
+  });
+
+  it('says nothing when it serves no sign-in of its own', () => {
+    expect(buildServerInfo(request('acme.test'), config, ssr).auth).toBeUndefined();
+  });
+});

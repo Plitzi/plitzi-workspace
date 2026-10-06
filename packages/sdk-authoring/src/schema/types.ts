@@ -22,6 +22,7 @@ import type {
   ElementInteraction,
   ElementLoadStrategy,
   ElementRuntime,
+  InteractionCallbackPreviews,
   Schema,
   SchemaVariable,
   SpaceFont,
@@ -513,10 +514,16 @@ export interface SpaceSpec {
  * makes the fragment usable on documents whose vocabulary nobody here knows.
  */
 export interface StepVocabulary {
-  /** Global callbacks by action name, each naming the module id it is registered on, and the params it takes. */
-  globalCallbacks: Record<string, { source: string; strictParams?: boolean; params?: ParamSpec }>;
-  /** Utility actions and their params. A utility is resolved by action alone and runs on no module at all. */
-  utilities: Record<string, { strictParams?: boolean; params?: ParamSpec }>;
+  /**
+   * Global callbacks by action name, each naming the module id it is registered on, the params it takes and, when it
+   * says, the keys it puts in the flow scope (`preview`) — what a later step's `when` can ask it about.
+   */
+  globalCallbacks: Record<
+    string,
+    { source: string; strictParams?: boolean; params?: ParamSpec; preview?: InteractionCallbackPreviews }
+  >;
+  /** Utility actions, their params and what they put in the flow scope. A utility runs on no module at all. */
+  utilities: Record<string, { strictParams?: boolean; params?: ParamSpec; preview?: InteractionCallbackPreviews }>;
   /**
    * Element type → every trigger it fires, the ones all elements share included. A type that is not listed is a
    * plugin's, whose triggers nobody here can know, and its flows are left alone.

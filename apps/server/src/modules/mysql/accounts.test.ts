@@ -110,10 +110,7 @@ describe('findAccountByToken', () => {
 });
 
 describe('findByRefreshToken', () => {
-  /**
-   * `refreshExpiresAt` has to come off the row. Left off, every renewal is refused as expired — which does not fail
-   * at login but a day later, when the access token ages out and a session that looked fine simply ends.
-   */
+  /** `refreshExpiresAt` comes off the row: renewal honours it over the token's own expiry. */
   it('carries refreshExpiresAt on the record', async () => {
     const { db } = fakeDb([
       [

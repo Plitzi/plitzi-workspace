@@ -9,6 +9,7 @@ import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 
 import { createServer } from './createServer';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
+import { defineFunctions } from '../modules/functions/contract';
 
 import type { Schema, SSRServer } from '@plitzi/sdk-shared';
 
@@ -103,7 +104,16 @@ describe('createServer with the project’s own data', () => {
     dataServer = createServer({
       port: DATA_PORT,
       adapters: createJsonAdapters({ offlineData: { schema, style: EMPTY_STYLE_SCHEMA } }),
-      dataDir
+      dataDir,
+      // No `getData` of the deployment's: the folder is the lookup, for the page's providers and the code alike.
+      action: { lookups: { getAction: () => Promise.resolve(undefined) } },
+      functions: {
+        native: [
+          defineFunctions({
+            routes: { 'GET /cost': async (_request, ctx) => Response.json(await ctx.data('home.json')) }
+          })
+        ]
+      }
     });
     dataServer.listen(DATA_PORT, '127.0.0.1');
     await vi.waitFor(async () => {
@@ -118,6 +128,17 @@ describe('createServer with the project’s own data', () => {
 
   it('renders the page with a file of `dataDir` in it, read as `/data/<file>`', async () => {
     expect(await (await fetch(`${DATA_BASE}/`)).text()).toContain(TITLE);
+  });
+
+  it('hands the same file to the code, read through the same lookup', async () => {
+    expect(await (await fetch(`${DATA_BASE}/fn/cost`)).json()).toEqual({ hero: { title: TITLE }, cost: 'internal' });
+  });
+
+  it('reads a file again once it changed', async () => {
+    writeFileSync(path.join(dataDir, 'home.json'), JSON.stringify({ hero: { title: 'Changed' }, cost: 'internal' }));
+
+    expect(await (await fetch(`${DATA_BASE}/fn/cost`)).json()).toMatchObject({ hero: { title: 'Changed' } });
+    expect(await (await fetch(`${DATA_BASE}/_rsc?location=/&ids=site`)).text()).toContain('Changed');
   });
 
   it('never serves the file: its path is a page’s, like any other the space does not have', async () => {

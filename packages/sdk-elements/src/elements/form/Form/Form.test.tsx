@@ -49,7 +49,9 @@ const Control = withFieldValue(FormControl);
  */
 const control = (
   props: Pick<FormControlProps, 'name' | 'label'> &
-    Partial<Omit<FormControlProps, 'subType'>> & { subType: 'text' | 'password' | 'date' | 'email' }
+    Partial<Omit<FormControlProps, 'subType'>> & {
+      subType: 'text' | 'password' | 'date' | 'email' | 'checkbox' | 'switch';
+    }
 ) => ({
   ref: { current: document.createElement('div') },
   className: '',
@@ -437,5 +439,70 @@ describe('Form / what assistive technology is told', () => {
     expect(screen.getByLabelText('Search the docs')).toBe(input('q'));
     expect(label.style.position).toBe('absolute');
     expect(label.style.clipPath).toBe('inset(50%)');
+  });
+});
+
+describe('FormControl / a checkbox and a switch', () => {
+  beforeEach(() => {
+    interactionTrigger.mockClear();
+  });
+
+  const standalone = (subType: 'checkbox' | 'switch', defaultValue = '') =>
+    render(
+      <StoreProvider value={STORE}>
+        <ElementContext value={controlEntry('alerts')}>
+          <Control
+            {...control({ name: 'alerts', subType, label: 'Email me alerts', required: false })}
+            defaultValue={defaultValue}
+          />
+        </ElementContext>
+      </StoreProvider>
+    );
+
+  /** It used to render nothing at all — a label pointing at no control — while the type said it was supported. */
+  it('renders a switch as a checkbox announced as one, named by its label', () => {
+    standalone('switch');
+
+    expect(screen.getByRole('switch', { name: 'Email me alerts' })).toBe(input('alerts'));
+    expect(input('alerts').type).toBe('checkbox');
+    expect(input('alerts').className).toContain('form-control__switch-container');
+  });
+
+  it.each(['checkbox', 'switch'] as const)(
+    'starts a %s ticked from a default of "true", and reports each flip',
+    subType => {
+      standalone(subType, 'true');
+
+      expect(input('alerts').checked).toBe(true);
+
+      fireEvent.click(input('alerts'));
+
+      expect(input('alerts').checked).toBe(false);
+      expect(interactionTrigger).toHaveBeenCalledWith('alerts', 'onChange', { value: false, name: 'alerts' });
+    }
+  );
+
+  it.each(['checkbox', 'switch'] as const)('starts a %s off with no default', subType => {
+    standalone(subType);
+
+    expect(input('alerts').checked).toBe(false);
+  });
+
+  it.each(['checkbox', 'switch'] as const)('hands the form a boolean from a %s', subType => {
+    render(
+      <Harness>
+        <ElementContext value={controlEntry('alerts')}>
+          <Control {...control({ name: 'alerts', subType, label: 'Email me alerts', required: false })} />
+        </ElementContext>
+      </Harness>
+    );
+
+    fireEvent.click(input('alerts'));
+
+    expect(input('alerts').checked).toBe(true);
+
+    fireEvent.submit(screen.getByText('Create'));
+
+    expect(submits()[0][2]).toMatchObject({ values: { alerts: true } });
   });
 });

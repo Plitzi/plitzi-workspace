@@ -5,33 +5,35 @@
     font-weight: 700;
   }
 
+  // Line heights are ratios landing on the same pixels at each size: a class that resizes a heading keeps the
+  // proportion.
   .plitzi-component__heading-h1 {
-    line-height: 44px;
+    line-height: 1.158;
     font-size: 38px;
   }
 
   .plitzi-component__heading-h2 {
-    line-height: 36px;
+    line-height: 1.125;
     font-size: 32px;
   }
 
   .plitzi-component__heading-h3 {
-    line-height: 30px;
+    line-height: 1.25;
     font-size: 24px;
   }
 
   .plitzi-component__heading-h4 {
-    line-height: 24px;
+    line-height: 1.333;
     font-size: 18px;
   }
 
   .plitzi-component__heading-h5 {
-    line-height: 20px;
+    line-height: 1.429;
     font-size: 14px;
   }
 
   .plitzi-component__heading-h6 {
-    line-height: 18px;
+    line-height: 1.5;
     font-size: 12px;
   }
 }

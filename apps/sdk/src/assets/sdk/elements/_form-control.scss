@@ -3,13 +3,19 @@
     &.form-control--invalid {
       .form-control__label-hidden,
       .form-control__label-text,
-      .form-control__label-time,
-      .form-control__label-password,
       .form-control__label-number,
       .form-control__label-email,
+      .form-control__label-password,
+      .form-control__label-search,
+      .form-control__label-url,
+      .form-control__label-tel,
+      .form-control__label-date,
+      .form-control__label-time,
+      .form-control__label-color,
       .form-control__label-textarea,
       .form-control__label-select,
-      .form-control__label-checkbox {
+      .form-control__label-checkbox,
+      .form-control__label-switch {
         color: red;
       }
 
@@ -45,14 +51,19 @@
     color: red;
   }
 
-  // Input (text / password / number / email / hidden / time)
+  // Input (text / number / email / password / search / url / tel / date / time / color / hidden)
 
   .form-control__label-hidden,
   .form-control__label-text,
-  .form-control__label-time,
-  .form-control__label-password,
   .form-control__label-number,
-  .form-control__label-email {
+  .form-control__label-email,
+  .form-control__label-password,
+  .form-control__label-search,
+  .form-control__label-url,
+  .form-control__label-tel,
+  .form-control__label-date,
+  .form-control__label-time,
+  .form-control__label-color {
     margin-bottom: 4px;
     display: flex;
     color: #6b7280;
@@ -196,6 +207,82 @@
     margin-bottom: 0;
     margin-left: 0;
     margin-top: 0;
+  }
+
+  // Switch: a checkbox drawn as a track and a thumb, in the label's own colour — a class on the input slot recolours
+  // it with `color`. The thumb of one that is on takes the page's background (`Canvas`), so it follows the scheme.
+
+  .form-control__label-switch {
+    display: flex;
+    align-items: center;
+    color: #6b7280;
+    font-weight: 600;
+    line-height: 18px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .form-control__switch-container {
+    height: 20px;
+    width: 36px;
+    margin-right: 8px;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-top: 0;
+    position: relative;
+    flex-shrink: 0;
+    border-right-color: currentColor;
+    border-right-style: solid;
+    border-right-width: 1px;
+    border-top-right-radius: 10px;
+    border-bottom-color: currentColor;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+    border-left-color: currentColor;
+    border-left-style: solid;
+    border-left-width: 1px;
+    border-top-color: currentColor;
+    border-top-style: solid;
+    border-top-width: 1px;
+    background-color: transparent;
+    transition: background-color 150ms ease;
+    appearance: none;
+    cursor: pointer;
+
+    &::before {
+      height: 14px;
+      width: 14px;
+      left: 2px;
+      top: 2px;
+      position: absolute;
+      border-radius: 50%;
+      background-color: currentColor;
+      transition: transform 150ms ease;
+      content: '';
+    }
+
+    &:checked {
+      background-color: currentColor;
+
+      &::before {
+        background-color: Canvas;
+        transform: translateX(16px);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 
   // Select

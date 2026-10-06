@@ -52,6 +52,22 @@ describe('building a space’s functions', () => {
     expect(problems[2]?.message).toContain('is not a file');
   });
 
+  /** The project's data is beside its functions, and the one thing outside them code reaches for: it is read, not built in. */
+  it('names the boundary, and ctx.data, for an import that climbs out of functions/', async () => {
+    const problems = await problemsOf({
+      'index.ts': 'import "./lib/feed";\nexport default {};',
+      'lib/feed.ts':
+        'import products from "../../data/shop/products.json";\nimport "../../config";\nexport { products };'
+    });
+
+    expect(problems.map(({ file }) => file)).toEqual(['lib/feed.ts', 'lib/feed.ts']);
+    expect(problems[0]?.message).toContain(
+      '"../../data/shop/products.json" is outside functions/: functions import only files under functions/'
+    );
+    expect(problems[0]?.message).toMatch(/read the space's data with ctx\.data\('shop\/products\.json'\)$/);
+    expect(problems[1]?.message).toMatch(/^"\.\.\/\.\.\/config" is outside functions\/: .* ctx\.data\('<file>'\)$/);
+  });
+
   it('points at a syntax error in the file it is in', async () => {
     const problems = await problemsOf({ 'index.ts': 'import "./broken";', 'broken.ts': 'const = 1;' });
 

@@ -69,7 +69,8 @@ const declaration = elementDeclaration<LinkAttributes>()({
         base: {
           default: {
             display: 'inline-block',
-            color: '#333',
+            color: 'light-dark(#333, oklch(0.92 0.004 286.32))',
+            'text-decoration': 'none',
             cursor: 'pointer'
           }
         }

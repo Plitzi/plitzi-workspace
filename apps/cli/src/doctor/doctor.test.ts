@@ -358,6 +358,28 @@ describe('plitzi doctor', () => {
     ).not.toEqual(expect.arrayContaining(['plitzi/author.ts']));
   });
 
+  /**
+   * An older `src/main.ts` wrote the space to `tmp/space.json` on every save and read it back; today's is handed the
+   * documents over IPC. Left behind, the file is said — and deleted only once nothing names it.
+   */
+  it('says the space an older server wrote to tmp/, and deletes it once no main.ts reads it', async () => {
+    const today = await read('src/main.ts');
+    await write('tmp/space.json', '{}');
+    await write('src/main.ts', "const OFFLINE_DATA = path.join(PROJECT_ROOT, 'tmp/space.json');\n");
+
+    const older = findingOf(await run(), 'older-leftover');
+
+    expect(older).toMatchObject({ file: 'tmp/space.json' });
+    expect(older?.fix).toContain('src/main.ts still imports it');
+    expect(older).not.toHaveProperty('repair');
+
+    await write('src/main.ts', today);
+    const report = await run({ fix: true });
+
+    expect(report.repaired.repairs).toContain('deletes tmp/space.json');
+    await expect(fs.access(path.join(project, 'tmp/space.json'))).rejects.toThrow();
+  }, 30_000);
+
   it('writes a signing secret with --fix where there is none', async () => {
     await write('.env', '# PORT=8080\n');
 

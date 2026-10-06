@@ -4,6 +4,7 @@ import { createIsolateRunner } from './sandbox/isolate';
 import { functionsInHand } from './space';
 import { functionTryEntry } from './tryEntry';
 import { createActionsModule } from '../actions';
+import { dataDirLookup } from '../actions/runtime/projectData';
 
 import type { FunctionsSource } from './build';
 import type { FunctionLimits, SpaceFunctions } from './protocol';
@@ -15,6 +16,8 @@ export type LocalFunctionsOptions = {
   credentials?: Record<string, Record<string, string>>;
   /** As the platform's: a plan's limits, for code that must fit them there. */
   limits?: Partial<FunctionLimits>;
+  /** The project's data folder (`src/data/`), what `ctx.data` reads — as the project's server reads it. */
+  dataDir?: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -46,6 +49,7 @@ const LOCAL_USER: SSRUser = {
 export const createLocalFunctions = ({
   credentials = {},
   limits,
+  dataDir,
   fetchImpl
 }: LocalFunctionsOptions = {}): LocalFunctions => {
   const runner = createIsolateRunner({ concurrency: 1 });
@@ -55,7 +59,8 @@ export const createLocalFunctions = ({
       getAction: () => Promise.resolve(undefined),
       getCredential: (_spaceId, identifier) =>
         Promise.resolve(Object.hasOwn(credentials, identifier) ? credentials[identifier] : undefined),
-      getFunctions: () => Promise.resolve(loaded)
+      getFunctions: () => Promise.resolve(loaded),
+      ...(dataDir ? { getData: dataDirLookup(dataDir) } : {})
     },
     functions: { runner, ...(limits ? { limits } : {}) },
     jobs: false,

@@ -75,6 +75,11 @@
       "import": "./dist/runtime.js",
       "default": "./dist/runtime.js"
     },
+    "./project": {
+      "types": "./dist/project.d.ts",
+      "import": "./dist/project.js",
+      "default": "./dist/project.js"
+    },
     "./functions-api.d.ts": "./dist/functions-api.d.ts"
   },
   "repository": {

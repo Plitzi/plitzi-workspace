@@ -8,6 +8,7 @@ import {
   CLI_DIR,
   DATA_DIR,
   DEV_SERVER_FILE,
+  ENV_FILE,
   FUNCTIONS_DIR,
   KV_FILE,
   MAIN_FILE,
@@ -127,7 +128,7 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
            *
            * The server compiles the project's plugins into `tmp/.sdk-plugins/` and then IMPORTS what it built, so a
            * bare `--watch` sees its own output land, restarts, compiles again, and never stops. Neither the space nor
-           * the plugins are among them: `main.ts` re-authors a local space on save and the open pages load again
+           * the plugins are among them: the server re-authors a local space on save and the open pages load again
            * (`reloadPages`), and the server builds a plugin again on save and the open pages swap it where it is drawn
            * — so only the server's own code restarts it: its entry, options and actions, and `src/functions/`.
            */
@@ -197,7 +198,9 @@ export const tsconfigBuild = (): string =>
         rootDir: 'src',
         rewriteRelativeImportExtensions: true
       },
-      include: ['src'],
+      // The asset types too: a space that imports a plugin's declaration reaches its component, and the stylesheet the
+      // component imports is typed only there.
+      include: ['src', `${CLI_DIR}/assets.d.ts`],
       // Built at boot from their source, by the server itself: never compiled ahead.
       exclude: ['src/plugins', 'src/functions']
     },
@@ -301,7 +304,7 @@ ${spaceSection(answers)}
 ## Folders that are not the source
 
 - \`${CLI_DIR}/\` is the CLI's part of the project — ${answers.source === 'local' ? 'the script that authors the space, ' : ''}${answers.mode === 'server' ? 'the types plugins import' : 'the base styles of the page'}
-  — kept current by \`plitzi upgrade\`, as is \`${MAIN_FILE}\`, the entry point. Everything else you write is in \`src/\`;
+  — kept current by \`plitzi upgrade\`, as is \`${MAIN_FILE}\`, the entry point${answers.mode === 'server' ? `, with \`${ENV_FILE}\`, which reads \`.env\` before it` : ''}. Everything else you write is in \`src/\`;
   \`${CLI_DIR}/README.md\` says what each of its folders is.
 - \`public/\` is served to anyone who asks, as it is: every file in it is on the internet once the project is deployed.
   Pictures and files meant for every visitor go there — never a secret, a key, a private document or what only some
@@ -363,15 +366,15 @@ export const agentsFile = (answers: CreateAnswers): string => {
       : `${run('start')} runs Vite on 5173.`;
   const serverNotes =
     answers.mode === 'server'
-      ? `- **The server is yours in ${code('src/config/serverOptions.ts')}**, not in ${code(MAIN_FILE)} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('main.ts')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions/')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/config/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
+      ? `- **The server is yours in ${code('src/config/serverOptions.ts')}**, not in ${code(MAIN_FILE)} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('serveProject')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions/')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/config/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
       : '';
   const dataNote =
     answers.mode === 'server'
-      ? `- **Data with no backend** goes in ${code(`${DATA_DIR}/*.json`)}: the server reads it and never serves it. An ${code('apiContainer')} whose ${code('runtime')} is ${code('server')} and ${code('query')} ${code('/data/products.json')} reads it, and the page arrives with it — bound as ${code('products.data.items')}, on a page or a layout, never inside a component. ${local ? `A browser provider asking for ${code('/data/…')} is refused by ${run('author')}. ` : ''}What a provider reads is in the page it renders: data a page must not carry is read in a server action, which answers only what is shown.`
+      ? `- **Data with no backend** goes in ${code(`${DATA_DIR}/*.json`)}: the server reads it and never serves it. An ${code('apiContainer')} whose ${code('runtime')} is ${code('server')} and ${code('query')} ${code('/data/products.json')} reads it, and the page arrives with it — bound as ${code('products.data.items')}, on a page or a layout, never inside a component. ${local ? `A browser provider asking for ${code('/data/…')} is refused by ${run('author')}. ` : ''}What a provider reads is in the page it renders: data a page must not carry is read in a server action, which answers only what is shown — a task of ${code('src/functions/')} reads the file with ${code('ctx.data("products.json")')}, never an import.`
       : `- **Data with no backend** goes in ${code('public/data/*.json')}, fetched by the browser — public like everything in ${code('public/')} — and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}.`;
   const dataFiles = answers.mode === 'server' ? `${DATA_DIR}/<file>.json` : 'public/data/<file>.json';
   const generated = [
-    `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took${local ? ', the space as last authored' : ''}, test output. Never committed, rebuilt when missing.`,
+    `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took, test output. Never committed, rebuilt when missing.`,
     ...(answers.mode === 'server'
       ? [
           `- ${code(`${PROJECT_STATE}/`)} — what the server keeps for the space: its ${code('kv')} (${code(KV_FILE)}). The deployment's state — never committed, never rebuilt; ${code('action.kv')} in ${code('src/config/serverOptions.ts')} keeps it elsewhere.`
@@ -393,7 +396,7 @@ ${commands.join('\n')}
 
 ## This project
 
-- **Yours is \`src/\` — but \`${MAIN_FILE}\`, the entry point — and \`${CLI_DIR}/\` is the CLI's**: \`plitzi upgrade\` replaces them, so never edit them. \`${CLI_DIR}/README.md\` says what each folder of \`src/\` is.
+- **Yours is \`src/\` — but \`${MAIN_FILE}\`, the entry point${answers.mode === 'server' ? ` (and \`${ENV_FILE}\`, which loads \`.env\` first)` : ''} — and \`${CLI_DIR}/\` is the CLI's**: \`plitzi upgrade\` replaces them, so never edit them. \`${CLI_DIR}/README.md\` says what each folder of \`src/\` is.
 - **Port.** ${port}
 ${dataNote}
 - **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.

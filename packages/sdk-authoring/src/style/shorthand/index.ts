@@ -91,15 +91,30 @@ const expandOne = (key: string, raw: string | number, out: CssProps): boolean =>
  * written after its longhands rendered the shorthand, and reading it back any other way changes the page.
  * Unrecognized keys pass through.
  */
-export const expandShorthand = (css: CssProps): CssProps => {
-  const out: CssProps = {};
+export const expandShorthand = (css: CssProps): CssProps => expandShorthandTraced(css).rules;
+
+/**
+ * {@link expandShorthand}, and which shorthand wrote each longhand it holds — `padding-top` → `padding` — for a longhand
+ * the shorthand set and nothing after it overrode. A longhand written out is in `rules` and not in `from`.
+ */
+export const expandShorthandTraced = (css: CssProps): { rules: CssProps; from: Map<string, string> } => {
+  const rules: CssProps = {};
+  const from = new Map<string, string>();
   for (const [key, value] of Object.entries(css)) {
-    if (!expandOne(key, value, out)) {
-      out[key] = value;
+    const expanded: CssProps = {};
+    if (!expandOne(key, value, expanded)) {
+      rules[key] = value;
+      from.delete(key);
+      continue;
+    }
+
+    for (const [longhand, longhandValue] of Object.entries(expanded)) {
+      rules[longhand] = longhandValue;
+      from.set(longhand, key);
     }
   }
 
-  return out;
+  return { rules, from };
 };
 
 // --- Patch expansion ----------------------------------------------------------------------------------

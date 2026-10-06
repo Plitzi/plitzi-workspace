@@ -46,6 +46,8 @@ type RscRequest = {
   ids?: readonly string[];
   /** Whether it asks about where the visitor is now — a navigation's prefetch asks about somewhere else. */
   here: boolean;
+  /** Whether it went around every cache on its way — see {@link RscRefreshOptions.fresh}. */
+  fresh: boolean;
   seq: number;
   controller: AbortController;
   promise: Promise<void>;
@@ -179,6 +181,26 @@ const writeAnswer = (
   });
 };
 
+export type RscRefreshOptions = {
+  /**
+   * Resolve for somewhere the visitor is not yet.
+   *
+   * A route change that renders first and fetches after paints a page whose sections have no answer, so the
+   * navigation asks for the destination BEFORE it commits. Absent means where the visitor already is, which is
+   * every other caller: the initial load, a pager, an element refreshing itself.
+   */
+  location?: string;
+  /**
+   * Ask the server itself, around the browser's cache and the page server's.
+   *
+   * Outside `main` an answer is kept for a while on both — the same question from many visitors is resolved once —
+   * which is right for a page window and wrong for a refresh that exists because something changed: a write, an
+   * explicit reload. Asked through either cache, that refresh is answered with the slice from before the write. A
+   * header rather than a query parameter, because every parameter of the request is input to what it resolves.
+   */
+  fresh?: boolean;
+};
+
 /**
  * Re-fetches RSC data into the store.
  *
@@ -199,14 +221,7 @@ export const refreshRsc = async (
   store: StoreApi<CommonState>,
   ids?: string[],
   params?: Record<string, string>,
-  /**
-   * Resolve for somewhere the visitor is not yet.
-   *
-   * A route change that renders first and fetches after paints a page whose sections have no answer, so the
-   * navigation asks for the destination BEFORE it commits. Absent means where the visitor already is, which is
-   * every other caller: the initial load, a pager, an element refreshing itself.
-   */
-  location?: string
+  { location, fresh = false }: RscRefreshOptions = {}
 ): Promise<void> => {
   const { enabled, endpoint } = store.get('rsc') ?? {};
   if (!enabled || !endpoint || typeof window === 'undefined') {
@@ -247,7 +262,8 @@ export const refreshRsc = async (
   const url = `${endpoint}?${search.toString()}`;
 
   const requests = requestsOf(store);
-  const asking = [...requests.inFlight].find(request => request.url === url);
+  // A request already out answers this one unless this one must go around the caches and that one did not.
+  const asking = [...requests.inFlight].find(request => request.url === url && (request.fresh || !fresh));
   if (asking) {
     return asking.promise;
   }
@@ -271,6 +287,7 @@ export const refreshRsc = async (
     url,
     ...(ids?.length ? { ids } : {}),
     here: target === currentRscLocation(),
+    fresh,
     seq,
     controller,
     promise: Promise.resolve()
@@ -278,7 +295,11 @@ export const refreshRsc = async (
 
   /** One ask — and, after a refusal that renewed the session, the one second ask. */
   const ask = async (retried: boolean): Promise<void> => {
-    const res = await fetch(url, { headers: { Accept: 'application/json' }, signal: controller.signal });
+    // `cache` keeps the browser from answering it; the header is what tells the page server.
+    const init: RequestInit = fresh
+      ? { cache: 'no-cache', headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' } }
+      : { headers: { Accept: 'application/json' } };
+    const res = await fetch(url, { ...init, signal: controller.signal });
     if (!res.ok) {
       // A refused credential is the earliest evidence a session ended, and this is the request a server-driven page
       // makes most often — so it is usually the first thing to find out. Told here, auth renews or signs the visitor

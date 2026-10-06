@@ -5,7 +5,7 @@ import { markdownHeadings } from '@plitzi/sdk-shared/schema/markdownHeadings';
 
 import { Markdown } from './Markdown';
 import ElementContext from '../../../Element/ElementContext';
-import { skipHocEntry } from '../../../testUtils/elementTestUtils';
+import { elementEntry, skipHocEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
@@ -39,5 +39,44 @@ describe('Markdown', () => {
 
     expect(rendered).toEqual(markdownHeadings(content).map(heading => heading.anchor));
     expect(rendered).toEqual(['a-space-in-code', 'one-import', 'the-link-element', 'cafe-creme', 'one-import-2']);
+  });
+
+  it('puts the class of each slot on its part of the document', () => {
+    const entry = elementEntry('notes', {
+      plitziJsxSkipHOC: true,
+      definition: {
+        rootId: 'root',
+        label: 'notes',
+        type: 'markdown',
+        styleSelectors: {
+          base: '',
+          heading: 'note-heading',
+          paragraph: 'note-p',
+          link: 'note-link',
+          anchor: 'note-anchor'
+        }
+      }
+    });
+    const { container } = render(
+      <ElementContext value={entry}>
+        <Markdown content={'## Title\n\nSee [the docs](/docs).'} />
+      </ElementContext>
+    );
+
+    expect(container.querySelector('h2')?.className).toBe('note-heading');
+    expect(container.querySelector('h2 > a')?.className).toBe('anchor note-anchor');
+    expect(container.querySelector('p')?.className).toBe('note-p');
+    expect(container.querySelector('p > a')?.className).toBe('note-link');
+  });
+
+  it('keeps every heading id and leaves the link to it out with headingLinks off', () => {
+    const { container } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Markdown content="## Café & crème" headingLinks={false} />
+      </ElementContext>
+    );
+
+    expect(container.querySelector('h2')?.id).toBe('cafe-creme');
+    expect(container.querySelector('a.anchor')).toBeNull();
   });
 });

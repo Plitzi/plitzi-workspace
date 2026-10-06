@@ -96,7 +96,7 @@ const route = usePluginRoute('board'); // from '@plitzi/plitzi-sdk'
 const url = route('/layout'); // undefined where no server runs code (the canvas)
 ```
 
-Its `ctx.kv` is the plugin's own; the space's credentials and channels are not.
+Its `ctx.kv` is the plugin's own; the space's credentials, channels and data are not.
 
 ## Talking to other pages
 

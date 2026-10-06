@@ -50,7 +50,7 @@ const declaration = elementDeclaration<HeadingAttributes>()({
     defaultStyle: {
       name: 'Heading',
       displayMode: 'desktop',
-      style: { base: { default: {} } },
+      style: { base: { default: { 'margin-top': '25px', 'margin-bottom': '25px', 'font-weight': 700 } } },
       subTypes: {
         h1: {
           name: 'H1 Heading',

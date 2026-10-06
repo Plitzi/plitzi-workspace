@@ -12,7 +12,7 @@ import type {
   ActionTaskDescriptor,
   ActionTriggerType
 } from './ActionTypes';
-import type { Environment } from './CommonTypes';
+import type { Environment, ServerAuth } from './CommonTypes';
 import type { PluginDeclaration } from './ComponentTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { DataDraft, DataSaveResult } from './DataTypes';
@@ -626,7 +626,7 @@ export type ActionLookupsConfig = {
   /**
    * The space's own data as of that revision — what a project keeps in `src/data/`, kept privately and frozen with each
    * publish — as its files' text by path (`products.json`). A provider resolved on the server whose `query` is
-   * `/data/<file>` reads it, as `dataDir` reads a folder; no browser is answered it.
+   * `/data/<file>` reads it, and a function's `ctx.data`; no browser is answered it. Given none, `dataDir` is read.
    */
   getData?: (spaceId: number, at?: SpaceRevision) => Promise<unknown>;
   /** The feature flags the space declares as of that revision — what a flow reads as `{{ flags.<name> }}`. */
@@ -996,7 +996,8 @@ export type SSRServerConfig = {
    * The project's own data, never served as files: a provider resolved on the server (`runtime: 'server'`) whose
    * `query` is `/data/<file>` reads `<dataDir>/<file>`, and the page arrives with it. Nobody downloads the folder; what
    * a provider reads goes into the page it renders, though — data a page must not carry is a server action's to read,
-   * answering only what is shown.
+   * answering only what is shown: a function reads it with `ctx.data('<file>')`. It is the space's data lookup
+   * (`action.lookups.getData`) when the deployment gives none.
    */
   dataDir?: string;
   static?: Record<string, string>;
@@ -1033,6 +1034,12 @@ export type SSRServerConfig = {
    * only with the `exchangeCredential` adapter, which is what turns what comes back into a session on this host.
    */
   signIn?: SSRSignInConfig;
+  /**
+   * The sign-in this server's pages are told about (`server.auth`), so a space that declares no `userProvider` signs
+   * in with nothing to declare. `createServer({ auth })` fills it from the kernel's `basePath`; name it yourself when
+   * the `/auth` flows are served by another host. The session hint cookie is added per request, named for the host.
+   */
+  pageAuth?: Omit<ServerAuth, 'sessionHintCookie'>;
   /** Naming and scope of the session cookies this server writes. See {@link SSRAuthCookie}. */
   authCookie?: SSRAuthCookie;
   templateFn?: SSRTemplateFn;
@@ -1243,7 +1250,7 @@ export type SSRServer = {
   readonly plugins: PluginRegistry;
   /**
    * With `devReload` on, every page open on this server loads again — what a project that authors its space in code
-   * calls once it wrote the new documents, instead of restarting the server. Nothing otherwise.
+   * calls once it serves the new documents (`serveProject`), instead of restarting the server. Nothing otherwise.
    */
   reloadPages: () => void;
   /**

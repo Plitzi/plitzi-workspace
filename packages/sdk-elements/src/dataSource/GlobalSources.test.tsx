@@ -24,9 +24,10 @@ const authValue = {
   user: { accessToken: 'token-abc', details: { username: 'ada', email: 'ada@example.test' } }
 } as unknown as AuthContextValue;
 
+/** `provider` is the auth context's: the space's own, or the one the server that rendered it serves. */
 const publishedSource = (
   path: 'runtime.sources.auth' | 'runtime.sources.theme',
-  userProvider = 'basic'
+  provider = 'basic'
 ): Record<string, unknown> => {
   let published: Record<string, unknown> = {};
   const Probe = () => {
@@ -37,8 +38,8 @@ const publishedSource = (
   };
 
   render(
-    <StoreProvider value={{ schema: { settings: { userProvider }, variables: [] }, pageDefinitions: {}, navigation }}>
-      <AuthContext value={authValue}>
+    <StoreProvider value={{ schema: { settings: {}, variables: [] }, pageDefinitions: {}, navigation }}>
+      <AuthContext value={{ ...authValue, provider }}>
         <GlobalSources>
           <Probe />
         </GlobalSources>
@@ -49,8 +50,7 @@ const publishedSource = (
   return published;
 };
 
-const authSourceFor = (userProvider: string): Record<string, unknown> =>
-  publishedSource('runtime.sources.auth', userProvider);
+const authSourceFor = (provider: string): Record<string, unknown> => publishedSource('runtime.sources.auth', provider);
 
 describe('GlobalSources — the theme source', () => {
   afterEach(() => {

@@ -2,7 +2,10 @@
   .plitzi-component__embed {
     width: 100%;
     display: block;
-    border: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-width: 0;
     aspect-ratio: 16 / 9;
 
     // In the builder the page inside would take every click: a cover over it selects the element instead.

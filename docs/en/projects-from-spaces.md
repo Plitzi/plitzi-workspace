@@ -31,8 +31,9 @@ Pizarra is the yardstick: a board works on `localhost` from a fresh `create`, is
 | Files | the space's public buckets | `public/`, every CDN address in the code rewritten to the project's own | served by the project (`publicDir`) |
 | Variables, credentials | names only | `.env.example` names them; `.env` holds a signing key made for the project | the project's environment |
 
-Everything else is the ordinary server project `plitzi create --mode server` writes, with a `main.ts` that wires the
-runtime, the actions, the functions and the plugins in. Every file is the developer's to edit.
+Everything else is the ordinary server project `plitzi create --mode server` writes, with a `main.ts` that hands the
+space and its actions to `serveProject` (`@plitzi/sdk-server/project`), which wires the runtime, the functions and the
+plugins in from where they land. Every file is the developer's to edit.
 
 A project made from a space is always a server project: `--mode client` is refused with `--from`.
 
@@ -139,7 +140,7 @@ written with `defineAction` always does.
   with every package the source imports — the SDK and React at this CLI's versions, since plugins are rebuilt against
   the project's own.
 - Its `src/main.ts` is the one every server project has — the same port, `/health`, reloads, `.env` and `kv` in
-  `state/` — and runs what the space brought besides from where it lands: its runtime (`src/runtime/`, or built only
+  `state/`, all `serveProject`'s — which runs what the space brought besides from where it lands: its runtime (`src/runtime/`, or built only
   in `vendor/runtime.bundle`), the plugins only a build of came across (`vendor/plugins/`). It is the CLI's, as in any
   project: `plitzi upgrade` keeps it current. Its visitors' sign-in is said in the report, with what to write.
   `start:dev` restarts on a change to `src/actions/` and `src/connectors/` too; a save to the pages re-authors them in
@@ -275,8 +276,10 @@ for in the builder: the settings, the actions, the connectors.
 - **Visitors and sign-in.** A space with visitor roles signs its visitors in with their Plitzi account, and gives roles
   by email; who holds them stays on Plitzi. Self-hosted, nobody signs in until the server does it itself (`createAuth`
   from `@plitzi/sdk-server/auth`, over accounts it keeps, giving each person the permissions of their roles with
-  `visitorAccess`), handed to the server as `auth` in `src/config/serverOptions.ts`. The report says so. Writing that
-  sign-in for the project is a separate decision.
+  `visitorAccess`), handed to the server as `auth` in `src/config/serverOptions.ts`. The server then tells its pages
+  where they sign in (`server.auth`), so the space declares nothing — its `userProvider: 'server'` is taken out, since
+  a provider the space declares wins over the server's. The report says so. The accounts that sign-in runs over are
+  the project's to keep.
 
 ## Where it is tested
 

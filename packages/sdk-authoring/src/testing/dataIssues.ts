@@ -27,8 +27,20 @@ export interface DataIssue {
 
 export interface DataReport {
   issues: DataIssue[];
-  /** Every list of the page whose rows come from a provider: how many it has now, `null` when it reads nothing. */
+  /**
+   * Every list of the page whose rows come from a provider: how many rows its source holds, `null` when it reads
+   * nothing. The source, before the binding's transformers: a list that filters or slices them draws fewer — what is
+   * drawn is the page's to count (`plitzi check` does).
+   */
   lists: Record<string, number | null>;
+}
+
+export interface DataIssuesOptions {
+  /**
+   * Elements with a visibility condition of their own that the page is not showing. Nothing inside one is mounted —
+   * its bindings read nothing because nothing reads them — so only its own condition is held against the answer.
+   */
+  hidden?: ReadonlySet<string>;
 }
 
 const PROVIDER = 'apiContainer_';
@@ -65,19 +77,48 @@ const pageElements = (schema: Schema, pageId: string): Element[] => {
 
 const named = (element: Element): string => `${element.definition.type} "${element.id}"`;
 
+/** Whether an element sits inside one of `hidden` — not whether it is one. */
+const insideHidden = (schema: Schema, element: Element, hidden: ReadonlySet<string>): boolean => {
+  const seen = new Set<string>();
+  for (let id = element.definition.parentId; id !== undefined && !seen.has(id);) {
+    if (hidden.has(id)) {
+      return true;
+    }
+
+    seen.add(id);
+    id = Object.hasOwn(schema.flat, id) ? schema.flat[id].definition.parentId : undefined;
+  }
+
+  return false;
+};
+
 /**
  * Every binding of the page onto a provider that has answered, read against that answer: a path that stops before its
  * last step — or a list's rows that are not there — is an issue that says where it stopped and what was there; a
- * provider that failed is one too. A provider still on
- * its way, or not on this page, is passed over — its answer is not in yet, or not this page's to judge.
+ * provider that failed is one too. A provider still on its way, or not on this page, is passed over — its answer is not
+ * in yet, or not this page's to judge — and so is what is inside an element the page is not showing (`hidden`).
  */
-export const dataIssues = (schema: Schema, pageId: string, sources: Record<string, unknown>): DataReport => {
+export const dataIssues = (
+  schema: Schema,
+  pageId: string,
+  sources: Record<string, unknown>,
+  { hidden = new Set() }: DataIssuesOptions = {}
+): DataReport => {
   const issues: DataIssue[] = [];
   const lists: Record<string, number | null> = {};
   const failed = new Set<string>();
   for (const element of pageElements(schema, pageId)) {
+    if (insideHidden(schema, element, hidden)) {
+      continue;
+    }
+
+    const ownConditionOnly = hidden.has(element.id);
     for (const binding of Object.values(element.definition.bindings ?? {}).flat()) {
-      if (binding.enabled === false || !binding.source.startsWith(PROVIDER)) {
+      if (
+        binding.enabled === false ||
+        !binding.source.startsWith(PROVIDER) ||
+        (ownConditionOnly && binding.to !== 'visibility')
+      ) {
         continue;
       }
 

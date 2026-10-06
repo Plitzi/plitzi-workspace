@@ -151,6 +151,10 @@ class BasicAuthProvider<U = Record<string, unknown>> extends AuthProvider<U> {
     if (!this.options.loginUrl) {
       // `fetch('')` is a POST to the CURRENT page, which answers with the page and looks like a login that quietly
       // did nothing. A space that declared no endpoint cannot sign anybody in, and says so.
+      console.warn(
+        '[plitzi] auth.login: the "basic" provider has no loginUrl to post the credentials to. Declare loginUrl in the space settings, or serve the space from createServer({ auth }), which names it for you.'
+      );
+
       return { ok: false, reason: 'missing' };
     }
 

@@ -198,8 +198,8 @@ Never download a whole tree you do not need.
   \`link\` navigates between pages, \`list\` repeats a template over a data array. \`plugin\` types are custom elements.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
 - \`plitzi://explain/{name}\` — what a name means: an element type's attributes, triggers and callbacks; a step's
-  params; what a trigger hands its flow; a problem code's fix. \`plitzi://explain/steps\` (or elements, triggers,
-  codes, transformers) lists every one of a kind.
+  params and what it publishes; what a trigger hands its flow; a problem code's fix. \`plitzi://explain/steps\` (or
+  elements, triggers, codes, transformers) lists every one of a kind.
 - \`plitzi://schema/{env}/pages\` — page **summaries** (ref, label, elementCount, folder). No element trees.
 - \`plitzi://schema/{env}/layouts\` — the shared **layout shells** (header/sidebar/footer) and the pages rendered
   inside each. Read one like a page. See *Shared layouts* below.
@@ -420,7 +420,9 @@ You do not have to rewrite them.
   \`justify-content\` as separate properties.
 - CSS is grouped by breakpoint: \`desktop\`, \`tablet\`, \`mobile\`.
 - Reference a style variable in CSS as \`var(--name)\`; a schema variable in a prop as \`{{name}}\`.
-- \`element.style.base\` is a **list** of definition refs; other slots go under \`element.style.slots\`.
+- \`element.style.base\` is a **list** of definition refs; other slots go under \`element.style.slots\`. A \`markdown\`
+  has a slot per part of the HTML it writes (\`heading\`, \`paragraph\`, \`link\`, \`list\`, \`code\`, \`anchor\`…): its
+  document is styled there, not in custom CSS.
 - **An element can attach SEVERAL classes at once, and they all apply.** \`style.base\` holds a list, and each
   non-base slot holds its own — every attached definition contributes CSS, and they **cascade** (a later class, then a
   global/id rule, overrides an earlier one on the same property). So when a style looks wrong, the culprit may be
@@ -542,9 +544,11 @@ you — never wire them by hand. Each step also has an \`enabled\` flag (see dis
 
 **Each step reads the page as it is when it runs**: a \`when\` or a \`{{ state.x }}\` after a \`setState\` sees the new
 value, and one after a \`delay\` sees what changed meanwhile. To act on the value from BEFORE a write, put the reading
-step first. **A trigger fired again while its flow runs is ignored** (no double submit); set \`"whileRunning": "queue"\`
-on the trigger node for a stream of events that must each run in order (\`"parallel"\` runs them at once,
-\`"latest"\` stops the running flow — its server action or request too — for a search as you type).
+step first. A step's \`when\` asks an earlier step only for what it publishes (\`plitzi://explain/<action>\` lists it):
+a run's \`<step>.status\` (\`runServerAction\` only), a sign-in's \`<step>.ok\` — any other key is refused
+(\`condition-field-unpublished\`). **A trigger fired again while its flow runs is ignored** (no double submit); set
+\`"whileRunning": "queue"\` on the trigger node for a stream of events that must each run in order (\`"parallel"\` runs
+them at once, \`"latest"\` stops the running flow — its server action or request too — for a search as you type).
 **Keyboard shortcuts** are a trigger every element has: \`onKey\` with param \`keys\` — \`"f"\`, \`"shift+f"\`,
 \`"mod+k"\` (⌘ on a Mac, Ctrl elsewhere), \`"plus, ="\`, \`"escape"\`. Heard on the whole page while the element is
 mounted, ignored while someone types in a field; the flow reads the key pressed as \`{{ <trigger id>.key }}\`.
@@ -790,8 +794,9 @@ any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\`
   \`defineFunctions\` from \`@plitzi/sdk-server/functions\`. Files import each other by relative path — no package,
   no Node built-in.
 - **\`ctx\` is all a function reaches:** \`ctx.kv\` (the space's store), \`ctx.fetch(url, init)\` to the hosts
-  \`allow.hosts\` names (\`*.example.com\` for subdomains), \`ctx.publish/grant/revoke\` (channels), \`ctx.log\`,
-  \`ctx.user\` (who asked, never their session). A secret is NAMED, never read: \`ctx.fetch(url, { credential: "stripe",
+  \`allow.hosts\` names (\`*.example.com\` for subdomains), \`ctx.publish/grant/revoke\` (channels),
+  \`ctx.data("products.json")\` (one file of the space's data, parsed — never imported), \`ctx.log\`, \`ctx.user\` (who
+  asked, never their session). A secret is NAMED, never read: \`ctx.fetch(url, { credential: "stripe",
   headers: { authorization: "Bearer {{ credential.apiKey }}" } })\`.
 - **Stateless:** nothing a function keeps in memory outlives the call — a module-level cache or counter starts empty
   every time, on whichever instance runs it. What must last goes in \`ctx.kv\`. A call gets 100 ms of CPU and 10 s;
@@ -980,7 +985,8 @@ the component does not have is reported by \`plitzi_validate\` — fix it before
 - **The link to the page being shown marks itself**: it carries \`aria-current="page"\`, and its class's \`current\`
   state says how it looks — \`{ "type": "patchDefinition", "ref": "nav-link", "states": { "current": { "desktop": {
   "color": "var(--primary)" } } } }\`. So a header written once in a layout lights the right item on every page; never
-  copy the header per page to style one item.
+  copy the header per page to style one item. The same state dresses any chosen one of a set: a pressed toggle
+  (\`aria-pressed\` — a theme toggle's option slot) and a selected tab.
 - **A section of a page** is an element with an \`anchor\` (its \`id\` in the DOM: lowercase, digits, \`-\`; one per
   page, layouts included; not inside a list row or a component). A link lands on it with \`hash\`:
   \`{ "mode": "page", "href": "home", "hash": "plans" }\` goes to \`/#plans\` and scrolls there, from any page.
@@ -1020,10 +1026,12 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
   \`paintedState\` lists the kept keys the FIRST PAINT shows (the tool a toolbar shows, a name in an avatar): they go
   in a cookie too, so the server draws with them instead of the page swapping them in after load. Small values only.
 - **User provider / auth**: \`userProvider\` — \`basic\` for any HTTP+JSON backend, the name of a provider registered
-  in the page, or \`""\` to disable auth — plus \`tokenStorage\`, the \`loginUrl\`/\`userUrl\`/\`refreshUrl\`/\`logoutUrl\`
+  in the page, or \`""\` for none — plus \`tokenStorage\`, the \`loginUrl\`/\`userUrl\`/\`refreshUrl\`/\`logoutUrl\`
   endpoints and the \`detailsPath\`/\`tokenPath\`/\`refreshTokenPath\`/\`expirationTimePath\` mapping that says where the
   values sit in their responses. \`sessionHintCookie\` is worth setting whenever the backend can: it names a readable
   cookie carrying only expiries, which is what lets a page answer "nobody is signed in" without a request.
+  A space served by a self-hosted \`createServer({ auth })\` declares none of these: that server tells its pages where
+  they sign in, and only what the space declares overrides it.
   On the Plitzi platform, \`userProvider: "server"\` signs visitors in with their Plitzi account on the space's own
   host: a \`link\` with \`mode: "external"\` to \`/auth/sign-in?return=/\` starts it, \`authLogout\` ends it.
 - \`visitorRoles\` — what each visitor role gives, \`{ "author": ["postPublish"] }\`: the permissions an action's

@@ -8,6 +8,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import Label from './components/Label';
 import { VISUALLY_HIDDEN } from './components/visuallyHidden';
 import declaration from './declaration';
+import { isChecked } from './helpers/isChecked';
 import withFieldValue from './hocs/withFieldValue';
 import Checkbox from './inputs/Checkbox';
 import Hidden from './inputs/Hidden';
@@ -151,11 +152,12 @@ const FormControl = ({
       }
 
       const { target } = e;
-      const checkable = target instanceof HTMLInputElement && (target.type === 'checkbox' || subType === 'switch');
+      // A switch is a checkbox too, announced as one that switches.
+      const checkable = target instanceof HTMLInputElement && target.type === 'checkbox';
       const value = checkable ? target.checked : target.value;
       void interactionsManager.interactionTrigger(id, 'onChange', { value, name });
     },
-    [handleChange, previewMode, subType, interactionsManager, id, name]
+    [handleChange, previewMode, interactionsManager, id, name]
   );
   const registerField = form?.registerField;
   const unregisterField = form?.unregisterField;
@@ -166,7 +168,22 @@ const FormControl = ({
   const isHidden = subType === 'hidden';
   // Every time it is shown — a search bar opened a second time takes the focus again — and never in the builder.
   const focusWhenShown = autoFocus && previewMode && visible;
+  const labelHidden = hideLabel && previewMode;
   const errorId = error && previewMode ? `${rootId}_${id}_error` : undefined;
+  const checkControl = isCheck && (
+    <Checkbox
+      variant={subType === 'switch' ? 'switch' : 'checkbox'}
+      id={`${rootId}_${id}`}
+      name={name}
+      checked={isChecked(value)}
+      className={styleSelectors.input}
+      required={required}
+      disabled={disabled}
+      onChange={handleChangeInteraction}
+      onValidate={handleValidate}
+      errorId={errorId}
+    />
+  );
 
   useEffect(() => {
     if (!registerField || !unregisterField) {
@@ -195,7 +212,7 @@ const FormControl = ({
           className={styleSelectors.label}
           type={subType}
           required={required}
-          hidden={hideLabel && previewMode}
+          hidden={labelHidden}
         >
           {label}
         </Label>
@@ -208,63 +225,12 @@ const FormControl = ({
           type={subType}
           required={required}
         >
-          {subType === 'checkbox' && (
-            <Checkbox
-              id={`${rootId}_${id}`}
-              name={name}
-              value={value}
-              className={styleSelectors.input}
-              placeholder={placeholder}
-              required={required}
-              disabled={disabled}
-              onChange={handleChangeInteraction}
-              onValidate={handleValidate}
-              errorId={errorId}
-            />
-          )}
-          {/* {subType === 'switch' && (
-            <Switch
-              id={`${rootId}_${id}`}
-              name={name}
-              onChange={handleChangeInteraction}
-              value={value}
-              size={size}
-              className={inputClassName}
-              hasError={!!errorMessage}
-              disabled={disabled}
-            />
-          )} */}
-          {hideLabel && previewMode ? <span style={VISUALLY_HIDDEN}>{label}</span> : label}
+          {checkControl}
+          {labelHidden && <span style={VISUALLY_HIDDEN}>{label}</span>}
+          {!labelHidden && label}
         </Label>
       )}
-      {subType === 'checkbox' && !label && (
-        <Checkbox
-          id={`${rootId}_${id}`}
-          name={name}
-          value={value}
-          className={styleSelectors.input}
-          placeholder={placeholder}
-          required={required}
-          disabled={disabled}
-          onChange={handleChangeInteraction}
-          onValidate={handleValidate}
-          errorId={errorId}
-        />
-      )}
-      {/* {subType === 'switch' && !label && (
-        <Switch
-          {...inputProps}
-          ref={ref}
-          id={`${rootId}_${id}`}
-          name={name}
-          onChange={handleChangeInteraction}
-          value={value}
-          size={size}
-          className={inputClassName}
-          hasError={!!errorMessage}
-          disabled={disabled}
-        />
-      )} */}
+      {isCheck && !label && checkControl}
       {['text', 'number', 'email', 'password', 'search', 'url', 'tel', 'date', 'time', 'color'].includes(subType) && (
         <Input
           id={`${rootId}_${id}`}

@@ -87,6 +87,9 @@ const auth = createAuth({
   adapters
 });
 
+/** Signed by this deployment, as renewal verifies a refresh credential before asking the store about it. */
+const REFRESH = auth.tokens.generateRefreshToken(account.id);
+
 const offlineData = offlineDataOf();
 
 let server: SSRServer;
@@ -167,7 +170,7 @@ beforeEach(() => {
   current = {
     token: 'old-access',
     expiresAt: inSeconds(-60),
-    refreshToken: 'refresh-1',
+    refreshToken: REFRESH,
     refreshExpiresAt: inSeconds(86_400)
   };
 });
@@ -238,13 +241,13 @@ describe('a page server whose `/auth` lives on another host', () => {
   it('serves no renewal endpoint of its own', async () => {
     const answer = await get(
       '/auth/refresh',
-      { ...DOCUMENT, cookie: 'test_session_refresh=refresh-1' },
+      { ...DOCUMENT, cookie: `test_session_refresh=${REFRESH}` },
       'GET',
       REMOTE_PORT
     );
 
     expect(answer.status).not.toBe(303);
-    expect(current?.refreshToken).toBe('refresh-1');
+    expect(current?.refreshToken).toBe(REFRESH);
   });
 });
 
@@ -256,13 +259,13 @@ describe('renewal turned off', () => {
   it('still serves the endpoint, for pages rendered elsewhere', async () => {
     const answer = await get(
       '/auth/refresh?redirect=%2F',
-      { ...DOCUMENT, cookie: 'test_session_refresh=refresh-1' },
+      { ...DOCUMENT, cookie: `test_session_refresh=${REFRESH}` },
       'GET',
       OFF_PORT
     );
 
     expect(answer.status).toBe(303);
-    expect(current?.refreshToken).not.toBe('refresh-1');
+    expect(current?.refreshToken).not.toBe(REFRESH);
   });
 });
 
@@ -270,7 +273,7 @@ describe('GET /auth/refresh', () => {
   it('renews with the refresh cookie and sends the visitor back, signed in', async () => {
     const answer = await get('/auth/refresh?redirect=%2Fpricing%3Fplan%3Dpro', {
       ...DOCUMENT,
-      cookie: 'test_session_refresh=refresh-1'
+      cookie: `test_session_refresh=${REFRESH}`
     });
 
     expect(answer.status).toBe(303);
@@ -279,7 +282,7 @@ describe('GET /auth/refresh', () => {
 
     const access = cookieNamed(answer, 'test_session')?.split(';')[0];
     expect(access).toBeDefined();
-    expect(current?.refreshToken).not.toBe('refresh-1');
+    expect(current?.refreshToken).not.toBe(REFRESH);
 
     const session = await fetch(`${BASE}/auth/session`, { headers: { cookie: access ?? '' } });
     expect(session.status).toBe(200);
@@ -313,7 +316,7 @@ describe('GET /auth/refresh', () => {
     const landsOn = async (target: string) => {
       const path = `/auth/refresh?redirect=${encodeURIComponent(target)}`;
 
-      return (await get(path, { ...DOCUMENT, cookie: 'test_session_refresh=refresh-1' })).location;
+      return (await get(path, { ...DOCUMENT, cookie: `test_session_refresh=${REFRESH}` })).location;
     };
 
     expect(await landsOn('https://evil.test/')).toBe('/');
@@ -326,9 +329,9 @@ describe('GET /auth/refresh', () => {
     await get('/auth/refresh?redirect=%2F', {
       'sec-fetch-mode': 'no-cors',
       'sec-fetch-dest': 'image',
-      cookie: 'test_session_refresh=refresh-1'
+      cookie: `test_session_refresh=${REFRESH}`
     });
 
-    expect(current?.refreshToken).toBe('refresh-1');
+    expect(current?.refreshToken).toBe(REFRESH);
   });
 });

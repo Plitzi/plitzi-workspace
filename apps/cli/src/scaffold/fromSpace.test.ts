@@ -124,23 +124,25 @@ describe('a project made from a space', () => {
     expect(project.files['.prettierignore']).toBeUndefined();
   });
 
+  /**
+   * `vendor/plugins/` is where `serveProject` runs a plugin as it was built, and where `projectAuthoring` reads the
+   * element types it provides: the server and `npm run author` hold the space to the same plugins.
+   */
   it('runs a plugin it has no source of as it was built, on its server and authored as a plugin’s', () => {
-    const main = serverMain;
-
-    expect(main).toContain("path.join(PROJECT_ROOT, 'vendor/plugins')");
-    expect(main).toContain('  plugins: await pluginDeclarations(PLUGINS_DIR),\n  pluginTypes: builtTypes,');
-    // Its bindings held to the files it serves, as `npm run author` holds them.
-    expect(main).toContain("serverData: projectData(path.join(PROJECT_ROOT, 'src/data')),");
-    expect(main).toContain("data: publicData(path.join(PROJECT_ROOT, 'public'))");
-    expect(main).toContain('plugins: { ...plugins, ...builtPlugins }');
-    expect(main).toContain('pluginNames.push(...Object.keys(builtPlugins));');
+    expect(project.downloads).toContainEqual({
+      url: `${CHART}/plugin-manifest.json`,
+      to: 'vendor/plugins/oldChart/plugin-manifest.json'
+    });
+    expect(serverMain).toContain("await projectAuthoring(new URL('..', import.meta.url))");
+    expect(scaffold({ ...answers(), fromSpace: true })['plitzi/author.ts']).toContain(
+      "await projectAuthoring(new URL('..', import.meta.url))"
+    );
   });
 
-  it('keeps a built plugin’s server half beside it, where its manifest names it, and loads it', () => {
+  it('keeps a built plugin’s server half beside it, where its manifest names it', () => {
     expect(JSON.parse(project.files['vendor/plugins/oldChart/functions.source.json'])).toEqual({
       'index.ts': 'export default {};\n'
     });
-    expect(serverMain).toContain('await loadFunctionsSource(');
   });
 
   it('says what its visitors need of a server of its own, where its auth would go', () => {
@@ -164,16 +166,11 @@ describe('a project made from a space', () => {
 
     // Its runtime where every project keeps one, handing over the module its source starts at.
     expect(project.files['src/runtime/index.ts']).toContain("export { default } from '../runtime.ts';");
-    const main = serverMain;
-    expect(main).toContain('await loadRuntimeModule(');
-    expect(main).toContain('await serveRuntime(spaceRuntime, { env: process.env, publicUrl })');
-    expect(main).toContain(
-      'functions: { native: [...functions, ...(runtime?.native ?? [])], plugins: pluginFunctions }'
+    // The server runs them all from where they are — `src/runtime/`, `src/functions/`, the actions it is handed.
+    expect(serverMain).toContain('  actions,\n  connectors,\n  serverOptions\n});');
+    expect(scaffold({ ...answers(), fromSpace: true })['src/env.ts']).toContain(
+      "process.loadEnvFile(new URL('../.env', import.meta.url))"
     );
-    expect(main).toContain("publicDir: path.join(PROJECT_ROOT, 'public')");
-    expect(main).toContain('signingSecret: process.env.PLITZI_SIGNING_SECRET');
-    expect(main).toContain("process.loadEnvFile(new URL('../.env', import.meta.url))");
-    expect(main).toContain('getConnector: (_spaceId, connectorId) => Promise.resolve(connectors.get(connectorId)),');
 
     const env = envFromSpace(exported(), answers(), SECRET);
     expect(env).toContain(`PLITZI_SIGNING_SECRET=${SECRET}`);
@@ -211,13 +208,13 @@ describe('a project made from a space it reads from Plitzi', () => {
 
   it('writes no pages, reads them with its key, and watches the space by the name its adapters give it', () => {
     expect(project.files['src/space/index.ts']).toBeUndefined();
-    expect(scaffold({ ...answers('cloud'), fromSpace: true })['src/main.ts']).toContain('createCloudAdapters');
+    expect(scaffold({ ...answers('cloud'), fromSpace: true })['src/main.ts']).toContain("cloud: { name: 'my-board' }");
     const env = envFromSpace(exported({ authoring: null }), answers('cloud'), SECRET);
     expect(env).toContain('PLITZI_HOST_KEY=host-key');
     expect(env).toContain(`PLITZI_SIGNING_SECRET=${SECRET}`);
     // Its actions came across with it, so they run here as a local space's do — a cloud one of its own has none.
-    expect(scaffold({ ...answers('cloud'), fromSpace: true })['src/main.ts']).toContain('lookups: actionLookups');
-    expect(scaffold({ ...answers('cloud') })['src/main.ts']).not.toContain('lookups: actionLookups');
+    expect(scaffold({ ...answers('cloud'), fromSpace: true })['src/main.ts']).toContain('  actions,\n  connectors,');
+    expect(scaffold({ ...answers('cloud') })['src/main.ts']).not.toContain('  actions,');
   });
 });
 
@@ -227,18 +224,8 @@ describe('the server a project made from a space runs', () => {
   it('is the one `create` writes — its port, health, reloads and settings — with what the space brought besides', () => {
     const main = scaffold({ ...answers(), fromSpace: true, runtime: true })['src/main.ts'];
 
-    for (const shared of [
-      'await freePort(8080, HOST)',
-      'health: { name: SERVER_NAME }',
-      "path.join(PROJECT_ROOT, 'tmp/dev-server.json')",
-      'watchSpace();',
-      'watchPlugins();',
-      "process.loadEnvFile(new URL('../.env', import.meta.url))",
-      'signingSecret: process.env.PLITZI_SIGNING_SECRET'
-    ]) {
-      expect(main).toContain(shared);
-      expect(create['src/main.ts']).toContain(shared);
-    }
+    expect(main).toBe(create['src/main.ts']);
+    expect(main).toContain('await serveProject({');
   });
 
   it('keeps its actions and connectors in folders there from the start, which `start:dev` restarts on', () => {

@@ -14,7 +14,8 @@ export type FormControlAttributes = AuthorableAttributes<
   previewError?: boolean;
 };
 
-const defaultInputStyle = {
+// The box every field is drawn in. A select's has no line height: the select inside sets its own.
+const fieldBox = {
   width: '100%',
   display: 'flex',
   'align-items': 'center',
@@ -40,10 +41,11 @@ const defaultInputStyle = {
   'padding-right': '16px',
   'padding-top': '8px',
   'padding-bottom': '8px',
-  'line-height': '20px',
   outline: 'none',
   position: 'relative'
 };
+
+const defaultInputStyle = { ...fieldBox, 'line-height': '20px' };
 
 // A checkbox's label sits beside its box rather than above it, so it is the same rule without the gap. Built
 // up rather than subtracted, which is what keeps this file free of imports.
@@ -64,6 +66,52 @@ const defaultErrorStyle = {
   color: 'red',
   'margin-top': '4px'
 };
+
+const selectStyle = { ...fieldBox, cursor: 'pointer' };
+
+/** A checkbox drawn as a track and a thumb, in the label's colour: a class recolours it with `color`. */
+const switchStyle = {
+  height: '20px',
+  width: '36px',
+  'margin-top': '0px',
+  'margin-bottom': '0px',
+  'margin-left': '0px',
+  'margin-right': '8px',
+  position: 'relative',
+  'flex-shrink': '0',
+  'border-top-color': 'currentColor',
+  'border-top-style': 'solid',
+  'border-top-width': '1px',
+  'border-right-color': 'currentColor',
+  'border-right-style': 'solid',
+  'border-right-width': '1px',
+  'border-bottom-color': 'currentColor',
+  'border-bottom-style': 'solid',
+  'border-bottom-width': '1px',
+  'border-left-color': 'currentColor',
+  'border-left-style': 'solid',
+  'border-left-width': '1px',
+  'border-top-left-radius': '10px',
+  'border-top-right-radius': '10px',
+  'border-bottom-left-radius': '10px',
+  'border-bottom-right-radius': '10px',
+  'background-color': 'transparent',
+  transition: 'background-color 150ms ease',
+  appearance: 'none',
+  cursor: 'pointer'
+};
+
+/** A field with its label above it: every typed sub-type and the select. */
+const typed = (name: string, input: Record<string, string>) => ({
+  name,
+  displayMode: 'desktop' as const,
+  style: {
+    base: { default: {} },
+    input: { default: input },
+    label: { default: defaultLabelStyle },
+    error: { default: defaultErrorStyle }
+  }
+});
 
 const declaration = elementDeclaration<FormControlAttributes>()({
   type: 'formControl',
@@ -125,7 +173,9 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       type: 'formControl',
       description:
         'A single labelled input (text/select/checkbox/… per its subType) inside a form; captures one field of user ' +
-        'input. A select offers its `options`: `[{ label, value }, …]` — the text shown, and what the field takes.',
+        'input. A select offers its `options`: `[{ label, value }, …]` — the text shown, and what the field takes. A ' +
+        '`switch` is a checkbox announced and drawn as an on/off switch (`role="switch"`), for a setting that applies at ' +
+        'once; both hold `true`/`false`, and a `defaultValue` of `"true"` starts them on.',
       bindings: {},
       styleSelectors: {
         base: '',
@@ -160,66 +210,19 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       displayMode: 'desktop',
       style: { base: { default: {} } },
       subTypes: {
-        hidden: {
-          name: 'Form Control Hidden',
-          displayMode: 'desktop',
-          style: {
-            base: {},
-            input: { default: {} },
-            label: { default: defaultLabelStyle },
-            error: { default: defaultErrorStyle }
-          }
-        },
-        text: {
-          name: 'Form Control Text',
-          displayMode: 'desktop',
-          style: {
-            base: { default: {} },
-            input: { default: defaultInputStyle },
-            label: { default: defaultLabelStyle },
-            error: { default: defaultErrorStyle }
-          }
-        },
-        password: {
-          name: 'Form Control Password',
-          displayMode: 'desktop',
-          style: {
-            base: { default: {} },
-            input: { default: defaultInputStyle },
-            label: { default: defaultLabelStyle },
-            error: { default: defaultErrorStyle }
-          }
-        },
-        number: {
-          name: 'Form Control Number',
-          displayMode: 'desktop',
-          style: {
-            base: { default: {} },
-            input: { default: defaultInputStyle },
-            label: { default: defaultLabelStyle },
-            error: { default: defaultErrorStyle }
-          }
-        },
-        email: {
-          name: 'Form Control Email',
-          displayMode: 'desktop',
-          style: {
-            base: { default: {} },
-            input: { default: defaultInputStyle },
-            label: { default: defaultLabelStyle },
-            error: { default: defaultErrorStyle }
-          }
-        },
-        textarea: {
-          name: 'Form Control Textarea',
-          displayMode: 'desktop',
-          style: {
-            base: { default: {} },
-            input: { default: defaultInputStyle },
-            label: { default: defaultLabelStyle },
-            error: { default: defaultErrorStyle }
-          }
-        },
+        hidden: typed('Form Control Hidden', {}),
+        text: typed('Form Control Text', defaultInputStyle),
+        number: typed('Form Control Number', defaultInputStyle),
+        email: typed('Form Control Email', defaultInputStyle),
+        password: typed('Form Control Password', defaultInputStyle),
+        search: typed('Form Control Search', defaultInputStyle),
+        url: typed('Form Control URL', defaultInputStyle),
+        tel: typed('Form Control Phone', defaultInputStyle),
+        date: typed('Form Control Date', defaultInputStyle),
+        time: typed('Form Control Time', defaultInputStyle),
+        color: typed('Form Control Color', defaultInputStyle),
+        textarea: typed('Form Control Textarea', { ...defaultInputStyle, color: 'inherit', resize: 'vertical' }),
+        select: typed('Form Control Select', selectStyle),
         checkbox: {
           name: 'Form Control Checkbox',
           displayMode: 'desktop',
@@ -237,15 +240,13 @@ const declaration = elementDeclaration<FormControlAttributes>()({
             error: { default: defaultErrorStyle }
           }
         },
-        select: {
-          name: 'Form Control Select',
+        switch: {
+          name: 'Form Control Switch',
           displayMode: 'desktop',
           style: {
             base: { default: {} },
-            input: {
-              default: { ...defaultInputStyle, cursor: 'pointer' }
-            },
-            label: defaultLabelStyle,
+            input: { default: switchStyle },
+            label: { default: { ...inlineLabelStyle, 'align-items': 'center' } },
             error: { default: defaultErrorStyle }
           }
         }

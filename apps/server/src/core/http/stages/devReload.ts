@@ -11,8 +11,8 @@ export const DEV_RELOAD_PATH = '/__plitzi/reload';
 
 /**
  * The page reloading itself when the space it shows changed — the edit loop of a project that authors its space in
- * code, without restarting the server: `main.ts` re-authors in a process of its own and calls `reloadPages()`, and
- * every page open on this server loads again.
+ * code, without restarting the server: `serveProject` re-authors in a process of its own, swaps the documents and calls
+ * `reloadPages()`, and every page open on this server loads again.
  *
  * Only with `devReload` on: every open page keeps a connection for it, which a server that never calls `reloadPages`
  * — a published one, or a platform's — would pay for and get nothing from. The template listens only then too.

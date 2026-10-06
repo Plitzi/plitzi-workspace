@@ -4,7 +4,8 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { dataFileResolver, dataLookupResolver, publicFileResolver } from './publicFileResolver';
+import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
+import { dataDirLookup } from '../actions/runtime/projectData';
 
 import type { RscResolveContext } from './resolveRscData';
 import type { Element } from '@plitzi/sdk-shared';
@@ -63,10 +64,18 @@ describe('publicFileResolver', () => {
   });
 });
 
-describe('dataFileResolver', () => {
+/** A self-hosted server's `dataDir`, read through the lookup `createServer` derives from it — the one `ctx.data` reads. */
+describe('dataLookupResolver over a data folder', () => {
   let dataDir: string;
+  // A folder has no revisions, so the deployment the request carries plays no part in what is read.
   const resolveData = (query: unknown) =>
-    dataFileResolver(dataDir)({ element: provider(query), signal: new AbortController().signal } as RscResolveContext);
+    dataLookupResolver(dataDirLookup(dataDir))({
+      element: provider(query),
+      spaceId: 1,
+      environment: 'main',
+      req: { ctx: {} },
+      signal: new AbortController().signal
+    } as unknown as RscResolveContext);
 
   beforeAll(() => {
     dataDir = mkdtempSync(path.join(tmpdir(), 'plitzi-data-'));
@@ -84,10 +93,10 @@ describe('dataFileResolver', () => {
     expect(await resolveData('/data/shop/hours.json')).toEqual({ status: 200, data: { open: 9 } });
   });
 
-  it('is not asked for anything outside `/data/`, nor out of its folder', async () => {
+  it('is not asked for anything outside `/data/`, and reads nothing out of its folder', async () => {
     expect(await resolveData('/products.json')).toBeUndefined();
-    expect(await resolveData('/data/../products.json')).toBeUndefined();
-    expect(await resolveData('/data/%2e%2e/secret.json')).toBeUndefined();
+    expect(await resolveData('/data/../products.json')).toBeNull();
+    expect(await resolveData('/data/%2e%2e/secret.json')).toBeNull();
     expect(await resolveData('/data/missing.json')).toBeNull();
   });
 });

@@ -834,6 +834,12 @@ export const AUTHORING_CODES = {
     means: 'a `when` comparing a submitted field to `""` — a field nobody typed in is not sent',
     fix: "`operator: 'empty'` / `'notEmpty'`"
   },
+  'condition-field-unpublished': {
+    kind: 'refused',
+    means:
+      'a `when` asking a step of its flow for a key it never publishes — `whenSucceeded` / `whenFailed` on anything but `runServerAction`',
+    fix: "a key the step publishes (`explain <step>`): after `authLogin`, `when({ field: 'signedIn.ok', operator: '=', value: true }, …)`"
+  },
 
   // Server actions.
   'action-without-entry': {
@@ -970,6 +976,12 @@ export const AUTHORING_CODES = {
     kind: 'suggested',
     means: 'a component no page, layout or other component places',
     fix: 'remove it from `components`, or place it where it was meant to go'
+  },
+  'class-overrides-class': {
+    kind: 'suggested',
+    means:
+      "one class's shorthand erasing the longhand another class on the same element writes out — `padding` over `padding-top` — because the stylesheet writes it later: classes in the order they are first met, a breakpoint's rules after the base, never the order of a class list",
+    fix: "the longhands the shorthand means instead of it (`padding-left`, `padding-right`), so it leaves the other class's alone — or `quiet: ['class-overrides-class']` when the shorthand is meant to win"
   }
 } as const satisfies Record<string, AuthoringCodeEntry>;
 

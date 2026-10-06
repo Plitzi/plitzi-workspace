@@ -69,6 +69,19 @@ const loaderOf = (file: string): esbuild.Loader => {
   return file.endsWith('.ts') ? 'ts' : 'js';
 };
 
+/** Where a project keeps its data, seen from its functions: `src/data/` beside `src/functions/`. */
+const DATA_FROM_FUNCTIONS = '../data/';
+
+/**
+ * Why an import that climbs out of `functions/` is refused, and what to do instead — the space's data is the one thing
+ * outside it code reaches for, and it is read at run time (`ctx.data`), as of the run's version, not built in.
+ */
+const outsideFunctions = (specifier: string, wanted: string): string => {
+  const file = wanted.startsWith(DATA_FROM_FUNCTIONS) ? wanted.slice(DATA_FROM_FUNCTIONS.length) : '<file>';
+
+  return `"${specifier}" is outside functions/: functions import only files under functions/ — read the space's data with ctx.data('${file}')`;
+};
+
 /** Resolves every import against the space's own files, and the contract; nothing on the disk is ever read. */
 const sourcePlugin = (files: Map<string, string>): esbuild.Plugin => ({
   name: 'plitzi-functions-source',
@@ -90,6 +103,10 @@ const sourcePlugin = (files: Map<string, string>): esbuild.Plugin => ({
 
       const base = args.kind === 'entry-point' ? '.' : path.posix.dirname(args.importer);
       const wanted = normalize(path.posix.join(base, args.path));
+      if (wanted === '..' || wanted.startsWith('../')) {
+        return { errors: [{ text: outsideFunctions(args.path, wanted) }] };
+      }
+
       const found = [wanted, `${wanted}.ts`, `${wanted}.js`, `${wanted}/index.ts`].find(candidate =>
         files.has(candidate)
       );

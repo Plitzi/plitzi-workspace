@@ -631,7 +631,29 @@ describe('specFromSpace / the current state', () => {
     expect(spec.customCss ?? '').toBe('');
   });
 
-  it('writes the state as that attribute', () => {
+  it('folds a pressed toggle and a selected tab into the class, as its current state too', () => {
+    const documents = authorSpace({
+      name: 'Current',
+      permanentUrl: 'current',
+      classes: { option: { color: 'gray' }, tab: { color: 'gray' } },
+      customCss: '.option[aria-pressed=\'true\'] { color: red; }\n.tab[aria-selected="true"] { color: blue; }\n',
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          body: [link({ href: '/', class: 'option', children: [] }), link({ href: '/', class: 'tab', children: [] })]
+        }
+      ]
+    });
+    const { spec } = specFromSpace(documents);
+
+    expect(spec.classes?.option).toMatchObject({ states: { current: { color: 'red' } } });
+    expect(spec.classes?.tab).toMatchObject({ states: { current: { color: 'blue' } } });
+    expect(spec.customCss ?? '').toBe('');
+  });
+
+  it('writes the state as the attributes of the chosen one of a set', () => {
     const { style } = authorSpace({
       name: 'Current',
       permanentUrl: 'current',
@@ -639,7 +661,9 @@ describe('specFromSpace / the current state', () => {
       pages: [{ id: 'home', name: 'Home', slug: '', body: [link({ href: '/', class: 'navLink', children: [] })] }]
     });
 
-    expect(style.platform.desktop.navLink.cache).toContain('&[aria-current="page"]{color:red;}');
+    expect(style.platform.desktop.navLink.cache).toContain(
+      '&:is([aria-current]:not([aria-current="false"]),[aria-pressed="true"],[aria-selected="true"]){color:red;}'
+    );
   });
 });
 

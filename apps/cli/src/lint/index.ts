@@ -238,6 +238,15 @@ export const reportText = (report: LintReport): string => {
     lines.push(chalk.dim(`What each means and what to write instead: the docs of each code — ${docsOf(report)}.`));
   }
 
+  const suggested = [...new Set(report.findings.filter(each => each.origin === 'authoring').map(each => each.code))];
+  if (suggested.length > 0) {
+    lines.push(
+      chalk.dim(
+        `Authoring's suggestions (${suggested.join(', ')}) are quieted on the element they are about — \`quiet: ['${suggested[0]}']\` — not by a \`plitzi-lint-disable\` comment, which silences only lint's own codes.`
+      )
+    );
+  }
+
   const summary = [
     plural(counts.error, 'error'),
     plural(counts.warning, 'warning'),

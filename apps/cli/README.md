@@ -109,8 +109,9 @@ when an install fails the CLI says which setting names it.
   from, so what you start with and what signing up gives you cannot come apart — and unlike a document, you can read
   and change it.
 - **A live loop.** In client mode a save is a hot module replacement: the space module is swapped and the tree
-  remounted, so the page updates without reloading. In server mode `start:dev` re-authors a saved space and the open
-  page loads again, swaps a saved plugin where it is drawn, and restarts only for the server's own code.
+  remounted, so the page updates without reloading. In server mode `start:dev` authors a saved space again — in a
+  process of its own, handing the documents to the server, which serves them from memory — and the open page loads
+  again; it swaps a saved plugin where it is drawn, and restarts only for the server's own code.
 - **A plugin of the project's own.** `src/plugins/StatCard` is a React component the space renders through a
   `custom` element — the one thing about Plitzi a page of built-in elements cannot show. Every folder of
   `src/plugins` is registered by itself, under its name in camelCase, so `plitzi add plugin` is all a new one takes. Its props ARE the
@@ -141,20 +142,24 @@ when an install fails the CLI says which setting names it.
 | `src/data/` | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read | yes |
 | `src/functions/` | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot | yes |
 | `vendor/plugins/` | The plugins the project runs as they were built, with no source (a project made from a space gets them), each folder with its `plugin-manifest.json`. The server runs them, and `author`, `check`, `fix` and `push` know every element type each provides | yes |
-| `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), the space as last authored, screenshots and test output. Rebuilt when missing | no |
+| `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), screenshots and test output. Rebuilt when missing | no |
 | `state/` | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/config/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
 | `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
 
 **`plitzi/` is the CLI's; `src/` is yours — but `src/main.ts`.** `plitzi/` holds `author.ts`, the types plugins import
 (`assets.d.ts`, server mode) or the page's base styles (`preflight.css`, client mode), and a `README.md` saying what
 each folder of `src/` is. `src/main.ts`, the entry point, is the CLI's too, kept in `src/` where an entry point is
-looked for; `upgrade` keeps all of them current, and the build compiles `src/` into `dist/main.js`. A plugin is declared by its folder: the server, `author` and `check` find every
+looked for — and in server mode `src/env.ts`, which it imports first to read `.env`; `upgrade` keeps all of them current, and the build compiles `src/` into `dist/main.js`. In server mode it is a few lines: it authors the space
+(`authorSpace` with `projectAuthoring` from `@plitzi/sdk-authoring/node`, what `author` checks it against too) and hands
+it, the actions and the options to `serveProject` from `@plitzi/sdk-server/project`, which wires the rest from where the
+project keeps it — so a fix to the server arrives with `npm update`, not as a file to upgrade. A plugin is declared by its folder: the server, `author` and `check` find every
 `src/plugins/<Name>/declaration.ts` (`pluginDeclarations` from `@plitzi/sdk-authoring/node`). What the server does
-besides serving the space is the project's own, in files it reads: `src/config/serverOptions.ts` (handed to `createServer` —
+besides serving the space is the project's own, in files it reads: `src/config/serverOptions.ts` (handed to `serveProject` —
 `images`, `action.limits`, `action.kv`, `rsc`) and, with `--source local`, `src/actions/index.ts` (the space's server
 actions, one `defineAction` each, a file each as they grow).
-What `main.ts` wires itself — where the space comes from, the plugins, `public/`, `src/data/`, `src/functions/`, the
-actions' lookups — is left out of `serverOptions`' type, and comes after it, so an option there can never unwire it.
+What `serveProject` wires itself — where the space comes from, the plugins, `public/`, `src/data/`, `src/functions/`,
+the actions' lookups — is left out of `serverOptions`' type (`ProjectServerOptions`), and comes after it, so an option
+there can never unwire it.
 `src/functions/` holds the project's own server code; `start:dev` restarts on a change to any of them. A plugin is not
 server code to restart for: a save to one is built again and swapped in the open pages where it is drawn — the rest of
 the page, its state included, stays — its server half (`src/plugins/<Name>/functions/`) is loaded again in place, and a
@@ -186,8 +191,9 @@ another project. They wait for the page to settle — loaded, then half a second
 stream that stays open, so a page with a realtime `channel` is checked like any other (`openPage` of
 `@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `check` reports every element the space owes the page that is missing or hidden (with why), broken
 images, sideways scroll, text in the colour behind it, console errors, refused requests and failed flows — and the
-page's data: a binding that reads a path its provider's answer lacks (with the keys it has), a provider that failed,
-the rows each list rendered. A page's state in a few hundred tokens, where a screenshot costs thousands.
+page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
+the page is not showing, which is not mounted — a provider that failed, and each list's rows, drawn and in its source
+(`feed 4 of 8 rows`, `hits not rendered (16 in its source)`; `--json`: `lists: { id: { rendered, source } }`). A page's state in a few hundred tokens, where a screenshot costs thousands.
 
 `--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
 default, and `shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
@@ -236,13 +242,15 @@ has it as `npm run lint:space`.
 | `special-case-in-map` | a `map` that singles out a row by its `id`, `key`, `slug`, `name`, `title` or `label`: the difference belongs in the row's data |
 | `colour-not-token` | a hex, `rgb()`/`hsl()`/`oklch()`… or a named colour where a colour is all a property takes — outside the declared tokens (`variables`, `light`/`dark`), anchors, masks, markup and URLs |
 | `positional-id` | an id minted for an element nobody named — `container-45`, `heading-a7k2` |
+| `disable-names-suggestion` | a `plitzi-lint-disable` comment naming a suggestion of authoring's, which a comment does not silence: `quiet: ['<code>']` on its element |
 | `space-does-not-author` | error: the space does not author, so authoring's suggestions could not be read — `npm run author` says why |
 | `source-unreadable` | error: the source could not be read (no TypeScript installed, a rule that could not finish) |
 
 Beside them, every suggestion authoring makes about the space it authors to (`authorSpace(…).suggestions`) — whatever
 its code, the day authoring adds it — as a warning at the line that wrote its element; `plitzi explain <code>` says what
-each means. They are quieted on the element (`quiet: ['repeated-shape']`), where the builder and the MCP read it too.
-A practice the source departs from on purpose is said where it is, eslint's way:
+each means. They are quieted on the element (`quiet: ['repeated-shape']`), where the builder and the MCP read it too —
+the report says so under them. A practice the source departs from on purpose is said where it is, eslint's way, for
+lint's own codes:
 `// plitzi-lint-disable-next-line colour-not-token -- the partner's own red`, `-line` for its own line, and
 `// plitzi-lint-disable <codes>` for the whole file.
 
@@ -283,7 +291,7 @@ did not write again.
 
 ```bash
 plitzi explain container        # an element: its attributes and their values, what it fires and answers, its slots
-plitzi explain navigate         # a step: its params and the function that writes it
+plitzi explain navigate         # a step: its params, what it publishes, and the function that writes it
 plitzi explain onScroll         # a trigger: what it hands its flow, and what fires it
 plitzi explain class-and-css    # a problem's code: what was wrong, what to write instead
 plitzi explain content-attribute # a suggestion's code: what is written the long way, and the short one
@@ -327,7 +335,7 @@ area would only say what the move fixes — and `upgrade` writes no file until i
 
 | Area | What is held |
 |---|---|
-| `layout` | where an older CLI kept what this one reads elsewhere (`src/space.ts`, `src/site/`, `src/actions.ts`, `src/author.ts`, `functions/`) and what it left behind (`src/plugins/declarations.ts`, `.sdk-plugins/`, `.plitzi/dev-server.json`) |
+| `layout` | where an older CLI kept what this one reads elsewhere (`src/space.ts`, `src/site/`, `src/actions.ts`, `src/author.ts`, `functions/`) and what it left behind (`src/plugins/declarations.ts`, `.sdk-plugins/`, `.plitzi/dev-server.json`, the `tmp/space.json` an older `src/main.ts` re-read the space from) |
 | `packages` | `"type": "module"`, the Node version; every package the project and its scripts need, declared and installed at a version its range allows; the SDK's packages at one version, no older than the CLI; one copy of the SDK and of React (none installed inside another); the scripts — gone, behind the CLI, or the project's own — the file each Node script starts and every folder `start:dev` watches; one lockfile |
 | `machinery` | the CLI's files (`MACHINERY`), as `upgrade` sees them: gone, behind, or the project's own (said, never failed); the scaffold record |
 | `config` | `tsconfig.json` reads `src/` and `plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key |
@@ -350,7 +358,7 @@ plitzi upgrade skills --write        # only the skills, each replaced whole from
 plitzi upgrade --write --take plitzi/author.ts
 ```
 
-A project brought up to the CLI it has now, part by part: `files` (the machinery — `author.ts`, `main.ts`, the
+A project brought up to the CLI it has now, part by part: `files` (the machinery — `author.ts`, `main.ts`, `env.ts`, the
 Playwright and lint configs, `AGENTS.md`), `packages` (`package.json` merged, `@plitzi/*` raised to this version, then
 the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill no longer has goes with it) and
 `renames` (a name a version renamed, at its file and line). A file nobody changed since the CLI wrote it is replaced;
@@ -361,7 +369,7 @@ that the machinery reads (`src/config/serverOptions.ts`, `src/actions/index.ts`)
 today's command, one the project changed is left and said (`.plitzi/scaffold.json` records both, and the package
 manager the files were written for — what a project not installed yet has no lockfile to say). In a project made from
 a space, a file the space gave over one of the CLI's would be the space's, and `upgrade` would leave it to `plitzi pull` —
-none does: `src/main.ts` runs whatever the space brought, from where it lands. `update` is the same
+none does: `serveProject` runs whatever the space brought, from where it lands. `update` is the same
 command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
 older than the `@plitzi/sdk-authoring` installed.
 
@@ -608,7 +616,9 @@ throws it away) and `push` refuses when the space moved on since. A problem come
 names them differently on purpose: a server gets the secret self-hosting key, a browser gets the public render key,
 whose protection is the origin it is presenting from.
 
-Every server project's `src/main.ts` reads `.env` itself (`process.loadEnvFile`), so `npm start` needs nothing else.
+Every server project reads `.env` itself, in `src/env.ts` (`process.loadEnvFile`) — the first thing `src/main.ts`
+imports, so `src/config/serverOptions.ts` and the actions find their settings in `process.env` as they load, and
+`npm start` needs nothing else.
 `create` gives each one a signing key there, made for it: `PLITZI_SIGNING_SECRET`, what `ctx.sign` and `ctx.verify`
 sign with — at least 32 characters (`doctor --fix` writes one where it is missing). `PORT` is left commented out: 8080,
 or the next free port while developing.

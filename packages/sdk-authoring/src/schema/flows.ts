@@ -198,7 +198,8 @@ export const whileRunning = (mode: WhileRunning, trigger: StepSpec): StepSpec =>
  * Runs a step only if the named server action completed.
  *
  * `<id>.status` is the field, and it is only in the flow scope at all when that step ran with `mode: 'await'` and
- * was {@link named} — the same two conditions that make `{{<id>.output.*}}` readable.
+ * was {@link named} — the same two conditions that make `{{<id>.output.*}}` readable. Only `runServerAction` publishes
+ * a `status`: any other step is asked about what it publishes (`authLogin`'s `ok`), with {@link when}.
  */
 export const whenSucceeded = (stepId: string, step: StepSpec): StepSpec =>
   when({ field: `${stepId}.status`, operator: '=', value: 'completed' }, step);

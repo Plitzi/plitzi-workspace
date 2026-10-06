@@ -107,7 +107,7 @@ export const elementAttributeNames = {
   list: ['itemKey', 'items', 'source', 'subType'],
   listItem: [],
   loading: [],
-  markdown: ['content'],
+  markdown: ['content', 'headingLinks'],
   modalContainer: ['autoHideAfterClick', 'title'],
   nodeHtml: [
     'about',

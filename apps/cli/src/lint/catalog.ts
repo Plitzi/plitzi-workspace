@@ -48,6 +48,12 @@ export const LINT_RULES = {
     means: 'a file of the space’s folder nothing the space imports reaches',
     docs: `${REFERENCE}/structure.md`
   },
+  'disable-names-suggestion': {
+    severity: 'warning',
+    means:
+      'a `plitzi-lint-disable` comment naming a suggestion of authoring’s, which only `quiet` on its element silences',
+    docs: `${REFERENCE}/structure.md`
+  },
   'space-does-not-author': {
     severity: 'error',
     means: 'the space does not author, so what authoring suggests about it could not be read',

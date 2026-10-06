@@ -1,5 +1,6 @@
 import type { User } from './AuthTypes';
 import type { RealtimeTransport } from './RealtimeTypes';
+import type { Schema } from './SchemaTypes';
 import type { SSRRenderResult, SSRRscData } from './ServerTypes';
 
 export type Environment = 'production' | 'staging' | 'development' | 'main';
@@ -32,8 +33,21 @@ export type Server<T extends Record<string, unknown> = Record<string, unknown>> 
     /** Unix seconds the session token dies at, so a hydrated page schedules its renewal without decoding anything. */
     expiresAt?: number;
   };
+  /**
+   * How the server that rendered this page signs people in — see {@link ServerAuth}. Absent when it serves no
+   * sign-in of its own, and then only what the space declares counts.
+   */
+  auth?: ServerAuth;
   ssr?: ServerSSR;
 } & T;
+
+/**
+ * The sign-in a page server serves, in the terms of the space settings it stands in for: a space that declares no
+ * `userProvider` signs in here, with nothing to declare. Whatever a space does declare wins, and a space that names
+ * another provider ignores this entirely — it describes a different backend.
+ */
+export type ServerAuth = Required<Pick<Schema['settings'], 'userProvider' | 'loginUrl'>> &
+  Pick<Schema['settings'], 'userUrl' | 'refreshUrl' | 'logoutUrl' | 'mfaUrl' | 'sessionHintCookie'>;
 
 /** What the rendering server hands over for THIS render, consumed once at the SDK root and not read from here again:
  *  the RSC bootstrap is projected into the store (`rsc`), which is where the live payload lives from then on. The

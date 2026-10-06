@@ -7,7 +7,7 @@
 export { answerAction } from './answerAction';
 export type { ActionAnswer, AnsweredRequest, AnsweredRoute, AnswerActionOptions, RoutingPage } from './answerAction';
 export { dataIssues } from './dataIssues';
-export type { DataIssue, DataIssueCode, DataReport } from './dataIssues';
+export type { DataIssue, DataIssueCode, DataIssuesOptions, DataReport } from './dataIssues';
 export { failedFlowText, readDevTools, readDevToolsInPage } from './devTools';
 export type { DevToolsDriver, DevToolsFlow, DevToolsFlowStep, DevToolsInput, DevToolsReport } from './devTools';
 export { inspectDocument, inspectPage } from './inspect';

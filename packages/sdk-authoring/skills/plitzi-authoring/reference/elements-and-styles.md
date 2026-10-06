@@ -18,7 +18,7 @@ container([hero, grid])             // an array is the children
 | `id` | the ONE name this element answers to — its key in the document, a binding's source, a step's target. Unique across the WHOLE space |
 | `class` | a shared class: a `styles()` declaration or a name from the space's `classes`; a list for several. Exclusive with `css` |
 | `css` | rules of this element's own: one set, or one per breakpoint (`{ desktop, tablet, mobile }`) |
-| `states` | `hover`, `focus-visible`, `current` (a link to the page shown), `hidden`… beside the element's own `css` |
+| `states` | `hover`, `focus-visible`, `current` (the chosen link, toggle, tab), `hidden`… beside the element's own `css` |
 | `variant` | a variant of the class it wears (when the class declares it) or of its type |
 | `slots` | a class for one of the element's OTHER selectors — a form control's `input` |
 | `bind` | where a value comes from |
@@ -113,9 +113,11 @@ container({ class: card, children: [ … ] });
 
 - A flat object is the base rules; `{ css, states, variants, ancestors }` when there is more. Each part may be written
   per breakpoint.
-- **Share a rule as a class, never as a spread.** Spreading a `const` into each element's `css` shares the source and
-  duplicates the document: one selector per element, so restyling one card in the builder restyles one card.
+- **Share a rule as a class, never as a spread** into each element's `css`: that is one selector per element, so
+  restyling one card in the builder restyles one card.
 - **Build a family from a plain object**, not by layering classes: `styles('button-primary', { ...buttonBase, … })`.
+- Of two classes on an element, the one the stylesheet writes later wins (first met; a breakpoint's after the base),
+  not the list's last: write the longhands a class means (`class-overrides-class`).
 - One name declared twice with rules that disagree is refused. Declare a class once, in the module that owns it, and
   import it.
 - `ancestors: { [sidebar.name]: { variants: { collapsed: { display: 'none' } } } }` styles an element by the state or
@@ -142,15 +144,14 @@ container({ class: card, children: [ … ] });
   What is inside follows its container with `ancestors: { [panel.name]: { states: { hidden: { … } } } }` — a
   different `transition-delay` per item staggers them. A container whose children mount only while it shows
   (`loadStrategy: 'visible'`) empties before it can leave: use `'lazy'` on one that animates out.
-- **The navigation of a site goes in a layout, once.** A link to the page being shown marks itself, and its class
-  dresses it with `states: { current: { … } }` — never a class picked per page, which forces a copy of the header into
-  every page.
+- **The navigation goes in a layout, once:** a link to the page shown dresses itself with its class's
+  `states: { current: { … } }` — never a class picked per page, which copies the header into every page.
 - **`:hover` is part of the selector, not a rule in `customCss`.** `customCss` is for what no class can say:
   keyframes, pseudo-elements, a rule across two unrelated elements, the inside of a third-party widget.
 - Per element TYPE defaults go in `elements: { heading: { base, states, variants, slots } }` — a whole type at once.
 - **Slots** are an element's other selectors: a `formControl`'s `input`, `label`, `error`; a `modalContainer`'s
   `backgroundContainer`, `rootContainer`, `headerContainer`, `headerTitle`, `headerCloseButton`, `bodyContainer`; a
-  `dialogContainer`'s footer and buttons. `elementSlots` lists them all by type. Style one element's with `slots`, a
+  `markdown`'s `heading`, `link`, `code`… (not `customCss`). `elementSlots` lists them all by type. Style one element's with `slots`, a
   whole type's with `elements.<type>.slots`.
 - A `modalContainer` / `dialogContainer` is fixed to the viewport, as tall as its content up to the screen, and 500px
   wide up to the screen; theme its look through its slots.

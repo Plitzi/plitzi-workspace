@@ -46,7 +46,11 @@ const declaration = elementDeclaration<NotFoundAttributes>()({
       displayMode: 'desktop',
       style: {
         base: {
-          default: {}
+          default: {
+            display: 'flex',
+            'justify-content': 'center',
+            'align-items': 'center'
+          }
         }
       }
     },

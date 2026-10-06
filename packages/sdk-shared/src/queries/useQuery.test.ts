@@ -7,8 +7,10 @@ import {
   invalidateQueriesForWrite,
   parseIds,
   queryCache,
+  registerServerQuery,
   requestKey,
-  useQuery
+  useQuery,
+  useServerQuery
 } from '.';
 
 let seq = 0;
@@ -206,8 +208,131 @@ describe('invalidateAfterWrite', () => {
 
     await act(() => invalidateAfterWrite({ mode: false, fallback: 'all' }));
 
-    expect(spy).toHaveBeenCalledWith();
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0], 'a selector narrowed what the default refreshes').toBeUndefined();
     spy.mockRestore();
+  });
+});
+
+/**
+ * A server provider's answer arrives in the RSC payload and never passes through the cache, so a write that only
+ * invalidated the cache left every server-driven list showing what it held before it.
+ */
+describe('server queries', () => {
+  const register = (query: { id: string; url?: string }) => {
+    const refresh = vi.fn(() => Promise.resolve());
+    const unregister = registerServerQuery({ ...query, refresh });
+
+    return { refresh, unregister };
+  };
+
+  it('are refreshed by every invalidation that picks them', async () => {
+    const orders = uniqueUrl('/api/orders');
+    const byQuery = register({ id: 'ordersList', url: orders });
+    const byConnector = register({ id: 'membersList' });
+
+    await invalidateQueries();
+    expect([byQuery.refresh, byConnector.refresh].map(refresh => refresh.mock.calls.length)).toEqual([1, 1]);
+
+    await invalidateQueries({ elements: ['membersList'] });
+    expect([byQuery.refresh, byConnector.refresh].map(refresh => refresh.mock.calls.length)).toEqual([1, 2]);
+
+    await invalidateQueries({ url: `${new URL(orders).origin}/api` });
+    expect([byQuery.refresh, byConnector.refresh].map(refresh => refresh.mock.calls.length)).toEqual([2, 2]);
+
+    byQuery.unregister();
+    byConnector.unregister();
+  });
+
+  /** A connector or an action reads no URL the page can name: read as asking for "", it was the prefix of all of them. */
+  it('never picks one with no URL by a URL, however broad', async () => {
+    const connector = register({ id: 'cms' });
+
+    await invalidateQueries({ url: '/' });
+    await invalidateQueriesForWrite('/api/cart');
+
+    expect(connector.refresh).not.toHaveBeenCalled();
+    connector.unregister();
+  });
+
+  it('are refreshed by a write to the origin they read from, and by a write step naming them', async () => {
+    const cart = uniqueUrl('/cart');
+    const elsewhere = uniqueUrl('/cart');
+    const same = register({ id: 'cart', url: cart });
+    const other = register({ id: 'other', url: elsewhere });
+
+    await invalidateAfterWrite({ mode: 'origin', fallback: 'all', url: `${new URL(cart).origin}/cart/items` });
+    expect([same.refresh, other.refresh].map(refresh => refresh.mock.calls.length)).toEqual([1, 0]);
+
+    await invalidateAfterWrite({ mode: 'elements', fallback: 'all', elements: 'other' });
+    expect([same.refresh, other.refresh].map(refresh => refresh.mock.calls.length)).toEqual([1, 1]);
+
+    same.unregister();
+    other.unregister();
+    await invalidateQueries();
+    expect([same.refresh, other.refresh].map(refresh => refresh.mock.calls.length)).toEqual([1, 1]);
+  });
+
+  it('settles even when one of them could not ask again', async () => {
+    const failing = registerServerQuery({ id: 'down', refresh: () => Promise.reject(new Error('unreachable')) });
+    const healthy = register({ id: 'up' });
+
+    await expect(invalidateQueries()).resolves.toBeUndefined();
+    expect(healthy.refresh).toHaveBeenCalledTimes(1);
+
+    failing();
+    healthy.unregister();
+  });
+});
+
+describe('useServerQuery', () => {
+  const props = (overrides: Partial<{ enabled: boolean; active: boolean }> = {}) => ({
+    id: 'board',
+    enabled: true,
+    active: true,
+    ...overrides
+  });
+
+  it('is refreshed while it is on screen', async () => {
+    const refresh = vi.fn(() => Promise.resolve());
+    const { unmount } = renderHook(() => useServerQuery({ ...props(), refresh }));
+
+    await act(() => invalidateQueries({ elements: ['board'] }));
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    unmount();
+    await act(() => invalidateQueries({ elements: ['board'] }));
+    expect(refresh, 'an unmounted provider was still refreshed').toHaveBeenCalledTimes(1);
+  });
+
+  /** The cache's own saving: a write does not become a request for every section the visitor cannot see. */
+  it('waits until it is shown to ask, and asks once however many invalidations it missed', async () => {
+    const refresh = vi.fn(() => Promise.resolve());
+    const { rerender, unmount } = renderHook(({ active }) => useServerQuery({ ...props({ active }), refresh }), {
+      initialProps: { active: false }
+    });
+
+    await act(() => invalidateQueries());
+    await act(() => invalidateQueries({ elements: ['board'] }));
+    expect(refresh).not.toHaveBeenCalled();
+
+    rerender({ active: true });
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    rerender({ active: false });
+    rerender({ active: true });
+    expect(refresh, 'shown again with nothing missed, it asked anyway').toHaveBeenCalledTimes(1);
+    unmount();
+  });
+
+  it('is nobody’s to refresh while it has no live answer — the builder', async () => {
+    const refresh = vi.fn(() => Promise.resolve());
+    const { unmount } = renderHook(() => useServerQuery({ ...props({ enabled: false }), refresh }));
+
+    await act(() => invalidateQueries());
+
+    expect(refresh).not.toHaveBeenCalled();
+    unmount();
   });
 });
 

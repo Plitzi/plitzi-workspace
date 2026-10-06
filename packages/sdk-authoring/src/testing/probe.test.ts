@@ -206,3 +206,77 @@ describe('probePage / sideways scroll', () => {
     expect(probePage({ ...input([]), overflow: true }).overflow).toMatchObject({ pixels: 500 });
   });
 });
+
+describe('probePage / text in the colour behind it', () => {
+  /** A box at `top`, 100×20, wherever the test puts it. */
+  const at = (node: Element, top: number, height = 20): void => {
+    vi.spyOn(node, 'getBoundingClientRect').mockReturnValue({
+      left: 0,
+      top,
+      right: 100,
+      bottom: top + height,
+      width: 100,
+      height
+    } as DOMRect);
+  };
+
+  /** jsdom stacks nothing: the elements under a point are what the test says, top first. */
+  const stackedAt = (...stack: (Element | null)[]): void => {
+    Object.defineProperty(document, 'elementsFromPoint', {
+      configurable: true,
+      value: () => stack.filter(layer => layer !== null)
+    });
+  };
+
+  afterEach(() => {
+    Reflect.deleteProperty(document, 'elementsFromPoint');
+  });
+
+  const legibility = { ...input([]), legibility: true };
+
+  it('takes only what is under the text: a bar fixed over it is in front, not behind', () => {
+    document.body.innerHTML = `
+      <header style="background-color: rgb(255, 255, 255)"></header>
+      <main style="background-color: rgb(0, 0, 0)"><p data-plitzi-el="lede" style="color: rgb(255, 255, 255)">Hello</p></main>`;
+    const lede = document.querySelector('p');
+    if (lede) {
+      at(lede, 100);
+    }
+
+    stackedAt(document.querySelector('header'), lede, document.querySelector('main'), document.body);
+
+    expect(probePage(legibility).illegible).toEqual([]);
+  });
+
+  it('still says text drawn in the colour of what is under it', () => {
+    document.body.innerHTML = `
+      <header style="background-color: rgb(0, 0, 0)"></header>
+      <main style="background-color: rgb(255, 255, 255)"><p data-plitzi-el="lede" style="color: rgb(250, 250, 250)">Hello</p></main>`;
+    const lede = document.querySelector('p');
+    if (lede) {
+      at(lede, 100);
+    }
+
+    stackedAt(document.querySelector('header'), lede, document.querySelector('main'), document.body);
+
+    expect(probePage(legibility).illegible).toEqual([{ text: '"lede": "Hello"', elementId: 'lede' }]);
+  });
+
+  it('reads its ancestors where the pane it scrolls in cuts it off — what the point hits there is another page part', () => {
+    document.body.innerHTML = `
+      <div class="pane" style="overflow-y: auto; background-color: rgb(0, 0, 0)">
+        <p data-plitzi-el="below" style="color: rgb(255, 255, 255)">Below the fold</p>
+      </div>
+      <footer style="background-color: rgb(255, 255, 255)"></footer>`;
+    const pane = document.querySelector('.pane');
+    const below = document.querySelector('p');
+    if (pane && below) {
+      at(pane, 0, 300);
+      at(below, 500);
+    }
+
+    stackedAt(document.querySelector('footer'), document.body);
+
+    expect(probePage(legibility).illegible).toEqual([]);
+  });
+});

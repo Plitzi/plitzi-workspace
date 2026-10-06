@@ -126,6 +126,57 @@ describe('window.__plitzi', () => {
     expect(inspector.sources()).toHaveProperty('state');
   });
 
+  it('reads a list’s rows from its provider and its own source, whatever store registered first', () => {
+    const picks = [{ title: 'A' }, { title: 'B' }];
+    const page = createStore<Record<string, unknown>>(() => ({
+      runtime: { sources: { apiContainer_feed: { data: { picks }, isLoading: false } } }
+    }));
+    const list = createStore<Record<string, unknown>>(
+      () => ({ runtime: { sources: { list_feed: { items: picks } } } }),
+      {
+        parent: page
+      }
+    );
+    const row = createStore<Record<string, unknown>>(
+      () => ({ runtime: { sources: { list_feed: { item: picks[0], index: 0 } } } }),
+      { parent: list }
+    );
+    for (const order of [
+      [row, list],
+      [list, row]
+    ]) {
+      const reader = createAgentInspector({
+        root: page,
+        writeState,
+        stores: () => order,
+        runs: () => runs,
+        setWatching,
+        document
+      });
+
+      expect(reader.sources()).toEqual({
+        apiContainer_feed: { data: { picks }, isLoading: false },
+        list_feed: { items: picks }
+      });
+    }
+  });
+
+  it('cuts a value that holds itself, and nothing else', () => {
+    const cycle: Record<string, unknown> = { name: 'loop' };
+    cycle.self = cycle;
+    const holder = createStore<Record<string, unknown>>(() => ({ runtime: { sources: { state: { cycle } } } }));
+    const reader = createAgentInspector({
+      root: holder,
+      writeState,
+      stores: () => [],
+      runs: () => runs,
+      setWatching,
+      document
+    });
+
+    expect(reader.sources('state')).toEqual({ cycle: { name: 'loop', self: '[…]' } });
+  });
+
   it('describes an element: what it is, its own state, and whether it is on screen', () => {
     document.body.innerHTML = '<span data-id="cart">2</span>';
 

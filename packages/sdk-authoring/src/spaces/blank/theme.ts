@@ -73,11 +73,10 @@ export const navLink = styles('nav-link', {
 /** The mark beside the name, at the size the bar wants. */
 export const brandMark = styles('brand-mark', { width: '24px', height: '24px' });
 
-/** The theme switch, dressed like the rest of the bar: a browser draws a bare button grey and square. */
+/** The theme switch, dressed like the rest of the bar. It starts as a bare control, centred and in the bar's type. */
 export const iconButton = styles('icon-button', {
   css: {
     display: 'flex',
-    'align-items': 'center',
     'justify-content': 'center',
     width: '36px',
     height: '36px',
@@ -85,8 +84,7 @@ export const iconButton = styles('icon-button', {
     border: '1px solid var(--border)',
     'background-color': 'var(--card)',
     color: 'var(--muted)',
-    'font-size': '16px',
-    cursor: 'pointer'
+    'font-size': '16px'
   },
   states: { hover: { color: 'var(--foreground)' }, 'focus-visible': focusRing }
 });

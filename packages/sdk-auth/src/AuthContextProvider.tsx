@@ -8,10 +8,10 @@ import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';
 import { publishedSession } from './helpers/publishedSession';
+import { resolveAuthSettings } from './helpers/resolveAuthSettings';
 import useAuth from './hooks/useAuth';
 import useSessionQueryReset from './hooks/useSessionQueryReset';
 
-import type { AuthProviderSettings } from './types';
 import type { AuthContextValue, Server } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
@@ -98,21 +98,25 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
     }
   }, [schemaSettings, variablesParsed]);
 
-  const settings = useMemo<AuthProviderSettings & { spaceKey: string }>(
-    () => ({
-      ...templated,
-      spaceKey: webKey,
-      tokenStorage: schemaSettings.tokenStorage ?? 'localStorage',
-      sessionGate: schemaSettings.sessionGate,
-      sessionRevalidateSeconds: schemaSettings.sessionRevalidateSeconds
-    }),
-    [templated, schemaSettings, webKey]
-  );
+  const { provider: userProvider, settings } = useMemo(() => {
+    const resolved = resolveAuthSettings(
+      schemaSettings.userProvider,
+      {
+        ...templated,
+        tokenStorage: schemaSettings.tokenStorage ?? 'localStorage',
+        sessionGate: schemaSettings.sessionGate,
+        sessionRevalidateSeconds: schemaSettings.sessionRevalidateSeconds
+      },
+      server.auth
+    );
+
+    return { provider: resolved.provider, settings: { ...resolved.settings, spaceKey: webKey } };
+  }, [templated, schemaSettings, webKey, server.auth]);
 
   const { manager, loading, authenticated, state, bootstrapUser, bootstrapToken, peekedUser, peekedToken } = useAuth({
     server,
     isHydrating,
-    provider: schemaSettings.userProvider ?? '',
+    provider: userProvider,
     settings
   });
 
@@ -155,6 +159,7 @@ const AuthContextProvider = ({ children, server }: AuthContextProviderProps) => 
       invalidate: manager.invalidate.bind(manager),
       can: manager.can.bind(manager),
       logout: manager.logout.bind(manager),
+      provider: manager.getProviderType(),
       state,
       authenticated: authenticated || !previewMode,
       /**

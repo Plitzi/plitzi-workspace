@@ -167,10 +167,10 @@ export function probePage(input: ProbeInput): ProbeFindings {
   }
 
   /**
-   * Whether any of a node is where it can be seen: its box cut by every ancestor that clips what spills (a carousel's
-   * track, a scrolling row) and then by the viewport — the test the browser runs before it fetches a lazy image.
+   * The part of a node that can be seen: its box cut by every ancestor that clips what spills (a carousel's track, a
+   * scrolling row, the pane a page scrolls in) and then by the viewport. Empty when nothing of it is in sight.
    */
-  const inSight = (node: Element): boolean => {
+  const seenBox = (node: Element): { left: number; top: number; right: number; bottom: number } => {
     let { left, top, right, bottom } = node.getBoundingClientRect();
     for (let at = node.parentElement; at; at = at.parentElement) {
       const style = getComputedStyle(at);
@@ -190,9 +190,19 @@ export function probePage(input: ProbeInput): ProbeFindings {
       }
     }
 
-    return (
-      Math.min(right, window.innerWidth) > Math.max(left, 0) && Math.min(bottom, window.innerHeight) > Math.max(top, 0)
-    );
+    return {
+      left: Math.max(left, 0),
+      top: Math.max(top, 0),
+      right: Math.min(right, window.innerWidth),
+      bottom: Math.min(bottom, window.innerHeight)
+    };
+  };
+
+  /** Whether any of a node is where it can be seen — the test the browser runs before it fetches a lazy image. */
+  const inSight = (node: Element): boolean => {
+    const { left, top, right, bottom } = seenBox(node);
+
+    return right > left && bottom > top;
   };
 
   /**
@@ -292,19 +302,24 @@ export function probePage(input: ProbeInput): ProbeFindings {
      * What is PAINTED under a point of the text, composited — or `null` when that cannot be known.
      *
      * Read from the elements stacked at the point rather than from the text's ancestors, because what shows through a
-     * translucent button is often not its parent: a photograph positioned behind the hero is a sibling. Translucent
+     * translucent button is often not its parent: a photograph positioned behind the hero is a sibling. Only the layers
+     * from the text down count: a bar fixed over it, or an overlay, is in front of it, not behind it. Translucent
      * layers are blended down to the first opaque one; a picture, a gradient or a video on the way means the colour
-     * there is not a colour, and the check says nothing rather than something false. Below the fold the stack cannot
-     * be read, so the ancestors stand in for it, with the same rules.
+     * there is not a colour, and the check says nothing rather than something false. Where the point is not the text's
+     * to read — below the fold, cut off by the pane it scrolls in, or the text not what the browser hits there — the
+     * ancestors stand in for the stack, with the same rules.
      */
     const behind = (node: Element): number[] | null => {
       const box = node.getBoundingClientRect();
       const x = box.left + box.width / 2;
       const y = box.top + box.height / 2;
-      const inView = x >= 0 && y >= 0 && x < window.innerWidth && y < window.innerHeight;
+      const seen = seenBox(node);
+      const atPoint =
+        x >= seen.left && y >= seen.top && x < seen.right && y < seen.bottom ? document.elementsFromPoint(x, y) : [];
+      const from = atPoint.indexOf(node);
       const stack: Element[] = [];
-      if (inView) {
-        stack.push(...document.elementsFromPoint(x, y));
+      if (from !== -1) {
+        stack.push(...atPoint.slice(from));
       } else {
         for (let at: Element | null = node; at; at = at.parentElement) {
           stack.push(at);

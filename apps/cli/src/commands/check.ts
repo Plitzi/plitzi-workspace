@@ -16,9 +16,9 @@ import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
 import { launchBrowser, openProjectPage, projectOrigin, withoutDevTools } from '../browser';
 
-import type { Browser, Scheme } from '../browser';
+import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { DataIssueCode, DevToolsInput, PageIssue, SpaceHandles } from '@plitzi/sdk-authoring';
-import type { Element, Schema } from '@plitzi/sdk-shared';
+import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
 
 /**
  * `plitzi check`: whether a page of the running project is whole, said in text — every element it owes on screen, no
@@ -27,9 +27,10 @@ import type { Element, Schema } from '@plitzi/sdk-shared';
  * costs thousands and still has to be looked at; a picture is for when this says something is wrong.
  *
  * With the page's dev tools on (any development server) it also says every flow that failed while the page loaded,
- * every binding that reads a path its provider's answer does not have and each list's rows, and, asked, what the page
- * holds: `--state` (the state, and every source by name) and `--element <id>`. `--ssr` holds the HTML the server sent
- * against the page once hydrated: what a server provider holds and the server's HTML lacked arrived late.
+ * every binding that reads a path its provider's answer does not have — none inside an element the page is not
+ * showing, which is not mounted — and each list's rows, drawn and in its source, and, asked, what the page holds:
+ * `--state` (the state, and every source by name) and `--element <id>`. `--ssr` holds the HTML the server sent against
+ * the page once hydrated: what a server provider holds and the server's HTML lacked arrived late.
  *
  *   plitzi check / --width 1440,390 --json
  *   plitzi check /products --state --element catalog-count
@@ -74,13 +75,23 @@ export interface CheckReport {
   failedRequests: string[];
   /** Whether the page had its dev tools on, which is what flows, state and elements are read from. */
   devTools: boolean;
-  /** Every list whose rows come from a provider: how many it shows, `null` when it reads nothing. */
-  lists: Record<string, number | null>;
+  /** Every list whose rows come from a provider, by id: how many rows it draws and how many its source holds. */
+  lists: Record<string, ListRows>;
   /** With `--ssr`: the elements the page has once hydrated that the server's HTML did not — none of them in a server provider. */
   browserOnly?: string[];
   state?: unknown;
   sources?: Record<string, unknown>;
   element?: unknown;
+}
+
+/**
+ * A list's rows: `rendered` is how many the page draws — `null` when the list is not on the page — and `source` how many
+ * its source holds, before the binding's transformers, so a list that filters or slices them draws fewer; `null` when
+ * it reads nothing.
+ */
+export interface ListRows {
+  rendered: number | null;
+  source: number | null;
 }
 
 /** The space the project declares, authored: what each page owes (the handles) and what it reads (the schema). */
@@ -130,7 +141,7 @@ const markedIn = (html: string): Set<string> =>
 /** The `runtime: 'server'` provider an element is inside — or is — if any: what the server's HTML owes. */
 const serverProviderOf = (schema: Schema, id: string): string | undefined => {
   const seen = new Set<string>();
-  let current = schema.flat[id] as Element | undefined;
+  let current = schema.flat[id] as SchemaElement | undefined;
   while (current && !seen.has(current.id)) {
     seen.add(current.id);
     if (current.definition.type === 'apiContainer' && current.definition.runtime === 'server') {
@@ -142,6 +153,71 @@ const serverProviderOf = (schema: Schema, id: string): string | undefined => {
   }
 
   return undefined;
+};
+
+/** Whether an element shows, or would start hidden, under a condition of its own: `visible` written on it. */
+const hasOwnCondition = (element: SchemaElement): boolean =>
+  element.definition.initialState?.visibility === false ||
+  Object.values(element.definition.bindings ?? {}).some(list => list.some(binding => binding.to === 'visibility'));
+
+/**
+ * The elements with a condition of their own that the page is not showing — no node, or none the browser draws — by
+ * the selectors their handles carry. Nothing inside one is mounted (an element's `loadStrategy`), so its bindings are
+ * not the page's to judge. Runs in the page, self-contained.
+ */
+export const notShownInPage = (elements: { id: string; selector: string }[]): string[] => {
+  const shows = (node: Element): boolean =>
+    getComputedStyle(node).display === 'contents' ? [...node.children].some(shows) : node.checkVisibility();
+
+  return elements
+    .filter(({ selector }) => !Array.from(document.querySelectorAll(selector)).some(shows))
+    .map(({ id }) => id);
+};
+
+const notShown = async (page: BrowserPage, authored: Authored): Promise<Set<string>> => {
+  const conditioned = Object.values(authored.schema.flat).flatMap(element => {
+    const handle = Object.hasOwn(authored.handles.elements, element.id)
+      ? authored.handles.elements[element.id]
+      : undefined;
+
+    // A provider with no tag has no node to look for, shown or not.
+    return handle && !handle.boxless && hasOwnCondition(element) ? [{ id: element.id, selector: handle.selector }] : [];
+  });
+
+  return new Set(conditioned.length > 0 ? await page.evaluate(notShownInPage, conditioned) : []);
+};
+
+/**
+ * How many rows each list draws: the copies of its row — the most of any of its children, one per row whatever a row
+ * hides — inside the list's first node. Runs in the page, self-contained.
+ */
+export const renderedRowsInPage = (
+  lists: { id: string; selector: string; row: string[] }[]
+): [string, number | null][] =>
+  lists.map(({ id, selector, row }) => {
+    const node = document.querySelector(selector);
+
+    return [id, node ? Math.max(0, ...row.map(child => node.querySelectorAll(child).length)) : null];
+  });
+
+const listRows = async (
+  page: BrowserPage,
+  authored: Authored,
+  sources: Record<string, number | null>
+): Promise<Record<string, ListRows>> => {
+  const selectorOf = (id: string): string | undefined =>
+    Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id].selector : undefined;
+  const lists = Object.keys(sources).flatMap(id => {
+    const selector = selectorOf(id);
+    const row = (authored.schema.flat[id].definition.items ?? []).flatMap(child => selectorOf(child) ?? []);
+
+    return selector ? [{ id, selector, row }] : [];
+  });
+  const rendered = new Map(lists.length > 0 ? await page.evaluate(renderedRowsInPage, lists) : []);
+
+  return Object.fromEntries(
+    Object.entries(sources).map(([id, source]) => [id, { rendered: rendered.get(id) ?? null, source }])
+  );
 };
 
 /**
@@ -229,7 +305,10 @@ const checkAt = async (
   // The sources always: what the bindings read is held against them. Printed only when asked.
   const devTools = await readDevTools(page, { ...asked, state: true });
   const data =
-    authored && pageId && devTools.sources ? dataIssues(authored.schema, pageId, devTools.sources) : undefined;
+    authored && pageId && devTools.sources
+      ? dataIssues(authored.schema, pageId, devTools.sources, { hidden: await notShown(page, authored) })
+      : undefined;
+  const lists = authored && data ? await listRows(page, authored, data.lists) : {};
   const served = ssr ? markedIn(await (await fetch(`${origin}${pathname}`)).text()) : undefined;
   const late = served
     ? lateElements(
@@ -272,7 +351,7 @@ const checkAt = async (
     consoleErrors,
     failedRequests,
     devTools: devTools.available,
-    lists: data?.lists ?? {},
+    lists,
     ...(late ? { browserOnly: late.browserOnly } : {}),
     ...(!asked.state || devTools.state === undefined ? {} : { state: devTools.state }),
     ...(!asked.state || devTools.sources === undefined ? {} : { sources: devTools.sources }),
@@ -314,18 +393,29 @@ const shapeOf = (value: unknown): string => {
   return text.length > 60 ? `${text.slice(0, 57)}…` : text;
 };
 
-/** Each list's rows in a few words — `plan-list 3 rows` — so an empty one is seen, not inferred from a box. */
+const rowsText = (count: number): string => `${String(count)} row${count === 1 ? '' : 's'}`;
+
+/** One list's rows in a few words: `plan-list 3 rows`, `feed 4 of 8 rows`, `hits not rendered (16 in its source)`. */
+export const listText = (id: string, { rendered, source }: ListRows): string => {
+  if (source === null) {
+    return `${id} reads nothing`;
+  }
+
+  if (rendered === null) {
+    return `${id} not rendered (${String(source)} in its source)`;
+  }
+
+  return `${id} ${rendered === source ? rowsText(source) : `${String(rendered)} of ${rowsText(source)}`}`;
+};
+
+/** Each list's rows, drawn and in its source — so an empty one is seen, not inferred from a box. */
 const listsText = (lists: CheckReport['lists']): string[] => {
   const entries = Object.entries(lists);
   if (entries.length === 0) {
     return [];
   }
 
-  const rows = entries.map(
-    ([id, count]) => `${id} ${count === null ? 'reads nothing' : `${String(count)} row${count === 1 ? '' : 's'}`}`
-  );
-
-  return [chalk.dim(`  · lists: ${rows.join(', ')}`)];
+  return [chalk.dim(`  · lists: ${entries.map(([id, rows]) => listText(id, rows)).join(', ')}`)];
 };
 
 /** With `--ssr`, what only the browser renders — not a problem outside a server provider, and said so it is seen. */

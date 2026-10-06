@@ -3,7 +3,7 @@ import path from 'node:path';
 import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
 
 import { filesUnder } from './filesUnder';
-import { DATA_DIR } from '../scaffold/paths';
+import { DATA_DIR, PUBLIC_DIR } from '../scaffold/paths';
 
 import type { Schema } from '@plitzi/sdk-shared';
 
@@ -12,9 +12,6 @@ import type { Schema } from '@plitzi/sdk-shared';
  * server, never served) and what it serves to anyone (`public/`, of which `public/assets/` is what the space's CDN
  * holds) — and how the space's CDN addresses the project took are written back as they were.
  */
-
-/** Where the project keeps what the space serves to anyone: `public/<path>` answers `/<path>`. */
-export const PUBLIC_DIR = 'public';
 
 /** `path` as a whole token of the text: never the tail of an address that already holds it (`…/pizarra/assets/a.png`). */
 export const tokenOf = (path: string): RegExp =>

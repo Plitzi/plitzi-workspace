@@ -70,6 +70,11 @@ export type AuthContextValue = {
   /** Report that the backend refused a credential — the `reason` from a 401. `expired` triggers a silent renewal,
    *  anything terminal ends the session. This is how an app tells auth that reality moved on between checks. */
   invalidate: (reason?: AuthFailureReason) => void;
+  /**
+   * The provider this page signs in with: the space's `userProvider`, else the one the server that rendered it serves
+   * (`server.auth`). Empty when there is neither, and then a page offers no auth actions at all.
+   */
+  provider: string;
   state: AuthState;
   authenticated: boolean;
   user?: {

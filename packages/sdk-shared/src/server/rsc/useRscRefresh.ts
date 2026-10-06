@@ -4,6 +4,7 @@ import { useStoreById } from '@plitzi/nexus/react';
 
 import refreshRsc from './refreshRsc';
 
+import type { RscRefreshOptions } from './refreshRsc';
 import type { CommonState } from '../../types';
 
 // The imperative half of RSC, bound to the store the caller sits in. A write to `rsc.*` is delegated up to the root
@@ -11,7 +12,11 @@ import type { CommonState } from '../../types';
 const useRscRefresh = () => {
   const store = useStoreById<CommonState>();
 
-  return useCallback((ids?: string[], params?: Record<string, string>) => refreshRsc(store, ids, params), [store]);
+  return useCallback(
+    (ids?: string[], params?: Record<string, string>, { fresh }: Pick<RscRefreshOptions, 'fresh'> = {}) =>
+      refreshRsc(store, ids, params, { fresh }),
+    [store]
+  );
 };
 
 export default useRscRefresh;

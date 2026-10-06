@@ -159,7 +159,8 @@ export type ActionLookups = {
   getPluginFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<Record<string, SpaceFunctions> | undefined>;
   /**
    * The space's own data as of that revision: its files' text by path (`products.json`), for a provider resolved on the
-   * server whose `query` is `/data/<file>` — the platform's `dataDir`. Absent, such a provider reads nothing here.
+   * server whose `query` is `/data/<file>` and for a function's `ctx.data` — the platform's `dataDir`, and what a
+   * self-hosted server derives from its own when it is given none. Absent, neither reads anything here.
    */
   getData?: (spaceId: number, at?: SpaceRevision) => Promise<Record<string, string> | undefined>;
   /**
@@ -229,6 +230,11 @@ export type ActionTaskContext = {
   /** Signs with the space's own key (`ActionsConfig.signingSecret`) — `undefined` when the deployment gave none. */
   sign?: SpaceSigning['sign'];
   verify?: SpaceSigning['verify'];
+  /**
+   * One file of the space's data (`products.json`), parsed, as of the run's revision — read-only, and refused when
+   * the deployment keeps no data (`lookups.getData`, or `dataDir`). One lookup per run, whichever step reads it.
+   */
+  data: (file: string) => Promise<unknown>;
 };
 
 /** How the actions module reaches the server's realtime channels. Set by `createServer`, never by a deployment. */

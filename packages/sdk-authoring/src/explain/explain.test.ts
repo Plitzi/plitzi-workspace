@@ -2,7 +2,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { BUILDER_SIGNATURES } from './builders';
-import { BUILDER_NAMES, EXPLAIN_KINDS, explain, explainKindOf, explainList, explanationText } from './explain';
+import {
+  BUILDER_NAMES,
+  EXPLAIN_KINDS,
+  GLOBAL_CALLBACK_BUILDERS,
+  explain,
+  explainKindOf,
+  explainList,
+  explanationText
+} from './explain';
 import { AUTHORING_HELPERS } from './helpers';
 import * as authoring from '../index';
 
@@ -37,6 +45,29 @@ describe('explain', () => {
       expect.objectContaining({ kind: 'step', name: 'cancelQuery', builder: 'cancelApi' })
     ]);
     expect(explain('whileRunning')).toEqual([expect.objectContaining({ kind: 'helper', name: 'whileRunning' })]);
+  });
+
+  /** The auth builders keep a prefix their actions do not have: `authLogin(…)` writes `auth.login`. */
+  it('names the auth builders after the actions they write, and answers them by either name', () => {
+    expect(explain('authLogin')).toEqual([
+      expect.objectContaining({ kind: 'step', name: 'login', builder: 'authLogin' })
+    ]);
+    expect(explain('login')).toEqual([expect.objectContaining({ kind: 'step', name: 'login', builder: 'authLogin' })]);
+    expect(explainText('logout')).toContain('Written: authLogout()');
+    expect(explainText('refreshDetails')).toContain('Written: authRefreshDetails()');
+    // Left out, `mode` is the catalogue's default — the builder takes it as optional too.
+    expect(explainText('login')).toContain("mode?: 'normal' | 'token' | 'mfa' = \"normal\"");
+  });
+
+  /** What a step publishes is what a later step reads, and the only thing a `when` can ask it. */
+  it('says what a step publishes for a later step to read', () => {
+    const [login] = explain('login');
+
+    expect(login.kind === 'step' && login.reads).toEqual(expect.arrayContaining(['ok', 'reason', 'mfaToken']));
+    expect(login.kind === 'step' && login.reads.includes('status')).toBe(false);
+    expect(explainText('runServerAction')).toContain('Reads: runId, status, output, reason, error');
+    expect(explainText('webHook')).toContain('Reads: response');
+    expect(explainText('navigate')).toContain('Reads: (nothing)');
   });
 
   /** A builder called with arguments of its own is written as it is called, not with the document's param names. */
@@ -128,7 +159,7 @@ describe('explain', () => {
 
   // A builder renamed without this table is a step `explain` would say is written by a function that does not exist.
   it('names only builders the package exports', () => {
-    for (const builder of Object.values(BUILDER_NAMES)) {
+    for (const builder of [...Object.values(BUILDER_NAMES), ...Object.values(GLOBAL_CALLBACK_BUILDERS)]) {
       expect(authoring, builder).toHaveProperty(builder);
     }
   });

@@ -302,9 +302,11 @@ own `css`, and are refused next to a shared `class` for the same reason `css` is
 `states` and `variants`, and `slots` for the type's other selectors — a modal's `rootContainer`, a form control's
 `input` — so every element of the type is dressed at once.
 
-`current` is a link to the page being shown: the link marks itself (`aria-current="page"`, which a screen reader
-announces too) from the address the page was rendered at, so a header written once in a layout dresses the right
-navigation item on every page — no class chosen per page, no copy of the header per page.
+`current` is the chosen one of a set: a link to the page being shown (`aria-current="page"`, from the address the page
+was rendered at), a pressed toggle (`aria-pressed="true"` — a theme toggle's option, a button with `ariaPressed`) or a
+selected tab (`aria-selected="true"`). The element marks itself, which a screen reader announces too, so a header
+written once in a layout dresses the right navigation item on every page — no class chosen per page, no copy of the
+header per page.
 
 `hidden` is not a pseudo-class: it is how an element looks while its `visible` says no — where it goes as it hides
 and where it comes from as it shows (it is also written as the element's `@starting-style`). With a transition on the
@@ -531,6 +533,11 @@ Three things go wrong when a step is written as a literal, and the builders answ
 `{{quote.output.summary}}` resolves only when the step that produced it is called `quote`. Unnamed steps get a
 derived id — unique, and nothing you can write down.
 
+What a step puts in that scope is its catalogue's `preview`, so a `when` asking a step of its flow for any other key is
+refused (`condition-field-unpublished`): the field is never there, and the rule answers the same whatever happened.
+`whenSucceeded` / `whenFailed` read a server action's `status`; a sign-in answers `ok`, and is asked
+`when({ field: 'signedIn.ok', operator: '=', value: true }, …)`.
+
 **A source read inside a flow is named in full.** A binding completes the prefix for you (`jobRows.item.id` becomes
 `list_jobRows.item.id`); a step's params are templates the runtime reads as written, so there the short name
 resolves to nothing — the button posts an empty id and every layer below reports success. `authorSpace` refuses
@@ -659,6 +666,14 @@ A cached answer stops counting as current before its time — it stays on screen
 - the visitor signs in, signs out or changes account. This one does not wait: whatever was held for the previous
   visitor is dropped at once, and every provider on screen loads again.
 
+A server-driven provider (`runtime: 'server'`) is never in that cache — its answer comes in the RSC payload — and the
+same invalidations reach it all the same: by its id, by `url` when it reads nothing but a `query`, and with
+everything. It asks the page server for its own slice again, hidden ones when they are next shown, and asks around
+the caches on the way (`Cache-Control: no-cache`): outside `main`, `/_rsc` keeps an answer for `rsc.cacheTtlMs`, and
+served from there a refresh after a write is the slice from before it. Its own `performQuery` and `writeRecord` ask
+the same way; a page of a "load more" and a `refreshSeconds` timer do not — the cache's lifetime is how stale the
+deployment lets an answer be.
+
 A `webHook` that reads can use the same cache: `webHook({ url, cache: true, staleTime: 60 })` answers from it while
 the answer is fresh, and shares it with any container asking the same thing.
 
@@ -681,8 +696,8 @@ and it asks again on its own that often:
 apiContainer({ id: 'board', runtime: 'server', action: 'queue-board', refreshSeconds: 2 })
 ```
 
-The same refresh `performQuery` runs, so it works for either runtime: a browser request is sent again, a server
-provider asks the server for its own slice again. It pauses while the tab is hidden and never starts a refresh while
+It works for either runtime: a browser request is sent again, a server provider asks the server for its own slice
+again — through the caches, so outside `main` an answer can be up to `rsc.cacheTtlMs` old. It pauses while the tab is hidden and never starts a refresh while
 the last one is still in flight. `0`, the default, never does.
 
 While a provider is asked again its `isLoading` is true, in either runtime. A server provider asks one question at a
@@ -821,6 +836,7 @@ const { suggestions } = authorSpace(space);
 | `heavy-animation` | Keyframes animating a size, a position, a blur, a shadow, or a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — see [Motion](./motion.md) |
 | `unused-class`, `unused-token`, `unused-component` | A class, token or component nothing wears, reads or places | Removed — or used where it was meant to go |
 | `literal-colour` | A class painted from the palette typing out a token's light value | `var(--token)` to follow the scheme; a token of one value when it must stay the same in both |
+| `class-overrides-class` | One class's shorthand (`padding`) erasing a longhand another class on the element writes out, because the stylesheet writes it later — first met, or a breakpoint's — whatever the class list says | The longhands it means. Read while authoring only: the document keeps longhands, so the builder and the MCP cannot tell |
 
 A suggestion never blocks: it is advice, not the publish gate, and copies about to diverge are a reason to leave it.
 Left on purpose, it is quieted where it is written — `quiet: ['repeated-shape']` on an element it is about, a

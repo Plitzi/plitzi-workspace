@@ -7,7 +7,9 @@ import { suggestRepeats } from './repeats';
 import type { Suggestion } from './types';
 import type { Schema, Style } from '@plitzi/sdk-shared';
 
+export { suggestClassOverrides } from './classOverrides';
 export { unusedDeclarations } from './declarations';
+export type { WornClass, WornList } from './classOverrides';
 export type { Suggestion } from './types';
 
 /**
@@ -34,16 +36,20 @@ const quietCodes = (schema: Schema): Map<string, string[]> =>
  * Each names what to write instead, and the ones about elements say how many it saves, which is what they are ranked
  * by.
  */
-export const suggestSpace = ({ schema, style }: { schema: Schema; style: Style }): Suggestion[] => {
-  const quiets = quietCodes(schema);
-
-  return [
+export const suggestSpace = ({ schema, style }: { schema: Schema; style: Style }): Suggestion[] =>
+  withoutQuieted(schema, [
     ...suggestRepeats(schema, style),
     ...suggestContent(schema, style),
     ...suggestCustomCss(schema, style),
     ...suggestMotion(schema, style),
     ...suggestDeclarations(schema, style)
-  ]
-    .filter(suggestion => !suggestion.elementIds.some(id => quiets.get(id)?.includes(suggestion.code) === true))
-    .sort((a, b) => b.saves - a.saves);
+  ]).sort((a, b) => b.saves - a.saves);
+
+/** The suggestions no element they are about quiets — for those read beside the documents, too (authoring's own). */
+export const withoutQuieted = (schema: Schema, suggestions: Suggestion[]): Suggestion[] => {
+  const quiets = quietCodes(schema);
+
+  return suggestions.filter(
+    suggestion => !suggestion.elementIds.some(id => quiets.get(id)?.includes(suggestion.code) === true)
+  );
 };

@@ -6,6 +6,7 @@ import {
   AUTHOR_FILE,
   CLI_DIR,
   FUNCTIONS_DIR,
+  MAIN_FILE,
   PROJECT_TMP,
   SPACE_DIR,
   SPACE_ENTRY
@@ -129,6 +130,17 @@ export const legacyLayout = async (root: string): Promise<LegacyPlace[]> => {
       blocking: false,
       action: 'remove',
       fix: `A cache the server keeps in ${PROJECT_TMP}/ now: delete it, and its line in .gitignore`
+    });
+  }
+
+  // What an older `src/main.ts` wrote the space to while developing, and read it back from: the server is handed the
+  // documents over IPC now, and holds them in memory.
+  if (await exists(at(`${PROJECT_TMP}/space.json`), 'file')) {
+    places.push({
+      found: `${PROJECT_TMP}/space.json`,
+      blocking: false,
+      action: 'remove-unread',
+      fix: `The space as an older ${MAIN_FILE} wrote it while developing; today's server holds it in memory: delete it`
     });
   }
 

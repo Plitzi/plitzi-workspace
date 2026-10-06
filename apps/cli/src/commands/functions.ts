@@ -15,7 +15,7 @@ import { filesWouldWrite, sayDryRun } from './dryRun';
 import { projectHere } from './existingProject';
 import { fail } from './terminal';
 import { authorizedRequest } from '../account/session';
-import { FUNCTIONS_DIR } from '../scaffold/paths';
+import { DATA_DIR, FUNCTIONS_DIR } from '../scaffold/paths';
 
 import type { AccountOptions } from './account';
 import type { DryRunOptions } from './dryRun';
@@ -394,7 +394,11 @@ type LocalFunctions = {
 };
 
 type LocalRunner = {
-  createLocalFunctions: (options: { credentials?: Record<string, Record<string, string>> }) => LocalFunctions;
+  /** `dataDir` is what `ctx.data` reads; a runner from before it ignores it, and its `ctx.data` is not there. */
+  createLocalFunctions: (options: {
+    credentials?: Record<string, Record<string, string>>;
+    dataDir?: string;
+  }) => LocalFunctions;
 };
 
 const isLocalRunner = (value: unknown): value is LocalRunner =>
@@ -490,7 +494,7 @@ export const devFunction = async (task: string, options: FunctionsDevOptions): P
     return;
   }
 
-  const local = runner.createLocalFunctions({ credentials: localCredentials() });
+  const local = runner.createLocalFunctions({ credentials: localCredentials(), dataDir: path.join(root, DATA_DIR) });
   const run = async (): Promise<void> => {
     const loaded = await local.load(await readFunctionsFiles(root));
     if (!loaded.ok) {

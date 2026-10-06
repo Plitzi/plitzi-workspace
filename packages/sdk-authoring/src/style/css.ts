@@ -1,7 +1,8 @@
 import { STYLE_STATES as SHARED_STYLE_STATES } from '@plitzi/sdk-shared/style/styleStates';
 
 import { cssNumberValue, cssPropertyName, isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
-import { expandShorthand } from './shorthand';
+import { expandShorthandTraced } from './shorthand';
+import { overlaid, recordShorthands } from './shorthandOrigins';
 import { AuthoringError } from '../schema/codes';
 
 import type {
@@ -80,7 +81,8 @@ const normalise = (rules: CssProps): CssProps => {
 export const css = (input: CssProps): StyleRules => {
   const rules = normalise(input);
   assertValues(rules);
-  const expanded = expandShorthand(rules);
+  const { rules: expanded, from } = expandShorthandTraced(rules);
+  recordShorthands(expanded, from);
   const unknown = Object.keys(expanded).filter(key => !isCssProperty(key) && !isCustomProperty(key));
 
   if (unknown.length > 0) {
@@ -136,8 +138,8 @@ export const toResponsive = (spec: CssSpec | undefined): ResponsiveStyle => {
     );
     if (compact) {
       const shared = css(compact);
-      responsive.tablet = { ...shared, ...responsive.tablet };
-      responsive.mobile = { ...shared, ...responsive.mobile };
+      responsive.tablet = overlaid(shared, responsive.tablet);
+      responsive.mobile = overlaid(shared, responsive.mobile);
     }
 
     return responsive;

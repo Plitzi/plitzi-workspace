@@ -27,8 +27,8 @@ formControl({ name: 'q', label: 'Search the docs', hideLabel: true, placeholder:
 formControl({ name: 'tint', subType: 'color', label: 'Highlight colour', hideLabel: true })
 ```
 
-A `placeholder` names only a field you type into, and only until something is typed. A swatch, a date, a select or a
-checkbox always needs its `label`.
+A `placeholder` names only a field you type into, and only until something is typed. A swatch, a date, a select, a
+checkbox or a switch always needs its `label`.
 
 ## Pictures say what they show, or that they only decorate
 

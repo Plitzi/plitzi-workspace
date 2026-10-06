@@ -18,8 +18,7 @@ export type InteractionsSourcesProviderProps = {
 };
 
 const InteractionsSourcesProvider = ({ children, hostActions }: InteractionsSourcesProviderProps) => {
-  const [[userProvider = 'basic', routeParams, queryParams, currentPageId]] = useSdkStore([
-    'schema.settings.userProvider',
+  const [[routeParams, queryParams, currentPageId]] = useSdkStore([
     'navigation.routeParams',
     'navigation.queryParams',
     'navigation.currentPageId'
@@ -28,7 +27,7 @@ const InteractionsSourcesProvider = ({ children, hostActions }: InteractionsSour
 
   return (
     <InteractionsContextProvider currentPageId={currentPageId} routeParams={routeParams} queryParams={queryParams}>
-      <AuthInteractions authProvider={userProvider}>
+      <AuthInteractions>
         <StateInteractions>
           <ActionInteractions>
             <QueriesInteractions>

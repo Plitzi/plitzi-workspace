@@ -57,15 +57,10 @@ const fileResolver = (folder: string, prefix: string): RscElementResolver => {
 export const publicFileResolver = (publicDir: string): RscElementResolver => fileResolver(publicDir, '/');
 
 /**
- * A server provider whose `query` is `/data/<file>`, read from `dataDir` — the project's own data, which is never
- * served as a file: nobody downloads the folder. What the provider reads is in the page it renders.
- */
-export const dataFileResolver = (dataDir: string): RscElementResolver => fileResolver(dataDir, PROJECT_DATA_PREFIX);
-
-/**
- * A server provider whose `query` is `/data/<file>`, answered from the space's own data as Plitzi keeps it — of the
- * version being rendered, read off the same deployment record an action's run is (`req.ctx.spaceDeployment`), so a
- * published page reads the data it was published with. What `dataFileResolver` is for a folder, for a platform.
+ * A server provider whose `query` is `/data/<file>`, answered from the space's own data — of the version being
+ * rendered, read off the same deployment record an action's run is (`req.ctx.spaceDeployment`), so a published page
+ * reads the data it was published with. The lookup is the platform's, or a self-hosted server's `dataDir`
+ * (`dataDirLookup`): the data is never served as a file, and what the provider reads is in the page it renders.
  */
 export const dataLookupResolver = (
   getData: (spaceId: number, at: SpaceRevision) => Promise<Record<string, string> | undefined>

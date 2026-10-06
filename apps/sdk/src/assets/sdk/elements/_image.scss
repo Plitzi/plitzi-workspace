@@ -1,12 +1,16 @@
 @mixin styles {
+  // As wide as a thumbnail and as tall as the picture's own ratio, so a class that sets only a width or an
+  // `aspect-ratio` is obeyed; never wider than where it sits.
   .plitzi-component__image {
-    height: 140px;
+    height: auto;
     width: 140px;
+    max-width: 100%;
     display: block;
 
     &.image--edit-mode > img {
       height: 100%;
       width: 100%;
+      object-fit: inherit;
     }
   }
 }

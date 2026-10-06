@@ -221,15 +221,67 @@ describe('signing in', () => {
 
 describe('renewing and ending a session', () => {
   const live = { ...ada, refreshExpiresAt: Math.floor(Date.now() / 1000) + 3600 };
+  const refreshToken = tokens.generateRefreshToken(ada.id);
 
   it('renews on a live refresh credential, and says so as a renewable failure when it has lapsed', async () => {
-    const renewed = await build({ findByRefreshToken: () => Promise.resolve(live) }).refresh('r');
+    const renewed = await build({ findByRefreshToken: () => Promise.resolve(live) }).refresh(refreshToken);
     const lapsed = await build({
       findByRefreshToken: () => Promise.resolve({ ...ada, refreshExpiresAt: 1 })
-    }).refresh('r');
+    }).refresh(refreshToken);
 
     expect(renewed.ok).toBe(true);
     expect(lapsed).toMatchObject({ ok: false, status: 401, body: { reason: 'expired' } });
+  });
+
+  /**
+   * The token carries its own deadline. A store that keeps sessions without one — a cache, a file, a table nobody
+   * gave the column — renews on that, rather than refusing every renewal a day after its first sign-in.
+   */
+  it('renews on the token’s own expiry when the store reports none', async () => {
+    const renewed = await build({ findByRefreshToken: () => Promise.resolve(ada) }).refresh(refreshToken);
+
+    expect(renewed.ok).toBe(true);
+  });
+
+  it('refuses a token past its own expiry when the store reports none', async () => {
+    vi.useFakeTimers({ now: Date.now() - (tokens.lifetimes.refresh + 60) * 1000 });
+    const old = tokens.generateRefreshToken(ada.id);
+    vi.useRealTimers();
+
+    const lapsed = await build({ findByRefreshToken: () => Promise.resolve(ada) }).refresh(old);
+
+    expect(lapsed).toMatchObject({ ok: false, status: 401, body: { reason: 'expired' }, endSession: true });
+  });
+
+  // Asked before the store is: a token this deployment never signed is refused without a lookup to answer it.
+  it('refuses a malformed or foreign token before asking the store', async () => {
+    const findByRefreshToken = vi.fn(() => Promise.resolve(live));
+    const foreign = createTokens({ secret: 'another', issuer: 'https://this.test', audience: ['a'] });
+
+    for (const presented of ['r', foreign.generateRefreshToken(ada.id), tokens.generateUserToken(ada.id)]) {
+      expect(await build({ findByRefreshToken }).refresh(presented)).toMatchObject({
+        ok: false,
+        status: 401,
+        endSession: true
+      });
+    }
+
+    expect(findByRefreshToken).not.toHaveBeenCalled();
+  });
+
+  it('refuses a token the store hands back for another account', async () => {
+    const renewed = await build({ findByRefreshToken: () => Promise.resolve({ ...live, id: 2 }) }).refresh(
+      refreshToken
+    );
+
+    expect(renewed).toMatchObject({ ok: false, status: 401, endSession: true });
+  });
+
+  // The store's row stays the revocation switch, however much life the token has left.
+  it('refuses a token whose row is gone', async () => {
+    const revoked = await build({ findByRefreshToken: () => Promise.resolve(undefined) }).refresh(refreshToken);
+
+    expect(revoked).toMatchObject({ ok: false, status: 401, endSession: true });
   });
 
   // Reachable with an expired access token on purpose: otherwise a live refresh token could never be revoked.

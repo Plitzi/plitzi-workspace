@@ -1,0 +1,8 @@
+@mixin styles {
+  .plitzi-component__pagination {
+    display: flex;
+    align-items: center;
+    row-gap: 8px;
+    column-gap: 8px;
+  }
+}

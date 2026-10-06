@@ -107,6 +107,14 @@ const unavailable = (what: string) => () => Promise.reject(new Error(`This serve
 const unsigned = () => Promise.reject(new Error('This server signs nothing: its actions were given no signingSecret'));
 
 /**
+ * A plugin reads none of its space's data. The space keeps there what its pages must not carry, and a plugin was trusted
+ * to draw, not with what the space keeps — the same line as its credentials: handed the data, its `fetch` could send
+ * it to any host the plugin declared.
+ */
+const noData = (file: string) =>
+  Promise.reject(new Error(`The functions of a plugin read none of the data of its space ("${file}")`));
+
+/**
  * What a space's code is handed, built from the run's own context: the one place a {@link FunctionContext} is made.
  * A self-hosted server hands it to the code directly; the platform answers the sandbox's calls with it. With a `scope`,
  * it is a plugin's code, and gets the plugin's corner of the space (`./scope`).
@@ -138,11 +146,13 @@ export const functionContextFor = (
       verify: ctx.verify ?? unsigned,
       publish: ctx.publish ?? unavailable('publish'),
       grant: ctx.grant ?? unavailable('grant'),
-      revoke: ctx.revoke ?? unavailable('revoke')
+      revoke: ctx.revoke ?? unavailable('revoke'),
+      data: ctx.data
     };
   }
 
-  // A plugin's corner of the space: its own keys and counters, signatures only it verifies, and no channel of the space's.
+  // A plugin's corner of the space: its own keys and counters, signatures only it verifies, no channel of the space's and
+  // none of its data.
   const kv = prefixKv(ctx.kv, pluginKvPrefix(scope.plugin));
   const { sign, verify } = ctx;
   const noChannel = () =>
@@ -156,6 +166,7 @@ export const functionContextFor = (
     verify: verify ? (value, signature) => verify(pluginSigned(scope.plugin, value), signature) : unsigned,
     publish: noChannel,
     grant: noChannel,
-    revoke: noChannel
+    revoke: noChannel,
+    data: noData
   };
 };

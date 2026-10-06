@@ -1,5 +1,6 @@
 import { ActionRunError } from './errors';
 import { namespaceKv } from './namespaceKv';
+import { projectDataReader } from './projectData';
 
 import type { createEmailSender } from './email';
 import type { createRedactor } from './scope';
@@ -115,74 +116,75 @@ export type TaskContextRequest = Pick<
  * every secret it resolves registered with the redactor, the space's `kv` namespace, the run's outbound budget, the
  * space's channels. Everything but `log`, which is the STEP's: each step keeps what it logged.
  */
-export const taskContextFor =
-  (
-    config: ActionsConfig,
-    { kv, email, redactor, signing }: TaskContextDeps,
-    request: TaskContextRequest,
-    signal: AbortSignal,
-    runFetch: typeof fetch
-  ) =>
-  (scope: Record<string, unknown>): Omit<ActionTaskContext, 'log'> => {
-    const { realtime } = config;
+export const taskContextFor = (
+  config: ActionsConfig,
+  { kv, email, redactor, signing }: TaskContextDeps,
+  request: TaskContextRequest,
+  signal: AbortSignal,
+  runFetch: typeof fetch
+): ((scope: Record<string, unknown>) => Omit<ActionTaskContext, 'log'>) => {
+  const { realtime } = config;
+  // Made once for the run, not per step: every read of one run sees one version of the data, looked up once.
+  const readData = projectDataReader(config.lookups.getData, request.spaceId, request.at);
 
-    return {
-      runId: request.runId,
-      spaceId: request.spaceId,
-      environment: request.environment,
-      trigger: request.trigger,
-      user: request.user,
-      callerId: request.callerId,
-      signal,
-      scope,
-      /**
-       * The secret a STEP asked for, resolved inside that step and never in the flow scope.
-       *
-       * There is no allow-list to check it against, deliberately: an action is authored by someone who may edit
-       * every action in the space, so a list they can edit is not a boundary — it only ever told the redactor what
-       * to look for, and the redactor now learns from what was actually resolved. What IS a boundary is that a
-       * credential reaches only the params of the step that named it, which is `renderTaskParams`' whole job.
-       */
-      credential: async identifier => {
-        const credential = await config.lookups.getCredential?.(request.spaceId, identifier);
-        if (credential) {
-          redactor.add(credential);
+  return scope => ({
+    runId: request.runId,
+    spaceId: request.spaceId,
+    environment: request.environment,
+    trigger: request.trigger,
+    user: request.user,
+    callerId: request.callerId,
+    signal,
+    scope,
+    /**
+     * The secret a STEP asked for, resolved inside that step and never in the flow scope.
+     *
+     * There is no allow-list to check it against, deliberately: an action is authored by someone who may edit
+     * every action in the space, so a list they can edit is not a boundary — it only ever told the redactor what
+     * to look for, and the redactor now learns from what was actually resolved. What IS a boundary is that a
+     * credential reaches only the params of the step that named it, which is `renderTaskParams`' whole job.
+     */
+    credential: async identifier => {
+      const credential = await config.lookups.getCredential?.(request.spaceId, identifier);
+      if (credential) {
+        redactor.add(credential);
+      }
+
+      return credential;
+    },
+    connector: async connectorId => {
+      const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId, request.at);
+      if (!manifest) {
+        return undefined;
+      }
+
+      // The connector's own credential: naming the connector is what reaches the secret it declares, exactly as
+      // the element-addressed write endpoint has always done.
+      const credential = manifest.credential
+        ? await config.lookups.getCredential?.(request.spaceId, manifest.credential)
+        : undefined;
+      if (credential) {
+        redactor.add(credential);
+      }
+
+      return { manifest, credential };
+    },
+    fetch: runFetch,
+    kv: namespaceKv(kv, request.spaceId),
+    dbDrivers: config.dbDrivers ?? [],
+    email,
+    emit: chunk => request.emit?.(redactor.redact(chunk)),
+    data: readData,
+    ...signing?.({ spaceId: request.spaceId, environment: request.environment }),
+    ...(realtime
+      ? {
+          publish: (topic: string, type: string, data: unknown) =>
+            realtime.publish({ spaceId: request.spaceId, environment: request.environment }, topic, type, data),
+          grant: (topic: string, ttlSeconds?: number) =>
+            realtime.grant({ spaceId: request.spaceId, environment: request.environment }, topic, ttlSeconds),
+          revoke: (topic: string, grant?: string) =>
+            realtime.revoke({ spaceId: request.spaceId, environment: request.environment }, topic, grant)
         }
-
-        return credential;
-      },
-      connector: async connectorId => {
-        const manifest = await config.lookups.getConnector?.(request.spaceId, connectorId, request.at);
-        if (!manifest) {
-          return undefined;
-        }
-
-        // The connector's own credential: naming the connector is what reaches the secret it declares, exactly as
-        // the element-addressed write endpoint has always done.
-        const credential = manifest.credential
-          ? await config.lookups.getCredential?.(request.spaceId, manifest.credential)
-          : undefined;
-        if (credential) {
-          redactor.add(credential);
-        }
-
-        return { manifest, credential };
-      },
-      fetch: runFetch,
-      kv: namespaceKv(kv, request.spaceId),
-      dbDrivers: config.dbDrivers ?? [],
-      email,
-      emit: chunk => request.emit?.(redactor.redact(chunk)),
-      ...signing?.({ spaceId: request.spaceId, environment: request.environment }),
-      ...(realtime
-        ? {
-            publish: (topic: string, type: string, data: unknown) =>
-              realtime.publish({ spaceId: request.spaceId, environment: request.environment }, topic, type, data),
-            grant: (topic: string, ttlSeconds?: number) =>
-              realtime.grant({ spaceId: request.spaceId, environment: request.environment }, topic, ttlSeconds),
-            revoke: (topic: string, grant?: string) =>
-              realtime.revoke({ spaceId: request.spaceId, environment: request.environment }, topic, grant)
-          }
-        : {})
-    };
-  };
+      : {})
+  });
+};

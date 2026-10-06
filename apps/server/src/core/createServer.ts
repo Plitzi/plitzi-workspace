@@ -1,5 +1,6 @@
 import { actionLookupsOf, connectorLookupsOf } from './configSeam';
 import { actionsModuleFor } from '../modules/actions/moduleFor';
+import { dataDirLookup } from '../modules/actions/runtime/projectData';
 import { connectorRscData } from '../modules/rsc/connectorRscData';
 import { createAuthApiStage } from './http/stages/authApi';
 import { createRenewalEndpointStage, createSessionRenewalStage } from './http/stages/sessionRenewal';
@@ -48,6 +49,20 @@ export type ServerConfig = Omit<SSRServerConfig, 'adapters'> & {
    * `false` turns it off.
    */
   sessionRenewal?: { url: string } | false;
+};
+
+/**
+ * The space's data as one lookup, for every reader of it: the deployment's `action.lookups.getData`, or — given none —
+ * the files of `dataDir`. A `/data/<file>` provider and a function's `ctx.data` then read the same files the same way,
+ * instead of the folder through one path and the lookup through another.
+ */
+const withDataLookup = <T extends { action?: SSRActionConfig; dataDir?: string }>(config: T): T => {
+  const lookups = config.action?.lookups;
+  if (!config.dataDir || !lookups || lookups.getData) {
+    return config;
+  }
+
+  return { ...config, action: { ...config.action, lookups: { ...lookups, getData: dataDirLookup(config.dataDir) } } };
 };
 
 /** The server this package makes: pages and RSC, mounting whatever the config enables, plus any stages a
@@ -99,7 +114,8 @@ const withConnectorRsc = <
     connectors: config.connectors ? connectorLookupsOf(config.connectors) : undefined,
     actions,
     publicDir: config.publicDir,
-    dataDir: config.dataDir,
+    // A server with no actions has no lookup to put the folder in; it reads it the same way all the same.
+    data: actions?.lookups.getData ?? (config.dataDir ? dataDirLookup(config.dataDir) : undefined),
     elementTimeoutMs: config.rsc?.elementTimeoutMs
   });
 
@@ -117,7 +133,7 @@ export const createServer = (
   extensions?: PipelineExtensions
 ): SSRServer => {
   if (!auth) {
-    const resolvedConfig = withConnectorRsc(config);
+    const resolvedConfig = withConnectorRsc(withDataLookup(config));
 
     return createPageServer(
       resolvedConfig,
@@ -140,14 +156,17 @@ export const createServer = (
   // successful sign-in is a bodyless 200 — they hold a session, not the account behind it. Left standing they
   // shadow the flows below, so a client that signed in correctly got nothing back to prove it. A deployment that
   // named its own paths keeps them: it asked for those endpoints, and they are then somewhere else entirely.
-  const resolved: SSRPageServerConfig = withConnectorRsc({
-    loginPath: false,
-    logoutPath: false,
-    exchangePath: false,
-    ...config,
-    authCookie: config.authCookie ?? auth.cookieConfig,
-    adapters: { ...auth.ssrAdapters, ...supplied }
-  });
+  const resolved: SSRPageServerConfig = withConnectorRsc(
+    withDataLookup({
+      loginPath: false,
+      logoutPath: false,
+      exchangePath: false,
+      ...config,
+      authCookie: config.authCookie ?? auth.cookieConfig,
+      pageAuth: config.pageAuth ?? auth.pageAuth,
+      adapters: { ...auth.ssrAdapters, ...supplied }
+    })
+  );
 
   // `preAuth`, because these gate themselves: each flow already states what a caller must present, and half of
   // them are what a signed-out visitor uses to sign in. Renewal sits there too: it has to act before the auth chain

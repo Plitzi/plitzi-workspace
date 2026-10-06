@@ -1,0 +1,65 @@
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { listText, notShownInPage, renderedRowsInPage } from './check';
+
+const marked = (id: string): string => `[data-plitzi-el="${id}"]`;
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  document.body.innerHTML = '';
+});
+
+describe('plitzi check / a list’s rows', () => {
+  it('counts the rows the page draws, one per copy of the row inside the list, and none for a list not on it', () => {
+    document.body.innerHTML = `
+      <ul data-plitzi-el="feed">
+        <li data-plitzi-el="feed-row"><span data-plitzi-el="feed-badge"></span></li>
+        <li data-plitzi-el="feed-row"></li>
+        <li data-plitzi-el="feed-row"><span data-plitzi-el="feed-badge"></span></li>
+      </ul>
+      <ul data-plitzi-el="empty"></ul>`;
+
+    expect(
+      renderedRowsInPage([
+        { id: 'feed', selector: marked('feed'), row: [marked('feed-badge'), marked('feed-row')] },
+        { id: 'empty', selector: marked('empty'), row: [marked('empty-row')] },
+        { id: 'hits', selector: marked('hits'), row: [marked('hits-row')] }
+      ])
+    ).toEqual([
+      ['feed', 3],
+      ['empty', 0],
+      ['hits', null]
+    ]);
+  });
+
+  it('says what is drawn beside what the source holds', () => {
+    expect(listText('plan-list', { rendered: 3, source: 3 })).toBe('plan-list 3 rows');
+    expect(listText('home-writer-list', { rendered: 4, source: 8 })).toBe('home-writer-list 4 of 8 rows');
+    expect(listText('search-hits', { rendered: null, source: 16 })).toBe('search-hits not rendered (16 in its source)');
+    expect(listText('feed', { rendered: 0, source: null })).toBe('feed reads nothing');
+  });
+});
+
+describe('plitzi check / what the page is not showing', () => {
+  it('names an element with a condition of its own that has no node, or none the browser draws', () => {
+    // jsdom lays nothing out: what the browser draws is said here, by a mark on the node.
+    Object.defineProperty(HTMLElement.prototype, 'checkVisibility', {
+      configurable: true,
+      value(this: HTMLElement) {
+        return this.dataset.drawn === 'yes';
+      }
+    });
+    document.body.innerHTML = `
+      <div data-plitzi-el="shown" data-drawn="yes"></div>
+      <div data-plitzi-el="folded"></div>
+      <div data-plitzi-el="slot" style="display: contents"><p data-drawn="yes"></p></div>`;
+
+    expect(notShownInPage(['shown', 'folded', 'slot', 'unmounted'].map(id => ({ id, selector: marked(id) })))).toEqual([
+      'folded',
+      'unmounted'
+    ]);
+
+    Reflect.deleteProperty(HTMLElement.prototype, 'checkVisibility');
+  });
+});

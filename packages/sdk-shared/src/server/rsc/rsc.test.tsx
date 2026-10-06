@@ -165,7 +165,7 @@ describe('useRscSync', () => {
     const store = makeStore({ enabled: true });
     renderSync({ rscPath: '/_rsc', rscData: { serverData: { blogApi: 1 } } }, store);
 
-    await act(() => refreshRsc(store, undefined, undefined, '/deep?window=24h'));
+    await act(() => refreshRsc(store, undefined, undefined, { location: '/deep?window=24h' }));
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     act(() => goTo(store, '/deep?window=24h', 'deep'));
@@ -228,7 +228,7 @@ describe('refreshRsc / prefetching a destination', () => {
    */
   it('fetches for the destination, not for the page still on screen', async () => {
     const store = ready('home');
-    await refreshRsc(store, undefined, undefined, '/blog?page=2');
+    await refreshRsc(store, undefined, undefined, { location: '/blog?page=2' });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toBe('/_rsc?location=%2Fblog%3Fpage%3D2');
@@ -238,7 +238,7 @@ describe('refreshRsc / prefetching a destination', () => {
   /** The page being LEFT has a provider and the destination has none: there is nothing to ask for. */
   it('asks for nothing when the destination has no server element', async () => {
     const store = ready('blog');
-    await refreshRsc(store, undefined, undefined, '/home');
+    await refreshRsc(store, undefined, undefined, { location: '/home' });
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -394,6 +394,47 @@ describe('refreshRsc', () => {
     await whole;
 
     expect(store.get('rsc.data')).toEqual({ a: 'whole', b: 'new' });
+  });
+
+  /**
+   * A refresh because something changed: answered by the browser's cache or the page server's, it was the slice from
+   * before the write. The header is what the page server reads; the URL stays the question, nothing added to it.
+   */
+  it('goes around every cache when asked fresh, without touching the question', async () => {
+    const store = liveStore();
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: { b: 3 } }) });
+
+    await refreshRsc(store, ['b'], { q: 'x' }, { fresh: true });
+    await refreshRsc(store, ['b'], { q: 'x' });
+
+    const [[freshUrl, freshInit], [plainUrl, plainInit]] = fetchMock.mock.calls as [string, RequestInit][];
+    expect(freshUrl).toBe(plainUrl);
+    expect(freshInit.cache).toBe('no-cache');
+    expect(freshInit.headers).toMatchObject({ 'Cache-Control': 'no-cache' });
+    expect(plainInit.cache).toBeUndefined();
+    expect(plainInit.headers).not.toHaveProperty('Cache-Control');
+  });
+
+  it('does not take a cached request in flight for the fresh answer it was asked for', async () => {
+    const store = liveStore();
+    const answers: ((value: unknown) => void)[] = [];
+    fetchMock.mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise((resolve, reject) => {
+          answers.push(resolve);
+          init.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        })
+    );
+
+    const cached = refreshRsc(store, ['b']);
+    const fresh = refreshRsc(store, ['b'], undefined, { fresh: true });
+    const again = refreshRsc(store, ['b']);
+    answers[1]({ ok: true, json: () => Promise.resolve({ serverData: { b: 'now' } }) });
+    await Promise.all([cached, fresh, again]);
+
+    expect(fetchMock, 'a plain ask is answered by the fresh one in flight').toHaveBeenCalledTimes(2);
+    expect((fetchMock.mock.calls[0][1] as RequestInit).signal?.aborted).toBe(true);
+    expect(store.get('rsc.data')).toEqual({ a: 1, b: 'now' });
   });
 
   it('asks once for a question already in flight', async () => {

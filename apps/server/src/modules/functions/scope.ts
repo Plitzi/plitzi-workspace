@@ -6,7 +6,7 @@ import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions/functions';
  *
  * The space trusted the plugin to draw something, not with what it keeps — so a plugin's functions are handed a narrower
  * `ctx`: their own corner of the space's `kv` and rate limits, signatures that only verify as theirs, the hosts they
- * declared, and none of the space's credentials or realtime channels.
+ * declared, and none of the space's credentials, realtime channels or data.
  */
 export type FunctionScope = { plugin: string };
 

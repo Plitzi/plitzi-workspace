@@ -1,10 +1,11 @@
 import { createActionResolver } from '../actions/runtime/renderResolver';
 import { createConnectorResolver } from '../connectors';
-import { dataFileResolver, dataLookupResolver, publicFileResolver } from './publicFileResolver';
+import { dataLookupResolver, publicFileResolver } from './publicFileResolver';
 import { resolveRscData } from './resolveRscData';
 
 import type { ActionsModule } from '../actions';
 import type { RscElementResolver } from './resolveRscData';
+import type { ProjectDataLookup } from '../actions/runtime/projectData';
 import type { ActionLookups } from '../actions/types';
 import type { ConnectorLookups } from '../connectors/resolver';
 import type { SSRAdapters } from '@plitzi/sdk-shared';
@@ -28,27 +29,25 @@ export const connectorRscData = ({
   connectors,
   actions,
   publicDir,
-  dataDir,
+  data,
   elementTimeoutMs
 }: {
   connectors?: ConnectorLookups;
   actions?: { lookups: ActionLookups; module: ActionsModule };
   /** Where the server's static files are: a provider whose `query` is one of them is read from disk. */
   publicDir?: string;
-  /** The project's own data, never served: a provider whose `query` is `/data/<file>` is read from it. */
-  dataDir?: string;
+  /**
+   * The space's data, never served: a provider whose `query` is `/data/<file>` is read from it — the lookup a
+   * deployment gave, or the one `createServer` derives from `dataDir`.
+   */
+  data?: ProjectDataLookup;
   /** The deployment's per-element ceiling, when it set one. `resolveRscData` decides the default. */
   elementTimeoutMs?: number;
 }): NonNullable<SSRAdapters['getRscData']> => {
   const resolveConnector = connectors ? createConnectorResolver(connectors) : undefined;
   const resolveAction = actions ? createActionResolver(actions.lookups, actions.module) : undefined;
   const resolvePublicFile = publicDir ? publicFileResolver(publicDir) : undefined;
-  const dataLookup = actions?.lookups.getData;
-  const resolveDataFile = dataDir
-    ? dataFileResolver(dataDir)
-    : dataLookup
-      ? dataLookupResolver((spaceId, at) => dataLookup(spaceId, at))
-      : undefined;
+  const resolveDataFile = data ? dataLookupResolver(data) : undefined;
 
   /**
    * An element names ONE producer, and which one decides how its data is fetched.
@@ -67,8 +66,8 @@ export const connectorRscData = ({
       return resolveAction ? resolveAction(context) : undefined;
     }
 
-    // The project's data first — its folder, or the space's as the platform keeps it: `/data/…` is its, wherever
-    // `publicDir` has a folder of that name.
+    // The project's data first — its folder, or the space's as the platform keeps it, read through one lookup:
+    // `/data/…` is its, wherever `publicDir` has a folder of that name.
     const fromData = resolveDataFile ? await resolveDataFile(context) : undefined;
 
     return fromData !== undefined ? fromData : resolvePublicFile ? resolvePublicFile(context) : undefined;

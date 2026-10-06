@@ -11,15 +11,34 @@ const declaration = elementDeclaration<MarkdownAttributes>()({
   type: 'markdown',
   content: {
     attributes: {
-      content: 'Markdown'
+      content: 'Markdown',
+      headingLinks: true
     },
     definition: {
       label: 'Markdown',
       type: 'markdown',
-      description: 'Renders a Markdown source string as formatted HTML.',
+      description:
+        'Renders a Markdown source string (GitHub-flavoured) as HTML, inside a `div.markdown`. Each part of it takes a ' +
+        'class through its slot: `heading` (`h1`–`h6`), `paragraph` (`p`), `link` (`a`), `list` (`ul`/`ol`), ' +
+        '`listItem` (`li`), `quote` (`blockquote`), `code` (inline `code`), `codeBlock` (the `pre` of a fenced block, ' +
+        'inside a `div.markdown-code` with its language and a copy button), `image` (`img`), `table` and `anchor`. ' +
+        'Every heading carries an id made of its words, which `/page#its-words` lands on, and starts with an empty ' +
+        'link to itself — `a.anchor > span.octicon-link`, the `anchor` slot; `headingLinks: false` leaves the link ' +
+        'out and keeps the id. The SDK styles none of it.',
       bindings: {},
       styleSelectors: {
-        base: ''
+        base: '',
+        heading: '',
+        paragraph: '',
+        link: '',
+        list: '',
+        listItem: '',
+        quote: '',
+        code: '',
+        codeBlock: '',
+        image: '',
+        table: '',
+        anchor: ''
       },
       initialState: {
         visibility: true
@@ -48,11 +67,7 @@ const declaration = elementDeclaration<MarkdownAttributes>()({
       displayMode: 'desktop',
       style: {
         base: {
-          default: {
-            'font-size': '14px',
-            // A ratio landing on the same pixels at this size: a class that resizes the text keeps the proportion.
-            'line-height': '1.714'
-          }
+          default: {}
         }
       }
     },

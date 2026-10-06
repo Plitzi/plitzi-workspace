@@ -9,6 +9,7 @@ import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useServerQuery } from '@plitzi/sdk-shared/queries';
 import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
 
@@ -296,15 +297,38 @@ const ApiContainer = ({
     [refresh]
   );
 
-  const refetch = useCallback(async () => {
-    if (!serverMode) {
-      apiRefetch();
+  const askAgain = useCallback(
+    async (fresh: boolean) => {
+      if (!serverMode) {
+        apiRefetch();
 
-      return;
-    }
+        return;
+      }
 
-    await refreshWithInput([id]);
-  }, [serverMode, apiRefetch, refreshWithInput, id]);
+      await refresh([id], queryInput.current, { fresh });
+    },
+    [serverMode, apiRefetch, refresh, id]
+  );
+
+  /**
+   * Asks again — a server provider around every cache on the way, since whoever asks for a refresh (a reload, a
+   * write) wants what the server holds now, not the answer the browser or the page server kept for a while.
+   */
+  const refetch = useCallback(() => askAgain(true), [askAgain]);
+
+  /**
+   * A timer's refresh goes through the caches: their lifetime is how stale a deployment lets an answer be, and a page
+   * polling around them would turn every visitor's timer into a resolution on the server.
+   */
+  const poll = useCallback(() => askAgain(false), [askAgain]);
+
+  useServerQuery({
+    id,
+    url: queryShaped && query ? query : undefined,
+    enabled: serverMode && rscResolved,
+    active: visible,
+    refresh: refetch
+  });
 
   /** A query asked for with `input`: kept, then asked — from its first page. */
   const performQuery = useCallback(
@@ -340,7 +364,7 @@ const ApiContainer = ({
   useAutoRefresh({
     seconds: refreshSeconds,
     enabled: visible && (serverMode ? rscResolved && !rscPending : apiEnabled),
-    refresh: refetch
+    refresh: poll
   });
 
   const slice = data as ProviderSlice;

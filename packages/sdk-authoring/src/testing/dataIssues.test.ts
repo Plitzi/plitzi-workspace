@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { dataIssues } from './dataIssues';
-import { apiContainer, heading, list, listItem, text } from '../elements';
+import { apiContainer, container, heading, list, listItem, text } from '../elements';
 import { authorSpace } from '../index';
 
 const { schema } = authorSpace({
@@ -85,6 +85,71 @@ describe('dataIssues', () => {
     expect(dataIssues(schema, 'home', { apiContainer_landing: { isLoading: true } })).toEqual({
       issues: [],
       lists: {}
+    });
+  });
+
+  describe('an element the page is not showing', () => {
+    const post = authorSpace({
+      name: 'Blog',
+      permanentUrl: 'blog',
+      pages: [
+        {
+          id: 'post',
+          name: 'Post',
+          slug: 'post',
+          body: [
+            apiContainer({
+              id: 'article',
+              query: '/data/post.json',
+              children: [
+                container({
+                  id: 'article-body',
+                  visible: 'article.data.meta.found',
+                  loadStrategy: 'visible',
+                  children: [
+                    heading({ id: 'article-title', from: 'article.data.post.title' }),
+                    list({
+                      id: 'article-tags',
+                      items: 'article.data.post.tags',
+                      children: [listItem({ children: [text({ from: 'article-tags.item.name' })] })]
+                    })
+                  ]
+                })
+              ]
+            })
+          ]
+        }
+      ]
+    }).schema;
+    const missing = {
+      apiContainer_article: { status: 200, data: { meta: { found: false } }, isLoading: false, hasError: false }
+    };
+
+    it('reads what is inside it as unmounted — nothing there is said, and no list of it is counted', () => {
+      expect(dataIssues(post, 'post', missing, { hidden: new Set(['article-body']) })).toEqual({
+        issues: [],
+        lists: {}
+      });
+    });
+
+    it('still holds its own condition against the answer', () => {
+      const report = dataIssues(
+        post,
+        'post',
+        { apiContainer_article: { status: 200, data: { post: {} }, isLoading: false, hasError: false } },
+        { hidden: new Set(['article-body']) }
+      );
+
+      expect(report.issues.map(issue => [issue.elementId, issue.code])).toEqual([
+        ['article-body', 'binding-reads-nothing']
+      ]);
+    });
+
+    it('reads everything when nothing is said to be hidden', () => {
+      expect(dataIssues(post, 'post', missing).issues.map(issue => issue.elementId)).toEqual([
+        'article-title',
+        'article-tags'
+      ]);
     });
   });
 });
