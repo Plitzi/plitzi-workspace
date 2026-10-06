@@ -17,10 +17,11 @@ import { DEFAULT_FUNCTION_CEILINGS } from '../functions/config';
 import { defineFunctions } from '../functions/contract';
 import { readManifest } from '../functions/manifest';
 import { createRemoteRunner } from '../functions/runner/remote';
+import { offlineDataOf } from '../ssr/testing/offlineData';
 
 import type { SpaceRuntimeDescription, SpaceRuntimeHost } from './host';
 import type { SpaceFunctions } from '../functions/protocol';
-import type { ActionEntry, ElementInteraction, OfflineDataRaw, Schema, SSRServer } from '@plitzi/sdk-shared';
+import type { ActionEntry, ElementInteraction, SSRServer } from '@plitzi/sdk-shared';
 
 /**
  * A space runtime beside the platform: its tasks run for the platform's flows with the platform's `ctx`, and its
@@ -98,22 +99,6 @@ const ENTRY: ActionEntry = {
   }
 };
 
-const schema: Schema = {
-  flat: {
-    home: {
-      id: 'home',
-      attributes: { slug: '', folder: '', default: true },
-      definition: { type: 'page', label: 'home', rootId: 'root', items: [], styleSelectors: { base: '' } }
-    }
-  },
-  pages: ['home'],
-  pageFolders: [],
-  components: {},
-  definition: { name: 'test', permanentUrl: 'test' },
-  variables: [],
-  settings: { customCss: '' }
-};
-
 let host: SpaceRuntimeHost;
 // What the page server told of each request it forwarded — its runtime being used.
 const forwarded: string[] = [];
@@ -136,7 +121,7 @@ beforeAll(async () => {
   page = createServer(
     {
       port: PAGE_PORT,
-      adapters: createJsonAdapters({ offlineData: { schema, style: {} } as unknown as OfflineDataRaw })
+      adapters: createJsonAdapters({ offlineData: offlineDataOf() })
     },
     {
       data: [

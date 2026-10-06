@@ -6,9 +6,10 @@ import { createActionsModule } from '../modules/actions';
 import { defineFunctions } from '../modules/functions/contract';
 import { createIsolateRunner } from '../modules/functions/sandbox/isolate';
 import { functionsInHand } from '../modules/functions/space';
+import { offlineDataOf } from '../modules/ssr/testing/offlineData';
 
 import type { SpaceFunctions } from '../modules/functions/protocol';
-import type { OfflineDataRaw, Schema, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '@plitzi/sdk-shared';
 
 /**
  * A space's functions answering HTTP under `/fn/`, through the server a deployment gets: the deployment's own routes
@@ -17,22 +18,6 @@ import type { OfflineDataRaw, Schema, SSRServer } from '@plitzi/sdk-shared';
 
 const PORT = 39317;
 const BASE = `http://127.0.0.1:${PORT}`;
-
-const schema: Schema = {
-  flat: {
-    home: {
-      id: 'home',
-      attributes: { slug: '', folder: '', default: true },
-      definition: { type: 'page', label: 'home', rootId: 'root', items: [], styleSelectors: { base: '' } }
-    }
-  },
-  pages: ['home'],
-  pageFolders: [],
-  components: {},
-  definition: { name: 'test', permanentUrl: 'test' },
-  variables: [],
-  settings: { customCss: '' }
-};
 
 const SPACE_SOURCE = {
   'index.ts': `import { ActionRefusal } from '@plitzi/sdk-server/functions';
@@ -72,7 +57,7 @@ beforeAll(async () => {
   const functions: SpaceFunctions = { ...functionsInHand(prepared.functions), limits: { cpuMs: 100 } };
   server = createServer({
     port: PORT,
-    adapters: createJsonAdapters({ offlineData: { schema, style: {} } as unknown as OfflineDataRaw }),
+    adapters: createJsonAdapters({ offlineData: offlineDataOf() }),
     action: {
       lookups: { getAction: () => Promise.resolve(undefined), getFunctions: () => Promise.resolve(functions) },
       jobs: false

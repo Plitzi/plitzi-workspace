@@ -6,9 +6,10 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { imagesPathOf } from './images';
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
+import { offlineDataOf } from '../../../modules/ssr/testing/offlineData';
 import { createServer } from '../../createServer';
 
-import type { OfflineDataRaw, SSRServer } from '@plitzi/sdk-shared';
+import type { SSRServer } from '@plitzi/sdk-shared';
 
 /**
  * `/_plitzi/img` over real HTTP, through the pipeline a deployment gets: mounted only where `images` is configured,
@@ -20,8 +21,7 @@ const PORT = 39341;
 const BARE_PORT = 39342;
 const base = (port: number) => `http://127.0.0.1:${String(port)}`;
 
-// The documents a page server needs to start; nothing here renders a page.
-const offlineData = { schema: { elements: {} }, style: {} } as unknown as OfflineDataRaw;
+const offlineData = offlineDataOf();
 
 const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'plitzi-image-stage-'));
 
@@ -58,8 +58,8 @@ describe('core/http/stages/images', () => {
     expect(imagesPathOf({ images: { domains: [] } })).toBeUndefined();
     expect(imagesPathOf({})).toBeUndefined();
     expect(
-      (await image('url=https%3A%2F%2Fimages.example.com%2Fa.jpg&w=640', BARE_PORT)).headers.get('vary')
-    ).toBeNull();
+      (await image('url=https%3A%2F%2Fimages.example.com%2Fa.jpg&w=640', BARE_PORT)).headers.get('content-type')
+    ).toContain('text/html');
   });
 
   it('refuses a host it was not given, a width it does not make and a write, fetching nothing', async () => {

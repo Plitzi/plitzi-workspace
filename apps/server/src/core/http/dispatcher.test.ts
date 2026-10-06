@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { makeHandler } from './dispatcher';
+import { serverLog } from '../../helpers/serverLog';
 
 import type { BuildContext } from './dispatcher';
 import type { BaseContext, Stage } from './types';
@@ -60,6 +61,14 @@ const run = async (
 
   return events;
 };
+
+const blowsUp: Stage = () => {
+  throw new Error('render blew up');
+};
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const answer = (status: number): Stage => {
   return ctx => {
@@ -201,12 +210,15 @@ describe('dispatcher request log', () => {
   });
 
   it('logs a request whose stage threw, with the error message', async () => {
-    const stage: Stage = () => {
-      throw new Error('render blew up');
-    };
-    const events = await run(fakeRequest('/boom'), [stage]);
+    const error = vi.spyOn(serverLog, 'error').mockImplementation(() => {});
+    const events = await run(fakeRequest('/boom'), [blowsUp]);
 
     expect(firstRequest(events)).toMatchObject({ path: '/boom', ok: false, error: 'render blew up' });
+    expect(error).toHaveBeenCalledWith(
+      'SSR',
+      'Unhandled error',
+      expect.objectContaining({ message: 'render blew up' })
+    );
   });
 
   it('logs a request no stage answered', async () => {
@@ -254,10 +266,8 @@ describe('dispatcher client IP', () => {
   });
 
   it('reports the client of a request whose stage threw', async () => {
-    const stage: Stage = () => {
-      throw new Error('render blew up');
-    };
-    const events = await run(fakeClientRequest({ 'cf-connecting-ip': '203.0.113.7' }), [stage]);
+    vi.spyOn(serverLog, 'error').mockImplementation(() => {});
+    const events = await run(fakeClientRequest({ 'cf-connecting-ip': '203.0.113.7' }), [blowsUp]);
 
     expect(firstRequest(events).clientIp).toBe('203.0.113.7');
   });

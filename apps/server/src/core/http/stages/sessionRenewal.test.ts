@@ -3,12 +3,13 @@ import { request } from 'node:http';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
+import { offlineDataOf } from '../../../modules/ssr/testing/offlineData';
 import { createAuth } from '../../auth/createAuth';
 import { createServer } from '../../createServer';
 
 import type { AccountAdapters, AccountRecord } from '../../auth/api';
 import type { IdentityAdapters } from '../../auth/identity';
-import type { OfflineDataRaw, SSRServer, SSRSession } from '@plitzi/sdk-shared';
+import type { SSRServer, SSRSession } from '@plitzi/sdk-shared';
 
 /**
  * A page asked for by a browser whose access cookie has died while its refresh cookie lives on.
@@ -86,7 +87,7 @@ const auth = createAuth({
   adapters
 });
 
-const offlineData = { schema: { elements: {} }, style: {} } as unknown as OfflineDataRaw;
+const offlineData = offlineDataOf();
 
 let server: SSRServer;
 let remote: SSRServer;
