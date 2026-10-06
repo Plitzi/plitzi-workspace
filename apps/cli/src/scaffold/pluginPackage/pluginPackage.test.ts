@@ -66,7 +66,8 @@ describe('the plugin package', () => {
       'src/index.ts',
       'vite.config.ts',
       'preview/main.ts',
-      'preview/space.ts',
+      'preview/space/index.ts',
+      'preview/space/theme.ts',
       'visual/plugin.spec.ts',
       'README.md',
       'AGENTS.md',
@@ -148,8 +149,8 @@ describe('a package of several elements', () => {
   it('previews and checks every one of them', () => {
     const files = several();
 
-    expect(files['preview/space.ts']).toContain("element('seatPicker', {");
-    expect(files['preview/space.ts']).toContain("element('legend', {");
+    expect(files['preview/space/index.ts']).toContain("element('seatPicker', {");
+    expect(files['preview/space/index.ts']).toContain("element('legend', {");
     expect(files['visual/plugin.spec.ts']).toContain("{ id: 'legend', label: 'Legend' }");
   });
 

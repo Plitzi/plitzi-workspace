@@ -587,3 +587,5 @@
 }
 
 @import '@plitzi/plitzi-sdk/plitzi-sdk.css';
+// Font Awesome is a sheet of its own, its fonts files beside it: the canvas draws the icons a page does.
+@import '@plitzi/plitzi-sdk/plitzi-sdk-icons.css';

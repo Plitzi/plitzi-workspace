@@ -43,6 +43,22 @@ Only a suggestion's code: a problem is never quieted (`quiet-unknown`).
 | `.Toastify__toast { font-family: …; border: … }` in `customCss` | `notifications: { font, fontSize, border, shadow, padding, … }` | `custom-css-notifications` |
 | Keyframes animating `width`, `top`, `filter: blur()`, `box-shadow`, a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — [motion](colours-and-motion.md) | `heavy-animation` |
 
+## What it declares and never uses
+
+A big space gathers what nothing reads any more: the class kept after the last element wearing it went, the token
+nobody points at, the component no page places — and the colour typed out where its token was meant. Each is one more
+thing the next reader has to check is safe to change. `authorSpace` names them too:
+
+| What it found | What to do | Suggestion |
+| --- | --- | --- |
+| A class in `classes` that no element, binding, flow or other class's `ancestors` names | Remove it — or wear it where it was meant to go | `unused-class` |
+| A token in `variables` that no `var(--…)` reads — not a class, an element, `customCss` nor another token | Remove it, or write it where its colour is typed out | `unused-token` |
+| A component that no page, layout or other component places | Remove it, or place it where it was meant to go | `unused-component` |
+| A colour typed out in a class painted from the palette, equal to a token's light value | `var(--token)` when it should follow the scheme; a token of one value of its own when it must stay the same in both (dark words on a light chip) | `literal-colour` |
+
+They are read generously, so they are never wrong: a name counts as used wherever it appears as a word, and a class
+written all in literals — a sticker's paper and ink, a swatch — is a palette of its own and not named.
+
 And a few the suggestions do not count, because they cost styles rather than elements:
 
 - **A look used twice is a class**, written once with `styles()`; every element of a TYPE dressed the same way is the

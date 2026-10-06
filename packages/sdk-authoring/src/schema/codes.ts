@@ -949,6 +949,27 @@ export const AUTHORING_CODES = {
     means:
       'keyframes animating what the browser repaints or lays out again on every frame — a size, a position, a blur, a shadow, or a colour in a loop — which stutters whenever the page is busy, most of all while it loads',
     fix: '`opacity` and `transform`: a size or a position is `translate`/`scale`, a blur or a shadow is the `opacity` of a layer carrying it; a loop that must animate anything else starts `paused` and runs under `[data-hydrated]`'
+  },
+  'unused-class': {
+    kind: 'suggested',
+    means: 'a class declared in `classes` that no element, binding, flow or other class names',
+    fix: 'remove it from `classes` — or wear it where it was meant to go'
+  },
+  'unused-token': {
+    kind: 'suggested',
+    means: 'a token of `variables` no `var(--…)` reads — not a class, an element, `customCss` nor another token',
+    fix: 'remove it, or write it where its colour is written out'
+  },
+  'literal-colour': {
+    kind: 'suggested',
+    means:
+      'a colour written out in a class where the space has a token of that value — it stays put in the dark scheme',
+    fix: '`var(--token)` when it should follow the scheme; a token of one value of its own when it must stay the same in both'
+  },
+  'unused-component': {
+    kind: 'suggested',
+    means: 'a component no page, layout or other component places',
+    fix: 'remove it from `components`, or place it where it was meant to go'
   }
 } as const satisfies Record<string, AuthoringCodeEntry>;
 

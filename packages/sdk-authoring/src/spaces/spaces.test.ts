@@ -1,10 +1,15 @@
 /* eslint-disable quotes */
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import {
   blankSpace,
-  blankSpaceSource,
   blankSpaceSpec,
+  blankTemplateFiles,
   emptySpaceSource,
   emptySpaceSpec,
   toPortableSource
@@ -14,6 +19,13 @@ import * as authoring from '../index';
 import { authorSpace, validateSpace } from '../schema';
 
 import type { SpaceSpec } from '../schema';
+
+/** The copy's entry, which holds the page, the name and any plugin it hosts. */
+const blankEntry = (options: Parameters<typeof blankTemplateFiles>[0] = {}): string =>
+  blankTemplateFiles(options)['src/space/index.ts'];
+
+/** Every file of the copy, as one text: what is true of all of them. */
+const blankCopy = (): string => Object.values(blankTemplateFiles()).join('\n');
 
 /**
  * The document two unrelated things start a space from — the platform's `POST /spaces` and `plitzi create` — so
@@ -114,14 +126,63 @@ describe('the plugin host element', () => {
 });
 
 describe('the copy handed to a project', () => {
-  it('imports from the package, not from inside it', () => {
-    const source = blankSpaceSource();
+  it('imports from the package and from the files beside it, never from inside the package', () => {
+    const files = blankTemplateFiles();
 
-    expect(source).not.toMatch(/from '\.\./);
-    expect(source).toContain("from '@plitzi/sdk-authoring'");
+    for (const [file, source] of Object.entries(files)) {
+      expect(source, file).not.toMatch(/from '\.\./);
+      for (const [, sibling] of source.matchAll(/from '\.\/([^']+)'/g)) {
+        expect(Object.keys(files), `${file} imports ./${sibling}`).toContain(`src/space/${sibling}`);
+      }
+    }
+
+    expect(blankEntry()).toContain("from '@plitzi/sdk-authoring'");
     // Named for whoever receives it, not for the platform: the copy is somebody's own site, not Plitzi's blank one.
-    expect(source).toContain('export const space');
-    expect(source).not.toContain('blankSpaceSpec');
+    expect(blankEntry()).toContain('export const space');
+    expect(blankCopy()).not.toContain('blankSpaceSpec');
+  });
+
+  /** A file per part, each short enough to read whole — what `plitzi lint` holds a project's space to. */
+  it('is a file per part, each one short enough to read whole', () => {
+    const files = blankTemplateFiles();
+
+    expect(Object.keys(files)).toEqual([
+      'src/space/index.ts',
+      'src/space/tokens.ts',
+      'src/space/theme.ts',
+      'src/space/content.ts'
+    ]);
+    for (const [file, source] of Object.entries(files)) {
+      expect(source.split('\n').filter(line => line.trim() !== '').length, file).toBeLessThanOrEqual(400);
+    }
+
+    expect(Object.keys(blankTemplateFiles({ dir: 'preview/space' }))).toContain('preview/space/index.ts');
+  });
+
+  /**
+   * What `plitzi create` starts a project with and what signing up gives an account cannot come apart: the copy, run
+   * as the project runs it, authors the very documents the platform's space does.
+   */
+  it('authors, as copied, the documents the platform starts a space with', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-blank-copy-'));
+    try {
+      for (const [file, source] of Object.entries(blankTemplateFiles())) {
+        await fs.mkdir(path.dirname(path.join(dir, file)), { recursive: true });
+        await fs.writeFile(path.join(dir, file), source);
+      }
+
+      const copy: unknown = await import(pathToFileURL(path.join(dir, 'src/space/index.ts')).href);
+      const spec: unknown = typeof copy === 'object' && copy !== null ? Reflect.get(copy, 'space') : undefined;
+      const { schema, style } = blankSpace();
+      // The module is the copy written just above, which exports the space as `space`.
+      const authored = authorSpace(spec as SpaceSpec);
+
+      expect(JSON.stringify({ schema: authored.schema, style: authored.style })).toBe(
+        JSON.stringify({ schema, style })
+      );
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
   });
 
   /**
@@ -135,7 +196,7 @@ describe('the copy handed to a project', () => {
       border: ['border-width', 'border-style', 'border-color']
     };
     // The innermost `{ … }` of the source: one rule set each.
-    const ruleSets = blankSpaceSource().match(/\{[^{}]*\}/g) ?? [];
+    const ruleSets = blankCopy().match(/\{[^{}]*\}/g) ?? [];
     const spelledOut = ruleSets.flatMap(rules =>
       Object.entries(groups)
         .filter(([, longhands]) => longhands.every(longhand => rules.includes(`'${longhand}'`)))
@@ -147,8 +208,8 @@ describe('the copy handed to a project', () => {
 
   /** The whole file has to survive, not just its header — the rewrite is of imports, not of the declaration. */
   it('keeps everything below the imports', () => {
-    expect(blankSpaceSource()).toContain(blankSpaceSpec.pages[0].name);
-    expect(blankSpaceSource().split('\n').length).toBeGreaterThan(100);
+    expect(blankEntry()).toContain(blankSpaceSpec.pages[0].name);
+    expect(blankCopy().split('\n').length).toBeGreaterThan(700);
   });
 
   /**
@@ -159,24 +220,26 @@ describe('the copy handed to a project', () => {
    * module that is not re-exported writes a project that does not compile, and nothing else here would say so.
    */
   it('imports only names the package actually exports', () => {
-    const match = /^import \{([^}]*)\} from '@plitzi\/sdk-authoring';$/m.exec(blankSpaceSource());
-    if (!match) {
-      throw new Error('the copy imports nothing from @plitzi/sdk-authoring');
-    }
+    const names = [...blankCopy().matchAll(/^import \{([^}]*)\} from '@plitzi\/sdk-authoring';$/gm)].flatMap(match =>
+      match[1].split(',').map(entry => entry.trim())
+    );
 
-    for (const name of match[1].split(',').map(entry => entry.trim())) {
+    expect(names.length).toBeGreaterThan(5);
+    for (const name of names) {
       expect(authoring, `@plitzi/sdk-authoring exports ${name}`).toHaveProperty(name);
     }
   });
 
   /** The receiver's name goes in here, so the scaffold never has to know which literals this file contains. */
   it('renames the copy, and slugs the url it derives ids from', () => {
-    const source = blankSpaceSource({ name: 'My Site' });
+    const source = blankEntry({ name: 'My Site' });
 
     expect(source).toContain("name: 'My Site'");
     // A DNS label at the platform, and what every element id and selector is derived from.
     expect(source).toContain("permanentUrl: 'my-site'");
-    expect(source).not.toContain(blankSpaceSpec.permanentUrl);
+    expect(Object.values(blankTemplateFiles({ name: 'My Site' })).join('\n')).not.toContain(
+      blankSpaceSpec.permanentUrl
+    );
   });
 
   /**
@@ -186,8 +249,8 @@ describe('the copy handed to a project', () => {
    * in the default would render "Not Found" on every space anyone ever signed up for.
    */
   it('hosts a plugin only when asked, and never in the space the platform authors', () => {
-    const plain = blankSpaceSource();
-    const hosted = blankSpaceSource({
+    const plain = blankCopy();
+    const hosted = blankEntry({
       plugin: { id: 'stat-card', renderType: 'statCard', attributes: { label: "Today's", series: [1, 2] } }
     });
 
@@ -205,7 +268,7 @@ describe('the copy handed to a project', () => {
 
   /** How a published space hosts a plugin it loads from a manifest, and how the builder adds one: by its own type. */
   it('hosts a plugin as an element of its own type when asked', () => {
-    const hosted = blankSpaceSource({
+    const hosted = blankEntry({
       plugin: { id: 'seat-picker', renderType: 'seatPicker', as: 'element', attributes: { start: 3 } }
     });
 
@@ -216,7 +279,7 @@ describe('the copy handed to a project', () => {
   });
 
   it('hosts every plugin of a list, one after another', () => {
-    const hosted = blankSpaceSource({
+    const hosted = blankEntry({
       plugin: [
         { id: 'seat-picker', renderType: 'seatPicker', as: 'element', attributes: {} },
         { id: 'legend', renderType: 'legend', as: 'element', attributes: { label: 'Key' } }
@@ -229,7 +292,7 @@ describe('the copy handed to a project', () => {
   });
 
   it('feeds the plugin from a data file when asked, through a provider and a binding', () => {
-    const hosted = blankSpaceSource({
+    const hosted = blankEntry({
       plugin: {
         id: 'stat-card',
         renderType: 'statCard',
@@ -254,10 +317,51 @@ describe('the copy handed to a project', () => {
     );
   });
 
+  /** A file copied beside it travels with it: its import is kept as written, after the package's. */
+  it('keeps an import of a file beside it, as its formatter wrapped it', () => {
+    const rewritten = toPortableSource(
+      [
+        "import { styles } from '../../style';",
+        '',
+        "import { a } from './content.ts';",
+        'import {',
+        '  b,',
+        '  c',
+        "} from './theme.ts';",
+        '',
+        "import type { T } from './content.ts';",
+        "import type { S } from '../../schema';",
+        '',
+        'const x = 1;',
+        ''
+      ].join('\n')
+    );
+
+    expect(rewritten).toBe(
+      [
+        "import { styles } from '@plitzi/sdk-authoring';",
+        '',
+        "import { a } from './content.ts';",
+        'import {',
+        '  b,',
+        '  c',
+        "} from './theme.ts';",
+        '',
+        "import type { S } from '@plitzi/sdk-authoring';",
+        "import type { T } from './content.ts';",
+        '',
+        'const x = 1;',
+        ''
+      ].join('\n')
+    );
+  });
+
   /** Anything it cannot point at the package is a broken copy, so it is refused rather than written. */
   it('refuses a relative import it cannot rewrite', () => {
     expect(() => toPortableSource("import spec from '../blank/spec';\n\nconst x = 1;\n")).toThrow(/cannot rewrite/);
     expect(() => toPortableSource("const x = 1;\n\nexport { y } from '../y';\n")).toThrow(/still refers/);
+    expect(() => toPortableSource("const x = 1;\n\nexport { y } from './';\n")).not.toThrow();
+    expect(() => toPortableSource("const x = 1;\n\nexport { y } from '.';\n")).toThrow(/still refers/);
   });
 
   /** Laid out as the project's formatter would, so a new project's first lint has nothing to say about it. */

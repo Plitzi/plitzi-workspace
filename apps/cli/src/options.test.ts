@@ -1,7 +1,7 @@
 import { InvalidArgumentError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
-import { positiveInteger, width, widths } from './options';
+import { count, positiveInteger, width, widths } from './options';
 
 describe('options', () => {
   it('reads widths in the order given, each once', () => {
@@ -21,5 +21,13 @@ describe('options', () => {
     expect(() => positiveInteger('0')).toThrow(InvalidArgumentError);
     expect(() => positiveInteger('-2')).toThrow(InvalidArgumentError);
     expect(() => positiveInteger('two')).toThrow(InvalidArgumentError);
+  });
+
+  it('takes a whole number from 0 for a count', () => {
+    expect(count('0')).toBe(0);
+    expect(count('12')).toBe(12);
+    expect(() => count('')).toThrow(InvalidArgumentError);
+    expect(() => count('-1')).toThrow(InvalidArgumentError);
+    expect(() => count('1.5')).toThrow(InvalidArgumentError);
   });
 });

@@ -73,9 +73,11 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
     [eventBridge]
   );
 
-  // The active ids are read once, as the panels open: what the person opens afterwards is the panels' own state.
+  // The active ids are read as the panels open: what the person opens afterwards is the panels' own state. They open
+  // again whenever a component is opened or closed — the scope they are drawn in is keyed by it — and then they have to
+  // open as the person left them, not as they were when the builder loaded.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const popups = useMemo(() => getPopups({ activeIds: popupsActiveLeft }), []);
+  const popups = useMemo(() => getPopups({ activeIds: popupsActiveLeft }), [component?.id]);
 
   return (
     <div className="flex grow flex-col overflow-auto">

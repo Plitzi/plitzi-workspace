@@ -240,7 +240,7 @@ const listInPackage = async (root: string, components: string[] | undefined, add
     `\nListed in src/elements.ts and src/declarations.ts: the package publishes ${several ? 'them' : 'it'} from now on. ` +
       `Look at ${several ? 'them' : 'it'} in the preview with ${added
         .map(names => `element('${names.type}', { id: '${names.base}' })`)
-        .join(', ')} in preview/space.ts.`
+        .join(', ')} in preview/space/index.ts.`
   );
 };
 

@@ -1,9 +1,12 @@
 /* eslint-disable quotes */
 import { authorSpace, slugify } from '../schema';
+import blankContentSource from './blank/content.ts?raw';
 import { space as blankSpaceSpec } from './blank/spec';
 // The declaration's own source, inlined at build time — the copy `plitzi create` writes into a project. Read as
 // text rather than through the filesystem because this package is bundled for the browser too.
-import specSource from './blank/spec.ts?raw';
+import blankSpecSource from './blank/spec.ts?raw';
+import blankThemeSource from './blank/theme.ts?raw';
+import blankTokensSource from './blank/tokens.ts?raw';
 import { space as emptySpaceSpec } from './empty/spec';
 import emptySpecSource from './empty/spec.ts?raw';
 import catalogProducts from '../../templates/catalog/src/data/products.json?raw';
@@ -37,27 +40,30 @@ export { space as emptySpaceSpec } from './empty/spec';
  * copy — and a copy of a fixture is a fixture that is wrong six months later with nothing to say so.
  *
  * A declaration rather than an exported document, so whoever receives it can change it. `blankSpace()` is the
- * documents a renderer wants; `blankSpaceSource()` is the file itself, for a project that will edit it.
+ * documents a renderer wants; `blankTemplateFiles()` are its files, for a project that will edit them.
  */
 
 /** The two documents, authored fresh — so one caller writing its own name in cannot mark the next one's copy. */
 export const blankSpace = (): AuthoredSpace => authorSpace(blankSpaceSpec);
 
 /**
- * The declaration as a file somebody can drop into their own project, optionally under a name of its own.
+ * The declaration as files somebody can drop into their own project, optionally under a name of its own.
  *
- * The source is this package's own — the same text that produced the documents above, so what a project starts
- * with and what Plitzi creates cannot come apart. Its imports are relative here because it lives inside the
- * package; on the way out they are rewritten to the package name, which is how the copy resolves anywhere else.
+ * The sources are this package's own — the same text that produced the documents above, so what a project starts
+ * with and what Plitzi creates cannot come apart. Their imports of the package's modules are relative here because
+ * they live inside it; on the way out they are rewritten to the package name, which is how the copy resolves anywhere
+ * else. The files import each other as siblings, so the folder travels whole.
  *
  * The rename lives here, and not in the scaffold that asks for it, for the reason the whole function exists: a
- * caller renaming the copy would have to know which literals this file happens to contain, and a caller that
+ * caller renaming the copy would have to know which literals these files happen to contain, and a caller that
  * knows that is a caller that breaks silently the day one of them changes. Here the literals are read off
  * `blankSpaceSpec`, so they cannot be out of date, and a rename that finds nothing to replace throws.
  */
-export interface BlankSpaceSourceOptions {
+export interface BlankTemplateOptions {
   /** The name the copy carries. `permanentUrl` follows it, slugged. */
   name?: string;
+  /** The folder the files are written in, relative to the project: `src/space` unless said. */
+  dir?: string;
   /**
    * Add a `custom` element hosting a plugin the receiver supplies — or several, one after another, given a list.
    *
@@ -120,12 +126,24 @@ const toSource = (value: unknown): string => {
   return typeof value === 'number' || typeof value === 'boolean' ? String(value) : 'null';
 };
 
-export const blankSpaceSource = (options: BlankSpaceSourceOptions = {}): string => {
-  const { name, plugin } = options;
+/**
+ * The welcome space as a project's files, by path: the page and the space in `index.ts`, the palette in `tokens.ts`,
+ * the classes in `theme.ts`, what the page says in `content.ts` — a file per part, as a space is written once it is
+ * more than a screen. The plugin a project hosts and the name it carries go in `index.ts`, which holds both.
+ */
+export const blankTemplateFiles = ({ name, dir = 'src/space', plugin }: BlankTemplateOptions = {}): Record<
+  string,
+  string
+> => {
   const plugins = plugin === undefined ? [] : Array.isArray(plugin) ? plugin : [plugin];
-  const portable = toPortableSource(plugins.length > 0 ? withPluginHost(specSource, plugins) : specSource);
+  const entry = toPortableSource(plugins.length > 0 ? withPluginHost(blankSpecSource, plugins) : blankSpecSource);
 
-  return name === undefined ? portable : renameSpace(portable, name);
+  return {
+    [`${dir}/index.ts`]: name === undefined ? entry : renameSpace(entry, name),
+    [`${dir}/tokens.ts`]: toPortableSource(blankTokensSource),
+    [`${dir}/theme.ts`]: toPortableSource(blankThemeSource),
+    [`${dir}/content.ts`]: toPortableSource(blankContentSource)
+  };
 };
 
 /**
@@ -183,7 +201,7 @@ const hostSource = (plugin: PluginHostOptions, pad: string): string => {
 const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): string => {
   if (!source.includes(PLUGIN_ANCHOR)) {
     throw new Error(
-      "blankSpaceSource: cannot host a plugin — the hero's children are not where they were. " +
+      "blankTemplateFiles: cannot host a plugin — the hero's children are not where they were. " +
         'Update PLUGIN_ANCHOR in src/spaces/index.ts to match the declaration.'
     );
   }
@@ -239,7 +257,7 @@ const replaceLiteral = (source: string, field: string, from: string, to: string)
   const declaration = `${field}: '${from}'`;
   if (!source.includes(declaration)) {
     throw new Error(
-      `blankSpaceSource: cannot rename the copy — "${declaration}" is not in the blank space's source. ` +
+      `Cannot rename the copy — "${declaration}" is not in the template's source. ` +
         'The declaration changed shape; update src/spaces/index.ts to match it.'
     );
   }
@@ -267,6 +285,15 @@ const renameSpace = (
 /** Matches an import of this package's own modules — the only kind the copy has to be freed of. */
 const RELATIVE_IMPORT = /^import (type )?\{([^}]*)\} from '\.\.[^']*';$/;
 
+/** An import as one line, to read, and as it is written, to keep: a sibling's import travels as its formatter wrapped it. */
+interface ImportStatement {
+  text: string;
+  written: string;
+}
+
+/** An import of a file beside this one, which travels with it: `./theme.ts`. */
+const SIBLING_IMPORT = /from '\.\/[^']*';$/;
+
 /**
  * The leading import block, one statement at a time.
  *
@@ -275,8 +302,8 @@ const RELATIVE_IMPORT = /^import (type )?\{([^}]*)\} from '\.\.[^']*';$/;
  * the removal below still takes the lines away. The result was a copy missing the names it uses, which compiles
  * nowhere and is discovered by whoever generated a project, not by whoever changed the declaration.
  */
-const leadingImports = (lines: string[]): { statements: string[]; end: number } => {
-  const statements: string[] = [];
+const leadingImports = (lines: string[]): { statements: ImportStatement[]; end: number } => {
+  const statements: ImportStatement[] = [];
   let pending: string[] = [];
   let end = 0;
 
@@ -289,10 +316,10 @@ const leadingImports = (lines: string[]): { statements: string[]; end: number } 
       break;
     }
 
-    pending.push(line.trim());
+    pending.push(line);
 
     if (line.trimEnd().endsWith(';')) {
-      statements.push(pending.join(' '));
+      statements.push({ text: pending.map(each => each.trim()).join(' '), written: pending.join('\n') });
       pending = [];
       end = index + 1;
     }
@@ -330,19 +357,27 @@ export const toPortableSource = (source: string): string => {
   const values = new Set<string>();
   const types = new Set<string>();
   const kept: string[] = [];
+  const siblings: string[] = [];
+  const siblingTypes: string[] = [];
 
-  for (const statement of statements) {
+  for (const { text: statement, written } of statements) {
     const match = RELATIVE_IMPORT.exec(statement);
     if (!match) {
-      // An import of something else — `node:path`, a third-party package — travels with the copy untouched.
       if (statement.includes("from '..")) {
         throw new Error(
           `toPortableSource: cannot rewrite "${statement}". Only named imports of this package's own modules ` +
-            "can be pointed at @plitzi/sdk-authoring; the blank space's declaration must use one."
+            "can be pointed at @plitzi/sdk-authoring; the template's declaration must use one."
         );
       }
 
-      kept.push(statement);
+      // A file beside this one travels with it, and is imported as it was; anything else — `node:path`, a
+      // third-party package — travels with the copy untouched, ahead of the package's own import.
+      if (SIBLING_IMPORT.test(statement)) {
+        (statement.startsWith('import type ') ? siblingTypes : siblings).push(written);
+      } else {
+        kept.push(written);
+      }
+
       continue;
     }
 
@@ -355,21 +390,29 @@ export const toPortableSource = (source: string): string => {
     }
   }
 
-  const header = [...kept, importOf(values, ''), importOf(types, 'type ')].filter(Boolean).join('\n\n');
+  // In the order the project's lint sorts them: packages, the files beside it, then the types of each.
+  const header = [
+    ...kept,
+    importOf(values, ''),
+    siblings.join('\n'),
+    [importOf(types, 'type '), ...siblingTypes].filter(Boolean).join('\n')
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 
   const portable = [header, ...lines.slice(end)].join('\n');
 
   /**
-   * Nothing relative survives, including from below the import block.
+   * Nothing climbs out of the folder, including from below the import block.
    *
    * A dynamic `import('../x')` or a re-export further down would resolve to nothing in the project the copy is
    * written into, and would do it at run time. Cheaper to refuse here than to ship a scaffold that fails on
-   * somebody else's machine.
+   * somebody else's machine. A sibling (`./theme.ts`) is one of the files copied with it, and stays.
    */
-  if (/from '\.\.?[/']/.test(portable)) {
+  if (/from '\.(?:\.[/']|')/.test(portable)) {
     throw new Error(
       'toPortableSource: the copy still refers to a path relative to this package. A file copied into somebody ' +
-        "else's project can only import from package names."
+        "else's project can only import from package names, or from the files copied beside it."
     );
   }
 

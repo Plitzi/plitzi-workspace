@@ -85,7 +85,7 @@ const pluginHost = http.createServer((req, res) => {
 pluginHost.listen(PLUGIN_HOST_PORT, '127.0.0.1');
 
 // The package's own preview space, which hosts the plugin as an element of its type — as a published space does.
-const { space } = (await import(path.join(PLUGIN_DIR, 'preview/space.ts'))) as { space: SpaceSpec };
+const { space } = (await import(path.join(PLUGIN_DIR, 'preview/space/index.ts'))) as { space: SpaceSpec };
 const { schema, style } = authorSpace(space, { pluginTypes: ['seatPicker'] });
 
 const server = createServer({

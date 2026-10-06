@@ -4,7 +4,7 @@ import { button, component, container, fontAwesome, heading, link, list, text } 
 import { onClick } from '../../elements/steps';
 import { setState, toggleState } from '../../interactions';
 import { authorSpace } from '../space';
-import { suggestSpace } from './index';
+import { suggestSpace, unusedDeclarations } from './index';
 
 import type { ElementSpec, PageSpec, SpaceSpec } from '../types';
 
@@ -385,6 +385,109 @@ describe('suggestions', () => {
   });
 
   it('has nothing to say about a space written the short way', () => {
-    expect(authorSpace(space([page('home', [heading({ content: 'Hello' })])])).suggestions).toEqual([]);
+    expect(authorSpace(space([page('home', [heading({ content: 'Hello' })])], { classes: {} })).suggestions).toEqual(
+      []
+    );
+  });
+
+  describe('what a space declares and never uses, or says twice', () => {
+    const palette = {
+      color: {
+        ink: { light: '#111111', dark: '#eeeeee', default: '#111111' },
+        text: { light: '#111', dark: '#EEEEEE', default: '#111' },
+        accent: { light: '#ff5500', dark: '#ff7733', default: '#ff5500' },
+        spare: { light: '#00ff00', dark: '#00aa00', default: '#00ff00' }
+      }
+    };
+    const declared = (extra: Partial<SpaceSpec> = {}) =>
+      authorSpace(
+        space(
+          [
+            page('home', [
+              heading({ content: 'Hello', class: 'title' }),
+              container({ class: 'panel', children: [text({ content: 'Inside', class: 'note' })] })
+            ])
+          ],
+          {
+            variables: palette,
+            classes: {
+              title: { color: 'var(--ink)' },
+              panel: {
+                css: { backgroundColor: '#FF5500', borderColor: 'var(--ink)' },
+                ancestors: { shell: { states: { hover: { color: 'var(--text)' } } } }
+              },
+              note: {},
+              shell: {},
+              orphan: { color: 'red' }
+            },
+            ...extra
+          }
+        )
+      ).suggestions;
+    const find = (code: string, extra?: Partial<SpaceSpec>) => declared(extra).find(item => item.code === code);
+
+    it('names a class nothing wears or names, and not one another class names in its ancestors', () => {
+      const unused = find('unused-class');
+
+      expect(unused?.message).toContain('`orphan`');
+      expect(unused?.message).not.toContain('`shell`');
+      expect(unused?.message).not.toContain('`note`');
+    });
+
+    it('names a token nothing reads, and not one a class or another class’s ancestors read', () => {
+      const unused = find('unused-token');
+
+      expect(unused?.message).toContain('`spare`');
+      expect(unused?.message).not.toContain('`ink`');
+      expect(unused?.message).not.toContain('`text`');
+    });
+
+    it('names a colour written out where a token of the scheme holds it, in whatever case — not one the same in both', () => {
+      expect(find('literal-colour')?.message).toContain('`--accent` in `panel`');
+      expect(
+        find('literal-colour', {
+          classes: { title: {}, note: {}, shell: {}, orphan: {}, panel: { backgroundColor: '#ff5500', color: '#111' } }
+        })
+      ).toBeUndefined();
+      expect(
+        find('literal-colour', {
+          variables: { color: { ...palette.color, accent: { light: '#ff5500', dark: '#ff5500', default: '#ff5500' } } }
+        })
+      ).toBeUndefined();
+    });
+
+    it('counts a token a class reads through its own variables, as the builder writes them', () => {
+      const { schema, style } = authorSpace(
+        space([page('home', [heading({ content: 'Hello', class: 'title' })])], {
+          variables: palette,
+          classes: { title: { color: 'var(--ink)' } }
+        })
+      );
+      const title = style.platform.desktop.title;
+      const withRing = {
+        ...style,
+        platform: {
+          ...style.platform,
+          desktop: { ...style.platform.desktop, title: { ...title, variables: { custom: { ring: 'var(--spare)' } } } }
+        }
+      };
+
+      expect(unusedDeclarations(schema, style).tokens).toContain('spare');
+      expect(unusedDeclarations(schema, withRing).tokens).not.toContain('spare');
+    });
+
+    it('names a component no page places, and says what removing it saves', () => {
+      const unused = find('unused-component', {
+        components: [
+          { id: 'Badge', root: container({ children: [text({ content: 'New' })] }) },
+          { id: 'Used', root: container({ children: [text({ content: 'Here' })] }) }
+        ],
+        pages: [page('home', [component('Used')])]
+      });
+
+      expect(unused?.message).toContain('`Badge`');
+      expect(unused?.message).not.toContain('`Used`');
+      expect(unused?.saves).toBe(2);
+    });
   });
 });

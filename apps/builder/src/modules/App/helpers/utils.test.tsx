@@ -10,6 +10,7 @@ vi.mock('@pmodules/Flags', () => ({ default: () => null }));
 vi.mock('@pmodules/Fonts', () => ({ default: () => null }));
 vi.mock('@pmodules/Resources', () => ({ default: () => null }));
 vi.mock('@pmodules/StateManager/StateManager', () => ({ default: () => null }));
+vi.mock('@pmodules/Usages', () => ({ default: () => null }));
 vi.mock('@pmodules/Variables', () => ({ default: () => null }));
 vi.mock('../components/AppDirectory', () => ({ default: () => null }));
 
@@ -23,6 +24,7 @@ describe('getPopups', () => {
       'variables',
       'assets',
       'layerManager',
+      'usages',
       'advanceStyle',
       'stateManager',
       'server',

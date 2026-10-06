@@ -113,6 +113,12 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
 
 ## Authoring
 
+- **What a space declares and never uses** is suggested now: `unused-class`, `unused-token`, `unused-component`, and
+  `literal-colour` — a class painted from the palette typing out a scheme token's light value. A suggestion about
+  declarations names them in `subjects`, so the MCP says one a batch left unused beside the ones the space had.
+  `unusedDeclarations(schema, style)` is the rule itself, for anything else that says "unused" (the builder does).
+- **`pageFamily(shape, entries)`** writes pages of one shape from data: each page its id, slug, titles, folder and
+  layout, and its body built inside `scope(entry.id, …)` so two pages never give one id.
 - **`action-output-path`** (warned): `.data` read on a provider fed by a server action, which publishes its output at
   the root. **`actionSource(id, sample)`** types such a provider by a sample of its output.
 - A value template (`returns: 'value'`, a computed, a step param) may name its parts with `{% set %}` before its one
@@ -172,6 +178,19 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
 
 ## CLI and page checks
 
+- **`plitzi lint`** reads a local space's source the way eslint reads code, for what the document cannot show:
+  `file-too-long`, `pages-in-one-file`, `inline-records` (rows of data written in code → `src/data/`), `repeated-css`,
+  `special-case-in-map`, `colour-not-token`, `positional-id`, `unused-file` — each at file:line with what to write
+  instead — and authoring's suggestions at the line that wrote them. `--json`, `--strict`, `--max-warnings <n>`;
+  `// plitzi-lint-disable-next-line <code> -- why` for a departure on purpose. Projects get `npm run lint:space`
+  (`upgrade` adds it to older ones). `doctor` stays the project's and never reads the space.
+- **`--template blank`** starts with only the colours its page uses: a token declared and read by nothing is one
+  authoring now points out.
+- **The welcome space is written as a folder**, not one 800-line file: `src/space/index.ts` (the page), `tokens.ts`,
+  `theme.ts`, `content.ts` — the shape a space keeps as it grows, and clean under `plitzi lint`. **Breaking** for
+  whoever called it: `blankSpaceSource()` is now `blankTemplateFiles({ name, dir, plugin })`, which returns the files by
+  path; `toPortableSource` keeps imports of the files beside it. A plugin package's preview space is
+  `preview/space/index.ts`.
 - **`check`, `shot` and the generated visual tests settle instead of waiting for `networkidle`**, which never came on a
   page with a realtime channel: `openPage` (`@plitzi/sdk-authoring`) waits for load, then quiet, counting no stream
   that stays open.
@@ -290,6 +309,14 @@ its own inside the builder. **Breaking** for whoever imported what that chat was
 
 ## Builder
 
+- **Usages**, a panel beside Layers: where each component, class, token, space variable and data source is used,
+  page by page — what reads it and which elements — and which nothing uses, by authoring's own rule. A click selects
+  the element, inside a component too.
+- **Revealing an element inside a component opens the component** (the Usages panel, ⌘P, the issues and the history all
+  reveal through it); before, the selection was dropped. **Panels stay open** when a component opens or closes.
+- **The canvas dims a page's layout around its body again when the layout or its slot draws no box**
+  (`display: contents`, which the efficiency guide recommends): the hole was measured as a rect of zeros and the whole
+  page was dimmed. A box-less element is measured by what it holds, and the mask by the box that positions it.
 - **Elements is one category at a time.** A row of chips — each category with its count, and the space's components as
   one more — picks what the panel shows, remembered between sessions, so the panel stays the same height however many
   elements plugins add. A search looks through every category and the components at once. Each element is a tile: its

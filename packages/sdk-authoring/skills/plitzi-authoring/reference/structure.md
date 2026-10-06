@@ -71,6 +71,30 @@ container({ id: 'quick', class: quickGrid, children: QUICK.map(item => quickCard
 When items differ in ONE detail (one link needs a binding), put that detail in the item's data as an optional field
 — never an `if (item.id === 'team')` inside the map.
 
+## Pages of one shape are a family
+
+Docs pages, a menu's sections, a team's profiles: the same shape, different words. Write the shape once and the pages
+as data with `pageFamily` — it gives each page its id, slug, titles, folder and layout, and builds each body inside
+`scope(entry.id, …)`, so the ids two pages of the family give are never one:
+
+```ts
+import { pageFamily, heading, markdown } from '@plitzi/sdk-authoring';
+import { SECTIONS } from '../data/sections';   // [{ id: 'starters', title: 'Starters', slug: 'starters', description, body }]
+
+pages: [
+  home,
+  ...pageFamily(
+    { folder: 'menu', layout: { id: 'site', slot: 'site-slot' }, seoTitle: entry => `${entry.title} — Menu`,
+      body: entry => [heading({ id: 'title', content: entry.title }), markdown(entry.body, { id: 'body' })] },
+    SECTIONS
+  )
+]
+```
+
+Adding a page is adding an entry; two entries of one id or slug are refused as any two pages are. For one shape over
+records a visitor browses — a product, a post — a single page with a route param (`slug: 'posts/:postId'`) reading
+the record is the answer instead: one page, as many addresses as records.
+
 ## Names
 
 - **Ids:** `area-role` in kebab-case — `hm-traffic-title`, `docs-nav-docs-data`. Never the builder's positional
@@ -90,3 +114,10 @@ per page. It renders; it is not maintainable. When you work on such a file, leav
 
 Each of those is safe to do on its own: authoring refuses anything that would not render, and the visual check shows
 the rest.
+
+## Checked for you
+
+`npm run lint:space` (`plitzi lint`) reads the source for what this page asks — a file past 400 lines, pages in one
+file, rows of data inline, a colour that is not a token, CSS copied three times, a row singled out by its id inside a
+`map`, a minted id, a file nothing imports — at file:line, beside authoring's suggestions. Leave it clean; a departure
+on purpose says why where it is: `// plitzi-lint-disable-next-line <code> -- why`.

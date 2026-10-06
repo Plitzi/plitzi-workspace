@@ -91,7 +91,7 @@ npx @plitzi/cli add plugin legend
 
 Run in this package, it writes \`src/Legend/\` and lists it in \`src/elements.ts\` and \`src/declarations.ts\` — the
 package publishes it from then on, beside \`${type}\`. Put an \`element('legend', { id: 'legend' })\` in
-\`preview/space.ts\` to look at it.
+\`preview/space/index.ts\` to look at it.
 `;
 };
 

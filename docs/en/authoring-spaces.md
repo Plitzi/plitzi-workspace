@@ -819,6 +819,8 @@ const { suggestions } = authorSpace(space);
 | `custom-css-sdk-default` | A reduced-motion reset, or the theme toggle's icons, in `customCss` | Nothing: the SDK does both |
 | `custom-css-notifications` | `.Toastify__toast` rules in `customCss` | The space's `notifications` |
 | `heavy-animation` | Keyframes animating a size, a position, a blur, a shadow, or a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — see [Motion](./motion.md) |
+| `unused-class`, `unused-token`, `unused-component` | A class, token or component nothing wears, reads or places | Removed — or used where it was meant to go |
+| `literal-colour` | A class painted from the palette typing out a token's light value | `var(--token)` to follow the scheme; a token of one value when it must stay the same in both |
 
 A suggestion never blocks: it is advice, not the publish gate, and copies about to diverge are a reason to leave it.
 Left on purpose, it is quieted where it is written — `quiet: ['repeated-shape']` on an element it is about, a
@@ -827,7 +829,8 @@ document (`definition.quiet`) and read by `suggestSpace`, so the builder's list 
 MCP writes it with `quiet` on an element op. `quiet` takes only suggestions' codes (`quiet-unknown`).
 `suggestSpace({ schema, style })` gives the same list for a document authored anywhere; the MCP server's
 `plitzi_validate` and `plitzi_apply` answer with the ones a batch opened up (never again the ones the space already
-had), and `npm run author` prints them under the warnings. The skill's `reference/efficiency.md` is the agent's version
+had — a suggestion about declarations names them in `subjects`, so a class a batch left unused is new beside the old
+ones), and `npm run author` prints them under the warnings. The skill's `reference/efficiency.md` is the agent's version
 of this table, with the rules that cost styles rather than elements.
 
 ---

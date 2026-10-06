@@ -213,8 +213,12 @@ Nothing is wrong: the page renders as written. Each is a shorter way to the same
 | `custom-css-notifications` | the toasts dressed with `.Toastify__toast` rules in `customCss` | `notifications: { font, fontSize, border, shadow, padding, background, text, radius }` |
 | `custom-css-sdk-default` | `customCss` repeating what the SDK already does for every space — less motion when asked, the theme toggle showing one icon | nothing: remove it |
 | `heavy-animation` | keyframes animating what the browser repaints or lays out again on every frame — a size, a position, a blur, a shadow, or a colour in a loop — which stutters whenever the page is busy, most of all while it loads | `opacity` and `transform`: a size or a position is `translate`/`scale`, a blur or a shadow is the `opacity` of a layer carrying it; a loop that must animate anything else starts `paused` and runs under `[data-hydrated]` |
+| `literal-colour` | a colour written out in a class where the space has a token of that value — it stays put in the dark scheme | `var(--token)` when it should follow the scheme; a token of one value of its own when it must stay the same in both |
 | `repeated-on-pages` | the same block — a header, a footer, a side panel — written into several pages | a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it; a link marks its own page with the `current` state |
 | `repeated-shape` | the same structure written again and again with different words — cards, rows, tiles | a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards |
+| `unused-class` | a class declared in `classes` that no element, binding, flow or other class names | remove it from `classes` — or wear it where it was meant to go |
+| `unused-component` | a component no page, layout or other component places | remove it from `components`, or place it where it was meant to go |
+| `unused-token` | a token of `variables` no `var(--…)` reads — not a class, an element, `customCss` nor another token | remove it, or write it where its colour is written out |
 
 ## UPPER_CASE codes
 

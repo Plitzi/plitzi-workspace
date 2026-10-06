@@ -6,6 +6,7 @@ import { useCallback, useEffect } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { boxOf, maskFrameOf } from './mask';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -55,14 +56,21 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
       return;
     }
 
-    // `clip-path` is drawn in the layout's own box, and both rects are the viewport's: a layout nested inside another
-    // sits away from the origin, and the canvas zoom scales both. Measured against the parent and unscaled, the hole
-    // lands on the body wherever the layout is.
-    const parentRect = parent.getBoundingClientRect();
-    const childRect = child.getBoundingClientRect();
-    const scale = parent.offsetWidth > 0 ? parentRect.width / parent.offsetWidth : 1;
-    const top = (childRect.top - parentRect.top) / scale;
-    const left = (childRect.left - parentRect.left) / scale;
+    const childRect = boxOf(child);
+    if (!childRect) {
+      parent.style.removeProperty('--child-clip');
+
+      return;
+    }
+
+    // `clip-path` is drawn in the mask's frame — its padding box — and both rects are the viewport's: a layout nested
+    // inside another sits away from the origin, and the canvas zoom scales both. Measured against the frame and
+    // unscaled, the hole lands on the body wherever the layout is.
+    const frame = maskFrameOf(parent);
+    const frameRect = frame.getBoundingClientRect();
+    const scale = frame.offsetWidth > 0 ? frameRect.width / frame.offsetWidth : 1;
+    const top = (childRect.top - frameRect.top) / scale - frame.clientTop;
+    const left = (childRect.left - frameRect.left) / scale - frame.clientLeft;
     const right = left + childRect.width / scale;
     const bottom = top + childRect.height / scale;
 
@@ -107,6 +115,12 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
     // header grows when its data arrives, and a scrolling slot carries the page away without resizing anything.
     const resizeObserver = new ResizeObserver(handleChange);
     resizeObserver.observe(layout);
+    // A layout that draws no box never resizes: the frame its mask is drawn in does.
+    const frame = maskFrameOf(layout);
+    if (frame !== layout) {
+      resizeObserver.observe(frame);
+    }
+
     const mutationObserver = new MutationObserver(handleChange);
     mutationObserver.observe(layout, { childList: true, subtree: true });
     layout.addEventListener('scroll', handleChange, true);

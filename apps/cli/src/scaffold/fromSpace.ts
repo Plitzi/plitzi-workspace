@@ -1,9 +1,9 @@
 import { posix } from 'node:path';
 
-import { actionSpecFromEntry, actionToSource } from '@plitzi/sdk-authoring';
+import { actionSpecFromEntry, actionToSource, blankTemplateFiles } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 
-import { ACTIONS_ENTRY, DATA_DIR, FUNCTIONS_DIR, RUNTIME_ENTRY, SPACE_ENTRY } from './paths';
+import { ACTIONS_ENTRY, DATA_DIR, FUNCTIONS_DIR, RUNTIME_ENTRY, SPACE_DIR, SPACE_ENTRY } from './paths';
 import { envFile, SDK_VERSION, withSigningSecret } from './project';
 
 import type { CreateAnswers, ProjectFiles } from './types';
@@ -39,8 +39,15 @@ const TEXT = /\.((m|c)?(t|j)sx?|json|css|scss|sass|less|md|txt|html|svg|ya?ml|xm
 /** Whether a file of the project is text — written, compared and formatted as such — rather than bytes. */
 export const isTextFile = (path: string): boolean => TEXT.test(path);
 
-/** The example plugin and space `create` writes for a project of its own, which one made from a space replaces. */
-const EXAMPLE = ['src/plugins/StatCard/StatCard.tsx', 'src/plugins/StatCard/index.ts'];
+/**
+ * The example plugin and space `create` writes for a project of its own, which one made from a space replaces — every
+ * file of the welcome space, so none is left beside the space's own for nothing to import.
+ */
+const EXAMPLE = [
+  'src/plugins/StatCard/StatCard.tsx',
+  'src/plugins/StatCard/index.ts',
+  ...Object.keys(blankTemplateFiles({ dir: SPACE_DIR }))
+];
 
 const decode = (base64: string): string => Buffer.from(base64, 'base64').toString('utf-8');
 

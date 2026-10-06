@@ -36,7 +36,7 @@ const spec = (elements: PluginNames[]): string => `import { expect, test } from 
 
 import { authorSpace, inspectPage, openPage } from '@plitzi/sdk-authoring';
 
-import { space } from '../preview/space.ts';
+import { space } from '../preview/space/index.ts';
 import { declarations } from '../src/declarations.ts';
 
 /** The preview's elements, by the id the preview space gives each and the label it shows. */

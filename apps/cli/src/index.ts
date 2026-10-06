@@ -28,7 +28,8 @@ import { shot } from './commands/shot';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { doctor } from './doctor';
-import { positiveInteger, width, widths } from './options';
+import { lint } from './lint';
+import { count, positiveInteger, width, widths } from './options';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
@@ -54,6 +55,7 @@ import type { ShotOptions } from './commands/shot';
 import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 import type { DoctorOptions } from './doctor';
+import type { LintOptions } from './lint';
 
 /**
  * The command line for Plitzi.
@@ -386,7 +388,7 @@ program
 program
   .command('doctor')
   .description(
-    'Whether the project the CLI set up is whole — packages, its files, configs, what Node runs, plugins, data files, functions, records — each problem with its fix. Not the space: that is `npm run author`'
+    'Whether the project the CLI set up is whole — packages, its files, configs, what Node runs, plugins, data files, functions, records — each problem with its fix. Not the space: that is `npm run author`, and how it is written `plitzi lint`'
   )
   .option(
     '--fix',
@@ -396,6 +398,16 @@ program
   .option('--strict', 'Warnings fail too (exit 1): for a CI that keeps the project up to its CLI')
   .option('--json', 'One object, for a tool or an agent')
   .action((options: DoctorOptions) => doctor(options));
+
+program
+  .command('lint')
+  .description(
+    'How the space in src/space/ is written, eslint’s way: each practice to change at its file and line, what to write instead, and what authoring suggests. Not whether it authors — `npm run author` — nor the project: `plitzi doctor`'
+  )
+  .option('--strict', 'Warnings fail too (exit 1)')
+  .addOption(new Option('--max-warnings <n>', 'More warnings than this fail (exit 1)').argParser(count))
+  .option('--json', 'One object: { scope, notChecked, findings }, for a tool or an agent')
+  .action((options: LintOptions) => lint(options));
 
 const skills = program.command('skills').description('The Plitzi skills an agent reads in .claude/skills/');
 

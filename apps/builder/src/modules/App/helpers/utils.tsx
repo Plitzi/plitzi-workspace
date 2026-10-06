@@ -9,6 +9,7 @@ import Flags from '@pmodules/Flags';
 import Fonts from '@pmodules/Fonts';
 import Resources from '@pmodules/Resources';
 import StateManager from '@pmodules/StateManager/StateManager';
+import Usages from '@pmodules/Usages';
 import Variables from '@pmodules/Variables';
 
 import AppDirectory from '../components/AppDirectory';
@@ -130,13 +131,18 @@ export const getPopups = ({
       title: 'Layers',
       component: <BuilderTree />
     }),
-    panel('advanceStyle', 5, activeIds, {
+    panel('usages', 5, activeIds, {
+      icon: 'fa-solid fa-arrows-to-dot',
+      title: 'Usages',
+      component: <Usages />
+    }),
+    panel('advanceStyle', 6, activeIds, {
       icon: 'fa-solid fa-file-code text-base',
       title: 'Advance Style',
       component: <StyleAdvanceEditor />,
       size: 'custom'
     }),
-    panel('stateManager', 6, activeIds, {
+    panel('stateManager', 7, activeIds, {
       icon: (
         <Sidebar.Icon className="p-2" title="State Manager">
           <StateManagerIcon />
@@ -146,8 +152,8 @@ export const getPopups = ({
       component: <StateManager />,
       size: 'custom'
     }),
-    fullView('server', 7, activeIds, 'fa-solid fa-server', 'Server'),
-    fullView('settings', 8, activeIds, 'fas fa-cog', 'Settings')
+    fullView('server', 8, activeIds, 'fa-solid fa-server', 'Server'),
+    fullView('settings', 9, activeIds, 'fas fa-cog', 'Settings')
   ];
 
   return { left, right: [], floating: [] };

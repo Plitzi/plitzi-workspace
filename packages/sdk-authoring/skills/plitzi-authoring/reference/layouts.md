@@ -113,31 +113,16 @@ this replaces.
 
 ## Pages from a factory
 
-When pages share a shape — a heading, a lede, content, a footer — the shape is a function and each page is its data:
+When pages share a shape — a heading, a lede, content, a footer — the shape is written once and each page is its data,
+with `pageFamily`: it gives every page its id, slug, titles, folder and this layout, and prefixes the ids each body
+gives (see [structure](structure.md#pages-of-one-shape-are-a-family)):
 
 ```ts
-export const docsPage = (id: string, markdownSource: string): PageSpec => {
-  const entry = docsEntry(id);                          // title, slug, lede from nav.ts
-
-  return {
-    id,
-    name: entry.title,
-    slug: entry.slug,
-    seoTitle: `${entry.title} — Docs`,
-    seoDescription: entry.lede,
-    folder: 'docs',
-    layout: { id: 'docs-layout', slot: 'docs-slot' },
-    body: [
-      container({
-        id: `${id}-main`,                                 // prefixed: this function runs once per page
-        class: main,
-        children: [heading(entry.title, { id: `${id}-title`, class: title }), markdown(markdownSource, { id: `${id}-md` }), ...footer(id)]
-      })
-    ]
-  };
-};
-
-export const quickstart = docsPage('docs-quickstart', `## One command …`);
+pages: pageFamily(
+  { folder: 'docs', layout: { id: 'docs-layout', slot: 'docs-slot' }, seoTitle: entry => `${entry.title} — Docs`,
+    body: entry => [container({ id: 'main', class: main, children: [heading({ id: 'title', content: entry.title, class: title }), markdown(entry.source, { id: 'md' })] })] },
+  DOCS   // [{ id: 'docs-quickstart', title, slug, description, source }] — the same list the sidebar reads
+)
 ```
 
 Every page is now its content and nothing else, and every page is guaranteed the same structure.

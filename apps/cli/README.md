@@ -103,10 +103,11 @@ when an install fails the CLI says which setting names it.
 
 ## What lands in the project
 
-- **The space, as yours.** A local project gets `src/space/index.ts` — a _copy_ of the space Plitzi gives a new
-  account, declared as a tree, some CSS and a palette rather than exported as a document. It is the same
-  declaration the platform authors a new space from, so what you start with and what signing up gives you cannot
-  come apart — and unlike a document, you can read and change it.
+- **The space, as yours.** A local project gets `src/space/` — a _copy_ of the space Plitzi gives a new account,
+  declared as a tree, some CSS and a palette rather than exported as a document, a file per part: `index.ts` (the page
+  and the space), `tokens.ts`, `theme.ts`, `content.ts`. It is the same declaration the platform authors a new space
+  from, so what you start with and what signing up gives you cannot come apart — and unlike a document, you can read
+  and change it.
 - **A live loop.** In client mode a save is a hot module replacement: the space module is swapped and the tree
   remounted, so the page updates without reloading. In server mode `start:dev` re-authors a saved space and the open
   page loads again, swaps a saved plugin where it is drawn, and restarts only for the server's own code.
@@ -212,6 +213,43 @@ by the line and column the element remembers — and only where the value is wri
 listed with where it is and why it was left. `--write` authors the space again in a fresh process and keeps the edits
 only if every fix is gone and no problem was added; a fix that would add one is put back and said.
 
+## `lint`
+
+```bash
+plitzi lint                    # the space's source, eslint's way: each practice to change at its file and line
+plitzi lint --json             # one object: { scope, notChecked, counts, findings }
+plitzi lint --max-warnings 0   # more warnings than that fail (exit 1); --strict: any warning does
+```
+
+How the space in `src/space/` is written — what only its source can say, and what grows hard to read and to change as
+a space reaches thousands of lines. Each finding has a stable `code`, a severity, the file, line and column, what to
+write instead, and `docs`: the reference of the project's skills that explains the practice. A project `create` writes
+has it as `npm run lint:space`.
+
+| Code | What it finds |
+|---|---|
+| `unused-file` | a file of `src/space/` nothing `src/space/index.ts` imports reaches |
+| `file-too-long` | a file of more than 400 non-blank lines: split it by what changes together |
+| `pages-in-one-file` | two pages or more (past 40 lines) written in `index.ts`, which only assembles the space; three or more (past 150 lines) in any other file — one file per page, or per page family, under `src/space/pages/` |
+| `inline-records` | ten or more records written inline that a page renders (`.map`ped, or a list's `items`): rows of data for `src/data/` (`public/data/` without a server), read by a provider into one `list` |
+| `repeated-css` | the same CSS — three declarations or more, in any order or spelling — written three times: one class |
+| `special-case-in-map` | a `map` that singles out a row by its `id`, `key`, `slug`, `name`, `title` or `label`: the difference belongs in the row's data |
+| `colour-not-token` | a hex, `rgb()`/`hsl()`/`oklch()`… or a named colour where a colour is all a property takes — outside the declared tokens (`variables`, `light`/`dark`), anchors, masks, markup and URLs |
+| `positional-id` | an id minted for an element nobody named — `container-45`, `heading-a7k2` |
+| `space-does-not-author` | error: the space does not author, so authoring's suggestions could not be read — `npm run author` says why |
+| `source-unreadable` | error: the source could not be read (no TypeScript installed, a rule that could not finish) |
+
+Beside them, every suggestion authoring makes about the space it authors to (`authorSpace(…).suggestions`) — whatever
+its code, the day authoring adds it — as a warning at the line that wrote its element; `plitzi explain <code>` says what
+each means. They are quieted on the element (`quiet: ['repeated-shape']`), where the builder and the MCP read it too.
+A practice the source departs from on purpose is said where it is, eslint's way:
+`// plitzi-lint-disable-next-line colour-not-token -- the partner's own red`, `-line` for its own line, and
+`// plitzi-lint-disable <codes>` for the whole file.
+
+It is not whether the space authors — what it refuses and warns of is `npm run author`'s — nor a page as it renders
+(`check`), nor the project around the space (`doctor`); every report says so (`notChecked`). Exit code 1 while anything
+is an error; with `--strict` a warning too, with `--max-warnings <n>` more than n of them.
+
 ## `import`
 
 ```bash
@@ -270,7 +308,7 @@ plitzi doctor --strict         # warnings fail too — for a CI that keeps the p
 Whether the project is whole as the CLI sets it up, read from what it is now rather than from what the CLI once wrote:
 a developer may change any file, and the checks are what each part must be for the project to install, start, build and
 push. It is the CLI's check of the project, not of the space: what the space authors to and warns of is `npm run
-author`'s, and how a page renders `check`'s. Exit code 1 while anything is an error (with `--strict`, a warning).
+author`'s, how it is written `lint`'s, and how a page renders `check`'s. Exit code 1 while anything is an error (with `--strict`, a warning).
 
 Each finding has an area, a stable `code`, the file and its `fix`; the report ends with **what to run next** — the few
 commands (`plitzi upgrade --write`, an install, `doctor --fix`) that clear most of the list, by how many each fixes.

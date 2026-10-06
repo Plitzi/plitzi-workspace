@@ -1,4 +1,4 @@
-import { blankSpaceSource } from '@plitzi/sdk-authoring';
+import { blankTemplateFiles } from '@plitzi/sdk-authoring';
 
 import { htmlText } from './quote';
 
@@ -46,7 +46,7 @@ import { authorSpace } from '@plitzi/sdk-authoring';
 
 import { declarations } from '../src/declarations.ts';
 import { elements } from '../src/elements.ts';
-import { space } from './space.ts';
+import { space } from './space/index.ts';
 
 import './preflight.css';
 import '@plitzi/plitzi-sdk/plitzi-sdk.css';
@@ -89,7 +89,7 @@ const mount = (spec: SpaceSpec) => {
 let mounted = mount(space);
 
 if (import.meta.hot) {
-  import.meta.hot.accept('./space.ts', updated => {
+  import.meta.hot.accept('./space/index.ts', updated => {
     // Cast because the dev server cannot know the shape of a module it is swapping; the name is this file's own.
     const next = (updated as { space?: SpaceSpec } | undefined)?.space;
     if (!next) {
@@ -109,8 +109,9 @@ export const previewFiles = ([main, ...others]: PluginNames[]): ProjectFiles => 
   // The space a new account starts with, carrying every element in its hero as an element of its own type — how the
   // builder adds one, and how a space that loads the package from its manifest hosts it. The preview's to change: put
   // each element where it will really live, give it the attributes it will really get.
-  'preview/space.ts': blankSpaceSource({
+  ...blankTemplateFiles({
     name: `${main.title} preview`,
+    dir: 'preview/space',
     plugin: [main, ...others].map(names => ({
       id: names.base,
       renderType: names.type,

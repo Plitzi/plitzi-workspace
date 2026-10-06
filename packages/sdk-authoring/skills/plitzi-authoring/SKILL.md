@@ -41,19 +41,18 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
 1. **Read before you write.** Open `src/space/index.ts` (and whatever it imports) and find the layout, the classes and the
    helpers already there. Extend them; do not add a second way of doing something the space already does.
 2. **Change the declaration, then author it.** `npm run author` (or a restart) runs `authorSpace` — not `doctor`, which
-   is the project's. It checks
-   everything — every field, value, template, name, param and page link — and a refusal says what to write instead:
-   do exactly that. Never work around a check, cast past it, or move the logic into a plugin to escape it. The first
-   refusals come one at a time; the linter's come as ONE list — fix every line of it before running again. How it
-   checks, a one-file author script for any project, and what it cannot see: [validation](reference/validation.md).
+   is the project's. It checks every field, value, template, name, param and page link, and a refusal says what to
+   write instead: do exactly that. Never work around a check, cast past it, or move the logic into a plugin to escape
+   it. The linter's problems come as ONE list — fix every line before running again. How it checks, and what it
+   cannot see: [validation](reference/validation.md).
 3. **Read every warning, then every suggestion.** A warning names something written that will not do what it says —
-   zero warnings is the bar. A suggestion (`[suggest]`, `suggestions` in `authorSpace`'s result) names a shorter way to
-   the same page: a layout for chrome on every page, a component or a `list` for copies, a button's own `content`. Take
-   them, the ones that save the most first. See [efficiency](reference/efficiency.md).
+   zero warnings is the bar. A suggestion (`[suggest]`) names a shorter way to the same page — a layout, a component,
+   a `list`, a button's own `content` — or what nothing uses. Take them, the ones that save the most first
+   ([efficiency](reference/efficiency.md)). Then `npm run lint:space`: how the source is written — long files, rows of
+   data inline, colours that are not tokens — at file:line. Leave both clean.
 4. **Look at it.** `npm run check -- /about --width 1440,390` says in text whether the page is whole — every element on
-   screen, nothing overflowing, a clean console; `npm run shot -- /about --width 390 --scheme dark` is the picture, for
-   when it says something is wrong (`--frames 4` shows what moves); `npm run visual`
-   runs the checks. Look at desktop, tablet and mobile, light and dark, and the page while its data is still loading.
+   screen, nothing overflowing, a clean console; `npm run shot -- /about --width 390 --scheme dark` is the picture
+   (`--frames 4` shows what moves); `npm run visual` runs the checks. Look at desktop, tablet and mobile, light and dark, and the page while its data is still loading.
 5. **Go through the [review checklist](reference/review-checklist.md) before saying it is done.** It is the feedback a
    reviewer gives on every change, written down so you do not need to hear it.
 
@@ -67,10 +66,11 @@ second into the first. If the MCP asks for a sign-in nobody can give, a project 
    Chrome shown on several pages — a header, a sidebar, a footer — is a **layout** the pages name, written once. A block
    placed many times with different content — a product card, a testimonial — is a **component** placed with
    `component(id, { props })`. A menu, a card grid, a list of steps is DATA, never a block pasted per item: a short
-   menu mapped in code (`entries.map(entry => link({ href, content: entry.title }))`) is fine; rows — cards, dishes,
-   tiles — are one `list` over them (`items: [ … ]`) whose row is written once. A link or a button says its words as
-   its own `content`, not through a `text` inside it. See [layouts and duplication](reference/layouts.md),
-   [components](reference/components.md) and [efficiency](reference/efficiency.md).
+   menu mapped in code is fine; rows — cards, dishes, tiles — are one `list` (`items: [ … ]`) whose row is written
+   once. A link or a button says its words as
+   its own `content`, not through a `text` inside it. Pages of one shape are one `pageFamily` over data. See
+   [layouts](reference/layouts.md), [components](reference/components.md), [structure](reference/structure.md) and
+   [efficiency](reference/efficiency.md).
 3. **One element, one base selector.** An element takes a shared `class` OR its own `css`, never both — authoring
    refuses the pair. "This class plus one thing" is the class with rules on top, last in the list:
    `class: [cover, { opacity: '0.25' }]` (needs the element's `id`; it becomes the class `<id>--own`). A look that

@@ -315,6 +315,11 @@ space already had is not repeated on every batch — and none of them blocks any
   \`states\`/\`ancestors\`, the SDK (reduced motion, the theme toggle's icons) or the space's notification look says.
 - \`heavy-animation\` — keyframes that animate a size, a position, a blur, a shadow, or a colour in a loop: they stutter
   while the page loads. Lighter, not shorter — see **Motion — good practices**.
+- \`unused-class\`, \`unused-token\`, \`unused-component\` — declared and read by nothing: remove it
+  (\`deleteDefinition\`, \`deleteStyleVariable\`, \`deleteComponent\`), or use it where it was meant to go. Said
+  when a batch leaves one behind.
+- \`literal-colour\` — a class painted from the palette typing out a token's light value: \`var(--token)\` when it
+  should follow the scheme; a token of one value when it must stay the same in both.
 \`plitzi://explain/<code>\` explains each. Take one unless the copies are about to diverge; one left on purpose is
 quieted on an element it names — \`quiet: ["repeated-shape"]\` on \`upsertElement\`/\`patchElement\` (\`null\` removes it)
 — and is not offered again, here, in the builder or in authoring. Suggestions' codes only.

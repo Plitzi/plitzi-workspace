@@ -1,6 +1,6 @@
-import { blankSpaceSource, catalogTemplateFiles, emptySpaceSource } from '@plitzi/sdk-authoring';
+import { blankTemplateFiles, catalogTemplateFiles, emptySpaceSource } from '@plitzi/sdk-authoring';
 
-import { AUTHOR_FILE, DATA_DIR, SPACE_ENTRY } from './paths';
+import { AUTHOR_FILE, DATA_DIR, SPACE_DIR, SPACE_ENTRY } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { PluginHostOptions } from '@plitzi/sdk-authoring';
@@ -10,8 +10,8 @@ import type { PluginHostOptions } from '@plitzi/sdk-authoring';
  *
  * Not imported from `@plitzi/sdk-authoring` at run time, and that is the whole point: a project whose space came
  * from a package could only ever render Plitzi's blank space, and the first thing anybody wants is to make it
- * theirs. What lands in `src/space/` is the declaration itself — a tree, some CSS, a palette — so editing the
- * space is editing this project.
+ * theirs. What lands in `src/space/` is the declaration itself — a tree, some CSS, a palette, a file each — so
+ * editing the space is editing this project.
  *
  * It is the same source the platform authors a new space from, so what `plitzi create` starts you with and what
  * signing up gives you cannot come apart.
@@ -235,7 +235,7 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
   }
 
   return {
-    [SPACE_ENTRY]: blankSpaceSource({ name: answers.name, plugin: pluginHost(answers) }),
+    ...blankTemplateFiles({ name: answers.name, dir: SPACE_DIR, plugin: pluginHost(answers) }),
     [AUTHOR_FILE]: authorScript(answers),
     // As the project's own formatter writes it — a short list on one line — so its first `format` changes nothing.
     ...(answers.mode === 'client'

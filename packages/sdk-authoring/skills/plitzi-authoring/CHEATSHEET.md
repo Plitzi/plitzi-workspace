@@ -18,7 +18,8 @@ const space: SpaceSpec = {
   components: [{ id, props, slots, root }],    // a block placed many times with different content
   pages: [{ id, name, slug: '', layout: { id: 'shell', slot: 'main' }, body: [] }]   // slot: where the body goes
 };                                             // slug '' is home; 'products/:slug' takes a param
-const { schema, style, warnings } = authorSpace(space, { plugins: [declaration] });
+pageFamily({ folder, layout, seoTitle, body: entry => [...] }, ENTRIES)   // pages of one shape, from data; ids scoped per page
+const { schema, style, warnings, suggestions } = authorSpace(space, { plugins: [declaration] });
 ```
 
 ## Elements

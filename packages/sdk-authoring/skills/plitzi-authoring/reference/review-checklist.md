@@ -9,6 +9,8 @@ of it; each line is something that has shipped broken before.
 - [ ] Every **suggestion** is taken, or left for a reason you can say (the copies are about to diverge; three cards a
       person rewords on the canvas) — and then quieted where it is written, `quiet: ['repeated-shape']`, so it stops
       burying the ones that matter. The ones your change opened up first — [efficiency.md](efficiency.md).
+- [ ] `npm run lint:space` is clean — no file past 400 lines, no rows of data inline, no colour that is not a token —
+      or each departure says why where it is ([structure.md](structure.md#checked-for-you)).
 - [ ] No console errors on any page you touched.
 
 ## Nothing flashes, nothing jumps

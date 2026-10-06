@@ -269,14 +269,20 @@ describe('plitzi doctor', () => {
     expect(process.exitCode).toBe(1);
   });
 
-  /** The project as a 0.38.4 CLI laid it out: the space in `src/space.ts`, `author` in `src/`, its cache at the root. */
+  /**
+   * The project as a 0.38.4 CLI laid it out: the space in `src/space.ts` and its parts in `src/site/`, `author` in
+   * `src/`, its cache at the root.
+   */
   const olderLayout = async (): Promise<void> => {
+    const parts = (await fs.readdir(path.join(project, 'src/space'))).filter(file => file !== 'index.ts');
+    await fs.mkdir(path.join(project, 'src/site'));
+    for (const part of parts) {
+      await fs.rename(path.join(project, 'src/space', part), path.join(project, 'src/site', part));
+    }
+
     await fs.rename(path.join(project, 'src/space/index.ts'), path.join(project, 'src/space.ts'));
-    await write('src/site/tokens.ts', 'export const tokens = {};\n');
-    await write(
-      'src/space.ts',
-      `import { tokens } from './site/tokens.ts';\nvoid tokens;\n${await read('src/space.ts')}`
-    );
+    await fs.rmdir(path.join(project, 'src/space'));
+    await write('src/space.ts', (await read('src/space.ts')).replaceAll("from './", "from './site/"));
     await write('src/main.ts', (await read('src/main.ts')).replace("'./space/index.ts'", "'./space.ts'"));
     await fs.rename(path.join(project, 'plitzi/author.ts'), path.join(project, 'src/author.ts'));
     await write('src/author.ts', (await read('src/author.ts')).replace("'../src/space/index.ts'", "'./space.ts'"));

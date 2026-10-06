@@ -2,12 +2,11 @@
 name: plitzi-cli
 description: >-
   Use the Plitzi command line (@plitzi/cli, `plitzi …` or `npx @plitzi/cli …`) instead of hand-writing what it
-  generates: scaffold a project that renders a space, add elements of your own (plugins) to it, create a plugin package,
-  build a plugin into the module + manifest + zip the platform takes, sign in to upload and install it on a space, and
-  edit a space's own server code (its functions) in the project, and take a space on Plitzi out as a self-hosted project
-  of its own (`create --from`, kept in step with `pull` and `push`). Use whenever the task is to start a Plitzi project,
-  create or change a plugin/custom element, pack, upload or install one, pull/push/try a space's functions, move a space
-  to a server of its own and back, or work out which space the CLI is connected to.
+  generates: scaffold a project that renders a space, add plugins to it or build a plugin package, pack, upload and
+  install one, edit a space's functions, take a space on Plitzi out as a self-hosted project and back (`create --from`,
+  `pull`, `push`), and check a project (`doctor`) or how its space's source is written (`lint`). Use whenever the task is
+  to start a Plitzi project, create or change a plugin, pack, upload or install one, pull/push/try a space's functions,
+  move a space to a server of its own and back, or work out which space the CLI is connected to.
 ---
 
 # The Plitzi CLI
@@ -39,21 +38,21 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
 
 ## Running it as an agent
 
-- **Which check.** The space: `npm run author`. A rendered page: `check`. The project around them (packages,
-  configs, imports, plugins, data): `doctor`, before `push`; `--fix` repairs the simple ones (an older
-  project: `npx @plitzi/cli@latest doctor --fix`).
+- **Which check.** The space as a document: `npm run author`. How its source is written: `npm run lint:space`. A
+  rendered page: `check`. The project around them (packages, configs, imports, plugins, data): `doctor`, before
+  `push`; `--fix` repairs the simple ones (an older project: `npx @plitzi/cli@latest doctor --fix`).
 
 - **After the SDK moves, `upgrade`.** It shows the CLI's files, scripts, versions and skills as they should be now, and
-  every renamed name at its line. `--write` replaces what nobody changed, merges `package.json` and installs; a file
+  each renamed name at its line. `--write` replaces what nobody changed, merges `package.json` and installs; a file
   you changed comes as a diff — `--take <file>` once read.
 
 - **`create` never decides for the person.** Three choices shape a project — package manager, `--mode`
   (`server`: SSR + RSC on a Node tier, `client`: browser only) and `--source` (`local`: the space lives in the project,
   `cloud`: it lives in Plitzi). With nobody at the terminal it writes NOTHING and prints each missing choice as a
-  question: ask the user, then run again with their answers as flags. `--yes` does not get around it — it only takes
-  the defaults for a person at a terminal. Do not guess the answers.
+  question: ask the user, then run again with their answers as flags. `--yes` only takes the defaults for a person at
+  a terminal; never guess the answers.
 - **Signing in happens in the browser.** `login`, `space` and a first `upload` open one; the person completes it (MFA
-  and social sign-in included — the CLI never sees a password). Tell them a browser tab is waiting, and wait.
+  and social sign-in included — the CLI never sees a password). Tell them a tab is waiting, and wait.
 - **One space at a time.** Everything goes to the space `whoami` names; `plitzi space` switches it. No command takes a
   space as a flag, so check `whoami --json` (`{ api, user, space }`) before an upload.
 - **Read stdout, exit code and stderr apart.** The answer is on stdout (`--json`: one object, one line); errors and
@@ -70,8 +69,8 @@ Where the space lives decides which one an agent uses — the two never take tur
 | On Plitzi — edited in the builder, with collaborators, published from there | the Plitzi MCP server: it reads and edits the live space, previews a page and checks every edit with the same linter |
 | On Plitzi, and wanted in code from now on | `create --from <space>`, then `pull` and `push` keep both in step |
 
-The MCP needs a signed-in account. If it asks for authentication and nobody can give it, do not wait on it: a project
-with `--source local` needs neither.
+The MCP needs a signed-in account; when nobody can give one, do not wait on it: a `--source local` project needs
+neither.
 
 ## Projects (`create`)
 
@@ -86,7 +85,8 @@ What a project gives you, so you use it rather than rebuild it:
 | --- | --- |
 | `start` | serve it — in client mode Vite, which hot-replaces on save. The server prints only what goes wrong; `-- --verbose` adds every request |
 | `start:dev` | server mode: restarted on a save to its code; a plugin is swapped in the open page. Options in `src/config/serverOptions.ts`, actions in `src/actions/`; `plitzi/` is the CLI's, never edit it |
-| `author` | author `src/space/`: one line when it is fine, every problem at once (file:line, what to change) when not, then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
+| `author` | author `src/space/`: every problem at once (file:line, what to change), then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
+| `lint:space` | how `src/space/` is written, at file:line: long files, inline data, colours not tokens, copied CSS, and authoring's suggestions; `-- --max-warnings 0`. On purpose: `// plitzi-lint-disable-next-line <code> -- why` |
 | `npx plitzi fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |
 | `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows, a binding its data lacks; `--state`, `--element <id>`: what it holds; `--ssr`: what SSR misses; `--json` |
 | `npx plitzi import <url>` | a page the user owns, as a start: `tokens.ts`, `outline.ts` (blocks and layout per breakpoint), lists as `data/*.json`, screenshots, `IMPORT.md`. Never the words. **Only when the user asks.** A site not on this machine needs `--account` (their Plitzi account, its domain verified on a space): ask first |
@@ -98,16 +98,16 @@ What a project gives you, so you use it rather than rebuild it:
 `shot` and `visual`. `PORT` chooses one (a taken one is then an error). `/health` answers with the space's name.
 
 Data with no backend, server mode: `src/data/*.json`, never served — a provider with `runtime: 'server'` and `query:
-'/data/x.json'` reads it on the server (a browser one is refused). Client mode: `public/data/`, fetched — public. Learn a
-file's fields with `data describe`, never by reading it.
+'/data/x.json'` reads it on the server. Client mode: `public/data/`, fetched — public. Learn a file's fields with
+`data describe`, never by reading it.
 
 **`public/` is on the internet**: never a secret there. `tmp/`, `state/` (its `kv`) ignored; `.plitzi/` committed.
 `--dry-run` on a command that writes or sends says what it would do, and does none of it.
 
-A local space starts as a tour of the platform with a plugin of the project's own; **`--template blank`** starts it as
-tokens, a layout and one empty page instead — the one to pick when the project is about to be a specific site; and
-**`--template catalog`** as a complete small shop (layout, card component, data in `src/data`, a filtered list, a
-page per product), a file per part — the one to read when unsure how a whole site is put together.
+A local space starts as a tour of the platform with a plugin of the project's own; **`--template blank`** as tokens, a
+layout and one empty page — for a project about to be a specific site; **`--template catalog`** as a small shop
+(layout, card component, data in `src/data`, a filtered list, a page per product), a file per part — the one to read
+when unsure how a whole site is put together.
 
 The space itself is written with `@plitzi/sdk-authoring` — see the `plitzi-authoring` skill, which `create` copies into
 `.claude/skills/` beside this one.

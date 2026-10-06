@@ -33,3 +33,13 @@ export const positiveInteger = (value: string): number => {
 
   return parsed;
 };
+
+/** A whole number from 0: how many of something are allowed. */
+export const count = (value: string): number => {
+  const parsed = Number(value.trim());
+  if (value.trim() === '' || !Number.isInteger(parsed) || parsed < 0) {
+    throw new InvalidArgumentError('It takes a whole number from 0.');
+  }
+
+  return parsed;
+};

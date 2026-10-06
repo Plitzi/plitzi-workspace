@@ -146,6 +146,8 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
           preview: 'vite preview'
         }),
     ...(source === 'local' ? { author: `node ${AUTHOR_FILE}` } : {}),
+    // How the space's source is written — its files, data, tokens, repeats — eslint's way; `lint` is the code's.
+    ...(source === 'local' ? { 'lint:space': 'plitzi lint' } : {}),
     // One line per error — file(line,col) and the message — rather than a framed excerpt of each.
     typecheck: 'tsc -p tsconfig.json --noEmit --pretty false',
     lint: 'eslint .',
@@ -346,7 +348,12 @@ export const agentsFile = (answers: CreateAnswers): string => {
   const commands = [
     `| ${code(installCommand(answers.packageManager))} | install |`,
     `| ${run('start')} | serve it |`,
-    ...(local ? [`| ${run('author')} | author the space and print its warnings and suggestions |`] : []),
+    ...(local
+      ? [
+          `| ${run('author')} | author the space and print its warnings and suggestions |`,
+          `| ${run('lint:space')} | how the space's source is written: each practice to change at its file and line |`
+        ]
+      : []),
     `| ${run('visual')} | open the page in a browser and check it rendered |`
   ];
   const zeroWarnings = local ? `Zero warnings from ${run('author')}.` : 'Zero warnings from authoring.';
@@ -416,7 +423,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 - **Scratch goes in ${code(`${PROJECT_TMP}/`)}, or nowhere.** A one-off script, a dump, a picture to look at — never at the root or beside the source, where it reads as part of the project.
 - **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component, and rows of data are one list. Change it where it is defined, and rename everywhere when you rename.
 - **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space/')} already has. Do not start a parallel layout of your own.
-- **Leave it passing.** ${local ? `${run('author')} with zero warnings, ` : ''}${run('typecheck')}, ${run('lint')} and ${run('format')} clean, and the page checked (${run('check')}).
+- **Leave it passing.** ${local ? `${run('author')} with zero warnings, ${run('lint:space')} clean, ` : ''}${run('typecheck')}, ${run('lint')} and ${run('format')} clean, and the page checked (${run('check')}).
 
 ## The rules that go wrong most
 

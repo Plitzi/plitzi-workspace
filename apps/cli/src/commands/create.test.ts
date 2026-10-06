@@ -401,9 +401,13 @@ describe('the scaffold', () => {
 
     expect(local['AGENTS.md']).toContain('.claude/skills/plitzi-authoring/SKILL.md');
     expect(local['AGENTS.md']).toMatch(/`npm run author` \| author the space/);
+    expect(local['AGENTS.md']).toMatch(/`npm run lint:space` \| how the space's source is written/);
     expect(local['CLAUDE.md']).toBe('@AGENTS.md\n');
-    // A space that lives in Plitzi has no `author` script to run.
+    // A space that lives in Plitzi has no `author` script to run, and no source to lint.
     expect(cloud['AGENTS.md']).not.toContain('run author');
+    expect(cloud['AGENTS.md']).not.toContain('lint:space');
+    expect(JSON.parse(local['package.json'])).toMatchObject({ scripts: { 'lint:space': 'plitzi lint' } });
+    expect(JSON.parse(cloud['package.json'])).not.toHaveProperty(['scripts', 'lint:space']);
   });
 
   /** The three facts that cost the most to find out, and the files that cost the most to read for nothing. */

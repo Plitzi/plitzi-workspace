@@ -55,10 +55,11 @@ export interface DoctorOptions {
 
 /**
  * What the doctor does not check, and what does — said in every report, so nobody takes a healthy project for a space
- * without problems: the space is authoring's, a page the browser's.
+ * without problems: the space is authoring's, how it is written lint's, a page the browser's.
  */
 export const NOT_CHECKED = [
   { what: 'the space — what it authors to, refuses and warns of', by: 'npm run author' },
+  { what: 'how the space is written — its files, data, tokens, repeats', by: 'plitzi lint' },
   { what: 'a page as it renders', by: 'plitzi check' }
 ] as const;
 
