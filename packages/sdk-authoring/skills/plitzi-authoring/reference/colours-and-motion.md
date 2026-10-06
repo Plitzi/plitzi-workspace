@@ -62,7 +62,9 @@ variables: {
 - **`tokens(variables)`** names them for a rule: declare the variables once (`satisfies SpaceSpec['variables']`), hand
   the same object to the space, and `const t = tokens(variables)` gives `t.primary === 'var(--primary)'` — a name the
   space does not declare is a type error. A `var(--x)` written by hand that nothing declares is warned
-  `unknown-variable`; one that may be missing on purpose takes a fallback, `var(--x, 8px)`.
+  `unknown-variable`; one that may be missing on purpose takes a fallback, `var(--x, 8px)`. The other way round, a token
+  nothing reads is suggested `unused-token`, and a class painted from the palette that types one of its colours out
+  `literal-colour` — see [efficiency](efficiency.md#what-it-declares-and-never-uses).
 - Choose each value against its own background: a colour picked on white is not the same colour on near-black.
 - Fixed colours are only for surfaces that are fixed in both themes (a brand panel that is always dark) — and then
   the text on them is fixed too. Theme-following text on a fixed background is the bug.

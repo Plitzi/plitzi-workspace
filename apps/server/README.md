@@ -690,6 +690,10 @@ Compiled and copied plugin files are served under `/sdk-plugins/{name}/`:
 
 Plugin responses are compressed with Brotli or gzip like all other responses.
 
+A page imports only the plugins it draws: its own elements, its layouts', and those of the components and references it
+holds (`pageElementTypes`). The rest reach the page as their declaration (`PluginEntry.deferred`) and are imported when
+a page that draws them is opened, client-side navigation included.
+
 ### TTL and invalidation
 
 Plugins are compiled once and cached for `pluginsTtlMs` (default: 1 week). The TTL is tracked via a `meta.json` file written alongside each plugin's compiled output. On the next request after expiry the plugin is automatically recompiled.
@@ -1406,6 +1410,16 @@ createServer({ templateFn, adapters: { ... } });
 
 The function is called once per render (cache misses only). The built-in `template.ejs` is used as fallback when `templateFn` is not set.
 
+What the built-in template does that a custom one has to decide for itself:
+
+- **The space travels beside the page.** The built-in template leaves it out of the payload, names it with
+  `spaceDocumentPath` (`<link id="plitzi-space" rel="preload" as="fetch">`) and its bootstrap fetches it before it
+  hydrates. A custom template is handed the space inline in `offlineData`, as before.
+- **Only the plugins the page draws are imported up front.** An entry with `deferred` is handed to `render()` as
+  `{ load: () => import(js), css, declaration }`: the SDK registers it at once and loads its code and stylesheet the
+  first time one of its elements is drawn. A template that imports every entry statically still works; it only loads
+  more than the page draws.
+
 **Streaming compatibility**: when `streaming: true` the server calls `templateFn` with a sentinel placeholder (`<!--SSR_CONTENT-->`) in place of the React HTML, splits the output at that marker, and streams head and tail separately. Existing templates that interpolate `html` as-is are compatible without any changes.
 
 ## Template props
@@ -1431,9 +1445,10 @@ return {
 | `jsPath` | `string` | URL for the SDK JS module. Defaults to `/sdk-assets/plitzi-sdk.js`. |
 | `cssPath` | `string` | URL for the SDK stylesheet. Defaults to `/sdk-assets/plitzi-sdk.css`. |
 | `iconsCssPath` | `string` | URL for Font Awesome's stylesheet, linked after `cssPath`; its fonts are files beside it. Defaults to `/sdk-assets/plitzi-sdk-icons.css`. |
+| `spaceDocumentPath` | `string` | Where the page fetches the space from (`/_plitzi/space/<hash>.json`), preloaded in the head and read by the bootstrap before it hydrates. Set by the built-in template's render; absent for a draft preview and for a custom `templateFn`, which receive the space inline in `offlineData`. |
 | `builderJsPath` | `string` | URL for the builder JS module. Omitted by default. |
 | `builderCssPath` | `string` | URL for the builder stylesheet. Omitted by default. |
-| `plugins` | `PluginEntry[]` | Plugin entries to inject. Normally set automatically via `pluginNames`. |
+| `plugins` | `PluginEntry[]` | Plugin entries to inject. Normally set automatically via `pluginNames`. An entry with `deferred` is one the page draws none of: its declaration, for the browser to load its code when a page that draws it is opened. |
 | `react` | `string` | React ESM URL. Defaults to `esm.sh/react@19`. |
 | `reactDom` | `string` | ReactDOM ESM URL. |
 | `reactDomClient` | `string` | ReactDOM client ESM URL. |

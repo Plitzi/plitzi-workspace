@@ -14,6 +14,7 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 | Step | Tool | Answers |
 | --- | --- | --- |
 | Write | `npm run author` | Whether the space authors: one line when it does, every problem at once (file, line, what to change) when not — and, under the warnings, the suggestions: a shorter way to the same page, with the elements it saves |
+| Lint | `npm run lint:space` (`plitzi lint`) | How the space's source is written, eslint's way, at file:line: files too long, pages in one file, rows of data written in code, colours that are not tokens, CSS copied, a row singled out in a `map`, minted ids, files nothing imports — beside authoring's suggestions at the line that wrote them. `--max-warnings 0` for CI |
 | Upgrade | `npx plitzi upgrade [files\|packages\|skills\|renames]` | The project brought up to the CLI it has: the CLI's files (replaced where nobody changed them, a diff where somebody did), `package.json` merged, the skills, every renamed name at its line; `--write` makes it |
 | Project | `npx plitzi doctor` | Whether the project the CLI set up is whole, after moving or rewiring files and before a push: packages, the CLI's files and scripts, configs, what Node runs, plugin folders, data files, functions — each problem with its file and fix. Never the space: that is `author`'s. `--fix` repairs the simple ones |
 | Repair | `npx plitzi fix` | The problems — and the suggestions — with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
