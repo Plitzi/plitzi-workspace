@@ -1,5 +1,337 @@
 # @plitzi/sdk-variables
 
+## 0.38.5
+
+### Patch Changes
+
+- 3bce653: ## Agents work through the MCP: the builder's AI chat is gone
+
+  An agent reaches a space through the MCP, from whatever harness the person already uses; Plitzi no longer runs one of
+  its own inside the builder. **Breaking** for whoever imported what that chat was built on:
+
+  - **The builder's Assistant panel is removed**, with its conversations, attachments, previews and provider settings.
+  - **`@plitzi/sdk-mcp` no longer exports the in-process AI engine**: `AIEngine`, `toolResponseOk`, `toolResponseErr`,
+    `zodToJsonSchema`, `getAllowedModes`, `bindTools`, `isToolActive`, `resolveToolHandler`, `isCallToolResult`,
+    `toolResponseFromResult` and `buildAgentGuide`. The MCP server, its tools and `@plitzi/sdk-mcp/server` are unchanged;
+    the tool functions are still exported to run in-process.
+  - **`@plitzi/sdk-shared` drops the chat's types** — `AITypes` (`AiContext`, `AiMode`, `AiMessageAttachment`,
+    `AiUsage`, …) and `McpTypes` (`McpTool`, `McpToolHandler`, `McpContent`, …), with their `./types/AITypes` and
+    `./types/McpTypes/index` subpaths — and no longer depends on `@modelcontextprotocol/sdk`.
+  - **A change's `origin` is never `coworker`**: `ChangeOrigin` is `builder`, `mcp`, `autofix`, `api` or `system`, and
+    the History panel's filter follows.
+  - **The builder's platform flags are gone**: `PlatformFlags` is no longer part of the builder's first query, nor
+    `platformFlags` of its store — `assistanceAI` was the only one.
+  - **Plitzi's own deployment no longer offers the `ai.complete` task** to flows.
+  - **Each MCP tool says whether it only reads** (`readOnlyHint`, from the tool's `access`), so a host can run a read
+    without asking and ask before a write. Until now `access` was read only by the builder's chat.
+  - **The MCP works over the JSON adapters.** `createJsonAdapters` offers `getSchema` and `getStyle`, and — for a space
+    read from a path — `saveSchema` and `saveStyle`, each writing its document back into the file. **Breaking**:
+    `saveOfflineData` is gone from `SSRAdapters`; nothing called it, and it was the JSON adapters' only write, so an MCP
+    over them could neither read nor save.
+
+  ## Lighter pages: icons on their own
+  - **Font Awesome is a stylesheet of its own**, `plitzi-sdk-icons.css`, with its fonts as files beside it
+    (`webfonts/`) instead of base64 inside `plitzi-sdk.css` — which drops from 287 KB to 103 KB. A page fetches a face
+    only when it shows an icon of that style, and a new SDK version no longer downloads the fonts again. The page server
+    links it after `plitzi-sdk.css` (`SSRTemplateProps.iconsCssPath`), the SDK's iframe and shadow modes load it beside
+    the stylesheet, and the package exports it: **a project that imports `@plitzi/plitzi-sdk/plitzi-sdk.css` imports
+    `@plitzi/plitzi-sdk/plitzi-sdk-icons.css` too** — `plitzi upgrade` adds it to `src/main.ts`, and a new project has
+    it. The MCP's rendered widgets inline the sheet, fonts and all, only for a widget that draws an icon.
+  - **Material Icons is no longer loaded.** Nothing in Plitzi used it; every page paid a request to Google for it.
+  - **A page loads only the plugins it draws.** The page server sends the rest as their declaration
+    (`PluginEntry.deferred`, `pluginDeclarationOf` in `@plitzi/sdk-shared/plugins/declaration`); the SDK registers each
+    as a stand-in that knows its types from the start, and loads its code and stylesheet the first time one of its
+    elements is drawn — on a page reached by navigating too, with no server involved. What a page draws is
+    `pageElementTypes` (`@plitzi/sdk-shared/schema/pageElements`): the page, its layouts, the components and references
+    it holds. `render()` takes a plugin as `{ load, css, declaration }` beside `{ component }`.
+  - **The space travels beside the page, not inside it.** The page names it (`<link id="plitzi-space">`,
+    `SSRTemplateProps.spaceDocumentPath`), the browser fetches it while the scripts load, and the page server answers
+    `/_plitzi/space/<hash>.json` behind the same gates as its pages — `immutable`, since the name is its content's hash:
+    one download for every page and every visit until the space changes. The website's docs page went from 2.6 MB to
+    0.5 MB. Still the whole space, so every navigation after the first page stays in the browser. A draft preview and a
+    deployment's own `templateFn` keep it inline.
+  - **An arrival on screen plays as the page arrives.** A `motion: { on: 'view' }` element already in view was held
+    invisible until the SDK hydrated — the page's content, and a page rendered `ssrOnly` forever. The page server's
+    document now sees it as soon as it is parsed, and hands over to the SDK once the page is live.
+
+  ## Server data: one request per question, the newest winning, and a way to stop
+  - **A link asks for its page's server data once.** The navigation's prefetch already brought it; the route change that
+    followed asked again — two renders per click. `useRscSync` now asks only for a location the store does not hold.
+  - **Answers land in the order they were asked.** `refreshRsc` joins a refresh already in flight for the same URL and
+    aborts one a newer refresh would overwrite (a whole payload asked again, an element asked again); a whole payload
+    keeps what an element asked for after it. A slow answer no longer paints a page the visitor has left.
+  - **Stopping.** `cancelRsc(store, ids)`, an `apiContainer`'s `cancelQuery` callback (`cancelApi(id)` in authoring) and
+    `queryCache.cancel(key)` for a browser provider: the request is dropped and what is shown stays. The server hears it:
+    `SSRRscContext.signal` aborts when the browser hangs up, and the default `getRscData` stops every element still
+    resolving — a shared render run only once nobody is waiting on it.
+  - **Pending.** A server provider's `isLoading` is true while it is asked again (`rsc.refreshing`). The `navigation`
+    source says `pending` and `pendingLocation` while a link waits for its destination's data; a second link clicked
+    before the first went supersedes it, and the first never goes.
+  - **A bound `input` asks again.** An `apiContainer`'s `input` is a prop now: bound to state, every change refetches a
+    server provider. What a refresh asks for (`req.ctx.rscParams`) wins over the `input` the element was saved with.
+  - **A section cut by its budget says how to give it more** (`rsc.elementTimeoutMs`).
+
+  ## Flows
+  - **`whileRunning('latest')`**: a new firing stops the run in progress — no further step; its `runServerAction` is
+    cancelled (request and server run) and its `webHook` aborted — and runs. A search as you type. The step's context
+    carries the `signal`. Offered in the builder and the MCP.
+  - `onApiSuccess` / `onApiError` fire once per answer: a cancelled request or a loading flag that came and went no
+    longer runs the flow again.
+  - **A debounce is `whileRunning('latest')` and a `delay` first**: `delayTime` ends its wait the moment its run is
+    superseded, so only the last firing gets past it. Its `time` is a number.
+
+  ## Server actions
+  - **The request budget is never silent.** A task that caught the refused fetch hid `maxRequests`; the step that ran
+    into it now logs it, and the server logs it once, naming `createServer({ action: { limits: { maxRequests } } })`.
+  - **`invalid_input` says what the value was and which type takes it** — `windows (text, got a list; declare the field
+\`json\` to take it)`. The templates reference documents that a param that is only `|json_encode` is the value it
+    encodes.
+  - **`kv` survives a restart with no database.** `createFileKv({ file })` (`@plitzi/sdk-server/actions`) keeps the
+    in-process store in one JSON file, written whole as soon as anything changes — for one process.
+    `createSqliteKv({ file } | { db })` (`@plitzi/sdk-server/sqlite`, new entry) is a table in a SQLite file over
+    `node:sqlite`, every operation one statement, shared safely by every process on the file. Both pass the adapter
+    contract every store is held to. The `09-schedules` example uses it rather than its own copy, whose counters read
+    `22.0`.
+
+  ## Authoring
+  - **What a space declares and never uses** is suggested now: `unused-class`, `unused-token`, `unused-component`, and
+    `literal-colour` — a class painted from the palette typing out a scheme token's light value. A suggestion about
+    declarations names them in `subjects`, so the MCP says one a batch left unused beside the ones the space had.
+    `unusedDeclarations(schema, style)` is the rule itself, for anything else that says "unused" (the builder does).
+  - **`pageFamily(shape, entries)`** writes pages of one shape from data: each page its id, slug, titles, folder and
+    layout, and its body built inside `scope(entry.id, …)` so two pages never give one id.
+  - **`action-output-path`** (warned): `.data` read on a provider fed by a server action, which publishes its output at
+    the root. **`actionSource(id, sample)`** types such a provider by a sample of its output.
+  - A value template (`returns: 'value'`, a computed, a step param) may name its parts with `{% set %}` before its one
+    expression, and is still that expression's value.
+  - `abs()`, `floor()`, `ceil()`, `clamp()` are refused with how they are written here (`x|abs`,
+    `x|round(0, 'floor')`, `min(max(x, low), high)`).
+  - An unknown attribute is reported against the element's props, not as "'id' does not exist in type ElementSpec[]".
+  - `explain` answers a builder's name (`reloadApi`, `cancelApi`) with its step, and knows `whileRunning`.
+  - A component's instance takes `quiet`, like any element — `component(id, { quiet: ['repeated-shape'] })`: instances
+    whose slots are filled alike on purpose stop being offered as a repeat, and an exported instance that carries one
+    typechecks.
+  - `container` and `text` take a `title`. A trigger's `preview` may hold numbers, flags, lists and `null`.
+  - **A Markdown element's headings are sections a link can name.** Each renders with the anchor its words read as
+    (`## Server data` → `#server-data`, numbered when repeated), and a link's `hash` may name one: `anchor-missing` counts
+    them, so a table of contents built from the Markdown is checked like any other link.
+  - `answerAction(page, actionId, output)` (testing): a test that would save something answers that server action in
+    the browser — the server's `kv`, and what the developer kept, are never written. A stream step gets its `done` frame.
+
+  ## Plugins
+  - **A plugin's stylesheet sits below the space's.** The cascade order is now `… utilities, plitzi-sdk-plugin,
+plitzi-sdk-runtime`, and whatever builds a plugin writes its CSS into `plitzi-sdk-plugin` (`inPluginLayer` from
+    `@plitzi/sdk-shared/style`): `plitzi pack plugin`, a server compiling one (`action: 'compile'`), and the stylesheet a
+    server copies or downloads for one. A space's classes and `customCss` now win over what the plugin's author shipped,
+    whatever the specificity — as they do over a built-in element. A plugin packed before this ships unlayered and still
+    wins until it is packed again.
+  - **Declared param types reach the callback.** A param declared `number` (new, a text box in the builder) or `boolean`
+    is handed over as one — written `5000`, or bound to text that says it; an empty number as nothing, so the component's
+    default applies.
+  - **`useElementVisible(id)`** (`@plitzi/plitzi-sdk`): whether another element is on the page — its own `visible`, every
+    container around it, the breakpoint — kept current while the plugin is mounted, at that plugin's cost alone.
+  - **A page open on a development server loads again when the server restarts** (`devReload`): `start:dev` restarting
+    on a change to the server's code reached the open page only when somebody reloaded it.
+  - **A saved plugin is swapped into the open page** (`devReload`, server mode): the page server rebuilds the plugin
+    whose source changed and the page renders the new component in place, keeping its state — no restart, no reload. A
+    change to its declaration (what the builder and the linter know of it) still reloads the page. `render()` takes
+    `{ hotPlugins: true }` and answers `{ unmount, replacePlugin }`; `PluginManager.rebuild(name)` and `onSources`. A new
+    folder in `src/plugins` is registered without a restart (`server.plugins.register`), from `create` and `create --from` alike.
+  - **A plugin brings its own server half.** `functions/index.ts` beside the component — the `defineFunctions` a
+    space's functions use — answers routes under `/fn/plugins/<type>/` and runs steps named `<type>.<action>` (origin
+    `'plugin'`, the builder's **Plugins** group). It runs with a narrower `ctx`: its own `kv` (prefixed
+    `plugin:<type>:`, its `rateLimit` and `sign` too), none of the space's credentials, no realtime publishing or grants;
+    its routes and tasks outside its namespace are refused, as are a space's routes under `/fn/plugins/`. The component
+    reaches its routes with `usePluginRoute(type)` (`@plitzi/plitzi-sdk`; `undefined` where no server runs code).
+    A page server takes them as `functions.plugins` (`{ [type]: FunctionsDefinition }`), swaps one with
+    `server.functions.setPlugin`, and asks a cloud adapter with `actionLookups.getPluginFunctions(spaceId, version)`.
+    `plitzi pack plugin` carries the source in the zip as `functions.source.json` (`PLUGIN_FUNCTIONS_SOURCE`, named by
+    the manifest's `functions`; `loadFunctionsSource` builds it) — kept privately by the platform, never published.
+  - **A plugin lays out the space's elements it holds.** `elementChildren(children)` (`@plitzi/plitzi-sdk`) hands
+    over each child element with the id it was authored under, for a dock, tabs or a masonry to place in boxes of its
+    own — instead of writing styles onto elements it does not render.
+  - **`useDisplayMode()`** (`@plitzi/plitzi-sdk`): `desktop`, `tablet` or `mobile`, at the widths the space's styles are
+    compiled at — not a breakpoint of the plugin's own.
+  - **A file a library needs whole travels inside the bundle**, imported as Vite imports it: `worker.js?raw` (its text — a
+    worker from a Blob), `engine.wasm?inline` (a base64 data URI). `plitzi pack` and a server compiling a plugin share
+    one build (`@plitzi/sdk-shared/plugins/bundle`), so a server now inlines `.avif`, `.ttf` and `.otf` as `pack` did.
+
+  ## CLI and page checks
+  - **`plitzi lint`** reads a local space's source the way eslint reads code, for what the document cannot show:
+    `file-too-long`, `pages-in-one-file`, `inline-records` (rows of data written in code → `src/data/`), `repeated-css`,
+    `special-case-in-map`, `colour-not-token`, `positional-id`, `unused-file` — each at file:line with what to write
+    instead — and authoring's suggestions at the line that wrote them. `--json`, `--strict`, `--max-warnings <n>`;
+    `// plitzi-lint-disable-next-line <code> -- why` for a departure on purpose. Projects get `npm run lint:space`
+    (`upgrade` adds it to older ones). `doctor` stays the project's and never reads the space.
+  - **`--template blank`** starts with only the colours its page uses: a token declared and read by nothing is one
+    authoring now points out.
+  - **The welcome space is written as a folder**, not one 800-line file: `src/space/index.ts` (the page), `tokens.ts`,
+    `theme.ts`, `content.ts` — the shape a space keeps as it grows, and clean under `plitzi lint`. **Breaking** for
+    whoever called it: `blankSpaceSource()` is now `blankTemplateFiles({ name, dir, plugin })`, which returns the files by
+    path; `toPortableSource` keeps imports of the files beside it. A plugin package's preview space is
+    `preview/space/index.ts`.
+  - **`check`, `shot` and the generated visual tests settle instead of waiting for `networkidle`**, which never came on a
+    page with a realtime channel: `openPage` (`@plitzi/sdk-authoring`) waits for load, then quiet, counting no stream
+    that stays open.
+  - **The server is the project's in `src/config/serverOptions.ts`; `src/main.ts` stays the CLI's.** `create` writes
+    `src/config/serverOptions.ts` (handed to `createServer`, typed from `ServerConfig`, now exported by
+    `@plitzi/sdk-server`) and, with `--source local`, `src/actions/index.ts` (the space’s server actions), which `main.ts` wires
+    for calls, renders and schedules. What `main.ts` wires itself (the space's adapters, the plugins, `public/`,
+    `src/data/`, `src/functions/`, the actions' lookups) is left out of `serverOptions`' type and comes after it, so no option unwires it.
+    `upgrade` writes either file into a project that has none — only when the `main.ts` reading it is the CLI's — and
+    never replaces it; `create --from` projects read `serverOptions.ts` too.
+  - **`upgrade packages` brings up the scripts the CLI wrote and nobody changed** (`.plitzi/scaffold.json` now records
+    them); a script the project changed is left and said, as before.
+  - `start:dev` restarts on a change to the server's code — `src/main.ts`, `src/config/`, `src/actions/` and
+    `src/functions/` (there from the start, kept by a `.gitkeep`); a plugin is swapped in the open page instead, and its
+    `functions/` set again, without a restart. A function imports its siblings with `.ts`, as `src/`.
+  - `add plugin --server` writes the plugin's server half (`functions/index.ts`, a `GET`/`POST /state` example on its
+    `kv`); a package gets `@plitzi/sdk-server` as a devDependency for its types. Refused in a client-mode project.
+  - `add plugin`: `--prop rows:list` and `--prop meta:json` for data a binding fills; `--headless` writes
+    `drawsNothing: true`; the generated events hook never fires on the builder's canvas.
+  - A `channel` with no tag is boxless to a page check, like a provider; an empty list is said to have no rows, with what
+    to do, instead of "no size (0×0)".
+  - **A server-mode project keeps its `kv` in `state/kv.json`** (`createFileKv`; ignored by git): what the space's actions
+    save outlives a restart, `start:dev`'s included. `action.kv` in `src/config/serverOptions.ts` names another store.
+  - A server-mode project types what its plugins import besides code (`plitzi/assets.d.ts`): a stylesheet, an image,
+    `?raw`, `?inline` — a client-mode one has them from `vite/client`.
+  - **A project made from a space runs the server `create` writes.** It has the same `src/main.ts` as any project: it
+    now takes a free port and writes `tmp/dev-server.json` (which `check`, `shot` and the visual tests read), answers
+    `/health`, and re-authors its pages on save instead of waiting for a restart. Its actions are `src/actions/` and its
+    connectors `src/connectors/`, both there from the start, and `start:dev` restarts on them; `src/actions/index.ts`
+    exports `actions` and `connectors`, as a `create` project's does (`push` reads that). Before, `upgrade` showed its
+    `main.ts` as the project's own, and `--take all` would have put `create`'s server in place of the space's.
+  - **A `--source cloud` server project starts.** Its key is in `.env`, which nothing read: `npm start` stopped on "Set
+    PLITZI_HOST_KEY". Every server project's `src/main.ts` now reads `.env` itself (`process.loadEnvFile`), and every
+    one is given a signing key there (`PLITZI_SIGNING_SECRET`, made for it by `create`) — `ctx.sign` refused in a project
+    `create` wrote, a plugin's server half included. `PORT` is no longer written into `.env`, where it pinned 8080. A
+    cloud project keeps its `kv` in `state/kv.json` too.
+  - **`upgrade` keeps the package manager a project was written for** (`.plitzi/scaffold.json`) when it has no lockfile
+    of its own yet: a yarn or pnpm project not installed (`--no-install`), or sitting in a monorepo folder, was taken for
+    npm and its `AGENTS.md`, Playwright config and `.gitignore` replaced with npm's commands.
+  - `author`, `check`, `fix` and `push` know the element types of a project's built-only plugins
+    (`vendor/plugins/*/plugin-manifest.json`, every element each provides), as its server does.
+  - **`import` reaches Plitzi only when told to.** A site not served from this machine needs `--account` — ask the
+    person's Plitzi account whether one of their spaces verified its domain, signing in — and without it is refused,
+    saying so, before any request: an agent running `import` in a local project opened a sign-in nobody asked for. The
+    CLI skill and the generated `AGENTS.md` say to run `import` only when the user asks, and to ask before `--account`.
+  - **A server project's data is no longer on the internet.** It was `public/data/*.json`, served to anyone as a file;
+    it is `src/data/*.json`, which the server reads and never serves (`dataDir`, new in `createServer`): a provider with
+    `runtime: 'server'` and `query: '/data/<file>'` reads it, and the page arrives with it. `projectData`
+    (`@plitzi/sdk-authoring/node`) and `authorSpace`'s `serverData` hold bindings to those files, and a provider asking
+    for `/data/…` from the browser is refused (`server-data-in-browser`): nothing would answer it. What a provider reads
+    is still in the page it renders — data a page must not carry is a server action's to read. A client-mode project
+    keeps `public/data/`, which the browser has to fetch. The catalog template follows the mode
+    (`catalogTemplateFiles({ mode })`). `public/` holds only what is meant for everyone.
+  - **The project's own server code is `src/functions/`**, with the rest of its source — typechecked with it, left out of
+    `tsconfig.build.json` (the server builds it at boot). `functions pull`/`push`/`dev`, `push`, `pull` and `create
+--from` follow. The `kv` folder is `state/` (it was `data/`, beside a data folder that was something else).
+  - **What is the CLI's is in `plitzi/`, apart from `src/`.** `plitzi/author.ts`, `plitzi/assets.d.ts` (server mode) or
+    `plitzi/preflight.css` (client mode), and `plitzi/README.md` — which says what each folder of `src/` is, instead of a
+    README in every one. `src/main.ts` stays where an entry point is looked for, the CLI's all the same.
+    `src/plugins/declarations.ts` is gone: a plugin is declared by its folder's `declaration.ts`, found by the server,
+    `author`, `check`, `fix`, `push` and the visual test alike (`pluginDeclarations` from `@plitzi/sdk-authoring/node`;
+    Vite's `import.meta.glob` in client mode).
+  - `functions.plugins` is in `SSRServerConfig`'s type and checked as the server starts: a project passing its plugins'
+    server halves did not typecheck.
+  - **A project's source is folders that grow.** The space is `src/space/` — its `index.ts` exports it as `space` and
+    assembles the rest (the catalog template's `src/site/` is `src/space/` now; `create --from` writes the space's own
+    `index.ts` there, exported as `space` too). The server actions are `src/actions/` — `index.ts` lists them, one action
+    a file, as `create --from` already had them — and what the server does besides serving the space is
+    `src/config/serverOptions.ts`. `start:dev` watches `src/config` and `src/actions` whole.
+  - **One server for every project, kept by `upgrade`.** `src/main.ts` runs what a project holds from where it lands — a
+    runtime in `src/runtime/` (or built only, `vendor/runtime.bundle`), plugins built only (`vendor/plugins/`), the
+    actions' connectors — so `create --from` writes no `main.ts` or `.prettierignore` of its own any more, and `upgrade`
+    keeps both current in projects made from a space too. `loadRuntimeModule` (`@plitzi/sdk-server/runtime`): a project's
+    runtime module, or nothing when it has none.
+  - **`plitzi add runtime`** writes `src/runtime/index.ts` — run by the project's server (`npm start` answers its
+    endpoints) and sent by `plitzi runtime push`, whose default entry it is now — and has `start:dev` restart on it. A
+    space taken out with a runtime gets `src/runtime/index.ts` handing over the module its source starts at.
+  - **`push` sends the space's files back as their CDN addresses.** `create --from` and `pull` write each CDN address as
+    the project's path (`/assets/a.png`, served from `public/assets/`); `push` sent those paths as they were, and the
+    space's pictures and data pointed at nothing on Plitzi. It also says, before sending, what Plitzi would not have: a
+    provider reading a file `src/data/` does not hold, and a file the space names that is not on its CDN.
+  - **`push` sends a project's data and its files.** Two new parts: `data` — `src/data/` whole, kept by Plitzi as the
+    space's own data (private, frozen with each publish, read by the page server of the version it renders; refused when
+    the space's copy changed since the project last had it, unless `--force`) — and `files` — each changed file of
+    `public/assets/`, put at the same path under the space's `assets/` on its CDN, so a pull brings it back where it was.
+    `create --from` and `pull` write the space's data into `src/data/`. `getData` joins the action lookups
+    (`ActionLookupsConfig`), and the page server resolves `/data/<file>` through it when there is no `dataDir`.
+  - **A space's data is edited in the builder and by agents.** The builder's Server view has a **Data** tab: the JSON
+    files the space's server providers read (`/data/<file>`), a file list and a JSON editor, saved whole against the
+    copy it read (⌘S; a newer copy is refused, a broken file named). The MCP reads it as `plitzi://data/{env}` and writes
+    it with `upsertDataFile` / `deleteDataFile` (`getData` / `saveData` among the adapters; a file that is not JSON is
+    refused as it is written), and the guide has a Data section. One write path for the builder, agents and `plitzi push`
+    (`SpaceData` / `SpaceSaveData` over GraphQL, under `spaceManage`), one history. `DataDraft` / `DataSaveResult` are
+    in `@plitzi/sdk-shared`. The builder's file list is shared by Functions and Data (`modules/FileTree`).
+  - **`plitzi doctor`**: whether the project the CLI set up is whole, checked against what it is now — a developer may
+    change any file. Packages (declared, installed at versions that agree, one copy of the SDK and of React), the CLI's
+    files and scripts (as `upgrade` sees them, one planner for both), the file each Node script starts and every folder
+    `start:dev` watches, the TypeScript configs, `.gitignore` and `.env` (never in git; the signing secret as long as the
+    project's server wants it), the code Node runs as written (relative imports with their extension, JSON with its
+    attribute, no JSX, every package declared — walked with esbuild), each plugin folder against its declaration, the data
+    files, `src/functions/` built by the project's own sdk-server, `.plitzi/` and the skills. Each finding has an area, a
+    code, the file and its fix; `--json`, `--strict`; exit 1 on an error. It never checks the space — `npm run author`
+    and `check` do — and every report says so. A layout an older CLI left (`src/space.ts`, `src/author.ts`,
+    `functions/` at the root…) is its own area, checked first and alone. `--fix` repairs what is simple and safe —
+    that layout moved with every import, URL and script following (and the scaffold record with it), dead files,
+    `.gitignore`, `"type": "module"`, a watched folder, a signing secret — then checks again; `--dry-run` says what.
+    Each report ends with what to run next. `upgrade` writes no file over an older layout, and says `doctor --fix`.
+    `buildFunctions` and `FunctionsBuildError` are exported from
+    `@plitzi/sdk-server/functions-runner`, `MIN_SIGNING_SECRET_LENGTH` from `@plitzi/sdk-server/actions`.
+  - **`--dry-run`** on every command that writes or sends — `create`, `add plugin`, `add runtime`, `pull`, `push`,
+    `pack plugin`, `source`, `import`, `upload plugin`, `functions pull`/`push`, `runtime push`/`start`/`stop`/`size`/
+    `vars`, `skills update`, `doctor --fix`: each file it would write (`+` new, `~` replaced, `-` removed), what it would install or run, what it would
+    send and where, and none of it done. It still reads what it needs to say so.
+  - **A new project is formatted from the start**, every template and mode: its first `format` changes nothing. The CLI's
+    own files are in its `.prettierignore`, so formatting never turns one into a file `upgrade` believes was changed.
+
+  ## Builder
+  - **The pages panel keeps its folders as you left them** — open or closed, per space, across reloads — the way the
+    style inspector keeps its sections. A folder starts closed.
+  - **Usages**, a panel beside Layers: where each component, class, token, space variable and data source is used,
+    page by page — what reads it and which elements — and which nothing uses, by authoring's own rule. A click selects
+    the element, inside a component too.
+  - **Revealing an element inside a component opens the component** (the Usages panel, ⌘P, the issues and the history all
+    reveal through it); before, the selection was dropped. **Panels stay open** when a component opens or closes.
+  - **The canvas dims a page's layout around its body again when the layout or its slot draws no box**
+    (`display: contents`, which the efficiency guide recommends): the hole was measured as a rect of zeros and the whole
+    page was dimmed. A box-less element is measured by what it holds, and the mask by the box that positions it.
+  - **Elements is one category at a time.** A row of chips — each category with its count, and the space's components as
+    one more — picks what the panel shows, remembered between sessions, so the panel stays the same height however many
+    elements plugins add. A search looks through every category and the components at once. Each element is a tile: its
+    icon, its whole name, and what it is on hover. Container, Button, Form, Form Control, Dropdown Popup, List Item, Rich
+    Text, Dialog Container and Tab Container Item have icons of their own (`sdk-elements`), none shared with another
+    element or with the component and snippet icons.
+  - **Layers reads as a tree and is driven from the keyboard.** A guide per depth, a chevron that turns, the component's
+    name beside an element that is one, and the selected row kept in view. ↑/↓, Home/End, → to open or go in, ← to close
+    or go up. A row under a closed ancestor is no longer shown. (plitzi-ui's `Tree`.)
+  - **Motion and preview no longer share an icon.** Playing the page's motion is a wand, which pulses while it plays;
+    preview is an eye, and a pen to go back to editing.
+  - **A component's settings fit their modal, however many props it has.** The modal is wider; the name and folder
+    share a line, and each prop is one compact row — its name, its kind, required, remove — with what a binding writes to
+    read it (`{{ props.<name> }}`) or what is wrong with it, and what it is for, beneath. The fields scroll and the buttons
+    stay in view. Props and slots are titled sections, and a slot shows its id.
+
+  ## Packages
+  - **`GET /auth/continue` takes `?fallback=`**: where to go when `redirect` is refused, vetted by the same check. A sign-in
+    screen's way back sends its site there, so leaving without signing in never lands on "you are signed in".
+  - **Markdown renders headings you can link to and code you can copy.** A heading carries its anchor and a `#` link to
+    itself; a fenced block a header with its language and a **Copy** button. The anchor is `@plitzi/sdk-shared`'s:
+    `anchorOf`, `uniqueAnchor` and `markdownHeadings` (`schema/anchor`, `schema/markdownHeadings`) — what the element
+    renders, what authoring checks a link against and what a table of contents is built from are one function. Needs
+    `@plitzi/plitzi-ui` 1.6.31 (its `Markdown` takes `headingAnchor`).
+  - **Every package declares what it imports, and nothing more.** `react` is a peer of `sdk-auth`, `sdk-event-bridge`,
+    `sdk-interactions`, `sdk-style` and `sdk-variables`; `sdk-schema` depends on `immer`, `sdk-elements` on
+    `@dr.pogodin/react-helmet`, `sdk-plugins` on `@plitzi/plitzi-ui`, `sdk-style` on `@plitzi/sdk-event-bridge` and
+    `sdk-dev-tools` on `@plitzi/sdk-plugins` — each worked only because `@plitzi/plitzi-sdk` brought them, and failed
+    installed alone or under a strict linker. `prop-types` and the `@plitzi/*` dependencies nothing imported are gone:
+    `sdk-mcp` no longer declares `@plitzi/sdk-elements`, which its code does not import — it still arrives through
+    `@plitzi/plitzi-sdk`.
+
+- Updated dependencies [3bce653]
+  - @plitzi/sdk-shared@0.38.5
+
 ## 0.38.4
 
 ### Patch Changes
