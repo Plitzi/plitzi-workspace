@@ -151,8 +151,9 @@ const server = createServer(
 actions) and its runtime loaded into it, its variables this process's environment.
 
 A project the CLI wrote finds its module with `loadRuntimeModule(file)` (`@plitzi/sdk-server/runtime`):
-`src/runtime/index.ts`, or what `build` compiled it to — or `undefined` when the project has none, so a project starts
-one by writing it (`plitzi add runtime`), with nothing to wire.
+`src/runtime/index.ts`, or what `build` compiled it to (`dist/runtime/index.js`, for a server run compiled) — or
+`undefined` when the project has none, so a project starts one by writing it (`plitzi add runtime`), with nothing to
+wire.
 
 ## 6. For a deployment
 

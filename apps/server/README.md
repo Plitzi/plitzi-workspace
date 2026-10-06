@@ -170,8 +170,6 @@ A project `npx @plitzi/cli create --mode server` writes runs this server through
 (the layout is `@plitzi/sdk-shared/project/paths`'s):
 
 ```ts
-import './env.ts'; // first: what follows reads its settings from `process.env` as it loads
-
 import { serveProject } from '@plitzi/sdk-server/project';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
@@ -181,18 +179,25 @@ import { actions, connectors } from './actions/index.ts';
 import { serverOptions } from './config/serverOptions.ts';
 import { space } from './space/index.ts';
 
-await serveProject({
-  entry: import.meta.url,
-  space: authorSpace(space, await projectAuthoring(new URL('..', import.meta.url))),
-  actions,
-  connectors,
-  serverOptions
-});
+await serveProject({ space: authorSpace(space, await projectAuthoring()), actions, connectors, serverOptions });
 ```
+
+The project is the working directory — where every script of its `package.json` runs it, and where a deployment runs
+`node dist/main.js` — never worked out from where a file is: `serveProject` and `projectAuthoring()` refuse to start
+anywhere else, naming what is missing (`package.json`, `src/`; `projectRoot` of `@plitzi/sdk-shared/project/root`, one
+check for both). Its settings are in `process.env` before any module loads: the scripts start Node with
+`--env-file-if-exists=.env`, and no file of the project reads `.env`. `start:dev`, which Node watches, preloads it
+instead — `node --import @plitzi/sdk-server/env --watch-path=… src/main.ts` — since Node, handed an env file under
+`--watch-path`, watches the folder it is in and restarts on every write there: the server's own `tmp/`, from boot.
+
+Both hold the project to its layout before anything else (`assertProjectLayout` of `@plitzi/sdk-shared/project/layout`,
+what `plitzi doctor` says too): a part where the server would read nothing — a plugin folder with no `index.ts` (or
+`index.tsx`), code in `src/plugin/`, `.env` in `src/`, a built plugin with no manifest — stops the boot with every error
+at once (`ProjectLayoutError`, each with its fix; `findings` holds them as data), and what works and should not stay —
+a plugin with no `declaration.ts`, no `.env.example` — is printed while developing, `[layout] …`.
 
 | Option | What it is |
 |---|---|
-| `entry` | The entry point's `import.meta.url` — `src/main.ts`, or `dist/main.js` once built. The project is its folder's parent, and the runtime is looked for beside it (`runtime/index.ts`, or `.js`). |
 | `space` | The space held in the project: `authorSpace`'s documents, served from memory. Its `warnings` are printed at boot. |
 | `cloud` | Instead of `space`: `{ name }` — the space stays in Plitzi and is read with `createCloudAdapters`, from `PLITZI_HOST_KEY` (required), `PLITZI_ENVIRONMENT` (`main` by default), `PLITZI_REVISION` and `PLITZI_SERVER_URL`. `name` is what `/health` answers with. |
 | `actions`, `connectors` | The space's server actions, found by their id, and the connectors they call. Left out, the server runs no actions. |
@@ -202,10 +207,12 @@ What it wires from the project:
 
 - **The port.** `PORT`, or 8080 — while developing, the next free one from there (`freePort`). `HOST`, loopback by
   default (`0.0.0.0` in a container). `PUBLIC_URL` is where people reach it, behind a proxy.
-- **Its plugins.** Every folder of `src/plugins` under its name in camelCase, built from its `index.ts` and rendered
+- **Its plugins.** Every folder of `src/plugins` under its name in camelCase, built from its `index.ts` (or
+  `index.tsx`, `pluginEntry`) and rendered
   on the server (`action: 'compile'`), with its server half (`functions/`); every plugin of `vendor/plugins`, run as it
   was built, beside its `plugin-manifest.json` — and the deployment's `pluginNames` naming them all.
-- **Its code.** `src/functions/` (`loadFunctions`), and the space's runtime — `src/runtime/`, or
+- **Its code.** `src/functions/` (`loadFunctions`), and the space's runtime — `src/runtime/index.ts`, or
+  `dist/runtime/index.js` when the process was started on what `build` emitted (`process.argv[1]` under `dist/`), or
   `vendor/runtime.bundle` — in this process, its endpoints answered before anything else.
 - **Its files.** `public/` served as it is, `src/data/` read and never served (`dataDir`), the `kv` in `state/kv.json`
   (`createFileKv`), `PLITZI_SIGNING_SECRET` what `ctx.sign` signs with.
@@ -217,11 +224,14 @@ While developing — `NODE_ENV` other than `production` — `devMode` and `devRe
 - **A save to the space is authored again** by the project's `plitzi/author.ts`, in a process of its own (an import is
   never read twice in one process), run with `--ipc`: it hands the documents back over the IPC channel, the server
   swaps them in memory and every open page loads again (`reloadPages`). What the script refuses it prints, and the page
-  keeps the last space that authored. A save to the server's own code — `main.ts`, `env.ts`, `src/config/`,
+  keeps the last space that authored. A save to the server's own code — `main.ts`, `src/config/`,
   `src/actions/`, `src/connectors/`, `src/functions/`, `src/runtime/` — is `start:dev`'s to restart on; of a plugin,
   only its `declaration.ts` is the space's.
 - **A plugin folder added** is registered and the open pages load again; one removed is turned off; a plugin's
-  `functions/` changed is loaded again in place. A plugin's component changed is the server's own `devReload`.
+  `functions/` changed is loaded again in place. A plugin's component changed is the server's own `devReload`. A folder
+  it cannot build — no entry yet, a name that is no type — or a `functions/` with no `index.ts` is said in the
+  terminal as the layout check says it (`[plugins] …`, once until it changes), and the server goes on; the folder is
+  registered once it is whole.
 
 It answers `{ server, url, close }`: the `SSRServer`, where it listens, and what stops it — watching, the server and the
 runtime — for a caller that stops it itself.

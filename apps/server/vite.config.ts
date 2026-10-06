@@ -106,6 +106,9 @@ export default defineConfig(({ mode }) => {
           // The server of a project `@plitzi/cli` writes, wired from where the project keeps each part: its own entry, so
           // a server that is not such a project never loads what reads that layout or re-authors a space on a save.
           project: path.resolve(root, 'src/project.ts'),
+          // What `start:dev` of such a project preloads: its `.env`, read where Node's own flag would make the watcher
+          // restart on every write in the project. A side effect and nothing else, so it is an entry of its own.
+          env: path.resolve(root, 'src/env.ts'),
           // Ready-made request handlers for the auth flows. Depends on no framework — see src/handlers.ts —
           // but keeping it out of the barrels is what makes it opt-in rather than something a page server drags in.
           handlers: path.resolve(root, 'src/handlers.ts')

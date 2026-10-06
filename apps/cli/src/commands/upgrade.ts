@@ -12,6 +12,7 @@ import { readOrigin } from './spaceOrigin';
 import { fail, install, writeFiles } from './terminal';
 import { unifiedDiff } from '../fix/diff';
 import { detectManagerVersion, installCommand, machineryFiles, seedFiles } from '../scaffold';
+import { RETIRED_MACHINERY } from '../scaffold/machinery';
 import { CLI_VERSION, packageJson } from '../scaffold/project';
 import { SKILL_NAMES, skillFiles, skillVersion } from '../scaffold/skills';
 
@@ -25,7 +26,7 @@ import type { CreateAnswers } from '../scaffold';
  *
  * - `files`: the machinery (`machineryFiles`) — `author.ts`, `main.ts`, the Playwright and lint configs, AGENTS.md. One
  *   nobody changed since the CLI wrote it is replaced; one the project made its own is shown as a diff and left, unless
- *   `--take` names it.
+ *   `--take` names it. One the CLI no longer writes (`RETIRED_MACHINERY`) is removed the same way.
  * - `packages`: `package.json` merged — the scripts and dependencies it lacks added, `@plitzi/*` raised to this
  *   version. A dependency the project has is never changed, nor a script it changed — one the CLI wrote and nobody touched
  *   since (the scaffold record) takes today's command; then the install.
@@ -251,8 +252,10 @@ export const planPackages = (
 /**
  * `seeded`: a file of the project's own that the machinery imports, written because the project had none. `space`: one
  * a space made into a project gave in the CLI's place (`src/main.ts`, from what the space holds) — `plitzi pull`'s.
+ * `removed`: one the CLI no longer writes, as it wrote it (or taken), deleted; `retired`: one the project changed, left.
  */
-export type FileStatus = 'current' | 'added' | 'updated' | 'yours' | 'taken' | 'seeded' | 'space';
+export type FileStatus =
+  'current' | 'added' | 'updated' | 'yours' | 'taken' | 'seeded' | 'space' | 'removed' | 'retired';
 
 export interface FilePlan {
   file: string;
@@ -298,6 +301,10 @@ const planFiles = async (
 
 const WRITES: ReadonlySet<FileStatus> = new Set(['added', 'updated', 'taken']);
 
+/** Whether `file` is the CLI's once the plan is made: written by it, or already as it writes it. */
+const theClisAfter = (plans: readonly FilePlan[], file: string): boolean =>
+  plans.some(plan => plan.file === file && (WRITES.has(plan.status) || plan.status === 'current'));
+
 /**
  * The project's own files the machinery imports that it does not have yet — written once, never replaced, and only
  * beside a machinery file of the CLI's that reads them: one the project kept as its own reads nothing of them.
@@ -307,11 +314,9 @@ const planSeeds = async (
   seeds: { file: string; contents: string; readBy: string }[],
   plans: readonly FilePlan[]
 ): Promise<FilePlan[]> => {
-  const theCli = (file: string) =>
-    plans.some(plan => plan.file === file && (WRITES.has(plan.status) || plan.status === 'current'));
   const planned = await Promise.all(
     seeds.map(async ({ file, contents, readBy }): Promise<FilePlan | undefined> =>
-      theCli(readBy) && (await readText(path.join(root, file))) === undefined
+      theClisAfter(plans, readBy) && (await readText(path.join(root, file))) === undefined
         ? { file, status: 'seeded', ours: contents }
         : undefined
     )
@@ -320,16 +325,50 @@ const planSeeds = async (
   return planned.filter((plan): plan is FilePlan => plan !== undefined);
 };
 
+/** A file of the machinery an older CLI wrote and this one does not, still in the project. */
+export interface RetiredPlan {
+  file: string;
+  status: 'removed' | 'retired';
+}
+
+/**
+ * What the CLI no longer writes (`RETIRED_MACHINERY`), still in the project: removed when nobody changed it since the
+ * CLI wrote it, or `--take` names it — `retired`, left, when the project did. Only once the machinery file that read it
+ * is the CLI's current one: beside one the project made its own, it is still read.
+ */
+const planRetired = async (
+  root: string,
+  plans: readonly FilePlan[],
+  recorded: Record<string, string>,
+  take: readonly string[]
+): Promise<RetiredPlan[]> => {
+  const planned = await Promise.all(
+    Object.entries(RETIRED_MACHINERY).map(async ([file, readBy]): Promise<RetiredPlan | undefined> => {
+      const yours = await readText(path.join(root, file));
+      if (yours === undefined || !theClisAfter(plans, readBy)) {
+        return undefined;
+      }
+
+      const asWritten = recorded[file] === digestOf(yours);
+
+      return { file, status: asWritten || take.includes('all') || take.includes(file) ? 'removed' : 'retired' };
+    })
+  );
+
+  return planned.filter((plan): plan is RetiredPlan => plan !== undefined);
+};
+
 /**
  * The machinery as `upgrade` sees it: each file the CLI writes, by what it is to the project (`FileStatus`), the
- * project's own files it reads that the project lacks (`seeds`), and the files a space gave in the CLI's place, which
- * are `plitzi pull`'s (`spaces`). What `plitzi doctor` reads too, so both say the same of every file.
+ * project's own files it reads that the project lacks (`seeds`), the ones it no longer writes still there (`retired`),
+ * and the files a space gave in the CLI's place, which are `plitzi pull`'s (`spaces`). What `plitzi doctor` reads too,
+ * so both say the same of every file.
  */
 export const machineryPlan = async (
   root: string,
   answers: CreateAnswers,
   { origin, recorded, take = [] }: { origin?: SpaceOrigin; recorded: Record<string, string>; take?: readonly string[] }
-): Promise<{ plans: FilePlan[]; seeds: FilePlan[]; spaces: string[] }> => {
+): Promise<{ plans: FilePlan[]; seeds: FilePlan[]; retired: RetiredPlan[]; spaces: string[] }> => {
   // A file the space gave in the CLI's place is the space's, kept by `plitzi pull` — never offered here.
   const given = new Set(Object.keys(origin?.files ?? {}));
   const machinery = Object.entries(machineryFiles(answers));
@@ -339,6 +378,7 @@ export const machineryPlan = async (
   return {
     plans,
     seeds: await planSeeds(root, seedFiles(answers), plans),
+    retired: await planRetired(root, plans, recorded, take),
     spaces: machinery.filter(([file]) => given.has(file)).map(([file]) => file)
   };
 };
@@ -426,6 +466,9 @@ const statusLine: Record<FileStatus, (file: string) => string> = {
   added: file => chalk.green(`  + ${file}`),
   updated: file => chalk.green(`  ~ ${file}`),
   seeded: file => chalk.green(`  + ${file} (yours from now on: the CLI's files above read it)`),
+  removed: file => chalk.green(`  - ${file} (no longer the CLI's: nothing reads it)`),
+  retired: file =>
+    chalk.yellow(`  ! ${file} — no longer the CLI's and nothing reads it, but yours: delete it, or --take ${file}`),
   taken: file => chalk.yellow(`  ~ ${file} (yours, taken)`),
   yours: file => chalk.yellow(`  ! ${file} — yours: the CLI's version below; --take ${file} to replace it`),
   space: file => chalk.dim(`  · ${file} — the space's: plitzi pull writes it as this CLI does`)
@@ -537,7 +580,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
 
   if (answers && wanted.has('files')) {
     const recorded = record?.files ?? {};
-    const { plans, seeds, spaces } = await machineryPlan(root, answers, {
+    const { plans, seeds, retired, spaces } = await machineryPlan(root, answers, {
       ...(origin ? { origin } : {}),
       recorded,
       take: options.take ?? []
@@ -545,6 +588,10 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     if (write) {
       const written = [...plans.filter(plan => WRITES.has(plan.status)), ...seeds];
       await writeFiles(root, Object.fromEntries(written.map(plan => [plan.file, plan.ours])));
+      for (const { file } of retired.filter(plan => plan.status === 'removed')) {
+        await fs.rm(path.join(root, file), { force: true });
+      }
+
       // What is the CLI's version now is recorded as the CLI's; a file left the project's keeps what was recorded.
       const digests = Object.fromEntries(
         plans.flatMap((plan): [string, string][] => {
@@ -555,6 +602,15 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
           return plan.file in recorded ? [[plan.file, recorded[plan.file]]] : [];
         })
       );
+      // One the CLI no longer writes, still read by a file the project made its own, keeps what was recorded of it: it
+      // is removed once that file is the CLI's again.
+      for (const file of Object.keys(RETIRED_MACHINERY)) {
+        const planned = retired.some(plan => plan.file === file);
+        if (!planned && file in recorded && (await readText(path.join(root, file))) !== undefined) {
+          digests[file] = recorded[file];
+        }
+      }
+
       await writeScaffoldRecord(root, CLI_VERSION, { files: digests, packageManager: manager });
     }
 
@@ -566,6 +622,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
           ? { diff: unifiedDiff(plan.file, plan.yours, plan.ours) }
           : {})
       })),
+      ...retired,
       ...spaces.map(file => ({ file, status: 'space' as const }))
     ];
   }

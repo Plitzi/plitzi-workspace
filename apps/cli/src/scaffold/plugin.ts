@@ -1,6 +1,8 @@
 import { PLUGIN_INLINED_ASSETS } from '@plitzi/sdk-shared/plugins/bundle';
 
-import { CLI_DIR } from './paths';
+import { CLI_DIR, PLUGINS_DIR } from './paths';
+import { pluginNames } from './pluginPackage/names';
+import { shapedDeclaration } from './pluginPackage/shape';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -189,10 +191,46 @@ declare module '*?inline' {
 }
 `;
 
+/**
+ * What the example is authored with, as `plitzi add plugin --prop …` writes it: its props, which are the attributes the
+ * space gives it and a binding fills — so authoring holds the space's use of it to them, as it does every plugin.
+ */
+const declaration = ({ name }: CreateAnswers): string =>
+  shapedDeclaration(
+    pluginNames('stat-card'),
+    {
+      title: 'Stat Card',
+      description: 'A number, its trend as a sparkline, and the point under the cursor.',
+      owner: name
+    },
+    {
+      props: [
+        { name: 'label', type: 'string', value: 'Metric' },
+        { name: 'value', type: 'number', value: 0 },
+        { name: 'unit', type: 'string', value: '' },
+        { name: 'series', type: 'list', value: [] }
+      ],
+      triggers: [],
+      callbacks: [],
+      headless: false
+    }
+  );
+
+/** The example plugin's folder, whole, by what writes each file. */
+const EXAMPLE_PLUGIN: Readonly<Record<string, (answers: CreateAnswers) => string>> = {
+  [`${PLUGINS_DIR}/StatCard/StatCard.tsx`]: component,
+  [`${PLUGINS_DIR}/StatCard/declaration.ts`]: declaration,
+  [`${PLUGINS_DIR}/StatCard/index.ts`]: barrel
+};
+
+/** Every file of the example plugin: what a project made from a space takes out again (`projectFromSpace`). */
+export const EXAMPLE_PLUGIN_FILES: readonly string[] = Object.keys(EXAMPLE_PLUGIN);
+
+const examplePlugin = (answers: CreateAnswers): ProjectFiles =>
+  Object.fromEntries(Object.entries(EXAMPLE_PLUGIN).map(([file, write]) => [file, write(answers)]));
+
 export const pluginFiles = (answers: CreateAnswers): ProjectFiles => ({
   ...(answers.mode === 'server' ? { [`${CLI_DIR}/assets.d.ts`]: assetDeclarations() } : {}),
   // Only the tour hosts the example: elsewhere the folder is there for `add plugin` to fill, and the server to read.
-  ...((answers.template ?? 'welcome') === 'welcome'
-    ? { 'src/plugins/StatCard/StatCard.tsx': component(), 'src/plugins/StatCard/index.ts': barrel() }
-    : { 'src/plugins/.gitkeep': '' })
+  ...((answers.template ?? 'welcome') === 'welcome' ? examplePlugin(answers) : { [`${PLUGINS_DIR}/.gitkeep`]: '' })
 });

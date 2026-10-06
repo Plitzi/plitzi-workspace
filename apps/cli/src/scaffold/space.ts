@@ -31,17 +31,15 @@ import { projectAuthoring } from '@plitzi/sdk-authoring/node';
 
 import { space } from '../${SPACE_ENTRY}';
 
+import type { ProjectAuthoring } from '@plitzi/sdk-authoring/node';
+
 // \`--json\` answers in one object, for a tool or an agent; otherwise one line on success, the problems on failure.
 const json = process.argv.includes('--json');
 // \`--ipc\`: the project's server ran this on a save, while developing, and is handed the documents it serves next.
 const ipc = process.argv.includes('--ipc');
 
-// What the space is checked against — what the server checks it against too: its plugins' declarations, the built
-// ones' types, and the files a provider reads, so a binding onto a path one of them does not have is said here.
-const options = await projectAuthoring(new URL('..', import.meta.url));
-
 /** How many of the warnings and suggestions said have one fix \`plitzi fix\` can write in this source — and the line that says so. */
-const fixableHint = (): string | undefined => {
+const fixableHint = (options: ProjectAuthoring): string | undefined => {
   let count: number;
   try {
     count = planFixes(space, options).fixes.length;
@@ -87,7 +85,13 @@ const outdated = (): { skill?: string; files?: string; sdk: string } | undefined
   return { ...(skill && skill !== sdk ? { skill } : {}), ...(files && files !== sdk ? { files } : {}), sdk };
 };
 
+// Read before the space is authored, so the catch below says a refusal of either alike.
+let options: ProjectAuthoring | undefined;
 try {
+  // What the space is checked against — what the server checks it against too: its plugins' declarations, the built
+  // ones' types, and the files a provider reads — read from the project's root, where its scripts run this. A project
+  // laid out where its server would not read it is refused here, every error said.
+  options = await projectAuthoring();
   const { schema, style, warnings, suggestions } = authorSpace(space, options);
   const behind = outdated();
   if (json) {
@@ -106,7 +110,7 @@ try {
     }
 
     // After both: \`plitzi fix\` writes a warning's fix and a suggestion's alike, where it has one reading.
-    const hint = warnings.length + suggestions.length > 0 ? fixableHint() : undefined;
+    const hint = warnings.length + suggestions.length > 0 ? fixableHint(options) : undefined;
     if (hint) {
       console.warn(hint);
     }
@@ -139,7 +143,7 @@ try {
     console.log(JSON.stringify({ ok: false, refusals: refusals ?? [{ place: '', ...refusalOf(error) }] }));
   } else {
     console.error(message);
-    const hint = fixableHint();
+    const hint = options && fixableHint(options);
     if (hint) {
       console.error(hint);
     }

@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { elementEntry, pluginTypeOf } from '@plitzi/sdk-shared/project/layout';
+
 import { connectToSpace } from './account';
 import { askChecks } from './askChecks';
 import { requestExport, versionLabel } from './createFrom';
@@ -130,13 +132,6 @@ const SPACE_FOLDERS = [`${SPACE_DIR}/`, `${ACTIONS_DIR}/`, 'src/connectors/'];
 const isSpaceFile = (file: string): boolean =>
   SPACE_FOLDERS.some(folder => file.startsWith(folder)) && /\.(ts|json)$/.test(file);
 
-/** A plugin's type as the project's folder spells it: `src/plugins/SeatPicker` is `seatPicker`. */
-const typeOfFolder = (folder: string): string => {
-  const name = path.basename(folder);
-
-  return `${name.charAt(0).toLowerCase()}${name.slice(1)}`;
-};
-
 /**
  * What the project can send, and whether each changed since the project last had the space. The plugins are grouped as
  * the space keeps them — a plugin can be several elements — and an element folder the space has no plugin of is a
@@ -239,13 +234,13 @@ const survey = async (
     .filter(group => group.folders.every(folder => folders.includes(folder)));
   const alone = folders
     .filter(folder => !grouped.some(group => group.folders.includes(folder)))
-    .map(folder => ({ type: typeOfFolder(folder), folders: [folder] }));
+    .map(folder => ({ type: pluginTypeOf(path.basename(folder)), folders: [folder] }));
   for (const { type, folders: group } of [...grouped, ...alone]) {
     const files = await closureOf(
       root,
       'plugin',
       type,
-      group.map(folder => path.join(folder, 'index.ts'))
+      group.flatMap(folder => elementEntry(folder) ?? [])
     );
     found.push({
       part: 'plugins',

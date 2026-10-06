@@ -5,10 +5,10 @@ import {
   ACTIONS_DIR,
   RUNTIME_DIR,
   AUTHOR_FILE,
+  BUILD_DIR,
   CLI_DIR,
   DATA_DIR,
   DEV_SERVER_FILE,
-  ENV_FILE,
   FUNCTIONS_DIR,
   KV_FILE,
   MAIN_FILE,
@@ -94,6 +94,20 @@ const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
  */
 export const NODE_ENGINES = { node: '>=22.18' };
 
+/**
+ * Node, with the project's `.env` in `process.env` before any module of it is evaluated — what `serverOptions.ts` and
+ * the actions read at their top level. Read by Node itself, so no file of the project has to load first; and only if
+ * there is one, so a deployment that sets its environment needs none.
+ */
+const nodeWithEnv = (args: string): string => `node --env-file-if-exists=.env ${args}`;
+
+/**
+ * The same, for a process Node watches: `.env` preloaded by `@plitzi/sdk-server/env`. Node's own flag would hand the
+ * watcher the folder `.env` is in — the project's root — and with `--watch-path` it restarts on any change under it:
+ * the server's own `tmp/dev-server.json`, written at boot, restarted it forever. A change to `.env` is a restart by hand.
+ */
+const watchedNodeWithEnv = (args: string): string => `node --import @plitzi/sdk-server/env ${args}`;
+
 /** What `start:dev` restarts on: the server's own code — and, in a project made from a space, its actions' folders. */
 const watchPaths = ({ source, fromSpace, runtime }: CreateAnswers): string =>
   [
@@ -122,7 +136,7 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
   return {
     ...(mode === 'server'
       ? {
-          start: `node ${MAIN_FILE}`,
+          start: nodeWithEnv(MAIN_FILE),
           /**
            * Watched by PATH, not wholesale.
            *
@@ -132,21 +146,22 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
            * (`reloadPages`), and the server builds a plugin again on save and the open pages swap it where it is drawn
            * — so only the server's own code restarts it: its entry, options and actions, and `src/functions/`.
            */
-          'start:dev': `node ${watchPaths(answers)} ${MAIN_FILE}`,
+          'start:dev': watchedNodeWithEnv(`${watchPaths(answers)} ${MAIN_FILE}`),
           /**
            * What production runs: the same entry compiled to JavaScript. Node strips types by loading a TypeScript
            * transformer into the process — ~10 MB a server keeps for its whole life to read one file — so a deployment
            * runs what `build` emitted and carries no TypeScript at all.
            */
           build: 'tsc -p tsconfig.build.json',
-          'start:prod': 'node dist/main.js'
+          'start:prod': nodeWithEnv(`${BUILD_DIR}/main.js`)
         }
       : {
           start: 'vite',
           build: 'vite build',
           preview: 'vite preview'
         }),
-    ...(source === 'local' ? { author: `node ${AUTHOR_FILE}` } : {}),
+    // A server project's with `.env` read, as its server has it when it authors the same space on a save.
+    ...(source === 'local' ? { author: mode === 'server' ? nodeWithEnv(AUTHOR_FILE) : `node ${AUTHOR_FILE}` } : {}),
     // How the space's source is written — its files, data, tokens, repeats — eslint's way; `lint` is the code's.
     ...(source === 'local' ? { 'lint:space': 'plitzi lint' } : {}),
     // One line per error — file(line,col) and the message — rather than a framed excerpt of each.
@@ -194,7 +209,7 @@ export const tsconfigBuild = (): string =>
       extends: './tsconfig.json',
       compilerOptions: {
         noEmit: false,
-        outDir: 'dist',
+        outDir: BUILD_DIR,
         rootDir: 'src',
         rewriteRelativeImportExtensions: true
       },
@@ -250,7 +265,7 @@ const YARN_IGNORES = '\n.yarn/*\n!.yarn/patches\n!.yarn/plugins\n!.yarn/releases
  * the CLI records about it, and is committed — a clone without it could not pull, push or upgrade.
  */
 export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
-  `node_modules\ndist\n.env\n${PROJECT_TMP}\n${mode === 'server' ? `${PROJECT_STATE}\n` : ''}${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
+  `node_modules\n${BUILD_DIR}\n.env\n${PROJECT_TMP}\n${mode === 'server' ? `${PROJECT_STATE}\n` : ''}${packageManager === 'yarn' ? YARN_IGNORES : ''}`;
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
@@ -287,6 +302,21 @@ writes nothing: the declaration is the source, and \`npx plitzi push\` puts it o
 there.`;
 };
 
+const settingsSection = ({ mode, source }: CreateAnswers): string =>
+  mode === 'server'
+    ? `## Settings
+
+\`.env\` holds them — what the actions sign with${source === 'cloud' ? ', the key the space is read with' : ''} — and is never committed;
+\`.env.example\` names the same settings with no secret in them, and is: a fresh clone copies it to \`.env\` and fills
+it in. Each script reads \`.env\` as it starts — Node's \`--env-file-if-exists=.env\`, or \`start:dev\`'s preload — before
+any of the project's code loads, so every module finds them in \`process.env\`; a change to it is read on the next
+start, and a deployment that sets its environment needs no file.`
+    : `## Settings
+
+\`.env\` holds them${source === 'cloud' ? ' — the public key the page renders with' : ''} and is never committed; \`.env.example\` names
+them and is. Vite reads \`.env\` and hands the page only what is named \`VITE_*\` — each value of one ships in the page,
+so never a secret.`;
+
 export const readme = (answers: CreateAnswers): string => `# ${answers.name}
 
 A Plitzi space, rendered ${answers.mode === 'server' ? 'by a server of your own (SSR + RSC)' : 'in the browser, with no server at all'}.
@@ -301,10 +331,12 @@ ${startLine(answers)}
 
 ${spaceSection(answers)}
 
+${settingsSection(answers)}
+
 ## Folders that are not the source
 
 - \`${CLI_DIR}/\` is the CLI's part of the project — ${answers.source === 'local' ? 'the script that authors the space, ' : ''}${answers.mode === 'server' ? 'the types plugins import' : 'the base styles of the page'}
-  — kept current by \`plitzi upgrade\`, as is \`${MAIN_FILE}\`, the entry point${answers.mode === 'server' ? `, with \`${ENV_FILE}\`, which reads \`.env\` before it` : ''}. Everything else you write is in \`src/\`;
+  — kept current by \`plitzi upgrade\`, as is \`${MAIN_FILE}\`, the entry point. Everything else you write is in \`src/\`;
   \`${CLI_DIR}/README.md\` says what each of its folders is.
 - \`public/\` is served to anyone who asks, as it is: every file in it is on the internet once the project is deployed.
   Pictures and files meant for every visitor go there — never a secret, a key, a private document or what only some
@@ -360,6 +392,10 @@ export const agentsFile = (answers: CreateAnswers): string => {
     `| ${run('visual')} | open the page in a browser and check it rendered |`
   ];
   const zeroWarnings = local ? `Zero warnings from ${run('author')}.` : 'Zero warnings from authoring.';
+  // What holds the project's layout before it runs a line of it: the server, and the author script of a space it holds.
+  const refusers = [answers.mode === 'server' ? 'The server' : '', local ? run('author') : '']
+    .filter(Boolean)
+    .join(' and ');
   const port =
     answers.mode === 'server'
       ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code(DEV_SERVER_FILE)}, where ${code('check')}, ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one.`
@@ -372,6 +408,10 @@ export const agentsFile = (answers: CreateAnswers): string => {
     answers.mode === 'server'
       ? `- **Data with no backend** goes in ${code(`${DATA_DIR}/*.json`)}: the server reads it and never serves it. An ${code('apiContainer')} whose ${code('runtime')} is ${code('server')} and ${code('query')} ${code('/data/products.json')} reads it, and the page arrives with it — bound as ${code('products.data.items')}, on a page or a layout, never inside a component. ${local ? `A browser provider asking for ${code('/data/…')} is refused by ${run('author')}. ` : ''}What a provider reads is in the page it renders: data a page must not carry is read in a server action, which answers only what is shown — a task of ${code('src/functions/')} reads the file with ${code('ctx.data("products.json")')}, never an import.`
       : `- **Data with no backend** goes in ${code('public/data/*.json')}, fetched by the browser — public like everything in ${code('public/')} — and read by an ${code('apiContainer')} whose ${code('query')} is ${code('/data/products.json')}.`;
+  const settingsNote =
+    answers.mode === 'server'
+      ? `Node reads ${code('.env')} as a script starts, before any module loads: read ${code('process.env')}, never load the file yourself.`
+      : `Vite reads it and hands the page only ${code('VITE_*')}, which ships in it: never a secret.`;
   const dataFiles = answers.mode === 'server' ? `${DATA_DIR}/<file>.json` : 'public/data/<file>.json';
   const generated = [
     `- ${code(`${PROJECT_TMP}/`)} — what the project writes for itself while it runs: the plugins it built, the port it took, test output. Never committed, rebuilt when missing.`,
@@ -396,8 +436,9 @@ ${commands.join('\n')}
 
 ## This project
 
-- **Yours is \`src/\` — but \`${MAIN_FILE}\`, the entry point${answers.mode === 'server' ? ` (and \`${ENV_FILE}\`, which loads \`.env\` first)` : ''} — and \`${CLI_DIR}/\` is the CLI's**: \`plitzi upgrade\` replaces them, so never edit them. \`${CLI_DIR}/README.md\` says what each folder of \`src/\` is.
+- **Yours is \`src/\` — but \`${MAIN_FILE}\`, the entry point — and \`${CLI_DIR}/\` is the CLI's**: \`plitzi upgrade\` replaces them, so never edit them. \`${CLI_DIR}/README.md\` says what each folder of \`src/\` is.
 - **Port.** ${port}
+- **Settings are ${code('.env')}**, never committed; ${code('.env.example')} names them, committed — a new one goes in both. ${settingsNote}
 ${dataNote}
 - **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.
 ${serverNotes}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
@@ -432,7 +473,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 
 - Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration; ${code('npx plitzi fix --write')} writes the ones with a single reading.
 - After the ${code('@plitzi/*')} packages move, ${code('npx plitzi upgrade')}: what this project's CLI files, scripts, skills and renamed names should now be — ${code('--write')} makes it, a file you changed comes as a diff.
-- After moving, renaming or rewiring files — and before a push — ${code('npx plitzi doctor')}: every problem in the project the CLI set up that would stop it from installing, starting, building or pushing, where it is and what fixes it — the space itself is ${local ? run('author') : 'the builder'}'s, a page ${run('check')}'s. ${code('--fix')} repairs the simple ones; then run what it says next.
+- Every part lives where the CLI put it: a plugin is a folder of ${code('src/plugins/')} with an ${code('index.ts')}, ${code('src/functions/')} and ${code('src/runtime/')} start at theirs, ${code('.env')} is at the root. ${code('npx plitzi doctor')} says what is out of place, with every other problem that would stop the project from installing, starting, building or pushing — where it is and what fixes it: run it after moving, renaming or rewiring files, and before a push.${refusers ? ` ${refusers} refuse${refusers.includes(' and ') ? '' : 's'} a part where nothing reads it, naming each.` : ''} The space itself is ${local ? run('author') : 'the builder'}'s, a page ${run('check')}'s. ${code('--fix')} repairs the simple ones; then run what it says next.
 - ${zeroWarnings}
 - Chrome shared by pages is a layout; a look used twice is a class; a block placed again with other content is a component, and rows of data are one ${code('list')} (a short menu may be a ${code('map')} in code).
 - Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.
@@ -451,13 +492,13 @@ What you leave behind is the next reader's problem — the user's, or the next a
  * Vite only exposes variables named `VITE_*` to the browser, which is a safety rail rather than a formality: a
  * client build that read a bare `PLITZI_HOST_KEY` would either find nothing or — worse, if someone "fixed" the
  * prefix — ship a server credential to every visitor. The two modes therefore name different variables, because
- * they hold different keys.
+ * they hold different keys; a browser project whose space is its own has none.
  */
-export const envFile = ({ key, environment, revision, mode, source }: CreateAnswers): string =>
-  mode === 'server'
-    ? `${
-        source === 'cloud'
-          ? `# The space's self-hosting key. Secret: never commit it, never ship it in a page.
+export const envFile = ({ key, environment, revision, mode, source }: CreateAnswers): string => {
+  if (mode === 'server') {
+    return `${
+      source === 'cloud'
+        ? `# The space's self-hosting key. Secret: never commit it, never ship it in a page.
 # Credentials, in the builder.
 PLITZI_HOST_KEY=${key}
 
@@ -467,13 +508,29 @@ PLITZI_ENVIRONMENT=${environment}
 ${revision ? `PLITZI_REVISION=${String(revision)}` : '# PLITZI_REVISION=12'}
 
 `
-          : ''
-      }${SERVER_SETTINGS}`
-    : `# The space's public render key. It ships in the page by design; the origin the browser states is what
+        : ''
+    }${SERVER_SETTINGS}`;
+  }
+
+  return source === 'cloud'
+    ? `# The space's public render key. It ships in the page by design; the origin the browser states is what
 # protects it — add this project's domain to the space's allowed domains.
 VITE_PLITZI_WEB_KEY=${key}
 VITE_PLITZI_ENVIRONMENT=${environment}
+`
+    : `# What the page reads as import.meta.env.VITE_*: Vite hands it only what is named VITE_, and each value ships in the
+# page — never a secret.
 `;
+};
+
+/**
+ * `.env.example`: the same settings with no secret in them — committed, where `.env` never is, so a clone knows what to
+ * fill in. Its values are what the scaffold writes before `create` gives the project its keys.
+ */
+export const envExample = (answers: CreateAnswers): string =>
+  `# The settings .env holds, with no secret in them: copy this file to .env and fill those in. Committed; .env never is.
+
+${envFile({ ...answers, key: '' })}`;
 
 /**
  * What every server project is given in `.env`: the key its actions sign with — filled by `plitzi create` with one made
@@ -500,5 +557,6 @@ export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   'AGENTS.md': agentsFile(answers),
   // Claude Code reads CLAUDE.md, other agents AGENTS.md: one imports the other, so there is one text to keep true.
   'CLAUDE.md': '@AGENTS.md\n',
-  ...(answers.mode === 'server' || answers.source === 'cloud' ? { '.env': envFile(answers) } : {})
+  '.env': envFile(answers),
+  '.env.example': envExample(answers)
 });

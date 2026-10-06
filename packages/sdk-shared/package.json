@@ -1099,9 +1099,17 @@
       "types": "./dist/plugins/declaration.d.ts",
       "import": "./dist/plugins/declaration.mjs"
     },
+    "./project/layout": {
+      "types": "./dist/project/layout.d.ts",
+      "import": "./dist/project/layout.mjs"
+    },
     "./project/paths": {
       "types": "./dist/project/paths.d.ts",
       "import": "./dist/project/paths.mjs"
+    },
+    "./project/root": {
+      "types": "./dist/project/root.d.ts",
+      "import": "./dist/project/root.mjs"
     },
     "./queries": {
       "types": "./dist/queries/index.d.ts",

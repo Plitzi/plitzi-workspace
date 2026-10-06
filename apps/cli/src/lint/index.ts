@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
+import { checkProjectLayout } from '@plitzi/sdk-shared/project/layout';
+
 import { finding } from './catalog';
 import { withoutDisabled } from './directives';
 import { RULES } from './rules';
@@ -317,7 +319,19 @@ export const lint = async (options: LintOptions): Promise<void> => {
         ],
         files: 0
       };
-  const findings = [...source.findings, ...(await authoringFindings(root))];
+  // The layout is the doctor's to say, error by error: here, one line that it stops the space from authoring at all.
+  const layoutErrors = checkProjectLayout(root, { mode, space: 'local' }).filter(each => each.level === 'error');
+  const findings = [
+    ...source.findings,
+    ...(layoutErrors.length > 0
+      ? [
+          finding(
+            'project-layout',
+            `The project's layout has ${plural(layoutErrors.length, 'error')}, which stop its server and \`npm run author\` — \`plitzi doctor\` says each and what fixes it; what authoring suggests is read once they are fixed.`
+          )
+        ]
+      : await authoringFindings(root))
+  ];
   const report = reportOf({ root, name, entry: SPACE_ENTRY, files: source.files }, findings, {
     strict: Boolean(options.strict),
     maxWarnings: options.maxWarnings

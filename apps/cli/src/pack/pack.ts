@@ -8,6 +8,8 @@ import { zipSync } from 'fflate';
 import { PLUGIN_FUNCTIONS_SOURCE, readFunctionsSource } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { pluginAssetLoaders, pluginImportQueries } from '@plitzi/sdk-shared/plugins/bundle';
+import { elementEntry } from '@plitzi/sdk-shared/project/layout';
+import { PLUGIN_DECLARATION_FILE, PLUGIN_ENTRIES } from '@plitzi/sdk-shared/project/paths';
 import { inPluginLayer } from '@plitzi/sdk-shared/style/cssLayers';
 
 import { packSource } from './source';
@@ -147,7 +149,7 @@ const readDeclarations = async (root: string, source: PackSource): Promise<Decla
       ? `export { declarations } from '${toImportPath(source.declarations)}';`
       : [
           ...source.folders.map(
-            (folder, index) => `import d${index} from '${toImportPath(path.join(folder, 'declaration.ts'))}';`
+            (folder, index) => `import d${index} from '${toImportPath(path.join(folder, PLUGIN_DECLARATION_FILE))}';`
           ),
           `export const declarations = [${source.folders.map((_folder, index) => `d${index}`).join(', ')}];`
         ].join('\n');
@@ -185,6 +187,21 @@ const readDeclarations = async (root: string, source: PackSource): Promise<Decla
   return checked;
 };
 
+/**
+ * The file an element folder is built from: its `index.ts`, or `index.tsx` (`elementEntry`) — one of them, which
+ * `packPlugin` holds every folder to before it builds.
+ */
+const elementIndex = (folder: string): string => {
+  const entry = elementEntry(folder);
+  if (!entry) {
+    throw new PackError(
+      `${folder} has no ${PLUGIN_ENTRIES.join(' and no ')}, or has both: an element is built from one of them.`
+    );
+  }
+
+  return entry;
+};
+
 /** The entry a space loads: the package's own, or one written for the folders — the first the plugin, the rest its `plugins`. */
 const entryOf = (source: PackSource, root: string): Pick<BuildOptions, 'entryPoints' | 'stdin'> =>
   source.kind === 'package'
@@ -193,9 +210,7 @@ const entryOf = (source: PackSource, root: string): Pick<BuildOptions, 'entryPoi
         stdin: {
           resolveDir: root,
           contents: [
-            ...source.folders.map(
-              (folder, index) => `import e${index} from '${toImportPath(path.join(folder, 'index.ts'))}';`
-            ),
+            ...source.folders.map((folder, index) => `import e${index} from '${toImportPath(elementIndex(folder))}';`),
             'export default e0;',
             `export const plugins = { ${source.folders
               .slice(1)
@@ -252,7 +267,7 @@ const readFunctions = (dir: string): Promise<Record<string, string>> =>
 
 /** The files a plugin is built from: the package's entry, or each element's index — and its server half's. */
 const sourceEntries = (source: PackSource, functionsEntry?: string): string[] => [
-  ...(source.kind === 'package' ? [source.entry] : source.folders.map(folder => path.join(folder, 'index.ts'))),
+  ...(source.kind === 'package' ? [source.entry] : source.folders.map(elementIndex)),
   ...(functionsEntry ? [functionsEntry] : [])
 ];
 
@@ -299,15 +314,20 @@ export const packPlugin = async ({
 
   if (source.kind === 'elements') {
     for (const folder of source.folders) {
-      for (const file of ['index.ts', 'declaration.ts']) {
-        try {
-          await fs.access(path.join(folder, file));
-        } catch {
-          throw new PackError(
-            `${path.relative(root, folder) || folder} has no ${file}: an element is a folder holding its component, ` +
-              'declaration and index. `plitzi add plugin` writes one.'
-          );
-        }
+      const missing = [
+        ...(elementEntry(folder) ? [] : [`${PLUGIN_ENTRIES.join(' (or ')})`]),
+        ...((await fs.access(path.join(folder, PLUGIN_DECLARATION_FILE)).then(
+          () => true,
+          () => false
+        ))
+          ? []
+          : [PLUGIN_DECLARATION_FILE])
+      ];
+      if (missing.length > 0) {
+        throw new PackError(
+          `${path.relative(root, folder) || folder} has no ${missing.join(' and no ')}: an element is a folder holding ` +
+            'its component, declaration and index — one index. `plitzi add plugin` writes one.'
+        );
       }
     }
   }

@@ -266,7 +266,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
           'package.json': packageJson(answers, fromSpace.dependencies),
           '.env': envFromSpace(exported, answers, signingSecret)
         }
-      : { ...files, ...(files['.env'] ? { '.env': withSigningSecret(files['.env'], signingSecret) } : {}) };
+      : { ...files, '.env': withSigningSecret(files['.env'], signingSecret) };
   if (options.dryRun) {
     const wantsInstall = options.install !== false;
     sayDryRun(`plitzi create ${target}`, [

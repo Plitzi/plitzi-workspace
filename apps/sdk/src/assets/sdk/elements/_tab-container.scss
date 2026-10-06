@@ -1,7 +1,9 @@
 @use 'placeholder';
 
 @mixin styles {
-  .plitzi-component__tab-container-item {
+  // Only the panels take turns. A header's items are the triggers: hidden while not chosen, a set of tabs showed one tab
+  // and no way to the others.
+  .plitzi-component__tab-container-body > .plitzi-component__tab-container-item {
     display: none;
 
     &.active {

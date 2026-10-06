@@ -16,7 +16,7 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 | Write | `npm run author` | Whether the space authors: one line when it does, every problem at once (file, line, what to change) when not — and, under the warnings, the suggestions: a shorter way to the same page, with the elements it saves |
 | Lint | `npm run lint:space` (`plitzi lint`) | How the space's source is written, eslint's way, at file:line: files too long, pages in one file, rows of data written in code, colours that are not tokens, CSS copied, a row singled out in a `map`, minted ids, files nothing imports — beside authoring's suggestions at the line that wrote them. `--max-warnings 0` for CI |
 | Upgrade | `npx plitzi upgrade [files\|packages\|skills\|renames]` | The project brought up to the CLI it has: the CLI's files (replaced where nobody changed them, a diff where somebody did), `package.json` merged, the skills, every renamed name at its line; `--write` makes it |
-| Project | `npx plitzi doctor` | Whether the project the CLI set up is whole, after moving or rewiring files and before a push: packages, the CLI's files and scripts, configs, what Node runs, plugin folders, data files, functions — each problem with its file and fix. Never the space: that is `author`'s. `--fix` repairs the simple ones |
+| Project | `npx plitzi doctor` | Whether the project the CLI set up is whole, after moving or rewiring files and before a push: where each part lives, packages, the CLI's files and scripts, configs, what Node runs, plugin folders, data files, functions — each problem with its file and fix. Never the space: that is `author`'s. `--fix` repairs the simple ones |
 | Repair | `npx plitzi fix` | The problems — and the suggestions — with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
 | Check | `npm run check` (`plitzi check`) | Whether a page of the running server is whole, in text: elements on screen, overflow, contrast, console, refused requests, failed flows, bindings reading a path their provider's answer lacks, failed providers, rows per list; `--ssr` names what the server's HTML lacks that the hydrated page has |
 | Inspect | `plitzi check --state --element <id>` | What the page holds: its state, every source by name and shape, one element's own state and bindings |
@@ -90,6 +90,20 @@ and keeps the originals and the variants on disk — a picture is never resized 
 typed sources (`source()`), `scope()` for helpers that run more than once — each is accepted beside the form it
 shortens and writes the same document. A compound element is written with its parts (`carousel()` writes its own
 track); one written without them is refused (`part-missing`).
+
+**Where each part lives is checked once, and said by three.** Nobody reads `plitzi/README.md` before writing a plugin
+folder: they make `src/plugin/Card/`, put the component in `Card.tsx` and no `index.ts`, drop `.env` into `src/`. Each
+of those used to be silent — the server registered a folder it could not build and failed later in esbuild's words, or
+read no folder at all — so the project half-worked. `checkProjectLayout` (`@plitzi/sdk-shared/project/layout`, pure file
+system, no import of the project) is the one place that knows where the CLI puts everything; the server runs it at
+boot, `projectAuthoring()` before authoring, and `doctor` in its `layout` area, so the three say the same sentence and
+nothing reads what the others refuse. Every error is listed at once, never the first; each names the file, what is
+wrong, what to do and the command, and asks about a near miss (`src/Plugins/` works on a macOS disk and not on the
+Linux it is deployed to, so names are read as they are written, never looked up). The fixes with one reading are data
+(`autofix`: a move, a copy, a file written), made only by `doctor --fix` with the move machinery the older layouts use.
+`lint` does not repeat them — one line that there are some, pointing at `doctor`. While `start:dev` runs, a plugin
+folder added broken is said in the terminal and the server goes on: a project half-written is the normal state while
+writing it.
 
 ## Left open
 

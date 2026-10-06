@@ -27,10 +27,30 @@ export const CLI_DIR = 'plitzi';
 export const AUTHOR_FILE = `${CLI_DIR}/author.ts`;
 
 /**
+ * The space, in a folder of its own — it grows a page, a layout, a component at a time — whose `index.ts` exports it as
+ * `space`: what the server's entry point, the author script, the visual test and the CLI's checks import.
+ */
+export const SPACE_DIR = 'src/space';
+export const SPACE_ENTRY = `${SPACE_DIR}/index.ts`;
+
+/**
  * The project's own components: every folder is one, registered under its name in camelCase — `src/plugins/StatCard`
- * renders a space's `custom({ renderType: 'statCard' })` — and declared by its `declaration.ts`.
+ * renders a space's `custom({ renderType: 'statCard' })` — built from its entry (`PLUGIN_ENTRIES`) and declared by its
+ * `declaration.ts`.
  */
 export const PLUGINS_DIR = 'src/plugins';
+
+/**
+ * What a plugin folder is built from: `index.ts`, or `index.tsx` for one that writes its JSX there — TypeScript both,
+ * and one of them, never both.
+ */
+export const PLUGIN_ENTRIES = ['index.ts', 'index.tsx'] as const;
+
+/** What a plugin folder declares itself in — its type, attributes, triggers — as `plitzi add plugin` writes it. */
+export const PLUGIN_DECLARATION_FILE = 'declaration.ts';
+
+/** A plugin's server half, a folder of its own beside its component: built from its `index.ts`. */
+export const PLUGIN_FUNCTIONS_DIR = 'functions';
 
 /**
  * Plugins no source of was kept, as they were built (a project made from a space): `vendor/plugins/<type>/`, each
@@ -55,6 +75,19 @@ export const DATA_DIR = 'src/data';
 
 /** The project's own server code — the tasks and `/fn/` routes `defineFunctions` declares — built at boot. */
 export const FUNCTIONS_DIR = 'src/functions';
+
+/**
+ * The space's runtime — its own server code, run as a process of its own on Plitzi and by the project's server in its
+ * process — a folder like the space, whose `index.ts` exports it.
+ */
+export const RUNTIME_DIR = 'src/runtime';
+export const RUNTIME_ENTRY = `${RUNTIME_DIR}/index.ts`;
+
+/**
+ * What `npm run build` compiles `src/` into — the server's own code, as JavaScript, for `start:prod` to run with no
+ * TypeScript in the process. The same tree: `src/runtime/index.ts` is `dist/runtime/index.js`.
+ */
+export const BUILD_DIR = 'dist';
 
 /**
  * What the running server keeps for the space — its `kv`: saved layouts, counters, a source's cached answer. Not

@@ -5,23 +5,20 @@ import { pathToFileURL } from 'node:url';
 import esbuild from 'esbuild';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { pluginEntry, pluginTypeOf } from '@plitzi/sdk-shared/project/layout';
 
 import { sayer } from './types';
-import { PLUGIN_MANIFEST_FILE, PLUGINS_DIR, VENDOR_PLUGINS_DIR } from '../scaffold/paths';
+import { PLUGIN_DECLARATION_FILE, PLUGINS_DIR } from '../scaffold/paths';
 
 import type { Check, Finding } from './types';
 
 /**
- * The project's own elements (`src/plugins/<Name>/`) as the server finds them: a folder each, registered as its name
- * with a small first letter — `StatCard` is `statCard` — built from its `index.ts`, and described by its
- * `declaration.ts`, whose `type` must be that same name. And the ones it runs as they were built
- * (`vendor/plugins/<type>/`), each beside its manifest.
+ * The project's own elements (`src/plugins/<Name>/`) as the server builds them: each folder the layout check finds a
+ * plugin — a name that is a type, an entry, what `layout` says of the rest — built as the server builds it, exporting
+ * its component, and described by its `declaration.ts`, whose `type` must be the folder's: `StatCard` is `statCard`.
  */
 
 const say = sayer('plugins');
-
-/** What the server registers a folder as (`serveProject`, `@plitzi/sdk-server/project`). */
-export const pluginTypeOf = (folder: string): string => `${folder.charAt(0).toLowerCase()}${folder.slice(1)}`;
 
 const exists = (file: string): Promise<boolean> =>
   fs.stat(file).then(
@@ -161,133 +158,52 @@ const builds = async (root: string, entry: string, declared: ReadonlySet<string>
   ];
 };
 
-const checkFolder = async (
-  root: string,
-  folder: string,
-  packages: ReadonlySet<string>
-): Promise<{ findings: Finding[]; type?: string }> => {
-  const entry = path.join(PLUGINS_DIR, folder, 'index.ts');
-  const declarationFile = path.join(PLUGINS_DIR, folder, 'declaration.ts');
-  const expected = pluginTypeOf(folder);
-  const findings: Finding[] = [];
-  if (await exists(path.join(root, entry))) {
-    findings.push(...(await builds(root, entry, packages)));
-  } else {
-    findings.push(
-      say.error(
-        'plugin-entry-missing',
-        `${PLUGINS_DIR}/${folder}/ has no index.ts: the server registers ${expected} and builds nothing.`,
-        {
-          file: entry,
-          fix: `Write ${entry}, exporting the component by default — or remove the folder.`
-        }
-      )
-    );
+const checkFolder = async (root: string, folder: string, packages: ReadonlySet<string>): Promise<Finding[]> => {
+  const entry = pluginEntry(root, folder);
+  // A folder the server cannot build is the layout check's to say: `plugin-entry-missing`, `plugin-name-invalid`.
+  if (!entry) {
+    return [];
   }
 
+  const findings = await builds(root, path.relative(root, entry), packages);
+  const declarationFile = path.join(PLUGINS_DIR, folder, PLUGIN_DECLARATION_FILE);
+  // None is the layout check's warning too (`plugin-declaration-missing`).
   if (!(await exists(path.join(root, declarationFile)))) {
-    findings.push(
-      say.info(
-        'plugin-declaration-missing',
-        `${PLUGINS_DIR}/${folder}/ has no declaration.ts: authoring holds none of its attributes to a type, and the builder does not offer it to add.`,
-        { file: declarationFile, fix: 'plitzi add plugin writes one; or write it by hand.' }
-      )
-    );
-
-    return { findings };
+    return findings;
   }
 
   const declared = await declaredType(path.join(root, declarationFile));
   if ('problem' in declared) {
-    findings.push(
+    return [
+      ...findings,
       say.error('plugin-declaration-invalid', `${declarationFile} ${declared.problem}.`, { file: declarationFile })
-    );
-
-    return { findings };
+    ];
   }
 
-  if (declared.type !== expected) {
-    findings.push(
-      say.error(
-        'plugin-type-mismatch',
-        `${declarationFile} declares the type ${declared.type}, and the server registers the folder as ${expected}: an element of ${declared.type} renders nothing.`,
-        { file: declarationFile, fix: `Declare type: '${expected}', or name the folder after the type.` }
-      )
-    );
-  }
+  const expected = pluginTypeOf(folder);
 
-  return { findings, type: declared.type };
+  return declared.type === expected
+    ? findings
+    : [
+        ...findings,
+        say.error(
+          'plugin-type-mismatch',
+          `${declarationFile} declares the type ${declared.type}, and the server registers the folder as ${expected}: an element of ${declared.type} renders nothing.`,
+          { file: declarationFile, fix: `Declare type: '${expected}', or name the folder after the type.` }
+        )
+      ];
 };
 
-const checkVendor = async (root: string): Promise<Finding[]> =>
-  (
-    await Promise.all(
-      (await foldersOf(path.join(root, VENDOR_PLUGINS_DIR))).map(async folder => {
-        const file = path.join(VENDOR_PLUGINS_DIR, folder, PLUGIN_MANIFEST_FILE);
-        try {
-          const manifest: unknown = JSON.parse(await fs.readFile(path.join(root, file), 'utf-8'));
-
-          return isRecord(manifest)
-            ? []
-            : [
-                say.error('vendor-manifest-invalid', `${file} is not a manifest.`, {
-                  file,
-                  fix: 'plitzi pull brings it again.'
-                })
-              ];
-        } catch {
-          return [
-            say.error(
-              'vendor-manifest-invalid',
-              `${file} is missing or not JSON: the built plugin ${folder} does not load.`,
-              {
-                file,
-                fix: 'plitzi pull brings it again.'
-              }
-            )
-          ];
-        }
-      })
-    )
-  ).flat();
-
+/**
+ * Each plugin folder built and declared as the server reads it. Where each is, its entry, the types two folders share,
+ * one shadowed by a built copy and the built ones' manifests are the layout check's (`plitzi doctor`'s `layout`).
+ */
 export const checkPlugins: Check = async ({ root, manifest }) => {
-  const folders = await foldersOf(path.join(root, PLUGINS_DIR));
   const declared = new Set([
     ...(isRecord(manifest.dependencies) ? Object.keys(manifest.dependencies) : []),
     ...(isRecord(manifest.devDependencies) ? Object.keys(manifest.devDependencies) : [])
   ]);
-  const checked = await Promise.all(folders.map(folder => checkFolder(root, folder, declared)));
-  const findings = checked.flatMap(({ findings: found }) => found);
-  const byType = new Map<string, string[]>();
-  folders.forEach(folder => byType.set(pluginTypeOf(folder), [...(byType.get(pluginTypeOf(folder)) ?? []), folder]));
-  for (const [type, named] of byType) {
-    if (named.length > 1) {
-      findings.push(
-        say.error(
-          'plugin-type-taken',
-          `${named.map(folder => `${PLUGINS_DIR}/${folder}`).join(' and ')} are both ${type}: the server keeps one.`,
-          {
-            fix: 'Rename one of the folders.'
-          }
-        )
-      );
-    }
-  }
+  const folders = await foldersOf(path.join(root, PLUGINS_DIR));
 
-  const built = await foldersOf(path.join(root, VENDOR_PLUGINS_DIR));
-  for (const type of built.filter(each => byType.has(each))) {
-    findings.push(
-      say.error(
-        'plugin-shadowed',
-        `${type} is both ${VENDOR_PLUGINS_DIR}/${type} (as it was built) and a folder of ${PLUGINS_DIR}: the server runs the built one, and a change to the source shows nowhere.`,
-        {
-          file: `${VENDOR_PLUGINS_DIR}/${type}`,
-          fix: `Remove ${VENDOR_PLUGINS_DIR}/${type}: the source is the plugin now.`
-        }
-      )
-    );
-  }
-
-  return [...findings, ...(await checkVendor(root))];
+  return (await Promise.all(folders.map(folder => checkFolder(root, folder, declared)))).flat();
 };

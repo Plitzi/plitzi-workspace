@@ -301,6 +301,30 @@ describe('plitzi lint', () => {
     expect(process.exitCode).toBe(1);
   }, 30_000);
 
+  // Each error is the doctor's to say, with its fix: lint says in one line that they are there, and reads the source.
+  it('points at plitzi doctor, in one line, when the project is laid out where nothing reads it', async () => {
+    await write('src/plugins/Card/Card.tsx', 'export default () => null;\n');
+    await write('src/plugin/Chart/index.ts', 'export default () => null;\n');
+    await write('src/space/index.ts', SPACE_INDEX);
+    await write('src/space/pages/home.ts', page("    heading('Hi', { css: { color: '#ff0066' } })"));
+
+    const report = await run();
+
+    expect(only(report, 'project-layout')).toEqual([
+      expect.objectContaining({
+        severity: 'error',
+        docs: 'plitzi doctor',
+        message:
+          "The project's layout has 2 errors, which stop its server and `npm run author` — `plitzi doctor` says each and what fixes it; what authoring suggests is read once they are fixed."
+      })
+    ]);
+    // Not one of them said here, nor authoring's refusal, which would say them all again.
+    expect(JSON.stringify(report.findings)).not.toContain('src/plugins/Card');
+    expect(codes(report)).not.toContain('space-does-not-author');
+    expect(codes(report)).toContain('colour-not-token');
+    expect(report.ok).toBe(false);
+  }, 30_000);
+
   it('refuses a project whose space is not written in it, and one an older CLI laid out', async () => {
     await fs.rm(path.join(project, 'src/space'), { recursive: true });
     said = [];

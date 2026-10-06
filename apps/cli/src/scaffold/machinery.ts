@@ -1,4 +1,4 @@
-import { CLI_DIR, ENV_FILE, FUNCTIONS_DIR, MAIN_FILE } from './paths';
+import { CLI_DIR, FUNCTIONS_DIR, MAIN_FILE } from './paths';
 
 /**
  * The files of a project that are this CLI's machinery rather than the project's own: what `plitzi upgrade` keeps up
@@ -12,9 +12,8 @@ import { CLI_DIR, ENV_FILE, FUNCTIONS_DIR, MAIN_FILE } from './paths';
  * the CLI wrote them and `upgrade` still knows them for its own.
  */
 export const MACHINERY: ReadonlySet<string> = new Set([
-  // The entry point, in `src/` where one is looked for, and what it imports first — and the CLI's folder, all of it.
+  // The entry point, in `src/` where one is looked for — and the CLI's folder, all of it.
   MAIN_FILE,
-  ENV_FILE,
   `${CLI_DIR}/author.ts`,
   `${CLI_DIR}/preflight.css`,
   `${CLI_DIR}/assets.d.ts`,
@@ -39,3 +38,13 @@ export const MACHINERY: ReadonlySet<string> = new Set([
   `${FUNCTIONS_DIR}/.gitkeep`,
   'src/connectors/.gitkeep'
 ]);
+
+/**
+ * Machinery an older CLI wrote and this one no longer does, by the machinery file that read it: `plitzi upgrade` removes
+ * one nobody changed since, once the file that read it is the CLI's current one — beside a reader the project made its
+ * own, it is still read, and stays. One the project changed is its own, shown and left.
+ */
+export const RETIRED_MACHINERY: Readonly<Record<string, string>> = {
+  // `.env` is read as the scripts start now (`--env-file-if-exists`, `start:dev`'s preload), before any module is.
+  'src/env.ts': MAIN_FILE
+};

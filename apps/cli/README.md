@@ -149,10 +149,14 @@ when an install fails the CLI says which setting names it.
 **`plitzi/` is the CLI's; `src/` is yours — but `src/main.ts`.** `plitzi/` holds `author.ts`, the types plugins import
 (`assets.d.ts`, server mode) or the page's base styles (`preflight.css`, client mode), and a `README.md` saying what
 each folder of `src/` is. `src/main.ts`, the entry point, is the CLI's too, kept in `src/` where an entry point is
-looked for — and in server mode `src/env.ts`, which it imports first to read `.env`; `upgrade` keeps all of them current, and the build compiles `src/` into `dist/main.js`. In server mode it is a few lines: it authors the space
-(`authorSpace` with `projectAuthoring` from `@plitzi/sdk-authoring/node`, what `author` checks it against too) and hands
+looked for; `upgrade` keeps all of them current, and the build compiles `src/` into `dist/main.js`. In server mode it is a few lines: it authors the space
+(`authorSpace` with `projectAuthoring()` from `@plitzi/sdk-authoring/node`, what `author` checks it against too) and hands
 it, the actions and the options to `serveProject` from `@plitzi/sdk-server/project`, which wires the rest from where the
-project keeps it — so a fix to the server arrives with `npm update`, not as a file to upgrade. A plugin is declared by its folder: the server, `author` and `check` find every
+project keeps it — so a fix to the server arrives with `npm update`, not as a file to upgrade. Neither is told where the
+project is: it is the folder every script runs in, and both refuse to start anywhere else, naming what is missing
+(`package.json`, `src/`) — run them from the project's root. Nor do they start on a part where nothing reads it — a
+plugin folder with no `index.ts`, code in `src/plugin/`, `.env` in `src/` — naming every one at once (`doctor` says each
+with its fix). A plugin is declared by its folder: the server, `author` and `check` find every
 `src/plugins/<Name>/declaration.ts` (`pluginDeclarations` from `@plitzi/sdk-authoring/node`). What the server does
 besides serving the space is the project's own, in files it reads: `src/config/serverOptions.ts` (handed to `serveProject` —
 `images`, `action.limits`, `action.kv`, `rsc`) and, with `--source local`, `src/actions/index.ts` (the space's server
@@ -244,6 +248,7 @@ has it as `npm run lint:space`.
 | `positional-id` | an id minted for an element nobody named — `container-45`, `heading-a7k2` |
 | `disable-names-suggestion` | a `plitzi-lint-disable` comment naming a suggestion of authoring's, which a comment does not silence: `quiet: ['<code>']` on its element |
 | `space-does-not-author` | error: the space does not author, so authoring's suggestions could not be read — `npm run author` says why |
+| `project-layout` | error: the project is laid out where its server and `npm run author` refuse to start — one line, each error `doctor`'s to say; authoring's suggestions are read once they are fixed |
 | `source-unreadable` | error: the source could not be read (no TypeScript installed, a rule that could not finish) |
 
 Beside them, every suggestion authoring makes about the space it authors to (`authorSpace(…).suggestions`) — whatever
@@ -323,25 +328,43 @@ commands (`plitzi upgrade --write`, an install, `doctor --fix`) that clear most 
 
 **`--fix`** makes only what is simple and safe, then examines the project again: a layout an older CLI left, moved (every
 import, `new URL(…, import.meta.url)` and script naming a moved file follows, and what the CLI recorded of its files
-follows them); an older CLI's dead files and caches deleted; `.gitignore` lines added or taken out; `"type": "module"`
-and `engines`; a folder `start:dev` watches; a `PLITZI_SIGNING_SECRET` where there is none (or one too short). What
-replaces a file of the project's, installs, or touches git is recommended, never done — `upgrade --write` and the install
-are a step of their own.
+follows them); a part out of place with one reading of where it goes, moved the same way — `src/plugin/` into
+`src/plugins/`, an `index.js` to `index.ts`, `src/.env` to the root when it has none, a name that differs only in case
+renamed through one of its own; `.env.example` written from `.env` with no value kept, `.env` copied from
+`.env.example`; an older CLI's dead files and caches deleted; `.gitignore` lines added or taken out; `"type": "module"`
+and `engines`; a folder `start:dev` watches; a `PLITZI_SIGNING_SECRET` where there is none (or one too short). A move
+that would write over a file is said and left. What replaces a file of the project's, installs, or touches git is
+recommended, never done — `upgrade --write` and the install are a step of their own.
 
 **A project an older CLI made** is the usual patient, and its own installed CLI may predate `doctor`: run the latest one
 from it — `npx @plitzi/cli@latest doctor --fix`, then what it recommends. While its layout is an older one (the space in
 `src/space.ts`, `author` in `src/`, `functions/` at the root), nothing else is checked — read against it, every other
 area would only say what the move fixes — and `upgrade` writes no file until it is moved.
 
+**Where each part lives** is one check (`checkProjectLayout`, `@plitzi/sdk-shared/project/layout`) said by three: the
+server refuses to start on its errors, listing every one (and prints its warnings while developing — a plugin folder
+added broken while `start:dev` runs is said there, and the server goes on), `npm run author` and the CLI's checks
+(`check`, `push`, `fix`) refuse to author, and `doctor` says each with its fix under `layout`. `lint` says in one line
+that there are some. Its codes, each with what it means, are `PROJECT_LAYOUT_CODES`: errors — a plugin folder with no
+`index.ts` (or `index.tsx`), or both; a JavaScript entry; a folder name that is no element type (`story-editor` →
+`StoryEditor`), two folders of one type, a plugin also built in `vendor/plugins/`; a plugin's `functions/`,
+`src/functions/` or `src/runtime/` with code and no `index.ts`; a local space with no `src/space/index.ts`, or one
+exported by default; a built plugin whose manifest is missing, unreadable, or names no script there; `.env` inside
+`src/`; code in a folder named like one the server reads (`src/plugin/`, `plugins/` at the root). Warnings — the same
+folder with nothing it would read (`src/Data/`, `src/runtimes/`, `src/public/`); a plugin with no `declaration.ts`; a
+file loose in `src/plugins/`; a file of `src/data/` that is not JSON; no `.env` or no `.env.example`; JSON in
+`public/data/` of a project with a server, and a file in `public/` named like a secret. A near name is asked about —
+did you mean `index.ts`, `src/plugins/`? — and one that differs only in case says it works on macOS and not on Linux.
+
 | Area | What is held |
 |---|---|
-| `layout` | where an older CLI kept what this one reads elsewhere (`src/space.ts`, `src/site/`, `src/actions.ts`, `src/author.ts`, `functions/`) and what it left behind (`src/plugins/declarations.ts`, `.sdk-plugins/`, `.plitzi/dev-server.json`, the `tmp/space.json` an older `src/main.ts` re-read the space from) |
-| `packages` | `"type": "module"`, the Node version; every package the project and its scripts need, declared and installed at a version its range allows; the SDK's packages at one version, no older than the CLI; one copy of the SDK and of React (none installed inside another); the scripts — gone, behind the CLI, or the project's own — the file each Node script starts and every folder `start:dev` watches; one lockfile |
-| `machinery` | the CLI's files (`MACHINERY`), as `upgrade` sees them: gone, behind, or the project's own (said, never failed); the scaffold record |
+| `layout` | where an older CLI kept what this one reads elsewhere (`src/space.ts`, `src/site/`, `src/actions.ts`, `src/author.ts`, `functions/`) and what it left behind (`src/plugins/declarations.ts`, `.sdk-plugins/`, `.plitzi/dev-server.json`, the `tmp/space.json` an older `src/main.ts` re-read the space from); every part where the server, `npm run author` and the CLI's checks read it (`PROJECT_LAYOUT_CODES`, above) |
+| `packages` | `"type": "module"`, the Node version; every package the project and its scripts need, declared and installed at a version its range allows; the SDK's packages at one version, no older than the CLI; one copy of the SDK and of React (none installed inside another); the scripts — gone, behind the CLI, or the project's own — the file each Node script starts, every folder `start:dev` watches, and a server's scripts reading `.env` (`--env-file-if-exists`; a watched one by the preload, never Node's flag); one lockfile |
+| `machinery` | the CLI's files (`MACHINERY`), as `upgrade` sees them: gone, behind, or the project's own (said, never failed); one it no longer writes, left over (`src/env.ts`); the scaffold record |
 | `config` | `tsconfig.json` reads `src/` and `plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key |
 | `sources` | what Node runs as written — `src/main.ts`, `src/config/`, `src/actions/`, `src/space/`, `src/runtime/`, `plitzi/author.ts`, the plugins' declarations, and all they import: every relative import a file that is there, with its extension; JSON imported `with { type: 'json' }`; no JSX; every package declared (a devDependency, in what production runs, is said); what the server loads by name exported (`space`, `actions`, the runtime's default) |
-| `plugins` | each folder of `src/plugins/`: an `index.ts` that builds and exports its component, its packages declared; a `declaration.ts` whose `type` is the folder's (`StatCard` → `statCard`); one folder a type; none shadowed by a built copy in `vendor/plugins/` |
-| `data` | every file of `src/data/` and `public/data/` JSON — what the server answers with and `push` sends |
+| `plugins` | each folder of `src/plugins/` the server can build: its entry builds and exports its component, its packages declared; its `declaration.ts` loads and its `type` is the folder's (`StatCard` → `statCard`) |
+| `data` | every JSON file of `src/data/` and `public/data/` parses — what the server answers with and `push` sends |
 | `functions` | `src/functions/` built by the project's own `@plitzi/sdk-server` (`buildFunctions`), as every runner builds them |
 | `records` | `.plitzi/space.json`, `scaffold.json` and `functions.json` readable, and of the same space |
 | `skills` | `.claude/skills/plitzi-*` as the packages installed write them |
@@ -358,7 +381,7 @@ plitzi upgrade skills --write        # only the skills, each replaced whole from
 plitzi upgrade --write --take plitzi/author.ts
 ```
 
-A project brought up to the CLI it has now, part by part: `files` (the machinery — `author.ts`, `main.ts`, `env.ts`, the
+A project brought up to the CLI it has now, part by part: `files` (the machinery — `author.ts`, `main.ts`, the
 Playwright and lint configs, `AGENTS.md`), `packages` (`package.json` merged, `@plitzi/*` raised to this version, then
 the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill no longer has goes with it) and
 `renames` (a name a version renamed, at its file and line). A file nobody changed since the CLI wrote it is replaced;
@@ -366,7 +389,9 @@ one the project made its own is a diff, left unless `--take` names it (`all` for
 `.prettierignore` names them, so the project's `format` never turns one into a file `upgrade` believes was changed. A file of the project's own
 that the machinery reads (`src/config/serverOptions.ts`, `src/actions/index.ts`) is written when the project has none and the
 `main.ts` reading it is the CLI's, and never replaced. A script is the same: one the CLI wrote and nobody changed takes
-today's command, one the project changed is left and said (`.plitzi/scaffold.json` records both, and the package
+today's command, one the project changed is left and said. A file the CLI no longer writes — `src/env.ts`, now that
+Node reads `.env` — is removed the same way once the `main.ts` that read it is the CLI's; one the project changed is
+said and left, unless `--take` names it (`.plitzi/scaffold.json` records the files and the scripts, and the package
 manager the files were written for — what a project not installed yet has no lockfile to say). In a project made from
 a space, a file the space gave over one of the CLI's would be the space's, and `upgrade` would leave it to `plitzi pull` —
 none does: `serveProject` runs whatever the space brought, from where it lands. `update` is the same
@@ -436,8 +461,9 @@ said before anything is sent, with what to do: a provider reading a file `src/da
 Adds elements of your own to the project you are in — one, several at once (`add plugin seat-picker legend`), or one at
 a time as the need comes. Each is a folder, written the way Plitzi's own elements are (`@plitzi/sdk-elements`): the
 component, its `declaration.ts` (its `type`, the events it fires, the actions it answers to, and the element the builder
-adds), its `Settings.tsx` panel for the builder, and the `index.ts` that puts them together. It asks what to call each,
-what the builder shows, and what it is for, and checks every folder is free before writing any.
+adds), its `Settings.tsx` panel for the builder, and the `index.ts` that puts them together — what the folder is built
+from: `index.ts`, or `index.tsx` for one that writes its JSX there, never both. It asks what to call each, what the
+builder shows, and what it is for, and checks every folder is free before writing any.
 
 - **In a project `plitzi create` wrote**, it goes in `src/plugins`, where the project already looks: nothing to
   register, and a running `start:dev` picks it up without a restart. Host it with `custom({ renderType: 'seatPicker' })` in `src/space/`
@@ -616,9 +642,14 @@ throws it away) and `push` refuses when the space moved on since. A problem come
 names them differently on purpose: a server gets the secret self-hosting key, a browser gets the public render key,
 whose protection is the origin it is presenting from.
 
-Every server project reads `.env` itself, in `src/env.ts` (`process.loadEnvFile`) — the first thing `src/main.ts`
-imports, so `src/config/serverOptions.ts` and the actions find their settings in `process.env` as they load, and
-`npm start` needs nothing else.
+Every project has a `.env`, never committed, and a `.env.example`, committed: the same settings with no secret in them,
+for a clone to copy and fill in. A server project's `.env` is read as each script starts —
+`node --env-file-if-exists=.env` in `start`, `start:prod` and `author`, and in `start:dev`, which Node watches,
+`node --import @plitzi/sdk-server/env` (Node's flag there has its watcher restart on every write in the project) —
+before any of its modules is evaluated, so `src/config/serverOptions.ts` and the actions find their settings in
+`process.env` as they load. A change to it is read on the next start, and a deployment that sets its environment needs
+no file. A browser
+project's is Vite's: only `VITE_*` reaches the page, and ships in it.
 `create` gives each one a signing key there, made for it: `PLITZI_SIGNING_SECRET`, what `ctx.sign` and `ctx.verify`
 sign with — at least 32 characters (`doctor --fix` writes one where it is missing). `PORT` is left commented out: 8080,
 or the next free port while developing.

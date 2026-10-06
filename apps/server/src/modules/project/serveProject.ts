@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
+import { assertProjectLayout, layoutFindingText } from '@plitzi/sdk-shared/project/layout';
 import {
   DATA_DIR,
   DEV_SERVER_FILE,
@@ -11,8 +11,10 @@ import {
   PUBLIC_DIR,
   RUNTIME_BUNDLE
 } from '@plitzi/sdk-shared/project/paths';
+import { projectRoot } from '@plitzi/sdk-shared/project/root';
 
 import { projectPlugins, watchProjectPlugins } from './plugins';
+import { runtimeModule } from './runtimeModule';
 import { watchSpace } from './watchSpace';
 import { createCloudAdapters } from '../../adapters/cloudAdapters';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
@@ -53,12 +55,10 @@ export type ProjectServerOptions = Partial<Omit<ServerConfig, SetByProject>> & {
   action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
 };
 
-/** A space authored in the project — `authorSpace(space, await projectAuthoring(…))` — and what it warned of. */
+/** A space authored in the project — `authorSpace(space, await projectAuthoring())` — and what it warned of. */
 export type ProjectSpace = AuthoredDocuments & { warnings?: readonly { message: string }[] };
 
 type ServeProjectBase = {
-  /** The entry point's `import.meta.url` — `src/main.ts`, or `dist/main.js` once built: the project is its folder's parent. */
-  entry: string;
   /** The space's server actions (`src/actions/`), found by their id. Left out, the server runs none. */
   actions?: readonly ActionEntry[];
   /** The connectors those actions call, by id. */
@@ -140,12 +140,15 @@ const actionLookups = (
 
 /**
  * The server of a project `@plitzi/cli` writes — its `src/main.ts` hands it the space, its actions and its options,
- * and everything else comes from where the project keeps it:
+ * and everything else comes from where the project keeps it. The project is the working directory, where its scripts
+ * start it (`projectRoot`: refused, saying what is missing, anywhere else), laid out where the server reads each part
+ * (`assertProjectLayout`: refused with every error at once; its warnings said while developing):
  *
  * - the port: `PORT`, or 8080 — the next free one from there while developing; `HOST`, loopback by default;
  * - its plugins: every folder of `src/plugins` built from its source and server-rendered, every one of `vendor/plugins`
  *   as it was built, each with its server half;
- * - its code: `src/functions/`, and the space's runtime (`src/runtime/`, or `vendor/runtime.bundle`) in this process;
+ * - its code: `src/functions/`, and the space's runtime (`src/runtime/` — compiled under `dist/` when the server runs
+ *   compiled, `runtimeModule` — or `vendor/runtime.bundle`) in this process;
  * - `public/` served as it is, `src/data/` read and never served, `kv` kept in `state/kv.json`;
  * - `/health` answering with the space's permanent URL (or the cloud project's name), and the port it took written to
  *   `tmp/dev-server.json` for `check`, `shot` and `visual` to find;
@@ -154,13 +157,21 @@ const actionLookups = (
  * While developing (`NODE_ENV` other than `production`), a save to the space is authored again by the project's
  * `plitzi/author.ts`, in a process of its own, which hands the documents back over IPC: the server swaps them in memory
  * and every open page loads again. A plugin folder added is registered, one removed turned off, and a plugin's
- * `functions/` loaded again.
+ * `functions/` loaded again; a folder it cannot build is said in the terminal, and the server goes on.
  */
 export const serveProject = async (options: ServeProjectOptions): Promise<ServedProject> => {
-  const { entry, actions, connectors = new Map<string, ConnectorManifest>(), serverOptions = {} } = options;
-  const entryFile = fileURLToPath(entry);
-  const root = path.resolve(path.dirname(entryFile), '..');
+  const { actions, connectors = new Map<string, ConnectorManifest>(), serverOptions = {} } = options;
+  const root = projectRoot();
   const developing = process.env.NODE_ENV !== 'production';
+  // Laid out where the server would read nothing — a plugin it cannot build, code in a misnamed folder, `.env` in
+  // `src/` — it does not start: every error said at once, never a page short of a part, nor a boot that fails on the first.
+  const layout = assertProjectLayout(root, { mode: 'server', space: options.space ? 'local' : 'cloud' });
+  // What works and should not stay is said while developing; a deployment's log is not where a project is changed.
+  if (developing) {
+    for (const warning of layout) {
+      console.warn(`[layout] ${layoutFindingText(warning)}`);
+    }
+  }
 
   // Loopback unless told otherwise: a container publishes a port only from an address it listens on (`HOST=0.0.0.0`).
   const host = process.env.HOST ?? '127.0.0.1';
@@ -190,7 +201,7 @@ export const serveProject = async (options: ServeProjectOptions): Promise<Served
   // variables are this process's environment. One that came across built only runs as it was built.
   const runtimeBundle = path.join(root, RUNTIME_BUNDLE);
   const spaceRuntime =
-    (await loadRuntimeModule(path.join(path.dirname(entryFile), `runtime/index${path.extname(entryFile)}`))) ??
+    (await loadRuntimeModule(runtimeModule(root, process.argv[1]))) ??
     (existsSync(runtimeBundle)
       ? await loadRuntime(readFileSync(runtimeBundle), path.join(root, PROJECT_TMP, 'runtime'))
       : undefined);

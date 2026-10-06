@@ -27,8 +27,20 @@
 - **No more `tmp/space.json` while developing**: a saved space is authored again in its own process and handed to the
   server over IPC (`plitzi/author.ts --ipc`, in place of `--out`); the server swaps it in memory and the open pages
   reload, and a refused space keeps the last one that authored. `plitzi doctor` reports a leftover `tmp/space.json`.
-- **`projectAuthoring(root)` in `@plitzi/sdk-authoring/node`**: what a project's space is checked against — its
-  plugins' declarations, its built plugins, its data files — once, for the server and `npm run author` alike.
+- **`projectAuthoring()` in `@plitzi/sdk-authoring/node`**: what a project's space is checked against — its plugins'
+  declarations, its built plugins, its data files — once, for the server and `npm run author` alike. Neither it nor
+  `serveProject` takes a root: it is the working directory, where every script runs (`projectAuthoringAt(root)` for a
+  tool working on another folder).
+- **`.env` lives at the root and Node reads it** as each script starts (`--env-file-if-exists=.env`; `start:dev`
+  preloads `@plitzi/sdk-server/env`, since a watched process would restart on every change beside the file). Settings
+  read at the top level of `src/config/serverOptions.ts` or the actions are set. Every project gets `.env` and
+  `.env.example`; `plitzi upgrade` removes the old `src/env.ts`.
+- **One check of a project's layout** (`@plitzi/sdk-shared/project/layout`): a plugin folder with no entry, a
+  JavaScript entry, `src/plugin/` for `src/plugins/`, a `.env` inside `src/`, a space exported by default, a broken
+  `vendor/` plugin… The server refuses to boot listing every error with its fix, `npm run author` and the CLI's checks
+  refuse with the same words, `plitzi doctor` lists them under `layout` and `--fix` makes the ones with a single fix,
+  and `plitzi lint` points at doctor. A plugin folder added broken while developing is reported in the terminal
+  instead of failing in esbuild. Plugins may start at `index.tsx`.
 - **`createJsonAdapters` serves documents held in memory**: `offlineData` may be a function returning them, not only a
   path.
 - **One source for a project's layout**, `@plitzi/sdk-shared/project/paths`; `src/config/serverOptions.ts` is typed
@@ -67,8 +79,6 @@
   why in the console (`[plitzi] auth.login: …`) instead of failing silently.
 - **Renewal verifies the refresh token itself.** `findByRefreshToken` no longer has to report `refreshExpiresAt`; when
   it does, it overrides the token's own expiry.
-- **Server projects load `.env` from a CLI-owned `src/env.ts`** that `src/main.ts` imports first, so settings read at
-  the top level of `src/config/serverOptions.ts` or the actions are set. `plitzi upgrade --write` adds it.
 - **New authoring reference `auth.md`**: providers, `authLogin` and its result, `authLogout`, `{{ auth.* }}`,
   `accessLevel`, visitor roles, action `access` and `ctx.user`.
 
@@ -95,6 +105,11 @@
   `list`, `listItem`, `quote`, `code`, `codeBlock`, `image`, `table`, `anchor`), and `headingLinks: false` drops the
   link each heading offers to itself while keeping its id, so `/page#anchor` links still work. Its description spells
   out the HTML it outputs. Needs `@plitzi/plitzi-ui` 1.6.32.
+- **Tabs show every trigger.** The SDK hid every inactive tab item, the header's included, so a set of tabs showed
+  one tab and no way to the others; only the body's panels take turns now.
+- **A link that names a query is current only on that query**: of `/?window=6h` and `/?window=24h`, the one shown
+  carries `aria-current` — with the path alone, every one of them did. A link with no query is still current on its
+  page whatever the query.
 
 ## check and lint
 

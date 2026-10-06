@@ -3,10 +3,12 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+
+import { ProjectLayoutError } from '@plitzi/sdk-shared/project/layout';
 
 import { authorSpace } from '.';
-import { pluginDeclarations, projectAuthoring, projectData, publicData } from './node';
+import { pluginDeclarations, projectAuthoring, projectAuthoringAt, projectData, publicData } from './node';
 
 const root = mkdtempSync(path.join(tmpdir(), 'plitzi-public-data-'));
 mkdirSync(path.join(root, 'public/data'), { recursive: true });
@@ -76,7 +78,11 @@ describe('pluginDeclarations', () => {
 
 describe('projectAuthoring', () => {
   const project = mkdtempSync(path.join(tmpdir(), 'plitzi-project-authoring-'));
+  writeFileSync(path.join(project, 'package.json'), '{}\n');
+  mkdirSync(path.join(project, 'src/space'), { recursive: true });
+  writeFileSync(path.join(project, 'src/space/index.ts'), 'export const space = {};\n');
   mkdirSync(path.join(project, 'src/plugins/Board'), { recursive: true });
+  writeFileSync(path.join(project, 'src/plugins/Board/index.ts'), 'export default () => null;\n');
   writeFileSync(path.join(project, 'src/plugins/Board/declaration.ts'), "export default { type: 'board' };\n");
   mkdirSync(path.join(project, 'src/data'), { recursive: true });
   writeFileSync(path.join(project, 'src/data/products.json'), JSON.stringify({ items: [{ name: 'Lamp' }] }));
@@ -87,34 +93,85 @@ describe('projectAuthoring', () => {
     ['map', { version: '2.0.0' }]
   ] as const) {
     mkdirSync(path.join(project, 'vendor/plugins', type), { recursive: true });
-    writeFileSync(path.join(project, 'vendor/plugins', type, 'plugin-manifest.json'), JSON.stringify(manifest));
+    writeFileSync(
+      path.join(project, 'vendor/plugins', type, 'plugin-manifest.json'),
+      JSON.stringify({ ...manifest, assets: { js: { src: `${type}.mjs`, type: 'script', isMain: true } } })
+    );
+    writeFileSync(path.join(project, 'vendor/plugins', type, `${type}.mjs`), '');
   }
-  mkdirSync(path.join(project, 'vendor/plugins/unread'), { recursive: true });
 
   afterAll(() => {
     rmSync(project, { recursive: true, force: true });
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /** The process as a project's script starts it: in the project's root. */
+  const runIn = (folder: string): void => {
+    vi.spyOn(process, 'cwd').mockReturnValue(folder);
+  };
+
   it('is what the project says: its declarations, the built plugins’ types and the data its providers read', async () => {
-    const options = await projectAuthoring(project);
+    runIn(project);
+    const options = await projectAuthoring();
 
     expect(options.plugins.map(declaration => declaration.type)).toEqual(['board']);
-    // Each built folder's type and every element its manifest provides; one with no manifest read is its folder alone.
-    expect(options.pluginTypes).toEqual(['chart', 'chart', 'chartLegend', 'map', 'unread']);
+    // Each built folder's type and every element its manifest provides.
+    expect(options.pluginTypes).toEqual(['chart', 'chart', 'chartLegend', 'map']);
     expect(options.serverData?.('/data/products.json')).toEqual({ items: [{ name: 'Lamp' }] });
     expect(options.data('/data/plans.json')).toEqual({ plans: [] });
   });
 
-  it("takes the project’s folder as a URL too — what `new URL('..', import.meta.url)` is", async () => {
-    const options = await projectAuthoring(new URL(`file://${project}/`));
+  // `node main.ts` in `src/`, or a script run from the folder above: never guessed from where a file is.
+  it('refuses a process started anywhere but the project’s root, saying what is missing and where to run it', async () => {
+    runIn(path.join(project, 'src'));
 
-    expect(options.plugins.map(declaration => declaration.type)).toEqual(['board']);
+    await expect(projectAuthoring()).rejects.toThrow(
+      `${path.join(project, 'src')} is not the root of a Plitzi project: it has no package.json and no src/. Run it from the project's root`
+    );
+  });
+
+  it('reads a project found from another folder — the CLI’s — held to the same check', async () => {
+    runIn(tmpdir());
+
+    expect((await projectAuthoringAt(project)).plugins.map(declaration => declaration.type)).toEqual(['board']);
+    await expect(projectAuthoringAt(path.join(project, 'public'))).rejects.toThrow(
+      'is not the root of a Plitzi project'
+    );
+  });
+
+  // What the server would not build, run or read is refused before the space is: every error at once.
+  it('refuses a project laid out where nothing reads it, every error said — as its server and the doctor say it', async () => {
+    const broken = mkdtempSync(path.join(tmpdir(), 'plitzi-project-authoring-broken-'));
+    mkdirSync(path.join(broken, 'src/plugins/Card'), { recursive: true });
+    mkdirSync(path.join(broken, 'src/plugin/Chart'), { recursive: true });
+    writeFileSync(path.join(broken, 'package.json'), '{}\n');
+    writeFileSync(path.join(broken, 'src/plugin/Chart/index.ts'), '');
+    writeFileSync(path.join(broken, 'src/.env'), 'A=1\n');
+    try {
+      const refused = projectAuthoringAt(broken);
+
+      await expect(refused).rejects.toBeInstanceOf(ProjectLayoutError);
+      await expect(refused).rejects.toThrow(
+        /^The project is not laid out as Plitzi reads it — 4 errors:\n\n1\. src\/plugins\/Card\/ has no index\.ts/
+      );
+      await expect(refused).rejects.toThrow('2. src/space/ has no index.ts');
+      await expect(refused).rejects.toThrow('3. src/plugin/ holds src/plugin/Chart/index.ts');
+      await expect(refused).rejects.toThrow('4. src/.env is never read');
+    } finally {
+      rmSync(broken, { recursive: true, force: true });
+    }
   });
 
   it('checks against nothing a project does not have — and a project with no server reads no data of its own', async () => {
     const empty = mkdtempSync(path.join(tmpdir(), 'plitzi-project-authoring-empty-'));
+    writeFileSync(path.join(empty, 'package.json'), '{}\n');
+    mkdirSync(path.join(empty, 'src/space'), { recursive: true });
+    writeFileSync(path.join(empty, 'src/space/index.ts'), 'export const space = {};\n');
     try {
-      const options = await projectAuthoring(empty);
+      const options = await projectAuthoringAt(empty);
 
       expect(options.plugins).toEqual([]);
       expect(options.pluginTypes).toEqual([]);
@@ -128,7 +185,7 @@ describe('projectAuthoring', () => {
   it('is options `authorSpace` takes whole', async () => {
     const authored = authorSpace(
       { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', body: [] }] },
-      await projectAuthoring(project)
+      await projectAuthoringAt(project)
     );
 
     expect(authored.schema.definition.permanentUrl).toBe('shop');

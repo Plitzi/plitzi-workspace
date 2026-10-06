@@ -149,6 +149,92 @@ describe('plitzi upgrade', () => {
     expect(await read('src/actions/index.ts')).toBe(actions);
   });
 
+  describe('a project that read .env in src/env.ts', () => {
+    const olderEnv = "try {\n  process.loadEnvFile(new URL('../.env', import.meta.url));\n} catch {\n  // None.\n}\n";
+    const olderMain =
+      "import './env.ts';\n\nimport { serveProject } from '@plitzi/sdk-server/project';\n\nawait serveProject({ entry: import.meta.url, serverOptions: {} });\n";
+    const olderScripts = {
+      start: 'node src/main.ts',
+      'start:dev': 'node --watch-path=./src/main.ts --watch-path=./src/config src/main.ts',
+      'start:prod': 'node dist/main.js',
+      author: 'node plitzi/author.ts'
+    };
+
+    /** The project as the CLI before this one wrote it, and recorded writing it. */
+    const writtenByOlderCli = async (): Promise<Record<string, string>> => {
+      const manifest: unknown = JSON.parse(await read('package.json'));
+      const scripts = isRecord(manifest) && isRecord(manifest.scripts) ? manifest.scripts : {};
+      const older = { ...scripts, ...olderScripts };
+      await fs.writeFile(
+        file('package.json'),
+        `${JSON.stringify({ ...(isRecord(manifest) ? manifest : {}), scripts: older }, null, 2)}\n`
+      );
+      await fs.writeFile(file('src/env.ts'), olderEnv);
+      await fs.writeFile(file('src/main.ts'), olderMain);
+      const record = await readScaffoldRecord(root);
+      await writeScaffoldRecord(root, '0.38.9', {
+        files: { ...record?.files, 'src/env.ts': digestOf(olderEnv), 'src/main.ts': digestOf(olderMain) },
+        scripts: Object.fromEntries(
+          Object.entries(older).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+        )
+      });
+
+      return Object.fromEntries(
+        Object.entries(scripts).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+      );
+    };
+
+    it('has Node read it instead: the scripts rewritten, main.ts without the import, and env.ts gone', async () => {
+      const ours = await writtenByOlderCli();
+
+      const shown = await run(['files', 'packages'], { write: true });
+
+      expect(recordsIn(shown.files)).toContainEqual({ file: 'src/env.ts', status: 'removed' });
+      await expect(fs.access(file('src/env.ts'))).rejects.toThrow();
+      expect(await read('src/main.ts')).toBe(machineryFiles(ANSWERS)['src/main.ts']);
+      expect(await read('src/main.ts')).not.toContain('env.ts');
+      const written: unknown = JSON.parse(await read('package.json'));
+      for (const name of Object.keys(olderScripts)) {
+        expect(written).toHaveProperty(['scripts', name], ours[name]);
+        expect(ours[name]).toMatch(/^node (--env-file-if-exists=\.env|--import @plitzi\/sdk-server\/env) /);
+      }
+
+      const record = await readScaffoldRecord(root);
+      expect(record?.files).not.toHaveProperty(['src/env.ts']);
+      expect(record?.scripts?.start).toBe(ours.start);
+    });
+
+    // Beside a main.ts of the project's own that still imports it, it is read: kept, unnamed, and its record with it.
+    it('keeps it while a main.ts of the project’s own reads it, and removes it once main.ts is the CLI’s', async () => {
+      await writtenByOlderCli();
+      await fs.writeFile(file('src/main.ts'), `// mine\n${olderMain}`);
+
+      const shown = await run(['files'], { write: true });
+
+      expect(recordsIn(shown.files).map(entry => entry.file)).not.toContain('src/env.ts');
+      expect(await read('src/env.ts')).toBe(olderEnv);
+      expect((await readScaffoldRecord(root))?.files['src/env.ts']).toBe(digestOf(olderEnv));
+
+      await run(['files'], { write: true, take: ['src/main.ts'] });
+
+      await expect(fs.access(file('src/env.ts'))).rejects.toThrow();
+    });
+
+    it('leaves one the project changed, said, until --take names it', async () => {
+      await writtenByOlderCli();
+      await fs.writeFile(file('src/env.ts'), `${olderEnv}// mine\n`);
+
+      const shown = await run(['files'], { write: true });
+
+      expect(recordsIn(shown.files)).toContainEqual({ file: 'src/env.ts', status: 'retired' });
+      expect(await read('src/env.ts')).toContain('// mine');
+
+      await run(['files'], { write: true, take: ['src/env.ts'] });
+
+      await expect(fs.access(file('src/env.ts'))).rejects.toThrow();
+    });
+  });
+
   /**
    * A `main.ts` of today reads the project's server options and actions, which a project made before them never had: an
    * upgrade writes them for it — once, and never over the project's own.

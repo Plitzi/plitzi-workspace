@@ -256,6 +256,66 @@ const scriptTargetChecks = async ({ root, manifest }: DoctorContext): Promise<Fi
   return findings;
 };
 
+/** The scripts that run a server project's code, which reads its settings from `process.env` as it loads. */
+const SERVER_SCRIPTS = ['start', 'start:dev', 'start:prod', 'author'] as const;
+
+/** What has Node read `.env` before the project's code: its own flag, or — under `--watch` — the server's preload. */
+const ENV_FLAG = /^--env-file(-if-exists)?=/;
+const ENV_PRELOAD = '@plitzi/sdk-server/env';
+
+/**
+ * A server project's settings are in `process.env` only when Node reads `.env` as it starts: no file of the project
+ * loads it. A script running the project's code without it starts the server with none of them — a cloud one refuses
+ * to, and the rest find no signing key the first time they sign. And Node's flag in a watched script hands the watcher
+ * the folder `.env` is in, the project's root: with `--watch-path`, every write in the project restarts it — the
+ * server's own `tmp/` at boot, forever.
+ */
+const scriptEnvChecks = ({ answers, manifest }: DoctorContext): Finding[] => {
+  if (answers.mode !== 'server') {
+    return [];
+  }
+
+  const scripts = stringsOf(manifest.scripts);
+
+  return SERVER_SCRIPTS.flatMap(name => {
+    const words = /^node\s/.test(scripts[name] ?? '') ? scripts[name].split(/\s+/) : [];
+    if (words.length === 0) {
+      return [];
+    }
+
+    const flagged = words.some(word => ENV_FLAG.test(word));
+    const preloaded = words.some(
+      (word, index) => word === `--import=${ENV_PRELOAD}` || (word === '--import' && words[index + 1] === ENV_PRELOAD)
+    );
+    const watched = words.some(word => word.startsWith('--watch'));
+    if (flagged && watched) {
+      return [
+        say.warning(
+          'script-env-watched',
+          `The script ${name} watches with Node's --env-file: Node then restarts it on any write in the project — the server's own tmp/ at boot, over and over.`,
+          {
+            file: 'package.json',
+            fix: `Preload it instead: node --import ${ENV_PRELOAD} in ${name}, in place of --env-file — ${UPGRADE_PACKAGES} rewrites a script the CLI wrote.`
+          }
+        )
+      ];
+    }
+
+    return flagged || preloaded
+      ? []
+      : [
+          say.warning(
+            'script-env-unread',
+            `The script ${name} runs Node without reading .env: its settings are not in process.env.`,
+            {
+              file: 'package.json',
+              fix: `Add ${watched ? `--import ${ENV_PRELOAD}` : '--env-file-if-exists=.env'} after node in ${name} — ${UPGRADE_PACKAGES} rewrites a script the CLI wrote.`
+            }
+          )
+        ];
+  });
+};
+
 /** The SDK's packages are released together: one version for all of them, and the CLI's or newer. */
 const sdkVersionChecks = (context: DoctorContext, sdk: readonly string[]): Finding[] => {
   const declared = declaredRanges(context);
@@ -417,6 +477,7 @@ export const checkPackages: Check = async context => {
     ...manifestChecks(context),
     ...(await scaffoldChecks(context)),
     ...(await scriptTargetChecks(context)),
+    ...scriptEnvChecks(context),
     ...sdkVersionChecks(context, sdk),
     ...(await installChecks(context, sdk)),
     ...(await lockfileChecks(context))

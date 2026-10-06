@@ -76,11 +76,32 @@ describe('the scaffold', () => {
     expect(files['src/space/index.ts']).not.toMatch(/from '\.\./);
   });
 
+  /** `.env` is out of git; `.env.example` is how a clone learns what to put in it — the same keys, no secret. */
+  it('gives every project a .env and, committed, a .env.example naming the same settings with no secret', () => {
+    const keysOf = (env: string): string[] => env.match(/^[A-Z_]+(?==)/gm) ?? [];
+    for (const mode of ['server', 'client'] as const) {
+      for (const source of ['local', 'cloud'] as const) {
+        const files = scaffold(answers({ mode, source, key: 'the-key' }));
+        const ignored = files['.gitignore'].split('\n');
+
+        expect(keysOf(files['.env.example'])).toEqual(keysOf(files['.env']));
+        expect(files['.env.example']).not.toContain('the-key');
+        expect(files['.env.example']).toMatch(/^# The settings \.env holds, with no secret in them/);
+        expect(ignored).toContain('.env');
+        expect(ignored).not.toContain('.env.example');
+      }
+    }
+
+    // A browser project's own space reads no key: Vite's `.env`, for what the page reads as `VITE_*`.
+    expect(keysOf(scaffold(answers({ mode: 'client' }))['.env'])).toEqual([]);
+    expect(scaffold(answers({ mode: 'client' }))['.env']).toContain('VITE_');
+  });
+
   it('gives a cloud project no space, and reads the live one instead', () => {
     const files = scaffold(answers({ source: 'cloud', key: 'k' }));
 
     expect(files['src/space/index.ts']).toBeUndefined();
-    expect(files['src/main.ts']).toContain("  cloud: { name: 'demo' },");
+    expect(files['src/main.ts']).toContain("cloud: { name: 'demo' }");
   });
 
   it('renders on a server or in the browser, and says so in what it installs', () => {
@@ -248,10 +269,11 @@ describe('the scaffold', () => {
     const server = scaffold(answers())['src/main.ts'];
     const client = scaffold(answers({ mode: 'client' }))['src/main.ts'];
 
-    // `serveProject` registers each folder of `src/plugins`, built on the server and rendered there.
+    // `serveProject` registers each folder of `src/plugins`, built on the server and rendered there — and Vite each
+    // one's entry, `index.ts` or `index.tsx`, as the server does.
     expect(server).toContain("import { serveProject } from '@plitzi/sdk-server/project';");
     expect(client).toContain(
-      "import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.ts'"
+      "import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.{ts,tsx}'"
     );
     expect(client).toContain('{ component: module.default }');
     expect(client).not.toContain("import StatCard from './plugins/StatCard';");
@@ -329,7 +351,10 @@ describe('the scaffold', () => {
       };
       const { compilerOptions } = JSON.parse(files['tsconfig.json']) as { compilerOptions: Record<string, unknown> };
 
-      expect(scripts.author).toBe('node plitzi/author.ts');
+      // A server project's with `.env` read, as its server has it when it authors the same space on a save.
+      expect(scripts.author).toBe(
+        mode === 'server' ? 'node --env-file-if-exists=.env plitzi/author.ts' : 'node plitzi/author.ts'
+      );
       expect(devDependencies.tsx).toBeUndefined();
       expect(engines.node).toBe('>=22.18');
       expect(compilerOptions).toMatchObject({
@@ -343,7 +368,7 @@ describe('the scaffold', () => {
     const server = JSON.parse(scaffold(answers({ mode: 'server' }))['package.json']) as {
       scripts: Record<string, string>;
     };
-    expect(server.scripts.start).toBe('node src/main.ts');
+    expect(server.scripts.start).toBe('node --env-file-if-exists=.env src/main.ts');
   });
 
   /**
@@ -360,7 +385,7 @@ describe('the scaffold', () => {
     };
 
     expect(scripts.build).toBe('tsc -p tsconfig.build.json');
-    expect(scripts['start:prod']).toBe('node dist/main.js');
+    expect(scripts['start:prod']).toBe('node --env-file-if-exists=.env dist/main.js');
     expect(build.compilerOptions).toMatchObject({
       noEmit: false,
       outDir: 'dist',
@@ -370,9 +395,8 @@ describe('the scaffold', () => {
     expect(build.include).toEqual(['src', 'plitzi/assets.d.ts']);
     // Built at boot from their source, by the server: never compiled ahead.
     expect(build.exclude).toEqual(['src/plugins', 'src/functions']);
-    // The same project from `src/main.ts` and from `dist/main.js`: the entry point's folder's parent.
-    expect(files['src/main.ts']).toContain('  entry: import.meta.url,');
-    expect(files['src/main.ts']).toContain("projectAuthoring(new URL('..', import.meta.url))");
+    // The same project from `src/main.ts` and from `dist/main.js`: the folder its scripts run in.
+    expect(files['src/main.ts']).toContain('await projectAuthoring()');
     expect(scaffold(answers({ mode: 'client' }))['tsconfig.build.json']).toBeUndefined();
   });
 
@@ -495,6 +519,8 @@ describe('plitzi create', () => {
         '.claude',
         // The key its actions sign with, made for it alone.
         '.env',
+        // The same settings with no secret in them: committed, for a clone to fill in.
+        '.env.example',
         '.gitignore',
         // What the CLI wrote of its machinery, by digest: what `upgrade` replaces a file by.
         '.plitzi',
@@ -521,8 +547,6 @@ describe('plitzi create', () => {
         'config',
         // The project's own data, read by its server and never served.
         'data',
-        // What reads `.env`, the CLI's too: the entry point imports it before anything else.
-        'env.ts',
         // The project's own server code, there from the start so `start:dev` can watch it.
         'functions',
         // The entry point: the CLI's, in src/ where an entry point is looked for.
@@ -532,6 +556,8 @@ describe('plitzi create', () => {
         'space'
       ]);
       expect(await fs.readFile(path.join(target, '.env'), 'utf-8')).toMatch(/^PLITZI_SIGNING_SECRET=[0-9a-f]{64}$/m);
+      // The example names it and holds no secret.
+      expect(await fs.readFile(path.join(target, '.env.example'), 'utf-8')).toMatch(/^PLITZI_SIGNING_SECRET=$/m);
       // What the files were written for, before any lockfile says it.
       expect(JSON.parse(await fs.readFile(path.join(target, '.plitzi/scaffold.json'), 'utf-8'))).toMatchObject({
         packageManager: 'npm'
@@ -569,6 +595,7 @@ describe('plitzi create', () => {
       });
 
       expect(await fs.readFile(path.join(dir, '.env'), 'utf-8')).toContain('PLITZI_HOST_KEY=host_key_123');
+      expect(await fs.readFile(path.join(dir, '.env.example'), 'utf-8')).toMatch(/^PLITZI_HOST_KEY=$/m);
       expect(await fs.readFile(path.join(dir, '.gitignore'), 'utf-8')).toContain('.env');
       expect(await fs.readFile(path.join(dir, 'src', 'main.ts'), 'utf-8')).not.toContain('host_key_123');
     });

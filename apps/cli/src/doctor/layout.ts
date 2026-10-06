@@ -1,19 +1,24 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { checkProjectLayout } from '@plitzi/sdk-shared/project/layout';
+
 import { collisions, moveFiles } from './moves';
 import { sayer } from './types';
 import { legacyLayout } from '../commands/legacyLayout';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/scaffoldRecord';
 
 import type { Moved, Moves } from './moves';
-import type { Check, Finding, Repair } from './types';
+import type { Check, DoctorContext, Finding, Repair } from './types';
 import type { LegacyPlace } from '../commands/legacyLayout';
+import type { LayoutAutofix, LayoutFinding } from '@plitzi/sdk-shared/project/layout';
 
 /**
- * The project laid out as this CLI lays it out: what an older one left elsewhere, said where it goes now. A part the
- * commands would not find at all stops every other check — read against the wrong layout, they would only say what the
- * move fixes — and `--fix` moves it, every import and script that names it following.
+ * The project laid out as this CLI lays it out: what an older one left elsewhere, said where it goes now — a part the
+ * commands would not find at all stops every other check, since read against the wrong layout they would only say what
+ * the move fixes — and everything the server, `npm run author` and the CLI's checks read held to where they read it
+ * (`checkProjectLayout`, the one check all three make). `--fix` makes each fix that has one reading: a move — every
+ * import and script that names it following — a copy, a file written.
  */
 
 const say = sayer('layout');
@@ -89,7 +94,116 @@ const carryRecord = async (root: string, moved: Moved): Promise<void> => {
   });
 };
 
-export const checkLayout: Check = async ({ root }) => {
+/** What code may name, so a move of it says the names follow: a folder, or a file of code. */
+const CODE_OR_FOLDER = /(\/|\.[cm]?[jt]sx?)$/;
+
+/** One path moved — a file, or a folder (`/`-ended) and everything under it. */
+const movesOf = (from: string, to: string): Moves =>
+  from.endsWith('/')
+    ? { files: new Map(), folders: new Map([[bare(from), bare(to)]]) }
+    : { files: new Map([[from, to]]), folders: new Map() };
+
+const sameIgnoringCase = (a: string, b: string): boolean => a.toLowerCase() === b.toLowerCase();
+
+/** Whether two paths are one file: on a disk that ignores case, `src/Data/x.json` is `src/data/x.json`. */
+const oneFile = async (root: string, a: string, b: string): Promise<boolean> => {
+  const [first, second] = await Promise.all([a, b].map(file => fs.stat(path.join(root, file)).catch(() => undefined)));
+
+  return first !== undefined && second !== undefined && first.dev === second.dev && first.ino === second.ino;
+};
+
+/** What a move would write over: a file already where it goes that is not the one moving there. */
+const takenBy = async (root: string, from: string, to: string): Promise<string[]> => {
+  const taken = await collisions(root, movesOf(from, to));
+  if (!sameIgnoringCase(from, to)) {
+    return taken;
+  }
+
+  const sourceOf = (target: string): string => `${bare(from)}${target.slice(bare(to).length)}`;
+  const others = await Promise.all(
+    taken.map(async target => ((await oneFile(root, sourceOf(target), target)) ? [] : [target]))
+  );
+
+  return others.flat();
+};
+
+/**
+ * The move, with every import and script naming it following, and what the CLI recorded of it too. One that only
+ * changes case goes through a name of its own: a disk that ignores case has both names as one file.
+ */
+const move = async (root: string, from: string, to: string): Promise<void> => {
+  if (sameIgnoringCase(from, to)) {
+    const through = `${bare(from)}-plitzi-move${from.endsWith('/') ? '/' : ''}`;
+    await carryRecord(root, await moveFiles(root, movesOf(from, through)));
+    await carryRecord(root, await moveFiles(root, movesOf(through, to)));
+
+    return;
+  }
+
+  await carryRecord(root, await moveFiles(root, movesOf(from, to)));
+};
+
+/** A layout fix as a repair `--fix` makes: said, and only when it writes over nothing — or what it would write over. */
+const repairOf = async (root: string, autofix: LayoutAutofix): Promise<{ repair: Repair } | { blocked: string[] }> => {
+  if (autofix.action === 'write') {
+    return {
+      repair: {
+        says: `writes ${autofix.file}`,
+        run: () => fs.writeFile(path.join(root, autofix.file), autofix.contents)
+      }
+    };
+  }
+
+  if (autofix.action === 'copy') {
+    return {
+      repair: {
+        says: `copies ${autofix.from} to ${autofix.to}`,
+        run: () => fs.copyFile(path.join(root, autofix.from), path.join(root, autofix.to), fs.constants.COPYFILE_EXCL)
+      }
+    };
+  }
+
+  const { from, to } = autofix;
+  const taken = await takenBy(root, from, to);
+
+  return taken.length > 0
+    ? { blocked: taken }
+    : {
+        repair: {
+          says: `moves ${from} → ${to}${CODE_OR_FOLDER.test(from) ? ' — every import and script naming it follows' : ''}`,
+          run: () => move(root, from, to)
+        }
+      };
+};
+
+/** What the server, the authoring and the CLI's checks say of the project's layout, said by the doctor with its fixes. */
+const layoutFindings = async (
+  { root, answers }: Pick<DoctorContext, 'root' | 'answers'>,
+  older: readonly LegacyPlace[]
+): Promise<Finding[]> => {
+  // What an older CLI left is said above, as that; its space found by its files, not by an index it may have lost.
+  const said = new Set(older.map(place => place.found));
+  const findings = checkProjectLayout(root, { mode: answers.mode }).filter(each => !said.has(each.file));
+
+  return Promise.all(
+    findings.map(async (each: LayoutFinding): Promise<Finding> => {
+      const fixed = each.autofix ? await repairOf(root, each.autofix) : undefined;
+      const blocked = fixed && 'blocked' in fixed ? fixed.blocked : [];
+      const message =
+        blocked.length > 0
+          ? `${each.message} It cannot be moved by itself: ${blocked.join(', ')} ${blocked.length === 1 ? 'is' : 'are'} already there.`
+          : each.message;
+
+      return (each.level === 'error' ? say.error : say.warning)(each.code, message, {
+        file: each.file,
+        fix: each.fix,
+        ...(fixed && 'repair' in fixed ? { repair: fixed.repair } : {})
+      });
+    })
+  );
+};
+
+export const checkLayout: Check = async ({ root, answers }) => {
   const places = await legacyLayout(root);
   const moving = places.filter(place => place.blocking && place.action === 'move');
   const moves: Moves = {
@@ -159,5 +273,8 @@ export const checkLayout: Check = async ({ root }) => {
     );
   }
 
-  return findings;
+  // Once the older layout is moved: read against it, a misplaced part would only be said twice.
+  return places.some(place => place.blocking)
+    ? findings
+    : [...findings, ...(await layoutFindings({ root, answers }, places))];
 };

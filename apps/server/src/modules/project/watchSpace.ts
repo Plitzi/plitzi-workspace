@@ -19,13 +19,12 @@ const isAuthoredDocuments = (message: unknown): message is AuthoredDocuments =>
   isRecord(message) && isRecord(message.schema) && isRecord(message.style);
 
 /**
- * What of `src/` is the space's: everything but the server's own code — its entry point, `env.ts`, the server options,
+ * What of `src/` is the space's: everything but the server's own code — its entry point, the server options,
  * actions, connectors, functions and runtime — which `start:dev` restarts the server on instead; and of a plugin, only
  * its declaration — its component is swapped in the open pages by the server itself.
  */
-const RESTARTS = ['main.ts', 'env.ts'];
 const authored = (file: string): boolean =>
-  !RESTARTS.includes(file) &&
+  file !== 'main.ts' &&
   !/^(config|actions|connectors|functions|runtime)([\\/]|$)/.test(file) &&
   (!/^plugins([\\/]|$)/.test(file) || path.basename(file) === 'declaration.ts');
 

@@ -167,8 +167,97 @@ describe('plitzi doctor', () => {
     const report = await run();
 
     expect(findingOf(report, 'plugin-type-mismatch')).toMatchObject({ file: 'src/plugins/StatCard/declaration.ts' });
-    expect(findingOf(report, 'plugin-entry-missing')).toMatchObject({ file: 'src/plugins/Legend/index.ts' });
+    expect(findingOf(report, 'plugin-entry-missing')).toMatchObject({ area: 'layout', file: 'src/plugins/Legend/' });
     expect(findingOf(report, 'plugin-does-not-build')?.message).toContain('./Bar');
+  });
+
+  /**
+   * What the server and `npm run author` refuse to start with, and what works and should not stay — said as they say
+   * it (`checkProjectLayout`), with the rest of the project still checked; `--fix` makes each fix with one reading.
+   */
+  it('says what is out of place, each with its fix, and --fix makes the ones that have one reading', async () => {
+    await write('src/plugin/Chart/index.ts', 'export default () => null;\n');
+    await write('src/plugin/Chart/declaration.ts', "export default { type: 'chart' };\n");
+    await write('src/plugins/Badge/index.js', 'export default () => null;\n');
+    await write('src/plugins/Badge/declaration.ts', "export default { type: 'badge' };\n");
+    await write('src/plugins/story-editor/index.ts', 'export default () => null;\n');
+    await write('src/data/notes.txt', 'a note\n');
+    await fs.rename(path.join(project, '.env'), path.join(project, 'src/.env'));
+    await fs.rm(path.join(project, '.env.example'));
+
+    const report = await run();
+
+    expect(
+      report.findings
+        .filter(finding => finding.area === 'layout')
+        .map(({ severity, code, file, repair }) => ({ severity, code, file, repair }))
+    ).toEqual([
+      {
+        severity: 'error',
+        code: 'entry-not-typescript',
+        file: 'src/plugins/Badge/index.js',
+        repair:
+          'moves src/plugins/Badge/index.js → src/plugins/Badge/index.ts — every import and script naming it follows'
+      },
+      { severity: 'error', code: 'plugin-name-invalid', file: 'src/plugins/story-editor/', repair: undefined },
+      {
+        severity: 'error',
+        code: 'folder-misplaced',
+        file: 'src/plugin/',
+        repair: 'moves src/plugin/ → src/plugins/ — every import and script naming it follows'
+      },
+      {
+        severity: 'error',
+        code: 'env-in-src',
+        file: 'src/.env',
+        repair: 'moves src/.env → .env'
+      },
+      { severity: 'warning', code: 'env-example-missing', file: '.env.example', repair: undefined },
+      { severity: 'warning', code: 'data-not-json', file: 'src/data/notes.txt', repair: undefined }
+    ]);
+    // One problem among the rest: the other areas are still read.
+    expect(report.areas.find(area => area.area === 'plugins')?.status).not.toBe('skipped');
+    expect(findingOf(report, 'plugin-name-invalid')?.fix).toContain(
+      'git mv src/plugins/story-editor src/plugins/StoryEditor'
+    );
+    expect(report.recommendations).toContainEqual({ command: 'plitzi doctor --fix', fixes: 3 });
+
+    const fixed = await run({ fix: true });
+
+    expect(fixed.repaired.repairs).toEqual([
+      'moves src/plugins/Badge/index.js → src/plugins/Badge/index.ts — every import and script naming it follows',
+      'moves src/plugin/ → src/plugins/ — every import and script naming it follows',
+      'moves src/.env → .env',
+      // Read again once `.env` is at the root: its example has one reading now.
+      'writes .env.example'
+    ]);
+    expect(await read('src/plugins/Chart/index.ts')).toBe('export default () => null;\n');
+    await expect(fs.access(path.join(project, 'src/plugin'))).rejects.toThrow();
+    expect(await read('src/plugins/Badge/index.ts')).toBe('export default () => null;\n');
+    expect(await read('.env')).toMatch(/^PLITZI_SIGNING_SECRET=a{64}$/m);
+    expect(await read('.env.example')).toBe('PLITZI_SIGNING_SECRET=\n');
+    expect(fixed.findings.filter(finding => finding.area === 'layout').map(finding => finding.code)).toEqual([
+      'plugin-name-invalid',
+      'data-not-json'
+    ]);
+  });
+
+  // `src/Data/` is `src/data/` to a macOS disk and not to Linux: renamed through a name of its own, the file kept.
+  it('renames a folder that differs only in case, keeping what it holds', async () => {
+    await fs.rm(path.join(project, 'src/data'), { recursive: true });
+    await write('src/Data/stock.json', '{ "items": [] }\n');
+
+    expect(findingOf(await run(), 'folder-near-miss')).toMatchObject({
+      severity: 'warning',
+      file: 'src/Data/',
+      repair: 'moves src/Data/ → src/data/ — every import and script naming it follows'
+    });
+
+    await run({ fix: true });
+
+    expect(await fs.readdir(path.join(project, 'src'))).toContain('data');
+    expect(await fs.readdir(path.join(project, 'src'))).not.toContain('Data');
+    expect(await read('src/data/stock.json')).toBe('{ "items": [] }\n');
   });
 
   it('says data that is not JSON, which a push would be refused', async () => {
@@ -250,6 +339,61 @@ describe('plitzi doctor', () => {
     expect(findingOf(report, 'script-target-missing')?.message).toContain('plitzi/authoring.ts');
   });
 
+  /** No file of the project reads `.env`: Node does, when the script that starts it says so. */
+  it('says a script that runs the server’s code without reading .env', async () => {
+    const changed = await manifest();
+    const scripts = isRecord(changed.scripts) ? { ...changed.scripts, start: 'node src/main.ts' } : {};
+    await write('package.json', JSON.stringify({ ...changed, scripts }, null, 2));
+
+    const report = await run();
+
+    expect(report.findings.filter(finding => finding.code === 'script-env-unread')).toEqual([
+      expect.objectContaining({
+        severity: 'warning',
+        file: 'package.json',
+        message: expect.stringContaining('The script start runs Node without reading .env') as unknown
+      })
+    ]);
+  });
+
+  /** Node's watcher, handed `--env-file`, watches the project's root: every write in it is a restart. */
+  it('says a watched script reading .env with Node’s flag, which restarts on every write', async () => {
+    const changed = await manifest();
+    const scripts = isRecord(changed.scripts)
+      ? { ...changed.scripts, 'start:dev': 'node --env-file-if-exists=.env --watch-path=./src/main.ts src/main.ts' }
+      : {};
+    await write('package.json', JSON.stringify({ ...changed, scripts }, null, 2));
+
+    const report = await run();
+
+    expect(findingOf(report, 'script-env-watched')).toMatchObject({
+      severity: 'warning',
+      fix: expect.stringContaining('node --import @plitzi/sdk-server/env') as unknown
+    });
+    expect(findingOf(report, 'script-env-unread')).toBeUndefined();
+  });
+
+  /** `src/env.ts` read `.env` before Node did: an older CLI's, and nothing reads it beside today's `main.ts`. */
+  it('says machinery the CLI no longer writes, left over — and whether upgrade removes it or it is the project’s', async () => {
+    const older = "try {\n  process.loadEnvFile(new URL('../.env', import.meta.url));\n} catch {\n  // None.\n}\n";
+    await write('src/env.ts', older);
+    const record = await readScaffoldRecord(project);
+    await writeScaffoldRecord(project, record?.cli ?? '0.38.4', {
+      files: { ...record?.files, 'src/env.ts': digestOf(older) }
+    });
+
+    expect(findingOf(await run(), 'machinery-retired')).toMatchObject({
+      severity: 'warning',
+      file: 'src/env.ts',
+      fix: 'plitzi upgrade files --write'
+    });
+
+    await write('src/env.ts', `${older}// mine\n`);
+    const report = await run();
+    expect(findingOf(report, 'machinery-retired')).toBeUndefined();
+    expect(findingOf(report, 'machinery-retired-yours')).toMatchObject({ severity: 'info', file: 'src/env.ts' });
+  });
+
   it('says the CLI’s files that are gone or behind, and the records it cannot read', async () => {
     await fs.rm(path.join(project, 'plitzi/author.ts'));
     await write('.plitzi/scaffold.json', '{ "format": 2 }');
@@ -287,7 +431,9 @@ describe('plitzi doctor', () => {
     await fs.rename(path.join(project, 'plitzi/author.ts'), path.join(project, 'src/author.ts'));
     await write('src/author.ts', (await read('src/author.ts')).replace("'../src/space/index.ts'", "'./space.ts'"));
     const changed = await manifest();
-    const scripts = isRecord(changed.scripts) ? { ...changed.scripts, author: 'node src/author.ts' } : {};
+    const scripts = isRecord(changed.scripts)
+      ? { ...changed.scripts, author: 'node --env-file-if-exists=.env src/author.ts' }
+      : {};
     await write('package.json', JSON.stringify({ ...changed, scripts }, null, 2));
     await write('.sdk-plugins/statCard@1.0.0/index.js', '');
     // Recorded as that CLI wrote them, where it wrote them.
@@ -298,7 +444,7 @@ describe('plitzi doctor', () => {
     files.set('src/main.ts', digestOf(await read('src/main.ts')));
     await writeScaffoldRecord(project, record?.cli ?? '0.38.4', {
       files: Object.fromEntries(files),
-      scripts: { ...record?.scripts, author: 'node src/author.ts' }
+      scripts: { ...record?.scripts, author: 'node --env-file-if-exists=.env src/author.ts' }
     });
   };
 
@@ -343,7 +489,7 @@ describe('plitzi doctor', () => {
     expect(await read('src/space/index.ts')).toContain("from './tokens.ts'");
     expect(await read('src/main.ts')).toContain("from './space/index.ts'");
     expect(await read('plitzi/author.ts')).toContain("from '../src/space/index.ts'");
-    expect(await manifest()).toHaveProperty(['scripts', 'author'], 'node plitzi/author.ts');
+    expect(await manifest()).toHaveProperty(['scripts', 'author'], 'node --env-file-if-exists=.env plitzi/author.ts');
     await expect(fs.access(path.join(project, '.sdk-plugins'))).rejects.toThrow();
     expect(await read('.gitignore')).toContain('.env');
     expect(report.repaired.repairs).toEqual(

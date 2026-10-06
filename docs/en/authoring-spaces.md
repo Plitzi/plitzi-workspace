@@ -111,7 +111,8 @@ prefixes its ids with the page (`` `${pageId}-foot` ``), and authoring names bot
 
 **A menu in a layout marks the current page by itself.** The menu is the same nodes on every page, and the link to
 the page being shown carries `aria-current="page"`: its class's `current` state says how it looks
-(`states: { current: { color: 'var(--foreground)' } }`), with no binding at all. An entry lit on several pages — a
+(`states: { current: { color: 'var(--foreground)' } }`), with no binding at all. A link that names a query is current
+only while the address has it — of `/?window=6h` and `/?window=24h`, the one shown. An entry lit on several pages — a
 section with pages of its own — is `activeOn(navLink, ['spaces', 'space-record'])`, which binds the class's `active`
 variant to `navigation.currentPageId` for those pages and `idle` for every other. The entries themselves are data —
 one list of pages (id, slug, title, summary, order) that the menu, the page titles, the meta descriptions and the

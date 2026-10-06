@@ -13,7 +13,8 @@ import {
   SPACE_ENTRY,
   VENDOR_PLUGINS_DIR
 } from './paths';
-import { envFile, SDK_VERSION, withSigningSecret } from './project';
+import { EXAMPLE_PLUGIN_FILES } from './plugin';
+import { envExample, envFile, SDK_VERSION, withSigningSecret } from './project';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { SpaceExport } from '@plitzi/sdk-shared/source';
@@ -52,11 +53,7 @@ export const isTextFile = (path: string): boolean => TEXT.test(path);
  * The example plugin and space `create` writes for a project of its own, which one made from a space replaces — every
  * file of the welcome space, so none is left beside the space's own for nothing to import.
  */
-const EXAMPLE = [
-  'src/plugins/StatCard/StatCard.tsx',
-  'src/plugins/StatCard/index.ts',
-  ...Object.keys(blankTemplateFiles({ dir: SPACE_DIR }))
-];
+const EXAMPLE = [...EXAMPLE_PLUGIN_FILES, ...Object.keys(blankTemplateFiles({ dir: SPACE_DIR }))];
 
 const decode = (base64: string): string => Buffer.from(base64, 'base64').toString('utf-8');
 
@@ -296,8 +293,8 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
       .map(name => [name, SDK_VERSION])
   );
   const variables = [...exported.variables, ...exported.credentials.map(({ identifier }) => identifier)];
-  // What `.env` holds, with no value of it: a key the space is read with, the signing key, the space's settings.
-  const example = envFile({
+  // What `.env` holds, with no secret of it: a key the space is read with, the signing key, the space's settings.
+  const example = envExample({
     name: '',
     mode: 'server',
     source: spaceSource,

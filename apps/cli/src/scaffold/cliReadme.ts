@@ -1,4 +1,4 @@
-import { AUTHOR_FILE, CLI_DIR, DATA_DIR, ENV_FILE, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR } from './paths';
+import { AUTHOR_FILE, CLI_DIR, DATA_DIR, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR } from './paths';
 
 import type { CreateAnswers } from './types';
 
@@ -9,7 +9,8 @@ import type { CreateAnswers } from './types';
 
 const PLUGINS = ({ mode }: CreateAnswers): string => `## \`src/plugins/\` — components of your own
 
-Every folder is one, registered under its name in camelCase: \`StatCard\` is the \`renderType\` \`statCard\`. The space
+Every folder is one, registered under its name in camelCase — \`StatCard\` is the \`renderType\` \`statCard\` — and built
+from its \`index.ts\` (or \`index.tsx\`): code several plugins share goes outside \`src/plugins/\`. The space
 hosts it with a \`custom\` element naming that type — \`custom({ renderType: 'statCard', … })\` — and the element's
 attributes arrive as the component's props. Its \`declaration.ts\` says what it fires, answers and reads; the space is
 checked against every folder's, found by folder like the plugins themselves.
@@ -82,15 +83,11 @@ export const cliReadme = (answers: CreateAnswers): string => {
   return `# ${CLI_DIR}/ — the CLI's part of this project
 
 What the project needs of the CLI besides its entry point, kept apart from \`src/\`. \`plitzi upgrade\` brings these files
-up to the CLI it has — and \`${MAIN_FILE}\`${server ? ` and \`${ENV_FILE}\`` : ''} with them, in \`src/\` because that is where an entry
+up to the CLI it has — and \`${MAIN_FILE}\` with them, in \`src/\` because that is where an entry
 point is looked for. One changed is shown as a diff and left, so changing one is taking it over. \`plitzi doctor\` holds the
 whole project to what follows — and to what Node, the server and \`push\` need of it — and says what to fix.
 
 - \`${MAIN_FILE}\` (in \`src/\`) — the entry point: ${server ? 'the page server — the space authored and handed to `serveProject` (`@plitzi/sdk-server/project`), which wires its plugins, its data and its code from where they are' : 'the Vite app that renders the space'}.${
-    server
-      ? `\n- \`${ENV_FILE}\` — reads \`.env\` into the process. The entry point imports it first, so what it imports after finds its settings in \`process.env\` as it loads.`
-      : ''
-  }${
     answers.source === 'local'
       ? `\n- \`${AUTHOR_FILE}\` — \`npm run author\`: authors \`src/space/\` and says what it found${server ? '; the server runs it on every save, and is handed the documents it serves next' : ''}.`
       : ''

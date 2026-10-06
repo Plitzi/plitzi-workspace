@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { scaffold } from '.';
-import { MACHINERY } from './machinery';
+import { MACHINERY, RETIRED_MACHINERY } from './machinery';
 import { gitignore } from './project';
 import { serverFiles } from './server';
 import { visualFiles } from './visual';
@@ -37,10 +37,28 @@ describe('the server a project starts', () => {
 
     expect(main).toContain("import { serveProject } from '@plitzi/sdk-server/project';");
     expect(main).toContain(
-      "await serveProject({\n  entry: import.meta.url,\n  // The space, authored at boot and checked against what the project's files say — its plugins, its data.\n  space: authorSpace(space, await projectAuthoring(new URL('..', import.meta.url))),\n  actions,\n  connectors,\n  serverOptions\n});"
+      '\nawait serveProject({ space: authorSpace(space, await projectAuthoring()), actions, connectors, serverOptions });\n'
     );
-    expect(main.split('\n').filter(line => line.startsWith('import ')).length).toBe(7);
+    expect(main.split('\n').filter(line => line.startsWith('import ')).length).toBe(6);
     expect(gitignore(answers())).toContain('tmp\n');
+  });
+
+  /**
+   * The project is the folder its scripts run in: nothing of it is worked out from where a file is, which is what lets
+   * the same entry point run from `src/` and, built, from `dist/`.
+   */
+  it('names no folder: the project is where its scripts start it', () => {
+    for (const source of ['local', 'cloud'] as const) {
+      const files = scaffold(answers({ source }));
+
+      expect(files['src/main.ts']).not.toContain('import.meta.url');
+      expect(files['src/main.ts']).not.toContain('entry');
+    }
+
+    expect(scaffold(answers())['plitzi/author.ts']).toContain('  options = await projectAuthoring();');
+    expect(scaffold(answers())['visual/home.spec.ts']).toContain(
+      'const { handles } = authorSpace(space, await projectAuthoring());'
+    );
   });
 
   it('re-authors a saved space over IPC, writing nothing beside the source or in tmp/', () => {
@@ -61,25 +79,42 @@ describe('the server a project starts', () => {
   });
 
   /**
-   * An import is evaluated before the body of the module importing it: `.env` read in `main.ts`'s body came after
-   * `serverOptions.ts` and the actions had read `process.env` at their top level — and found nothing.
+   * An import is evaluated before the body of the module importing it, so `.env` is read before any of the project's
+   * modules is: `serverOptions.ts` and the actions find their settings in `process.env` at their top level.
    */
-  it('reads .env before anything it imports does, from a module imported first', () => {
+  it('reads .env before any module of the project is evaluated, with no file of the project to do it', () => {
     for (const source of ['local', 'cloud'] as const) {
-      const files = serverFiles(answers({ source }));
-      const imports = files['src/main.ts'].split('\n').filter(line => line.startsWith('import '));
+      const files = scaffold(answers({ source }));
+      const { scripts } = JSON.parse(files['package.json']) as { scripts: Record<string, string> };
 
-      expect(imports[0]).toBe("import './env.ts';");
+      expect(files['src/env.ts']).toBeUndefined();
+      expect(files['src/main.ts']).not.toContain('env.ts');
       expect(files['src/main.ts']).not.toContain('loadEnvFile');
-      expect(files['src/env.ts']).toContain("process.loadEnvFile(new URL('../.env', import.meta.url));");
-      expect(MACHINERY.has('src/env.ts')).toBe(true);
+      for (const name of ['start', 'start:prod', ...(source === 'local' ? ['author'] : [])]) {
+        expect(scripts[name]).toMatch(/^node --env-file-if-exists=\.env /);
+      }
+
+      // Node's flag under `--watch-path` has the watcher restart on any write in the project's root — the server's
+      // own `tmp/` among them — so the watched process preloads it instead.
+      expect(scripts['start:dev']).toMatch(/^node --import @plitzi\/sdk-server\/env --watch-path=/);
+      expect(scripts['start:dev']).not.toContain('--env-file');
     }
+
+    expect(MACHINERY.has('src/env.ts')).toBe(false);
+    expect(RETIRED_MACHINERY).toEqual({ 'src/env.ts': 'src/main.ts' });
   });
 
   it('names a cloud project’s server for /health by the project, a local one’s space naming it', () => {
-    expect(serverFiles(answers({ source: 'cloud' }))['src/main.ts']).toContain("  cloud: { name: 'catalog' },");
+    expect(serverFiles(answers({ source: 'cloud' }))['src/main.ts']).toContain(
+      "await serveProject({ cloud: { name: 'catalog' }, serverOptions });"
+    );
     expect(serverFiles(answers({ source: 'cloud', name: "o'brien" }))['src/main.ts']).toContain(
-      "  cloud: { name: 'o\\'brien' },"
+      "cloud: { name: 'o\\'brien' }"
+    );
+    // A property a line once the call is longer than the project's 120 columns, as its Prettier writes it.
+    const long = 'a'.repeat(80);
+    expect(serverFiles(answers({ source: 'cloud', name: long, fromSpace: true }))['src/main.ts']).toContain(
+      `await serveProject({\n  cloud: { name: '${long}' },\n  actions,\n  connectors,\n  serverOptions\n});`
     );
     expect(serverFiles(answers({ source: 'cloud' }))['src/main.ts']).not.toContain('@plitzi/sdk-authoring');
   });

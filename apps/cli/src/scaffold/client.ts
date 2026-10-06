@@ -89,11 +89,11 @@ body {
 const PLUGINS = `/**
  * The project's own components: every folder of \`src/plugins\` is one, registered under its name in camelCase —
  * \`src/plugins/StatCard\` is what a space's \`custom({ renderType: 'statCard' })\` renders, and its attributes arrive
- * as the component's props. \`plitzi add plugin\` writes a new one there, and Vite picks it up. There is no server
- * here, so the plugins are part of this project's bundle and hot-replaced like any other module; see
- * \`${CLI_DIR}/README.md\`.
+ * as the component's props — built from its \`index.ts\`, or \`index.tsx\`. \`plitzi add plugin\` writes a new one
+ * there, and Vite picks it up. There is no server here, so the plugins are part of this project's bundle and
+ * hot-replaced like any other module; see \`${CLI_DIR}/README.md\`.
  */
-const pluginModules = import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.ts', {
+const pluginModules = import.meta.glob<{ default: RenderPlugins[string]['component'] }>('./plugins/*/index.{ts,tsx}', {
   eager: true
 });
 

@@ -4,11 +4,14 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
+import { elementEntry } from '@plitzi/sdk-shared/project/layout';
+
 import { sayDryRun } from './dryRun';
 import { findProject, readPackageJson } from './existingProject';
 import { askText, atTerminal, fail, refuseWithoutTerminal } from './terminal';
 import { PackError, packPlugin, sourceFileOf } from '../pack';
 import { pluginNames } from '../scaffold';
+import { PLUGIN_DECLARATION_FILE, PLUGINS_DIR } from '../scaffold/paths';
 
 import type { DryRunOptions } from './dryRun';
 import type { ExistingProject } from './existingProject';
@@ -31,9 +34,14 @@ export interface PackPluginOptions extends DryRunOptions {
   sourceRoot?: string;
 }
 
+/** An element folder: its entry (`index.ts` or `index.tsx`, `elementEntry`) and its declaration. */
 const hasElement = async (folder: string): Promise<boolean> => {
+  if (!elementEntry(folder)) {
+    return false;
+  }
+
   try {
-    await Promise.all(['index.ts', 'declaration.ts'].map(file => fs.access(path.join(folder, file))));
+    await fs.access(path.join(folder, PLUGIN_DECLARATION_FILE));
 
     return true;
   } catch {
@@ -43,7 +51,7 @@ const hasElement = async (folder: string): Promise<boolean> => {
 
 /** The element folders a project keeps in `src/plugins` — the ones with a declaration, which is what packs. */
 export const elementFolders = async (project: Pick<ExistingProject, 'root'>): Promise<string[]> => {
-  const dir = path.join(project.root, 'src/plugins');
+  const dir = path.join(project.root, PLUGINS_DIR);
   let entries: string[] = [];
   try {
     entries = (await fs.readdir(dir, { withFileTypes: true }))

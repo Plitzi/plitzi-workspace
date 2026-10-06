@@ -402,14 +402,16 @@ describe('plitzi pack plugin', () => {
     await inTemp(async dir => {
       await cliProject(dir);
       await from(dir, () => addPlugin(['seat-picker'], {}));
+      // A component with no declaration is not an element the CLI can pack.
+      await fs.mkdir(path.join(dir, 'src/plugins/Chart'), { recursive: true });
+      await fs.writeFile(path.join(dir, 'src/plugins/Chart/index.tsx'), 'export default () => null;\n');
 
       await from(dir, () => packPluginCommand([], {}));
     });
 
     expect(process.exitCode).toBe(1);
-    expect(errors()).toContain('src/plugins/SeatPicker');
-    // The scaffold's example has no declaration, so it is not an element the CLI can pack.
-    expect(errors()).not.toContain('src/plugins/StatCard');
+    expect(errors()).toContain('src/plugins/SeatPicker | src/plugins/StatCard');
+    expect(errors()).not.toContain('src/plugins/Chart');
   });
 
   it('packs a plugin package as the package publishes itself, zip beside it', async () => {

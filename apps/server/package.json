@@ -80,6 +80,11 @@
       "import": "./dist/project.js",
       "default": "./dist/project.js"
     },
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "import": "./dist/env.js",
+      "default": "./dist/env.js"
+    },
     "./functions-api.d.ts": "./dist/functions-api.d.ts"
   },
   "repository": {
@@ -87,7 +92,9 @@
     "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/env.js"
+  ],
   "dependencies": {
     "@plitzi/plitzi-sdk": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",

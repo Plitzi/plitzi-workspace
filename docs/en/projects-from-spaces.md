@@ -148,8 +148,8 @@ written with `defineAction` always does.
 - It downloads the space's files into `public/` and rewrites every CDN address in the code to the project's root.
   They were public on the space's CDN and stay public here: everything in `public/` is served to anyone who asks.
 - It writes `.env` with a signing key made for the project (`PLITZI_SIGNING_SECRET`: what `ctx.sign` signs with — the
-  space's own key stays on Plitzi), as every server project gets one, and `.env.example` naming every variable and
-  credential.
+  space's own key stays on Plitzi), as every server project gets one, and `.env.example` — every project has one, with
+  no secret in it — naming every variable and credential besides.
 - It installs, formats with the project's Prettier (`public/` and `vendor/` are ignored: downloads stay as they came),
   and records what the project was given in `.plitzi/space.json`, and the functions as a working copy in
   `.plitzi/functions.json` — so `plitzi functions push` works from the project too.
@@ -160,8 +160,8 @@ are downloaded into `vendor/plugins/<type>/` and registered as they were built (
 server too), the runtime into `vendor/runtime.bundle` (loaded with `loadRuntime`). Both run and cannot be changed; the
 report says to upload them again from their source, and the next `pull` brings the code.
 
-**A plugin's source must start at `src/plugins/<Name>/index.ts`.** That is where the project registers plugins from
-(`<Name>` in camelCase is the type). One that starts elsewhere is named in the report.
+**A plugin's source must start at `src/plugins/<Name>/index.ts`** (or `index.tsx`). That is where the project registers
+plugins from (`<Name>` in camelCase is the type). One that starts elsewhere is named in the report.
 
 **`--source cloud`.** The pages stay on Plitzi and keep being edited in the builder; the project reads them with the
 space's host key (`plitzi create` asks for it, or `--key`), and everything else — actions, functions, runtime, plugins,

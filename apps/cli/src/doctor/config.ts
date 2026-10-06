@@ -372,6 +372,12 @@ const envChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> =
     }
   }
 
+  // No `.env` at the root is the layout's to say (`env-missing`, `env-in-src`), and its fix — `.env.example` copied, the
+  // misplaced one moved — brings the secret a new one written here would replace: the secret is read once there is one.
+  if (!settings.file && process.env.PLITZI_SIGNING_SECRET === undefined) {
+    return findings;
+  }
+
   const secret = settings.value('PLITZI_SIGNING_SECRET');
   const minimum = await minimumSecret(root);
   // Only `.env`'s: one the process's own environment sets wins over the file, and is the deployment's to change.

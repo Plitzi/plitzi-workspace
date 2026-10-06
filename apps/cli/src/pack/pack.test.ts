@@ -172,6 +172,22 @@ describe('the source a plugin is packed from', () => {
       expect(snapshot.name).toBe('seatPicker');
       expect(snapshot.entries).toEqual(['src/plugins/SeatPicker/index.ts']);
       expect(Object.keys(snapshot.files)).toContain('src/plugins/SeatPicker/declaration.ts');
+
+      // An element that writes its JSX in its entry starts at `index.tsx`, as the server builds it.
+      await fs.rename(
+        path.join(dir, 'src/plugins/SeatPicker/index.ts'),
+        path.join(dir, 'src/plugins/SeatPicker/index.tsx')
+      );
+      await packPlugin({
+        root: dir,
+        source: { kind: 'elements', folders: [path.join(dir, 'src/plugins/SeatPicker')] },
+        base: 'seat-picker',
+        version: '1.0.0',
+        outDir: path.join(dir, 'dist/plugins/seat-picker'),
+        zip
+      });
+      const tsx = JSON.parse(gunzipSync(await fs.readFile(file)).toString('utf-8')) as { entries: string[] };
+      expect(tsx.entries).toEqual(['src/plugins/SeatPicker/index.tsx']);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
@@ -296,6 +312,11 @@ describe('what is refused, and why', () => {
 
       await expect(pack(dir, [path.join(dir, 'src/plugins/StatCard')])).rejects.toThrow(
         'src/plugins/StatCard has no declaration.ts'
+      );
+
+      await writeFiles(path.join(dir, 'src/plugins/Chart'), { 'Chart.tsx': 'export default {};\n' });
+      await expect(pack(dir, [path.join(dir, 'src/plugins/Chart')])).rejects.toThrow(
+        'src/plugins/Chart has no index.ts (or index.tsx) and no declaration.ts'
       );
     });
   });

@@ -212,6 +212,16 @@ const literal = (value: PropValue): string => {
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
 };
 
+/**
+ * The attributes a binding may fill, as the project's Prettier writes them: on one line while there is one, a line each
+ * once there are more — an array of several objects is always broken.
+ */
+const bindableList = (props: readonly PropShape[]): string => {
+  const items = props.map(prop => `{ path: '${prop.name}', label: ${tsString(titleOf(prop.name))} }`);
+
+  return items.length > 1 ? `[\n          ${items.join(',\n          ')}\n        ]` : `[${items.join('')}]`;
+};
+
 export const shapedDeclaration = (
   { component: name, type }: PluginNames,
   { title, description, owner }: ElementText,
@@ -291,7 +301,7 @@ const declaration = {
       style: { base: { default: {} } },
       /** The attributes a data source may be pointed at — what the builder offers when somebody connects data to it. */
       bindingsAllowed: {
-        attributes: [${shape.props.map(prop => `{ path: '${prop.name}', label: ${tsString(titleOf(prop.name))} }`).join(', ')}],
+        attributes: ${bindableList(shape.props)},
         initialState: []
       }
     },

@@ -120,11 +120,12 @@ const CHECKS: readonly [DoctorArea, Check][] = [
 
 /**
  * Every area checked, in the order they are said. A layout an older CLI left, where the commands would not find the
- * project's parts, is examined alone: read against it, every other area would only say what moving it fixes.
+ * project's parts, is examined alone: read against it, every other area would only say what moving it fixes. Any other
+ * error of the layout — a plugin with no entry, code in a misnamed folder — is one problem among the rest.
  */
 export const examine = async (context: DoctorContext): Promise<{ findings: Finding[]; skipped: boolean }> => {
   const layout = await guarded('layout', () => checkLayout(context));
-  const skipped = layout.some(finding => finding.severity === 'error');
+  const skipped = layout.some(finding => finding.code === 'older-layout');
   const findings = [...layout];
   for (const [area, check] of skipped ? [] : CHECKS) {
     findings.push(...(await guarded(area, () => check(context))));

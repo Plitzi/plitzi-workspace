@@ -3,7 +3,14 @@ import path from 'node:path';
 
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { PLUGIN_MANIFEST_FILE, PLUGINS_DIR, VENDOR_PLUGINS_DIR } from '@plitzi/sdk-shared/project/paths';
+import {
+  checkPluginFolder,
+  layoutFindingText,
+  pluginEntry,
+  pluginTypeOf,
+  readVendorPlugin
+} from '@plitzi/sdk-shared/project/layout';
+import { PLUGIN_FUNCTIONS_DIR, PLUGINS_DIR, VENDOR_PLUGINS_DIR } from '@plitzi/sdk-shared/project/paths';
 
 import { loadFunctions, loadFunctionsSource } from '../functions/load';
 
@@ -29,74 +36,67 @@ export type ProjectPlugins = {
   fromFolders: Set<string>;
 };
 
-/** `src/plugins/StatCard` is the plugin `statCard`. */
-const pluginName = (folder: string): string => `${folder.charAt(0).toLowerCase()}${folder.slice(1)}`;
-
 /**
  * `action: 'compile'` is what makes a folder's plugin SERVER-rendered: the server builds the entry with esbuild, keeps
  * React external so the plugin runs on the one copy the page already has, serves the bundle to the browser AND
  * imports it into the render — so the component's markup is in the HTML before any JavaScript arrives.
  */
-const folderSource = (dir: string, folder: string): PluginSource => ({
-  js: path.join(dir, folder, 'index.ts'),
-  action: 'compile',
-  version: '1.0.0'
-});
+const folderSource = (entry: string): PluginSource => ({ js: entry, action: 'compile', version: '1.0.0' });
 
 const foldersOf = (dir: string): string[] =>
   existsSync(dir)
     ? readdirSync(dir, { withFileTypes: true })
         .filter(entry => entry.isDirectory())
         .map(entry => entry.name)
+        .sort()
     : [];
+
+/** Every folder of `src/plugins` the server can build, by the plugin it is: what it registers. */
+const pluginFolders = (root: string): Map<string, { folder: string; entry: string }> => {
+  const found = new Map<string, { folder: string; entry: string }>();
+  for (const folder of foldersOf(path.join(root, PLUGINS_DIR))) {
+    const entry = pluginEntry(root, folder);
+    // Two folders of one type are refused at boot; one added while developing leaves the first registered.
+    if (entry && !found.has(pluginTypeOf(folder))) {
+      found.set(pluginTypeOf(folder), { folder, entry });
+    }
+  }
+
+  return found;
+};
 
 /**
  * A plugin's server half: its `functions/` folder (`src/plugins/Board/functions/index.ts`), written like the project's
  * own `src/functions/` and loaded with what a plugin may reach — its own corner of `kv`, its routes under
- * `/fn/plugins/<name>/`, its tasks named `<name>.<action>`. A folder without one is a component and nothing else.
+ * `/fn/plugins/<name>/`, its tasks named `<name>.<action>`. A folder without one is a component and nothing else; one
+ * with code and no `index.ts` is the layout check's to say (`plugin-functions-entry-missing`).
  */
-const folderFunctions = async (dir: string, folder: string): Promise<FunctionsDefinition | undefined> => {
-  const functions = path.join(dir, folder, 'functions');
+const folderFunctions = async (root: string, folder: string): Promise<FunctionsDefinition | undefined> => {
+  const functions = path.join(root, PLUGINS_DIR, folder, PLUGIN_FUNCTIONS_DIR);
 
   return existsSync(path.join(functions, 'index.ts')) ? (await loadFunctions(functions)).at(0) : undefined;
 };
 
 type BuiltPlugin = { type: string; source: PluginSource; functions?: string };
 
-type ManifestAsset = { src: string; type: string; isMain: boolean };
-
-const assetsOf = (manifest: Record<string, unknown>): ManifestAsset[] =>
-  isRecord(manifest.assets)
-    ? Object.values(manifest.assets).flatMap(asset =>
-        isRecord(asset) && typeof asset.src === 'string' && typeof asset.type === 'string'
-          ? [{ src: asset.src, type: asset.type, isMain: asset.isMain === true }]
-          : []
-      )
-    : [];
-
 /** A plugin of `vendor/plugins`, from the manifest `plitzi pack plugin` wrote beside its bundle when it was published. */
-const builtPlugin = (dir: string, type: string): BuiltPlugin => {
-  const at = path.join(dir, type);
-  const manifest: unknown = JSON.parse(readFileSync(path.join(at, PLUGIN_MANIFEST_FILE), 'utf-8'));
-  const read = isRecord(manifest) ? manifest : {};
-  const assets = assetsOf(read);
-  const script =
-    assets.find(asset => asset.type === 'script' && asset.isMain) ?? assets.find(asset => asset.type === 'script');
-  const style = assets.find(asset => asset.type === 'style');
-  if (!script) {
-    throw new Error(`${VENDOR_PLUGINS_DIR}/${type}/${PLUGIN_MANIFEST_FILE} names no script to run.`);
+const builtPlugin = (root: string, type: string): BuiltPlugin => {
+  const read = readVendorPlugin(root, type);
+  // The layout check refused the boot over one that does not read: this is a project changed since it passed.
+  if ('problem' in read) {
+    throw new Error(read.problem.message);
   }
 
   return {
     type,
     source: {
-      js: path.join(at, script.src),
-      ...(style ? { css: path.join(at, style.src) } : {}),
+      js: read.script,
+      ...(read.style ? { css: read.style } : {}),
       action: 'copy',
-      version: typeof read.version === 'string' ? read.version : '1.0.0'
+      version: read.version
     },
     // Its server half, as it was packed: the source, built and loaded here like a folder's.
-    ...(typeof read.functions === 'string' ? { functions: path.join(at, read.functions) } : {})
+    ...(read.functions ? { functions: read.functions } : {})
   };
 };
 
@@ -117,22 +117,20 @@ const carriedSource = (file: string): Record<string, string> => {
 
 /** Every plugin of the project at `root`, as its server registers them at boot. */
 export const projectPlugins = async (root: string): Promise<ProjectPlugins> => {
-  const dir = path.join(root, PLUGINS_DIR);
-  const folders = foldersOf(dir);
+  const folders = pluginFolders(root);
   const sources: Record<string, PluginSource> = Object.fromEntries(
-    folders.map(folder => [pluginName(folder), folderSource(dir, folder)])
+    [...folders].map(([name, { entry }]) => [name, folderSource(entry)])
   );
   const functions: Record<string, FunctionsDefinition> = {};
-  for (const folder of folders) {
-    const definition = await folderFunctions(dir, folder);
+  for (const [name, { folder }] of folders) {
+    const definition = await folderFunctions(root, folder);
     if (definition) {
-      functions[pluginName(folder)] = definition;
+      functions[name] = definition;
     }
   }
 
   // None in most projects: a project made from a space whose plugins kept no source.
-  const vendor = path.join(root, VENDOR_PLUGINS_DIR);
-  const built = foldersOf(vendor).map(type => builtPlugin(vendor, type));
+  const built = foldersOf(path.join(root, VENDOR_PLUGINS_DIR)).map(type => builtPlugin(root, type));
   for (const { type, source, functions: carried } of built) {
     sources[type] = source;
     if (carried) {
@@ -147,7 +145,7 @@ export const projectPlugins = async (root: string): Promise<ProjectPlugins> => {
     sources,
     names: Object.keys(sources),
     functions,
-    fromFolders: new Set(folders.map(pluginName))
+    fromFolders: new Set(folders.keys())
   };
 };
 
@@ -155,7 +153,9 @@ export const projectPlugins = async (root: string): Promise<ProjectPlugins> => {
  * A plugin edited while developing is built again by the server, and the open pages swap it where it is drawn — the
  * rest of the page, its state included, stays as it was (`devReload`). Its server half (`functions/`) is loaded again
  * here, in place. A plugin ADDED — a new folder with an `index.ts`, what `plitzi add plugin` writes — is registered
- * here, and the pages load again to render it; one removed is turned off. Answers what stops watching.
+ * here, and the pages load again to render it; one removed is turned off. A folder the server cannot build, or whose
+ * server half has no entry, is said in the terminal as the layout check says it at boot — once, until it changes — and
+ * the server goes on. Answers what stops watching.
  */
 export const watchProjectPlugins = (root: string, server: SSRServer, plugins: ProjectPlugins): (() => void) => {
   const dir = path.join(root, PLUGINS_DIR);
@@ -166,9 +166,31 @@ export const watchProjectPlugins = (root: string, server: SSRServer, plugins: Pr
   const { names, fromFolders } = plugins;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const reloading = new Map<string, ReturnType<typeof setTimeout>>();
+  /** What was said of each folder last — at boot, by the layout check — so a save says only what changed. */
+  const said = new Map(
+    foldersOf(dir).map(folder => [folder, checkPluginFolder(root, folder).map(layoutFindingText).join('\n')])
+  );
+  const sayOf = (folder: string): void => {
+    const findings = checkPluginFolder(root, folder);
+    const text = findings.map(layoutFindingText).join('\n');
+    if (text === (said.get(folder) ?? '')) {
+      return;
+    }
+
+    said.set(folder, text);
+    for (const finding of findings) {
+      const line = `[plugins] ${layoutFindingText(finding)}`;
+      if (finding.level === 'error') {
+        console.error(line);
+      } else {
+        console.warn(line);
+      }
+    }
+  };
   const reloadFunctions = (folder: string): void => {
-    const name = pluginName(folder);
-    folderFunctions(dir, folder)
+    const name = pluginTypeOf(folder);
+    sayOf(folder);
+    folderFunctions(root, folder)
       .then(definition => {
         server.functions.setPlugin(name, definition);
         // A plugin with no server half has nothing loaded to say.
@@ -184,16 +206,17 @@ export const watchProjectPlugins = (root: string, server: SSRServer, plugins: Pr
       });
   };
   const sync = (): void => {
-    // Name → folder, for every folder that is a plugin now.
-    const present = new Map(
-      foldersOf(dir)
-        .filter(folder => existsSync(path.join(dir, folder, 'index.ts')))
-        .map(folder => [pluginName(folder), folder])
-    );
+    const folders = foldersOf(dir);
+    folders.forEach(sayOf);
+    for (const folder of [...said.keys()].filter(each => !folders.includes(each))) {
+      said.delete(folder);
+    }
+
+    const present = pluginFolders(root);
     const added = [...present].filter(([name]) => !fromFolders.has(name));
     const removed = [...fromFolders].filter(name => !present.has(name));
-    for (const [name, folder] of added) {
-      server.plugins.register(name, folderSource(dir, folder));
+    for (const [name, { folder, entry }] of added) {
+      server.plugins.register(name, folderSource(entry));
       fromFolders.add(name);
       names.push(name);
       reloadFunctions(folder);
@@ -213,7 +236,7 @@ export const watchProjectPlugins = (root: string, server: SSRServer, plugins: Pr
   const watcher = watch(dir, { recursive: true }, (_event, file) => {
     // `Board/functions/index.ts`: a plugin's server half changed, and is loaded again on its own.
     const [folder, part] = (file ?? '').split(path.sep);
-    if (folder && part === 'functions' && fromFolders.has(pluginName(folder))) {
+    if (folder && part === PLUGIN_FUNCTIONS_DIR && fromFolders.has(pluginTypeOf(folder))) {
       clearTimeout(reloading.get(folder));
       reloading.set(
         folder,

@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { projectAuthoring } from '@plitzi/sdk-authoring/node';
+import { projectAuthoringAt } from '@plitzi/sdk-authoring/node';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { SPACE_ENTRY } from '../scaffold/paths';
@@ -33,19 +33,21 @@ export interface ProjectSpace {
 
 /**
  * The project's own declaration, loaded as its `author` script loads it — `src/space/index.ts`, with the plugins it is
- * checked against (`projectAuthoring`): every plugin folder's `declaration.ts` and the built ones' types — for a command
- * that authors it in this process.
+ * checked against (`projectAuthoringAt`: the root the command found, from whichever folder of the project it was run
+ * in): every plugin folder's `declaration.ts` and the built ones' types — for a command that authors it in this process.
+ * The project's layout is held first, as `npm run author` holds it: a space folder with no `index.ts` is said as that,
+ * every error of the layout with it, rather than as a module Node cannot find.
  */
 export const loadProjectSpace = async (root: string): Promise<ProjectSpace | { problem: string }> => {
-  const module = await importProject(path.join(root, SPACE_ENTRY));
-  const space = isRecord(module) ? module.space : undefined;
-  if (!isSpaceSpec(space)) {
-    return { problem: `${SPACE_ENTRY} exports no \`space\`.` };
-  }
-
+  let authoring: ProjectAuthoring;
   try {
-    return { space, authoring: await projectAuthoring(root) };
+    authoring = await projectAuthoringAt(root);
   } catch (error) {
     return { problem: error instanceof Error ? error.message : String(error) };
   }
+
+  const module = await importProject(path.join(root, SPACE_ENTRY));
+  const space = isRecord(module) ? module.space : undefined;
+
+  return isSpaceSpec(space) ? { space, authoring } : { problem: `${SPACE_ENTRY} exports no \`space\`.` };
 };

@@ -1,14 +1,15 @@
 import { sayer } from './types';
 import { compareVersions, versionOf } from './versions';
 import { machineryPlan } from '../commands/upgrade';
-import { AUTHOR_FILE, ENV_FILE, MAIN_FILE } from '../scaffold/paths';
+import { AUTHOR_FILE, MAIN_FILE } from '../scaffold/paths';
 import { CLI_VERSION } from '../scaffold/project';
 
 import type { Check, Finding } from './types';
 
 /**
  * The files the CLI writes and keeps up (`MACHINERY`), as `plitzi upgrade` sees them: gone, behind the CLI, or made the
- * project's own. The same verdict `upgrade` acts on — one planner says it for both.
+ * project's own — and the ones it no longer writes, left over. The same verdict `upgrade` acts on — one planner says it
+ * for both.
  */
 
 const say = sayer('machinery');
@@ -16,7 +17,6 @@ const say = sayer('machinery');
 /** Without these the project does not start, author, build or type-check: gone, they are errors. */
 const ESSENTIAL: ReadonlySet<string> = new Set([
   MAIN_FILE,
-  ENV_FILE,
   AUTHOR_FILE,
   'tsconfig.json',
   'tsconfig.build.json',
@@ -49,7 +49,7 @@ export const checkMachinery: Check = async ({ root, answers, origin, record }) =
     );
   }
 
-  const { plans } = await machineryPlan(root, answers, {
+  const { plans, retired } = await machineryPlan(root, answers, {
     ...(origin ? { origin } : {}),
     recorded: record?.files ?? {}
   });
@@ -76,6 +76,21 @@ export const checkMachinery: Check = async ({ root, answers, origin, record }) =
         })
       );
     }
+  }
+
+  for (const plan of retired) {
+    findings.push(
+      plan.status === 'removed'
+        ? say.warning('machinery-retired', `${plan.file} is no longer the CLI's, and nothing reads it.`, {
+            file: plan.file,
+            fix: 'plitzi upgrade files --write'
+          })
+        : say.info(
+            'machinery-retired-yours',
+            `${plan.file} is no longer the CLI's, and nothing reads it — but the project changed it, so upgrade leaves it.`,
+            { file: plan.file, fix: `Delete it, or plitzi upgrade files --write --take ${plan.file}` }
+          )
+    );
   }
 
   return findings;

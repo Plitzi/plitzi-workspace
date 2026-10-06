@@ -39,8 +39,8 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
 ## Running it as an agent
 
 - **Which check.** The space as a document: `npm run author`. How its source is written: `npm run lint:space`. A
-  rendered page: `check`. The project around them (packages, configs, imports, plugins, data): `doctor`, before
-  `push`; `--fix` repairs the simple ones (an older project: `npx @plitzi/cli@latest doctor --fix`).
+  rendered page: `check`. The project around them (layout, packages, configs, imports, plugins, data): `doctor`,
+  before `push`; `--fix` repairs the simple ones (an older project: `npx @plitzi/cli@latest doctor --fix`).
 
 - **After the SDK moves, `upgrade`.** It shows the CLI's files, scripts, versions and skills as they should be now, and
   each renamed name at its line. `--write` replaces what nobody changed, merges `package.json` and installs; a file
@@ -186,8 +186,7 @@ its settings kept. `--plugin-version` sets the version the manifest carries. The
 imports, followed from its entry — is kept beside it on the space (`runtime push` does the same for a runtime), which
 is what `create --from` brings back; `plitzi pack source` writes what would be kept to a file, to look at.
 
-A self-hosted page server does not need `pack`: it compiles a plugin from its source
-(`plugins: { seatPicker: { js: 'src/plugins/SeatPicker/index.ts', action: 'compile' } }` in `createServer`).
+A self-hosted page server does not need `pack`: it compiles a plugin from its source (`action: 'compile'`).
 
 The same server decides its own say over the space's **feature flags**: `createServer({ flags: { newCheckout: true } })`
 (or a function of `{ spaceId, environment }` when it serves several). It overrides what the space declares — only for
@@ -208,6 +207,7 @@ A space's own server code, edited in `src/functions/` (`pull`, `push`, `try`, `d
 | `start` says the port is in use | `PORT` is set to a taken port — unset it to take the next free one, or choose another |
 | A page that is not this project's, or `shot` refuses the port | another server answers there — `curl 127.0.0.1:<port>/health` names it; `tmp/dev-server.json` has this project's port |
 | "Custom Component … Not Found", or a flow on a plugin's event never runs | `doctor` names the folder whose type or declaration is off |
+| "not laid out as Plitzi reads it" | each misplaced part, with its fix; `doctor --fix` |
 | `upload` opens a browser | there is no session, or no space chosen — the person completes it there |
 | The upload went to the wrong space | `plitzi space` chooses another; check `whoami` first |
 | `pull` wrote nothing and named files | they changed here and on the space — set your changes aside and pull again, or `--force` |
