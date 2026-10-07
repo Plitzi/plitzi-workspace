@@ -36,4 +36,21 @@ describe('locateElements', () => {
     expect(located.find(element => element.elementId === 'greeting')).toMatchObject({ type: 'text', content: 'Hello' });
     expect(located.map(element => element.elementId)).toEqual(expect.arrayContaining(['home', 'nav']));
   });
+
+  it('answers the parts of a component, in the component', () => {
+    const located = locateElements({
+      name: 'Where',
+      permanentUrl: 'where',
+      components: [
+        { id: 'card', root: container({ id: 'card-root', children: [text('Title', { id: 'card-title' })] }) }
+      ],
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [text('Hello', { id: 'greeting' })] }]
+    });
+
+    expect(located.find(element => element.elementId === 'card-title')).toMatchObject({
+      type: 'text',
+      rootId: 'card',
+      content: 'Title'
+    });
+  });
 });

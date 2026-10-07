@@ -2130,7 +2130,16 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
   const author = new SpaceAuthor(spec, options);
   const { schema } = author.write();
 
-  return Object.values(schema.flat).map(element => {
+  // A component's own tree is a document of its own: its parts are written by the project's code like any other, and
+  // are in the component — their `rootId` is its root element's, which nobody names.
+  const elements = [
+    ...Object.values(schema.flat).map(element => ({ element, rootId: element.definition.rootId })),
+    ...Object.entries(schema.components).flatMap(([componentId, component]) =>
+      Object.values(component.flat).map(element => ({ element, rootId: componentId }))
+    )
+  ];
+
+  return elements.map(({ element, rootId }) => {
     const written = author.specOf(element.id);
     const calls = written ? writtenCalls(written) : [];
     const position = calls.at(0);
@@ -2146,7 +2155,7 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
     return {
       elementId: element.id,
       type: element.definition.type,
-      rootId: element.definition.rootId,
+      rootId,
       classes: element.definition.styleSelectors.base.split(/\s+/).filter(Boolean),
       ...(typeof content === 'string' && content !== '' ? { content } : {}),
       templates,

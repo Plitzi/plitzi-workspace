@@ -62,3 +62,5 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   is handed where it is handed (`pageHead('about-head', 'About us')`), refuses an edit of a call that writes several
   elements unless `--every` says so, and never writes `content` beside words given as the factory's first argument.
 - `plitzi explain` of a name that is the project's own says where to read it.
+- `locateElements` answers the parts of every component too, in the component (`rootId` is its id): `plitzi where`
+  and `plitzi edit` reach an element inside a component as they reach one on a page or a layout.
