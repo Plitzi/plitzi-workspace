@@ -4,9 +4,11 @@ description: >-
   Use the Plitzi command line (@plitzi/cli, `plitzi …` or `npx @plitzi/cli …`) instead of hand-writing what it
   generates: scaffold a project that renders a space, add plugins to it or build a plugin package, pack, upload and
   install one, edit a space's functions, take a space on Plitzi out as a self-hosted project and back (`create --from`,
-  `space pull`, `space push`), and check a project (`doctor`) or how its space's source is written (`space lint`). Use whenever the task is
-  to start a Plitzi project, create or change a plugin, pack, upload or install one, pull/push/try a space's functions,
-  move a space to a server of its own and back, or work out which space the CLI is connected to.
+  `space pull`, `space push`), check a project (`doctor`) or how its space's source is written (`space lint`), and
+  write a report to Plitzi of what broke, misled or cost time (`feedback`). Use whenever the task is to start a Plitzi
+  project, create or change a plugin, pack, upload or install one, pull/push/try a space's functions, move a space to a
+  server of its own and back, work out which space the CLI is connected to — or when the person asks for a report,
+  feedback or a list of what went wrong with Plitzi.
 ---
 
 # The Plitzi CLI
@@ -37,6 +39,9 @@ npx plitzi feedback                             # a report to Plitzi, for the pe
   question: ask the user, then run again with their answers as flags. Never guess them.
 - **Signing in happens in the browser** (`login`, `space use`, a first `plugin upload`): tell the person a tab is waiting.
 - **One space at a time** — the one `whoami --json` names; `plitzi space use` switches it.
+- **A report to Plitzi** — the person asks for a report, feedback, the bugs found or what cost time: `npx plitzi
+  feedback` (`--previous <link>` continues an earlier one). It reads the versions and `doctor` itself and writes the
+  page; fill it and publish it as its brief says, rather than a report of your own making.
 - **Read stdout, exit code and stderr apart.** The answer is on stdout (`--json`: one line); exit 1 means it did not do
   what was asked. A refusal says what to change: change it — the same refusal twice says to stop and ask.
 
