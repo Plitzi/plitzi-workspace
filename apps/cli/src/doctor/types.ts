@@ -6,7 +6,7 @@ import type { CreateAnswers, PackageManager } from '../scaffold';
 /**
  * What `plitzi doctor` looks at, in the order it says them: each a part of the project a developer may have changed, and
  * which can stop it from installing, starting, building or going up to Plitzi. What the space says is not among them:
- * that is `npm run author`'s and `plitzi check`'s.
+ * that is `npm run author`'s and `plitzi page check`'s.
  */
 export const DOCTOR_AREAS = [
   'layout',

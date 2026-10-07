@@ -126,7 +126,7 @@ const runtimeOf = (loaded: unknown): SpaceRuntime => {
 
 /**
  * A project's runtime module, as a server of its own runs it — `src/runtime/index.ts`, or what `build` compiled it to —
- * or nothing when the project has none: a project starts one by writing it (`plitzi add runtime`), with nothing to wire.
+ * or nothing when the project has none: a project starts one by writing it (`plitzi runtime add`), with nothing to wire.
  */
 export const loadRuntimeModule = async (file: string): Promise<SpaceRuntime | undefined> => {
   try {

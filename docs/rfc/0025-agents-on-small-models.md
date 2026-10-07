@@ -53,8 +53,8 @@ Measured on 2026-10-07 (≈ characters / 4):
 | A real project's `src/` (Inkwell) | ~97k | Read file by file to find what to edit |
 | Authoring references | 45k in 25 files (`authoring-errors.md` alone 8.6k) | On demand |
 | `SKILL.md` + `CHEATSHEET.md` | ~4k + ~2.4k per skill | When the skill is used |
-| A screenshot at 1440×900 | ~1.7k per image | Every `plitzi_screenshot` / `plitzi shot` |
-| `plitzi check`, `lint`, `explain`, `npm run author` | 10–250 | Per call — already right |
+| A screenshot at 1440×900 | ~1.7k per image | Every `plitzi_screenshot` / `plitzi page shot` |
+| `plitzi page check`, `lint`, `explain`, `npm run author` | 10–250 | Per call — already right |
 | `plitzi doctor` | ~1k on Inkwell | Mostly one repeated line per locally installed package |
 
 The CLI's outputs are not the problem; what an agent has to load and read to use them is.
@@ -77,7 +77,7 @@ The CLI's outputs are not the problem; what an agent has to load and read to use
 6. **Every output is bounded, and ends with the next step.** A ceiling per output with a cursor for the rest
    (`more: …`), so no answer overflows a 32k window; and the command that comes next, so a small model follows a path
    instead of planning one.
-7. **Text first.** Many small models do not see images. `plitzi check` and the MCP's check answer in text that is
+7. **Text first.** Many small models do not see images. `plitzi page check` and the MCP's check answer in text that is
    enough on its own; a screenshot is an extra.
 8. **Computed when asked.** Where an element is written, what a page holds, what a type is — read from the code and the
    documents at that moment.
@@ -97,7 +97,7 @@ The CLI's outputs are not the problem; what an agent has to load and read to use
     makes the wrong one. So each job has one tool (seeing a saved page is `plitzi_look`, not a choice between three);
     a name says its verb and its object (`plitzi_set_classes`, not `plitzi_class`); a parameter never changes meaning
     by default (classes are added or removed, never a list that silently replaces what was there); and an input that
-    could mean two things is answered as one *and says the other* (`plitzi where cta` reads an id, and says the words
+    could mean two things is answered as one *and says the other* (`plitzi element where cta` reads an id, and says the words
     that also matched, with the command for them), or is read one way when asked (`--by`). What is corrected is
     corrected only where one reading exists — two types told apart by their capitals alone are not guessed between.
 
@@ -134,14 +134,14 @@ first.
 
 ### 5.2 The CLI (local projects)
 
-**`plitzi where <id | class | text>`.** Answers `file:line` and the few lines of the call that wrote the element. It
+**`plitzi element where <id | class | text>`.** Answers `file:line` and the few lines of the call that wrote the element. It
 runs authoring and reads `writtenAt` — the call site every factory records (`sdk-authoring/src/schema/writtenAt.ts`),
-what `plitzi fix` already edits at — so it follows the code wherever a person moved it, with nothing to keep in step.
+what `plitzi space fix` already edits at — so it follows the code wherever a person moved it, with nothing to keep in step.
 Authoring records it only outside production; `where` runs it that way. A project that does not author (broken code)
 falls back to finding the id in `src/`, said as such.
 
-**`plitzi edit <id> --set <attribute>=<value> | --class <name> | --remove`.** The CLI makes the edit at the call site,
-as `plitzi fix` does (`planFixes`, `specEditOf`), then authors and prints what changed and the next step. A small model
+**`plitzi element edit <id> --set <attribute>=<value> | --class <name> | --remove`.** The CLI makes the edit at the call site,
+as `plitzi space fix` does (`planFixes`, `specEditOf`), then authors and prints what changed and the next step. A small model
 changes text, a class or an attribute without writing TypeScript; what is not a simple edit gets `where`'s snippet to
 edit by hand. A helper written once and called per element is the one place an edit could reach more than it names:
 a value the helper is handed is changed where it is handed, and a call that writes several elements is changed only
@@ -171,7 +171,7 @@ The budgets in `skills.test.ts` change to these.
 The gate every change above passes, the first thing built, and what says how small is small enough.
 
 **Tasks.** 6 to 8, half through the MCP on a cloud space and half through the CLI on a local project — one of them on a
-project whose code a person moved first. Each with objective success: `plitzi check` clean, and assertions on the result
+project whose code a person moved first. Each with objective success: `plitzi page check` clean, and assertions on the result
 (the list reads `data/products.json`; the heading says the words asked for).
 
 **Two axes, swept together.** The floor is a model AND a context:
@@ -189,7 +189,7 @@ difference.
 
 | Kind | What counts | How it is caught |
 | --- | --- | --- |
-| **Failure** | The task's assertions do not hold, or the check is not clean | The task's own assertions, `plitzi check` |
+| **Failure** | The task's assertions do not hold, or the check is not clean | The task's own assertions, `plitzi page check` |
 | **Hallucination** | A name that does not exist: an element type, a slot, a field, an operation, a CLI flag, an API, a file path — and a claim of success the check contradicts | The refusals that name it (`unknown-element-type`, `element-slot-unknown`, `global-field-unknown`, an unknown operation or option), a path that does not exist, the agent's final answer against the check |
 | **Degradation** | Success reached the long way: more turns, more refusals met, more retries, more tokens | Turns, refusals and tokens per task |
 
@@ -256,7 +256,7 @@ The benchmark's waste line (§5.4) is how each of these is judged.
    degradation, net tokens beyond each harness's own floor, the ceiling and the floor of §5.4. Its first run is the
    baseline the phases below are judged against, and it settles §8's open questions.
 1. **The MCP's start budget — done:** the schema once, `describe_operation`, `validate` into `dryRun`, `look`.
-2. **`plitzi where` and `plitzi edit` — done:** `locateElements` in authoring; `edit` writes attributes and checks the
+2. **`plitzi element where` and `plitzi element edit` — done:** `locateElements` in authoring; `edit` writes attributes and checks the
    space in a fresh process.
 3. **Outputs, verified writes and cheap mistakes — done:** ceilings and cursors, next steps, `doctor` grouped; every write
    answers with the check of what it changed; every problem at once with its corrected call; the loop breaker.
@@ -264,7 +264,7 @@ The benchmark's waste line (§5.4) is how each of these is judged.
    the rest in references the core routes to. References stay at their 3,000-token budget, one subject each; splitting
    them finer waits for the benchmark to say a smaller piece is read better.
 5. **Intention tools and closed vocabularies — done:** on the MCP `plitzi_set_attributes`, `plitzi_set_classes` (add and
-   remove), `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` (the §5.1 candidates); on the CLI `plitzi edit`, which writes literals — a class in
+   remove), `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` (the §5.1 candidates); on the CLI `plitzi element edit`, which writes literals — a class in
    code is a variable, so dressing an element there stays the agent's, at the call `where` shows. A class an element
    wears is held to the ones the space has. The catalogue grows or shrinks by what the benchmark's models fail at.
 6. **Accepting the unambiguous**, with warnings — done: an element type's capitals; the preview renders through

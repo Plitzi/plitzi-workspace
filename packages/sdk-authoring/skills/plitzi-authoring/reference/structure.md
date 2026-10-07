@@ -117,7 +117,7 @@ the rest.
 
 ## Checked for you
 
-`npm run lint:space` (`plitzi lint`) reads the source for what this page asks — a file past 400 lines, pages in one
+`npm run lint:space` (`plitzi space lint`) reads the source for what this page asks — a file past 400 lines, pages in one
 file, rows of data inline, a colour that is not a token, CSS copied three times, a row singled out by its id inside a
 `map`, a minted id, a file nothing imports — at file:line, beside authoring's suggestions. Leave it clean; a departure
 on purpose says why where it is: `// plitzi-lint-disable-next-line <code> -- why` for lint's own codes. A suggestion of

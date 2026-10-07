@@ -19,7 +19,7 @@ const bindingText = ({ category, to, source, template }: NonNullable<ElementRepo
   `${category === 'attributes' ? '' : `${category} · `}${to} ← ${source}${template ? ` · ${template}` : ''}`;
 
 /**
- * The element as the page has it now — the same report `window.__plitzi.element()` and `plitzi check --element` give:
+ * The element as the page has it now — the same report `window.__plitzi.element()` and `plitzi page check --element` give:
  * its own state, what it binds to, how many copies are on the page and where. Read again every second.
  */
 const DetailsRuntime = ({ id }: DetailsRuntimeProps) => {

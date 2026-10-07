@@ -512,7 +512,7 @@ export const sourceEdit = (
   return editKey(ts, sourceFile, props, edit.on === 'attribute' ? ATTRIBUTE_HOLDERS : [], edit);
 };
 
-/** The call written at that position, as it is written: what `plitzi where` shows of an element. */
+/** The call written at that position, as it is written: what `plitzi element where` shows of an element. */
 export const callTextAt = (
   ts: Ts,
   sourceFile: TypeScript.SourceFile,
@@ -534,7 +534,7 @@ const wordsOf = (ts: Ts, call: TypeScript.CallExpression): TypeScript.Expression
 };
 
 /**
- * An attribute set — or removed, with no value — where the element was written: `plitzi edit`. `content` written as the
+ * An attribute set — or removed, with no value — where the element was written: `plitzi element edit`. `content` written as the
  * factory's first argument (`text('Hi', { … })`) is replaced there; anything else is a key of its props, edited as a
  * fix edits it.
  */
@@ -860,6 +860,35 @@ const loopOf = (ts: Ts, sourceFile: TypeScript.SourceFile, from: Node, item?: st
   return imported
     ? { list: imported.exported, item: first.name.text, from: imported.from }
     : { list: name, item: first.name.text };
+};
+
+/**
+ * The list a call hands as a list element's rows — `items: PLANS` or `items: [...PLANS]` — with where it is declared:
+ * what each row shows is an entry of it.
+ */
+export const itemsSource = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>
+): { list: string; from?: string } | undefined => {
+  const written = writtenNodeAt(ts, sourceFile, position);
+  const props = written ? propsOfWritten(ts, written) : undefined;
+  const value = props ? propertyValue(ts, findProperty(ts, props, 'items')) : undefined;
+  const spread =
+    value && ts.isArrayLiteralExpression(value) && value.elements.length === 1 ? value.elements[0] : undefined;
+  const named =
+    value && ts.isIdentifier(value)
+      ? value
+      : spread && ts.isSpreadElement(spread) && ts.isIdentifier(spread.expression)
+        ? spread.expression
+        : undefined;
+  if (!named) {
+    return undefined;
+  }
+
+  const imported = importOf(ts, sourceFile, named.text);
+
+  return imported ? { list: imported.exported, from: imported.from } : { list: named.text };
 };
 
 /** The list the call at a position is repeated for, if it is written inside one's `map`. */

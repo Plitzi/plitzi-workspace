@@ -12,7 +12,7 @@ import { fakePlatform } from '../account/fakePlatform';
 import type { FakePlatform } from '../account/fakePlatform';
 
 /**
- * `plitzi upload plugin`: to the connected space and no other, with signing in and choosing the space done in the
+ * `plitzi plugin upload`: to the connected space and no other, with signing in and choosing the space done in the
  * browser when there is no connection yet — and nothing sent that the platform would refuse anyway.
  */
 
@@ -71,7 +71,7 @@ const pluginZip = (name = 'seat-picker-1.2.0.zip') =>
     'plugin-manifest.json': JSON.stringify({ root: 'seatPicker', version: '1.2.0' })
   });
 
-describe('plitzi upload plugin', () => {
+describe('plitzi plugin upload', () => {
   it('signs in and has the space chosen in the browser when there is no connection, then uploads to it', async () => {
     await uploadPluginCommand(await pluginZip(), { api: platform.api });
 
@@ -114,7 +114,7 @@ describe('plitzi upload plugin', () => {
   it('refuses a zip that is not a plugin before signing in or sending anything', async () => {
     await uploadPluginCommand(await writeZip('photos.zip', { 'photo.png': 'x' }), { api: platform.api });
 
-    expect(said.err).toContain('plitzi pack plugin');
+    expect(said.err).toContain('plitzi plugin pack');
     expect(browser).not.toHaveBeenCalled();
     expect(platform.uploads).toHaveLength(0);
     expect(process.exitCode).toBe(1);
@@ -163,7 +163,7 @@ describe('plitzi upload plugin', () => {
     expect(platform.uploads[0].path).toContain('bucket=main-files');
   });
 
-  it('finds the zip plitzi pack plugin left in the project when none is named', async () => {
+  it('finds the zip plitzi plugin pack left in the project when none is named', async () => {
     await fs.writeFile(path.join(home, 'package.json'), '{"name":"site"}');
     await pluginZip('dist/plugins/seat-picker-1.2.0.zip');
     vi.spyOn(process, 'cwd').mockReturnValue(home);
@@ -173,7 +173,7 @@ describe('plitzi upload plugin', () => {
     expect(platform.uploads[0].path).toContain('filename=seat-picker-1.2.0.zip');
   });
 
-  /** What `plitzi pack plugin` wrote beside the zip goes up too, so the space can be taken back out. */
+  /** What `plitzi plugin pack` wrote beside the zip goes up too, so the space can be taken back out. */
   it('keeps the plugin’s source on the space when it was packed beside the zip', async () => {
     const zip = await pluginZip();
     const snapshot = { format: 1, kind: 'plugin', name: 'seatPicker', entries: ['a.ts'], files: {}, dependencies: {} };

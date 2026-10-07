@@ -62,10 +62,10 @@ anything under `/_`, `/auth`, `/.well-known`.
 **Its code lives in a project of yours** — a folder, usually a repository — and is sent from there: the builder shows
 how a runtime runs and sets its variables, but it does not hold its code and cannot change it. The project needs
 `src/runtime/index.ts` (the module above, a file each beside it as it grows) and `@plitzi/sdk-server` installed:
-`plitzi add runtime` writes it in a project `plitzi create` made in server mode — whose server runs it too, so what
+`plitzi runtime add` writes it in a project `plitzi create` made in server mode — whose server runs it too, so what
 is pushed is what was tried — and [`examples/self-hosting/10-runtime`](../../examples/self-hosting/10-runtime) is the smallest one to start
 from — it also runs as a server of its own. From that project, signed in (`plitzi login`) with the space chosen
-(`plitzi space`):
+(`plitzi space use`):
 
 ```bash
 plitzi runtime push                  # packs src/runtime/index.ts (or --entry) and keeps it as the space's draft runtime
@@ -152,7 +152,7 @@ actions) and its runtime loaded into it, its variables this process's environmen
 
 A project the CLI wrote finds its module with `loadRuntimeModule(file)` (`@plitzi/sdk-server/runtime`):
 `src/runtime/index.ts`, or what `build` compiled it to (`dist/runtime/index.js`, for a server run compiled) — or
-`undefined` when the project has none, so a project starts one by writing it (`plitzi add runtime`), with nothing to
+`undefined` when the project has none, so a project starts one by writing it (`plitzi runtime add`), with nothing to
 wire.
 
 ## 6. For a deployment

@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vitest';
 
-import { bindTemplate, component, container, link, locateClasses, locateElements, styles, text } from '../index';
+import {
+  bindTemplate,
+  component,
+  container,
+  link,
+  list,
+  listItem,
+  locateClasses,
+  locateElements,
+  styles,
+  text
+} from '../index';
 
 describe('locateElements', () => {
   // `at` is the author's own code, and this test is inside the package: a project's elements carry it (see the CLI's
-  // `plitzi where`). What is checked here is the rest of what it answers about each one.
+  // `plitzi element where`). What is checked here is the rest of what it answers about each one.
   it('answers every element the space authors to, with its classes, words and attributes', () => {
     const navLink = styles('nav-link', { desktop: { color: 'red' } });
     const located = locateElements({
@@ -45,6 +56,27 @@ describe('locateElements', () => {
       words: ['{{ source }} XP']
     });
     expect(located.find(element => element.elementId === 'nav-home')?.words).toEqual(['Home']);
+
+    // A list handed its rows as data: the words its rows show are in its items.
+    const plans = locateElements({
+      name: 'Plans',
+      permanentUrl: 'plans',
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          body: [
+            list({
+              id: 'plans',
+              items: [{ name: 'Team', cta: 'Talk to sales' }],
+              row: r => listItem({ id: 'plan', children: [text({ id: 'plan-cta', from: `${r.item}.cta` })] })
+            })
+          ]
+        }
+      ]
+    });
+    expect(plans.find(element => element.elementId === 'plans')?.words).toEqual(['Team', 'Talk to sales']);
     expect(located.map(element => element.elementId)).toEqual(expect.arrayContaining(['home', 'nav']));
   });
 

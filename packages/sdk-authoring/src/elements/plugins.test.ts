@@ -117,7 +117,7 @@ describe('authorSpace with plugins', () => {
 
 /**
  * A component of the project's own is usually hosted by `custom({ renderType })` — what `plitzi create` and
- * `plitzi add plugin` set up. Its events are the component's, so a flow on one was refused as something a `custom`
+ * `plitzi plugin add` set up. Its events are the component's, so a flow on one was refused as something a `custom`
  * "never fires", and the CLI's own template could not be used as it was written.
  */
 describe('a component hosted by custom', () => {

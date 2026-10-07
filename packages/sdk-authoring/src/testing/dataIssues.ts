@@ -13,7 +13,7 @@ import type { Element, Schema } from '@plitzi/sdk-shared';
  * — `landing.data.plans` where the answer is `{ plans }` — was "36 elements on screen, nothing wrong". Read here, with
  * the provider's answer in hand, it is the binding, the path it reads and the keys that ARE there.
  *
- * Pure: the sources come from the page's dev tools (`window.__plitzi.sources()`), so a suite or `plitzi check` reads
+ * Pure: the sources come from the page's dev tools (`window.__plitzi.sources()`), so a suite or `plitzi page check` reads
  * them however it reaches the page.
  */
 
@@ -30,7 +30,7 @@ export interface DataReport {
   /**
    * Every list of the page whose rows come from a provider: how many rows its source holds, `null` when it reads
    * nothing. The source, before the binding's transformers: a list that filters or slices them draws fewer — what is
-   * drawn is the page's to count (`plitzi check` does).
+   * drawn is the page's to count (`plitzi page check` does).
    */
   lists: Record<string, number | null>;
 }

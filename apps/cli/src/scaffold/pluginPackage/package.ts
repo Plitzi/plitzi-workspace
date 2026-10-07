@@ -12,7 +12,7 @@ import type { PluginAnswers, ProjectFiles } from '../types';
  * provides them and the plugin uses those, so a project installing the plugin never gets a second copy to fight with.
  * They are dev dependencies too, because the preview renders a page of its own.
  *
- * It builds nothing itself. `plitzi pack plugin` is the one place a plugin is packed — into `dist/`, which `exports`
+ * It builds nothing itself. `plitzi plugin pack` is the one place a plugin is packed — into `dist/`, which `exports`
  * points at, and a zip for the builder — so the package carries no bundler config and no build dependency of its own.
  */
 

@@ -1,9 +1,9 @@
-# A space as a project: `plitzi create --from`, `plitzi pull` and `plitzi push`
+# A space as a project: `plitzi create --from`, `plitzi space pull` and `plitzi space push`
 
 `plitzi create --from <space>` writes a project that runs a space on Plitzi on a server of your own, with everything
 the space is made of: its pages, styles, actions, functions and runtime, the source of its plugins, and its files.
-The project depends on nothing of Plitzi's, neither its servers nor its CDN. `plitzi pull` then keeps it in step with
-the space as the space goes on being edited, and `plitzi push` puts what the project changed back on the space.
+The project depends on nothing of Plitzi's, neither its servers nor its CDN. `plitzi space pull` then keeps it in step with
+the space as the space goes on being edited, and `plitzi space push` puts what the project changed back on the space.
 
 It closes a circle both ways: a space that moves to its own server, and a self-hosted project that goes back up to
 Plitzi — whether it was taken out of a space or started on its own.
@@ -12,8 +12,8 @@ Plitzi — whether it was taken out of a space or started on its own.
 plitzi create my-board --from pizarra                 # the draft, as code, served self-hosted
 plitzi create my-board --from pizarra --environment production --revision 3   # a snapshot, as it was frozen
 plitzi create my-board --from pizarra --source cloud  # the pages stay on Plitzi; everything else runs here
-cd my-board && plitzi pull                            # later: what changed on the space, brought in
-plitzi push                                           # and what changed here, put back as the space's draft
+cd my-board && plitzi space pull                            # later: what changed on the space, brought in
+plitzi space push                                           # and what changed here, put back as the space's draft
 ```
 
 Pizarra is the yardstick: a board works on `localhost` from a fresh `create`, is drawn on, and is kept across a reload.
@@ -65,11 +65,11 @@ later comes with the source it was made with, not whatever was uploaded since.
 
 **When.**
 
-- `plitzi pack plugin` writes the snapshot beside the zip (`<name>.source.json.gz`), and `plitzi upload plugin` keeps it
+- `plitzi plugin pack` writes the snapshot beside the zip (`<name>.source.json.gz`), and `plitzi plugin upload` keeps it
   after the plugin is installed (`PUT /spaces/:id/sources`).
 - `plitzi runtime push` packs and keeps it after the runtime is pushed.
 - The seeder does both for every seed, through the same CLI, with `--source-root` set to the seed's folder.
-- `plitzi pack source <entries…> --kind --name -o <file>` writes one to a file, to see what would be kept.
+- `plitzi source pack <entries…> --kind --name -o <file>` writes one to a file, to see what would be kept.
 
 **Guards.**
 
@@ -158,7 +158,7 @@ written with `defineAction` always does.
 **What came across built only.** A plugin or runtime uploaded before Plitzi kept sources has none: the plugin's files
 are downloaded into `vendor/plugins/<type>/` and registered as they were built (`action: 'copy'`, rendered on the
 server too), the runtime into `vendor/runtime.bundle` (loaded with `loadRuntime`). Both run and cannot be changed; the
-report says to upload them again from their source, and the next `pull` brings the code.
+report says to upload them again from their source, and the next `space pull` brings the code.
 
 **A plugin's source must start at `src/plugins/<Name>/index.ts`** (or `index.tsx`). That is where the project registers
 plugins from (`<Name>` in camelCase is the type). One that starts elsewhere is named in the report.
@@ -167,15 +167,15 @@ plugins from (`<Name>` in camelCase is the type). One that starts elsewhere is n
 space's host key (`plitzi create` asks for it, or `--key`), and everything else — actions, functions, runtime, plugins,
 files — runs locally. A plugin the project registers is never looked for on the space's CDN.
 
-## `plitzi pull`
+## `plitzi space pull`
 
-`pull`, run in the project, asks the platform for the version the project follows again — the draft, an environment's
+`space pull`, run in the project, asks the platform for the version the project follows again — the draft, an environment's
 latest, or a pinned revision, as `.plitzi/space.json` records — and compares every file the space gives with what it
 gave last time and with what is on disk now. Both sides are compared as the project's Prettier writes them, and a file
 recorded before the project had a formatter still counts as unchanged when only formatting moved it. `--environment`
 and `--revision` follow another version from then on (`--revision latest` lets go of a pin).
 
-| On the space | Here | What `pull` does |
+| On the space | Here | What `space pull` does |
 |---|---|---|
 | changed, or new | unchanged | writes it |
 | unchanged | changed (or deleted) | keeps the change |
@@ -187,18 +187,18 @@ A file of the space's CDN is fetched again only when the space names another add
 `package.json` only gains the packages the space's code now asks for (a range the project changed is kept, and said).
 The functions' working copy is refreshed with them, unless a change here to one of them stood.
 
-## `plitzi push`
+## `plitzi space push`
 
-The way back of `pull`, run in the project: what changed in it put back on the space the CLI is connected to, as the
+The way back of `space pull`, run in the project: what changed in it put back on the space the CLI is connected to, as the
 space's **draft** — publishing a snapshot stays the builder's.
 
 ```bash
-plitzi push                      # at a terminal: every part offered, what changed ticked; with nobody there, what changed
-plitzi push space functions      # only these parts: space, functions, data, runtime, plugins, files
-plitzi push space --force        # replace the draft even though it changed since
+plitzi space push                      # at a terminal: every part offered, what changed ticked; with nobody there, what changed
+plitzi space push space functions      # only these parts: space, functions, data, runtime, plugins, files
+plitzi space push space --force        # replace the draft even though it changed since
 ```
 
-**What changed.** Since the project last had the space — its last `create --from`, `pull` or `push`, as
+**What changed.** Since the project last had the space — its last `create --from`, `space pull` or `space push`, as
 `.plitzi/space.json` records: a plugin or the runtime when a file of its closure (`packSource`'s) is not the one
 recorded; the functions when `src/functions/` is not what `.plitzi/functions.json` holds; the data or the files when a
 file of `src/data/` or `public/assets/` is not the one recorded; the space when a file of
@@ -210,7 +210,7 @@ went up before it is said, and recorded):
 
 | Part | What goes up | As |
 |---|---|---|
-| `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `pack plugin` + `upload plugin` (`--cdn`, `--bucket`) |
+| `plugins` | each plugin whose source changed — grouped as the space keeps them, a new element folder a plugin of its own | `plugin pack` + `plugin upload` (`--cdn`, `--bucket`) |
 | `files` | each changed file of `public/assets/`, at the same path under the space's `assets/` — images, sounds, videos, JSON | `POST /spaces/:spaceId/cdns/:identifier/assets?path=` |
 | `functions` | `src/functions/` | `functions push` |
 | `data` | `src/data/` whole, its CDN addresses put back | `PUT /spaces/:spaceId/data` |
@@ -225,14 +225,14 @@ created as, with no actions or connectors: a space made from a template, or edit
 `--force`. `--force` reaches the functions and the data too, whose own checks (the version the project last had) it
 passes the same way.
 
-**Which space.** The one the CLI is connected to (`plitzi space`), which must be the one `.plitzi/space.json` names; and
+**Which space.** The one the CLI is connected to (`plitzi space use`), which must be the one `.plitzi/space.json` names; and
 the draft only — a project following a published environment follows the draft first (`pull --environment main`).
 
-**What it records.** `.plitzi/space.json` as the space now holds the project, so `pull` compares with it from then on —
+**What it records.** `.plitzi/space.json` as the space now holds the project, so `space pull` compares with it from then on —
 but only the files of what was sent, as the space gives them back: a page edited in the builder and not pushed over is
 still the builder's change to the next pull. A project that never had the space records it whole, and from then on
-`pull` works on it as on one `create --from` made; its files laid out differently from `create --from`'s are kept as its
-own (`pull`'s "deleted here" and "changed here").
+`space pull` works on it as on one `create --from` made; its files laid out differently from `create --from`'s are kept as its
+own (`space pull`'s "deleted here" and "changed here").
 
 ## The import
 
@@ -259,13 +259,13 @@ for in the builder: the settings, the actions, the connectors.
   published environment.
 - **Files.** Downloaded into the project's `public/assets/` and served by it: a self-hosted project is its own server
   and depends on nothing of Plitzi's, its CDN included. `public/assets/<path>` is the CDN's `<space>/assets/<path>`, both
-  ways: `push` puts a changed one there (named exactly, replacing what the path held) and sends each path to one as its
+  ways: `space push` puts a changed one there (named exactly, replacing what the path held) and sends each path to one as its
   CDN address; the rest of `public/` is the project's own.
 - **Data.** `src/data/` is the space's own data on Plitzi (`SpaceData`, one row per version, its files kept in the
-  space's private bucket as its functions are): saved whole by `push` (`PUT /spaces/:spaceId/data`, under
+  space's private bucket as its functions are): saved whole by `space push` (`PUT /spaces/:spaceId/data`, under
   `spaceManage`; each file JSON at a plain path, 8 MB in all), frozen with each publish, and read by the page server of
   the version it renders (`getData` among the action lookups, resolved as `dataDir` resolves it self-hosted). The
-  export carries it, so `create --from` and `pull` write it back. The same draft is edited in the builder (Server ›
+  export carries it, so `create --from` and `space pull` write it back. The same draft is edited in the builder (Server ›
   Data, `SpaceData` / `SpaceSaveData`, shaped as `DataDraft` / `DataSaveResult` in `@plitzi/sdk-shared`) and by an
   agent (`upsertDataFile` over MCP): one write path, one history.
 - **SDK versions.** A plugin is rebuilt by the project against the project's own `@plitzi/*`: the snapshot carries the
@@ -285,11 +285,11 @@ for in the builder: the settings, the actions, the connectors.
 
 **The cycle, whole:** `plitzi-sdk-server`'s `test/e2e/flows/spaces/space-as-project.e2e.test.ts`, with nothing stubbed
 — the API and its databases, the seeds' buckets, the built CLI, the generated project run by Node. A project made with
-`plitzi create` and `plitzi add plugin` puts its plugin, runtime and functions on Plitzi; `create --from` takes the
+`plitzi create` and `plitzi plugin add` puts its plugin, runtime and functions on Plitzi; `create --from` takes the
 space back out, every source file byte for byte, the action as code and the pages authoring the same documents; that
-project serves it with nothing of Plitzi's; a snapshot comes out as it was frozen after the draft moved on; `pull` keeps
+project serves it with nothing of Plitzi's; a snapshot comes out as it was frozen after the draft moved on; `space pull` keeps
 a change made in the project, writes the space's, and stops on a file changed on both; the self-hosted project's own
-change goes back up for the next project to take out; and `plitzi push` puts the whole project back — plugin,
+change goes back up for the next project to take out; and `plitzi space push` puts the whole project back — plugin,
 functions, runtime and pages — sends nothing the second time, and is refused over the builder's edit until `--force`.
 A step a later change breaks fails there, named.
 

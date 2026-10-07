@@ -20,13 +20,13 @@ export interface PackSourceOptions extends DryRunOptions {
 }
 
 /**
- * `plitzi pack source`: the snapshot `plitzi upload plugin` and `plitzi runtime push` keep beside what they send (RFC
+ * `plitzi source pack`: the snapshot `plitzi plugin upload` and `plitzi runtime push` keep beside what they send (RFC
  * 0020), written to a file — to see what of a project would be kept, or for a tool that keeps it itself (the seeder).
  */
 const packSourceCommand = async (entries: string[], options: PackSourceOptions): Promise<void> => {
   const root = options.root ? path.resolve(options.root) : (await findProject(process.cwd()))?.root;
   if (!root) {
-    fail('plitzi pack source packs a project’s source, and there is no package.json here or above.');
+    fail('plitzi source pack packs a project’s source, and there is no package.json here or above.');
 
     return;
   }

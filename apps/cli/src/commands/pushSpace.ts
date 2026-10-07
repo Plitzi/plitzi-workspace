@@ -20,7 +20,7 @@ import type { ConnectedSpace, Connection } from '../account/connection';
 import type { SpaceImport } from '@plitzi/sdk-shared/source';
 
 /**
- * The space part of `plitzi push`: the project's `src/space/`, authored as `npm run author` authors it, with the
+ * The space part of `plitzi space push`: the project's `src/space/`, authored as `npm run author` authors it, with the
  * server actions and connectors the project keeps — put back as the space's draft (`PUT /spaces/:id/import`).
  *
  * The actions are the ones the project serves: what `src/actions/index.ts` lists. The
@@ -109,7 +109,7 @@ export type SpacePush = { outcome: PushOutcome; draft?: string };
 /**
  * What of the space would not reach Plitzi with it, said before it is sent — never left to be found on a page that
  * renders empty there:
- * - a provider reading a file of the project's data (`/data/…`) that `src/data/` does not hold: `plitzi push` sends
+ * - a provider reading a file of the project's data (`/data/…`) that `src/data/` does not hold: `plitzi space push` sends
  *   the data there is, and there is none of that file;
  * - a file of `public/` the space names that is not on its CDN: only `public/assets/` goes there (the `files` part),
  *   and Plitzi serves no project's `public/`.
@@ -141,7 +141,7 @@ const notCarried = async (
     ...(assets.length > 0
       ? [
           `These files of ${PUBLIC_ASSETS_DIR}/ are not on the space's CDN yet, so the space names files Plitzi does not serve: ${assets.join(', ')}. ` +
-            'Push the files part with it (plitzi push files space).'
+            'Push the files part with it (plitzi space push files space).'
         ]
       : []),
     ...(elsewhere.length > 0
@@ -239,7 +239,7 @@ export const pushSpaceOf = async (
         ? `${space.name} already holds work of its own, and this project never had it: pushing would replace it.\n` +
             `Take it out first (plitzi create --from ${space.permanentUrl}), or pass --force to replace it with this project.`
         : `${space.name}’s draft changed since this project last had it — in the builder, or from another copy.\n` +
-            'Pull first (plitzi pull) and push again, or pass --force to replace it with this project.'
+            'Pull first (plitzi space pull) and push again, or pass --force to replace it with this project.'
     );
 
     return { outcome: 'failed' };

@@ -107,7 +107,7 @@ describe('keeping it', () => {
 
     const current = await currentConnection(platform.api);
 
-    expect(current).toEqual({ ok: false, error: expect.stringContaining('plitzi space') as string });
+    expect(current).toEqual({ ok: false, error: expect.stringContaining('plitzi space use') as string });
     expect(await readConnection()).toBeUndefined();
   });
 

@@ -335,7 +335,7 @@ export const elementsRegistry = (components: string[]): string => `${components
   .join('\n')}
 
 /**
- * Every element this package holds, the one it is named after first. \`plitzi add plugin\` writes this list — add an
+ * Every element this package holds, the one it is named after first. \`plitzi plugin add\` writes this list — add an
  * element with it, or by hand: its folder, and a line here and in \`declarations.ts\`.
  */
 ${listSource('elements', components)}
@@ -348,7 +348,7 @@ export const declarationsRegistry = (components: string[]): string => `${compone
 
 /**
  * Every element's declaration, in the order of \`elements.ts\`: the build writes each into \`plugin-manifest.json\`, and
- * the first is the one a space's \`plugins\` entry loads the package by. \`plitzi add plugin\` writes this list.
+ * the first is the one a space's \`plugins\` entry loads the package by. \`plitzi plugin add\` writes this list.
  */
 ${listSource('declarations', components.map(typeOf))}
 `;
@@ -357,7 +357,7 @@ const entry = (): string => `import { elements } from './elements';
 
 /**
  * What a space loads: the element the package is named after, and every other element it holds as \`plugins\`, by
- * type. Nothing here changes when one is added — \`plitzi add plugin\` writes its folder and lists it in \`elements.ts\`.
+ * type. Nothing here changes when one is added — \`plitzi plugin add\` writes its folder and lists it in \`elements.ts\`.
  */
 const [main, ...others] = elements;
 
@@ -371,7 +371,7 @@ export default main;
 
 /**
  * The element's server half — \`functions/index.ts\` in its folder — written like a space's functions and run with a
- * plugin's narrower \`ctx\`: what \`plitzi add plugin --server\` starts it with, an example to change.
+ * plugin's narrower \`ctx\`: what \`plitzi plugin add --server\` starts it with, an example to change.
  */
 export const pluginFunctionsFile = ({
   component,

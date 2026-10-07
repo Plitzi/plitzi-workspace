@@ -27,7 +27,7 @@ const inTemp = async (run: (dir: string) => Promise<void>): Promise<void> => {
   }
 };
 
-/** An element as `plitzi add plugin` writes it, in its folder under `src/plugins`. */
+/** An element as `plitzi plugin add` writes it, in its folder under `src/plugins`. */
 const element = (dir: string, name: string, title: string) =>
   writeFiles(
     path.join(dir, 'src/plugins', pluginNames(name).component),
@@ -139,7 +139,7 @@ describe('packing element folders', () => {
 });
 
 describe('the source a plugin is packed from', () => {
-  /** Kept beside the zip, so `plitzi upload plugin` keeps it on the space with the plugin. */
+  /** Kept beside the zip, so `plitzi plugin upload` keeps it on the space with the plugin. */
   it('is written beside the zip, every file its elements reach', async () => {
     // Inside this package, so the project's TypeScript resolves to the workspace's as a real project's would.
     const parent = path.join(import.meta.dirname, '../../node_modules/.tmp');

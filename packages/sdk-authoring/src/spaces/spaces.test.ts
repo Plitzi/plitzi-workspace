@@ -142,7 +142,7 @@ describe('the copy handed to a project', () => {
     expect(blankCopy()).not.toContain('blankSpaceSpec');
   });
 
-  /** A file per part, each short enough to read whole — what `plitzi lint` holds a project's space to. */
+  /** A file per part, each short enough to read whole — what `plitzi space lint` holds a project's space to. */
   it('is a file per part, each one short enough to read whole', () => {
     const files = blankTemplateFiles();
 

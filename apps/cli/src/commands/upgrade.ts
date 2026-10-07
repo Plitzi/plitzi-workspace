@@ -260,7 +260,7 @@ export const planPackages = (
 
 /**
  * `seeded`: a file of the project's own that the machinery imports, written because the project had none. `space`: one
- * a space made into a project gave in the CLI's place (`src/main.ts`, from what the space holds) — `plitzi pull`'s.
+ * a space made into a project gave in the CLI's place (`src/main.ts`, from what the space holds) — `plitzi space pull`'s.
  * `removed`: one the CLI no longer writes, as it wrote it (or taken), deleted; `retired`: one the project changed, left.
  */
 export type FileStatus =
@@ -370,7 +370,7 @@ const planRetired = async (
 /**
  * The machinery as `upgrade` sees it: each file the CLI writes, by what it is to the project (`FileStatus`), the
  * project's own files it reads that the project lacks (`seeds`), the ones it no longer writes still there (`retired`),
- * and the files a space gave in the CLI's place, which are `plitzi pull`'s (`spaces`). What `plitzi doctor` reads too,
+ * and the files a space gave in the CLI's place, which are `plitzi space pull`'s (`spaces`). What `plitzi doctor` reads too,
  * so both say the same of every file.
  */
 export const machineryPlan = async (
@@ -378,7 +378,7 @@ export const machineryPlan = async (
   answers: CreateAnswers,
   { origin, recorded, take = [] }: { origin?: SpaceOrigin; recorded: Record<string, string>; take?: readonly string[] }
 ): Promise<{ plans: FilePlan[]; seeds: FilePlan[]; retired: RetiredPlan[]; spaces: string[] }> => {
-  // A file the space gave in the CLI's place is the space's, kept by `plitzi pull` — never offered here.
+  // A file the space gave in the CLI's place is the space's, kept by `plitzi space pull` — never offered here.
   const given = new Set(Object.keys(origin?.files ?? {}));
   const machinery = Object.entries(machineryFiles(answers));
   const ours = Object.fromEntries(machinery.filter(([file]) => !given.has(file)));
@@ -484,7 +484,7 @@ const statusLine: Record<FileStatus, (file: string) => string> = {
     chalk.yellow(`  ! ${file} — no longer the CLI's and nothing reads it, but yours: delete it, or --take ${file}`),
   taken: file => chalk.yellow(`  ~ ${file} (yours, taken)`),
   yours: file => chalk.yellow(`  ! ${file} — yours: the CLI's version below; --take ${file} to replace it`),
-  space: file => chalk.dim(`  · ${file} — the space's: plitzi pull writes it as this CLI does`)
+  space: file => chalk.dim(`  · ${file} — the space's: plitzi space pull writes it as this CLI does`)
 };
 
 /** The report as text; `install` is the project's install command, said when the CLI left the install to the author. */
@@ -515,7 +515,19 @@ const reportText = (report: UpgradeReport, install: string): string => {
       ...ownScripts.map(entry =>
         chalk.dim(`  = script ${entry.name} is yours ("${entry.yours}"; the CLI writes "${entry.ours}")`)
       ),
-      ...local.map(entry => chalk.yellow(`  ! ${entry.name} is installed locally — ${entry.from}: left as it is`))
+      // One fact said once: a workspace links every package, and a line each says the same thing fifteen times.
+      ...(local.length > 3
+        ? [
+            chalk.yellow(
+              `  ! ${String(local.length)} packages are installed locally, not from the registry (${local
+                .slice(0, 8)
+                .map(entry => entry.name.replace(/^@plitzi\//, ''))
+                .join(
+                  ', '
+                )}${local.length > 8 ? ` and ${String(local.length - 8)} more` : ''}): left as they are — --json says how each came`
+            )
+          ]
+        : local.map(entry => chalk.yellow(`  ! ${entry.name} is installed locally — ${entry.from}: left as it is`)))
     );
     if (installed === 'skipped') {
       lines.push(
@@ -533,7 +545,14 @@ const reportText = (report: UpgradeReport, install: string): string => {
   if (report.skills) {
     lines.push(report.skills.length === 0 ? chalk.green('skills: up to date') : 'skills:');
     lines.push(
-      ...report.skills.map(skill => chalk.green(`  ~ ${skill.name}: ${skill.was ?? 'none'} → ${skill.now ?? '?'}`))
+      // One version on both sides is still a different skill: it was written before this build of the same version.
+      ...report.skills.map(skill =>
+        chalk.green(
+          skill.was !== undefined && skill.was === skill.now
+            ? `  ~ ${skill.name}: ${skill.now} — what it says changed within that version`
+            : `  ~ ${skill.name}: ${skill.was ?? 'none'} → ${skill.now ?? '?'}`
+        )
+      )
     );
   }
 

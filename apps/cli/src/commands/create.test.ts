@@ -254,8 +254,8 @@ describe('the scaffold', () => {
       devDependencies: Record<string, string>;
     };
 
-    expect(scripts.shot).toBe('plitzi shot');
-    expect(scripts.check).toBe('plitzi check');
+    expect(scripts.shot).toBe('plitzi page shot');
+    expect(scripts.check).toBe('plitzi page check');
     expect(devDependencies['@plitzi/cli']).toMatch(/^\^\d+\.\d+\.\d+/);
     expect(files['scripts/shot.ts']).toBeUndefined();
   });
@@ -263,7 +263,7 @@ describe('the scaffold', () => {
   /**
    * `compile` is what makes a server-mode plugin part of the HTML rather than something hydration adds later.
    * The browser build has no server to compile anything, so it registers the component it already bundles. Both find
-   * the plugins by folder, so one `plitzi add plugin` writes is registered with no line of this file changed.
+   * the plugins by folder, so one `plitzi plugin add` writes is registered with no line of this file changed.
    */
   it('registers every plugin folder the way each mode can actually render it', () => {
     const server = scaffold(answers())['src/main.ts'];
@@ -412,7 +412,7 @@ describe('the scaffold', () => {
     // A space that lives in Plitzi has no `author` script to run, and no source to lint.
     expect(cloud['AGENTS.md']).not.toContain('run author');
     expect(cloud['AGENTS.md']).not.toContain('lint:space');
-    expect(JSON.parse(local['package.json'])).toMatchObject({ scripts: { 'lint:space': 'plitzi lint' } });
+    expect(JSON.parse(local['package.json'])).toMatchObject({ scripts: { 'lint:space': 'plitzi space lint' } });
     expect(JSON.parse(cloud['package.json'])).not.toHaveProperty(['scripts', 'lint:space']);
   });
 

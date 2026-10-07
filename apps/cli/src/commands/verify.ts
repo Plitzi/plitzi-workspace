@@ -187,7 +187,7 @@ export const verifyText = (
             ...(pages.unchecked.length > 0
               ? [
                   chalk.yellow(
-                    `- not checked — sent elsewhere (a page for signed-in visitors) or not answered: ${pages.unchecked.join(', ')} — plitzi check <path> --as <username>`
+                    `- not checked — sent elsewhere (a page for signed-in visitors) or not answered: ${pages.unchecked.join(', ')} — plitzi page check <path> --as <username>`
                   )
                 ]
               : [])

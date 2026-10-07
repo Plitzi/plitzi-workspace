@@ -260,7 +260,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
   const project = await findProject(process.cwd());
   if (!project) {
     fail(
-      'plitzi add plugin adds an element to a project, and there is no package.json here or above. ' +
+      'plitzi plugin add adds an element to a project, and there is no package.json here or above. ' +
         'For a plugin of its own, run plitzi create <folder> --plugin.'
     );
 
@@ -388,7 +388,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
     if (options.dryRun) {
       const { plitzi } = project;
       const lists = plitzi?.kind === 'plugin' && plitzi.components ? ['src/elements.ts', 'src/declarations.ts'] : [];
-      sayDryRun(`plitzi add plugin ${names.join(' ')}`, [
+      sayDryRun(`plitzi plugin add ${names.join(' ')}`, [
         ...(await filesWouldWrite(project.root, [...wouldWrite, ...lists])),
         ...(options.server && plitzi?.kind === 'plugin'
           ? ['~ package.json — @plitzi/sdk-server as a devDependency, for the server half’s types, when it has none']

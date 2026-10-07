@@ -278,7 +278,7 @@ describe('serveProject — a space held in the project', () => {
     expect(await pageOf(running.url)).toContain('badge@1.0.0');
   });
 
-  // A folder `plitzi add plugin` did not write — a component with no entry — says so where the server runs, and the
+  // A folder `plitzi plugin add` did not write — a component with no entry — says so where the server runs, and the
   // server goes on: the plugin is registered once it is whole.
   it('says a plugin folder added broken while it runs, goes on serving, and registers it once it is whole', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);

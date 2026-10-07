@@ -12,7 +12,7 @@ import { fakePlatform } from '../account/fakePlatform';
 
 import type { FakePlatform } from '../account/fakePlatform';
 
-/** `plitzi pull`: a project made from a space, brought up to date with it without undoing what was done here. */
+/** `plitzi space pull`: a project made from a space, brought up to date with it without undoing what was done here. */
 
 const { default: create } = await import('./create');
 
@@ -81,7 +81,7 @@ describe('what a pull does to one file', () => {
   });
 });
 
-describe('plitzi pull', () => {
+describe('plitzi space pull', () => {
   it('remembers where the project came from and what it was given', async () => {
     const origin = await readOrigin(project);
 

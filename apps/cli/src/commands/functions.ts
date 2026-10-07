@@ -204,7 +204,7 @@ const printProblems = (problems: Problem[]): void => {
 /**
  * `src/functions/` saved as the draft of the space the connection works in: refused when the space's copy moved on since the
  * pull, and — for a project that never pulled them — when the space already has functions of its own. `force` replaces
- * whatever the space holds now, which is what `plitzi push --force` asks of every part.
+ * whatever the space holds now, which is what `plitzi space push --force` asks of every part.
  */
 export const pushFunctionsOf = async (
   root: string,

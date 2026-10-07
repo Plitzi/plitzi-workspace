@@ -273,7 +273,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
       ...(await filesWouldWrite(target, [...Object.keys(written), ...Object.keys(fromSpace?.binaries ?? {})])),
       ...(fromSpace?.downloads ?? []).map(({ url, to }) => `+ ${to} — fetched from ${url}`),
       `+ ${SCAFFOLD_RECORD_FILE} — what the CLI wrote, for \`plitzi upgrade\``,
-      ...(exported ? [`+ ${ORIGIN_FILE} — the space it came from, for \`plitzi pull\` and \`push\``] : []),
+      ...(exported ? [`+ ${ORIGIN_FILE} — the space it came from, for \`plitzi space pull\` and \`space push\``] : []),
       ...(wantsInstall ? [`run ${installCommand(packageManager)}`] : []),
       ...(wantsInstall && wasEmpty ? [`run ${runCommand(packageManager, 'format')}`] : [])
     ]);
@@ -284,7 +284,7 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   await writeFiles(target, written);
   const missing = fromSpace ? await writeFromSpace(target, fromSpace) : [];
   // What of the CLI's machinery was written, by digest: what lets `plitzi upgrade` replace a file nobody touched since.
-  // One the space gave in its place (`src/main.ts` of a project made from one) is the space's: `plitzi pull` keeps it.
+  // One the space gave in its place (`src/main.ts` of a project made from one) is the space's: `plitzi space pull` keeps it.
   await writeScaffoldRecord(target, CLI_VERSION, {
     files: Object.fromEntries(
       Object.keys(machineryFiles(answers))

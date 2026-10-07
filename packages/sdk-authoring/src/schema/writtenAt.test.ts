@@ -22,7 +22,7 @@ describe('writtenAt', () => {
   });
 
   // A spread copies only what is enumerable: a factory that rebuilt a spec handed back one written nowhere, and
-  // `plitzi where` could not place a component's instance nor `plitzi edit` change its props.
+  // `plitzi element where` could not place a component's instance nor `plitzi element edit` change its props.
   it('carries the original marker through a copy, never a new one', () => {
     const marker = (spec: object): unknown =>
       Object.getOwnPropertySymbols(spec)

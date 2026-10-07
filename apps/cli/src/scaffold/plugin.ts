@@ -192,7 +192,7 @@ declare module '*?inline' {
 `;
 
 /**
- * What the example is authored with, as `plitzi add plugin --prop …` writes it: its props, which are the attributes the
+ * What the example is authored with, as `plitzi plugin add --prop …` writes it: its props, which are the attributes the
  * space gives it and a binding fills — so authoring holds the space's use of it to them, as it does every plugin.
  */
 const declaration = ({ name }: CreateAnswers): string =>
@@ -231,6 +231,6 @@ const examplePlugin = (answers: CreateAnswers): ProjectFiles =>
 
 export const pluginFiles = (answers: CreateAnswers): ProjectFiles => ({
   ...(answers.mode === 'server' ? { [`${CLI_DIR}/assets.d.ts`]: assetDeclarations() } : {}),
-  // Only the tour hosts the example: elsewhere the folder is there for `add plugin` to fill, and the server to read.
+  // Only the tour hosts the example: elsewhere the folder is there for `plugin add` to fill, and the server to read.
   ...((answers.template ?? 'welcome') === 'welcome' ? examplePlugin(answers) : { [`${PLUGINS_DIR}/.gitkeep`]: '' })
 });

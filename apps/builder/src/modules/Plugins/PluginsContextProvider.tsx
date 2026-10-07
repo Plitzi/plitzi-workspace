@@ -84,7 +84,7 @@ const PluginsContextProvider = ({ children, plugins: pluginsProp }: PluginsConte
 
   /**
    * A plugin installed — or installed again at a new address, which is how a new version arrives — made the one this
-   * builder loads. The same whether this builder installed it or another did (a collaborator, `plitzi upload plugin`).
+   * builder loads. The same whether this builder installed it or another did (a collaborator, `plitzi plugin upload`).
    */
   const applyAdded = useCallback(
     async (raw: PluginRaw) => {

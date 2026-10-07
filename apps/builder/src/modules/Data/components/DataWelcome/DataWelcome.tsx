@@ -47,7 +47,7 @@ const DataWelcome = ({ onStart }: DataWelcomeProps) => (
       </div>
       <Button onClick={onStart}>Start with an example</Button>
       <span className="text-[11px] text-gray-500 dark:text-zinc-400">
-        Or work in your own editor: a project&apos;s <code>src/data/</code> goes up with <code>plitzi push</code>.
+        Or work in your own editor: a project&apos;s <code>src/data/</code> goes up with <code>plitzi space push</code>.
       </span>
     </div>
   </div>

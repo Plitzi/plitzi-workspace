@@ -171,7 +171,7 @@ export const spaceEventSchemas = {
   }),
   /**
    * A plugin installed — or installed again at a new address, which is how a new version arrives: from the builder,
-   * or from `plitzi upload plugin` with no builder open. An open builder loads it without a reload.
+   * or from `plitzi plugin upload` with no builder open. An open builder loads it without a reload.
    */
   SPACE_ADD_PLUGIN: z.object({ plugin }),
   /** Its address or its settings changed. */

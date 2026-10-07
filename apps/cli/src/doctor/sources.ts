@@ -219,8 +219,8 @@ const present = async (root: string, files: readonly string[]): Promise<string[]
 
 /** What an entry must export, as what loads it reads it: by name, never found out at start. */
 const EXPECTED: readonly { file: string; name: string; why: string }[] = [
-  { file: SPACE_ENTRY, name: 'space', why: 'the space `author`, the server and `push` read' },
-  { file: ACTIONS_ENTRY, name: 'actions', why: 'the list the server runs and `push` sends' },
+  { file: SPACE_ENTRY, name: 'space', why: 'the space `author`, the server and `plitzi space push` read' },
+  { file: ACTIONS_ENTRY, name: 'actions', why: 'the list the server runs and `plitzi space push` sends' },
   { file: RUNTIME_ENTRY, name: 'default', why: 'the runtime the server starts (`defineRuntime({ … })`)' }
 ];
 

@@ -7,10 +7,10 @@ import MarkdownDocument from './MarkdownDocument';
 
 describe('MarkdownDocument', () => {
   it('writes inline code with nothing of the syntax tree on the tag', () => {
-    const { container } = render(<MarkdownDocument>{'## `pull`\n\nRun `plitzi pull`.'}</MarkdownDocument>);
+    const { container } = render(<MarkdownDocument>{'## `pull`\n\nRun `plitzi space pull`.'}</MarkdownDocument>);
     const codes = [...container.querySelectorAll('code')];
 
-    expect(codes.map(code => code.textContent)).toEqual(['pull', 'plitzi pull']);
+    expect(codes.map(code => code.textContent)).toEqual(['pull', 'plitzi space pull']);
     codes.forEach(code => expect(code.hasAttribute('node')).toBe(false));
   });
 

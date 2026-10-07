@@ -22,7 +22,7 @@ import type { DataIssueCode, DevToolsInput, PageIssue, SpaceHandles } from '@pli
 import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
 
 /**
- * `plitzi check`: whether a page of the running project is whole, said in text — every element it owes on screen, no
+ * `plitzi page check`: whether a page of the running project is whole, said in text — every element it owes on screen, no
  * image broken, nothing scrolling sideways, no text in the colour behind it, no error in the console, no request
  * refused — at each width asked. What an agent needs to know about a page in a few hundred tokens, where a screenshot
  * costs thousands and still has to be looked at; a picture is for when this says something is wrong.
@@ -33,9 +33,9 @@ import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
  * `--state` (the state, and every source by name) and `--element <id>`. `--ssr` holds the HTML the server sent against
  * the page once hydrated: what a server provider holds and the server's HTML lacked arrived late.
  *
- *   plitzi check / --width 1440,390 --json
- *   plitzi check /products --state --element catalog-count
- *   plitzi check /pricing --ssr
+ *   plitzi page check / --width 1440,390 --json
+ *   plitzi page check /products --state --element catalog-count
+ *   plitzi page check /pricing --ssr
  */
 
 export interface CheckOptions {
@@ -120,7 +120,7 @@ export interface PageMoment {
   url: string;
   /** How far down the page and each scrolled element is, by element id (`page` for the document itself). */
   scrolls: Record<string, number>;
-  /** The elements on screen, by id. */
+  /** The elements the browser draws — shown, wherever the page is scrolled — by id. */
   shown: string[];
 }
 
@@ -471,8 +471,8 @@ export const momentChanges = (
   return [
     ...(before.url === after.url ? [] : [`went to ${after.url} (from ${before.url})`]),
     ...scrolled,
-    ...(appeared.length > 0 ? [`now on screen: ${listed(appeared)}`] : []),
-    ...(gone.length > 0 ? [`no longer on screen: ${listed(gone)}`] : []),
+    ...(appeared.length > 0 ? [`now shown: ${listed(appeared)}`] : []),
+    ...(gone.length > 0 ? [`no longer shown: ${listed(gone)}`] : []),
     ...stateChanges
   ];
 };
@@ -700,7 +700,7 @@ const checkAt = async (
         code: 'redirected',
         message: account
           ? `${pathname} sent the browser to ${landed}, signed in as ${account.username}: that account may not see it`
-          : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV}`,
+          : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV}`,
         width
       }),
       consoleErrors,
@@ -933,7 +933,7 @@ export const check = async (route: string | undefined, options: CheckOptions): P
   const password = process.env[CHECK_PASSWORD_ENV];
   if (options.as && !password) {
     fail(
-      `--as ${options.as} signs in with the password in ${CHECK_PASSWORD_ENV}: set it — ${CHECK_PASSWORD_ENV}=… npx plitzi check …`
+      `--as ${options.as} signs in with the password in ${CHECK_PASSWORD_ENV}: set it — ${CHECK_PASSWORD_ENV}=… npx plitzi page check …`
     );
 
     return;

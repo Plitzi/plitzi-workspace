@@ -33,7 +33,7 @@ export type SpaceOrigin = {
    */
   version: { environment: string; revision?: number };
   /**
-   * The draft the project was last given or last pushed (`SpaceExport.draft`): what `plitzi push` names as its base,
+   * The draft the project was last given or last pushed (`SpaceExport.draft`): what `plitzi space push` names as its base,
    * so a draft edited in the builder since is never replaced unseen. None while it follows a published environment.
    */
   draft?: string;
@@ -44,7 +44,7 @@ export type SpaceOrigin = {
   /** The packages the space's code asked for, at the ranges written into `package.json`. */
   dependencies: Record<string, string>;
   /**
-   * The version of the space's data (`src/data/`) the project last had — what `plitzi push` names as its base, so data
+   * The version of the space's data (`src/data/`) the project last had — what `plitzi space push` names as its base, so data
    * pushed from another copy since is never replaced unseen. None while the project never had the space's data.
    */
   data?: string;

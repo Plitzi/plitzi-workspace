@@ -29,7 +29,7 @@ const folder = (dir: string): void => {
   fs.mkdirSync(path.join(root, dir), { recursive: true });
 };
 
-/** A plugin folder as `plitzi add plugin` writes it. */
+/** A plugin folder as `plitzi plugin add` writes it. */
 const plugin = (name: string): void => {
   write(`src/plugins/${name}/${name}.tsx`, 'export default () => null;\n');
   write(`src/plugins/${name}/index.ts`, `export { default } from './${name}.tsx';\n`);
@@ -112,7 +112,7 @@ describe('the plugins', () => {
       code: 'plugin-entry-missing',
       file: 'src/plugins/Card/',
       message: 'src/plugins/Card/ has no index.ts (or index.tsx), so the server cannot build the plugin card.',
-      fix: "Write src/plugins/Card/index.ts exporting the component by default — export { default } from './Card.tsx'; — as npx plitzi add plugin writes it. Every folder of src/plugins/ is a plugin: code several plugins share goes outside it (src/shared/)."
+      fix: "Write src/plugins/Card/index.ts exporting the component by default — export { default } from './Card.tsx'; — as npx plitzi plugin add writes it. Every folder of src/plugins/ is a plugin: code several plugins share goes outside it (src/shared/)."
     });
     expect(pluginEntry(root, 'Card')).toBeUndefined();
   });
@@ -307,7 +307,7 @@ describe('the project’s code', () => {
   it('refuses src/runtime/ with no index.ts', () => {
     write('src/runtime/server.ts');
 
-    expect(only('runtime-entry-missing').fix).toContain('npx plitzi add runtime');
+    expect(only('runtime-entry-missing').fix).toContain('npx plitzi runtime add');
   });
 
   it('refuses a space with no entry, and one exported by default', () => {

@@ -4,7 +4,7 @@ import chalk from 'chalk';
 
 /**
  * Several of a list, ticked at the terminal: ↑/↓ (or k/j) move, space ticks, `a` ticks all or none, Enter takes what is
- * ticked, Esc or Ctrl-C takes nothing. For a choice of parts rather than of one thing — what `plitzi push` sends.
+ * ticked, Esc or Ctrl-C takes nothing. For a choice of parts rather than of one thing — what `plitzi space push` sends.
  *
  * Only for somebody at the terminal (`atTerminal`): a command run by nobody takes its answer from its arguments, and
  * refuses — saying what to pass — when they are missing.

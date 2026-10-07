@@ -18,7 +18,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('plitzi check / a list’s rows', () => {
+describe('plitzi page check / a list’s rows', () => {
   it('counts the rows the page draws, one per copy of the row inside the list, and none for a list not on it', () => {
     document.body.innerHTML = `
       <ul data-plitzi-el="feed">
@@ -49,7 +49,7 @@ describe('plitzi check / a list’s rows', () => {
   });
 });
 
-describe('plitzi check / what the page is not showing', () => {
+describe('plitzi page check / what the page is not showing', () => {
   it('names an element with a condition of its own that has no node, or none the browser draws', () => {
     // jsdom lays nothing out: what the browser draws is said here, by a mark on the node.
     Object.defineProperty(HTMLElement.prototype, 'checkVisibility', {
@@ -129,8 +129,8 @@ describe('what a click changed', () => {
       'went to /enterprise#plans (from /enterprise)',
       'the page scrolled 3309 → 0 px',
       'faq scrolled 0 → 120 px',
-      'now on screen: hero',
-      'no longer on screen: footer',
+      'now shown: hero',
+      'no longer shown: footer',
       'state.menuOpen: false → true',
       'state.faq: unset → "a"'
     ]);

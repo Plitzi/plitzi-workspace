@@ -107,7 +107,7 @@ export const disconnect = async (): Promise<Connection | undefined> => {
 const ended = (connection: Connection): string =>
   connection.space
     ? `Your connection to ${connection.space.name} has ended — signed out elsewhere, or you no longer have access ` +
-      'to that space. Connect again with plitzi space.'
+      'to that space. Connect again with plitzi space use.'
     : 'Your session has ended. Sign in again with plitzi login.';
 
 /** A fresh session for the connection, kept. A refusal ends the connection; an unreachable server does not. */

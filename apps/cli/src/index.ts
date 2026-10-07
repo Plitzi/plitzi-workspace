@@ -176,7 +176,33 @@ program
     return createPlugin(directory, options);
   });
 
-program
+const spaceGroup = program
+  .command('space')
+  .description('The space this project works with: which one, its draft both ways, and how its source is written');
+
+const pageGroup = program
+  .command('page')
+  .description(
+    'A page of the running project: whether it is whole, a picture of it, or one of another site to start from'
+  );
+
+const elementGroup = program
+  .command('element')
+  .description('An element of the space written in this project: where its code is, and changing it there — checked');
+
+const pluginGroup = program
+  .command('plugin')
+  .description('Elements of your own: added to the project, built into what the platform takes, and installed on it');
+
+const runtime = program
+  .command('runtime')
+  .description('The space’s runtime: its own server code, run as a process of its own beside the platform');
+
+const sourceGroup = program
+  .command('source')
+  .description('The source a plugin or the runtime is built from, kept beside what is sent');
+
+spaceGroup
   .command('pull')
   .description(
     'Bring a project made with create --from up to date with its space: what changed there is written, what changed here is kept'
@@ -191,7 +217,7 @@ program
   .option(...DRY_RUN_OPTION)
   .action((options: PullOptions) => pull(options));
 
-program
+spaceGroup
   .command('push')
   .argument(
     '[parts...]',
@@ -207,10 +233,8 @@ program
   .option(...DRY_RUN_OPTION)
   .action((parts: string[], options: PushOptions) => push(parts, options));
 
-const add = program.command('add').description('Add something to the project you are in');
-
-add
-  .command('plugin')
+pluginGroup
+  .command('add')
   .argument('[names...]', 'What each element is called: seat-picker. Asked for when left out.')
   .description('Add elements of your own to this project: each one its component, declaration and builder panel')
   .option('-d, --dir <folder>', 'The folder that holds the project’s components. Asked for, unless the project says.')
@@ -233,19 +257,17 @@ add
   .option(...DRY_RUN_OPTION)
   .action((names: string[], options: AddPluginOptions) => addPlugin(names, options));
 
-add
-  .command('runtime')
+runtime
+  .command('add')
   .description(
-    'The space’s runtime in src/runtime/: its own server code, run by this project’s server and by Plitzi (plitzi runtime push)'
+    'Write the space’s runtime in src/runtime/: its own server code, run by this project’s server and by Plitzi (plitzi runtime push)'
   )
   .option('-f, --force', 'Write over a runtime the project already has')
   .option(...DRY_RUN_OPTION)
   .action((options: AddRuntimeOptions) => addRuntime(options));
 
-const pack = program.command('pack').description('Build something of this project into what the platform takes');
-
-pack
-  .command('plugin')
+pluginGroup
+  .command('pack')
   .argument('[folders...]', 'Element folders to pack, the main one first. In a plugin package, left out: all of them.')
   .description('Build a plugin: one ES module, its plugin-manifest.json, and the zip the builder takes under Resources')
   .option('-o, --out <folder>', 'Where the build goes. Emptied first; it must be inside the project.')
@@ -258,10 +280,10 @@ pack
   .option(...DRY_RUN_OPTION)
   .action((folders: string[], options: PackPluginOptions) => packPluginCommand(folders, options));
 
-pack
-  .command('source')
+sourceGroup
+  .command('pack')
   .argument('<entries...>', 'The files the build starts from: a runtime module, or each element’s index')
-  .description('Write the source snapshot plitzi upload and plitzi runtime push keep beside what they send')
+  .description('Write the source snapshot plitzi plugin upload and plitzi runtime push keep beside what they send')
   .addOption(
     new Option('--kind <kind>', 'What it is the source of').choices(['plugin', 'runtime']).makeOptionMandatory()
   )
@@ -289,13 +311,13 @@ program
   .option(...API_OPTION)
   .action((options: WhoamiOptions) => whoami(options));
 
-program
-  .command('space')
+spaceGroup
+  .command('use')
   .description('Choose the space to work in, in your browser. One at a time: it replaces the one chosen before')
   .option(...API_OPTION)
   .action((options: AccountOptions) => space(options));
 
-program
+pageGroup
   .command('check')
   .argument('[path]', 'The page: /about. The home page when left out')
   .description(
@@ -314,7 +336,7 @@ program
   .option('--json', 'One object per width, for a tool or an agent')
   .action((path: string | undefined, options: CheckOptions) => check(path, options));
 
-program
+spaceGroup
   .command('fix')
   .description(
     'What authoring would fix in the space, as edits to your source: shown as a diff; with --write written, formatted and checked'
@@ -323,7 +345,7 @@ program
   .option('--json', 'The plan as one object, for a tool or an agent')
   .action((options: FixOptions) => fix(options));
 
-program
+pageGroup
   .command('import')
   .argument('<url>', 'The page to start from: https://example.com/pricing')
   .description(
@@ -343,7 +365,7 @@ program
   .option(...DRY_RUN_OPTION)
   .action((url: string, options: ImportOptions) => importPage(url, options));
 
-program
+pageGroup
   .command('shot')
   .argument('[path]', 'The page: /about. The home page when left out')
   .description('A picture of one page of the running project — and, asked, how it differs from another or what moves')
@@ -383,7 +405,7 @@ program
   .option('--json', 'One object, for a tool or an agent')
   .action((options: VerifyOptions) => verify(options));
 
-program
+elementGroup
   .command('where')
   .argument('<query>', 'An element’s id, a class it wears, or words it shows: hero-cta, navLink, "Get started"')
   .description('Where the project’s code writes an element: the file, the line and the call itself')
@@ -396,7 +418,7 @@ program
   .option('--json', 'One object, for a tool or an agent')
   .action((query: string, options: WhereOptions) => where(query, options));
 
-program
+elementGroup
   .command('edit')
   .argument('<id>', 'The element, by its id: hero-cta')
   .description('Change an element’s attributes in the call that writes it, then check the space still authors')
@@ -406,14 +428,14 @@ program
   .option('--json', 'One object, for a tool or an agent')
   .action((id: string, options: EditOptions) => edit(id, options));
 
-program
+elementGroup
   .command('remove')
   .argument('<id>', 'The element, by its id: ent-trust')
   .description('Take an element out of the code that writes it, with what only it used, then check the space')
   .option('--json', 'One object, for a tool or an agent')
   .action((id: string, options: RemoveOptions) => remove(id, options));
 
-program
+elementGroup
   .command('move')
   .argument('<id>', 'The element, by its id: ent-faq')
   .description('Put an element before or after a sibling in the code that writes them, then check the space')
@@ -422,8 +444,9 @@ program
   .option('--json', 'One object, for a tool or an agent')
   .action((id: string, options: MoveOptions) => move(id, options));
 
-// What `edit` reads the space with in a fresh process, after it changed a file: not a command for a person.
-program.command('elements', { hidden: true }).action(() => elements());
+// What `element edit`, `remove` and `move` read the space with in a fresh process, after they changed a file: not a
+// command for a person.
+elementGroup.command('readings', { hidden: true }).action(() => elements());
 
 program
   .command('explain')
@@ -438,7 +461,6 @@ program
 
 program
   .command('upgrade')
-  .alias('update')
   .argument('[parts...]', `Only these: ${UPGRADE_PARTS.join(', ')} — every one when none is named`)
   .description(
     'Bring the project up to this CLI: its machinery files, package.json, the skills and renamed names — shown; with --write made'
@@ -455,7 +477,7 @@ program
 program
   .command('doctor')
   .description(
-    'Whether the project the CLI set up is whole — packages, its files, configs, what Node runs, plugins, data files, functions, records — each problem with its fix. Not the space: that is `npm run author`, and how it is written `plitzi lint`'
+    'Whether the project the CLI set up is whole — packages, its files, configs, what Node runs, plugins, data files, functions, records — each problem with its fix. Not the space: that is `npm run author`, and how it is written `plitzi space lint`'
   )
   .option(
     '--fix',
@@ -480,7 +502,7 @@ program
   .option('--json', 'One object: { file, facts, brief }, for a tool or an agent')
   .action((options: FeedbackOptions) => feedback(options));
 
-program
+spaceGroup
   .command('lint')
   .description(
     'How the space in src/space/ is written, eslint’s way: each practice to change at its file and line, what to write instead, and what authoring suggests. Not whether it authors — `npm run author` — nor the project: `plitzi doctor`'
@@ -511,11 +533,9 @@ data
   .option('--json', 'One object: { shape, example }')
   .action((file: string, options: DataDescribeOptions) => dataDescribe(file, options));
 
-const upload = program.command('upload').description('Put something of this project on the space you work in');
-
-upload
-  .command('plugin')
-  .argument('[zip]', 'The zip plitzi pack plugin built. Left out: the one packed in this project.')
+pluginGroup
+  .command('upload')
+  .argument('[zip]', 'The zip plitzi plugin pack built. Left out: the one packed in this project.')
   .description('Upload a packed plugin to a CDN of the space you work in, and install it there')
   .option('--cdn <identifier>', 'Which of the space’s CDNs the bucket is in.')
   .option('--bucket <identifier>', 'Which public bucket the plugin goes in. Asked for when there are several.')
@@ -563,10 +583,6 @@ functions
   .option('--params <json>', 'Its params, as a JSON object')
   .option('-w, --watch', `Run it again every time a file of ${FUNCTIONS_DIR}/ is saved`)
   .action((task: string, options: FunctionsDevOptions) => devFunction(task, options));
-
-const runtime = program
-  .command('runtime')
-  .description('The space’s runtime: its own server code, run as a process of its own beside the platform');
 
 runtime
   .command('push')
@@ -626,5 +642,19 @@ vars
   .option(...API_OPTION)
   .option(...DRY_RUN_OPTION)
   .action((name: string, options: RuntimeOptions) => unsetRuntimeVariable(name, options));
+
+// A command asked for at the top that is one of a group's — `plitzi push` — answered with where it is, not only that it
+// is unknown: read off the commands themselves, so it says the truth of this CLI and nothing has to be kept in step.
+program.on('command:*', (operands: string[]) => {
+  const name = operands.at(0) ?? '';
+  const homes = program.commands
+    .filter(group => group.commands.some(command => command.name() === name))
+    .map(group => `plitzi ${group.name()} ${name}`);
+  program.error(
+    homes.length > 0
+      ? `There is no plitzi ${name}: it is ${homes.length === 1 ? homes[0] : `one of ${homes.join(', ')}`}. plitzi --help lists them all.`
+      : `Unknown command ${name}. plitzi --help lists them all.`
+  );
+});
 
 program.parse(process.argv);

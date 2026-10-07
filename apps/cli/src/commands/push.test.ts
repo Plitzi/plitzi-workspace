@@ -13,7 +13,7 @@ import type { Check } from './askChecks';
 import type { FakePlatform } from '../account/fakePlatform';
 
 /**
- * `plitzi push`: a project put back on its space as the draft — the way back of `plitzi pull` — never over what the
+ * `plitzi space push`: a project put back on its space as the draft — the way back of `plitzi space pull` — never over what the
  * builder did since unseen, and only the parts asked for.
  */
 
@@ -93,7 +93,7 @@ afterEach(async () => {
   await fs.rm(home, { recursive: true, force: true });
 });
 
-describe('plitzi push', () => {
+describe('plitzi space push', () => {
   it('puts the space back as the draft it came from, and remembers the draft it made', async () => {
     expect((await readOrigin(project))?.draft).toBe('draft-1');
     await write('src/space/index.ts', edited('Welcome'));
@@ -223,7 +223,7 @@ describe('plitzi push', () => {
 
     await push(['space'], {});
 
-    expect(said.join('\n')).toContain('plitzi push files space');
+    expect(said.join('\n')).toContain('plitzi space push files space');
     // src/data/ holds what it reads: nothing to say of it.
     expect(said.join('\n')).not.toContain('stock reads');
   });
@@ -304,7 +304,7 @@ describe('plitzi push', () => {
 
     expect(process.exitCode).toBe(1);
     expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain(
-      'plitzi push sends space, functions, data, runtime, plugins, files — not pages'
+      'plitzi space push sends space, functions, data, runtime, plugins, files — not pages'
     );
 
     process.exitCode = undefined;
@@ -326,7 +326,7 @@ describe('plitzi push', () => {
     await push(['space'], {});
 
     expect(process.exitCode).toBe(1);
-    expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('plitzi pull --environment main');
+    expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('plitzi space pull --environment main');
   });
 
   it('pushes to the space the project came from, and to no other', async () => {

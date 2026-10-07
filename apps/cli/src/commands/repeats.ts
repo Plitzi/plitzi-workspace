@@ -55,4 +55,4 @@ export const noteRefused = async (root: string, command: readonly string[], now 
 
 export const AGAIN =
   'This is the same command refused again: running it once more will not change the answer. Change what it names, ' +
-  'edit the call by hand (`plitzi where` shows it), or ask the person what they meant.';
+  'edit the call by hand (`plitzi element where` shows it), or ask the person what they meant.';

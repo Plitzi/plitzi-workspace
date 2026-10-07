@@ -29,7 +29,7 @@ const RuntimeCodeNote = ({ pushed, idleMinutes }: RuntimeCodeNoteProps) => (
       <li className="flex items-start gap-3">
         <span className={STEP}>1</span>
         <span>
-          <code className={CODE}>plitzi login</code>, then <code className={CODE}>plitzi space</code> to choose this
+          <code className={CODE}>plitzi login</code>, then <code className={CODE}>plitzi space use</code> to choose this
           space.
         </span>
       </li>

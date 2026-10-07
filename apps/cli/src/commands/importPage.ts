@@ -19,7 +19,7 @@ import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk-authoring';
 
 /**
- * `plitzi import <url>`: a page someone already has, measured in a browser and written into the project as a place to
+ * `plitzi page import <url>`: a page someone already has, measured in a browser and written into the project as a place to
  * start from — its tokens (colours per theme, corners, shadows, Google fonts), the outline of its blocks with their
  * layout per breakpoint, the lists it repeats as JSON rows, the pictures it shows, and a screenshot per width. Never
  * its words: the structure is what takes longest to work out by hand, and the content is the owner's.
@@ -27,8 +27,8 @@ import type { ImportColourSample, ImportProbe, ImportSummary } from '@plitzi/sdk
  * Only a site that is the person's: one served from this machine, or — asked of their Plitzi account, with `--account`
  * — one a verified domain of one of their spaces covers (`siteOwnership`).
  *
- *   plitzi import http://localhost:3000/pricing --out src/pricing
- *   plitzi import https://example.com/pricing --account
+ *   plitzi page import http://localhost:3000/pricing --out src/pricing
+ *   plitzi page import https://example.com/pricing --account
  */
 
 export interface ImportOptions extends OwnershipOptions, DryRunOptions {
@@ -150,7 +150,7 @@ export const importPage = async (address: string, options: ImportOptions): Promi
   }
 
   if (options.dryRun) {
-    sayDryRun(`plitzi import ${url.href}`, [
+    sayDryRun(`plitzi page import ${url.href}`, [
       `${url.hostname} is yours: ${ownership.said}`,
       `measure it at ${widths.join(', ')} px, light and dark, in the project's Playwright`,
       `${existing.length > 0 ? '~' : '+'} ${out}/ — tokens.ts, outline.ts, data/*.json, assets.json, screens/, IMPORT.md`,

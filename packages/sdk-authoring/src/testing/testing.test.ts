@@ -115,7 +115,7 @@ describe('testing/describeFindings', () => {
     ]);
   });
 
-  /** What a tool acts on (`plitzi check --json`): the kind of problem and the element, beside the sentence. */
+  /** What a tool acts on (`plitzi page check --json`): the kind of problem and the element, beside the sentence. */
   it('hands each problem over as data too: its code and the element it is about', () => {
     expect(
       issuesOf(owed, {

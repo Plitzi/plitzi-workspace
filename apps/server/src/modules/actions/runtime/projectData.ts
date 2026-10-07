@@ -6,7 +6,7 @@ import type { ActionLookups, SpaceRevision } from '../types';
 /** How a server reaches a space's data: its files' text by path (`products.json`), as of a revision. */
 export type ProjectDataLookup = NonNullable<ActionLookups['getData']>;
 
-/** What a project keeps in its data folder: JSON, the only files `plitzi push` sends as the space's data. */
+/** What a project keeps in its data folder: JSON, the only files `plitzi space push` sends as the space's data. */
 const DATA_EXTENSION = '.json';
 
 /**

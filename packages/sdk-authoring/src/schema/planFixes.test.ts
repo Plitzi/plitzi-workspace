@@ -43,7 +43,7 @@ describe('planFixes', () => {
     ]);
   });
 
-  /** The `content-attribute` suggestion, where it has one way to be written: `plitzi fix` makes it. */
+  /** The `content-attribute` suggestion, where it has one way to be written: `plitzi space fix` makes it. */
   it('plans words and an icon held as children as the element’s own, and leaves what cannot move as is', () => {
     const { fixes } = planFixes(
       page([

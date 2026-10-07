@@ -57,7 +57,7 @@ bending one to make a test possible breaks what it exists to show.
 from its manifest; `fromSpace` answers an export from a small platform of its own, runs the built CLI's `create --from`
 inside the workspace — so the project resolves the workspace's packages, never npm's — and serves the space from the
 project it wrote: its plugin rendered on the server, its runtime's route, its action running its function, its files.
-The same cycle against the real platform — API, databases, buckets, upload and push, snapshots, `pull` — is
+The same cycle against the real platform — API, databases, buckets, upload and push, snapshots, `space pull` — is
 `plitzi-sdk-server`'s `test/e2e/flows/spaces/space-as-project.e2e.test.ts` (see
 [A space as a project](./projects-from-spaces.md#where-it-is-tested)).
 

@@ -248,14 +248,14 @@ export const fixSpace = (
 
 /**
  * `planFixes`, holding the same catalogs: every fix `fixSpace` would make in this declaration, each with the place in
- * the author's code that wrote the element and the edit that makes the fix there — what `plitzi fix` shows and writes.
+ * the author's code that wrote the element and the edit that makes the fix there — what `plitzi space fix` shows and writes.
  */
 export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): FixPlan =>
   planFixesUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
 
 /**
  * `locateElements`, holding the same catalogs: every element the space authors to, with the call in the author's code
- * that wrote it — what `plitzi where` answers and `plitzi edit` edits at.
+ * that wrote it — what `plitzi element where` answers and `plitzi element edit` edits at.
  */
 export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): WrittenElement[] =>
   locateElementsUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));

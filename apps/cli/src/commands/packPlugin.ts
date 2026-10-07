@@ -18,10 +18,10 @@ import type { ExistingProject } from './existingProject';
 import type { PackSource } from '../pack';
 
 /**
- * `plitzi pack plugin`: what the builder takes under Resources, from wherever the plugin lives.
+ * `plitzi plugin pack`: what the builder takes under Resources, from wherever the plugin lives.
  *
  * - In a plugin package, its elements as the package publishes them.
- * - In any other project, the element folders named — an element added with `plitzi add plugin` to a self-hosted
+ * - In any other project, the element folders named — an element added with `plitzi plugin add` to a self-hosted
  *   project is packed from where it is, with no package around it. Several go in one zip: the first is the plugin,
  *   the rest its `plugins`.
  */
@@ -111,8 +111,8 @@ const chosenFolders = async (project: ExistingProject, foldersGiven: string[]): 
   const candidates = await elementFolders(project);
   if (candidates.length === 0) {
     fail(
-      'No element to pack: name its folder (plitzi pack plugin src/components/SeatPicker), or add one with ' +
-        'plitzi add plugin.'
+      'No element to pack: name its folder (plitzi plugin pack src/components/SeatPicker), or add one with ' +
+        'plitzi plugin add.'
     );
 
     return undefined;
@@ -128,7 +128,7 @@ const chosenFolders = async (project: ExistingProject, foldersGiven: string[]): 
           question: 'Which elements go in the plugin? The first is the one it is named after.'
         }
       ],
-      'plitzi pack plugin stopped before building anything: which elements go in it shape the whole plugin'
+      'plitzi plugin pack stopped before building anything: which elements go in it shape the whole plugin'
     );
 
     return undefined;
@@ -140,7 +140,7 @@ const chosenFolders = async (project: ExistingProject, foldersGiven: string[]): 
 const packPluginCommand = async (foldersGiven: string[], options: PackPluginOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project) {
-    fail('plitzi pack plugin packs a plugin of a project, and there is no package.json here or above.');
+    fail('plitzi plugin pack packs a plugin of a project, and there is no package.json here or above.');
 
     return;
   }
@@ -171,7 +171,7 @@ const packPluginCommand = async (foldersGiven: string[], options: PackPluginOpti
 
   if (options.dryRun) {
     const relative = (file: string): string => path.relative(process.cwd(), file) || '.';
-    sayDryRun(`plitzi pack plugin — ${base} ${version}`, [
+    sayDryRun(`plitzi plugin pack — ${base} ${version}`, [
       `build ${inPackage ? 'the package’s elements (src/index.ts)' : folders.map(relative).join(', ')}, with any server half its folder has`,
       `+ ${relative(outDir)}/ — the module and plugin-manifest.json${inPackage ? ', and types/' : ''}`,
       ...(zip ? [`+ ${relative(zip)}`, `+ ${relative(sourceFileOf(zip))} — its source, when it can be kept`] : [])
@@ -210,7 +210,9 @@ const packPluginCommand = async (foldersGiven: string[], options: PackPluginOpti
 
     if ('file' in result.source) {
       console.log(
-        chalk.dim(`  ${path.relative(process.cwd(), result.source.file)} — its source, which plitzi upload keeps too`)
+        chalk.dim(
+          `  ${path.relative(process.cwd(), result.source.file)} — its source, which plitzi plugin upload keeps too`
+        )
       );
     } else {
       console.log(

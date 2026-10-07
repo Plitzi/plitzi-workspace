@@ -8,7 +8,7 @@ import { authorizedRequest } from '../account/session';
 import type { AccountOptions } from './account';
 
 /**
- * Whether a site is the person's to import — the check `plitzi import` makes before it reads anything.
+ * Whether a site is the person's to import — the check `plitzi page import` makes before it reads anything.
  *
  * A site served from this machine needs no proof — it is the person's own development server — and nothing is asked
  * of anybody. Any other needs a verified domain of one of their spaces that covers the host (the `_plitzi` TXT record

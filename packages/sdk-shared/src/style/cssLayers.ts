@@ -25,7 +25,7 @@ const importInto = (statement: string, layer: string): string => {
 
 /**
  * A plugin's stylesheet, as it ships: everything in it in {@link PLUGIN_CSS_LAYER}. Written by whatever builds a
- * plugin — a server compiling one, `plitzi pack plugin` — so every way the file later reaches a page (a `<link>` in the
+ * plugin — a server compiling one, `plitzi plugin pack` — so every way the file later reaches a page (a `<link>` in the
  * server's HTML, the SDK's assets, the builder's canvas) puts it in its place with no work of its own.
  *
  * Idempotent: a stylesheet already wrapped is returned as it is.

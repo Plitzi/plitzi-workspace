@@ -19,7 +19,7 @@ const EMPTY_FILES: Record<string, string> = {};
 
 /**
  * The space's own data: JSON files its pages read on the server, edited here and saved as the draft — whole, against
- * the copy this panel read, so one saved since from elsewhere (an agent, a project's `plitzi push`) is never
+ * the copy this panel read, so one saved since from elsewhere (an agent, a project's `plitzi space push`) is never
  * overwritten unseen. The live site reads what the space was last published with.
  */
 const Data = () => {

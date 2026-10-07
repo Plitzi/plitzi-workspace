@@ -25,7 +25,7 @@ const elements = [
   element('cta', [], 'Ship it today')
 ];
 
-describe('what plitzi where finds', () => {
+describe('what plitzi element where finds', () => {
   it('takes an id first, then a class, then words', () => {
     expect(matchElements(elements, 'hero-title')).toMatchObject({ by: 'id', found: [{ elementId: 'hero-title' }] });
     expect(matchElements(elements, 'nav-link')?.found.map(found => found.elementId)).toEqual(['nav-home', 'nav-docs']);

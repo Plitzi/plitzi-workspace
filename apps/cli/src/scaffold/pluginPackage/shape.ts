@@ -8,10 +8,10 @@ import type { PluginNames } from './names';
 import type { ElementText } from './source';
 
 /**
- * An element written in its final shape, from what `plitzi add plugin` was told: its props with their types and
+ * An element written in its final shape, from what `plitzi plugin add` was told: its props with their types and
  * defaults, the events it fires and what each hands a flow, the actions it answers to, and whether it draws anything.
  *
- * The counter `add plugin` writes without them shows the three ways an element talks to a space, and is rewritten on
+ * The counter `plugin add` writes without them shows the three ways an element talks to a space, and is rewritten on
  * day one; told the shape, it writes that shape — four files with nothing to delete.
  */
 

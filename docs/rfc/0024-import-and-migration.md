@@ -4,7 +4,7 @@
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-10-07
 - **Scope:** a new import engine in a workspace package (`packages/sdk-authoring`, or a package of its own), its four
-  consumers — the builder's Transform panel (`apps/builder`), the CLI (`plitzi import`), the MCP (`apps/mcp`) and the
+  consumers — the builder's Transform panel (`apps/builder`), the CLI (`plitzi page import`), the MCP (`apps/mcp`) and the
   platform's endpoint (`plitzi-sdk-server` `services/transformers`) — and the screenshot service for measuring fidelity
 
 ---
@@ -35,10 +35,10 @@ runs no model for this.
 | `POST /utils/transform-to-schema` | same folder, `endpoints/transformToSchema.ts` | The one way in today: `{ body, mode, custom-css, style-mode }` → `{ schema, style }` |
 | The Transform panel | `apps/builder/src/modules/Transformers` | Paste, preview, insert into the selected element |
 | Fixtures | `naturalToSchema/fixtures`: 19 HTML+Tailwind, 8 Webflow, 7 JSON, 1 HTML | A starting corpus — asserted today as whole-schema equality (`naturalToSchema.test.ts`) |
-| Schema → authoring code | `POST /utils/transform-to-authoring`, `helpers/authoringExport.ts`; `specFromSpace` in `sdk-authoring/decompile` | The other half of `plitzi import`: documents written out as `src/space/` TypeScript |
-| `plitzi import <url>` | `apps/cli` (`importPage`) | A page of a site the person verified, measured in the project's Playwright at three widths: its tokens, an outline of its blocks per breakpoint, its repeated blocks as `data/*.json` — a place to start writing from, deliberately never its words nor a copy |
+| Schema → authoring code | `POST /utils/transform-to-authoring`, `helpers/authoringExport.ts`; `specFromSpace` in `sdk-authoring/decompile` | The other half of `plitzi page import`: documents written out as `src/space/` TypeScript |
+| `plitzi page import <url>` | `apps/cli` (`importPage`) | A page of a site the person verified, measured in the project's Playwright at three widths: its tokens, an outline of its blocks per breakpoint, its repeated blocks as `data/*.json` — a place to start writing from, deliberately never its words nor a copy |
 | `compareSpaces` | `sdk-authoring/decompile/compareSpaces.ts` | Proof that a round trip changed nothing observable |
-| Authoring's linter and fixes | `authorSpace(...).warnings/suggestions`, `fixSpace`, `plitzi fix` | What turns a literal import into an idiomatic one: `custom-css-class`, `custom-css-slot`, lists, `class-overrides-class` |
+| Authoring's linter and fixes | `authorSpace(...).warnings/suggestions`, `fixSpace`, `plitzi space fix` | What turns a literal import into an idiomatic one: `custom-css-class`, `custom-css-slot`, lists, `class-overrides-class` |
 | Components | `schema.components` (ex-RFC 0021) | Where a repeated block lands |
 | Screenshots | the screenshot service, `plitzi_look` | Rendering the original and the import side by side |
 | Space data and the CDN | `src/data/`, the space's bucket, connectors | Where a CMS and its assets land |
@@ -79,7 +79,7 @@ const { schema, style, report } = await importUi(source, {
 | Consumer | What it does with an import |
 | --- | --- |
 | The builder's Transform panel | As today — paste, preview, insert — through the engine; the report shown beside the preview |
-| `plitzi import`, which takes a file besides a URL: `plitzi import ./block.html [--as component <Name>]`, `plitzi import ./webflow-export.zip` | A file the person owns is converted, not measured: authoring code into `src/space/` (or `src/components/`), then `author`, and what `fix` would change. A URL keeps today's meaning — a measured start, never a copy |
+| `plitzi page import`, which takes a file besides a URL: `plitzi page import ./block.html [--as component <Name>]`, `plitzi page import ./webflow-export.zip` | A file the person owns is converted, not measured: authoring code into `src/space/` (or `src/components/`), then `author`, and what `fix` would change. A URL keeps today's meaning — a measured start, never a copy |
 | An MCP tool (`plitzi_import`) | An agent imports a block into a page, as operations it can `dryRun` and see with `look` |
 | `POST /utils/transform-to-schema` | Unchanged for its callers |
 
@@ -98,7 +98,7 @@ can do by itself. So the engine's output goes through:
 
 Sources, in order: plain HTML with its CSS; HTML with Tailwind classes (v3 and v4: v4's CSS-first configuration and
 `@theme` variables become the space's tokens); the Webflow clipboard (what exists). A page on the web is not a
-source: `plitzi import <url>` already starts from one by measuring it, and copying a site the person has not handed
+source: `plitzi page import <url>` already starts from one by measuring it, and copying a site the person has not handed
 over is not this engine's business.
 
 What a script did is never guessed: a dropdown, a tab set or a carousel written in JavaScript is reported with the
@@ -114,7 +114,7 @@ of each CMS collection — or, where the plan allows, the Data API (sites, pages
 token the person gives. Which plans offer which is the first thing to settle (§7).
 
 **What it becomes:** a project, as `plitzi create --from` writes one — so the result is code the developer owns and
-`plitzi push` puts on the platform.
+`plitzi space push` puts on the platform.
 
 | Webflow | Plitzi | Notes |
 | --- | --- | --- |
@@ -130,7 +130,7 @@ token the person gives. Which plans offer which is the first thing to settle (§
 | Embeds and custom code | `nodeHtml`, or reported | Analytics and tag-manager snippets become the space's settings where they have one |
 | SEO and Open Graph, 301 redirects | Page settings; the space's redirects | |
 
-**The migration report.** Like `plitzi check`'s: every page with what came over and what did not — an interaction
+**The migration report.** Like `plitzi page check`'s: every page with what came over and what did not — an interaction
 with no equivalent, a breakpoint difference folded away, a script left out — each with where it was in the source and
 what to do. A migration that hides a loss is worse than one that fails.
 
@@ -165,7 +165,7 @@ Each source is a mode of the engine and a mapping table; the engine, the report 
 1. **The engine in the workspace.** Move `naturalToSchema` and its parsers into the package, behind `importUi`; the
    platform's endpoint wraps it; the fixtures move with it. No behaviour change — the existing tests prove it.
 2. **Through authoring.** Authoring, fixes and structure detection after every import; the report.
-3. **`plitzi import` and the MCP tool.**
+3. **`plitzi page import` and the MCP tool.**
 4. **Fidelity.** The screenshot comparison, a threshold per fixture in CI.
 5. **Tailwind v4.**
 6. **Webflow migration.** The code export and CMS CSVs first; the Data API after.
@@ -181,7 +181,7 @@ Phases 1–3 are worth doing on their own: they put import where developers and 
 - Deterministic first, an agent optional, Plitzi running no model.
 - Webflow is the first migration source: its model (classes, combo classes, breakpoints, a CMS) is the closest to
   Plitzi's, so it gives the most for the work.
-- A migration ends as a project the developer owns, through `plitzi create --from`'s shape and `plitzi push`.
+- A migration ends as a project the developer owns, through `plitzi create --from`'s shape and `plitzi space push`.
 
 ## 7. Open questions
 

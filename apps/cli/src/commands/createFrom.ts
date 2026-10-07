@@ -157,7 +157,7 @@ export const functionsOnDisk = async (root: string, project: ProjectFromSpace): 
   );
 
 /**
- * What the project was given, recorded once it is on disk as it will stay — installed and formatted — so `plitzi pull`
+ * What the project was given, recorded once it is on disk as it will stay — installed and formatted — so `plitzi space pull`
  * tells what changed here from what changed on the space; and its functions as a pulled working copy, so `plitzi
  * functions push` sends them back to the space they came from.
  */

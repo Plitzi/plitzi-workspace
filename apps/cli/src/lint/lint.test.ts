@@ -13,7 +13,7 @@ import create from '../commands/create';
 import type { LintFinding, LintOptions, LintReport } from '.';
 
 /**
- * `plitzi lint` on a project `plitzi create` wrote: a space as written is clean, and each practice the source departs
+ * `plitzi space lint` on a project `plitzi create` wrote: a space as written is clean, and each practice the source departs
  * from is said at its file and line — beside what authoring suggests, whatever its code.
  */
 
@@ -83,7 +83,7 @@ afterEach(async () => {
   await fs.rm(home, { recursive: true, force: true });
 });
 
-describe('plitzi lint', () => {
+describe('plitzi space lint', () => {
   it('finds a space as plitzi create wrote it clean, and says what it does not check', async () => {
     for (const template of ['welcome', 'blank', 'catalog']) {
       await fs.rm(project, { recursive: true, force: true });
@@ -98,7 +98,11 @@ describe('plitzi lint', () => {
       expect(report.counts.error).toBe(0);
       expect(process.exitCode).toBeUndefined();
       expect(report.scope).toBe('space-source');
-      expect(report.notChecked.map(entry => entry.by)).toEqual(['npm run author', 'plitzi check', 'plitzi doctor']);
+      expect(report.notChecked.map(entry => entry.by)).toEqual([
+        'npm run author',
+        'plitzi page check',
+        'plitzi doctor'
+      ]);
       expect(report.project.files).toBeGreaterThan(0);
     }
   }, 60_000);
@@ -329,7 +333,7 @@ describe('plitzi lint', () => {
     await fs.rm(path.join(project, 'src/space'), { recursive: true });
     said = [];
     await lint({});
-    expect(said.join('\n')).toContain('plitzi lint reads a space written in the project');
+    expect(said.join('\n')).toContain('plitzi space lint reads a space written in the project');
     expect(process.exitCode).toBe(1);
 
     await write('src/space.ts', SPACE_INDEX);

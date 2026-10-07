@@ -101,7 +101,7 @@ describe('PluginsContextProvider — removing a plugin', () => {
 });
 
 /**
- * A change another builder made — a collaborator, or `plitzi upload plugin` with no builder open — arriving on the
+ * A change another builder made — a collaborator, or `plitzi plugin upload` with no builder open — arriving on the
  * space's channel, applied here without a reload and without a mutation of this builder's own.
  */
 describe('PluginsContextProvider — changes from elsewhere', () => {

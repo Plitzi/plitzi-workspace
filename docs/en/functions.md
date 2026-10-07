@@ -321,7 +321,7 @@ own — a process beside the platform, on it — or a self-hosted `@plitzi/sdk-s
 A plugin can bring server code of its own — saving what its component arranged, asking an API on its behalf — so the
 use case stays inside the plugin instead of leaking into every space that uses it as functions, actions and flows. It is
 a `functions/` folder in the plugin's main element folder (`src/plugins/Board/functions/index.ts`), written exactly as a
-space's functions are (§1): `plitzi add plugin board --server` starts one.
+space's functions are (§1): `plitzi plugin add board --server` starts one.
 
 ```ts
 import { defineFunctions } from '@plitzi/sdk-server/functions';
@@ -356,7 +356,7 @@ export default defineFunctions({
 - **A project `plitzi create` writes** loads each plugin folder's `functions/` natively, beside its own `src/functions/`:
   `createServer({ functions: { native, plugins: { board: definition } } })`. While developing, a save to it is loaded
   again in place (`server.functions.setPlugin(type, definition)`) — the server is not restarted.
-- **A packed plugin** carries its server half as source: `plitzi pack plugin` writes `functions.source.json`
+- **A packed plugin** carries its server half as source: `plitzi plugin pack` writes `functions.source.json`
   (`PLUGIN_FUNCTIONS_SOURCE`, `@plitzi/sdk-shared/actions`) beside the bundle and names it in the manifest (`functions`). Uploaded to a space, the platform builds and checks it as the
   plugin's and keeps it in the space's private bucket like the space's own functions — never on the public CDN with
   the rest of the plugin. An upload whose server half does not check out, or to a space with no private bucket, is

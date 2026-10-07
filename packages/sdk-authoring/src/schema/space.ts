@@ -2155,7 +2155,7 @@ export interface FixPlan {
 
 /**
  * What `fixSpace` would settle in this declaration, each with the place in the author's own code that wrote it and
- * the edit that makes the same fix there — what `plitzi fix` shows, and writes when asked — beside every problem the
+ * the edit that makes the same fix there — what `plitzi space fix` shows, and writes when asked — beside every problem the
  * linter reports, which a written fix must not add to. The documents are written as `authorSpace` writes them,
  * without its gate: the problems a fix settles are the ones the gate stops on.
  */
@@ -2203,7 +2203,7 @@ export interface WrittenElement {
   /**
    * Every word it says to a person, read or heard: its `content`, `label`, `title`, `alt` and `placeholder`, the
    * templates its bindings write, and — an instance of a component — the words it hands the component. What
-   * `plitzi where` finds an element by when it is asked for words.
+   * `plitzi element where` finds an element by when it is asked for words.
    */
   words: string[];
   /** Its attributes as authored. */
@@ -2229,6 +2229,23 @@ const SAID_ATTRIBUTES = new Set(['content', 'label', 'title', 'alt', 'placeholde
 /** What places a component, never what it hands it: the rest of an instance's attributes are the component's props. */
 const PLACING_ATTRIBUTES = new Set(['referenceType', 'referenceId', 'slot']);
 
+/** Every string a list's data holds, a few levels deep: the words its rows show come from there. */
+const dataWords = (value: unknown, depth = 0): string[] => {
+  if (depth > 4) {
+    return [];
+  }
+
+  if (typeof value === 'string') {
+    return value === '' ? [] : [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(item => dataWords(item, depth + 1));
+  }
+
+  return isRecord(value) ? Object.values(value).flatMap(item => dataWords(item, depth + 1)) : [];
+};
+
 const wordsOf = (element: Element, templates: readonly string[]): string[] => {
   const instance = element.definition.type === 'reference' && element.attributes.referenceType === 'component';
 
@@ -2240,13 +2257,15 @@ const wordsOf = (element: Element, templates: readonly string[]): string[] => {
         ? [value]
         : []
     ),
-    ...templates
+    ...templates,
+    // A list handed its rows as data (`items: [...PLANS]`): what each row shows is in them.
+    ...dataWords(element.attributes.items)
   ];
 };
 
 /**
  * Every element the space authors to, with where it was written — read from the code as it is NOW, so it follows an
- * element wherever a person moved it, with nothing kept that could fall out of step. What `plitzi where` answers.
+ * element wherever a person moved it, with nothing kept that could fall out of step. What `plitzi element where` answers.
  */
 export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): WrittenElement[] => {
   const author = new SpaceAuthor(spec, options);
@@ -2301,7 +2320,7 @@ export interface WrittenClass {
 
 /**
  * Every class the space declares, with the `styles()` call that wrote it — read from the code as it is now, as
- * `locateElements` reads the elements. What `plitzi where` answers of a class: who wears it, and where it is written.
+ * `locateElements` reads the elements. What `plitzi element where` answers of a class: who wears it, and where it is written.
  */
 export const locateClasses = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): WrittenClass[] => {
   const author = new SpaceAuthor(spec, options);

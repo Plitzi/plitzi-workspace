@@ -23,21 +23,21 @@ import type TypeScript from 'typescript';
 export type { LintFinding, Severity } from './types';
 
 /**
- * `plitzi lint`: the space's SOURCE read for good practices, eslint's way — each finding at its file and line, with
+ * `plitzi space lint`: the space's SOURCE read for good practices, eslint's way — each finding at its file and line, with
  * what to write instead. What it reads is how the space is written: a file too long to read whole, every page in one
  * file, rows of data inline, a colour where a token belongs, the same CSS copied, a row singled out inside a `map`, a
  * name the builder minted, a file nothing imports. Beside them, what authoring suggests about the space it authors to
  * (`suggestions`), whatever their codes, at the line that wrote each element.
  *
- * Not whether the space is valid — `npm run author` — nor a page as it renders — `plitzi check` — nor the project
+ * Not whether the space is valid — `npm run author` — nor a page as it renders — `plitzi page check` — nor the project
  * around it — `plitzi doctor`: every report says so (`notChecked`).
  *
  * Exit code 1 when anything is an error; with `--strict` a warning too, with `--max-warnings <n>` more than n of them —
  * so a CI step or a pre-commit hook can hold a space to it.
  *
- *   plitzi lint
- *   plitzi lint --json
- *   plitzi lint --max-warnings 0
+ *   plitzi space lint
+ *   plitzi space lint --json
+ *   plitzi space lint --max-warnings 0
  */
 
 export interface LintOptions {
@@ -49,12 +49,12 @@ export interface LintOptions {
 }
 
 /**
- * What `plitzi lint` does not check, and what does — said in every report, so nobody takes a clean lint for a space
+ * What `plitzi space lint` does not check, and what does — said in every report, so nobody takes a clean lint for a space
  * that authors, a page that renders or a project that installs.
  */
 export const NOT_CHECKED = [
   { what: 'whether the space authors — what it refuses and warns of', by: 'npm run author' },
-  { what: 'a page as it renders', by: 'plitzi check' },
+  { what: 'a page as it renders', by: 'plitzi page check' },
   { what: 'the project around the space — packages, configs, imports, plugins, data files', by: 'plitzi doctor' }
 ] as const;
 
@@ -222,7 +222,7 @@ export const reportText = (report: LintReport): string => {
   const { project, counts } = report;
   const lines = [
     chalk.bold(
-      `plitzi lint — ${project.name} (the space's source: ${plural(project.files, 'file')} from ${project.entry})`
+      `plitzi space lint — ${project.name} (the space's source: ${plural(project.files, 'file')} from ${project.entry})`
     ),
     ''
   ];
@@ -282,7 +282,7 @@ const projectToLint = async (): Promise<{ root: string; name: string; mode: 'ser
 
   if (project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
     fail(
-      `plitzi lint reads a space written in the project — ${SPACE_ENTRY}, as \`plitzi create --source local\` writes it. A space kept on Plitzi is read in the builder or over the MCP.`
+      `plitzi space lint reads a space written in the project — ${SPACE_ENTRY}, as \`plitzi create --source local\` writes it. A space kept on Plitzi is read in the builder or over the MCP.`
     );
 
     return undefined;

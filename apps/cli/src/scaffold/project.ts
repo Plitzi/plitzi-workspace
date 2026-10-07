@@ -80,7 +80,7 @@ const dependencies = ({ mode, source }: CreateAnswers): Record<string, string> =
 /** A server-mode project runs no bundler of its own: the page server builds the plugins, and Node runs the rest. */
 const devDependencies = ({ mode }: CreateAnswers): Record<string, string> => ({
   ...SHARED_DEV_DEPENDENCIES,
-  // `shot`, `check`, `explain`, `data describe` and `upgrade` run from the project, at the version of the SDK.
+  // `page shot`, `page check`, `explain`, `data describe` and `upgrade` run from the project, at the version of the SDK.
   '@plitzi/cli': SDK_VERSION,
   ...(mode === 'server' ? {} : { vite: VITE_VERSION })
 });
@@ -163,15 +163,15 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
     // A server project's with `.env` read, as its server has it when it authors the same space on a save.
     ...(source === 'local' ? { author: mode === 'server' ? nodeWithEnv(AUTHOR_FILE) : `node ${AUTHOR_FILE}` } : {}),
     // How the space's source is written — its files, data, tokens, repeats — eslint's way; `lint` is the code's.
-    ...(source === 'local' ? { 'lint:space': 'plitzi lint' } : {}),
+    ...(source === 'local' ? { 'lint:space': 'plitzi space lint' } : {}),
     // One line per error — file(line,col) and the message — rather than a framed excerpt of each.
     typecheck: 'tsc -p tsconfig.json --noEmit --pretty false',
     lint: 'eslint .',
     format: 'prettier --write .',
     visual: 'playwright test',
     // The CLI's, on the project's own Playwright: a picture of a page, and whether a page is whole — in text.
-    shot: 'plitzi shot',
-    check: 'plitzi check',
+    shot: 'plitzi page shot',
+    check: 'plitzi page check',
     // Every one of the above that says whether the project is left passing, in one run: only what fails is printed.
     verify: 'plitzi verify'
   };
@@ -300,7 +300,7 @@ from what is written there, so authoring it twice writes byte-identical document
 Nothing is fetched and nothing is signed in to: there is no account, no key and no network in the picture.
 
 \`${runCommand(answers.packageManager, 'author')}\` authors it and says what it found — warnings, suggestions, what a newer SDK changed. It
-writes nothing: the declaration is the source, and \`npx plitzi push\` puts it on a space in Plitzi when you want it
+writes nothing: the declaration is the source, and \`npx plitzi space push\` puts it on a space in Plitzi when you want it
 there.`;
 };
 
@@ -359,7 +359,7 @@ ${settingsSection(answers)}
       : ''
   }
 - \`.plitzi/\` is what the CLI records about the project — the space it came from, its functions' working copy, the
-  files \`create\` wrote — so \`plitzi pull\`, \`push\` and \`upgrade\` know where they stand. Commit it.
+  files \`create\` wrote — so \`plitzi space pull\`, \`space push\` and \`upgrade\` know where they stand. Commit it.
 
 ## The skills
 
@@ -459,7 +459,7 @@ ${[
 Read ${code('.claude/skills/plitzi-authoring/SKILL.md')} — how a space is written, and the references it links to for
 layouts, data, templates and flows. The types of ${code('@plitzi/sdk-authoring')} document every factory and field.
 For a component of your own — a plugin — or anything about packing or uploading one, read
-${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi add plugin')} writes it in the shape everything reads.
+${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi plugin add')} writes it in the shape everything reads.
 
 ## Keep the project clean
 
@@ -473,14 +473,14 @@ What you leave behind is the next reader's problem — the user's, or the next a
 
 ## The rules that go wrong most
 
-- Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration; ${code('npx plitzi fix --write')} writes the ones with a single reading.
-${local ? `- To change an element, ask where it is written — ${code('npx plitzi where <id|class|words>')} answers the file, the line and the call — and edit that call (${code('npx plitzi edit <id> --set content="…"')} writes an attribute and checks it). People move files: never keep a note of where something is.\n` : ''}- After the ${code('@plitzi/*')} packages move, ${code('npx plitzi upgrade')}: what this project's CLI files, scripts, skills and renamed names should now be — ${code('--write')} makes it, a file you changed comes as a diff.
+- Never write schema/style JSON by hand; author it. A refusal names the fix — fix the declaration; ${code('npx plitzi space fix --write')} writes the ones with a single reading.
+${local ? `- To change an element, ask where it is written — ${code('npx plitzi element where <id|class|words>')} answers the file, the line and the call — and edit that call (${code('npx plitzi element edit <id> --set content="…"')} writes an attribute and checks it). People move files: never keep a note of where something is.\n` : ''}- After the ${code('@plitzi/*')} packages move, ${code('npx plitzi upgrade')}: what this project's CLI files, scripts, skills and renamed names should now be — ${code('--write')} makes it, a file you changed comes as a diff.
 - Every part lives where the CLI put it: a plugin is a folder of ${code('src/plugins/')} with an ${code('index.ts')}, ${code('src/functions/')} and ${code('src/runtime/')} start at theirs, ${code('.env')} is at the root. ${code('npx plitzi doctor')} says what is out of place, with every other problem that would stop the project from installing, starting, building or pushing — where it is and what fixes it: run it after moving, renaming or rewiring files, and before a push.${refusers ? ` ${refusers} refuse${refusers.includes(' and ') ? '' : 's'} a part where nothing reads it, naming each.` : ''} The space itself is ${local ? run('author') : 'the builder'}'s, a page ${run('check')}'s. ${code('--fix')} repairs the simple ones; then run what it says next.
 - ${zeroWarnings}
 - Chrome shared by pages is a layout; a look used twice is a class; a block placed again with other content is a component, and rows of data are one ${code('list')} (a short menu may be a ${code('map')} in code).
 - Ids are one namespace for the whole space: name what is referred to; a helper that runs more than once builds inside ${code('scope()')}.
 - A file per part — the tokens, the layout, each component, each page — short enough to read whole, in ${code('src/space/')}; its ${code('index.ts')} assembles them. ${code('npx plitzi create <dir> --template catalog')} is a complete example of the shape.
-- Rebuilding a page the user owns, when they ask for it: ${code('npx plitzi import <url>')} writes its tokens, outline and lists as a start — then split it into parts and write the content. A site served from this machine needs nothing; any other needs ${code('--account')}, which signs in to the user's Plitzi account to find its domain verified on one of their spaces — ask them first. This project otherwise reaches no account.
+- Rebuilding a page the user owns, when they ask for it: ${code('npx plitzi page import <url>')} writes its tokens, outline and lists as a start — then split it into parts and write the content. A site served from this machine needs nothing; any other needs ${code('--account')}, which signs in to the user's Plitzi account to find its domain verified on one of their spaces — ask them first. This project otherwise reaches no account.
 - Elements are visible by default. One the logic REVEALS starts hidden (${code('visible')}, or ${code('visible: false')} plus a computed binding) so nothing flashes while loading; one a flag HIDES stays shown while the flag is unset.
 - Inside a template a source is spelled in full (${code('apiContainer_stats')}); an attribute only resolves ${code('{{ name|filter }}')}.
 - Colours are tokens with light and dark values; times carry an explicit zone and say it.

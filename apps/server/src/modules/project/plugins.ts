@@ -79,7 +79,7 @@ const folderFunctions = async (root: string, folder: string): Promise<FunctionsD
 
 type BuiltPlugin = { type: string; source: PluginSource; functions?: string };
 
-/** A plugin of `vendor/plugins`, from the manifest `plitzi pack plugin` wrote beside its bundle when it was published. */
+/** A plugin of `vendor/plugins`, from the manifest `plitzi plugin pack` wrote beside its bundle when it was published. */
 const builtPlugin = (root: string, type: string): BuiltPlugin => {
   const read = readVendorPlugin(root, type);
   // The layout check refused the boot over one that does not read: this is a project changed since it passed.
@@ -152,7 +152,7 @@ export const projectPlugins = async (root: string): Promise<ProjectPlugins> => {
 /**
  * A plugin edited while developing is built again by the server, and the open pages swap it where it is drawn — the
  * rest of the page, its state included, stays as it was (`devReload`). Its server half (`functions/`) is loaded again
- * here, in place. A plugin ADDED — a new folder with an `index.ts`, what `plitzi add plugin` writes — is registered
+ * here, in place. A plugin ADDED — a new folder with an `index.ts`, what `plitzi plugin add` writes — is registered
  * here, and the pages load again to render it; one removed is turned off. A folder the server cannot build, or whose
  * server half has no entry, is said in the terminal as the layout check says it at boot — once, until it changes — and
  * the server goes on. Answers what stops watching.

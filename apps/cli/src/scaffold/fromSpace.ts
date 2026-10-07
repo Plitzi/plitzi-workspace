@@ -156,7 +156,7 @@ const placeOf = (paths: readonly string[]) => {
 
 /**
  * Where the project keeps what the space's runtime and plugins are built from: the module the runtime starts at, and the
- * files each plugin's elements start at — the paths `create --from` writes them at, which `plitzi push` packs again.
+ * files each plugin's elements start at — the paths `create --from` writes them at, which `plitzi space push` packs again.
  */
 export const projectEntries = ({
   source
@@ -203,7 +203,7 @@ const spaceSettings = (exported: SpaceExport): string =>
 export const envFromSpace = (exported: SpaceExport, answers: CreateAnswers, signingSecret: string): string =>
   `${withSigningSecret(envFile(answers), signingSecret)}\n${spaceSettings(exported)}`;
 
-/** What a project made from a space holds, from what the platform answered for it — the same for `create` and `pull`. */
+/** What a project made from a space holds, from what the platform answered for it — the same for `create` and `space pull`. */
 export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswers['source']): ProjectFromSpace => {
   const { source, builtOnly, assets, report } = exported;
   const place = placeOf(Object.keys(source.files));
@@ -259,7 +259,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     files[`${DATA_DIR}/${path}`] = local(text);
   });
 
-  // A built plugin's server half, beside its bundle as \`plitzi pack plugin\` puts it: the platform keeps it privately,
+  // A built plugin's server half, beside its bundle as \`plitzi plugin pack\` puts it: the platform keeps it privately,
   // so it came in the export rather than as a file on the CDN.
   builtOnly.plugins.forEach(({ type, functions: carried }) => {
     if (carried) {
@@ -327,7 +327,7 @@ export const projectFromSpace = (exported: SpaceExport, spaceSource: CreateAnswe
     }),
     ...builtOnly.plugins.map(
       ({ type }) =>
-        `${type}: no source of this plugin was kept, so it runs as it was built (${VENDOR_PLUGINS_DIR}/${type}/) and cannot be changed — upload it again from its source with plitzi upload plugin`
+        `${type}: no source of this plugin was kept, so it runs as it was built (${VENDOR_PLUGINS_DIR}/${type}/) and cannot be changed — upload it again from its source with plitzi plugin upload`
     ),
     ...(builtOnly.runtime
       ? [`The runtime came across built only (${RUNTIME_BUNDLE}): it runs, and cannot be changed`]

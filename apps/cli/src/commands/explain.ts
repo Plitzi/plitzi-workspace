@@ -12,7 +12,7 @@ import type { Explanation } from '@plitzi/sdk-authoring';
 /**
  * `plitzi explain <name>`: what a name means when authoring a space — an element, a step, a trigger, a problem's code,
  * a transformer, a helper (`bindTemplate`, `scope`, `motion`…) — in a few lines, from the catalogues the checks
- * themselves read; any other export of `@plitzi/sdk-authoring` (`pageFamily`, `SpaceSpec`) by its published declaration. A code is any check's: authoring's, `plitzi lint`'s own rules (`LINT_RULES`) and the project's
+ * themselves read; any other export of `@plitzi/sdk-authoring` (`pageFamily`, `SpaceSpec`) by its published declaration. A code is any check's: authoring's, `plitzi space lint`'s own rules (`LINT_RULES`) and the project's
  * layout (`PROJECT_LAYOUT_CODES`, what the server, `npm run author` and `plitzi doctor` hold a project to). `--list
  * steps` names every one of a kind; `--json` answers in one object, for a tool or an agent.
  */
@@ -32,7 +32,7 @@ export interface CheckCodeExplanation {
   codeKind: 'error' | 'warning';
   means: string;
   fix: string;
-  checkedBy: 'plitzi lint' | 'the project layout';
+  checkedBy: 'plitzi space lint' | 'the project layout';
 }
 
 const LAYOUT_FIX =
@@ -48,7 +48,7 @@ const CHECK_CODES: ReadonlyMap<string, CheckCodeExplanation> = new Map([
       codeKind: rule.severity,
       means: rule.means,
       fix: `what its message says — explained in ${rule.docs}`,
-      checkedBy: 'plitzi lint'
+      checkedBy: 'plitzi space lint'
     }
   ]),
   ...Object.entries(PROJECT_LAYOUT_CODES).map(([name, code]): [string, CheckCodeExplanation] => [

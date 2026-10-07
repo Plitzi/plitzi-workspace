@@ -67,7 +67,7 @@ export interface ElementDeclarationData {
   /**
    * Whether the element is behaviour rather than content — a clock that fires a flow, a listener — and draws nothing on
    * a page (at most a tag in the builder, to have something to select). Read by the page checks (`inspectPage`,
-   * `plitzi check`), which would otherwise wait for it to be on screen and report it hidden.
+   * `plitzi page check`), which would otherwise wait for it to be on screen and report it hidden.
    */
   drawsNothing?: boolean;
   content?: {

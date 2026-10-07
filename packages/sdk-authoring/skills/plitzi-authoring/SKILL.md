@@ -28,7 +28,7 @@ A space on Plitzi — edited in the builder — is edited through the Plitzi MCP
 
 ## How to work
 
-1. **Find, then write.** `npx plitzi where <id|class|words>` answers the file, the line and the call: edit there, and
+1. **Find, then write.** `npx plitzi element where <id|class|words>` answers the file, the line and the call: edit there, and
    extend what the space already has. People move files — never keep a note of where something is.
 2. **Author.** `npm run author`. A refusal says what to write instead: do exactly that. Every problem comes at once —
    fix them all before running again. Zero warnings; take the suggestions, the biggest first.

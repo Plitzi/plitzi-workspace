@@ -30,14 +30,14 @@ import type { EditOutcome } from '../fix/sourceEdits';
 import type { WrittenElement, WrittenPosition } from '@plitzi/sdk-authoring';
 
 /**
- * `plitzi remove <id>` and `plitzi move <id> --before|--after <id>`: an element taken out of the code that writes it,
+ * `plitzi element remove <id>` and `plitzi element move <id> --before|--after <id>`: an element taken out of the code that writes it,
  * or put elsewhere among its siblings — the call, not a line of TypeScript written by hand. Checked as `edit` checks:
  * the space authored again in a fresh process and read against the one before. A removal may only take the element
  * and what it holds, a move may only reorder its parent; anything else and the file goes back, what it would have
  * changed named.
  *
- *   plitzi remove ent-trust
- *   plitzi move ent-faq --before ent-contact
+ *   plitzi element remove ent-trust
+ *   plitzi element move ent-faq --before ent-contact
  */
 
 export interface RemoveOptions {
@@ -89,7 +89,7 @@ const locate = async (elementId: string, command: string[]): Promise<Located | u
     await refuse(
       element
         ? 'The project has no TypeScript to read its source with: install its packages first.'
-        : `No element has the id "${elementId}". \`plitzi where ${elementId}\` finds it by a class or its words.`
+        : `No element has the id "${elementId}". \`plitzi element where ${elementId}\` finds it by a class or its words.`
     );
 
     return undefined;
@@ -307,7 +307,7 @@ export const remove = async (elementId: string, options: RemoveOptions): Promise
       ...(helperUnread
         ? [`${helperUnread} is read by nothing now: delete it where it is declared, unless it is kept for later.`]
         : []),
-      'Next: plitzi verify — or plitzi check the page it was on'
+      'Next: plitzi verify — or plitzi page check the page it was on'
     ].join('\n')
   );
 };
@@ -392,7 +392,7 @@ export const move = async (elementId: string, options: MoveOptions): Promise<voi
       chalk.green(`${elementId} moved ${side} ${siblingId}; the space authors with it.`),
       'Changed in the space:',
       ...written.effects.map(effect => `  ${effect.line}`),
-      'Next: plitzi check the page it is on'
+      'Next: plitzi page check the page it is on'
     ].join('\n')
   );
 };

@@ -22,15 +22,15 @@ import type { TextChange } from '../fix/sourceEdits';
 import type { PlannedFix } from '@plitzi/sdk-authoring';
 
 /**
- * `plitzi fix`: what authoring the space would fix, as edits to the project's own source — shown as a diff, and with
+ * `plitzi space fix`: what authoring the space would fix, as edits to the project's own source — shown as a diff, and with
  * `--write` written, formatted as the project formats, and checked: the space is authored again in a fresh process,
  * and unless every fix written is gone and no problem was added, every file goes back to what it was.
  *
  * Only what has one reading is fixed (the fixes `fixSpace` makes), and only where it is written as a literal in the
  * call that wrote the element; everything else is said, with where it is, for the author.
  *
- *   plitzi fix            # the diff
- *   plitzi fix --write    # written, then checked
+ *   plitzi space fix            # the diff
+ *   plitzi space fix --write    # written, then checked
  */
 
 export interface FixOptions {
@@ -118,7 +118,7 @@ const editSources = async (root: string, fixes: readonly PlannedFix[]): Promise<
   return { files, written, left };
 };
 
-/** A plan as `plitzi fix --json` prints it. */
+/** A plan as `plitzi space fix --json` prints it. */
 const planFromJson = (stdout: string): ProjectPlan => {
   const parsed: unknown = JSON.parse(stdout);
   if (!isRecord(parsed)) {
@@ -150,7 +150,7 @@ const planFromJson = (stdout: string): ProjectPlan => {
 /** The plan, made in a process of its own: the edited files are imported fresh, never from this one's module cache. */
 const planAfresh = async (): Promise<ProjectPlan> => {
   try {
-    const { stdout } = await run(process.execPath, [process.argv[1], 'fix', '--json'], {
+    const { stdout } = await run(process.execPath, [process.argv[1], 'space', 'fix', '--json'], {
       cwd: process.cwd(),
       maxBuffer: 16 * 1024 * 1024
     });
@@ -224,7 +224,7 @@ export const fix = async (options: FixOptions): Promise<void> => {
       [
         ...diffs,
         ...(edited.written.length > 0
-          ? [chalk.green(`${String(edited.written.length)} to write: plitzi fix --write`)]
+          ? [chalk.green(`${String(edited.written.length)} to write: plitzi space fix --write`)]
           : []),
         ...leftText(edited.left)
       ].join('\n')

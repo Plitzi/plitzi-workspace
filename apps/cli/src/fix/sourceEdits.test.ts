@@ -190,7 +190,7 @@ describe('children that are only words and an icon, written as the element’s o
   });
 });
 
-describe('an attribute edited where the element was written (plitzi edit)', () => {
+describe('an attribute edited where the element was written (plitzi element edit)', () => {
   const at = (text: string, marker: string) => {
     const sourceFile = ts.createSourceFile('space.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
     const { line, character } = sourceFile.getLineAndCharacterOfPosition(text.indexOf(marker));

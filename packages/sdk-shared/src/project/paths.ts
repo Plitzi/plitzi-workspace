@@ -46,7 +46,7 @@ export const PLUGINS_DIR = 'src/plugins';
  */
 export const PLUGIN_ENTRIES = ['index.ts', 'index.tsx'] as const;
 
-/** What a plugin folder declares itself in — its type, attributes, triggers — as `plitzi add plugin` writes it. */
+/** What a plugin folder declares itself in — its type, attributes, triggers — as `plitzi plugin add` writes it. */
 export const PLUGIN_DECLARATION_FILE = 'declaration.ts';
 
 /** A plugin's server half, a folder of its own beside its component: built from its `index.ts`. */
@@ -58,7 +58,7 @@ export const PLUGIN_FUNCTIONS_DIR = 'functions';
  */
 export const VENDOR_PLUGINS_DIR = 'vendor/plugins';
 
-/** What `plitzi pack plugin` writes beside a plugin's bundle: its version, its files, and the elements it provides. */
+/** What `plitzi plugin pack` writes beside a plugin's bundle: its version, its files, and the elements it provides. */
 export const PLUGIN_MANIFEST_FILE = 'plugin-manifest.json';
 
 /** A runtime that came across built only (a project made from a space): run as it was built. */

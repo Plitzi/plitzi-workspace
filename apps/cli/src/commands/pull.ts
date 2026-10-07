@@ -23,7 +23,7 @@ import type { SpaceOrigin } from './spaceOrigin';
 import type { PackageManager } from '../scaffold';
 
 /**
- * `plitzi pull`: a project `plitzi create --from` made, brought up to date with the space it came from (docs/en/projects-from-spaces.md).
+ * `plitzi space pull`: a project `plitzi create --from` made, brought up to date with the space it came from (docs/en/projects-from-spaces.md).
  *
  * The project is the developer's — they edit it — and the space goes on being edited in the builder. So a pull asks
  * two questions of every file the space gives: did it change here, and did it change on the space. Changed on the space
@@ -238,7 +238,7 @@ export const pull = async (options: PullOptions): Promise<void> => {
     const packageText = await fs.readFile(path.join(root, 'package.json'), 'utf-8');
     const manifest: unknown = JSON.parse(packageText);
     const { changed } = mergeDependencies(isRecord(manifest) ? manifest : {}, next.dependencies, origin.dependencies);
-    sayDryRun(`plitzi pull — ${origin.space.name}, ${versionLabel(asked.version)}`, [
+    sayDryRun(`plitzi space pull — ${origin.space.name}, ${versionLabel(asked.version)}`, [
       ...(await filesWouldWrite(root, of('write'))),
       ...of('remove').map(file => `- ${file}`),
       ...of('keep').map(file => `= ${file} — changed here, kept`),

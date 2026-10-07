@@ -4,10 +4,10 @@ The command line for Plitzi.
 
 ```bash
 npx @plitzi/cli create my-site                 # a project that renders a space
-npx @plitzi/cli add plugin seat-picker legend  # elements of your own, in the project you are in
+npx @plitzi/cli plugin add seat-picker legend  # elements of your own, in the project you are in
 npx @plitzi/cli create seat-picker --plugin    # a plugin package any space can load
-npx @plitzi/cli pack plugin                    # a plugin built, and zipped the way the builder takes it
-npx @plitzi/cli upload plugin                  # that zip, on the space you work in, and installed there
+npx @plitzi/cli plugin pack                    # a plugin built, and zipped the way the builder takes it
+npx @plitzi/cli plugin upload                  # that zip, on the space you work in, and installed there
 ```
 
 ## What every command does the same way
@@ -21,10 +21,10 @@ npx @plitzi/cli upload plugin                  # that zip, on the space you work
   there, `-e, --environment` for which version of the space, `--width` for the widths a page is looked at (one, or
   several separated by commas), `--api` for the platform, `--json` for a tool or an agent.
 - **`--dry-run` says what it would do, and does none of it** — on every command that writes or sends: `create`,
-  `add plugin`, `add runtime`, `pull`, `push`, `pack plugin`, `source`, `import`, `upload plugin`, `functions pull`/
-  `push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills update`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
+  `plugin add`, `runtime add`, `space pull`, `space push`, `plugin pack`, `source pack`, `page import`, `plugin upload`, `functions pull`/
+  `functions push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills update`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
   removed), what it would install or run, what it would send and where. It still reads what it needs to say so — the
-  project, the files it would send, the space it would pull, signing in for that. `upgrade` and `fix` only show until
+  project, the files it would send, the space it would pull, signing in for that. `upgrade` and `space fix` only show until
   `--write`.
 
 ## `create`
@@ -65,8 +65,8 @@ code (JSON, with the reason said, where one would not read back exactly), its fu
 runtime, and its files downloaded into `public/` with every CDN address rewritten — served by the project with nothing
 of Plitzi's. `.env` gets a signing key made for it and the names of the variables and credentials the space had, never
 their values. It signs in as you and needs a space you may change; the end of `create` says what came across
-differently. What the project was given is recorded in `.plitzi/space.json` — commit it — for [`pull`](#pull) and
-[`push`](#push). See `docs/en/projects-from-spaces.md`.
+differently. What the project was given is recorded in `.plitzi/space.json` — commit it — for [`space pull`](#space-pull) and
+[`space push`](#space-push). See `docs/en/projects-from-spaces.md`.
 
 ## The package manager
 
@@ -82,7 +82,7 @@ bundler — so the linker is pinned to the layout npm and pnpm already give it.
 
 ## Node runs the TypeScript
 
-Every script that runs TypeScript — `start`, `author`, `shot` — is plain `node`: Node 22.18+ strips the types
+Every script that runs TypeScript — `start`, `author`, `page shot` — is plain `node`: Node 22.18+ strips the types
 itself, so nothing transpiles beside the server. (`tsx` did, and its loader thread cost a page server more memory
 than the server: ~270 MB to start where the same server starts in ~90.) The project's `tsconfig` holds it to what
 that needs — relative imports name their `.ts` file (`allowImportingTsExtensions`), type-only imports say so
@@ -114,7 +114,7 @@ when an install fails the CLI says which setting names it.
   again; it swaps a saved plugin where it is drawn, and restarts only for the server's own code.
 - **A plugin of the project's own.** `src/plugins/StatCard` is a React component the space renders through a
   `custom` element — the one thing about Plitzi a page of built-in elements cannot show. Every folder of
-  `src/plugins` is registered by itself, under its name in camelCase, so `plitzi add plugin` is all a new one takes. Its props ARE the
+  `src/plugins` is registered by itself, under its name in camelCase, so `plitzi plugin add` is all a new one takes. Its props ARE the
   element's attributes, so a data source pointed at that element later reaches the component with no plumbing in
   between. Server-rendered in server mode (`action: 'compile'`), part of the bundle in client mode.
 - **A visual test.** The `visual` script starts the project, opens the page and asserts that every element the space
@@ -141,10 +141,10 @@ when an install fails the CLI says which setting names it.
 | `public/` | Served to anyone who asks, as it is — pictures, a favicon, and in client mode the data the browser fetches (`public/data/`). **It is on the internet**: never a secret, a key, a private document or data only some visitors may read | yes |
 | `src/data/` | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read | yes |
 | `src/functions/` | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot | yes |
-| `vendor/plugins/` | The plugins the project runs as they were built, with no source (a project made from a space gets them), each folder with its `plugin-manifest.json`. The server runs them, and `author`, `check`, `fix` and `push` know every element type each provides | yes |
+| `vendor/plugins/` | The plugins the project runs as they were built, with no source (a project made from a space gets them), each folder with its `plugin-manifest.json`. The server runs them, and `author`, `page check`, `space fix` and `space push` know every element type each provides | yes |
 | `tmp/` | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), screenshots and test output. Rebuilt when missing | no |
 | `state/` | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/config/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no |
-| `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `pull`, `push` and `upgrade` stand on | yes |
+| `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `space pull`, `space push` and `upgrade` stand on | yes |
 
 **`plitzi/` is the CLI's; `src/` is yours — but `src/main.ts`.** `plitzi/` holds `author.ts`, the types plugins import
 (`assets.d.ts`, server mode) or the page's base styles (`preflight.css`, client mode), and a `README.md` saying what
@@ -156,7 +156,7 @@ project keeps it — so a fix to the server arrives with `npm update`, not as a 
 project is: it is the folder every script runs in, and both refuse to start anywhere else, naming what is missing
 (`package.json`, `src/`) — run them from the project's root. Nor do they start on a part where nothing reads it — a
 plugin folder with no `index.ts`, code in `src/plugin/`, `.env` in `src/` — naming every one at once (`doctor` says each
-with its fix). A plugin is declared by its folder: the server, `author` and `check` find every
+with its fix). A plugin is declared by its folder: the server, `author` and `page check` find every
 `src/plugins/<Name>/declaration.ts` (`pluginDeclarations` from `@plitzi/sdk-authoring/node`). What the server does
 besides serving the space is the project's own, in files it reads: `src/config/serverOptions.ts` (handed to `serveProject` —
 `images`, `action.limits`, `action.kv`, `rsc`) and, with `--source local`, `src/actions/index.ts` (the space's server
@@ -179,23 +179,23 @@ in `src/data/products.json` read on the server as a typed source (`public/data/p
 in client mode), a catalog filtered by category, and a page per product — a file per part under `src/space/`. Both go
 with `--source local`.
 
-## `check` and `shot`
+## `page check` and `page shot`
 
 ```bash
-plitzi check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
-plitzi check /products --state --element catalog-count   # and what it holds: state, sources, one element
-plitzi check / --ssr                       # and what the server's HTML lacks that the hydrated page has
-plitzi check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
-PLITZI_CHECK_PASSWORD=… plitzi check /studio --as maya   # a page for signed-in visitors, signed in through /auth first
-plitzi shot /about --width 390 --scheme dark
-plitzi shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
-plitzi shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
+plitzi page check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
+plitzi page check /products --state --element catalog-count   # and what it holds: state, sources, one element
+plitzi page check / --ssr                       # and what the server's HTML lacks that the hydrated page has
+plitzi page check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
+PLITZI_CHECK_PASSWORD=… plitzi page check /studio --as maya   # a page for signed-in visitors, signed in through /auth first
+plitzi page shot /about --width 390 --scheme dark
+plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
+plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
 another project. They wait for the page to settle — loaded, then half a second with nothing asked for — counting no
 stream that stays open, so a page with a realtime `channel` is checked like any other (`openPage` of
-`@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `check` reports every element the space owes the page that is missing or hidden (with why), broken
+`@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `page check` reports every element the space owes the page that is missing or hidden (with why), broken
 images, sideways scroll, text in the colour behind it, console errors, refused requests and failed flows — and the
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
 the page is not showing, which is not mounted — a provider that failed, and each list's rows, drawn and in its source
@@ -211,27 +211,27 @@ picture.
 
 `--click <id>` clicks one element once the page has settled, as a visitor does — brought into view first, which is
 not the click's doing — and says what changed: the flows it ran and how each step ended, where the page went, what
-scrolled, what came on screen and what left it, the state. A click that changed nothing says so in those words, and a
+scrolled, what is shown now and what no longer is, the state. A click that changed nothing says so in those words, and a
 flow that ran and succeeded with nothing on the page changed is said as that too: a button whose flow does nothing
 looks like one that works until it is clicked. A click that could not be made, or a flow that failed, fails the check
 (`--json`: `clicked: { element, changes, failed, problem? }`).
 
 `--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
-default, and `shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
-full-page `shot` is the whole page — the pane the SDK scrolls in unrolled, every lazy picture loaded, every arrival
+default, and `page shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
+full-page `page shot` is the whole page — the pane the SDK scrolls in unrolled, every lazy picture loaded, every arrival
 waiting for the scroll shown as it ends — in `tmp/shots/` unless `--out` says where.
 
-`shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
+`page shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
 is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
 texts both pages have and says what each does differently there — `h1 "Learn CSS" — font-size 68px → 60px · y +19px`.
 `--frames` compares pictures taken one after another and names what moved. A project `create` writes has them as
 `npm run check` and `npm run shot`.
 
-## `fix`
+## `space fix`
 
 ```bash
-plitzi fix            # what authoring would fix, as a diff of your own source
-plitzi fix --write    # written, formatted as the project formats, and checked
+plitzi space fix            # what authoring would fix, as a diff of your own source
+plitzi space fix --write    # written, formatted as the project formats, and checked
 ```
 
 The fixes are the ones with a single reading (`fixSpace`'s: a key the element never reads, `'true'` where a boolean
@@ -240,22 +240,22 @@ by the line and column the element remembers — and only where the value is wri
 listed with where it is and why it was left. `--write` authors the space again in a fresh process and keeps the edits
 only if every fix is gone and no problem was added; a fix that would add one is put back and said.
 
-## `where` and `edit`
+## `element where` and `element edit`
 
 ```bash
-plitzi where hero-cta                            # by id: the file, the line and the call that writes it
-plitzi where navLink                             # every element wearing the class (`nav-link` or `navLink`)
-plitzi where "Get started"                       # every element showing the words
-plitzi where cta --by text                       # one reading only: id, class or text
-plitzi edit hero-cta --set content="Start free"  # an attribute written in that call
-plitzi edit signup --set required=true --remove placeholder
-plitzi edit site-brand --every --set label="Home"  # a helper's call that writes several elements: every one
+plitzi element where hero-cta                            # by id: the file, the line and the call that writes it
+plitzi element where navLink                             # every element wearing the class (`nav-link` or `navLink`)
+plitzi element where "Get started"                       # every element showing the words
+plitzi element where cta --by text                       # one reading only: id, class or text
+plitzi element edit hero-cta --set content="Start free"  # an attribute written in that call
+plitzi element edit signup --set required=true --remove placeholder
+plitzi element edit site-brand --every --set label="Home"  # a helper's call that writes several elements: every one
 ```
 
-`where` answers where the project's code writes an element — `src/space/pages/home.ts:42` and the call itself, or the
+`element where` answers where the project's code writes an element — `src/space/pages/home.ts:42` and the call itself, or the
 object a page or a layout is declared as — so
 the call is edited instead of the files around it being read. It is asked of the code as it is now: the space is
-authored again and each element's call read back, the way `fix` finds it, so it follows an element wherever somebody
+authored again and each element's call read back, the way `space fix` finds it, so it follows an element wherever somebody
 moved it, with nothing kept that could fall out of step. Ten matches at most, the call shown for the first three;
 `--json` adds the element's attributes when it was asked for by id. A query is read as an id, then a class, then words —
 the first that matches is answered, and any other that matched too is said with its count and the command for it
@@ -265,36 +265,36 @@ where the class is declared too — the `styles()` call — before who wears it;
 `LIST.map(item => …)` says which list it is repeated for and the file it is in. A space that does not author is said, with the
 lines of `src/` holding the words instead.
 
-`edit` writes attributes in that call — `content` given as the factory's first argument (`text('Hi', { … })`) where it
+`element edit` writes attributes in that call — `content` given as the factory's first argument (`text('Hi', { … })`) where it
 is — keeping the kind each one has (a number stays a number; a new one is `true`/`false` or words), formats the file as
 the project formats it, and authors the space again in a fresh process, read against the space before it: unless every
 value asked for is there and nothing else in the space changed, the files go back to what they were, and what would
 have changed besides is named. What it changed is printed, every line of it (`--json`: `effects`). An attribute a
-binding computes is refused — the page shows the binding's value, never one written — and `where` marks it `Bound`. A value that is a parameter of the helper the call is in (`heading(title, { … })` inside
+binding computes is refused — the page shows the binding's value, never one written — and `element where` marks it `Bound`. A value that is a parameter of the helper the call is in (`heading(title, { … })` inside
 `pageHead(id, title)`) is changed where the helper is handed it — `pageHead('about-head', 'About us')` — followed up
 as far as the project's code hands it on, and only when the helper reads it once. A value read off a list the call is
 repeated for (`QUESTIONS.map(item => button({ content: item.question }))`) is changed in the one entry of the list
 that holds it, in whichever file the list is written. A component's instance is edited like any element: its
-attributes are the props it hands the component, and `where` finds the words it hands too. A page is edited by its
-attributes as `where` shows them — `seoPageTitle` is written as the page's `seoTitle`. A value read in more than one
+attributes are the props it hands the component, and `element where` finds the words it hands too. A page is edited by its
+attributes as `element where` shows them — `seoPageTitle` is written as the page's `seoTitle`. A value read in more than one
 place — a list entry a nav and a menu both draw — changes them all only with `--every`, every one named. A call that writes more than one
-element — a helper called for each — is never changed unasked: `where` says which elements it writes and the call that
-leads to this one alone, and `edit` refuses, naming them, unless `--every` says the change is for all of them. Any other
+element — a helper called for each — is never changed unasked: `element where` says which elements it writes and the call that
+leads to this one alone, and `element edit` refuses, naming them, unless `--every` says the change is for all of them. Any other
 value written as anything but a literal — a variable, a template, props spread from elsewhere — is left to the author,
-said with where it is. The same `edit` refused again within a few minutes says so,
+said with where it is. The same `element edit` refused again within a few minutes says so,
 and that running it once more will not change the answer (kept in `tmp/refusals.json`).
 
-## `remove`, `move` and `verify`
+## `element remove`, `element move` and `verify`
 
 ```bash
-plitzi remove ent-trust                     # the element's call taken out, with the styles and imports only it used
-plitzi move ent-faq --before ent-pricing    # put before (or --after) a sibling of the same list of children
+plitzi element remove ent-trust                     # the element's call taken out, with the styles and imports only it used
+plitzi element move ent-faq --before ent-pricing    # put before (or --after) a sibling of the same list of children
 plitzi verify                               # author, lint:space, typecheck, lint, format and every page: what fails
 plitzi verify --no-pages                    # the pages left out, said as such
 ```
 
-`remove` and `move` act on the call that writes the element — or, a section a helper builds and returns
-(`body: [enterpriseFaq()]`), on the helper's call — and are checked as `edit` is: the space authored again in a fresh
+`element remove` and `element move` act on the call that writes the element — or, a section a helper builds and returns
+(`body: [enterpriseFaq()]`), on the helper's call — and are checked as `element edit` is: the space authored again in a fresh
 process and read against the one before. A removal may take the element and what it holds and nothing else; a move
 may change only its parent's order, with the element beside the one it was moved by. Anything more and the file goes
 back, what it would have changed named. A `styles()` declared for the removed element alone goes with it, and its
@@ -308,14 +308,14 @@ among its siblings — so a move renames nothing.
 no parameter in its path at 1440 and 390 px (the server must be up: `npm start`). Only what fails is printed, with the
 last lines it said; a page the browser was sent away from — one for signed-in visitors — is said as not checked, never
 as passing — said on its own line, without failing the run, since a space with pages for signed-in visitors always
-has some (`plitzi check <path> --as <username>` opens one). Exit 1 when anything failed.
+has some (`plitzi page check <path> --as <username>` opens one). Exit 1 when anything failed.
 
-## `lint`
+## `space lint`
 
 ```bash
-plitzi lint                    # the space's source, eslint's way: each practice to change at its file and line
-plitzi lint --json             # one object: { scope, notChecked, counts, findings }
-plitzi lint --max-warnings 0   # more warnings than that fail (exit 1); --strict: any warning does
+plitzi space lint                    # the space's source, eslint's way: each practice to change at its file and line
+plitzi space lint --json             # one object: { scope, notChecked, counts, findings }
+plitzi space lint --max-warnings 0   # more warnings than that fail (exit 1); --strict: any warning does
 ```
 
 How the space in `src/space/` is written — what only its source can say, and what grows hard to read and to change as
@@ -347,14 +347,14 @@ lint's own codes:
 `// plitzi-lint-disable <codes>` for the whole file.
 
 It is not whether the space authors — what it refuses and warns of is `npm run author`'s — nor a page as it renders
-(`check`), nor the project around the space (`doctor`); every report says so (`notChecked`). Exit code 1 while anything
+(`page check`), nor the project around the space (`doctor`); every report says so (`notChecked`). Exit code 1 while anything
 is an error; with `--strict` a warning too, with `--max-warnings <n>` more than n of them.
 
-## `import`
+## `page import`
 
 ```bash
-plitzi import https://example.com/pricing                 # into src/imported
-plitzi import https://example.com/ --out src/home --width 1440,390
+plitzi page import https://example.com/pricing                 # into src/imported
+plitzi page import https://example.com/ --out src/home --width 1440,390
 ```
 
 A page you own or may reuse, measured in the project's own Playwright as a place to start writing from — never a copy
@@ -411,7 +411,7 @@ plitzi doctor --strict         # warnings fail too — for a CI that keeps the p
 Whether the project is whole as the CLI sets it up, read from what it is now rather than from what the CLI once wrote:
 a developer may change any file, and the checks are what each part must be for the project to install, start, build and
 push. It is the CLI's check of the project, not of the space: what the space authors to and warns of is `npm run
-author`'s, how it is written `lint`'s, and how a page renders `check`'s. Exit code 1 while anything is an error (with `--strict`, a warning).
+author`'s, how it is written `space lint`'s, and how a page renders `page check`'s. Exit code 1 while anything is an error (with `--strict`, a warning).
 
 Each finding has an area, a stable `code`, the file and its `fix`; the report ends with **what to run next** — the few
 commands (`plitzi upgrade --write`, an install, `doctor --fix`) that clear most of the list, by how many each fixes.
@@ -434,7 +434,7 @@ area would only say what the move fixes — and `upgrade` writes no file until i
 **Where each part lives** is one check (`checkProjectLayout`, `@plitzi/sdk-shared/project/layout`) said by three: the
 server refuses to start on its errors, listing every one (and prints its warnings while developing — a plugin folder
 added broken while `start:dev` runs is said there, and the server goes on), `npm run author` and the CLI's checks
-(`check`, `push`, `fix`) refuse to author, and `doctor` says each with its fix under `layout`. `lint` says in one line
+(`page check`, `space push`, `space fix`) refuse to author, and `doctor` says each with its fix under `layout`. `space lint` says in one line
 that there are some. Its codes, each with what it means, are `PROJECT_LAYOUT_CODES`: errors — a plugin folder with no
 `index.ts` (or `index.tsx`), or both; a JavaScript entry; a folder name that is no element type (`story-editor` →
 `StoryEditor`), two folders of one type, a plugin also built in `vendor/plugins/`; a plugin's `functions/`,
@@ -454,7 +454,7 @@ did you mean `index.ts`, `src/plugins/`? — and one that differs only in case s
 | `config` | `tsconfig.json` reads `src/` and `plitzi/` and sets what Node's type stripping needs; `tsconfig.build.json` writes the file `start:prod` runs; `.gitignore` keeps `.env` out (and `node_modules`, `tmp`, `dist`, `state`) and `.plitzi/` in; `.env` not in git; the signing secret, as long as the project's own server wants it; a cloud project's key |
 | `sources` | what Node runs as written — `src/main.ts`, `src/config/`, `src/actions/`, `src/space/`, `src/runtime/`, `plitzi/author.ts`, the plugins' declarations, and all they import: every relative import a file that is there, with its extension; JSON imported `with { type: 'json' }`; no JSX; every package declared (a devDependency, in what production runs, is said); what the server loads by name exported (`space`, `actions`, the runtime's default) |
 | `plugins` | each folder of `src/plugins/` the server can build: its entry builds and exports its component, its packages declared; its `declaration.ts` loads and its `type` is the folder's (`StatCard` → `statCard`) |
-| `data` | every JSON file of `src/data/` and `public/data/` parses — what the server answers with and `push` sends |
+| `data` | every JSON file of `src/data/` and `public/data/` parses — what the server answers with and `space push` sends |
 | `functions` | `src/functions/` built by the project's own `@plitzi/sdk-server` (`buildFunctions`), as every runner builds them |
 | `records` | `.plitzi/space.json`, `scaffold.json` and `functions.json` readable, and of the same space |
 | `skills` | `.claude/skills/plitzi-*` as the packages installed write them |
@@ -501,7 +501,7 @@ today's command, one the project changed is left and said. A file the CLI no lon
 Node reads `.env` — is removed the same way once the `main.ts` that read it is the CLI's; one the project changed is
 said and left, unless `--take` names it (`.plitzi/scaffold.json` records the files and the scripts, and the package
 manager the files were written for — what a project not installed yet has no lockfile to say). In a project made from
-a space, a file the space gave over one of the CLI's would be the space's, and `upgrade` would leave it to `plitzi pull` —
+a space, a file the space gave over one of the CLI's would be the space's, and `upgrade` would leave it to `plitzi space pull` —
 none does: `serveProject` runs whatever the space brought, from where it lands. `update` is the same
 command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
 older than the `@plitzi/sdk-authoring` installed.
@@ -516,12 +516,12 @@ plitzi data describe src/data/products.json --json   # { shape, example }
 The fields of a JSON file, their types and which rows have them — `price?: number  (in 812 of 879)` — so a page can
 be bound to half a megabyte of data after reading twenty lines of it.
 
-## `pull`
+## `space pull`
 
 ```bash
-plitzi pull                                    # the space's changes in, yours kept
-plitzi pull --force                            # where a file changed on both sides, the space's copy wins
-plitzi pull --environment production --revision latest   # follow another version from now on
+plitzi space pull                                    # the space's changes in, yours kept
+plitzi space pull --force                            # where a file changed on both sides, the space's copy wins
+plitzi space pull --environment production --revision latest   # follow another version from now on
 ```
 
 In a project `create --from` wrote: a file the space changed and you did not is written, one you changed and the space
@@ -530,15 +530,15 @@ write **nothing** and name them. Both sides are compared as the project's Pretti
 `package.json` only gains the packages the space's code now asks for. It follows the version the project was made from —
 the draft, an environment's latest, or a pinned revision.
 
-## `push`
+## `space push`
 
 ```bash
-plitzi push                                    # at a terminal: tick what goes up — what changed is ticked already
-plitzi push space functions                    # only these: space, functions, data, runtime, plugins, files
-plitzi push space --force                      # replace the draft even though it was edited in the builder since
+plitzi space push                                    # at a terminal: tick what goes up — what changed is ticked already
+plitzi space push space functions                    # only these: space, functions, data, runtime, plugins, files
+plitzi space push space --force                      # replace the draft even though it was edited in the builder since
 ```
 
-The way back of `pull`: the project put on the space it works with, as its **draft**. With nobody at the terminal it
+The way back of `space pull`: the project put on the space it works with, as its **draft**. With nobody at the terminal it
 sends what changed since the project last had the space. Each part goes up as its own command sends it, in the order
 that names come before what names them:
 
@@ -556,17 +556,17 @@ The draft is never replaced unseen: when it was edited in the builder since the 
 is refused — pull first, or `--force`. A project that never had the space (one not made with `create --from`) may take a
 space nobody has worked on yet; one that holds work asks for `--force` too. Always the space the CLI is connected to,
 which must be the one the project came from, and never a published environment: publish in the builder. Afterwards
-`.plitzi/space.json` records what was sent, so `pull` keeps working — on a project that started on its own too.
+`.plitzi/space.json` records what was sent, so `space pull` keeps working — on a project that started on its own too.
 
 The space goes back with its files where Plitzi serves them: a path to a file of `public/assets/` (`/assets/a.png`) —
-one `create --from` or `pull` wrote, or one the `files` part put on the CDN — is sent as that file's CDN address. Only
+one `create --from` or `space pull` wrote, or one the `files` part put on the CDN — is sent as that file's CDN address. Only
 `public/assets/` goes to the CDN: the rest of `public/` is the project's own server's. What would not reach Plitzi is
 said before anything is sent, with what to do: a provider reading a file `src/data/` does not hold, a file of
 `public/assets/` the space names that is not on its CDN yet, and one of `public/` outside `assets/`.
 
-## `add plugin`
+## `plugin add`
 
-Adds elements of your own to the project you are in — one, several at once (`add plugin seat-picker legend`), or one at
+Adds elements of your own to the project you are in — one, several at once (`plugin add seat-picker legend`), or one at
 a time as the need comes. Each is a folder, written the way Plitzi's own elements are (`@plitzi/sdk-elements`): the
 component, its `declaration.ts` (its `type`, the events it fires, the actions it answers to, and the element the builder
 adds), its `Settings.tsx` panel for the builder, and the `index.ts` that puts them together — what the folder is built
@@ -586,7 +586,7 @@ A name that would make a built-in element's type (`button`, `form`) is refused: 
 Told its shape, it writes that shape rather than the counter it writes otherwise — one element at a time:
 
 ```bash
-plitzi add plugin ticker --prop interval:number=5000 --prop paused:boolean --trigger onTick:count --callback reset --headless
+plitzi plugin add ticker --prop interval:number=5000 --prop paused:boolean --trigger onTick:count --callback reset --headless
 ```
 
 `--prop name:type=default` (string, number or boolean) is an attribute: in the props, the declaration's defaults and
@@ -601,14 +601,14 @@ Prettier writes them.
 routes answer under `/fn/plugins/<type>/` (`usePluginRoute(type)` in the component names them), its tasks are steps
 `<type>.<action>`, and it runs with a plugin's own corner of `kv`, none of the space's credentials or channels. In a
 server-mode project or a plugin package (which gets `@plitzi/sdk-server` for the types); a project that renders in the
-browser alone has nothing to run it, and is refused. `pack plugin` carries it as `functions.source.json`, and the
+browser alone has nothing to run it, and is refused. `plugin pack` carries it as `functions.source.json`, and the
 platform builds and keeps it privately when the plugin is uploaded — see
 [functions § a plugin's server half](../../docs/en/functions.md#10-a-plugins-server-half).
 
 ## `create --plugin`
 
 A plugin package: elements any space can load, with a Vite preview to write them in. It builds nothing itself —
-`pack plugin` does, for every plugin — so it carries no bundler config and no build dependency.
+`plugin pack` does, for every plugin — so it carries no bundler config and no build dependency.
 
 ```bash
 plitzi create seat-picker --plugin                   # asks the name, what the builder shows, what it is for, who publishes it
@@ -624,14 +624,14 @@ Its scripts: `start` (every element inside a space, rendered by the SDK in the b
 replacement), `visual` (a browser checks each element renders, answers a click, and leaves the page whole),
 `typecheck`, `lint` and `format`.
 
-## `pack plugin`
+## `plugin pack`
 
 The one place a plugin is built — from a plugin package, or from element folders of any project:
 
 ```bash
-plitzi pack plugin                                    # in a plugin package: every element it holds
-plitzi pack plugin src/plugins/SeatPicker             # an element of a self-hosted project
-plitzi pack plugin src/plugins/SeatPicker src/plugins/Legend   # several in one plugin, the first its main
+plitzi plugin pack                                    # in a plugin package: every element it holds
+plitzi plugin pack src/plugins/SeatPicker             # an element of a self-hosted project
+plitzi plugin pack src/plugins/SeatPicker src/plugins/Legend   # several in one plugin, the first its main
 ```
 
 It writes one ES module (esbuild; React and the SDK kept out — the page provides them; images, fonts and any file
@@ -647,27 +647,27 @@ what a manifest is written from. `--out` moves the build, `--no-zip` leaves the 
 version the manifest carries (the project's own by default).
 
 Beside the zip it writes the plugin's **source** (`<name>.source.json.gz`): every file of the project its elements import
-— followed with the project's own TypeScript, `import type` included — and the packages they need. `upload plugin`
+— followed with the project's own TypeScript, `import type` included — and the packages they need. `plugin upload`
 keeps it on the space, which is what `create --from` brings back. `--source-root` names the project those paths are
 relative to, when the elements are not a project of their own. A file outside it, a credentials file or a credential
 in the code keeps it from being written — said, and never stopping the build.
 
-## `pack source`
+## `source pack`
 
 ```bash
-plitzi pack source src/runtime/index.ts --kind runtime --name runtime -o runtime.source.json.gz
+plitzi source pack src/runtime/index.ts --kind runtime --name runtime -o runtime.source.json.gz
 ```
 
-What `upload plugin` and `runtime push` keep, written to a file to look at: the closure of the entries named, gzipped.
+What `plugin upload` and `runtime push` keep, written to a file to look at: the closure of the entries named, gzipped.
 
 
-## `login`, `space` and `upload plugin`
+## `login`, `space use` and `plugin upload`
 
 ```bash
 plitzi login          # sign in, in your browser
-plitzi space          # choose the space to work in, in your browser
+plitzi space use          # choose the space to work in, in your browser
 plitzi whoami         # who you are signed in as, and the space; --json for a tool
-plitzi upload plugin  # the zip pack plugin left, on that space
+plitzi plugin upload  # the zip pack plugin left, on that space
 plitzi logout         # the session revoked on the platform, and forgotten here
 ```
 
@@ -677,17 +677,17 @@ social sign-in work without it knowing. What it keeps is the session and a way t
 and it shows among your account's devices, where it can be ended like any other.
 
 **One space at a time.** The space is chosen on the same grant screen an AI connector's is, and the CLI works in that
-one until `plitzi space` chooses another — which replaces the connection, and revokes the one before. No command takes a
+one until `plitzi space use` chooses another — which replaces the connection, and revokes the one before. No command takes a
 space of its own: an upload goes to the space `plitzi whoami` names, so a plugin meant for a staging space cannot end
 up in the live one because of a flag.
 
-`upload plugin` takes the zip named, or the one `pack plugin` left in the project (the newest, when there are several —
+`plugin upload` takes the zip named, or the one `plugin pack` left in the project (the newest, when there are several —
 asked at a terminal). It is checked for its `plugin-manifest.json` before anything is sent. Without a connection, or
 without a space, the browser opens for what is missing, so the first upload is one command too. It goes on one of the
 space's public buckets — `--bucket <identifier>` (narrowed to one CDN with `--cdn <identifier>`), or asked when there
 are several; a private bucket is refused, since no page could load from it — and is installed, as the builder does when
 a zip is dropped under Resources: added, or the plugin already there moved to the new version with its settings kept. The
-source `pack plugin` wrote beside the zip goes up after it, into the space's private bucket.
+source `plugin pack` wrote beside the zip goes up after it, into the space's private bucket.
 
 `--api` (or `PLITZI_API_URL`) points it at another platform, a self-hosted or local one; the CLI trusts the
 certificate authorities the system trusts, as the browser beside it does.
@@ -710,11 +710,11 @@ connection kept open, memory that outlives a request, Node and its packages (`do
 **Its code lives in a project of yours** — a folder, usually a repository — and nowhere else: the builder shows how a
 runtime runs and sets its variables, but it does not hold its code and cannot change it. The project has
 `src/runtime/index.ts` (or `--entry`), whose default export is `defineRuntime(…)`, and `@plitzi/sdk-server` installed:
-`plitzi add runtime` writes it in a project from `plitzi create` in server mode, whose `src/main.ts` runs it too —
+`plitzi runtime add` writes it in a project from `plitzi create` in server mode, whose `src/main.ts` runs it too —
 `/hello` answers on `npm start` — and whose `start:dev` restarts on it; `examples/self-hosting/10-runtime` is the smallest one to start
 from, and it runs as a server of its own too.
 
-`push` packs the module with the project's own `@plitzi/sdk-server` — the module and every package it imports, bar
+`runtime push` packs the module with the project's own `@plitzi/sdk-server` — the module and every package it imports, bar
 `@plitzi/*` and React, which the platform provides — and sends it to the space `plitzi whoami` names. It becomes the
 draft's runtime, which starts on it; **publishing the space** from the builder takes it to the published site. A
 runtime is part of the plans that carry it; on another, the push is refused and says so. The source it was
@@ -738,8 +738,8 @@ plitzi functions dev seismic.feed --params '{}' --watch            # on this mac
 ```
 
 A space's own server code — tasks its actions run as steps, routes under `/fn/` — and `src/functions/` is a working copy
-of it: `.plitzi/functions.json` keeps what was pulled, so `pull` refuses to overwrite what is not pushed (`--force`
-throws it away) and `push` refuses when the space moved on since. A problem comes back as
+of it: `.plitzi/functions.json` keeps what was pulled, so `functions pull` refuses to overwrite what is not pushed (`--force`
+throws it away) and `functions push` refuses when the space moved on since. A problem comes back as
 `src/functions/<file>:<line> <message>`. `dev` runs with the project's own `@plitzi/sdk-server` (`isolated-vm` and
 `core-js` beside it); credentials come from `PLITZI_FUNCTIONS_CREDENTIALS`. See `docs/en/functions.md`.
 

@@ -20,7 +20,7 @@ component's props.
 ${installCommand(packageManager)}
 ${run('start')}    # the plugin inside a space, with hot module replacement
 ${run('visual')}   # a browser opens the preview and checks the plugin works
-npx @plitzi/cli pack plugin   # the plugin, built — and zipped the way the builder takes it
+npx @plitzi/cli plugin pack   # the plugin, built — and zipped the way the builder takes it
 \`\`\`
 
 ## What is where
@@ -40,7 +40,7 @@ Each element is written the way Plitzi's own elements are (\`@plitzi/sdk-element
 
 ## Publishing
 
-\`npx @plitzi/cli pack plugin\` builds the plugin — the CLI is the one place a plugin is packed, so this package carries
+\`npx @plitzi/cli plugin pack\` builds the plugin — the CLI is the one place a plugin is packed, so this package carries
 no build of its own. It writes \`dist/\`: \`${base}.mjs\`, \`plugin-manifest.json\` — which the builder, the page server and
 the MCP server read to know the plugin before they load it — and \`types/\`, the declarations a project installing the
 package reads. Beside it, \`${base}-<version>.zip\`.
@@ -86,7 +86,7 @@ package reads. Beside it, \`${base}-<version>.zip\`.
 ## Another element
 
 \`\`\`bash
-npx @plitzi/cli add plugin legend
+npx @plitzi/cli plugin add legend
 \`\`\`
 
 Run in this package, it writes \`src/Legend/\` and lists it in \`src/elements.ts\` and \`src/declarations.ts\` — the
@@ -106,8 +106,8 @@ the way \`@plitzi/sdk-elements\` writes its own. An element's \`declaration.ts\`
 - ${run('start')} — the preview: the plugin inside a space.
 - ${run('visual')} — a browser checks the preview.
 - ${run('typecheck')} and ${run('lint')} — before calling a change done.
-- \`npx @plitzi/cli pack plugin\` — \`dist/\` (the module, \`plugin-manifest.json\`, the types) and the zip for the builder.
-- \`npx @plitzi/cli add plugin <name>\` — another element, in the same shape; \`upload plugin\` puts the zip on a space.
+- \`npx @plitzi/cli plugin pack\` — \`dist/\` (the module, \`plugin-manifest.json\`, the types) and the zip for the builder.
+- \`npx @plitzi/cli plugin add <name>\` — another element, in the same shape; \`plugin upload\` puts the zip on a space.
   Everything the CLI does, and how it behaves with nobody at the terminal: \`.claude/skills/plitzi-cli/SKILL.md\`.
 
 - The component's props are the element's attributes. A new one goes in three places: the props, the declaration

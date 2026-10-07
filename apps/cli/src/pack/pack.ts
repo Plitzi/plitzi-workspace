@@ -76,7 +76,7 @@ export interface PackResult {
   /** Whether the type declarations were written, when they were asked for. */
   typesOutcome?: TypesOutcome;
   /**
-   * The source snapshot written beside the zip, for `plitzi upload plugin` to keep on the space — or why there is none:
+   * The source snapshot written beside the zip, for `plitzi plugin upload` to keep on the space — or why there is none:
    * then the plugin is kept built only, and a project taken from the space gets the build, not its source.
    */
   source: { file: string } | { problem: string };
@@ -108,7 +108,7 @@ interface Declaration {
 /** The declaration, or what is missing from it — named, so the fix is one edit away. */
 const checkDeclaration = (value: unknown, where: string): Declaration => {
   const missing = (field: string) =>
-    new PackError(`${where}: the declaration has no ${field}. Write it the way \`plitzi add plugin\` does.`);
+    new PackError(`${where}: the declaration has no ${field}. Write it the way \`plitzi plugin add\` does.`);
   if (!isRecord(value) || typeof value.type !== 'string' || !value.type) {
     throw missing('`type`');
   }
@@ -326,7 +326,7 @@ export const packPlugin = async ({
       if (missing.length > 0) {
         throw new PackError(
           `${path.relative(root, folder) || folder} has no ${missing.join(' and no ')}: an element is a folder holding ` +
-            'its component, declaration and index — one index. `plitzi add plugin` writes one.'
+            'its component, declaration and index — one index. `plitzi plugin add` writes one.'
         );
       }
     }

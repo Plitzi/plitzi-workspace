@@ -20,11 +20,11 @@ import type { ConnectedSpace, Connection } from '../account/connection';
 import type { Outcome } from '../account/session';
 
 /**
- * `plitzi upload plugin`: a packed plugin put on one of the connected space's CDNs, and installed there — what the
+ * `plitzi plugin upload`: a packed plugin put on one of the connected space's CDNs, and installed there — what the
  * builder does when its zip is dropped under Resources, without the builder.
  *
  * Always to the space the CLI is connected to, and to no other: which one that is, `plitzi whoami` says and
- * `plitzi space` changes. Signing in and choosing a space happen in the browser when there is no connection yet, so the
+ * `plitzi space use` changes. Signing in and choosing a space happen in the browser when there is no connection yet, so the
  * first upload is one command too.
  */
 
@@ -59,7 +59,7 @@ interface Manifest {
   version: string;
 }
 
-/** The zips `plitzi pack plugin` leaves: at a plugin package's root, or under `dist/plugins` of any other project. */
+/** The zips `plitzi plugin pack` leaves: at a plugin package's root, or under `dist/plugins` of any other project. */
 const packedZips = async (root: string): Promise<string[]> => {
   const inFolder = async (dir: string): Promise<string[]> => {
     try {
@@ -88,7 +88,7 @@ const chooseZip = async (given: string | undefined): Promise<string | undefined>
   const project = await findProject(process.cwd());
   const zips = project ? await packedZips(project.root) : [];
   if (zips.length === 0) {
-    fail('No packed plugin here. Build one with plitzi pack plugin, or name it: plitzi upload plugin <file.zip>.');
+    fail('No packed plugin here. Build one with plitzi plugin pack, or name it: plitzi plugin upload <file.zip>.');
 
     return undefined;
   }
@@ -102,7 +102,7 @@ const chooseZip = async (given: string | undefined): Promise<string | undefined>
     refuseWithoutTerminal(
       'upload',
       [{ flag: '<zip> (the argument)', choices, question: 'Which packed plugin is to be uploaded?' }],
-      'plitzi upload plugin stopped before uploading anything: which plugin goes to the space is a choice'
+      'plitzi plugin upload stopped before uploading anything: which plugin goes to the space is a choice'
     );
 
     return undefined;
@@ -195,7 +195,7 @@ export const chooseTarget = async (
           question: `Which of ${spaceName}'s public buckets does the plugin go in? (narrow with --cdn)`
         }
       ],
-      'plitzi upload plugin stopped before uploading anything: which bucket serves the plugin is a choice'
+      'plitzi plugin upload stopped before uploading anything: which bucket serves the plugin is a choice'
     );
 
     return undefined;
@@ -251,7 +251,7 @@ export const uploadZip = async (
 ): Promise<PushOutcome> => {
   const manifest = manifestOf(zip);
   if (!manifest) {
-    fail(`${filename} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi pack plugin.`);
+    fail(`${filename} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi plugin pack.`);
 
     return 'failed';
   }
@@ -259,7 +259,7 @@ export const uploadZip = async (
   const { cdn, bucket } = target;
   const label = `${manifest.root}${manifest.version ? ` ${manifest.version}` : ''}`;
   if (dryRun) {
-    sayDryRun(`plitzi upload plugin — ${space.name}`, [
+    sayDryRun(`plitzi plugin upload — ${space.name}`, [
       `→ ${filename}, ${label} (${(zip.byteLength / 1024).toFixed(0)} KB), to ${cdn.name} — ${bucket.name}`,
       `install it on ${space.name}${source ? ', with the source it was packed from' : ', built only: no source beside it'}`
     ]);
@@ -330,7 +330,7 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
 
   if (!manifestOf(zip)) {
     fail(
-      `${path.basename(zipPath)} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi pack plugin.`
+      `${path.basename(zipPath)} is not a plugin: it has no plugin-manifest.json at its root. Build it with plitzi plugin pack.`
     );
 
     return;
@@ -354,7 +354,7 @@ const uploadPluginCommand = async (zipGiven: string | undefined, options: Upload
     return;
   }
 
-  // Packed beside the zip by `plitzi pack plugin`, when its source could be: a zip from elsewhere goes up built only.
+  // Packed beside the zip by `plitzi plugin pack`, when its source could be: a zip from elsewhere goes up built only.
   const source = await fs.readFile(sourceFileOf(zipPath)).catch(() => undefined);
   await uploadZip(listed.value.connection, space, {
     zip,

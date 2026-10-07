@@ -6,7 +6,7 @@ import chalk from 'chalk';
 /**
  * `--dry-run`: what a command would do, said, and nothing of it done — no file written or removed, nothing installed,
  * nothing sent to the platform. It still READS what it needs to say it: the project, the files it would send, and the
- * space it would pull or make a project from — signing in for that when it is not. `upgrade` and `fix` need none: they
+ * space it would pull or make a project from — signing in for that when it is not. `upgrade` and `space fix` need none: they
  * only show until `--write`.
  */
 export interface DryRunOptions {

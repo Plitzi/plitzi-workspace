@@ -308,7 +308,7 @@ const pascalCaseOf = (folder: string): string | undefined => {
 
 /**
  * The file an element's folder is built from, wherever the folder is — its `index.ts`, or `index.tsx` — or nothing
- * when it has neither, or both: what `plitzi pack plugin` builds a folder from, as the server does.
+ * when it has neither, or both: what `plitzi plugin pack` builds a folder from, as the server does.
  */
 export const elementEntry = (dir: string): string | undefined => {
   const { files } = entriesOf(dir);
@@ -465,7 +465,7 @@ const declarationFindings = (root: string, folder: string): LayoutFinding[] => {
       'plugin-declaration-missing',
       `${at}/`,
       `${at}/ has no ${PLUGIN_DECLARATION_FILE}: ${lost}.`,
-      `Write ${at}/${PLUGIN_DECLARATION_FILE} — export default { type: '${type}', … } — as npx plitzi add plugin writes one beside the component it makes.`
+      `Write ${at}/${PLUGIN_DECLARATION_FILE} — export default { type: '${type}', … } — as npx plitzi plugin add writes one beside the component it makes.`
     )
   ];
 };
@@ -490,14 +490,14 @@ export const checkPluginFolder = (root: string, folder: string): LayoutFinding[]
       accepted: PLUGIN_ENTRIES,
       code: 'plugin-entry-missing',
       lost: `the server cannot build the plugin ${type}`,
-      write: `Write ${at}/index.ts exporting the component by default${component ? ` — export { default } from './${component}';` : ''} — as npx plitzi add plugin writes it. Every folder of ${PLUGINS_DIR}/ is a plugin: code several plugins share goes outside it (src/shared/).`
+      write: `Write ${at}/index.ts exporting the component by default${component ? ` — export { default } from './${component}';` : ''} — as npx plitzi plugin add writes it. Every folder of ${PLUGINS_DIR}/ is a plugin: code several plugins share goes outside it (src/shared/).`
     }),
     ...sourceEntryFindings(root, {
       folder: `${at}/${PLUGIN_FUNCTIONS_DIR}`,
       accepted: ['index.ts'],
       code: 'plugin-functions-entry-missing',
       lost: `none of the plugin's server half runs (its routes under /fn/plugins/${type}/)`,
-      write: `Write ${at}/${PLUGIN_FUNCTIONS_DIR}/index.ts exporting defineFunctions({ … }) by default — as npx plitzi add plugin --server writes it.`
+      write: `Write ${at}/${PLUGIN_FUNCTIONS_DIR}/index.ts exporting defineFunctions({ … }) by default — as npx plitzi plugin add --server writes it.`
     }),
     ...declarationFindings(root, folder)
   ];
@@ -550,7 +550,7 @@ const assetsOf = (manifest: Record<string, unknown>): ManifestAsset[] =>
 export const readVendorPlugin = (root: string, type: string): VendorPlugin | { problem: LayoutFinding } => {
   const at = `${VENDOR_PLUGINS_DIR}/${type}`;
   const file = `${at}/${PLUGIN_MANIFEST_FILE}`;
-  const again = `npx plitzi pull brings it again — or delete ${at}/, and the space renders no ${type}.`;
+  const again = `npx plitzi space pull brings it again — or delete ${at}/, and the space renders no ${type}.`;
   if (!exists(root, file, 'file')) {
     return {
       problem: finding(
@@ -629,7 +629,7 @@ const pluginFindings = (root: string): LayoutFinding[] => {
         'plugin-file-loose',
         `${PLUGINS_DIR}/${file}`,
         `${PLUGINS_DIR}/${file} is a file, and every plugin is a folder of ${PLUGINS_DIR}/: the server reads nothing of it.`,
-        `Give it a folder with an index.ts that exports it by default — ${PLUGINS_DIR}/${named}/${file} and ${PLUGINS_DIR}/${named}/index.ts, as npx plitzi add plugin writes them — or move it out of ${PLUGINS_DIR}/.`
+        `Give it a folder with an index.ts that exports it by default — ${PLUGINS_DIR}/${named}/${file} and ${PLUGINS_DIR}/${named}/index.ts, as npx plitzi plugin add writes them — or move it out of ${PLUGINS_DIR}/.`
       );
     });
   const built = entriesOf(path.join(root, VENDOR_PLUGINS_DIR)).folders;
@@ -872,7 +872,7 @@ const dataFindings = (root: string): LayoutFinding[] =>
       finding(
         'data-not-json',
         file,
-        `${file} is not JSON: a provider's /data/<file> and ctx.data read JSON files only, and plitzi push leaves it behind.`,
+        `${file} is not JSON: a provider's /data/<file> and ctx.data read JSON files only, and plitzi space push leaves it behind.`,
         `Keep it as JSON (${file.replace(/\.[^./]*$/, '')}.json), or move it out of ${DATA_DIR}/.`
       )
     );
@@ -958,7 +958,7 @@ export const checkProjectLayout = (root: string, options: ProjectLayoutOptions =
       accepted: ['index.ts'],
       code: 'runtime-entry-missing',
       lost: 'the space’s runtime does not run',
-      write: `Write ${RUNTIME_DIR}/index.ts exporting defineRuntime(…) by default — npx plitzi add runtime writes one.`
+      write: `Write ${RUNTIME_DIR}/index.ts exporting defineRuntime(…) by default — npx plitzi runtime add writes one.`
     }),
     ...(known.space === 'local' ? spaceFindings(root, misplaced) : []),
     ...misplaced,

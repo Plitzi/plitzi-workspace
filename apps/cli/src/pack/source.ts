@@ -13,7 +13,7 @@ import type TypeScript from 'typescript';
 
 /**
  * A source snapshot packed from a project: the files an artifact is built from, found by following its imports from its
- * entries — what `plitzi upload plugin` and `plitzi runtime push` send beside what they built, so the platform can hand
+ * entries — what `plitzi plugin upload` and `plitzi runtime push` send beside what they built, so the platform can hand
  * the space back as a project (`plitzi create --from`).
  *
  * Imports are read with the project's own TypeScript, never by building: a bundler drops `import type`, and a file only

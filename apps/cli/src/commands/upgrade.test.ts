@@ -288,7 +288,7 @@ describe('plitzi upgrade', () => {
    * A project made from a space has the `src/main.ts` the space gave it — its runtime, its built plugins — which `plitzi
    * pull` writes as the CLI it runs does. Offering `create`'s in its place would be offering to drop them.
    */
-  it('leaves a file the space gave to `plitzi pull`, and says so', async () => {
+  it('leaves a file the space gave to `plitzi space pull`, and says so', async () => {
     await fs.writeFile(file('src/main.ts'), '// the space’s server, with its runtime and plugins from ./plugins/\n');
     await writeOrigin(root, {
       format: 1,
@@ -372,13 +372,13 @@ describe('plitzi upgrade', () => {
     expect(shown.packages).toMatchObject({
       raised: [{ name: '@plitzi/plitzi-sdk', from: '^0.1.0', to: `^${CLI_VERSION}` }],
       added: [{ section: 'devDependencies', name: '@plitzi/cli' }],
-      scripts: [{ name: 'check', command: 'plitzi check' }],
+      scripts: [{ name: 'check', command: 'plitzi page check' }],
       ownScripts: [{ name: 'lint', yours: 'eslint src' }],
       install: 'needed'
     });
     const written: unknown = JSON.parse(await read('package.json'));
     expect(written).toMatchObject({
-      scripts: { lint: 'eslint src', check: 'plitzi check' },
+      scripts: { lint: 'eslint src', check: 'plitzi page check' },
       dependencies: { '@plitzi/plitzi-sdk': `^${CLI_VERSION}`, 'left-pad': '^1.3.0' },
       devDependencies: { '@plitzi/cli': `^${CLI_VERSION}` }
     });

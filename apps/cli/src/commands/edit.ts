@@ -22,14 +22,14 @@ import type { ListEntryGiven, TextChange, ValueSlot } from '../fix/sourceEdits';
 import type TypeScript from 'typescript';
 
 /**
- * `plitzi edit <id>`: an element's attributes changed where the project's code writes it — the call `plitzi where`
+ * `plitzi element edit <id>`: an element's attributes changed where the project's code writes it — the call `plitzi element where`
  * finds — so a change of words or a setting needs no TypeScript written by hand. Written, formatted as the project
  * formats, and checked: the space is authored again in a fresh process and read against the one before — unless every
  * value asked for is there and nothing else changed, the files go back to what they were. What it changed is said,
  * every line of it.
  *
- *   plitzi edit hero-cta --set content="Start free"
- *   plitzi edit signup-email --set required=true --remove placeholder
+ *   plitzi element edit hero-cta --set content="Start free"
+ *   plitzi element edit signup-email --set required=true --remove placeholder
  */
 
 export interface EditOptions {
@@ -142,7 +142,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
   const element = found.by === 'id' ? found.matches[0] : undefined;
   if (!element) {
     await refuse(
-      `No element has the id "${elementId}". \`plitzi where ${elementId}\` finds it by a class or its words.`
+      `No element has the id "${elementId}". \`plitzi element where ${elementId}\` finds it by a class or its words.`
     );
 
     return;
@@ -174,7 +174,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
     await refuse(
       [
         `Nothing was changed: ${computed.map(change => `\`${change.key}\``).join(', ')} of ${elementId} is computed by a binding — the page shows the binding's value, never one written here.`,
-        `Change the binding where it is written, by hand, at ${element.at ?? 'the call'} — \`plitzi where ${elementId} --by id\` shows it.`
+        `Change the binding where it is written, by hand, at ${element.at ?? 'the call'} — \`plitzi element where ${elementId} --by id\` shows it.`
       ].join('\n')
     );
 
@@ -199,7 +199,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
             return `\`${change.key}\`${nearest ? ` (did you mean \`${nearest}\`?)` : ''}`;
           })
           .join(', ')}. It has ${attributes.join(', ')}.`,
-        `What the call is written with besides its attributes is edited by hand, at ${element.at ?? 'the call'} — \`plitzi where ${elementId} --by id\` shows it.`
+        `What the call is written with besides its attributes is edited by hand, at ${element.at ?? 'the call'} — \`plitzi element where ${elementId} --by id\` shows it.`
       ].join('\n')
     );
 
@@ -323,7 +323,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
         ...said.map(({ line }) => line),
         ...(said.some(({ literal }) => literal)
           ? [
-              `For all of them, add --every. For ${elementId} alone, hand it its own value where the helper is called, by hand — \`plitzi where ${elementId} --by id\` shows its own call.`
+              `For all of them, add --every. For ${elementId} alone, hand it its own value where the helper is called, by hand — \`plitzi element where ${elementId} --by id\` shows its own call.`
             ]
           : [])
       ].join('\n')
@@ -352,7 +352,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
       [
         `Nothing was changed in ${element.at}:`,
         ...(unplaced.length > 0 ? unplaced : ['two of the changes touch the same place']).map(line => `  - ${line}`),
-        `Edit the call there by hand — \`plitzi where ${elementId} --by id\` shows it.`
+        `Edit the call there by hand — \`plitzi element where ${elementId} --by id\` shows it.`
       ].join('\n')
     );
 
@@ -427,7 +427,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
       ),
       'Changed in the space:',
       ...effects.map(effect => `  ${effect.line}`),
-      'Next: plitzi check — the page as it renders now'
+      'Next: plitzi page check — the page as it renders now'
     ].join('\n')
   );
 };

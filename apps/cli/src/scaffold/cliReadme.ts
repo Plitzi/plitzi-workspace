@@ -23,14 +23,14 @@ on the one copy the page already has, serves the bundle to the browser AND impor
 component's markup is in the HTML before any JavaScript arrives. With \`start:dev\` running, a saved plugin is swapped into the open page without reloading it,
 and a new folder is registered as it appears.
 
-A plugin can bring server code of its own: \`add plugin board --server\` writes \`Board/functions/index.ts\`, whose
+A plugin can bring server code of its own: \`plugin add board --server\` writes \`Board/functions/index.ts\`, whose
 routes answer under \`/fn/plugins/board/\` — the component names them with \`usePluginRoute('board')\` — with a \`kv\`
 of the plugin's own.`
     : `\`${MAIN_FILE}\` hands them to \`render()\`. There is no server here, so each one is part of this project's own
 bundle and Vite hot-replaces it like any other module.`
 }
 
-\`npx @plitzi/cli add plugin seat-picker\` writes \`src/plugins/SeatPicker/\`: the component, its declaration, the panel
+\`npx @plitzi/cli plugin add seat-picker\` writes \`src/plugins/SeatPicker/\`: the component, its declaration, the panel
 the builder edits it with, and the \`index.ts\` that hands them over.
 
 - **Render \`RootElement\`, not a \`div\`.** The id and classes the space gave it land on what you render, so the CSS
@@ -53,7 +53,7 @@ with their extension — \`import { reader } from './sources.ts'\`.
 const RUNTIME = `## \`${RUNTIME_DIR}/\` — the space's runtime, when it has one
 
 Its own server code, run as a process of its own beside the space on Plitzi — Node, its packages, a connection held
-open — and by the server here, in its process: \`npx @plitzi/cli add runtime\` writes \`index.ts\`, and
+open — and by the server here, in its process: \`npx @plitzi/cli runtime add\` writes \`index.ts\`, and
 \`plitzi runtime push\` sends the module it is, tried here first.
 `;
 
@@ -74,7 +74,7 @@ const FROM_SPACE = `## \`src/actions/\` and \`src/connectors/\` — what the spa
 
 The space's server actions — one \`defineAction({ … })\` per file, or JSON where code has no words for one — and its
 connectors, one JSON manifest each. \`src/actions/index.ts\` hands them to the server, and \`start:dev\` restarts on a change
-to either. \`plitzi pull\` brings the space's copies again; \`plitzi push\` sends them back.
+to either. \`plitzi space pull\` brings the space's copies again; \`plitzi space push\` sends them back.
 `;
 
 export const cliReadme = (answers: CreateAnswers): string => {
@@ -85,7 +85,7 @@ export const cliReadme = (answers: CreateAnswers): string => {
 What the project needs of the CLI besides its entry point, kept apart from \`src/\`. \`plitzi upgrade\` brings these files
 up to the CLI it has — and \`${MAIN_FILE}\` with them, in \`src/\` because that is where an entry
 point is looked for. One changed is shown as a diff and left, so changing one is taking it over. \`plitzi doctor\` holds the
-whole project to what follows — and to what Node, the server and \`push\` need of it — and says what to fix.
+whole project to what follows — and to what Node, the server and \`space push\` need of it — and says what to fix.
 
 - \`${MAIN_FILE}\` (in \`src/\`) — the entry point: ${server ? 'the page server — the space authored and handed to `serveProject` (`@plitzi/sdk-server/project`), which wires its plugins, its data and its code from where they are' : 'the Vite app that renders the space'}.${
     answers.source === 'local'

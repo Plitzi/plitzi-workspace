@@ -4,7 +4,7 @@ import type { LintFinding, Severity, SourcePlace } from './types';
 const REFERENCE = '.claude/skills/plitzi-authoring/reference';
 
 /**
- * Every rule `plitzi lint` reads the space's source with: what it finds, how much it matters, and where the practice
+ * Every rule `plitzi space lint` reads the space's source with: what it finds, how much it matters, and where the practice
  * is explained. What authoring suggests about the space it authors to is relayed besides, under authoring's own codes.
  */
 export const LINT_RULES = {

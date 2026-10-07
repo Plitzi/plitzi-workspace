@@ -174,7 +174,7 @@ describe('a package of several elements', () => {
 
 describe('what a plugin package is, beside its elements', () => {
   /** The CLI is the one place a plugin is packed: a copy of the build in every package is what went stale before. */
-  it('builds nothing itself, and points at what `plitzi pack plugin` writes', () => {
+  it('builds nothing itself, and points at what `plitzi plugin pack` writes', () => {
     const files = scaffoldPlugin(answers());
     const pkg = JSON.parse(files['package.json']) as {
       exports: Record<string, unknown>;

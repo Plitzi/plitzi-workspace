@@ -1,7 +1,7 @@
 import type { Schema, Style } from '../types';
 
 /**
- * A project's space put back on Plitzi as the space's draft (docs/en/projects-from-spaces.md): what `plitzi push` sends
+ * A project's space put back on Plitzi as the space's draft (docs/en/projects-from-spaces.md): what `plitzi space push` sends
  * to `PUT /spaces/:spaceId/import`, and what it is answered. The way back of `SpaceExport` — one shape for both ends.
  */
 

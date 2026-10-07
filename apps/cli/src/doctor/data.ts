@@ -8,7 +8,7 @@ import { DATA_DIR } from '../scaffold/paths';
 import type { Check, Finding } from './types';
 
 /**
- * The project's data files that are JSON, read as JSON: what the server answers a provider with, and what `plitzi push`
+ * The project's data files that are JSON, read as JSON: what the server answers a provider with, and what `plitzi space push`
  * sends — one that does not parse refuses the push. A file of `src/data/` that is not JSON at all is the layout check's
  * to say (`data-not-json`); which of them the space reads, the space's (`npm run author`).
  */

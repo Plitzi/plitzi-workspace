@@ -18,7 +18,7 @@ import { CLI_VERSION, projectScripts } from '../scaffold/project';
 import type { DryRunOptions } from './dryRun';
 
 /**
- * `plitzi add runtime`: the space's runtime — its own server code, run as a process of its own beside the space on the
+ * `plitzi runtime add`: the space's runtime — its own server code, run as a process of its own beside the space on the
  * platform (`plitzi runtime push`) — written where the project's server runs it too (`src/runtime/index.ts`), so what
  * is pushed is what was tried. Only in a server-mode project: a project with no server has nothing to run it in.
  */
@@ -78,7 +78,7 @@ const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   const plitzi = project?.plitzi?.kind === 'project' ? project.plitzi : undefined;
   if (!project || !plitzi) {
-    fail('plitzi add runtime adds to a project plitzi create wrote, and this is not one.');
+    fail('plitzi runtime add adds to a project plitzi create wrote, and this is not one.');
 
     return;
   }
@@ -113,7 +113,7 @@ const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
   const startDev = await planStartDev(project.root, answers);
 
   if (options.dryRun) {
-    sayDryRun('plitzi add runtime', [
+    sayDryRun('plitzi runtime add', [
       ...(await filesWouldWrite(project.root, [RUNTIME_ENTRY])),
       ...(startDev.script ? ['~ package.json — start:dev restarts on src/runtime/ too'] : [])
     ]);

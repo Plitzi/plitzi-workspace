@@ -1,6 +1,6 @@
 /**
  * The attribute every piece of the dev tools' own chrome carries — the badge, the panel — so whatever looks at the
- * page rather than at the tools can leave it out: `plitzi shot` and `plitzi check` hide it, and a picture of a page is
+ * page rather than at the tools can leave it out: `plitzi page shot` and `plitzi page check` hide it, and a picture of a page is
  * a picture of the page.
  */
 export const DEV_TOOLS_ATTRIBUTE = 'data-plitzi-devtools';

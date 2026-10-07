@@ -245,7 +245,7 @@ const run = promisify(execFile);
 /** The space as it authors now, read by a fresh process: this one loaded the files before they were edited. */
 export const readAfresh = async (): Promise<ElementReading[] | { problem: string }> => {
   try {
-    const { stdout } = await run(process.execPath, [process.argv[1], 'elements'], {
+    const { stdout } = await run(process.execPath, [process.argv[1], 'element', 'readings'], {
       cwd: process.cwd(),
       maxBuffer: 64 * 1024 * 1024
     });
@@ -263,7 +263,7 @@ export const readAfresh = async (): Promise<ElementReading[] | { problem: string
 };
 
 /**
- * `plitzi elements`, not listed: the space as `ElementReading[]`, or `{ problem }` — what `plitzi edit` reads in a fresh
+ * `plitzi element readings`, not listed: the space as `ElementReading[]`, or `{ problem }` — what `plitzi element edit` reads in a fresh
  * process after it changed a file the one running it had already loaded.
  */
 export const elements = async (): Promise<void> => {

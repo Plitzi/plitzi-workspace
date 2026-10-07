@@ -10,7 +10,7 @@ import addRuntime from './addRuntime';
 import create from './create';
 
 /**
- * `plitzi add runtime`: the space's runtime written where the project's server runs it and `plitzi runtime push` finds
+ * `plitzi runtime add`: the space's runtime written where the project's server runs it and `plitzi runtime push` finds
  * it — the same module tried here before it goes — and `start:dev` restarting on it.
  */
 
@@ -41,7 +41,7 @@ const project = async (mode: 'server' | 'client'): Promise<void> => {
   vi.spyOn(process, 'cwd').mockReturnValue(dir);
 };
 
-describe('plitzi add runtime', () => {
+describe('plitzi runtime add', () => {
   it('writes the runtime where the server runs it, and has start:dev restart on it', async () => {
     await project('server');
 

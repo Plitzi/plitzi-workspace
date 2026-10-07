@@ -7,20 +7,20 @@ import { findProject } from './existingProject';
 import { filesUnder } from './filesUnder';
 import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
-import { callTextAt, declaredRoots, loopAround } from '../fix/sourceEdits';
+import { callTextAt, declaredRoots, itemsSource, loopAround } from '../fix/sourceEdits';
 import { loadTypeScript } from '../projectTypeScript';
 
 import type { WrittenElement, WrittenPosition } from '@plitzi/sdk-authoring';
 
 /**
- * `plitzi where <id | class | words>`: where the project's code writes an element — the file, the line and the call
+ * `plitzi element where <id | class | words>`: where the project's code writes an element — the file, the line and the call
  * itself — so an agent edits that call instead of reading the files around it. Asked of the code as it is NOW (the space
  * authored again, each element's call site read back), so it follows an element wherever a person moved it; nothing is
  * kept that could fall out of step.
  *
- *   plitzi where hero-cta          # by id
- *   plitzi where navLink           # every element wearing the class
- *   plitzi where "Get started"     # every element showing the words
+ *   plitzi element where hero-cta          # by id
+ *   plitzi element where navLink           # every element wearing the class
+ *   plitzi element where "Get started"     # every element showing the words
  */
 
 /** The three readings of a query, in the order a bare one is tried. */
@@ -44,7 +44,7 @@ interface WhereMatch {
   classes: string[];
   content?: string;
   at?: string;
-  /** The same place exactly: the factory's name, at its line and column — what `plitzi edit` edits at. */
+  /** The same place exactly: the factory's name, at its line and column — what `plitzi element edit` edits at. */
   position?: WrittenPosition;
   /** The call that writes it, as written — cut after `SNIPPET_LINES` lines. */
   code?: string;
@@ -56,13 +56,15 @@ interface WhereMatch {
   sharedWith?: string[];
   /**
    * Only by id: the calls of the project's code that led to that one, the nearest first, each with the elements of
-   * `sharedWith` it leads to as well — what `plitzi edit` follows a helper's parameter up.
+   * `sharedWith` it leads to as well — what `plitzi element edit` follows a helper's parameter up.
    */
   through?: WhereCall[];
   /** When the call writes other elements too: the nearest call that leads to this one alone, as it is written. */
   ownCall?: { at: string; code?: string };
   /** The list the call is repeated for, and the file it is written in: one entry of it per element. */
   repeatedFor?: { list: string; file?: string };
+  /** A list element handed its rows as data: the list they are the entries of, and the file it is written in. */
+  rowsFrom?: { list: string; file?: string };
 }
 
 export interface WhereCall {
@@ -212,18 +214,38 @@ const loopOf = async (
     text === undefined
       ? undefined
       : loopAround(ts, ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS), position);
-  if (!loop) {
-    return undefined;
-  }
 
-  const listFile =
-    loop.from === undefined
+  return loop ? listAt(position, loop) : undefined;
+};
+
+/** A list a file names, with the file it is declared in: the same file, or the one it imports it from. */
+const listAt = async (
+  position: WrittenPosition,
+  named: { list: string; from?: string }
+): Promise<{ list: string; file?: string }> => {
+  const file =
+    named.from === undefined
       ? position.file
-      : loop.from.startsWith('.')
-        ? await importedFile(position.file, loop.from)
+      : named.from.startsWith('.')
+        ? await importedFile(position.file, named.from)
         : undefined;
 
-  return { list: loop.list, ...(listFile === undefined ? {} : { file: listFile }) };
+  return { list: named.list, ...(file === undefined ? {} : { file }) };
+};
+
+/** The list a list element's call hands it as rows, with the file it is declared in. */
+const rowsOf = async (
+  ts: NonNullable<ReturnType<typeof loadTypeScript>>,
+  position: WrittenPosition
+): Promise<WhereMatch['rowsFrom']> => {
+  const file = path.resolve(process.cwd(), position.file);
+  const text = await fs.readFile(file, 'utf-8').catch(() => undefined);
+  const named =
+    text === undefined
+      ? undefined
+      : itemsSource(ts, ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS), position);
+
+  return named ? listAt(position, named) : undefined;
 };
 
 const withCode = async (
@@ -269,10 +291,12 @@ const withCode = async (
       const code = await codeAt(ts, position);
       const ownCode = own && (await codeAt(ts, own.position));
       const repeatedFor = await loopOf(ts, position);
+      const rowsFrom = await rowsOf(ts, position);
 
       return {
         ...match,
         ...(repeatedFor ? { repeatedFor } : {}),
+        ...(rowsFrom ? { rowsFrom } : {}),
         ...(code === undefined ? {} : { code: snippet(code) }),
         ...(own ? { ownCall: { at: own.at, ...(ownCode === undefined ? {} : { code: snippet(ownCode) }) } } : {})
       };
@@ -416,6 +440,11 @@ const matchText = (match: WhereMatch): string[] => [
   ...(match.sharedWith
     ? [`    The same call also writes ${match.sharedWith.join(', ')}: an edit there changes every one.`]
     : []),
+  ...(match.rowsFrom
+    ? [
+        `    Its rows are the entries of ${match.rowsFrom.list}${match.rowsFrom.file ? ` (${match.rowsFrom.file})` : ''}: what a row shows is its entry's — add, change or remove one there.`
+      ]
+    : []),
   ...(match.repeatedFor
     ? [
         `    Repeated for each entry of ${match.repeatedFor.list}${match.repeatedFor.file ? ` (${match.repeatedFor.file})` : ''}: what each shows is its entry's — add, change or remove one there.`
@@ -444,7 +473,7 @@ const nextStep = (answer: WhereAnswer): string | undefined => {
 
   const bound = only.bound ? ` (not ${only.bound.join(', ')}: a binding computes it)` : '';
 
-  return `Next: plitzi edit ${only.elementId} --set <attribute>=<value>${bound} — or edit ${only.at} by hand`;
+  return `Next: plitzi element edit ${only.elementId} --set <attribute>=<value>${bound} — or edit ${only.at} by hand`;
 };
 
 const whereText = (answer: WhereAnswer): string => {
@@ -462,7 +491,7 @@ const whereText = (answer: WhereAnswer): string => {
         ? 'has the id, a class or the words'
         : READING_SAID[answer.by].replace(/^by /, 'has the ');
 
-    return `No element ${asked} "${answer.query}". \`plitzi check\` lists the elements a page shows.`;
+    return `No element ${asked} "${answer.query}". \`plitzi page check\` lists the elements a page shows.`;
   }
 
   const said = READING_SAID[answer.by ?? 'id'];
@@ -477,7 +506,7 @@ const whereText = (answer: WhereAnswer): string => {
     ...(answer.more ? [`… ${String(answer.more)} more — ask for one by its id`] : []),
     ...(answer.also ?? []).map(
       other =>
-        `Also ${String(other.count)} ${READING_SAID[other.by]} "${answer.query}": plitzi where "${answer.query}" --by ${other.by}`
+        `Also ${String(other.count)} ${READING_SAID[other.by]} "${answer.query}": plitzi element where "${answer.query}" --by ${other.by}`
     ),
     ...[nextStep(answer)].filter(line => line !== undefined)
   ].join('\n');

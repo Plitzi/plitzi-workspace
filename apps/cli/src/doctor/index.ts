@@ -30,7 +30,7 @@ export type { DoctorArea, Finding, Severity } from './types';
 /**
  * `plitzi doctor`: whether the project is whole as the CLI sets it up — everything a developer may have changed checked
  * against what makes it install, start, build and push, rather than against what the CLI once wrote. The space itself
- * — what it authors to, and what it warns of — is `npm run author`'s and `plitzi check`'s, never the doctor's.
+ * — what it authors to, and what it warns of — is `npm run author`'s and `plitzi page check`'s, never the doctor's.
  *
  * Each problem says where it is and what fixes it. Nothing is changed unless `--fix` says so, and then only what is
  * simple and safe — a layout an older CLI left, dead files, `.gitignore`, a folder a script watches, a missing secret —
@@ -60,8 +60,8 @@ export interface DoctorOptions {
  */
 export const NOT_CHECKED = [
   { what: 'the space — what it authors to, refuses and warns of', by: 'npm run author' },
-  { what: 'how the space is written — its files, data, tokens, repeats', by: 'plitzi lint' },
-  { what: 'a page as it renders', by: 'plitzi check' }
+  { what: 'how the space is written — its files, data, tokens, repeats', by: 'plitzi space lint' },
+  { what: 'a page as it renders', by: 'plitzi page check' }
 ] as const;
 
 /** A finding as it is reported: its repair said, not run. */

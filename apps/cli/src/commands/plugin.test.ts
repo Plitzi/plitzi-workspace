@@ -184,7 +184,7 @@ const captureOutput = () => {
   return () => lines.join('\n');
 };
 
-describe('plitzi add plugin', () => {
+describe('plitzi plugin add', () => {
   it('needs a project to add to', async () => {
     const errors = captureErrors();
     await inTemp(dir => from(dir, () => addPlugin(['seat-picker'], {})));
@@ -378,7 +378,7 @@ describe('plitzi add plugin', () => {
   });
 });
 
-describe('plitzi pack plugin', () => {
+describe('plitzi plugin pack', () => {
   it('packs an element of a self-hosted project into the zip the builder takes', async () => {
     captureErrors();
     const output = captureOutput();

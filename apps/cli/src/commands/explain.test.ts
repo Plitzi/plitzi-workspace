@@ -37,11 +37,11 @@ describe('plitzi explain', () => {
     expect(printed(() => explainCommand(undefined, { list: 'codes' }))).toContain('class-and-css');
   });
 
-  it('says a code of plitzi lint as it says one of authoring’s: what it means, and where the fix is explained', () => {
+  it('says a code of plitzi space lint as it says one of authoring’s: what it means, and where the fix is explained', () => {
     const said = printed(() => explainCommand('file-too-long', {}));
 
     expect(said).toBe(
-      'file-too-long — warning of plitzi lint: a file of the space too long to read whole.\nFix: what its message says — explained in .claude/skills/plitzi-authoring/reference/structure.md.'
+      'file-too-long — warning of plitzi space lint: a file of the space too long to read whole.\nFix: what its message says — explained in .claude/skills/plitzi-authoring/reference/structure.md.'
     );
   });
 

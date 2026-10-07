@@ -36,10 +36,10 @@ import type { ConnectedSpace, Connection } from '../account/connection';
 import type { SourceSnapshotKind, SpaceExport } from '@plitzi/sdk-shared/source';
 
 /**
- * `plitzi push`: the project put back on the space it works with — the way back of `plitzi pull`
+ * `plitzi space push`: the project put back on the space it works with — the way back of `plitzi space pull`
  * (docs/en/projects-from-spaces.md). Whatever changed since the project last had the space, or the parts named:
  *
- * - `plugins` — each plugin whose source changed, packed and uploaded to the space's CDN, as `plitzi upload plugin`;
+ * - `plugins` — each plugin whose source changed, packed and uploaded to the space's CDN, as `plitzi plugin upload`;
  * - `functions` — `src/functions/`, as `plitzi functions push`;
  * - `runtime` — the runtime module, packed, as `plitzi runtime push`;
  * - `space` — the pages, styles, actions and connectors, as the space's draft.
@@ -211,7 +211,7 @@ const survey = async (
   }
 
   const entries = before && projectEntries(before);
-  // Where the space's runtime is, as `plitzi add runtime` and `create --from` write it alike.
+  // Where the space's runtime is, as `plitzi runtime add` and `create --from` write it alike.
   if (await exists(path.join(root, DEFAULT_RUNTIME_ENTRY))) {
     const runtimeEntry = DEFAULT_RUNTIME_ENTRY;
     const entry = path.join(root, runtimeEntry);
@@ -262,7 +262,7 @@ const choose = async (found: Pushable[], asked: string[], spaceName: string): Pr
   if (asked.length > 0) {
     const unknown = asked.filter(part => !isPart(part));
     if (unknown.length > 0) {
-      fail(`plitzi push sends ${PUSH_PARTS.join(', ')} — not ${unknown.join(', ')}.`);
+      fail(`plitzi space push sends ${PUSH_PARTS.join(', ')} — not ${unknown.join(', ')}.`);
 
       return undefined;
     }
@@ -303,7 +303,7 @@ const choose = async (found: Pushable[], asked: string[], spaceName: string): Pr
   return chosen;
 };
 
-/** A plugin packed as `plitzi pack plugin` packs it, and uploaded and installed as `plitzi upload plugin` does. */
+/** A plugin packed as `plitzi plugin pack` packs it, and uploaded and installed as `plitzi plugin upload` does. */
 const pushPlugin = async (
   root: string,
   connection: Connection,
@@ -346,7 +346,7 @@ const pushPlugin = async (
 };
 
 /**
- * `.plitzi/space.json` as the space now holds the project, so `plitzi pull` compares with it from here on: the files of
+ * `.plitzi/space.json` as the space now holds the project, so `plitzi space pull` compares with it from here on: the files of
  * the parts sent recorded as the space gives them back, the rest as they were — a page changed in the builder and not
  * pushed over is still the builder's change to the next pull. A project that never had the space records it whole.
  */
@@ -385,7 +385,7 @@ const recordPush = async (
     console.log(
       chalk.yellow(
         `Pushed, but .plitzi/space.json is not brought up to date — ${exported.error}\n` +
-          'The next plitzi pull compares with what it recorded before.'
+          'The next plitzi space pull compares with what it recorded before.'
       )
     );
 
@@ -454,13 +454,13 @@ const recordPush = async (
 export const push = async (asked: string[], options: PushOptions): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project) {
-    fail('There is no package.json here or above: run plitzi push in the project to send.');
+    fail('There is no package.json here or above: run plitzi space push in the project to send.');
 
     return;
   }
 
   if (project.plitzi?.kind === 'plugin') {
-    fail('This is a plugin package: plitzi pack plugin and plitzi upload plugin put it on a space.');
+    fail('This is a plugin package: plitzi plugin pack and plitzi plugin upload put it on a space.');
 
     return;
   }
@@ -470,7 +470,7 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
   if (origin && origin.version.environment !== 'main') {
     fail(
       `This project follows ${versionLabel(origin.version)} of ${origin.space.name}, and a push writes the draft.\n` +
-        'Follow the draft first: plitzi pull --environment main.'
+        'Follow the draft first: plitzi space pull --environment main.'
     );
 
     return;
@@ -485,7 +485,7 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
   if (origin && origin.space.id !== space.id) {
     fail(
       `This project is ${origin.space.name}’s, and the CLI works in ${space.name}. ` +
-        'Switch to it with plitzi space, and push again.'
+        'Switch to it with plitzi space use, and push again.'
     );
 
     return;
@@ -524,7 +524,7 @@ export const push = async (asked: string[], options: PushOptions): Promise<void>
   const force = options.force ?? false;
   if (options.dryRun) {
     sayDryRun(
-      `plitzi push — to ${space.name}’s draft`,
+      `plitzi space push — to ${space.name}’s draft`,
       [...chosen]
         .sort((a, b) => ORDER.indexOf(a.part) - ORDER.indexOf(b.part))
         .map(item => `→ ${item.label}${force ? ' (--force: over whatever the space holds now)' : ''}`)

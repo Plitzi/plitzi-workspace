@@ -9,7 +9,7 @@ custom({ id: 'arcade', renderType: 'nebulaRun', shipColor: 'amber', bind: { best
 
 ## Creating one
 
-The CLI writes it, in the shape Plitzi's own elements are written in: `npx @plitzi/cli add plugin seat-picker` (a
+The CLI writes it, in the shape Plitzi's own elements are written in: `npx @plitzi/cli plugin add seat-picker` (a
 package of its own and packing it: the CLI skill).
 
 One folder, four files: `SeatPicker.tsx` (the component), `declaration.ts` (its `type`, the `triggers` it fires, the
@@ -88,7 +88,7 @@ the widths the space's styles use, instead of a width of the plugin's own.
 
 ## Its own server code
 
-`plitzi add plugin board --server` writes `functions/index.ts` in its folder (the CLI skill). Its routes answer
+`plitzi plugin add board --server` writes `functions/index.ts` in its folder (the CLI skill). Its routes answer
 under `/fn/plugins/board/`; the component names them, with nothing for the space to wire:
 
 ```tsx

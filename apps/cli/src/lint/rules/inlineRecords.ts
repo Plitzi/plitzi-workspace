@@ -6,7 +6,7 @@ import type TypeScript from 'typescript';
 
 /**
  * A short list in code is the documented way to write a menu or three plans (`items.map(…)`); past this many records,
- * it is a table of data written into a page, which a person edits as data — in the builder, or by `plitzi push`.
+ * it is a table of data written into a page, which a person edits as data — in the builder, or by `plitzi space push`.
  */
 export const MIN_RECORDS = 10;
 

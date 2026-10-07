@@ -13,9 +13,9 @@ import type { Target } from './uploadPlugin';
 import type { ConnectedSpace, Connection } from '../account/connection';
 
 /**
- * The two parts of a project `plitzi push` sends besides its code and its space: its data (`src/data/`, read by its
+ * The two parts of a project `plitzi space push` sends besides its code and its space: its data (`src/data/`, read by its
  * providers on the server, never served) and its files (`public/assets/`, served to anyone from the space's CDN). Each
- * lands where Plitzi keeps it, and comes back to the same path with `plitzi pull`.
+ * lands where Plitzi keeps it, and comes back to the same path with `plitzi space pull`.
  */
 
 /** The types the space's CDN takes, by extension: what an image, a sound, a video or a JSON file is sent as. */
@@ -89,7 +89,7 @@ export const pushDataOf = async (
   if (status === 409 && base) {
     fail(
       `${space.name}’s data changed since this project last had it — pushed from another copy.\n` +
-        'Pull first (plitzi pull) and push again, or pass --force to replace it with this project’s.'
+        'Pull first (plitzi space pull) and push again, or pass --force to replace it with this project’s.'
     );
 
     return { outcome: 'failed' };

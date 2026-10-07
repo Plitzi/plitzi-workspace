@@ -76,7 +76,7 @@ export interface ContentMove {
  * its own (a binding, a flow, a condition), an icon that means something (`label`) or is sized or animated, and a
  * text that is a drawn shape are left alone, since none of that would move with them.
  *
- * What the `content-attribute` suggestion says, and what `plitzi fix` writes for the moves with no class to carry.
+ * What the `content-attribute` suggestion says, and what `plitzi space fix` writes for the moves with no class to carry.
  */
 export const contentMoves = (schema: Schema, style: Style): ContentMove[] => {
   const { flat } = schema;

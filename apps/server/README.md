@@ -159,7 +159,7 @@ serve it — worth running over anything that arrives as a file.
 A space on Plitzi comes out whole, as a project wired to this server: `npx @plitzi/cli create my-site --from <space>`
 writes its pages as authoring code, its actions as `defineAction` code, its functions, the source of its plugins and
 runtime, and its files into `public/` — a draft, or any published snapshot (`--environment`, `--revision`) — and
-`plitzi pull` keeps it in step, and `plitzi push` puts what changed in it back on the space. See
+`plitzi space pull` keeps it in step, and `plitzi space push` puts what changed in it back on the space. See
 `docs/en/projects-from-spaces.md` in the workspace.
 
 ## Projects
@@ -221,7 +221,7 @@ What it wires from the project:
 - **Its files.** `public/` served as it is, `src/data/` read and never served (`dataDir`), the `kv` in `state/kv.json`
   (`createFileKv`), `PLITZI_SIGNING_SECRET` what `ctx.sign` signs with.
 - **Where it is.** `/health` answers with the space's permanent URL (or the cloud `name`), and `tmp/dev-server.json`
-  records the name, the port and the URL for `plitzi check`, `shot` and `visual`. A signal closes it (`closeOnSignals`).
+  records the name, the port and the URL for `plitzi page check`, `shot` and `visual`. A signal closes it (`closeOnSignals`).
 
 While developing — `NODE_ENV` other than `production` — `devMode` and `devReload` are on, and:
 
@@ -541,7 +541,7 @@ createServer({ dataDir: path.join(PROJECT_ROOT, 'src/data'), adapters: { ... } }
 ```
 
 The data is read through one lookup, `action.lookups.getData(spaceId, at)` — the space's own data as its files' text by
-path, as of the version being rendered or run: what a cloud deployment keeps for a space (`plitzi push`). Given none,
+path, as of the version being rendered or run: what a cloud deployment keeps for a space (`plitzi space push`). Given none,
 `createServer` derives it from `dataDir` (its `.json` files, read again once they change), so the folder and the
 platform are read the same way.
 
@@ -642,7 +642,7 @@ All fields are optional and combined with AND logic. Calling `invalidate()` with
 
 Plugins are React component bundles that extend the Plitzi schema renderer. They are defined globally at server config level, compiled or copied on first use, and cached on disk for one week. The `getSpaceDeployment` adapter controls which plugins each space gets access to via `pluginNames`.
 
-A compiled plugin is one module and its stylesheet, built as `plitzi pack plugin` builds it: React and the SDK kept out, and everything else inside — images and fonts as data URIs, and a file imported whole the way Vite imports it (`worker.js?raw` for its text, `engine.wasm?inline` for a data URI).
+A compiled plugin is one module and its stylesheet, built as `plitzi plugin pack` builds it: React and the SDK kept out, and everything else inside — images and fonts as data URIs, and a file imported whole the way Vite imports it (`worker.js?raw` for its text, `engine.wasm?inline` for a data URI).
 
 Whatever stylesheet the server writes for a plugin — compiled, copied or downloaded — goes into the `plitzi-sdk-plugin` cascade layer (`inPluginLayer` from `@plitzi/sdk-shared/style`), below the space's own: a space's classes and `customCss` win over what the plugin shipped, whatever the specificity. A `css` given as a web path (`/builder-assets/…`) is linked as it is.
 

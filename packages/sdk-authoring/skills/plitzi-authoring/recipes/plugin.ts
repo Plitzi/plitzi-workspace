@@ -1,5 +1,5 @@
 /**
- * An element of your own (a plugin): authored from its declaration — the one `plitzi add plugin` writes — so a flow on
+ * An element of your own (a plugin): authored from its declaration — the one `plitzi plugin add` writes — so a flow on
  * its events, a step to its actions and its attributes are all checked. Hand the declaration to `authorSpace` too.
  */
 import {

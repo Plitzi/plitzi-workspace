@@ -19,7 +19,7 @@ const saveResultOf = (answer: BuilderMutationsMap['SpaceSaveData'] | undefined):
 };
 
 /**
- * The space's data draft, and saving it — through the same operation an agent's MCP and a project's `plitzi push` end
+ * The space's data draft, and saving it — through the same operation an agent's MCP and a project's `plitzi space push` end
  * in (`SpaceSaveData`): whole, against the version it was read at.
  */
 const useData = () => {

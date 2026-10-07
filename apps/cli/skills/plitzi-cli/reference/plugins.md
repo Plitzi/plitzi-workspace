@@ -1,15 +1,15 @@
 # Elements of your own, and plugin packages
 
-## Elements of your own (`add plugin`)
+## Elements of your own (`plugin add`)
 
 A plugin is a React component the space renders — a map, a chart, a seat picker: whatever is not text in a box. **Never
 start one from a blank file**: `add plugin <name>` writes it in the shape the platform, the builder and the linter all
 read.
 
 ```bash
-plitzi add plugin seat-picker                                  # one; asks what the builder calls it and what it is for
-plitzi add plugin seat-picker legend                           # several at once
-plitzi add plugin ticker --prop interval:number=5000 --prop paused:boolean --trigger onTick:count --callback reset --headless
+plitzi plugin add seat-picker                                  # one; asks what the builder calls it and what it is for
+plitzi plugin add seat-picker legend                           # several at once
+plitzi plugin add ticker --prop interval:number=5000 --prop paused:boolean --trigger onTick:count --callback reset --headless
 ```
 
 **Say its shape and it is written in it**: `--prop name:type=default` (string, number, boolean; `list`/`json` for data
@@ -49,15 +49,15 @@ plitzi create packages/seat-picker --plugin --name @acme/plitzi-plugin-seat-pick
 ```
 
 Its scripts: `start` (the elements inside a space, hot-replaced), `visual`, `typecheck`, `lint`. Add more elements with
-`add plugin` from inside it — they are listed in `src/elements.ts` and `src/declarations.ts`, which the package
+`plugin add` from inside it — they are listed in `src/elements.ts` and `src/declarations.ts`, which the package
 publishes from. A package's element is authored as a TYPE of its own: `defineElement<SeatPickerAttributes>(declaration)`.
 
-## Building and shipping (`pack plugin`, `upload plugin`)
+## Building and shipping (`plugin pack`, `plugin upload`)
 
 ```bash
-plitzi pack plugin                              # in a plugin package: every element
-plitzi pack plugin src/plugins/SeatPicker       # an element of a project; several folders → one plugin, the first its main
-plitzi upload plugin                            # the zip pack left, onto the space whoami names, installed there
+plitzi plugin pack                              # in a plugin package: every element
+plitzi plugin pack src/plugins/SeatPicker       # an element of a project; several folders → one plugin, the first its main
+plitzi plugin upload                            # the zip pack left, onto the space whoami names, installed there
 ```
 
 `pack` writes one ES module (React and the SDK kept out — the page provides them), `plugin-manifest.json` from the
@@ -65,7 +65,7 @@ declarations with integrity hashes, and the zip the builder takes under Resource
 sends the zip to one of the space's CDNs (`--cdn`) and installs it — a plugin already there moves to the new version with
 its settings kept. `--plugin-version` sets the version the manifest carries. The plugin's source — every file it
 imports, followed from its entry — is kept beside it on the space (`runtime push` does the same for a runtime), which
-is what `create --from` brings back; `plitzi pack source` writes what would be kept to a file, to look at.
+is what `create --from` brings back; `plitzi source pack` writes what would be kept to a file, to look at.
 
 A self-hosted page server does not need `pack`: it compiles a plugin from its source (`action: 'compile'`).
 

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { projectFormatter } from './projectFormatter';
 
-/** What `plitzi pull` formats the space's files with before comparing them: the project's own Prettier. */
+/** What `plitzi space pull` formats the space's files with before comparing them: the project's own Prettier. */
 
 describe('a project’s formatter', () => {
   it('formats with the Prettier the project installed', async () => {

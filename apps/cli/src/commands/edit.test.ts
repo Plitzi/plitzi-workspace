@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseSets } from './edit';
 
-describe('what plitzi edit --set writes', () => {
+describe('what plitzi element edit --set writes', () => {
   it('keeps the kind an attribute already has', () => {
     expect(parseSets(['level=3', 'required=false', 'content=42'], { level: 2, required: true, content: 'x' })).toEqual({
       changes: [

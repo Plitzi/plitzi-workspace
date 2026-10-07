@@ -35,7 +35,7 @@ export const darkScheme = (light: ImportProbe, dark: ImportProbe): ImportedDark 
   return changed ? { colours, customProperties: dark.customProperties } : undefined;
 };
 
-/** What an import found, counted — the few lines `plitzi import` answers with. */
+/** What an import found, counted — the few lines `plitzi page import` answers with. */
 export interface ImportSummary {
   url: string;
   widths: number[];
@@ -456,7 +456,7 @@ export const importedFiles = ({ probes, dark }: ImportedPage): Imported => {
     '',
     '1. Split `outline.ts` into one file per part of the page, each under `scope()`, and write its content.',
     '2. Turn each repeated block into a `list` over its `data/` file (see the `lists` reference).',
-    '3. `npx plitzi check` at every width, and compare with `screens/`.',
+    '3. `npx plitzi page check` at every width, and compare with `screens/`.',
     ''
   ].join('\n');
 

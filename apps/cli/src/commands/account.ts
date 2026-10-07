@@ -63,7 +63,7 @@ const whoIs = async (connection: Connection): Promise<Outcome<string>> => {
 const spaceLine = (connection: Connection): string =>
   connection.space
     ? `Space: ${chalk.bold(connection.space.name)} ${chalk.dim(`(${connection.space.permanentUrl})`)}`
-    : chalk.dim('No space chosen: choose one with plitzi space.');
+    : chalk.dim('No space chosen: choose one with plitzi space use.');
 
 export const login = async (options: AccountOptions): Promise<void> => {
   const api = await apiFor(options);

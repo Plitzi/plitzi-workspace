@@ -36,7 +36,7 @@ const json = process.argv.includes('--json');
 // \`--ipc\`: the project's server ran this on a save, while developing, and is handed the documents it serves next.
 const ipc = process.argv.includes('--ipc');
 
-/** How many of the warnings and suggestions said have one fix \`plitzi fix\` can write in this source — and the line that says so. */
+/** How many of the warnings and suggestions said have one fix \`plitzi space fix\` can write in this source — and the line that says so. */
 const fixableHint = ({ space, authoring }: ProjectSpaceSource): string | undefined => {
   let count: number;
   try {
@@ -45,7 +45,7 @@ const fixableHint = ({ space, authoring }: ProjectSpaceSource): string | undefin
     return undefined;
   }
 
-  return count === 0 ? undefined : \`[fix] \${count} of these have one fix: npx plitzi fix shows it in your source, --write writes it\`;
+  return count === 0 ? undefined : \`[fix] \${count} of these have one fix: npx plitzi space fix shows it in your source, --write writes it\`;
 };
 
 /** A file's text, or undefined when there is none to read. */
@@ -83,7 +83,7 @@ const outdated = (): { skill?: string; files?: string; sdk: string } | undefined
   return { ...(skill && skill !== sdk ? { skill } : {}), ...(files && files !== sdk ? { files } : {}), sdk };
 };
 
-// Read before the space is authored, so the catch below can say what of a refusal \`plitzi fix\` writes.
+// Read before the space is authored, so the catch below can say what of a refusal \`plitzi space fix\` writes.
 let project: ProjectSpaceSource | undefined;
 try {
   // The space and what it is checked against — what the server reads too: its plugins' declarations, the built ones'
@@ -107,7 +107,7 @@ try {
       console.warn(\`[suggest] \${suggestion.code} · \${suggestion.message} (saves \${suggestion.saves})\${at}\`);
     }
 
-    // After both: \`plitzi fix\` writes a warning's fix and a suggestion's alike, where it has one reading.
+    // After both: \`plitzi space fix\` writes a warning's fix and a suggestion's alike, where it has one reading.
     const hint = warnings.length + suggestions.length > 0 ? fixableHint(project) : undefined;
     if (hint) {
       console.warn(hint);

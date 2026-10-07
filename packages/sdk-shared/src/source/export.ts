@@ -30,7 +30,7 @@ export type SpaceExport = {
   /** The version taken out: the draft (`main`, revision 0), or a snapshot an environment holds. */
   version: Pick<SpaceVersionContents, 'environment' | 'revision' | 'snapshot'>;
   /**
-   * Which state of the draft's documents this is — its schema, style, actions and connectors — what `plitzi push`
+   * Which state of the draft's documents this is — its schema, style, actions and connectors — what `plitzi space push`
    * checks the space's draft has not moved on from. `null` for a snapshot, which no push writes.
    */
   draft: string | null;
@@ -49,7 +49,7 @@ export type SpaceExport = {
   functions: { version: string; files: Record<string, string> };
   /**
    * The space's own data, by path in `src/data/` (JSON its providers read on the server, never served), and the version
-   * of it this is — what `plitzi push` checks the space's copy has not moved on from.
+   * of it this is — what `plitzi space push` checks the space's copy has not moved on from.
    */
   data: { version: string; files: Record<string, string> };
   /**
