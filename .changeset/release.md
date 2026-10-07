@@ -81,7 +81,9 @@
   win, and a space that names another provider ignores the server's description. New `pageAuth` server option, for a
   deployment whose `/auth` flows are served by another host.
 - **A page with no auth provider no longer offers `auth.login` / `auth.logout`**, and a sign-in that cannot work says
-  why in the console (`[plitzi] auth.login: …`) instead of failing silently.
+  why in the console (`[plitzi] auth.login: …`) instead of failing silently. What a visitor keeps there
+  (`keepState`, `paintedState`) is the browser's, as on any space without accounts: what was kept as a guest's on such
+  a page before is let go once, on the first visit after the upgrade.
 - **Renewal verifies the refresh token itself.** `findByRefreshToken` no longer has to report `refreshExpiresAt`; when
   it does, it overrides the token's own expiry.
 - **New authoring reference `auth.md`**: providers, `authLogin` and its result, `authLogout`, `{{ auth.* }}`,

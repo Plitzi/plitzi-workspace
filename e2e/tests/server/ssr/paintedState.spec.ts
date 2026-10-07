@@ -26,8 +26,10 @@ describeTarget('server', subject => {
   ];
 
   const port = new URL(subject.origin).port;
+  // This server signs nobody in, so what a visitor keeps is the browser's: the owner the SDK writes, and accepts back, is
+  // ''. Written as a guest's, the page would read it as somebody else's and drop it as it hydrates.
   const painted = (values: Record<string, unknown>) =>
-    `plitzi_0_painted_${port}=${encodeURIComponent(JSON.stringify({ owner: 'guest', values }))}`;
+    `plitzi_0_painted_${port}=${encodeURIComponent(JSON.stringify({ owner: '', values }))}`;
 
   test('draws the kept value into the HTML before any script runs', async ({ request }) => {
     const token = await mintPreview(request, subject.origin, drawsFavourite);
