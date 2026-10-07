@@ -143,7 +143,9 @@ falls back to finding the id in `src/`, said as such.
 **`plitzi edit <id> --set <attribute>=<value> | --class <name> | --remove`.** The CLI makes the edit at the call site,
 as `plitzi fix` does (`planFixes`, `specEditOf`), then authors and prints what changed and the next step. A small model
 changes text, a class or an attribute without writing TypeScript; what is not a simple edit gets `where`'s snippet to
-edit by hand.
+edit by hand. A helper written once and called per element is the one place an edit could reach more than it names:
+a value the helper is handed is changed where it is handed, and a call that writes several elements is changed only
+with `--every`, `where` naming them — never silently.
 
 **Outputs.** Every command's text output gets a ceiling and a cursor; `plitzi doctor` groups lines that differ only
 by package; each command ends with the next one when there is one. `--json` stays the stable contract for a program;

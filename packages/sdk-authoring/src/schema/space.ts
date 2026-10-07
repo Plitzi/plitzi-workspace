@@ -63,7 +63,7 @@ import { withNotificationsCss } from './notifications';
 import { refusalOf, SpaceRefusedError } from './refusals';
 import { didYouMean } from './suggest';
 import { assertSpaceValid, validateSpace } from './validate';
-import { writtenAt, writtenAtPosition } from './writtenAt';
+import { writtenAt, writtenAtPosition, writtenCalls } from './writtenAt';
 
 import type { Suggestion, WornClass, WornList } from './advice';
 import type { SourceIndex } from './bindings';
@@ -2107,12 +2107,19 @@ export interface WrittenElement {
   classes: string[];
   /** Its own words, when it has some. */
   content?: string;
+  /** The templates its bindings compute an attribute with — where the words it shows live when they are not its own. */
+  templates: string[];
   /** Its attributes as authored. */
   attributes: Record<string, unknown>;
   /** Where it was written: `src/space/pages/home.ts:42`. Absent for an element no call of the author's code wrote. */
   at?: string;
   /** The same place exactly — the factory's name, at its line and column — which is what an edit is made at. */
   position?: WrittenPosition;
+  /**
+   * The calls of the author's code that led to `position`, the nearest first: a helper written once and called for
+   * each element (`pageHead('about-head', …)`) is told apart by them.
+   */
+  through: WrittenPosition[];
 }
 
 /**
@@ -2125,8 +2132,16 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
 
   return Object.values(schema.flat).map(element => {
     const written = author.specOf(element.id);
-    const position = written ? writtenAtPosition(written) : undefined;
+    const calls = written ? writtenCalls(written) : [];
+    const position = calls.at(0);
     const content = element.attributes.content;
+    const templates = Object.values(element.definition.bindings ?? {}).flatMap(bindings =>
+      bindings.flatMap(binding =>
+        (binding.transformers ?? []).flatMap(transformer =>
+          Object.values(transformer.params).filter((param): param is string => typeof param === 'string')
+        )
+      )
+    );
 
     return {
       elementId: element.id,
@@ -2134,7 +2149,9 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
       rootId: element.definition.rootId,
       classes: element.definition.styleSelectors.base.split(/\s+/).filter(Boolean),
       ...(typeof content === 'string' && content !== '' ? { content } : {}),
+      templates,
       attributes: element.attributes,
+      through: calls.slice(1),
       ...(position ? { at: `${position.file}:${String(position.line)}`, position } : {})
     };
   });

@@ -233,6 +233,7 @@ plitzi where "Get started"                       # every element showing the wor
 plitzi where cta --by text                       # one reading only: id, class or text
 plitzi edit hero-cta --set content="Start free"  # an attribute written in that call
 plitzi edit signup --set required=true --remove placeholder
+plitzi edit site-brand --every --set label="Home"  # a helper's call that writes several elements: every one
 ```
 
 `where` answers where the project's code writes an element — `src/space/pages/home.ts:42` and the call itself — so
@@ -247,8 +248,13 @@ lines of `src/` holding the words instead.
 `edit` writes attributes in that call — `content` given as the factory's first argument (`text('Hi', { … })`) where it
 is — keeping the kind each one has (a number stays a number; a new one is `true`/`false` or words), formats the file as
 the project formats it, and authors the space again in a fresh process: unless every value asked for is there, the
-file goes back to what it was. A value written as anything but a literal — a variable, a template, props spread from
-elsewhere — is left to the author, said with where it is. The same `edit` refused again within a few minutes says so,
+file goes back to what it was. A value that is a parameter of the helper the call is in (`heading(title, { … })` inside
+`pageHead(id, title)`) is changed where the helper is handed it — `pageHead('about-head', 'About us')` — followed up
+as far as the project's code hands it on, and only when the helper reads it once. A call that writes more than one
+element — a helper called for each — is never changed unasked: `where` says which elements it writes and the call that
+leads to this one alone, and `edit` refuses, naming them, unless `--every` says the change is for all of them. Any other
+value written as anything but a literal — a variable, a template, props spread from elsewhere — is left to the author,
+said with where it is. The same `edit` refused again within a few minutes says so,
 and that running it once more will not change the answer (kept in `tmp/refusals.json`).
 
 ## `lint`

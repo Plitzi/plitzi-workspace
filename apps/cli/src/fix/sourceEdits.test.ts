@@ -52,7 +52,7 @@ describe('a planned edit, made in the source', () => {
         key: 'decorative',
         value: true
       })
-    ).toBe('unplaced: `decorative` is not written as a value there');
+    ).toBe('unplaced: `decorative` is written as `decorative: flag` there: change it where that is given');
   });
 
   it('tells two calls on one line apart by where each starts', () => {
@@ -200,6 +200,17 @@ describe('an attribute edited where the element was written (plitzi edit)', () =
   it('leaves words written as the first argument to the author when they are to go', () => {
     expect(edit("text('Search', { id: 'w' })", 'text', 'content')).toBe(
       'unplaced: `content` is the call’s first argument there: remove it from the call by hand'
+    );
+  });
+
+  // A helper's parameter, or a value from anywhere else: what the visitor reads is decided where it is given, and a
+  // `content` added to the props would win over the first argument and leave it written for nothing.
+  it('leaves words given from elsewhere where they are given', () => {
+    expect(edit("heading(title, { id: 'h' })", 'heading', 'content', 'About')).toBe(
+      'unplaced: `content` is written as `title` there: change it where that is given'
+    );
+    expect(edit("paragraph({ id: 'p', content: line })", 'paragraph', 'content', 'About')).toBe(
+      'unplaced: `content` is written as `content: line` there: change it where that is given'
     );
   });
 

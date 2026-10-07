@@ -56,3 +56,9 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
 - **`plitzi where --by id|class|text`** reads a query one way; without it, the first reading that matches is answered
   and every other one that matched is said with its count and the command for it — a query that means two things is
   never answered as one. `plitzi edit` reads its element by id alone.
+- **A helper written once and called for many elements** is told apart: `locateElements` answers each element's
+  `through` — the calls of the author's code that led to the one that wrote it — so `plitzi where` says which other
+  elements the same call writes and the call that leads to this one alone, and `plitzi edit` changes a value the helper
+  is handed where it is handed (`pageHead('about-head', 'About us')`), refuses an edit of a call that writes several
+  elements unless `--every` says so, and never writes `content` beside words given as the factory's first argument.
+- `plitzi explain` of a name that is the project's own says where to read it.

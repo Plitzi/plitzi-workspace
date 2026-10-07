@@ -122,7 +122,10 @@ export const explainCommand = (name: string | undefined, options: ExplainOptions
     }
 
     fail(
-      `"${name}" is no element, step, trigger, code, transformer, helper or export of @plitzi/sdk-authoring. See what there is: --list ${kinds}.`
+      [
+        `"${name}" is no element, step, trigger, code, transformer, helper or export of @plitzi/sdk-authoring. See what there is: --list ${kinds}.`,
+        `A name of the project's own code is read where it is written: \`grep -rn "${name}" src/\`.`
+      ].join('\n')
     );
 
     return;

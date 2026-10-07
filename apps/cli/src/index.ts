@@ -387,6 +387,7 @@ program
   .description('Change an element’s attributes in the call that writes it, then check the space still authors')
   .option('--set <key=value...>', 'An attribute to write: content="Start free", required=true')
   .option('--remove <key...>', 'An attribute to take out')
+  .option('--every', 'The call writes other elements too, and the change is for every one')
   .option('--json', 'One object, for a tool or an agent')
   .action((id: string, options: EditOptions) => edit(id, options));
 

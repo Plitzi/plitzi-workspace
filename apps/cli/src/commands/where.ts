@@ -50,6 +50,21 @@ interface WhereMatch {
   code?: string;
   /** Its attributes as authored: only when the query named it by id. */
   attributes?: Record<string, unknown>;
+  /** The other elements the same call writes — a helper called more than once: an edit there changes every one. */
+  sharedWith?: string[];
+  /**
+   * Only by id: the calls of the project's code that led to that one, the nearest first, each with the elements of
+   * `sharedWith` it leads to as well — what `plitzi edit` follows a helper's parameter up.
+   */
+  through?: WhereCall[];
+  /** When the call writes other elements too: the nearest call that leads to this one alone, as it is written. */
+  ownCall?: { at: string; code?: string };
+}
+
+export interface WhereCall {
+  at: string;
+  position: WrittenPosition;
+  sharedWith?: string[];
 }
 
 export interface WhereAnswer {
@@ -89,7 +104,12 @@ const readAs = (elements: readonly WrittenElement[], query: string, reading: Whe
 
   const words = query.toLowerCase();
 
-  return elements.filter(element => element.content?.toLowerCase().includes(words));
+  // The words it shows: its own, or the ones a binding's template writes (`'Reading as a guest'` inside a ternary).
+  return elements.filter(
+    element =>
+      element.content?.toLowerCase().includes(words) ||
+      element.templates.some(template => template.toLowerCase().includes(words))
+  );
 };
 
 /**
@@ -124,26 +144,91 @@ const snippet = (code: string): string => {
 };
 
 /** Each match with the call that writes it, read from the file the position names. */
-const withCode = async (root: string, found: readonly WrittenElement[], by: WhereBy): Promise<WhereMatch[]> => {
+const positionKey = (position: WrittenPosition): string =>
+  `${position.file}:${String(position.line)}:${String(position.column)}`;
+
+const atOf = (position: WrittenPosition): string => `${position.file}:${String(position.line)}`;
+
+/** Every element by the call that writes it: more than one under a key is a helper called more than once. */
+export const byCall = (elements: readonly WrittenElement[]): Map<string, WrittenElement[]> => {
+  const calls = new Map<string, WrittenElement[]>();
+  for (const element of elements) {
+    if (element.position) {
+      const key = positionKey(element.position);
+      calls.set(key, [...(calls.get(key) ?? []), element]);
+    }
+  }
+
+  return calls;
+};
+
+/** The calls that led to an element's own, each with the other elements written by the same call it leads to too. */
+export const callsThrough = (element: WrittenElement, sharers: readonly WrittenElement[]): WhereCall[] =>
+  element.through.map(position => {
+    const key = positionKey(position);
+    const sharedWith = sharers
+      .filter(sharer => sharer.through.some(call => positionKey(call) === key))
+      .map(sharer => sharer.elementId);
+
+    return { at: atOf(position), position, ...(sharedWith.length > 0 ? { sharedWith } : {}) };
+  });
+
+const codeAt = async (ts: NonNullable<ReturnType<typeof loadTypeScript>>, position: WrittenPosition) => {
+  const file = path.resolve(process.cwd(), position.file);
+  const text = await fs.readFile(file, 'utf-8').catch(() => undefined);
+
+  return text === undefined
+    ? undefined
+    : callTextAt(ts, ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS), position);
+};
+
+const withCode = async (
+  root: string,
+  found: readonly WrittenElement[],
+  by: WhereBy,
+  calls: ReadonlyMap<string, WrittenElement[]>
+): Promise<WhereMatch[]> => {
   const ts = loadTypeScript(root);
   const shown = found.slice(0, MATCHES);
 
   return Promise.all(
     shown.map(async (element, index) => {
-      const { position, attributes, ...facts } = element;
-      const match: WhereMatch = { ...facts, ...(position ? { position } : {}), ...(by === 'id' ? { attributes } : {}) };
-      if (!ts || !position || index >= SNIPPETS) {
-        return match;
+      const { elementId, type, rootId, classes, content, at, position, attributes } = element;
+      const match: WhereMatch = {
+        elementId,
+        type,
+        rootId,
+        classes,
+        ...(content === undefined ? {} : { content }),
+        ...(at === undefined ? {} : { at }),
+        ...(position ? { position } : {}),
+        ...(by === 'id' ? { attributes } : {})
+      };
+      const sharers = position
+        ? (calls.get(positionKey(position)) ?? []).filter(other => other.elementId !== elementId)
+        : [];
+      const through = callsThrough(element, sharers);
+      if (by === 'id' && through.length > 0) {
+        match.through = through;
       }
 
-      const file = path.resolve(process.cwd(), position.file);
-      const text = await fs.readFile(file, 'utf-8').catch(() => undefined);
-      const code =
-        text === undefined
-          ? undefined
-          : callTextAt(ts, ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS), position);
+      const own = sharers.length > 0 ? through.find(call => !call.sharedWith) : undefined;
+      if (sharers.length > 0) {
+        match.sharedWith = sharers.map(sharer => sharer.elementId);
+      }
 
-      return code === undefined ? match : { ...match, code: snippet(code) };
+      if (!ts || !position || index >= SNIPPETS) {
+        return own ? { ...match, ownCall: { at: own.at } } : match;
+      }
+
+      const code = await codeAt(ts, position);
+      const ownCode = own && (await codeAt(ts, own.position));
+
+      return {
+        ...match,
+        ...(code === undefined ? {} : { code: snippet(code) }),
+        ...(own ? { ownCall: { at: own.at, ...(ownCode === undefined ? {} : { code: snippet(ownCode) }) } } : {})
+      };
     })
   );
 };
@@ -199,7 +284,7 @@ export const whereAnswer = async (root: string, query: string, by?: WhereReading
   return {
     query,
     by: matched.by,
-    matches: await withCode(root, matched.found, matched.by),
+    matches: await withCode(root, matched.found, matched.by, byCall(elements)),
     ...(matched.found.length > MATCHES ? { more: matched.found.length - MATCHES } : {}),
     ...(matched.also.length > 0 ? { also: matched.also } : {})
   };
@@ -207,7 +292,16 @@ export const whereAnswer = async (root: string, query: string, by?: WhereReading
 
 const matchText = (match: WhereMatch): string[] => [
   `${match.elementId} (${match.type}) — ${match.at ?? 'no call of the project writes it: a page’s own root, or a part of a component'}`,
-  ...(match.code ? match.code.split('\n').map(line => `    ${line}`) : [])
+  ...(match.code ? match.code.split('\n').map(line => `    ${line}`) : []),
+  ...(match.sharedWith
+    ? [`    The same call also writes ${match.sharedWith.join(', ')}: an edit there changes every one.`]
+    : []),
+  ...(match.ownCall
+    ? [
+        `    Its own call is ${match.ownCall.at}:`,
+        ...(match.ownCall.code ? match.ownCall.code.split('\n').map(line => `      ${line}`) : [])
+      ]
+    : [])
 ];
 
 /** The next command, when there is one obvious one. */

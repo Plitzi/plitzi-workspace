@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { matchElements } from './where';
+import { byCall, callsThrough, matchElements } from './where';
 
 import type { WrittenElement } from '@plitzi/sdk-authoring';
 
@@ -9,6 +9,8 @@ const element = (elementId: string, classes: string[], content?: string): Writte
   type: 'text',
   rootId: 'home',
   classes,
+  templates: [],
+  through: [],
   attributes: {},
   ...(content === undefined ? {} : { content })
 });
@@ -42,7 +44,58 @@ describe('what plitzi where finds', () => {
     expect(matchElements(withCta, 'cta', 'class')).toBeUndefined();
   });
 
+  // What a visitor reads is searched for by those words, whether the element holds them or a template writes them.
+  it('finds words a binding’s template writes', () => {
+    const quoted = (words: string): string => `'${words}'`;
+    const greeting = {
+      ...element('greeting', []),
+      templates: [`{{ user ? ${quoted('Welcome back')} : ${quoted('Reading as a guest')} }}`]
+    };
+
+    expect(matchElements([greeting], 'reading as a guest')).toMatchObject({
+      by: 'text',
+      found: [{ elementId: 'greeting' }]
+    });
+  });
+
   it('finds nothing for what nothing is', () => {
     expect(matchElements(elements, 'pricing')).toBeUndefined();
+  });
+
+  // A helper called twice writes two elements from one call: an edit there changes both, and that is said.
+  it('knows the elements one call writes', () => {
+    const at = { file: 'src/space/brand.ts', line: 30, column: 3 };
+    const calls = byCall([
+      { ...element('site-brand', []), position: at },
+      { ...element('site-footer-brand', []), position: at },
+      { ...element('hero-title', []), position: { ...at, line: 12 } }
+    ]);
+
+    expect(calls.get('src/space/brand.ts:30:3')?.map(found => found.elementId)).toEqual([
+      'site-brand',
+      'site-footer-brand'
+    ]);
+    expect(calls.get('src/space/brand.ts:12:3')?.map(found => found.elementId)).toEqual(['hero-title']);
+  });
+
+  // `pageHead(…)` writes every page's title from one call; what tells them apart is where each page calls it.
+  it('tells the calls that lead to one element alone from those it shares', () => {
+    const at = (file: string, line: number) => ({ file, line, column: 5 });
+    const written = at('src/space/parts/pageHead.ts', 32);
+    const about = {
+      ...element('about-head-title', []),
+      position: written,
+      through: [at('src/space/pages/about.ts', 17), at('src/space/index.ts', 3)]
+    };
+    const writers = {
+      ...element('writers-head-title', []),
+      position: written,
+      through: [at('src/space/pages/writers.ts', 72), at('src/space/index.ts', 3)]
+    };
+
+    expect(callsThrough(about, [writers])).toEqual([
+      { at: 'src/space/pages/about.ts:17', position: about.through[0] },
+      { at: 'src/space/index.ts:3', position: about.through[1], sharedWith: ['writers-head-title'] }
+    ]);
   });
 });

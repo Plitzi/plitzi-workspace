@@ -57,34 +57,40 @@ export interface WrittenPosition {
 }
 
 /**
- * The call in the author's own code that wrote `spec` — the factory's name at that line and column, which tells it
- * apart from another call on the same line. What a fix edits the source at.
+ * Every call of the author's own code on the way to `spec`, the one that wrote it first and then each that called it —
+ * a helper (`pageHead(…)`) and where it was called. Each is the function's name at its line and column, which tells
+ * it apart from another call on the same line.
  */
-export const writtenAtPosition = (spec: unknown): WrittenPosition | undefined => {
+export const writtenCalls = (spec: unknown): WrittenPosition[] => {
   const marker: unknown = typeof spec === 'object' && spec !== null ? Reflect.get(spec, WRITTEN_AT) : undefined;
   if (!(marker instanceof Error) || !marker.stack) {
-    return undefined;
+    return [];
   }
 
   const cwd = workingDirectory();
-  for (const line of marker.stack.split('\n').slice(1)) {
-    const match = FRAME.exec(line.trim());
-    if (!match) {
-      continue;
-    }
 
-    const file = match[1].replace(/^file:\/\//, '');
-    if (!isOwnFrame(file)) {
-      return {
-        file: cwd && file.startsWith(cwd) ? file.slice(cwd.length) : file,
-        line: Number(match[2]),
-        column: Number(match[3])
-      };
-    }
-  }
+  return marker.stack
+    .split('\n')
+    .slice(1)
+    .flatMap(line => {
+      const match = FRAME.exec(line.trim());
+      const file = match?.[1].replace(/^file:\/\//, '');
+      if (!match || !file || isOwnFrame(file)) {
+        return [];
+      }
 
-  return undefined;
+      return [
+        {
+          file: cwd && file.startsWith(cwd) ? file.slice(cwd.length) : file,
+          line: Number(match[2]),
+          column: Number(match[3])
+        }
+      ];
+    });
 };
+
+/** The call in the author's own code that wrote `spec`: what a fix edits the source at. */
+export const writtenAtPosition = (spec: unknown): WrittenPosition | undefined => writtenCalls(spec).at(0);
 
 /** The first frame of the author's own code that wrote `spec`, relative to the working directory; or nothing. */
 export const writtenAt = (spec: unknown): string | undefined => {

@@ -184,7 +184,9 @@ const editKey = (
     }
 
     if (!ts.isPropertyAssignment(property) || !isLiteral(ts, property.initializer)) {
-      return { unplaced: `\`${edit.key}\` is not written as a value there` };
+      return {
+        unplaced: `\`${edit.key}\` is written as \`${property.getText(sourceFile)}\` there: change it where that is given`
+      };
     }
 
     return one({
@@ -469,6 +471,20 @@ export const callTextAt = (
 ): string | undefined => callAt(ts, sourceFile, position.line, position.column)?.getText(sourceFile);
 
 /**
+ * Words handed first, before the props, are the content (`heading(title, { … })`): a `content` added to the props
+ * would win over them and leave them written for nothing, so they are what an edit of the content changes.
+ */
+const wordsOf = (ts: Ts, call: TypeScript.CallExpression): TypeScript.Expression | undefined => {
+  const first = call.arguments.at(0);
+  const second = call.arguments.at(1);
+  if (!first || ts.isObjectLiteralExpression(first) || ts.isArrayLiteralExpression(first)) {
+    return undefined;
+  }
+
+  return ts.isStringLiteral(first) || ts.isNoSubstitutionTemplateLiteral(first) || second ? first : undefined;
+};
+
+/**
  * An attribute set — or removed, with no value — where the element was written: `plitzi edit`. `content` written as the
  * factory's first argument (`text('Hi', { … })`) is replaced there; anything else is a key of its props, edited as a
  * fix edits it.
@@ -485,13 +501,19 @@ export const attributeEdit = (
     return { unplaced: 'the call that wrote it is not where it was' };
   }
 
-  const first = call.arguments.at(0);
-  if (key === 'content' && first && (ts.isStringLiteral(first) || ts.isNoSubstitutionTemplateLiteral(first))) {
+  const words = key === 'content' ? wordsOf(ts, call) : undefined;
+  if (words) {
+    if (!ts.isStringLiteral(words) && !ts.isNoSubstitutionTemplateLiteral(words)) {
+      return {
+        unplaced: `\`content\` is written as \`${words.getText(sourceFile)}\` there: change it where that is given`
+      };
+    }
+
     if (value === undefined) {
       return { unplaced: '`content` is the call’s first argument there: remove it from the call by hand' };
     }
 
-    return one({ start: first.getStart(sourceFile), end: first.getEnd(), text: literalText(value) });
+    return one({ start: words.getStart(sourceFile), end: words.getEnd(), text: literalText(value) });
   }
 
   return sourceEdit(
@@ -500,6 +522,191 @@ export const attributeEdit = (
     position,
     value === undefined ? { on: 'attribute', op: 'remove', key } : { on: 'attribute', op: 'set', key, value }
   );
+};
+
+/** A value handed to a helper: by its place among the arguments, and by its key when they are one object of props. */
+export interface ArgumentSlot {
+  helper: string;
+  argument: number;
+  key?: string;
+}
+
+/** Where a value is written in a call: an attribute of the element a factory writes, or an argument of a helper. */
+export type ValueSlot = { attribute: string } | ArgumentSlot;
+
+/** A value written as a parameter of the helper the call is in, and where the helper's caller hands it. */
+export interface ParameterGiven {
+  name: string;
+  slot: ArgumentSlot;
+  /** How many times the helper reads it: more than once, what is handed there is more than this one value. */
+  uses: number;
+}
+
+const calleeName = (ts: Ts, call: TypeScript.CallExpression): string | undefined => {
+  const callee = ts.isPropertyAccessExpression(call.expression) ? call.expression.name : call.expression;
+
+  return ts.isIdentifier(callee) ? callee.text : undefined;
+};
+
+/** What a property holds as written: its value, or the name a shorthand reads. */
+const propertyValue = (ts: Ts, property: Property | undefined): TypeScript.Expression | undefined => {
+  if (property && ts.isPropertyAssignment(property)) {
+    return property.initializer;
+  }
+
+  return property && ts.isShorthandPropertyAssignment(property) ? property.name : undefined;
+};
+
+/** The expression a slot is written as in a call: nothing when the call does not write it. */
+const slotExpression = (
+  ts: Ts,
+  call: TypeScript.CallExpression,
+  slot: ValueSlot
+): TypeScript.Expression | undefined => {
+  if ('attribute' in slot) {
+    const words = slot.attribute === 'content' ? wordsOf(ts, call) : undefined;
+    const props = propsOf(ts, call);
+    const attributes = props && objectAt(ts, props, 'attributes');
+
+    return (
+      words ??
+      propertyValue(
+        ts,
+        (props && findProperty(ts, props, slot.attribute)) ??
+          (attributes && findProperty(ts, attributes, slot.attribute))
+      )
+    );
+  }
+
+  const argument = calleeName(ts, call) === slot.helper ? call.arguments.at(slot.argument) : undefined;
+  if (!argument || slot.key === undefined) {
+    return argument;
+  }
+
+  return ts.isObjectLiteralExpression(argument) ? propertyValue(ts, findProperty(ts, argument, slot.key)) : undefined;
+};
+
+type FunctionLike = TypeScript.ArrowFunction | TypeScript.FunctionExpression | TypeScript.FunctionDeclaration;
+
+/** The function a call is written in, and the name it is called by — a declaration's, or the variable's it is held in. */
+const enclosingFunction = (ts: Ts, node: Node): { fn: FunctionLike; name: string } | undefined => {
+  const at = ts.findAncestor(
+    node.parent,
+    (ancestor): ancestor is FunctionLike =>
+      ts.isArrowFunction(ancestor) || ts.isFunctionExpression(ancestor) || ts.isFunctionDeclaration(ancestor)
+  );
+  if (!at) {
+    return undefined;
+  }
+
+  const holder = at.parent;
+  const name = ts.isFunctionDeclaration(at)
+    ? at.name?.text
+    : ts.isVariableDeclaration(holder) && ts.isIdentifier(holder.name)
+      ? holder.name.text
+      : undefined;
+
+  return name === undefined ? undefined : { fn: at, name };
+};
+
+/** Every place the function reads a name: never a key written beside a value, nor a property of something else. */
+const readsOf = (ts: Ts, fn: FunctionLike, name: string): number => {
+  let reads = 0;
+  const visit = (node: Node): void => {
+    const parent = node.parent;
+    const isKey =
+      (ts.isPropertyAssignment(parent) && parent.name === node) ||
+      (ts.isPropertyAccessExpression(parent) && parent.name === node);
+    if (ts.isIdentifier(node) && node.text === name && !isKey) {
+      reads += 1;
+    }
+
+    ts.forEachChild(node, visit);
+  };
+  if (fn.body) {
+    visit(fn.body);
+  }
+
+  return reads;
+};
+
+/**
+ * The parameter of the helper a call is in that a slot is written as — `heading(title, { … })` inside
+ * `pageHead(id, kicker, title, line)` — and where its caller hands it: the value the visitor reads is decided there.
+ */
+export const parameterBehind = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>,
+  slot: ValueSlot
+): ParameterGiven | undefined => {
+  const call = callAt(ts, sourceFile, position.line, position.column);
+  const expression = call && slotExpression(ts, call, slot);
+  const helper = call && expression && ts.isIdentifier(expression) ? enclosingFunction(ts, call) : undefined;
+  if (!helper || !expression || !ts.isIdentifier(expression)) {
+    return undefined;
+  }
+
+  const name = expression.text;
+  for (const [argument, parameter] of helper.fn.parameters.entries()) {
+    if (ts.isIdentifier(parameter.name) && parameter.name.text === name) {
+      return { name, slot: { helper: helper.name, argument }, uses: readsOf(ts, helper.fn, name) };
+    }
+
+    const element = ts.isObjectBindingPattern(parameter.name)
+      ? parameter.name.elements.find(
+          binding => !binding.dotDotDotToken && ts.isIdentifier(binding.name) && binding.name.text === name
+        )
+      : undefined;
+    if (element) {
+      const key = element.propertyName && ts.isIdentifier(element.propertyName) ? element.propertyName.text : name;
+
+      return { name, slot: { helper: helper.name, argument, key }, uses: readsOf(ts, helper.fn, name) };
+    }
+  }
+
+  return undefined;
+};
+
+/** A value set — or removed — where a slot is written: an element's attribute, or what a helper's caller hands it. */
+export const slotEdit = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>,
+  slot: ValueSlot,
+  value: string | number | boolean | undefined
+): EditOutcome => {
+  if ('attribute' in slot) {
+    return attributeEdit(ts, sourceFile, position, slot.attribute, value);
+  }
+
+  const call = callAt(ts, sourceFile, position.line, position.column);
+  if (!call || calleeName(ts, call) !== slot.helper) {
+    return { unplaced: `\`${slot.helper}(…)\` is not called where it was` };
+  }
+
+  if (value === undefined) {
+    return { unplaced: `it is handed to \`${slot.helper}\` there: take it out of the call by hand` };
+  }
+
+  const argument = call.arguments.at(slot.argument);
+  if (!argument) {
+    return { unplaced: `\`${slot.helper}\` is not handed it there` };
+  }
+
+  if (slot.key !== undefined) {
+    return ts.isObjectLiteralExpression(argument)
+      ? editKey(ts, sourceFile, argument, undefined, { on: 'field', op: 'set', key: slot.key, value })
+      : {
+          unplaced: `\`${slot.helper}\` is handed \`${argument.getText(sourceFile)}\` there: change it where that is given`
+        };
+  }
+
+  return isLiteral(ts, argument)
+    ? one({ start: argument.getStart(sourceFile), end: argument.getEnd(), text: literalText(value) })
+    : {
+        unplaced: `\`${slot.helper}\` is handed \`${argument.getText(sourceFile)}\` there: change it where that is given`
+      };
 };
 
 /** The text with every change made — from the end back, so each span is where it was found. Overlaps are refused. */

@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 
 import chalk from 'chalk';
 
+import { closest } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { findProject } from './existingProject';
@@ -14,11 +15,12 @@ import { fail } from './terminal';
 import { whereAnswer } from './where';
 import { unifiedDiff } from '../fix/diff';
 import { formatLikeBefore } from '../fix/format';
-import { applyChanges, attributeEdit } from '../fix/sourceEdits';
+import { applyChanges, parameterBehind, slotEdit } from '../fix/sourceEdits';
 import { loadTypeScript } from '../projectTypeScript';
 
-import type { WhereAnswer } from './where';
-import type { TextChange } from '../fix/sourceEdits';
+import type { WhereAnswer, WhereCall } from './where';
+import type { TextChange, ValueSlot } from '../fix/sourceEdits';
+import type TypeScript from 'typescript';
 
 /**
  * `plitzi edit <id>`: an element's attributes changed where the project's code writes it — the call `plitzi where`
@@ -33,6 +35,8 @@ import type { TextChange } from '../fix/sourceEdits';
 export interface EditOptions {
   set?: string[];
   remove?: string[];
+  /** The call writes other elements too — a helper called more than once — and the change is meant for every one. */
+  every?: boolean;
   json?: boolean;
 }
 
@@ -42,6 +46,21 @@ interface Change {
   key: string;
   /** Absent: the attribute is removed. */
   value?: Value;
+}
+
+/** A file of the project as it was read, and the changes an edit makes to it. */
+interface Source {
+  file: string;
+  before: string;
+  sourceFile: TypeScript.SourceFile;
+  edits: TextChange[];
+}
+
+/** A change, and the call it is made in: the element's own, or one that hands a helper its value. */
+interface Placed {
+  change: Change;
+  call: WhereCall;
+  slot: ValueSlot;
 }
 
 const run = promisify(execFile);
@@ -194,57 +213,175 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
   }
 
   const changes: Change[] = [...parsed.changes, ...(options.remove ?? []).map(key => ({ key }))];
-  const file = path.resolve(process.cwd(), position.file);
-  const before = await fs.readFile(file, 'utf-8');
-  const sourceFile = ts.createSourceFile(file, before, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const edits: TextChange[] = [];
-  const unplaced: string[] = [];
-  for (const change of changes) {
-    const outcome = attributeEdit(ts, sourceFile, position, change.key, change.value);
-    if ('unplaced' in outcome) {
-      unplaced.push(`\`${change.key}\`: ${outcome.unplaced}`);
-    } else {
-      edits.push(...outcome.changes);
-    }
-  }
-
-  const changed = unplaced.length === 0 ? applyChanges(before, edits) : undefined;
-  if (changed === undefined) {
+  // Only what the element has as an attribute: an option of the factory that wrote it (`as`, `from`) is how the call
+  // builds the element, not one of its attributes, and an edit of it could not be checked — said before anything is.
+  const attributes = Object.keys(element.attributes ?? {});
+  const unknown = changes.filter(change => !attributes.includes(change.key));
+  if (unknown.length > 0) {
     await refuse(
       [
-        `Nothing was changed in ${element.at}:`,
-        ...(unplaced.length > 0 ? unplaced : ['two of the changes touch the same place']).map(line => `  - ${line}`),
-        `Edit the call there by hand — \`plitzi where ${elementId}\` shows it.`
+        `Nothing was changed: a ${element.type} has no attribute ${unknown
+          .map(change => {
+            const nearest = closest(change.key, attributes);
+
+            return `\`${change.key}\`${nearest ? ` (did you mean \`${nearest}\`?)` : ''}`;
+          })
+          .join(', ')}. It has ${attributes.join(', ')}.`,
+        `What the call is written with besides its attributes is edited by hand, at ${element.at ?? 'the call'} — \`plitzi where ${elementId} --by id\` shows it.`
       ].join('\n')
     );
 
     return;
   }
 
-  const after = await formatLikeBefore(await projectFormatter(project.root), position.file, before, changed);
-  await fs.writeFile(file, after);
-  const reasons = missing(await authoredAfresh(elementId), elementId, changes);
-  if (reasons.length > 0) {
-    await fs.writeFile(file, before);
+  const sources = new Map<string, Source>();
+  const sourceOf = async (file: string): Promise<Source> => {
+    const known = sources.get(file);
+    if (known) {
+      return known;
+    }
+
+    const at = path.resolve(process.cwd(), file);
+    const before = await fs.readFile(at, 'utf-8');
+    const source = {
+      file,
+      before,
+      sourceFile: ts.createSourceFile(at, before, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS),
+      edits: []
+    };
+    sources.set(file, source);
+
+    return source;
+  };
+
+  const calls: WhereCall[] = [
+    { at: element.at ?? position.file, position, ...(element.sharedWith ? { sharedWith: element.sharedWith } : {}) },
+    ...(element.through ?? [])
+  ];
+  // Where each change is made: the element's own call, or — when it is written there as a helper's parameter — where
+  // the helper is handed it, followed up as far as the project's code hands it on.
+  const place = async (change: Change): Promise<Placed | { unplaced: string }> => {
+    let slot: ValueSlot = { attribute: change.key };
+    for (const [depth, call] of calls.entries()) {
+      const { sourceFile } = await sourceOf(call.position.file);
+      const given = parameterBehind(ts, sourceFile, call.position, slot);
+      if (!given) {
+        return { change, call, slot };
+      }
+
+      if (given.uses > 1) {
+        return {
+          unplaced: `\`${change.key}\` is \`${given.name}\` there, which \`${given.slot.helper}\` reads ${String(given.uses)} times: what it is handed is more than ${elementId}’s \`${change.key}\``
+        };
+      }
+
+      if (depth === calls.length - 1) {
+        return {
+          unplaced: `\`${change.key}\` is \`${given.name}\` there, and no call of the project hands it to \`${given.slot.helper}\``
+        };
+      }
+
+      slot = given.slot;
+    }
+
+    return { unplaced: 'the call that wrote it is not where it was' };
+  };
+
+  const placed: Placed[] = [];
+  const unplaced: string[] = [];
+  for (const change of changes) {
+    const outcome = await place(change);
+    if ('unplaced' in outcome) {
+      unplaced.push(`\`${change.key}\`: ${outcome.unplaced}`);
+    } else {
+      placed.push(outcome);
+    }
+  }
+
+  // A call that writes more than one element changes them all: never done unasked, the agent would not know it had.
+  const shared = placed.filter(({ call }) => call.sharedWith);
+  if (shared.length > 0 && !options.every) {
     await refuse(
-      ['Nothing was changed — the file is as it was:', ...reasons.map(reason => `  - ${reason}`)].join('\n')
+      [
+        ...shared.map(
+          ({ change, call }) =>
+            `Nothing was changed: \`${change.key}\` is written in ${call.at}, which writes ${(call.sharedWith ?? []).join(', ')} too — an edit there changes every one.`
+        ),
+        `For all of them, add --every. For ${elementId} alone, hand it its own value where the helper is called, by hand — \`plitzi where ${elementId} --by id\` shows its own call.`
+      ].join('\n')
     );
 
     return;
   }
 
+  for (const { change, call, slot } of placed) {
+    const source = await sourceOf(call.position.file);
+    const outcome = slotEdit(ts, source.sourceFile, call.position, slot, change.value);
+    if ('unplaced' in outcome) {
+      unplaced.push(`\`${change.key}\`: ${outcome.unplaced}`);
+    } else {
+      source.edits.push(...outcome.changes);
+    }
+  }
+
+  const changed = [...sources.values()]
+    .filter(source => source.edits.length > 0)
+    .map(source => ({ source, after: unplaced.length === 0 ? applyChanges(source.before, source.edits) : undefined }));
+  if (unplaced.length > 0 || changed.some(({ after }) => after === undefined)) {
+    await refuse(
+      [
+        `Nothing was changed in ${element.at}:`,
+        ...(unplaced.length > 0 ? unplaced : ['two of the changes touch the same place']).map(line => `  - ${line}`),
+        `Edit the call there by hand — \`plitzi where ${elementId} --by id\` shows it.`
+      ].join('\n')
+    );
+
+    return;
+  }
+
+  const formatter = await projectFormatter(project.root);
+  const written: { file: string; before: string; after: string }[] = [];
+  for (const { source, after } of changed) {
+    if (after !== undefined) {
+      const formatted = await formatLikeBefore(formatter, source.file, source.before, after);
+      await fs.writeFile(path.resolve(process.cwd(), source.file), formatted);
+      written.push({ file: source.file, before: source.before, after: formatted });
+    }
+  }
+
+  const reasons = missing(await authoredAfresh(elementId), elementId, changes);
+  if (reasons.length > 0) {
+    await Promise.all(written.map(({ file, before }) => fs.writeFile(path.resolve(process.cwd(), file), before)));
+    await refuse(
+      [
+        `Nothing was changed — ${written.length > 1 ? 'the files are' : 'the file is'} as it was:`,
+        ...reasons.map(reason => `  - ${reason}`)
+      ].join('\n')
+    );
+
+    return;
+  }
+
+  const alsoChanged = [...new Set(placed.flatMap(({ call }) => call.sharedWith ?? []))];
   if (options.json) {
-    console.log(JSON.stringify({ elementId, at: element.at, changes }));
+    console.log(
+      JSON.stringify({
+        elementId,
+        changes: placed.map(({ change, call }) => ({ ...change, at: call.at })),
+        ...(alsoChanged.length > 0 ? { alsoChanged } : {})
+      })
+    );
 
     return;
   }
 
   console.log(
     [
-      unifiedDiff(path.relative(process.cwd(), file), before, after),
+      ...written.map(({ file, before, after }) => unifiedDiff(file, before, after)),
       chalk.green(
-        `${elementId}: ${changes.map(change => change.key).join(', ')} written in ${element.at}; the space authors with it.`
+        `${elementId}: ${placed.map(({ change, call }) => `${change.key} in ${call.at}`).join(', ')}; the space authors with it.`
       ),
+      ...(alsoChanged.length > 0 ? [`The same call writes ${alsoChanged.join(', ')}: changed too.`] : []),
       'Next: plitzi check — the page as it renders now'
     ].join('\n')
   );
