@@ -150,7 +150,7 @@ when an install fails the CLI says which setting names it.
 (`assets.d.ts`, server mode) or the page's base styles (`preflight.css`, client mode), and a `README.md` saying what
 each folder of `src/` is. `src/main.ts`, the entry point, is the CLI's too, kept in `src/` where an entry point is
 looked for; `upgrade` keeps all of them current, and the build compiles `src/` into `dist/main.js`. In server mode it is a few lines: it authors the space
-(`authorSpace` with `projectAuthoring()` from `@plitzi/sdk-authoring/node`, what `author` checks it against too) and hands
+(`authorProjectSpace` from `@plitzi/sdk-authoring/node`, which reads `src/space/` as `author` reads it) and hands
 it, the actions and the options to `serveProject` from `@plitzi/sdk-server/project`, which wires the rest from where the
 project keeps it — so a fix to the server arrives with `npm update`, not as a file to upgrade. Neither is told where the
 project is: it is the folder every script runs in, and both refuse to start anywhere else, naming what is missing

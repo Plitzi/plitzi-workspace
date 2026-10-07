@@ -31,6 +31,11 @@
   declarations, its built plugins, its data files — once, for the server and `npm run author` alike. Neither it nor
   `serveProject` takes a root: it is the working directory, where every script runs (`projectAuthoringAt(root)` for a
   tool working on another folder).
+- **`authorProjectSpace` and `projectSpace()` in `@plitzi/sdk-authoring/node`**: the project's space read from
+  `src/space/index.ts` — `dist/space/index.js` when the server runs built — once its root and layout are checked, and
+  authored. `src/main.ts` is `serveProject({ space: authorProjectSpace, actions, connectors, serverOptions })`, with no
+  import of the space; `plitzi/author.ts`, the visual tests and the CLI's checks read it the same way. A module that
+  exports no `space` is refused saying what to export (`ProjectSpaceError`).
 - **`.env` lives at the root and Node reads it** as each script starts (`--env-file-if-exists=.env`; `start:dev`
   preloads `@plitzi/sdk-server/env`, since a watched process would restart on every change beside the file). Settings
   read at the top level of `src/config/serverOptions.ts` or the actions are set. Every project gets `.env` and
@@ -104,7 +109,7 @@
 - **Markdown takes a class for each part of the document** through its own slot (`heading`, `paragraph`, `link`,
   `list`, `listItem`, `quote`, `code`, `codeBlock`, `image`, `table`, `anchor`), and `headingLinks: false` drops the
   link each heading offers to itself while keeping its id, so `/page#anchor` links still work. Its description spells
-  out the HTML it outputs. Needs `@plitzi/plitzi-ui` 1.6.32.
+  out the HTML it outputs.
 - **Tabs show every trigger.** The SDK hid every inactive tab item, the header's included, so a set of tabs showed
   one tab and no way to the others; only the body's panels take turns now.
 - **A link that names a query is current only on that query**: of `/?window=6h` and `/?window=24h`, the one shown
@@ -137,8 +142,10 @@
 - **`pagination`**: `previous`, `page` (the one shown is its `current` state), `next`, `loadMore`.
 - **`richText`** and **`markdown`**: a slot per part — `heading` and `heading1`…`heading6`, `strong`, `emphasis`,
   `divider`, `tableHead`, `tableRow`, `tableHeaderCell`, `tableCell`, and the code block's frame, header, language and
-  copy button. The GitHub stylesheet plitzi-ui shipped for markdown is gone: the builder renders a document as the page
-  does. Needs `@plitzi/plitzi-ui` after 1.6.32.
+  copy button. Both heading slots dress one `<h3>`, so `heading-level-overridden` warns when they set the same property
+  and the stylesheet's order makes the general one win. A document is drawn by the SDK's own renderer
+  (`MarkdownDocument` in `@plitzi/sdk-elements`), with no stylesheet of its own: plitzi-ui's `Markdown` keeps GitHub's,
+  which no longer reaches a space, so what the space writes on each part is what shows — in the builder as on the page.
 - `custom-css-slot` suggests the slot for a `customCss` rule on a part's SDK class — only where a class on the slot can
   say the rest of the selector (a state, a pseudo-element); `element-slot-unknown` warns of a slot an element does not
   have.

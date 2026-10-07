@@ -186,6 +186,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `form-control-name-taken` | two controls in one form with one name — one overwrites the other | a name each |
 | `form-control-unnamed` | a control in a form with no `name` — its value never reaches `values` | `formControl({ name: 'email', … })` |
 | `form-value-compared-to-blank` | a `when` comparing a submitted field to `""` — a field nobody typed in is not sent | `operator: 'empty'` / `'notEmpty'` |
+| `heading-level-overridden` | a markdown's or richText's `heading` slot and a level's (`heading3`) both setting one property, the general class written later in the stylesheet — the level's value is lost | set the property on one of the two: the level slot for that level alone, `heading` for every heading |
 | `heading-level-skipped` | an `h4` right after an `h2` — the outline misses a level | the next level down; size it with its class |
 | `image-without-alt` | an image that is not `decorative` and has no `alt` | say what it shows, or `decorative: true` |
 | `label-ignored` | a `label` on a container whose tag is named by what it holds (`li`, a heading) | the words inside, or a landmark tag (`nav`, `section`…) |

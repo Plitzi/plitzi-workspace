@@ -1,6 +1,6 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 
-import type { SchemaVariable } from '../types';
+import type { SchemaVariable, SchemaVariableValue } from '../types';
 
 /** What a variable's `subValues` are matched against — everything a `when` rule may name. */
 export type VariableScope = {
@@ -25,12 +25,12 @@ export type VariableScope = {
 export const resolveVariables = (
   variables: SchemaVariable[] | undefined,
   scope: VariableScope = {}
-): Record<string, unknown> => {
+): Record<string, SchemaVariableValue> => {
   if (!Array.isArray(variables)) {
     return {};
   }
 
-  return variables.reduce<Record<string, unknown>>((acum, variable) => {
+  return variables.reduce<Record<string, SchemaVariableValue>>((acum, variable) => {
     const { name, value, subValues } = variable;
     if (!Array.isArray(subValues) || subValues.length === 0) {
       return { ...acum, [name]: value };

@@ -8,7 +8,16 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 import { ProjectLayoutError } from '@plitzi/sdk-shared/project/layout';
 
 import { authorSpace } from '.';
-import { pluginDeclarations, projectAuthoring, projectAuthoringAt, projectData, publicData } from './node';
+import {
+  authorProjectSpace,
+  pluginDeclarations,
+  projectAuthoring,
+  projectAuthoringAt,
+  projectData,
+  ProjectSpaceError,
+  projectSpaceAt,
+  publicData
+} from './node';
 
 const root = mkdtempSync(path.join(tmpdir(), 'plitzi-public-data-'));
 mkdirSync(path.join(root, 'public/data'), { recursive: true });
@@ -189,5 +198,69 @@ describe('projectAuthoring', () => {
     );
 
     expect(authored.schema.definition.permanentUrl).toBe('shop');
+  });
+});
+
+describe('projectSpace', () => {
+  /** A project whose space module is `source`, in a folder of its own: a module is imported once per path. */
+  const projectWith = (source: string): string => {
+    const folder = mkdtempSync(path.join(tmpdir(), 'plitzi-project-space-'));
+    writeFileSync(path.join(folder, 'package.json'), '{}\n');
+    mkdirSync(path.join(folder, 'src/space'), { recursive: true });
+    writeFileSync(path.join(folder, 'src/space/index.ts'), source);
+
+    return folder;
+  };
+  const folders: string[] = [];
+
+  afterAll(() => {
+    folders.forEach(folder => {
+      rmSync(folder, { recursive: true, force: true });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('is the space src/space/index.ts exports, with what it is checked against', async () => {
+    const folder = projectWith(
+      "export const space = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', body: [] }] };\n"
+    );
+    folders.push(folder);
+    const { space, authoring } = await projectSpaceAt(folder);
+
+    expect(space.permanentUrl).toBe('shop');
+    expect(authoring.plugins).toEqual([]);
+  });
+
+  it('is authored whole for the project the process runs in — what its server serves', async () => {
+    const folder = projectWith(
+      "export const space = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', body: [] }] };\n"
+    );
+    folders.push(folder);
+    vi.spyOn(process, 'cwd').mockReturnValue(folder);
+
+    expect((await authorProjectSpace()).schema.definition.permanentUrl).toBe('shop');
+  });
+
+  // An export renamed or forgotten: said as what to export, not as `undefined` read three calls later.
+  it('refuses a space module that exports no space, saying what to export', async () => {
+    const folder = projectWith("export const site = { name: 'Shop' };\n");
+    folders.push(folder);
+    const refused = projectSpaceAt(folder);
+
+    await expect(refused).rejects.toBeInstanceOf(ProjectSpaceError);
+    await expect(refused).rejects.toThrow(
+      "src/space/index.ts exports no `space`: the space's declaration, `export const space: SpaceSpec = { name, permanentUrl, pages, … }`"
+    );
+  });
+
+  it('holds the layout first: a space folder with no index.ts is said as that, not as a module not found', async () => {
+    const folder = projectWith('');
+    folders.push(folder);
+    rmSync(path.join(folder, 'src/space/index.ts'));
+
+    await expect(projectSpaceAt(folder)).rejects.toBeInstanceOf(ProjectLayoutError);
   });
 });

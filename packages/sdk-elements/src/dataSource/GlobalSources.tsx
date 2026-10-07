@@ -2,13 +2,14 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
-import { evaluateComputed, resolveVariables } from '@plitzi/sdk-shared/dataSource';
+import { evaluateComputed } from '@plitzi/sdk-shared/dataSource';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
+import useResolvedVariables from '@plitzi/sdk-shared/dataSource/hooks/useResolvedVariables';
 import { flagValues, undeclaredFlagOverrides } from '@plitzi/sdk-shared/flags';
 import useFlagResolution from '@plitzi/sdk-shared/flags/useFlagResolution';
 import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
-import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/sdk-shared/store';
+import { useCommonStore, useCommonStoreSync } from '@plitzi/sdk-shared/store';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 
 import type { AuthContextValue, SourceField } from '@plitzi/sdk-shared';
@@ -21,29 +22,18 @@ export type GlobalSourcesProps = {
 
 // Mounts the global data sources at the right tree depth (under the Navigation/Auth/RuntimeState providers).
 const GlobalSources = ({ children }: GlobalSourcesProps) => {
-  const { environment } = useRenderSettings();
-
   // --- variables ---
-  const [[variables, routeParams, queryParams, hostname, origin, href, currentPageId, pendingLocation = '']] =
-    useCommonStore([
-      'schema.variables',
-      'navigation.routeParams',
-      'navigation.queryParams',
-      'navigation.hostname',
-      'navigation.origin',
-      'navigation.href',
-      'navigation.currentPageId',
-      'navigation.pendingLocation'
-    ]);
-  // Shared with the router, which needs the same answer BEFORE this provider exists: a page that redirects an
-  // unauthenticated visitor off-site decides not to render, so nothing below here ever runs to publish them.
-  // Resolved again whenever a route param changes, which is most navigations; most variables do not depend on one.
-  const variablesValue = useStableValue(
-    useMemo<Record<string, unknown>>(
-      () => resolveVariables(variables, { routeParams, queryParams, hostname, environment }),
-      [environment, hostname, queryParams, routeParams, variables]
-    )
-  );
+  const [[routeParams, queryParams, origin, href, currentPageId, pendingLocation = '']] = useCommonStore([
+    'navigation.routeParams',
+    'navigation.queryParams',
+    'navigation.origin',
+    'navigation.href',
+    'navigation.currentPageId',
+    'navigation.pendingLocation'
+  ]);
+  // The same answer the SDK's stylesheet and the router resolve for themselves (`useResolvedVariables`): both need it
+  // before this provider has published anything.
+  const variablesValue = useResolvedVariables();
   const variablesFields = useCallback(
     () => getPathsFromObeject(variablesValue).map(path => ({ path, name: `variables.${path}` })),
     [variablesValue]

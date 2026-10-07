@@ -12,6 +12,7 @@
  * authorSpace(space, { data: publicData(new URL('../public/', import.meta.url)) });   // bindings held to the files
  * authorSpace(space, { serverData: projectData(new URL('./data/', import.meta.url)) }); // …and read on the server only
  * authorSpace(space, await projectAuthoring());                                          // all of a CLI project's
+ * await authorProjectSpace();                                       // …and its own space, `src/space/index.ts`
  * ```
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -26,14 +27,16 @@ import {
   PLUGIN_MANIFEST_FILE,
   PLUGINS_DIR,
   PUBLIC_DIR,
+  SPACE_ENTRY,
   VENDOR_PLUGINS_DIR
 } from '@plitzi/sdk-shared/project/paths';
-import { checkProjectRoot, projectRoot } from '@plitzi/sdk-shared/project/root';
+import { checkProjectRoot, projectModule, projectRoot } from '@plitzi/sdk-shared/project/root';
 import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
 
+import { authorSpace } from './index';
 import { compactSvg } from './svg/compactSvg';
 
-import type { PluginDeclarationData } from './schema/types';
+import type { AuthoredSpace, PluginDeclarationData, SpaceSpec } from './schema/types';
 
 const pathOf = (where: string | URL): string => (where instanceof URL ? fileURLToPath(where) : where);
 
@@ -219,6 +222,68 @@ export const projectAuthoringAt = async (root: string): Promise<ProjectAuthoring
     ...(existsSync(serverData) ? { serverData: projectData(serverData) } : {}),
     data: publicData(path.join(at, PUBLIC_DIR))
   };
+};
+
+/** A project whose space module (`src/space/index.ts`) exports no space: its message says what to export. */
+export class ProjectSpaceError extends Error {
+  constructor(module: string) {
+    super(
+      `${module} exports no \`space\`: the space's declaration, \`export const space: SpaceSpec = { name, permanentUrl, pages, … }\` — what the server, \`npm run author\` and the CLI's checks read.`
+    );
+    this.name = 'ProjectSpaceError';
+  }
+}
+
+// A bundler renames a class it inlines, and a process that ends on the error prints the constructor's name beside its own.
+Object.defineProperty(ProjectSpaceError, 'name', { value: 'ProjectSpaceError' });
+
+/**
+ * What the module exports as `space`, taken as a declaration when it has the shape of one. `authorSpace` checks the
+ * rest of it, field by field, and says what is wrong — so this only has to tell a space from anything else.
+ */
+const isSpaceSpec = (value: unknown): value is SpaceSpec =>
+  isRecord(value) &&
+  typeof value.name === 'string' &&
+  typeof value.permanentUrl === 'string' &&
+  Array.isArray(value.pages);
+
+/** The space a project declares in `src/space/`, with what it is checked against (`projectAuthoring`). */
+export type ProjectSpaceSource = { space: SpaceSpec; authoring: ProjectAuthoring };
+
+/**
+ * `projectSpace` of the project at `root`, held to the same checks: for a tool that works on a project from another
+ * folder — the CLI, run anywhere inside one. A project's own code calls `projectSpace()` or `authorProjectSpace()`.
+ */
+export const projectSpaceAt = async (root: string): Promise<ProjectSpaceSource> => {
+  // First, as the server holds it: a space folder with no `index.ts` is said as that, every error of the layout with
+  // it, rather than as a module Node cannot find.
+  const authoring = await projectAuthoringAt(root);
+  // Compiled when the process runs what `build` emitted (`node dist/main.js`), which carries no TypeScript.
+  const module: unknown = await import(pathToFileURL(projectModule(root, SPACE_ENTRY, process.argv[1])).href);
+  const space = isRecord(module) ? module.space : undefined;
+  if (!isSpaceSpec(space)) {
+    throw new ProjectSpaceError(SPACE_ENTRY);
+  }
+
+  return { space, authoring };
+};
+
+/**
+ * The space of the project this process runs — `src/space/index.ts`'s `space` — with what it is checked against, once
+ * the project's root and layout are (`projectAuthoring`). Imported only then, so a factory that refuses what it is
+ * given as the space's files load is said like the rest — the message, not a stack. A module that exports no space is
+ * refused, saying what to export (`ProjectSpaceError`).
+ */
+export const projectSpace = async (): Promise<ProjectSpaceSource> => projectSpaceAt(projectRoot());
+
+/**
+ * The project's space, authored: what a project's server serves — `serveProject({ space: authorProjectSpace })` — and
+ * its visual tests read. `projectSpace`, then `authorSpace` with what it is checked against.
+ */
+export const authorProjectSpace = async (): Promise<AuthoredSpace> => {
+  const { space, authoring } = await projectSpace();
+
+  return authorSpace(space, authoring);
 };
 
 export { compactSvg } from './svg/compactSvg';

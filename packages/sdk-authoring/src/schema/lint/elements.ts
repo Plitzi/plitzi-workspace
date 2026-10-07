@@ -7,7 +7,7 @@ import { didYouMean } from '../suggest';
 import { textOf } from './context';
 import { checkGlobalRead } from './globalReads';
 import { checkPageTarget } from './pages';
-import { checkSlots } from './slots';
+import { checkHeadingLevels, checkSlots } from './slots';
 import { checkPropsRead, checkTemplate } from './templates';
 
 import type { LintContext } from './context';
@@ -692,6 +692,7 @@ export const lintElements = (ctx: LintContext): void => {
     checkIntent(ctx, element, where);
     checkSvgMarkup(ctx, element, where);
     checkSlots(ctx, element, where);
+    checkHeadingLevels(ctx, element, where);
     warnRouteParams(ctx, element, where);
   }
 

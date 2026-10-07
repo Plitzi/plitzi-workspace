@@ -1,7 +1,7 @@
 import { didYouMean } from '../suggest';
 
 import type { LintContext } from './context';
-import type { Element } from '@plitzi/sdk-shared';
+import type { Element, StyleItem, StyleObject, StyleValue } from '@plitzi/sdk-shared';
 
 /** What a slot the type does not have is answered with: the one it meant, and the ones there are. */
 const unknownSlot = (where: string, type: string, slot: string, slots: readonly string[]): string =>
@@ -56,6 +56,77 @@ export const lintTypeSlots = (ctx: LintContext): void => {
 
         reported.add(key);
         ctx.error('element-slot-unknown', unknownSlot(`\`elements.${type}.slots\``, type, slot, slots));
+      }
+    }
+  }
+};
+
+const LEVEL_SLOT = /^heading([1-6])$/;
+
+const classesOf = (selector: string | undefined): string[] => (selector ?? '').split(/\s+/).filter(Boolean);
+
+/** A class's own rules at one breakpoint — its base, and each of its states — by where they apply, property by property. */
+const classRules = (items: Record<string, StyleItem>, name: string): Map<string, Map<string, StyleValue>> => {
+  const item = Object.hasOwn(items, name) ? items[name] : undefined;
+  const base = item?.type === 'class' ? item.attributes.base : undefined;
+  const byProperty = (rules: StyleObject | undefined): Map<string, StyleValue> => new Map(Object.entries(rules ?? {}));
+
+  return new Map([
+    ['', byProperty(base?.default)],
+    ...Object.entries(base?.states ?? {}).map(([state, rules]): [string, Map<string, StyleValue>] => [
+      `:${state}`,
+      byProperty(rules)
+    ])
+  ]);
+};
+
+/**
+ * A heading wears its element's `heading` slot and its level's (`heading3`) at once — what every heading shares, and
+ * what its level changes. Where both set one property, the stylesheet's order decides, not the slots: the class written
+ * later wins, and an `<h3>` showing the size of every heading is the level's rule silently lost. Warned where the
+ * level's class is the one that loses.
+ */
+export const checkHeadingLevels = (ctx: LintContext, element: Element, where: string): void => {
+  const selectors = element.definition.styleSelectors;
+  const general = classesOf(selectors.heading);
+  if (general.length === 0) {
+    return;
+  }
+
+  for (const [slot, selector] of Object.entries(selectors)) {
+    const level = LEVEL_SLOT.exec(slot)?.[1];
+    if (!level) {
+      continue;
+    }
+
+    for (const [mode, items] of Object.entries(ctx.style.platform)) {
+      const order = Object.keys(items);
+      for (const levelClass of classesOf(selector)) {
+        for (const generalClass of general) {
+          if (order.indexOf(generalClass) < order.indexOf(levelClass)) {
+            continue;
+          }
+
+          const levelRules = classRules(items, levelClass);
+          for (const [state, rules] of classRules(items, generalClass)) {
+            const levelState = levelRules.get(state);
+            const lost = [...rules].find(
+              ([property, value]) => levelState?.has(property) && levelState.get(property) !== value
+            );
+            if (!lost) {
+              continue;
+            }
+
+            const [property, value] = lost;
+            ctx.warn(
+              'heading-level-overridden',
+              `${where}: its \`heading\` slot ("${generalClass}") and its \`${slot}\` slot ("${levelClass}") both set \`${property}\`${state ? ` in \`${state}\`` : ''} (${mode}), and "${generalClass}" is written later in the stylesheet — so every <h${level}> shows ${String(value)}, not ${String(levelState?.get(property))}. Set \`${property}\` on one of them only: on "${levelClass}" for the <h${level}> alone, on "${generalClass}" for every heading.`,
+              element.id
+            );
+
+            return;
+          }
+        }
       }
     }
   }

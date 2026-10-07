@@ -24,10 +24,10 @@ const declaration = elementDeclaration<RichTextAttributes>()({
       description:
         'Renders a body field coming from a CMS — HTML, markdown or plain text. Scripts and event handlers are ' +
         'stripped before rendering, so third-party content cannot execute. The parts of an HTML or markdown body take ' +
-        'a class through the slots a `markdown` has, by the same names: `heading` and `heading1`…`heading6`, ' +
-        '`paragraph`, `link`, `strong` (`strong`/`b`), `emphasis` (`em`/`i`), `list`, `listItem`, `quote`, `divider`, ' +
-        '`code` (inline), `codeBlock` (`pre`), `image`, `table`, `tableHead`, `tableRow`, `tableHeaderCell`, ' +
-        '`tableCell`; the fenced block of a markdown body also sits in `codeBlockFrame`, under `codeBlockHeader` with ' +
+        'a class through the slots a `markdown` has, by the same names: `heading` and `heading1`…`heading6` (a property ' +
+        'on one of the two, never both), `paragraph`, `link`, `strong` (`strong`/`b`), `emphasis` (`em`/`i`), ' +
+        '`list`, `listItem`, `quote`, `divider`, `code` (inline), `codeBlock` (`pre`), `image`, `table`, `tableHead`, ' +
+        '`tableRow`, `tableHeaderCell`, `tableCell`; the fenced block of a markdown body also sits in `codeBlockFrame`, under `codeBlockHeader` with ' +
         '`codeBlockLanguage` and `codeBlockCopy`. The SDK styles none of it.',
       items: [],
       bindings: {},

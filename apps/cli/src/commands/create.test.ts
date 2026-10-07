@@ -362,7 +362,7 @@ describe('the scaffold', () => {
         verbatimModuleSyntax: true,
         erasableSyntaxOnly: true
       });
-      expect(files['plitzi/author.ts']).toContain("import('../src/space/index.ts')");
+      expect(files['plitzi/author.ts']).toContain('await projectSpace()');
     }
 
     const server = JSON.parse(scaffold(answers({ mode: 'server' }))['package.json']) as {
@@ -396,7 +396,7 @@ describe('the scaffold', () => {
     // Built at boot from their source, by the server: never compiled ahead.
     expect(build.exclude).toEqual(['src/plugins', 'src/functions']);
     // The same project from `src/main.ts` and from `dist/main.js`: the folder its scripts run in.
-    expect(files['src/main.ts']).toContain('await projectAuthoring()');
+    expect(files['src/main.ts']).toContain('space: authorProjectSpace');
     expect(scaffold(answers({ mode: 'client' }))['tsconfig.build.json']).toBeUndefined();
   });
 
@@ -463,7 +463,7 @@ describe('the scaffold', () => {
       expect(files['src/space/pages/product.ts']).toContain("slug: 'products/:slug'");
       const data = mode === 'server' ? 'src/data/products.json' : 'public/data/products.json';
       expect(JSON.parse(files[data])).toHaveProperty('products');
-      expect(files['plitzi/author.ts']).toContain("import('../src/space/index.ts')");
+      expect(files['plitzi/author.ts']).toContain('await projectSpace()');
       expect(Object.keys(files).filter(file => file.startsWith('src/plugins/StatCard'))).toEqual([]);
     }
   });

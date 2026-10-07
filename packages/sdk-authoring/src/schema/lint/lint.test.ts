@@ -17,6 +17,7 @@ import {
   lintSpace,
   list,
   listItem,
+  markdown,
   text
 } from '../../index';
 import {
@@ -1417,6 +1418,39 @@ describe('lintSpace', () => {
       expect(unknown).toHaveLength(1);
       expect(unknown[0].message).toContain('"caret-blnk"');
       expect(unknown[0].message).toContain('did you mean "caret-blink"?');
+    });
+
+    it('heading-level-overridden', () => {
+      const headings = (classes: Record<string, { 'font-size': string } | { 'scroll-margin-top': string }>) =>
+        lintSpace(
+          authorSpace({
+            name: 'Docs',
+            permanentUrl: 'docs',
+            classes,
+            pages: [
+              {
+                id: 'home',
+                name: 'Home',
+                slug: '',
+                body: [
+                  markdown('## Hi', { id: 'doc', slots: { heading: 'prose-heading', heading2: 'prose-heading2' } })
+                ]
+              }
+            ]
+          })
+        ).warnings.filter(issue => issue.code === 'heading-level-overridden');
+
+      // The general class written after the level's: every <h2> shows the general size.
+      const lost = headings({ 'prose-heading2': { 'font-size': '26px' }, 'prose-heading': { 'font-size': '20px' } });
+      expect(lost).toHaveLength(1);
+      expect(lost[0].message).toContain('every <h2> shows 20px, not 26px');
+      // Written the other way round the level wins, and two classes that never share a property cannot disagree.
+      expect(headings({ 'prose-heading': { 'font-size': '20px' }, 'prose-heading2': { 'font-size': '26px' } })).toEqual(
+        []
+      );
+      expect(
+        headings({ 'prose-heading2': { 'font-size': '26px' }, 'prose-heading': { 'scroll-margin-top': '80px' } })
+      ).toEqual([]);
     });
 
     it('element-slot-unknown', () => {

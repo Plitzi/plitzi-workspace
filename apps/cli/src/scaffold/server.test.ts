@@ -37,9 +37,12 @@ describe('the server a project starts', () => {
 
     expect(main).toContain("import { serveProject } from '@plitzi/sdk-server/project';");
     expect(main).toContain(
-      "\nawait serveProject({\n  space: async () => authorSpace((await import('./space/index.ts')).space, await projectAuthoring()),\n  actions,\n  connectors,\n  serverOptions\n});\n"
+      '\nawait serveProject({ space: authorProjectSpace, actions, connectors, serverOptions });\n'
     );
-    expect(main.split('\n').filter(line => line.startsWith('import ')).length).toBe(5);
+    expect(main).toContain("import { authorProjectSpace } from '@plitzi/sdk-authoring/node';");
+    // The space is not one of them: `authorProjectSpace` reads it, once the layout is checked.
+    expect(main).not.toContain("from './space");
+    expect(main.split('\n').filter(line => line.startsWith('import ')).length).toBe(4);
     expect(gitignore(answers())).toContain('tmp\n');
   });
 
@@ -55,10 +58,8 @@ describe('the server a project starts', () => {
       expect(files['src/main.ts']).not.toContain('entry');
     }
 
-    expect(scaffold(answers())['plitzi/author.ts']).toContain('  options = await projectAuthoring();');
-    expect(scaffold(answers())['visual/home.spec.ts']).toContain(
-      'const { handles } = authorSpace(space, await projectAuthoring());'
-    );
+    expect(scaffold(answers())['plitzi/author.ts']).toContain('  project = await projectSpace();');
+    expect(scaffold(answers())['visual/home.spec.ts']).toContain('const { handles } = await authorProjectSpace();');
   });
 
   it('re-authors a saved space over IPC, writing nothing beside the source or in tmp/', () => {

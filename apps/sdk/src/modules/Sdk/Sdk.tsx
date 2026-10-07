@@ -4,8 +4,8 @@ import { use, useMemo, useRef, useCallback } from 'react';
 import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import useResolvedVariables from '@plitzi/sdk-shared/dataSource/hooks/useResolvedVariables';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
 import useImagesSync from '@plitzi/sdk-shared/server/actions/useImagesSync';
@@ -46,13 +46,15 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   const { assets } = use(PluginsContext);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const { rootRef } = use(ContainerRootContext);
-  const [[schemaSettings, styleCache, currentPageId, variables = emptyObject, fonts = NO_FONTS]] = useSdkStore([
+  const [[schemaSettings, styleCache, currentPageId, fonts = NO_FONTS]] = useSdkStore([
     'schema.settings',
     'style.cache',
     'navigation.currentPageId',
-    'runtime.sources.variables',
     'style.fonts'
   ]);
+  // Resolved here, not read from `runtime.sources.variables`: that is published below this, while the page renders,
+  // and the server would write this sheet without the variables that the browser hydrates it with.
+  const variables = useResolvedVariables();
   const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);

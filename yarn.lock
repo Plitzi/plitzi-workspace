@@ -3126,10 +3126,14 @@ __metadata:
     "@plitzi/sdk-navigation": "workspace:*"
     "@plitzi/sdk-schema": "workspace:*"
     "@plitzi/sdk-shared": "workspace:*"
+    "@types/react-syntax-highlighter": "npm:^15.5.13"
     clsx: "npm:^2.1.1"
     eslint: "npm:^9.39.5"
     immer: "npm:^11.1.21"
     react: "npm:^19.3.0"
+    react-markdown: "npm:^10.1.0"
+    react-syntax-highlighter: "npm:^16.1.1"
+    remark-gfm: "npm:^4.0.1"
     typescript: "npm:^6.0.3"
     vite: "npm:^8.3.2"
     vitest: "npm:^5.0.3"
@@ -4334,7 +4338,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:^19.3.0":
+"@types/react-syntax-highlighter@npm:^15.5.13":
+  version: 15.5.13
+  resolution: "@types/react-syntax-highlighter@npm:15.5.13"
+  dependencies:
+    "@types/react": "npm:*"
+  checksum: 10c0/e3bca325b27519fb063d3370de20d311c188ec16ffc01e5bc77bdf2d7320756725ee3d0246922cd5d38b75c5065a1bc43d0194e92ecf6556818714b4ffb0967a
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:*, @types/react@npm:^19.3.0":
   version: 19.3.0
   resolution: "@types/react@npm:19.3.0"
   dependencies:

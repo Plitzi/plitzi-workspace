@@ -57,6 +57,9 @@ describe('the space a CLI check authors', () => {
   it('is refused when the module exports no space by its name', async () => {
     await write('src/space/index.ts', 'export const site = {};\n');
 
-    expect(await loadProjectSpace(root)).toEqual({ problem: 'src/space/index.ts exports no `space`.' });
+    expect(await loadProjectSpace(root)).toEqual({
+      problem:
+        "src/space/index.ts exports no `space`: the space's declaration, `export const space: SpaceSpec = { name, permanentUrl, pages, … }` — what the server, `npm run author` and the CLI's checks read."
+    });
   });
 });

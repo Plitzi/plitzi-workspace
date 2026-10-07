@@ -7,8 +7,8 @@ import { finding } from './catalog';
 import { loadProjectSpace } from '../commands/projectSpace';
 
 import type { LintFinding } from './types';
-import type { ProjectSpace } from '../commands/projectSpace';
 import type { Suggestion } from '@plitzi/sdk-authoring';
+import type { ProjectSpaceSource } from '@plitzi/sdk-authoring/node';
 
 const AT = /^(.+):(\d+)$/;
 
@@ -64,7 +64,7 @@ const fromSuggestion = async (root: string, suggestion: Suggestion): Promise<Lin
  * Its warnings and refusals are not relayed: whether the space is valid is `npm run author`'s to say.
  */
 export const authoringFindings = async (root: string): Promise<LintFinding[]> => {
-  let project: ProjectSpace | { problem: string };
+  let project: ProjectSpaceSource | { problem: string };
   try {
     project = await loadProjectSpace(root);
   } catch (error) {

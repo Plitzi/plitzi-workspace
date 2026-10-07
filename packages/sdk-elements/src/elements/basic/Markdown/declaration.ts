@@ -20,10 +20,11 @@ const declaration = elementDeclaration<MarkdownAttributes>()({
       description:
         'Renders a Markdown source string (GitHub-flavoured) as HTML, inside a `div.markdown`. Each part of it takes a ' +
         'class through the slot named for it: `heading` (every `h1`–`h6`) and `heading1`…`heading6` (that level only, ' +
-        'beside it), `paragraph`, `link`, `strong`, `emphasis` (`em`), `list` (`ul`/`ol`), `listItem`, `quote` ' +
-        '(`blockquote`), `divider` (`hr`), `code` (inline), `image`, `table`, `tableHead` (`thead`), `tableRow`, ' +
-        '`tableHeaderCell` (`th`) and `tableCell` (`td`). A fenced block is `codeBlock` (its `pre`) in `codeBlockFrame`, ' +
-        'under `codeBlockHeader`, which holds `codeBlockLanguage` and the `codeBlockCopy` button. Every heading carries ' +
+        'beside it — a property goes on one of the two, never both), `paragraph`, `link`, `strong`, `emphasis` ' +
+        '(`em`), `list` (`ul`/`ol`), `listItem`, `quote` (`blockquote`), `divider` (`hr`), `code` (inline), `image`, ' +
+        '`table`, `tableHead` (`thead`), `tableRow`, `tableHeaderCell` (`th`) and `tableCell` (`td`). A fenced block ' +
+        'is `codeBlock` (its `pre`) in `codeBlockFrame`, under `codeBlockHeader`, which holds `codeBlockLanguage` and ' +
+        'the `codeBlockCopy` button. Every heading carries ' +
         'an id made of its words, which `/page#its-words` lands on, and starts with an empty link to itself — ' +
         '`a.anchor > span.octicon-link`, the `anchor` slot; `headingLinks: false` leaves the link out and keeps the id. ' +
         'The SDK styles none of it.',

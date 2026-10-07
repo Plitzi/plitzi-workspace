@@ -1,7 +1,7 @@
 import { planFixes, refusalOf } from '@plitzi/sdk-authoring';
 
-import type { ProjectSpace } from '../commands/projectSpace';
 import type { FixPlan, PlanProblem, PlannedFix } from '@plitzi/sdk-authoring';
+import type { ProjectSpaceSource } from '@plitzi/sdk-authoring/node';
 
 /** The plan for the project's space as it is on disk — or why there is none: it did not get as far as its documents. */
 export type ProjectPlan = FixPlan | { problem: string };
@@ -14,7 +14,7 @@ export const fixKey = (fix: Pick<PlannedFix, 'code' | 'elementId' | 'message'>):
 export const problemKey = (problem: Pick<PlanProblem, 'code' | 'elementId'>): string =>
   `${problem.code} ${problem.elementId ?? ''}`;
 
-export const projectPlan = ({ space, authoring }: ProjectSpace): ProjectPlan => {
+export const projectPlan = ({ space, authoring }: ProjectSpaceSource): ProjectPlan => {
   try {
     return planFixes(space, authoring);
   } catch (error) {

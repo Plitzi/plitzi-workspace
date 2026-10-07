@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-import type { MarkdownClassNames, MarkdownPart } from '@plitzi/plitzi-ui/Markdown';
+import type { MarkdownClassNames, MarkdownPart } from '../../../components/MarkdownDocument';
 
 /**
  * The part each tag of a body's HTML is, named as the parts of a Markdown document are, so one set of slots dresses

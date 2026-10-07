@@ -9,12 +9,12 @@ import {
   KV_FILE,
   PROJECT_TMP,
   PUBLIC_DIR,
-  RUNTIME_BUNDLE
+  RUNTIME_BUNDLE,
+  RUNTIME_ENTRY
 } from '@plitzi/sdk-shared/project/paths';
-import { projectRoot } from '@plitzi/sdk-shared/project/root';
+import { projectModule, projectRoot } from '@plitzi/sdk-shared/project/root';
 
 import { projectPlugins, watchProjectPlugins } from './plugins';
-import { runtimeModule } from './runtimeModule';
 import { watchSpace } from './watchSpace';
 import { createCloudAdapters } from '../../adapters/cloudAdapters';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
@@ -55,15 +55,20 @@ export type ProjectServerOptions = Partial<Omit<ServerConfig, SetByProject>> & {
   action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
 };
 
-/** A space authored in the project — `authorSpace(space, await projectAuthoring())` — and what it warned of. */
+/** A space authored in the project — `authorProjectSpace` of `@plitzi/sdk-authoring/node` — and what it warned of. */
 export type ProjectSpace = AuthoredDocuments & { warnings?: readonly { message: string }[] };
 
 /**
  * The errors whose message is the whole report — every problem, where it is and what to write instead — and whose
- * stack would only point inside the SDK: the project's root, its layout, a space that does not author. Told by name,
- * since each package that throws one carries its own copy of the class.
+ * stack would only point inside the SDK: the project's root, its layout, a space module with no space, a space that does
+ * not author. Told by name, since each package that throws one carries its own copy of the class.
  */
-const REPORTS: ReadonlySet<string> = new Set(['ProjectRootError', 'ProjectLayoutError', 'SpaceRefusedError']);
+const REPORTS: ReadonlySet<string> = new Set([
+  'ProjectRootError',
+  'ProjectLayoutError',
+  'ProjectSpaceError',
+  'SpaceRefusedError'
+]);
 
 const isReport = (error: unknown): error is Error => error instanceof Error && REPORTS.has(error.name);
 
@@ -80,8 +85,8 @@ export type ServeProjectOptions = ServeProjectBase &
   (
     | {
         /**
-         * The space, held in the project: authored once its layout is checked — `async () => authorSpace(space, await
-         * projectAuthoring())` — served from memory, and, while developing, authored again on a save.
+         * The space, held in the project: authored once its layout is checked — `authorProjectSpace` of
+         * `@plitzi/sdk-authoring/node` — served from memory, and, while developing, authored again on a save.
          */
         space: () => ProjectSpace | Promise<ProjectSpace>;
         cloud?: never;
@@ -203,7 +208,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   // variables are this process's environment. One that came across built only runs as it was built.
   const runtimeBundle = path.join(root, RUNTIME_BUNDLE);
   const spaceRuntime =
-    (await loadRuntimeModule(runtimeModule(root, process.argv[1]))) ??
+    (await loadRuntimeModule(projectModule(root, RUNTIME_ENTRY, process.argv[1]))) ??
     (existsSync(runtimeBundle)
       ? await loadRuntime(readFileSync(runtimeBundle), path.join(root, PROJECT_TMP, 'runtime'))
       : undefined);
@@ -287,7 +292,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
  * - its plugins: every folder of `src/plugins` built from its source and server-rendered, every one of `vendor/plugins`
  *   as it was built, each with its server half;
  * - its code: `src/functions/`, and the space's runtime (`src/runtime/` — compiled under `dist/` when the server runs
- *   compiled, `runtimeModule` — or `vendor/runtime.bundle`) in this process;
+ *   compiled, `projectModule` — or `vendor/runtime.bundle`) in this process;
  * - `public/` served as it is, `src/data/` read and never served, `kv` kept in `state/kv.json`;
  * - `/health` answering with the space's permanent URL (or the cloud project's name), and the port it took written to
  *   `tmp/dev-server.json` for `check`, `shot` and `visual` to find;

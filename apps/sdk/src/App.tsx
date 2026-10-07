@@ -7,7 +7,6 @@ import { contentEditableTheme } from '@plitzi/plitzi-ui/ContentEditable';
 import { headingTheme } from '@plitzi/plitzi-ui/Heading';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { inputTheme } from '@plitzi/plitzi-ui/Input';
-import { markdownTheme } from '@plitzi/plitzi-ui/Markdown';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
@@ -119,7 +118,6 @@ const components = {
   ContainerResizable: containerResizableTheme,
   ContainerCollapsable: containerCollapsableTheme,
   Text: textTheme,
-  Markdown: markdownTheme,
   ContainerTabs: containerTabsTheme
 };
 

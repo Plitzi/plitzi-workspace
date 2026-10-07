@@ -222,6 +222,50 @@
       "types": "./dist/components/IconPicker/index.d.ts",
       "import": "./dist/components/IconPicker/index.mjs"
     },
+    "./components/MarkdownDocument": {
+      "types": "./dist/components/MarkdownDocument/index.d.ts",
+      "import": "./dist/components/MarkdownDocument/index.mjs"
+    },
+    "./components/MarkdownDocument/MarkdownDocument": {
+      "types": "./dist/components/MarkdownDocument/MarkdownDocument.d.ts",
+      "import": "./dist/components/MarkdownDocument/MarkdownDocument.mjs"
+    },
+    "./components/MarkdownDocument/components/CodeBlock": {
+      "types": "./dist/components/MarkdownDocument/components/CodeBlock/index.d.ts",
+      "import": "./dist/components/MarkdownDocument/components/CodeBlock/index.mjs"
+    },
+    "./components/MarkdownDocument/components/CodeBlock/CodeBlock": {
+      "types": "./dist/components/MarkdownDocument/components/CodeBlock/CodeBlock.d.ts",
+      "import": "./dist/components/MarkdownDocument/components/CodeBlock/CodeBlock.mjs"
+    },
+    "./components/MarkdownDocument/components/CodeBlock/index": {
+      "types": "./dist/components/MarkdownDocument/components/CodeBlock/index.d.ts",
+      "import": "./dist/components/MarkdownDocument/components/CodeBlock/index.mjs"
+    },
+    "./components/MarkdownDocument/helpers/hastText": {
+      "types": "./dist/components/MarkdownDocument/helpers/hastText.d.ts",
+      "import": "./dist/components/MarkdownDocument/helpers/hastText.mjs"
+    },
+    "./components/MarkdownDocument/helpers/markdownComponents": {
+      "types": "./dist/components/MarkdownDocument/helpers/markdownComponents.d.ts",
+      "import": "./dist/components/MarkdownDocument/helpers/markdownComponents.mjs"
+    },
+    "./components/MarkdownDocument/helpers/markdownParts": {
+      "types": "./dist/components/MarkdownDocument/helpers/markdownParts.d.ts",
+      "import": "./dist/components/MarkdownDocument/helpers/markdownParts.mjs"
+    },
+    "./components/MarkdownDocument/helpers/rehypeHeadingAnchors": {
+      "types": "./dist/components/MarkdownDocument/helpers/rehypeHeadingAnchors.d.ts",
+      "import": "./dist/components/MarkdownDocument/helpers/rehypeHeadingAnchors.mjs"
+    },
+    "./components/MarkdownDocument/helpers/syntaxHighlighter": {
+      "types": "./dist/components/MarkdownDocument/helpers/syntaxHighlighter.d.ts",
+      "import": "./dist/components/MarkdownDocument/helpers/syntaxHighlighter.mjs"
+    },
+    "./components/MarkdownDocument/index": {
+      "types": "./dist/components/MarkdownDocument/index.d.ts",
+      "import": "./dist/components/MarkdownDocument/index.mjs"
+    },
     "./dataSource": {
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
@@ -1334,13 +1378,17 @@
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "clsx": "^2.1.1",
-    "immer": "^11.1.21"
+    "immer": "^11.1.21",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.1",
+    "remark-gfm": "^4.0.1"
   },
   "peerDependencies": {
     "react": "^19",
     "react-dom": "^19"
   },
   "devDependencies": {
+    "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^9.39.5",
     "react": "^19.3.0",
     "typescript": "^6.0.3",

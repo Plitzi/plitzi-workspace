@@ -1,5 +1,4 @@
 /* eslint-disable react-refresh/only-export-components */
-import MarkdownUI from '@plitzi/plitzi-ui/Markdown';
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
@@ -7,6 +6,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import { classHtmlParts } from './classHtmlParts';
 import { rebaseHtmlMedia, sanitizeHtml } from './sanitizeHtml';
+import MarkdownDocument from '../../../components/MarkdownDocument';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -54,7 +54,7 @@ const RichText = ({ ref, className = '', content = '', format = 'html', mediaBas
       )}
     >
       {format === 'html' && <div dangerouslySetInnerHTML={{ __html: html }} />}
-      {format === 'markdown' && <MarkdownUI classNames={classNames}>{content}</MarkdownUI>}
+      {format === 'markdown' && <MarkdownDocument classNames={classNames}>{content}</MarkdownDocument>}
       {format === 'text' && <div className="plitzi-component__rich-text-plain">{content}</div>}
     </RootElement>
   );

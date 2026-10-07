@@ -172,18 +172,22 @@ A project `npx @plitzi/cli create --mode server` writes runs this server through
 ```ts
 import { serveProject } from '@plitzi/sdk-server/project';
 
-import { authorSpace } from '@plitzi/sdk-authoring';
-import { projectAuthoring } from '@plitzi/sdk-authoring/node';
+import { authorProjectSpace } from '@plitzi/sdk-authoring/node';
 
 import { actions, connectors } from './actions/index.ts';
 import { serverOptions } from './config/serverOptions.ts';
-import { space } from './space/index.ts';
 
-await serveProject({ space: authorSpace(space, await projectAuthoring()), actions, connectors, serverOptions });
+await serveProject({ space: authorProjectSpace, actions, connectors, serverOptions });
 ```
 
+`space` is called once the project's root and layout are checked: `authorProjectSpace` reads `src/space/index.ts`'s
+`space` — `dist/space/index.js` when the server runs what `build` emitted (`projectModule` of
+`@plitzi/sdk-shared/project/root`, the rule the runtime is found by too) — and authors it with `projectAuthoring()`. A
+module that exports no `space` is refused saying what to export (`ProjectSpaceError`), and a space that does not author
+with every problem (`SpaceRefusedError`): each printed as the report it is, and the process exits with 1.
+
 The project is the working directory — where every script of its `package.json` runs it, and where a deployment runs
-`node dist/main.js` — never worked out from where a file is: `serveProject` and `projectAuthoring()` refuse to start
+`node dist/main.js` — never worked out from where a file is: `serveProject` and `authorProjectSpace` refuse to start
 anywhere else, naming what is missing (`package.json`, `src/`; `projectRoot` of `@plitzi/sdk-shared/project/root`, one
 check for both). Its settings are in `process.env` before any module loads: the scripts start Node with
 `--env-file-if-exists=.env`, and no file of the project reads `.env`. `start:dev`, which Node watches, preloads it

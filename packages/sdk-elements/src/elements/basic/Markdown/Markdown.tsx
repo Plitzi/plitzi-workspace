@@ -1,11 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import MarkdownUI from '@plitzi/plitzi-ui/Markdown';
 import clsx from 'clsx';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { uniqueAnchor } from '@plitzi/sdk-shared/schema/anchor';
 
 import useMarkdownClassNames from './hooks/useMarkdownClassNames';
+import MarkdownDocument from '../../../components/MarkdownDocument';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -42,9 +42,9 @@ const Markdown = ({ ref, content = 'Markdown', className = '', headingLinks = tr
       )}
     >
       {/* Every heading is a section a link can name — `/page#its-words` — with the anchor authoring checks links against. */}
-      <MarkdownUI headingAnchor={uniqueAnchor} headingLinks={headingLinks} classNames={classNames}>
+      <MarkdownDocument headingAnchor={uniqueAnchor} headingLinks={headingLinks} classNames={classNames}>
         {content}
-      </MarkdownUI>
+      </MarkdownDocument>
     </RootElement>
   );
 };

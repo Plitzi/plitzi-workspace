@@ -1,53 +1,23 @@
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { projectSpaceAt } from '@plitzi/sdk-authoring/node';
 
-import { projectAuthoringAt } from '@plitzi/sdk-authoring/node';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import type { ProjectSpaceSource } from '@plitzi/sdk-authoring/node';
 
-import { SPACE_ENTRY } from '../scaffold/paths';
-
-import type { SpaceSpec } from '@plitzi/sdk-authoring';
-import type { ProjectAuthoring } from '@plitzi/sdk-authoring/node';
+/** What `projectSpaceAt` refuses with a message that is the whole report: the root, the layout, a module with no space. */
+const REPORTS: ReadonlySet<string> = new Set(['ProjectRootError', 'ProjectLayoutError', 'ProjectSpaceError']);
 
 /**
- * What the module exports as `space`, taken as a declaration when it has the shape of one. `authorSpace` checks the
- * rest of it, field by field, and says what is wrong — so this only has to tell a space from anything else.
+ * The project's own declaration, loaded as its server and its `author` script load it (`projectSpaceAt`) — for a
+ * command that authors it in this process, at the root it found from whichever folder of the project it was run in. A
+ * project refused before its space is authored is said as the problem, in the words the server says it.
  */
-const isSpaceSpec = (value: unknown): value is SpaceSpec =>
-  isRecord(value) &&
-  typeof value.name === 'string' &&
-  typeof value.permanentUrl === 'string' &&
-  Array.isArray(value.pages);
-
-const importProject = async (file: string): Promise<unknown> => import(pathToFileURL(file).href);
-
-/** The space a project declares in `src/space/`, with the plugin declarations it is authored with. */
-export interface ProjectSpace {
-  space: SpaceSpec;
-  /**
-   * What the space is checked against — its plugins, its built plugins, its data files — as `npm run author` and the
-   * server check it, so the CLI's checks never pass a space they refuse.
-   */
-  authoring: ProjectAuthoring;
-}
-
-/**
- * The project's own declaration, loaded as its `author` script loads it — `src/space/index.ts`, with the plugins it is
- * checked against (`projectAuthoringAt`: the root the command found, from whichever folder of the project it was run
- * in): every plugin folder's `declaration.ts` and the built ones' types — for a command that authors it in this process.
- * The project's layout is held first, as `npm run author` holds it: a space folder with no `index.ts` is said as that,
- * every error of the layout with it, rather than as a module Node cannot find.
- */
-export const loadProjectSpace = async (root: string): Promise<ProjectSpace | { problem: string }> => {
-  let authoring: ProjectAuthoring;
+export const loadProjectSpace = async (root: string): Promise<ProjectSpaceSource | { problem: string }> => {
   try {
-    authoring = await projectAuthoringAt(root);
+    return await projectSpaceAt(root);
   } catch (error) {
-    return { problem: error instanceof Error ? error.message : String(error) };
+    if (error instanceof Error && REPORTS.has(error.name)) {
+      return { problem: error.message };
+    }
+
+    throw error;
   }
-
-  const module = await importProject(path.join(root, SPACE_ENTRY));
-  const space = isRecord(module) ? module.space : undefined;
-
-  return isSpaceSpec(space) ? { space, authoring } : { problem: `${SPACE_ENTRY} exports no \`space\`.` };
 };

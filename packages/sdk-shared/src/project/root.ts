@@ -1,7 +1,7 @@
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 
-import { SOURCE_DIR } from './paths';
+import { BUILD_DIR, SOURCE_DIR } from './paths';
 
 /**
  * What the root of a project `@plitzi/cli` writes holds, whatever else it has: its `package.json`, and its source — what
@@ -42,3 +42,29 @@ export const checkProjectRoot = (root: string): string => {
  * and a process started from anywhere else is refused, saying what is missing (`checkProjectRoot`).
  */
 export const projectRoot = (): string => checkProjectRoot(process.cwd());
+
+/** `file` with every link on its way resolved — `/tmp` is `/private/tmp` on macOS — or as it is, when it is not there. */
+const real = (file: string): string => {
+  try {
+    return realpathSync(file);
+  } catch {
+    return path.resolve(file);
+  }
+};
+
+/**
+ * Where a module of the project's source (`entry`, under `src/` — `src/space/index.ts`) is, in the form the process
+ * runs in: what `build` emitted (`dist/space/index.js`) when it was started on that — `node dist/main.js`, which carries
+ * no TypeScript at all — and the source otherwise. Told by the script the process was started with (`script`,
+ * `process.argv[1]`), followed through any link, rather than by `NODE_ENV`: a production server run from its source
+ * still finds the source, and one run compiled never imports a `.ts` file.
+ */
+export const projectModule = (root: string, entry: string, script: string | undefined): string => {
+  const build = real(path.join(root, BUILD_DIR));
+  const compiled = script !== undefined && real(script).startsWith(`${build}${path.sep}`);
+
+  return path.join(
+    root,
+    compiled ? path.join(BUILD_DIR, path.relative(SOURCE_DIR, entry)).replace(/\.tsx?$/, '.js') : entry
+  );
+};

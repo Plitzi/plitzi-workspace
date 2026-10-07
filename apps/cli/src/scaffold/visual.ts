@@ -55,10 +55,8 @@ export default defineConfig({
 
 const authoredSpec = (): string => `import { expect, test } from '@playwright/test';
 
-import { authorSpace, inspectPage, openPage } from '@plitzi/sdk-authoring';
-import { projectAuthoring } from '@plitzi/sdk-authoring/node';
-
-import { space } from '../src/space/index.ts';
+import { inspectPage, openPage } from '@plitzi/sdk-authoring';
+import { authorProjectSpace } from '@plitzi/sdk-authoring/node';
 
 /**
  * Every page renders whole: everything the space NAMES is on screen, images arrived, nothing scrolls sideways, and no
@@ -72,7 +70,7 @@ import { space } from '../src/space/index.ts';
  * left to tests of its own: a page behind a session or with a route param (\`post/{{slug}}\`). What shows only under a
  * condition, renders once per list row or has no box of its own, \`inspectPage\` sets aside by itself.
  */
-const { handles } = authorSpace(space, await projectAuthoring());
+const { handles } = await authorProjectSpace();
 
 const openable = Object.values(handles.pages).filter(
   pageHandle => pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0

@@ -291,6 +291,12 @@ export const AUTHORING_CODES = {
     means: "an ancestor condition keyed by something that is neither a class name nor `'>'` (the parent)",
     fix: "`[card.name]` for a `styles()` declaration, or `'>'` for the parent whatever it wears"
   },
+  'heading-level-overridden': {
+    kind: 'warned',
+    means:
+      "a markdown's or richText's `heading` slot and a level's (`heading3`) both setting one property, the general class written later in the stylesheet — the level's value is lost",
+    fix: 'set the property on one of the two: the level slot for that level alone, `heading` for every heading'
+  },
   'style-pseudo-unknown': {
     kind: 'refused',
     means: 'a pseudo-element a class cannot dress',

@@ -166,6 +166,9 @@ export type SchemaVariable =
   | SchemaVariableBase<'checkbox' | 'switch', boolean>
   | SchemaVariableBase<'text' | 'email' | 'password' | 'select' | 'select2' | 'textarea' | 'color', string>;
 
+/** What a variable holds once resolved: a number, a switch's state or text. */
+export type SchemaVariableValue = SchemaVariable['value'];
+
 /** A value a flag takes where its `when` matches. The first rule that matches decides. */
 export type SchemaFlagRule = { when: RuleGroup; value: boolean };
 

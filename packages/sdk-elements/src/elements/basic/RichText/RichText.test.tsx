@@ -1,9 +1,9 @@
-import { MARKDOWN_PARTS } from '@plitzi/plitzi-ui/Markdown';
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import declaration from './declaration';
 import { RichText } from './RichText';
+import { MARKDOWN_PARTS } from '../../../components/MarkdownDocument';
 import ElementContext from '../../../Element/ElementContext';
 import { elementEntry } from '../../../testUtils/elementTestUtils';
 

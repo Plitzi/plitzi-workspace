@@ -1,8 +1,8 @@
-import { MARKDOWN_PARTS } from '@plitzi/plitzi-ui/Markdown';
-
 import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
 
-import type { MarkdownClassNames } from '@plitzi/plitzi-ui/Markdown';
+import { MARKDOWN_PARTS } from '../../../../components/MarkdownDocument';
+
+import type { MarkdownClassNames } from '../../../../components/MarkdownDocument';
 
 /**
  * The class of each part of a Markdown document, read off the element's slots of the same names — the same object

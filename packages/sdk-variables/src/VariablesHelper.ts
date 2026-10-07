@@ -1,4 +1,4 @@
-import type { StyleVariables } from '@plitzi/sdk-shared';
+import type { SchemaVariableValue, StyleVariables } from '@plitzi/sdk-shared';
 
 const hexColorRegex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
 const rgbColorRegex = /^rgba?\(\s*(\d{1,3}%?\s*,\s*){2,3}\d{1,3}%?\s*\)$/;
@@ -28,7 +28,7 @@ const cssColorNames = new Set([
   'fuchsia'
 ]);
 
-const isColor = (value: string): boolean => {
+const isColor = (value: SchemaVariableValue): boolean => {
   if (!value || typeof value !== 'string') {
     return false;
   }
@@ -38,7 +38,7 @@ const isColor = (value: string): boolean => {
   return hexColorRegex.test(v) || rgbColorRegex.test(v) || hslColorRegex.test(v) || cssColorNames.has(v);
 };
 
-export const schemaVariablesToCss = (variables?: Record<string, string>) => {
+export const schemaVariablesToCss = (variables?: Record<string, SchemaVariableValue>) => {
   if (!variables) {
     return '';
   }

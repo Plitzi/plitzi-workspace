@@ -1,4 +1,3 @@
-import { MARKDOWN_PARTS } from '@plitzi/plitzi-ui/Markdown';
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
@@ -6,6 +5,7 @@ import { markdownHeadings } from '@plitzi/sdk-shared/schema/markdownHeadings';
 
 import declaration from './declaration';
 import { Markdown } from './Markdown';
+import { MARKDOWN_PARTS } from '../../../components/MarkdownDocument';
 import ElementContext from '../../../Element/ElementContext';
 import { elementEntry, skipHocEntry } from '../../../testUtils/elementTestUtils';
 

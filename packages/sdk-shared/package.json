@@ -186,6 +186,10 @@
       "types": "./dist/dataSource/hooks/useRegisterSource.d.ts",
       "import": "./dist/dataSource/hooks/useRegisterSource.mjs"
     },
+    "./dataSource/hooks/useResolvedVariables": {
+      "types": "./dist/dataSource/hooks/useResolvedVariables.d.ts",
+      "import": "./dist/dataSource/hooks/useResolvedVariables.mjs"
+    },
     "./dataSource/index": {
       "types": "./dist/dataSource/index.d.ts",
       "import": "./dist/dataSource/index.mjs"
