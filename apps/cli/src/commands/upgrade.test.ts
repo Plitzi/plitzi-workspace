@@ -11,13 +11,19 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
 import { writeOrigin } from './spaceOrigin';
-import { writeFiles } from './terminal';
+import { install, writeFiles } from './terminal';
 import { upgrade } from './upgrade';
 import { detectManagerVersion, machineryFiles, scaffold } from '../scaffold';
 import { CLI_VERSION } from '../scaffold/project';
 
 import type { UpgradeOptions } from './upgrade';
 import type { CreateAnswers } from '../scaffold';
+
+// The install is the package manager's, which a test has no network for: told apart by whether it was asked for.
+vi.mock('./terminal', async importOriginal => ({
+  ...(await importOriginal<typeof import('./terminal')>()),
+  install: vi.fn(() => Promise.resolve(true))
+}));
 
 /** The version the CLI resolves `@plitzi/sdk-authoring` at, read as it reads it. */
 const authoringVersion = (): string => {
@@ -63,7 +69,8 @@ describe('plitzi upgrade', () => {
   };
 
   beforeEach(async () => {
-    root = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-upgrade-'));
+    // Its real path: the CLI works on the project's, and on macOS the temporary folder is a link (`/var` → `/private/var`).
+    root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-upgrade-')));
     // A project as `create` writes it today, without the skills — those are the installed packages' to say.
     await writeFiles(
       root,
@@ -375,6 +382,68 @@ describe('plitzi upgrade', () => {
       dependencies: { '@plitzi/plitzi-sdk': `^${CLI_VERSION}`, 'left-pad': '^1.3.0' },
       devDependencies: { '@plitzi/cli': `^${CLI_VERSION}` }
     });
+  });
+
+  /**
+   * Tarballs installed by hand (`npm install --no-save`): an install would put the registry's in their place, so the
+   * package installed locally keeps its range, and the install is left to the author, with the command that would.
+   */
+  it('never replaces a @plitzi package installed locally: it is left, and so is the install', async () => {
+    const manifest: unknown = JSON.parse(await read('package.json'));
+    if (!isRecord(manifest) || !isRecord(manifest.dependencies)) {
+      throw new Error('the scaffold wrote no dependencies');
+    }
+
+    const older = { '@plitzi/sdk-authoring': '^0.1.0', '@plitzi/sdk-server': '^0.1.0' };
+    await fs.writeFile(
+      file('package.json'),
+      `${JSON.stringify({ ...manifest, dependencies: { ...manifest.dependencies, ...older } }, null, 2)}\n`
+    );
+    const tarball = 'file:../tgz/plitzi-sdk-authoring-0.1.0.tgz';
+    await writeFiles(root, {
+      'node_modules/@plitzi/sdk-authoring/package.json': '{ "name": "@plitzi/sdk-authoring", "version": "0.1.0" }',
+      'node_modules/.package-lock.json': JSON.stringify({
+        packages: { 'node_modules/@plitzi/sdk-authoring': { version: '0.1.0', resolved: tarball } }
+      })
+    });
+    const said = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await upgrade(['packages'], { write: true });
+
+    const text = said.mock.calls.flat().join('\n');
+    expect(text).toContain(
+      `! @plitzi/sdk-authoring is installed locally — installed from ${tarball}, not from the registry: left as it is`
+    );
+    expect(text).toContain(
+      "not installed: an install now would put the registry's in place of what is installed locally"
+    );
+    expect(text).toContain("or run `npm install` to take the registry's");
+    expect(install).not.toHaveBeenCalled();
+    const written: unknown = JSON.parse(await read('package.json'));
+    expect(written).toMatchObject({
+      dependencies: { '@plitzi/sdk-authoring': '^0.1.0', '@plitzi/sdk-server': `^${CLI_VERSION}` }
+    });
+
+    const shown = await run(['packages']);
+    expect(shown.packages).toMatchObject({
+      raised: [],
+      local: [{ name: '@plitzi/sdk-authoring', from: `installed from ${tarball}, not from the registry` }]
+    });
+  });
+
+  it('installs, once package.json is written, when nothing is installed locally', async () => {
+    const manifest: unknown = JSON.parse(await read('package.json'));
+    if (!isRecord(manifest) || !isRecord(manifest.dependencies)) {
+      throw new Error('the scaffold wrote no dependencies');
+    }
+
+    const dependencies = { ...manifest.dependencies, '@plitzi/sdk-server': '^0.1.0' };
+    await fs.writeFile(file('package.json'), `${JSON.stringify({ ...manifest, dependencies }, null, 2)}\n`);
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await upgrade(['packages'], { write: true });
+
+    expect(install).toHaveBeenCalledWith('npm', root);
   });
 
   /**

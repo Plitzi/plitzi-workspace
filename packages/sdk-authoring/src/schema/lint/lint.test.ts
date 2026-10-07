@@ -224,6 +224,95 @@ describe('lintSpace', () => {
     });
   });
 
+  describe('globals', () => {
+    const errors = (documents: ReturnType<typeof withChange>, code: string) =>
+      lintSpace(documents).errors.filter(issue => issue.code === code);
+
+    /** What Inkwell wrote: `auth.authenticated`, where the source's field is `isAuthenticated`. */
+    it('global-field-unknown', () => {
+      const guarded = (field: string) =>
+        step('notify', 'globalCallback', 'addNotification', {
+          elementId: 'space',
+          params: { content: 'Welcome back' },
+          when: { combinator: 'and', rules: [{ field, operator: '=', value: true }] }
+        });
+      const inCondition = withChange(({ schema }) => {
+        setFlow(schema, 'go', [onClick(), guarded('auth.authenticated')]);
+      });
+      const [condition] = errors(inCondition, 'global-field-unknown');
+      expect(condition.message).toContain('the condition of step "notify" reads "auth.authenticated"');
+      expect(condition.message).toContain('did you mean "auth.isAuthenticated"?');
+      expect(condition.message).toContain('`auth` holds auth.isAuthenticated, auth.status, auth.accessToken');
+
+      const inBinding = withChange(({ schema }) => {
+        schema.flat.hello.definition.bindings = {
+          attributes: [{ id: 'b1', to: 'content', source: 'navigation.queryParam.next' }],
+          initialState: [{ id: 'b2', to: 'visibility', source: 'theme.dark' }]
+        };
+      });
+      expect(errors(inBinding, 'global-field-unknown').map(issue => issue.message)).toEqual([
+        expect.stringContaining('did you mean "navigation.queryParams"?'),
+        expect.stringContaining('`theme` holds theme.mode, theme.resolved')
+      ]);
+
+      const inTemplate = withChange(({ schema }) => {
+        schema.flat.hello.attributes.content = '{{ auth.details.username ?? auth.user.name }}';
+      });
+      const [template] = errors(inTemplate, 'global-field-unknown');
+      expect(template.elementId).toBe('hello');
+      expect(template.message).toContain('reads "auth.user"');
+
+      // Below an open field anything goes, a step of the flow named like a global is that step, and a field of
+      // something else that happens to be called `auth` is not the global — nor is a string that only looks like one.
+      const fine = withChange(({ schema }) => {
+        setFlow(schema, 'go', [
+          onClick(),
+          guarded('auth.isAuthenticated'),
+          guarded('navigation.queryParams.anything'),
+          guarded('auth.details.anything')
+        ]);
+        schema.flat.hello.attributes.content =
+          // eslint-disable-next-line quotes -- the template quotes a string of its own
+          "{{ state.auth.name }} {{ theme.resolved }} {{ navigation.href }} {{ 'https://auth.acme.com' }} flags.off";
+        schema.flat.row.definition.bindings = {
+          attributes: [{ id: 'b1', to: 'content', source: 'state.whatever.deep' }]
+        };
+      });
+      expect(errors(fine, 'global-field-unknown')).toEqual([]);
+      const ownStep = withChange(({ schema }) => {
+        setFlow(schema, 'go', [
+          onClick(),
+          step('auth', 'globalCallback', 'login', {
+            elementId: 'auth',
+            params: { mode: 'normal', username: 'ada', password: 'secret' }
+          }),
+          guarded('auth.ok')
+        ]);
+      });
+      expect(errors(ownStep, 'global-field-unknown')).toEqual([]);
+    });
+
+    it('flag-unknown and computed-unknown in a condition and in a binding', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flags = { newCheckout: { value: false, rules: [] } };
+        schema.settings.computed = { level: '{{ state.xp // 100 }}' };
+        schema.flat.hello.definition.flag = { name: 'newCheckout', is: true };
+        schema.flat.hello.definition.bindings = { attributes: [{ id: 'b1', to: 'content', source: 'computed.levl' }] };
+        setFlow(schema, 'go', [
+          onClick(),
+          step('notify', 'globalCallback', 'addNotification', {
+            elementId: 'space',
+            params: { content: 'New' },
+            when: { combinator: 'and', rules: [{ field: 'flags.newChekout', operator: '=', value: true }] }
+          })
+        ]);
+      });
+
+      expect(errors(documents, 'flag-unknown')[0].message).toContain('did you mean "newCheckout"?');
+      expect(errors(documents, 'computed-unknown')[0].message).toContain('did you mean "level"?');
+    });
+  });
+
   describe('anchors', () => {
     it('motion-invalid', () => {
       const documents = withChange(({ schema }) => {
@@ -284,6 +373,36 @@ describe('lintSpace', () => {
       });
 
       expect(errorsOf(documents)).toContain('anchor-missing');
+    });
+  });
+
+  describe('links', () => {
+    it('link-current-section', () => {
+      const external = withChange(({ schema }) => {
+        schema.flat['to-about'].attributes.current = 'section';
+        schema.flat['to-about'].attributes.mode = 'external';
+      });
+      const home = withChange(({ schema }) => {
+        schema.flat['to-about'].attributes.current = 'section';
+        schema.flat['to-about'].attributes.href = homeId(schema);
+      });
+      const section = withChange(({ schema }) => {
+        schema.flat['to-about'].attributes.current = 'section';
+      });
+
+      expect(warningsOf(external)).toContain('link-current-section');
+      expect(warningsOf(home)).toContain('link-current-section');
+      expect(warningsOf(section)).not.toContain('link-current-section');
+    });
+
+    it('attribute-value on a `current` it does not take, naming the one meant', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat['to-about'].attributes.current = 'sections';
+      });
+
+      expect(lintSpace(documents).errors.find(issue => issue.code === 'attribute-value')?.message).toContain(
+        'did you mean "section"?'
+      );
     });
   });
 
@@ -1059,6 +1178,41 @@ describe('lintSpace', () => {
       expect(unpublished(flowAfter(picked, ['picked.status', '='], ['elsewhere.status', '=']))).toEqual([]);
     });
 
+    it('element-ids-target', () => {
+      const refresh = (id: string, ids: string[], invalidateQueries = 'elements') =>
+        step(id, 'globalCallback', 'runServerAction', {
+          elementId: 'actions',
+          params: { actionId: 'save', input: {}, mode: 'await', invalidateQueries, invalidateElements: ids }
+        });
+      const targets = (...steps: ReturnType<typeof step>[]) =>
+        lintSpace(
+          withChange(({ schema }) => {
+            setFlow(schema, 'go', [onClick(), ...steps]);
+          })
+        ).errors.filter(issue => issue.code === 'element-ids-target');
+
+      const [missing, notContainer] = targets(refresh('save', ['fed', 'hello']));
+      expect(missing.message).toContain('"invalidateElements" names "fed", an id no element of the space has');
+      expect(missing.message).toContain('did you mean "feed"?');
+      expect(notContainer.message).toContain('names "hello", a "text" — only an apiContainer is refreshed by its id');
+      expect(notContainer.message).toContain('It takes the id of an apiContainer: feed.');
+
+      const invalidate = step('invalidate', 'globalCallback', 'invalidateQueries', {
+        elementId: 'queries',
+        params: { url: '', elements: ['box'] }
+      });
+      const hook = step('hook', 'utility', 'webHook', {
+        params: { url: '/api/posts', method: 'post', invalidateQueries: 'elements', invalidateElements: ['nope'] }
+      });
+      expect(targets(invalidate, hook).map(issue => issue.message)).toEqual([
+        expect.stringContaining('"elements" names "box", a "container"'),
+        expect.stringContaining('"invalidateElements" names "nope", an id no element of the space has')
+      ]);
+
+      // A list the mode leaves aside is not used, a template is known when the step runs, and a container is a target.
+      expect(targets(refresh('all', ['nope'], 'all'), refresh('ok', ['feed', '{{ state.target }}']))).toEqual([]);
+    });
+
     it('unknown-global-callback', () => {
       const documents = withChange(({ schema }) => {
         setFlow(schema, 'go', [onClick(), step('teleport', 'globalCallback', 'teleport', { elementId: 'state' })]);
@@ -1241,6 +1395,57 @@ describe('lintSpace', () => {
       });
 
       expect(warningsOf(documents)).toContain('unknown-variable');
+    });
+
+    it('animation-name-unknown', () => {
+      const documents = withChange(({ schema, style }) => {
+        schema.settings.customCss = '@keyframes caret-blink {\n  from {\n    opacity: 1;\n  }\n}';
+        style.platform.desktop.caret = {
+          name: 'caret',
+          type: 'class',
+          cache: '',
+          attributes: {
+            base: {
+              default: { 'animation-name': 'caret-blnk, plitzi-motion-fade' },
+              pseudos: { after: { default: { content: '""', 'animation-name': 'caret-blink' } } }
+            }
+          }
+        };
+      });
+      const unknown = lintSpace(documents).warnings.filter(issue => issue.code === 'animation-name-unknown');
+
+      expect(unknown).toHaveLength(1);
+      expect(unknown[0].message).toContain('"caret-blnk"');
+      expect(unknown[0].message).toContain('did you mean "caret-blink"?');
+    });
+
+    it('element-slot-unknown', () => {
+      const documents = withChange(({ schema, style }) => {
+        schema.flat.go.definition.styleSelectors.icn = 'card';
+        style.platform.desktop.modalContainer = {
+          name: 'modalContainer',
+          type: 'element',
+          componentType: 'modalContainer',
+          cache: '',
+          attributes: { base: { default: {} }, rootContainr: { default: { color: 'red' } } }
+        };
+      });
+      const issues = lintSpace(documents).errors.filter(issue => issue.code === 'element-slot-unknown');
+
+      expect(issues.map(issue => issue.message)).toEqual([
+        expect.stringMatching(/\(go\).* names the slot "icn", which a button does not have — did you mean "icon"\?/),
+        expect.stringMatching(/`elements.modalContainer.slots` names the slot "rootContainr".*"rootContainer"/)
+      ]);
+    });
+
+    it('leaves a slot nobody put a class on alone, and one of a type it does not know', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.go.definition.styleSelectors.icn = '';
+        schema.flat.box.definition.type = 'pluginCard';
+        schema.flat.box.definition.styleSelectors.frame = 'card';
+      });
+
+      expect(errorsOf(documents)).not.toContain('element-slot-unknown');
     });
   });
 

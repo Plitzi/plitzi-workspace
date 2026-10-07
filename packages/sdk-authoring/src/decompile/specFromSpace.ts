@@ -12,6 +12,7 @@ import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from '../interactions';
 import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../schema';
 import { isSuggestionCode } from '../schema/codes';
 import { flagSpecOf } from '../schema/flags';
+import { splitKeyframesCss } from '../schema/keyframes';
 import { splitNotificationsCss } from '../schema/notifications';
 import { css, modifierClassName } from '../style';
 import { foldCustomCss } from './customCss';
@@ -42,7 +43,10 @@ import type {
   Style,
   StyleAncestor,
   StyleBlock,
+  StyleCondition,
   StyleObject,
+  StyleState,
+  StyleStateBlock,
   SpaceComponent
 } from '@plitzi/sdk-shared';
 
@@ -284,14 +288,43 @@ const bindingCorpus = (bindings: unknown): unknown[] =>
   );
 
 /** The selector a folded target was written as, for the correction that reports it. */
-const foldedSelector = ({ className, state, ancestor }: FoldTarget): string => {
+const foldedSelector = ({ className, state, pseudo, condition, ancestor }: FoldTarget): string => {
   if (!ancestor) {
-    return `.${className}${state ? `:${state}` : ''}`;
+    const selector = `.${className}${state ? `:${state}` : ''}${pseudo ? `::${pseudo}` : ''}`;
+
+    return condition ? `${selector} (${condition})` : selector;
   }
 
   const variant = ancestor.variant ? `[data-variant="${ancestor.variant}"]` : '';
 
   return `.${ancestor.className}${variant}${ancestor.state ? `:${ancestor.state}` : ''} .${className}`;
+};
+
+/** A part — the class itself, a pseudo-element, a condition — with `rules` added to it, or to one of its states. */
+const withPartRules = <Part extends StyleStateBlock>(
+  part: Part,
+  state: StyleState | undefined,
+  rules: StyleObject
+): Part =>
+  state
+    ? { ...part, states: { ...part.states, [state]: { ...part.states?.[state], ...rules } } }
+    : { ...part, default: { ...part.default, ...rules } };
+
+/** `block` with `rules` added where a folded target says: in a state, a pseudo-element, a condition, or several. */
+const withTargetRules = (
+  block: StyleBlock,
+  { state, pseudo, condition }: FoldTarget,
+  rules: StyleObject
+): StyleBlock => {
+  const holder: StyleCondition = condition ? (block.conditions?.[condition] ?? {}) : block;
+  const placed: StyleCondition = pseudo
+    ? {
+        ...holder,
+        pseudos: { ...holder.pseudos, [pseudo]: withPartRules(holder.pseudos?.[pseudo] ?? {}, state, rules) }
+      }
+    : withPartRules(holder, state, rules);
+
+  return condition ? { ...block, conditions: { ...block.conditions, [condition]: placed } } : { ...block, ...placed };
 };
 
 /** `block` with `rules` added under one ancestor condition — always, a state, a variant, or a variant's state. */
@@ -406,8 +439,10 @@ class SpecReader {
     this.indexStyle(style);
     // An older export may carry no stylesheet at all.
     const written: unknown = schema.settings.customCss;
-    // The notifications' rule is authoring's own writing: it goes back to the field it was written from.
-    const { notifications, customCss: writtenOwn } = splitNotificationsCss(typeof written === 'string' ? written : '');
+    // The keyframes block and the notifications' rule are authoring's own writing: each goes back to the field it was
+    // written from.
+    const { keyframes, customCss: withoutKeyframes } = splitKeyframesCss(typeof written === 'string' ? written : '');
+    const { notifications, customCss: writtenOwn } = splitNotificationsCss(withoutKeyframes);
     const ownCss = this.foldCustomCss(writtenOwn);
     const pageFolders = this.readFolders();
     const roots = this.collectRoots();
@@ -448,6 +483,7 @@ class SpecReader {
       ...(schema.flags && !isEmpty(schema.flags) ? { flags: schema.flags } : {}),
       ...(channels && !isEmpty(channels) ? { channels } : {}),
       ...(customCss ? { customCss } : {}),
+      ...(isEmpty(keyframes) ? {} : { keyframes }),
       ...(isEmpty(notifications) ? {} : { notifications }),
       ...(schema.rsc ? { rsc: schema.rsc } : {}),
       ...(pageFolders.length > 0 ? { pageFolders } : {}),
@@ -564,21 +600,14 @@ class SpecReader {
     );
     for (const { targets, rules } of folded) {
       const expanded = css(rules);
-      for (const { className, state, ancestor } of targets) {
-        const blocks = this.classBlocks.get(className) ?? {};
+      for (const target of targets) {
+        const blocks = this.classBlocks.get(target.className) ?? {};
         const block: StyleBlock = blocks.desktop ?? { default: {} };
-        if (ancestor) {
-          blocks.desktop = withAncestorRules(block, ancestor, expanded);
-        } else if (state) {
-          blocks.desktop = {
-            ...block,
-            states: { ...block.states, [state]: { ...block.states?.[state], ...expanded } }
-          };
-        } else {
-          blocks.desktop = { ...block, default: { ...block.default, ...expanded } };
-        }
+        blocks.desktop = target.ancestor
+          ? withAncestorRules(block, target.ancestor, expanded)
+          : withTargetRules(block, target, expanded);
 
-        this.classBlocks.set(className, blocks);
+        this.classBlocks.set(target.className, blocks);
       }
 
       this.correct(
@@ -792,6 +821,8 @@ class SpecReader {
       !this.ancestorClasses().has(selector) &&
       !read.variants &&
       !read.ancestors &&
+      !read.pseudos &&
+      !read.conditions &&
       isEmpty(read.unwritable) &&
       (inline === 'css-and-states' || !read.states);
 
@@ -821,7 +852,14 @@ class SpecReader {
     }
 
     const read = readSelector(blocks);
-    if (this.references.has(name) || read.variants || read.ancestors || !isEmpty(read.unwritable)) {
+    if (
+      this.references.has(name) ||
+      read.variants ||
+      read.ancestors ||
+      read.pseudos ||
+      read.conditions ||
+      !isEmpty(read.unwritable)
+    ) {
       return undefined;
     }
 
@@ -901,6 +939,8 @@ class SpecReader {
         ...(read.states ? { states: read.states } : {}),
         ...(read.variants ? { variants: read.variants } : {}),
         ...(read.ancestors ? { ancestors: read.ancestors } : {}),
+        ...(read.pseudos ? { pseudos: read.pseudos } : {}),
+        ...(read.conditions ? { conditions: read.conditions } : {}),
         ...(slotSpecs.length > 0 ? { slots: Object.fromEntries(slotSpecs) } : {})
       };
     }

@@ -30,6 +30,7 @@ import type {
   StyleCategory,
   StyleItem,
   StyleObject,
+  StylePseudo,
   StyleState,
   StyleValue
 } from '@plitzi/sdk-shared';
@@ -43,6 +44,8 @@ export type InspectorProps = {
   styleState?: StyleState;
   styleVariant?: string;
   styleAncestor?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
   styleSelector?: string;
   element?: Element;
   displayMode: DisplayMode;
@@ -57,6 +60,8 @@ const Inspector = ({
   styleState,
   styleVariant,
   styleAncestor,
+  stylePseudo,
+  styleCondition,
   styleSelector = 'base',
   element,
   displayMode,
@@ -77,7 +82,9 @@ const Inspector = ({
     styleSelector,
     styleState,
     styleVariant,
-    styleAncestor
+    styleAncestor,
+    stylePseudo,
+    styleCondition
   });
 
   const handleChangeCollapse = useCallback(
@@ -103,7 +110,9 @@ const Inspector = ({
           styleSelector,
           styleState,
           styleVariant,
-          styleAncestor
+          styleAncestor,
+          stylePseudo,
+          styleCondition
         });
 
         return;
@@ -118,7 +127,9 @@ const Inspector = ({
         styleSelector,
         styleState,
         styleVariant,
-        styleAncestor
+        styleAncestor,
+        stylePseudo,
+        styleCondition
       });
       if (!element) {
         return;
@@ -145,7 +156,9 @@ const Inspector = ({
       styleSelector,
       styleState,
       styleVariant,
-      styleAncestor
+      styleAncestor,
+      stylePseudo,
+      styleCondition
     ]
   );
 
@@ -172,6 +185,8 @@ const Inspector = ({
       styleState={styleState}
       styleVariant={styleVariant}
       styleAncestor={styleAncestor}
+      stylePseudo={stylePseudo}
+      styleCondition={styleCondition}
       selector={selector}
       element={element}
       inheritData={inheritData}

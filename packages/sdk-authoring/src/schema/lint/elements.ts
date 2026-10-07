@@ -5,7 +5,9 @@ import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twi
 import { BINDING_CATEGORIES, LOAD_STRATEGIES, RUNTIMES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
 import { textOf } from './context';
+import { checkGlobalRead } from './globalReads';
 import { checkPageTarget } from './pages';
+import { checkSlots } from './slots';
 import { checkPropsRead, checkTemplate } from './templates';
 
 import type { LintContext } from './context';
@@ -236,6 +238,7 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
     // name itself — that some element publishes it — is the structural validator's.
     const head = binding.source.split('.')[0];
     checkPropsRead(ctx, binding.source, at, element.id);
+    checkGlobalRead(ctx, binding.source, at, element.id);
     const providerId = head.slice(head.indexOf('_') + 1);
     const prefix = ctx.sources.get(providerId);
     if (prefix && head === `${prefix}_${providerId}` && !scope.has(providerId)) {
@@ -688,6 +691,7 @@ export const lintElements = (ctx: LintContext): void => {
     checkAttributeTemplates(ctx, element, where);
     checkIntent(ctx, element, where);
     checkSvgMarkup(ctx, element, where);
+    checkSlots(ctx, element, where);
     warnRouteParams(ctx, element, where);
   }
 

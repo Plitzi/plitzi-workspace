@@ -295,6 +295,10 @@ program
   .option('--state', 'Also what the page holds: its state, and every source by name')
   .option('--element <id>', 'Also one element: what it reads, its own state, whether it is on screen')
   .option('--ssr', 'Also the HTML the server sent against the hydrated page: what a server provider sent late')
+  .option(
+    '--as <username>',
+    'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD'
+  )
   .option('--json', 'One object per width, for a tool or an agent')
   .action((path: string | undefined, options: CheckOptions) => check(path, options));
 

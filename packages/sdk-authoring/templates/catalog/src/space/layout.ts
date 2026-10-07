@@ -1,8 +1,8 @@
 /**
  * The chrome every page shares — a header with the menu, and a footer — written once. Pages name the layout and the
- * slot their body goes in (`site-main`); the current menu entry comes from `activeOn`, not from each page.
+ * slot their body goes in (`site-main`); the current menu entry marks itself, not each page.
  */
-import { activeOn, container, link, styles, text } from '@plitzi/sdk-authoring';
+import { container, link, styles, text } from '@plitzi/sdk-authoring';
 
 import { t } from './tokens.ts';
 
@@ -31,7 +31,7 @@ const nav = styles('nav', { display: 'flex', gap: 20 });
 
 const navLink = styles('nav-link', {
   css: { color: t.muted, textDecoration: 'none' },
-  variants: { active: { color: t.foreground, fontWeight: 600 } }
+  states: { current: { color: t.foreground, fontWeight: 600 } }
 });
 
 const main = styles('main', {
@@ -44,10 +44,10 @@ const main = styles('main', {
 
 const footer = styles('site-footer', { padding: '24px', color: t.muted, fontSize: '14px', textAlign: 'center' });
 
-/** The menu: one entry per section, and the pages that belong to it. */
+/** The menu: one entry per section — Products stays current on every product, which is under its path. */
 const MENU = [
-  { href: '/', label: 'Home', pages: ['home'] },
-  { href: '/products', label: 'Products', pages: ['catalog', 'product'] }
+  { href: '/', label: 'Home', current: 'page' },
+  { href: '/products', label: 'Products', current: 'section' }
 ] as const;
 
 export const layout: LayoutSpec = {
@@ -71,7 +71,7 @@ export const layout: LayoutSpec = {
                 link({
                   href: entry.href,
                   class: navLink,
-                  bind: [activeOn(navLink, [...entry.pages])],
+                  current: entry.current,
                   content: entry.label
                 })
               )

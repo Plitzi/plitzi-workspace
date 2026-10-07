@@ -37,11 +37,19 @@ const declaration = elementDeclaration<PaginationAttributes>()({
       label: 'Pagination',
       type: 'pagination',
       description:
-        'Pages through a list. Bind it to a provider page info: in URL mode it writes the page into the address bar so the result stays shareable and indexable, and in load-more mode it announces the next page for the provider to append.',
+        'Pages through a list. Bind it to a provider page info: in URL mode it writes the page into the address bar so ' +
+        'the result stays shareable and indexable, and in load-more mode it announces the next page for the provider ' +
+        'to append. Its buttons take a class through their slots: `previous`, `page` (each numbered one — the page ' +
+        'shown carries `aria-current="page"`, so the class\'s `current` state dresses it), `next` and `loadMore`; one ' +
+        'with nowhere to go is disabled, the `disabled` state.',
       items: [],
       bindings: {},
       styleSelectors: {
-        base: ''
+        base: '',
+        previous: '',
+        page: '',
+        next: '',
+        loadMore: ''
       },
       initialState: {
         visibility: true

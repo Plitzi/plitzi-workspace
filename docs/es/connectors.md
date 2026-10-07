@@ -287,7 +287,9 @@ fuentes de plugins.
 | `windowSize` | número | Páginas alrededor de la actual |
 
 Emite el trigger `onPageChange`. En el builder (sin datos) renderiza los controles deshabilitados, para que el
-elemento se pueda estilizar al seleccionarlo.
+elemento se pueda estilizar al seleccionarlo. Sus botones son slots — `previous`, `page`, `next`, `loadMore` — y la
+página mostrada lleva `aria-current="page"`, que viste el estado `current` de la clase de `page`; el que no tiene
+adónde ir está `disabled`.
 
 ### RichText (`basic`)
 
@@ -300,7 +302,10 @@ autoral y inaceptable para contenido de terceros).
 - `mediaBaseUrl` — prefijo para `src`/`href` relativos dentro del cuerpo (el conector rebasea campos de registro,
   pero el markup dentro de un body le es opaco).
 
-Sanea: quita `<script>`, manejadores de eventos y URLs `javascript:`, y rebasea media relativa.
+Sanea: quita `<script>`, manejadores de eventos y URLs `javascript:`, y rebasea media relativa. Después pone la clase
+de cada slot en su parte — los slots de un `markdown`, con los mismos nombres (`heading`, `heading2`, `paragraph`,
+`link`, `codeBlock`…), así un mismo tema viste el cuerpo en cualquier formato: el HTML se lee como texto, igual que
+lo lee el saneador (`classHtmlParts`), así el servidor escribe las mismas clases que el navegador.
 
 ---
 
@@ -380,6 +385,11 @@ se **fusiona** en `rsc.data`. `useRscSync` tiene como clave la **ubicación** �
 y su `href`, no el `currentPageId`: `/posts/1` → `/posts/2` es la misma página con otro registro — y solo pide una
 ubicación que el store no tiene (`rsc.location`), así que el cambio de ruta que sigue reutiliza lo que trajo el
 prefetch: un render por clic, no dos.
+
+La página que se deja se sigue dibujando un render o dos después de que la ruta cambió, y lo que pidan entonces sus
+providers — un `input` bindeado que se resuelve otra vez contra la ruta nueva, una invalidación, un temporizador — se
+preguntaría sobre la dirección NUEVA. Por eso un refresco parcial nombra solo los elementos que el servidor resuelve
+allí (`collectServerElements`, el mismo recorrido que hace el servidor), y uno que no nombra ninguno no es una petición.
 
 ### 7.4 Casos borde
 

@@ -36,6 +36,7 @@ export const SPACE_SPEC_KEYS = [
   'elements',
   'schemaVariables',
   'customCss',
+  'keyframes',
   'notifications',
   'computed',
   'formats',
@@ -155,6 +156,8 @@ export const ELEMENT_STYLE_SPEC_KEYS = [
   'states',
   'variants',
   'ancestors',
+  'pseudos',
+  'conditions',
   'slots'
 ] as const satisfies readonly (keyof ElementStyleSpec)[];
 

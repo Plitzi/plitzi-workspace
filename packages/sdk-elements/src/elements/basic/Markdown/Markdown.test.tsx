@@ -1,8 +1,10 @@
+import { MARKDOWN_PARTS } from '@plitzi/plitzi-ui/Markdown';
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { markdownHeadings } from '@plitzi/sdk-shared/schema/markdownHeadings';
 
+import declaration from './declaration';
 import { Markdown } from './Markdown';
 import ElementContext from '../../../Element/ElementContext';
 import { elementEntry, skipHocEntry } from '../../../testUtils/elementTestUtils';
@@ -51,6 +53,7 @@ describe('Markdown', () => {
         styleSelectors: {
           base: '',
           heading: 'note-heading',
+          heading2: 'note-h2',
           paragraph: 'note-p',
           link: 'note-link',
           anchor: 'note-anchor'
@@ -63,10 +66,17 @@ describe('Markdown', () => {
       </ElementContext>
     );
 
-    expect(container.querySelector('h2')?.className).toBe('note-heading');
+    expect(container.querySelector('h2')?.className).toBe('note-heading note-h2');
     expect(container.querySelector('h2 > a')?.className).toBe('anchor note-anchor');
     expect(container.querySelector('p')?.className).toBe('note-p');
     expect(container.querySelector('p > a')?.className).toBe('note-link');
+  });
+
+  it('offers a slot for every part of the document', () => {
+    const { base, ...slots } = declaration.content.definition.styleSelectors;
+
+    expect(base).toBe('');
+    expect(Object.keys(slots)).toEqual([...MARKDOWN_PARTS]);
   });
 
   it('keeps every heading id and leaves the link to it out with headingLinks off', () => {

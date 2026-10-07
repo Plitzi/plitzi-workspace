@@ -1,3 +1,4 @@
+import { reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
 import { INTERVAL_TRIGGER, intervalOf, MIN_INTERVAL_MS } from '@plitzi/sdk-shared/helpers/interval';
 import { KEY_TRIGGER, parseKeys } from '@plitzi/sdk-shared/helpers/keys';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
@@ -5,11 +6,13 @@ import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
 import { STEP_TYPES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
+import { checkGlobalRead } from './globalReads';
 import { checkPageTarget } from './pages';
 import { checkTemplate } from './templates';
 
 import type { LintContext } from './context';
 import type { Element, ElementInteraction } from '@plitzi/sdk-shared';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
 
 const STEP_TYPE_NAMES = new Set<string>(STEP_TYPES);
 
@@ -64,6 +67,59 @@ const flowsOf = (element: Element): ElementInteraction[][] => {
 };
 
 /**
+ * The elements a step names by id in a param of its own (`elementIds`: `invalidateElements`, `invalidateQueries`'s
+ * `elements`), held to the space: an id no element has, or one of a type the param does not take — only an
+ * `apiContainer` is refreshed by its id — refreshes nothing, and the page goes on showing what the write changed. Read
+ * as the runtime reads the params, defaults filled in: a list the step's mode leaves aside is not used.
+ */
+const checkElementIds = (
+  ctx: LintContext,
+  params: Record<string, unknown>,
+  spec: ParamSpec | undefined,
+  at: string,
+  hostId: string
+): void => {
+  const declared = spec ?? {};
+  const effective = reconcileParams(params, declared, false);
+  for (const [key, param] of Object.entries(declared)) {
+    const ids = params[key];
+    if (param.type !== 'elementIds' || !Array.isArray(ids) || (param.when && !param.when(effective))) {
+      continue;
+    }
+
+    const { elementType } = param;
+    const candidates = Object.values({ ...ctx.schema.flat, ...ctx.flat })
+      .filter(element => !elementType || element.definition.type === elementType)
+      .map(element => element.id);
+    const kind = elementType ? `an ${elementType}` : 'an element';
+    const listed =
+      candidates.length > 0
+        ? `: ${candidates.slice(0, 8).join(', ')}${candidates.length > 8 ? ', …' : ''}`
+        : ', and the space has none';
+    for (const id of ids) {
+      if (typeof id !== 'string' || hasTemplateSyntax(id)) {
+        continue;
+      }
+
+      const element = ctx.element(id) ?? (Object.hasOwn(ctx.schema.flat, id) ? ctx.schema.flat[id] : undefined);
+      const type = element?.definition.type;
+      if (element && (!elementType || type === elementType)) {
+        continue;
+      }
+
+      const found = element
+        ? `a "${type ?? ''}" — only ${kind} is refreshed by its id, so it refreshes nothing`
+        : 'an id no element of the space has';
+      ctx.error(
+        'element-ids-target',
+        `${at}: "${key}" names "${id}", ${found}${didYouMean(id, candidates) || '.'} It takes the id of ${kind}${listed}.`,
+        hostId
+      );
+    }
+  }
+};
+
+/**
  * A global callback's module, a utility's absence of one, the params either takes, and the warnings for a catalog
  * that does not know the action — a plugin may register one this process cannot see.
  */
@@ -103,6 +159,8 @@ const checkAction = (ctx: LintContext, node: ElementInteraction, where: string, 
     if (issue) {
       ctx.error('step-params', issue, hostId);
     }
+
+    checkElementIds(ctx, node.params, declared.params, at, hostId);
   }
 
   if (node.type === 'utility') {
@@ -130,6 +188,8 @@ const checkAction = (ctx: LintContext, node: ElementInteraction, where: string, 
     if (issue) {
       ctx.error('step-params', issue, hostId);
     }
+
+    checkElementIds(ctx, node.params, vocabulary.utilities[node.action].params, at, hostId);
   }
 };
 
@@ -469,6 +529,25 @@ const checkConditionFields = (
   }
 };
 
+/**
+ * A condition asking a global for a field it never has — `auth.authenticated` for `auth.isAuthenticated`, a flag the
+ * space does not declare. The field is never there, so the step runs, or never does, whatever the visitor is. A step of
+ * the flow named like a global is that step, and is asked what it publishes instead.
+ */
+const checkConditionGlobals = (
+  ctx: LintContext,
+  node: ElementInteraction,
+  steps: ReadonlyMap<string, ElementInteraction>,
+  where: string,
+  hostId: string
+): void => {
+  for (const { field } of conditionRules(node.when)) {
+    if (!steps.has(field.split('.')[0])) {
+      checkGlobalRead(ctx, field, `${where}: the condition of step "${node.id}"`, hostId);
+    }
+  }
+};
+
 /** A form's submitted field, as a step reads it: `sent.values.code`. */
 const FORM_VALUE = /\.values\.[^.]+$/;
 
@@ -598,6 +677,7 @@ export const lintFlows = (ctx: LintContext): void => {
         warnBlankFormValue(ctx, node, where, host.id);
         checkWhileRunning(ctx, node, where, host.id);
         checkConditionFields(ctx, node, steps, where, host.id);
+        checkConditionGlobals(ctx, node, steps, where, host.id);
         if (node.type === 'trigger') {
           checkTrigger(ctx, node, where, host);
           continue;

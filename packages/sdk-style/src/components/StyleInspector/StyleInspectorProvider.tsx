@@ -6,6 +6,7 @@ import { useCallback, useMemo } from 'react';
 import { baseDefaultValue } from '@plitzi/sdk-shared';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { styleTargetRules } from '@plitzi/sdk-shared/style/styleTarget';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';
@@ -15,10 +16,10 @@ import type { InheritData } from '../../helpers';
 import type {
   DisplayMode,
   Element,
-  StyleBlock,
   StyleCategory,
   StyleItem,
   StyleObject,
+  StylePseudo,
   StyleState,
   StyleValue
 } from '@plitzi/sdk-shared';
@@ -32,6 +33,8 @@ export type StyleInspectorProviderProps = {
   styleState?: StyleState;
   styleVariant?: string;
   styleAncestor?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
   element?: Element;
   inheritData: InheritData;
   displayMode: DisplayMode;
@@ -46,6 +49,8 @@ const StyleInspectorProvider = ({
   styleState,
   styleVariant,
   styleAncestor,
+  stylePseudo,
+  styleCondition,
   element,
   inheritData,
   displayMode,
@@ -54,30 +59,17 @@ const StyleInspectorProvider = ({
   const bindingData = useStyleBinding({ element });
   const [schemaVariables = emptyObject] = useCommonStore('runtime.sources.variables');
 
-  const getValues = useCallback(() => {
-    let attributes: Partial<Record<StyleCategory, StyleValue>> | undefined = undefined;
-    if (selector && styleSelector && (selector.attributes[styleSelector] as StyleBlock | undefined)) {
-      const block = selector.attributes[styleSelector];
-      if (styleAncestor) {
-        const ancestor = block.ancestors?.[styleAncestor];
-        const variant = styleVariant ? ancestor?.variants?.[styleVariant] : undefined;
-        const scope = styleVariant ? variant : ancestor;
-        attributes = (styleState ? scope?.states?.[styleState] : scope?.default) ?? {};
-      } else if (styleState && styleVariant) {
-        attributes = block.variants?.[styleVariant].states?.[styleState] ?? {};
-      } else if (styleVariant) {
-        attributes = block.variants?.[styleVariant]?.default ?? {};
-      } else if (styleState) {
-        attributes = block.states?.[styleState] ?? {};
-      } else {
-        attributes = block.default ?? {};
-      }
-    } else {
-      attributes = {};
-    }
-
-    return attributes;
-  }, [selector, styleSelector, styleState, styleVariant, styleAncestor]);
+  const getValues = useCallback(
+    (): Partial<Record<StyleCategory, StyleValue>> =>
+      styleTargetRules(selector?.attributes[styleSelector], {
+        styleState,
+        styleVariant,
+        styleAncestor,
+        stylePseudo,
+        styleCondition
+      }) ?? {},
+    [selector, styleSelector, styleState, styleVariant, styleAncestor, stylePseudo, styleCondition]
+  );
 
   const setValue = useCallback(
     (styleKey?: StyleCategory, values?: StyleObject | StyleValue): void => {
@@ -147,6 +139,8 @@ const StyleInspectorProvider = ({
       styleState,
       styleVariant,
       styleAncestor,
+      stylePseudo,
+      styleCondition,
       displayMode,
       variables: schemaVariables,
       inheritData: inheritData.style,
@@ -163,6 +157,8 @@ const StyleInspectorProvider = ({
       styleState,
       styleVariant,
       styleAncestor,
+      stylePseudo,
+      styleCondition,
       displayMode,
       schemaVariables,
       inheritData.style,

@@ -13,7 +13,7 @@ const space: SpaceSpec = {
   classes: { card },                           // styles() declarations, by their own name; styles('card', tw('p-4 rounded-xl'))
   computed: { total: '{{ … }}' },              // values read anywhere as computed.total
   flags: { beta: { description, value: false, rules: [] } },
-  customCss: '@keyframes …',                   // keyframes and what no property says
+  keyframes: { blink: { '50%': { opacity: 0 } } },   // a class plays them: animation: 'blink 1s infinite'
   layouts: [{ id: 'shell', body }],           // chrome shared by pages
   components: [{ id, props, slots, root }],    // a block placed many times with different content
   pages: [{ id, name, slug: '', layout: { id: 'shell', slot: 'main' }, body: [] }]   // slot: where the body goes
@@ -81,7 +81,7 @@ bind: { alt: 'p.data.title' }                                  // other attribut
 bind: [bindTemplate('content', 'p.data.items', '{{ source|length }} items')]
 bind: [bindTemplate('items', 'p.data.rows', '{{ source|filter(r => r.on) }}', { returns: 'value' })]
 bind: [variantFrom(pill, 'rows.item.status')]                  // a variant chosen by the data
-bind: [activeOn(navLink, 'about')]                             // the current page's link
+current: 'section'                                             // a link lit on its page and the pages under it
 bind: [activeWhen(dot, '{{ list_dots.index == state.slide }}')] // a variant while a condition holds
 visible: 'p.data.signedIn'                                     // shown while true; '!p.data.signedIn' inverts
 visible: { source: 'p.data.rows', template: '{{ source is defined and source|length == 0 }}' }

@@ -28,7 +28,7 @@ import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder
  *
  * There is no user on a `TokenResult`, deliberately: who the session belongs to is loaded separately and arrives on
  * the `auth` source, not out of this step. A flow that wants to greet somebody by name reads what they typed, or
- * reads `auth.user` on a later render.
+ * reads `auth.details.username` on a later render.
  */
 export const authCallbacks: Record<string, BuiltinGlobalCallback> = {
   login: {

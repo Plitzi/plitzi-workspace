@@ -6,7 +6,7 @@ import type { QueryParams, RouteParams } from './NavigationTypes';
 import type { RealtimeTransport } from './RealtimeTypes';
 import type { Schema, Element } from './SchemaTypes';
 import type { SpaceConnector } from './SpaceTypes';
-import type { DisplayMode, Style, StyleState } from './StyleTypes';
+import type { DisplayMode, Style, StylePseudo, StyleState } from './StyleTypes';
 import type { ColorScheme, Theme } from './ThemeTypes';
 import type { FlagOverrides, FlagResolution } from '../flags/resolveFlags';
 
@@ -292,6 +292,10 @@ export type BuilderState = CommonState & {
   styleState?: StyleState;
   /** The ancestor class being edited under: `styleState`/`styleVariant` are then its, and neither means always. */
   styleAncestor?: string;
+  /** The pseudo-element being edited (`before`, `placeholder`…) of whatever the other fields address. */
+  stylePseudo?: StylePseudo;
+  /** The condition being edited under (`motion-reduce`, a container query): the class's own rules, there. */
+  styleCondition?: string;
   elementHovered?: string;
   elementSelected?: string;
   /**

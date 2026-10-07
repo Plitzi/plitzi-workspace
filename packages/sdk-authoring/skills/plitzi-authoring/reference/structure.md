@@ -108,7 +108,7 @@ the record is the answer instead: one page, as many addresses as records.
 per page. It renders; it is not maintainable. When you work on such a file, leave it better:
 
 - repeated `css` blocks → one class;
-- a nav with a hand-styled current entry per page → a layout and `activeOn`;
+- a nav with a hand-styled current entry per page → a layout whose links mark themselves (`current: 'section'`);
 - the same tree pasted per item → a function and a `map`;
 - `container-45` → a name.
 

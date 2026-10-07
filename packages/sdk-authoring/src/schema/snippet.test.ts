@@ -218,7 +218,7 @@ describe('validateSnippet', () => {
             ...child,
             definition: {
               ...child.definition,
-              bindings: { attributes: [{ id: 'b1', to: 'content', source: 'auth.user.firstName' }] }
+              bindings: { attributes: [{ id: 'b1', to: 'content', source: 'auth.details.username' }] }
             }
           }
         }

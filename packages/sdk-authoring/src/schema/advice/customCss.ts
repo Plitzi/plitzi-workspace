@@ -1,4 +1,6 @@
 /* eslint-disable quotes -- the messages quote code, which reads best in the other quotes */
+import { splitNotificationsCss } from '@plitzi/sdk-shared/style/notifications';
+
 import { declaredClasses } from './declaredClasses';
 import { foldCustomCss } from '../../decompile/customCss';
 
@@ -8,7 +10,8 @@ import type { Schema, Style } from '@plitzi/sdk-shared';
 /**
  * What a space's `customCss` says that something else says better.
  *
- * - A rule a class can hold — `.card:hover`, `.card .icon` — read by the same fold the export makes, so this suggests
+ * - A rule a class can hold — `.card:hover`, `.card .icon`, `.link::after`, one under `@media (prefers-reduced-motion:
+ *   reduce)` — read by the same fold the export makes, so this suggests
  *   exactly what an export would do with it.
  * - What the SDK already does for every space: the stills for a visitor who asked for less motion, the theme toggle
  *   showing the icon of the scheme in use.
@@ -22,8 +25,13 @@ const MOTION_RESET =
 /** Showing or hiding an icon of the theme toggle — what the SDK's base layer does by default. Sizing one is not. */
 const THEME_ICONS = /\.plitzi-component__theme-toggle\s*\[data-theme-icon[^{]*\{[^}]*display\s*:/;
 
-/** The toast's type, edge, depth or room, each a field of `notifications`. */
-const TOAST_RULE = /\.Toastify__toast\s*\{[^}]*(?:font-family|font-size|border|box-shadow|padding)\s*:/;
+/** What a field of `notifications` says of the toast or a part inside it, written as a rule on the library's class. */
+const TOAST_RULES = [
+  /\.Toastify__toast\s*\{[^}]*?(?<![\w-])(?:font-family|font-size|font-weight|line-height|min-height|border|box-shadow|padding)\s*:/,
+  /\.Toastify__toast-icon\s*\{[^}]*?(?<![\w-])(?:width|margin-inline-end)\s*:/,
+  /\.Toastify__close-button\s*\{[^}]*?(?<![\w-])(?:color|opacity)\s*:/,
+  /\.Toastify__progress-bar(?:--wrp)?\s*\{[^}]*?(?<![\w-])height\s*:/
+];
 
 export const suggestCustomCss = (schema: Schema, style: Style): Suggestion[] => {
   const customCss = schema.settings.customCss;
@@ -37,11 +45,14 @@ export const suggestCustomCss = (schema: Schema, style: Style): Suggestion[] => 
   if (folded.length > 0) {
     const targets = folded.flatMap(rule =>
       rule.targets.map(target => {
+        const parts = [
+          ...(target.state ? [`its \`${target.state}\` state`] : []),
+          ...(target.pseudo ? [`its \`${target.pseudo}\``] : []),
+          ...(target.condition ? [`under \`${target.condition}\``] : [])
+        ];
         const where = target.ancestor
           ? `inside \`${target.ancestor.className}\`${target.ancestor.state ? `:${target.ancestor.state}` : ''}`
-          : target.state
-            ? `its \`${target.state}\` state`
-            : 'itself';
+          : parts.join(', ') || 'itself';
 
         return `\`${target.className}\` (${where})`;
       })
@@ -53,8 +64,9 @@ export const suggestCustomCss = (schema: Schema, style: Style): Suggestion[] => 
       message:
         `${String(folded.length)} rule${folded.length === 1 ? '' : 's'} in \`customCss\` ${folded.length === 1 ? 'is' : 'are'} ` +
         `a class's own: ${targets.slice(0, 4).join(', ')}${targets.length > 4 ? ', …' : ''}. Write ${folded.length === 1 ? 'it' : 'them'} on ` +
-        'the class — `states: { hover: { … } }`, `ancestors: { [card.name]: { states: { hover: { … } } } }` — where ' +
-        'the style editor shows it and a breakpoint can change it.'
+        'the class — `states: { hover: { … } }`, `ancestors: { [card.name]: { states: { hover: { … } } } }`, ' +
+        "`pseudos: { after: { content: '\"→\"' } }`, `conditions: { 'motion-reduce': { … } }` — where the style editor " +
+        'shows it and a breakpoint can change it.'
     });
   }
 
@@ -75,16 +87,19 @@ export const suggestCustomCss = (schema: Schema, style: Style): Suggestion[] => 
     });
   }
 
-  if (TOAST_RULE.test(customCss)) {
+  // Read past the rules `notifications` itself writes at the end, which say those very fields.
+  const ownCss = splitNotificationsCss(customCss).customCss;
+  if (TOAST_RULES.some(rule => rule.test(ownCss))) {
     suggestions.push({
       code: 'custom-css-notifications',
       elementIds: [],
       saves: 0,
       message:
-        'The toasts are dressed by a `.Toastify__toast` rule in `customCss`. Their type, edge, depth and room are ' +
-        "fields of the space's `notifications` — `notifications: { font: 'var(--font-sans)', fontSize: '14px', " +
-        "border: '1px solid var(--border)', shadow: 'var(--shadow-lg)', padding: '12px 14px' }` — beside their " +
-        'colours; keep in `customCss` only what those do not say.'
+        'The toasts are dressed by `.Toastify__*` rules in `customCss`. Their type, edge, depth, room and height, and ' +
+        "their icon, close button and progress bar, are fields of the space's `notifications` — `notifications: " +
+        "{ font: 'var(--font-sans)', fontWeight: '500', minHeight: '0px', iconSize: '18px', closeColor: " +
+        "'var(--muted)', progressHeight: '2px' }` — beside their colours; keep in `customCss` only what those do " +
+        'not say.'
     });
   }
 

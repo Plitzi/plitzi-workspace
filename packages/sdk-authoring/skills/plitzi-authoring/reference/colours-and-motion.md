@@ -2,8 +2,9 @@
 
 ## Animations
 
-- **Keyframes go in the space's `customCss`** (`'@keyframes marquee { to { transform: translateX(-50%); } }'`) and
-  the class names them: `animation: 'marquee 30s linear infinite'`.
+- **Keyframes go in the space's `keyframes`** (`keyframes: { marquee: { to: { transform: 'translateX(-50%)' } } }`)
+  and the class names them: `animation: 'marquee 30s linear infinite'`. A name no keyframes declare is warned
+  (`animation-name-unknown`).
 - **An element hidden by `visible` is `display: none`**, so an animation in its class runs again every time it is
   shown — the way to animate a slide in (see recipes/every-few-seconds.ts).
 - **Pause on hover** from the element around it: `ancestors: { [band.name]: { states: { hover:

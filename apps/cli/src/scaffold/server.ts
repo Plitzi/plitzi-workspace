@@ -34,6 +34,11 @@ const serveCall = (properties: readonly string[]): string => {
   return line.length <= 120 ? line : `await serveProject({\n  ${properties.join(',\n  ')}\n});`;
 };
 
+/** What a local project's entry point says besides: why its space is imported where it is. */
+const LOCAL_DOC = `
+ * The space is imported when the server asks for it, once the project's layout is checked: a project laid out wrong,
+ * or a space that does not author, is said as a report — every problem and its fix — and the process exits with 1.`;
+
 /** What a cloud project's entry point says besides: where its space is, and what names the server. */
 const CLOUD_DOC = `
  * The space stays in Plitzi, read with \`PLITZI_HOST_KEY\`; \`name\` is what \`/health\` answers with.`;
@@ -42,7 +47,7 @@ const CLOUD_DOC = `
 const mainDoc = (local: boolean): string => `/**
  * The project's page server. \`serveProject\` wires the rest from where this project keeps it — its plugins, its
  * functions and runtime, \`public/\`, \`${DATA_DIR}/\`, the \`kv\` in \`${KV_FILE}\`, the port — and, while developing,
- * authors the space again on a save and reloads the open pages (\`@plitzi/sdk-server\`'s README, "Projects").${local ? '' : CLOUD_DOC}
+ * authors the space again on a save and reloads the open pages (\`@plitzi/sdk-server\`'s README, "Projects").${local ? LOCAL_DOC : CLOUD_DOC}
  * It runs in the project's root, as its scripts start it — \`.env\` there is read before anything here loads
  * (\`--env-file-if-exists=.env\`; \`start:dev\` preloads it, \`@plitzi/sdk-server/env\`).
  *
@@ -60,12 +65,12 @@ export const serverMain = ({ source, name, actions }: ServerMainOptions): string
   const local = source === 'local';
   const ownImports = [
     ...(actions ? [namedImport(['actions', 'connectors'], './actions/index.ts')] : []),
-    namedImport(['serverOptions'], './config/serverOptions.ts'),
-    ...(local ? [namedImport(['space'], './space/index.ts')] : [])
+    namedImport(['serverOptions'], './config/serverOptions.ts')
   ];
-  // The space authored at boot and checked against what the project's files say; or Plitzi's, named for `/health`.
+  // The space imported and authored when the server asks for it — once the project's layout is checked — so whatever
+  // refuses it is said as a report; or Plitzi's, named for `/health`.
   const spaceProperty = local
-    ? 'space: authorSpace(space, await projectAuthoring())'
+    ? `space: async () => authorSpace((await import(${quoted('./space/index.ts')})).space, await projectAuthoring())`
     : `cloud: { name: ${quoted(name)} }`;
   const authoringImports = local
     ? `\n${namedImport(['authorSpace'], '@plitzi/sdk-authoring')}\n${namedImport(['projectAuthoring'], '@plitzi/sdk-authoring/node')}\n`

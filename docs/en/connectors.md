@@ -294,7 +294,8 @@ sources.
 | `windowSize` | number | Pages around the current one |
 
 It emits the `onPageChange` trigger. In the builder (no data) it renders its controls disabled, so the element can be
-styled when selected.
+styled when selected. Its buttons are slots — `previous`, `page`, `next`, `loadMore` — and the page shown carries
+`aria-current="page"`, which the `current` state of the `page` class dresses; one with nowhere to go is `disabled`.
 
 ### RichText (`basic`)
 
@@ -307,7 +308,10 @@ unacceptable for third-party content).
 - `mediaBaseUrl` — prefix for relative `src`/`href` inside the body (the connector rebases record fields, but the
   markup inside a body is opaque to it).
 
-It sanitizes: strips `<script>`, event handlers and `javascript:` URLs, and rebases relative media.
+It sanitizes: strips `<script>`, event handlers and `javascript:` URLs, and rebases relative media. Then it puts the
+class of each slot on its part — the slots a `markdown` has, by the same names (`heading`, `heading2`, `paragraph`,
+`link`, `codeBlock`…), so one theme dresses a body in either format: an HTML body is read as a string, as the
+sanitizer reads it (`classHtmlParts`), so the server writes the same classes the browser does.
 
 ---
 
@@ -385,6 +389,11 @@ and the new slice is **merged** into `rsc.data`. `useRscSync` keys off the **loc
 query params and `href`, not the `currentPageId`: `/posts/1` → `/posts/2` is the same page with another record — and
 asks only for a location the store does not hold (`rsc.location`), so the route change that follows reuses what the
 prefetch brought: one render per click, not two.
+
+The page being left is still drawn for a render or two after the route moved, and whatever its providers ask then — a
+bound `input` re-resolving against the new route, an invalidation, a timer — would be asked about the NEW address. So a
+partial refresh names only the elements the server resolves there (`collectServerElements`, the walk the server makes),
+and one naming none of them is no request at all.
 
 ### 7.4 Edge cases
 

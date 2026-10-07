@@ -112,9 +112,12 @@ prefixes its ids with the page (`` `${pageId}-foot` ``), and authoring names bot
 **A menu in a layout marks the current page by itself.** The menu is the same nodes on every page, and the link to
 the page being shown carries `aria-current="page"`: its class's `current` state says how it looks
 (`states: { current: { color: 'var(--foreground)' } }`), with no binding at all. A link that names a query is current
-only while the address has it — of `/?window=6h` and `/?window=24h`, the one shown. An entry lit on several pages — a
-section with pages of its own — is `activeOn(navLink, ['spaces', 'space-record'])`, which binds the class's `active`
-variant to `navigation.currentPageId` for those pages and `idle` for every other. The entries themselves are data —
+only while the address has it — of `/?window=6h` and `/?window=24h`, the one shown. An entry lit for a section — a
+journal and its articles — is `current: 'section'` on the link: current on every page under its path, at a segment
+boundary (`/runs` holds `/runs/42`, not `/runsx`), and announced there as `aria-current="true"` rather than `"page"`,
+because ARIA's `page` says the link leads to the page itself; the `current` style state selects both. The pages of an
+entry that are not under its path are `activeOn(navLink, ['spaces', 'space-record'])`, which binds the class's
+`active` variant to `navigation.currentPageId` for those pages and `idle` for every other. The entries themselves are data —
 one list of pages (id, slug, title, summary, order) that the menu, the page titles, the meta descriptions and the
 "previous / next" links all read — and the pages that share a shape come from one function that takes that entry
 and the page's content. This site's own docs are built that way: sixteen pages that used to carry the whole sidebar
@@ -296,8 +299,9 @@ container({ css: { color: 'var(--muted)' }, states: { hover: { color: 'var(--for
 ```
 
 `states` takes the states the editor has tabs for — `hover`, `focus`, `focus-visible`, `focus-within`, `active`,
-`disabled`, `checked`, `visited`, `current` and `hidden` — and each one, like `css`, may be written per breakpoint.
-Once a style has `states`, `variants` or `ancestors`, its own rules go under `css` beside them: rules written next to
+`disabled`, `checked`, `visited`, `current`, `expanded`, `hidden`, and where the element sits among its siblings,
+`first`, `last`, `odd` and `even` — and each one, like `css`, may be written per breakpoint.
+Once a style has `states`, `variants`, `ancestors`, `pseudos` or `conditions`, its own rules go under `css` beside them: rules written next to
 `states` are refused (`rule-set-mixed`) rather than read as something else. An element's own `states` sit beside its
 own `css`, and are refused next to a shared `class` for the same reason `css` is. An element type's defaults (`elements`) take the same
 `states` and `variants`, and `slots` for the type's other selectors — a modal's `rootContainer`, a form control's
@@ -307,7 +311,9 @@ own `css`, and are refused next to a shared `class` for the same reason `css` is
 was rendered at), a pressed toggle (`aria-pressed="true"` — a theme toggle's option, a button with `ariaPressed`) or a
 selected tab (`aria-selected="true"`). The element marks itself, which a screen reader announces too, so a header
 written once in a layout dresses the right navigation item on every page — no class chosen per page, no copy of the
-header per page.
+header per page. A tab panel on show is `current` too (`[role="tabpanel"]:not([hidden])` — the others carry `hidden`),
+and every alternative of the selector weighs at most two attributes, so a class's `current` (0,3,0) wins over its
+`hover` (0,2,0) wherever the two are written. `expanded` is the control whose panel is open (`aria-expanded="true"`).
 
 `hidden` is not a pseudo-class: it is how an element looks while its `visible` says no — where it goes as it hides
 and where it comes from as it shows (it is also written as the element's `@starting-style`). With a transition on the
@@ -347,9 +353,27 @@ by hand the key is the trap: it names the selector the variants
 belong to, and the element's type (`text.base`) is a different selector from its class (`statusPill.base`) — the
 first renders with no variant at all, and nothing reports it.
 
+### Pseudo-elements, conditions and the parent
+
+What used to need `customCss` beside a class is part of it, in one style language the builder, the MCP and authoring
+read and write alike (`StyleBlock` in `sdk-shared`, compiled by `processSelector` in `sdk-style`):
+
+- **`pseudos`** — `before`, `after`, `marker`, `placeholder`, `first-letter`, `first-line`, `selection` (`STYLE_PSEUDOS`),
+  each with its states: `.x:hover::after`, the pseudo-element last, where CSS allows it. Authoring refuses what draws
+  nothing — a `before`/`after` with no `content`, a `content` without its quotes (`isContentValue`), a property the
+  browser drops on that pseudo-element (`PSEUDO_PROPERTIES`).
+- **`conditions`** — `motion-reduce`, `motion-safe` and container widths (`container card (max-width: 30rem)`), kept in
+  one spelling (`canonicalCondition`) and written after everything else in the class, so they win at the same weight.
+  Breakpoints stay what they are: conditions of the whole page, one block each.
+- **`ancestors['>']`** — the parent, whatever it wears, by its state alone (`:where([aria-expanded="true"]) > &`):
+  what lets a closed component's part answer the element around it without naming that element's class. Only the
+  parent: "any ancestor in a state" would match on every hover of the page.
+
 ### Motion
 
-Keyframes go in the space's `customCss` and a class names them (`animation: 'marquee 30s linear infinite'`). Animate
+Keyframes go in the space's `keyframes` — validated, written as the block `customCss` starts with, where the style
+editor reads them back (`splitKeyframesCss`) — and a class names them (`animation: 'marquee 30s linear infinite'`);
+one no keyframes declare is warned (`animation-name-unknown`). Animate
 `opacity` and `transform`: they keep running while the page hydrates, and anything else — a blur, a shadow, a
 `background-position`, a size — repaints on the main thread and stutters with it. A decoration that needs one of
 those starts `paused` and runs under `[data-hydrated]`. The whole list is in [Motion](./motion.md).
@@ -833,7 +857,7 @@ const { suggestions } = authorSpace(space);
 | `content-attribute` | A `button` or `link` whose only child is a `text` | The element's own `content` |
 | `custom-css-class` | `customCss` rules a class's `states` and `ancestors` say | Those, on the class |
 | `custom-css-sdk-default` | A reduced-motion reset, or the theme toggle's icons, in `customCss` | Nothing: the SDK does both |
-| `custom-css-notifications` | `.Toastify__toast` rules in `customCss` | The space's `notifications` |
+| `custom-css-notifications` | `.Toastify__*` rules in `customCss` — the toast, its icon, close button or progress bar | The space's `notifications` |
 | `heavy-animation` | Keyframes animating a size, a position, a blur, a shadow, or a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — see [Motion](./motion.md) |
 | `unused-class`, `unused-token`, `unused-component` | A class, token or component nothing wears, reads or places | Removed — or used where it was meant to go |
 | `literal-colour` | A class painted from the palette typing out a token's light value | `var(--token)` to follow the scheme; a token of one value when it must stay the same in both |

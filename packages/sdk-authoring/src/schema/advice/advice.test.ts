@@ -315,6 +315,29 @@ describe('suggestions', () => {
     );
   });
 
+  it('reads the toast’s parts dressed by hand as the notifications’ fields, and leaves what those cannot say', () => {
+    const toasts = (customCss: string) =>
+      codesOf(space([page('home', [container()])], { customCss })).includes('custom-css-notifications');
+
+    expect(toasts('.plitzi-sdk-toasts .Toastify__toast-icon { width: 18px; }')).toBe(true);
+    expect(toasts('.plitzi-sdk-toasts .Toastify__close-button { align-self: center; color: var(--muted); }')).toBe(
+      true
+    );
+    expect(toasts('.plitzi-sdk-toasts .Toastify__progress-bar { height: 2px; }')).toBe(true);
+    expect(toasts('.Toastify__toast { min-height: 0; }')).toBe(true);
+    expect(toasts('.Toastify__close-button { background-color: red; }')).toBe(false);
+    expect(toasts('.Toastify__toast { letter-spacing: 0.08em; text-transform: uppercase; }')).toBe(false);
+  });
+
+  it('does not read the rules the notifications write as the toasts dressed by hand', () => {
+    const spec = space([page('home', [container()])], {
+      notifications: { font: 'var(--font-sans)', minHeight: '0px', iconSize: '18px', closeColor: 'var(--muted)' },
+      customCss: '.plitzi-sdk-toasts .Toastify__close-button { align-self: center; }'
+    });
+
+    expect(codesOf(spec)).not.toContain('custom-css-notifications');
+  });
+
   describe('heavy animations', () => {
     const animated = (customCss: string, classes: SpaceSpec['classes'] = {}) =>
       authorSpace(

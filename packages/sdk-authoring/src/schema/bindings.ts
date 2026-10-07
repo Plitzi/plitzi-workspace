@@ -288,12 +288,14 @@ export interface ActiveOnOptions {
  *
  * The page being shown is \`navigation.currentPageId\`, so an entry lights up when that is one of its pages — one
  * binding, the same on every entry of a menu that lives in a layout, instead of a copy of the menu per page with the
- * right entry styled by hand. Several ids for one entry: a section and the pages beneath it (\`['spaces',
- * 'space-record']\`). Every other page wears \`idle\`, a name the class need not declare.
+ * right entry styled by hand. Several ids for one entry: a section and pages of it that are not under its path
+ * (\`['spaces', 'space-record']\`, a record at \`/s/:id\`). Every other page wears \`idle\`, a name the class need not
+ * declare. A link needs none of this for its own page, nor for the pages under its path: it marks itself current there
+ * (\`current: 'section'\`), dressed by its class's \`current\` state.
  *
  * \`\`\`ts
  * const navLink = styles('nav-link', { css: { … }, variants: { active: { color: 'var(--accent)' } } });
- * link({ href: 'docs-data', class: navLink, bind: [activeOn(navLink, 'docs-data')] });
+ * link({ href: 'spaces', class: navLink, bind: [activeOn(navLink, ['spaces', 'space-record'])] });
  * \`\`\`
  */
 export const activeOn = (

@@ -28,7 +28,11 @@ export const upsertDefinition = (space: Space, env: Env, op: UpsertDefinition): 
     return guard;
   }
 
-  writeStyleItem(space.style, ref, base, slots, 'class', undefined);
+  const problem = writeStyleItem(space.style, ref, base, slots, 'class', undefined);
+
+  if (problem) {
+    return problem;
+  }
 
   return { ...empty(), updated: 1, staleResources: [defUri(env, ref), defsUri(env)] };
 };

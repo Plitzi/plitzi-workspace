@@ -119,6 +119,94 @@ describe('a style with states, variants or ancestors', () => {
   });
 });
 
+describe('a style with pseudo-elements, conditions and its parent', () => {
+  it('writes a pseudo-element beside the rules, and the states that show it', () => {
+    const blocks = toBlocks({
+      css: { color: 'gray' },
+      pseudos: { after: { css: { content: '"→"', 'margin-left': '4px' }, states: { hover: { 'margin-left': '8px' } } } }
+    });
+
+    expect(blocks.desktop).toEqual({
+      default: { color: 'gray' },
+      pseudos: {
+        after: { default: { content: '"→"', 'margin-left': '4px' }, states: { hover: { 'margin-left': '8px' } } }
+      }
+    });
+  });
+
+  it('refuses a pseudo-element it cannot dress, with the one meant', () => {
+    expect(() => toBlocks({ pseudos: Object.fromEntries([['::before', { content: '""' }]]) })).toThrow(
+      /\[style-pseudo-unknown\][^]*without the colons, "before"/
+    );
+    expect(() => toBlocks({ pseudos: Object.fromEntries([['befor', { content: '""' }]]) })).toThrow(
+      /did you mean "before"\?/
+    );
+  });
+
+  it('refuses content CSS cannot read, content where it draws nothing, and a before with none', () => {
+    expect(() => toBlocks({ pseudos: { after: { content: '→' } } })).toThrow(
+      /\[style-pseudo-content\][^]*content: '"→"'/
+    );
+    expect(() => toBlocks({ pseudos: { placeholder: { content: '"x"' } } })).toThrow(/draws nothing/);
+    expect(() => toBlocks({ pseudos: { before: { color: 'red' } } })).toThrow(/has no `content`/);
+    expect(() =>
+      toBlocks({ pseudos: { before: { css: { color: 'red' }, states: { hover: { content: '""' } } } } })
+    ).not.toThrow();
+  });
+
+  it('refuses a property the pseudo-element drops', () => {
+    expect(() => toBlocks({ pseudos: { selection: { padding: '4px' } } })).toThrow(
+      /\[style-pseudo-property\][^]*`padding-top` on `::selection`/
+    );
+    expect(() => toBlocks({ pseudos: { selection: { color: 'white', 'background-color': 'black' } } })).not.toThrow();
+  });
+
+  it('writes rules under a condition, in the spelling the document keeps', () => {
+    const blocks = toBlocks({
+      css: { transition: 'transform 200ms' },
+      conditions: {
+        'motion-reduce': { transition: 'none' },
+        'container   card (max-width:30rem)': {
+          css: { 'flex-direction': 'column' },
+          pseudos: { after: { content: 'none' } }
+        }
+      }
+    });
+
+    expect(blocks.desktop?.conditions).toEqual({
+      'motion-reduce': { default: { 'transition-property': 'none' } },
+      'container card (max-width: 30rem)': {
+        default: { 'flex-direction': 'column' },
+        pseudos: { after: { default: { content: 'none' } } }
+      }
+    });
+  });
+
+  it('refuses a condition it cannot hold under, and one written twice', () => {
+    expect(() => toBlocks({ conditions: { 'motion-reduced': { opacity: '1' } } })).toThrow(
+      /\[style-condition-unknown\][^]*did you mean "motion-reduce"\?/
+    );
+    expect(() => toBlocks({ conditions: { 'container (width: 30rem)': { opacity: '1' } } })).toThrow(
+      /min-width, max-width/
+    );
+    expect(() =>
+      toBlocks({
+        conditions: {
+          'container (max-width: 30rem)': { opacity: '1' },
+          'container (max-width:30rem)': { opacity: '0' }
+        }
+      })
+    ).toThrow(/already writes under another spelling/);
+  });
+
+  it('keys the parent, whatever it wears, as `>`', () => {
+    const blocks = toBlocks({ ancestors: { '>': { states: { expanded: { transform: 'rotate(180deg)' } } } } });
+
+    expect(blocks.desktop?.ancestors).toEqual({ '>': { states: { expanded: { transform: 'rotate(180deg)' } } } });
+    expect(() => toBlocks({ ancestors: { '> .card': { css: { color: 'red' } } } })).toThrow(/\[ancestor-not-class\]/);
+  });
+});
+
 describe('layout combinators', () => {
   it('column is the two display declarations plus the gap', () => {
     expect(column('24px')).toEqual({

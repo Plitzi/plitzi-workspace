@@ -12,6 +12,7 @@ import { useCommonStore, useCommonStoreSync, useRenderSettings } from '@plitzi/s
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 
 import type { AuthContextValue, SourceField } from '@plitzi/sdk-shared';
+import type { ShapedGlobalValue } from '@plitzi/sdk-shared/dataSource/globalSources';
 import type { ReactNode } from 'react';
 
 export type GlobalSourcesProps = {
@@ -65,7 +66,16 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
    * resolved on the server waits for that page's data before it goes, and `pendingLocation` is where it is going.
    */
   const navigationValue = useMemo(
-    () => ({ routeParams, queryParams, origin, href, currentPageId, pending: pendingLocation !== '', pendingLocation }),
+    () =>
+      ({
+        routeParams,
+        queryParams,
+        origin,
+        href,
+        currentPageId,
+        pending: pendingLocation !== '',
+        pendingLocation
+      }) satisfies ShapedGlobalValue<'navigation'>,
     [routeParams, queryParams, origin, href, currentPageId, pendingLocation]
   );
   const navigationFields = useCallback(() => {
@@ -115,7 +125,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
         verified: '',
         ...(user?.details ?? {})
       }
-    };
+    } satisfies ShapedGlobalValue<'auth'>;
   }, [provider, user, authenticated, status]);
   const authFields = useCallback(
     () => getPathsFromObeject(authValue).map(path => ({ path, name: `user.${path}` })),
@@ -189,7 +199,10 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
    * `resolved` is the one anything building a URL or comparing a colour wants — `system` is not a colour.
    */
   const { theme, resolvedTheme } = useTheme(SPACE_THEME_AREA);
-  const themeValue = useMemo(() => ({ mode: theme, resolved: resolvedTheme }), [theme, resolvedTheme]);
+  const themeValue = useMemo(
+    () => ({ mode: theme, resolved: resolvedTheme }) satisfies ShapedGlobalValue<'theme'>,
+    [theme, resolvedTheme]
+  );
   const themeFields = useCallback(
     () => getPathsFromObeject(themeValue).map(path => ({ path, name: `theme.${path}` })),
     [themeValue]

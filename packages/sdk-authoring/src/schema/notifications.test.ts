@@ -32,6 +32,12 @@ describe('notificationsCss', () => {
     expect(() => notificationsCss({ colour: 'red' } as never)).toThrow('It takes background, text');
     expect(() => notificationsCss({ border: '1px solid red; color: blue' })).toThrow('not one CSS value');
   });
+
+  it('names the field a misspelt one meant', () => {
+    expect(() => notificationsCss({ iconSise: '18px' } as never)).toThrow(
+      'has no "iconSise" — did you mean "iconSize"?'
+    );
+  });
 });
 
 describe('splitNotificationsCss', () => {

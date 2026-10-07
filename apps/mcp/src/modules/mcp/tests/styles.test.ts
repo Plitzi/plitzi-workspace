@@ -327,6 +327,93 @@ describe('MCP patchDefinition (partial CSS merge)', () => {
   });
 });
 
+describe('MCP pseudo-elements, conditions and the parent on a class', () => {
+  const upsert = {
+    type: 'upsertDefinition',
+    ref: 'caret',
+    desktop: { 'animation-name': 'caret-blink' },
+    pseudos: { after: { desktop: { content: '"|"' }, states: { hover: { desktop: { color: 'red' } } } } },
+    conditions: { 'container   card (max-width:30rem)': { desktop: { 'font-size': '14px' } } },
+    ancestors: { '>': { states: { expanded: { desktop: { color: 'blue' } } } } },
+    variants: { muted: { desktop: { opacity: '0.5' }, states: { hover: { desktop: { opacity: '1' } } } } }
+  } as const;
+
+  it('writes them, reads them back, and compiles them', async () => {
+    const cap = capturing(buildSpace());
+    const res = await apply({ operations: [upsert] }, buildSpace(), cap.persisters);
+    expect(res.applied).toBe(true);
+
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/caret')?.data as AIDefinition;
+    expect(def.pseudos?.after).toEqual({
+      desktop: { content: '"|"' },
+      states: { hover: { desktop: { color: 'red' } } }
+    });
+    expect(def.conditions?.['container card (max-width: 30rem)']).toEqual({ desktop: { 'font-size': '14px' } });
+    expect(def.variants?.muted.states?.hover.desktop).toEqual({ opacity: '1' });
+    const cache = cap.saved().style.platform.desktop.caret.cache;
+    expect(cache).toContain('&::after{content:"|";}');
+    expect(cache).toContain('@container card (max-width: 30rem)');
+    expect(cache).toContain(':where([aria-expanded="true"]) > &');
+  });
+
+  it('keeps what a patch does not name — a patch rewrites the class from what it read — and removes a null', async () => {
+    const cap = capturing(buildSpace());
+    await apply({ operations: [upsert] }, buildSpace(), cap.persisters);
+    await apply(
+      {
+        operations: [
+          {
+            type: 'patchDefinition',
+            ref: 'caret',
+            desktop: { color: 'gray' },
+            conditions: { 'container card (max-width: 30rem)': null }
+          }
+        ]
+      },
+      cap.saved(),
+      cap.persisters
+    );
+
+    const def = readResource(cap.saved(), 'main', 'plitzi://definitions/main/caret')?.data as AIDefinition;
+    expect(def.desktop).toEqual({ 'animation-name': 'caret-blink', color: 'gray' });
+    expect(def.pseudos?.after.desktop).toEqual({ content: '"|"' });
+    expect(def.variants?.muted.states?.hover.desktop).toEqual({ opacity: '1' });
+    expect(def.ancestors?.['>'].states?.expanded.desktop).toEqual({ color: 'blue' });
+    expect(def.conditions).toBeUndefined();
+  });
+
+  it('refuses what would draw nothing, saying how to write it', async () => {
+    const refused = async (operation: Record<string, unknown>) =>
+      (
+        await apply(
+          { operations: [{ type: 'upsertDefinition', ref: 'x', ...operation }] },
+          buildSpace(),
+          capturing(buildSpace()).persisters
+        )
+      ).errors;
+
+    expect(await refused({ pseudos: { '::before': { desktop: { content: '""' } } } })).toEqual([
+      expect.objectContaining({
+        message: '"::before" is not a pseudo-element a class dresses',
+        hint: 'Write it without the colons: "before".'
+      })
+    ]);
+    expect(await refused({ pseudos: { after: { desktop: { content: '→' } } } })).toEqual([
+      expect.objectContaining({ message: 'content: → on ::after is not text CSS can read, so nothing is drawn' })
+    ]);
+    expect(await refused({ pseudos: { before: { desktop: { color: 'red' } } } })).toEqual([
+      expect.objectContaining({ message: '::before has no content, so nothing is drawn' })
+    ]);
+    expect(await refused({ pseudos: { selection: { desktop: { padding: '4px' } } } })).toEqual([
+      expect.objectContaining({ message: 'padding-top on ::selection is dropped by every browser' })
+    ]);
+    const condition = await refused({ conditions: { 'motion-reduced': { desktop: { opacity: '1' } } } });
+    expect(condition?.map(error => error.message)).toEqual([
+      '"motion-reduced" is not a condition a class\'s rules can hold under'
+    ]);
+  });
+});
+
 describe('MCP class ops never touch a global element style (false-positive guard)', () => {
   const spaceWithGlobal = (): Space => {
     const space = buildSpace();

@@ -100,6 +100,33 @@ describe('Link Tests', () => {
     expect(getByText('Fuera').closest('a')?.hasAttribute('aria-current')).toBe(false);
   });
 
+  it('stays current on the pages under its section, as the current entry rather than the current page', () => {
+    const at = { ...storeValue, navigation: { ...navigation, href: 'https://example.test/automations/runs/42' } };
+    const { getByText } = render(
+      <StoreProvider value={at}>
+        <ElementContext value={skipHocEntry()}>
+          <Link mode="internal" href="automations/runs" current="section">
+            Runs
+          </Link>
+          <Link mode="internal" href="automations/runs">
+            Only runs
+          </Link>
+          <Link mode="internal" href="automations/run" current="section">
+            Run
+          </Link>
+          <Link mode="external" href="https://example.test/automations" current="section">
+            Fuera
+          </Link>
+        </ElementContext>
+      </StoreProvider>
+    );
+
+    expect(getByText('Runs').closest('a')?.getAttribute('aria-current')).toBe('true');
+    expect(getByText('Only runs').closest('a')?.hasAttribute('aria-current')).toBe(false);
+    expect(getByText('Run').closest('a')?.hasAttribute('aria-current')).toBe(false);
+    expect(getByText('Fuera').closest('a')?.hasAttribute('aria-current')).toBe(false);
+  });
+
   describe('href resolution', () => {
     const slotted = (id: string, attributes: Record<string, unknown> = {}) => ({
       id,

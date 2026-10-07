@@ -111,6 +111,47 @@
   carries `aria-current` — with the path alone, every one of them did. A link with no query is still current on its
   page whatever the query.
 
+## The style language says what `customCss` used to
+
+- **Pseudo-elements on a class**: `pseudos: { after: { css: { content: '"→"' }, states: { hover: { … } } } }` —
+  `before`, `after`, `marker`, `placeholder`, `first-letter`, `first-line`, `selection`, each in the class's states and
+  variants. Authoring refuses what draws nothing: a `before`/`after` with no `content`, a `content` without its quotes,
+  a property the browser drops on that pseudo-element.
+- **Conditions on a class**: `conditions: { 'motion-reduce': { … }, 'container card (max-width: 30rem)': { … } }` —
+  reduced or allowed motion, and container widths, each with its states and pseudo-elements.
+- **The space's `keyframes`**, validated and written at the top of `customCss`; an `animation-name` no keyframes declare
+  is warned (`animation-name-unknown`).
+- **New states**: `expanded` (`aria-expanded`), `first`, `last`, `odd`, `even`; the tab panel on show is `current`, and
+  the theme toggle's icon of the scheme in use is `current` on its `icon` slot.
+- **`ancestors['>']`** is the parent, whatever it wears — a closed component's part reacting to the element around it.
+- The builder's style inspector, the MCP's definition ops (`pseudos`, `conditions`, and variants with their states) and
+  the export to code read and write all of it; an MCP `patchDefinition` no longer drops what it did not name. Rules in
+  `customCss` a class can hold now — `.link::after`, one under `@media (prefers-reduced-motion: reduce)`, `.row:first-child`,
+  `.row:nth-child(even)`, `.toggle[aria-expanded='true']` — are folded into the class on export and suggested by
+  `custom-css-class`.
+
+## Elements take a class for each part
+
+- **`formControl`**: `field` (the `<input>` itself), `icon` (the show-password button) and `requiredMark` slots; a switch's
+  knob reads in dark mode and takes `--plitzi-switch-thumb`, `--plitzi-switch-thumb-checked`, `--plitzi-switch-thumb-shadow`.
+- **`pagination`**: `previous`, `page` (the one shown is its `current` state), `next`, `loadMore`.
+- **`richText`** and **`markdown`**: a slot per part — `heading` and `heading1`…`heading6`, `strong`, `emphasis`,
+  `divider`, `tableHead`, `tableRow`, `tableHeaderCell`, `tableCell`, and the code block's frame, header, language and
+  copy button. The GitHub stylesheet plitzi-ui shipped for markdown is gone: the builder renders a document as the page
+  does. Needs `@plitzi/plitzi-ui` after 1.6.32.
+- `custom-css-slot` suggests the slot for a `customCss` rule on a part's SDK class — only where a class on the slot can
+  say the rest of the selector (a state, a pseudo-element); `element-slot-unknown` warns of a slot an element does not
+  have.
+
+## Links, refreshes and toasts
+
+- **`current: 'section'` on a link** keeps it current on its page and every page under its path (`aria-current="true"`
+  there), styled by the `current` state — no `activeOn` binding for a section.
+- **A refresh asks only about elements the page shown holds**: a provider on the page being left no longer sends a
+  `/_rsc` about the new address.
+- **The toasts' parts are `notifications` fields**: `minHeight`, `fontWeight`, `lineHeight`, `iconSize`, `iconGap`,
+  `closeColor`, `closeOpacity`, `progressHeight`.
+
 ## check and lint
 
 - **`plitzi check`, `push`, `lint` and `fix` hold the space to what `npm run author` and the server do**: its data
@@ -123,5 +164,18 @@
   list's `items`.
 - **`plitzi lint` says authoring suggestions are quieted with `quiet` on the element**, and reports a
   `plitzi-lint-disable` comment that names one (`disable-names-suggestion`).
+- **`plitzi check` says when a page sent the browser elsewhere** (a page for signed-in visitors, to the sign-in) instead
+  of reporting every element missing, and `--as <username>` signs in first through the server's `/auth` routes, the
+  password from `PLITZI_CHECK_PASSWORD`.
+- **`plitzi upgrade` never replaces @plitzi packages installed locally** — a tarball, a link, a portal, an override: it
+  leaves them and the install, and says which and the command that would install the registry's.
+- **`plitzi explain` covers every code**: authoring's, `plitzi lint`'s and the project layout's.
+- **Authoring reads the global sources' fields**: `auth.authenticated` in a condition is refused with "did you mean
+  `isAuthenticated`?" (`global-field-unknown`), and `invalidateElements` must name providers that exist
+  (`element-ids-target`). A template's reads of `computed`, `flags` and the global sources come off the parsed
+  template: a string inside it (`'https://auth.acme.com'`) is no longer read as `auth.acme`.
+- **`custom-css-notifications` no longer reads the rules `notifications` itself writes** as toasts dressed by hand.
+- **A refused space or layout is a report, not a stack**: the server's entry point imports the space once the layout is
+  checked, and `npm start` and `npm run author` print every problem and exit with 1.
 - **New authoring suggestion `class-overrides-class`**: one class's shorthand (`padding`) silently erases a longhand
   (`padding-top`) another class on the same element writes out.

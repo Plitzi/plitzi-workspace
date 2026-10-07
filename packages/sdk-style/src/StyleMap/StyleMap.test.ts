@@ -1029,3 +1029,75 @@ describe('StyleMap / ancestor conditions', () => {
     expect(style.platform.desktop.icon.attributes.base).toEqual({ default: { color: 'black' } });
   });
 });
+
+describe('StyleMap / pseudo-elements, conditions and the parent', () => {
+  let style: Pick<Style, 'platform' | 'variables'>;
+
+  beforeEach(() => {
+    style = createBaseStyle();
+    StyleMap.addSelector(style, 'desktop', 'card', 'class', undefined, { color: 'black' }, paramsBase);
+  });
+
+  it('writes a pseudo-element, and its state, and compiles them last in the selector', () => {
+    const after = { styleSelector: 'base', stylePseudo: 'after' as const };
+    expect(StyleMap.updateSelector(style, 'desktop', 'card', 'content', '"→"', after)).toBe(true);
+    expect(
+      StyleMap.updateSelector(style, 'desktop', 'card', 'translate', '4px 0', { ...after, styleState: 'hover' })
+    ).toBe(true);
+
+    expect(style.platform.desktop.card.attributes.base.pseudos).toEqual({
+      after: { default: { content: '"→"' }, states: { hover: { translate: '4px 0' } } }
+    });
+    expect(style.platform.desktop.card.cache).toContain('&:hover::after{translate:4px 0;}');
+  });
+
+  it('writes under a condition whose key is no path segment, and removes it whole', () => {
+    const narrow = { styleSelector: 'base', styleCondition: 'container (max-width: 30.5rem)' };
+    expect(StyleMap.updateSelector(style, 'desktop', 'card', 'flex-direction', 'column', narrow)).toBe(true);
+    expect(style.platform.desktop.card.attributes.base.conditions).toEqual({
+      'container (max-width: 30.5rem)': { default: { 'flex-direction': 'column' } }
+    });
+
+    expect(StyleMap.updateSelector(style, 'desktop', 'card', undefined, undefined, narrow)).toBe(true);
+    expect(style.platform.desktop.card.attributes.base.conditions).toBeUndefined();
+  });
+
+  it('drops a condition left with nothing in it when its last state goes', () => {
+    const reduced = { styleSelector: 'base', styleCondition: 'motion-reduce', styleState: 'hover' as const };
+    StyleMap.updateSelector(style, 'desktop', 'card', 'transform', 'none', reduced);
+    StyleMap.updateSelector(style, 'desktop', 'card', undefined, undefined, reduced);
+
+    expect(style.platform.desktop.card.attributes.base).toEqual({ default: { color: 'black' } });
+  });
+
+  it('writes the parent’s state under `>`', () => {
+    const open = { styleSelector: 'base', styleAncestor: '>', styleState: 'expanded' as const };
+    expect(StyleMap.updateSelector(style, 'desktop', 'card', 'rotate', '180deg', open)).toBe(true);
+    expect(style.platform.desktop.card.attributes.base.ancestors).toEqual({
+      '>': { states: { expanded: { rotate: '180deg' } } }
+    });
+  });
+
+  it('refuses a target no block has: a condition key that is none, a condition with variants, a pseudo under an ancestor', () => {
+    expect(
+      StyleMap.updateSelector(style, 'desktop', 'card', 'color', 'red', {
+        styleSelector: 'base',
+        styleCondition: 'print'
+      })
+    ).toBe(false);
+    expect(
+      StyleMap.updateSelector(style, 'desktop', 'card', 'color', 'red', {
+        styleSelector: 'base',
+        styleCondition: 'motion-safe',
+        styleVariant: 'ghost'
+      })
+    ).toBe(false);
+    expect(
+      StyleMap.updateSelector(style, 'desktop', 'card', 'color', 'red', {
+        styleSelector: 'base',
+        styleAncestor: 'list',
+        stylePseudo: 'before'
+      })
+    ).toBe(false);
+  });
+});

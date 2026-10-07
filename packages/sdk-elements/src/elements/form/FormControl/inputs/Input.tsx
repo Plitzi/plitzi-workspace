@@ -4,7 +4,12 @@ import { useCallback, useRef, useState } from 'react';
 import useFocusWhenShown from './useFocusWhenShown';
 
 export type InputProps = {
+  /** The box the field is drawn in — the `input` slot. */
   className?: string;
+  /** The `<input>` inside the box — the `field` slot. */
+  fieldClassName?: string;
+  /** A password's show/hide button — the `icon` slot. */
+  iconClassName?: string;
   id?: string;
   name?: string;
   placeholder?: string;
@@ -29,6 +34,8 @@ export type InputProps = {
 
 const Input = ({
   className = '',
+  fieldClassName,
+  iconClassName,
   id = '',
   name = '',
   placeholder = '',
@@ -75,7 +82,7 @@ const Input = ({
     <div className={clsx('form-control__input-container', className)} onClick={handleClickContainer}>
       <input
         ref={inputRef}
-        className="input-container__input"
+        className={clsx('input-container__input', fieldClassName)}
         id={id}
         aria-invalid={errorId ? true : undefined}
         aria-describedby={errorId}
@@ -96,7 +103,7 @@ const Input = ({
         // would find this button too, since a label is matched by the words it contains.
         <button
           type="button"
-          className="form-input__icon"
+          className={clsx('form-input__icon', iconClassName)}
           aria-pressed={isPasswordVisible}
           title="Show password"
           onClick={handleClickShowPassword}

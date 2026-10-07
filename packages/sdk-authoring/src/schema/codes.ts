@@ -66,7 +66,7 @@ export const AUTHORING_CODES = {
   'notifications-shape': {
     kind: 'refused',
     means: '`notifications` with a field it does not have, or a value that is not one CSS value',
-    fix: "the fields it lists; a colour or a length, like 'var(--card)' or '12px'"
+    fix: "the field it suggests, or one it lists; one CSS value, like 'var(--card)', '12px' or '500'"
   },
   'unknown-field': {
     kind: 'refused',
@@ -167,6 +167,11 @@ export const AUTHORING_CODES = {
     means: 'a link whose `hash` no element on the page it goes to carries — it would land at the top',
     fix: 'the anchor the message lists, or give the section that `anchor`'
   },
+  'link-current-section': {
+    kind: 'warned',
+    means: "`current: 'section'` on a link that is never current (an external one) or current everywhere (to `/`)",
+    fix: "leave `current` out — `'section'` is for a link to a section's own page, `/automations/runs`"
+  },
 
   // Ids, classes and selectors.
   'id-invalid': {
@@ -203,6 +208,11 @@ export const AUTHORING_CODES = {
     kind: 'refused',
     means: 'a class name the space does not declare',
     fix: 'declare it in `classes`, hand the `styles()` declaration itself, or write the rules with `css`'
+  },
+  'element-slot-unknown': {
+    kind: 'refused',
+    means: 'a `slots` key the element type does not have — its class would dress nothing',
+    fix: 'one of the slots `plitzi explain <type>` lists; the element itself takes `class`'
   },
   'class-conflict': {
     kind: 'refused',
@@ -278,8 +288,39 @@ export const AUTHORING_CODES = {
   },
   'ancestor-not-class': {
     kind: 'refused',
-    means: 'an ancestor condition keyed by something that is not a class name',
-    fix: '`[card.name]` for a `styles()` declaration'
+    means: "an ancestor condition keyed by something that is neither a class name nor `'>'` (the parent)",
+    fix: "`[card.name]` for a `styles()` declaration, or `'>'` for the parent whatever it wears"
+  },
+  'style-pseudo-unknown': {
+    kind: 'refused',
+    means: 'a pseudo-element a class cannot dress',
+    fix: 'one of `before`, `after`, `marker`, `placeholder`, `first-letter`, `first-line`, `selection` — without the `::`'
+  },
+  'style-pseudo-property': {
+    kind: 'refused',
+    means: 'a property the pseudo-element ignores — the browser drops it without a word',
+    fix: 'one it honours (`::selection` paints, `::marker` and `::placeholder` take text and font), or style the element'
+  },
+  'style-pseudo-content': {
+    kind: 'refused',
+    means:
+      'a `content` CSS cannot read — text without its quotes draws nothing — or a `before`/`after` with no `content`, which is not there at all',
+    fix: 'the text in quotes inside the string — `content: \'"→"\'`, `\'""\'` for an empty box — or a function such as `counter(step)`'
+  },
+  'style-condition-unknown': {
+    kind: 'refused',
+    means: "a condition a class's rules cannot hold under",
+    fix: '`motion-reduce`, `motion-safe`, or a container width — `container (max-width: 30rem)`, `container card (min-width: 480px)`'
+  },
+  'keyframes-shape': {
+    kind: 'refused',
+    means: 'keyframes with a name CSS does not accept or the SDK keeps for itself, or a frame that is not an offset',
+    fix: "a plain name (`slide-in`), frames keyed `from`, `to` or a percentage (`'50%'`, `'0%, 100%'`)"
+  },
+  'animation-name-unknown': {
+    kind: 'warned',
+    means: '`animation-name` naming keyframes the space does not declare — nothing plays',
+    fix: "declare them in the space's `keyframes`, or name one it has"
   },
   'tablet-rule-skips-mobile': {
     kind: 'warned',
@@ -637,6 +678,12 @@ export const AUTHORING_CODES = {
     means: 'a computed value read before it is declared, or never declared',
     fix: 'declare it in `computed`, above the one that reads it'
   },
+  'global-field-unknown': {
+    kind: 'refused',
+    means:
+      'a binding, a template or a `when` reading a field `navigation`, `auth` or `theme` never has — `auth.authenticated`',
+    fix: 'the field it suggests: `auth.isAuthenticated`, `auth.details.username`, `navigation.queryParams.next`, `theme.resolved`'
+  },
 
   // Components.
   'component-id': {
@@ -703,7 +750,7 @@ export const AUTHORING_CODES = {
   },
   'flag-unknown': {
     kind: 'refused',
-    means: 'a template reading a flag the space does not declare',
+    means: 'a template, a binding or a `when` reading a flag the space does not declare',
     fix: 'the declared name it suggests, or declare it'
   },
   'flag-name': {
@@ -762,6 +809,12 @@ export const AUTHORING_CODES = {
     kind: 'refused',
     means: 'a step param that does not exist, or a value outside its options',
     fix: 'the params and values it lists'
+  },
+  'element-ids-target': {
+    kind: 'refused',
+    means:
+      'a step refreshing containers by id (`invalidateElements`, `invalidateQueries({ elements })`) naming one the space does not have, or one that is not an `apiContainer`',
+    fix: "the id of the `apiContainer` whose data the step changes: `invalidateElements: ['posts']`"
   },
   'trigger-never-fired': {
     kind: 'refused',
@@ -945,10 +998,16 @@ export const AUTHORING_CODES = {
       '`customCss` repeating what the SDK already does for every space — less motion when asked, the theme toggle showing one icon',
     fix: 'nothing: remove it'
   },
+  'custom-css-slot': {
+    kind: 'suggested',
+    means:
+      "a part of a built-in element dressed in `customCss` by the SDK's markup — a form control's `<input>`, a pager's buttons, a heading inside a markdown",
+    fix: 'a class on the slot of that part — `slots: { field: input }`, `elements.<type>.slots` — with its states'
+  },
   'custom-css-notifications': {
     kind: 'suggested',
-    means: 'the toasts dressed with `.Toastify__toast` rules in `customCss`',
-    fix: '`notifications: { font, fontSize, border, shadow, padding, background, text, radius }`'
+    means: 'the toasts or their icon, close button or progress bar dressed with `.Toastify__*` rules in `customCss`',
+    fix: '`notifications: { font, fontSize, fontWeight, minHeight, iconSize, closeColor, progressHeight, … }`'
   },
   'heavy-animation': {
     kind: 'suggested',

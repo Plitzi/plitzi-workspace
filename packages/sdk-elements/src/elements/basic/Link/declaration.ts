@@ -13,7 +13,8 @@ const declaration = elementDeclaration<LinkAttributes>()({
     mode: valuesOf<NonNullable<LinkProps['mode']>>()(['page', 'internal', 'external']),
     target: valuesOf<NonNullable<LinkProps['target']>>()(['self', 'blank', 'parent', 'top']),
     contentPlacement: valuesOf<NonNullable<LinkProps['contentPlacement']>>()(['before', 'after']),
-    iconPlacement: valuesOf<NonNullable<LinkProps['iconPlacement']>>()(['before', 'after'])
+    iconPlacement: valuesOf<NonNullable<LinkProps['iconPlacement']>>()(['before', 'after']),
+    current: valuesOf<NonNullable<LinkProps['current']>>()(['page', 'section'])
   },
   content: {
     attributes: {
@@ -25,7 +26,8 @@ const declaration = elementDeclaration<LinkAttributes>()({
       content: '',
       contentPlacement: 'after',
       icon: '',
-      iconPlacement: 'before'
+      iconPlacement: 'before',
+      current: 'page'
     },
     definition: {
       label: 'Link',
@@ -33,7 +35,9 @@ const declaration = elementDeclaration<LinkAttributes>()({
       description:
         'Navigation. Moves the user between pages of the site or to an external URL (its `mode`/`href` decide which). Use ' +
         'this to go page-to-page rather than a button + interaction. Its words are its own `content` and an icon beside ' +
-        'them its `icon` (Font Awesome classes) — no text or fontAwesome element inside it for them.',
+        'them its `icon` (Font Awesome classes) — no text or fontAwesome element inside it for them. It marks itself ' +
+        'current on the page it leads to (`aria-current`, the `current` style state); its `current` set to `section` ' +
+        'keeps it current on every page under its path too — a menu entry for a section and its pages.',
       items: [],
       bindings: {},
       styleSelectors: {

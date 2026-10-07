@@ -250,7 +250,8 @@
           "content": "",
           "contentPlacement": "after",
           "icon": "",
-          "iconPlacement": "before"
+          "iconPlacement": "before",
+          "current": "page"
         },
         "definition": {
           "label": "Link",
@@ -368,7 +369,8 @@
           "content": "",
           "contentPlacement": "after",
           "icon": "",
-          "iconPlacement": "before"
+          "iconPlacement": "before",
+          "current": "page"
         },
         "definition": {
           "label": "Link",
@@ -486,7 +488,8 @@
           "content": "",
           "contentPlacement": "after",
           "icon": "",
-          "iconPlacement": "before"
+          "iconPlacement": "before",
+          "current": "page"
         },
         "definition": {
           "label": "Link",
@@ -604,7 +607,8 @@
           "content": "",
           "contentPlacement": "after",
           "icon": "",
-          "iconPlacement": "before"
+          "iconPlacement": "before",
+          "current": "page"
         },
         "definition": {
           "label": "Link",

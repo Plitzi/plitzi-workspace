@@ -85,6 +85,7 @@ export const SPACE_FIELDS = [
   'flags',
   'channels',
   'customCss',
+  'keyframes',
   'notifications',
   'rsc',
   'pageFolders',

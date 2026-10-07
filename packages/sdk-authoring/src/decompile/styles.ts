@@ -1,18 +1,32 @@
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { isStylePseudo } from '@plitzi/sdk-shared/style/stylePseudos';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
 import { BREAKPOINTS, css, expandShorthand, STYLE_STATES } from '../style';
 
-import type { AncestorSpec, CssProps, CssSpec, RuleSetSpec, StatesSpec, StyleSpec, VariantSpec } from '../style';
+import type {
+  AncestorSpec,
+  ConditionSpec,
+  CssProps,
+  CssSpec,
+  PseudosSpec,
+  PseudoSpec,
+  RuleSetSpec,
+  StatesSpec,
+  StyleSpec,
+  VariantSpec
+} from '../style';
 import type {
   DisplayMode,
   Style,
   StyleBlock,
   StyleItem,
   StyleObject,
+  StylePseudo,
+  StylePseudos,
   StyleState,
-  StyleStates
+  StyleStateBlock
 } from '@plitzi/sdk-shared';
 
 /**
@@ -36,6 +50,8 @@ export interface ReadSelector {
   states: StatesSpec | undefined;
   variants: Record<string, CssSpec | VariantSpec> | undefined;
   ancestors: Record<string, AncestorSpec> | undefined;
+  pseudos: PseudosSpec | undefined;
+  conditions: Record<string, ConditionSpec> | undefined;
   unwritable: UnwritableRules;
   /** State names the document carries that no browser state matches. Dropped: nothing ever matched them. */
   unknownStates: string[];
@@ -170,18 +186,38 @@ const toCssSpec = (perBreakpoint: Partial<Record<DisplayMode, CssProps>>): CssSp
 interface BlockReader {
   rules: Partial<Record<DisplayMode, CssProps>>;
   states: Map<StyleState, Partial<Record<DisplayMode, CssProps>>>;
+  pseudos: Map<StylePseudo, BlockReader>;
   unwritable: UnwritableRules;
   unknownStates: Set<string>;
 }
 
-const newReader = (): BlockReader => ({ rules: {}, states: new Map(), unwritable: {}, unknownStates: new Set() });
+const newReader = (): BlockReader => ({
+  rules: {},
+  states: new Map(),
+  pseudos: new Map(),
+  unwritable: {},
+  unknownStates: new Set()
+});
+
+/** Where in a selector a part sits: under a variant, an ancestor or a condition, as a pseudo-element of one of them. */
+interface Place {
+  variant?: string;
+  ancestor?: string;
+  condition?: string;
+  pseudo?: StylePseudo;
+}
+
+/** A part of a block as it is read: its own rules and states, and — but an ancestor's — its pseudo-elements. */
+type ReadPart = StyleStateBlock & { pseudos?: StylePseudos };
 
 const readBlock = (
   reader: BlockReader,
   breakpoint: DisplayMode,
-  block: Omit<StyleBlock, 'variants' | 'ancestors'>,
-  park: (breakpoint: DisplayMode, part: 'default' | StyleState, rules: CssProps) => void
+  block: ReadPart,
+  place: Place,
+  unwritable: UnwritableRules
 ): void => {
+  const park = parkInto(unwritable, place);
   const base = splitRules(block.default);
   reader.rules[breakpoint] = base.writable;
   if (!isEmpty(base.unwritable)) {
@@ -205,6 +241,17 @@ const readBlock = (
       park(breakpoint, state, split.unwritable);
     }
   }
+
+  for (const [pseudo, pseudoBlock] of Object.entries(block.pseudos ?? {})) {
+    // A document written by an older SDK, or by hand, may name one no browser has: it is left out, as a state is.
+    if (!isStylePseudo(pseudo)) {
+      continue;
+    }
+
+    const pseudoReader = reader.pseudos.get(pseudo) ?? newReader();
+    readBlock(pseudoReader, breakpoint, pseudoBlock, { ...place, pseudo }, unwritable);
+    reader.pseudos.set(pseudo, pseudoReader);
+  }
 };
 
 const statesOf = (reader: BlockReader): StatesSpec | undefined => {
@@ -217,16 +264,28 @@ const statesOf = (reader: BlockReader): StatesSpec | undefined => {
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 };
 
+/** The part of a block a place names, made where it is not there yet. */
+const partAt = (block: StyleBlock, { variant, ancestor, condition, pseudo }: Place): StyleStateBlock => {
+  if (ancestor) {
+    const scope = ((block.ancestors ??= {})[ancestor] ??= {});
+
+    return variant ? ((scope.variants ??= {})[variant] ??= { default: {} }) : scope;
+  }
+
+  const holder: ReadPart = condition
+    ? ((block.conditions ??= {})[condition] ??= {})
+    : variant
+      ? ((block.variants ??= {})[variant] ??= { default: {} })
+      : block;
+
+  return pseudo ? ((holder.pseudos ??= {})[pseudo] ??= {}) : holder;
+};
+
 const parkInto =
-  (unwritable: UnwritableRules, variant?: string, ancestor?: string) =>
+  (unwritable: UnwritableRules, place: Place) =>
   (breakpoint: DisplayMode, part: 'default' | StyleState, rules: CssProps): void => {
     const block: StyleBlock = unwritable[breakpoint] ?? { default: {} };
-    const scope: { default?: StyleObject; states?: StyleStates; variants?: StyleBlock['variants'] } = ancestor
-      ? ((block.ancestors ??= {})[ancestor] ??= {})
-      : block;
-    const target: { default?: StyleObject; states?: StyleStates } = variant
-      ? ((scope.variants ??= {})[variant] ??= { default: {} })
-      : scope;
+    const target = partAt(block, place);
 
     if (part === 'default') {
       target.default = { ...target.default, ...rules };
@@ -237,19 +296,52 @@ const parkInto =
     unwritable[breakpoint] = block;
   };
 
-const variantsOf = (readers: Map<string, BlockReader>): Record<string, CssSpec | VariantSpec> | undefined => {
-  const specs = [...readers].map(([name, reader]): [string, CssSpec | VariantSpec] => {
-    const variantCss = toCssSpec(reader.rules);
-    const variantStates = statesOf(reader);
+const pseudosOf = (reader: BlockReader): PseudosSpec | undefined => {
+  const entries = [...reader.pseudos].flatMap(([pseudo, pseudoReader]): [StylePseudo, PseudoSpec][] => {
+    const pseudoCss = toCssSpec(pseudoReader.rules);
+    const pseudoStates = statesOf(pseudoReader);
+    if (pseudoStates) {
+      return [[pseudo, { ...(pseudoCss ? { css: pseudoCss } : {}), states: pseudoStates }]];
+    }
 
-    return [
-      name,
-      variantStates ? { ...(variantCss ? { css: variantCss } : {}), states: variantStates } : (variantCss ?? {})
-    ];
+    return pseudoCss ? [[pseudo, pseudoCss]] : [];
   });
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
+
+/** A part read back: plain CSS when its rules say everything, the object form when it has states or pseudo-elements. */
+const partSpecOf = (reader: BlockReader): CssSpec | { css?: CssSpec; states?: StatesSpec; pseudos?: PseudosSpec } => {
+  const partCss = toCssSpec(reader.rules);
+  const partStates = statesOf(reader);
+  const partPseudos = pseudosOf(reader);
+
+  return partStates || partPseudos
+    ? {
+        ...(partCss ? { css: partCss } : {}),
+        ...(partStates ? { states: partStates } : {}),
+        ...(partPseudos ? { pseudos: partPseudos } : {})
+      }
+    : (partCss ?? {});
+};
+
+const variantsOf = (readers: Map<string, BlockReader>): Record<string, CssSpec | VariantSpec> | undefined => {
+  const specs = [...readers].map(([name, reader]): [string, CssSpec | VariantSpec] => [name, partSpecOf(reader)]);
 
   return specs.length > 0 ? Object.fromEntries(specs) : undefined;
 };
+
+const conditionsOf = (readers: Map<string, BlockReader>): Record<string, ConditionSpec> | undefined => {
+  const specs = [...readers].map(([condition, reader]): [string, ConditionSpec] => [condition, partSpecOf(reader)]);
+
+  return specs.length > 0 ? Object.fromEntries(specs) : undefined;
+};
+
+/** A reader and the readers of its pseudo-elements, which hold states of their own. */
+const withPseudoReaders = (reader: BlockReader): BlockReader[] => [
+  reader,
+  ...[...reader.pseudos.values()].flatMap(withPseudoReaders)
+];
 
 interface AncestorReader {
   base: BlockReader;
@@ -261,6 +353,7 @@ export const readSelector = (blocks: SelectorBlocks): ReadSelector => {
   const base = newReader();
   const variantReaders = new Map<string, BlockReader>();
   const ancestorReaders = new Map<string, AncestorReader>();
+  const conditionReaders = new Map<string, BlockReader>();
 
   for (const breakpoint of BREAKPOINTS) {
     const block = blocks[breakpoint];
@@ -268,10 +361,10 @@ export const readSelector = (blocks: SelectorBlocks): ReadSelector => {
       continue;
     }
 
-    readBlock(base, breakpoint, block, parkInto(base.unwritable));
+    readBlock(base, breakpoint, block, {}, base.unwritable);
     for (const [name, variantBlock] of Object.entries(block.variants ?? {})) {
       const reader = variantReaders.get(name) ?? newReader();
-      readBlock(reader, breakpoint, variantBlock, parkInto(base.unwritable, name));
+      readBlock(reader, breakpoint, variantBlock, { variant: name }, base.unwritable);
       variantReaders.set(name, reader);
     }
 
@@ -281,21 +374,30 @@ export const readSelector = (blocks: SelectorBlocks): ReadSelector => {
         readers.base,
         breakpoint,
         { default: ancestorBlock.default, states: ancestorBlock.states },
-        parkInto(base.unwritable, undefined, ancestor)
+        { ancestor },
+        base.unwritable
       );
       for (const [name, variantBlock] of Object.entries(ancestorBlock.variants ?? {})) {
         const reader = readers.variants.get(name) ?? newReader();
-        readBlock(reader, breakpoint, variantBlock, parkInto(base.unwritable, name, ancestor));
+        readBlock(reader, breakpoint, variantBlock, { variant: name, ancestor }, base.unwritable);
         readers.variants.set(name, reader);
       }
 
       ancestorReaders.set(ancestor, readers);
+    }
+
+    for (const [condition, conditionBlock] of Object.entries(block.conditions ?? {})) {
+      const reader = conditionReaders.get(condition) ?? newReader();
+      readBlock(reader, breakpoint, conditionBlock, { condition }, base.unwritable);
+      conditionReaders.set(condition, reader);
     }
   }
 
   const baseCss = toCssSpec(base.rules);
   const states = statesOf(base);
   const variants = variantsOf(variantReaders);
+  const pseudos = pseudosOf(base);
+  const conditions = conditionsOf(conditionReaders);
   const ancestorSpecs = [...ancestorReaders].flatMap(([name, readers]): [string, AncestorSpec][] => {
     const ancestorCss = toCssSpec(readers.base.rules);
     const ancestorStates = statesOf(readers.base);
@@ -319,23 +421,28 @@ export const readSelector = (blocks: SelectorBlocks): ReadSelector => {
     ...(baseCss ? { css: baseCss } : {}),
     ...(states ? { states } : {}),
     ...(variants ? { variants } : {}),
-    ...(ancestors ? { ancestors } : {})
+    ...(ancestors ? { ancestors } : {}),
+    ...(pseudos ? { pseudos } : {}),
+    ...(conditions ? { conditions } : {})
   };
   const readers = [
     base,
     ...variantReaders.values(),
+    ...conditionReaders.values(),
     ...[...ancestorReaders.values()].flatMap(({ base: ancestorBase, variants: ancestorVariants }) => [
       ancestorBase,
       ...ancestorVariants.values()
     ])
-  ];
+  ].flatMap(withPseudoReaders);
 
   return {
-    spec: states || variants || ancestors ? ruleSet : baseCss,
+    spec: states || variants || ancestors || pseudos || conditions ? ruleSet : baseCss,
     css: baseCss,
     states,
     variants,
     ancestors,
+    pseudos,
+    conditions,
     unwritable: base.unwritable,
     unknownStates: [...new Set(readers.flatMap(reader => [...reader.unknownStates]))]
   };

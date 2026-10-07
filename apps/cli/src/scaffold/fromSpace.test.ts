@@ -165,7 +165,7 @@ describe('a project made from a space', () => {
     // Its runtime where every project keeps one, handing over the module its source starts at.
     expect(project.files['src/runtime/index.ts']).toContain("export { default } from '../runtime.ts';");
     // The server runs them all from where they are — `src/runtime/`, `src/functions/`, the actions it is handed.
-    expect(serverMain).toContain(', actions, connectors, serverOptions });');
+    expect(serverMain).toContain('\n  actions,\n  connectors,\n  serverOptions\n});');
     expect(scaffold({ ...answers(), fromSpace: true })['src/env.ts']).toBeUndefined();
 
     const env = envFromSpace(exported(), answers(), SECRET);
@@ -225,7 +225,7 @@ describe('the server a project made from a space runs', () => {
     const main = scaffold({ ...answers(), fromSpace: true, runtime: true })['src/main.ts'];
 
     expect(main).toBe(create['src/main.ts']);
-    expect(main).toContain('await serveProject({ ');
+    expect(main).toContain('await serveProject({\n');
   });
 
   it('keeps its actions and connectors in folders there from the start, which `start:dev` restarts on', () => {

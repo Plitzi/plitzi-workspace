@@ -79,6 +79,17 @@ const FORM_CONTROL_INPUTS: Record<string, string> = {
   hidden: '.form-control__input-hidden-container'
 };
 
+/** The field inside a form control's box, for the sub-types drawn as a box around one. */
+const FORM_CONTROL_FIELDS: Partial<Record<string, string>> = {
+  ...Object.fromEntries(
+    ['text', 'number', 'email', 'password', 'search', 'url', 'tel', 'date', 'time', 'color'].map(subType => [
+      subType,
+      '.input-container__input'
+    ])
+  ),
+  select: '.select-container__select'
+};
+
 /**
  * Where the stylesheet writes each element's defaults, slot by slot.
  *
@@ -128,7 +139,10 @@ const STYLESHEET: Record<string, SlotRules> = {
     return {
       base: ['.plitzi-component__form-control'],
       label: [`.form-control__label-${subType}`],
+      requiredMark: ['.form-control__label--required'],
       input: [FORM_CONTROL_INPUTS[subType] ?? '.form-control__input-container'],
+      ...(FORM_CONTROL_FIELDS[subType] ? { field: [FORM_CONTROL_FIELDS[subType]] } : {}),
+      ...(subType === 'password' ? { icon: ['.form-input__icon'] } : {}),
       error: ['.form-control__error-message']
     };
   },
@@ -186,10 +200,6 @@ const NOT_A_SLOT = new Set([
   // A list in its controlled mode: the declaration's sub-types describe the `ul`/`ol` it otherwise is.
   '.plitzi-component__controlled-list',
   '.plitzi-component__tab-container-item',
-  '.form-control__label--required',
-  '.form-input__icon',
-  '.input-container__input',
-  '.select-container__select',
   // The builder's stand-in for a field that has nothing to show on a page.
   '.input-container__input-hidden--no-preview'
 ]);

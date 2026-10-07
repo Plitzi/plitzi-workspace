@@ -9,7 +9,10 @@ export type SelectProps = {
   options?: ({ value?: string; label?: string } | string)[];
   placeholder?: string;
   value?: string;
+  /** The box the select is drawn in — the `input` slot. */
   className?: string;
+  /** The `<select>` inside the box — the `field` slot. */
+  fieldClassName?: string;
   disabled?: boolean;
   onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
   onValidate?: () => void;
@@ -27,6 +30,7 @@ const Select = ({
   placeholder = '',
   value = '',
   className = '',
+  fieldClassName,
   disabled = false,
   onChange,
   onValidate,
@@ -81,7 +85,7 @@ const Select = ({
         name={name}
         onChange={onChange}
         value={value}
-        className="select-container__select"
+        className={clsx('select-container__select', fieldClassName)}
         disabled={disabled}
         onClick={handleClickInput}
         onBlur={handleBlur}

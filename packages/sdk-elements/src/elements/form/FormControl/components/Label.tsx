@@ -15,6 +15,8 @@ export type LabelProps = {
   required: boolean;
   /** Named for assistive technology only: the field's design shows what it is for some other way. */
   hidden?: boolean;
+  /** The class of the `*` a required field's label ends with — the `requiredMark` slot. */
+  requiredClassName?: string;
 };
 
 const Label = ({
@@ -25,7 +27,8 @@ const Label = ({
   previewMode = true,
   required = true,
   hidden = false,
-  className = ''
+  className = '',
+  requiredClassName
 }: LabelProps) => {
   const handleClick = useCallback(
     (e: MouseEvent) => {
@@ -40,7 +43,7 @@ const Label = ({
     return (
       <label ref={ref} className={clsx(`form-control__label-${type}`, className)} onClick={handleClick}>
         {children}
-        {required && children && <span className="form-control__label--required">*</span>}
+        {required && children && <span className={clsx('form-control__label--required', requiredClassName)}>*</span>}
       </label>
     );
   }
@@ -53,7 +56,7 @@ const Label = ({
       style={hidden ? VISUALLY_HIDDEN : undefined}
     >
       {children}
-      {required && children && <span className="form-control__label--required">*</span>}
+      {required && children && <span className={clsx('form-control__label--required', requiredClassName)}>*</span>}
     </label>
   );
 };

@@ -34,13 +34,13 @@ Only a suggestion's code: a problem is never quieted (`quiet-unknown`).
 | Written the long way | The short way | Suggestion |
 | --- | --- | --- |
 | The same header, footer or sidebar in every page | A **layout** holding it once; each page names it (`layout: { id, slot }`) — [layouts](layouts.md) | `repeated-on-pages` |
-| A header copied per page so one link can be styled "active" | The link marks its own page: `states: { current: { … } }` on its class; `activeOn` for an entry lit on several pages | `repeated-on-pages` |
+| A header copied per page so one link can be styled "active" | The link marks its own page: `states: { current: { … } }` on its class; `current: 'section'` for an entry lit on the pages under it | `repeated-on-pages` |
 | The same card, row or tile written again with other words | A **component** with props, placed with `component(id, { props })` — [components](components.md) | `repeated-shape` |
 | Rows of data written one by one, side by side | One `list` over the rows — `items: [ … ]` fixed, or bound to a source — with its row written once — [lists](lists.md). Data is the test: three cards a person rewords on the canvas read better as three cards. Copies that read different sources or write different state keys are controls written alike, and not offered | `repeated-shape` |
 | `button({ children: [text('Save')] })`, `link({ children: [text('Docs'), fontAwesome({ icon })] })` | `button({ content: 'Save' })`, `link({ href, content: 'Docs', icon, iconPlacement: 'after' })` — the icon's class on the `icon` slot; what the text's class adds (`whiteSpace: 'nowrap'`) moves to the box's class — never the class itself, whose `inherit` would then point past the box and whose `pointerEvents: 'none'` would switch the box off | `content-attribute` |
 | `.card:hover { … }`, `.card .icon { … }` in `customCss` | The class's own `states` and `ancestors` | `custom-css-class` |
 | A reduced-motion reset, or rules showing one icon of the theme toggle, in `customCss` | Nothing: the SDK does both for every space | `custom-css-sdk-default` |
-| `.Toastify__toast { font-family: …; border: … }` in `customCss` | `notifications: { font, fontSize, border, shadow, padding, … }` | `custom-css-notifications` |
+| `.Toastify__toast { font-family: …; border: … }`, `.Toastify__toast-icon { width: … }` in `customCss` | `notifications: { font, fontSize, border, iconSize, closeColor, progressHeight, … }` | `custom-css-notifications` |
 | Keyframes animating `width`, `top`, `filter: blur()`, `box-shadow`, a colour in a loop | `opacity` and `transform`; decoration held until `[data-hydrated]` — [motion](colours-and-motion.md) | `heavy-animation` |
 
 ## What it declares and never uses

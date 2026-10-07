@@ -32,7 +32,11 @@ export const upsertIdStyle = (space: Space, env: Env, op: UpsertIdStyle): OpResu
     return guard;
   }
 
-  writeStyleItem(space.style, targetId, base, slots, 'id', undefined);
+  const problem = writeStyleItem(space.style, targetId, base, slots, 'id', undefined);
+
+  if (problem) {
+    return problem;
+  }
 
   return { ...empty(), updated: 1, staleResources: [idUri(env, targetId), idsUri(env)] };
 };

@@ -67,6 +67,73 @@ const defaultErrorStyle = {
   'margin-top': '4px'
 };
 
+const requiredMarkStyle = {
+  color: 'red',
+  'margin-left': '4px'
+};
+
+const noBorder = {
+  'border-top-style': 'none',
+  'border-right-style': 'none',
+  'border-bottom-style': 'none',
+  'border-left-style': 'none'
+};
+
+/** The field inside its box: it draws nothing of its own and takes the box's type and colour. */
+const fieldStyle = {
+  height: '100%',
+  width: '100%',
+  'padding-top': '0px',
+  'padding-right': '0px',
+  'padding-bottom': '0px',
+  'padding-left': '0px',
+  display: 'block',
+  ...noBorder,
+  'background-color': 'inherit',
+  color: 'inherit',
+  'line-height': 'inherit',
+  'font-family': 'inherit',
+  'font-size': 'inherit',
+  'box-shadow': 'none'
+};
+
+const selectFieldStyle = {
+  height: '100%',
+  width: '100%',
+  display: 'block',
+  ...noBorder,
+  'background-color': 'transparent',
+  color: 'inherit',
+  'line-height': 'inherit',
+  'font-family': 'inherit',
+  'font-size': 'inherit',
+  appearance: 'none',
+  cursor: 'inherit',
+  'box-shadow': 'none'
+};
+
+/** A password's show/hide button, without the browser's own button look: the icon keeps the field's colour and size. */
+const iconStyle = {
+  height: '100%',
+  'margin-top': '0px',
+  'margin-right': '0px',
+  'margin-bottom': '0px',
+  'margin-left': '0px',
+  'padding-right': '4px',
+  'padding-left': '4px',
+  display: 'flex',
+  'justify-content': 'center',
+  'align-items': 'center',
+  ...noBorder,
+  'background-color': 'transparent',
+  color: 'inherit',
+  'line-height': 'inherit',
+  'font-family': 'inherit',
+  'font-size': 'inherit',
+  'font-weight': 'inherit',
+  cursor: 'pointer'
+};
+
 const selectStyle = { ...fieldBox, cursor: 'pointer' };
 
 /** A checkbox drawn as a track and a thumb, in the label's colour: a class recolours it with `color`. */
@@ -101,17 +168,25 @@ const switchStyle = {
   cursor: 'pointer'
 };
 
+/** The slots only some fields draw: the `field` inside the box, a password's `icon`. */
+type FieldParts = { field?: Record<string, string>; icon?: Record<string, string> };
+
 /** A field with its label above it: every typed sub-type and the select. */
-const typed = (name: string, input: Record<string, string>) => ({
+const typed = (name: string, input: Record<string, string>, { field, icon }: FieldParts = {}) => ({
   name,
   displayMode: 'desktop' as const,
   style: {
     base: { default: {} },
     input: { default: input },
+    ...(field ? { field: { default: field } } : {}),
+    ...(icon ? { icon: { default: icon } } : {}),
     label: { default: defaultLabelStyle },
+    requiredMark: { default: requiredMarkStyle },
     error: { default: defaultErrorStyle }
   }
 });
+
+const withField: FieldParts = { field: fieldStyle };
 
 const declaration = elementDeclaration<FormControlAttributes>()({
   type: 'formControl',
@@ -175,12 +250,20 @@ const declaration = elementDeclaration<FormControlAttributes>()({
         'A single labelled input (text/select/checkbox/… per its subType) inside a form; captures one field of user ' +
         'input. A select offers its `options`: `[{ label, value }, …]` — the text shown, and what the field takes. A ' +
         '`switch` is a checkbox announced and drawn as an on/off switch (`role="switch"`), for a setting that applies at ' +
-        'once; both hold `true`/`false`, and a `defaultValue` of `"true"` starts them on.',
+        'once; both hold `true`/`false`, and a `defaultValue` of `"true"` starts them on. Its slots: `label`, ' +
+        '`requiredMark` (the `*` that ends the label of a required field), `input` (the box a typed field or a select ' +
+        'is drawn in — a textarea, checkbox or switch is its own box), `field` (the `<input>` or `<select>` inside ' +
+        'that box), `icon` (the show/hide button of a password) and `error`. The thumb of a switch is no element a ' +
+        'class reaches: the class on its `input` slot sets `--plitzi-switch-thumb` (off), ' +
+        '`--plitzi-switch-thumb-checked` (on, white by default) and `--plitzi-switch-thumb-shadow`.',
       bindings: {},
       styleSelectors: {
         base: '',
         label: '',
+        requiredMark: '',
         input: '',
+        field: '',
+        icon: '',
         error: ''
       },
       initialState: {
@@ -211,18 +294,18 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       style: { base: { default: {} } },
       subTypes: {
         hidden: typed('Form Control Hidden', {}),
-        text: typed('Form Control Text', defaultInputStyle),
-        number: typed('Form Control Number', defaultInputStyle),
-        email: typed('Form Control Email', defaultInputStyle),
-        password: typed('Form Control Password', defaultInputStyle),
-        search: typed('Form Control Search', defaultInputStyle),
-        url: typed('Form Control URL', defaultInputStyle),
-        tel: typed('Form Control Phone', defaultInputStyle),
-        date: typed('Form Control Date', defaultInputStyle),
-        time: typed('Form Control Time', defaultInputStyle),
-        color: typed('Form Control Color', defaultInputStyle),
+        text: typed('Form Control Text', defaultInputStyle, withField),
+        number: typed('Form Control Number', defaultInputStyle, withField),
+        email: typed('Form Control Email', defaultInputStyle, withField),
+        password: typed('Form Control Password', defaultInputStyle, { ...withField, icon: iconStyle }),
+        search: typed('Form Control Search', defaultInputStyle, withField),
+        url: typed('Form Control URL', defaultInputStyle, withField),
+        tel: typed('Form Control Phone', defaultInputStyle, withField),
+        date: typed('Form Control Date', defaultInputStyle, withField),
+        time: typed('Form Control Time', defaultInputStyle, withField),
+        color: typed('Form Control Color', defaultInputStyle, withField),
         textarea: typed('Form Control Textarea', { ...defaultInputStyle, color: 'inherit', resize: 'vertical' }),
-        select: typed('Form Control Select', selectStyle),
+        select: typed('Form Control Select', selectStyle, { field: selectFieldStyle }),
         checkbox: {
           name: 'Form Control Checkbox',
           displayMode: 'desktop',
@@ -237,6 +320,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
               }
             },
             label: { default: inlineLabelStyle },
+            requiredMark: { default: requiredMarkStyle },
             error: { default: defaultErrorStyle }
           }
         },
@@ -247,6 +331,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
             base: { default: {} },
             input: { default: switchStyle },
             label: { default: { ...inlineLabelStyle, 'align-items': 'center' } },
+            requiredMark: { default: requiredMarkStyle },
             error: { default: defaultErrorStyle }
           }
         }

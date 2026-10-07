@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style/styleStates';
+
 import { TabContainer } from './TabContainer';
 import { TabContainerBody } from './TabContainerBody/TabContainerBody';
 import { TabContainerHeader } from './TabContainerHeader/TabContainerHeader';
@@ -74,6 +76,20 @@ describe('TabContainer — a tab list assistive technology can read and work', (
     fireEvent.keyDown(lifetime, { key: 'Home' });
 
     expect(screen.getByRole('tab', { name: 'Monthly' }).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('hides the panels not on show, so only the one on show is in the `current` state', () => {
+    render(<Tabs />);
+
+    const panels = screen.getAllByRole('tabpanel', { hidden: true });
+
+    expect(panels.map(panel => panel.hidden)).toEqual([false, true, true]);
+    expect(screen.getAllByRole('tabpanel').map(panel => panel.textContent)).toEqual(['12 € a month']);
+    expect(panels.map(panel => panel.matches(CURRENT_SELECTOR))).toEqual([true, false, false]);
+
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Monthly' }), { key: 'End' });
+
+    expect(panels.map(panel => panel.hidden)).toEqual([true, true, false]);
   });
 
   it('selects with Enter or Space, as a click does', () => {

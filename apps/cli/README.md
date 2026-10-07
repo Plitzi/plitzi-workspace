@@ -185,6 +185,7 @@ with `--source local`.
 plitzi check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
 plitzi check /products --state --element catalog-count   # and what it holds: state, sources, one element
 plitzi check / --ssr                       # and what the server's HTML lacks that the hydrated page has
+PLITZI_CHECK_PASSWORD=… plitzi check /studio --as maya   # a page for signed-in visitors, signed in through /auth first
 plitzi shot /about --width 390 --scheme dark
 plitzi shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi shot / --compare https://example.com --width 1440   # beside another site: what differs, and how

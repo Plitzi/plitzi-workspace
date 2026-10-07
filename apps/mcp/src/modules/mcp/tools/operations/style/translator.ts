@@ -6,9 +6,20 @@ import type {
   AIDefinitionSlot,
   AIGlobalStyle,
   AIIdStyle,
-  AIStyleVariable
+  AIPseudo,
+  AIStyleVariable,
+  AIVariant
 } from '../../../types';
-import type { DisplayMode, SpaceFont, Style, StyleBlock, StyleItem } from '@plitzi/sdk-shared';
+import type {
+  DisplayMode,
+  SpaceFont,
+  Style,
+  StyleBlock,
+  StyleItem,
+  StylePseudos,
+  StyleStateBlock,
+  StyleStates
+} from '@plitzi/sdk-shared';
 
 // Read projections of the STYLE schema: definition names, one definition's CSS, and design tokens.
 
@@ -55,12 +66,51 @@ const fillConditions = (
   }
 };
 
+const fillStates = (target: AIPseudo, mode: DisplayMode, states: StyleStates | undefined): void => {
+  for (const [state, obj] of Object.entries(states ?? {})) {
+    if (Object.keys(obj).length > 0) {
+      (target.states ??= {})[state] ??= {};
+      target.states[state][mode] = obj;
+    }
+  }
+};
+
+/** A part with rules and states — a pseudo-element, a variant, a condition — at one breakpoint. */
+const fillPart = (target: AIPseudo, mode: DisplayMode, part: StyleStateBlock): void => {
+  if (part.default && Object.keys(part.default).length > 0) {
+    target[mode] = part.default;
+  }
+
+  fillStates(target, mode, part.states);
+};
+
+const fillPseudos = (target: AIVariant, mode: DisplayMode, pseudos: StylePseudos | undefined): void => {
+  for (const [pseudo, part] of Object.entries(pseudos ?? {})) {
+    fillPart(((target.pseudos ??= {})[pseudo] ??= {}), mode, part);
+  }
+};
+
 const fillSlot = (target: AIDefinitionSlot, mode: DisplayMode, block: StyleBlock): void => {
   if (block.default && Object.keys(block.default).length > 0) {
     target[mode] = block.default;
   }
 
-  fillConditions(target, mode, block);
+  fillStates(target, mode, block.states);
+  // A variant whole — its states and pseudo-elements too: a patch writes back what it read, and what it did not read
+  // it would drop.
+  for (const [name, variant] of Object.entries(block.variants ?? {})) {
+    const variantTarget = ((target.variants ??= {})[name] ??= {});
+    fillPart(variantTarget, mode, variant);
+    fillPseudos(variantTarget, mode, variant.pseudos);
+  }
+
+  fillPseudos(target, mode, block.pseudos);
+  for (const [condition, part] of Object.entries(block.conditions ?? {})) {
+    const conditionTarget = ((target.conditions ??= {})[condition] ??= {});
+    fillPart(conditionTarget, mode, part);
+    fillPseudos(conditionTarget, mode, part.pseudos);
+  }
+
   for (const [ancestor, condition] of Object.entries(block.ancestors ?? {})) {
     const conditionTarget = ((target.ancestors ??= {})[ancestor] ??= {});
     if (condition.default && Object.keys(condition.default).length > 0) {

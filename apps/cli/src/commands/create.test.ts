@@ -362,7 +362,7 @@ describe('the scaffold', () => {
         verbatimModuleSyntax: true,
         erasableSyntaxOnly: true
       });
-      expect(files['plitzi/author.ts']).toContain("from '../src/space/index.ts'");
+      expect(files['plitzi/author.ts']).toContain("import('../src/space/index.ts')");
     }
 
     const server = JSON.parse(scaffold(answers({ mode: 'server' }))['package.json']) as {
@@ -463,7 +463,7 @@ describe('the scaffold', () => {
       expect(files['src/space/pages/product.ts']).toContain("slug: 'products/:slug'");
       const data = mode === 'server' ? 'src/data/products.json' : 'public/data/products.json';
       expect(JSON.parse(files[data])).toHaveProperty('products');
-      expect(files['plitzi/author.ts']).toContain("from '../src/space/index.ts'");
+      expect(files['plitzi/author.ts']).toContain("import('../src/space/index.ts')");
       expect(Object.keys(files).filter(file => file.startsWith('src/plugins/StatCard'))).toEqual([]);
     }
   });

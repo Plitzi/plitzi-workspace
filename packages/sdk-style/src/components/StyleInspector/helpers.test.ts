@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { ancestorClasses, ancestorConditions, ancestorOptions, ancestorRemovals, unusedAncestors } from './helpers';
+import {
+  ancestorClasses,
+  ancestorConditions,
+  ancestorOptions,
+  ancestorRemovals,
+  conditionOptions,
+  pseudoOptions,
+  unusedAncestors
+} from './helpers';
 
 import type { Element, Schema, Style, StyleItem } from '@plitzi/sdk-shared';
 
@@ -41,9 +49,48 @@ describe('ancestorOptions', () => {
     });
 
     expect(options).toEqual([
+      { label: 'the element around it', value: '>' },
       { label: '.card — inside, hover', value: 'card' },
       { label: '.layout', value: 'layout' },
       { label: '.sidebar — collapsed, collapsed:hover', value: 'sidebar' }
+    ]);
+  });
+});
+
+describe('the parent among the ancestors', () => {
+  it('is offered first, by what it is, and never reported unused', () => {
+    const options = ancestorOptions([], { '>': { states: { expanded: { rotate: '180deg' } } } });
+
+    expect(options).toEqual([{ label: 'the element around it — expanded', value: '>' }]);
+    expect(
+      unusedAncestors(
+        {},
+        {
+          name: 'chevron',
+          type: 'class',
+          attributes: { base: { ancestors: { '>': { states: { expanded: { rotate: '180deg' } } } } } },
+          cache: ''
+        }
+      )
+    ).toEqual(new Set());
+  });
+});
+
+describe('pseudoOptions and conditionOptions', () => {
+  it('offer every pseudo-element and the motion conditions, saying which the block already dresses', () => {
+    const block = {
+      pseudos: { after: { default: { content: '""' } } },
+      conditions: { 'container (max-width: 30rem)': { default: { color: 'red' } } }
+    };
+
+    expect(pseudoOptions(block).find(option => 'value' in option && option.value === 'after')).toEqual({
+      label: '::after (set)',
+      value: 'after'
+    });
+    expect(conditionOptions(block)).toEqual([
+      { label: 'Reduced motion', value: 'motion-reduce' },
+      { label: 'Motion allowed', value: 'motion-safe' },
+      { label: 'container (max-width: 30rem) (set)', value: 'container (max-width: 30rem)' }
     ]);
   });
 });

@@ -5,7 +5,7 @@ import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import calculateInheriting from '../../../helpers/calculateInheriting';
 
-import type { Element, StyleState } from '@plitzi/sdk-shared';
+import type { Element, StylePseudo, StyleState } from '@plitzi/sdk-shared';
 
 export type UseStyleInheritProps = {
   element?: Element;
@@ -16,6 +16,8 @@ export type UseStyleInheritProps = {
   styleState?: StyleState;
   styleVariant?: string;
   styleAncestor?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
 };
 
 const useStyleInherit = ({
@@ -26,7 +28,9 @@ const useStyleInherit = ({
   styleSelector = 'base',
   styleState,
   styleVariant,
-  styleAncestor
+  styleAncestor,
+  stylePseudo,
+  styleCondition
 }: UseStyleInheritProps) => {
   const [[flat, platform]] = useBuilderStore(['schema.flat', 'style.platform']);
   const { componentDefinitions } = use(ComponentContext);
@@ -44,6 +48,8 @@ const useStyleInherit = ({
       styleState,
       styleVariant,
       styleAncestor,
+      stylePseudo,
+      styleCondition,
       includeSelf: selectors.length > 1,
       skipSelectors: selectorsToSkip,
       addSelectors: selectorsToInclude
@@ -59,7 +65,9 @@ const useStyleInherit = ({
     componentSubType,
     styleState,
     styleVariant,
-    styleAncestor
+    styleAncestor,
+    stylePseudo,
+    styleCondition
   ]);
 
   return inheritData;

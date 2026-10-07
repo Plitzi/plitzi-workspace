@@ -93,7 +93,9 @@ const TabContainerItem = ({
         tabIndex: selected ? 0 : -1,
         onKeyDown: handleKeyDown
       }
-    : { id: panelId, role: 'tabpanel', 'aria-labelledby': tabId, tabIndex: 0 };
+    : // A panel not on show is `hidden`: out of the reading order and the find-in-page, and what keeps it out of the
+      // `current` state, which selects the panel on show (`[role="tabpanel"]:not([hidden])`)
+      { id: panelId, role: 'tabpanel', 'aria-labelledby': tabId, tabIndex: 0, hidden: !selected };
 
   return (
     <RootElement

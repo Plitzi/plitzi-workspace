@@ -149,6 +149,8 @@ const styleConstants = {
   ACCENT_COLOR: 'accent-color',
   CARET_COLOR: 'caret-color',
   COLOR_SCHEME: 'color-scheme',
+  // What a `::before`, an `::after` or a `::marker` draws — and only those: authoring refuses it anywhere else.
+  CONTENT: 'content',
   // Position
   POSITION: 'position',
   FLOAT: 'float',
@@ -418,6 +420,7 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   [styleConstants.SCROLLBAR_WIDTH]: 'auto',
   [styleConstants.SCROLLBAR_COLOR]: 'auto',
   [styleConstants.CONTAINER_TYPE]: 'normal',
+  [styleConstants.CONTENT]: 'normal',
   [styleConstants.CONTAINER_NAME]: 'none',
   [styleConstants.OBJECT_FIT]: 'fill',
   [styleConstants.OBJECT_POSITION]: '50% 50%',

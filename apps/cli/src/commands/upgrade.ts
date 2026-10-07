@@ -7,6 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { lockfileManager, projectHere, readPackageJson } from './existingProject';
 import { blockingLegacy } from './legacyLayout';
+import { localPackages } from './localPackages';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
 import { readOrigin } from './spaceOrigin';
 import { fail, install, writeFiles } from './terminal';
@@ -17,6 +18,7 @@ import { CLI_VERSION, packageJson } from '../scaffold/project';
 import { SKILL_NAMES, skillFiles, skillVersion } from '../scaffold/skills';
 
 import type { PlitziProject } from './existingProject';
+import type { LocalPackage } from './localPackages';
 import type { SpaceOrigin } from './spaceOrigin';
 import type { CreateAnswers } from '../scaffold';
 
@@ -29,7 +31,9 @@ import type { CreateAnswers } from '../scaffold';
  *   `--take` names it. One the CLI no longer writes (`RETIRED_MACHINERY`) is removed the same way.
  * - `packages`: `package.json` merged — the scripts and dependencies it lacks added, `@plitzi/*` raised to this
  *   version. A dependency the project has is never changed, nor a script it changed — one the CLI wrote and nobody touched
- *   since (the scaffold record) takes today's command; then the install.
+ *   since (the scaffold record) takes today's command; then the install. A `@plitzi` package installed otherwise than
+ *   the registry has it (`localPackages`: a tarball, a link, an override) is neither raised nor replaced: the install
+ *   is left to the author, said with the command that would take the registry's.
  * - `skills`: `.claude/skills/plitzi-*` from the packages installed, each replaced whole.
  * - `renames`: a name a version renamed, still written in the source (`canTemplate`), at its file and line — and with
  *   `--write`, renamed.
@@ -50,7 +54,10 @@ export interface UpgradeOptions {
   /** Files of the project's own to replace anyway — `all` for every one. */
   take?: string[];
   json?: boolean;
-  /** `--no-install`: write `package.json` and leave the install to the author. */
+  /**
+   * `--no-install`: write `package.json` and leave the install to the author — as it is left anyway while a `@plitzi`
+   * package is installed locally, which an install would replace.
+   */
   install?: boolean;
 }
 
@@ -178,11 +185,13 @@ const stringsOf = (value: unknown): Record<string, string> =>
 /**
  * `package.json` brought up to the CLI. `wrote` is what the CLI wrote of its scripts (the scaffold record): one the
  * project still has as written is the CLI's and takes today's command; one it changed is its own and is only said.
+ * `local` names the packages installed locally, whose range is the project's to change with what it installs.
  */
 export const planPackages = (
   text: string,
   answers: CreateAnswers,
-  wrote: Record<string, string> = {}
+  wrote: Record<string, string> = {},
+  local: ReadonlySet<string> = new Set()
 ): PackagesPlan => {
   const parsed: unknown = JSON.parse(text);
   const ours: unknown = JSON.parse(packageJson(answers));
@@ -222,7 +231,7 @@ export const planPackages = (
       if (!where) {
         plan.added.push({ section, name, range });
         sections[section][name] = range;
-      } else if (name.startsWith('@plitzi/') && isBelow(sections[where][name], range)) {
+      } else if (name.startsWith('@plitzi/') && !local.has(name) && isBelow(sections[where][name], range)) {
         plan.raised.push({ section: where, name, from: sections[where][name], to: range });
         sections[where][name] = range;
       }
@@ -456,7 +465,11 @@ interface UpgradeReport {
   version: string;
   write: boolean;
   files?: { file: string; status: FileStatus; diff?: string }[];
-  packages?: Omit<PackagesPlan, 'after' | 'recorded'> & { install?: 'done' | 'failed' | 'needed' };
+  packages?: Omit<PackagesPlan, 'after' | 'recorded'> & {
+    /** `skipped`: not run, a `@plitzi` package being installed locally (`local`), which it would replace. */
+    install?: 'done' | 'failed' | 'needed' | 'skipped';
+    local: LocalPackage[];
+  };
   skills?: SkillPlan[];
   renames?: RenameFound[];
 }
@@ -474,7 +487,8 @@ const statusLine: Record<FileStatus, (file: string) => string> = {
   space: file => chalk.dim(`  · ${file} — the space's: plitzi pull writes it as this CLI does`)
 };
 
-const reportText = (report: UpgradeReport): string => {
+/** The report as text; `install` is the project's install command, said when the CLI left the install to the author. */
+const reportText = (report: UpgradeReport, install: string): string => {
   const lines = [chalk.bold(`plitzi upgrade → ${report.version}${report.write ? '' : ' (shown; --write makes it)'}`)];
   if (report.files) {
     const changed = report.files.filter(file => file.status !== 'current' && file.status !== 'space');
@@ -490,7 +504,7 @@ const reportText = (report: UpgradeReport): string => {
   }
 
   if (report.packages) {
-    const { added, raised, scripts, updatedScripts, ownScripts, install: installed } = report.packages;
+    const { added, raised, scripts, updatedScripts, ownScripts, local, install: installed } = report.packages;
     const none = added.length + raised.length + scripts.length + updatedScripts.length === 0;
     lines.push(none ? chalk.green('packages: up to date') : 'packages:');
     lines.push(
@@ -500,9 +514,16 @@ const reportText = (report: UpgradeReport): string => {
       ...updatedScripts.map(entry => chalk.green(`  ~ script ${entry.name}: ${entry.to}`)),
       ...ownScripts.map(entry =>
         chalk.dim(`  = script ${entry.name} is yours ("${entry.yours}"; the CLI writes "${entry.ours}")`)
-      )
+      ),
+      ...local.map(entry => chalk.yellow(`  ! ${entry.name} is installed locally — ${entry.from}: left as it is`))
     );
-    if (installed === 'needed') {
+    if (installed === 'skipped') {
+      lines.push(
+        chalk.yellow(
+          `  not installed: an install now would put the registry's in place of what is installed locally. Install the new versions the way you installed those — or run \`${install}\` to take the registry's`
+        )
+      );
+    } else if (installed === 'needed') {
       lines.push(chalk.yellow('  then install, for the new versions to be the ones that run'));
     } else if (installed === 'failed') {
       lines.push(chalk.red('  the install failed: the reason is in the output above'));
@@ -630,15 +651,19 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   if (answers && wanted.has('packages')) {
     const text = await readText(path.join(root, 'package.json'));
     const wrote = record?.scripts;
-    const plan = text === undefined ? undefined : planPackages(text, answers, wrote);
+    const local = await localPackages(root);
+    const plan =
+      text === undefined ? undefined : planPackages(text, answers, wrote, new Set(local.map(entry => entry.name)));
     if (plan) {
       const { after, recorded, ...rest } = plan;
-      let installed: 'done' | 'failed' | 'needed' | undefined;
+      let installed: NonNullable<UpgradeReport['packages']>['install'];
       if (after !== undefined) {
         installed = 'needed';
         if (write) {
           await fs.writeFile(path.join(root, 'package.json'), after);
-          if (options.install !== false && !options.json) {
+          if (local.length > 0) {
+            installed = 'skipped';
+          } else if (options.install !== false && !options.json) {
             installed = (await install(manager, root)) ? 'done' : 'failed';
           }
         }
@@ -649,7 +674,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
         await writeScaffoldRecord(root, CLI_VERSION, { scripts: recorded });
       }
 
-      report.packages = { ...rest, ...(installed === undefined ? {} : { install: installed }) };
+      report.packages = { ...rest, local, ...(installed === undefined ? {} : { install: installed }) };
     }
   }
 
@@ -682,7 +707,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     report.renames = found;
   }
 
-  console.log(options.json ? JSON.stringify(report) : reportText(report));
+  console.log(options.json ? JSON.stringify(report) : reportText(report, installCommand(manager)));
   if (report.packages?.install === 'failed') {
     process.exitCode = 1;
     console.error(chalk.dim(`\`${installCommand(manager)}\` failed.`));

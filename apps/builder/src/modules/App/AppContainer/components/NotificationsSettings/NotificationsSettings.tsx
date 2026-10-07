@@ -30,7 +30,15 @@ const FIELD_LABELS: Record<Field, { label: string; placeholder: string }> = {
   fontSize: { label: 'Text size', placeholder: '14px' },
   border: { label: 'Border', placeholder: '1px solid var(--border)' },
   shadow: { label: 'Shadow', placeholder: 'var(--shadow-lg)' },
-  padding: { label: 'Padding', placeholder: '12px 14px' }
+  padding: { label: 'Padding', placeholder: '12px 14px' },
+  minHeight: { label: 'Min height', placeholder: '0px' },
+  fontWeight: { label: 'Text weight', placeholder: '500' },
+  lineHeight: { label: 'Line height', placeholder: '1.45' },
+  iconSize: { label: 'Icon size', placeholder: '18px' },
+  iconGap: { label: 'Icon gap', placeholder: '10px' },
+  closeColor: { label: 'Close button colour', placeholder: 'var(--muted)' },
+  closeOpacity: { label: 'Close button opacity', placeholder: '0.8' },
+  progressHeight: { label: 'Progress bar height', placeholder: '2px' }
 };
 
 type NotificationFieldProps = {
@@ -91,8 +99,8 @@ const NotificationsSettings = () => {
   return (
     <ViewSection title="Notifications">
       <p className="text-xs text-gray-500 dark:text-zinc-400">
-        How the toasts an Add Notification step shows look. Any CSS value; a token follows the theme. Left empty, the
-        library&apos;s own.
+        How the toasts an Add Notification step shows look — the toast, its icon, its close button and its progress bar.
+        One CSS value each; a token follows the theme. Left empty, the library&apos;s own.
       </p>
       <div className="grid grid-cols-2 gap-3">
         {NOTIFICATIONS_FIELDS.map(field => (

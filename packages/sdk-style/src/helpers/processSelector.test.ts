@@ -951,7 +951,7 @@ describe('processSelector / the current state', () => {
   const cacheOf = (block: StyleBlock, name = 'navLink'): string =>
     processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
 
-  it('selects the chosen one of a set — the page shown, a pressed toggle, a selected tab — which a hover still answers', () => {
+  it('selects the chosen one of a set — the page shown, a pressed toggle, a selected tab, its panel — which a hover still answers', () => {
     const cache = cacheOf({
       default: { color: 'gray' },
       states: { hover: { color: 'black' }, current: { color: 'red' } }
@@ -959,8 +959,82 @@ describe('processSelector / the current state', () => {
 
     expect(cache).toBe(
       '.navLink{color:gray;' +
-        '&:is([aria-current]:not([aria-current="false"]),[aria-pressed="true"],[aria-selected="true"]){color:red;}' +
+        '&:is([aria-current]:not([aria-current="false"]),[aria-pressed="true"],[aria-selected="true"],[role="tabpanel"]:not([hidden])){color:red;}' +
         '&:hover{color:black;}}'
     );
+  });
+});
+
+describe('processSelector / the style language', () => {
+  const cacheOf = (block: StyleBlock, name = 'card'): string =>
+    processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
+
+  it('writes the open trigger and where an element sits as the attribute and structural pseudo-classes', () => {
+    const cache = cacheOf({
+      states: {
+        hover: { color: 'black' },
+        expanded: { color: 'blue' },
+        last: { 'margin-bottom': '0px' },
+        first: { 'margin-top': '0px' },
+        even: { 'background-color': 'gray' },
+        odd: { 'background-color': 'white' }
+      }
+    });
+
+    expect(cache).toBe(
+      '.card{&:nth-child(odd){background-color:white;}&:nth-child(even){background-color:gray;}' +
+        '&:first-child{margin-top:0px;}&:last-child{margin-bottom:0px;}&[aria-expanded="true"]{color:blue;}' +
+        '&:hover{color:black;}}'
+    );
+  });
+
+  it('writes a pseudo-element last in its selector, after the state that shows it', () => {
+    const cache = cacheOf({
+      default: { position: 'relative' },
+      pseudos: { after: { default: { content: '"→"' }, states: { hover: { translate: '4px 0' } } } }
+    });
+
+    expect(cache).toBe('.card{position:relative;&::after{content:"→";}&:hover::after{translate:4px 0;}}');
+  });
+
+  it('writes the pseudo-elements of a variant inside it', () => {
+    const cache = cacheOf({
+      variants: { ghost: { default: {}, pseudos: { before: { default: { content: '""' } } } } }
+    });
+
+    expect(cache).toBe('.card{&[data-variant="ghost"],&.card--ghost{&::before{content:"";}}}');
+  });
+
+  it('writes the conditions last, as at-rules inside the class, with their states and pseudo-elements', () => {
+    const cache = cacheOf({
+      default: { transition: 'transform 200ms' },
+      states: { hover: { transform: 'translateY(-2px)' } },
+      conditions: {
+        'motion-reduce': { default: {}, states: { hover: { transform: 'none' } } },
+        'container sidebar (max-width: 30rem)': {
+          default: { 'flex-direction': 'column' },
+          pseudos: { before: { default: { display: 'none' } } }
+        }
+      }
+    });
+
+    expect(cache).toBe(
+      '.card{transition:transform 200ms;&:hover{transform:translateY(-2px);}' +
+        '@media (prefers-reduced-motion: reduce){&:hover{transform:none;}}' +
+        '@container sidebar (max-width: 30rem){flex-direction:column;&::before{display:none;}}}'
+    );
+  });
+
+  it('leaves out a condition it cannot read rather than writing an at-rule no browser knows', () => {
+    expect(cacheOf({ conditions: { print: { default: { color: 'black' } } } })).toBe('.card{}');
+  });
+
+  it('writes the parent by its state alone, one step up', () => {
+    const cache = cacheOf(
+      { ancestors: { '>': { states: { expanded: { rotate: '180deg' }, hover: { opacity: '1' } } } } },
+      'chevron'
+    );
+
+    expect(cache).toBe('.chevron{:where([aria-expanded="true"]) > &{rotate:180deg;}:where(:hover) > &{opacity:1;}}');
   });
 });

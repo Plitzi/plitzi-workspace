@@ -132,40 +132,80 @@ afterEach(async () => {
 });
 
 describe('serveProject — a space held in the project', () => {
+  /** What a refusal leaves of the process: what it printed, and the code it exited with — instead of exiting. */
+  const refusal = async (options: Parameters<typeof serveProject>[0]): Promise<{ said: string; code: unknown }> => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(process, 'exit').mockImplementation(code => {
+      throw new Error(`exit ${String(code)}`);
+    });
+    await expect(serveProject(options)).rejects.toThrow('exit 1');
+    const code = process.exitCode;
+    process.exitCode = 0;
+
+    return { said: error.mock.calls.flat().join('\n'), code };
+  };
+
   // `node main.ts` in `src/`: the project is never guessed from where a file is.
   it('refuses to start anywhere but the project’s root, saying what is missing and where to run it', async () => {
     vi.spyOn(process, 'cwd').mockReturnValue(path.join(root, 'src'));
 
-    await expect(serveProject({ space: titled('authored at boot') })).rejects.toThrow(
-      `${path.join(root, 'src')} is not the root of a Plitzi project: it has no package.json and no src/.`
+    const { said, code } = await refusal({ space: () => titled('authored at boot') });
+
+    expect(said).toBe(
+      `${path.join(root, 'src')} is not the root of a Plitzi project: it has no package.json and no src/. Run it from the project's root, the folder its package.json is in — where its scripts run it (npm start, npm run author).`
     );
+    expect(code).toBe(1);
     expect(existsSync(path.join(root, 'tmp/dev-server.json'))).toBe(false);
   });
 
   // A plugin it cannot build, code where nothing reads it, settings Node never loads: the first is not all there is.
-  it('refuses to start laid out where it would read nothing, every error said at once', async () => {
+  it('refuses to start laid out where it would read nothing, every error said at once — before authoring', async () => {
     await write('src/plugins/Card/declaration.ts', "export default { type: 'card' };\n");
     await write('src/plugin/Chart/index.ts', 'export default () => null;\n');
     await write('src/.env', 'PLITZI_SIGNING_SECRET=other\n');
+    const authored = vi.fn(() => titled('authored at boot'));
 
-    const refused = serveProject({ space: titled('authored at boot') });
+    const { said, code } = await refusal({ space: authored });
 
-    await expect(refused).rejects.toThrow(/^The project is not laid out as Plitzi reads it — 3 errors:/);
-    await expect(refused).rejects.toThrow(
+    expect(said).toMatch(/^The project is not laid out as Plitzi reads it — 3 errors:/);
+    expect(said).toContain(
       '1. src/plugins/Card/ has no index.ts (or index.tsx), so the server cannot build the plugin card.'
     );
-    await expect(refused).rejects.toThrow(
+    expect(said).toContain(
       '2. src/plugin/ holds src/plugin/Chart/index.ts, and nothing reads it there — did you mean src/plugins/?'
     );
-    await expect(refused).rejects.toThrow("3. src/.env is never read: Node reads the project's settings");
+    expect(said).toContain("3. src/.env is never read: Node reads the project's settings");
+    expect(said).not.toContain('    at ');
+    expect(code).toBe(1);
+    expect(authored).not.toHaveBeenCalled();
     expect(existsSync(path.join(root, 'tmp/dev-server.json'))).toBe(false);
+  });
+
+  it('says a space that does not author as authoring says it, and exits', async () => {
+    const refused = new Error('Space "Shop" was not written — one problem:\n\n1. [no-pages] a space with no pages');
+    refused.name = 'SpaceRefusedError';
+
+    const { said, code } = await refusal({ space: () => Promise.reject(refused) });
+
+    expect(said).toBe(refused.message);
+    expect(code).toBe(1);
+  });
+
+  // Anything else is a bug of the project's code or of the server's, and its stack is what finds it.
+  it('throws what is not a refusal as it was thrown', async () => {
+    const exit = vi.spyOn(process, 'exit');
+
+    await expect(
+      serveProject({ space: () => Promise.reject(new TypeError('space.pages is undefined')) })
+    ).rejects.toThrow(TypeError);
+    expect(exit).not.toHaveBeenCalled();
   });
 
   it('says what works and should not stay, while developing — and starts', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await write('src/data/notes.txt', 'a note\n');
 
-    await serve({ space: titled('authored at boot') });
+    await serve({ space: () => titled('authored at boot') });
 
     expect(warn).toHaveBeenCalledWith(
       expect.stringMatching(/^\[layout\] src\/data\/notes\.txt is not JSON: .*\n {2}→ Keep it as JSON/)
@@ -173,7 +213,7 @@ describe('serveProject — a space held in the project', () => {
   });
 
   it('serves it, its public files, and says where it is for the tools that look for it', async () => {
-    const running = await serve({ space: titled('authored at boot') });
+    const running = await serve({ space: () => titled('authored at boot') });
 
     const page = await fetch(`${running.url}/`);
     expect(page.status).toBe(200);
@@ -188,7 +228,7 @@ describe('serveProject — a space held in the project', () => {
   });
 
   it('authors it again on a save and serves the new documents from memory, every open page told to load again', async () => {
-    const running = await serve({ space: titled('authored at boot') });
+    const running = await serve({ space: () => titled('authored at boot') });
     const reload = await listen(running.url);
     await reload.heard('hello');
 
@@ -203,7 +243,7 @@ describe('serveProject — a space held in the project', () => {
   });
 
   it('keeps the last space that authored when the script refuses the new one', async () => {
-    const running = await serve({ space: titled('authored at boot') });
+    const running = await serve({ space: () => titled('authored at boot') });
 
     await write('src/space/index.ts', 'export const space = { broken: true };\n');
     await vi.waitFor(async () => expect(await fs.readdir(path.join(root, 'runs'))).toHaveLength(1), {
@@ -216,7 +256,7 @@ describe('serveProject — a space held in the project', () => {
   });
 
   it('leaves the server’s own code to a restart: a save to it authors nothing', async () => {
-    await serve({ space: titled('authored at boot') });
+    await serve({ space: () => titled('authored at boot') });
 
     await write('src/config/serverOptions.ts', 'export const serverOptions = {};\n');
     await write('src/plugins/Card/Card.tsx', 'export default () => null;\n');
@@ -226,7 +266,7 @@ describe('serveProject — a space held in the project', () => {
   });
 
   it('registers a plugin folder added while it runs, and the open pages load again to render it', async () => {
-    const running = await serve({ space: titled('authored at boot') });
+    const running = await serve({ space: () => titled('authored at boot') });
     expect(await pageOf(running.url)).not.toContain('badge@');
     const reload = await listen(running.url);
     await reload.heard('hello');
@@ -242,7 +282,7 @@ describe('serveProject — a space held in the project', () => {
   // server goes on: the plugin is registered once it is whole.
   it('says a plugin folder added broken while it runs, goes on serving, and registers it once it is whole', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    const running = await serve({ space: titled('authored at boot') });
+    const running = await serve({ space: () => titled('authored at boot') });
     const reload = await listen(running.url);
     await reload.heard('hello');
 
@@ -282,7 +322,7 @@ describe('serveProject — a space held in the project', () => {
   it('authors nothing and watches nothing in production', async () => {
     process.env.NODE_ENV = 'production';
     // One process: workers, on by default in production, are processes of their own a test does not run.
-    const running = await serve({ space: titled('authored at boot'), serverOptions: { workers: false } });
+    const running = await serve({ space: () => titled('authored at boot'), serverOptions: { workers: false } });
 
     await write('next.json', JSON.stringify(titled('authored again')));
     await write('src/space/index.ts', 'export const space = { saved: true };\n');

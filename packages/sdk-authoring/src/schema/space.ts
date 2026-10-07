@@ -12,6 +12,7 @@ import { channelProblems } from '@plitzi/sdk-shared/realtime';
 import { anchorOf } from '@plitzi/sdk-shared/schema/anchor';
 import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { isParentAncestor } from '@plitzi/sdk-shared/style/styleStates';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
@@ -54,6 +55,7 @@ import {
 } from './guard';
 import { buildHandles, instanceSelectorFor, pathForSlug, selectorFor } from './handles';
 import { digest } from './ids';
+import { withKeyframesCss } from './keyframes';
 import { fixSpace, lintSpace } from './lint';
 import { CUSTOM_TYPE } from './lint/context';
 import { MAIN_ATTRIBUTES } from './mainAttributes';
@@ -476,7 +478,11 @@ class SpaceAuthor {
       ...(this.spec.flags ? { flags: this.spec.flags } : {}),
       settings: {
         ...this.spec.settings,
-        customCss: withNotificationsCss(this.spec.customCss ?? '', this.spec.notifications),
+        // The keyframes at the top and the notifications' rules at the end: where the style editor reads each back.
+        customCss: withKeyframesCss(
+          withNotificationsCss(this.spec.customCss ?? '', this.spec.notifications),
+          this.spec.keyframes
+        ),
         ...(this.spec.computed ? { computed: this.spec.computed } : {}),
         ...(this.spec.channels ? { channels: this.spec.channels } : {})
       },
@@ -554,7 +560,9 @@ class SpaceAuthor {
       css: spec.base ?? {},
       states: spec.states,
       variants: spec.variants,
-      ancestors: spec.ancestors
+      ancestors: spec.ancestors,
+      pseudos: spec.pseudos,
+      conditions: spec.conditions
     });
     const slots = Object.entries(spec.slots ?? {}).map(([slot, rules]) => [slot, toBlocks(rules)] as const);
 
@@ -702,7 +710,8 @@ class SpaceAuthor {
     for (const breakpoint of BREAKPOINTS) {
       for (const item of Object.values(this.platform[breakpoint])) {
         for (const [slot, block] of Object.entries(item.attributes)) {
-          for (const ancestor of Object.keys(block.ancestors ?? {})) {
+          // The parent (`'>'`) is named by nothing it wears, so there is no class of it to declare.
+          for (const ancestor of Object.keys(block.ancestors ?? {}).filter(name => !isParentAncestor(name))) {
             this.assertClass(
               ancestor,
               `The ${item.type} "${item.name}" (${slot}, ${breakpoint}), in its \`ancestors\`,`

@@ -1,13 +1,34 @@
+import { canonicalCondition } from '@plitzi/sdk-shared/style/styleConditions';
+import { isStylePseudo } from '@plitzi/sdk-shared/style/stylePseudos';
 import processSelector from '@plitzi/sdk-style/helpers/processSelector';
 
+import { styleInputProblem } from './validate';
 import { expandShorthand, expandShorthandPatch } from '../../../catalogs';
 import { fail } from '../../../helpers';
 
-import type { DefinitionSlotInput, DefinitionSlotPatch } from './shared';
+import type {
+  DefinitionSlotInput,
+  DefinitionSlotPatch,
+  PseudoPartInput,
+  PseudoPartPatch,
+  VariantPartInput,
+  VariantPartPatch
+} from './shared';
 import type { CssPatch } from '../../../catalogs';
 import type { OpResult } from '../../../helpers';
-import type { AIDefinition, AIDefinitionSlot, CssProps, DisplayModeCss } from '../../../types';
-import type { DisplayMode, Style, StyleAttributes, StyleBlock, StyleItem, TagType } from '@plitzi/sdk-shared';
+import type { AIDefinition, AIDefinitionSlot, AIPseudo, AIVariant, CssProps, DisplayModeCss } from '../../../types';
+import type {
+  DisplayMode,
+  Style,
+  StyleAttributes,
+  StyleBlock,
+  StyleItem,
+  StylePseudos,
+  StyleStateBlock,
+  StyleStates,
+  StyleVariant,
+  TagType
+} from '@plitzi/sdk-shared';
 
 // Shared machinery for the style-schema handlers: stale-resource URI builders, the kind-clash guard, and the
 // low-level StyleItem writer + patch merge that both definitions and global element selectors reuse.
@@ -54,6 +75,41 @@ export const guardKind = (style: Style, ref: string, want: TagType): OpResult | 
   );
 };
 
+/** A part with rules and states — a pseudo-element, a variant, a condition — at one breakpoint, or nothing there. */
+const partAt = (part: PseudoPartInput, mode: DisplayMode): StyleStateBlock | undefined => {
+  const block: StyleStateBlock = {};
+  const css = part[mode];
+  if (css && Object.keys(css).length > 0) {
+    block.default = expandShorthand(css);
+  }
+
+  for (const [state, dm] of Object.entries(part.states ?? {})) {
+    if (dm[mode]) {
+      (block.states ??= {})[state as keyof StyleStates] = expandShorthand(dm[mode]);
+    }
+  }
+
+  return block.default || block.states ? block : undefined;
+};
+
+const pseudosAt = (pseudos: VariantPartInput['pseudos'], mode: DisplayMode): StylePseudos | undefined => {
+  const entries = Object.entries(pseudos ?? {}).flatMap(([pseudo, part]) => {
+    const block = partAt(part, mode);
+
+    return block && isStylePseudo(pseudo) ? [[pseudo, block] as const] : [];
+  });
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
+
+/** A variant or a condition at one breakpoint: its own part, and its pseudo-elements'. */
+const variantAt = (part: VariantPartInput, mode: DisplayMode): StyleVariant | undefined => {
+  const block = partAt(part, mode);
+  const pseudos = pseudosAt(part.pseudos, mode);
+
+  return block || pseudos ? { ...block, ...(pseudos ? { pseudos } : {}) } : undefined;
+};
+
 const slotToBlocks = (slot: DefinitionSlotInput): Partial<Record<DisplayMode, StyleBlock>> => {
   const perMode: Partial<Record<DisplayMode, StyleBlock>> = {};
 
@@ -70,9 +126,24 @@ const slotToBlocks = (slot: DefinitionSlotInput): Partial<Record<DisplayMode, St
       }
     }
 
-    for (const [name, dm] of Object.entries(slot.variants ?? {})) {
-      if (dm[mode]) {
-        (block.variants ??= {})[name] = { default: expandShorthand(dm[mode]) };
+    for (const [name, variant] of Object.entries(slot.variants ?? {})) {
+      const variantBlock = variantAt(variant, mode);
+      if (variantBlock) {
+        (block.variants ??= {})[name] = { default: {}, ...variantBlock };
+      }
+    }
+
+    const pseudos = pseudosAt(slot.pseudos, mode);
+    if (pseudos) {
+      block.pseudos = pseudos;
+    }
+
+    for (const [key, condition] of Object.entries(slot.conditions ?? {})) {
+      const conditionBlock = variantAt(condition, mode);
+      // Validated before anything is written (`styleInputProblem`), so a key here is a condition: kept as it is spelt.
+      const canonical = canonicalCondition(key) ?? key;
+      if (conditionBlock) {
+        (block.conditions ??= {})[canonical] = conditionBlock;
       }
     }
 
@@ -105,7 +176,12 @@ export const writeStyleItem = (
   slots: Record<string, DefinitionSlotInput> | undefined,
   itemType: TagType,
   componentType: string | undefined
-): void => {
+): OpResult | null => {
+  const problem = styleInputProblem(base, slots);
+  if (problem) {
+    return problem;
+  }
+
   for (const mode of MODES) {
     const attributes: StyleAttributes = {};
     const baseBlocks = slotToBlocks(base);
@@ -134,6 +210,8 @@ export const writeStyleItem = (
       style.platform[mode][ref] = styleItem;
     }
   }
+
+  return null;
 };
 
 // --- Partial merge (patch): overlay a patch onto the current definition, per breakpoint. A null CSS value removes
@@ -209,6 +287,74 @@ const mergeAncestors = (
   return Object.keys(result).length > 0 ? result : undefined;
 };
 
+const mergePart = (base: AIPseudo | undefined, patch: PseudoPartPatch | undefined): PseudoPartInput => {
+  const merged: PseudoPartInput = mergeDisplayMode(base, patch);
+  const states = mergeNamedModes(base?.states, patch?.states);
+  if (states) {
+    merged.states = states;
+  }
+
+  return merged;
+};
+
+const mergePseudos = (
+  base: Record<string, AIPseudo> | undefined,
+  patch: Record<string, PseudoPartPatch | null> | undefined
+): Record<string, PseudoPartInput> | undefined => {
+  const names = new Set([...Object.keys(base ?? {}), ...Object.keys(patch ?? {})]);
+  const result: Record<string, PseudoPartInput> = {};
+  for (const name of names) {
+    const partPatch = patch?.[name];
+    if (partPatch === null) {
+      continue;
+    }
+
+    const merged = mergePart(base?.[name], partPatch);
+    if (Object.keys(merged).length > 0) {
+      result[name] = merged;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
+const mergeVariantPart = (base: AIVariant | undefined, patch: VariantPartPatch | undefined): VariantPartInput => {
+  const merged: VariantPartInput = mergePart(base, patch);
+  const pseudos = mergePseudos(base?.pseudos, patch?.pseudos);
+  if (pseudos) {
+    merged.pseudos = pseudos;
+  }
+
+  return merged;
+};
+
+/**
+ * Variants or conditions, each merged whole — its rules, states and pseudo-elements — and one patched to `null`
+ * removed. A condition is matched by the one spelling the document keeps, so a patch may write it as it likes.
+ */
+const mergeVariantParts = (
+  base: Record<string, AIVariant> | undefined,
+  patch: Record<string, VariantPartPatch | null> | undefined,
+  keyOf: (key: string) => string = key => key
+): Record<string, VariantPartInput> | undefined => {
+  const patches = new Map(Object.entries(patch ?? {}).map(([key, value]) => [keyOf(key), value]));
+  const names = new Set([...Object.keys(base ?? {}), ...patches.keys()]);
+  const result: Record<string, VariantPartInput> = {};
+  for (const name of names) {
+    const partPatch = patches.get(name);
+    if (partPatch === null) {
+      continue;
+    }
+
+    const merged = mergeVariantPart(base?.[name], partPatch);
+    if (Object.keys(merged).length > 0) {
+      result[name] = merged;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+};
+
 const mergeSlot = (base: AIDefinitionSlot | undefined, patch: DefinitionSlotPatch): DefinitionSlotInput => {
   const merged: DefinitionSlotInput = mergeDisplayMode(base, patch);
   const states = mergeNamedModes(base?.states, patch.states);
@@ -216,7 +362,7 @@ const mergeSlot = (base: AIDefinitionSlot | undefined, patch: DefinitionSlotPatc
     merged.states = states;
   }
 
-  const variants = mergeNamedModes(base?.variants, patch.variants);
+  const variants = mergeVariantParts(base?.variants, patch.variants);
   if (variants) {
     merged.variants = variants;
   }
@@ -224,6 +370,16 @@ const mergeSlot = (base: AIDefinitionSlot | undefined, patch: DefinitionSlotPatc
   const ancestors = mergeAncestors(base?.ancestors, patch.ancestors);
   if (ancestors) {
     merged.ancestors = ancestors;
+  }
+
+  const pseudos = mergePseudos(base?.pseudos, patch.pseudos);
+  if (pseudos) {
+    merged.pseudos = pseudos;
+  }
+
+  const conditions = mergeVariantParts(base?.conditions, patch.conditions, key => canonicalCondition(key) ?? key);
+  if (conditions) {
+    merged.conditions = conditions;
   }
 
   return merged;

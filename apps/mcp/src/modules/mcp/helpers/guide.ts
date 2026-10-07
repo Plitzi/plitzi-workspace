@@ -420,9 +420,11 @@ You do not have to rewrite them.
   \`justify-content\` as separate properties.
 - CSS is grouped by breakpoint: \`desktop\`, \`tablet\`, \`mobile\`.
 - Reference a style variable in CSS as \`var(--name)\`; a schema variable in a prop as \`{{name}}\`.
-- \`element.style.base\` is a **list** of definition refs; other slots go under \`element.style.slots\`. A \`markdown\`
-  has a slot per part of the HTML it writes (\`heading\`, \`paragraph\`, \`link\`, \`list\`, \`code\`, \`anchor\`…): its
-  document is styled there, not in custom CSS.
+- \`element.style.base\` is a **list** of definition refs; other slots go under \`element.style.slots\` — the slots
+  \`plitzi://explain/{type}\` lists, never custom CSS on the SDK's own class names. A \`markdown\` or a \`richText\`
+  has a slot per part of the document it writes (\`heading\`, \`heading2\`, \`paragraph\`, \`link\`, \`code\`,
+  \`codeBlockFrame\`…); a \`formControl\` its \`input\` box, the \`field\` inside it, \`label\`, \`requiredMark\`, \`error\`;
+  a \`pagination\` its \`previous\`, \`page\`, \`next\` (the page shown is the class's \`current\` state).
 - **An element can attach SEVERAL classes at once, and they all apply.** \`style.base\` holds a list, and each
   non-base slot holds its own — every attached definition contributes CSS, and they **cascade** (a later class, then a
   global/id rule, overrides an earlier one on the same property). So when a style looks wrong, the culprit may be
@@ -468,6 +470,15 @@ hovered or in a variant (\`.card:hover .icon\`, a collapsed sidebar hiding its l
 keyed by a class the ancestor wears: \`ancestors: { "toolbar": { "desktop": { … } }, "card": { "states": { "hover":
 { "desktop": { … } } } }, "sidebar": { "variants": { "collapsed": … } } }\`.
 Any ancestor counts, not only the parent; the class's own states and variants win over these. Never customCss for it.
+\`">"\` keys the parent, whatever it wears — a component's part reacting to what it sits in.
+
+**Pseudo-elements and conditions** sit beside \`states\` in a definition and in each of its variants:
+\`pseudos: { "after": { "desktop": { "content": "\\"→\\"" }, "states": { "hover": { "desktop": { … } } } } }\`
+(\`before\`/\`after\` are drawn only with a quoted \`content\`; also \`selection\`, \`marker\`, \`placeholder\`,
+\`first-letter\`, \`first-line\`), and \`conditions: { "motion-reduce": { "desktop": { … } }, "container (max-width:
+30rem)": { … } }\` (the nearest ancestor whose class sets \`container-type\`). A patch keeps the ones it does not name;
+\`null\` removes one. A state beyond \`hover\`/\`focus-visible\`/\`current\`: \`expanded\` (an open trigger), \`first\`,
+\`last\`, \`odd\`, \`even\`.
 
 ## Variables, design tokens and fonts
 - **Schema variables** are space-wide values a prop reads as \`{{name}}\`: \`upsertVariable { name, variableType,
@@ -985,8 +996,10 @@ the component does not have is reported by \`plitzi_validate\` — fix it before
 - **The link to the page being shown marks itself**: it carries \`aria-current="page"\`, and its class's \`current\`
   state says how it looks — \`{ "type": "patchDefinition", "ref": "nav-link", "states": { "current": { "desktop": {
   "color": "var(--primary)" } } } }\`. So a header written once in a layout lights the right item on every page; never
-  copy the header per page to style one item. The same state dresses any chosen one of a set: a pressed toggle
-  (\`aria-pressed\` — a theme toggle's option slot) and a selected tab.
+  copy the header per page to style one item. A link for a section — a journal and its articles — takes
+  \`"current": "section"\` in its props: current on every page under its path too (\`aria-current="true"\`), the same
+  state dressing it. The same state dresses any chosen one of a set: a pressed toggle (\`aria-pressed\` — a theme
+  toggle's option slot) and a selected tab.
 - **A section of a page** is an element with an \`anchor\` (its \`id\` in the DOM: lowercase, digits, \`-\`; one per
   page, layouts included; not inside a list row or a component). A link lands on it with \`hash\`:
   \`{ "mode": "page", "href": "home", "hash": "plans" }\` goes to \`/#plans\` and scrolls there, from any page.
@@ -1015,10 +1028,12 @@ Space-level configuration lives in \`plitzi://settings/{env}\` and is edited wit
 - \`customCss\` — **raw global CSS** injected for the whole space. Use it only for genuinely site-wide rules
   (\`@keyframes\`, \`@font-face\`, resets). To style an element, write a **definition** and attach it — never customCss.
 - \`notifications\` — how the toasts an \`addNotification\` step shows look: colours (\`background\`, \`text\`,
-  \`success\`, \`danger\`, \`warning\`, \`info\`) and shape (\`radius\`, \`font\`, \`fontSize\`, \`border\`, \`shadow\`,
-  \`padding\`), any CSS value — a token follows the theme: \`{ "type": "patchSettings", "notifications": { "background":
-  "var(--card)", "border": "1px solid var(--border)" } }\`. Merged field by field, \`null\` removes one. It is stored as a
-  rule inside \`customCss\` but reads and changes apart from it: never write a \`.Toastify__toast\` rule yourself.
+  \`success\`, \`danger\`, \`warning\`, \`info\`), shape (\`radius\`, \`font\`, \`fontSize\`, \`fontWeight\`, \`lineHeight\`,
+  \`minHeight\`, \`border\`, \`shadow\`, \`padding\`) and the parts inside (\`iconSize\`, \`iconGap\`, \`closeColor\`,
+  \`closeOpacity\`, \`progressHeight\`), one CSS value each — a token follows the theme: \`{ "type": "patchSettings",
+  "notifications": { "background": "var(--card)", "iconSize": "18px" } }\`. Merged field by field, \`null\` removes one.
+  It is stored as rules inside \`customCss\` but reads and changes apart from it: never write a \`.Toastify__*\` rule
+  yourself.
 - \`keepState\` / \`stateStorage\` — keep the runtime state (\`state.<key>\`, what \`setState\` writes) across reloads,
   in \`localStorage\`/\`sessionStorage\`, filed under whoever is signed in. It is the space's setting — pages do not
   take one. \`transientState\` lists the top-level keys never kept (a filter, a demo, a panel left open); do not

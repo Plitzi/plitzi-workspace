@@ -103,22 +103,32 @@
     font-size: 14px;
     user-select: none;
     outline: none;
+  }
 
-    .input-container__input {
-      height: 100%;
-      width: 100%;
-      padding: 0;
-      display: block;
-      border: none;
-      background-color: inherit;
-      line-height: inherit;
-      font-family: inherit;
-      font-size: inherit;
-      box-shadow: none;
+  // The field inside its box draws nothing of its own and takes the box's type and colour, so a class on the `input`
+  // slot dresses both, and one on the `field` slot reaches the `<input>` alone.
 
-      &:focus-visible {
-        outline: inherit;
-      }
+  .input-container__input {
+    height: 100%;
+    width: 100%;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-top: 0;
+    display: block;
+    border-right-style: none;
+    border-bottom-style: none;
+    border-left-style: none;
+    border-top-style: none;
+    background-color: inherit;
+    color: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    box-shadow: none;
+
+    &:focus-visible {
+      outline: inherit;
     }
   }
 
@@ -126,21 +136,26 @@
   // taken off, and the icon inside keeps the field's colour and size.
   .form-input__icon {
     height: 100%;
-    margin: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-top: 0;
     padding-right: 4px;
     padding-left: 4px;
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 0;
-    background: none;
+    border-right-style: none;
+    border-bottom-style: none;
+    border-left-style: none;
+    border-top-style: none;
+    background-color: transparent;
     color: inherit;
-    font: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-size: inherit;
     cursor: pointer;
-  }
-
-  .input-container__input {
-    color: inherit;
   }
 
   // Textarea
@@ -210,7 +225,10 @@
   }
 
   // Switch: a checkbox drawn as a track and a thumb, in the label's own colour — a class on the input slot recolours
-  // it with `color`. The thumb of one that is on takes the page's background (`Canvas`), so it follows the scheme.
+  // it with `color`. The thumb is the input's `::before`, which no class reaches, so it reads its look from custom
+  // properties the same class can set: `--plitzi-switch-thumb` (off), `--plitzi-switch-thumb-checked` (on) and
+  // `--plitzi-switch-thumb-shadow`. On, it is white over the filled track with a shadow under it, whatever the scheme:
+  // the page's own background (`Canvas`) drew a dark thumb in dark mode.
 
   .form-control__label-switch {
     display: flex;
@@ -260,7 +278,8 @@
       top: 2px;
       position: absolute;
       border-radius: 50%;
-      background-color: currentColor;
+      background-color: var(--plitzi-switch-thumb, currentColor);
+      box-shadow: var(--plitzi-switch-thumb-shadow, 0 1px 2px rgb(0 0 0 / 30%));
       transition: transform 150ms ease;
       content: '';
     }
@@ -269,7 +288,7 @@
       background-color: currentColor;
 
       &::before {
-        background-color: Canvas;
+        background-color: var(--plitzi-switch-thumb-checked, #ffffff);
         transform: translateX(16px);
       }
     }
@@ -336,24 +355,6 @@
       display: none;
     }
 
-    .select-container__select {
-      height: 100%;
-      width: 100%;
-      display: block;
-      border: none;
-      background-color: transparent;
-      line-height: inherit;
-      font-family: inherit;
-      font-size: inherit;
-      appearance: none;
-      cursor: inherit;
-      box-shadow: none;
-
-      &:focus-visible {
-        outline: inherit;
-      }
-    }
-
     &::after {
       padding: 4px;
       right: 0;
@@ -369,7 +370,25 @@
   }
 
   .select-container__select {
+    height: 100%;
+    width: 100%;
+    display: block;
+    border-right-style: none;
+    border-bottom-style: none;
+    border-left-style: none;
+    border-top-style: none;
+    background-color: transparent;
     color: inherit;
+    line-height: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    appearance: none;
+    cursor: inherit;
+    box-shadow: none;
+
+    &:focus-visible {
+      outline: inherit;
+    }
   }
 
   // Hidden

@@ -1,5 +1,6 @@
 import type { ColorScheme, Theme } from './ThemeTypes';
 import type styleConstants from '../style/styleConstants';
+import type { StylePseudo } from '../style/stylePseudos';
 import type { STYLE_STATES } from '../style/styleStates';
 
 export type TagType = 'class' | 'element' | 'id';
@@ -40,14 +41,28 @@ export type StyleObject = Partial<Record<StyleCategory, StyleValue>>;
 // States (hover, active, etc)
 export type StyleStates = Partial<Record<StyleState, StyleObject>>;
 
-// Variants (sm, lg, primary)
-export type StyleVariants = Record<string, Omit<StyleBlock, 'variants' | 'ancestors'>>;
+// The rules of one target and of its states: what a pseudo-element, an ancestor's variant and every other part hold.
+export type StyleStateBlock = { default?: StyleObject; states?: StyleStates };
+
+export type { StylePseudo };
+
+// Pseudo-elements (`::before`, `::placeholder`…): what the class draws or dresses besides the element, in its states.
+export type StylePseudos = Partial<Record<StylePseudo, StyleStateBlock>>;
+
+// Variants (sm, lg, primary): their rules, their states and their pseudo-elements.
+export type StyleVariant = StyleStateBlock & { pseudos?: StylePseudos };
+export type StyleVariants = Record<string, StyleVariant>;
 
 // How the element looks inside an ancestor carrying that class: always (`default`), or while that ancestor is in a
 // state or variant (a card's hover, a collapsed sidebar). Keyed by the ancestor's class name; any ancestor counts,
-// not only the parent.
-export type StyleAncestor = { default?: StyleObject; states?: StyleStates; variants?: StyleVariants };
+// not only the parent. `PARENT_ANCESTOR` (`>`) is the parent, whatever it wears, in its states.
+export type StyleAncestor = { default?: StyleObject; states?: StyleStates; variants?: Record<string, StyleStateBlock> };
 export type StyleAncestors = Record<string, StyleAncestor>;
+
+// Rules under a condition of the page rather than the element (`motion-reduce`, `container (max-width: 30rem)` — see
+// `styleConditions`): the class's own, its states' and its pseudo-elements'.
+export type StyleCondition = StyleStateBlock & { pseudos?: StylePseudos };
+export type StyleConditions = Record<string, StyleCondition>;
 
 // Full block per selector (base, header, etc)
 export type StyleBlock = {
@@ -55,16 +70,22 @@ export type StyleBlock = {
   states?: StyleStates;
   variants?: StyleVariants;
   ancestors?: StyleAncestors;
+  pseudos?: StylePseudos;
+  conditions?: StyleConditions;
 };
 
 // Which part of a selector an edit addresses. With `styleAncestor`, state and variant are the ancestor's, and
-// neither means inside that ancestor at all times.
+// neither means inside that ancestor at all times. `styleCondition` and `styleAncestor` exclude each other, and a
+// condition has no variants; `stylePseudo` is the pseudo-element of whichever of them is addressed, and `styleState`
+// then the state it shows in.
 export type StyleTarget = {
   componentType?: string;
   styleSelector?: string;
   styleState?: StyleState;
   styleVariant?: string;
   styleAncestor?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
 };
 
 // styleSelector: base, header, icon, etc

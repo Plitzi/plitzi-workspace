@@ -2,13 +2,10 @@
 
 @mixin styles {
   // Only the panels take turns. A header's items are the triggers: hidden while not chosen, a set of tabs showed one tab
-  // and no way to the others.
-  .plitzi-component__tab-container-body > .plitzi-component__tab-container-item {
-    display: none;
-
-    &.active {
-      display: block;
-    }
+  // and no way to the others. Hidden whatever the panel's class says — a class that lays its panel out as a flex
+  // column showed every panel at once — so the class dresses the one on show, and its `current` state that one only.
+  .plitzi-component__tab-container-body > .plitzi-component__tab-container-item:not(.active) {
+    display: none !important;
   }
 
   .builder-iframe.builder--display-component-border {

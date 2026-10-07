@@ -6,6 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { editManifest, keepFolder } from './repairs';
 import { sayer } from './types';
 import { compareVersions, floorOf, satisfies, versionOf, versionText } from './versions';
+import { localPackages } from '../commands/localPackages';
 import { planPackages } from '../commands/upgrade';
 import { installCommand } from '../scaffold';
 import { CLI_VERSION, NODE_ENGINES, SDK_VERSION, packageJson } from '../scaffold/project';
@@ -365,6 +366,20 @@ const installChecks = async (context: DoctorContext, sdk: readonly string[]): Pr
   const declared = declaredRanges(context);
   const singletons = [...sdk, 'react', 'react-dom'];
   const installed = new Map<string, Installed>();
+  // Installed by hand, linked or overridden: the project's choice, which an install would undo — said, never refused.
+  const local = new Map((await localPackages(context.root)).map(entry => [entry.name, entry.from]));
+  for (const [name, from] of local) {
+    findings.push(
+      say.info(
+        'installed-local',
+        `${name} is installed locally — ${from}: an install puts the registry's in its place.`,
+        {
+          file: 'package.json'
+        }
+      )
+    );
+  }
+
   for (const [name, range] of Object.entries(declared)) {
     const found = await installedOf(context.root, name);
     if (!found) {
@@ -378,7 +393,7 @@ const installChecks = async (context: DoctorContext, sdk: readonly string[]): Pr
     }
 
     installed.set(name, found);
-    if (satisfies(found.version, range) === false) {
+    if (!local.has(name) && satisfies(found.version, range) === false) {
       findings.push(
         say.error('installed-mismatch', `${name} ${found.version} is installed, and package.json asks for ${range}.`, {
           file: 'package.json',

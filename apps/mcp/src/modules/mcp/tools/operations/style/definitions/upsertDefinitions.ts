@@ -40,7 +40,12 @@ export const upsertDefinitions = (space: Space, env: Env, op: UpsertDefinitions)
       continue;
     }
 
-    writeStyleItem(space.style, ref, base, slots, 'class', undefined);
+    const problem = writeStyleItem(space.style, ref, base, slots, 'class', undefined);
+    if (problem?.errors) {
+      errors.push(...problem.errors.map(error => ({ ...error, path: `definitions.${ref}.${error.path}` })));
+      continue;
+    }
+
     result.updated += 1;
     result.staleResources.push(defUri(env, ref));
   }

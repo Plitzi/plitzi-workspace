@@ -84,7 +84,10 @@ const Pagination = ({
   loadMoreLabel = 'Load more',
   label = 'Pagination'
 }: PaginationProps) => {
-  const { id } = useElement();
+  const {
+    id,
+    definition: { styleSelectors }
+  } = useElement();
   const {
     settings: { previewMode },
     contexts: { InteractionsContext }
@@ -136,7 +139,7 @@ const Pagination = ({
       {mode === 'loadMore' && (
         <button
           type="button"
-          className="plitzi-component__pagination-more"
+          className={clsx('plitzi-component__pagination-more', styleSelectors.loadMore)}
           disabled={!hasNextPage && previewMode}
           onClick={handleClickPage(page + 1)}
         >
@@ -147,7 +150,7 @@ const Pagination = ({
         <>
           <button
             type="button"
-            className="plitzi-component__pagination-prev"
+            className={clsx('plitzi-component__pagination-prev', styleSelectors.previous)}
             disabled={!hasPrevPage && previewMode}
             onClick={handleClickPage(page - 1)}
           >
@@ -157,9 +160,11 @@ const Pagination = ({
             <button
               type="button"
               key={item}
-              className={clsx('plitzi-component__pagination-page', {
-                'plitzi-component__pagination-page--current': item === page
-              })}
+              className={clsx(
+                'plitzi-component__pagination-page',
+                { 'plitzi-component__pagination-page--current': item === page },
+                styleSelectors.page
+              )}
               aria-current={item === page ? 'page' : undefined}
               onClick={handleClickPage(item)}
             >
@@ -168,7 +173,7 @@ const Pagination = ({
           ))}
           <button
             type="button"
-            className="plitzi-component__pagination-next"
+            className={clsx('plitzi-component__pagination-next', styleSelectors.next)}
             disabled={!hasNextPage && previewMode}
             onClick={handleClickPage(page + 1)}
           >

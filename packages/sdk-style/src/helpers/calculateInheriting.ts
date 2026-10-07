@@ -11,7 +11,9 @@ import type {
   StyleBlock,
   StyleCategory,
   StyleItem,
+  StylePseudo,
   StyleState,
+  StyleTarget,
   StyleValue
 } from '@plitzi/sdk-shared';
 
@@ -141,13 +143,13 @@ const getDefaultStyle = (
 
 /* -------------------- STYLE RESOLUTION -------------------- */
 
-const resolveStyleBlock = (
-  attributes: StyleItem['attributes'],
-  styleSelector: string,
-  styleState?: StyleState,
-  styleVariant?: string,
-  styleAncestor?: string
-) => {
+type InheritTarget = Pick<
+  StyleTarget,
+  'styleState' | 'styleVariant' | 'styleAncestor' | 'stylePseudo' | 'styleCondition'
+>;
+
+const resolveStyleBlock = (attributes: StyleItem['attributes'], styleSelector: string, target: InheritTarget) => {
+  const { styleState, styleVariant, styleAncestor, stylePseudo, styleCondition } = target;
   const block = attributes[styleSelector];
   if (!(block as StyleBlock | undefined)) {
     return {};
@@ -162,8 +164,29 @@ const resolveStyleBlock = (
     return { ...base, ...ancestor?.default, ...ancestorVariant?.default, ...ancestorState };
   }
 
-  const variantBase = styleVariant ? (block.variants?.[styleVariant]?.default ?? {}) : {};
+  // A pseudo-element is a box of its own: it starts from its own rules, not the element's — the class's, then those of
+  // the variant or the condition it is under, each with the state it shows in
+  if (stylePseudo) {
+    const own = block.pseudos?.[stylePseudo];
+    const scope = styleCondition ? block.conditions?.[styleCondition] : undefined;
+    const scoped = (scope ?? (styleVariant ? block.variants?.[styleVariant] : undefined))?.pseudos?.[stylePseudo];
+
+    return {
+      ...own?.default,
+      ...(styleState ? own?.states?.[styleState] : {}),
+      ...scoped?.default,
+      ...(styleState ? scoped?.states?.[styleState] : {})
+    };
+  }
+
   const state = styleState ? (block.states?.[styleState] ?? {}) : {};
+  if (styleCondition) {
+    const condition = block.conditions?.[styleCondition];
+
+    return { ...base, ...state, ...condition?.default, ...(styleState ? condition?.states?.[styleState] : {}) };
+  }
+
+  const variantBase = styleVariant ? (block.variants?.[styleVariant]?.default ?? {}) : {};
   const variantState = styleVariant && styleState ? (block.variants?.[styleVariant]?.states?.[styleState] ?? {}) : {};
 
   return {
@@ -174,15 +197,8 @@ const resolveStyleBlock = (
   };
 };
 
-const resolveNodeStyle = (
-  node: InheritData['tree'][number],
-  styleSelector: string,
-  styleState?: StyleState,
-  styleVariant?: string,
-  styleAncestor?: string
-) => {
-  return resolveStyleBlock(node.attributes, styleSelector, styleState, styleVariant, styleAncestor);
-};
+const resolveNodeStyle = (node: InheritData['tree'][number], styleSelector: string, target: InheritTarget) =>
+  resolveStyleBlock(node.attributes, styleSelector, target);
 
 /* --------------------------- MAIN CALCULATION ----------------------------- */
 
@@ -292,6 +308,8 @@ const calculateInheriting = (
     styleState?: StyleState;
     styleVariant?: string;
     styleAncestor?: string;
+    stylePseudo?: StylePseudo;
+    styleCondition?: string;
     includeSelf?: boolean;
     skipSelectors?: string[];
     addSelectors?: string[];
@@ -303,10 +321,13 @@ const calculateInheriting = (
     styleState,
     styleVariant,
     styleAncestor,
+    stylePseudo,
+    styleCondition,
     includeSelf = false,
     skipSelectors = [],
     addSelectors = []
   } = params;
+  const target: InheritTarget = { styleState, styleVariant, styleAncestor, stylePseudo, styleCondition };
   const metadata: InheritData = { tree: [], style: {}, parentStyle: {} };
   const hierarchy = element ? buildHierarchy(flat, element) : [];
   const seenDefaultTypes = new Set<string>();
@@ -415,7 +436,7 @@ const calculateInheriting = (
 
   const finalStyle: InheritData['style'] = {};
   for (const node of metadata.tree) {
-    let styleData = resolveNodeStyle(node, styleSelector, styleState, styleVariant, styleAncestor);
+    let styleData = resolveNodeStyle(node, styleSelector, target);
     if (!(styleData as typeof styleData | undefined) || !Object.keys(styleData).length) {
       continue;
     }
@@ -441,10 +462,7 @@ const calculateInheriting = (
 
   const parentStyle = metadata.tree
     .filter(node => node.isParent)
-    .reduce(
-      (acc, node) => ({ ...acc, ...resolveNodeStyle(node, styleSelector, styleState, styleVariant, styleAncestor) }),
-      {}
-    );
+    .reduce((acc, node) => ({ ...acc, ...resolveNodeStyle(node, styleSelector, target) }), {});
 
   return { ...metadata, style: finalStyle, parentStyle };
 };

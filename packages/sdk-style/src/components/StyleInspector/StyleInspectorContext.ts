@@ -1,7 +1,15 @@
 import { createContext } from 'react';
 
 import type { InheritData } from '../../helpers';
-import type { DisplayMode, StyleCategory, StyleItem, StyleObject, StyleState, StyleValue } from '@plitzi/sdk-shared';
+import type {
+  DisplayMode,
+  StyleCategory,
+  StyleItem,
+  StyleObject,
+  StylePseudo,
+  StyleState,
+  StyleValue
+} from '@plitzi/sdk-shared';
 
 export type SetValues = {
   (path?: undefined, values?: StyleObject): void;
@@ -15,6 +23,8 @@ export type StyleInspectorContextValue = {
   styleState?: StyleState;
   styleAncestor?: string;
   styleVariant?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
   displayMode: DisplayMode;
   variables: Record<string, unknown>;
   inheritData: InheritData['style'];

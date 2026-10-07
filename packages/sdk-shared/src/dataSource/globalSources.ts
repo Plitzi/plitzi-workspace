@@ -26,3 +26,31 @@ export type GlobalSource = (typeof GLOBAL_SOURCES)[number];
 export const COMPUTED_GLOBALS = GLOBAL_SOURCES.filter(
   (name): name is Exclude<GlobalSource, 'state' | 'computed'> => name !== 'state' && name !== 'computed'
 );
+
+/**
+ * The fields of the globals whose shape the platform decides, as `GlobalSources` publishes them: a read of any other
+ * — `auth.authenticated` for `auth.isAuthenticated` — resolves to nothing, and the authoring linter says so. An `open`
+ * field holds whatever the page puts in it (the route's params, the signed-in account's details), so nothing below it
+ * is a mistake. The rest of the globals are the space's own (`variables`, `flags`, `computed`, held to what it
+ * declares) or anybody's (`state`, `host`).
+ */
+export const GLOBAL_SOURCE_FIELDS = {
+  navigation: {
+    routeParams: 'open',
+    queryParams: 'open',
+    origin: 'value',
+    href: 'value',
+    currentPageId: 'value',
+    pending: 'value',
+    pendingLocation: 'value'
+  },
+  auth: { isAuthenticated: 'value', status: 'value', accessToken: 'value', details: 'open' },
+  theme: { mode: 'value', resolved: 'value' }
+} as const satisfies Partial<Record<GlobalSource, Record<string, 'value' | 'open'>>>;
+
+export type ShapedGlobalSource = keyof typeof GLOBAL_SOURCE_FIELDS;
+
+/** What one of those globals publishes: its declared fields and no others, each one a page may leave out. */
+export type ShapedGlobalValue<Source extends ShapedGlobalSource> = {
+  [Field in keyof (typeof GLOBAL_SOURCE_FIELDS)[Source]]?: unknown;
+};

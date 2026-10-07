@@ -1,4 +1,4 @@
-import type { DisplayMode, StyleBlock, StyleObject, StyleState, StyleValue } from '@plitzi/sdk-shared';
+import type { DisplayMode, StyleBlock, StyleObject, StylePseudo, StyleState, StyleValue } from '@plitzi/sdk-shared';
 
 /**
  * The two shapes CSS has while a space is being authored.
@@ -54,10 +54,41 @@ export type CssSpec = CssInput | ResponsiveCss;
 /** Rules for the states a selector reacts to — `hover`, `focus`, `active` — each one plain or per breakpoint. */
 export type StatesSpec = Partial<Record<StyleState, CssSpec>>;
 
+/**
+ * A pseudo-element's rules: plain CSS, or CSS with the states of the selector that show it —
+ * `after: { css: { content: '"→"' }, states: { hover: { 'margin-left': '4px' } } }` is `.x::after` and `.x:hover::after`.
+ */
+export type PseudoSpec = CssSpec | PseudoRulesSpec;
+
+/** A pseudo-element's rules in the object form: its own, and the selector's states that change them. */
+export interface PseudoRulesSpec {
+  css?: CssSpec;
+  states?: StatesSpec;
+}
+
+/**
+ * What a selector draws or dresses besides the element — `before`, `after`, `marker`, `placeholder`, `first-letter`,
+ * `first-line`, `selection` (`STYLE_PSEUDOS`). `content` is written as CSS reads it, quotes included: `'"→"'`.
+ */
+export type PseudosSpec = Partial<Record<StylePseudo, PseudoSpec>>;
+
 /** One variant of a selector: what it changes, and how it reacts on its own. A variant cannot carry variants. */
 export interface VariantSpec {
   css?: CssSpec;
   states?: StatesSpec;
+  pseudos?: PseudosSpec;
+}
+
+/**
+ * A selector's rules under a condition of the page rather than of the element: `motion-reduce` (the visitor asked for
+ * less motion), `motion-safe`, or a container's width — `container (max-width: 30rem)`, `container card (min-width:
+ * 480px)` — asked of the nearest ancestor whose class sets `container-type` (and `container-name` to name it).
+ */
+export type ConditionSpec = CssSpec | ConditionRulesSpec;
+
+/** A condition's rules in the object form: the selector's own under it, its states' and its pseudo-elements'. */
+export interface ConditionRulesSpec extends PseudoRulesSpec {
+  pseudos?: PseudosSpec;
 }
 
 /**
@@ -77,8 +108,13 @@ export interface RuleSetSpec extends VariantSpec {
    * class by its declaration — `[card.name]: { states: { hover: … } }` — so a rename reaches it.
    *
    * The selector's own states and variants win over these where both set a property.
+   *
+   * `'>'` is the element's parent, whatever class it wears — what a closed component's part reacts to without naming
+   * the class of the element around it: `ancestors: { '>': { states: { expanded: { transform: 'rotate(180deg)' } } } }`.
    */
   ancestors?: Record<string, AncestorSpec>;
+  /** Rules under a condition of the page — reduced motion, a container's width — by condition. */
+  conditions?: Record<string, ConditionSpec>;
 }
 
 /** What one ancestor condition changes: inside it always, in its states, or in its variants (and their states). */

@@ -31,7 +31,11 @@ export const upsertGlobalStyle = (space: Space, env: Env, op: UpsertGlobalStyle)
     return guard;
   }
 
-  writeStyleItem(space.style, componentType, base, slots, 'element', componentType);
+  const problem = writeStyleItem(space.style, componentType, base, slots, 'element', componentType);
+
+  if (problem) {
+    return problem;
+  }
 
   return { ...empty(), updated: 1, staleResources: [globalUri(env, componentType), globalsUri(env)] };
 };

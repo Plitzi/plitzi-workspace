@@ -5,9 +5,12 @@ import { useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { classHtmlParts } from './classHtmlParts';
 import { rebaseHtmlMedia, sanitizeHtml } from './sanitizeHtml';
 import withElement from '../../../Element/hocs/withElement';
+import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
+import useMarkdownClassNames from '../Markdown/hooks/useMarkdownClassNames';
 
 import type { RefObject } from 'react';
 
@@ -28,14 +31,18 @@ const RichText = ({ ref, className = '', content = '', format = 'html', mediaBas
   const {
     settings: { previewMode }
   } = usePlitziServiceContext();
+  const {
+    definition: { styleSelectors }
+  } = useElement();
+  const classNames = useMarkdownClassNames(styleSelectors);
 
   const html = useMemo(() => {
     if (format !== 'html') {
       return '';
     }
 
-    return rebaseHtmlMedia(sanitizeHtml(content), mediaBaseUrl);
-  }, [format, content, mediaBaseUrl]);
+    return classHtmlParts(rebaseHtmlMedia(sanitizeHtml(content), mediaBaseUrl), classNames);
+  }, [format, content, mediaBaseUrl, classNames]);
 
   return (
     <RootElement
@@ -47,7 +54,7 @@ const RichText = ({ ref, className = '', content = '', format = 'html', mediaBas
       )}
     >
       {format === 'html' && <div dangerouslySetInnerHTML={{ __html: html }} />}
-      {format === 'markdown' && <MarkdownUI>{content}</MarkdownUI>}
+      {format === 'markdown' && <MarkdownUI classNames={classNames}>{content}</MarkdownUI>}
       {format === 'text' && <div className="plitzi-component__rich-text-plain">{content}</div>}
     </RootElement>
   );

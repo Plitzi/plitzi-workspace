@@ -34,7 +34,9 @@ export const AUTHORING_HELPERS: Readonly<Record<string, HelperEntry>> = {
   },
   activeOn: {
     signature: 'activeOn(class, pageIds)',
-    summary: "Marks a navigation entry as current on the pages it stands for, through the class's `active` variant.",
+    summary:
+      "Marks a navigation entry as current on the pages it stands for, through the class's `active` variant — for " +
+      "pages not under its path; a link lit on the pages under it is `current: 'section'`.",
     example: "link({ href: 'docs', class: navLink, bind: [activeOn(navLink, 'docs')] })"
   },
   activeWhen: {

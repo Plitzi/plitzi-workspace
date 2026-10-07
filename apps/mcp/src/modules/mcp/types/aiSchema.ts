@@ -238,10 +238,25 @@ export interface AIAncestorCondition extends DisplayModeCss {
   variants?: Record<string, DisplayModeCss>;
 }
 
+/** A pseudo-element of a selector (`before`, `after`, `placeholder`…): its rules per breakpoint, and in its states. */
+export interface AIPseudo extends DisplayModeCss {
+  states?: Record<string, DisplayModeCss>;
+}
+
+/** A variant: its rules per breakpoint, its states and its pseudo-elements. */
+export interface AIVariant extends AIPseudo {
+  pseudos?: Record<string, AIPseudo>;
+}
+
+/** The rules under a condition of the page (`motion-reduce`, `container (max-width: 30rem)`), as a variant has them. */
+export type AICondition = AIVariant;
+
 export interface AIDefinitionSlot extends DisplayModeCss {
   states?: Record<string, DisplayModeCss>;
-  variants?: Record<string, DisplayModeCss>;
+  variants?: Record<string, AIVariant>;
   ancestors?: Record<string, AIAncestorCondition>;
+  pseudos?: Record<string, AIPseudo>;
+  conditions?: Record<string, AICondition>;
 }
 
 export interface AIDefinition extends AIDefinitionSlot {

@@ -8,6 +8,8 @@ import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { useBuilderStore, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
+import { canonicalCondition } from '@plitzi/sdk-shared/style/styleConditions';
+import { isParentAncestor } from '@plitzi/sdk-shared/style/styleStates';
 
 import Selector from '../Selector';
 import AncestorRules from './components/AncestorRules';
@@ -16,6 +18,8 @@ import {
   ancestorConditions,
   ancestorOptions,
   ancestorRemovals,
+  conditionOptions,
+  pseudoOptions,
   STYLE_STATE_OPTIONS,
   unusedAncestors
 } from './helpers';
@@ -24,8 +28,7 @@ import Inspector from './Inspector';
 import type { AncestorCondition } from './helpers';
 import type { SelectorValue } from '../Selector';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
-import type { DisplayMode, Element, StyleItem, TagType } from '@plitzi/sdk-shared';
-import type { StyleState } from '@plitzi/sdk-shared';
+import type { DisplayMode, Element, StyleItem, StylePseudo, StyleState, TagType } from '@plitzi/sdk-shared';
 
 export type StyleInspectorProps = {
   displayMode: DisplayMode;
@@ -69,8 +72,12 @@ const StyleInspector = ({
   useBuilderStoreSync('styleSelector', styleSelector, { enabled: mode === 'element' });
   useBuilderStoreSync('styleVariant', styleVariant, { enabled: mode === 'element' });
   const [styleAncestor, setStyleAncestor] = useState<string | undefined>(undefined);
+  const [stylePseudo, setStylePseudo] = useState<StylePseudo | undefined>(undefined);
+  const [styleCondition, setStyleCondition] = useState<string | undefined>(undefined);
   useBuilderStoreSync('styleState', styleState, { enabled: mode === 'element' });
   useBuilderStoreSync('styleAncestor', styleAncestor, { enabled: mode === 'element' });
+  useBuilderStoreSync('stylePseudo', stylePseudo, { enabled: mode === 'element' });
+  useBuilderStoreSync('styleCondition', styleCondition, { enabled: mode === 'element' });
   const [[flat, platform]] = useBuilderStore(['schema.flat', 'style.platform']);
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
@@ -120,6 +127,16 @@ const StyleInspector = ({
 
     return [...new Set(names)].map(variant => ({ label: variant, value: variant }));
   }, [selector?.attributes, selectors, styleAncestor, styleSelector]);
+  const pseudos = useMemo(
+    () => pseudoOptions(selector?.attributes[styleSelector]),
+    [selector?.attributes, styleSelector]
+  );
+  const conditionChoices = useMemo(
+    () => conditionOptions(selector?.attributes[styleSelector]),
+    [selector?.attributes, styleSelector]
+  );
+  // The parent is named by its state, never by a variant: the variant picker goes while it is the ancestor
+  const parentPicked = !!styleAncestor && isParentAncestor(styleAncestor);
 
   useEffect(() => {
     setStyleSelector('base');
@@ -132,6 +149,8 @@ const StyleInspector = ({
     onChange?.(selector ? selector : '');
     setStyleState(undefined);
     setStyleAncestor(undefined);
+    setStylePseudo(undefined);
+    setStyleCondition(undefined);
     setComponentSubType(undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onChange, styleSelectors]);
@@ -148,6 +167,8 @@ const StyleInspector = ({
     setStyleState(undefined);
     setStyleVariant(undefined);
     setStyleAncestor(undefined);
+    setStylePseudo(undefined);
+    setStyleCondition(undefined);
     setComponentSubType(undefined);
   }, [styleSelector]);
 
@@ -155,6 +176,8 @@ const StyleInspector = ({
     setStyleState(undefined);
     setStyleVariant(undefined);
     setStyleAncestor(undefined);
+    setStylePseudo(undefined);
+    setStyleCondition(undefined);
     setComponentSubType(undefined);
   }, [value]);
 
@@ -242,7 +265,49 @@ const StyleInspector = ({
     setStyleAncestor(option?.value);
     setStyleState(undefined);
     setStyleVariant(undefined);
+    // An ancestor's rules are the element's own, never a pseudo-element's, and not under a condition
+    setStylePseudo(undefined);
+    setStyleCondition(undefined);
   }, []);
+
+  const handleChangeStylePseudo = useCallback(
+    (option?: Exclude<Option, OptionGroup>) => setStylePseudo(option?.value as StylePseudo | undefined),
+    []
+  );
+
+  const handleChangeStyleCondition = useCallback((option?: Exclude<Option, OptionGroup>) => {
+    const condition = option ? canonicalCondition(option.value) : undefined;
+    // A typed condition that is not one is not picked: there is nothing it could be written as
+    if (option && !condition) {
+      return;
+    }
+
+    setStyleCondition(condition);
+    if (condition) {
+      setStyleVariant(undefined);
+      setStyleAncestor(undefined);
+    }
+  }, []);
+
+  const handleRemoveStyleCondition = useCallback(
+    (option: Exclude<Option, OptionGroup>) => {
+      if (option.value === styleCondition) {
+        setStyleCondition(undefined);
+        setStyleState(undefined);
+      }
+
+      if (!selector?.attributes[styleSelector]?.conditions?.[option.value]) {
+        return;
+      }
+
+      builderHandler('styleUpdateSelector', displayMode, selector.name, undefined, undefined, {
+        styleSelector,
+        styleCondition: option.value,
+        componentType: selector.componentType
+      });
+    },
+    [builderHandler, displayMode, selector, styleCondition, styleSelector]
+  );
 
   const handleRemoveStyleAncestor = useCallback(
     (option: Exclude<Option, OptionGroup>) => {
@@ -269,6 +334,8 @@ const StyleInspector = ({
     setStyleAncestor(condition.ancestor);
     setStyleVariant(condition.variant);
     setStyleState(condition.state);
+    setStylePseudo(undefined);
+    setStyleCondition(undefined);
   }, []);
 
   const handleRemoveCondition = useCallback(
@@ -317,6 +384,10 @@ const StyleInspector = ({
 
   const handleChangeStyleVariant = useCallback((option?: Exclude<Option, OptionGroup>) => {
     setStyleVariant(option?.value);
+    // A condition holds the class's own rules, not a variant's
+    if (option) {
+      setStyleCondition(undefined);
+    }
   }, []);
 
   const handleRemoveStyleVariant = useCallback(
@@ -394,7 +465,7 @@ const StyleInspector = ({
                 ))}
               </Select>
             )}
-            {allowStyleVariant && (
+            {allowStyleVariant && !parentPicked && (
               <div className="grow basis-0">
                 <Select2
                   className="grow basis-0"
@@ -438,6 +509,35 @@ const StyleInspector = ({
             onRemove={handleRemoveStyleAncestor}
           />
         )}
+        {hasControls && allowStyleState && !styleAncestor && (
+          <div className="flex w-full items-center gap-2">
+            <div className="grow basis-0">
+              <Select2
+                className="grow basis-0"
+                value={stylePseudo}
+                options={pseudos}
+                placeholder="Pseudo-element"
+                size="xs"
+                clearable
+                onChange={handleChangeStylePseudo}
+              />
+            </div>
+            <div className="grow basis-0">
+              <Select2
+                className="grow basis-0"
+                value={styleCondition}
+                options={conditionChoices}
+                placeholder="Condition"
+                size="xs"
+                clearable
+                allowCreateOptions
+                allowRemoveOptions
+                onChange={handleChangeStyleCondition}
+                onRemove={handleRemoveStyleCondition}
+              />
+            </div>
+          </div>
+        )}
         {allowStyleState && conditions.length > 0 && (
           <AncestorRules
             conditions={conditions}
@@ -460,6 +560,8 @@ const StyleInspector = ({
           styleState={styleState}
           styleVariant={styleVariant}
           styleAncestor={styleAncestor}
+          stylePseudo={stylePseudo}
+          styleCondition={styleCondition}
           element={element}
           displayMode={displayMode}
           mode={mode}

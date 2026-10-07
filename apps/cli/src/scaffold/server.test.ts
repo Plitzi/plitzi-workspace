@@ -37,9 +37,9 @@ describe('the server a project starts', () => {
 
     expect(main).toContain("import { serveProject } from '@plitzi/sdk-server/project';");
     expect(main).toContain(
-      '\nawait serveProject({ space: authorSpace(space, await projectAuthoring()), actions, connectors, serverOptions });\n'
+      "\nawait serveProject({\n  space: async () => authorSpace((await import('./space/index.ts')).space, await projectAuthoring()),\n  actions,\n  connectors,\n  serverOptions\n});\n"
     );
-    expect(main.split('\n').filter(line => line.startsWith('import ')).length).toBe(6);
+    expect(main.split('\n').filter(line => line.startsWith('import ')).length).toBe(5);
     expect(gitignore(answers())).toContain('tmp\n');
   });
 

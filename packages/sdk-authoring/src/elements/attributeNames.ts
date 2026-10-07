@@ -103,7 +103,7 @@ export const elementAttributeNames = {
   heading: ['content', 'subType'],
   image: ['alt', 'decorative', 'fetchPriority', 'height', 'loadMode', 'resize', 'sizes', 'src', 'width'],
   layoutContainer: ['layout', 'layoutContainer', 'subType'],
-  link: ['content', 'contentPlacement', 'hash', 'href', 'icon', 'iconPlacement', 'label', 'mode', 'target'],
+  link: ['content', 'contentPlacement', 'current', 'hash', 'href', 'icon', 'iconPlacement', 'label', 'mode', 'target'],
   list: ['itemKey', 'items', 'source', 'subType'],
   listItem: [],
   loading: [],

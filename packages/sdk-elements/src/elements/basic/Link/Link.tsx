@@ -7,7 +7,7 @@ import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
-import { isCurrentPage } from './isCurrentPage';
+import { ariaCurrent } from './ariaCurrent';
 import ElementWords from '../../../Element/ElementWords';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -48,6 +48,12 @@ export type LinkProps = {
   icon?: string;
   /** Which side of the words the icon sits on. */
   iconPlacement?: IconPlacement;
+  /**
+   * Where the link is current. `page` (the default): on the page it leads to and nowhere else. `section`: on that page
+   * and every page under its path — `/automations/runs` stays lit on `/automations/runs/42`, a journal's link on its
+   * articles — announced there as the current entry (`aria-current="true"`) rather than the current page.
+   */
+  current?: 'page' | 'section';
 };
 
 const Link = ({
@@ -62,7 +68,8 @@ const Link = ({
   content = '',
   contentPlacement = 'after',
   icon = '',
-  iconPlacement = 'before'
+  iconPlacement = 'before',
+  current = 'page'
 }: LinkProps) => {
   const {
     style,
@@ -104,9 +111,9 @@ const Link = ({
     return getPageFullPath(pageDefinitions, pageFolders, href, true);
   }, [mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
   const url = mode !== 'external' && hash ? `${path}#${hash}` : path;
-  // The page being shown, said by the link that leads to it: what a screen reader announces, and what the `current`
-  // style state selects. From the address the server rendered, so the first paint already marks it.
-  const current = mode !== 'external' && isCurrentPage(path, location);
+  // The page being shown, said by the link that leads to it — or by its section's: what a screen reader announces, and
+  // what the `current` style state selects. From the address the server rendered, so the first paint already marks it.
+  const currentAs = mode === 'external' ? undefined : ariaCurrent(path, location, current);
 
   const handleClick = (e: MouseEvent) => {
     if (!previewMode) {
@@ -132,7 +139,7 @@ const Link = ({
       ...(target === 'blank' ? { rel: 'noopener noreferrer' } : {}),
       // Empty means "let the contents name it", which is right for an ordinary link and only wrong for a card.
       'aria-label': label ? label : undefined,
-      'aria-current': current ? ('page' as const) : undefined,
+      'aria-current': currentAs,
       className: clsx('plitzi-component__link', className)
     };
     if (!previewMode) {
@@ -140,7 +147,7 @@ const Link = ({
     }
 
     return { ...propsToReturn, href: url };
-  }, [ref, style, target, label, current, className, previewMode, url]);
+  }, [ref, style, target, label, currentAs, className, previewMode, url]);
 
   return (
     <RootElement tag="a" {...propsMemo} onClick={handleClick}>

@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-import { get, set, omit } from '@plitzi/plitzi-ui/helpers';
+import { omit } from '@plitzi/plitzi-ui/helpers';
+
+import { isStyleRules, setAtKeys, styleTargetKeys, valueAtKeys } from '@plitzi/sdk-shared/style/styleTarget';
 
 import { isStyleObject } from './isValueValid';
 
@@ -9,8 +11,8 @@ import type {
   StyleCategory,
   StyleItem,
   StyleObject,
-  StyleState,
   StyleStates,
+  StyleTarget,
   StyleValue,
   StyleVariants
 } from '@plitzi/sdk-shared';
@@ -39,95 +41,98 @@ const parseValue = (
   return prevValue;
 };
 
-const getBlockPath = (styleSelector: string, styleAncestor?: string) =>
-  styleAncestor ? `attributes.${styleSelector}.ancestors.${styleAncestor}` : `attributes.${styleSelector}`;
-
-const getTargetPath = (styleSelector: string, styleVariant?: string, styleState?: string, styleAncestor?: string) => {
-  const blockPath = getBlockPath(styleSelector, styleAncestor);
-  if (styleVariant && styleState) {
-    return `${blockPath}.variants.${styleVariant}.states.${styleState}`;
-  }
-
-  if (styleVariant) {
-    return `${blockPath}.variants.${styleVariant}.default`;
-  }
-
-  if (styleState) {
-    return `${blockPath}.states.${styleState}`;
-  }
-
-  return `${blockPath}.default`;
-};
-
 const isEmptyObject = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0;
 
-// Drops `key` from the object at `path`, and each container left empty up to (not including) the selector's block
-const removeKey = (styleItem: StyleItem, path: string, key: string, blockPath: string) => {
-  const current = get(styleItem, path) as Record<string, unknown> | undefined;
-  if (!current) {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+// The keys of a part a target names on its way down (`['variants', 'primary']`), after its ancestor or condition
+const partsOf = (keys: string[]): [string, string][] => {
+  const parts: [string, string][] = [];
+  for (let index = 0; index + 1 < keys.length; index += 2) {
+    parts.push([keys[index], keys[index + 1]]);
+  }
+
+  return parts;
+};
+
+// Under an ancestor, a condition or a pseudo-element, a part left with only an empty `default` holds nothing: the
+// builder keeps an empty variant of the class itself on purpose, as a name to pick, but those are named elsewhere
+const prunesEmpty = (keys: string[]): boolean =>
+  keys.includes('ancestors') || keys.includes('conditions') || keys.includes('pseudos');
+
+// By hand rather than `omit`, which reads its keys as paths: a condition key has spaces and a colon in it
+const withoutKey = (object: Record<string, unknown>, key: string): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(object).filter(([name]) => name !== key));
+
+// Drops `key` from the object at `keys`, and each container left empty up to (not including) the selector's block
+const removeKey = (root: Record<string, unknown>, keys: string[], key: string) => {
+  const current = valueAtKeys(root, keys);
+  if (!isRecord(current)) {
     return;
   }
 
-  const next = omit(current, [key]);
-  // Under an ancestor, a variant left with only an empty `default` holds nothing: the builder keeps an empty variant
-  // of the class itself on purpose, as a name to pick, but an ancestor's variant is named by the ancestor
-  const holdsNothing = path.includes('.ancestors.') && Object.values(next).every(inner => isEmptyObject(inner));
-  if ((Object.keys(next).length && !holdsNothing) || path === blockPath) {
-    set(styleItem, path, next);
+  const next = withoutKey(current, key);
+  const holdsNothing = prunesEmpty(keys) && Object.values(next).every(inner => isEmptyObject(inner));
+  if ((Object.keys(next).length && !holdsNothing) || keys.length === 1) {
+    setAtKeys(root, keys, next);
 
     return;
   }
 
-  const separator = path.lastIndexOf('.');
-  removeKey(styleItem, path.slice(0, separator), path.slice(separator + 1), blockPath);
+  removeKey(root, keys.slice(0, -1), keys[keys.length - 1]);
 };
 
 const writeStyle = (
   mode: 'add' | 'update' = 'add',
   styleItem: StyleItem,
   styleSelector: string,
-  path?: StyleCategory,
-  value?: StyleItem['attributes'] | StyleValue | Partial<StyleObject> | StyleVariants | StyleStates | StyleBlock,
-  styleState?: StyleState,
-  styleVariant?: string,
-  styleAncestor?: string
+  path: StyleCategory | undefined,
+  value:
+    StyleItem['attributes'] | StyleValue | Partial<StyleObject> | StyleVariants | StyleStates | StyleBlock | undefined,
+  target: StyleTarget
 ) => {
-  const blockPath = getBlockPath(styleSelector, styleAncestor);
-  const targetPath = getTargetPath(styleSelector, styleVariant, styleState, styleAncestor);
-  const hasStateOrVariant = !!styleState || !!styleVariant;
-  const parentPath = styleVariant ? `${blockPath}.variants` : `${blockPath}.states`;
+  // The attributes are plain objects walked by key: an ancestor (`>`) or a condition key is no dotted path segment
+  const root: Record<string, unknown> = styleItem.attributes;
+  const targetKeys = [styleSelector, ...styleTargetKeys(target)];
+  const scoped = !!target.styleAncestor || !!target.styleCondition;
+  const scopeKeys = targetKeys.slice(0, scoped ? 3 : 1);
+  // The state, variant and pseudo-element on the way down, outermost first; the last pair is the rules themselves
+  const parts = partsOf(targetKeys.slice(scopeKeys.length)).filter(([kind]) => kind !== 'default');
+  const outermost = parts.at(0);
+  const outermostContainer = outermost ? [...scopeKeys, outermost[0]] : undefined;
 
   // Set Value
   if (value !== undefined) {
     if (isStyleObject(value as StyleObject) && isEmptyObject(value)) {
-      // Clearing the rules that hold inside an ancestor at all times leaves nothing behind, not an empty block
-      if (styleAncestor && !hasStateOrVariant) {
-        removeKey(styleItem, blockPath, 'default', `attributes.${styleSelector}`);
+      // Clearing the rules that hold inside an ancestor or a condition at all times leaves nothing behind
+      if (scoped && !parts.length) {
+        removeKey(root, scopeKeys, 'default');
 
         return;
       }
 
       // dont recreate state/variant if they dont already exists
-      if (mode === 'update' && hasStateOrVariant && !get(styleItem, parentPath)) {
+      if (mode === 'update' && outermostContainer && valueAtKeys(root, outermostContainer) === undefined) {
         return;
       }
 
-      set(styleItem, targetPath, {});
+      setAtKeys(root, targetKeys, {});
 
       return;
     }
 
-    const current = get(styleItem, targetPath, {});
-    set(styleItem, targetPath, parseValue(path, value, current));
+    const current = valueAtKeys(root, targetKeys);
+    setAtKeys(root, targetKeys, parseValue(path, value, isStyleRules(current) ? current : {}));
 
     return;
   }
 
   // create empty state/variant
-  if (mode === 'add' && !path && hasStateOrVariant) {
-    if (!get(styleItem, parentPath)) {
-      set(styleItem, targetPath, {});
+  if (mode === 'add' && !path && outermostContainer) {
+    if (valueAtKeys(root, outermostContainer) === undefined) {
+      setAtKeys(root, targetKeys, {});
     }
 
     return;
@@ -135,42 +140,23 @@ const writeStyle = (
 
   // Delete by path
   if (path) {
-    const current = get(styleItem, targetPath, {});
-    set(styleItem, targetPath, omit(current, [path]));
+    const current = valueAtKeys(root, targetKeys);
+    setAtKeys(root, targetKeys, omit(isStyleRules(current) ? current : {}, [path]));
 
     return;
   }
 
-  // Delete one state of a variant, and the variant with it once nothing is left in it
-  if (styleVariant && styleState) {
-    removeKey(styleItem, `${blockPath}.variants.${styleVariant}.states`, styleState, `attributes.${styleSelector}`);
-
-    return;
-  }
-
-  // Delete Variant
-  if (styleVariant) {
-    removeKey(styleItem, `${blockPath}.variants`, styleVariant, `attributes.${styleSelector}`);
-
-    return;
-  }
-
-  // Delete State
-  if (styleState) {
-    removeKey(styleItem, `${blockPath}.states`, styleState, `attributes.${styleSelector}`);
-
-    return;
-  }
-
-  // No path and no value under an ancestor alone purges every rule under it; clearing its rules is a `{}` value
-  if (styleAncestor) {
-    removeKey(styleItem, `attributes.${styleSelector}.ancestors`, styleAncestor, `attributes.${styleSelector}`);
+  // Delete the innermost part named — a state, then a pseudo-element, a variant, the ancestor or condition — and each
+  // container it leaves empty
+  const innermost = targetKeys.at(-1) === 'default' ? targetKeys.slice(0, -1) : targetKeys;
+  if (innermost.length > 1) {
+    removeKey(root, innermost.slice(0, -1), innermost[innermost.length - 1]);
 
     return;
   }
 
   // Reset Default
-  set(styleItem, targetPath, {});
+  setAtKeys(root, targetKeys, {});
 };
 
-export { getTargetPath, isEmptyObject, parseValue, writeStyle };
+export { isEmptyObject, parseValue, writeStyle };

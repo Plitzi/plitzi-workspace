@@ -11,8 +11,10 @@ import type {
   Schema,
   Style,
   StyleBlock,
+  StyleConditions,
   StyleItem,
   StyleObject,
+  StylePseudos,
   StyleStates,
   StyleVariants
 } from '@plitzi/sdk-shared';
@@ -83,11 +85,27 @@ const rulesOf = (rules: StyleObject | undefined): Record<string, string> =>
 const statesOf = (states: StyleStates | undefined): unknown =>
   Object.fromEntries(Object.entries(states ?? {}).map(([state, rules]) => [state, rulesOf(rules)]));
 
+const pseudosOf = (pseudos: StylePseudos | undefined): unknown =>
+  Object.fromEntries(
+    Object.entries(pseudos ?? {}).map(([pseudo, part]) => [
+      pseudo,
+      { default: rulesOf(part.default), states: statesOf(part.states) }
+    ])
+  );
+
 const variantsOf = (variants: StyleVariants | undefined): unknown =>
   Object.fromEntries(
     Object.entries(variants ?? {}).map(([name, variant]) => [
       name,
-      { default: rulesOf(variant.default), states: statesOf(variant.states) }
+      { default: rulesOf(variant.default), states: statesOf(variant.states), pseudos: pseudosOf(variant.pseudos) }
+    ])
+  );
+
+const conditionsOf = (conditions: StyleConditions | undefined): unknown =>
+  Object.fromEntries(
+    Object.entries(conditions ?? {}).map(([condition, part]) => [
+      condition,
+      { default: rulesOf(part.default), states: statesOf(part.states), pseudos: pseudosOf(part.pseudos) }
     ])
   );
 
@@ -96,6 +114,8 @@ const blockOf = (block: StyleBlock | undefined): unknown =>
     default: rulesOf(block.default),
     states: statesOf(block.states),
     variants: variantsOf(block.variants),
+    pseudos: pseudosOf(block.pseudos),
+    conditions: conditionsOf(block.conditions),
     ancestors: Object.fromEntries(
       Object.entries(block.ancestors ?? {}).map(([name, ancestor]) => [
         name,
@@ -114,7 +134,9 @@ const blockOf = (block: StyleBlock | undefined): unknown =>
  * A selector the style does not define resolves to no rules at all, which is exactly what the element renders with.
  */
 const hasRules = (block: StyleBlock): boolean =>
-  [block.default, block.states, block.variants, block.ancestors].some(part => Object.keys(part ?? {}).length > 0);
+  [block.default, block.states, block.variants, block.ancestors, block.pseudos, block.conditions].some(
+    part => Object.keys(part ?? {}).length > 0
+  );
 
 /**
  * The classes of a selector that wears several, in the order the stylesheet lists them, per breakpoint.

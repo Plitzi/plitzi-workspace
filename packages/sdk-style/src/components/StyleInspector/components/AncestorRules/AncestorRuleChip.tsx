@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { memo, useCallback } from 'react';
 
+import { ancestorName } from '../../helpers';
+
 import type { AncestorCondition } from '../../helpers';
 
 export type AncestorRuleChipProps = {
@@ -16,9 +18,10 @@ const AncestorRuleChip = ({ condition, active = false, unused = false, onSelect,
 
   const handleRemove = useCallback(() => onRemove?.(condition), [condition, onRemove]);
 
+  const name = ancestorName(condition.ancestor);
   const title = unused
-    ? `No element this selector dresses sits inside .${condition.ancestor}, so this rule never matches`
-    : `Edit the rules for inside .${condition.ancestor} (${condition.label})`;
+    ? `No element this selector dresses sits inside ${name}, so this rule never matches`
+    : `Edit the rules for inside ${name} (${condition.label})`;
 
   return (
     <div
@@ -36,14 +39,14 @@ const AncestorRuleChip = ({ condition, active = false, unused = false, onSelect,
         onClick={handleSelect}
       >
         {unused && <i className="fas fa-triangle-exclamation" />}
-        <span className="truncate">.{condition.ancestor}</span>
+        <span className="truncate">{name}</span>
         <span className="opacity-70">· {condition.label}</span>
       </button>
       <button
         type="button"
         className="cursor-pointer border-l border-inherit px-1.5 py-1 hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400"
         title="Remove this rule"
-        aria-label={`Remove the ${condition.label} rule under .${condition.ancestor}`}
+        aria-label={`Remove the ${condition.label} rule under ${name}`}
         onClick={handleRemove}
       >
         <i className="fas fa-xmark" />

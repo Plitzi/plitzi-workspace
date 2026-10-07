@@ -27,7 +27,7 @@ The space is not written until these are fixed.
 | `action-without-entry` | an action with no way in, so nothing can start it | a `trigger` — `{ type: 'call', access }`, or `render`, `webhook`, `custom`, `schedule` |
 | `action-without-steps` | an action with no steps | the steps it runs |
 | `active-when-constant` | an `activeWhen` condition that reads nothing — always or never true | name what it depends on: `'{{ list_dots.index == state.slide }}'` |
-| `ancestor-not-class` | an ancestor condition keyed by something that is not a class name | `[card.name]` for a `styles()` declaration |
+| `ancestor-not-class` | an ancestor condition keyed by something that is neither a class name nor `'>'` (the parent) | `[card.name]` for a `styles()` declaration, or `'>'` for the parent whatever it wears |
 | `anchor-duplicate` | one anchor on two elements of the same page (layouts included) | rename all but one |
 | `anchor-invalid` | an `anchor` or a link's `hash` that is not lowercase letters, digits and `-` | `anchor: 'plans'`, `hash: 'plans'` — no `#` |
 | `anchor-missing` | a link whose `hash` no element on the page it goes to carries — it would land at the top | the anchor the message lists, or give the section that `anchor` |
@@ -64,16 +64,18 @@ The space is not written until these are fixed.
 | `css-property-twice` | one property written twice in a rule set — `paddingTop` beside `'padding-top'` — so one would silently win | keep one |
 | `css-property-unknown` | a CSS property that does not exist | the property it suggests; a custom property starts with `--` |
 | `css-value` | an empty CSS value, or one with `;` or `{}` | one value per property; leave a property out instead of writing it empty |
+| `element-ids-target` | a step refreshing containers by id (`invalidateElements`, `invalidateQueries({ elements })`) naming one the space does not have, or one that is not an `apiContainer` | the id of the `apiContainer` whose data the step changes: `invalidateElements: ['posts']` |
 | `element-load-strategy` | a `loadStrategy` the element does not take | one of the values the message lists |
 | `element-rejected` | an element the schema refused to hold | the problem listed with it |
 | `element-runtime` | a `runtime` the element does not run in | one of the values the message lists |
 | `element-shape` | an element that is not an object with a `type`, `attributes` and a list of `children` | build elements with their factories — `text(…)`, `container(…)` |
+| `element-slot-unknown` | a `slots` key the element type does not have — its class would dress nothing | one of the slots `plitzi explain <type>` lists; the element itself takes `class` |
 | `flag-gate` | an element's or a page's `flag` that is not a flag name | `flag: 'newCheckout'`, or `flag: '!newCheckout'` for "only while off" |
 | `flag-name` | a flag whose name a template cannot read as `flags.x` | letters, digits and `_` |
 | `flag-rule-shape` | a flag rule that is not `{ when, value }`, or whose `value` is not `true` or `false` | `{ when: { … }, value: true }` |
 | `flag-shape` | a flag whose `value` is not `true` or `false` | `{ value: false, rules: [] }` |
 | `flag-undeclared` | a gate on a flag the space does not declare — it reads as off, so the element never (or always) renders | declare it in `flags`, or remove the gate |
-| `flag-unknown` | a template reading a flag the space does not declare | the declared name it suggests, or declare it |
+| `flag-unknown` | a template, a binding or a `when` reading a flag the space does not declare | the declared name it suggests, or declare it |
 | `flow-empty` | a flow with no steps | `[onClick(), setState({ … })]` |
 | `flow-without-trigger` | a flow whose first step is not the event that runs it | `[onClick(), setState(…)]` |
 | `folder-cycle` | a page folder inside itself | a `parent` that leads to the top |
@@ -84,9 +86,11 @@ The space is not written until these are fixed.
 | `from-without-attribute` | `from` on a type with no one attribute that shows its data (a container, a form) | bind the attribute you mean: `bind: { attribute: 'source' }` |
 | `global-callback-module` | a global callback sent to a module other than the one that registers it | the step builder, which knows the module |
 | `global-callback-undeclared` | a global-callback step builder naming an action no source declares | one of the actions it lists |
+| `global-field-unknown` | a binding, a template or a `when` reading a field `navigation`, `auth` or `theme` never has — `auth.authenticated` | the field it suggests: `auth.isAuthenticated`, `auth.details.username`, `navigation.queryParams.next`, `theme.resolved` |
 | `id-invalid` | an id a binding, a template or a test cannot name | a letter first, then letters, digits, `-` and `_`: `'hero-title'` |
 | `id-shadows-global` | an element named like a global data source (`state`, `navigation`, `auth`…) | another id |
 | `id-taken` | two elements with one id — ids are one namespace for the whole space | a name taken by a page or a layout: a name of its own; a helper called twice: `scope('promos', ref => …)`, every id inside prefixed |
+| `keyframes-shape` | keyframes with a name CSS does not accept or the SDK keeps for itself, or a frame that is not an offset | a plain name (`slide-in`), frames keyed `from`, `to` or a percentage (`'50%'`, `'0%, 100%'`) |
 | `layout-slot-unknown` | a layout `slot` that is not an element inside that layout | the id of the element in the shell where the body goes |
 | `layout-undeclared` | a page or a layout inside a layout the space does not declare | the layout's id, or declare it in `layouts` |
 | `list-items-ignored` | a list whose items nothing reads — `source: 'none'` renders its children once | `source: 'controlled'` |
@@ -97,7 +101,7 @@ The space is not written until these are fixed.
 | `motion-invalid` | a `motion` with a preset, a trigger or a timing the page cannot play | `motion: { enter: 'fade-up', on: 'view' }` — the message lists the presets |
 | `motion-no-tag` | a `motion` on an element with no tag of its own — nothing to move | the motion on what it wraps, or a `subType` on it |
 | `no-pages` | a space with no pages | `pages: [{ id: 'home', name: 'Home', slug: '', body: [] }]` |
-| `notifications-shape` | `notifications` with a field it does not have, or a value that is not one CSS value | the fields it lists; a colour or a length, like 'var(--card)' or '12px' |
+| `notifications-shape` | `notifications` with a field it does not have, or a value that is not one CSS value | the field it suggests, or one it lists; one CSS value, like 'var(--card)', '12px' or '500' |
 | `outside-ancestor` | an element that reads the state of an element it is not inside | nest it in the element the message names |
 | `page-access-level` | an `accessLevel` that is not one the router reads | one of the values the message lists |
 | `page-route-reserved` | a page under `/fn`, where the space's functions answer | another slug |
@@ -132,6 +136,10 @@ The space is not written until these are fixed.
 | `step-name` | a step name a later step cannot read as `{{ name.field }}` | a letter first, then letters, digits, `-` and `_` |
 | `step-params` | a step param that does not exist, or a value outside its options | the params and values it lists |
 | `step-type` | a step `type` that does not exist | the step builders — `setState(…)`, `navigate(…)` — write it |
+| `style-condition-unknown` | a condition a class's rules cannot hold under | `motion-reduce`, `motion-safe`, or a container width — `container (max-width: 30rem)`, `container card (min-width: 480px)` |
+| `style-pseudo-content` | a `content` CSS cannot read — text without its quotes draws nothing — or a `before`/`after` with no `content`, which is not there at all | the text in quotes inside the string — `content: '"→"'`, `'""'` for an empty box — or a function such as `counter(step)` |
+| `style-pseudo-property` | a property the pseudo-element ignores — the browser drops it without a word | one it honours (`::selection` paints, `::marker` and `::placeholder` take text and font), or style the element |
+| `style-pseudo-unknown` | a pseudo-element a class cannot dress | one of `before`, `after`, `marker`, `placeholder`, `first-letter`, `first-line`, `selection` — without the `::` |
 | `style-state-unknown` | a state a selector does not react to | one of the states it lists (`hover`, `focus`, `active`…) |
 | `svg-not-svg` | an `svg` whose `content` is not one `<svg>…</svg>` — it draws nothing | the SVG markup alone; HTML around it goes in a `blockHtml` |
 | `template-short-source` | a source named without its prefix inside a template or a step | the full name: `apiContainer_stats`, `list_rows` |
@@ -162,6 +170,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | Code | What was wrong | Write instead |
 | --- | --- | --- |
 | `action-output-path` | a read of `.data` on a provider fed by a server action — it publishes the action’s output at its root, and `.data` is a `query` provider’s answer | the output’s own field — `apiContainer_feed.stories`, not `apiContainer_feed.data.stories` |
+| `animation-name-unknown` | `animation-name` naming keyframes the space does not declare — nothing plays | declare them in the space's `keyframes`, or name one it has |
 | `click-on-static-element` | a click flow on a container, text, heading, image or list item — no keyboard reaches it | the flow on a `button` (it holds children) or a `link` |
 | `colour-without-dark` | a colour token with no dark value | `{ light, dark, default }` |
 | `condition-starts-visible` | a computed visibility that shows until its data answers | `visible: { source, template }` |
@@ -180,6 +189,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `heading-level-skipped` | an `h4` right after an `h2` — the outline misses a level | the next level down; size it with its class |
 | `image-without-alt` | an image that is not `decorative` and has no `alt` | say what it shows, or `decorative: true` |
 | `label-ignored` | a `label` on a container whose tag is named by what it holds (`li`, a heading) | the words inside, or a landmark tag (`nav`, `section`…) |
+| `link-current-section` | `current: 'section'` on a link that is never current (an external one) or current everywhere (to `/`) | leave `current` out — `'section'` is for a link to a section's own page, `/automations/runs` |
 | `list-item-key-missing` | a list's `itemKey` that some of its items lack, or two of them share — the rows fall back to `id`, then position | a field every item has, once each |
 | `list-row-not-li` | a row of a list with `items` that is not an `<li>` — that list is a `<ul>` (or `<ol>`), so the row is a box inside a list, no item to a screen reader | `container({ subType: 'li' })` — or the component's root one, or a wrapper for a link or a button |
 | `overlay-never-opened` | a modal or a dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |
@@ -212,8 +222,9 @@ Nothing is wrong: the page renders as written. Each is a shorter way to the same
 | `class-overrides-class` | one class's shorthand erasing the longhand another class on the same element writes out — `padding` over `padding-top` — because the stylesheet writes it later: classes in the order they are first met, a breakpoint's rules after the base, never the order of a class list | the longhands the shorthand means instead of it (`padding-left`, `padding-right`), so it leaves the other class's alone — or `quiet: ['class-overrides-class']` when the shorthand is meant to win |
 | `content-attribute` | a button or a link whose children are only its words and an icon — a `text`, a `fontAwesome` — elements more than it needs | its own `content` and `icon` (`link({ href, content: 'Docs', icon: 'fa-solid fa-arrow-right', iconPlacement: 'after' })`); the icon's class goes on the `icon` slot, and what the text's class adds on the box's class, never the class itself |
 | `custom-css-class` | a `customCss` rule a class can hold — `.card:hover`, `.panel .icon` | the class's own `states` or `ancestors`, where the style editor reads it back and a breakpoint can change it |
-| `custom-css-notifications` | the toasts dressed with `.Toastify__toast` rules in `customCss` | `notifications: { font, fontSize, border, shadow, padding, background, text, radius }` |
+| `custom-css-notifications` | the toasts or their icon, close button or progress bar dressed with `.Toastify__*` rules in `customCss` | `notifications: { font, fontSize, fontWeight, minHeight, iconSize, closeColor, progressHeight, … }` |
 | `custom-css-sdk-default` | `customCss` repeating what the SDK already does for every space — less motion when asked, the theme toggle showing one icon | nothing: remove it |
+| `custom-css-slot` | a part of a built-in element dressed in `customCss` by the SDK's markup — a form control's `<input>`, a pager's buttons, a heading inside a markdown | a class on the slot of that part — `slots: { field: input }`, `elements.<type>.slots` — with its states |
 | `heavy-animation` | keyframes animating what the browser repaints or lays out again on every frame — a size, a position, a blur, a shadow, or a colour in a loop — which stutters whenever the page is busy, most of all while it loads | `opacity` and `transform`: a size or a position is `translate`/`scale`, a blur or a shadow is the `opacity` of a layer carrying it; a loop that must animate anything else starts `paused` and runs under `[data-hydrated]` |
 | `literal-colour` | a colour written out in a class where the space has a token of that value — it stays put in the dark scheme | `var(--token)` when it should follow the scheme; a token of one value of its own when it must stay the same in both |
 | `repeated-on-pages` | the same block — a header, a footer, a side panel — written into several pages | a layout holding it once (`layouts`, and `layout: { id, slot }` on each page) — a component when only some pages of a layout carry it; a link marks its own page with the `current` state |

@@ -89,7 +89,13 @@ const widgetOperations = [
 // server providers read with: ~1.1k across the tools that carry the op union, their words the fewest that say a path is
 // read as `/data/<path>`; the rest is in the guide's Data section. Set with ~0.7k of room, so a description clarified
 // in passing does not have to raise it again.
-const TOOLS_BUDGET_BYTES = 205_500;
+//
+// Raised from 205.5k for the style language in every style op — a class's `pseudos` and `conditions`, and variants
+// that carry their own states and pseudo-elements (what a patch used to drop) — ~12k across the four tools that carry
+// the op union, factored into six shared definitions (`StylePseudos`, `StyleConditions`, `StyleVariantRules` and their
+// patches; inlined it measured ~130k more), and for the toasts' parts as `notifications` fields; the words are in the
+// guide. Set with ~0.6k of room.
+const TOOLS_BUDGET_BYTES = 218_500;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

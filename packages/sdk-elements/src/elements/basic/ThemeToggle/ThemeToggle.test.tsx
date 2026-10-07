@@ -1,6 +1,8 @@
 import { render, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style/styleStates';
+
 import { ThemeToggle } from './ThemeToggle';
 
 import type { Theme } from '@plitzi/sdk-shared';
@@ -85,6 +87,20 @@ describe('ThemeToggle', () => {
     // page back until storage answered.
     expect(container.querySelector('[data-theme-icon="light"]')).not.toBeNull();
     expect(container.querySelector('[data-theme-icon="dark"]')).not.toBeNull();
+  });
+
+  it('marks the icon of the scheme in use as current — the machine’s answer while nothing is chosen', () => {
+    const { container, rerender } = render(atTheme('dark', <ThemeToggle />));
+    const icon = (scheme: string) => container.querySelector(`[data-theme-icon="${scheme}"]`);
+
+    expect(icon('dark')?.matches(CURRENT_SELECTOR)).toBe(true);
+    expect(icon('light')?.hasAttribute('aria-current')).toBe(false);
+
+    // The mock resolves `system` to light, as a machine set to light does.
+    rerender(atTheme('system', <ThemeToggle />));
+
+    expect(icon('light')?.matches(CURRENT_SELECTOR)).toBe(true);
+    expect(icon('dark')?.hasAttribute('aria-current')).toBe(false);
   });
 
   it('flips the theme when it is clicked', () => {

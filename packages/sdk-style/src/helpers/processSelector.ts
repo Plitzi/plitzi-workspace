@@ -1,11 +1,13 @@
-import { inCascadeOrder, isStartingState, stateSuffix } from '@plitzi/sdk-shared/style/styleStates';
+import { conditionAtRule } from '@plitzi/sdk-shared/style/styleConditions';
+import { pseudoSuffix } from '@plitzi/sdk-shared/style/stylePseudos';
+import { inCascadeOrder, isParentAncestor, isStartingState, stateSuffix } from '@plitzi/sdk-shared/style/styleStates';
 
 import processSelectorAttributes from './processSelectorAttributes';
 import processSelectorName from './processSelectorName';
 import processSelectorVariables from './processSelectorVariables';
 
 import type { Attributes, ProcessedAncestors } from './processSelectorAttributes';
-import type { StyleItem } from '@plitzi/sdk-shared';
+import type { StyleItem, StylePseudo } from '@plitzi/sdk-shared';
 
 type Block = Omit<Attributes[string], 'default'>;
 
@@ -52,34 +54,40 @@ const variantSelector = (base: string, variant: string, state = '') => [
 ];
 
 // `:where()` keeps the rule at the class's own weight: it beats the class's base, and the element's own states and
-// variants still beat it.
+// variants still beat it. The parent (`>`) is named by nothing but its state, one step up: `:where(:hover) > &`.
 const ancestorRules = (ancestors: ProcessedAncestors, inline: boolean, tab: number) => {
   const separator = inline ? ',' : ', ';
   const rules: string[] = [];
   for (const [ancestor, { default: values, states, variants }] of Object.entries(ancestors)) {
+    const parent = isParentAncestor(ancestor);
+    const base = parent ? '' : `.${ancestor}`;
+    const combinator = parent ? ' > &' : ' &';
+    const shown = parent ? '*' : base;
     if (values?.length) {
-      rules.push(getSelector(`:where(.${ancestor}) &`, values, {}, inline, tab));
+      rules.push(getSelector(`:where(${shown})${combinator}`, values, {}, inline, tab));
     }
 
     for (const [state, values] of inCascadeOrder(states ?? {})) {
-      rules.push(getSelector(`:where(.${ancestor}${stateSuffix(state)}) &`, values, {}, inline, tab));
+      rules.push(getSelector(`:where(${base}${stateSuffix(state)})${combinator}`, values, {}, inline, tab));
       if (isStartingState(state)) {
-        rules.push(startingStyle(`:where(.${ancestor}) &`, values, inline, tab));
+        rules.push(startingStyle(`:where(${shown})${combinator}`, values, inline, tab));
       }
     }
 
+    // The parent wears no class, so a variant of it is its `data-variant` alone.
+    const variantOf = (variant: string, state = '') =>
+      parent ? [`[data-variant="${variant}"]${state}`] : variantSelector(base, variant, state);
     for (const [variant, block] of Object.entries(variants ?? {})) {
       if (block.default.length) {
-        const selector = variantSelector(`.${ancestor}`, variant).join(separator);
-        rules.push(getSelector(`:where(${selector}) &`, block.default, {}, inline, tab));
+        const selector = variantOf(variant).join(separator);
+        rules.push(getSelector(`:where(${selector})${combinator}`, block.default, {}, inline, tab));
       }
 
       for (const [state, values] of inCascadeOrder(block.states ?? {})) {
-        const selector = variantSelector(`.${ancestor}`, variant, stateSuffix(state)).join(separator);
-        rules.push(getSelector(`:where(${selector}) &`, values, {}, inline, tab));
+        const selector = variantOf(variant, stateSuffix(state)).join(separator);
+        rules.push(getSelector(`:where(${selector})${combinator}`, values, {}, inline, tab));
         if (isStartingState(state)) {
-          const shown = variantSelector(`.${ancestor}`, variant).join(separator);
-          rules.push(startingStyle(`:where(${shown}) &`, values, inline, tab));
+          rules.push(startingStyle(`:where(${variantOf(variant).join(separator)})${combinator}`, values, inline, tab));
         }
       }
     }
@@ -88,8 +96,46 @@ const ancestorRules = (ancestors: ProcessedAncestors, inline: boolean, tab: numb
   return rules;
 };
 
-const attributesToString = (name: string, attrs: string[], block: Block, inline = true, tab = TAB_SIZE) => {
-  const { states, variants, ancestors } = block;
+// A pseudo-element goes last in its selector, after the state that shows it: `&:hover::before`, never the other way.
+const pseudoRules = (pseudos: NonNullable<Block['pseudos']>, inline: boolean, tab: number): string[] =>
+  (Object.entries(pseudos) as [StylePseudo, NonNullable<NonNullable<Block['pseudos']>[StylePseudo]>][]).flatMap(
+    ([pseudo, { default: values, states }]) => {
+      const suffix = pseudoSuffix(pseudo);
+      const rules: string[] = values.length ? [getSelector(`&${suffix}`, values, {}, inline, tab)] : [];
+      for (const [state, stateValues] of inCascadeOrder(states ?? {})) {
+        rules.push(getSelector(`&${stateSuffix(state)}${suffix}`, stateValues, {}, inline, tab));
+        if (isStartingState(state)) {
+          rules.push(startingStyle(`&${suffix}`, stateValues, inline, tab));
+        }
+      }
+
+      return rules;
+    }
+  );
+
+// Written last, so a class's rules under a condition win over the same rules outside it at the same weight.
+const conditionRules = (
+  name: string,
+  conditions: NonNullable<Block['conditions']>,
+  inline: boolean,
+  tab: number
+): string[] =>
+  Object.entries(conditions).flatMap(([condition, { default: values, states, pseudos }]) => {
+    const atRule = conditionAtRule(condition);
+    if (!atRule) {
+      return [];
+    }
+
+    const body: string = attributesToString(name, values, { states, pseudos }, inline, tab);
+    if (!body) {
+      return [];
+    }
+
+    return [inline ? `${atRule}{${body}}` : `${getSpaces(tab)}${atRule} {\n${body}\n${getSpaces(tab)}}`];
+  });
+
+const attributesToString = (name: string, attrs: string[], block: Block, inline = true, tab = TAB_SIZE): string => {
+  const { states, variants, ancestors, pseudos, conditions } = block;
   const body = inline
     ? attrs.join('')
     : attrs
@@ -111,21 +157,24 @@ const attributesToString = (name: string, attrs: string[], block: Block, inline 
         getSelector(
           `&[data-variant="${variant}"]${inline ? ',' : ', '}&${variantBaseName}--${variant}`,
           values.default,
-          { states: values.states },
+          { states: values.states, pseudos: values.pseudos },
           inline,
           tab + TAB_SIZE
         )
       )
     : [];
 
+  const pseudoBlocks = pseudos ? pseudoRules(pseudos, inline, tab + TAB_SIZE) : [];
   const ancestorBlocks = ancestors ? ancestorRules(ancestors, inline, tab + TAB_SIZE) : [];
+  const conditionBlocks = conditions ? conditionRules(name, conditions, inline, tab + TAB_SIZE) : [];
+  const parts = [stateBlocks, pseudoBlocks, variantBlocks, ancestorBlocks, conditionBlocks];
 
   if (inline) {
-    return `${body}${stateBlocks.join('')}${variantBlocks.join('')}${ancestorBlocks.join('')}`;
+    return `${body}${parts.map(blocks => blocks.join('')).join('')}`;
   }
 
   const sections = body ? [body] : [];
-  for (const blocks of [stateBlocks, variantBlocks, ancestorBlocks]) {
+  for (const blocks of parts) {
     if (blocks.length) {
       sections.push(blocks.join('\n\n'));
     }
@@ -141,8 +190,8 @@ const startingStyle = (selector: string, values: string[], inline: boolean, tab:
     ? `@starting-style{${getSelector(selector, values, {}, inline, tab)}}`
     : `${getSpaces(tab)}@starting-style {\n${getSelector(selector, values, {}, inline, tab + TAB_SIZE)}\n${getSpaces(tab)}}`;
 
-const getSelector = (name: string, attrs: string[], block: Block, inline = true, tab = TAB_SIZE) => {
-  const body = attributesToString(name, attrs, block, inline, tab);
+const getSelector = (name: string, attrs: string[], block: Block, inline = true, tab = TAB_SIZE): string => {
+  const body: string = attributesToString(name, attrs, block, inline, tab);
 
   return inline ? `${name}{${body}}` : `${getSpaces(tab)}${name} {\n${body}\n${getSpaces(tab)}}`;
 };

@@ -138,10 +138,11 @@ without a word.
 
 `addNotification({ content: 'Saved', appearance: 'success' })` — `appearance` is `success`, `danger`, `warning` or
 `info`. They follow the page's theme; how they look is the space's `notifications` — colours (`background`, `text`,
-`success`, `danger`, `warning`, `info`) and shape (`radius`, `font`, `fontSize`, `border`, `shadow`, `padding`):
-`notifications: { background: 'var(--card)', text: 'var(--foreground)', success: 'var(--accent)', radius: '12px',
-font: 'var(--font-sans)', border: '1px solid var(--border)', shadow: 'var(--shadow-lg)' }`. The toast carries no class
-of the space's, so this — not a `.Toastify__toast` rule in `customCss` — is where it is dressed.
+`success`, `danger`, `warning`, `info`), shape (`radius`, `font`, `fontSize`, `fontWeight`, `lineHeight`, `minHeight`,
+`border`, `shadow`, `padding`) and the parts inside (`iconSize`, `iconGap`, `closeColor`, `closeOpacity`,
+`progressHeight`), one CSS value each: `notifications: { background: 'var(--card)', radius: '12px', iconSize: '18px' }`.
+The toast carries no class of the space's, so this — not a `.Toastify__*` rule in `customCss` — is where it is
+dressed.
 
 ## Modals, dropdowns, tabs
 

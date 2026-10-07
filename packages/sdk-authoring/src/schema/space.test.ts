@@ -571,6 +571,41 @@ describe('authorSpace / what it refuses', () => {
     ).toThrow(/Slot "input".*"fields"/);
   });
 
+  describe('a slot the type does not have', () => {
+    const slotNames = { formControl: ['label', 'requiredMark', 'input', 'field', 'icon', 'error'], text: [] };
+    const spaceWith = (body: ElementSpec[], elements?: SpaceSpec['elements']): SpaceSpec => ({
+      name: 'Slot',
+      permanentUrl: 'slot-unknown',
+      classes: { field: { width: '100%' } },
+      ...(elements ? { elements } : {}),
+      pages: [{ name: 'Home', slug: '', body }]
+    });
+
+    it('is refused with the one it meant and the ones it has', () => {
+      expect(() => authorSpace(spaceWith([{ type: 'formControl', slots: { feild: 'field' } }]), { slotNames })).toThrow(
+        /\[element-slot-unknown\].*"feild".*did you mean "field".*Its slots: label, requiredMark/s
+      );
+    });
+
+    it('is refused on a type with no slots, which takes the class itself', () => {
+      expect(() => authorSpace(spaceWith([{ type: 'text', slots: { label: 'field' } }]), { slotNames })).toThrow(
+        /a text has no slots: give the element itself the class/i
+      );
+    });
+
+    it('is refused in the defaults of a whole type', () => {
+      expect(() =>
+        authorSpace(spaceWith([], { formControl: { slots: { inptu: { width: '100%' } } } }), { slotNames })
+      ).toThrow(/`elements.formControl.slots` names the slot "inptu".*did you mean "input"/);
+    });
+
+    it('is left alone for a type nobody said the slots of', () => {
+      expect(() =>
+        authorSpace(spaceWith([{ type: 'formControl', slots: { feild: 'field' } }]), { slotNames: {} })
+      ).not.toThrow();
+    });
+  });
+
   /**
    * The resolution only happens when the caller supplied the catalog, which is what the composed entry does. A
    * space authored straight from this package writes its sources as declared — the fragment has to stay usable on

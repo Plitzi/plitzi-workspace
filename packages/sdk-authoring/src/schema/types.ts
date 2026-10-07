@@ -2,12 +2,15 @@ import type { Suggestion } from './advice';
 import type { VisibleCondition } from './bindings';
 import type { SuggestionCode } from './codes';
 import type { SpaceHandles } from './handles';
+import type { KeyframesSpec } from './keyframes';
 import type { NotificationsSpec } from './notifications';
 import type {
   AncestorSpec,
   ClassList,
+  ConditionSpec,
   CssSpec,
   ElementClassList,
+  PseudosSpec,
   StatesSpec,
   StyleDeclaration,
   StyleSpec,
@@ -383,6 +386,8 @@ export interface ElementStyleSpec {
   states?: StatesSpec;
   variants?: Record<string, CssSpec | VariantSpec>;
   ancestors?: Record<string, AncestorSpec>;
+  pseudos?: PseudosSpec;
+  conditions?: Record<string, ConditionSpec>;
   slots?: Record<string, StyleSpec>;
 }
 
@@ -406,6 +411,13 @@ export interface SpaceSpec {
   elements?: Record<string, ElementStyleSpec>;
   schemaVariables?: SchemaVariable[];
   customCss?: string;
+  /**
+   * The space's own `@keyframes`, by name — what a class plays with `animation-name`:
+   * `{ 'caret-blink': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0 } } }`. For how an element arrives or the loop it
+   * keeps, declared `motion` says it better; these are for the rest (a caret, a drifting gradient, a panel sliding in).
+   * Written at the top of `customCss`, where the style editor reads them back.
+   */
+  keyframes?: KeyframesSpec;
   /**
    * How the notifications an `addNotification` step shows look: `{ background: 'var(--card)', text: 'var(--foreground)',
    * success: 'var(--accent)', radius: '12px' }`. They follow the light/dark theme and the page's font already.

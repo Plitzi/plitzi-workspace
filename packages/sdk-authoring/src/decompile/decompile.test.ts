@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
+import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style/styleStates';
 
 import { apiContainer, button, container, heading, link, text } from '../elements';
 import { authorSpace } from '../index';
@@ -106,6 +107,42 @@ describe('specFromSpace', () => {
     const { first, second } = roundTrip(blankSpaceSpec);
 
     expect(compareSpaces(first, second)).toEqual([]);
+  });
+
+  it('round-trips pseudo-elements, conditions, the parent and the keyframes a class plays', () => {
+    const space: SpaceSpec = {
+      name: 'Motion',
+      permanentUrl: 'motion',
+      keyframes: { 'caret-blink': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0 } } },
+      classes: {
+        caret: {
+          css: { 'animation-name': 'caret-blink', 'animation-duration': '1s' },
+          pseudos: {
+            after: { css: { content: '"|"' }, states: { hover: { color: 'red' } } },
+            selection: { 'background-color': 'black' }
+          },
+          conditions: {
+            'motion-reduce': { 'animation-name': 'none' },
+            'container card (max-width: 30rem)': {
+              css: { 'font-size': '14px' },
+              pseudos: { after: { content: 'none' } }
+            }
+          },
+          ancestors: { '>': { states: { expanded: { color: 'blue' } } } }
+        }
+      },
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [text('Typing', { id: 'typing', class: 'caret' })] }]
+    };
+    const { first, second } = roundTrip(space);
+    const { spec } = specFromSpace(first);
+
+    expect(compareSpaces(first, second)).toEqual([]);
+    // Read back from the CSS they were written as: every value is its text.
+    expect(spec.keyframes).toEqual({ 'caret-blink': { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0' } } });
+    expect(first.schema.settings.customCss).toMatch(/^@keyframes caret-blink \{/);
+    expect(first.style.platform.desktop.caret.cache).toContain('&::after{content:"|";}');
+    expect(first.style.platform.desktop.caret.cache).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(first.style.platform.desktop.caret.cache).toContain('@container card (max-width: 30rem)');
   });
 
   it('keeps a name something refers to, and leaves out one nothing does', () => {
@@ -604,15 +641,39 @@ describe('specFromSpace / customCss', () => {
     });
     const { spec, corrections } = specFromSpace(documents);
 
-    expect(corrections.filter(correction => correction.code === 'folded-custom-css')).toHaveLength(2);
+    expect(corrections.filter(correction => correction.code === 'folded-custom-css')).toHaveLength(3);
     expect(spec.classes?.card).toMatchObject({
       css: { padding: '4px', 'font-variant-numeric': 'tabular-nums' },
-      states: { hover: { color: 'blue' } }
+      states: { hover: { color: 'blue' } },
+      conditions: { 'motion-reduce': { 'transition-property': 'none' } }
     });
     expect(spec.classes?.other).toMatchObject({ states: { 'focus-visible': { color: 'blue' } } });
-    expect(spec.customCss).toBe(
-      '.card .icon { transform: rotate(1deg); }\n\n@media (prefers-reduced-motion: reduce) { .card { transition: none; } }\n'
-    );
+    expect(spec.customCss).toBe('.card .icon { transform: rotate(1deg); }\n');
+  });
+
+  it('folds a pseudo-element, in a state and under a condition, and leaves one that would draw nothing', () => {
+    const documents = authorSpace({
+      name: 'Folded',
+      permanentUrl: 'folded',
+      classes: { more: { color: 'gray' } },
+      customCss: [
+        '.more::after { content: "→"; margin-left: 6px; }',
+        '.more:hover::after { margin-left: 10px; }',
+        '@container (max-width: 30rem) { .more::after { content: none; } }',
+        '.more::before { color: red; }',
+        '.more::selection { padding: 4px; }'
+      ].join('\n\n'),
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [container({ class: 'more' })] }]
+    });
+    const { spec } = specFromSpace(documents);
+
+    expect(spec.classes?.more).toMatchObject({
+      pseudos: {
+        after: { css: { content: '"→"', 'margin-left': '6px' }, states: { hover: { 'margin-left': '10px' } } }
+      },
+      conditions: { 'container (max-width: 30rem)': { pseudos: { after: { content: 'none' } } } }
+    });
+    expect(spec.customCss).toBe('.more::before { color: red; }\n\n.more::selection { padding: 4px; }\n');
   });
 });
 
@@ -653,6 +714,40 @@ describe('specFromSpace / the current state', () => {
     expect(spec.customCss ?? '').toBe('');
   });
 
+  it('folds where an element sits and an open control into the class, as the states that say them', () => {
+    const documents = authorSpace({
+      name: 'Structural',
+      permanentUrl: 'structural',
+      classes: { row: { color: 'gray' }, toggle: { color: 'gray' } },
+      customCss: [
+        '.row:first-child { margin-top: 0; }',
+        '.row:last-child { margin-bottom: 0; }',
+        '.row:nth-child(even) { background-color: whitesmoke; }',
+        ".toggle[aria-expanded='true'] { color: red; }",
+        ''
+      ].join('\n'),
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          body: [container({ class: 'row' }), link({ href: '/', class: 'toggle', children: [] })]
+        }
+      ]
+    });
+    const { spec } = specFromSpace(documents);
+
+    expect(spec.classes?.row).toMatchObject({
+      states: {
+        first: { 'margin-top': '0' },
+        last: { 'margin-bottom': '0' },
+        even: { 'background-color': 'whitesmoke' }
+      }
+    });
+    expect(spec.classes?.toggle).toMatchObject({ states: { expanded: { color: 'red' } } });
+    expect(spec.customCss ?? '').toBe('');
+  });
+
   it('writes the state as the attributes of the chosen one of a set', () => {
     const { style } = authorSpace({
       name: 'Current',
@@ -661,9 +756,7 @@ describe('specFromSpace / the current state', () => {
       pages: [{ id: 'home', name: 'Home', slug: '', body: [link({ href: '/', class: 'navLink', children: [] })] }]
     });
 
-    expect(style.platform.desktop.navLink.cache).toContain(
-      '&:is([aria-current]:not([aria-current="false"]),[aria-pressed="true"],[aria-selected="true"]){color:red;}'
-    );
+    expect(style.platform.desktop.navLink.cache).toContain(`&${CURRENT_SELECTOR}{color:red;}`);
   });
 });
 

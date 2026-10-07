@@ -18,7 +18,7 @@ container([hero, grid])             // an array is the children
 | `id` | the ONE name this element answers to — its key in the document, a binding's source, a step's target. Unique across the WHOLE space |
 | `class` | a shared class: a `styles()` declaration or a name from the space's `classes`; a list for several. Exclusive with `css` |
 | `css` | rules of this element's own: one set, or one per breakpoint (`{ desktop, tablet, mobile }`) |
-| `states` | `hover`, `focus-visible`, `current` (the chosen link, toggle, tab), `hidden`… beside the element's own `css` |
+| `states` | `hover`, `focus-visible`, `current` (the chosen link, toggle, tab), `expanded`, `first`/`last`/`odd`/`even`, `hidden`… |
 | `variant` | a variant of the class it wears (when the class declares it) or of its type |
 | `slots` | a class for one of the element's OTHER selectors — a form control's `input` |
 | `bind` | where a value comes from |
@@ -73,13 +73,9 @@ indented with space below it: `{ margin: '0px', padding: '0px' }` on its class t
 children sit in the parent's layout and a `class` on it styles nothing (`STYLE_WITHOUT_TAG`). Put the layout on the
 parent, or give it `attributes: { subType: 'div' }`.
 
-A type this SDK does not ship — a plugin — is authored the same way: `defineElement<Props>({ type, … })`,
-`element<Props>('type', props)`, or `elementsFromManifest(manifest)`. See [plugins](plugins.md).
+A plugin's type is authored the same way: `defineElement<Props>({ type, … })` — see [plugins](plugins.md).
 
-**What a type takes, answered by the package** instead of the 7,000-line `.d.ts`: every catalogue is exported, keyed by
-type — `elementCatalog` (what it is for), `elementDefaultAttributes`, `elementAttributeNames`, `elementTriggers`,
-`elementCallbacks`, `elementSlots`, `elementSourceTypes`, `elementLeafTypes`, plus `BUILTIN_TRANSFORMERS` — and
-`npx @plitzi/cli explain formControl` prints them for one type.
+**What a type takes:** `npx @plitzi/cli explain formControl`, or the exported catalogues ([validation.md](validation.md)).
 
 ## CSS
 
@@ -111,7 +107,7 @@ const card = styles('card', {
 container({ class: card, children: [ … ] });
 ```
 
-- A flat object is the base rules; `{ css, states, variants, ancestors }` when there is more. Each part may be written
+- A flat object is the base rules; `{ css, states, variants, ancestors, pseudos, conditions }` when there is more. Each part may be written
   per breakpoint.
 - **Share a rule as a class, never as a spread** into each element's `css`: that is one selector per element, so
   restyling one card in the builder restyles one card.
@@ -121,7 +117,10 @@ container({ class: card, children: [ … ] });
 - One name declared twice with rules that disagree is refused. Declare a class once, in the module that owns it, and
   import it.
 - `ancestors: { [sidebar.name]: { variants: { collapsed: { display: 'none' } } } }` styles an element by the state or
-  variant of an ancestor class — the way to react to a parent's hover or collapse without a flow.
+  variant of an ancestor class — the way to react to a parent's hover or collapse without a flow; `'>'` is the parent,
+  whatever it wears (a component's part: `{ '>': { states: { expanded: … } } }`).
+- `pseudos: { after: { content: '"→"' } }` (`before`/`after` need a quoted `content`; also `selection`, `marker`,
+  `placeholder`, `first-letter`, `first-line`). `conditions: { 'motion-reduce': …, 'container (max-width: 30rem)': … }`.
 - **`hidden` is how an element looks while its `visible` says no** — where it goes as it hides, and where it comes
   from as it shows. Give the class a transition that includes `display` with `allow-discrete`, and a panel fades or
   slides instead of blinking; the transition on the base is the way in, the one in `hidden` the way out:
@@ -146,13 +145,13 @@ container({ class: card, children: [ … ] });
   (`loadStrategy: 'visible'`) empties before it can leave: use `'lazy'` on one that animates out.
 - **The navigation goes in a layout, once:** a link to the page shown dresses itself with its class's
   `states: { current: { … } }` — never a class picked per page, which copies the header into every page.
-- **`:hover` is part of the selector, not a rule in `customCss`.** `customCss` is for what no class can say:
-  keyframes, pseudo-elements, a rule across two unrelated elements, the inside of a third-party widget.
-- Per element TYPE defaults go in `elements: { heading: { base, states, variants, slots } }` — a whole type at once.
-- **Slots** are an element's other selectors: a `formControl`'s `input`, `label`, `error`; a `modalContainer`'s
-  `backgroundContainer`, `rootContainer`, `headerContainer`, `headerTitle`, `headerCloseButton`, `bodyContainer`; a
-  `markdown`'s `heading`, `link`, `code`… (not `customCss`). `elementSlots` lists them all by type. Style one element's with `slots`, a
-  whole type's with `elements.<type>.slots`.
+- **`:hover` is part of the selector, not a rule in `customCss`.** `customCss` is for what no class can say: a rule
+  across two unrelated elements, the inside of a third-party widget.
+- Per element TYPE defaults go in `elements: { heading: { base, states, variants, pseudos, slots } }` — a whole type.
+- **Slots** are an element's parts (not `customCss`): a `formControl`'s `input` (the box), `field` (its `<input>`),
+  `label`, `requiredMark`, `error`; a `markdown`'s or `richText`'s `heading`, `heading2`, `link`, `codeBlockFrame`…;
+  a `pagination`'s `page` (the one shown: its `current` state). `plitzi explain <type>` lists them. Style one
+  element's with `slots`, a type's with `elements.<type>.slots`.
 - A `modalContainer` / `dialogContainer` is fixed to the viewport, as tall as its content up to the screen, and 500px
   wide up to the screen; theme its look through its slots.
 
@@ -160,7 +159,7 @@ container({ class: card, children: [ … ] });
 already speak in variant names — `variantFrom(pill, 'runs.item.status', { template: "{{ source == 'completed' ?
 'ok' : 'failed' }}" })`. The binding's key names the CLASS; never write it by hand. A variant while a condition holds
 — the dot of the slide on screen — is `activeWhen(dot, '{{ list_dots.index == state.slide }}')` (`active`, else
-`idle`); for "the current page", `activeOn` in [layouts.md](layouts.md).
+`idle`); for "the current page", `current` in [layouts.md](layouts.md).
 
 ## From Tailwind classes
 
@@ -170,4 +169,4 @@ A design written in Tailwind classes becomes classes the builder edits with `sty
 ## Colours, themes and motion
 
 Every colour is a token with a light and a dark value, read as `var(--name)` (or `tokens(variables)`); keyframes go in
-`customCss` — see [colours-and-motion.md](colours-and-motion.md).
+the space's `keyframes` — see [colours-and-motion.md](colours-and-motion.md).

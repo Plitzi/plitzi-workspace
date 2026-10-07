@@ -2,10 +2,12 @@ import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/t
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 
 import { checkActionOutputReads } from './actionOutput';
+import { checkShapedReads, globalFieldsRead, reportUnknownComputed, reportUnknownFlag } from './globalReads';
 import { GLOBAL_SOURCES } from '../bindings';
 import { didYouMean } from '../suggest';
 
 import type { LintContext } from './context';
+import type { GlobalRead } from './globalReads';
 
 /** Where one template is evaluated, which decides the names it may read beyond the sources in scope. */
 export type TemplateSite =
@@ -57,21 +59,22 @@ export const checkPropsRead = (ctx: LintContext, path: string, where: string, id
  * Every `computed.<name>` a template reads has to be one the space declares — and, inside a computed value, one
  * declared above it: they are evaluated in order, so a later one is not there yet.
  */
-const checkComputedReads = (ctx: LintContext, template: string, where: string, site: TemplateSite, id?: string) => {
+const checkComputedReads = (ctx: LintContext, reads: GlobalRead[], where: string, site: TemplateSite, id?: string) => {
   const readable = site.kind === 'computed' ? site.earlier : ctx.computed;
-  for (const [, name = ''] of template.matchAll(/\bcomputed\.([A-Za-z_][A-Za-z0-9_]*)/g)) {
-    if (readable.includes(name)) {
+  for (const [source, name] of reads) {
+    if (source !== 'computed' || readable.includes(name)) {
       continue;
     }
 
-    const later = site.kind === 'computed' && ctx.computed.includes(name);
-    ctx.error(
-      'computed-unknown',
-      later
-        ? `${where} reads "computed.${name}", which is declared after it. Computed values are evaluated in order: move "${name}" above.`
-        : `${where} reads "computed.${name}", which the space does not compute${didYouMean(name, ctx.computed) || '.'} Declare it in \`computed\`: { ${name}: '{{ … }}' }.`,
-      id
-    );
+    if (site.kind === 'computed' && ctx.computed.includes(name)) {
+      ctx.error(
+        'computed-unknown',
+        `${where} reads "computed.${name}", which is declared after it. Computed values are evaluated in order: move "${name}" above.`,
+        id
+      );
+    } else {
+      reportUnknownComputed(ctx, name, where, id);
+    }
   }
 };
 
@@ -79,14 +82,10 @@ const checkComputedReads = (ctx: LintContext, template: string, where: string, s
  * Every `flags.<name>` a template reads has to be a flag the space declares: one it does not resolves to nothing, so
  * the binding or the condition reading it is silently off.
  */
-const checkFlagReads = (ctx: LintContext, template: string, where: string, id?: string) => {
-  for (const [, name = ''] of template.matchAll(/(?<![\w.])flags\.([A-Za-z_][A-Za-z0-9_]*)/g)) {
-    if (!ctx.flags.includes(name)) {
-      ctx.error(
-        'flag-unknown',
-        `${where} reads "flags.${name}", which the space does not declare${didYouMean(name, ctx.flags) || '.'} Declare it in \`flags\`: { ${name}: { value: false, rules: [] } }.`,
-        id
-      );
+const checkFlagReads = (ctx: LintContext, reads: GlobalRead[], where: string, id?: string) => {
+  for (const [source, name] of reads) {
+    if (source === 'flags' && !ctx.flags.includes(name)) {
+      reportUnknownFlag(ctx, name, where, id);
     }
   }
 };
@@ -183,8 +182,10 @@ export const checkTemplate = (
   }
 
   const { issues, freeNames } = inspectTemplate(template);
-  checkComputedReads(ctx, template, where, site, id);
-  checkFlagReads(ctx, template, where, id);
+  const reads = globalFieldsRead(template);
+  checkComputedReads(ctx, reads, where, site, id);
+  checkFlagReads(ctx, reads, where, id);
+  checkShapedReads(ctx, reads, where, id);
   // A root, not a field: `item.props.title` reads a record's own `props`.
   for (const [path] of template.matchAll(/(?<![\w.])props\.[A-Za-z_][A-Za-z0-9_]*/g)) {
     checkPropsRead(ctx, path, where, id);

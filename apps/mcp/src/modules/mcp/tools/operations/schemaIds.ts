@@ -19,13 +19,19 @@ import {
 import {
   ancestors,
   ancestorsPatch,
+  conditions,
+  conditionsPatch,
   cssMap,
   cssPatchMap,
   definitionSlot,
   definitionSlotPatch,
   displayModeCss,
   displayModeCssPatch,
-  themeValue
+  pseudos,
+  pseudosPatch,
+  themeValue,
+  variantPart,
+  variantPartPatch
 } from './style/shared';
 
 /** The op union is the tool input of plitzi_apply, plitzi_validate, plitzi_render AND plitzi_preview, and every
@@ -68,6 +74,14 @@ const SHARED_SCHEMAS: [z.ZodType, string][] = [
   [displayModeCssPatch, 'BreakpointCssPatch'],
   [ancestors, 'StyleAncestors'],
   [ancestorsPatch, 'StyleAncestorsPatch'],
+  // A class's pseudo-elements, its conditions and its variants (which hold pseudo-elements of their own): in every
+  // style op, its slots and its patch — inlined, they took the listing from 0.2 MB to 0.33 MB.
+  [pseudos, 'StylePseudos'],
+  [pseudosPatch, 'StylePseudosPatch'],
+  [conditions, 'StyleConditions'],
+  [conditionsPatch, 'StyleConditionsPatch'],
+  [variantPart, 'StyleVariantRules'],
+  [variantPartPatch, 'StyleVariantRulesPatch'],
   [themeValue, 'ThemeValue'],
   // The connector manifest is the heaviest shape in the union — its endpoints and connection settings appear in
   // both upsertConnector and patchConnector, so without these three ids the listing carries each of them twice per

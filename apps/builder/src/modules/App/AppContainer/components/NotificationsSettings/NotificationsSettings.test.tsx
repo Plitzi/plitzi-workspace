@@ -54,6 +54,22 @@ describe('NotificationsSettings', () => {
     );
   });
 
+  it('edits the parts inside the toast as fields too, keeping the ones it was not asked to change', () => {
+    const { container } = renderWith(withNotificationsCss(OWN, { iconSize: '18px', closeColor: 'var(--muted)' }));
+
+    expect(fieldOf(container, 'iconSize').value).toBe('18px');
+    expect(fieldOf(container, 'closeColor').value).toBe('var(--muted)');
+
+    fireEvent.change(fieldOf(container, 'progressHeight'), { target: { value: '2px' } });
+
+    expect(emit).toHaveBeenCalledWith(
+      'main',
+      'schemaUpdateSettings',
+      withNotificationsCss(OWN, { iconSize: '18px', closeColor: 'var(--muted)', progressHeight: '2px' }),
+      'customCss'
+    );
+  });
+
   it('says what is wrong with a value that is not one CSS value, and keeps it out of the space', () => {
     const { container, getByText } = renderWith(OWN);
 

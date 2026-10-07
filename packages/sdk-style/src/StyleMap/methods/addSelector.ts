@@ -1,5 +1,7 @@
 import { set } from '@plitzi/plitzi-ui/helpers';
 
+import { styleTargetProblem } from '@plitzi/sdk-shared/style/styleTarget';
+
 import processSelector from '../../helpers/processSelector';
 import getStyleItem from '../helpers/getStyleItem';
 import isValidValue, { isStyleAttributes } from '../helpers/isValueValid';
@@ -34,13 +36,14 @@ const addSelector = (
     return false;
   }
 
-  const { componentType, styleSelector, styleState, styleVariant, styleAncestor } = params;
+  const { componentType, styleSelector, styleState, styleVariant, styleAncestor, stylePseudo, styleCondition } = params;
   if (
     getStyleItem(platform, displayMode, selector) ||
     (!componentType && type === 'element') ||
     (componentType && type !== 'element') ||
     (styleSelector && typeof styleSelector !== 'string') ||
-    (!styleSelector && (styleState || styleVariant || styleAncestor)) ||
+    (!styleSelector && (styleState || styleVariant || styleAncestor || stylePseudo || styleCondition)) ||
+    styleTargetProblem(params) !== undefined ||
     (path && path.includes('.')) ||
     !isValidValue(path, value, params)
   ) {
@@ -67,7 +70,7 @@ const addSelector = (
     return true;
   }
 
-  writeStyle('add', styleItem, styleSelector ?? 'base', path, value, styleState, styleVariant, styleAncestor);
+  writeStyle('add', styleItem, styleSelector ?? 'base', path, value, params);
   styleItem.cache = processSelector(styleItem);
   set(platform, `${displayMode}.${selector}`, styleItem);
 

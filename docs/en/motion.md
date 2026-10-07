@@ -1,6 +1,7 @@
 # Motion — good practices
 
-Animation in a space is CSS: keyframes in the space's `customCss`, an `animation` or a `transition` on a class. Nothing
+Animation in a space is CSS: keyframes (the space's `keyframes`, kept at the top of its `customCss`), an `animation` or
+a `transition` on a class. Nothing
 stops a space from animating anything, and that is the risk — a page that looked smooth on the author's machine
 stutters on a phone, and stutters everywhere while it loads. This guide says what moves cheaply, what does not, and
 how to keep the expensive kind out of the way. It applies to whoever writes the space: a person in the builder, code
@@ -12,18 +13,18 @@ Most of what a page moves is an arrival — a section fading up as it scrolls in
 gentle loop. An element says that with `motion`, and the SDK's stylesheet plays it; no keyframes to write:
 
 ```ts
-container({ motion: { enter: 'fade-up', on: 'view' }, children })     // arrives once, as it comes into view
-container({ class: grid, motion: { enter: 'scale', stagger: 60 }, children: cards })  // its children, one by one
-image({ src, alt, motion: { loop: 'float' } })                         // keeps rising and falling, gently
+container({ motion: { enter: 'fade-up', on: 'view' }, children }); // arrives once, as it comes into view
+container({ class: grid, motion: { enter: 'scale', stagger: 60 }, children: cards }); // its children, one by one
+image({ src, alt, motion: { loop: 'float' } }); // keeps rising and falling, gently
 ```
 
-| Field | Values |
-| --- | --- |
-| `enter` | gentle: `fade`, `fade-up`, `fade-down`, `slide-left`, `slide-right`, `scale` · bold: `slide-up`, `zoom-in`, `zoom-out`, `tilt`, `spin-in` · springy: `pop`, `bounce-in` |
-| `on` | `load` (default); `view` — once, the first time it comes into view, and then it stays (on a server-rendered page, one on screen as it arrives plays then, not when the scripts do); `scroll` — with the scroll itself, both ways (it goes back out as the reader scrolls up past it), on load where the browser has no scroll timelines |
-| `duration`, `delay` | ms (600 and 0 by default); `duration` does not apply under `scroll`, which follows the scroll |
-| `stagger` | ms between children: they arrive instead of the element, the first 24 one by one |
-| `loop` | `float`, `pulse`, `spin`, `sway`, `drift`, `orbit` — ambient · `bounce`, `wobble`, `heartbeat` — to draw the eye; held until the page is live (`data-hydrated`) |
+| Field               | Values                                                                                                                                                                                                                                                                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enter`             | gentle: `fade`, `fade-up`, `fade-down`, `slide-left`, `slide-right`, `scale` · bold: `slide-up`, `zoom-in`, `zoom-out`, `tilt`, `spin-in` · springy: `pop`, `bounce-in`                                                                                                                                                                 |
+| `on`                | `load` (default); `view` — once, the first time it comes into view, and then it stays (on a server-rendered page, one on screen as it arrives plays then, not when the scripts do); `scroll` — with the scroll itself, both ways (it goes back out as the reader scrolls up past it), on load where the browser has no scroll timelines |
+| `duration`, `delay` | ms (600 and 0 by default); `duration` does not apply under `scroll`, which follows the scroll                                                                                                                                                                                                                                           |
+| `stagger`           | ms between children: they arrive instead of the element, the first 24 one by one                                                                                                                                                                                                                                                        |
+| `loop`              | `float`, `pulse`, `spin`, `sway`, `drift`, `orbit` — ambient · `bounce`, `wobble`, `heartbeat` — to draw the eye; held until the page is live (`data-hydrated`)                                                                                                                                                                         |
 
 Every preset moves only `opacity` and the transforms — an arrival the individual `translate`/`scale`/`rotate` properties, so it
 composes with a `transform` of the element's own, a loop `transform` — and a visitor who asked for less motion gets
@@ -41,12 +42,12 @@ the published page does: loops running, arrivals played as they come into view. 
 A browser draws a frame in three steps: **layout** (where every box goes), **paint** (the pixels of each layer) and
 **composite** (the layers put together, on the GPU). An animation costs whatever steps it forces on every frame:
 
-| Animating | Forces, each frame | Cost |
-|---|---|---|
-| `opacity`, `transform` (and `translate`, `scale`, `rotate`) | Composite only | Cheap — the browser runs it on its own thread, apart from the page's scripts |
-| `color`, `background-color`, `background-position`, a gradient, a custom property, `box-shadow`, `clip-path`, `mask` | Paint, then composite | Main thread; grows with the area repainted |
-| `filter: blur()`, `backdrop-filter` | Paint of a blur | Expensive at any size, very expensive over a large area |
-| `width`, `height`, `top`/`left`, `margin`, `padding`, `font-size`, `gap` | Layout of the page, paint, composite | The most expensive: every box after it may move |
+| Animating                                                                                                            | Forces, each frame                   | Cost                                                                         |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------- |
+| `opacity`, `transform` (and `translate`, `scale`, `rotate`)                                                          | Composite only                       | Cheap — the browser runs it on its own thread, apart from the page's scripts |
+| `color`, `background-color`, `background-position`, a gradient, a custom property, `box-shadow`, `clip-path`, `mask` | Paint, then composite                | Main thread; grows with the area repainted                                   |
+| `filter: blur()`, `backdrop-filter`                                                                                  | Paint of a blur                      | Expensive at any size, very expensive over a large area                      |
+| `width`, `height`, `top`/`left`, `margin`, `padding`, `font-size`, `gap`                                             | Layout of the page, paint, composite | The most expensive: every box after it may move                              |
 
 The first row is the only one that keeps running smoothly while the page's scripts are busy. Everything else waits
 for the main thread — and a page's main thread is busiest exactly when it loads: the SDK hydrates the server's HTML in
@@ -69,8 +70,12 @@ each of them.
    SDK's root says `data-hydrated`:
 
    ```css
-   .glow { animation: glow 8s linear infinite paused; }
-   [data-hydrated] .glow { animation-play-state: running; }
+   .glow {
+     animation: glow 8s linear infinite paused;
+   }
+   [data-hydrated] .glow {
+     animation-play-state: running;
+   }
    ```
 
    The page loads still, then comes alive; nothing stutters. That is for **loops**. An entrance of your own that plays
@@ -78,6 +83,7 @@ each of them.
    `.disc { animation: unfold 2s 200ms backwards; }` — as the presets do. The compositor plays it while the page
    hydrates; held for `[data-hydrated]` instead, the server's paint shows it finished, then it jumps back to start
    when the page goes live, and a canvas that never goes live holds it on its first frame.
+
 5. **Entrances are short and cheap.** What appears as the page loads fades and rises — `opacity` and a small
    `translateY`, under ~600 ms, with a stagger of tens of milliseconds between rows. Not a blur that clears, not a
    height that opens.

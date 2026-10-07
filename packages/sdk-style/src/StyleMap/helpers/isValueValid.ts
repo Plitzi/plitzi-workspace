@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { canonicalCondition } from '@plitzi/sdk-shared/style/styleConditions';
+import { isStylePseudo } from '@plitzi/sdk-shared/style/stylePseudos';
+
 import type {
   StyleAttributes,
   StyleBlock,
   StyleCategory,
   StyleObject,
   StyleState,
+  StyleStateBlock,
   StyleStates,
   StyleValue,
   StyleVariants
@@ -30,7 +34,11 @@ export const isStyleVariants = (obj: NonNullable<StyleBlock['variants']>): boole
       return false;
     }
 
-    if ('variants' in v || 'ancestors' in v) {
+    if ('variants' in v || 'ancestors' in v || 'conditions' in v) {
+      return false;
+    }
+
+    if ('pseudos' in v && v.pseudos && !isStylePseudos(v.pseudos)) {
       return false;
     }
 
@@ -55,6 +63,23 @@ export const isStyleAncestors = (obj: NonNullable<StyleBlock['ancestors']>): boo
       (!ancestor.variants || isStyleVariants(ancestor.variants))
   );
 
+const isStateBlock = (block: StyleStateBlock): boolean =>
+  isPlainObject(block) &&
+  (!block.default || isStyleObject(block.default)) &&
+  (!block.states || isStyleStates(block.states));
+
+export const isStylePseudos = (obj: NonNullable<StyleBlock['pseudos']>): boolean =>
+  isPlainObject(obj) && Object.entries(obj).every(([pseudo, block]) => isStylePseudo(pseudo) && isStateBlock(block));
+
+export const isStyleConditions = (obj: NonNullable<StyleBlock['conditions']>): boolean =>
+  isPlainObject(obj) &&
+  Object.entries(obj).every(
+    ([condition, block]) =>
+      canonicalCondition(condition) === condition &&
+      isStateBlock(block) &&
+      (!block.pseudos || isStylePseudos(block.pseudos))
+  );
+
 export const isStyleBlock = (obj: StyleBlock): boolean => {
   if (!isPlainObject(obj)) {
     return false;
@@ -73,6 +98,14 @@ export const isStyleBlock = (obj: StyleBlock): boolean => {
   }
 
   if (obj.ancestors && !isStyleAncestors(obj.ancestors)) {
+    return false;
+  }
+
+  if (obj.pseudos && !isStylePseudos(obj.pseudos)) {
+    return false;
+  }
+
+  if (obj.conditions && !isStyleConditions(obj.conditions)) {
     return false;
   }
 

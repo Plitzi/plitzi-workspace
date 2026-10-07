@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { isSchemaFlag } from '../flags/schemaFlag';
 import { isRecord } from '../helpers/isRecord';
 import { DISPLAY_MODES } from '../style/displayModes';
+import { STYLE_PSEUDOS } from '../style/stylePseudos';
 import { STYLE_STATES } from '../style/styleStates';
 import { StyleVariableCategory } from '../types/StyleTypes';
 
@@ -91,7 +92,9 @@ const selectorParams = z.object({
   styleSelector: z.string().optional(),
   styleState: styleState.optional(),
   styleVariant: z.string().optional(),
-  styleAncestor: z.string().optional()
+  styleAncestor: z.string().optional(),
+  stylePseudo: z.enum(STYLE_PSEUDOS).optional(),
+  styleCondition: z.string().optional()
 });
 
 /** Updating a selector always names the one being updated; creating one does not have it yet. */

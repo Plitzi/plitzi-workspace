@@ -73,7 +73,7 @@ const ThemeToggle = ({
   systemLabel = 'System',
   showSystem = false
 }: ThemeToggleProps) => {
-  const { theme, setTheme, toggleTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
   const {
     id,
     definition: { styleSelectors }
@@ -180,11 +180,23 @@ const ThemeToggle = ({
         state, and markup that depended on it would differ between the server and the browser. The SDK's base
         layer shows the one for the scheme in use; a space that wants otherwise keys a rule off `data-theme-icon`,
         and its stylesheet wins. The colours stay the space's — nothing here chooses any.
+
+        The icon of the scheme in use also says so — `aria-current`, the `current` state of the `icon` slot — once the
+        browser is rendering: a switch that shows both icons lights that one with a class of its own, where the
+        machine's answer reaches it too.
       */}
-      <span className={clsx('plitzi-component__theme-toggle-icon', styleSelectors.icon)} data-theme-icon="light">
+      <span
+        className={clsx('plitzi-component__theme-toggle-icon', styleSelectors.icon)}
+        data-theme-icon="light"
+        aria-current={isMounted && resolvedTheme === 'light' ? 'true' : undefined}
+      >
         <SunIcon />
       </span>
-      <span className={clsx('plitzi-component__theme-toggle-icon', styleSelectors.icon)} data-theme-icon="dark">
+      <span
+        className={clsx('plitzi-component__theme-toggle-icon', styleSelectors.icon)}
+        data-theme-icon="dark"
+        aria-current={isMounted && resolvedTheme === 'dark' ? 'true' : undefined}
+      >
         <MoonIcon />
       </span>
     </RootElement>

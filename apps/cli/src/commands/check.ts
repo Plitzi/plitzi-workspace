@@ -48,11 +48,35 @@ export interface CheckOptions {
   element?: string;
   /** The HTML the server sent, held against the page once hydrated. */
   ssr?: boolean;
+  /**
+   * An account of the project to sign in as first, through its server's `/auth` routes (`createServer({ auth })`), with
+   * the password in `PLITZI_CHECK_PASSWORD` — what a page for signed-in visitors is checked as.
+   */
+  as?: string;
+}
+
+/** Where `--as` reads the account's password: the environment, never the command line, which a shell keeps. */
+export const CHECK_PASSWORD_ENV = 'PLITZI_CHECK_PASSWORD';
+
+/** The project's sign-in route: where `createServer({ auth })` mounts its flows unless told otherwise. */
+const SIGN_IN_PATH = '/auth/login';
+
+interface Account {
+  username: string;
+  password: string;
 }
 
 /** One problem of a page, as data: what an agent branches on and points at, beside the sentence a person reads. */
 export interface CheckIssue {
-  code: PageIssue['code'] | DataIssueCode | 'no-answer' | 'no-page' | 'flow-failed' | 'not-server-rendered';
+  code:
+    | PageIssue['code']
+    | DataIssueCode
+    | 'no-answer'
+    | 'no-page'
+    | 'flow-failed'
+    | 'not-server-rendered'
+    | 'not-signed-in'
+    | 'redirected';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;
@@ -257,10 +281,41 @@ const checkAt = async (
   scheme: Scheme | undefined,
   authored: Authored | undefined,
   asked: DevToolsInput,
-  ssr: boolean
+  ssr: boolean,
+  account: Account | undefined
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
   const page = await openProjectPage(browser, origin, { width, height: 900, ...(scheme ? { scheme } : {}) });
+  /** A report of a page that could not be looked at — nothing answered, no sign-in, sent elsewhere. */
+  const unchecked = (issue: CheckIssue): CheckReport => ({
+    path: pathname,
+    width,
+    ok: false,
+    checked: 0,
+    problems: [issue.message],
+    issues: [issue],
+    hiddenAtWidth: [],
+    consoleErrors: [],
+    failedRequests: [],
+    devTools: false,
+    lists: {}
+  });
+  if (account) {
+    const signedIn = await page.request.post(`${origin}${SIGN_IN_PATH}`, {
+      data: { username: account.username, password: account.password }
+    });
+    if (!signedIn.ok()) {
+      return unchecked({
+        code: 'not-signed-in',
+        message:
+          signedIn.status() === 404
+            ? `nothing answers at ${SIGN_IN_PATH}: --as signs in through the routes createServer({ auth }) mounts there`
+            : `${account.username} was not signed in (${String(signedIn.status())}): ${(await signedIn.text()).slice(0, 200)} — check ${CHECK_PASSWORD_ENV}`,
+        width
+      });
+    }
+  }
+
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
   page.on('pageerror', error => consoleErrors.push(error.message));
@@ -278,20 +333,27 @@ const checkAt = async (
   // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
   const answered = await openPage(page, `${origin}${pathname}`);
   if (!answered) {
-    const issue: CheckIssue = { code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width };
-
     return {
-      path: pathname,
-      width,
-      ok: false,
-      checked: 0,
-      problems: [issue.message],
-      issues: [issue],
-      hiddenAtWidth: [],
+      ...unchecked({ code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width }),
       consoleErrors,
-      failedRequests,
-      devTools: false,
-      lists: {}
+      failedRequests
+    };
+  }
+
+  // A page that sent the browser elsewhere — a page for signed-in visitors, to the sign-in — is not the page asked for:
+  // every element of it would read as missing.
+  const landed = new URL(page.url()).pathname;
+  if (withoutTrailingSlash(landed) !== withoutTrailingSlash(new URL(`${origin}${pathname}`).pathname)) {
+    return {
+      ...unchecked({
+        code: 'redirected',
+        message: account
+          ? `${pathname} sent the browser to ${landed}, signed in as ${account.username}: that account may not see it`
+          : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV}`,
+        width
+      }),
+      consoleErrors,
+      failedRequests
     };
   }
 
@@ -451,11 +513,24 @@ const reportText = (report: CheckReport, asked: DevToolsInput): string => {
   ].join('\n');
 };
 
+const withoutTrailingSlash = (path: string): string => (path.length > 1 ? path.replace(/\/+$/, '') : path);
+
 export const check = async (route: string | undefined, options: CheckOptions): Promise<void> => {
   const project = await projectHere('whose page to check');
   if (!project) {
     return;
   }
+
+  const password = process.env[CHECK_PASSWORD_ENV];
+  if (options.as && !password) {
+    fail(
+      `--as ${options.as} signs in with the password in ${CHECK_PASSWORD_ENV}: set it — ${CHECK_PASSWORD_ENV}=… npx plitzi check …`
+    );
+
+    return;
+  }
+
+  const account = options.as && password ? { username: options.as, password } : undefined;
 
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   const where = await projectOrigin(project.root, plitzi);
@@ -489,7 +564,17 @@ export const check = async (route: string | undefined, options: CheckOptions): P
     const reports: CheckReport[] = [];
     for (const width of widths) {
       reports.push(
-        await checkAt(browser, where.origin, route ?? '/', width, scheme, authored, asked, Boolean(options.ssr))
+        await checkAt(
+          browser,
+          where.origin,
+          route ?? '/',
+          width,
+          scheme,
+          authored,
+          asked,
+          Boolean(options.ssr),
+          account
+        )
       );
     }
 

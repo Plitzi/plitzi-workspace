@@ -1,14 +1,30 @@
-import { STYLE_STATES as SHARED_STYLE_STATES } from '@plitzi/sdk-shared/style/styleStates';
+import { canonicalCondition, STYLE_MOTION_CONDITIONS } from '@plitzi/sdk-shared/style/styleConditions';
+import {
+  CONTENT_PSEUDOS,
+  GENERATED_PSEUDOS,
+  isContentValue,
+  isStylePseudo,
+  PSEUDO_PROPERTIES,
+  pseudoHonours,
+  STYLE_PSEUDOS
+} from '@plitzi/sdk-shared/style/stylePseudos';
+import { isParentAncestor, STYLE_STATES as SHARED_STYLE_STATES } from '@plitzi/sdk-shared/style/styleStates';
 
 import { cssNumberValue, cssPropertyName, isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
 import { expandShorthandTraced } from './shorthand';
 import { overlaid, recordShorthands } from './shorthandOrigins';
 import { AuthoringError } from '../schema/codes';
+import { didYouMean } from '../schema/suggest';
 
 import type {
+  ConditionRulesSpec,
+  ConditionSpec,
   CssInput,
   CssProps,
   CssSpec,
+  PseudoRulesSpec,
+  PseudoSpec,
+  PseudosSpec,
   ResponsiveBlock,
   ResponsiveCss,
   ResponsiveStyle,
@@ -22,6 +38,9 @@ import type {
   DisplayMode,
   StyleAncestors,
   StyleBlock,
+  StyleConditions,
+  StylePseudo,
+  StylePseudos,
   StyleState,
   StyleStates,
   StyleVariants
@@ -181,13 +200,13 @@ export const STYLE_STATES: readonly StyleState[] = SHARED_STYLE_STATES;
 
 const STYLE_STATE_SET = new Set<string>(STYLE_STATES);
 
-const RULE_SET_KEYS = new Set(['css', 'states', 'variants', 'ancestors']);
+const RULE_SET_KEYS = new Set(['css', 'states', 'variants', 'ancestors', 'pseudos', 'conditions']);
 
 /**
  * Whether a style is the object form rather than plain CSS.
  *
- * Told apart by the keys, like the per-breakpoint shape: `css`, `states`, `variants` and `ancestors` are not CSS properties, so
- * an object naming only those is a rule set and anything else is CSS.
+ * Told apart by the keys, like the per-breakpoint shape: `css`, `states`, `variants`, `ancestors`, `pseudos` and
+ * `conditions` are not CSS properties, so an object naming only those is a rule set and anything else is CSS.
  */
 export const isRuleSetSpec = (spec: StyleSpec): spec is RuleSetSpec => {
   const keys = Object.keys(spec);
@@ -211,10 +230,10 @@ const CLASS_NAME = /^-?[_a-zA-Z][\w-]*$/;
 
 const toAncestors = (ancestors: RuleSetSpec['ancestors']) =>
   Object.entries(ancestors ?? {}).map(([name, ancestor]) => {
-    if (!CLASS_NAME.test(name)) {
+    if (!isParentAncestor(name) && !CLASS_NAME.test(name)) {
       throw new AuthoringError(
         'ancestor-not-class',
-        `The ancestor "${name}" is not a class name. An ancestor condition is keyed by a class that ancestor wears — \`[card.name]\` for a \`styles()\` declaration.`
+        `The ancestor "${name}" is not a class name. An ancestor condition is keyed by a class that ancestor wears — \`[card.name]\` for a \`styles()\` declaration — or by \`'>'\` for the parent, whatever it wears.`
       );
     }
 
@@ -226,6 +245,168 @@ const statesAt = (states: Map<string, ResponsiveStyle>, breakpoint: DisplayMode)
     const rules = responsive[breakpoint];
 
     return rules && Object.keys(rules).length > 0 ? [[state, rules] as const] : [];
+  });
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
+
+/** A part of a selector that holds rules of its own and the selector's states over them: a pseudo-element, a condition. */
+interface PartRules {
+  base: ResponsiveStyle;
+  states: Map<string, ResponsiveStyle>;
+}
+
+/** Every rule set of a part — its own and its states', on every breakpoint — with the state it belongs to. */
+const partRuleSets = ({ base, states }: PartRules): StyleRules[] => [
+  ...Object.values(base),
+  ...[...states.values()].flatMap(responsive => Object.values(responsive))
+];
+
+/** The keys of a part's object form, which no CSS property shares. */
+const PART_KEYS = new Set(['css', 'states', 'pseudos']);
+
+/** Whether a part is written as `{ css, states, pseudos }` rather than plain CSS — told apart by the keys. */
+const isPartSpec = (spec: PseudoSpec | ConditionSpec): spec is PseudoRulesSpec | ConditionRulesSpec => {
+  const keys = Object.keys(spec);
+
+  return keys.length > 0 && keys.every(key => PART_KEYS.has(key));
+};
+
+const partOf = (spec: PseudoSpec | ConditionSpec): ConditionRulesSpec => (isPartSpec(spec) ? spec : { css: spec });
+
+/**
+ * Refuses what a pseudo-element would not draw: a property the browser drops there, a `content` CSS cannot read (text
+ * without its quotes), `content` where it draws nothing, and a `before`/`after` with no `content` at all — which is
+ * not there, however it is styled.
+ */
+const assertPseudo = (pseudo: StylePseudo, part: PartRules): void => {
+  const ruleSets = partRuleSets(part);
+  for (const rules of ruleSets) {
+    for (const [property, value] of Object.entries(rules)) {
+      if (property === 'content') {
+        if (!CONTENT_PSEUDOS.includes(pseudo)) {
+          throw new AuthoringError(
+            'style-pseudo-content',
+            `\`content\` on \`::${pseudo}\` draws nothing: only ${CONTENT_PSEUDOS.map(name => `\`::${name}\``).join(', ')} take one.`
+          );
+        }
+
+        if (!isContentValue(String(value))) {
+          throw new AuthoringError(
+            'style-pseudo-content',
+            `\`content: ${String(value)}\` on \`::${pseudo}\` is not text CSS can read, so nothing is drawn. Text goes in quotes inside the string — \`content: '"${String(value).replace(/"/g, '\\"')}"'\` — and an empty box is \`'""'\`; \`counter()\`, \`attr()\` and \`url()\` are written as they are.`
+          );
+        }
+
+        continue;
+      }
+
+      if (!pseudoHonours(pseudo, property)) {
+        throw new AuthoringError(
+          'style-pseudo-property',
+          `\`${property}\` on \`::${pseudo}\` is dropped by every browser — \`::${pseudo}\` honours ${(PSEUDO_PROPERTIES[pseudo] ?? []).map(name => `\`${name}\``).join(', ')}. Style the element itself for the rest.`
+        );
+      }
+    }
+  }
+
+  if (GENERATED_PSEUDOS.includes(pseudo) && !ruleSets.some(rules => Object.hasOwn(rules, 'content'))) {
+    throw new AuthoringError(
+      'style-pseudo-content',
+      `\`::${pseudo}\` has no \`content\`, so the browser draws nothing for it. Give it one — \`content: '""'\` for an empty box — in its rules or in a state's.`
+    );
+  }
+};
+
+const toPseudos = (pseudos: PseudosSpec | undefined): Map<StylePseudo, PartRules> => {
+  const parts = new Map<StylePseudo, PartRules>();
+  for (const [name, spec] of Object.entries(pseudos ?? {})) {
+    const bare = name.replace(/^:+/, '');
+    if (!isStylePseudo(name)) {
+      throw new AuthoringError(
+        'style-pseudo-unknown',
+        `Unknown pseudo-element "${name}"${isStylePseudo(bare) ? ` — write it without the colons, "${bare}"` : didYouMean(bare, STYLE_PSEUDOS)}. A class dresses ${STYLE_PSEUDOS.join(', ')}.`
+      );
+    }
+
+    const part = partOf(spec);
+    const rules: PartRules = { base: toResponsive(part.css), states: toStates(part.states) };
+    assertPseudo(name, rules);
+    parts.set(name, rules);
+  }
+
+  return parts;
+};
+
+const pseudosAt = (pseudos: Map<StylePseudo, PartRules>, breakpoint: DisplayMode): StylePseudos | undefined => {
+  const entries = [...pseudos].flatMap(([pseudo, { base, states }]) => {
+    const rules = base[breakpoint];
+    const stateRules = statesAt(states, breakpoint);
+    const own = rules && Object.keys(rules).length > 0;
+
+    return own || stateRules
+      ? [[pseudo, { ...(own ? { default: rules } : {}), ...(stateRules ? { states: stateRules } : {}) }] as const]
+      : [];
+  });
+
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
+
+interface ConditionRules extends PartRules {
+  pseudos: Map<StylePseudo, PartRules>;
+}
+
+const toConditions = (conditions: RuleSetSpec['conditions']): Map<string, ConditionRules> => {
+  const parts = new Map<string, ConditionRules>();
+  for (const [key, spec] of Object.entries(conditions ?? {})) {
+    const condition = canonicalCondition(key);
+    if (!condition) {
+      throw new AuthoringError(
+        'style-condition-unknown',
+        `Unknown condition "${key}"${didYouMean(key, STYLE_MOTION_CONDITIONS)}. A class's rules can hold under ${STYLE_MOTION_CONDITIONS.map(name => `\`${name}\``).join(', ')}, or a container's width — \`container (max-width: 30rem)\`, \`container card (min-width: 480px)\` (min-width, max-width or both joined by \`and\`, in px, rem, em or ch).`
+      );
+    }
+
+    if (parts.has(condition)) {
+      throw new AuthoringError(
+        'style-condition-unknown',
+        `"${key}" is \`${condition}\`, which the class already writes under another spelling: keep one.`
+      );
+    }
+
+    const part = partOf(spec);
+    parts.set(condition, {
+      base: toResponsive(part.css),
+      states: toStates(part.states),
+      pseudos: toPseudos(part.pseudos)
+    });
+  }
+
+  return parts;
+};
+
+const conditionsAt = (
+  conditions: Map<string, ConditionRules>,
+  breakpoint: DisplayMode
+): StyleConditions | undefined => {
+  const entries = [...conditions].flatMap(([condition, { base, states, pseudos }]) => {
+    const rules = base[breakpoint];
+    const stateRules = statesAt(states, breakpoint);
+    const pseudoRules = pseudosAt(pseudos, breakpoint);
+    const own = rules && Object.keys(rules).length > 0;
+
+    return own || stateRules || pseudoRules
+      ? [
+          [
+            condition,
+            {
+              ...(own ? { default: rules } : {}),
+              ...(stateRules ? { states: stateRules } : {}),
+              ...(pseudoRules ? { pseudos: pseudoRules } : {})
+            }
+          ] as const
+        ]
+      : [];
   });
 
   return entries.length > 0 ? Object.fromEntries(entries) : undefined;
@@ -248,7 +429,7 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
     throw new AuthoringError(
       'rule-set-mixed',
       `A style writes ${rules.map(key => `\`${key}\``).join(', ')} beside ${misplaced.map(key => `\`${key}\``).join(', ')}. ` +
-        'Once a style has states, variants or ancestors, its own rules go under `css`: ' +
+        'Once a style has states, variants, ancestors, pseudo-elements or conditions, its own rules go under `css`: ' +
         `\`{ css: { ${rules.map(key => `${key}: …`).join(', ')} }, ${misplaced.map(key => `${key}: { … }`).join(', ')} }\`.`
     );
   }
@@ -258,6 +439,8 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
   const states = toStates(ruleSet.states);
   const variants = Object.entries(ruleSet.variants ?? {}).map(([name, variant]) => [name, toBlocks(variant)] as const);
   const ancestors = toAncestors(ruleSet.ancestors);
+  const pseudos = toPseudos(ruleSet.pseudos);
+  const conditions = toConditions(ruleSet.conditions);
 
   const blocks: ResponsiveBlock = {};
   for (const breakpoint of BREAKPOINTS) {
@@ -268,7 +451,16 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
         const block = variantBlocks[breakpoint];
 
         return block
-          ? [[name, { default: block.default ?? {}, ...(block.states ? { states: block.states } : {}) }]]
+          ? [
+              [
+                name,
+                {
+                  default: block.default ?? {},
+                  ...(block.states ? { states: block.states } : {}),
+                  ...(block.pseudos ? { pseudos: block.pseudos } : {})
+                }
+              ]
+            ]
           : [];
       })
     );
@@ -293,11 +485,15 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
       })
     );
 
+    const pseudoRules = pseudosAt(pseudos, breakpoint);
+    const conditionRules = conditionsAt(conditions, breakpoint);
     if (
       Object.keys(rules).length === 0 &&
       !stateRules &&
       Object.keys(variantRules).length === 0 &&
-      Object.keys(ancestorRules).length === 0
+      Object.keys(ancestorRules).length === 0 &&
+      !pseudoRules &&
+      !conditionRules
     ) {
       continue;
     }
@@ -306,7 +502,9 @@ export const toBlocks = (spec: StyleSpec | undefined): ResponsiveBlock => {
       default: rules,
       ...(stateRules ? { states: stateRules } : {}),
       ...(Object.keys(variantRules).length > 0 ? { variants: variantRules } : {}),
-      ...(Object.keys(ancestorRules).length > 0 ? { ancestors: ancestorRules } : {})
+      ...(Object.keys(ancestorRules).length > 0 ? { ancestors: ancestorRules } : {}),
+      ...(pseudoRules ? { pseudos: pseudoRules } : {}),
+      ...(conditionRules ? { conditions: conditionRules } : {})
     };
     blocks[breakpoint] = block;
   }

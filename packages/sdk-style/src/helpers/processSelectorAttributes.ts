@@ -1,8 +1,12 @@
 import type {
   StyleAncestors,
+  StyleConditions,
   StyleItem,
   StyleObject,
+  StylePseudo,
+  StylePseudos,
   StyleState,
+  StyleStateBlock,
   StyleStates,
   StyleValue,
   StyleVariants
@@ -11,16 +15,27 @@ import type {
 type CssResult = { variables: Record<string, string>; value: string };
 
 type ProcessedStates = Partial<Record<StyleState, string[]>>;
-type ProcessedVariants = Record<string, { default: string[]; states?: ProcessedStates }>;
+type ProcessedStateBlock = { default: string[]; states?: ProcessedStates };
+type ProcessedPseudos = Partial<Record<StylePseudo, ProcessedStateBlock>>;
+type ProcessedPart = ProcessedStateBlock & { pseudos?: ProcessedPseudos };
+type ProcessedVariants = Record<string, ProcessedPart>;
+type ProcessedConditions = Record<string, ProcessedPart>;
 
 export type ProcessedAncestors = Record<
   string,
-  { default?: string[]; states?: ProcessedStates; variants?: ProcessedVariants }
+  { default?: string[]; states?: ProcessedStates; variants?: Record<string, ProcessedStateBlock> }
 >;
 
 export type Attributes = Record<
   string,
-  { default: string[]; states?: ProcessedStates; variants?: ProcessedVariants; ancestors?: ProcessedAncestors }
+  {
+    default: string[];
+    states?: ProcessedStates;
+    variants?: ProcessedVariants;
+    ancestors?: ProcessedAncestors;
+    pseudos?: ProcessedPseudos;
+    conditions?: ProcessedConditions;
+  }
 >;
 
 // Helpers
@@ -218,15 +233,37 @@ const processStates = (states?: StyleStates): ProcessedStates | undefined => {
   return Object.keys(processed).length ? processed : undefined;
 };
 
-const processVariants = (variants?: StyleVariants): ProcessedVariants | undefined => {
-  if (!variants) {
+const processStateBlock = (block: StyleStateBlock): ProcessedStateBlock => {
+  const states = processStates(block.states);
+
+  return { default: processObject(block.default), ...(states && { states }) };
+};
+
+const processPseudos = (pseudos?: StylePseudos): ProcessedPseudos | undefined => {
+  if (!pseudos) {
     return undefined;
   }
 
-  const processed: ProcessedVariants = {};
-  for (const [variantName, variantBlock] of Object.entries(variants)) {
-    const states = processStates(variantBlock.states);
-    processed[variantName] = { default: processObject(variantBlock.default), ...(states && { states }) };
+  const processed: ProcessedPseudos = {};
+  for (const [pseudo, block] of Object.entries(pseudos) as [StylePseudo, StyleStateBlock][]) {
+    const part = processStateBlock(block);
+    if (part.default.length || part.states) {
+      processed[pseudo] = part;
+    }
+  }
+
+  return Object.keys(processed).length ? processed : undefined;
+};
+
+const processParts = (parts?: StyleVariants | StyleConditions): Record<string, ProcessedPart> | undefined => {
+  if (!parts) {
+    return undefined;
+  }
+
+  const processed: Record<string, ProcessedPart> = {};
+  for (const [name, block] of Object.entries(parts)) {
+    const pseudos = processPseudos(block.pseudos);
+    processed[name] = { ...processStateBlock(block), ...(pseudos && { pseudos }) };
   }
 
   return Object.keys(processed).length ? processed : undefined;
@@ -241,7 +278,7 @@ const processAncestors = (ancestors?: StyleAncestors): ProcessedAncestors | unde
   for (const [ancestorName, ancestor] of Object.entries(ancestors)) {
     const values = processObject(ancestor.default);
     const states = processStates(ancestor.states);
-    const variants = processVariants(ancestor.variants);
+    const variants = processParts(ancestor.variants);
     if (values.length || states || variants) {
       processed[ancestorName] = {
         ...(values.length && { default: values }),
@@ -263,14 +300,18 @@ function processSelectorAttributes(selector?: StyleItem): { attributes: Attribut
   for (const styleSelector in selector.attributes) {
     const block = selector.attributes[styleSelector];
     const states = processStates(block.states);
-    const variants = processVariants(block.variants);
+    const variants = processParts(block.variants);
     const ancestors = processAncestors(block.ancestors);
+    const pseudos = processPseudos(block.pseudos);
+    const conditions = processParts(block.conditions);
 
     attributes[styleSelector] = {
       default: processObject(block.default),
       ...(states && { states }),
       ...(variants && { variants }),
-      ...(ancestors && { ancestors })
+      ...(ancestors && { ancestors }),
+      ...(pseudos && { pseudos }),
+      ...(conditions && { conditions })
     };
   }
 

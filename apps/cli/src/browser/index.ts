@@ -53,6 +53,15 @@ export interface BrowserPage {
   addStyleTag(options: { content: string }): Promise<unknown>;
   /** The browser context the page lives in — its cookies, set before the page is asked for. */
   context(): { addCookies(cookies: { name: string; value: string; url: string }[]): Promise<void> };
+  /** Where the page is now — after any redirect the server answered with. */
+  url(): string;
+  /** Requests made as the page would make them, sharing its context's cookies: a sign-in here signs the page in. */
+  request: {
+    post(
+      url: string,
+      options: { data: Record<string, string> }
+    ): Promise<{ ok(): boolean; status(): number; text(): Promise<string> }>;
+  };
   on(event: 'pageerror', listener: (error: Error) => void): unknown;
   on(event: 'console', listener: (message: PageMessage) => void): unknown;
   on(event: 'response', listener: (response: PageResponse) => void): unknown;

@@ -8,9 +8,11 @@ import { lintDataPaths } from './dataPaths';
 import { lintElements } from './elements';
 import { lintFlags } from './flags';
 import { lintFlows } from './flows';
+import { lintLinks } from './links';
 import { lintMotion } from './motion';
 import { lintPages } from './pages';
 import { lintQuiet } from './quiet';
+import { lintTypeSlots } from './slots';
 import { lintStyle } from './style';
 import { lintComputed } from './templates';
 
@@ -47,9 +49,11 @@ export const lintSpace = (
   lintComputed(ctx);
   lintFlags(ctx);
   lintElements(ctx);
+  lintTypeSlots(ctx);
   lintDataPaths(ctx);
   lintActionOutputBindings(ctx);
   lintAnchors(ctx);
+  lintLinks(ctx);
   lintMotion(ctx);
   lintQuiet(ctx);
   lintInstances(ctx);
@@ -67,6 +71,7 @@ export const lintSpace = (
     lintElements(own);
     lintDataPaths(own);
     lintAnchors(own);
+    lintLinks(own);
     lintInstances(own);
     lintFlows(own);
     lintAccessibility(own);

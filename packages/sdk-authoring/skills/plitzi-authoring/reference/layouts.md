@@ -74,7 +74,6 @@ const navGroup = (group: DocsGroup): ElementSpec =>
         id: `docs-nav-${entry.id}`,
         href: entry.id,
         class: navLink,
-        bind: [activeOn(navLink, entry.id)],
         children: [text(entry.title, { id: `docs-nav-label-${entry.id}` })]
       })
     )
@@ -83,22 +82,11 @@ const navGroup = (group: DocsGroup): ElementSpec =>
 
 Adding a page is one entry in the list: the menu, the index and the neighbours' "next" follow.
 
-## The current entry: `activeOn`
+## The current entry
 
-A menu in a layout is the same nodes on every page, so it cannot have the right entry styled by hand. It asks which
-page is showing:
-
-```ts
-const navLink = styles('nav-link', {
-  css: { color: 'var(--muted)' },
-  variants: { active: { color: 'var(--foreground)', 'font-weight': '600' } }
-});
-
-link({ href: 'spaces', class: navLink, bind: [activeOn(navLink, ['spaces', 'space-record'])] });
-```
-
-A link to ONE page needs nothing of this: it marks itself — `aria-current="page"`, which a screen reader announces — and
-its class dresses it with the `current` state:
+A menu in a layout is the same nodes on every page, so it cannot have the right entry styled by hand — and does not
+need to. A link to the page being shown marks itself: `aria-current="page"`, which a screen reader announces, and its
+class's `current` state dresses it:
 
 ```ts
 const navLink = styles('nav-link', { css: { color: 'var(--muted)' }, states: { current: { color: 'var(--foreground)' } } });
@@ -106,10 +94,19 @@ const navLink = styles('nav-link', { css: { color: 'var(--muted)' }, states: { c
 link({ href: '/pricing', mode: 'internal', class: navLink });
 ```
 
-`activeOn(class, pageIds, { variant?, slot? })` is for an entry lit on SEVERAL pages — a section and the pages under it,
-a journal and its articles: it binds the class's variant to `navigation.currentPageId`, the `active` variant on those
-pages and `idle` everywhere else. Do not write the binding by hand with a `when` rule per page; that is the long form
-this replaces.
+An entry lit for a SECTION — a journal and its articles, `/automations/runs` while on `/automations/runs/42` — says
+`current: 'section'`: current on its page and on every page under its path, at a `/` (`/runs` holds `/runs/42`, not
+`/runsx`), announced there as the current entry (`aria-current="true"`); the same `current` state dresses it. A link to
+`/` holds every page, so authoring warns (`link-current-section`):
+
+```ts
+link({ href: 'runs', class: navLink, current: 'section' });
+```
+
+`activeOn(class, pageIds, { variant?, slot? })` is for an entry lit on pages NOT under its path — `['spaces',
+'space-record']` when a record lives at `/s/:id`: it binds the class's variant to `navigation.currentPageId`, the
+`active` variant on those pages and `idle` everywhere else. Do not write the binding by hand with a `when` rule per
+page; that is the long form this replaces.
 
 ## Pages from a factory
 

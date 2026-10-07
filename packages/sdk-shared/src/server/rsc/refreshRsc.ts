@@ -1,6 +1,6 @@
 import { authFailureFromResponse, reportAuthFailure } from '../../auth';
 import { getPaths, matchRoutePath } from '../../navigation';
-import { hasServerElements } from '../../schema/serverElements';
+import { collectServerElements, hasServerElements } from '../../schema/serverElements';
 // The recorder itself rather than the barrel, which also exports a React hook this module has no business loading.
 import { recordRenderActionRuns } from '../../store/actionRuns/actionRunsRecorder';
 
@@ -25,6 +25,24 @@ const matchRscPageId = (schema: Schema | undefined, location: string, authentica
 
   return matchRoutePath(getPaths(pages, schema.pageFolders, authenticated), location.split('?')[0], authenticated)
     .pageId;
+};
+
+/**
+ * Of `ids`, the ones the server resolves on `pageId` — the same walk it makes — in the order they were named.
+ *
+ * An element of the page a navigation is leaving is still drawn for a render or two after the route moved, and
+ * whatever it asks for then — a bound `input` re-resolving against the new route, an invalidation, a timer — is asked
+ * about the NEW address: a story's provider asking `/writers` for itself, to be answered with nothing.
+ */
+const servedIds = (
+  schema: Schema,
+  pageId: string | undefined,
+  ids: readonly string[],
+  flags: Record<string, boolean> | undefined
+): string[] => {
+  const served = new Set(collectServerElements(schema, pageId, [...ids], flags).map(({ id }) => id));
+
+  return ids.filter(id => served.has(id));
 };
 
 // `PathOf` bottoms out at `rsc.data` — a `Record<string, unknown>` leaf contributes no dynamic key to the union — so
@@ -208,7 +226,8 @@ export type RscRefreshOptions = {
  * has what it needs through the store it can reach, and an element buried under any number of scopes writes to the
  * root by delegation (nothing but the root owns `rsc`).
  *
- * Pass `ids` to refresh only those elements — the response is merged over the existing payload. Omit them for a full
+ * Pass `requestedIds` to refresh only those elements — the response is merged over the existing payload; of them,
+ * only the ones the server resolves at that location are asked for, and none is no request. Omit them for a full
  * refresh, which replaces it. `params` ride along on the query string; that is how a provider asks for a different
  * page window.
  *
@@ -219,7 +238,7 @@ export type RscRefreshOptions = {
  */
 export const refreshRsc = async (
   store: StoreApi<CommonState>,
-  ids?: string[],
+  requestedIds?: string[],
   params?: Record<string, string>,
   { location, fresh = false }: RscRefreshOptions = {}
 ): Promise<void> => {
@@ -247,7 +266,12 @@ export const refreshRsc = async (
   // The flags as they resolved for the page on screen, so a server element gated off asks for nothing. Not for a page
   // being navigated to: a flag's rule may read the route, and the server — which decides anyway — resolves them there.
   const flags = location ? undefined : store.get('runtime.sources.flags');
-  if (!schema || !hasServerElements(schema, pageId, flags)) {
+  if (!schema) {
+    return;
+  }
+
+  const ids = requestedIds?.length ? servedIds(schema, pageId, requestedIds, flags) : undefined;
+  if (ids ? !ids.length : !hasServerElements(schema, pageId, flags)) {
     return;
   }
 

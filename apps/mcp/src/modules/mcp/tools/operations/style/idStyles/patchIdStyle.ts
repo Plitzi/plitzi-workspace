@@ -39,7 +39,10 @@ export const patchIdStyle = (space: Space, env: Env, op: PatchIdStyle): OpResult
 
   const { type, targetId, slots: slotsPatch, ...basePatch } = op;
   const { base, slots } = mergePatch(existing, basePatch, slotsPatch);
-  writeStyleItem(space.style, targetId, base, slots, 'id', undefined);
+  const problem = writeStyleItem(space.style, targetId, base, slots, 'id', undefined);
+  if (problem) {
+    return problem;
+  }
 
   return { ...empty(), updated: 1, staleResources: [idUri(env, targetId), idsUri(env)] };
 };

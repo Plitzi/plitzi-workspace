@@ -62,7 +62,8 @@ const declaration = elementDeclaration<ThemeToggleAttributes>()({
         'Lets a visitor choose light or dark. It writes the choice on the document root, where a space stylesheet is already looking for it, and remembers it — so the machine decides until somebody says otherwise. It ships no colours of its own: its buttons carry no browser look and take the colour and type around them — style ' +
         'them with the space own classes. A `segmented` one marks the chosen option with `aria-pressed`, which is the ' +
         '`current` state of its `option` slot. It shows the icon of the scheme in use by default; key a rule off ' +
-        '`data-theme-icon` to change that.',
+        '`data-theme-icon` to change that. A `switch` marks the icon of the scheme in use — the one chosen, or the ' +
+        'machine one while none is — with `aria-current`, the `current` state of its `icon` slot.',
       items: [],
       bindings: {},
       styleSelectors: {

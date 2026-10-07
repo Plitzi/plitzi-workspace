@@ -462,6 +462,10 @@
       "types": "./dist/elements/basic/Link/Settings.d.ts",
       "import": "./dist/elements/basic/Link/Settings.mjs"
     },
+    "./elements/basic/Link/ariaCurrent": {
+      "types": "./dist/elements/basic/Link/ariaCurrent.d.ts",
+      "import": "./dist/elements/basic/Link/ariaCurrent.mjs"
+    },
     "./elements/basic/Link/declaration": {
       "types": "./dist/elements/basic/Link/declaration.d.ts",
       "import": "./dist/elements/basic/Link/declaration.mjs"
@@ -469,10 +473,6 @@
     "./elements/basic/Link/index": {
       "types": "./dist/elements/basic/Link/index.d.ts",
       "import": "./dist/elements/basic/Link/index.mjs"
-    },
-    "./elements/basic/Link/isCurrentPage": {
-      "types": "./dist/elements/basic/Link/isCurrentPage.d.ts",
-      "import": "./dist/elements/basic/Link/isCurrentPage.mjs"
     },
     "./elements/basic/Markdown": {
       "types": "./dist/elements/basic/Markdown/index.d.ts",
@@ -489,6 +489,10 @@
     "./elements/basic/Markdown/declaration": {
       "types": "./dist/elements/basic/Markdown/declaration.d.ts",
       "import": "./dist/elements/basic/Markdown/declaration.mjs"
+    },
+    "./elements/basic/Markdown/hooks/useMarkdownClassNames": {
+      "types": "./dist/elements/basic/Markdown/hooks/useMarkdownClassNames.d.ts",
+      "import": "./dist/elements/basic/Markdown/hooks/useMarkdownClassNames.mjs"
     },
     "./elements/basic/Markdown/index": {
       "types": "./dist/elements/basic/Markdown/index.d.ts",
@@ -525,6 +529,10 @@
     "./elements/basic/RichText/Settings": {
       "types": "./dist/elements/basic/RichText/Settings.d.ts",
       "import": "./dist/elements/basic/RichText/Settings.mjs"
+    },
+    "./elements/basic/RichText/classHtmlParts": {
+      "types": "./dist/elements/basic/RichText/classHtmlParts.d.ts",
+      "import": "./dist/elements/basic/RichText/classHtmlParts.mjs"
     },
     "./elements/basic/RichText/declaration": {
       "types": "./dist/elements/basic/RichText/declaration.d.ts",

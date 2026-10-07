@@ -1,4 +1,13 @@
-import { inCascadeOrder, isKnownState, STYLE_STATE_LABELS, STYLE_STATES } from '@plitzi/sdk-shared/style/styleStates';
+import { conditionLabel, STYLE_MOTION_CONDITIONS } from '@plitzi/sdk-shared/style/styleConditions';
+import { STYLE_PSEUDO_LABELS, STYLE_PSEUDOS } from '@plitzi/sdk-shared/style/stylePseudos';
+import {
+  inCascadeOrder,
+  isKnownState,
+  isParentAncestor,
+  PARENT_ANCESTOR,
+  STYLE_STATE_LABELS,
+  STYLE_STATES
+} from '@plitzi/sdk-shared/style/styleStates';
 
 import type { Option } from '@plitzi/plitzi-ui/Select2';
 import type {
@@ -8,6 +17,7 @@ import type {
   Style,
   StyleAncestor,
   StyleAncestors,
+  StyleBlock,
   StyleItem,
   StyleState
 } from '@plitzi/sdk-shared';
@@ -17,6 +27,28 @@ export const STYLE_STATE_OPTIONS: Option[] = STYLE_STATES.map(state => ({
   label: STYLE_STATE_LABELS[state],
   value: state
 }));
+
+/** How an ancestor key reads in the inspector: its class, or the parent it stands for. */
+export const ancestorName = (ancestor: string): string =>
+  isParentAncestor(ancestor) ? 'the element around it' : `.${ancestor}`;
+
+/** The pseudo-element picker's options, the ones the block already dresses saying so. */
+export const pseudoOptions = (block?: StyleBlock): Option[] =>
+  STYLE_PSEUDOS.map(pseudo => ({
+    label: block?.pseudos?.[pseudo] ? `${STYLE_PSEUDO_LABELS[pseudo]} (set)` : STYLE_PSEUDO_LABELS[pseudo],
+    value: pseudo
+  }));
+
+/**
+ * The condition picker's options: reduced motion and its opposite, then every container query the block already holds.
+ * A new container query is typed in (`container (max-width: 30rem)`) and kept only in the spelling
+ * `canonicalCondition` reads.
+ */
+export const conditionOptions = (block?: StyleBlock): Option[] =>
+  [...new Set([...STYLE_MOTION_CONDITIONS, ...Object.keys(block?.conditions ?? {})])].map(condition => ({
+    label: block?.conditions?.[condition] ? `${conditionLabel(condition)} (set)` : conditionLabel(condition),
+    value: condition
+  }));
 
 /**
  * The classes an element's ancestors carry, closest first: what an "ancestor" condition can name. Only the base slot
@@ -69,10 +101,11 @@ export const ancestorConditions = (ancestors: StyleAncestors = {}): AncestorCond
 export const ancestorOptions = (candidates: string[], configured: StyleAncestors = {}): Option[] => {
   const conditions = ancestorConditions(configured);
 
-  return [...new Set([...candidates, ...Object.keys(configured)])].map(name => {
+  return [...new Set([PARENT_ANCESTOR, ...candidates, ...Object.keys(configured)])].map(name => {
     const labels = conditions.filter(condition => condition.ancestor === name).map(condition => condition.label);
+    const label = ancestorName(name);
 
-    return { label: labels.length ? `.${name} — ${labels.join(', ')}` : `.${name}`, value: name };
+    return { label: labels.length ? `${label} — ${labels.join(', ')}` : label, value: name };
   });
 };
 
@@ -89,7 +122,12 @@ const wearersOf = (flat: Schema['flat'], item: StyleItem): Element[] =>
  * behind when a class was renamed or the tree changed. Each wearer's ancestors are walked once.
  */
 export const unusedAncestors = (flat: Schema['flat'], item: StyleItem): Set<string> => {
-  const named = new Set(Object.values(item.attributes).flatMap(block => Object.keys(block.ancestors ?? {})));
+  // The parent is whatever element is around the wearer, so it is never unused
+  const named = new Set(
+    Object.values(item.attributes)
+      .flatMap(block => Object.keys(block.ancestors ?? {}))
+      .filter(ancestor => !isParentAncestor(ancestor))
+  );
   if (!named.size) {
     return named;
   }

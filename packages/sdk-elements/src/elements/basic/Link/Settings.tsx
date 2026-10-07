@@ -19,6 +19,7 @@ type SettingsProps = {
   contentPlacement?: 'before' | 'after';
   icon?: string;
   iconPlacement?: 'before' | 'after';
+  current?: 'page' | 'section';
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
@@ -32,6 +33,7 @@ const Settings = ({
   contentPlacement = 'after',
   icon = '',
   iconPlacement = 'before',
+  current = 'page',
   onUpdate
 }: SettingsProps) => {
   const {
@@ -135,6 +137,12 @@ const Settings = ({
           </Select>
           <div className="truncate rounded-b border-r border-b border-l border-gray-200 p-1 text-xs">{fullpath}</div>
         </div>
+      )}
+      {mode !== 'external' && (
+        <Select value={current} label="Current On" onChange={handleChange('current')} size="sm">
+          <option value="page">Its Page</option>
+          <option value="section">Its Page And The Pages Under It</option>
+        </Select>
       )}
       {mode !== 'external' && (
         <Input

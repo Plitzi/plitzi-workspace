@@ -17,7 +17,7 @@ const element = (id: string, items: string[] = [], runtime?: 'server' | 'client'
 });
 
 /**
- * A space with a mix, which is the whole reason the gate exists: `blog` is backed by a provider, `home` is not, and
+ * A space with a mix, which is the whole reason the gate exists: `blog` is backed by providers, `home` is not, and
  * `deep` buries its provider under plain containers. Which of them is on screen is what decides whether a refresh
  * has anywhere to land, so every store here states both the schema and the page.
  */
@@ -25,8 +25,10 @@ const space = {
   flat: {
     home: element('home', ['homeText']),
     homeText: element('homeText', [], 'client'),
-    blog: element('blog', ['blogApi']),
+    blog: element('blog', ['blogApi', 'a', 'b']),
     blogApi: element('blogApi', [], 'server'),
+    a: element('a', [], 'server'),
+    b: element('b', [], 'server'),
     deep: element('deep', ['deepBox']),
     deepBox: element('deepBox', ['deepApi']),
     deepApi: element('deepApi', [], 'server')
@@ -465,6 +467,32 @@ describe('refreshRsc', () => {
     expect(store.get('rsc.data')).toEqual({ a: 1, b: 2 });
     expect(store.get('rsc.stale')).toBeFalsy();
     expect(store.get('rsc.refreshing')).toEqual({});
+  });
+
+  /**
+   * A navigation's last renders of the page it leaves: the route has moved, the old page's provider is still drawn,
+   * and its bound input re-resolving against the new route asks for it — about the new address, which holds nothing.
+   */
+  it('asks nothing for an element of a page that is no longer on screen', async () => {
+    const store = liveStore('deep');
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: {} }) });
+
+    await refreshRsc(store, ['blogApi'], { slug: 'a-story' }, { fresh: true });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(store.get('rsc.data')).toEqual({ a: 1, b: 2 });
+    expect(store.get('rsc.refreshing')).toBeUndefined();
+  });
+
+  it('names only the elements the page on screen holds', async () => {
+    const store = liveStore();
+    fetchMock.mockResolvedValue({ ok: true, json: () => Promise.resolve({ serverData: { b: 3 } }) });
+
+    await refreshRsc(store, ['deepApi', 'b']);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toMatch(/[?&]ids=b(&|$)/);
+    expect(fetchMock.mock.calls[0][0]).not.toContain('deepApi');
   });
 
   it('does not gate out the element asking for itself on a page that does have a provider', async () => {

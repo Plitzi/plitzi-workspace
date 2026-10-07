@@ -39,7 +39,10 @@ export const patchDefinition = (space: Space, env: Env, op: PatchDefinition): Op
 
   const { type, ref, slots: slotsPatch, ...basePatch } = op;
   const { base, slots } = mergePatch(existing, basePatch, slotsPatch);
-  writeStyleItem(space.style, ref, base, slots, 'class', undefined);
+  const problem = writeStyleItem(space.style, ref, base, slots, 'class', undefined);
+  if (problem) {
+    return problem;
+  }
 
   return { ...empty(), updated: 1, staleResources: [defUri(env, ref), defsUri(env)] };
 };

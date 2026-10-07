@@ -1379,6 +1379,10 @@
       "types": "./dist/style/index.d.ts",
       "import": "./dist/style/index.mjs"
     },
+    "./style/keyframes": {
+      "types": "./dist/style/keyframes.d.ts",
+      "import": "./dist/style/keyframes.mjs"
+    },
     "./style/layoutGrid": {
       "types": "./dist/style/layoutGrid.d.ts",
       "import": "./dist/style/layoutGrid.mjs"
@@ -1395,13 +1399,25 @@
       "types": "./dist/style/snippetStyle.d.ts",
       "import": "./dist/style/snippetStyle.mjs"
     },
+    "./style/styleConditions": {
+      "types": "./dist/style/styleConditions.d.ts",
+      "import": "./dist/style/styleConditions.mjs"
+    },
     "./style/styleConstants": {
       "types": "./dist/style/styleConstants.d.ts",
       "import": "./dist/style/styleConstants.mjs"
     },
+    "./style/stylePseudos": {
+      "types": "./dist/style/stylePseudos.d.ts",
+      "import": "./dist/style/stylePseudos.mjs"
+    },
     "./style/styleStates": {
       "types": "./dist/style/styleStates.d.ts",
       "import": "./dist/style/styleStates.mjs"
+    },
+    "./style/styleTarget": {
+      "types": "./dist/style/styleTarget.d.ts",
+      "import": "./dist/style/styleTarget.mjs"
     },
     "./style/useDisplayMode": {
       "types": "./dist/style/useDisplayMode.d.ts",

@@ -1,5 +1,9 @@
+import { animationNamesIn, keyframesNamesIn, SDK_KEYFRAMES_PREFIX } from '@plitzi/sdk-shared/style/keyframes';
+
+import { didYouMean } from '../suggest';
+
 import type { LintContext } from './context';
-import type { StyleBlock, StyleItem, StyleObject, StyleVariables } from '@plitzi/sdk-shared';
+import type { StyleItem, StyleObject, StyleStates, StyleVariables } from '@plitzi/sdk-shared';
 
 /**
  * A colour token with a light value and no dark one: a dark theme shows the light value, which is how a near-black
@@ -26,11 +30,23 @@ const DECLARATION = /(--[\w-]+)\s*:/g;
 const variableNames = (variables: Partial<StyleVariables> | undefined): string[] =>
   Object.values(variables ?? {}).flatMap(group => Object.keys(group).map(name => `--${name}`));
 
-const objectsOf = (block: Omit<StyleBlock, 'variants' | 'ancestors'> & Partial<StyleBlock>): StyleObject[] => [
+/** Any part of a selector's block: its own, a variant, an ancestor's, a pseudo-element's, a condition's. */
+interface RulesPart {
+  default?: StyleObject;
+  states?: StyleStates;
+  variants?: Record<string, RulesPart>;
+  ancestors?: Record<string, RulesPart>;
+  pseudos?: Partial<Record<string, RulesPart>>;
+  conditions?: Record<string, RulesPart>;
+}
+
+/** Every rule set a block holds, however deep — so a `var()` or an `animation-name` under a `::before` is read too. */
+const objectsOf = (block: RulesPart): StyleObject[] => [
   ...(block.default ? [block.default] : []),
   ...Object.values(block.states ?? {}),
-  ...Object.values(block.variants ?? {}).flatMap(objectsOf),
-  ...Object.values(block.ancestors ?? {}).flatMap(objectsOf)
+  ...[block.variants, block.ancestors, block.pseudos, block.conditions].flatMap(parts =>
+    Object.values(parts ?? {}).flatMap(part => (part ? objectsOf(part) : []))
+  )
 ];
 
 const rulesOf = (item: StyleItem): StyleObject[] => Object.values(item.attributes).flatMap(objectsOf);
@@ -71,7 +87,41 @@ const lintVariables = (ctx: LintContext): void => {
   }
 };
 
+/**
+ * An `animation-name` playing keyframes nothing declares: the animation never runs, and nothing says so. Declared is a
+ * keyframes rule of the space's — its `keyframes`, or one written by hand in `customCss` — or one of the SDK's own
+ * (`plitzi-…`). Warned, not refused: a plugin's stylesheet can declare one out of sight of the space.
+ */
+const lintAnimations = (ctx: LintContext): void => {
+  const declared = new Set(keyframesNamesIn(ctx.schema.settings.customCss));
+  const reported = new Set<string>();
+  const items = Object.values(ctx.style.platform).flatMap(items => Object.values(items));
+  for (const item of items) {
+    for (const rule of rulesOf(item)) {
+      const value = rule['animation-name'];
+      if (value === undefined) {
+        continue;
+      }
+
+      for (const name of animationNamesIn(String(value))) {
+        if (declared.has(name) || name.startsWith(SDK_KEYFRAMES_PREFIX) || reported.has(name)) {
+          continue;
+        }
+
+        reported.add(name);
+        ctx.warn(
+          'animation-name-unknown',
+          `The ${item.type} "${item.name}" plays the keyframes "${name}", which the space does not declare, so nothing moves${didYouMean(name, declared)}. Declare them in the space's \`keyframes\` — \`keyframes: { '${name}': { from: { … }, to: { … } } }\` — or name ones it has.`,
+          undefined,
+          { name, selector: item.name }
+        );
+      }
+    }
+  }
+};
+
 export const lintStyle = (ctx: LintContext): void => {
   lintColours(ctx);
   lintVariables(ctx);
+  lintAnimations(ctx);
 };

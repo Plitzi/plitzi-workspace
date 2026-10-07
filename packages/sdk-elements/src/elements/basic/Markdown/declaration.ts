@@ -19,25 +19,44 @@ const declaration = elementDeclaration<MarkdownAttributes>()({
       type: 'markdown',
       description:
         'Renders a Markdown source string (GitHub-flavoured) as HTML, inside a `div.markdown`. Each part of it takes a ' +
-        'class through its slot: `heading` (`h1`–`h6`), `paragraph` (`p`), `link` (`a`), `list` (`ul`/`ol`), ' +
-        '`listItem` (`li`), `quote` (`blockquote`), `code` (inline `code`), `codeBlock` (the `pre` of a fenced block, ' +
-        'inside a `div.markdown-code` with its language and a copy button), `image` (`img`), `table` and `anchor`. ' +
-        'Every heading carries an id made of its words, which `/page#its-words` lands on, and starts with an empty ' +
-        'link to itself — `a.anchor > span.octicon-link`, the `anchor` slot; `headingLinks: false` leaves the link ' +
-        'out and keeps the id. The SDK styles none of it.',
+        'class through the slot named for it: `heading` (every `h1`–`h6`) and `heading1`…`heading6` (that level only, ' +
+        'beside it), `paragraph`, `link`, `strong`, `emphasis` (`em`), `list` (`ul`/`ol`), `listItem`, `quote` ' +
+        '(`blockquote`), `divider` (`hr`), `code` (inline), `image`, `table`, `tableHead` (`thead`), `tableRow`, ' +
+        '`tableHeaderCell` (`th`) and `tableCell` (`td`). A fenced block is `codeBlock` (its `pre`) in `codeBlockFrame`, ' +
+        'under `codeBlockHeader`, which holds `codeBlockLanguage` and the `codeBlockCopy` button. Every heading carries ' +
+        'an id made of its words, which `/page#its-words` lands on, and starts with an empty link to itself — ' +
+        '`a.anchor > span.octicon-link`, the `anchor` slot; `headingLinks: false` leaves the link out and keeps the id. ' +
+        'The SDK styles none of it.',
       bindings: {},
       styleSelectors: {
         base: '',
         heading: '',
+        heading1: '',
+        heading2: '',
+        heading3: '',
+        heading4: '',
+        heading5: '',
+        heading6: '',
         paragraph: '',
         link: '',
+        strong: '',
+        emphasis: '',
         list: '',
         listItem: '',
         quote: '',
+        divider: '',
         code: '',
         codeBlock: '',
+        codeBlockFrame: '',
+        codeBlockHeader: '',
+        codeBlockLanguage: '',
+        codeBlockCopy: '',
         image: '',
         table: '',
+        tableHead: '',
+        tableRow: '',
+        tableHeaderCell: '',
+        tableCell: '',
         anchor: ''
       },
       initialState: {

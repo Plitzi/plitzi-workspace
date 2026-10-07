@@ -487,8 +487,8 @@ describe('plitzi doctor', () => {
     expect(report.ok).toBe(true);
     expect(codes(report)).toEqual([]);
     expect(await read('src/space/index.ts')).toContain("from './tokens.ts'");
-    expect(await read('src/main.ts')).toContain("from './space/index.ts'");
-    expect(await read('plitzi/author.ts')).toContain("from '../src/space/index.ts'");
+    expect(await read('src/main.ts')).toContain("import('./space/index.ts')");
+    expect(await read('plitzi/author.ts')).toContain("import('../src/space/index.ts')");
     expect(await manifest()).toHaveProperty(['scripts', 'author'], 'node --env-file-if-exists=.env plitzi/author.ts');
     await expect(fs.access(path.join(project, '.sdk-plugins'))).rejects.toThrow();
     expect(await read('.gitignore')).toContain('.env');

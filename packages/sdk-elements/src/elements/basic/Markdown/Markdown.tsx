@@ -1,16 +1,15 @@
 /* eslint-disable react-refresh/only-export-components */
 import MarkdownUI from '@plitzi/plitzi-ui/Markdown';
 import clsx from 'clsx';
-import { useMemo } from 'react';
 
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { uniqueAnchor } from '@plitzi/sdk-shared/schema/anchor';
 
+import useMarkdownClassNames from './hooks/useMarkdownClassNames';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
 
-import type { MarkdownClassNames } from '@plitzi/plitzi-ui/Markdown';
 import type { RefObject } from 'react';
 
 export type MarkdownProps = {
@@ -31,12 +30,7 @@ const Markdown = ({ ref, content = 'Markdown', className = '', headingLinks = tr
   const {
     definition: { styleSelectors }
   } = useElement();
-  const { heading, paragraph, link, list, listItem, quote, code, codeBlock, image, table, anchor } = styleSelectors;
-  // One object while the classes stay the same: a new one rebuilds every tag of the document.
-  const classNames = useMemo<MarkdownClassNames>(
-    () => ({ heading, paragraph, link, list, listItem, quote, code, codeBlock, image, table, anchor }),
-    [heading, paragraph, link, list, listItem, quote, code, codeBlock, image, table, anchor]
-  );
+  const classNames = useMarkdownClassNames(styleSelectors);
 
   return (
     <RootElement

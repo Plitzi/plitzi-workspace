@@ -1,5 +1,6 @@
 import { suggestContent } from './content';
 import { suggestCustomCss } from './customCss';
+import { suggestCustomCssSlots } from './customCssSlots';
 import { suggestDeclarations } from './declarations';
 import { suggestMotion } from './motion';
 import { suggestRepeats } from './repeats';
@@ -41,6 +42,7 @@ export const suggestSpace = ({ schema, style }: { schema: Schema; style: Style }
     ...suggestRepeats(schema, style),
     ...suggestContent(schema, style),
     ...suggestCustomCss(schema, style),
+    ...suggestCustomCssSlots(schema),
     ...suggestMotion(schema, style),
     ...suggestDeclarations(schema, style)
   ]).sort((a, b) => b.saves - a.saves);

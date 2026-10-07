@@ -58,6 +58,15 @@ export type ProjectServerOptions = Partial<Omit<ServerConfig, SetByProject>> & {
 /** A space authored in the project — `authorSpace(space, await projectAuthoring())` — and what it warned of. */
 export type ProjectSpace = AuthoredDocuments & { warnings?: readonly { message: string }[] };
 
+/**
+ * The errors whose message is the whole report — every problem, where it is and what to write instead — and whose
+ * stack would only point inside the SDK: the project's root, its layout, a space that does not author. Told by name,
+ * since each package that throws one carries its own copy of the class.
+ */
+const REPORTS: ReadonlySet<string> = new Set(['ProjectRootError', 'ProjectLayoutError', 'SpaceRefusedError']);
+
+const isReport = (error: unknown): error is Error => error instanceof Error && REPORTS.has(error.name);
+
 type ServeProjectBase = {
   /** The space's server actions (`src/actions/`), found by their id. Left out, the server runs none. */
   actions?: readonly ActionEntry[];
@@ -70,8 +79,11 @@ type ServeProjectBase = {
 export type ServeProjectOptions = ServeProjectBase &
   (
     | {
-        /** The space, held in the project: served from memory, and — while developing — authored again on a save. */
-        space: ProjectSpace;
+        /**
+         * The space, held in the project: authored once its layout is checked — `async () => authorSpace(space, await
+         * projectAuthoring())` — served from memory, and, while developing, authored again on a save.
+         */
+        space: () => ProjectSpace | Promise<ProjectSpace>;
         cloud?: never;
       }
     | {
@@ -138,28 +150,18 @@ const actionLookups = (
   listScheduledSpaces: () => Promise.resolve([SPACE_ID])
 });
 
-/**
- * The server of a project `@plitzi/cli` writes — its `src/main.ts` hands it the space, its actions and its options,
- * and everything else comes from where the project keeps it. The project is the working directory, where its scripts
- * start it (`projectRoot`: refused, saying what is missing, anywhere else), laid out where the server reads each part
- * (`assertProjectLayout`: refused with every error at once; its warnings said while developing):
- *
- * - the port: `PORT`, or 8080 — the next free one from there while developing; `HOST`, loopback by default;
- * - its plugins: every folder of `src/plugins` built from its source and server-rendered, every one of `vendor/plugins`
- *   as it was built, each with its server half;
- * - its code: `src/functions/`, and the space's runtime (`src/runtime/` — compiled under `dist/` when the server runs
- *   compiled, `runtimeModule` — or `vendor/runtime.bundle`) in this process;
- * - `public/` served as it is, `src/data/` read and never served, `kv` kept in `state/kv.json`;
- * - `/health` answering with the space's permanent URL (or the cloud project's name), and the port it took written to
- *   `tmp/dev-server.json` for `check`, `shot` and `visual` to find;
- * - a signal closes it, finishing what runs.
- *
- * While developing (`NODE_ENV` other than `production`), a save to the space is authored again by the project's
- * `plitzi/author.ts`, in a process of its own, which hands the documents back over IPC: the server swaps them in memory
- * and every open page loads again. A plugin folder added is registered, one removed turned off, and a plugin's
- * `functions/` loaded again; a folder it cannot build is said in the terminal, and the server goes on.
- */
-export const serveProject = async (options: ServeProjectOptions): Promise<ServedProject> => {
+/** The space this project serves, authored from its own source — or Plitzi's, named for `/health`. */
+const spaceToServe = async ({ space, cloud }: ServeProjectOptions): Promise<{ space?: ProjectSpace; name: string }> => {
+  if (!space) {
+    return { name: cloud.name };
+  }
+
+  const authored = await space();
+
+  return { space: authored, name: authored.schema.definition.permanentUrl };
+};
+
+const startProject = async (options: ServeProjectOptions): Promise<ServedProject> => {
   const { actions, connectors = new Map<string, ConnectorManifest>(), serverOptions = {} } = options;
   const root = projectRoot();
   const developing = process.env.NODE_ENV !== 'production';
@@ -180,8 +182,8 @@ export const serveProject = async (options: ServeProjectOptions): Promise<Served
   /** Where people reach this server: `PUBLIC_URL` behind a proxy, its own address otherwise. */
   const publicUrl = (process.env.PUBLIC_URL ?? `http://127.0.0.1:${String(port)}`).replace(/\/+$/, '');
 
+  const { space, name } = await spaceToServe(options);
   const plugins = await projectPlugins(root);
-  const { space } = options;
   // What the server serves of a space held in the project: replaced, while developing, by each save authored again.
   const held = space && { documents: { schema: space.schema, style: space.style } };
   for (const warning of space?.warnings ?? []) {
@@ -207,8 +209,7 @@ export const serveProject = async (options: ServeProjectOptions): Promise<Served
       : undefined);
   const runtime = spaceRuntime && (await serveRuntime(spaceRuntime, { env: process.env, publicUrl }));
 
-  // What `/health` answers with, and `tmp/dev-server.json` records: how a tool knows it reached THIS project.
-  const name = space ? space.schema.definition.permanentUrl : options.cloud.name;
+  // `name` is what `/health` answers with, and `tmp/dev-server.json` records: how a tool knows it reached THIS project.
   const server = createServer(
     {
       // What went wrong and nothing else: `npm start -- --verbose` adds a line for every request.
@@ -272,4 +273,41 @@ export const serveProject = async (options: ServeProjectOptions): Promise<Served
       await close();
     }
   };
+};
+
+/**
+ * The server of a project `@plitzi/cli` writes — its `src/main.ts` hands it the space, its actions and its options,
+ * and everything else comes from where the project keeps it. The project is the working directory, where its scripts
+ * start it (`projectRoot`: refused, saying what is missing, anywhere else), laid out where the server reads each part
+ * (`assertProjectLayout`: refused with every error at once; its warnings said while developing), and only then is its
+ * space authored. A refusal of any of the three is printed as it is — the message is the whole report, every problem
+ * and its fix, and a stack would only point inside the SDK — and the process exits with 1. What it serves:
+ *
+ * - the port: `PORT`, or 8080 — the next free one from there while developing; `HOST`, loopback by default;
+ * - its plugins: every folder of `src/plugins` built from its source and server-rendered, every one of `vendor/plugins`
+ *   as it was built, each with its server half;
+ * - its code: `src/functions/`, and the space's runtime (`src/runtime/` — compiled under `dist/` when the server runs
+ *   compiled, `runtimeModule` — or `vendor/runtime.bundle`) in this process;
+ * - `public/` served as it is, `src/data/` read and never served, `kv` kept in `state/kv.json`;
+ * - `/health` answering with the space's permanent URL (or the cloud project's name), and the port it took written to
+ *   `tmp/dev-server.json` for `check`, `shot` and `visual` to find;
+ * - a signal closes it, finishing what runs.
+ *
+ * While developing (`NODE_ENV` other than `production`), a save to the space is authored again by the project's
+ * `plitzi/author.ts`, in a process of its own, which hands the documents back over IPC: the server swaps them in memory
+ * and every open page loads again. A plugin folder added is registered, one removed turned off, and a plugin's
+ * `functions/` loaded again; a folder it cannot build is said in the terminal, and the server goes on.
+ */
+export const serveProject = async (options: ServeProjectOptions): Promise<ServedProject> => {
+  try {
+    return await startProject(options);
+  } catch (error) {
+    if (!isReport(error)) {
+      throw error;
+    }
+
+    console.error(error.message);
+    process.exitCode = 1;
+    process.exit(1);
+  }
 };
