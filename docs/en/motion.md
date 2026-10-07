@@ -112,7 +112,7 @@ changing the machine's setting. Its **X-ray** marks every element that declares 
 it.
 
 The authoring linter reads the space's keyframes: one that animates anything but `opacity` and `transform`, and that
-something runs, is suggested `heavy-animation` — in `authorSpace`'s and `plitzi_validate`'s `suggestions` and the
+something runs, is suggested `heavy-animation` — in `authorSpace`'s and `plitzi_apply`'s `suggestions` and the
 builder's problems panel — with each property it animates and the way out of its cost. A property from the second row
 counts only in a loop — once, it is a few frames — and a loop that starts `paused` and runs under `[data-hydrated]` is
 let through; a size, a position, a blur or a shadow counts every time.

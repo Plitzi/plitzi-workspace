@@ -16,15 +16,16 @@ const WORKSPACE_ONLY = /(?:^|[\s`(])(?:docs\/(?:en|rfc)\/|examples\/|plitzi-work
 /**
  * What an agent spends reading each file, in tokens — about four characters each, for English prose and code alike.
  *
- * A budget per kind of file: a skill's entry point is read every time, so it stays short and says what not to read;
- * a reference is read only when the task names its subject, so it covers one subject. `authoring-errors.md` is the
+ * A budget per kind of file: a skill's entry point is read every time, so it is a core — what it is for, the few rules
+ * that go wrong most, and a table that routes each task to the one file it needs (RFC 0025: a small model has to fit
+ * it beside its work); a reference is read only when the task names its subject, so it covers one subject. `authoring-errors.md` is the
  * one page searched rather than read — by the code in brackets — and has no budget.
  */
 const tokensOf = (text: string): number => Math.ceil(text.length / 4);
 
 const budgetOf = (path: string): number | undefined => {
   if (path.endsWith('/SKILL.md')) {
-    return 4000;
+    return 1500;
   }
 
   if (path.endsWith('/CHEATSHEET.md')) {

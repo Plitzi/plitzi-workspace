@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSpace, capturing } from './helpers';
+import { buildSpace, capturing, checkBatch } from './helpers';
 import { readResource } from '../resources';
-import { apply, validate } from '../tools';
+import { apply } from '../tools';
 
 import type { Space } from '../helpers';
 import type { AIFolder, AIPageSkeleton, AIPageSummary } from '../types';
@@ -59,11 +59,11 @@ describe('MCP settings (space-level customCss + auth config)', () => {
   });
 
   it('refuses a notifications value that is not one CSS value, and a field it does not take', () => {
-    const broken = validate(
+    const broken = checkBatch(
       { operations: [{ type: 'patchSettings', notifications: { background: 'red; } body { display: none' } }] },
       buildSpace()
     );
-    const unknown = validate(
+    const unknown = checkBatch(
       { operations: [{ type: 'patchSettings', notifications: { colour: 'red' } }] },
       buildSpace()
     );
@@ -86,7 +86,7 @@ describe('MCP settings (space-level customCss + auth config)', () => {
 
   // The runtime compares top-level keys: a dotted one would match nothing and the state would be kept regardless.
   it('refuses a dotted transient key', () => {
-    const res = validate({ operations: [{ type: 'patchSettings', transientState: ['tour.step'] }] }, buildSpace());
+    const res = checkBatch({ operations: [{ type: 'patchSettings', transientState: ['tour.step'] }] }, buildSpace());
     expect(res.valid).toBe(false);
     expect(res.errors.some(e => e.message.includes('no dots'))).toBe(true);
   });
@@ -104,10 +104,10 @@ describe('MCP settings (space-level customCss + auth config)', () => {
   });
 
   it('refuses a painted key that is dotted, or also transient', () => {
-    const dotted = validate({ operations: [{ type: 'patchSettings', paintedState: ['tool.pick'] }] }, buildSpace());
+    const dotted = checkBatch({ operations: [{ type: 'patchSettings', paintedState: ['tool.pick'] }] }, buildSpace());
     expect(dotted.errors.some(e => e.path.endsWith('paintedState[0]') && e.message.includes('no dots'))).toBe(true);
 
-    const both = validate(
+    const both = checkBatch(
       { operations: [{ type: 'patchSettings', paintedState: ['toolPick'], transientState: ['toolPick'] }] },
       buildSpace()
     );
@@ -143,7 +143,7 @@ describe('MCP settings (space-level customCss + auth config)', () => {
 
   // The pattern is what the server matches topics against: one it cannot read opens nothing, silently.
   it('refuses a channel the server could not serve, saying how to write it', () => {
-    const res = validate(
+    const res = checkBatch(
       { operations: [{ type: 'patchSettings', channels: { 'board {id}': { access: { mode: 'public' } } } }] },
       buildSpace()
     );
@@ -253,7 +253,12 @@ describe('MCP patchElement (I3/R3 — partial merge)', () => {
 
   it('merges style.base without touching other selectors', async () => {
     const res = await apply(
-      { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'c1', style: { base: ['box', 'extra'] } }] },
+      {
+        operations: [
+          { type: 'upsertDefinition', ref: 'extra', desktop: { color: 'red' } },
+          { type: 'patchElement', pageRef: 'home', ref: 'c1', style: { base: ['box', 'extra'] } }
+        ]
+      },
       buildSpace()
     );
     expect(res.elements?.find(e => e.ref === 'c1')?.style.base).toEqual(['box', 'extra']);
@@ -319,13 +324,13 @@ describe('MCP page folders (create, nest, delete, move)', () => {
   });
 
   it('rejects a page joining a folder that does not exist', () => {
-    const r = validate({ operations: [{ type: 'upsertPage', ref: 'x', folder: 'ghost' }] }, buildSpace());
+    const r = checkBatch({ operations: [{ type: 'upsertPage', ref: 'x', folder: 'ghost' }] }, buildSpace());
     expect(r.valid).toBe(false);
     expect(r.errors[0].message).toContain('Folder "ghost" does not exist');
   });
 
   it('rejects nesting a folder under itself', () => {
-    const r = validate({ operations: [{ type: 'upsertFolder', ref: 'blog', parentId: 'blog' }] }, buildSpace());
+    const r = checkBatch({ operations: [{ type: 'upsertFolder', ref: 'blog', parentId: 'blog' }] }, buildSpace());
     expect(r.valid).toBe(false);
     expect(r.errors.some(e => e.message.includes('cannot be nested under itself'))).toBe(true);
   });
@@ -384,7 +389,7 @@ describe('MCP page.folder is always "" (root) or a valid id', () => {
   it('accepts an explicit empty-string folder as root (not a missing-folder error)', async () => {
     const res = await apply({ operations: [{ type: 'upsertPage', ref: 'p', label: 'P', folder: '' }] }, buildSpace());
     expect(res.applied).toBe(true);
-    expect(validate({ operations: [{ type: 'upsertPage', ref: 'p', folder: '' }] }, buildSpace()).valid).toBe(true);
+    expect(checkBatch({ operations: [{ type: 'upsertPage', ref: 'p', folder: '' }] }, buildSpace()).valid).toBe(true);
   });
 
   it('detects (rejects) a folder that is not a real folder ref, via apply', async () => {

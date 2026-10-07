@@ -121,8 +121,6 @@ export const checkElementInput = (element: ElementInput, path: string, ctx: Vali
       message: 'Element type is required',
       hint: 'Read plitzi://types for known types'
     });
-  } else if (!ctx.knownTypes.has(element.type)) {
-    ctx.warnings.push(`Type "${element.type}" was not seen in this space; ensure a plugin provides it (${path}.type).`);
   }
 
   checkElementProps(element, path, ctx);

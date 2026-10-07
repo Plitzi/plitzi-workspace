@@ -27,7 +27,8 @@ const SINGLE = '\x27';
 const quoted = (text: string): string =>
   `${SINGLE}${text.replace(/\\/g, '\\\\').replaceAll(SINGLE, `\\${SINGLE}`)}${SINGLE}`;
 
-const literalText = (value: string | boolean): string => (typeof value === 'string' ? quoted(value) : String(value));
+const literalText = (value: string | number | boolean): string =>
+  typeof value === 'string' ? quoted(value) : String(value);
 
 const keyText = (key: string): string => (/^[A-Za-z_$][\w$]*$/.test(key) ? key : quoted(key));
 
@@ -458,6 +459,47 @@ export const sourceEdit = (
   }
 
   return editKey(ts, sourceFile, props, edit.on === 'attribute' ? 'attributes' : undefined, edit);
+};
+
+/** The call written at that position, as it is written: what `plitzi where` shows of an element. */
+export const callTextAt = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>
+): string | undefined => callAt(ts, sourceFile, position.line, position.column)?.getText(sourceFile);
+
+/**
+ * An attribute set — or removed, with no value — where the element was written: `plitzi edit`. `content` written as the
+ * factory's first argument (`text('Hi', { … })`) is replaced there; anything else is a key of its props, edited as a
+ * fix edits it.
+ */
+export const attributeEdit = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>,
+  key: string,
+  value: string | number | boolean | undefined
+): EditOutcome => {
+  const call = callAt(ts, sourceFile, position.line, position.column);
+  if (!call) {
+    return { unplaced: 'the call that wrote it is not where it was' };
+  }
+
+  const first = call.arguments.at(0);
+  if (key === 'content' && first && (ts.isStringLiteral(first) || ts.isNoSubstitutionTemplateLiteral(first))) {
+    if (value === undefined) {
+      return { unplaced: '`content` is the call’s first argument there: remove it from the call by hand' };
+    }
+
+    return one({ start: first.getStart(sourceFile), end: first.getEnd(), text: literalText(value) });
+  }
+
+  return sourceEdit(
+    ts,
+    sourceFile,
+    position,
+    value === undefined ? { on: 'attribute', op: 'remove', key } : { on: 'attribute', op: 'set', key, value }
+  );
 };
 
 /** The text with every change made — from the end back, so each span is where it was found. Overlaps are refused. */

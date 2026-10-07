@@ -8,6 +8,7 @@ import { check } from './commands/check';
 import create from './commands/create';
 import createPlugin from './commands/createPlugin';
 import { dataDescribe } from './commands/data';
+import { edit } from './commands/edit';
 import { explainCommand } from './commands/explain';
 import { fix } from './commands/fix';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
@@ -27,6 +28,7 @@ import {
 import { shot } from './commands/shot';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
+import { where } from './commands/where';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
@@ -43,6 +45,7 @@ import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
 import type { DataDescribeOptions } from './commands/data';
 import type { DryRunOptions } from './commands/dryRun';
+import type { EditOptions } from './commands/edit';
 import type { ExplainOptions } from './commands/explain';
 import type { FixOptions } from './commands/fix';
 import type { FunctionsDevOptions, FunctionsOptions } from './commands/functions';
@@ -55,6 +58,7 @@ import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
 import type { ShotOptions } from './commands/shot';
 import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
+import type { WhereOptions } from './commands/where';
 import type { DoctorOptions } from './doctor';
 import type { FeedbackOptions } from './feedback';
 import type { LintOptions } from './lint';
@@ -363,6 +367,22 @@ program
   .option('--reduced-motion', 'As a visitor who asked for less motion')
   .option('--json', 'One object, for a tool or an agent')
   .action((path: string | undefined, options: ShotOptions) => shot(path, options));
+
+program
+  .command('where')
+  .argument('<query>', 'An element’s id, a class it wears, or words it shows: hero-cta, navLink, "Get started"')
+  .description('Where the project’s code writes an element: the file, the line and the call itself')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((query: string, options: WhereOptions) => where(query, options));
+
+program
+  .command('edit')
+  .argument('<id>', 'The element, by its id: hero-cta')
+  .description('Change an element’s attributes in the call that writes it, then check the space still authors')
+  .option('--set <key=value...>', 'An attribute to write: content="Start free", required=true')
+  .option('--remove <key...>', 'An attribute to take out')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((id: string, options: EditOptions) => edit(id, options));
 
 program
   .command('explain')

@@ -23,7 +23,7 @@ export interface FixChange {
   /** What `rename` renames to, and what `replace` writes. */
   to?: string;
   /** What `set` writes. */
-  value?: string | boolean;
+  value?: string | number | boolean;
 }
 
 /** One change a fix made, said the way the problems list says the issue it settles. */

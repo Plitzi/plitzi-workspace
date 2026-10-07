@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSpace, capturing } from './helpers';
+import { buildSpace, capturing, checkBatch } from './helpers';
 import { readResource } from '../resources';
-import { apply, validate } from '../tools';
+import { apply } from '../tools';
 
 import type { Space } from '../helpers';
 import type { Operation } from '../tools';
@@ -183,7 +183,7 @@ describe('MCP interactions', () => {
   });
 
   it('rejects a flow whose first node is not a trigger', () => {
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           {
@@ -201,7 +201,7 @@ describe('MCP interactions', () => {
   });
 
   it('rejects deleteInteraction without exactly one of flowId/nodeId', () => {
-    const res = validate({ operations: [{ type: 'deleteInteraction', pageRef: 'home', ref: 'c1' }] }, buildSpace());
+    const res = checkBatch({ operations: [{ type: 'deleteInteraction', pageRef: 'home', ref: 'c1' }] }, buildSpace());
     expect(res.valid).toBe(false);
     expect(res.errors.some(e => e.message.includes('exactly one'))).toBe(true);
   });
@@ -276,7 +276,7 @@ describe('MCP interactions', () => {
   // A param value can be a data-binding token ({{ source }}) that resolves at runtime — so its literal string form is
   // NOT a type error even for a param declared boolean/number (autoDismiss/autoDismissTimeout here).
   it('accepts a data-binding token as a param value where the type would otherwise be boolean/number', () => {
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           {
@@ -306,7 +306,7 @@ describe('MCP interactions', () => {
   });
 
   it('warns when a built-in globalCallback is pointed at the host element instead of its source', () => {
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           {
@@ -381,7 +381,7 @@ describe('MCP interactions', () => {
   });
 
   it('warns when a strict built-in callback gets unknown params', () => {
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           {
@@ -461,7 +461,7 @@ describe('MCP interactions', () => {
         }
       ]
     };
-    const res = validate({ operations: [op] }, interactiveSpace());
+    const res = checkBatch({ operations: [op] }, interactiveSpace());
     expect(res.valid).toBe(true);
     expect(res.warnings.some(w => w.includes('setState') && w.includes('"type"'))).toBe(true);
 
@@ -518,7 +518,7 @@ describe('MCP interactions', () => {
         { nodeType: 'utility', action: 'delayTime', title: 'Wait', params: { delay: 2000 } }
       ]
     };
-    const res = validate({ operations: [op] }, interactiveSpace());
+    const res = checkBatch({ operations: [op] }, interactiveSpace());
     expect(res.valid).toBe(true);
     expect(res.warnings.some(w => w.includes('delayTime') && w.includes('"delay"') && w.includes('time'))).toBe(true);
 
@@ -608,7 +608,7 @@ describe('MCP interactions', () => {
         enabled: true
       }
     };
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }
@@ -640,7 +640,7 @@ describe('MCP interactions', () => {
         enabled: true
       }
     };
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-1', title: 'Renamed' }
@@ -656,7 +656,7 @@ describe('MCP interactions', () => {
 
   // Refused — no element answers it, so the step would do nothing — and the warning names the node type that fixes it.
   it('refuses a global callback used with nodeType "callback" and names the right node type', () => {
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           {
@@ -681,7 +681,7 @@ describe('MCP interactions', () => {
   });
 
   it('warns when a utility is used with nodeType "globalCallback" (wrong node type)', () => {
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           {
@@ -728,19 +728,19 @@ describe('MCP interactions', () => {
 
   // A setState with no key writes nothing: the step runs and nothing changes, so it does not get saved.
   it('refuses an element setState missing its key', () => {
-    const res = validate({ operations: [setStateFlow({ value: 'x' })] }, interactiveSpace());
+    const res = checkBatch({ operations: [setStateFlow({ value: 'x' })] }, interactiveSpace());
     expect(res.valid).toBe(false);
     expect(res.errors.some(e => e.message.includes('setState') && e.message.includes('needs "key"'))).toBe(true);
   });
 
   it('refuses a setState attribute key the built-in target never reads; a real key passes', () => {
-    const ok = validate(
+    const ok = checkBatch(
       { operations: [setStateFlow({ category: 'attribute', key: 'content', value: 'x' })] },
       interactiveSpace()
     );
     expect(ok.valid).toBe(true);
 
-    const bad = validate(
+    const bad = checkBatch(
       { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' })] },
       interactiveSpace()
     );
@@ -765,7 +765,7 @@ describe('MCP interactions', () => {
     };
     space.schema.flat.home.definition.items = [...(space.schema.flat.home.definition.items ?? []), 'w1'];
 
-    const res = validate(
+    const res = checkBatch(
       { operations: [setStateFlow({ category: 'attribute', key: 'bogus', value: 'x' }, 'w1')] },
       space
     );
@@ -774,13 +774,13 @@ describe('MCP interactions', () => {
   });
 
   it('validates category="state" keys against the type visibility + styleSelectors', () => {
-    const ok = validate(
+    const ok = checkBatch(
       { operations: [setStateFlow({ category: 'state', key: 'styleSelectors.base', value: 'true' })] },
       interactiveSpace()
     );
     expect(ok.valid).toBe(true);
 
-    const bad = validate(
+    const bad = checkBatch(
       { operations: [setStateFlow({ category: 'state', key: 'styleSelectors.nope', value: 'true' })] },
       interactiveSpace()
     );
@@ -795,14 +795,14 @@ describe('MCP interactions', () => {
       position: 'inside',
       element: { ref: 'w-1', type: 'container', props: { bogus: 1 } }
     };
-    const strict = validate(
+    const strict = checkBatch(
       { operations: [upsert] },
       spaceWithCatalog({ container: { custom: false, attributes: ['title'] } })
     );
     expect(strict.valid).toBe(false);
     expect(strict.errors.some(e => e.message.includes('container') && e.message.includes('bogus'))).toBe(true);
 
-    const lenient = validate(
+    const lenient = checkBatch(
       { operations: [{ ...upsert, element: { ref: 'w-1', type: 'myWidget', props: { bogus: 1 } } }] },
       spaceWithCatalog({ myWidget: { custom: true, attributes: ['title'] } })
     );
@@ -845,23 +845,23 @@ describe('MCP interactions', () => {
   });
 
   it('ERRORS on a non-numeric value for a number param, but ACCEPTS a numeric string (text input)', () => {
-    const bad = validate({ operations: [notifyFlow({ autoDismissTimeout: 'soon' })] }, interactiveSpace());
+    const bad = checkBatch({ operations: [notifyFlow({ autoDismissTimeout: 'soon' })] }, interactiveSpace());
     expect(bad.valid).toBe(false);
     expect(bad.errors.some(e => e.message.includes('autoDismissTimeout') && e.message.includes('number'))).toBe(true);
 
     // The builder's number fields are text inputs, so a numeric string ("5000") is legitimate and coerces at runtime.
-    const ok = validate({ operations: [notifyFlow({ autoDismissTimeout: '5000' })] }, interactiveSpace());
+    const ok = checkBatch({ operations: [notifyFlow({ autoDismissTimeout: '5000' })] }, interactiveSpace());
     expect(ok.valid).toBe(true);
   });
 
   it('ERRORS on a boolean param given as a string', () => {
-    const res = validate({ operations: [notifyFlow({ autoDismiss: 'true' })] }, interactiveSpace());
+    const res = checkBatch({ operations: [notifyFlow({ autoDismiss: 'true' })] }, interactiveSpace());
     expect(res.valid).toBe(false);
     expect(res.errors.some(e => e.message.includes('autoDismiss') && e.message.includes('boolean'))).toBe(true);
   });
 
   it('ERRORS on a select param value outside its options and lists the allowed values', () => {
-    const res = validate({ operations: [notifyFlow({ appearance: 'bogus' })] }, interactiveSpace());
+    const res = checkBatch({ operations: [notifyFlow({ appearance: 'bogus' })] }, interactiveSpace());
     expect(res.valid).toBe(false);
     const err = res.errors.find(e => e.message.includes('appearance'));
     expect(err?.message).toContain('success');
@@ -884,9 +884,9 @@ describe('MCP interactions', () => {
         }
       ]
     });
-    expect(validate({ operations: [flow(true)] }, interactiveSpace()).valid).toBe(true);
-    expect(validate({ operations: [flow(5)] }, interactiveSpace()).valid).toBe(true);
-    expect(validate({ operations: [flow('Hola')] }, interactiveSpace()).valid).toBe(true);
+    expect(checkBatch({ operations: [flow(true)] }, interactiveSpace()).valid).toBe(true);
+    expect(checkBatch({ operations: [flow(5)] }, interactiveSpace()).valid).toBe(true);
+    expect(checkBatch({ operations: [flow('Hola')] }, interactiveSpace()).valid).toBe(true);
   });
 
   // --- patchInteractionNode validates the MERGED node (stored params ∪ the patch), not only the keys touched: a
@@ -910,7 +910,7 @@ describe('MCP interactions', () => {
         enabled: true
       }
     };
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'delayTime-bad', title: 'Renamed' }
@@ -939,7 +939,7 @@ describe('MCP interactions', () => {
         enabled: true
       }
     };
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           { type: 'patchInteractionNode', pageRef: 'home', ref: 'c1', nodeId: 'setState-1', params: { value: 'nuevo' } }

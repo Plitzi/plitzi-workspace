@@ -95,12 +95,7 @@ export interface ApplyInput {
   operations: Operation[];
 }
 
-// --- plitzi_validate ---
-
-export interface ValidateInput {
-  environment?: string;
-  operations: Operation[];
-}
+// --- what a batch's check answers (draftBatch, lintDraft): refused, warned of, suggested ---
 
 export interface ValidationResult {
   valid: boolean;

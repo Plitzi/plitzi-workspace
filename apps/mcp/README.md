@@ -117,10 +117,11 @@ createServer({ adapters }, { screenshot: { serviceUrl, renderBaseUrl }, proxy: {
 |---|---|---|
 | `plitzi_search` | read | Find elements, pages, styles and bindings; returns ready-made URIs |
 | `plitzi_read` | read | Read one or more resources in detail by URI |
-| `plitzi_validate` | read | Dry-run a batch of operations: what would fail, what is warned, and suggestions for a shorter way to the same page |
-| `plitzi_apply` | write | Apply a batch of operations and persist; answers with the batch's suggestions too |
-| `plitzi_preview` | read | Render a draft to HTML through an SSR server |
-| `plitzi_screenshot` | read | Render a draft to a PNG (desktop, mobile or both) through the screenshot service |
+| `plitzi_apply` | write | Apply a batch of operations and persist; answers with the batch's suggestions too. `dryRun` checks it without saving, and `look` renders the page as the batch leaves it (HTML, a PNG or the accessibility outline) |
+| `plitzi_set`, `plitzi_class`, `plitzi_bind`, `plitzi_place`, `plitzi_add_page` | write | One change by its intention — an element's attributes, its classes, a binding, a component placed, a page — by the element's ref alone, saved as `plitzi_apply` saves it, answered in a line |
+| `plitzi_describe_operation` | read | One operation's schema by its type, or the list of every type |
+| `plitzi_preview` | read | Render a saved page to HTML through an SSR server |
+| `plitzi_screenshot` | read | Render a saved page to a PNG (desktop, mobile or both) through the screenshot service |
 | `plitzi_render` | read | Render a self-contained UI widget, offline, with no space |
 | `plitzi_try_function` | write | Run one task of the space's functions against the draft, in the sandbox: its value, logs and error |
 
@@ -164,8 +165,8 @@ This package ships an [Agent Skill](https://agentskills.io/) for `plitzi_render`
 a widget instead of writing prose, the shape of a good call, the layout and theme traps that make a widget look
 wrong in a chat panel, and how to iterate on one it already rendered.
 
-It lives in [`skills/plitzi-render`](./skills/plitzi-render/SKILL.md) as a plain `SKILL.md`, so it installs by
-copying that folder into your agent's skills directory (Claude Code, VS Code / Copilot, Codex, Gemini CLI, Cline,
+It lives in [`skills/plitzi-render`](./skills/plitzi-render/SKILL.md): a short `SKILL.md` an agent reads every time,
+and a `reference/` it opens when the task names one. It installs by copying that folder into your agent's skills directory (Claude Code, VS Code / Copilot, Codex, Gemini CLI, Cline,
 Goose…):
 
 ```bash

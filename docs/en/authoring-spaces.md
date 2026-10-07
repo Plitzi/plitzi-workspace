@@ -869,7 +869,7 @@ component's instance included (`component(id, { quiet })`) — so it stops buryi
 document (`definition.quiet`) and read by `suggestSpace`, so the builder's list and the MCP leave out the same ones; the
 MCP writes it with `quiet` on an element op. `quiet` takes only suggestions' codes (`quiet-unknown`).
 `suggestSpace({ schema, style })` gives the same list for a document authored anywhere; the MCP server's
-`plitzi_validate` and `plitzi_apply` answer with the ones a batch opened up (never again the ones the space already
+`plitzi_apply` (a `dryRun` too) answers with the ones a batch opened up (never again the ones the space already
 had — a suggestion about declarations names them in `subjects`, so a class a batch left unused is new beside the old
 ones), and `npm run author` prints them under the warnings. The skill's `reference/efficiency.md` is the agent's version
 of this table, with the rules that cost styles rather than elements.

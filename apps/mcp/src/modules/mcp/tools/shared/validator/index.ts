@@ -1,3 +1,4 @@
+import { closest } from '@plitzi/sdk-authoring';
 import { treeOf } from '@plitzi/sdk-schema/helpers/components';
 import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
 
@@ -15,7 +16,7 @@ import { checkSlotCss } from './css';
 import { checkElementInput, checkRawMarkup, checkTypeProps, checkVariantApplication } from './elements';
 import { checkInteractionNode } from './interactions';
 import { checkRef } from './refs';
-import { elementTypeNames, observedDataSources, observedInteractionActions } from '../../../catalogs';
+import { observedDataSources, observedInteractionActions } from '../../../catalogs';
 import {
   componentView,
   findComponentByRef,
@@ -83,10 +84,6 @@ const buildValidationCtx = (space: Space, ops: Operation[], mode: ValidationMode
     errors: [],
     warnings: [],
     warned: new Set(),
-    // Built-in element types (container, heading, image…) are always available from the SDK — no plugin needed — so
-    // they are always "known", even in a space that has no instance of them yet or (plitzi_render) a catalog-less seed
-    // space. Without this the render tool warns "ensure a plugin provides it" for every standard element.
-    knownTypes: new Set([...Object.keys(registry.types), ...elementTypeNames]),
     typeProps: new Map(Object.entries(registry.types).map(([type, info]) => [type, new Set(Object.keys(info.props))])),
     typeMeta: buildTypeMeta(space.catalog),
     // Ids are one namespace across the pages and each component, so an element is found in whichever tree holds it.
@@ -124,6 +121,44 @@ export const validateOperations = (
     }
 
     (input.children ?? []).forEach((child, i) => checkProviders(child, `${base}.children[${i}]`));
+  };
+
+  // The classes an element may wear: the space's, and the ones this batch declares. A name that is neither used to
+  // be saved as written — an element dressed by a class nothing defines, which renders unstyled and says nothing.
+  const classes = new Set([
+    ...Object.values(space.style.platform).flatMap(breakpoint =>
+      Object.entries(breakpoint)
+        .filter(([, item]) => item.type === 'class')
+        .map(([name]) => name)
+    ),
+    ...ops.flatMap(op =>
+      op.type === 'upsertDefinition' ? [op.ref] : op.type === 'upsertDefinitions' ? Object.keys(op.definitions) : []
+    )
+  ]);
+  const checkClasses = (
+    style: { base?: string[]; slots?: Record<string, string[]> } | undefined,
+    path: string
+  ): void => {
+    const worn = [
+      ...(style?.base ?? []).map(name => ({ name, at: `${path}.base` })),
+      ...Object.entries(style?.slots ?? {}).flatMap(([slot, names]) =>
+        names.map(name => ({ name, at: `${path}.slots.${slot}` }))
+      )
+    ];
+    for (const { name, at } of worn) {
+      if (!classes.has(name)) {
+        const nearest = closest(name, classes);
+        ctx.errors.push({
+          path: at,
+          message: `"${name}" is not a class of the space${nearest ? ` — did you mean "${nearest}"?` : ''}`,
+          hint: 'Name one of plitzi://definitions/{env}, or declare it earlier in the batch with upsertDefinition'
+        });
+      }
+    }
+  };
+  const checkTreeClasses = (input: ElementInput, path: string): void => {
+    checkClasses(input.style, `${path}.style`);
+    (input.children ?? []).forEach((child, i) => checkTreeClasses(child, `${path}.children[${i}]`));
   };
 
   if (ops.length > MAX_OPS) {
@@ -173,11 +208,13 @@ export const validateOperations = (
     switch (op.type) {
       case 'upsertElement':
         checkElementInput(op.element, `${base}.element`, ctx, new Set());
+        checkTreeClasses(op.element, `${base}.element`);
         checkVariantApplication(op.element.initialState, `${base}.element.initialState`, ctx);
         checkProviders(op.element, `${base}.element`);
         break;
       case 'patchElement': {
         checkRef(op.ref, `${base}.ref`, ctx);
+        checkClasses(op.style, `${base}.style`);
         const page = findRootByRef(scoped, component ? component.rootId : op.pageRef);
         const target = page ? resolveRef(scoped, page, op.ref) : undefined;
         if (op.props && target && target.id !== page?.id) {

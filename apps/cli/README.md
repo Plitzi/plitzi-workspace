@@ -224,6 +224,30 @@ by the line and column the element remembers — and only where the value is wri
 listed with where it is and why it was left. `--write` authors the space again in a fresh process and keeps the edits
 only if every fix is gone and no problem was added; a fix that would add one is put back and said.
 
+## `where` and `edit`
+
+```bash
+plitzi where hero-cta                            # by id: the file, the line and the call that writes it
+plitzi where navLink                             # every element wearing the class (`nav-link` or `navLink`)
+plitzi where "Get started"                       # every element showing the words
+plitzi edit hero-cta --set content="Start free"  # an attribute written in that call
+plitzi edit signup --set required=true --remove placeholder
+```
+
+`where` answers where the project's code writes an element — `src/space/pages/home.ts:42` and the call itself — so
+the call is edited instead of the files around it being read. It is asked of the code as it is now: the space is
+authored again and each element's call read back, the way `fix` finds it, so it follows an element wherever somebody
+moved it, with nothing kept that could fall out of step. Ten matches at most, the call shown for the first three;
+`--json` adds the element's attributes when it was asked for by id. A space that does not author is said, with the
+lines of `src/` holding the words instead.
+
+`edit` writes attributes in that call — `content` given as the factory's first argument (`text('Hi', { … })`) where it
+is — keeping the kind each one has (a number stays a number; a new one is `true`/`false` or words), formats the file as
+the project formats it, and authors the space again in a fresh process: unless every value asked for is there, the
+file goes back to what it was. A value written as anything but a literal — a variable, a template, props spread from
+elsewhere — is left to the author, said with where it is. The same `edit` refused again within a few minutes says so,
+and that running it once more will not change the answer (kept in `tmp/refusals.json`).
+
 ## `lint`
 
 ```bash
@@ -303,11 +327,14 @@ plitzi explain class-and-css    # a problem's code: what was wrong, what to writ
 plitzi explain content-attribute # a suggestion's code: what is written the long way, and the short one
 plitzi explain bindTemplate     # a helper: how it is written, what it is for, an example
 plitzi explain motion           # the arrivals, triggers and loops the SDK plays
+plitzi explain pageFamily       # any other export of @plitzi/sdk-authoring: its signature and its doc's first line
 plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers
 ```
 
 What a name means when authoring, from the catalogues the checks themselves read — the answer to a question that would
-otherwise be a search through the SDK's types. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
+otherwise be a search through the SDK's types. A name no catalogue holds — `pageFamily`, `styles`, `SpaceSpec` — is any
+export of `@plitzi/sdk-authoring`, answered from the `.d.ts` the project installed, so it is the version the project
+runs. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
 
 ## `doctor`
 

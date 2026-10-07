@@ -1,22 +1,18 @@
 import { applyTool } from './apply';
+import { describeOperationTool } from './describeOperation';
+import { addPageTool, bindTool, classTool, placeTool, setTool } from './intents';
 import { previewTool } from './preview';
 import { readTool } from './read';
 import { renderTool } from './render';
 import { screenshotTool } from './screenshot';
 import { searchTool } from './search';
 import { tryFunctionTool } from './tryFunction';
-import { validateTool } from './validate';
 
 import type { ToolDef } from './shared/tool';
 
 export { apply, applyShape } from './apply';
-export { validate, validateShape } from './validate';
 export { search, searchShape } from './search';
 export { read, readShape } from './read';
-export { previewShape } from './preview';
-export { render, renderShape } from './render';
-export { screenshotShape } from './screenshot';
-export { applyOperations } from './apply/dispatch';
 export { validateOperations } from './shared/validator';
 export { operation } from './operations';
 
@@ -24,8 +20,13 @@ export { operation } from './operations';
  *  ToolDef descriptor and append it here. */
 export const tools: ToolDef[] = [
   applyTool,
-  validateTool,
+  setTool,
+  classTool,
+  bindTool,
+  placeTool,
+  addPageTool,
   searchTool,
+  describeOperationTool,
   readTool,
   renderTool,
   previewTool,
@@ -43,7 +44,6 @@ export type {
   Persisters,
   WriteElement,
   WriteResponse,
-  ValidateInput,
   ValidationResult,
   MutationOutcome,
   SearchHit,

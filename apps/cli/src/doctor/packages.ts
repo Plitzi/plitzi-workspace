@@ -164,12 +164,21 @@ const scaffoldChecks = async (context: DoctorContext): Promise<Finding[]> => {
     );
   }
 
+  // One line for every package behind the same version: one fact, and one command that settles all of them.
+  const behind = new Map<string, string[]>();
   for (const { name, from, to } of plan.raised) {
+    behind.set(to, [...(behind.get(to) ?? []), `${name} ${from}`]);
+  }
+
+  for (const [to, packages] of behind) {
     findings.push(
-      say.warning('sdk-behind', `${name} is ${from}, behind this CLI (${to}): what it writes is for ${to}.`, {
-        file: 'package.json',
-        fix: UPGRADE_PACKAGES
-      })
+      say.warning(
+        'sdk-behind',
+        packages.length === 1
+          ? `${packages[0]} is behind this CLI (${to}): what it writes is for ${to}.`
+          : `${String(packages.length)} packages are behind this CLI (${to}) — ${packages.join(', ')}: what it writes is for ${to}.`,
+        { file: 'package.json', fix: UPGRADE_PACKAGES }
+      )
     );
   }
 
@@ -367,15 +376,23 @@ const installChecks = async (context: DoctorContext, sdk: readonly string[]): Pr
   const singletons = [...sdk, 'react', 'react-dom'];
   const installed = new Map<string, Installed>();
   // Installed by hand, linked or overridden: the project's choice, which an install would undo — said, never refused.
+  // Packages that came the same way are one line — eighteen tarballs of one folder are one fact, not eighteen.
   const local = new Map((await localPackages(context.root)).map(entry => [entry.name, entry.from]));
+  const byOrigin = new Map<string, string[]>();
   for (const [name, from] of local) {
+    const origin = from.replace(/[^/\s,]+\.tgz/g, '<package>.tgz');
+    byOrigin.set(origin, [...(byOrigin.get(origin) ?? []), name]);
+  }
+
+  for (const [origin, names] of byOrigin) {
+    const [only] = names;
     findings.push(
       say.info(
         'installed-local',
-        `${name} is installed locally — ${from}: an install puts the registry's in its place.`,
-        {
-          file: 'package.json'
-        }
+        names.length === 1
+          ? `${only} is installed locally — ${local.get(only) ?? origin}: an install puts the registry's in its place.`
+          : `${String(names.length)} packages are installed locally — ${origin}: ${names.join(', ')}. An install puts the registry's in their place.`,
+        { file: 'package.json' }
       )
     );
   }

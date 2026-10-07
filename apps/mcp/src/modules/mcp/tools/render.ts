@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { generateCache } from '@plitzi/sdk-style/StyleHelper';
 
-import { documentOperations } from './operations';
+import { compactDocumentOperations, documentOperations } from './operations';
 import { iconFontCss, RENDER_APP_URI } from '../apps';
 import { emptySpace } from '../helpers';
 import { proxifyResources } from '../proxy';
@@ -291,6 +291,7 @@ export const renderTool = defineTool({
     'the WIRING, not that a click was performed: say what you connected, never that you verified it at runtime. ' +
     'On failure it returns teachable errors (path + hint) — read them and retry.',
   inputShape: renderShape,
+  compactInputShape: { ...renderShape, operations: compactDocumentOperations },
   access: 'read',
   spaceless: true,
   ui: { resourceUri: RENDER_APP_URI },

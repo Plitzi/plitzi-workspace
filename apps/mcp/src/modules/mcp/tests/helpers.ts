@@ -1,6 +1,8 @@
+import { draftBatch } from '../tools/shared/draftBatch';
+
 import type { Space } from '../helpers';
 import type { Operation } from '../tools';
-import type { Persisters } from '../types';
+import type { Persisters, ValidationResult } from '../types';
 
 const buildSpace = (): Space => {
   const schema = {
@@ -227,4 +229,22 @@ const malformedSpace = (): Space => ({
   actions: []
 });
 
-export { buildSpace, capturing, spaceWithRoute, varOp, scopeSpace, malformedSpace };
+/**
+ * What `plitzi_apply`'s dryRun answers of a batch, as one result to assert on: the same `draftBatch` it runs before
+ * anything is saved, so a refusal here is the one an agent meets.
+ */
+const checkBatch = (input: { operations: Operation[] }, space: Space): ValidationResult => {
+  const result = draftBatch(space, 'main', input.operations);
+  if (!result.ok) {
+    return { valid: false, errors: result.errors, warnings: result.warnings };
+  }
+
+  return {
+    valid: true,
+    errors: [],
+    warnings: result.warnings,
+    ...(result.suggestions.length > 0 ? { suggestions: result.suggestions } : {})
+  };
+};
+
+export { buildSpace, capturing, checkBatch, spaceWithRoute, varOp, scopeSpace, malformedSpace };

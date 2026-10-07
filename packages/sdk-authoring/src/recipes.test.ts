@@ -37,12 +37,12 @@ const recipes = import.meta.glob<{ recipe: SpaceSpec; plugins?: readonly PluginD
 );
 
 describe('the skill’s recipes', () => {
-  // A recipe nobody can find is not one: each is a row of SKILL.md's table, by the intent it answers.
-  it('are each listed in SKILL.md', () => {
-    const skill = readFileSync(new URL('../skills/plitzi-authoring/SKILL.md', import.meta.url), 'utf-8');
+  // A recipe nobody can find is not one: each is a row of the recipes' index, by the intent it answers.
+  it('are each listed in the index of recipes', () => {
+    const index = readFileSync(new URL('../skills/plitzi-authoring/reference/recipes.md', import.meta.url), 'utf-8');
     const unlisted = Object.keys(recipes)
-      .map(path => `recipes/${path.split('/').pop() ?? path}`)
-      .filter(file => !skill.includes(`](${file})`));
+      .map(path => `../recipes/${path.split('/').pop() ?? path}`)
+      .filter(file => !index.includes(`](${file})`));
 
     expect(unlisted).toEqual([]);
   });

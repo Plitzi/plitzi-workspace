@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import { buildSpace, capturing } from './helpers';
+import { buildSpace, capturing, checkBatch } from './helpers';
 import { readResource } from '../resources';
-import { apply, search, validate } from '../tools';
+import { apply, search } from '../tools';
 
 import type { Space } from '../helpers';
 import type { AIDefinition, AIElementDetail } from '../types';
@@ -195,7 +195,7 @@ describe('MCP style variants + element state', () => {
   });
 
   it('warns when an element applies a variant its class does not declare', () => {
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           {
@@ -213,7 +213,7 @@ describe('MCP style variants + element state', () => {
   });
 
   it('does not warn for a declared variant, nor for one created in the same batch', () => {
-    const res = validate(
+    const res = checkBatch(
       {
         operations: [
           { type: 'patchElement', pageRef: 'home', ref: 'c1', initialState: { styleVariant: { box: { base: 'lg' } } } },

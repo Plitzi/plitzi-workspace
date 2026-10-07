@@ -32,7 +32,6 @@ export interface ValidationCtx {
   errors: ValidationError[];
   warnings: string[];
   warned: Set<string>;
-  knownTypes: Set<string>;
   typeProps: Map<string, Set<string>>; // observed prop keys per element type (I5)
   typeMeta: Map<string, TypeMeta>; // authoritative per-type metadata from the component catalog
   elementType: (ref: string) => string | undefined; // resolve an element ref/id to its schema type

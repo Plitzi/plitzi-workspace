@@ -112,3 +112,32 @@ process, ~10 MB counted as the server's.
 
 `--runtime local` runs the servers as plain child processes instead: no limits, memory read as resident set size
 (which on macOS counts pages a container would not). For a quick before/after on one machine, never to size hardware.
+
+## Agents: how small a model can work on Plitzi
+
+`yarn agents` is a different bench: not the server's hardware but the agents that write a space — RFC 0025's floor,
+the smallest model and context whose results are as good as the largest's. It spends tokens, so nothing runs without
+a model named, and it is run at milestones rather than on every change.
+
+```bash
+yarn agents --model claude:claude-opus-5-5 --model claude:claude-haiku-4-5-20251001 \
+  --model opencode:ollama/qwen3.6:latest --dry-run       # what would run
+yarn agents --model claude:claude-haiku-4-5-20251001 --task mcp-text --runs 1
+yarn agents --model … --context none --context core --context full
+yarn agents --report <dir>                               # the report again, from results/agents/<dir>/runs.jsonl
+```
+
+- **The ladder**, largest first: the first `--model` is the reference every other is held to. Claude models run in
+  Claude Code (`claude -p`, on the account it is signed in to), any other in OpenCode (`ollama/<model>` reaches a local
+  Ollama). Each is started with nothing of the person's own setup — project settings only, no MCP server but the
+  bench's, the scenario's tools only, and a shell that runs `npx plitzi` and `npm run` and nothing else.
+- **The tasks** (`agents/tasks.ts`): three on a space through the MCP — the MCP's dev server, serving a copy of its
+  sample per run — and three on a project through the CLI, written per run by the workspace's CLI from its catalog
+  template; one after a person moved the file the change is in. Each is checked on the result: the space as saved, or
+  the project's space authored again.
+- **What is measured** (`agents/metrics.ts`): success; hallucinations (a refusal naming something made up); waste (the
+  tokens of the turns after a refusal); net tokens — what a turn costs beyond the harness's own system prompt and tools,
+  measured per model on a run asked for one word; and turns.
+- **The report** (`results/agents/<date>/report.md`): per configuration, the success, hallucination and waste rates and
+  the net tokens per verified success, held to the reference within RFC 0025's tolerances; a run past three times the
+  reference's median on its task fails. The floor recommended is the cheapest configuration that holds.

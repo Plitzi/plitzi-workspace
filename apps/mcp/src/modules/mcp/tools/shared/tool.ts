@@ -54,6 +54,13 @@ export interface ToolSpec<Shape extends ZodRawShape> {
   access: 'read' | 'write';
   /** A host capability this tool needs; hosts that did not wire it skip registering the tool. */
   requires?: ToolRequires;
+  /** This tool's input carries the whole operations vocabulary (`plitzi_apply`): the one copy of it a connection lists. */
+  carriesOperations?: boolean;
+  /**
+   * What is LISTED for this tool when another tool on the connection carries the vocabulary: the same input with the
+   * operations' fields left out. Its calls are still parsed against `inputShape`, so nothing is checked less.
+   */
+  compactInputShape?: ZodRawShape;
   /** The tool operates on no space (plitzi_render authors a throwaway one), so the host must NOT resolve a spaceId
    *  or load a space for it — that keeps it callable with no auth, on the public surface. */
   spaceless?: boolean;
@@ -77,6 +84,8 @@ export interface ToolDef {
   inputShape: ZodRawShape;
   access: 'read' | 'write';
   requires?: ToolRequires;
+  carriesOperations?: boolean;
+  compactInputShape?: ZodRawShape;
   spaceless?: boolean;
   ui?: McpUiToolMeta;
   execute: (args: unknown, ctx: ToolContext) => unknown;
@@ -99,6 +108,8 @@ export const defineTool = <Shape extends ZodRawShape>(spec: ToolSpec<Shape>): To
     inputShape: spec.inputShape,
     access: spec.access,
     requires: spec.requires,
+    carriesOperations: spec.carriesOperations,
+    compactInputShape: spec.compactInputShape,
     spaceless: spec.spaceless,
     ui: spec.ui,
     execute: (args, ctx) => spec.run(parse(args), ctx),

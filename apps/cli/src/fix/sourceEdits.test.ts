@@ -2,7 +2,7 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
-import { applyChanges, pruneImports, sourceEdit } from './sourceEdits';
+import { applyChanges, attributeEdit, callTextAt, pruneImports, sourceEdit } from './sourceEdits';
 
 import type { SpecEdit } from '@plitzi/sdk-authoring';
 
@@ -174,5 +174,39 @@ describe('children that are only words and an icon, written as the element’s o
     expect(
       pruneImports(ts, 'nav.ts', "import { text } from '@plitzi/sdk-authoring';\nexport const a = 1;", ['text'])
     ).toBe('\nexport const a = 1;');
+  });
+});
+
+describe('an attribute edited where the element was written (plitzi edit)', () => {
+  const at = (text: string, marker: string) => {
+    const sourceFile = ts.createSourceFile('space.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const { line, character } = sourceFile.getLineAndCharacterOfPosition(text.indexOf(marker));
+
+    return { sourceFile, position: { line: line + 1, column: character + 1 } };
+  };
+  const edit = (text: string, marker: string, key: string, value?: string | number | boolean): string => {
+    const { sourceFile, position } = at(text, marker);
+    const outcome = attributeEdit(ts, sourceFile, position, key, value);
+
+    return 'unplaced' in outcome ? `unplaced: ${outcome.unplaced}` : (applyChanges(text, outcome.changes) ?? 'overlap');
+  };
+
+  it('replaces words written as the factory’s first argument there, and anything else in its props', () => {
+    expect(edit("text('Search', { id: 'w' })", 'text', 'content', 'Find')).toBe("text('Find', { id: 'w' })");
+    expect(edit("heading({ id: 'h', level: 2 })", 'heading', 'level', 3)).toBe("heading({ id: 'h', level: 3 })");
+    expect(edit("link({ id: 'l', target: '_blank' })", 'link', 'target')).toBe("link({ id: 'l' })");
+  });
+
+  it('leaves words written as the first argument to the author when they are to go', () => {
+    expect(edit("text('Search', { id: 'w' })", 'text', 'content')).toBe(
+      'unplaced: `content` is the call’s first argument there: remove it from the call by hand'
+    );
+  });
+
+  it('shows the call as it is written', () => {
+    const text = "const page = [text('Hi', { id: 'a' }), link({ id: 'b' })];";
+    const { sourceFile, position } = at(text, 'link');
+
+    expect(callTextAt(ts, sourceFile, position)).toBe("link({ id: 'b' })");
   });
 });

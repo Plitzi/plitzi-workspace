@@ -21,6 +21,7 @@ export * from './refusals';
 export * from './space';
 export * from './advice';
 export * from './snippet';
+export { closest } from './suggest';
 export * from './validate';
 export type * from './types';
 export type { WrittenPosition } from './writtenAt';

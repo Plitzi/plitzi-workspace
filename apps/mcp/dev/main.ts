@@ -18,8 +18,10 @@ const HOST = process.env.MCP_HOST ?? '0.0.0.0';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const spacePath = () => path.resolve(__dirname, 'sample', 'space.json');
-const stylePath = () => path.resolve(__dirname, 'sample', 'style.json');
+// `MCP_SAMPLE_DIR` serves another copy — the agent benchmark hands each run one of its own, so no run writes the repo's.
+const sampleDir = process.env.MCP_SAMPLE_DIR ?? path.resolve(__dirname, 'sample');
+const spacePath = () => path.join(sampleDir, 'space.json');
+const stylePath = () => path.join(sampleDir, 'style.json');
 
 const readSchema = (): Schema => (JSON.parse(readFileSync(spacePath(), 'utf-8')) as { schema: Schema }).schema;
 const readStyle = (): Style => JSON.parse(readFileSync(stylePath(), 'utf-8')) as Style;

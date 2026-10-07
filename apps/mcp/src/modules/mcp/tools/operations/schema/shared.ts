@@ -6,6 +6,8 @@ import { ANCHOR_PATTERN } from '@plitzi/sdk-shared/schema/anchor';
 import { motionProblems } from '@plitzi/sdk-shared/schema/motion';
 import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
+import { closedObject } from '../closed';
+
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { ElementRuntime } from '@plitzi/sdk-shared';
 
@@ -188,7 +190,11 @@ export const elementShape = {
 };
 
 export const elementInput: z.ZodType<ElementInput> = z.lazy(() =>
-  z.object({ ...elementShape, children: z.array(elementInput).optional() })
+  closedObject(
+    'An element',
+    { ...elementShape, children: z.array(elementInput).optional() },
+    'plitzi_describe_operation { type: "upsertElement" }'
+  )
 );
 
 export const position = z
@@ -213,14 +219,18 @@ const bindingTransformer = z.object({
     .describe('Set false to keep the transformer in the chain but skip it at runtime (defaults to true)')
 });
 
-export const bindingInput = z.object({
-  to: z.string().describe('Target field the value feeds (a prop key, style value, or initialState key)'),
-  source: z.string().describe('Data source path, e.g. "apiContainer_x.data" — see plitzi://data-sources'),
-  id: z.string().optional().describe('Stable binding id; generated when omitted'),
-  transformers: z.array(bindingTransformer).optional(),
-  when: ruleGroup.optional().describe('QueryBuilder RuleGroup gating the binding (validated structurally)'),
-  enabled: z.boolean().optional()
-});
+export const bindingInput = closedObject(
+  'A binding',
+  {
+    to: z.string().describe('Target field the value feeds (a prop key, style value, or initialState key)'),
+    source: z.string().describe('Data source path, e.g. "apiContainer_x.data" — see plitzi://data-sources'),
+    id: z.string().optional().describe('Stable binding id; generated when omitted'),
+    transformers: z.array(bindingTransformer).optional(),
+    when: ruleGroup.optional().describe('QueryBuilder RuleGroup gating the binding (validated structurally)'),
+    enabled: z.boolean().optional()
+  },
+  'plitzi_describe_operation { type: "upsertBinding" }'
+);
 
 // --- Interactions ---
 
@@ -228,21 +238,25 @@ export const interactionNodeType = z
   .enum(['trigger', 'globalCallback', 'callback', 'utility'])
   .describe('trigger starts a flow (must be first); the rest run in order after it');
 
-export const interactionNode = z.object({
-  id: z.string().optional().describe('Existing node id to preserve; generated when omitted'),
-  title: z.string().describe('Human label for the step'),
-  nodeType: interactionNodeType,
-  action: z.string().describe('Action name, e.g. "onClick", "login" — see plitzi://interactions'),
-  params: z.record(z.string(), z.unknown()).optional(),
-  enabled: z.boolean().optional(),
-  when: ruleGroup.optional().describe('QueryBuilder RuleGroup gating this step (validated structurally)'),
-  whileRunning: z.enum(WHILE_RUNNING_MODES).optional().describe('Trigger only: a refiring while this flow runs'),
-  elementId: z
-    .string()
-    .optional()
-    .describe('Element whose callback this step invokes, by name; defaults to this element'),
-  preview: z.record(z.string(), z.unknown()).optional()
-});
+export const interactionNode = closedObject(
+  'A flow step',
+  {
+    id: z.string().optional().describe('Existing node id to preserve; generated when omitted'),
+    title: z.string().describe('Human label for the step'),
+    nodeType: interactionNodeType,
+    action: z.string().describe('Action name, e.g. "onClick", "login" — see plitzi://interactions'),
+    params: z.record(z.string(), z.unknown()).optional(),
+    enabled: z.boolean().optional(),
+    when: ruleGroup.optional().describe('QueryBuilder RuleGroup gating this step (validated structurally)'),
+    whileRunning: z.enum(WHILE_RUNNING_MODES).optional().describe('Trigger only: a refiring while this flow runs'),
+    elementId: z
+      .string()
+      .optional()
+      .describe('Element whose callback this step invokes, by name; defaults to this element'),
+    preview: z.record(z.string(), z.unknown()).optional()
+  },
+  'plitzi_describe_operation { type: "upsertInteractionFlow" }'
+);
 
 /** What the validator checks: an authored node, or one read back from storage — which may carry a `task` type the
  *  write vocabulary above does not offer. Checking the stored shape is the point; refusing it is the validator's. */

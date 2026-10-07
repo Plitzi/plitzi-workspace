@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
@@ -8,16 +8,25 @@ import { render } from '../tools/render';
 import type { Operation } from '../tools/operations';
 
 /** The skill ships next to this server and is copied into agents that never see this repo, so a stale example in
- *  it teaches every one of them something that no longer renders. Every operations batch it shows is rendered
- *  here, exactly as an agent would send it. */
+ *  it teaches every one of them something that no longer renders. Every operations batch it shows — in its core or a
+ *  reference the core routes to — is rendered here, exactly as an agent would send it. */
 
-const SKILL_PATH = fileURLToPath(new URL('../../../../skills/plitzi-render/SKILL.md', import.meta.url));
+const SKILL_DIR = fileURLToPath(new URL('../../../../skills/plitzi-render/', import.meta.url));
 
-const skill = readFileSync(SKILL_PATH, 'utf8');
+const skill = readFileSync(`${SKILL_DIR}SKILL.md`, 'utf8');
 
-const batches = [...skill.matchAll(/```json\n([\s\S]*?)```/gu)].map(match => match[1]);
+const references = readdirSync(`${SKILL_DIR}reference`).map(file => `reference/${file}`);
+
+const pages = [skill, ...references.map(file => readFileSync(`${SKILL_DIR}${file}`, 'utf8'))];
+
+const batches = pages.flatMap(page => [...page.matchAll(/```json\n([\s\S]*?)```/gu)].map(match => match[1]));
 
 describe('plitzi-render skill', () => {
+  // A reference nobody can reach is not read: the core routes to every one.
+  it('routes to each of its references from the core', () => {
+    expect(references.filter(file => !skill.includes(`](${file})`))).toEqual([]);
+  });
+
   it('shows at least one complete example, since that is what weaker agents copy', () => {
     expect(batches.length).toBeGreaterThan(0);
   });

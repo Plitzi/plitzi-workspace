@@ -373,7 +373,8 @@ Rules:
 - **Messages are documentation.** A refusal, a warning, `explain` and a CLI line are read before any page: they say
   the fix in the terms the docs use, and a hint applies to the field it is about.
 - **Budgets are part of the design.** Skills are held to token budgets (`apps/cli/src/scaffold/skills.test.ts`):
-  `SKILL.md` 4000, `CHEATSHEET.md` 2500, a reference 3000, a recipe 1500. Over budget, cut what another surface owns
+  `SKILL.md` 1500 (a core: what it is for, the rules that go wrong most, a table routing each task to its one file),
+  `CHEATSHEET.md` 2500, a reference 3000, a recipe 1500. Over budget, cut what another surface owns
   — never the rule itself.
 - **Run the checks the docs have:** `apps/cli` `skills.test.ts` (budgets, links), `packages/sdk-authoring`
   `recipes.test.ts` and `codesPage.test.ts`, `apps/mcp` guide tests, and in `plitzi-sdk-server`

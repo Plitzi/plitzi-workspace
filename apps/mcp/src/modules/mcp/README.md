@@ -118,10 +118,10 @@ owns its whole origin, so MCP answers at the root — no `/mcp` path.
 
 ### `tools/` — the write side
 
-One file per top-level tool (`apply`, `validate`, `search`, `read`, `render`, `preview`, `screenshot`,
+One file per top-level tool (`apply`, `describeOperation`, `search`, `read`, `render`, `preview`, `screenshot`,
 `tryFunction`), registered from `tools/index.ts` into the `tools` array. Every tool that takes operations runs them through
 [`shared/draftBatch.ts`](tools/shared/draftBatch.ts) — expand, validate the input, apply to a copy, lint the copy —
-so `plitzi_validate` answers exactly what `plitzi_apply` would — errors, warnings and the `suggestions` the batch opened
+so `plitzi_apply`'s `dryRun` answers exactly what saving would — errors, warnings and the `suggestions` the batch opened
 up ([`shared/newSuggestions.ts`](tools/shared/newSuggestions.ts): only ones the space did not already have) — and
 `plitzi_render` holds a widget to the same rules. The edit vocabulary lives under `operations/`:
 

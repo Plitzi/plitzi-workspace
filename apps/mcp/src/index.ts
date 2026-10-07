@@ -26,18 +26,7 @@ export {
   outlineOfTree,
   unnamedControls
 } from './modules/mcp';
-export {
-  apply,
-  search,
-  read,
-  validate,
-  applyShape,
-  searchShape,
-  readShape,
-  validateShape,
-  operation,
-  tools
-} from './modules/mcp/tools';
+export { apply, search, read, applyShape, searchShape, readShape, operation, tools } from './modules/mcp/tools';
 
 export type {
   McpServerContext,
@@ -64,7 +53,6 @@ export type {
   ReadInput,
   ReadResponse,
   ReadHit,
-  ValidateInput,
   WriteResponse,
   WriteElement,
   Persisters,

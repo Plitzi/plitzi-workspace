@@ -113,8 +113,8 @@ a QueryBuilder RuleGroup gating the binding.
 as \`icon\` (\`iconPlacement\` before/after, its class on the \`icon\` slot) — never a \`text\` or \`fontAwesome\` child;
 a text child also ignores the box's colour and hover. Chrome on several pages is a **layout**; the nav item of the page being shown is marked by the
 \`current\` state of its class, not by a copy of the header per page. Sibling rows of data are one \`repeatElement\`; a
-block repeated with other words is a **component** (\`upsertComponent { fromRef }\`). \`plitzi_validate\` and
-\`plitzi_apply\` answer with **\`suggestions\`** for what the batch could have written shorter, each with the elements
+block repeated with other words is a **component** (\`upsertComponent { fromRef }\`). \`plitzi_apply\` (with or
+without \`dryRun\`) answers with **\`suggestions\`** for what the batch could have written shorter, each with the elements
 it saves — never blocking; take them unless the copies are about to diverge.
 
 **Interactions** (\`upsertInteractionFlow\`): a \`trigger\` node first, then callbacks/utilities **in order** (links
@@ -280,25 +280,36 @@ stateVersion) and returns any **style definitions** whose name matches the query
 When you do hold several refs to open (e.g. from a skeleton), read them together with \`plitzi_read\` rather than one at a time.
 
 ## Tools
-- \`plitzi_validate\` — check a batch, returns teachable errors/warnings. Writes nothing. Also reports **pre-existing
-  malformations** in any resource the batch touches (see below), and \`suggestions\` (see *Suggestions*).
-- \`plitzi_apply\` — validate → apply → persist atomically. Rejects the whole batch on any error or conflict. Pass
-  \`dryRun: true\` to apply in memory only and get the same result back (changed versions + full element detail)
-  without persisting — inspect it, then re-run without \`dryRun\` to commit. Its answer carries \`suggestions\` too.
+- \`plitzi_apply\` — validate → apply → persist atomically. Rejects the whole batch on any error or conflict, and
+  reports **pre-existing malformations** in any resource the batch touches (see below) and \`suggestions\` (see
+  *Suggestions*). Pass \`dryRun: true\` to check and apply in memory only — the same answer, nothing persisted — and
+  \`look\` (\`"html"\`, \`"image"\`, \`"accessibility"\` or \`"both"\`, with \`pageRef\` and \`viewport\`) to see the page
+  as the batch leaves it in the same call. Check and look with \`dryRun\`, then send the same operations without it.
+- **By intention**, a few parameters and the element named by its ref alone — the page is found, the operations
+  written, the batch checked and saved as \`plitzi_apply\` saves it, and the answer is a line: \`plitzi_set { ref, set,
+  unset }\` (its words and attributes), \`plitzi_class { ref, classes }\` (every class it wears), \`plitzi_bind { ref, to,
+  source }\`, \`plitzi_place { component, ref, into, props }\`, \`plitzi_add_page { ref, slug, layout }\`. Reach for one
+  when it says the whole change; anything else is a batch.
+- \`plitzi_describe_operation\` — one operation's schema by its \`type\` (every field, which are required); without a
+  type, every operation type there is. Ask for the one you are writing instead of guessing a field: a field an
+  operation does not have is refused naming the one meant (\`"prop" (did you mean "props"?)\`), and a type spelt with
+  other capitals is read as the catalog spells it and said in \`warnings\`. The same batch refused twice is not run a
+  third time (\`REPEATED_BATCH\`) — change what the errors name, or ask the person.
 - \`plitzi_search\` — find elements (and pages/definitions) across the space.
 - \`plitzi_read\` — read many resource **uris in one batch** (pages, elements, definitions, variables). Pass the
   ready-made uris from search / a write response; each result is \`{ uri, stateVersion, data }\` or a teachable error,
   so one bad uri never fails the batch. Use it instead of N single reads whenever you already hold several refs.
-- \`plitzi_preview\` — render a page to HTML, optionally with unsaved \`operations\` applied, to check structure.
-- \`plitzi_screenshot\` — render a page to a PNG (desktop, mobile or \`both\`), optionally with unsaved \`operations\`:
-  the way to SEE overflow, misalignment and broken layout before you commit. \`view: "accessibility"\` reads the same
-  page as a screen reader and a browser agent (Claude in Chrome) do — its accessibility tree as an outline of roles and
-  names, with every control and picture that has no name listed in \`unnamed\` — as text, far cheaper than an image
-  (\`"both"\` returns both). Both need the SSR render service; where it is missing they answer \`PREVIEW_UNAVAILABLE\`.
+- \`plitzi_preview\` — render a saved page to HTML, to check its structure.
+- \`plitzi_screenshot\` — render a saved page to a PNG (desktop, mobile or \`both\`): the way to SEE overflow,
+  misalignment and broken layout (a change not saved yet: \`plitzi_apply\` with \`dryRun\` and \`look\`).
+  \`view: "accessibility"\` reads the same page as a screen reader and a browser agent (Claude in Chrome) do — its
+  accessibility tree as an outline of roles and names, with every control and picture that has no name listed in
+  \`unnamed\` — as text, far cheaper than an image (\`"both"\` returns both). Both need the SSR render service; where
+  it is missing they answer \`PREVIEW_UNAVAILABLE\`.
 - \`plitzi_render\` — a different job: show the user a self-contained widget built offline. It never touches the space.
 
 ## Suggestions — the same page with fewer elements
-\`plitzi_validate\` and \`plitzi_apply\` answer with \`suggestions\`: lines like \`[content-attribute] … (saves 4
+\`plitzi_apply\` (with or without \`dryRun\`) answers with \`suggestions\`: lines like \`[content-attribute] … (saves 4
 elements)\`, each naming a shorter way to what the batch just wrote. Only what THIS batch opened up is said — what the
 space already had is not repeated on every batch — and none of them blocks anything: the page renders as written.
 - \`repeated-on-pages\` — the same block at the edge of several pages: put it in a **layout** once (a block only some
@@ -520,7 +531,7 @@ that apiContainer; inside a \`list\`, the repeated \`listItem\` and its children
 (\`list_<name>.item.<field>\`). The global sources — ${GLOBALS} — have no \`<type>_<name>\` head and are
 bindable anywhere. Binding an element to an element source outside its
 provider's subtree is schema-valid but **broken at runtime** (the source is not in scope), so
-\`plitzi_validate\`/\`plitzi_apply\` treat it as an **error and reject the batch** — move the element under the
+\`plitzi_apply\` treats it as an **error and rejects the batch** — move the element under the
 provider, or bind a source that is in scope.
 
 **mockData is builder-only.** An \`apiContainer\`'s \`mockData\` prop feeds sample data **while editing in the
@@ -964,14 +975,14 @@ the component reads \`{{ props.item.name }}\`.
     "children": [ { "ref": "lamp-buy", "type": "button", "props": { "content": "Buy", "slot": "product-card-actions" } } ] } }
 \`\`\`
 A required prop left out, a prop the component does not declare, a value of the wrong kind or a child naming a slot
-the component does not have is reported by \`plitzi_validate\` — fix it before applying.
+the component does not have is reported by \`plitzi_apply\`'s \`dryRun\` — fix it before applying.
 
 ## Pages & folders
 - **A page behind a feature flag**: \`upsertPage { flag: "labs" }\` answers 404 while the flag is off (see **Feature
   flags**); \`flag: null\` removes it.
 - **Always set a \`slug\` when creating a page** (\`upsertPage\`) — it is the page's URL path and good practice for a
   clean, stable route (e.g. \`"pricing"\` or \`"posts/:postId"\`). Omit it and the page ref is used as the slug,
-  and \`plitzi_validate\`/\`plitzi_apply\` warn so you remember to set a meaningful one.
+  and \`plitzi_apply\` warns so you remember to set a meaningful one.
 - **A page slug is RELATIVE — do NOT start it with \`/\`.** The runtime prepends the leading slash (and any folder
   path) itself, so a leading slash doubles it. Write \`"pricing"\`, not \`"/pricing"\`. (upsertPage strips a leading
   slash for you, but write it relative.)

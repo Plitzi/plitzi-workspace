@@ -95,7 +95,20 @@ const widgetOperations = [
 // the op union, factored into six shared definitions (`StylePseudos`, `StyleConditions`, `StyleVariantRules` and their
 // patches; inlined it measured ~130k more), and for the toasts' parts as `notifications` fields; the words are in the
 // guide. Set with ~0.6k of room.
-const TOOLS_BUDGET_BYTES = 218_500;
+//
+// Lowered from 218.5k to 71.6k (RFC 0025): the op union is listed once, by plitzi_apply. plitzi_validate became its
+// `dryRun`; plitzi_preview and plitzi_screenshot show what is saved, and a batch is looked at through `look` on that
+// same `dryRun`; plitzi_render names its operations' types only (`compactInputShape`) while plitzi_apply is listed
+// beside it. Measured at 70.9k with ~0.7k of room — the whole listing an agent loads before it does anything.
+//
+// Raised to 73k: every operation now refuses a field it does not have (`additionalProperties: false`, ~1.4k across the
+// 48), where one used to be dropped and the batch answered success — `prop` for `props` applied nothing. Measured at
+// 72.3k with ~0.7k of room.
+//
+// Raised to 76k for the intent tools (plitzi_set, plitzi_class, plitzi_bind, plitzi_place, plitzi_add_page, ~2.3k): a
+// small model changes words, classes and bindings, places a component and adds a page with a few parameters instead of
+// composing operations. Measured at 75.3k with ~0.7k of room.
+const TOOLS_BUDGET_BYTES = 76_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.
@@ -237,6 +250,10 @@ describe('MCP connector (Streamable HTTP, no auth)', () => {
         definitions?: Record<string, unknown>;
       };
       expect(Object.keys(apply.definitions ?? {})).toEqual(expect.arrayContaining(['Element', 'Css', 'RuleGroup']));
+      // …and only there: beside it, plitzi_render names its operations' types and leaves their fields to apply's.
+      const render = JSON.stringify(tools.find(tool => tool.name === 'plitzi_render')?.inputSchema);
+      expect(render).toContain('repeatElement');
+      expect(render).not.toContain('"definitions"');
     } finally {
       await attached.close();
     }
@@ -413,7 +430,7 @@ describe('guest connection (a grant that carries no space)', () => {
   it('offers only the tools that work without a space, so none of them is a dead end', async () => {
     const { tools } = await endpoint.client.listTools();
 
-    expect(tools.map(tool => tool.name).sort()).toEqual(['plitzi_read', 'plitzi_render']);
+    expect(tools.map(tool => tool.name).sort()).toEqual(['plitzi_describe_operation', 'plitzi_read', 'plitzi_render']);
   });
 
   it('lists only the resources it can actually open', async () => {

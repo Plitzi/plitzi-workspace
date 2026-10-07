@@ -1,6 +1,7 @@
 import { expandOperations } from './expandOperations';
 import { fixTouched, lintDraft } from './lintDraft';
 import { newSuggestions } from './newSuggestions';
+import { normalizeOperations } from './normalizeOperations';
 import { validateOperations } from './validator';
 import { cloneSpace } from '../../helpers';
 import { applyOperations } from '../apply/dispatch';
@@ -24,9 +25,10 @@ export type DraftResult =
 
 /**
  * A batch run on a copy of the space and read back — the one way every tool that takes operations handles them, so
- * `plitzi_validate` answers exactly what `plitzi_apply` would, and `plitzi_render` holds a widget to the same rules.
+ * a `dryRun` answers exactly what `plitzi_apply` would save, and `plitzi_render` holds a widget to the same rules.
  *
- * In order: the sugar ops expanded; what was already wrong with the elements the batch touches fixed where it has one
+ * In order: the sugar ops expanded; what has one reading read that way (`normalizeOperations`, said in `warnings`);
+ * what was already wrong with the elements the batch touches fixed where it has one
  * reading (`fixTouched`, each fix said in `warnings`); each op checked against the input it takes; the batch applied to
  * the copy; and the copy read by `lintDraft` — structure and meaning, the same reading every other writer gets. The
  * first stage to refuse ends it; the space handed in is never touched.
@@ -42,21 +44,21 @@ export const draftBatch = (
     return { ok: false, errors: expansion.errors, warnings: [] };
   }
 
-  const ops = expansion.operations;
+  const { operations: ops, notes } = normalizeOperations(space, expansion.operations);
   const prepared = fixTouched(space, ops);
   const validation = validateOperations(prepared.space, ops, mode);
   if (!validation.valid) {
-    return { ok: false, errors: validation.errors, warnings: [...prepared.fixed, ...validation.warnings] };
+    return { ok: false, errors: validation.errors, warnings: [...notes, ...prepared.fixed, ...validation.warnings] };
   }
 
   const draft = cloneSpace(prepared.space);
   const outcome = applyOperations(draft, env, ops);
   if (outcome.errors.length > 0) {
-    return { ok: false, errors: outcome.errors, warnings: [...prepared.fixed, ...validation.warnings] };
+    return { ok: false, errors: outcome.errors, warnings: [...notes, ...prepared.fixed, ...validation.warnings] };
   }
 
   const reading = lintDraft(draft, ops, prepared.space);
-  const warnings = [...prepared.fixed, ...validation.warnings, ...reading.warnings];
+  const warnings = [...notes, ...prepared.fixed, ...validation.warnings, ...reading.warnings];
   if (reading.errors.length > 0) {
     return { ok: false, errors: reading.errors, warnings };
   }

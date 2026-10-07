@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 
-import { buildSpace, malformedSpace, spaceWithRoute, varOp } from './helpers';
-import { operation, validate } from '../tools';
+import { buildSpace, checkBatch, malformedSpace, spaceWithRoute, varOp } from './helpers';
+import { operation } from '../tools';
 
 import type { Operation } from '../tools';
 
 describe('MCP validator (teaching errors)', () => {
   it('rejects camelCase CSS and suggests the kebab key', () => {
-    const result = validate(
+    const result = checkBatch(
       { operations: [{ type: 'upsertDefinition', ref: 'btn', desktop: { backgroundColor: '#000' } }] },
       buildSpace()
     );
@@ -16,7 +16,7 @@ describe('MCP validator (teaching errors)', () => {
   });
 
   it('rejects an unknown style-variable category with validValues', () => {
-    const result = validate(
+    const result = checkBatch(
       {
         operations: [
           { type: 'upsertStyleVariable', category: 'typography', name: '--x', value: '1px' } as unknown as Operation
@@ -29,7 +29,7 @@ describe('MCP validator (teaching errors)', () => {
   });
 
   it('rejects a non-existent pageRef with the list of valid refs', () => {
-    const result = validate({ operations: [{ type: 'deleteElement', pageRef: 'ghost', ref: 'c1' }] }, buildSpace());
+    const result = checkBatch({ operations: [{ type: 'deleteElement', pageRef: 'ghost', ref: 'c1' }] }, buildSpace());
     expect(result.valid).toBe(false);
     expect(result.errors[0].validValues).toEqual(['home']);
   });
@@ -37,13 +37,13 @@ describe('MCP validator (teaching errors)', () => {
 
 describe('MCP variable-reference validation', () => {
   it('accepts a known space schema variable', () => {
-    const r = validate({ operations: [varOp('home', 'text', '{{apiUrl}}/x')] }, buildSpace());
+    const r = checkBatch({ operations: [varOp('home', 'text', '{{apiUrl}}/x')] }, buildSpace());
     expect(r.valid).toBe(true);
   });
 
   // An attribute reading a name nothing answers renders empty, and nothing anywhere says why: refused.
   it('refuses an unknown/hallucinated variable', () => {
-    const r = validate({ operations: [varOp('home', 'text', '{{bogusVar}}')] }, buildSpace());
+    const r = checkBatch({ operations: [varOp('home', 'text', '{{bogusVar}}')] }, buildSpace());
     expect(r.valid).toBe(false);
     expect(r.errors.some(e => e.message.includes('"bogusVar"') && e.message.includes('nothing here answers'))).toBe(
       true
@@ -51,12 +51,12 @@ describe('MCP variable-reference validation', () => {
   });
 
   it('accepts a page route param (from the slug) as a valid {{name}}', () => {
-    const r = validate({ operations: [varOp('home', 'text', '{{apiUrl}}/spaces/{{spaceId}}')] }, spaceWithRoute());
+    const r = checkBatch({ operations: [varOp('home', 'text', '{{apiUrl}}/spaces/{{spaceId}}')] }, spaceWithRoute());
     expect(r.valid).toBe(true);
   });
 
   it('accepts a variable the same batch declares', () => {
-    const r = validate(
+    const r = checkBatch(
       {
         operations: [
           { type: 'upsertVariable', name: 'newVar', variableType: 'text', value: 'v' },
@@ -69,7 +69,7 @@ describe('MCP variable-reference validation', () => {
   });
 
   it('skips {{...}} inside raw-code element types (no false positives on JSX)', () => {
-    const r = validate(
+    const r = checkBatch(
       { operations: [varOp('home', 'blockJsx', 'style={{ position: "relative" }} {{bogusVar}}')] },
       buildSpace()
     );
@@ -77,13 +77,13 @@ describe('MCP variable-reference validation', () => {
   });
 
   it('validates var(--token) in CSS values against the design tokens', () => {
-    const known = validate(
+    const known = checkBatch(
       { operations: [{ type: 'upsertDefinition', ref: 'btn', desktop: { color: 'var(--foreground)' } }] },
       buildSpace()
     );
     expect(known.warnings.some(w => w.includes('Unknown style variable'))).toBe(false);
 
-    const unknown = validate(
+    const unknown = checkBatch(
       { operations: [{ type: 'upsertDefinition', ref: 'btn', desktop: { color: 'var(--nope)' } }] },
       buildSpace()
     );
@@ -170,7 +170,7 @@ describe('MCP deep validation of when (RuleGroup) and transformers', () => {
 
 describe('MCP pre-existing malformation audit (blocks save until fixed)', () => {
   it('blocks an unrelated valid edit while a touched element has a pre-existing malformed transformer', () => {
-    const r = validate(
+    const r = checkBatch(
       { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'txt', initialState: { visibility: true } }] },
       malformedSpace()
     );
@@ -183,7 +183,7 @@ describe('MCP pre-existing malformation audit (blocks save until fixed)', () => 
   });
 
   it('passes when the SAME batch fixes the pre-existing malformation', () => {
-    const r = validate(
+    const r = checkBatch(
       {
         operations: [
           {
@@ -202,7 +202,7 @@ describe('MCP pre-existing malformation audit (blocks save until fixed)', () => 
   });
 
   it('does not audit an element the batch never touches', () => {
-    const r = validate(
+    const r = checkBatch(
       { operations: [{ type: 'upsertDefinition', ref: 'unrelated', desktop: { color: 'red' } }] },
       malformedSpace()
     );
@@ -212,7 +212,7 @@ describe('MCP pre-existing malformation audit (blocks save until fixed)', () => 
 
 describe('MCP type-aware props (I5)', () => {
   it('refuses a prop a built-in type never reads', () => {
-    const r = validate(
+    const r = checkBatch(
       {
         operations: [
           { type: 'upsertElement', pageRef: 'home', element: { ref: 'c2', type: 'container', props: { bogusProp: 1 } } }
@@ -225,7 +225,7 @@ describe('MCP type-aware props (I5)', () => {
   });
 
   it('accepts a prop the type reads', () => {
-    const r = validate(
+    const r = checkBatch(
       {
         operations: [
           {
@@ -253,14 +253,14 @@ describe('MCP style on a provider with no tag', () => {
 
   /** A provider with no tag renders its children and no element, so the gap written on it lands nowhere. */
   it('warns that the style of an untagged apiContainer applies to nothing', () => {
-    const r = validate({ operations: styled({ query: 'https://api.example.com/x' }) }, buildSpace());
+    const r = checkBatch({ operations: styled({ query: 'https://api.example.com/x' }) }, buildSpace());
 
     expect(r.valid).toBe(true);
     expect(r.warnings.some(w => w.includes('element "feed"') && w.includes('no `subType`'))).toBe(true);
   });
 
   it('says nothing once the provider has a tag', () => {
-    const r = validate({ operations: styled({ query: 'https://api.example.com/x', subType: 'div' }) }, buildSpace());
+    const r = checkBatch({ operations: styled({ query: 'https://api.example.com/x', subType: 'div' }) }, buildSpace());
 
     expect(r.warnings.some(w => w.includes('no `subType`'))).toBe(false);
   });

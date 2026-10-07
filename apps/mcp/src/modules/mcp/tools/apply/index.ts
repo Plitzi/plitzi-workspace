@@ -6,7 +6,9 @@ import { changedResources, conflictMessage, detectConflicts, resolvedElements } 
 import { dataFileUri, dataUri, functionFileUri, functionsUri } from '../../helpers';
 import { environment, operations } from '../operations';
 import { draftBatch } from '../shared/draftBatch';
-import { defineTool } from '../shared/tool';
+import { fullPage, lookAt, pageRef, viewport } from '../shared/look';
+import { AGAIN, REPEATED, batchKey, forgetRefused, noteRefused, timesRefused } from '../shared/repeats';
+import { defineTool, imageResult } from '../shared/tool';
 
 import type { Space } from '../../helpers';
 import type { ApplyInput, Env, Persisters, ValidationError, WriteResponse } from '../../types';
@@ -25,7 +27,18 @@ export const applyShape = {
     .record(z.string(), z.string())
     .optional()
     .describe('Resource URI → the stateVersion you read; guards against concurrent edits'),
-  operations
+  operations,
+  look: z
+    .enum(['html', 'image', 'accessibility', 'both'])
+    .optional()
+    .describe(
+      'Also render the page: with dryRun, as the batch would leave it (nothing saved); without, as it was saved. ' +
+        '"html" the markup, "image" a PNG, "accessibility" the outline a screen reader reads (text, far cheaper than ' +
+        'an image), "both" image and outline. Check, look and then save with the same operations — written once.'
+    ),
+  pageRef,
+  viewport,
+  fullPage
 };
 
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
@@ -231,9 +244,44 @@ export const applyTool = defineTool({
   description:
     'Validate, apply and persist a batch of operations atomically. Returns the changed resources and their new ' +
     'versions, plus the full detail of every element it created or updated. Pass dryRun to apply in memory only ' +
-    '(inspect the outcome without committing). Rejects the whole batch on any error or version conflict — INCLUDING ' +
+    '(inspect the outcome without committing), and `look` to see the page as the batch leaves it. Rejects the whole batch on any error or version conflict — INCLUDING ' +
     'a pre-existing malformation in any resource the batch touches (fix it in the same batch to unblock the save).',
   inputShape: applyShape,
+  carriesOperations: true,
   access: 'write',
-  run: (input, ctx) => apply({ ...input, environment: ctx.env }, ctx.space, ctx.persisters)
+  run: async (input, ctx) => {
+    // The same batch refused twice is not run a third time: the answer cannot change, and each attempt is paid for.
+    const key = batchKey(`${String(ctx.spaceId ?? '')}:${ctx.env}`, input.operations);
+    const before = timesRefused(key);
+    if (before >= 2) {
+      return REPEATED;
+    }
+
+    const result = await apply({ ...input, environment: ctx.env }, ctx.space, ctx.persisters);
+    if (result.errors?.length) {
+      noteRefused(key);
+
+      return before === 1 ? { ...result, again: AGAIN } : result;
+    }
+
+    forgetRefused(key);
+    if (!input.look || (!result.applied && !result.dryRun)) {
+      return result;
+    }
+
+    const look = await lookAt(ctx, {
+      pageRef: input.pageRef,
+      operations: result.dryRun ? input.operations : undefined,
+      view: input.look,
+      viewport: input.viewport,
+      fullPage: input.fullPage
+    });
+    if ('refused' in look) {
+      return { ...result, look: look.refused };
+    }
+
+    return look.images.length > 0
+      ? imageResult(look.images, { ...result, look: look.meta })
+      : { ...result, look: look.meta };
+  }
 });

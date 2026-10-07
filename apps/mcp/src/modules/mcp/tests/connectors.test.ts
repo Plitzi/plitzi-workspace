@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSpace, capturing } from './helpers';
+import { buildSpace, capturing, checkBatch } from './helpers';
 import { readResource } from '../resources';
-import { apply, validate } from '../tools';
+import { apply } from '../tools';
 import { documentOperation, operation } from '../tools/operations';
 
 import type { Space } from '../helpers';
@@ -83,7 +83,7 @@ describe('MCP connectors', () => {
   });
 
   it('saves a manifest with no credential, warning that requests go unauthenticated', () => {
-    const result = validate({ operations: [strapiConnector] }, buildSpace());
+    const result = checkBatch({ operations: [strapiConnector] }, buildSpace());
 
     // The agent never holds a secret: the manifest must be storable before the space owner attaches one.
     expect(result.valid).toBe(true);
@@ -92,7 +92,7 @@ describe('MCP connectors', () => {
 
   it('rejects a manifest the engine could not execute', () => {
     const broken = { ...strapiConnector, baseUrl: 'cms.example.com' } as Operation;
-    const result = validate({ operations: [broken] }, buildSpace());
+    const result = checkBatch({ operations: [broken] }, buildSpace());
 
     expect(result.valid).toBe(false);
     expect(result.errors[0].path).toBe('operations[0].baseUrl');
@@ -104,7 +104,7 @@ describe('MCP connectors', () => {
       connection: { ...strapiConnector.connection, operators: { eq: 'filters[{{field}}]' } }
     } as Operation;
 
-    expect(validate({ operations: [broken] }, buildSpace()).valid).toBe(false);
+    expect(checkBatch({ operations: [broken] }, buildSpace()).valid).toBe(false);
   });
 
   it('merges endpoints by name on patch and removes one set to null', async () => {
@@ -207,7 +207,7 @@ describe('MCP provider elements (the connector half that lives in the schema)', 
   // The commonest way to author a dead page: the connector props are right and the element still renders in the
   // browser, which ignores them.
   it('warns when a provider names a connector but is not server-rendered', () => {
-    const result = validate(
+    const result = checkBatch(
       { operations: [provider({ connector: 'strapi-blog', resource: 'articles' })] },
       withConnector()
     );
@@ -217,7 +217,7 @@ describe('MCP provider elements (the connector half that lives in the schema)', 
   });
 
   it('warns when a server provider names a connector the space does not have', () => {
-    const result = validate(
+    const result = checkBatch(
       { operations: [provider({ connector: 'ghost', resource: 'articles' }, 'server')] },
       withConnector()
     );
@@ -226,7 +226,7 @@ describe('MCP provider elements (the connector half that lives in the schema)', 
   });
 
   it('accepts a provider wired to a connector created earlier in the same batch', () => {
-    const result = validate(
+    const result = checkBatch(
       { operations: [strapiConnector, provider({ connector: 'strapi-blog', resource: 'articles' }, 'server')] },
       buildSpace()
     );
@@ -236,7 +236,7 @@ describe('MCP provider elements (the connector half that lives in the schema)', 
   });
 
   it('rejects a read endpoint the connector does not declare', () => {
-    const result = validate(
+    const result = checkBatch(
       { operations: [provider({ connector: 'strapi-blog', resource: 'articles', endpoint: 'feed' }, 'server')] },
       withConnector()
     );
@@ -248,7 +248,7 @@ describe('MCP provider elements (the connector half that lives in the schema)', 
   // A filter naming an undeclared operator is DROPPED by the engine: the query runs unfiltered and a detail page
   // renders an arbitrary record, so it fails the batch rather than warning.
   it('rejects a filter whose operator the connector does not declare', () => {
-    const result = validate(
+    const result = checkBatch(
       {
         operations: [
           provider(
@@ -273,7 +273,7 @@ describe('MCP provider elements (the connector half that lives in the schema)', 
     const { persisters, saved } = capturing(space);
     await apply({ operations: [provider({ connector: 'strapi-blog', resource: 'articles' })] }, space, persisters);
 
-    const wired = validate(
+    const wired = checkBatch(
       { operations: [{ type: 'patchElement', pageRef: 'home', ref: 'posts-api', runtime: 'server' }] },
       saved()
     );
@@ -305,14 +305,14 @@ describe('MCP connector deletion', () => {
       persisters
     );
 
-    const result = validate({ operations: [{ type: 'deleteConnector', ref: 'strapi-blog' }] }, saved());
+    const result = checkBatch({ operations: [{ type: 'deleteConnector', ref: 'strapi-blog' }] }, saved());
 
     expect(result.valid).toBe(true);
     expect(result.warnings.join(' ')).toContain('posts-api');
   });
 
   it('says nothing when no element uses it', () => {
-    const result = validate({ operations: [{ type: 'deleteConnector', ref: 'strapi-blog' }] }, withConnector());
+    const result = checkBatch({ operations: [{ type: 'deleteConnector', ref: 'strapi-blog' }] }, withConnector());
 
     expect(result.warnings).toEqual([]);
   });

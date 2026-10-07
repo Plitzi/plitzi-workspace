@@ -2097,6 +2097,49 @@ export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): Fi
   return { problems, fixes: [...fixes, ...contentFixes(author, documents)] };
 };
 
+/** One element of the space, and the call in the author's code that wrote it. */
+export interface WrittenElement {
+  elementId: string;
+  type: string;
+  /** The page, layout or component it is in. */
+  rootId: string;
+  /** The classes it wears, by name. */
+  classes: string[];
+  /** Its own words, when it has some. */
+  content?: string;
+  /** Its attributes as authored. */
+  attributes: Record<string, unknown>;
+  /** Where it was written: `src/space/pages/home.ts:42`. Absent for an element no call of the author's code wrote. */
+  at?: string;
+  /** The same place exactly — the factory's name, at its line and column — which is what an edit is made at. */
+  position?: WrittenPosition;
+}
+
+/**
+ * Every element the space authors to, with where it was written — read from the code as it is NOW, so it follows an
+ * element wherever a person moved it, with nothing kept that could fall out of step. What `plitzi where` answers.
+ */
+export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): WrittenElement[] => {
+  const author = new SpaceAuthor(spec, options);
+  const { schema } = author.write();
+
+  return Object.values(schema.flat).map(element => {
+    const written = author.specOf(element.id);
+    const position = written ? writtenAtPosition(written) : undefined;
+    const content = element.attributes.content;
+
+    return {
+      elementId: element.id,
+      type: element.definition.type,
+      rootId: element.definition.rootId,
+      classes: element.definition.styleSelectors.base.split(/\s+/).filter(Boolean),
+      ...(typeof content === 'string' && content !== '' ? { content } : {}),
+      attributes: element.attributes,
+      ...(position ? { at: `${position.file}:${String(position.line)}`, position } : {})
+    };
+  });
+};
+
 /**
  * The `content-attribute` suggestions that have one way to be written: the children only words and an icon, none of
  * them named — a child with an id of its own is something a test or a flow may point at — and the words wearing no

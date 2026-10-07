@@ -216,18 +216,18 @@ export const createMcpServer = async ({
     return tool.executePublic ? args => tool.executePublic?.(args, MCP_ENV) : undefined;
   };
 
-  for (const tool of tools) {
-    // Skip a tool whose capability the host did not wire — e.g. plitzi_screenshot without a browser service, so
-    // it never appears in tools/list when the feature is off.
-    if (tool.requires === 'screenshot' && !screenshot) {
-      continue;
-    }
+  // What this connection lists: a tool whose capability the host did not wire (plitzi_screenshot without a browser
+  // service) never appears, nor one with nothing to do here.
+  const listed = tools.flatMap(tool => {
+    const behavior = tool.requires === 'screenshot' && !screenshot ? undefined : behaviorOf(tool);
 
-    const behavior = behaviorOf(tool);
-    if (!behavior) {
-      continue;
-    }
+    return behavior ? [{ tool, behavior }] : [];
+  });
+  // The operations vocabulary is listed once: by the tool that carries it when it is here, so the others name their
+  // operations' types only. Without it (a guest connection lists plitzi_render alone) each keeps its whole schema.
+  const operationsCarried = listed.some(({ tool }) => tool.carriesOperations);
 
+  for (const { tool, behavior } of listed) {
     const run = async (args: unknown) => {
       const start = performance.now();
       try {
@@ -256,7 +256,7 @@ export const createMcpServer = async ({
     const config = {
       title: tool.title,
       description: tool.description,
-      inputSchema: tool.inputShape,
+      inputSchema: operationsCarried && tool.compactInputShape ? tool.compactInputShape : tool.inputShape,
       // A host may run a tool that only reads without asking the person first; one that writes, it should ask.
       annotations: { readOnlyHint: tool.access === 'read' }
     };

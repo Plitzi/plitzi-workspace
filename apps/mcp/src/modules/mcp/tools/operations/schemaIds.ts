@@ -34,10 +34,10 @@ import {
   variantPartPatch
 } from './style/shared';
 
-/** The op union is the tool input of plitzi_apply, plitzi_validate, plitzi_render AND plitzi_preview, and every
- *  host reads it as JSON Schema on tools/list — four copies of the same 30 operations in the model's context, on
- *  EVERY request of every conversation the server is connected to. It measured ~25k tokens PER TOOL (~100k in
- *  total), which dwarfs anything a widget payload ever costs.
+/** The op union is the tool input of plitzi_apply (and of plitzi_render where apply is not listed), and every host
+ *  reads it as JSON Schema on tools/list — on EVERY request of every conversation the server is connected to. It
+ *  measured ~25k tokens a copy, which dwarfs anything a widget payload ever costs; one copy per connection is what
+ *  `compactInputShape` keeps it to, and this keeps that copy small.
  *
  *  Most of that weight is one subschema pasted over and over: an element tree appears in upsertElement,
  *  patchElement and both repeat templates; a breakpoint CSS block in every style op; a rule group in every binding

@@ -19,6 +19,7 @@ import {
   authorSnippet as authorSnippetUnchecked,
   fixSpace as fixSpaceUnchecked,
   lintSpace as lintSpaceUnchecked,
+  locateElements as locateElementsUnchecked,
   planFixes as planFixesUnchecked,
   validateSpace as validateSpaceUnchecked,
   validateSnippet as validateSnippetUnchecked
@@ -38,7 +39,8 @@ import type {
   StepVocabulary,
   Snippet,
   SnippetSpec,
-  FixPlan
+  FixPlan,
+  WrittenElement
 } from './schema';
 import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
 
@@ -248,6 +250,13 @@ export const fixSpace = (
  */
 export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): FixPlan =>
   planFixesUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
+
+/**
+ * `locateElements`, holding the same catalogs: every element the space authors to, with the call in the author's code
+ * that wrote it — what `plitzi where` answers and `plitzi edit` edits at.
+ */
+export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): WrittenElement[] =>
+  locateElementsUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
 
 /**
  * `authorSnippet`, holding the same vocabularies — the artefact you publish when you are not building a space.

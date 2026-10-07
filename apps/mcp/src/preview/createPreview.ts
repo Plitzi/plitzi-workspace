@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 
 import { buildBody } from '@plitzi/sdk-server/ssr';
 
-import { cloneSpace, computeVersion, findPageByRef, getPageElements } from '../modules/mcp/helpers';
-import { applyOperations, validateOperations } from '../modules/mcp/tools';
+import { computeVersion, findPageByRef, getPageElements } from '../modules/mcp/helpers';
+import { draftBatch } from '../modules/mcp/tools/shared/draftBatch';
 
 import type { PreviewRequestBody, PreviewResult } from '../modules/mcp/types';
 import type { PluginManager, ServerCaches } from '@plitzi/sdk-server/ssr';
@@ -58,29 +58,23 @@ export const createPreview = async (
 
   let draftOffline = offlineData;
   if (body.operations && body.operations.length > 0) {
-    const draft = cloneSpace({ schema: offlineData.schema, style: offlineData.style, connectors: [], actions: [] });
-
-    const validation = validateOperations(draft, body.operations);
-    if (!validation.valid) {
+    // The batch as plitzi_apply would save it — expanded, read, fixed, checked and applied by the one path every tool
+    // takes — so the page shown is the page that would be saved.
+    const batch = draftBatch(
+      { schema: offlineData.schema, style: offlineData.style, connectors: [], actions: [] },
+      env,
+      body.operations
+    );
+    if (!batch.ok) {
       return {
         ok: false,
         error: 'INVALID_OPERATIONS',
-        message: 'The operations did not validate.',
-        errors: validation.errors
+        message: 'The operations were refused, as plitzi_apply would refuse them.',
+        errors: batch.errors
       };
     }
 
-    const outcome = applyOperations(draft, env, body.operations);
-    if (outcome.errors.length > 0) {
-      return {
-        ok: false,
-        error: 'APPLY_FAILED',
-        message: 'The operations could not be applied.',
-        errors: outcome.errors
-      };
-    }
-
-    draftOffline = { ...offlineData, schema: draft.schema, style: draft.style };
+    draftOffline = { ...offlineData, schema: batch.draft.schema, style: batch.draft.style };
   }
 
   const pagePath = resolvePagePath(draftOffline.schema, body.pageRef);

@@ -87,7 +87,7 @@ Give headings their level for the outline and their size through their class. An
 ## 4. The linter
 
 The same linter every writer of a space goes through (`authorSpace`, the builder's problems panel, the MCP's
-`plitzi_validate` and `plitzi_apply`, `yarn spaces:lint`) warns about these. They are warnings: the page renders,
+`plitzi_apply`, `yarn spaces:lint`) warns about these. They are warnings: the page renders,
 and a publish is not blocked.
 
 | Code | What it finds | The fix it gives |
@@ -121,8 +121,8 @@ A plugin that draws owns its own markup, and what the linter can't see is up to 
 
 ## 6. Checking a page
 
-- **Through MCP:** `plitzi_screenshot` with `view: "accessibility"` renders the page, unsaved `operations` included,
-  and returns its accessibility tree as an outline (`- button "Close"`, `- heading "Plans" [level=1]`). Every
+- **Through MCP:** `plitzi_screenshot` with `view: "accessibility"` renders a saved page — `plitzi_apply` with `dryRun`
+  and `look: "accessibility"` one not saved yet — and returns its accessibility tree as an outline (`- button "Close"`, `- heading "Plans" [level=1]`). Every
   control or picture with no name is listed in `unnamed`. It is text, far cheaper than an image. `view: "both"`
   returns both. It needs the same browser as the image: the cluster's screenshot service (from 0.1.9) or Playwright or
   Puppeteer on the machine.

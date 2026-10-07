@@ -13,14 +13,19 @@ describe('MCP tool registry (defineTool descriptors)', () => {
 
   it('registers every tool with name, modes metadata and an execute', () => {
     expect(tools.map(t => t.name).sort()).toEqual([
+      'plitzi_add_page',
       'plitzi_apply',
+      'plitzi_bind',
+      'plitzi_class',
+      'plitzi_describe_operation',
+      'plitzi_place',
       'plitzi_preview',
       'plitzi_read',
       'plitzi_render',
       'plitzi_screenshot',
       'plitzi_search',
-      'plitzi_try_function',
-      'plitzi_validate'
+      'plitzi_set',
+      'plitzi_try_function'
     ]);
     expect(tools.every(t => typeof t.execute === 'function')).toBe(true);
     expect(tools.find(t => t.name === 'plitzi_apply')?.access).toBe('write');
@@ -93,7 +98,7 @@ describe('MCP createPreview (draft build, pre-render error paths)', () => {
     );
     expect(res.ok).toBe(false);
     if (!res.ok) {
-      expect(['INVALID_OPERATIONS', 'APPLY_FAILED']).toContain(res.error);
+      expect(res.error).toBe('INVALID_OPERATIONS');
       expect(res.errors?.length).toBeGreaterThan(0);
     }
   });

@@ -84,7 +84,8 @@ calls as a small one:
    own resource instead of its contents.
 2. **`plitzi_search`** — finds elements by label, type or attribute, and each hit already carries what an edit needs
    (its URI, its version, and with `include: "detail"` its props and resolved CSS).
-3. **`plitzi_validate`** or **`plitzi_apply` with `dryRun`** — checks a batch without saving, and answers with
+3. **`plitzi_apply` with `dryRun`** — checks a batch without saving (and, with `look`, renders the page as it would
+   leave it — HTML, an image or the accessibility outline — in the same call), and answers with
    **suggestions**: a shorter way to what the batch wrote — a header copied onto a third page that a layout would
    hold once, a `text` inside a button that is the button's own `content` — each with the elements it saves. Only what
    the batch opened up is said, and none of them blocks the save.
@@ -97,10 +98,11 @@ calls as a small one:
 |---|---|
 | `plitzi_search` | Find elements, pages and style classes; returns the names every edit takes |
 | `plitzi_read` | Read several resources at once by URI |
-| `plitzi_validate` | Check a batch of operations without saving: errors, warnings and suggestions |
-| `plitzi_apply` | Apply and save a batch — all of it or none of it; answers with the batch's suggestions too |
-| `plitzi_preview` | Render a page to HTML, optionally with an unsaved batch |
-| `plitzi_screenshot` | Render a page to an image, or to its accessibility tree (`view: "accessibility"`), optionally with an unsaved batch |
+| `plitzi_apply` | Apply and save a batch — all of it or none of it; answers with the batch's suggestions too. `dryRun` checks it without saving, `look` renders the page as the batch leaves it |
+| `plitzi_set`, `plitzi_class`, `plitzi_bind`, `plitzi_place`, `plitzi_add_page` | One change by its intention, the element named by its ref alone, saved as `plitzi_apply` saves it and answered in a line |
+| `plitzi_describe_operation` | One operation's schema by its type, or every type there is. A field an operation does not have is refused naming the one meant; the same batch refused twice is not run again (`REPEATED_BATCH`) |
+| `plitzi_preview` | Render a saved page to HTML |
+| `plitzi_screenshot` | Render a saved page to an image, or to its accessibility tree (`view: "accessibility"`) |
 | `plitzi_render` | Show the user an offline widget; never touches the space |
 | `plitzi_try_function` | Run one task of the space's [functions](./functions.md) against the draft, in the sandbox: its value, logs and error |
 

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 
-import { capturing } from './helpers';
+import { capturing, checkBatch } from './helpers';
 import { readResource } from '../resources';
-import { apply, validate } from '../tools';
+import { apply } from '../tools';
 
 import type { Space } from '../helpers';
 import type { AIElementDetail } from '../types';
@@ -78,7 +78,7 @@ const scopeSpace = (): Space => ({
 
 describe('MCP binding source scope (descendants only)', () => {
   const bind = (ref: string) =>
-    validate(
+    checkBatch(
       {
         operations: [
           {
@@ -110,7 +110,7 @@ describe('MCP binding source scope (descendants only)', () => {
 
 describe('MCP binding transformers', () => {
   const withTransformer = (action: string, params: Record<string, string>) =>
-    validate(
+    checkBatch(
       {
         operations: [
           {

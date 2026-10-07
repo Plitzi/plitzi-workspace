@@ -9,6 +9,6 @@
     "lib": ["ES2023"],
     "resolveJsonModule": true
   },
-  "include": ["src", "targets", "probe", "vitest.config.ts"],
+  "include": ["src", "targets", "probe", "agents", "vitest.config.ts"],
   "exclude": ["node_modules", "results", ".cache"]
 }
