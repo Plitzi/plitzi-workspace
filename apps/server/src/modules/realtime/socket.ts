@@ -5,7 +5,6 @@ import { frameText } from '../../helpers/wsFrame';
 
 import type { ChannelResolver } from './declarations';
 import type { RealtimeGrants } from './grants';
-import type { RealtimeAnswer } from './handlers';
 import type { RealtimeHub } from './hub';
 import type { UpgradeRequest } from '../../core/http/socketResponse';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
@@ -150,22 +149,16 @@ export const handleRealtimeSocket = async ({
       }
 
       const id = ackId(message.id);
-      void publishFrom(hub, connection, message)
-        .catch((error: unknown): RealtimeAnswer => {
-          warnRealtime('a message was not delivered')(error);
-
-          return { status: 503, error: 'The message was not delivered: send it again', reason: 'unavailable' };
-        })
-        .then(result => {
-          if (id !== undefined) {
-            send('ack', {
-              id,
-              ok: result.status === 204,
-              status: result.status,
-              ...(result.reason ? { reason: result.reason } : {})
-            });
-          }
-        });
+      void publishFrom(hub, connection, message).then(result => {
+        if (id !== undefined) {
+          send('ack', {
+            id,
+            ok: result.status === 204,
+            status: result.status,
+            ...(result.reason ? { reason: result.reason } : {})
+          });
+        }
+      });
     });
 
     socket.on('close', () => {

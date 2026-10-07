@@ -42,6 +42,7 @@ plitzi-workspace/
 | `apps/builder` | Interfaz principal para diseñar y editar espacios Plitzi |
 | `apps/sdk` | Bundle del SDK usado por espacios y el servidor SSR |
 | `apps/server` | Servidor HTTP para SSR, RSC, plugins y assets estáticos |
+| `apps/mcp` | Servidor MCP y herramientas de IA, que dependen de las entradas acotadas de `apps/server` (nunca al revés) — un despliegue que solo sirve páginas nunca lo instala |
 
 ## Paquetes
 
@@ -51,7 +52,10 @@ Los paquetes en `packages/sdk-*` son librerías del workspace importadas por las
 
 | Tema | Ubicación |
 |------|-----------|
-| Guías del monorepo | `docs/en/` o `docs/es/` |
+| Guías del monorepo | `docs/en/` o `docs/es/` — ¿recién llegado? [Onboarding](./onboarding.md) |
+| Decisiones de diseño | `docs/rfc/` (inglés) |
 | API del servidor SSR | `apps/server/README.md` (inglés) |
+| Superficie MCP / IA | `apps/mcp/README.md` (inglés) |
+| Backend: API, auth, base de datos | [Plitzi/plitzi-sdk-server](https://github.com/plitzi/plitzi-sdk-server) (repositorio aparte, en inglés) |
 | API del store (Nexus) | [Plitzi/nexus](https://github.com/Plitzi/nexus) (repositorio aparte, en inglés) |
 | Convenciones de código | `claude.md` |

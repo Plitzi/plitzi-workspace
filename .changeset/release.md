@@ -168,9 +168,9 @@
   below it publishes while the page renders, which the server had not done yet when it wrote the sheet; it now
   resolves them from the document itself (`useResolvedVariables` of `@plitzi/sdk-shared/dataSource/hooks`), the same
   on both sides.
-- **A realtime message the pub/sub cannot deliver is answered, not fatal.** A publish over the WebSocket that Redis
-  refuses — a timeout under load — gets an `ack` with `503` and `reason: 'unavailable'`; a connect, a disconnect or a
-  revoke that fails is logged. Each used to reject with nobody waiting, and the server's `unhandledRejection` handler
+- **A realtime message the pub/sub cannot deliver is answered, not fatal.** A publish that Redis refuses — a timeout under
+  load — is answered `503` with `reason: 'unavailable'`, by the `POST` and in the WebSocket's `ack` alike; a connect,
+  a disconnect or a revoke that fails is logged, on either transport. Each used to reject with nobody waiting, and the server's `unhandledRejection` handler
   shut the whole process down.
 
 ## Reporting to Plitzi

@@ -202,7 +202,7 @@ a plugin with no `declaration.ts`, no `.env.example` — is printed while develo
 
 | Option | What it is |
 |---|---|
-| `space` | The space held in the project: `authorSpace`'s documents, served from memory. Its `warnings` are printed at boot. |
+| `space` | The space held in the project: a function that authors it — `authorProjectSpace` — called once the project's layout is checked (a save while developing is authored again by `plitzi/author.ts`, in a process of its own). Served from memory; its `warnings` are printed at boot. |
 | `cloud` | Instead of `space`: `{ name }` — the space stays in Plitzi and is read with `createCloudAdapters`, from `PLITZI_HOST_KEY` (required), `PLITZI_ENVIRONMENT` (`main` by default), `PLITZI_REVISION` and `PLITZI_SERVER_URL`. `name` is what `/health` answers with. |
 | `actions`, `connectors` | The space's server actions, found by their id, and the connectors they call. Left out, the server runs no actions. |
 | `serverOptions` | The project's `src/config/serverOptions.ts`, typed `ProjectServerOptions`: what `createServer` takes but for what `serveProject` wires, spread before it — `logLevel` and `logger` (`warn`, to the console; `--verbose` on the command line: `info`), `auth`, `images`, `rsc`, `action.limits`, `action.kv` are the project's to set. |
@@ -288,7 +288,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `sessionRenewal` | `{ url } \| false` | on with `auth` | Where a page request whose access cookie died, its refresh cookie alive, renews before it is rendered. |
 | `authCookie` | `SSRAuthCookie` | — | Name, domain, `sameSite`, `secure`, `refreshPath` (`/auth`) and `hintSuffix` (`_hint`) of the session cookies. `auth` brings its own; set here, a piece wins over it. |
 | `exchangePath` | `string \| false` | `'/auth/exchange'` | Where a browser-obtained credential is handed over; served only with the `exchangeCredential` adapter. |
-| `debugMode` | `boolean` | `devMode`, or the space's `devTools` | Authorizes debugging on the pages this server renders. Set, it decides for every space: `false` is a refusal no space turns around. |
+| `debugMode` | `boolean` | `devMode`, or the space's `devTools` | Authorizes debugging on the pages this server renders. Set, it decides for every space: `false` is a refusal no space turns around. A page loads React's development build only while its visitor has the dev tools on. |
 | `frameOptions` | `'DENY' \| 'SAMEORIGIN' \| string[] \| false` | `'DENY'` | Who may embed the pages in a frame (CSP `frame-ancestors`, and `X-Frame-Options`); `false` omits both headers. A space adapter's `frameAncestors` derives it per space — see [Space adapters](#space-adapters-a-space-per-domain). |
 | `fonts` | `{ baseUrl?, dir? }` | `baseUrl: '/fonts'` | Where the font files a space uploaded are addressed, and with `dir` served from this server under `/fonts/*`. See `docs/en/fonts.md` in the workspace. |
 | `environment` | `'production' \| 'staging' \| 'development' \| 'local'` | `'production'` | The Plitzi tier whose endpoints the rendered pages are handed. |

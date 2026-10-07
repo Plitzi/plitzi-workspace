@@ -231,7 +231,7 @@ Without this, another site could open a `session` channel with a visitor's sessi
   `$revoked` message on it.
 - `POST /_realtime` `{ token, topic, type, data }` — a publish. `204`, or `401` (not this server's connection — it
   restarted), `403` (`not_subscribed`, `server_only`), `422` (a `$` type, a bad topic), `413` (too big), `429` (too
-  fast).
+  fast), `503` (`unavailable`: the pub/sub under it did not deliver it — send it again).
 
 ### WebSocket
 

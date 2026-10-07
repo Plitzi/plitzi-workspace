@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createActionsModule } from '../actions';
 import { createChannelResolver } from './declarations';
@@ -224,6 +224,27 @@ describe('realtime channels', () => {
     expect(await publish(hub, { token, topic: 'board:1', type: 'x', data: 1 })).toBe(204);
     expect(await publish(hub, { token, topic: 'board:1', type: 'x', data: 1 })).toBe(429);
     await page.close();
+  });
+
+  // Redis timing out under load: the stream still opens, and a publish is told to send it again, as a WebSocket's ack is.
+  it('answers a publish the pub/sub could not deliver with a 503', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const hub = createRealtimeHub({
+      ...createMemoryPubSub(),
+      publish: () => Promise.reject(new Error('Command timed out'))
+    });
+    const page = await connect(hub, 'board:1');
+    const { res, sent } = buildRes();
+    await handleRealtimePublish({
+      req: request({}, undefined, { token: page.ready?.token, topic: 'board:1', type: 'x', data: 1 }),
+      res,
+      hub
+    });
+
+    expect(sent.status).toBe(503);
+    expect(JSON.parse(sent.body)).toMatchObject({ reason: 'unavailable' });
+    await page.close();
+    warn.mockRestore();
   });
 
   it('tells a presence channel who arrived, and who left once they had announced themselves', async () => {

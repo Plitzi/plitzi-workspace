@@ -3,6 +3,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { accessRefusal } from '@plitzi/sdk-shared/actions';
 import { PRESENCE_TYPE, channelLimits, matchChannel } from '@plitzi/sdk-shared/realtime';
 
+import { warnRealtime } from './failure';
 import { openEventStream } from '../../core/http/sse';
 import { onAbort } from '../../helpers/onAbort';
 
@@ -218,7 +219,13 @@ export const publishFrom = async (
     connection.announced.add(name);
   }
 
-  await hub.publish(connection.space, hub.from(connection, name, kind, value));
+  try {
+    await hub.publish(connection.space, hub.from(connection, name, kind, value));
+  } catch (error) {
+    warnRealtime('a message was not delivered')(error);
+
+    return { status: 503, error: 'The message was not delivered: send it again', reason: 'unavailable' };
+  }
 
   return { status: 204 };
 };
@@ -269,12 +276,12 @@ export const handleRealtimeSubscribe = async ({
     topics: [...admission.accepted.keys()],
     refused: admission.refused
   });
-  await hub.connect(connection);
+  await hub.connect(connection).catch(warnRealtime('a connection was not announced'));
 
   await gone;
   release();
   stream.close();
-  await hub.disconnect(connection);
+  await hub.disconnect(connection).catch(warnRealtime('a connection was not let go'));
 };
 
 export type PublishDeps = { req: SSRRequest; res: SSRResponseHelpers; hub: RealtimeHub };
