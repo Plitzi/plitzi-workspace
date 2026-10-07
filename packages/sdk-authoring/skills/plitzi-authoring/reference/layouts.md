@@ -137,6 +137,10 @@ Every page is now its content and nothing else, and every page is guaranteed the
   addresses; the deepest folder's wins, the space's takes the rest. A page whose `flag` is off shows it too.
 - **A space with none is given a plain one** — a title and a link home, in the home page's layout — and `author`
   suggests writing your own (`not-found-page`): say it in the space's words.
+- **A page that exists but finds nothing** — `/products/:slug` for a slug no product has — is sent with 404 too when
+  its server provider says so: `notFound: "{{ not (source.data.products|find('slug', navigation.routeParams.slug)) }}"`,
+  one expression against its answer, on a `runtime: 'server'` provider of the page (not of its layout, which every
+  page shares). The page renders as written: show its "not found" part with `visible`.
 
 ## Styles follow the same rule
 

@@ -260,6 +260,17 @@ describe('an address no page answers', () => {
     expect(matchRoutePath(guarded, '/studio', false).action).toEqual({ type: 'redirect', path: '/' });
   });
 
+  // `update/*` answers a whole subtree as a page of its own: only a slug that IS `*` is the "not found" page.
+  it('leaves a page answering a subtree by its own `*` a page like any other', () => {
+    const editor = getPaths({ ...withNotFound, editor: page('editor', { slug: 'spaces/:spaceId/update/*' }) }, folders);
+
+    expect(matchRoutePath(editor, '/spaces/7/update/pages', false)).toMatchObject({
+      action: { type: 'normal' },
+      pageId: 'editor'
+    });
+    expect(editor.find(path => path.pageId === 'editor')?.notFound).toBeUndefined();
+  });
+
   it('answers with its status at its own address too', () => {
     expect(matchRoutePath(paths, '/notFound', false)).toMatchObject({
       action: { type: 'notFound' },

@@ -26,7 +26,9 @@ const previousLines = (previous: readonly string[]): string[] =>
         ...previous.map(url => `  - ${url}`),
         'Read each (a claude.ai artifact: open it with your artifact tool, never by fetching the URL). Number the new',
         'findings after the highest id there, and fill `changed` with every earlier finding this project touched:',
-        'fixed, partly or still open — and how you saw it, on the versions above.'
+        'fixed, partly or still open — and how you saw it, on the versions above.',
+        'A link can stop opening — an artifact deleted, or no longer shared. Say which one did not, ask the person for',
+        'the highest id it had, and leave `changed` to the reports you could read.'
       ]
     : ['No earlier report: number the findings from PZ-1.'];
 

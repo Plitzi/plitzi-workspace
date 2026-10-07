@@ -3,13 +3,13 @@ export {
   getPageFullPath,
   getPaths,
   isAbsoluteUrl,
-  isCatchAll,
   isPageAuthored,
   matchRoutePath,
   notFoundPageFor,
   getRouteParams,
   getSlugParams,
-  navigationTarget
+  navigationTarget,
+  NOT_FOUND_SLUG
 } from './routes';
 
 export type { PathMatch, PathPattern } from './matchPath';

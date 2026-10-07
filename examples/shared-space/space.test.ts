@@ -7,8 +7,9 @@ describe('the sample space', () => {
   it('authors the page every example renders', () => {
     const { schema, style, warnings } = offlineData();
 
-    expect(schema.pages).toHaveLength(1);
-    expect(Object.keys(schema.flat)).toHaveLength(31);
+    // The page, and the one for an address nothing answers.
+    expect(schema.pages).toEqual(['home', 'not-found']);
+    expect(Object.values(schema.flat).filter(element => element.definition.rootId === 'home')).toHaveLength(31);
     expect(style.platform.desktop.page).toBeDefined();
     expect(warnings).toEqual([]);
   });

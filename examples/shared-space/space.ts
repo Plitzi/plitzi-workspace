@@ -32,9 +32,9 @@ const rscElement = (
   runtime: ElementRuntime
 ): ElementSpec => element(type, { id, runtime });
 
-const card = (title: string, body: string): ElementSpec =>
+const card = (title: string, body: string, href = '#'): ElementSpec =>
   link({
-    href: '#',
+    href,
     class: 'buttonLink',
     children: [
       container({
@@ -202,6 +202,24 @@ export const sampleSpace: SpaceSpec = {
             card('Templates', 'Explore the Plitzi playground'),
             card('Deploy', 'Instantly deploy your Plitzi Space')
           ]
+        })
+      ]
+    },
+    // The page of every address no other page answers, sent with status 404.
+    {
+      name: 'Not found',
+      id: 'not-found',
+      slug: '*',
+      class: 'page',
+      body: [
+        container({ class: 'backdrop' }),
+        container({
+          class: 'headline',
+          children: [heading({ id: 'not-found-title', content: 'Page not found', subType: 'h1', variant: 'lg' })]
+        }),
+        container({
+          class: 'cards',
+          children: [card('Home', 'There is nothing at this address — the welcome page is.', '/')]
         })
       ]
     }

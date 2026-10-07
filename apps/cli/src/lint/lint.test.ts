@@ -54,7 +54,10 @@ const only = (report: LintReport, code: string): LintFinding[] => report.finding
 /** A space whose index assembles what `src/space/pages/home.ts` writes, as the source to add to. */
 const SPACE_INDEX = `import { home } from './pages/home.ts';
 
-export const space = { name: 'Lint', permanentUrl: 'lint', pages: [home] };
+// The page for an address nothing answers, written: authoring has none of its own to add and suggest.
+const notFound = { name: 'Not found', slug: '*', body: [] };
+
+export const space = { name: 'Lint', permanentUrl: 'lint', pages: [home, notFound] };
 `;
 
 const page = (body: string, imports = "import { container, heading, text } from '@plitzi/sdk-authoring';"): string =>
@@ -73,6 +76,8 @@ beforeEach(async () => {
     template: 'blank'
   });
   project = path.join(home, 'site');
+  // The template's page for an unknown address sits in its layout, which no case here writes: each space is its own.
+  await fs.rm(path.join(project, 'src/space/notFound.ts'));
   vi.spyOn(process, 'cwd').mockReturnValue(project);
   await linkPackages();
 });
@@ -273,6 +278,20 @@ describe('plitzi space lint', () => {
 
     expect(only(report, 'colour-not-token')).toMatchObject([{ line: 10 }]);
     expect(only(report, 'positional-id')).toMatchObject([{ line: 11 }]);
+  }, 30_000);
+
+  // What the space lacks has no element to quiet it on: it is answered by writing it.
+  it('never offers to quiet a suggestion about what the space lacks', async () => {
+    await write(
+      'src/space/index.ts',
+      "import { home } from './pages/home.ts';\n\nexport const space = { name: 'Lint', permanentUrl: 'lint', pages: [home] };\n"
+    );
+    await write('src/space/pages/home.ts', page("    heading('Hi', { id: 'home-title' })"));
+
+    const report = await run();
+
+    expect(only(report, 'not-found-page')).toMatchObject([{ origin: 'authoring', severity: 'warning' }]);
+    expect(said.join('\n')).not.toContain("Authoring's suggestions (not-found-page)");
   }, 30_000);
 
   it('fails on an error; on warnings only with --strict or past --max-warnings', async () => {

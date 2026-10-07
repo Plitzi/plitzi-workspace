@@ -79,7 +79,11 @@ const noBorder = {
   'border-left-style': 'none'
 };
 
-/** The field inside its box: it draws nothing of its own and takes the box's type and colour. */
+/**
+ * The field inside its box: it draws nothing of its own and takes the box's type and colour. Its background is the box
+ * showing through, never the box's colour again: `inherit` painted a translucent one twice, and the field stood out
+ * from the padding around it as a second, darker box.
+ */
 const fieldStyle = {
   height: '100%',
   width: '100%',
@@ -89,7 +93,7 @@ const fieldStyle = {
   'padding-left': '0px',
   display: 'block',
   ...noBorder,
-  'background-color': 'inherit',
+  'background-color': 'transparent',
   color: 'inherit',
   'line-height': 'inherit',
   'font-family': 'inherit',

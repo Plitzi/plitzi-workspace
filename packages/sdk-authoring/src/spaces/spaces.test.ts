@@ -153,7 +153,8 @@ describe('the copy handed to a project', () => {
       'src/space/index.ts',
       'src/space/tokens.ts',
       'src/space/theme.ts',
-      'src/space/content.ts'
+      'src/space/content.ts',
+      'src/space/notFound.ts'
     ]);
     for (const [file, source] of Object.entries(files)) {
       expect(source.split('\n').filter(line => line.trim() !== '').length, file).toBeLessThanOrEqual(400);

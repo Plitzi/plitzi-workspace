@@ -1,7 +1,8 @@
 /* eslint-disable quotes -- templates quote their own strings, and read best in the other quotes */
 /**
  * A page per record: a card links to `/products/<slug>`, and the detail page narrows the same file to the product its
- * address names — with a message, not an empty page, when no product has that name.
+ * address names — with a message, not an empty page, when no product has that name, and status 404: the provider is
+ * resolved on the server, and `notFound` says when its answer holds nothing for this address.
  */
 import { apiContainer, heading, link, list, text, listItem } from '@plitzi/sdk-authoring';
 
@@ -48,7 +49,8 @@ export const recipe: SpaceSpec = {
         apiContainer({
           id: 'catalog-one',
           query: '/data/products.json',
-          cache: true,
+          runtime: 'server',
+          notFound: "{{ not (source.data.products|find('slug', navigation.routeParams.slug)) }}",
           children: [
             list({
               id: 'this-product',

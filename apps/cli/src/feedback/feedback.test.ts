@@ -61,6 +61,8 @@ describe('plitzi feedback', () => {
     const answer = await answered({ previous: [url] });
 
     expect(answer.brief).toContain(`  - ${url}`);
+    // A link that no longer opens is said, never guessed past.
+    expect(answer.brief).toContain('A link can stop opening');
     expect(await fs.readFile(answer.file, 'utf-8')).toContain(`const PREVIOUS = [\n  "${url}"\n]`);
 
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);

@@ -9,7 +9,7 @@ Each is a whole file that authors with no warning — CI holds it to that. Copy 
 | Data read by the page server (`--mode server`) | [recipes/server-data.ts](../recipes/server-data.ts) |
 | An accordion, one answer open at a time | [recipes/accordion.ts](../recipes/accordion.ts) |
 | Filter and sort a list from a select | [recipes/filter-a-list.ts](../recipes/filter-a-list.ts) |
-| A page per record (`/products/:slug`), and "not found" | [recipes/detail-page.ts](../recipes/detail-page.ts) |
+| A page per record (`/products/:slug`), and "not found" sent with 404 | [recipes/detail-page.ts](../recipes/detail-page.ts) |
 | Link to a section of a page (`/#plans`) | [recipes/link-to-a-section.ts](../recipes/link-to-a-section.ts) |
 | A carousel: slides with arrows, dots and autoplay; a marquee; a row that swipes | [recipes/carousel.ts](../recipes/carousel.ts) |
 | Do something every few seconds — a ticker, a poll, a slideshow by hand | [recipes/every-few-seconds.ts](../recipes/every-few-seconds.ts) |

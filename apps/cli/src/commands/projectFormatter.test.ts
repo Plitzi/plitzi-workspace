@@ -6,7 +6,8 @@ import { projectFormatter } from './projectFormatter';
 
 /** What `plitzi space pull` formats the space's files with before comparing them: the project's own Prettier. */
 
-describe('a project’s formatter', () => {
+// Loading the project's Prettier is an import of all of it: far over 5 s on a machine running every package's tests.
+describe('a project’s formatter', { timeout: 30_000 }, () => {
   it('formats with the Prettier the project installed', async () => {
     const format = await projectFormatter(path.resolve(import.meta.dirname, '../..'));
 

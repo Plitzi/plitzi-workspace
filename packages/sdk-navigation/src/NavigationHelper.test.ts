@@ -503,9 +503,8 @@ describe('Testing NavigationHelper', () => {
     const authenticated = true;
     const basePath = '/';
     const previewMode = false;
-    const strictMode = true;
 
-    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, previewMode, strictMode)).toEqual([
+    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, previewMode)).toEqual([
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/spaces/:spaceId/update/*',
@@ -709,7 +708,7 @@ describe('Testing NavigationHelper', () => {
       }
     ]);
 
-    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, !previewMode, strictMode)).toEqual([
+    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, !previewMode)).toEqual([
       {
         pageId: '64669d67e07288d4094abbf2',
         path: '/spaces/:spaceId/update/*',
@@ -849,159 +848,6 @@ describe('Testing NavigationHelper', () => {
         unauthorizedBehaviour: 'redirect',
         unauthorizedPageRedirect: '/',
         hasAccess: false
-      }
-    ]);
-
-    expect(getPaths(pick(schemaFlat, pages), pageFolders, authenticated, basePath, !previewMode, !strictMode)).toEqual([
-      {
-        pageId: '64669d67e07288d4094abbf2',
-        path: '/spaces/:spaceId/update/*',
-        accessLevel: 'authenticated',
-        enabled: true,
-        isRaw: false,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
-        hasAccess: true
-      },
-      {
-        pageId: '64bba0dbde52766b70ce322c',
-        path: '/spaces/:spaceId',
-        accessLevel: 'authenticated',
-        enabled: true,
-        isRaw: false,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
-        hasAccess: true
-      },
-      {
-        accessLevel: undefined,
-        enabled: true,
-        pageId: '657425e280b5b09c93b4a284',
-        path: '/no-published/test',
-        isRaw: false,
-        hasAccess: true,
-        unauthorizedBehaviour: undefined,
-        unauthorizedPageRedirect: undefined
-      },
-      {
-        pageId: '6500448795e141eac765c372',
-        path: '/auth/signup',
-        accessLevel: 'public',
-        isRaw: false,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '',
-        hasAccess: false,
-        enabled: true
-      },
-      {
-        pageId: '64599fe5e07288d4094abbed',
-        path: '/auth/login',
-        accessLevel: 'public',
-        isRaw: false,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/',
-        hasAccess: false,
-        enabled: true
-      },
-      {
-        pageId: '67001330e33d456df96630f4',
-        path: '/67001330e33d456df96630f4',
-        accessLevel: 'public',
-        enabled: true,
-        isRaw: true,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/',
-        hasAccess: false
-      },
-      {
-        pageId: '657425e280b5b09c93b4a284',
-        path: '/657425e280b5b09c93b4a284',
-        isRaw: true,
-        hasAccess: true,
-        accessLevel: undefined,
-        enabled: true,
-        unauthorizedBehaviour: undefined,
-        unauthorizedPageRedirect: undefined
-      },
-      {
-        pageId: '6500448795e141eac765c372',
-        path: '/6500448795e141eac765c372',
-        accessLevel: 'public',
-        isRaw: true,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '',
-        hasAccess: false,
-        enabled: true
-      },
-      {
-        pageId: '64bba0dbde52766b70ce322c',
-        path: '/64bba0dbde52766b70ce322c',
-        accessLevel: 'authenticated',
-        isRaw: true,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
-        hasAccess: true,
-        enabled: true
-      },
-      {
-        pageId: '64669d67e07288d4094abbf2',
-        path: '/64669d67e07288d4094abbf2',
-        accessLevel: 'authenticated',
-        isRaw: true,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
-        hasAccess: true,
-        enabled: true
-      },
-      {
-        pageId: '645f2945e07288d4094abbf1',
-        path: '/645f2945e07288d4094abbf1',
-        accessLevel: 'authenticated',
-        isRaw: true,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
-        hasAccess: true,
-        enabled: true
-      },
-      {
-        pageId: '64599fe5e07288d4094abbed',
-        path: '/64599fe5e07288d4094abbed',
-        accessLevel: 'public',
-        isRaw: true,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/',
-        hasAccess: false,
-        enabled: true
-      },
-      {
-        pageId: '645f2945e07288d4094abbf1',
-        path: '/',
-        accessLevel: 'authenticated',
-        isRaw: false,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/64b9102cf6359d8ddeae853c',
-        hasAccess: true,
-        enabled: true
-      },
-      {
-        pageId: '67001330e33d456df96630f4',
-        path: '/',
-        accessLevel: 'public',
-        enabled: true,
-        isRaw: false,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/',
-        hasAccess: false
-      },
-      {
-        accessLevel: 'authenticated',
-        enabled: true,
-        hasAccess: false,
-        isRaw: true,
-        pageId: '645f2945e07288d4094abbf1',
-        path: '*',
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/'
       }
     ]);
   });

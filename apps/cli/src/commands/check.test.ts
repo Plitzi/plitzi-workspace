@@ -207,14 +207,16 @@ describe('the account a check signs in as', () => {
 });
 
 describe('the page an address is answered by', () => {
-  const page = (id: string, path: string) => ({ id, path, elements: {} });
+  const page = (id: string, path: string, slug = path.slice(1)) => ({ id, path, slug, elements: {} });
   const handles = {
     pages: {
       home: page('home', '/'),
       post: page('post', '/p/:slug'),
-      lost: page('lost', '/*'),
-      docsLost: page('docsLost', '/docs/*'),
-      docs: page('docs', '/docs/intro')
+      lost: page('lost', '/*', '*'),
+      docsLost: page('docsLost', '/docs/*', '*'),
+      docs: page('docs', '/docs/intro', 'intro'),
+      // A page of its own that answers a whole subtree: not a "not found" page.
+      editor: page('editor', '/spaces/:spaceId/update/*')
     }
   } as unknown as Parameters<typeof pageFor>[0];
 
@@ -222,6 +224,10 @@ describe('the page an address is answered by', () => {
     expect(pageFor(handles, '/')).toBe('home');
     expect(pageFor(handles, '/p/hello')).toBe('post');
     expect(pageFor(handles, '/docs/intro')).toBe('docs');
+  });
+
+  it('is a page answering a subtree by its own `*`, never the "not found" page', () => {
+    expect(pageFor(handles, '/spaces/7/update/pages/home')).toBe('editor');
   });
 
   it('is the deepest folder’s "not found" page, then the space’s', () => {

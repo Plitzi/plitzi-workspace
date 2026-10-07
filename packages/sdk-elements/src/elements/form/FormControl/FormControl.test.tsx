@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 
+import declaration from './declaration';
 import { FormControl } from './FormControl';
 import ElementContext from '../../../Element/ElementContext';
 import { elementEntry } from '../../../testUtils/elementTestUtils';
@@ -106,5 +107,17 @@ describe('FormControl slots', () => {
 
     expect(container.querySelector('input')?.className).toBe('form-control__switch-container f-box');
     expect(container.querySelector('.f-required')?.textContent).toBe('*');
+  });
+});
+
+/** A box with a translucent background showed a second, darker box where the field sat: it painted the colour again. */
+describe('FormControl field', () => {
+  it('draws no background of its own: the box shows through it, whatever the box is painted', () => {
+    const fields = Object.values(declaration.content.defaultStyle.subTypes).flatMap(variant =>
+      'field' in variant.style && variant.style.field ? [variant.style.field.default['background-color']] : []
+    );
+
+    expect(fields.length).toBeGreaterThan(0);
+    expect(new Set(fields)).toEqual(new Set(['transparent']));
   });
 });

@@ -714,6 +714,233 @@
             "visibility": true
           }
         }
+      },
+      "not-found": {
+        "id": "not-found",
+        "attributes": {
+          "slug": "*",
+          "default": false,
+          "name": "Not found",
+          "seoEnabled": false
+        },
+        "definition": {
+          "label": "Page",
+          "type": "page",
+          "rootId": "not-found",
+          "items": [
+            "container-9",
+            "container-10",
+            "container-11"
+          ],
+          "styleSelectors": {
+            "base": "page"
+          }
+        }
+      },
+      "container-9": {
+        "id": "container-9",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "not-found",
+          "parentId": "not-found",
+          "items": [],
+          "styleSelectors": {
+            "base": "backdrop"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "container-10": {
+        "id": "container-10",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "not-found",
+          "parentId": "not-found",
+          "items": [
+            "not-found-title"
+          ],
+          "styleSelectors": {
+            "base": "headline"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "not-found-title": {
+        "id": "not-found-title",
+        "attributes": {
+          "content": "Page not found",
+          "subType": "h1"
+        },
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "rootId": "not-found",
+          "parentId": "container-10",
+          "items": [],
+          "styleSelectors": {
+            "base": "heading-a17c"
+          },
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "lg"
+              }
+            }
+          }
+        }
+      },
+      "container-11": {
+        "id": "container-11",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "not-found",
+          "parentId": "not-found",
+          "items": [
+            "link-5"
+          ],
+          "styleSelectors": {
+            "base": "cards"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "link-5": {
+        "id": "link-5",
+        "attributes": {
+          "href": "/",
+          "target": "self",
+          "mode": "internal",
+          "hash": "",
+          "label": "",
+          "content": "",
+          "contentPlacement": "after",
+          "icon": "",
+          "iconPlacement": "before",
+          "current": "page"
+        },
+        "definition": {
+          "label": "Link",
+          "type": "link",
+          "rootId": "not-found",
+          "parentId": "container-11",
+          "items": [
+            "container-12",
+            "paragraph-5"
+          ],
+          "styleSelectors": {
+            "base": "buttonLink",
+            "icon": ""
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "container-12": {
+        "id": "container-12",
+        "attributes": {
+          "subType": "div"
+        },
+        "definition": {
+          "label": "Container",
+          "type": "container",
+          "rootId": "not-found",
+          "parentId": "link-5",
+          "items": [
+            "heading-5",
+            "fontAwesome-5"
+          ],
+          "styleSelectors": {
+            "base": "titleContainer"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "heading-5": {
+        "id": "heading-5",
+        "attributes": {
+          "content": "Home",
+          "subType": "h1"
+        },
+        "definition": {
+          "label": "Heading",
+          "type": "heading",
+          "rootId": "not-found",
+          "parentId": "container-12",
+          "items": [],
+          "styleSelectors": {
+            "base": "heading-6828"
+          },
+          "initialState": {
+            "visibility": true,
+            "styleVariant": {
+              "heading": {
+                "base": "title"
+              }
+            }
+          }
+        }
+      },
+      "fontAwesome-5": {
+        "id": "fontAwesome-5",
+        "attributes": {
+          "icon": "fas fa-arrow-right",
+          "size": "fa-2x",
+          "iconAnimation": ""
+        },
+        "definition": {
+          "label": "Font Awesome",
+          "type": "fontAwesome",
+          "rootId": "not-found",
+          "parentId": "container-12",
+          "items": [],
+          "styleSelectors": {
+            "base": "titleIcon"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
+      },
+      "paragraph-5": {
+        "id": "paragraph-5",
+        "attributes": {
+          "content": "There is nothing at this address — the welcome page is."
+        },
+        "definition": {
+          "label": "Paragraph",
+          "type": "paragraph",
+          "rootId": "not-found",
+          "parentId": "link-5",
+          "items": [],
+          "styleSelectors": {
+            "base": "paragraph-3a1b"
+          },
+          "initialState": {
+            "visibility": true
+          }
+        }
       }
     },
     "variables": [],
@@ -724,7 +951,8 @@
       "enabled": true
     },
     "pages": [
-      "home"
+      "home",
+      "not-found"
     ],
     "pageFolders": [],
     "components": {}
@@ -1322,6 +1550,81 @@
             "named": false
           }
         }
+      },
+      "not-found": {
+        "id": "not-found",
+        "type": "page",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"not-found\"]",
+        "named": true,
+        "slug": "*",
+        "path": "/*",
+        "params": [],
+        "elements": {
+          "container-9": {
+            "id": "container-9",
+            "type": "container",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"container-9\"]",
+            "named": false
+          },
+          "container-10": {
+            "id": "container-10",
+            "type": "container",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"container-10\"]",
+            "named": false
+          },
+          "not-found-title": {
+            "id": "not-found-title",
+            "type": "heading",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"not-found-title\"]",
+            "named": true
+          },
+          "container-11": {
+            "id": "container-11",
+            "type": "container",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"container-11\"]",
+            "named": false
+          },
+          "link-5": {
+            "id": "link-5",
+            "type": "link",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"link-5\"]",
+            "named": false
+          },
+          "container-12": {
+            "id": "container-12",
+            "type": "container",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"container-12\"]",
+            "named": false
+          },
+          "heading-5": {
+            "id": "heading-5",
+            "type": "heading",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"heading-5\"]",
+            "named": false
+          },
+          "fontAwesome-5": {
+            "id": "fontAwesome-5",
+            "type": "fontAwesome",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"fontAwesome-5\"]",
+            "named": false
+          },
+          "paragraph-5": {
+            "id": "paragraph-5",
+            "type": "paragraph",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"paragraph-5\"]",
+            "named": false
+          }
+        }
       }
     },
     "layouts": {},
@@ -1757,6 +2060,144 @@
         "pageId": "home",
         "selector": "[data-plitzi-el=\"paragraph-4\"]",
         "named": false
+      },
+      "not-found": {
+        "id": "not-found",
+        "type": "page",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"not-found\"]",
+        "named": true,
+        "slug": "*",
+        "path": "/*",
+        "params": [],
+        "elements": {
+          "container-9": {
+            "id": "container-9",
+            "type": "container",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"container-9\"]",
+            "named": false
+          },
+          "container-10": {
+            "id": "container-10",
+            "type": "container",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"container-10\"]",
+            "named": false
+          },
+          "not-found-title": {
+            "id": "not-found-title",
+            "type": "heading",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"not-found-title\"]",
+            "named": true
+          },
+          "container-11": {
+            "id": "container-11",
+            "type": "container",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"container-11\"]",
+            "named": false
+          },
+          "link-5": {
+            "id": "link-5",
+            "type": "link",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"link-5\"]",
+            "named": false
+          },
+          "container-12": {
+            "id": "container-12",
+            "type": "container",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"container-12\"]",
+            "named": false
+          },
+          "heading-5": {
+            "id": "heading-5",
+            "type": "heading",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"heading-5\"]",
+            "named": false
+          },
+          "fontAwesome-5": {
+            "id": "fontAwesome-5",
+            "type": "fontAwesome",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"fontAwesome-5\"]",
+            "named": false
+          },
+          "paragraph-5": {
+            "id": "paragraph-5",
+            "type": "paragraph",
+            "pageId": "not-found",
+            "selector": "[data-plitzi-el=\"paragraph-5\"]",
+            "named": false
+          }
+        }
+      },
+      "container-9": {
+        "id": "container-9",
+        "type": "container",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"container-9\"]",
+        "named": false
+      },
+      "container-10": {
+        "id": "container-10",
+        "type": "container",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"container-10\"]",
+        "named": false
+      },
+      "not-found-title": {
+        "id": "not-found-title",
+        "type": "heading",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"not-found-title\"]",
+        "named": true
+      },
+      "container-11": {
+        "id": "container-11",
+        "type": "container",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"container-11\"]",
+        "named": false
+      },
+      "link-5": {
+        "id": "link-5",
+        "type": "link",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"link-5\"]",
+        "named": false
+      },
+      "container-12": {
+        "id": "container-12",
+        "type": "container",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"container-12\"]",
+        "named": false
+      },
+      "heading-5": {
+        "id": "heading-5",
+        "type": "heading",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"heading-5\"]",
+        "named": false
+      },
+      "fontAwesome-5": {
+        "id": "fontAwesome-5",
+        "type": "fontAwesome",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"fontAwesome-5\"]",
+        "named": false
+      },
+      "paragraph-5": {
+        "id": "paragraph-5",
+        "type": "paragraph",
+        "pageId": "not-found",
+        "selector": "[data-plitzi-el=\"paragraph-5\"]",
+        "named": false
       }
     }
   },
@@ -1768,10 +2209,11 @@
         "link-1",
         "link-2",
         "link-3",
-        "link-4"
+        "link-4",
+        "link-5"
       ],
       "saves": 15,
-      "message": "4 links of 5 elements side by side (\"link-1\", \"link-2\", \"link-3\" and 1 more) are one item written again for each row of data. One `list` over the rows draws them: its item template is written once and reads each row (`{{ <list>.item.<field> }}`). Worth it when they are data — an array they were written from, rows that come and go; a few cards a person edits word by word on the canvas can stay as they are.",
+      "message": "5 links of 5 elements share one structure (\"link-1\", \"link-2\", \"link-3\" and 2 more) and differ only in what they say. Make it a component — `components: [{ id, props, root }]` — and place it with `component(id, { props })`: one tree to read and edit, and every copy changes with it. What a copy says or does differently is a prop: an attribute reads `{{ props.title }}`, and so does a flow's step; what it reads from the page is a prop the instance binds (`component(id, { bind: [{ to: prop, source }] })`).",
       "at": "space.ts:36"
     }
   ]

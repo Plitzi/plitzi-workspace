@@ -533,7 +533,7 @@ export const AUTHORING_CODES = {
   'not-found-in-browser': {
     kind: 'refused',
     means:
-      "`notFound` on a provider asked from the browser — its answer arrives after the page was sent with its status",
+      '`notFound` on a provider asked from the browser — its answer arrives after the page was sent with its status',
     fix: "`runtime: 'server'` on the provider, or `visible` on the page's \"not found\" part instead"
   },
   'not-found-not-a-template': {

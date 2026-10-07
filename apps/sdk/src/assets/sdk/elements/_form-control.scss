@@ -106,7 +106,8 @@
   }
 
   // The field inside its box draws nothing of its own and takes the box's type and colour, so a class on the `input`
-  // slot dresses both, and one on the `field` slot reaches the `<input>` alone.
+  // slot dresses both, and one on the `field` slot reaches the `<input>` alone. Its background is the box showing
+  // through: `inherit` painted a translucent box colour twice, a darker box inside the padding.
 
   .input-container__input {
     height: 100%;
@@ -120,7 +121,7 @@
     border-bottom-style: none;
     border-left-style: none;
     border-top-style: none;
-    background-color: inherit;
+    background-color: transparent;
     color: inherit;
     line-height: inherit;
     font-family: inherit;

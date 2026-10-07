@@ -245,8 +245,14 @@ const noPageMessage = (handles: SpaceHandles, pathname: string): string =>
     .map(page => page.path)
     .join(', ')}`;
 
-/** A page whose slug is `*`: the page of every address under its folder that no other page answers. */
-const isCatchAll = (path: string): boolean => path.endsWith('/*');
+/**
+ * The space's "not found" page: a page whose slug is `*`, the page of every address under its folder that no other
+ * page answers. Not every path ending in `*` — `update/*` is a page of its own that answers a whole subtree.
+ */
+const isNotFoundPage = (page: { slug: string }): boolean => page.slug === '*';
+
+/** A path whose last segment is `*`: it answers every address under it. */
+const isSplat = (path: string): boolean => path.endsWith('/*');
 
 /** Where `verify` looks at a page for an address nothing answers: an address under its folder no page has. */
 const NOT_FOUND_PROBE = 'plitzi-check-not-found';
@@ -255,11 +261,11 @@ const NOT_FOUND_PROBE = 'plitzi-check-not-found';
 export const pageFor = (handles: SpaceHandles, pathname: string): string | undefined => {
   const wanted = pathname.replace(/\/$/, '').split('/');
   const answers = (path: string): boolean => {
-    const catchAll = isCatchAll(path);
-    const segments = (catchAll ? path.slice(0, -2) : path.replace(/\/$/, '')).split('/');
+    const splat = isSplat(path);
+    const segments = (splat ? path.slice(0, -2) : path.replace(/\/$/, '')).split('/');
 
     return (
-      (catchAll ? wanted.length > segments.length : segments.length === wanted.length) &&
+      (splat ? wanted.length > segments.length : segments.length === wanted.length) &&
       segments.every(
         (segment, index) => segment.startsWith(':') || /^\{\{.*\}\}$/.test(segment) || segment === wanted[index]
       )
@@ -267,8 +273,8 @@ export const pageFor = (handles: SpaceHandles, pathname: string): string | undef
   };
   const pages = Object.values(handles.pages);
   const ordered = [
-    ...pages.filter(page => !isCatchAll(page.path)),
-    ...pages.filter(page => isCatchAll(page.path)).sort((a, b) => b.path.length - a.path.length)
+    ...pages.filter(page => !isNotFoundPage(page)),
+    ...pages.filter(isNotFoundPage).sort((a, b) => b.path.length - a.path.length)
   ];
 
   return ordered.find(page => answers(page.path))?.id;
@@ -966,9 +972,9 @@ const checkAt = async (
       ...(flow.on === undefined ? {} : { elementId: flow.on }),
       width
     }));
-  const catchAll = handles && pageId ? isCatchAll(handles.pages[pageId].path) : false;
+  const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
   const statusIssues: CheckIssue[] =
-    catchAll && sentWith !== 404
+    notFoundPage && sentWith !== 404
       ? [
           {
             code: 'page-status',
@@ -1283,7 +1289,7 @@ export const staticPaths = async (root: string): Promise<string[] | { problem: s
   return (
     Object.values(authored.handles.pages)
       // The page for an address nothing answers is looked at where it shows: at an address no page has.
-      .map(page => (isCatchAll(page.path) ? `${page.path.slice(0, -1)}${NOT_FOUND_PROBE}` : page.path))
+      .map(page => (isNotFoundPage(page) ? `${page.path.slice(0, -1)}${NOT_FOUND_PROBE}` : page.path))
       .filter(pathname => pathname.split('/').every(segment => !segment.startsWith(':') && !/\{\{.*\}\}/.test(segment)))
   );
 };

@@ -51,7 +51,15 @@ const simulatedFleet = (catalogue: Record<string, HostedStore>) => {
   return { hub, worker, primaryHeard };
 };
 
-const turns = () => new Promise(resolve => setTimeout(resolve, 20));
+/**
+ * Enough turns of the event loop for a message to go out and its answer to come back — each hop is one turn
+ * (`setImmediate`). Counted in turns, not in milliseconds: a busy machine reached a 20 ms timer before the second hop.
+ */
+const turns = async (count = 6): Promise<void> => {
+  for (let turn = 0; turn < count; turn++) {
+    await new Promise(resolve => setImmediate(resolve));
+  }
+};
 
 describe('the fleet channel', () => {
   it('answers a worker from the store the primary holds', async () => {

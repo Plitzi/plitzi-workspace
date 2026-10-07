@@ -240,7 +240,12 @@ export const reportText = (report: LintReport): string => {
     lines.push(chalk.dim(`What each means and what to write instead: the docs of each code — ${docsOf(report)}.`));
   }
 
-  const suggested = [...new Set(report.findings.filter(each => each.origin === 'authoring').map(each => each.code))];
+  // Only one about an element somebody wrote is quieted on it; one about what the space lacks is answered by writing it.
+  const suggested = [
+    ...new Set(
+      report.findings.filter(each => each.origin === 'authoring' && each.file !== undefined).map(each => each.code)
+    )
+  ];
   if (suggested.length > 0) {
     lines.push(
       chalk.dim(

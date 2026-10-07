@@ -1,6 +1,6 @@
 import { blankTemplateFiles, catalogTemplateFiles, emptyTemplateFiles } from '@plitzi/sdk-authoring';
 
-import { AUTHOR_FILE, SPACE_DIR, SPACE_ENTRY } from './paths';
+import { AUTHOR_FILE, SPACE_DIR } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { PluginHostOptions } from '@plitzi/sdk-authoring';

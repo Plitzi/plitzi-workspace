@@ -121,8 +121,9 @@ jobs:
         run: find .turbo/cache -type f -mtime +7 -delete || true
 
   # The unit tests of every app and package, one runner each, listed by the `build` job: a package added tomorrow is
-  # tested without anybody listing it. The bench, the e2e suite and the examples are not apps or packages, and are not
-  # run. The integration tests skip themselves where there is no database to reach.
+  # tested without anybody listing it — and the sample space every example renders, whose test holds its checked-in JSON
+  # to what it authors. The bench, the e2e suite and the other examples are not run. The integration tests skip
+  # themselves where there is no database to reach.
   test:
     needs: build
     runs-on: ubuntu-latest
