@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { listText, notShownInPage, renderedRowsInPage } from './check';
+import { contestedText, listText, notShownInPage, renderedRowsInPage } from './check';
 
 const marked = (id: string): string => `[data-plitzi-el="${id}"]`;
 
@@ -61,5 +61,37 @@ describe('plitzi check / what the page is not showing', () => {
     ]);
 
     Reflect.deleteProperty(HTMLElement.prototype, 'checkVisibility');
+  });
+});
+
+// Two classes set the same property: which one the page shows is the question an agent cannot answer from the code.
+describe('the styles an element’s classes contest', () => {
+  it('says the value shown, the class it comes from and what the others say — a shorthand’s longhands once', () => {
+    const corner = (property: string) => ({
+      property,
+      declared: [
+        { className: 'button-primary', value: '12px' },
+        { className: 'ent-cta-pill', value: '999px' }
+      ],
+      shown: '999px',
+      winner: 'ent-cta-pill'
+    });
+
+    expect(
+      contestedText([
+        ...['top-left', 'top-right', 'bottom-right', 'bottom-left'].map(at => corner(`border-${at}-radius`)),
+        {
+          property: 'color',
+          declared: [
+            { className: 'a', value: 'red' },
+            { className: 'b', value: 'red' }
+          ],
+          shown: 'rgb(255, 0, 0)'
+        }
+      ])
+    ).toEqual([
+      'border-top-left-radius and 3 more like it: 999px, from ent-cta-pill (button-primary says 12px)',
+      'color: rgb(255, 0, 0) — a and b all set it so: any one of them alone gives it'
+    ]);
   });
 });

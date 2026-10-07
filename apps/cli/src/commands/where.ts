@@ -1,13 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { locateElements, refusalOf } from '@plitzi/sdk-authoring';
+import { locateClasses, locateElements, refusalOf } from '@plitzi/sdk-authoring';
 
 import { findProject } from './existingProject';
 import { filesUnder } from './filesUnder';
 import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
-import { callTextAt } from '../fix/sourceEdits';
+import { callTextAt, declaredRoots, loopAround } from '../fix/sourceEdits';
 import { loadTypeScript } from '../projectTypeScript';
 
 import type { WrittenElement, WrittenPosition } from '@plitzi/sdk-authoring';
@@ -61,6 +61,8 @@ interface WhereMatch {
   through?: WhereCall[];
   /** When the call writes other elements too: the nearest call that leads to this one alone, as it is written. */
   ownCall?: { at: string; code?: string };
+  /** The list the call is repeated for, and the file it is written in: one entry of it per element. */
+  repeatedFor?: { list: string; file?: string };
 }
 
 export interface WhereCall {
@@ -77,6 +79,8 @@ export interface WhereAnswer {
   more?: number;
   /** The other readings the query matched too, by how many — a query that means two things says so. */
   also?: { by: WhereReading; count: number }[];
+  /** Read as a class: where the class is declared, and the `styles()` call that declares it. */
+  declared?: { name: string; at?: string; code?: string }[];
   /** Lines of `src/` holding the words, when the space could not be authored to find the element. */
   lines?: { at: string; text: string }[];
   problem?: string;
@@ -92,20 +96,6 @@ const SNIPPET_LINES = 12;
 const comparable = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 /** Every element a query names when it is read one way. */
-/** What places a component, never what it hands it: the rest of an instance's attributes are the component's props. */
-const PLACING = new Set(['referenceType', 'referenceId', 'slot']);
-
-/**
- * The words a component's instance hands it (`pageHead('about-head', 'About us')`): what its parts show, read as
- * `{{ props.title }}`, lives on the instance — the part itself holds only the template.
- */
-const handedWords = (element: WrittenElement): string[] =>
-  element.type === 'reference' && element.attributes.referenceType === 'component'
-    ? Object.entries(element.attributes)
-        .filter((entry): entry is [string, string] => !PLACING.has(entry[0]) && typeof entry[1] === 'string')
-        .map(([, value]) => value)
-    : [];
-
 const readAs = (elements: readonly WrittenElement[], query: string, reading: WhereReading): WrittenElement[] => {
   if (reading === 'id') {
     return elements.filter(element => element.elementId === query);
@@ -120,13 +110,9 @@ const readAs = (elements: readonly WrittenElement[], query: string, reading: Whe
 
   const words = query.toLowerCase();
 
-  // The words it shows: its own, the ones a binding's template writes (`'Reading as a guest'` inside a ternary), or
-  // the ones an instance hands its component.
-  return elements.filter(
-    element =>
-      element.content?.toLowerCase().includes(words) ||
-      [...element.templates, ...handedWords(element)].some(text => text.toLowerCase().includes(words))
-  );
+  // Every word it says: its own, a label or an alt, a binding's template (`'Reading as a guest'` inside a ternary), the
+  // words an instance hands its component — what authoring answers as `words`.
+  return elements.filter(element => element.words.some(text => text.toLowerCase().includes(words)));
 };
 
 /**
@@ -190,6 +176,22 @@ export const callsThrough = (element: WrittenElement, sharers: readonly WrittenE
     return { at: atOf(position), position, ...(sharedWith.length > 0 ? { sharedWith } : {}) };
   });
 
+/** The file a relative import names, as written or with the extension and index TypeScript would try. */
+export const importedFile = async (from: string, specifier: string): Promise<string | undefined> => {
+  const base = path.join(path.dirname(from), specifier);
+  for (const candidate of [base, `${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')]) {
+    const found = await fs
+      .stat(path.resolve(process.cwd(), candidate))
+      .then(stat => stat.isFile())
+      .catch(() => false);
+    if (found) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+};
+
 const codeAt = async (ts: NonNullable<ReturnType<typeof loadTypeScript>>, position: WrittenPosition) => {
   const file = path.resolve(process.cwd(), position.file);
   const text = await fs.readFile(file, 'utf-8').catch(() => undefined);
@@ -197,6 +199,31 @@ const codeAt = async (ts: NonNullable<ReturnType<typeof loadTypeScript>>, positi
   return text === undefined
     ? undefined
     : callTextAt(ts, ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS), position);
+};
+
+/** The list a call is repeated for, with the file it is written in when the project's own code has it. */
+const loopOf = async (
+  ts: NonNullable<ReturnType<typeof loadTypeScript>>,
+  position: WrittenPosition
+): Promise<WhereMatch['repeatedFor']> => {
+  const file = path.resolve(process.cwd(), position.file);
+  const text = await fs.readFile(file, 'utf-8').catch(() => undefined);
+  const loop =
+    text === undefined
+      ? undefined
+      : loopAround(ts, ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS), position);
+  if (!loop) {
+    return undefined;
+  }
+
+  const listFile =
+    loop.from === undefined
+      ? position.file
+      : loop.from.startsWith('.')
+        ? await importedFile(position.file, loop.from)
+        : undefined;
+
+  return { list: loop.list, ...(listFile === undefined ? {} : { file: listFile }) };
 };
 
 const withCode = async (
@@ -241,9 +268,11 @@ const withCode = async (
 
       const code = await codeAt(ts, position);
       const ownCode = own && (await codeAt(ts, own.position));
+      const repeatedFor = await loopOf(ts, position);
 
       return {
         ...match,
+        ...(repeatedFor ? { repeatedFor } : {}),
         ...(code === undefined ? {} : { code: snippet(code) }),
         ...(own ? { ownCall: { at: own.at, ...(ownCode === undefined ? {} : { code: snippet(ownCode) }) } } : {})
       };
@@ -267,6 +296,29 @@ const sourceLines = async (root: string, query: string): Promise<{ at: string; t
   return lines;
 };
 
+/**
+ * Where the project declares each page and layout, by id: no factory call writes one, so it is found as the object
+ * it is written as. Only an id declared once is answered — two places are two candidates, never a guess.
+ */
+const rootsDeclared = async (root: string): Promise<Map<string, WrittenPosition>> => {
+  const ts = loadTypeScript(root);
+  const found = new Map<string, WrittenPosition[]>();
+  if (!ts) {
+    return new Map();
+  }
+
+  for (const file of (await filesUnder(root, 'src')).filter(name => /\.tsx?$/.test(name))) {
+    const absolute = path.join(root, file);
+    const text = await fs.readFile(absolute, 'utf-8');
+    const sourceFile = ts.createSourceFile(absolute, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    for (const { id, line, column } of declaredRoots(ts, sourceFile)) {
+      found.set(id, [...(found.get(id) ?? []), { file: path.relative(process.cwd(), absolute), line, column }]);
+    }
+  }
+
+  return new Map([...found].flatMap(([id, positions]) => (positions.length === 1 ? [[id, positions[0]]] : [])));
+};
+
 /** Every element the space authors to, read now — or why it does not author. */
 export const locatedSpace = async (root: string): Promise<WrittenElement[] | { problem: string }> => {
   const loaded = await loadProjectSpace(root);
@@ -274,11 +326,43 @@ export const locatedSpace = async (root: string): Promise<WrittenElement[] | { p
     return { problem: loaded.problem };
   }
 
+  let elements: WrittenElement[];
   try {
-    return locateElements(loaded.space, loaded.authoring);
+    elements = locateElements(loaded.space, loaded.authoring);
   } catch (error) {
     return { problem: refusalOf(error).message.split('\n')[0] };
   }
+
+  const roots = elements.some(element => !element.position && element.elementId === element.rootId)
+    ? await rootsDeclared(root)
+    : new Map<string, WrittenPosition>();
+
+  return elements.map(element => {
+    const declared =
+      element.position || element.elementId !== element.rootId ? undefined : roots.get(element.elementId);
+
+    return declared ? { ...element, position: declared, at: `${declared.file}:${String(declared.line)}` } : element;
+  });
+};
+
+/** The classes a class query names — by name or by the variable that holds one — with where each is declared. */
+const declaredClasses = async (root: string, query: string): Promise<NonNullable<WhereAnswer['declared']>> => {
+  const loaded = await loadProjectSpace(root);
+  if ('problem' in loaded) {
+    return [];
+  }
+
+  const ts = loadTypeScript(root);
+  const named = comparable(query);
+  const classes = locateClasses(loaded.space, loaded.authoring).filter(found => comparable(found.name) === named);
+
+  return Promise.all(
+    classes.map(async ({ name, at, position }) => {
+      const code = ts && position ? await codeAt(ts, position) : undefined;
+
+      return { name, ...(at ? { at } : {}), ...(code === undefined ? {} : { code: snippet(code) }) };
+    })
+  );
 };
 
 /** The answer to a query, of the elements the space authors to. */
@@ -293,9 +377,12 @@ export const answerOf = async (
     return { query, ...(by ? { by } : {}), matches: [] };
   }
 
+  const declared = matched.by === 'class' ? await declaredClasses(root, query) : [];
+
   return {
     query,
     by: matched.by,
+    ...(declared.length > 0 ? { declared } : {}),
     matches: await withCode(root, matched.found, matched.by, byCall(elements)),
     ...(matched.found.length > MATCHES ? { more: matched.found.length - MATCHES } : {}),
     ...(matched.also.length > 0 ? { also: matched.also } : {})
@@ -328,6 +415,11 @@ const matchText = (match: WhereMatch): string[] => [
     : []),
   ...(match.sharedWith
     ? [`    The same call also writes ${match.sharedWith.join(', ')}: an edit there changes every one.`]
+    : []),
+  ...(match.repeatedFor
+    ? [
+        `    Repeated for each entry of ${match.repeatedFor.list}${match.repeatedFor.file ? ` (${match.repeatedFor.file})` : ''}: what each shows is its entry's — add, change or remove one there.`
+      ]
     : []),
   ...(match.ownCall
     ? [
@@ -376,6 +468,10 @@ const whereText = (answer: WhereAnswer): string => {
   const said = READING_SAID[answer.by ?? 'id'];
 
   return [
+    ...(answer.declared ?? []).flatMap(declared => [
+      `Class ${declared.name} — declared at ${declared.at ?? 'no styles() call of the project (the space-wide classes)'}`,
+      ...(declared.code ? declared.code.split('\n').map(line => `    ${line}`) : [])
+    ]),
     `${String(answer.matches.length + (answer.more ?? 0))} ${said} "${answer.query}":`,
     ...answer.matches.flatMap(matchText),
     ...(answer.more ? [`… ${String(answer.more)} more — ask for one by its id`] : []),

@@ -5,15 +5,15 @@ import { promisify } from 'node:util';
 
 import chalk from 'chalk';
 
-import { closest } from '@plitzi/sdk-authoring';
+import { closest, PAGE_SPEC_FIELDS } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { findProject } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { AGAIN, noteRefused } from './repeats';
-import { isReadings, readingOf, spaceEffects, surprises } from './spaceReading';
+import { isReadings, reachedToo, readingOf, spaceEffects, surprises } from './spaceReading';
 import { fail } from './terminal';
-import { answerOf, locatedSpace } from './where';
+import { answerOf, importedFile, locatedSpace } from './where';
 import { unifiedDiff } from '../fix/diff';
 import { formatLikeBefore } from '../fix/format';
 import { applyChanges, listEntryBehind, listEntryEdit, parameterBehind, slotEdit, slotText } from '../fix/sourceEdits';
@@ -66,22 +66,6 @@ interface Placed {
 
 /** Where a placed change is said to be made. */
 const placedAt = ({ call, entry }: Placed): string => (entry ? `${entry.file}, in ${entry.given.list}` : call.at);
-
-/** The file a relative import names, as written or with the extension and index TypeScript would try. */
-const importedFile = async (from: string, specifier: string): Promise<string | undefined> => {
-  const base = path.join(path.dirname(from), specifier);
-  for (const candidate of [base, `${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')]) {
-    const found = await fs
-      .stat(path.resolve(process.cwd(), candidate))
-      .then(stat => stat.isFile())
-      .catch(() => false);
-    if (found) {
-      return candidate;
-    }
-  }
-
-  return undefined;
-};
 
 const run = promisify(execFile);
 
@@ -224,7 +208,11 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
 
   // Only what the element has as an attribute: an option of the factory that wrote it (`as`, `from`) is how the call
   // builds the element, not one of its attributes, and an edit of it could not be checked — said before anything is.
-  const attributes = Object.keys(element.attributes ?? {});
+  // A page declares its attributes as fields of its own, set or not yet: a page with no `seoTitle` can be given one.
+  const isPage = element.type === 'page';
+  const attributes = [
+    ...new Set([...Object.keys(element.attributes ?? {}), ...(isPage ? Object.keys(PAGE_SPEC_FIELDS) : [])])
+  ];
   const unknown = changes.filter(change => !attributes.includes(change.key));
   if (unknown.length > 0) {
     await refuse(
@@ -237,6 +225,20 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
           })
           .join(', ')}. It has ${attributes.join(', ')}.`,
         `What the call is written with besides its attributes is edited by hand, at ${element.at ?? 'the call'} — \`plitzi where ${elementId} --by id\` shows it.`
+      ].join('\n')
+    );
+
+    return;
+  }
+
+  // Two attributes from one field (`layout: { id, slot }`), or one that follows from others (`seoEnabled`): no single
+  // field of the page to write, so said rather than guessed.
+  const derived = isPage ? changes.filter(change => !Object.hasOwn(PAGE_SPEC_FIELDS, change.key)) : [];
+  if (derived.length > 0) {
+    await refuse(
+      [
+        `Nothing was changed: ${derived.map(change => `\`${change.key}\``).join(', ')} of a page is no field of its own — \`layout\` and \`layoutContainer\` are its \`layout: { id, slot }\`, and \`seoEnabled\` follows from \`seoTitle\` and \`seoDescription\`.`,
+        `Edit the page by hand at ${element.at ?? 'its declaration'}.`
       ].join('\n')
     );
 
@@ -270,7 +272,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
   // Where each change is made: the element's own call, or — when it is written there as a helper's parameter — where
   // the helper is handed it, followed up as far as the project's code hands it on.
   const place = async (change: Change): Promise<Placed | { unplaced: string }> => {
-    let slot: ValueSlot = { attribute: change.key };
+    let slot: ValueSlot = { attribute: isPage ? PAGE_SPEC_FIELDS[change.key] : change.key };
     for (const [depth, call] of calls.entries()) {
       const { sourceFile } = await sourceOf(call.position.file);
       const given = parameterBehind(ts, sourceFile, call.position, slot);
@@ -402,14 +404,28 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
 
   const after = await readAfresh();
   const effects = 'problem' in after ? [] : spaceEffects(located.map(readingOf), after);
+  // The same value, read somewhere else too: meant for all of them only when `--every` says so.
+  const reached = 'problem' in after ? [] : reachedToo(effects, after, asked, changes);
+  if (options.every) {
+    for (const { elementId: other, change } of reached) {
+      asked.set(other, [...(asked.get(other) ?? []), change]);
+    }
+  }
+
   const reasons =
     'problem' in after ? [`the space no longer authors: ${after.problem}`] : surprises(effects, after, asked);
   if (reasons.length > 0) {
     await Promise.all(written.map(({ file, before }) => fs.writeFile(path.resolve(process.cwd(), file), before)));
+    const others = [...new Set(reached.map(({ elementId: other }) => other))];
     await refuse(
       [
         `Nothing was changed — ${written.length > 1 ? 'the files are' : 'the file is'} as it was:`,
-        ...reasons.map(reason => `  - ${reason}`)
+        ...reasons.map(reason => `  - ${reason}`),
+        ...(others.length > 0 && !options.every
+          ? [
+              `The value is written once for ${elementId} and ${others.join(', ')}: for all of them, add --every; for ${elementId} alone, give it a value of its own by hand.`
+            ]
+          : [])
       ].join('\n')
     );
 

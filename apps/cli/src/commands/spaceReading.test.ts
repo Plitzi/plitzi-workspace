@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isReadings, spaceEffects, surprises } from './spaceReading';
+import { isReadings, reachedToo, spaceEffects, surprises } from './spaceReading';
 
 import type { ElementReading } from './spaceReading';
 
@@ -55,6 +55,18 @@ describe('what an edit did that was not asked, or did not do', () => {
     expect(surprises(spaceEffects(before, after), after, asked)).toEqual([
       'title.content reads "Hi", not "Hello"',
       'it changed footer-title.content: "Hi" → "Hello" too, which was not asked'
+    ]);
+  });
+});
+
+// A nav and a menu drawn from one list entry: the label asked of one is the other's too, and is said as such.
+describe('what an edit reached with the very value asked', () => {
+  it('names the elements given the same attribute and value, and nothing else', () => {
+    const asked = new Map([['title', [{ key: 'content', value: 'Hello' }]]]);
+    const after = [reading('title', { content: 'Hello', level: 2 }), reading('footer-title', { content: 'Hello' })];
+
+    expect(reachedToo(spaceEffects(before, after), after, asked, [{ key: 'content', value: 'Hello' }])).toEqual([
+      { elementId: 'footer-title', change: { key: 'content', value: 'Hello' } }
     ]);
   });
 });

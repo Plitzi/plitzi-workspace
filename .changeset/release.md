@@ -90,5 +90,19 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   hands its component, and `edit` writes an instance's props.
 - `plitzi edit` follows a value read off a list the call is repeated for (`item.question` in
   `QUESTIONS.flatMap(item => …)`) to the one entry that holds it, in the file the list is written in; when the shared
-  value is not a literal it says where it comes from instead of offering `--every`. The shell now stays around the element on both sides of hydration, under the same
+  value is not a literal it says where it comes from instead of offering `--every`.
+- **`plitzi check --element` says which class wins.** Each property more than one of the element's classes sets, at
+  rest: the value shown, the class it comes from and what the others say — or that they all set it so. Which wins is
+  asked of the page, each class taken off for a moment; a style change is verified in text, not with a picture.
+- **`plitzi where` reads more.** By words it finds every word an element says (`words` on `WrittenElement`: content,
+  `label`, `title`, `alt`, `placeholder`, binding templates, an instance's props); by class it says where the class
+  is declared (`locateClasses` in `@plitzi/sdk-authoring`); an element repeated over a list says which list, and its
+  file; a page or a layout is placed at the object it is declared as.
+- **`plitzi edit` edits a page** by the attributes `where` shows (`seoPageTitle` written as `seoTitle`;
+  `PAGE_SPEC_FIELDS` in `@plitzi/sdk-authoring`), refusing `layout` and `seoEnabled`, which are no field of their own;
+  and a value read in more than one place (a list entry a nav and a menu both draw) changes them all only with
+  `--every`, each named.
+- **A component prop of a type that does not exist is refused** (`prop-type-unknown`, with the types there are):
+  `type: 'string'` was accepted at run time, offered by no editor and checked against nothing. `BUILTIN_PARAM_TYPES`
+  in `@plitzi/sdk-shared` is the list, and `BuiltinParamType` is derived from it. The shell now stays around the element on both sides of hydration, under the same
   key, and only stops freezing (`frozen`).

@@ -199,6 +199,10 @@ images, sideways scroll, text in the colour behind it, console errors, refused r
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
 the page is not showing, which is not mounted — a provider that failed, and each list's rows, drawn and in its source
 (`feed 4 of 8 rows`, `hits not rendered (16 in its source)`; `--json`: `lists: { id: { rendered, source } }`). A page's state in a few hundred tokens, where a screenshot costs thousands.
+`--element` adds, at rest, each property more than one of the element's classes sets: the value shown, the class it
+comes from and what the others say — `border-radius: 999px, from ent-cta-pill (button-primary says 12px)` — or that
+they all set it so and any one alone gives it. Which class wins is asked of the page (each taken off for a moment),
+so specificity, order and media are answered without a picture.
 
 `--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
 default, and `shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
@@ -236,13 +240,17 @@ plitzi edit signup --set required=true --remove placeholder
 plitzi edit site-brand --every --set label="Home"  # a helper's call that writes several elements: every one
 ```
 
-`where` answers where the project's code writes an element — `src/space/pages/home.ts:42` and the call itself — so
+`where` answers where the project's code writes an element — `src/space/pages/home.ts:42` and the call itself, or the
+object a page or a layout is declared as — so
 the call is edited instead of the files around it being read. It is asked of the code as it is now: the space is
 authored again and each element's call read back, the way `fix` finds it, so it follows an element wherever somebody
 moved it, with nothing kept that could fall out of step. Ten matches at most, the call shown for the first three;
 `--json` adds the element's attributes when it was asked for by id. A query is read as an id, then a class, then words —
 the first that matches is answered, and any other that matched too is said with its count and the command for it
-(`--by text`); `--by` reads it one way only. A space that does not author is said, with the
+(`--by text`); `--by` reads it one way only. Words are every word an element says: its content, a `label`, `title`,
+`alt` or `placeholder`, a binding's template, the words an instance hands its component. Asked for a class, it says
+where the class is declared too — the `styles()` call — before who wears it; and an element written inside a
+`LIST.map(item => …)` says which list it is repeated for and the file it is in. A space that does not author is said, with the
 lines of `src/` holding the words instead.
 
 `edit` writes attributes in that call — `content` given as the factory's first argument (`text('Hi', { … })`) where it
@@ -255,7 +263,9 @@ binding computes is refused — the page shows the binding's value, never one wr
 as far as the project's code hands it on, and only when the helper reads it once. A value read off a list the call is
 repeated for (`QUESTIONS.map(item => button({ content: item.question }))`) is changed in the one entry of the list
 that holds it, in whichever file the list is written. A component's instance is edited like any element: its
-attributes are the props it hands the component, and `where` finds the words it hands too. A call that writes more than one
+attributes are the props it hands the component, and `where` finds the words it hands too. A page is edited by its
+attributes as `where` shows them — `seoPageTitle` is written as the page's `seoTitle`. A value read in more than one
+place — a list entry a nav and a menu both draw — changes them all only with `--every`, every one named. A call that writes more than one
 element — a helper called for each — is never changed unasked: `where` says which elements it writes and the call that
 leads to this one alone, and `edit` refuses, naming them, unless `--every` says the change is for all of them. Any other
 value written as anything but a literal — a variable, a template, props spread from elsewhere — is left to the author,

@@ -4,7 +4,7 @@ import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
 import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
 import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
 import { checkVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
-import { invalidParams } from '@plitzi/sdk-shared/authoring/paramSpec';
+import { BUILTIN_PARAM_TYPES, invalidParams } from '@plitzi/sdk-shared/authoring/paramSpec';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
@@ -174,6 +174,21 @@ const withCache = (item: Omit<StyleItem, 'cache'>): StyleItem => {
 };
 
 /** The two attributes a page or a layout names its shell with. */
+/**
+ * A page's attributes that are one field of its `PageSpec` each, by attribute name: the page writes `seoTitle` and the
+ * document reads `seoPageTitle`. What an edit of a page's attribute writes in the code. Its layout is not here — two
+ * attributes from one field (`layout: { id, slot }`) — nor `seoEnabled`, which follows from the other two.
+ */
+export const PAGE_SPEC_FIELDS: Readonly<Record<string, keyof PageSpec>> = {
+  slug: 'slug',
+  name: 'name',
+  default: 'isDefault',
+  folder: 'folder',
+  accessLevel: 'accessLevel',
+  seoPageTitle: 'seoTitle',
+  seoPageDescription: 'seoDescription'
+};
+
 const layoutAttributes = (layout: LayoutRef | undefined): Record<string, string> =>
   layout ? { layout: layout.id, layoutContainer: layout.slot } : {};
 
@@ -212,6 +227,8 @@ class SpaceAuthor {
   private readonly classOrigins = new Map<string, () => string>();
   /** Where each class's rules were written, in words — what `class-overrides-class` names it by. */
   private readonly classWritten = new Map<string, () => string>();
+  /** Each class written with `styles()`, by name: the declaration, which knows the line of the author's that wrote it. */
+  private readonly classDeclarations = new Map<string, StyleDeclaration>();
   /** Each element's own rules on top of its classes (`<id>--own`), and where they were written. */
   private readonly ownRules = new Map<string, { blocks: ResponsiveBlock; written: () => string }>();
   /** Every element's own selector, named or derived — each one is that element's alone. */
@@ -339,6 +356,11 @@ class SpaceAuthor {
   }
 
   /** The spec an element was written from, by its id in the documents. */
+  /** Every class the space declares, by name, with the `styles()` declaration that wrote it when one did. */
+  declaredClasses(): [string, StyleDeclaration | undefined][] {
+    return [...this.classRules.keys()].map(name => [name, this.classDeclarations.get(name)]);
+  }
+
   specOf(id: string): ElementSpec | undefined {
     return this.specs.get(id);
   }
@@ -376,7 +398,8 @@ class SpaceAuthor {
         name,
         value.rules,
         () => `${declaredAt(value)}, listed in the space-wide \`classes\``,
-        () => declaredAt(value)
+        () => declaredAt(value),
+        value
       );
     }
 
@@ -599,12 +622,21 @@ class SpaceAuthor {
    * `origin` says where, and is only asked for when there is a conflict to report: reading where an element was written
    * means formatting a stack, which every element of every space would otherwise pay for on every write.
    */
-  private declareClass(name: string, blocks: ResponsiveBlock, origin: () => string, written: () => string): void {
+  private declareClass(
+    name: string,
+    blocks: ResponsiveBlock,
+    origin: () => string,
+    written: () => string,
+    declaration?: StyleDeclaration
+  ): void {
     const existing = this.classRules.get(name);
     if (!existing) {
       this.classRules.set(name, blocks);
       this.classOrigins.set(name, origin);
       this.classWritten.set(name, written);
+      if (declaration) {
+        this.classDeclarations.set(name, declaration);
+      }
 
       return;
     }
@@ -631,7 +663,8 @@ class SpaceAuthor {
             ref.name,
             ref.rules,
             () => `${declaredAt(ref)}, used by ${usedBy()}`,
-            () => declaredAt(ref)
+            () => declaredAt(ref),
+            ref
           );
         }
       }
@@ -1056,10 +1089,21 @@ class SpaceAuthor {
       }
 
       componentIds.add(component.id);
-      for (const name of Object.keys(component.props ?? {})) {
+      for (const [name, prop] of Object.entries(component.props ?? {})) {
         const problem = propNameProblem(name);
         if (problem) {
           throw new AuthoringError('prop-name', `${where}: ${problem}.`);
+        }
+
+        // Read at run time too: a project in JavaScript, or one nobody type-checks, would otherwise declare a prop of
+        // a type no editor offers and nothing checks a value against — and never hear of it.
+        const types: readonly string[] = BUILTIN_PARAM_TYPES;
+        const type: string = prop.type;
+        if (!types.includes(type)) {
+          throw new AuthoringError(
+            'prop-type-unknown',
+            `${where} declares the prop "${name}" as \`${type}\`, which is no type${didYouMean(type, [...types]) || '.'} A prop is one of ${types.join(', ')}: words are \`text\`.`
+          );
         }
       }
     }
@@ -2109,6 +2153,12 @@ export interface WrittenElement {
   content?: string;
   /** The templates its bindings compute an attribute with — where the words it shows live when they are not its own. */
   templates: string[];
+  /**
+   * Every word it says to a person, read or heard: its `content`, `label`, `title`, `alt` and `placeholder`, the
+   * templates its bindings write, and — an instance of a component — the words it hands the component. What
+   * `plitzi where` finds an element by when it is asked for words.
+   */
+  words: string[];
   /** Its attributes as authored. */
   attributes: Record<string, unknown>;
   /** The attributes its bindings compute: what the page shows of them is the binding's, never the value written. */
@@ -2123,6 +2173,27 @@ export interface WrittenElement {
    */
   through: WrittenPosition[];
 }
+
+/** The attributes that are words a person reads or hears, whatever the element. */
+const SAID_ATTRIBUTES = new Set(['content', 'label', 'title', 'alt', 'placeholder']);
+
+/** What places a component, never what it hands it: the rest of an instance's attributes are the component's props. */
+const PLACING_ATTRIBUTES = new Set(['referenceType', 'referenceId', 'slot']);
+
+const wordsOf = (element: Element, templates: readonly string[]): string[] => {
+  const instance = element.definition.type === 'reference' && element.attributes.referenceType === 'component';
+
+  return [
+    ...Object.entries(element.attributes).flatMap(([key, value]) =>
+      typeof value === 'string' &&
+      value !== '' &&
+      (SAID_ATTRIBUTES.has(key) || (instance && !PLACING_ATTRIBUTES.has(key)))
+        ? [value]
+        : []
+    ),
+    ...templates
+  ];
+};
 
 /**
  * Every element the space authors to, with where it was written — read from the code as it is NOW, so it follows an
@@ -2161,11 +2232,35 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
       classes: element.definition.styleSelectors.base.split(/\s+/).filter(Boolean),
       ...(typeof content === 'string' && content !== '' ? { content } : {}),
       templates,
+      words: wordsOf(element, templates),
       attributes: element.attributes,
       bound: (element.definition.bindings?.attributes ?? []).map(binding => binding.to),
       through: calls.slice(1),
       ...(position ? { at: `${position.file}:${String(position.line)}`, position } : {})
     };
+  });
+};
+
+/** One class of the space, and where the author's code declares it. */
+export interface WrittenClass {
+  name: string;
+  /** Where it was declared: `src/space/styles.ts:118`. Absent for one no `styles()` call wrote (a space-wide object). */
+  at?: string;
+  position?: WrittenPosition;
+}
+
+/**
+ * Every class the space declares, with the `styles()` call that wrote it — read from the code as it is now, as
+ * `locateElements` reads the elements. What `plitzi where` answers of a class: who wears it, and where it is written.
+ */
+export const locateClasses = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): WrittenClass[] => {
+  const author = new SpaceAuthor(spec, options);
+  author.write();
+
+  return author.declaredClasses().map(([name, declaration]) => {
+    const position = declaration ? writtenAtPosition(declaration) : undefined;
+
+    return { name, ...(position ? { at: `${position.file}:${String(position.line)}`, position } : {}) };
   });
 };
 

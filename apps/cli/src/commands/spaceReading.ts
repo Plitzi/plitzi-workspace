@@ -164,6 +164,35 @@ export const surprises = (
 };
 
 /**
+ * The elements an edit reached beyond those asked, each given the very attribute and value asked for: one value
+ * written once and read in two places — a list entry a menu and a nav both draw. What `--every` takes as meant;
+ * anything else it changed stays a surprise.
+ */
+export const reachedToo = (
+  effects: readonly SpaceEffect[],
+  after: readonly ElementReading[],
+  asked: ReadonlyMap<string, readonly AskedChange[]>,
+  changes: readonly AskedChange[]
+): { elementId: string; change: AskedChange }[] => {
+  const readings = new Map(after.map(element => [element.elementId, element]));
+
+  return effects.flatMap(({ elementId, key }) => {
+    const change = changes.find(candidate => candidate.key === key && candidate.value !== undefined);
+    const reads = readings.get(elementId)?.attributes[key ?? ''];
+    if (
+      key === undefined ||
+      !change ||
+      asked.get(elementId)?.some(known => known.key === key) ||
+      canonicalJson(reads) !== canonicalJson(change.value)
+    ) {
+      return [];
+    }
+
+    return [{ elementId, change }];
+  });
+};
+
+/**
  * `plitzi elements`, not listed: the space as `ElementReading[]`, or `{ problem }` — what `plitzi edit` reads in a fresh
  * process after it changed a file the one running it had already loaded.
  */

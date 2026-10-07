@@ -6,6 +6,7 @@ import {
   applyChanges,
   attributeEdit,
   callTextAt,
+  declaredRoots,
   listEntryBehind,
   listEntryEdit,
   parameterBehind,
@@ -270,6 +271,20 @@ describe('an attribute edited where the element was written (plitzi edit)', () =
       "export const QUESTIONS = [{ id: 'a', question: 'Why?' }, { id: 'b', question: 'When?' }] as const;"
     );
     expect(written('Who?')).toBe('unplaced: no entry of `QUESTIONS` writes `question` as "Who?"');
+  });
+
+  // A page is declared as an object, not written by a call: found by its id and its body, and edited as its props.
+  it('finds the pages and layouts a file declares, and edits one as it edits a call', () => {
+    const text = "export const about: PageSpec = { id: 'about', name: 'About', slug: 'about', body: [] };";
+    const sourceFile = ts.createSourceFile('about.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const [declared] = declaredRoots(ts, sourceFile);
+
+    expect(declared).toEqual({ id: 'about', line: 1, column: 32 });
+    const outcome = attributeEdit(ts, sourceFile, declared, 'seoTitle', 'About — Example');
+
+    expect('changes' in outcome ? applyChanges(text, outcome.changes) : outcome.unplaced).toBe(
+      "export const about: PageSpec = { id: 'about', name: 'About', slug: 'about', body: [], seoTitle: 'About — Example' };"
+    );
   });
 
   it('shows the call as it is written', () => {

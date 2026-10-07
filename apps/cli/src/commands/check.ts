@@ -106,6 +106,18 @@ export interface CheckReport {
   state?: unknown;
   sources?: Record<string, unknown>;
   element?: unknown;
+  /** With `--element`: each property more than one of its classes sets, and which the page shows. `null`: not on it. */
+  styles?: ContestedStyle[] | null;
+}
+
+/** A property more than one of an element's classes sets, at rest: what each says, and which one the page shows. */
+export interface ContestedStyle {
+  property: string;
+  declared: { className: string; value: string }[];
+  /** The value the page shows. */
+  shown: string;
+  /** The class it is shown from — the one whose removal changes it; absent when they all say the same. */
+  winner?: string;
 }
 
 /**
@@ -209,6 +221,131 @@ const notShown = async (page: BrowserPage, authored: Authored): Promise<Set<stri
 };
 
 /**
+ * Each property more than one of an element's classes sets, as the page has them at rest, and which one wins. Which
+ * wins is asked of the page rather than worked out from the cascade: each class is taken off for a moment, and the one
+ * whose absence changes the value is the one it comes from — specificity, order, layers and media all answered at once.
+ * Runs in the page, self-contained.
+ */
+export const contestedStylesInPage = ({
+  selector,
+  classes
+}: {
+  selector: string;
+  classes: string[];
+}): ContestedStyle[] | null => {
+  const node = document.querySelector(selector);
+  if (!(node instanceof HTMLElement)) {
+    return null;
+  }
+
+  const worn = classes.filter(name => node.classList.contains(name));
+  const declared = new Map<string, { className: string; value: string }[]>();
+  const visit = (rules: CSSRuleList): void => {
+    for (const rule of Array.from(rules)) {
+      if (rule instanceof CSSMediaRule) {
+        if (matchMedia(rule.media.mediaText).matches) {
+          visit(rule.cssRules);
+        }
+
+        continue;
+      }
+
+      if (rule instanceof CSSSupportsRule) {
+        if (CSS.supports(rule.conditionText)) {
+          visit(rule.cssRules);
+        }
+
+        continue;
+      }
+
+      if (!(rule instanceof CSSStyleRule)) {
+        if (rule instanceof CSSGroupingRule) {
+          visit(rule.cssRules);
+        }
+
+        continue;
+      }
+
+      let applies = false;
+      try {
+        applies = node.matches(rule.selectorText);
+      } catch {
+        // A selector `matches` cannot take — a pseudo-element — is never this node at rest.
+      }
+
+      const className = applies
+        ? worn.find(name => new RegExp(`\\.${CSS.escape(name)}(?![\\w-])`).test(rule.selectorText))
+        : undefined;
+      if (!className) {
+        continue;
+      }
+
+      for (const property of Array.from(rule.style)) {
+        const others = (declared.get(property) ?? []).filter(entry => entry.className !== className);
+        declared.set(property, [...others, { className, value: rule.style.getPropertyValue(property) }]);
+      }
+    }
+  };
+  for (const sheet of Array.from(document.styleSheets)) {
+    try {
+      visit(sheet.cssRules);
+    } catch {
+      // A stylesheet from another origin cannot be read, and holds none of the space's classes.
+    }
+  }
+
+  const contested = [...declared].filter(([, list]) => list.length > 1);
+  const { transition, animation } = node.style;
+  // Off while the classes come and go: a transition would answer the value it starts from, not the one it ends at.
+  node.style.transition = 'none';
+  node.style.animation = 'none';
+  const shownOf = (property: string): string => getComputedStyle(node).getPropertyValue(property);
+  const result = contested.map(([property, list]): ContestedStyle => {
+    const shown = shownOf(property);
+    const winner = list.find(({ className }) => {
+      node.classList.remove(className);
+      const without = shownOf(property);
+      node.classList.add(className);
+
+      return without !== shown;
+    })?.className;
+
+    return { property, declared: list, shown, ...(winner ? { winner } : {}) };
+  });
+  node.style.transition = transition;
+  node.style.animation = animation;
+
+  return result;
+};
+
+/** Contested properties as lines, those that say the same of the same classes said once: a shorthand's longhands. */
+export const contestedText = (contested: readonly ContestedStyle[]): string[] => {
+  const groups = new Map<string, { properties: string[]; style: ContestedStyle }>();
+  for (const style of contested) {
+    const key = JSON.stringify([style.shown, style.winner, style.declared]);
+    const group = groups.get(key);
+    if (group) {
+      group.properties.push(style.property);
+    } else {
+      groups.set(key, { properties: [style.property], style });
+    }
+  }
+
+  return [...groups.values()].map(({ properties, style }) => {
+    const named =
+      properties.length > 2
+        ? `${properties[0]} and ${String(properties.length - 1)} more like it`
+        : properties.join(', ');
+    const losers = style.declared.filter(({ className }) => className !== style.winner);
+    const over = losers.map(({ className, value }) => `${className} says ${value}`).join(', ');
+
+    return style.winner
+      ? `${named}: ${style.shown}, from ${style.winner} (${over})`
+      : `${named}: ${style.shown} — ${style.declared.map(({ className }) => className).join(' and ')} all set it so: any one of them alone gives it`;
+  });
+};
+
+/**
  * How many rows each list draws: the copies of its row — the most of any of its children, one per row whatever a row
  * hides — inside the list's first node. Runs in the page, self-contained.
  */
@@ -220,6 +357,23 @@ export const renderedRowsInPage = (
 
     return [id, node ? Math.max(0, ...row.map(child => node.querySelectorAll(child).length)) : null];
   });
+
+/** The contested styles of the element asked for, by its handle's selector and the classes the space gives it. */
+const elementStyles = async (
+  page: BrowserPage,
+  authored: Authored | undefined,
+  id: string
+): Promise<ContestedStyle[] | null> => {
+  const handle = authored && Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
+  const element = authored && Object.hasOwn(authored.schema.flat, id) ? authored.schema.flat[id] : undefined;
+  if (!handle || !element) {
+    return null;
+  }
+
+  const classes = Object.values(element.definition.styleSelectors).flatMap(names => names.split(/\s+/).filter(Boolean));
+
+  return page.evaluate(contestedStylesInPage, { selector: handle.selector, classes });
+};
 
 const listRows = async (
   page: BrowserPage,
@@ -363,6 +517,7 @@ const checkAt = async (
   const report = handles && pageId ? await inspectPage(page, handles, { page: pageId }) : await inspectDocument(page);
   // The sources always: what the bindings read is held against them. Printed only when asked.
   const devTools = await readDevTools(page, { ...asked, state: true });
+  const styled = asked.element === undefined ? undefined : await elementStyles(page, authored, asked.element);
   const data =
     authored && pageId && devTools.sources
       ? dataIssues(authored.schema, pageId, devTools.sources, { hidden: await notShown(page, authored) })
@@ -414,7 +569,8 @@ const checkAt = async (
     ...(late ? { browserOnly: late.browserOnly } : {}),
     ...(!asked.state || devTools.state === undefined ? {} : { state: devTools.state }),
     ...(!asked.state || devTools.sources === undefined ? {} : { sources: devTools.sources }),
-    ...(devTools.element === undefined ? {} : { element: devTools.element })
+    ...(devTools.element === undefined ? {} : { element: devTools.element }),
+    ...(styled === undefined ? {} : { styles: styled })
   };
 };
 
@@ -431,7 +587,14 @@ const heldText = (report: CheckReport, asked: DevToolsInput): string[] => {
   return [
     ...(report.state === undefined ? [] : [`  · state ${JSON.stringify(report.state)}`]),
     ...Object.entries(report.sources ?? {}).map(([name, value]) => `  · source ${name}: ${shapeOf(value)}`),
-    ...(asked.element === undefined ? [] : [`  · element ${asked.element}: ${JSON.stringify(report.element ?? null)}`])
+    ...(asked.element === undefined ? [] : [`  · element ${asked.element}: ${JSON.stringify(report.element ?? null)}`]),
+    ...(asked.element === undefined || report.styles === undefined
+      ? []
+      : report.styles === null
+        ? [`  · element ${asked.element} is not on the page: its styles cannot be read`]
+        : report.styles.length === 0
+          ? [`  · element ${asked.element}: no property is set by more than one of its classes`]
+          : contestedText(report.styles).map(line => `  · element ${asked.element} at rest — ${line}`))
   ];
 };
 

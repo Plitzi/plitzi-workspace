@@ -10,6 +10,7 @@ const element = (elementId: string, classes: string[], content?: string): Writte
   rootId: 'home',
   classes,
   templates: [],
+  words: content === undefined ? [] : [content],
   through: [],
   bound: [],
   attributes: {},
@@ -48,10 +49,8 @@ describe('what plitzi where finds', () => {
   // What a visitor reads is searched for by those words, whether the element holds them or a template writes them.
   it('finds words a binding’s template writes', () => {
     const quoted = (words: string): string => `'${words}'`;
-    const greeting = {
-      ...element('greeting', []),
-      templates: [`{{ user ? ${quoted('Welcome back')} : ${quoted('Reading as a guest')} }}`]
-    };
+    const template = `{{ user ? ${quoted('Welcome back')} : ${quoted('Reading as a guest')} }}`;
+    const greeting = { ...element('greeting', []), templates: [template], words: [template] };
 
     expect(matchElements([greeting], 'reading as a guest')).toMatchObject({
       by: 'text',
@@ -64,7 +63,8 @@ describe('what plitzi where finds', () => {
     const instance = {
       ...element('about-head', []),
       type: 'reference',
-      attributes: { referenceType: 'component', referenceId: 'page-head', title: 'About us' }
+      attributes: { referenceType: 'component', referenceId: 'page-head', title: 'About us' },
+      words: ['About us']
     };
 
     expect(matchElements([instance], 'about us')).toMatchObject({ by: 'text', found: [{ elementId: 'about-head' }] });

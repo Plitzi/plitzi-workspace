@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { bindTemplate, container, link, locateElements, styles, text } from '../index';
+import { bindTemplate, component, container, link, locateClasses, locateElements, styles, text } from '../index';
 
 describe('locateElements', () => {
   // `at` is the author's own code, and this test is inside the package: a project's elements carry it (see the CLI's
@@ -41,8 +41,10 @@ describe('locateElements', () => {
     });
     expect(located.find(element => element.elementId === 'score')).toMatchObject({
       bound: ['content'],
-      templates: ['{{ source }} XP']
+      templates: ['{{ source }} XP'],
+      words: ['{{ source }} XP']
     });
+    expect(located.find(element => element.elementId === 'nav-home')?.words).toEqual(['Home']);
     expect(located.map(element => element.elementId)).toEqual(expect.arrayContaining(['home', 'nav']));
   });
 
@@ -51,15 +53,46 @@ describe('locateElements', () => {
       name: 'Where',
       permanentUrl: 'where',
       components: [
-        { id: 'card', root: container({ id: 'card-root', children: [text('Title', { id: 'card-title' })] }) }
+        {
+          id: 'card',
+          props: { title: { type: 'text', description: 'Its title' } },
+          root: container({ id: 'card-root', children: [text('Title', { id: 'card-title' })] })
+        }
       ],
-      pages: [{ id: 'home', name: 'Home', slug: '', body: [text('Hello', { id: 'greeting' })] }]
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          body: [
+            text('Hello', { id: 'greeting' }),
+            component('card', { id: 'card-1', props: { title: 'Lamp' } }),
+            link({ id: 'logo', href: 'home', label: 'Back home' })
+          ]
+        }
+      ]
     });
+
+    // The words an instance hands its component, and a label a screen reader says, are words it says too.
+    expect(located.find(element => element.elementId === 'card-1')?.words).toEqual(['Lamp']);
+    expect(located.find(element => element.elementId === 'logo')?.words).toEqual(['Back home']);
 
     expect(located.find(element => element.elementId === 'card-title')).toMatchObject({
       type: 'text',
       rootId: 'card',
       content: 'Title'
     });
+  });
+
+  // `at` is the author's code, and this test is inside the package: what is checked is that every class is answered.
+  it('answers every class the space declares, by name', () => {
+    const card = styles('card', { css: { padding: '8px' } });
+    const located = locateClasses({
+      name: 'Where',
+      permanentUrl: 'where',
+      pages: [{ id: 'home', name: 'Home', slug: '', body: [container({ id: 'box', class: card })] }]
+    });
+
+    expect(located.map(found => found.name)).toContain('card');
   });
 });

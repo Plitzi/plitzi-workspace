@@ -104,9 +104,53 @@ const callAt = (
   return found;
 };
 
+/** What wrote an element: a factory's call, or — a page, a layout — the object it is declared as. */
+type Written = TypeScript.CallExpression | ObjectLiteral;
+
+/** The object literal that starts at a line and column, from 1: how a page or a layout is declared. */
+const literalAt = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  line: number,
+  column: number
+): ObjectLiteral | undefined => {
+  let found: ObjectLiteral | undefined;
+  const visit = (node: Node): void => {
+    if (found) {
+      return;
+    }
+
+    if (ts.isObjectLiteralExpression(node)) {
+      const at = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+      if (at.line + 1 === line && at.character + 1 === column) {
+        found = node;
+
+        return;
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  return found;
+};
+
+/** What is written at a position: the call a factory's name starts there, else the object literal that does. */
+const writtenNodeAt = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>
+): Written | undefined =>
+  callAt(ts, sourceFile, position.line, position.column) ?? literalAt(ts, sourceFile, position.line, position.column);
+
 /** The props a factory call was handed: its last object literal — `text('Hi', { … })`, `container({ … })`. */
 const propsOf = (ts: Ts, call: TypeScript.CallExpression): ObjectLiteral | undefined =>
   call.arguments.filter(ts.isObjectLiteralExpression).at(-1);
+
+/** The props of what is written: a call's, or the declared object itself. */
+const propsOfWritten = (ts: Ts, written: Written): ObjectLiteral | undefined =>
+  ts.isCallExpression(written) ? propsOf(ts, written) : written;
 
 /**
  * The object a step was written with: itself when it is a literal, a builder's own props (`setState({ … })`), or —
@@ -439,12 +483,12 @@ export const sourceEdit = (
   position: Pick<WrittenPosition, 'line' | 'column'>,
   edit: SpecEdit
 ): EditOutcome => {
-  const call = callAt(ts, sourceFile, position.line, position.column);
-  if (!call) {
+  const written = writtenNodeAt(ts, sourceFile, position);
+  if (!written) {
     return { unplaced: 'the call that wrote it is not where it was' };
   }
 
-  const props = propsOf(ts, call);
+  const props = propsOfWritten(ts, written);
   if (!props) {
     return { unplaced: 'the call that wrote it was handed no props to edit' };
   }
@@ -473,7 +517,7 @@ export const callTextAt = (
   ts: Ts,
   sourceFile: TypeScript.SourceFile,
   position: Pick<WrittenPosition, 'line' | 'column'>
-): string | undefined => callAt(ts, sourceFile, position.line, position.column)?.getText(sourceFile);
+): string | undefined => writtenNodeAt(ts, sourceFile, position)?.getText(sourceFile);
 
 /**
  * Words handed first, before the props, are the content (`heading(title, { … })`): a `content` added to the props
@@ -501,12 +545,12 @@ export const attributeEdit = (
   key: string,
   value: string | number | boolean | undefined
 ): EditOutcome => {
-  const call = callAt(ts, sourceFile, position.line, position.column);
-  if (!call) {
+  const written = writtenNodeAt(ts, sourceFile, position);
+  if (!written) {
     return { unplaced: 'the call that wrote it is not where it was' };
   }
 
-  const words = key === 'content' ? wordsOf(ts, call) : undefined;
+  const words = key === 'content' && ts.isCallExpression(written) ? wordsOf(ts, written) : undefined;
   if (words) {
     if (!ts.isStringLiteral(words) && !ts.isNoSubstitutionTemplateLiteral(words)) {
       return {
@@ -563,14 +607,10 @@ const propertyValue = (ts: Ts, property: Property | undefined): TypeScript.Expre
 };
 
 /** The expression a slot is written as in a call: nothing when the call does not write it. */
-const slotExpression = (
-  ts: Ts,
-  call: TypeScript.CallExpression,
-  slot: ValueSlot
-): TypeScript.Expression | undefined => {
+const slotExpression = (ts: Ts, written: Written, slot: ValueSlot): TypeScript.Expression | undefined => {
   if ('attribute' in slot) {
-    const words = slot.attribute === 'content' ? wordsOf(ts, call) : undefined;
-    const props = propsOf(ts, call);
+    const words = slot.attribute === 'content' && ts.isCallExpression(written) ? wordsOf(ts, written) : undefined;
+    const props = propsOfWritten(ts, written);
     const holders = props
       ? [props, ...ATTRIBUTE_HOLDERS.map(key => objectAt(ts, props, key)).filter(inner => inner !== undefined)]
       : [];
@@ -584,7 +624,10 @@ const slotExpression = (
     );
   }
 
-  const argument = calleeName(ts, call) === slot.helper ? call.arguments.at(slot.argument) : undefined;
+  const argument =
+    ts.isCallExpression(written) && calleeName(ts, written) === slot.helper
+      ? written.arguments.at(slot.argument)
+      : undefined;
   if (!argument || slot.key === undefined) {
     return argument;
   }
@@ -646,9 +689,9 @@ export const parameterBehind = (
   position: Pick<WrittenPosition, 'line' | 'column'>,
   slot: ValueSlot
 ): ParameterGiven | undefined => {
-  const call = callAt(ts, sourceFile, position.line, position.column);
-  const expression = call && slotExpression(ts, call, slot);
-  const helper = call && expression && ts.isIdentifier(expression) ? enclosingFunction(ts, call) : undefined;
+  const written = writtenNodeAt(ts, sourceFile, position);
+  const expression = written && slotExpression(ts, written, slot);
+  const helper = written && expression && ts.isIdentifier(expression) ? enclosingFunction(ts, written) : undefined;
   if (!helper || !expression || !ts.isIdentifier(expression)) {
     return undefined;
   }
@@ -722,8 +765,8 @@ export const slotText = (
   position: Pick<WrittenPosition, 'line' | 'column'>,
   slot: ValueSlot
 ): { text: string; literal: boolean } | undefined => {
-  const call = callAt(ts, sourceFile, position.line, position.column);
-  const expression = call && slotExpression(ts, call, slot);
+  const written = writtenNodeAt(ts, sourceFile, position);
+  const expression = written && slotExpression(ts, written, slot);
 
   return expression ? { text: expression.getText(sourceFile), literal: isLiteral(ts, expression) } : undefined;
 };
@@ -766,6 +809,70 @@ const importOf = (
   return undefined;
 };
 
+/** The list a call is repeated for — `LIST.map(item => …)` around it — with the name each entry is read by. */
+export interface LoopAround {
+  /** The list, by the name it is declared under. */
+  list: string;
+  /** The parameter each entry is read by inside. */
+  item: string;
+  /** The module the file imports the list from, as written; absent when it is declared in the same file. */
+  from?: string;
+}
+
+const loopOf = (ts: Ts, sourceFile: TypeScript.SourceFile, from: Node, item?: string): LoopAround | undefined => {
+  const fn = ts.findAncestor(
+    from.parent,
+    (ancestor): ancestor is TypeScript.ArrowFunction | TypeScript.FunctionExpression => {
+      if (!ts.isArrowFunction(ancestor) && !ts.isFunctionExpression(ancestor)) {
+        return false;
+      }
+
+      const first = ancestor.parameters.at(0);
+      const looped = ancestor.parent;
+
+      return (
+        !!first &&
+        ts.isIdentifier(first.name) &&
+        (item === undefined || first.name.text === item) &&
+        ts.isCallExpression(looped) &&
+        ts.isPropertyAccessExpression(looped.expression) &&
+        LIST_METHODS.has(looped.expression.name.text) &&
+        ts.isIdentifier(looped.expression.expression)
+      );
+    }
+  );
+  const first = fn?.parameters.at(0);
+  const looped = fn?.parent;
+  if (
+    !first ||
+    !ts.isIdentifier(first.name) ||
+    !looped ||
+    !ts.isCallExpression(looped) ||
+    !ts.isPropertyAccessExpression(looped.expression) ||
+    !ts.isIdentifier(looped.expression.expression)
+  ) {
+    return undefined;
+  }
+
+  const name = looped.expression.expression.text;
+  const imported = importOf(ts, sourceFile, name);
+
+  return imported
+    ? { list: imported.exported, item: first.name.text, from: imported.from }
+    : { list: name, item: first.name.text };
+};
+
+/** The list the call at a position is repeated for, if it is written inside one's `map`. */
+export const loopAround = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>
+): LoopAround | undefined => {
+  const written = writtenNodeAt(ts, sourceFile, position);
+
+  return written ? loopOf(ts, sourceFile, written) : undefined;
+};
+
 /**
  * The list a slot reads an entry of: the call is written once inside `LIST.map(item => …)` and the value is
  * `item.key`, so what each element shows is written in the list, one entry per element.
@@ -776,40 +883,22 @@ export const listEntryBehind = (
   position: Pick<WrittenPosition, 'line' | 'column'>,
   slot: ValueSlot
 ): ListEntryGiven | undefined => {
-  const call = callAt(ts, sourceFile, position.line, position.column);
-  const expression = call && slotExpression(ts, call, slot);
-  if (!call || !expression || !ts.isPropertyAccessExpression(expression) || !ts.isIdentifier(expression.expression)) {
-    return undefined;
-  }
-
-  const item = expression.expression.text;
-  const fn = ts.findAncestor(
-    call.parent,
-    (ancestor): ancestor is TypeScript.ArrowFunction | TypeScript.FunctionExpression =>
-      (ts.isArrowFunction(ancestor) || ts.isFunctionExpression(ancestor)) &&
-      ancestor.parameters.some(parameter => ts.isIdentifier(parameter.name) && parameter.name.text === item)
-  );
-  const first = fn?.parameters.at(0);
-  const looped = fn?.parent;
+  const written = writtenNodeAt(ts, sourceFile, position);
+  const expression = written && slotExpression(ts, written, slot);
   if (
-    !first ||
-    !ts.isIdentifier(first.name) ||
-    first.name.text !== item ||
-    !looped ||
-    !ts.isCallExpression(looped) ||
-    !ts.isPropertyAccessExpression(looped.expression) ||
-    !LIST_METHODS.has(looped.expression.name.text) ||
-    !ts.isIdentifier(looped.expression.expression)
+    !written ||
+    !expression ||
+    !ts.isPropertyAccessExpression(expression) ||
+    !ts.isIdentifier(expression.expression)
   ) {
     return undefined;
   }
 
-  const name = looped.expression.expression.text;
-  const imported = importOf(ts, sourceFile, name);
+  const loop = loopOf(ts, sourceFile, written, expression.expression.text);
 
-  return imported
-    ? { list: imported.exported, key: expression.name.text, from: imported.from }
-    : { list: name, key: expression.name.text };
+  return loop
+    ? { list: loop.list, key: expression.name.text, ...(loop.from === undefined ? {} : { from: loop.from }) }
+    : undefined;
 };
 
 /** A literal's value as the space reads it; nothing for anything that is not one. */
@@ -878,6 +967,35 @@ export const listEntryEdit = (
   const { initializer } = matching[0];
 
   return one({ start: initializer.getStart(sourceFile), end: initializer.getEnd(), text: literalText(value) });
+};
+
+/**
+ * The pages and layouts a file declares — an object with an `id` written as words and a `body` — each where its `{`
+ * is: the place a page's attributes are edited at, since no factory call writes one.
+ */
+export const declaredRoots = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile
+): { id: string; line: number; column: number }[] => {
+  const found: { id: string; line: number; column: number }[] = [];
+  const visit = (node: Node): void => {
+    if (ts.isObjectLiteralExpression(node) && findProperty(ts, node, 'body')) {
+      const id = findProperty(ts, node, 'id');
+      if (
+        id &&
+        ts.isPropertyAssignment(id) &&
+        (ts.isStringLiteral(id.initializer) || ts.isNoSubstitutionTemplateLiteral(id.initializer))
+      ) {
+        const at = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+        found.push({ id: id.initializer.text, line: at.line + 1, column: at.character + 1 });
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  return found;
 };
 
 /** The text with every change made — from the end back, so each span is where it was found. Overlaps are refused. */

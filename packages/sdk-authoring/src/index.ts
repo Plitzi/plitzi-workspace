@@ -19,6 +19,7 @@ import {
   authorSnippet as authorSnippetUnchecked,
   fixSpace as fixSpaceUnchecked,
   lintSpace as lintSpaceUnchecked,
+  locateClasses as locateClassesUnchecked,
   locateElements as locateElementsUnchecked,
   planFixes as planFixesUnchecked,
   validateSpace as validateSpaceUnchecked,
@@ -40,6 +41,7 @@ import type {
   Snippet,
   SnippetSpec,
   FixPlan,
+  WrittenClass,
   WrittenElement
 } from './schema';
 import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
@@ -257,6 +259,10 @@ export const planFixes = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): Fi
  */
 export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): WrittenElement[] =>
   locateElementsUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
+
+/** `locateClasses`, holding the same catalogs: every class the space declares, with the `styles()` call that wrote it. */
+export const locateClasses = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): WrittenClass[] =>
+  locateClassesUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
 
 /**
  * `authorSnippet`, holding the same vocabularies — the artefact you publish when you are not building a space.

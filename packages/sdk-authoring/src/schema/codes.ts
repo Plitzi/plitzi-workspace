@@ -712,6 +712,11 @@ export const AUTHORING_CODES = {
     means: 'a prop whose name a template cannot read as `props.x`',
     fix: 'letters, digits and `_`'
   },
+  'prop-type-unknown': {
+    kind: 'refused',
+    means: 'a prop declared with a type no editor offers and nothing checks a value against',
+    fix: 'one of text, textarea, select, boolean, number, scalar, json, elementIds — words are `text`'
+  },
   'prop-unknown': {
     kind: 'refused',
     means: 'a prop the component does not declare, handed in or read',

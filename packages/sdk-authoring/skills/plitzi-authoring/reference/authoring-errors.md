@@ -112,6 +112,7 @@ The space is not written until these are fixed.
 | `part-missing` | a compound element — a carousel, a tab container, a dropdown — without a part it renders through | the part the message names, inside it (`carousel()` writes its own track) |
 | `prop-missing` | an instance without a prop its component requires | `component('card', { props: { name: … } })`, or bind it |
 | `prop-name` | a prop whose name a template cannot read as `props.x` | letters, digits and `_` |
+| `prop-type-unknown` | a prop declared with a type no editor offers and nothing checks a value against | one of text, textarea, select, boolean, number, scalar, json, elementIds — words are `text` |
 | `prop-unknown` | a prop the component does not declare, handed in or read | the prop it suggests, or declare it: `props: { name: { type: 'text' } }` |
 | `prop-value` | a prop handed in with a value its declaration does not take | a value of the declared type, or one of its options |
 | `props-outside-component` | `props.x` read outside a component | read the source it would have come from |
