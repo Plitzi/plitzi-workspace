@@ -1,5 +1,13 @@
 # @plitzi/sdk-auth
 
+## 0.38.8
+
+### Patch Changes
+
+- Updated dependencies [1b45aae]
+  - @plitzi/sdk-shared@0.38.8
+  - @plitzi/sdk-navigation@0.38.8
+
 ## 0.38.7
 
 ### Patch Changes

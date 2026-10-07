@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/cli",
-  "version": "0.38.7",
+  "version": "0.38.8",
   "license": "AGPL-3.0",
   "description": "Command line for Plitzi: scaffold a project that renders a space, a plugin package, or an element of your own.",
   "files": [

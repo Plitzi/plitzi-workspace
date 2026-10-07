@@ -1,5 +1,14 @@
 # @plitzi/sdk-style
 
+## 0.38.8
+
+### Patch Changes
+
+- Updated dependencies [1b45aae]
+  - @plitzi/sdk-shared@0.38.8
+  - @plitzi/sdk-event-bridge@0.38.8
+  - @plitzi/sdk-variables@0.38.8
+
 ## 0.38.7
 
 ### Patch Changes
