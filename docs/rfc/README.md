@@ -29,14 +29,16 @@ lost, it simply stops being read as a plan.
 
 | # | Title | Status | Scope |
 |---|---|---|---|
-| [0017](./0017-native-mobile-apps.md) | Native mobile apps (Android / iOS) | Proposal | new `mobile/` project, `sdk-authoring`, servers |
+| [0017](./0017-native-mobile-apps.md) | Native mobile apps (Android / iOS) | Postponed | new `mobile/` project, `sdk-authoring`, servers |
 | [0022](./0022-sketch-to-page.md) | Sketch to page ("make it real") | Proposal | builder, `apps/mcp`, preview service, Pizarra later |
+| [0024](./0024-import-and-migration.md) | Import and migration: UI in, sites over | Proposal | an import engine in the workspace, the builder, CLI, MCP, the platform's transformers |
 
 ## Conventions
 
 - **Filename:** `NNNN-kebab-case-title.md` (zero-padded sequential number).
 - **Header:** Status, Author, Date, Scope.
-- **Status values:** `Proposal` → `Accepted` → `Implemented` → deleted (or `Rejected`).
+- **Status values:** `Proposal` → `Accepted` → `Implemented` → deleted (or `Rejected`). `Postponed` is a proposal
+  set aside on purpose: kept for its reasoning, not to be started until its status changes.
 - Numbers are never reused: the next RFC takes the next number, whatever has been
   removed since.
 - Add new RFCs by incrementing the number and registering them in the table above.

@@ -1,6 +1,8 @@
 # RFC 0017 — Native mobile apps (Android / iOS)
 
-- **Status:** Proposal
+- **Status:** Postponed (2026-10-07) — not until the web product has traction: native apps open fronts of their own
+  (store distribution, signing, updates) that serve nothing the web core needs now. The reasoning below stands for
+  when it is picked up again.
 - **Author:** Carlos Rodriguez
 - **Date:** 2026-09-24
 - **Scope:** a new, self-contained native project (`mobile/`, outside the Yarn workspaces), plus later platform work in
