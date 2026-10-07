@@ -83,5 +83,12 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   static shell while hydrating and handed back without it — under another key — on the next render, so React tore
   down everything under it and built it again. With a server provider around a layout (an `apiContainer` that draws
   no markup of its own), the whole layout's DOM was replaced on every page, and every `motion` arrival in it played
-  twice: a visible flicker on load. The shell now stays around the element on both sides of hydration, under the same
+  twice: a visible flicker on load.
+- **A component's instance is written somewhere.** `component(…)` — and each child it places in a slot — rebuilt its
+  spec with a spread and lost the marker of where the author wrote it: `plitzi where` could not place an instance and
+  `plitzi edit` refused it. The original marker is carried (`carryWrittenAt`); `where` finds the words an instance
+  hands its component, and `edit` writes an instance's props.
+- `plitzi edit` follows a value read off a list the call is repeated for (`item.question` in
+  `QUESTIONS.flatMap(item => …)`) to the one entry that holds it, in the file the list is written in; when the shared
+  value is not a literal it says where it comes from instead of offering `--every`. The shell now stays around the element on both sides of hydration, under the same
   key, and only stops freezing (`frozen`).

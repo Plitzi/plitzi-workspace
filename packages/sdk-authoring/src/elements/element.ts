@@ -5,7 +5,7 @@ import { isSourcePath, sourceName } from './source';
 import { toBindingSpecs } from '../schema/bindings';
 import { AuthoringError } from '../schema/codes';
 import { MAIN_ATTRIBUTES } from '../schema/mainAttributes';
-import { markWrittenAt } from '../schema/writtenAt';
+import { carryWrittenAt, markWrittenAt } from '../schema/writtenAt';
 
 import type { BindingSpec, BindingsSpec, ElementSpec, SpecMeta, StepSpec, VisibleCondition } from '../schema';
 import type { SourceName } from './source';
@@ -455,7 +455,7 @@ export const component = (componentId: string, instance: ComponentInstanceProps 
   const filled = Array.isArray(children)
     ? children
     : Object.entries(children ?? {}).flatMap(([slot, specs]) =>
-        specs.map(spec => ({ ...spec, attributes: { ...spec.attributes, slot } }))
+        specs.map(spec => carryWrittenAt(spec, { ...spec, attributes: { ...spec.attributes, slot } }))
       );
   const spec = buildSpec('reference', declarationsByType.get('reference'), {
     ...authoring,
@@ -463,8 +463,8 @@ export const component = (componentId: string, instance: ComponentInstanceProps 
   });
 
   // After the authoring fields are read, never among them: a prop called `bind` is the component's, not the binding's.
-  return {
+  return carryWrittenAt(spec, {
     ...spec,
     attributes: { ...spec.attributes, referenceType: 'component', referenceId: componentId, ...props }
-  };
+  });
 };

@@ -252,7 +252,10 @@ value asked for is there and nothing else in the space changed, the files go bac
 have changed besides is named. What it changed is printed, every line of it (`--json`: `effects`). An attribute a
 binding computes is refused — the page shows the binding's value, never one written — and `where` marks it `Bound`. A value that is a parameter of the helper the call is in (`heading(title, { … })` inside
 `pageHead(id, title)`) is changed where the helper is handed it — `pageHead('about-head', 'About us')` — followed up
-as far as the project's code hands it on, and only when the helper reads it once. A call that writes more than one
+as far as the project's code hands it on, and only when the helper reads it once. A value read off a list the call is
+repeated for (`QUESTIONS.map(item => button({ content: item.question }))`) is changed in the one entry of the list
+that holds it, in whichever file the list is written. A component's instance is edited like any element: its
+attributes are the props it hands the component, and `where` finds the words it hands too. A call that writes more than one
 element — a helper called for each — is never changed unasked: `where` says which elements it writes and the call that
 leads to this one alone, and `edit` refuses, naming them, unless `--every` says the change is for all of them. Any other
 value written as anything but a literal — a variable, a template, props spread from elsewhere — is left to the author,

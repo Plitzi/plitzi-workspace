@@ -2,7 +2,16 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
-import { applyChanges, attributeEdit, callTextAt, pruneImports, sourceEdit } from './sourceEdits';
+import {
+  applyChanges,
+  attributeEdit,
+  callTextAt,
+  listEntryBehind,
+  listEntryEdit,
+  parameterBehind,
+  pruneImports,
+  sourceEdit
+} from './sourceEdits';
 
 import type { SpecEdit } from '@plitzi/sdk-authoring';
 
@@ -212,6 +221,55 @@ describe('an attribute edited where the element was written (plitzi edit)', () =
     expect(edit("paragraph({ id: 'p', content: line })", 'paragraph', 'content', 'About')).toBe(
       'unplaced: `content` is written as `content: line` there: change it where that is given'
     );
+  });
+
+  // A component's instance: its attributes are the props it hands the component.
+  it('writes an instance’s prop where the instance hands it', () => {
+    expect(edit("component('card', { id: 'c', props: { title: 'A' } })", 'component', 'title', 'B')).toBe(
+      "component('card', { id: 'c', props: { title: 'B' } })"
+    );
+  });
+
+  it('follows a prop handed by a helper’s parameter to where the helper is called', () => {
+    const text =
+      "const head = (id, title) => component('page-head', { id, props: { title } });\nhead('about', 'About us');";
+    const { sourceFile, position } = at(text, 'component');
+
+    expect(parameterBehind(ts, sourceFile, position, { attribute: 'title' })).toEqual({
+      name: 'title',
+      slot: { helper: 'head', argument: 1 },
+      uses: 1
+    });
+  });
+
+  // `QUESTIONS.flatMap(item => [button({ content: item.question })])`: the words of each button are its entry's.
+  it('follows a value read off a list the call is repeated for, to the entry that holds it', () => {
+    const text = [
+      "import { QUESTIONS as Q } from './content.ts';",
+      'const list = Q.flatMap(item => [button({ id: item.id, content: item.question })]);'
+    ].join('\n');
+    const { sourceFile, position } = at(text, 'button');
+
+    expect(listEntryBehind(ts, sourceFile, position, { attribute: 'content' })).toEqual({
+      list: 'QUESTIONS',
+      key: 'question',
+      from: './content.ts'
+    });
+  });
+
+  it('writes the one entry whose value is the element’s, and says when there is not exactly one', () => {
+    const text = "export const QUESTIONS = [{ id: 'a', question: 'Why?' }, { id: 'b', question: 'How?' }] as const;";
+    const sourceFile = ts.createSourceFile('content.ts', text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+    const written = (current: string) => {
+      const outcome = listEntryEdit(ts, sourceFile, { list: 'QUESTIONS', key: 'question' }, current, 'When?');
+
+      return 'unplaced' in outcome ? `unplaced: ${outcome.unplaced}` : applyChanges(text, outcome.changes);
+    };
+
+    expect(written('How?')).toBe(
+      "export const QUESTIONS = [{ id: 'a', question: 'Why?' }, { id: 'b', question: 'When?' }] as const;"
+    );
+    expect(written('Who?')).toBe('unplaced: no entry of `QUESTIONS` writes `question` as "Who?"');
   });
 
   it('shows the call as it is written', () => {

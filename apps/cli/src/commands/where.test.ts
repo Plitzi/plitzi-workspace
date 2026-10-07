@@ -59,6 +59,18 @@ describe('what plitzi where finds', () => {
     });
   });
 
+  // `pageHead('about-head', 'About us')` places a component: the words are the instance's, the title only reads them.
+  it('finds words an instance hands its component', () => {
+    const instance = {
+      ...element('about-head', []),
+      type: 'reference',
+      attributes: { referenceType: 'component', referenceId: 'page-head', title: 'About us' }
+    };
+
+    expect(matchElements([instance], 'about us')).toMatchObject({ by: 'text', found: [{ elementId: 'about-head' }] });
+    expect(matchElements([instance], 'page-head')).toBeUndefined();
+  });
+
   it('finds nothing for what nothing is', () => {
     expect(matchElements(elements, 'pricing')).toBeUndefined();
   });

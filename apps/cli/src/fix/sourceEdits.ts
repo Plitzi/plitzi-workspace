@@ -45,6 +45,12 @@ const nameOf = (ts: Ts, property: Property): string | undefined => {
 const findProperty = (ts: Ts, object: ObjectLiteral, key: string): Property | undefined =>
   object.properties.find(property => nameOf(ts, property) === key);
 
+/**
+ * Where an element's attributes are written besides its props themselves: `attributes: { … }`, and — for a component's
+ * instance, whose attributes are the props it hands the component — `props: { … }`.
+ */
+const ATTRIBUTE_HOLDERS: readonly string[] = ['attributes', 'props'];
+
 /** The object literal a property holds, when it holds one: `attributes: { … }`, `params: { … }`. */
 const objectAt = (ts: Ts, object: ObjectLiteral, key: string): ObjectLiteral | undefined => {
   const property = findProperty(ts, object, key);
@@ -163,15 +169,12 @@ const editKey = (
   ts: Ts,
   sourceFile: TypeScript.SourceFile,
   object: ObjectLiteral,
-  nested: string | undefined,
+  nested: readonly string[],
   edit: SpecEdit
 ): EditOutcome => {
-  const inner = nested === undefined ? undefined : objectAt(ts, object, nested);
-  const holder = findProperty(ts, object, edit.key)
-    ? object
-    : inner && findProperty(ts, inner, edit.key)
-      ? inner
-      : undefined;
+  const inners = nested.map(key => objectAt(ts, object, key)).filter(inner => inner !== undefined);
+  const inner = inners.at(0);
+  const holder = [object, ...inners].find(candidate => findProperty(ts, candidate, edit.key));
   const property = holder ? findProperty(ts, holder, edit.key) : undefined;
 
   if (edit.op === 'set') {
@@ -457,10 +460,12 @@ export const sourceEdit = (
   if (edit.on === 'step') {
     const step = edit.step ? stepIn(ts, props, edit.step.flow, edit.step.index) : undefined;
 
-    return step ? editKey(ts, sourceFile, step, 'params', edit) : { unplaced: 'the step is not written in that call' };
+    return step
+      ? editKey(ts, sourceFile, step, ['params'], edit)
+      : { unplaced: 'the step is not written in that call' };
   }
 
-  return editKey(ts, sourceFile, props, edit.on === 'attribute' ? 'attributes' : undefined, edit);
+  return editKey(ts, sourceFile, props, edit.on === 'attribute' ? ATTRIBUTE_HOLDERS : [], edit);
 };
 
 /** The call written at that position, as it is written: what `plitzi where` shows of an element. */
@@ -566,14 +571,15 @@ const slotExpression = (
   if ('attribute' in slot) {
     const words = slot.attribute === 'content' ? wordsOf(ts, call) : undefined;
     const props = propsOf(ts, call);
-    const attributes = props && objectAt(ts, props, 'attributes');
+    const holders = props
+      ? [props, ...ATTRIBUTE_HOLDERS.map(key => objectAt(ts, props, key)).filter(inner => inner !== undefined)]
+      : [];
 
     return (
       words ??
       propertyValue(
         ts,
-        (props && findProperty(ts, props, slot.attribute)) ??
-          (attributes && findProperty(ts, attributes, slot.attribute))
+        holders.map(holder => findProperty(ts, holder, slot.attribute)).find(property => property !== undefined)
       )
     );
   }
@@ -696,7 +702,7 @@ export const slotEdit = (
 
   if (slot.key !== undefined) {
     return ts.isObjectLiteralExpression(argument)
-      ? editKey(ts, sourceFile, argument, undefined, { on: 'field', op: 'set', key: slot.key, value })
+      ? editKey(ts, sourceFile, argument, [], { on: 'field', op: 'set', key: slot.key, value })
       : {
           unplaced: `\`${slot.helper}\` is handed \`${argument.getText(sourceFile)}\` there: change it where that is given`
         };
@@ -707,6 +713,171 @@ export const slotEdit = (
     : {
         unplaced: `\`${slot.helper}\` is handed \`${argument.getText(sourceFile)}\` there: change it where that is given`
       };
+};
+
+/** How a slot is written in a call, and whether that is a value an edit can write over. */
+export const slotText = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>,
+  slot: ValueSlot
+): { text: string; literal: boolean } | undefined => {
+  const call = callAt(ts, sourceFile, position.line, position.column);
+  const expression = call && slotExpression(ts, call, slot);
+
+  return expression ? { text: expression.getText(sourceFile), literal: isLiteral(ts, expression) } : undefined;
+};
+
+/** An entry of a list a call is repeated for — `item.question` in `QUESTIONS.flatMap(item => …)` — and where it is. */
+export interface ListEntryGiven {
+  /** The list, by the name it is declared under. */
+  list: string;
+  /** The key of each entry the slot reads. */
+  key: string;
+  /** The module the file imports the list from, as written; absent when it is declared in the same file. */
+  from?: string;
+}
+
+const LIST_METHODS = new Set(['map', 'flatMap', 'forEach']);
+
+/** The module a file imports a name from, and the name it is exported under there. */
+const importOf = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  name: string
+): { from: string; exported: string } | undefined => {
+  for (const statement of sourceFile.statements) {
+    const bindings = ts.isImportDeclaration(statement) ? statement.importClause?.namedBindings : undefined;
+    if (
+      !bindings ||
+      !ts.isNamedImports(bindings) ||
+      !ts.isImportDeclaration(statement) ||
+      !ts.isStringLiteral(statement.moduleSpecifier)
+    ) {
+      continue;
+    }
+
+    const element = bindings.elements.find(binding => binding.name.text === name);
+    if (element) {
+      return { from: statement.moduleSpecifier.text, exported: element.propertyName?.text ?? name };
+    }
+  }
+
+  return undefined;
+};
+
+/**
+ * The list a slot reads an entry of: the call is written once inside `LIST.map(item => …)` and the value is
+ * `item.key`, so what each element shows is written in the list, one entry per element.
+ */
+export const listEntryBehind = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>,
+  slot: ValueSlot
+): ListEntryGiven | undefined => {
+  const call = callAt(ts, sourceFile, position.line, position.column);
+  const expression = call && slotExpression(ts, call, slot);
+  if (!call || !expression || !ts.isPropertyAccessExpression(expression) || !ts.isIdentifier(expression.expression)) {
+    return undefined;
+  }
+
+  const item = expression.expression.text;
+  const fn = ts.findAncestor(
+    call.parent,
+    (ancestor): ancestor is TypeScript.ArrowFunction | TypeScript.FunctionExpression =>
+      (ts.isArrowFunction(ancestor) || ts.isFunctionExpression(ancestor)) &&
+      ancestor.parameters.some(parameter => ts.isIdentifier(parameter.name) && parameter.name.text === item)
+  );
+  const first = fn?.parameters.at(0);
+  const looped = fn?.parent;
+  if (
+    !first ||
+    !ts.isIdentifier(first.name) ||
+    first.name.text !== item ||
+    !looped ||
+    !ts.isCallExpression(looped) ||
+    !ts.isPropertyAccessExpression(looped.expression) ||
+    !LIST_METHODS.has(looped.expression.name.text) ||
+    !ts.isIdentifier(looped.expression.expression)
+  ) {
+    return undefined;
+  }
+
+  const name = looped.expression.expression.text;
+  const imported = importOf(ts, sourceFile, name);
+
+  return imported
+    ? { list: imported.exported, key: expression.name.text, from: imported.from }
+    : { list: name, key: expression.name.text };
+};
+
+/** A literal's value as the space reads it; nothing for anything that is not one. */
+const literalValue = (ts: Ts, node: Node): string | number | boolean | undefined => {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return node.text;
+  }
+
+  if (ts.isNumericLiteral(node)) {
+    return Number(node.text);
+  }
+
+  if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword) {
+    return node.kind === ts.SyntaxKind.TrueKeyword;
+  }
+
+  return undefined;
+};
+
+/** What a declaration holds under the `as const` and `satisfies` written around it. */
+const unwrapped = (ts: Ts, expression: TypeScript.Expression): TypeScript.Expression =>
+  ts.isAsExpression(expression) || ts.isSatisfiesExpression(expression) || ts.isParenthesizedExpression(expression)
+    ? unwrapped(ts, expression.expression)
+    : expression;
+
+/**
+ * The one entry of a list whose `key` reads `current`, written over with `value`. Found by what it says now, the one
+ * thing the element and its entry share: none, or more than one, is said and left to the author.
+ */
+export const listEntryEdit = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  entry: Pick<ListEntryGiven, 'list' | 'key'>,
+  current: unknown,
+  value: string | number | boolean | undefined
+): EditOutcome => {
+  const declaration = sourceFile.statements
+    .filter(ts.isVariableStatement)
+    .flatMap(statement => [...statement.declarationList.declarations])
+    .find(candidate => ts.isIdentifier(candidate.name) && candidate.name.text === entry.list);
+  const list = declaration?.initializer ? unwrapped(ts, declaration.initializer) : undefined;
+  if (!list || !ts.isArrayLiteralExpression(list)) {
+    return { unplaced: `\`${entry.list}\` is not written as a list there` };
+  }
+
+  if (value === undefined) {
+    return { unplaced: `it is \`${entry.key}\` of an entry of \`${entry.list}\`: take it out of the entry by hand` };
+  }
+
+  const matching = list.elements
+    .filter(ts.isObjectLiteralExpression)
+    .map(object => findProperty(ts, object, entry.key))
+    .filter(
+      (property): property is TypeScript.PropertyAssignment =>
+        !!property && ts.isPropertyAssignment(property) && literalValue(ts, property.initializer) === current
+    );
+  if (matching.length !== 1) {
+    return {
+      unplaced:
+        matching.length === 0
+          ? `no entry of \`${entry.list}\` writes \`${entry.key}\` as ${JSON.stringify(current)}`
+          : `${String(matching.length)} entries of \`${entry.list}\` write \`${entry.key}\` as ${JSON.stringify(current)}: change the one meant by hand`
+    };
+  }
+
+  const { initializer } = matching[0];
+
+  return one({ start: initializer.getStart(sourceFile), end: initializer.getEnd(), text: literalText(value) });
 };
 
 /** The text with every change made — from the end back, so each span is where it was found. Overlaps are refused. */

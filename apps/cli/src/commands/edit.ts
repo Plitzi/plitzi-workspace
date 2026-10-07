@@ -16,12 +16,12 @@ import { fail } from './terminal';
 import { answerOf, locatedSpace } from './where';
 import { unifiedDiff } from '../fix/diff';
 import { formatLikeBefore } from '../fix/format';
-import { applyChanges, parameterBehind, slotEdit } from '../fix/sourceEdits';
+import { applyChanges, listEntryBehind, listEntryEdit, parameterBehind, slotEdit, slotText } from '../fix/sourceEdits';
 import { loadTypeScript } from '../projectTypeScript';
 
 import type { AskedChange, ElementReading } from './spaceReading';
 import type { WhereCall } from './where';
-import type { TextChange, ValueSlot } from '../fix/sourceEdits';
+import type { ListEntryGiven, TextChange, ValueSlot } from '../fix/sourceEdits';
 import type TypeScript from 'typescript';
 
 /**
@@ -53,12 +53,35 @@ interface Source {
   edits: TextChange[];
 }
 
-/** A change, and the call it is made in: the element's own, or one that hands a helper its value. */
+/**
+ * A change, and where it is made: the element's own call, one that hands a helper its value, or — when the call is
+ * repeated over a list and reads an entry of it — that entry, in the file the list is written in.
+ */
 interface Placed {
   change: Change;
   call: WhereCall;
   slot: ValueSlot;
+  entry?: { given: ListEntryGiven; file: string };
 }
+
+/** Where a placed change is said to be made. */
+const placedAt = ({ call, entry }: Placed): string => (entry ? `${entry.file}, in ${entry.given.list}` : call.at);
+
+/** The file a relative import names, as written or with the extension and index TypeScript would try. */
+const importedFile = async (from: string, specifier: string): Promise<string | undefined> => {
+  const base = path.join(path.dirname(from), specifier);
+  for (const candidate of [base, `${base}.ts`, `${base}.tsx`, path.join(base, 'index.ts')]) {
+    const found = await fs
+      .stat(path.resolve(process.cwd(), candidate))
+      .then(stat => stat.isFile())
+      .catch(() => false);
+    if (found) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+};
 
 const run = promisify(execFile);
 
@@ -252,7 +275,20 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
       const { sourceFile } = await sourceOf(call.position.file);
       const given = parameterBehind(ts, sourceFile, call.position, slot);
       if (!given) {
-        return { change, call, slot };
+        const listed = listEntryBehind(ts, sourceFile, call.position, slot);
+        if (!listed) {
+          return { change, call, slot };
+        }
+
+        const file =
+          listed.from === undefined ? call.position.file : await importedFile(call.position.file, listed.from);
+        if (file === undefined || (listed.from !== undefined && !listed.from.startsWith('.'))) {
+          return {
+            unplaced: `\`${change.key}\` is \`${listed.key}\` of an entry of \`${listed.list}\`, which comes from ${listed.from ?? 'elsewhere'}`
+          };
+        }
+
+        return { change, call, slot, entry: { given: listed, file } };
       }
 
       if (given.uses > 1) {
@@ -285,24 +321,45 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
   }
 
   // A call that writes more than one element changes them all: never done unasked, the agent would not know it had.
-  const shared = placed.filter(({ call }) => call.sharedWith);
+  // An entry of a list is this element's alone: only a change made in the call itself reaches the others.
+  const shared = placed.filter(({ call, entry }) => call.sharedWith && !entry);
   if (shared.length > 0 && !options.every) {
+    const said = await Promise.all(
+      shared.map(async ({ change, call, slot }) => {
+        const others = (call.sharedWith ?? []).join(', ');
+        const written = slotText(ts, (await sourceOf(call.position.file)).sourceFile, call.position, slot);
+
+        // Not a value there: `--every` would be refused too, so the way out is where the value comes from.
+        return written && !written.literal
+          ? {
+              literal: false,
+              line: `Nothing was changed: \`${change.key}\` is written as \`${written.text}\` in ${call.at}, the call that writes ${others} too — change it where \`${written.text}\` comes from.`
+            }
+          : {
+              literal: true,
+              line: `Nothing was changed: \`${change.key}\` is written in ${call.at}, which writes ${others} too — an edit there changes every one.`
+            };
+      })
+    );
     await refuse(
       [
-        ...shared.map(
-          ({ change, call }) =>
-            `Nothing was changed: \`${change.key}\` is written in ${call.at}, which writes ${(call.sharedWith ?? []).join(', ')} too — an edit there changes every one.`
-        ),
-        `For all of them, add --every. For ${elementId} alone, hand it its own value where the helper is called, by hand — \`plitzi where ${elementId} --by id\` shows its own call.`
+        ...said.map(({ line }) => line),
+        ...(said.some(({ literal }) => literal)
+          ? [
+              `For all of them, add --every. For ${elementId} alone, hand it its own value where the helper is called, by hand — \`plitzi where ${elementId} --by id\` shows its own call.`
+            ]
+          : [])
       ].join('\n')
     );
 
     return;
   }
 
-  for (const { change, call, slot } of placed) {
-    const source = await sourceOf(call.position.file);
-    const outcome = slotEdit(ts, source.sourceFile, call.position, slot, change.value);
+  for (const { change, call, slot, entry } of placed) {
+    const source = await sourceOf(entry ? entry.file : call.position.file);
+    const outcome = entry
+      ? listEntryEdit(ts, source.sourceFile, entry.given, element.attributes?.[change.key], change.value)
+      : slotEdit(ts, source.sourceFile, call.position, slot, change.value);
     if ('unplaced' in outcome) {
       unplaced.push(`\`${change.key}\`: ${outcome.unplaced}`);
     } else {
@@ -337,7 +394,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
 
   // What it is asked to change: the element, and — with --every — each other element its shared calls write.
   const asked = new Map<string, Change[]>([[elementId, changes]]);
-  for (const { change, call } of placed) {
+  for (const { change, call } of placed.filter(({ entry }) => !entry)) {
     for (const other of call.sharedWith ?? []) {
       asked.set(other, [...(asked.get(other) ?? []), change]);
     }
@@ -363,7 +420,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
     console.log(
       JSON.stringify({
         elementId,
-        changes: placed.map(({ change, call }) => ({ ...change, at: call.at })),
+        changes: placed.map(one => ({ ...one.change, at: placedAt(one) })),
         effects: effects.map(effect => effect.line)
       })
     );
@@ -375,7 +432,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
     [
       ...written.map(({ file, before, after }) => unifiedDiff(file, before, after)),
       chalk.green(
-        `${elementId}: ${placed.map(({ change, call }) => `${change.key} in ${call.at}`).join(', ')}; the space authors with it.`
+        `${elementId}: ${placed.map(one => `${one.change.key} in ${placedAt(one)}`).join(', ')}; the space authors with it.`
       ),
       'Changed in the space:',
       ...effects.map(effect => `  ${effect.line}`),

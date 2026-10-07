@@ -67,6 +67,20 @@ export const markWrittenAt = <T extends object>(spec: T): T => {
   return spec;
 };
 
+/**
+ * `copy`, carrying where `spec` was written. A spread copies only what is enumerable, so a factory that rebuilds a spec
+ * (`{ ...spec, attributes }`) would hand back one written nowhere: `plitzi where` could not place it and `plitzi edit`
+ * would refuse it. The marker is the original's — the call the author wrote — never one taken where the copy is made.
+ */
+export const carryWrittenAt = <T extends object>(spec: object, copy: T): T => {
+  const marker: unknown = Reflect.get(spec, WRITTEN_AT);
+  if (marker instanceof Error) {
+    Object.defineProperty(copy, WRITTEN_AT, { value: marker, enumerable: false });
+  }
+
+  return copy;
+};
+
 /** Where a call is, exactly: the file, its line and the column its function's name starts at, from 1. */
 export interface WrittenPosition {
   /** Relative to the working directory when it is under it. */

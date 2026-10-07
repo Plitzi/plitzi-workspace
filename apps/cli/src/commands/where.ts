@@ -92,6 +92,20 @@ const SNIPPET_LINES = 12;
 const comparable = (name: string): string => name.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 /** Every element a query names when it is read one way. */
+/** What places a component, never what it hands it: the rest of an instance's attributes are the component's props. */
+const PLACING = new Set(['referenceType', 'referenceId', 'slot']);
+
+/**
+ * The words a component's instance hands it (`pageHead('about-head', 'About us')`): what its parts show, read as
+ * `{{ props.title }}`, lives on the instance — the part itself holds only the template.
+ */
+const handedWords = (element: WrittenElement): string[] =>
+  element.type === 'reference' && element.attributes.referenceType === 'component'
+    ? Object.entries(element.attributes)
+        .filter((entry): entry is [string, string] => !PLACING.has(entry[0]) && typeof entry[1] === 'string')
+        .map(([, value]) => value)
+    : [];
+
 const readAs = (elements: readonly WrittenElement[], query: string, reading: WhereReading): WrittenElement[] => {
   if (reading === 'id') {
     return elements.filter(element => element.elementId === query);
@@ -106,11 +120,12 @@ const readAs = (elements: readonly WrittenElement[], query: string, reading: Whe
 
   const words = query.toLowerCase();
 
-  // The words it shows: its own, or the ones a binding's template writes (`'Reading as a guest'` inside a ternary).
+  // The words it shows: its own, the ones a binding's template writes (`'Reading as a guest'` inside a ternary), or
+  // the ones an instance hands its component.
   return elements.filter(
     element =>
       element.content?.toLowerCase().includes(words) ||
-      element.templates.some(template => template.toLowerCase().includes(words))
+      [...element.templates, ...handedWords(element)].some(text => text.toLowerCase().includes(words))
   );
 };
 
