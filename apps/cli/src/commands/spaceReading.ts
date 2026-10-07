@@ -1,3 +1,6 @@
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
 import { canonicalJson } from '@plitzi/sdk-shared/helpers/canonicalJson';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
@@ -22,11 +25,17 @@ export interface ElementReading {
   attributes: Record<string, unknown>;
   templates: string[];
   bound: string[];
+  /** The elements it holds, in their order: what a move changes, and a removal takes one from. */
+  children: string[];
 }
 
 /** One difference between the space before and after: an attribute's carries its key and what it reads after. */
 export interface SpaceEffect {
   elementId: string;
+  /** An element that came or went, one of its fields (its classes, its children…), or one of its attributes. */
+  kind: 'added' | 'removed' | 'field' | 'attribute';
+  /** For a field: which. */
+  field?: keyof ElementReading;
   /** The attribute that changed; absent for anything else about the element — its classes, its place, itself. */
   key?: string;
   line: string;
@@ -47,8 +56,9 @@ export const readingOf = ({
   classes,
   attributes,
   templates,
-  bound
-}: WrittenElement): ElementReading => ({ elementId, type, rootId, classes, attributes, templates, bound });
+  bound,
+  children
+}: WrittenElement): ElementReading => ({ elementId, type, rootId, classes, attributes, templates, bound, children });
 
 const isStrings = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(item => typeof item === 'string');
@@ -65,7 +75,8 @@ export const isReadings = (value: unknown): value is ElementReading[] =>
       isStrings(entry.classes) &&
       isRecord(entry.attributes) &&
       isStrings(entry.templates) &&
-      isStrings(entry.bound)
+      isStrings(entry.bound) &&
+      isStrings(entry.children)
   );
 
 const shown = (value: unknown): string => {
@@ -79,8 +90,37 @@ const FIELDS: readonly (keyof Omit<ElementReading, 'elementId' | 'attributes'>)[
   'rootId',
   'classes',
   'templates',
-  'bound'
+  'bound',
+  'children'
 ];
+
+/**
+ * How an element's children changed, in the words that say it: those added and those gone, or the one that moved and
+ * where it is now — never two lists cut short where the difference is.
+ */
+export const childrenChange = (before: readonly string[], after: readonly string[]): string => {
+  const added = after.filter(id => !before.includes(id));
+  const removed = before.filter(id => !after.includes(id));
+  if (added.length > 0 || removed.length > 0) {
+    return [...added.map(id => `+${id}`), ...removed.map(id => `−${id}`)].join(' ');
+  }
+
+  // The one whose move explains the whole difference: without it, the two orders are the same.
+  const moved = after.find(
+    id => before.filter(other => other !== id).join('\n') === after.filter(other => other !== id).join('\n')
+  );
+  if (moved === undefined) {
+    return `reordered: ${after.join(', ')}`;
+  }
+
+  const at = after.indexOf(moved);
+  const neighbours = [
+    ...(at > 0 ? [`after ${after[at - 1]}`] : ['first']),
+    ...(at < after.length - 1 ? [`before ${after[at + 1]}`] : ['last'])
+  ];
+
+  return `${moved} moved — now ${neighbours.join(', ')}`;
+};
 
 /** Every difference between the space before and after, element by element and attribute by attribute. */
 export const spaceEffects = (before: readonly ElementReading[], after: readonly ElementReading[]): SpaceEffect[] => {
@@ -89,20 +129,28 @@ export const spaceEffects = (before: readonly ElementReading[], after: readonly 
   const effects: SpaceEffect[] = [];
   for (const [elementId, element] of was) {
     if (!is.has(elementId)) {
-      effects.push({ elementId, line: `${elementId} (${element.type}) removed` });
+      effects.push({ elementId, kind: 'removed', line: `${elementId} (${element.type}) removed` });
     }
   }
 
   for (const [elementId, element] of is) {
     const old = was.get(elementId);
     if (!old) {
-      effects.push({ elementId, line: `${elementId} (${element.type}) added` });
+      effects.push({ elementId, kind: 'added', line: `${elementId} (${element.type}) added` });
       continue;
     }
 
     for (const field of FIELDS) {
       if (canonicalJson(old[field]) !== canonicalJson(element[field])) {
-        effects.push({ elementId, line: `${elementId} ${field}: ${shown(old[field])} → ${shown(element[field])}` });
+        effects.push({
+          elementId,
+          kind: 'field',
+          field,
+          line:
+            field === 'children'
+              ? `${elementId} children: ${childrenChange(old.children, element.children)}`
+              : `${elementId} ${field}: ${shown(old[field])} → ${shown(element[field])}`
+        });
       }
     }
 
@@ -119,7 +167,7 @@ export const spaceEffects = (before: readonly ElementReading[], after: readonly 
           : to === undefined
             ? `${elementId}.${key} removed (was ${shown(from)})`
             : `${elementId}.${key}: ${shown(from)} → ${shown(to)}`;
-      effects.push({ elementId, key, line });
+      effects.push({ elementId, kind: 'attribute', key, line });
     }
   }
 
@@ -190,6 +238,28 @@ export const reachedToo = (
 
     return [{ elementId, change }];
   });
+};
+
+const run = promisify(execFile);
+
+/** The space as it authors now, read by a fresh process: this one loaded the files before they were edited. */
+export const readAfresh = async (): Promise<ElementReading[] | { problem: string }> => {
+  try {
+    const { stdout } = await run(process.execPath, [process.argv[1], 'elements'], {
+      cwd: process.cwd(),
+      maxBuffer: 64 * 1024 * 1024
+    });
+    const parsed: unknown = JSON.parse(stdout);
+    if (isReadings(parsed)) {
+      return parsed;
+    }
+
+    return { problem: isRecord(parsed) && typeof parsed.problem === 'string' ? parsed.problem : 'it did not answer' };
+  } catch (error) {
+    const printed = isRecord(error) && typeof error.stdout === 'string' ? error.stdout.trim() : '';
+
+    return { problem: printed || (error instanceof Error ? error.message.split('\n')[0] : String(error)) };
+  }
 };
 
 /**

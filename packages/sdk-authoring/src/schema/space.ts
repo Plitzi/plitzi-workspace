@@ -126,6 +126,19 @@ const declaredAt = (declaration: StyleDeclaration): string => {
   return `styles('${declaration.name}')${at === undefined ? '' : ` at ${at}`}`;
 };
 
+/**
+ * A component in words, with where it is written: its declaration is an object no factory marks, so it is placed by
+ * its root — the call next to everything else it declares. Read defensively: this names it in the very refusals that
+ * say its shape is wrong.
+ */
+const componentWhere = (component: ComponentSpec): string => {
+  const root: unknown = component.root;
+  const at = typeof root === 'object' && root !== null ? writtenAt(root) : undefined;
+  const id: unknown = component.id;
+
+  return `Component "${String(id)}"${at === undefined ? '' : ` (declared at ${at}, by its root)`}`;
+};
+
 /** The types that render their children once per item: everything inside one is repeated, one copy per row. */
 const REPEATING_TYPES = new Set(['list', 'carouselTrack']);
 
@@ -263,19 +276,49 @@ class SpaceAuthor {
     //
     // `FlatMap.assertValid` is deliberately not also called here: it validates the flat map with no pages
     // attached, which is a strictly weaker reading of the same document than the pair below.
-    if (this.refusals.length > 0) {
-      const allow = this.options.allow ?? [];
-      const { errors } = validateSpace({ schema, style }, this.options);
-      throw new SpaceRefusedError(this.spec.permanentUrl, [
-        ...this.refusals,
-        ...errors
-          .filter(error => !allow.some(entry => entry.code === error.code && entry.element === error.elementId))
-          .map(error => ({
-            place: error.elementId ? `"${error.elementId}"` : '',
-            code: error.code,
-            message: error.message
-          }))
-      ]);
+    // Each said where the element it is about was written, and — a name pointed at that nothing answers to — with
+    // the nearest one there is: the line to go to and the fix, not a search through the source.
+    const allow = this.options.allow ?? [];
+    const answering = this.options.vocabulary?.callbacks;
+    // The names a missing one could have meant: of the elements that answer the step it was for, when that is known —
+    // the nearest name of any type is how a renamed modal was offered a search field.
+    const meant = (missing: string, step: string | undefined): string => {
+      const elements = Object.values(schema.flat);
+      const fit =
+        step && answering
+          ? elements
+              .filter(
+                element =>
+                  Object.hasOwn(answering, element.definition.type) && answering[element.definition.type].includes(step)
+              )
+              .map(element => element.id)
+          : elements.map(element => element.id);
+      const nearest = didYouMean(missing, fit);
+      if (nearest || !step || !answering) {
+        return nearest;
+      }
+
+      return fit.length === 0
+        ? ` — no element of the space answers \`${step}\``
+        : fit.length <= 5
+          ? ` — the elements that answer \`${step}\`: ${fit.join(', ')}`
+          : '';
+    };
+    const gate = validateSpace({ schema, style }, this.options)
+      .errors.filter(error => !allow.some(entry => entry.code === error.code && entry.element === error.elementId))
+      .map(error => {
+        const written = error.elementId ? this.specOf(error.elementId) : undefined;
+        const at = written ? writtenAt(written) : undefined;
+
+        return {
+          place: error.elementId ? `"${error.elementId}"` : '',
+          code: error.code,
+          message: `${error.message}${error.missing ? meant(error.missing, error.wantedBy) : ''}`,
+          ...(at === undefined ? {} : { at })
+        };
+      });
+    if (this.refusals.length > 0 || gate.length > 0) {
+      throw new SpaceRefusedError(this.spec.permanentUrl, [...this.refusals, ...gate]);
     }
 
     const warnings = assertSpaceValid(
@@ -1070,7 +1113,7 @@ class SpaceAuthor {
 
     const componentIds = new Set<string>();
     for (const component of this.spec.components ?? []) {
-      const where = `Component "${component.id}"`;
+      const where = componentWhere(component);
       assertKnownKeys(component, COMPONENT_SPEC_KEYS, where);
       // Read as what reached here, not what the type promises: a spec is often assembled by hand or by an agent.
       const id: unknown = component.id;
@@ -1482,7 +1525,7 @@ class SpaceAuthor {
    * that tree — every slot one of its elements.
    */
   private addComponent(component: ComponentSpec): SpaceComponent {
-    const where = `Component "${component.id}"`;
+    const where = componentWhere(component);
     const tree = this.componentTrees.get(component.id);
     if (!tree) {
       throw new Error(`${where} was not collected before it was written`);
@@ -1885,8 +1928,9 @@ class SpaceAuthor {
   }
 
   /**
-   * `path` is the element's identity — what a selector of its own is named after, so it never changes; `place` is
-   * how a person finds it: the nearest named element, and the steps from there.
+   * `path` is where its parent placed it; its identity — what a selector of its own and its bindings are named after —
+   * is that place with its id in its position, so it never changes when its siblings move. `place` is how a person
+   * finds it: the nearest named element, and the steps from there.
    */
   private writeElement(
     spec: ElementSpec,
@@ -1899,6 +1943,9 @@ class SpaceAuthor {
   ): string {
     this.assertElementShape(spec, place);
     const id = spec.id ?? this.nextId(spec.type);
+    // Named by its id, written or given, where its parent placed it by position: an element and everything it holds
+    // keep the selectors and binding ids their rules are named after wherever its siblings are moved.
+    const identity = `${path.slice(0, path.lastIndexOf('/'))}/#${id}`;
     this.specs.set(id, spec);
     const where = `Element "${spec.type}" (${id}) at ${place}`;
     this.assertFlowShapes(spec.flows, where);
@@ -1930,7 +1977,7 @@ class SpaceAuthor {
         // A slot names a class outright: it dresses a part of an element that already exists, and a selector of
         // its own per control would write the same rule once per input on the page.
         styleSelectors: {
-          base: this.selectorFor(path, spec, place),
+          base: this.selectorFor(identity, spec, place),
           ...this.declaredSlots(spec.type),
           ...this.slotSelectors(spec, place)
         },
@@ -1959,7 +2006,7 @@ class SpaceAuthor {
         // from the document, and leave out the same ones.
         ...(spec.quiet === undefined ? {} : { quiet: [...spec.quiet] }),
         ...(spec.flag === undefined ? {} : { flag: flagGateOf(spec.flag, where) }),
-        ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where, tree.globals) } : {}),
+        ...(bindings?.length ? { bindings: groupBindings(identity, bindings, sourceIndex, where, tree.globals) } : {}),
         ...(spec.flows ? { interactions: authorFlows(spec.flows, id) } : {})
       }
     };
@@ -1985,7 +2032,7 @@ class SpaceAuthor {
 
     const children = spec.row === undefined ? spec.children : this.rowChildren(spec, spec.row, id, where);
     children?.forEach((child, index) =>
-      this.addElement(child, `${path}/${index}`, placeOf(child, place, index), ownRootId, id, conditional, tree)
+      this.addElement(child, `${identity}/${index}`, placeOf(child, place, index), ownRootId, id, conditional, tree)
     );
 
     return id;
@@ -2161,6 +2208,8 @@ export interface WrittenElement {
   words: string[];
   /** Its attributes as authored. */
   attributes: Record<string, unknown>;
+  /** The elements it holds, in their order. */
+  children: string[];
   /** The attributes its bindings compute: what the page shows of them is the binding's, never the value written. */
   bound: string[];
   /** Where it was written: `src/space/pages/home.ts:42`. Absent for an element no call of the author's code wrote. */
@@ -2234,6 +2283,7 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
       templates,
       words: wordsOf(element, templates),
       attributes: element.attributes,
+      children: element.definition.items ?? [],
       bound: (element.definition.bindings?.attributes ?? []).map(binding => binding.to),
       through: calls.slice(1),
       ...(position ? { at: `${position.file}:${String(position.line)}`, position } : {})

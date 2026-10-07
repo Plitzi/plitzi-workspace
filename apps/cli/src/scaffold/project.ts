@@ -171,7 +171,9 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
     visual: 'playwright test',
     // The CLI's, on the project's own Playwright: a picture of a page, and whether a page is whole — in text.
     shot: 'plitzi shot',
-    check: 'plitzi check'
+    check: 'plitzi check',
+    // Every one of the above that says whether the project is left passing, in one run: only what fails is printed.
+    verify: 'plitzi verify'
   };
 };
 
@@ -441,7 +443,7 @@ ${commands.join('\n')}
 - **Settings are ${code('.env')}**, never committed; ${code('.env.example')} names them, committed — a new one goes in both. ${settingsNote}
 ${dataNote}
 - **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.
-${serverNotes}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
+${serverNotes}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — and with ${code('--click <id>')}, what clicking one element changed, or that nothing did — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
 - **What the page holds, in text:** ${code(`${runCommand(answers.packageManager, 'check')} -- /products --state --element <id>`)} adds its state, every source by name and one element (what it reads, its own state, whether it is on screen); every check already lists the flows that failed. Read it instead of guessing from classes in the DOM.
 
 ## Do not read
@@ -467,7 +469,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 - **Scratch goes in ${code(`${PROJECT_TMP}/`)}, or nowhere.** A one-off script, a dump, a picture to look at — never at the root or beside the source, where it reads as part of the project.
 - **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component, and rows of data are one list. Change it where it is defined, and rename everywhere when you rename.
 - **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space/')} already has. Do not start a parallel layout of your own.
-- **Leave it passing.** ${local ? `${run('author')} with zero warnings, ${run('lint:space')} clean, ` : ''}${run('typecheck')}, ${run('lint')} and ${run('format')} clean, and the page checked (${run('check')}).
+- **Leave it passing.** ${run('verify')} runs it all and prints only what fails: ${local ? `${run('author')} with zero warnings, ${run('lint:space')} clean, ` : ''}${run('typecheck')}, ${run('lint')} and the format clean, and every page whole (${run('check')}, with the server up).
 
 ## The rules that go wrong most
 

@@ -16,6 +16,7 @@ import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
 import { launchBrowser, openProjectPage, projectOrigin, withoutDevTools } from '../browser';
 
+import type { ExistingProject } from './existingProject';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { DataIssueCode, DevToolsInput, PageIssue, SpaceHandles } from '@plitzi/sdk-authoring';
 import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
@@ -48,6 +49,8 @@ export interface CheckOptions {
   element?: string;
   /** The HTML the server sent, held against the page once hydrated. */
   ssr?: boolean;
+  /** One element clicked, by its id, once the page has settled: what changed because of it, or that nothing did. */
+  click?: string;
   /**
    * An account of the project to sign in as first, through its server's `/auth` routes (`createServer({ auth })`), with
    * the password in `PLITZI_CHECK_PASSWORD` — what a page for signed-in visitors is checked as.
@@ -106,8 +109,44 @@ export interface CheckReport {
   state?: unknown;
   sources?: Record<string, unknown>;
   element?: unknown;
-  /** With `--element`: each property more than one of its classes sets, and which the page shows. `null`: not on it. */
-  styles?: ContestedStyle[] | null;
+  /** With `--element`: how its classes meet on it, at rest at this width. `null`: it is not on the page. */
+  styles?: ElementStyles | null;
+  /** With `--click`: what clicking the element changed. */
+  clicked?: ClickReport;
+}
+
+/** What a page is, as far as a click can change it: where it is, how far each part is scrolled, what shows. */
+export interface PageMoment {
+  url: string;
+  /** How far down the page and each scrolled element is, by element id (`page` for the document itself). */
+  scrolls: Record<string, number>;
+  /** The elements on screen, by id. */
+  shown: string[];
+}
+
+/** What a click changed — each kind of change, said; none at all is said too. */
+export interface ClickReport {
+  element: string;
+  /** The element could not be clicked: not on the page, hidden, covered. */
+  problem?: string;
+  changes: string[];
+  /** The flows the click ran that failed, as the dev tools tell them. */
+  failed: string[];
+}
+
+/** How an element's classes meet on it: the properties more than one sets, and the classes that change nothing. */
+export interface ElementStyles {
+  contested: ContestedStyle[];
+  /**
+   * The classes it wears that change nothing on it here: every property each sets stays as it is without it. A class
+   * that changes even one property is never here — what it shares with another is said of that property alone.
+   */
+  inert: { className: string; properties: number }[];
+  /**
+   * The other elements of the space each of its classes is on: what changing the class itself — its rules, not this
+   * element's `class` — changes too.
+   */
+  wornBy: Record<string, string[]>;
 }
 
 /** A property more than one of an element's classes sets, at rest: what each says, and which one the page shows. */
@@ -232,7 +271,7 @@ export const contestedStylesInPage = ({
 }: {
   selector: string;
   classes: string[];
-}): ContestedStyle[] | null => {
+}): Omit<ElementStyles, 'wornBy'> | null => {
   const node = document.querySelector(selector);
   if (!(node instanceof HTMLElement)) {
     return null;
@@ -294,32 +333,43 @@ export const contestedStylesInPage = ({
     }
   }
 
-  const contested = [...declared].filter(([, list]) => list.length > 1);
   const { transition, animation } = node.style;
   // Off while the classes come and go: a transition would answer the value it starts from, not the one it ends at.
   node.style.transition = 'none';
   node.style.animation = 'none';
   const shownOf = (property: string): string => getComputedStyle(node).getPropertyValue(property);
-  const result = contested.map(([property, list]): ContestedStyle => {
-    const shown = shownOf(property);
-    const winner = list.find(({ className }) => {
-      node.classList.remove(className);
-      const without = shownOf(property);
-      node.classList.add(className);
+  // Which of the properties each class sets stays as it is without that class: all of them, and it changes nothing.
+  const unchangedWithout = (className: string, properties: readonly string[]): boolean[] => {
+    const shown = properties.map(shownOf);
+    node.classList.remove(className);
+    const without = properties.map(shownOf);
+    node.classList.add(className);
 
-      return without !== shown;
-    })?.className;
+    return properties.map((_, index) => without[index] === shown[index]);
+  };
+  const contested = [...declared]
+    .filter(([, list]) => list.length > 1)
+    .map(([property, list]): ContestedStyle => {
+      const winner = list.find(({ className }) => !unchangedWithout(className, [property])[0])?.className;
 
-    return { property, declared: list, shown, ...(winner ? { winner } : {}) };
+      return { property, declared: list, shown: shownOf(property), ...(winner ? { winner } : {}) };
+    });
+  const inert = worn.flatMap(className => {
+    const properties = [...declared].filter(([, list]) => list.some(entry => entry.className === className));
+    const names = properties.map(([property]) => property);
+
+    return names.length > 0 && unchangedWithout(className, names).every(Boolean)
+      ? [{ className, properties: names.length }]
+      : [];
   });
   node.style.transition = transition;
   node.style.animation = animation;
 
-  return result;
+  return { contested, inert };
 };
 
 /** Contested properties as lines, those that say the same of the same classes said once: a shorthand's longhands. */
-export const contestedText = (contested: readonly ContestedStyle[]): string[] => {
+export const contestedText = (contested: readonly ContestedStyle[], wornBy: ElementStyles['wornBy']): string[] => {
   const groups = new Map<string, { properties: string[]; style: ContestedStyle }>();
   for (const style of contested) {
     const key = JSON.stringify([style.shown, style.winner, style.declared]);
@@ -339,10 +389,141 @@ export const contestedText = (contested: readonly ContestedStyle[]): string[] =>
     const losers = style.declared.filter(({ className }) => className !== style.winner);
     const over = losers.map(({ className, value }) => `${className} says ${value}`).join(', ');
 
+    // Said of the property alone: a class that shares it may set others nobody else does, and be on other elements.
+    const shared = style.declared
+      .filter(({ className }) => (wornBy[className] ?? []).length > 0)
+      .map(({ className }) => othersWearing(className, wornBy));
+    const reach = shared.length > 0 ? ` — ${shared.join('; ')}` : '';
+
     return style.winner
-      ? `${named}: ${style.shown}, from ${style.winner} (${over})`
-      : `${named}: ${style.shown} — ${style.declared.map(({ className }) => className).join(' and ')} all set it so: any one of them alone gives it`;
+      ? `${named}: ${style.shown}, from ${style.winner} (${over})${reach}`
+      : `${named}: ${style.shown} — ${style.declared.map(({ className }) => className).join(' and ')} all set it so; it stays ${style.shown} without any one of them${reach}`;
   });
+};
+
+/** Who else a class is on, said where changing the class itself would reach them. */
+const othersWearing = (className: string, wornBy: ElementStyles['wornBy']): string => {
+  const others = wornBy[className] ?? [];
+  if (others.length === 0) {
+    return `${className} is on this element alone`;
+  }
+
+  const named =
+    others.length > 3 ? `${others.slice(0, 3).join(', ')} and ${String(others.length - 3)} more` : others.join(', ');
+
+  return `${className} is also on ${named}: changing the class itself changes ${others.length === 1 ? 'it' : 'them'} too`;
+};
+
+/**
+ * The classes that change nothing on the element, said with how far that was measured — and what taking one away
+ * means: off this element's `class`, which touches no other; never its rules, which every element wearing it reads.
+ */
+export const inertText = (inert: ElementStyles['inert'], width: number, wornBy: ElementStyles['wornBy']): string[] =>
+  inert.map(
+    ({ className, properties }) =>
+      `${className} changes nothing on it at rest at ${String(width)} px: each of the ${String(properties)} ${properties === 1 ? 'property' : 'properties'} it sets stays as it is without it (a hover or another width may still need it). To drop it here, take it off this element’s \`class\`; ${othersWearing(className, wornBy)}.`
+  );
+
+/** Where the page is, how far each part is scrolled and what shows. Runs in the page, self-contained. */
+export const pageMomentInPage = (): PageMoment => {
+  const marked = Array.from(document.querySelectorAll('[data-plitzi-el]'));
+  const scrolls: Record<string, number> = { page: Math.round(document.scrollingElement?.scrollTop ?? 0) };
+  for (const node of marked) {
+    if (node.scrollTop > 0) {
+      scrolls[node.getAttribute('data-plitzi-el') ?? ''] = Math.round(node.scrollTop);
+    }
+  }
+
+  return {
+    url: `${location.pathname}${location.search}${location.hash}`,
+    scrolls,
+    shown: [
+      ...new Set(marked.filter(node => node.checkVisibility()).map(node => node.getAttribute('data-plitzi-el') ?? ''))
+    ]
+  };
+};
+
+/** Every way two moments of the page differ, in words: where it went, what scrolled, what came and went, the state. */
+export const momentChanges = (
+  before: PageMoment,
+  after: PageMoment,
+  state: { before: unknown; after: unknown }
+): string[] => {
+  const scrolled = [...new Set([...Object.keys(before.scrolls), ...Object.keys(after.scrolls)])].flatMap(id => {
+    const from = before.scrolls[id] ?? 0;
+    const to = after.scrolls[id] ?? 0;
+
+    return from === to ? [] : [`${id === 'page' ? 'the page' : id} scrolled ${String(from)} → ${String(to)} px`];
+  });
+  const appeared = after.shown.filter(id => !before.shown.includes(id));
+  const gone = before.shown.filter(id => !after.shown.includes(id));
+  const listed = (ids: string[]): string =>
+    ids.length > 6 ? `${ids.slice(0, 6).join(', ')} and ${String(ids.length - 6)} more` : ids.join(', ');
+  const stateBefore = isRecord(state.before) ? state.before : {};
+  const stateAfter = isRecord(state.after) ? state.after : {};
+  const said = (value: unknown): string => (value === undefined ? 'unset' : JSON.stringify(value));
+  const stateChanges = [...new Set([...Object.keys(stateBefore), ...Object.keys(stateAfter)])].flatMap(key =>
+    said(stateBefore[key]) === said(stateAfter[key])
+      ? []
+      : [`state.${key}: ${said(stateBefore[key])} → ${said(stateAfter[key])}`]
+  );
+
+  return [
+    ...(before.url === after.url ? [] : [`went to ${after.url} (from ${before.url})`]),
+    ...scrolled,
+    ...(appeared.length > 0 ? [`now on screen: ${listed(appeared)}`] : []),
+    ...(gone.length > 0 ? [`no longer on screen: ${listed(gone)}`] : []),
+    ...stateChanges
+  ];
+};
+
+/**
+ * The element clicked as a visitor clicks it — brought into view first, which is not the click's doing — and what
+ * changed: the flows it ran, where the page went, what scrolled, appeared or went, the state. A click that changed
+ * nothing is said as such: a button whose flow does nothing looks the same as one that works until somebody clicks.
+ */
+const clickEffects = async (page: BrowserPage, authored: Authored | undefined, id: string): Promise<ClickReport> => {
+  const handle = authored && Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
+  const selector = handle?.selector ?? `[data-plitzi-el="${id}"]`;
+  const target = page.locator(selector).first();
+  if ((await target.count()) === 0) {
+    return { element: id, problem: `no element ${id} is on this page`, changes: [], failed: [] };
+  }
+
+  try {
+    await target.scrollIntoViewIfNeeded({ timeout: 3000 });
+  } catch {
+    return { element: id, problem: `${id} could not be brought into view`, changes: [], failed: [] };
+  }
+
+  const tools = await readDevTools(page, { state: true });
+  const before = await page.evaluate(pageMomentInPage, undefined);
+  const ran = new Set(tools.flows.map(flow => `${flow.at}|${flow.trigger}|${String(flow.on)}`));
+  try {
+    await target.click({ timeout: 3000 });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
+
+    return { element: id, problem: `${id} could not be clicked: ${reason}`, changes: [], failed: [] };
+  }
+
+  // Time for what it set off to land: a flow's steps, a smooth scroll, a page it went to.
+  await page.waitForTimeout(1200);
+  const toolsAfter = await readDevTools(page, { state: true });
+  const after = await page.evaluate(pageMomentInPage, undefined);
+  const flows = toolsAfter.flows.filter(flow => !ran.has(`${flow.at}|${flow.trigger}|${String(flow.on)}`));
+
+  return {
+    element: id,
+    changes: [
+      ...flows.map(
+        flow =>
+          `ran ${flow.trigger}${flow.on ? ` of ${flow.on}` : ''}: ${flow.steps.map(step => `${step.action} ${step.status}`).join(', ') || 'no steps'}`
+      ),
+      ...momentChanges(before, after, { before: tools.state, after: toolsAfter.state })
+    ],
+    failed: flows.filter(flow => flow.status === 'failed').map(failedFlowText)
+  };
 };
 
 /**
@@ -363,16 +544,31 @@ const elementStyles = async (
   page: BrowserPage,
   authored: Authored | undefined,
   id: string
-): Promise<ContestedStyle[] | null> => {
-  const handle = authored && Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
-  const element = authored && Object.hasOwn(authored.schema.flat, id) ? authored.schema.flat[id] : undefined;
+): Promise<ElementStyles | null> => {
+  if (!authored) {
+    return null;
+  }
+
+  const handle = Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
+  const element = Object.hasOwn(authored.schema.flat, id) ? authored.schema.flat[id] : undefined;
   if (!handle || !element) {
     return null;
   }
 
-  const classes = Object.values(element.definition.styleSelectors).flatMap(names => names.split(/\s+/).filter(Boolean));
+  const classesOf = (one: SchemaElement): string[] =>
+    Object.values(one.definition.styleSelectors).flatMap(names => names.split(/\s+/).filter(Boolean));
+  const classes = classesOf(element);
+  const read = await page.evaluate(contestedStylesInPage, { selector: handle.selector, classes });
+  if (!read) {
+    return null;
+  }
 
-  return page.evaluate(contestedStylesInPage, { selector: handle.selector, classes });
+  const others = Object.values(authored.schema.flat).filter(one => one.id !== id);
+  const wornBy = Object.fromEntries(
+    classes.map(className => [className, others.filter(one => classesOf(one).includes(className)).map(one => one.id)])
+  );
+
+  return { ...read, wornBy };
 };
 
 const listRows = async (
@@ -436,7 +632,8 @@ const checkAt = async (
   authored: Authored | undefined,
   asked: DevToolsInput,
   ssr: boolean,
-  account: Account | undefined
+  account: Account | undefined,
+  click?: string
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
   const page = await openProjectPage(browser, origin, { width, height: 900, ...(scheme ? { scheme } : {}) });
@@ -518,6 +715,7 @@ const checkAt = async (
   // The sources always: what the bindings read is held against them. Printed only when asked.
   const devTools = await readDevTools(page, { ...asked, state: true });
   const styled = asked.element === undefined ? undefined : await elementStyles(page, authored, asked.element);
+  const clicked = click === undefined ? undefined : await clickEffects(page, authored, click);
   const data =
     authored && pageId && devTools.sources
       ? dataIssues(authored.schema, pageId, devTools.sources, { hidden: await notShown(page, authored) })
@@ -557,7 +755,13 @@ const checkAt = async (
   return {
     path: pathname,
     width,
-    ok: issues.length === 0 && consoleErrors.length === 0 && failedRequests.length === 0,
+    // A click that could not be made, or whose flow failed, is the page not doing what it is for.
+    ok:
+      issues.length === 0 &&
+      consoleErrors.length === 0 &&
+      failedRequests.length === 0 &&
+      !clicked?.problem &&
+      (clicked?.failed.length ?? 0) === 0,
     checked: report.checked,
     problems: issues.map(issue => issue.message),
     issues,
@@ -570,7 +774,8 @@ const checkAt = async (
     ...(!asked.state || devTools.state === undefined ? {} : { state: devTools.state }),
     ...(!asked.state || devTools.sources === undefined ? {} : { sources: devTools.sources }),
     ...(devTools.element === undefined ? {} : { element: devTools.element }),
-    ...(styled === undefined ? {} : { styles: styled })
+    ...(styled === undefined ? {} : { styles: styled }),
+    ...(clicked === undefined ? {} : { clicked })
   };
 };
 
@@ -592,9 +797,16 @@ const heldText = (report: CheckReport, asked: DevToolsInput): string[] => {
       ? []
       : report.styles === null
         ? [`  · element ${asked.element} is not on the page: its styles cannot be read`]
-        : report.styles.length === 0
-          ? [`  · element ${asked.element}: no property is set by more than one of its classes`]
-          : contestedText(report.styles).map(line => `  · element ${asked.element} at rest — ${line}`))
+        : [
+            ...(report.styles.contested.length === 0
+              ? [`  · element ${asked.element}: no property is set by more than one of its classes`]
+              : contestedText(report.styles.contested, report.styles.wornBy).map(
+                  line => `  · element ${asked.element} at rest — ${line}`
+                )),
+            ...inertText(report.styles.inert, report.width, report.styles.wornBy).map(
+              line => `  · element ${asked.element}: ${line}`
+            )
+          ])
   ];
 };
 
@@ -650,9 +862,43 @@ const browserOnlyText = (report: CheckReport): string[] =>
       ]
     : [];
 
-const reportText = (report: CheckReport, asked: DevToolsInput): string => {
+/** What a click changed, a line each — or that it changed nothing, which is the line a broken button gets. */
+export const clickedText = (clicked: ClickReport | undefined): string[] => {
+  if (!clicked) {
+    return [];
+  }
+
+  if (clicked.problem) {
+    return [`  - click: ${clicked.problem}`];
+  }
+
+  return [
+    ...(clicked.changes.length === 0
+      ? [
+          `  · clicking ${clicked.element} changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, and the state is as it was`
+        ]
+      : [
+          `  · clicking ${clicked.element}:`,
+          ...clicked.changes.map(change => `      ${change}`),
+          // A flow that ran and succeeded is not a page that changed: when only flows are said, that is said too.
+          ...(clicked.changes.every(change => change.startsWith('ran '))
+            ? [
+                '      — and nothing on the page changed: the page went nowhere, nothing scrolled, appeared or went, and the state is as it was'
+              ]
+            : [])
+        ]),
+    ...clicked.failed.map(flow => `  - ${flow}`)
+  ];
+};
+
+export const reportText = (report: CheckReport, asked: DevToolsInput): string => {
   const head = `${report.path} at ${String(report.width)} px`;
-  const held = [...listsText(report.lists), ...browserOnlyText(report), ...heldText(report, asked)];
+  const held = [
+    ...listsText(report.lists),
+    ...browserOnlyText(report),
+    ...heldText(report, asked),
+    ...clickedText(report.clicked)
+  ];
   const atWidth =
     report.hiddenAtWidth.length > 0
       ? chalk.dim(`  · hidden at this width by a breakpoint, on purpose: ${report.hiddenAtWidth.join(', ')}`)
@@ -694,58 +940,98 @@ export const check = async (route: string | undefined, options: CheckOptions): P
   }
 
   const account = options.as && password ? { username: options.as, password } : undefined;
+  const asked: DevToolsInput = {
+    state: Boolean(options.state),
+    ...(options.element ? { element: options.element } : {})
+  };
+  const reports = await checkRoutes(project, [route ?? '/'], {
+    widths: options.width ?? [1440, 390],
+    asked,
+    ssr: Boolean(options.ssr),
+    ...(options.scheme ? { scheme: options.scheme } : {}),
+    ...(account ? { account } : {}),
+    ...(options.click ? { click: options.click } : {})
+  });
+  if ('problem' in reports) {
+    fail(reports.problem);
 
+    return;
+  }
+
+  console.log(options.json ? JSON.stringify(reports) : reports.map(report => reportText(report, asked)).join('\n'));
+  if (reports.some(report => !report.ok)) {
+    process.exitCode = 1;
+  }
+};
+
+/**
+ * Pages of the running project checked, each at each width, in one browser: what `check` does for one route and
+ * `verify` for every page that has no parameter in its path. A project the server does not answer for, or with no
+ * browser, is a problem said once rather than a report per page.
+ */
+export const checkRoutes = async (
+  project: { root: string; plitzi?: ExistingProject['plitzi'] },
+  routes: readonly string[],
+  options: {
+    widths: readonly number[];
+    asked: DevToolsInput;
+    ssr: boolean;
+    scheme?: Scheme;
+    account?: Account;
+    click?: string;
+  }
+): Promise<CheckReport[] | { problem: string }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   const where = await projectOrigin(project.root, plitzi);
   if ('problem' in where) {
-    fail(where.problem);
-
-    return;
+    return where;
   }
 
   const authored = plitzi?.source === 'local' ? await projectSpace(project.root) : undefined;
   if (authored && 'problem' in authored) {
-    fail(authored.problem);
-
-    return;
+    return authored;
   }
 
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
-    fail(browser.problem);
-
-    return;
+    return browser;
   }
 
   try {
-    const widths = options.width ?? [1440, 390];
-    const { scheme } = options;
-    const asked: DevToolsInput = {
-      state: Boolean(options.state),
-      ...(options.element ? { element: options.element } : {})
-    };
     const reports: CheckReport[] = [];
-    for (const width of widths) {
-      reports.push(
-        await checkAt(
-          browser,
-          where.origin,
-          route ?? '/',
-          width,
-          scheme,
-          authored,
-          asked,
-          Boolean(options.ssr),
-          account
-        )
-      );
+    for (const route of routes) {
+      for (const width of options.widths) {
+        reports.push(
+          await checkAt(
+            browser,
+            where.origin,
+            route,
+            width,
+            options.scheme,
+            authored,
+            options.asked,
+            options.ssr,
+            options.account,
+            options.click
+          )
+        );
+      }
     }
 
-    console.log(options.json ? JSON.stringify(reports) : reports.map(report => reportText(report, asked)).join('\n'));
-    if (reports.some(report => !report.ok)) {
-      process.exitCode = 1;
-    }
+    return reports;
   } finally {
     await browser.close();
   }
+};
+
+/** The paths of the space's pages that take no parameter — the ones a check can open as they are. */
+export const staticPaths = async (root: string): Promise<string[] | { problem: string }> => {
+  const authored = await projectSpace(root);
+  if ('problem' in authored) {
+    return authored;
+  }
+
+  return Object.values(authored.handles.pages)
+    .map(page => page.path)
+    .filter(pathname => pathname.split('/').every(segment => !segment.startsWith(':') && !/\{\{.*\}\}/.test(segment)));
 };

@@ -13,6 +13,7 @@ const element = (elementId: string, classes: string[], content?: string): Writte
   words: content === undefined ? [] : [content],
   through: [],
   bound: [],
+  children: [],
   attributes: {},
   ...(content === undefined ? {} : { content })
 });

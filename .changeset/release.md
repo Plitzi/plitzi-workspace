@@ -3,6 +3,7 @@
 '@plitzi/sdk-authoring': patch
 '@plitzi/sdk-elements': patch
 '@plitzi/sdk-mcp': patch
+'@plitzi/sdk-schema': patch
 '@plitzi/sdk-shared': patch
 ---
 
@@ -106,3 +107,26 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   `type: 'string'` was accepted at run time, offered by no editor and checked against nothing. `BUILTIN_PARAM_TYPES`
   in `@plitzi/sdk-shared` is the list, and `BuiltinParamType` is derived from it. The shell now stays around the element on both sides of hydration, under the same
   key, and only stops freezing (`frozen`).
+- **`plitzi remove <id>` and `plitzi move <id> --before|--after <id>`** take an element out of the code that writes
+  it, or reorder it among its siblings — following a section a helper returns to the helper's call — checked as
+  `edit` is: a removal may take only the element and what it holds, a move only reorder its parent, or the file goes
+  back. Styles and imports only the removed call used go with it, named; a helper left unread is said.
+- **`plitzi verify`** runs the project's checks — author (no warning), lint:space, typecheck, lint, format — and every
+  page with no parameter, and prints only what fails; a page it could not open is said as not checked. Generated
+  projects get `npm run verify`, and their `AGENTS.md` names it as the way to leave the project passing.
+- **A component's refusal says where it is written** (by its root's call).
+- **`check --element`** says a class changes nothing on the element only when every property it sets stays without
+  it, and names the other elements the class is on: changing the class changes them; taking it off this element does
+  not.
+- **An element's generated selector and binding ids are named after its id**, under its parent's place, not after its
+  position among its siblings: a move renames nothing. Every space written in code gets new generated names once —
+  the same rules, so nothing a visitor sees changes.
+- A change of an element's children is said as what came, went or moved (`faq moved — now after hero, before pricing`).
+- **`plitzi check --click <id>`** clicks one element and says what changed — flows run and how each step ended, the
+  page it went to, what scrolled, appeared or left, the state — or that nothing did, in those words; a flow that
+  succeeded while nothing on the page changed is said as that. A click that could not be made, or a flow that failed,
+  fails the check.
+- **A refusal of the authored space's gate says where**: each of the validator's errors (`UNRESOLVED_INTERACTION_TARGET`,
+  `UNRESOLVED_BINDING_SOURCE`, …) carries the file and line of the element it is about, and a name nothing answers to is
+  offered the nearest element that answers the step it was for (`openModal('search')` → `search-modal`, not the
+  `search-q` field), or the few that do. `SchemaValidationError` gains `missing` and `wantedBy` (`@plitzi/sdk-schema`).

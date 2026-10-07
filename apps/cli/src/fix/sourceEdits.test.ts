@@ -9,8 +9,11 @@ import {
   declaredRoots,
   listEntryBehind,
   listEntryEdit,
+  moveItem,
   parameterBehind,
+  pruneDeclarations,
   pruneImports,
+  removeItem,
   sourceEdit
 } from './sourceEdits';
 
@@ -285,6 +288,37 @@ describe('an attribute edited where the element was written (plitzi edit)', () =
     expect('changes' in outcome ? applyChanges(text, outcome.changes) : outcome.unplaced).toBe(
       "export const about: PageSpec = { id: 'about', name: 'About', slug: 'about', body: [], seoTitle: 'About — Example' };"
     );
+  });
+
+  it('takes an element’s call out of its list, and moves one before or after a sibling', () => {
+    const text = "const body = [text('A', { id: 'a' }), text('B', { id: 'b' }), text('C', { id: 'c' })];";
+    const { sourceFile, position: b } = at(text, "text('B'");
+    const c = at(text, "text('C'").position;
+    const a = at(text, "text('A'").position;
+    const removedB = removeItem(ts, sourceFile, b);
+    const movedC = moveItem(ts, sourceFile, c, a, 'before');
+
+    expect('changes' in removedB ? applyChanges(text, removedB.changes) : removedB.unplaced).toBe(
+      "const body = [text('A', { id: 'a' }), text('C', { id: 'c' })];"
+    );
+    expect('changes' in movedC ? applyChanges(text, movedC.changes) : movedC.unplaced).toBe(
+      "const body = [ text('C', { id: 'c' }),text('A', { id: 'a' }), text('B', { id: 'b' })];"
+    );
+  });
+
+  // A style written for the element alone goes with it, and is said; one something else reads, or exported, stays.
+  it('takes out the styles nothing reads after a removal, and names them', () => {
+    const text = [
+      "const card = styles('card', {});",
+      "const kept = styles('kept', {});",
+      "export const shared = styles('shared', {});",
+      "const body = [text('A', { class: kept })];"
+    ].join('\n');
+
+    expect(pruneDeclarations(ts, 'a.ts', text, ['card', 'kept', 'shared'])).toEqual({
+      text: text.replace("const card = styles('card', {});\n", ''),
+      pruned: ['card']
+    });
   });
 
   it('shows the call as it is written', () => {

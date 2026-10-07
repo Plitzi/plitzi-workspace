@@ -1,7 +1,15 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { contestedText, listText, notShownInPage, renderedRowsInPage } from './check';
+import {
+  clickedText,
+  contestedText,
+  inertText,
+  listText,
+  momentChanges,
+  notShownInPage,
+  renderedRowsInPage
+} from './check';
 
 const marked = (id: string): string => `[data-plitzi-el="${id}"]`;
 
@@ -78,20 +86,61 @@ describe('the styles an element’s classes contest', () => {
     });
 
     expect(
-      contestedText([
-        ...['top-left', 'top-right', 'bottom-right', 'bottom-left'].map(at => corner(`border-${at}-radius`)),
-        {
-          property: 'color',
-          declared: [
-            { className: 'a', value: 'red' },
-            { className: 'b', value: 'red' }
-          ],
-          shown: 'rgb(255, 0, 0)'
-        }
-      ])
+      contestedText(
+        [
+          ...['top-left', 'top-right', 'bottom-right', 'bottom-left'].map(at => corner(`border-${at}-radius`)),
+          {
+            property: 'color',
+            declared: [
+              { className: 'a', value: 'red' },
+              { className: 'b', value: 'red' }
+            ],
+            shown: 'rgb(255, 0, 0)'
+          }
+        ],
+        { 'button-primary': ['site-cta', 'write-cta'], 'ent-cta-pill': [], a: [], b: [] }
+      )
     ).toEqual([
-      'border-top-left-radius and 3 more like it: 999px, from ent-cta-pill (button-primary says 12px)',
-      'color: rgb(255, 0, 0) — a and b all set it so: any one of them alone gives it'
+      'border-top-left-radius and 3 more like it: 999px, from ent-cta-pill (button-primary says 12px) — button-primary is also on site-cta, write-cta: changing the class itself changes them too',
+      'color: rgb(255, 0, 0) — a and b all set it so; it stays rgb(255, 0, 0) without any one of them'
+    ]);
+  });
+
+  // A class that shares one property may set others: only one whose every property stays is said to change nothing.
+  it('says a class changes nothing only when every property it sets stays without it, and how far that was measured', () => {
+    expect(inertText([{ className: 'ent-cta-pill', properties: 1 }], 1440, { 'ent-cta-pill': ['site-cta'] })).toEqual([
+      'ent-cta-pill changes nothing on it at rest at 1440 px: each of the 1 property it sets stays as it is without it (a hover or another width may still need it). To drop it here, take it off this element’s `class`; ent-cta-pill is also on site-cta: changing the class itself changes it too.'
+    ]);
+  });
+});
+
+// A button whose flow does nothing looks like one that works, until it is clicked and every change is read off.
+describe('what a click changed', () => {
+  const moment = { url: '/enterprise', scrolls: { page: 3309 }, shown: ['footer', 'top'] };
+
+  it('says where the page went, what scrolled, came and went, and the state', () => {
+    expect(
+      momentChanges(
+        moment,
+        { url: '/enterprise#plans', scrolls: { page: 0, faq: 120 }, shown: ['top', 'hero'] },
+        { before: { menuOpen: false }, after: { menuOpen: true, faq: 'a' } }
+      )
+    ).toEqual([
+      'went to /enterprise#plans (from /enterprise)',
+      'the page scrolled 3309 → 0 px',
+      'faq scrolled 0 → 120 px',
+      'now on screen: hero',
+      'no longer on screen: footer',
+      'state.menuOpen: false → true',
+      'state.faq: unset → "a"'
+    ]);
+  });
+
+  it('says a click that changed nothing, in so many words', () => {
+    expect(
+      clickedText({ element: 'top', changes: momentChanges(moment, moment, { before: {}, after: {} }), failed: [] })
+    ).toEqual([
+      '  · clicking top changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, and the state is as it was'
     ]);
   });
 });

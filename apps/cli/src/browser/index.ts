@@ -38,7 +38,10 @@ export interface PageResponse {
 /** One element of a page, as `shot --clip` and `--scroll-to` reach it. */
 export interface PageElement {
   screenshot(): Promise<Uint8Array>;
-  scrollIntoViewIfNeeded(): Promise<void>;
+  scrollIntoViewIfNeeded(options?: { timeout: number }): Promise<void>;
+  /** How many elements the selector finds: none is an element not on the page. */
+  count(): Promise<number>;
+  click(options: { timeout: number }): Promise<void>;
 }
 
 export interface BrowserPage {

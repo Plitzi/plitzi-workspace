@@ -998,6 +998,178 @@ export const declaredRoots = (
   return found;
 };
 
+/** Where a call sits among its siblings: the list of children it is an item of, and its place there. */
+const placeInList = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>
+): { list: TypeScript.ArrayLiteralExpression; call: TypeScript.CallExpression } | { unplaced: string } => {
+  const call = callAt(ts, sourceFile, position.line, position.column);
+  if (!call) {
+    return { unplaced: 'the call that wrote it is not where it was' };
+  }
+
+  return ts.isArrayLiteralExpression(call.parent)
+    ? { list: call.parent, call }
+    : { unplaced: 'it is not written as an item of a list of children — it is held or handed on — so by hand' };
+};
+
+/**
+ * Where an element is an item of a list of children: its own call, or — a section a helper builds and returns,
+ * `body: [enterpriseFaq()]` — the call of the helper, named so the caller can follow it there.
+ */
+export const listItemAt = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>
+): 'item' | { returnedBy: string } | { unplaced: string } => {
+  const call = callAt(ts, sourceFile, position.line, position.column);
+  if (!call) {
+    return { unplaced: 'the call that wrote it is not where it was' };
+  }
+
+  if (ts.isArrayLiteralExpression(call.parent)) {
+    return 'item';
+  }
+
+  const returned = (ts.isArrowFunction(call.parent) && call.parent.body === call) || ts.isReturnStatement(call.parent);
+  const helper = returned ? enclosingFunction(ts, call) : undefined;
+
+  return helper
+    ? { returnedBy: helper.name }
+    : { unplaced: 'it is not written as an item of a list of children — it is held or handed on — so by hand' };
+};
+
+/** Whether the call at a position is a call of the named function: the helper an element's own call is returned by. */
+export const callsNamed = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>,
+  name: string
+): boolean => {
+  const call = callAt(ts, sourceFile, position.line, position.column);
+
+  return !!call && calleeName(ts, call) === name;
+};
+
+/** The element's call taken out of the list it is an item of, with the comma that went with it. */
+export const removeItem = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>
+): EditOutcome & { removed?: string } => {
+  const placed = placeInList(ts, sourceFile, position);
+  if ('unplaced' in placed) {
+    return placed;
+  }
+
+  const index = placed.list.elements.indexOf(placed.call);
+
+  return { ...one(removeFromList(sourceFile, placed.list.elements, index)), removed: placed.call.getText(sourceFile) };
+};
+
+/**
+ * The element's call moved before or after a sibling in the same list, each item carried with the comments written
+ * above it. Two lists are two places in the code: a move between them is the author's.
+ */
+export const moveItem = (
+  ts: Ts,
+  sourceFile: TypeScript.SourceFile,
+  position: Pick<WrittenPosition, 'line' | 'column'>,
+  sibling: Pick<WrittenPosition, 'line' | 'column'>,
+  side: 'before' | 'after'
+): EditOutcome => {
+  const moving = placeInList(ts, sourceFile, position);
+  const target = placeInList(ts, sourceFile, sibling);
+  if ('unplaced' in moving) {
+    return moving;
+  }
+
+  if ('unplaced' in target) {
+    return { unplaced: `the element to move it ${side}: ${target.unplaced}` };
+  }
+
+  if (moving.list !== target.list) {
+    return { unplaced: 'the two are not items of the same list of children: moving between them is by hand' };
+  }
+
+  const items = [...moving.list.elements].filter(item => item !== moving.call);
+  const at = items.indexOf(target.call) + (side === 'after' ? 1 : 0);
+  const ordered = [...items.slice(0, at), moving.call, ...items.slice(at)];
+  const first = moving.list.elements[0];
+  const last = moving.list.elements[moving.list.elements.length - 1];
+
+  return one({
+    start: first.getFullStart(),
+    end: last.getEnd(),
+    text: ordered.map(item => item.getFullText(sourceFile)).join(',')
+  });
+};
+
+/**
+ * What a removal left behind in the file: each top-level, unexported `const x = styles(…)` among `names` that nothing
+ * reads any longer — taken out, and named, so nothing goes unsaid. Anything else unread is the linter's to say.
+ */
+export const pruneDeclarations = (
+  ts: Ts,
+  fileName: string,
+  text: string,
+  names: readonly string[]
+): { text: string; pruned: string[] } => {
+  const sourceFile = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const reads = new Map<string, number>();
+  const visit = (node: Node): void => {
+    if (ts.isIdentifier(node) && !(ts.isVariableDeclaration(node.parent) && node.parent.name === node)) {
+      reads.set(node.text, (reads.get(node.text) ?? 0) + 1);
+    }
+
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  const pruned: string[] = [];
+  const changes: TextChange[] = [];
+  for (const statement of sourceFile.statements) {
+    const exported = ts.isVariableStatement(statement)
+      ? statement.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword)
+      : true;
+    const declarations = ts.isVariableStatement(statement) ? statement.declarationList.declarations : undefined;
+    const declaration = declarations?.length === 1 ? declarations[0] : undefined;
+    const name = declaration && ts.isIdentifier(declaration.name) ? declaration.name.text : undefined;
+    const initializer = declaration?.initializer;
+    const isStyles =
+      !!initializer &&
+      ts.isCallExpression(initializer) &&
+      ts.isIdentifier(initializer.expression) &&
+      initializer.expression.text === 'styles';
+    if (!exported && name && names.includes(name) && isStyles && !reads.get(name)) {
+      // With its comments above it; the first of a file takes its line break too, so the file does not open blank.
+      const start = statement.getFullStart();
+      const end = statement.getEnd() + (start === 0 && text[statement.getEnd()] === '\n' ? 1 : 0);
+      changes.push({ start, end, text: '' });
+      pruned.push(name);
+    }
+  }
+
+  return { text: applyChanges(text, changes) ?? text, pruned };
+};
+
+/** Every name a piece of code reads: what a removal may have left unread elsewhere in its file. */
+export const namesIn = (ts: Ts, code: string): string[] => {
+  const sourceFile = ts.createSourceFile('removed.ts', code, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const names = new Set<string>();
+  const visit = (node: Node): void => {
+    if (ts.isIdentifier(node)) {
+      names.add(node.text);
+    }
+
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  return [...names];
+};
+
 /** The text with every change made — from the end back, so each span is where it was found. Overlaps are refused. */
 export const applyChanges = (text: string, changes: readonly TextChange[]): string | undefined => {
   const ordered = [...changes].toSorted((a, b) => b.start - a.start);

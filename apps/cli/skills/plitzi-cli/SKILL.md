@@ -18,6 +18,9 @@ writing any of those yourself.** `plitzi <command> --help` lists every flag.
 ```bash
 npx plitzi where hero-cta                       # where the code writes an element: file:line and the call
 npx plitzi edit hero-cta --set content="Hi"     # an attribute written there, checked
+npx plitzi remove ent-trust                     # an element taken out, with what only it used
+npx plitzi move ent-faq --before ent-pricing    # an element put elsewhere among its siblings
+npx plitzi verify                               # left passing? author, lints, types, format, pages
 npx plitzi check -- /about --width 1440,390     # whether a page is whole, in text
 npx plitzi explain navigate                     # what a name means: element, step, code, any export
 npx plitzi doctor                               # whether the project is whole; --fix the simple parts
@@ -27,8 +30,8 @@ npx plitzi feedback                             # a report to Plitzi, for the pe
 
 ## Running it as an agent
 
-- **Which check.** The space: `npm run author`. How its source is written: `npm run lint:space`. A page: `check`. The
-  project around them: `doctor`, before `push`.
+- **Which check.** All of it before you finish: `verify` — only what fails is printed. The space alone: `npm run
+  author`; a page: `check`. The project around them: `doctor`, before `push`.
 - **`create` never decides for the person.** With nobody at the terminal it writes nothing and prints each choice as a
   question: ask the user, then run again with their answers as flags. Never guess them.
 - **Signing in happens in the browser** (`login`, `space`, a first `upload`): tell the person a tab is waiting.

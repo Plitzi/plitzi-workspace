@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isReadings, reachedToo, spaceEffects, surprises } from './spaceReading';
+import { childrenChange, isReadings, reachedToo, spaceEffects, surprises } from './spaceReading';
 
 import type { ElementReading } from './spaceReading';
 
@@ -11,7 +11,8 @@ const reading = (elementId: string, attributes: Record<string, unknown>, classes
   classes,
   attributes,
   templates: [],
-  bound: []
+  bound: [],
+  children: []
 });
 
 const before = [reading('title', { content: 'Hi', level: 1 }), reading('footer-title', { content: 'Hi' })];
@@ -68,6 +69,16 @@ describe('what an edit reached with the very value asked', () => {
     expect(reachedToo(spaceEffects(before, after), after, asked, [{ key: 'content', value: 'Hello' }])).toEqual([
       { elementId: 'footer-title', change: { key: 'content', value: 'Hello' } }
     ]);
+  });
+});
+
+describe('how an element’s children changed', () => {
+  it('says what came and went, the one that moved and where it is now', () => {
+    expect(childrenChange(['hero', 'pricing', 'faq', 'closing'], ['hero', 'pricing', 'faq'])).toBe('−closing');
+    expect(childrenChange(['hero', 'pricing', 'faq'], ['hero', 'faq', 'pricing'])).toBe(
+      'faq moved — now after hero, before pricing'
+    );
+    expect(childrenChange(['a', 'b', 'c'], ['c', 'b', 'a'])).toBe('reordered: c, b, a');
   });
 });
 

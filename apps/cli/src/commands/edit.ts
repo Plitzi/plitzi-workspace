@@ -1,17 +1,14 @@
-import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { promisify } from 'node:util';
 
 import chalk from 'chalk';
 
 import { closest, PAGE_SPEC_FIELDS } from '@plitzi/sdk-authoring';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { findProject } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { AGAIN, noteRefused } from './repeats';
-import { isReadings, reachedToo, readingOf, spaceEffects, surprises } from './spaceReading';
+import { reachedToo, readAfresh, readingOf, spaceEffects, surprises } from './spaceReading';
 import { fail } from './terminal';
 import { answerOf, importedFile, locatedSpace } from './where';
 import { unifiedDiff } from '../fix/diff';
@@ -19,7 +16,7 @@ import { formatLikeBefore } from '../fix/format';
 import { applyChanges, listEntryBehind, listEntryEdit, parameterBehind, slotEdit, slotText } from '../fix/sourceEdits';
 import { loadTypeScript } from '../projectTypeScript';
 
-import type { AskedChange, ElementReading } from './spaceReading';
+import type { AskedChange } from './spaceReading';
 import type { WhereCall } from './where';
 import type { ListEntryGiven, TextChange, ValueSlot } from '../fix/sourceEdits';
 import type TypeScript from 'typescript';
@@ -67,8 +64,6 @@ interface Placed {
 /** Where a placed change is said to be made. */
 const placedAt = ({ call, entry }: Placed): string => (entry ? `${entry.file}, in ${entry.given.list}` : call.at);
 
-const run = promisify(execFile);
-
 /**
  * `--set key=value`, the value of the kind the attribute already has: a number stays a number, a boolean a boolean. A
  * new attribute is a boolean when it reads `true` or `false`, and words otherwise — never guessed to be a number.
@@ -110,26 +105,6 @@ export const parseSets = (
   }
 
   return { changes };
-};
-
-/** The space as it authors now, read by a fresh process: this one loaded the files before they were edited. */
-const readAfresh = async (): Promise<ElementReading[] | { problem: string }> => {
-  try {
-    const { stdout } = await run(process.execPath, [process.argv[1], 'elements'], {
-      cwd: process.cwd(),
-      maxBuffer: 64 * 1024 * 1024
-    });
-    const parsed: unknown = JSON.parse(stdout);
-    if (isReadings(parsed)) {
-      return parsed;
-    }
-
-    return { problem: isRecord(parsed) && typeof parsed.problem === 'string' ? parsed.problem : 'it did not answer' };
-  } catch (error) {
-    const printed = isRecord(error) && typeof error.stdout === 'string' ? error.stdout.trim() : '';
-
-    return { problem: printed || (error instanceof Error ? error.message.split('\n')[0] : String(error)) };
-  }
 };
 
 export const edit = async (elementId: string, options: EditOptions): Promise<void> => {

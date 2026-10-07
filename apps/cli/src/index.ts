@@ -4,6 +4,7 @@ import { SCHEMES } from './browser';
 import { login, logout, space, whoami } from './commands/account';
 import addPlugin from './commands/addPlugin';
 import addRuntime from './commands/addRuntime';
+import { move, remove } from './commands/arrange';
 import { check } from './commands/check';
 import create from './commands/create';
 import createPlugin from './commands/createPlugin';
@@ -29,6 +30,7 @@ import { shot } from './commands/shot';
 import { elements } from './commands/spaceReading';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
+import { verify } from './commands/verify';
 import { where, WHERE_READINGS } from './commands/where';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
@@ -41,6 +43,7 @@ import { CLI_VERSION } from './scaffold/project';
 import type { AccountOptions, WhoamiOptions } from './commands/account';
 import type { AddPluginOptions } from './commands/addPlugin';
 import type { AddRuntimeOptions } from './commands/addRuntime';
+import type { MoveOptions, RemoveOptions } from './commands/arrange';
 import type { CheckOptions } from './commands/check';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
@@ -59,6 +62,7 @@ import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
 import type { ShotOptions } from './commands/shot';
 import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
+import type { VerifyOptions } from './commands/verify';
 import type { WhereOptions } from './commands/where';
 import type { DoctorOptions } from './doctor';
 import type { FeedbackOptions } from './feedback';
@@ -302,6 +306,7 @@ program
   .option('--state', 'Also what the page holds: its state, and every source by name')
   .option('--element <id>', 'Also one element: what it reads, its own state, whether it is on screen')
   .option('--ssr', 'Also the HTML the server sent against the hydrated page: what a server provider sent late')
+  .option('--click <id>', 'Click one element once the page settles, and say what it changed — or that nothing did')
   .option(
     '--as <username>',
     'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD'
@@ -370,6 +375,15 @@ program
   .action((path: string | undefined, options: ShotOptions) => shot(path, options));
 
 program
+  .command('verify')
+  .description(
+    'Whether the project is left passing: author, lints, types, format and every page, only the problems said'
+  )
+  .option('--no-pages', 'Leave the pages out — said as such')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((options: VerifyOptions) => verify(options));
+
+program
   .command('where')
   .argument('<query>', 'An element’s id, a class it wears, or words it shows: hero-cta, navLink, "Get started"')
   .description('Where the project’s code writes an element: the file, the line and the call itself')
@@ -391,6 +405,22 @@ program
   .option('--every', 'The call writes other elements too, and the change is for every one')
   .option('--json', 'One object, for a tool or an agent')
   .action((id: string, options: EditOptions) => edit(id, options));
+
+program
+  .command('remove')
+  .argument('<id>', 'The element, by its id: ent-trust')
+  .description('Take an element out of the code that writes it, with what only it used, then check the space')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((id: string, options: RemoveOptions) => remove(id, options));
+
+program
+  .command('move')
+  .argument('<id>', 'The element, by its id: ent-faq')
+  .description('Put an element before or after a sibling in the code that writes them, then check the space')
+  .option('--before <id>', 'The sibling it goes before')
+  .option('--after <id>', 'The sibling it goes after')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((id: string, options: MoveOptions) => move(id, options));
 
 // What `edit` reads the space with in a fresh process, after it changed a file: not a command for a person.
 program.command('elements', { hidden: true }).action(() => elements());

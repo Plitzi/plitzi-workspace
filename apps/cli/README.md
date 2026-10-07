@@ -185,6 +185,7 @@ with `--source local`.
 plitzi check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
 plitzi check /products --state --element catalog-count   # and what it holds: state, sources, one element
 plitzi check / --ssr                       # and what the server's HTML lacks that the hydrated page has
+plitzi check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
 PLITZI_CHECK_PASSWORD=… plitzi check /studio --as maya   # a page for signed-in visitors, signed in through /auth first
 plitzi shot /about --width 390 --scheme dark
 plitzi shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
@@ -201,8 +202,19 @@ the page is not showing, which is not mounted — a provider that failed, and ea
 (`feed 4 of 8 rows`, `hits not rendered (16 in its source)`; `--json`: `lists: { id: { rendered, source } }`). A page's state in a few hundred tokens, where a screenshot costs thousands.
 `--element` adds, at rest, each property more than one of the element's classes sets: the value shown, the class it
 comes from and what the others say — `border-radius: 999px, from ent-cta-pill (button-primary says 12px)` — or that
-they all set it so and any one alone gives it. Which class wins is asked of the page (each taken off for a moment),
-so specificity, order and media are answered without a picture.
+they all set it alike, so it stays without any one of them. That is said of the property alone: a class that shares
+one may set others. A class is said to change nothing on the element only when every property it sets stays without
+it, at rest at that width — and then with the other elements it is on: taking it off this element's `class` touches
+none of them, changing the class itself changes them all (`--json`: `styles: { contested, inert, wornBy }`). Which
+class wins is asked of the page (each taken off for a moment), so specificity, order and media are answered without a
+picture.
+
+`--click <id>` clicks one element once the page has settled, as a visitor does — brought into view first, which is
+not the click's doing — and says what changed: the flows it ran and how each step ended, where the page went, what
+scrolled, what came on screen and what left it, the state. A click that changed nothing says so in those words, and a
+flow that ran and succeeded with nothing on the page changed is said as that too: a button whose flow does nothing
+looks like one that works until it is clicked. A click that could not be made, or a flow that failed, fails the check
+(`--json`: `clicked: { element, changes, failed, problem? }`).
 
 `--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
 default, and `shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
@@ -271,6 +283,32 @@ leads to this one alone, and `edit` refuses, naming them, unless `--every` says 
 value written as anything but a literal — a variable, a template, props spread from elsewhere — is left to the author,
 said with where it is. The same `edit` refused again within a few minutes says so,
 and that running it once more will not change the answer (kept in `tmp/refusals.json`).
+
+## `remove`, `move` and `verify`
+
+```bash
+plitzi remove ent-trust                     # the element's call taken out, with the styles and imports only it used
+plitzi move ent-faq --before ent-pricing    # put before (or --after) a sibling of the same list of children
+plitzi verify                               # author, lint:space, typecheck, lint, format and every page: what fails
+plitzi verify --no-pages                    # the pages left out, said as such
+```
+
+`remove` and `move` act on the call that writes the element — or, a section a helper builds and returns
+(`body: [enterpriseFaq()]`), on the helper's call — and are checked as `edit` is: the space authored again in a fresh
+process and read against the one before. A removal may take the element and what it holds and nothing else; a move
+may change only its parent's order, with the element beside the one it was moved by. Anything more and the file goes
+back, what it would have changed named. A `styles()` declared for the removed element alone goes with it, and its
+factories' imports, named; a helper left with no caller is said, not deleted. A call written once for several
+elements (a `map`), a page or a layout, and a move between two files are left to the author, said.
+
+An element's own selector and its bindings are named after its place under its nearest id — not after its position
+among its siblings — so a move renames nothing.
+
+`verify` runs each check the project has a script for, as its package manager runs one, then opens every page with
+no parameter in its path at 1440 and 390 px (the server must be up: `npm start`). Only what fails is printed, with the
+last lines it said; a page the browser was sent away from — one for signed-in visitors — is said as not checked, never
+as passing — said on its own line, without failing the run, since a space with pages for signed-in visitors always
+has some (`plitzi check <path> --as <username>` opens one). Exit 1 when anything failed.
 
 ## `lint`
 

@@ -25,6 +25,10 @@ export type SchemaValidationError = {
   elementId?: string;
   /** The component whose tree the error is in; absent for the pages' tree. */
   componentId?: string;
+  /** The name an element points at that no element answers to — what a suggestion of the nearest one is made from. */
+  missing?: string;
+  /** The step the missing element was to answer (`openModal`): a suggestion is drawn from the elements that do. */
+  wantedBy?: string;
   details?: unknown;
 };
 
@@ -625,6 +629,7 @@ const createValidator = (schema: Schema, options?: SchemaValidationOptions) => {
                 code: 'UNRESOLVED_BINDING_SOURCE',
                 message: `${where}, but no element answers to the name "${ref}"`,
                 elementId: element.id,
+                missing: ref,
                 details: { source: binding.source, elementId: ref }
               });
             }
@@ -712,7 +717,9 @@ const createValidator = (schema: Schema, options?: SchemaValidationOptions) => {
           errors.push({
             code: 'UNRESOLVED_INTERACTION_TARGET',
             message: `Interaction "${node.id}" on element "${element.id}" runs against "${node.elementId}", but no element answers to that name`,
-            elementId: element.id
+            elementId: element.id,
+            missing: node.elementId,
+            wantedBy: node.action
           });
         }
 
