@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { container, link, locateElements, styles, text } from '../index';
+import { bindTemplate, container, link, locateElements, styles, text } from '../index';
 
 describe('locateElements', () => {
   // `at` is the author's own code, and this test is inside the package: a project's elements carry it (see the CLI's
@@ -20,7 +20,8 @@ describe('locateElements', () => {
               id: 'nav',
               children: [link({ id: 'nav-home', href: 'home', content: 'Home', class: navLink })]
             }),
-            text('Hello', { id: 'greeting' })
+            text('Hello', { id: 'greeting' }),
+            text('', { id: 'score', bind: [bindTemplate('content', 'state.xp', '{{ source }} XP')] })
           ]
         }
       ]
@@ -33,7 +34,15 @@ describe('locateElements', () => {
       content: 'Home',
       attributes: { href: 'home' }
     });
-    expect(located.find(element => element.elementId === 'greeting')).toMatchObject({ type: 'text', content: 'Hello' });
+    expect(located.find(element => element.elementId === 'greeting')).toMatchObject({
+      type: 'text',
+      content: 'Hello',
+      bound: []
+    });
+    expect(located.find(element => element.elementId === 'score')).toMatchObject({
+      bound: ['content'],
+      templates: ['{{ source }} XP']
+    });
     expect(located.map(element => element.elementId)).toEqual(expect.arrayContaining(['home', 'nav']));
   });
 

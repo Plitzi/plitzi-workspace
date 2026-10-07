@@ -6,6 +6,7 @@ import { changedResources, conflictMessage, detectConflicts, resolvedElements } 
 import { dataFileUri, dataUri, functionFileUri, functionsUri } from '../../helpers';
 import { environment, operations } from '../operations';
 import { draftBatch } from '../shared/draftBatch';
+import { effectsOf } from '../shared/effects';
 import { fullPage, lookAt, pageRef, viewport } from '../shared/look';
 import { AGAIN, REPEATED, batchKey, forgetRefused, noteRefused, timesRefused } from '../shared/repeats';
 import { defineTool, imageResult } from '../shared/tool';
@@ -40,6 +41,8 @@ export const applyShape = {
   viewport,
   fullPage
 };
+
+export const NOTHING_CHANGED = 'Nothing changed: every operation left the space as it was.';
 
 const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
 
@@ -103,7 +106,10 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     };
   }
 
-  const { draft, outcome, warnings, suggestions } = result;
+  const { draft, outcome, suggestions } = result;
+  // What the batch did, read off the space before and after it: what the answer reports, not what was asked.
+  const effects = effectsOf(space, draft);
+  const warnings = effects.length > 0 ? result.warnings : [NOTHING_CHANGED, ...result.warnings];
 
   // Dry run: everything is applied to the in-memory draft and reported (changed versions + full element detail),
   // but nothing is persisted — the agent inspects the outcome, then re-runs without dryRun to commit.
@@ -112,6 +118,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
       applied: false,
       dryRun: true,
       summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
+      effects,
       changed: changedResources(draft, env, outcome.staleResources),
       elements: resolvedElements(draft, env, outcome.elementRefs),
       warnings: noWarnings(warnings),
@@ -121,7 +128,8 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
 
   // The functions first: they are built and checked as they are saved, so this is where a batch can still be refused —
   // and it has to be before anything else is written, or a refusal here would leave the rest of the batch saved.
-  let persisted = true;
+  // Every store this batch had something for and no persister: said by name, never only as `persisted: false`.
+  const unsaved: string[] = [];
   if (outcome.changedFunctions && draft.functions) {
     if (persisters?.saveFunctions) {
       const saved = await persisters.saveFunctions(draft.functions.files, space.functions?.version ?? '');
@@ -136,7 +144,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
         };
       }
     } else {
-      persisted = false;
+      unsaved.push('the functions');
     }
   }
 
@@ -162,7 +170,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
         };
       }
     } else {
-      persisted = false;
+      unsaved.push('the data');
     }
   }
 
@@ -171,7 +179,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     if (persisters?.schema) {
       await persisters.schema(draft.schema);
     } else {
-      persisted = false;
+      unsaved.push('the schema');
     }
   }
 
@@ -185,7 +193,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
       draft.style.cache = generateCache(draft.style);
       await persisters.style(draft.style);
     } else {
-      persisted = false;
+      unsaved.push('the style');
     }
   }
 
@@ -196,7 +204,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     if (entry && persisters?.saveConnector) {
       await persisters.saveConnector(entry);
     } else {
-      persisted = false;
+      unsaved.push(`connector ${id}`);
     }
   }
 
@@ -204,7 +212,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     if (persisters?.deleteConnector) {
       await persisters.deleteConnector(id);
     } else {
-      persisted = false;
+      unsaved.push(`the removal of connector ${id}`);
     }
   }
 
@@ -215,7 +223,7 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     if (entry && persisters?.saveAction) {
       await persisters.saveAction(entry);
     } else {
-      persisted = false;
+      unsaved.push(`action ${id}`);
     }
   }
 
@@ -223,17 +231,21 @@ export const apply = async (input: ApplyInput, space: Space, persisters?: Persis
     if (persisters?.deleteAction) {
       await persisters.deleteAction(id);
     } else {
-      persisted = false;
+      unsaved.push(`the removal of action ${id}`);
     }
   }
 
   return {
     applied: true,
-    persisted,
+    persisted: unsaved.length === 0,
     summary: { created: outcome.created, updated: outcome.updated, deleted: outcome.deleted },
+    effects,
     changed: changedResources(draft, env, outcome.staleResources),
     elements: resolvedElements(draft, env, outcome.elementRefs),
-    warnings: noWarnings(warnings),
+    warnings: noWarnings([
+      ...(unsaved.length > 0 ? [`NOT saved: ${unsaved.join(', ')} — this server has no store to save it in`] : []),
+      ...warnings
+    ]),
     suggestions: noWarnings(suggestions)
   };
 };
@@ -242,8 +254,8 @@ export const applyTool = defineTool({
   name: 'plitzi_apply',
   title: 'Apply',
   description:
-    'Validate, apply and persist a batch of operations atomically. Returns the changed resources and their new ' +
-    'versions, plus the full detail of every element it created or updated. Pass dryRun to apply in memory only ' +
+    'Validate, apply and persist a batch of operations atomically. Returns `effects` (what it changed, read off the ' +
+    'space), the changed resources’ new versions and each created or updated element’s detail. Pass dryRun to apply in memory only ' +
     '(inspect the outcome without committing), and `look` to see the page as the batch leaves it. Rejects the whole batch on any error or version conflict — INCLUDING ' +
     'a pre-existing malformation in any resource the batch touches (fix it in the same batch to unblock the save).',
   inputShape: applyShape,

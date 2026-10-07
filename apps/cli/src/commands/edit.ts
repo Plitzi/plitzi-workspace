@@ -11,22 +11,25 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { findProject } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { AGAIN, noteRefused } from './repeats';
+import { isReadings, readingOf, spaceEffects, surprises } from './spaceReading';
 import { fail } from './terminal';
-import { whereAnswer } from './where';
+import { answerOf, locatedSpace } from './where';
 import { unifiedDiff } from '../fix/diff';
 import { formatLikeBefore } from '../fix/format';
 import { applyChanges, parameterBehind, slotEdit } from '../fix/sourceEdits';
 import { loadTypeScript } from '../projectTypeScript';
 
-import type { WhereAnswer, WhereCall } from './where';
+import type { AskedChange, ElementReading } from './spaceReading';
+import type { WhereCall } from './where';
 import type { TextChange, ValueSlot } from '../fix/sourceEdits';
 import type TypeScript from 'typescript';
 
 /**
  * `plitzi edit <id>`: an element's attributes changed where the project's code writes it — the call `plitzi where`
  * finds — so a change of words or a setting needs no TypeScript written by hand. Written, formatted as the project
- * formats, and checked: the space is authored again in a fresh process, and unless every value asked for is there, the
- * file goes back to what it was.
+ * formats, and checked: the space is authored again in a fresh process and read against the one before — unless every
+ * value asked for is there and nothing else changed, the files go back to what they were. What it changed is said,
+ * every line of it.
  *
  *   plitzi edit hero-cta --set content="Start free"
  *   plitzi edit signup-email --set required=true --remove placeholder
@@ -40,13 +43,7 @@ export interface EditOptions {
   json?: boolean;
 }
 
-type Value = string | number | boolean;
-
-interface Change {
-  key: string;
-  /** Absent: the attribute is removed. */
-  value?: Value;
-}
+type Change = AskedChange;
 
 /** A file of the project as it was read, and the changes an edit makes to it. */
 interface Source {
@@ -64,9 +61,6 @@ interface Placed {
 }
 
 const run = promisify(execFile);
-
-/** What `plitzi where --json` printed, read as its answer when it has the shape of one. */
-const isWhereAnswer = (value: unknown): value is WhereAnswer => isRecord(value) && Array.isArray(value.matches);
 
 /**
  * `--set key=value`, the value of the kind the attribute already has: a number stays a number, a boolean a boolean. A
@@ -111,47 +105,24 @@ export const parseSets = (
   return { changes };
 };
 
-/** The element as the space authors it now, asked of a fresh process: the file was edited after this one loaded it. */
-const authoredAfresh = async (elementId: string): Promise<WhereAnswer | { problem: string }> => {
+/** The space as it authors now, read by a fresh process: this one loaded the files before they were edited. */
+const readAfresh = async (): Promise<ElementReading[] | { problem: string }> => {
   try {
-    const { stdout } = await run(process.execPath, [process.argv[1], 'where', elementId, '--by', 'id', '--json'], {
+    const { stdout } = await run(process.execPath, [process.argv[1], 'elements'], {
       cwd: process.cwd(),
-      maxBuffer: 16 * 1024 * 1024
+      maxBuffer: 64 * 1024 * 1024
     });
     const parsed: unknown = JSON.parse(stdout);
+    if (isReadings(parsed)) {
+      return parsed;
+    }
 
-    return isWhereAnswer(parsed) ? parsed : { problem: 'the space did not answer' };
+    return { problem: isRecord(parsed) && typeof parsed.problem === 'string' ? parsed.problem : 'it did not answer' };
   } catch (error) {
     const printed = isRecord(error) && typeof error.stdout === 'string' ? error.stdout.trim() : '';
 
     return { problem: printed || (error instanceof Error ? error.message.split('\n')[0] : String(error)) };
   }
-};
-
-/** Why the edit did not land, read off the element as authored after it: nothing when every change is there. */
-const missing = (after: WhereAnswer | { problem: string }, elementId: string, changes: readonly Change[]): string[] => {
-  if ('problem' in after && !('matches' in after)) {
-    return [`the space no longer authors: ${after.problem}`];
-  }
-
-  if (after.by === 'source') {
-    return [`the space no longer authors: ${after.problem ?? 'it was refused'}`];
-  }
-
-  const element = after.matches.find(match => match.elementId === elementId);
-  if (!element) {
-    return [`\`${elementId}\` is no longer in the space`];
-  }
-
-  const attributes = element.attributes ?? {};
-
-  return changes
-    .filter(change => (change.value === undefined ? change.key in attributes : attributes[change.key] !== change.value))
-    .map(change =>
-      change.value === undefined
-        ? `\`${change.key}\` is still set`
-        : `\`${change.key}\` reads ${JSON.stringify(attributes[change.key])}, not ${JSON.stringify(change.value)}`
-    );
 };
 
 export const edit = async (elementId: string, options: EditOptions): Promise<void> => {
@@ -175,14 +146,16 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
     return;
   }
 
-  const found = await whereAnswer(project.root, elementId, 'id');
-  if (found.by === 'source') {
+  const located = await locatedSpace(project.root);
+  if ('problem' in located) {
     await refuse(
-      `Nothing was changed: ${found.problem ?? 'the space does not author'}. Fix that first (\`npm run author\`).`
+      `Nothing was changed: the space does not author (${located.problem}). Fix that first (\`npm run author\`).`
     );
 
     return;
   }
+
+  const found = await answerOf(project.root, located, elementId, 'id');
 
   const element = found.by === 'id' ? found.matches[0] : undefined;
   if (!element) {
@@ -213,6 +186,19 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
   }
 
   const changes: Change[] = [...parsed.changes, ...(options.remove ?? []).map(key => ({ key }))];
+  // A bound attribute shows what its binding computes: a value written under it would change nothing on the page.
+  const computed = changes.filter(change => element.bound?.includes(change.key));
+  if (computed.length > 0) {
+    await refuse(
+      [
+        `Nothing was changed: ${computed.map(change => `\`${change.key}\``).join(', ')} of ${elementId} is computed by a binding — the page shows the binding's value, never one written here.`,
+        `Change the binding where it is written, by hand, at ${element.at ?? 'the call'} — \`plitzi where ${elementId} --by id\` shows it.`
+      ].join('\n')
+    );
+
+    return;
+  }
+
   // Only what the element has as an attribute: an option of the factory that wrote it (`as`, `from`) is how the call
   // builds the element, not one of its attributes, and an edit of it could not be checked — said before anything is.
   const attributes = Object.keys(element.attributes ?? {});
@@ -349,7 +335,18 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
     }
   }
 
-  const reasons = missing(await authoredAfresh(elementId), elementId, changes);
+  // What it is asked to change: the element, and — with --every — each other element its shared calls write.
+  const asked = new Map<string, Change[]>([[elementId, changes]]);
+  for (const { change, call } of placed) {
+    for (const other of call.sharedWith ?? []) {
+      asked.set(other, [...(asked.get(other) ?? []), change]);
+    }
+  }
+
+  const after = await readAfresh();
+  const effects = 'problem' in after ? [] : spaceEffects(located.map(readingOf), after);
+  const reasons =
+    'problem' in after ? [`the space no longer authors: ${after.problem}`] : surprises(effects, after, asked);
   if (reasons.length > 0) {
     await Promise.all(written.map(({ file, before }) => fs.writeFile(path.resolve(process.cwd(), file), before)));
     await refuse(
@@ -362,13 +359,12 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
     return;
   }
 
-  const alsoChanged = [...new Set(placed.flatMap(({ call }) => call.sharedWith ?? []))];
   if (options.json) {
     console.log(
       JSON.stringify({
         elementId,
         changes: placed.map(({ change, call }) => ({ ...change, at: call.at })),
-        ...(alsoChanged.length > 0 ? { alsoChanged } : {})
+        effects: effects.map(effect => effect.line)
       })
     );
 
@@ -381,7 +377,8 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
       chalk.green(
         `${elementId}: ${placed.map(({ change, call }) => `${change.key} in ${call.at}`).join(', ')}; the space authors with it.`
       ),
-      ...(alsoChanged.length > 0 ? [`The same call writes ${alsoChanged.join(', ')}: changed too.`] : []),
+      'Changed in the space:',
+      ...effects.map(effect => `  ${effect.line}`),
       'Next: plitzi check — the page as it renders now'
     ].join('\n')
   );

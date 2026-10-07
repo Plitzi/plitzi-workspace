@@ -11,6 +11,7 @@ const element = (elementId: string, classes: string[], content?: string): Writte
   classes,
   templates: [],
   through: [],
+  bound: [],
   attributes: {},
   ...(content === undefined ? {} : { content })
 });

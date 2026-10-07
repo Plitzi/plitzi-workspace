@@ -9,26 +9,30 @@ import { defineTool } from './shared/tool';
 
 import type { Operation } from './operations';
 import type { ToolContext } from './shared/tool';
+import type { Element } from '@plitzi/sdk-shared';
 
 /**
  * Tools that take an intention — set an element's attributes, add or remove its classes, bind an attribute, place a
  * component, add a page
  * — instead of a batch: a few parameters, the element named by its ref alone (the page it is on is found), and the
  * operations written for the agent. Each runs through `plitzi_apply`, so it is checked and saved exactly as a batch
- * is, and answers in a line: what changed, and what to do next. For anything they do not say, `plitzi_apply`.
+ * is, and answers with what it did — the batch's `effects`, read off the space, never a restatement of what was asked —
+ * whether it was saved, what was already so, and what to do next. For anything they do not say, `plitzi_apply`.
  */
 
 /** What an intention answers: done, or why not — never the whole element back. */
-type IntentAnswer = { done: string; warnings?: string[]; next: string } | { done: false; errors: unknown[] };
+type IntentAnswer =
+  | { done: true; saved: boolean; effects: string[]; warnings?: string[]; next: string }
+  | { done: false; errors: unknown[]; warnings?: string[] };
+
+type Refusal = { done: false; errors: unknown[] };
 
 /** The element a ref names, with the page or layout it is on — or the nearest ref there is. */
-const locate = (
-  ctx: ToolContext,
-  ref: string
-): { root: string; classes: string[] } | { done: false; errors: unknown[] } => {
+const locate = (ctx: ToolContext, ref: string): { element: Element; root: string; classes: string[] } | Refusal => {
   const element = findElementByRef(ctx.space.schema, ref);
   if (element) {
     return {
+      element,
       root: element.definition.rootId,
       classes: element.definition.styleSelectors.base.split(/\s+/).filter(Boolean)
     };
@@ -48,15 +52,37 @@ const locate = (
   };
 };
 
-const run = async (ctx: ToolContext, operations: Operation[], done: string, page: string): Promise<IntentAnswer> => {
+/** The attributes of an element a binding computes, with the source each reads. */
+const boundOf = (element: Element): Map<string, string> =>
+  new Map(
+    (element.definition.bindings?.attributes ?? []).map((binding): [string, string] => [binding.to, binding.source])
+  );
+
+/**
+ * The batch applied, answered with what it did. `notes` are what the agent believed that was already so — a class it
+ * wears, an attribute it did not have — said beside the effects, never dropped because nothing came of them.
+ */
+const run = async (
+  ctx: ToolContext,
+  operations: Operation[],
+  page: string,
+  notes: string[] = []
+): Promise<IntentAnswer> => {
   const result = await apply({ operations, environment: ctx.env }, ctx.space, ctx.persisters);
+  const warnings = [...notes, ...(result.warnings ?? [])];
   if (!result.applied) {
-    return { done: false, errors: result.errors ?? (result.conflict ? [result.conflict] : []) };
+    return {
+      done: false,
+      errors: result.errors ?? (result.conflict ? [result.conflict] : []),
+      ...(warnings.length > 0 ? { warnings } : {})
+    };
   }
 
   return {
-    done,
-    ...(result.warnings ? { warnings: result.warnings } : {}),
+    done: true,
+    saved: result.persisted !== false,
+    effects: result.effects ?? [],
+    ...(warnings.length > 0 ? { warnings } : {}),
     next: `plitzi_look { pageRef: "${page}" } to see it`
   };
 };
@@ -79,15 +105,33 @@ export const setAttributesTool = defineTool({
       return at;
     }
 
-    const props = { ...input.set, ...Object.fromEntries((input.unset ?? []).map(key => [key, null])) };
-    const keys = Object.keys(props);
+    const set = input.set ?? {};
+    const unset = input.unset ?? [];
+    // A bound attribute shows what its binding computes: a value written under it would change nothing on the page,
+    // and the agent would believe it had.
+    const bound = boundOf(at.element);
+    const covered = [...Object.keys(set), ...unset].filter(key => bound.has(key));
+    if (covered.length > 0) {
+      return {
+        done: false,
+        errors: covered.map(key => ({
+          path: key,
+          message: `${key} of ${input.ref} is bound to ${String(bound.get(key))}: the page shows what the binding computes, not a value written here`,
+          hint: 'plitzi_bind_attribute changes what it reads; to write a value instead, plitzi_apply deleteBinding first'
+        }))
+      };
+    }
 
-    return run(
-      ctx,
-      [{ type: 'patchElement', pageRef: at.root, ref: input.ref, props }],
-      `${keys.join(', ')} of ${input.ref} written`,
-      at.root
-    );
+    const { attributes } = at.element;
+    const notes = [
+      ...Object.entries(set)
+        .filter(([key, value]) => attributes[key] === value)
+        .map(([key, value]) => `${key} was already ${JSON.stringify(value)}`),
+      ...unset.filter(key => !(key in attributes)).map(key => `${key} was not set`)
+    ];
+    const props = { ...set, ...Object.fromEntries(unset.map(key => [key, null])) };
+
+    return run(ctx, [{ type: 'patchElement', pageRef: at.root, ref: input.ref, props }], at.root, notes);
   }
 });
 
@@ -109,18 +153,33 @@ export const setClassesTool = defineTool({
       return at;
     }
 
+    // A class it does not wear cannot be taken off: the agent's picture of the element is wrong, and going on would
+    // build on it.
+    const absent = (input.remove ?? []).filter(name => !at.classes.includes(name));
+    if (absent.length > 0) {
+      return {
+        done: false,
+        errors: absent.map(name => {
+          const nearest = closest(name, at.classes);
+
+          return {
+            path: 'remove',
+            message: `${input.ref} does not wear "${name}"${nearest ? ` — did you mean "${nearest}"?` : ''}; it wears ${at.classes.join(', ') || 'no class'}`
+          };
+        })
+      };
+    }
+
+    const notes = (input.add ?? [])
+      .filter(name => at.classes.includes(name))
+      .map(name => `${input.ref} already wore ${name}`);
     const removed = new Set(input.remove ?? []);
     const base = [
       ...at.classes.filter(name => !removed.has(name)),
       ...(input.add ?? []).filter(name => !at.classes.includes(name))
     ];
 
-    return run(
-      ctx,
-      [{ type: 'patchElement', pageRef: at.root, ref: input.ref, style: { base } }],
-      `${input.ref} wears ${base.join(', ') || 'no class'}`,
-      at.root
-    );
+    return run(ctx, [{ type: 'patchElement', pageRef: at.root, ref: input.ref, style: { base } }], at.root, notes);
   }
 });
 
@@ -142,6 +201,8 @@ export const bindAttributeTool = defineTool({
       return at;
     }
 
+    const was = boundOf(at.element).get(input.to);
+
     return run(
       ctx,
       [
@@ -153,8 +214,8 @@ export const bindAttributeTool = defineTool({
           binding: { to: input.to, source: input.source }
         }
       ],
-      `${input.ref}.${input.to} reads ${input.source}`,
-      at.root
+      at.root,
+      was === undefined ? [] : [`${input.ref}.${input.to} was bound to ${was}: replaced`]
     );
   }
 });
@@ -192,7 +253,6 @@ export const placeComponentTool = defineTool({
           }
         }
       ],
-      `${input.ref} (${input.component}) placed in ${input.into}`,
       at.root
     );
   }
@@ -221,7 +281,6 @@ export const addPageTool = defineTool({
           ...(input.layout ? { layout: input.layout } : {})
         }
       ],
-      `page ${input.ref} added at /${input.slug}`,
       input.ref
     )
 });

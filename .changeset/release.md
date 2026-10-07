@@ -2,6 +2,7 @@
 '@plitzi/cli': patch
 '@plitzi/sdk-authoring': patch
 '@plitzi/sdk-mcp': patch
+'@plitzi/sdk-shared': patch
 ---
 
 ## Agents load less to do the same (RFC 0025)
@@ -62,5 +63,15 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   is handed where it is handed (`pageHead('about-head', 'About us')`), refuses an edit of a call that writes several
   elements unless `--every` says so, and never writes `content` beside words given as the factory's first argument.
 - `plitzi explain` of a name that is the project's own says where to read it.
+- **Nothing a write does is silent.** `plitzi_apply` answers `effects`: every change the batch made, read off the space
+  before and after it (elements added or removed by subtree, attributes, classes, moves, styles, settings, connectors,
+  actions), with a note where a changed attribute is one a binding computes; a batch that changed nothing says so, and
+  a store with no persister leads the warnings as `NOT saved: …`. The intent tools answer those `effects`, whether it
+  was `saved` and what was already so, refuse to take off a class the element does not wear and to write a value under
+  a binding. `plitzi edit` reads the whole space before and after the edit (`plitzi elements`, in a fresh process),
+  prints every change, and puts the files back when anything changed that was not asked, naming it; it refuses an
+  attribute a binding computes, and `plitzi where` marks those `Bound`. `canonicalJson` (`@plitzi/sdk-shared`) is
+  what every before-and-after comparison is made with. Authoring keeps deep enough a call stack (64 frames) that a
+  helper inside a helper is still told apart.
 - `locateElements` answers the parts of every component too, in the component (`rootId` is its id): `plitzi where`
   and `plitzi edit` reach an element inside a component as they reach one on a page or a layout.

@@ -26,6 +26,7 @@ import {
   unsetRuntimeVariable
 } from './commands/runtime';
 import { shot } from './commands/shot';
+import { elements } from './commands/spaceReading';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { where, WHERE_READINGS } from './commands/where';
@@ -390,6 +391,9 @@ program
   .option('--every', 'The call writes other elements too, and the change is for every one')
   .option('--json', 'One object, for a tool or an agent')
   .action((id: string, options: EditOptions) => edit(id, options));
+
+// What `edit` reads the space with in a fresh process, after it changed a file: not a command for a person.
+program.command('elements', { hidden: true }).action(() => elements());
 
 program
   .command('explain')

@@ -318,6 +318,10 @@
       "types": "./dist/helpers/index.d.ts",
       "import": "./dist/helpers/index.mjs"
     },
+    "./helpers/canonicalJson": {
+      "types": "./dist/helpers/canonicalJson.d.ts",
+      "import": "./dist/helpers/canonicalJson.mjs"
+    },
     "./helpers/cookies": {
       "types": "./dist/helpers/cookies.d.ts",
       "import": "./dist/helpers/cookies.mjs"

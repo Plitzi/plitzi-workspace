@@ -50,6 +50,8 @@ interface WhereMatch {
   code?: string;
   /** Its attributes as authored: only when the query named it by id. */
   attributes?: Record<string, unknown>;
+  /** The attributes a binding computes: the page shows the binding's value, never the one written. */
+  bound?: string[];
   /** The other elements the same call writes — a helper called more than once: an edit there changes every one. */
   sharedWith?: string[];
   /**
@@ -193,7 +195,7 @@ const withCode = async (
 
   return Promise.all(
     shown.map(async (element, index) => {
-      const { elementId, type, rootId, classes, content, at, position, attributes } = element;
+      const { elementId, type, rootId, classes, content, at, position, attributes, bound } = element;
       const match: WhereMatch = {
         elementId,
         type,
@@ -202,7 +204,8 @@ const withCode = async (
         ...(content === undefined ? {} : { content }),
         ...(at === undefined ? {} : { at }),
         ...(position ? { position } : {}),
-        ...(by === 'id' ? { attributes } : {})
+        ...(by === 'id' ? { attributes } : {}),
+        ...(bound.length > 0 ? { bound } : {})
       };
       const sharers = position
         ? (calls.get(positionKey(position)) ?? []).filter(other => other.elementId !== elementId)
@@ -249,33 +252,27 @@ const sourceLines = async (root: string, query: string): Promise<{ at: string; t
   return lines;
 };
 
-export const whereAnswer = async (root: string, query: string, by?: WhereReading): Promise<WhereAnswer> => {
+/** Every element the space authors to, read now — or why it does not author. */
+export const locatedSpace = async (root: string): Promise<WrittenElement[] | { problem: string }> => {
   const loaded = await loadProjectSpace(root);
-  const elements = (() => {
-    if ('problem' in loaded) {
-      return { problem: loaded.problem };
-    }
-
-    try {
-      return locateElements(loaded.space, loaded.authoring);
-    } catch (error) {
-      return { problem: refusalOf(error).message.split('\n')[0] };
-    }
-  })();
-
-  if ('problem' in elements) {
-    const lines = await sourceLines(root, query);
-
-    return {
-      query,
-      by: 'source',
-      matches: [],
-      lines: lines.slice(0, MATCHES),
-      ...(lines.length > MATCHES ? { more: lines.length - MATCHES } : {}),
-      problem: `the space does not author (${elements.problem}), so these are the lines of src/ that hold "${query}"`
-    };
+  if ('problem' in loaded) {
+    return { problem: loaded.problem };
   }
 
+  try {
+    return locateElements(loaded.space, loaded.authoring);
+  } catch (error) {
+    return { problem: refusalOf(error).message.split('\n')[0] };
+  }
+};
+
+/** The answer to a query, of the elements the space authors to. */
+export const answerOf = async (
+  root: string,
+  elements: readonly WrittenElement[],
+  query: string,
+  by?: WhereReading
+): Promise<WhereAnswer> => {
   const matched = matchElements(elements, query, by);
   if (!matched) {
     return { query, ...(by ? { by } : {}), matches: [] };
@@ -290,9 +287,30 @@ export const whereAnswer = async (root: string, query: string, by?: WhereReading
   };
 };
 
+export const whereAnswer = async (root: string, query: string, by?: WhereReading): Promise<WhereAnswer> => {
+  const elements = await locatedSpace(root);
+  if (!('problem' in elements)) {
+    return answerOf(root, elements, query, by);
+  }
+
+  const lines = await sourceLines(root, query);
+
+  return {
+    query,
+    by: 'source',
+    matches: [],
+    lines: lines.slice(0, MATCHES),
+    ...(lines.length > MATCHES ? { more: lines.length - MATCHES } : {}),
+    problem: `the space does not author (${elements.problem}), so these are the lines of src/ that hold "${query}"`
+  };
+};
+
 const matchText = (match: WhereMatch): string[] => [
   `${match.elementId} (${match.type}) — ${match.at ?? 'no call of the project writes it: a page’s own root, or a part of a component'}`,
   ...(match.code ? match.code.split('\n').map(line => `    ${line}`) : []),
+  ...(match.bound
+    ? [`    Bound: ${match.bound.join(', ')} — the page shows what the binding computes, not the value written.`]
+    : []),
   ...(match.sharedWith
     ? [`    The same call also writes ${match.sharedWith.join(', ')}: an edit there changes every one.`]
     : []),
@@ -317,7 +335,9 @@ const nextStep = (answer: WhereAnswer): string | undefined => {
     return undefined;
   }
 
-  return `Next: plitzi edit ${only.elementId} --set <attribute>=<value> — or edit ${only.at} by hand`;
+  const bound = only.bound ? ` (not ${only.bound.join(', ')}: a binding computes it)` : '';
+
+  return `Next: plitzi edit ${only.elementId} --set <attribute>=<value>${bound} — or edit ${only.at} by hand`;
 };
 
 const whereText = (answer: WhereAnswer): string => {

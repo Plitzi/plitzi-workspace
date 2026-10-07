@@ -247,8 +247,10 @@ lines of `src/` holding the words instead.
 
 `edit` writes attributes in that call — `content` given as the factory's first argument (`text('Hi', { … })`) where it
 is — keeping the kind each one has (a number stays a number; a new one is `true`/`false` or words), formats the file as
-the project formats it, and authors the space again in a fresh process: unless every value asked for is there, the
-file goes back to what it was. A value that is a parameter of the helper the call is in (`heading(title, { … })` inside
+the project formats it, and authors the space again in a fresh process, read against the space before it: unless every
+value asked for is there and nothing else in the space changed, the files go back to what they were, and what would
+have changed besides is named. What it changed is printed, every line of it (`--json`: `effects`). An attribute a
+binding computes is refused — the page shows the binding's value, never one written — and `where` marks it `Bound`. A value that is a parameter of the helper the call is in (`heading(title, { … })` inside
 `pageHead(id, title)`) is changed where the helper is handed it — `pageHead('about-head', 'About us')` — followed up
 as far as the project's code hands it on, and only when the helper reads it once. A call that writes more than one
 element — a helper called for each — is never changed unasked: `where` says which elements it writes and the call that

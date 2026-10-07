@@ -2111,6 +2111,8 @@ export interface WrittenElement {
   templates: string[];
   /** Its attributes as authored. */
   attributes: Record<string, unknown>;
+  /** The attributes its bindings compute: what the page shows of them is the binding's, never the value written. */
+  bound: string[];
   /** Where it was written: `src/space/pages/home.ts:42`. Absent for an element no call of the author's code wrote. */
   at?: string;
   /** The same place exactly — the factory's name, at its line and column — which is what an edit is made at. */
@@ -2160,6 +2162,7 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
       ...(typeof content === 'string' && content !== '' ? { content } : {}),
       templates,
       attributes: element.attributes,
+      bound: (element.definition.bindings?.attributes ?? []).map(binding => binding.to),
       through: calls.slice(1),
       ...(position ? { at: `${position.file}:${String(position.line)}`, position } : {})
     };

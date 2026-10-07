@@ -54,6 +54,8 @@ export interface WriteResponse {
   dryRun?: boolean;
   persisted?: boolean;
   summary: { created: number; updated: number; deleted: number };
+  /** What the batch did, read off the space before and after it: a line per change, nothing left unsaid. */
+  effects?: string[];
   changed: ChangedResource[];
   elements?: WriteElement[];
   warnings?: string[];

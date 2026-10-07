@@ -96,8 +96,8 @@ calls as a small one:
 |---|---|
 | `plitzi_search` | Find elements, pages and style classes; returns the names every edit takes |
 | `plitzi_read` | Read several resources at once by URI |
-| `plitzi_apply` | Apply and save a batch — all of it or none of it; answers with the batch's suggestions too. `dryRun` checks it without saving, `look` renders the page as the batch leaves it |
-| `plitzi_set_attributes`, `plitzi_set_classes`, `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` | One change by its intention, the element named by its ref alone, saved as `plitzi_apply` saves it and answered in a line; classes are added or removed, the rest kept |
+| `plitzi_apply` | Apply and save a batch — all of it or none of it; answers with its `effects` (every change it made, read off the space before and after — a batch that changed nothing, or a store with nothing to save it in, is said first) and its suggestions. `dryRun` checks it without saving, `look` renders the page as the batch leaves it |
+| `plitzi_set_attributes`, `plitzi_set_classes`, `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` | One change by its intention, the element named by its ref alone, saved as `plitzi_apply` saves it and answered with its `effects`, whether it was `saved`, and what was already so; classes are added or removed, the rest kept. A class it does not wear cannot be taken off, nor a value written under a binding |
 | `plitzi_describe_operation` | One operation's schema by its type, or every type there is. A field an operation does not have is refused naming the one meant; the same batch refused twice is not run again (`REPEATED_BATCH`) |
 | `plitzi_look` | See a saved page: its accessibility outline (default), its HTML, or an image |
 | `plitzi_render` | Show the user an offline widget; never touches the space |

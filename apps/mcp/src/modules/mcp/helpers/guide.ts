@@ -285,8 +285,12 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   *Suggestions*). Pass \`dryRun: true\` to check and apply in memory only — the same answer, nothing persisted — and
   \`look\` (\`"html"\`, \`"image"\`, \`"accessibility"\` or \`"both"\`, with \`pageRef\` and \`viewport\`) to see the page
   as the batch leaves it in the same call. Check and look with \`dryRun\`, then send the same operations without it.
+  \`effects\` is what the batch did, read off the space before and after it — every element, attribute, class and
+  setting it changed, one line each: read it, not your batch, for what is now so. \`Nothing changed\` and \`NOT saved\`
+  lead the warnings when they are so.
 - **By intention**, a few parameters and the element named by its ref alone — the page is found, the operations
-  written, the batch checked and saved as \`plitzi_apply\` saves it, and the answer is a line:
+  written, the batch checked and saved as \`plitzi_apply\` saves it, and the answer its \`effects\`, whether it was
+  \`saved\`, and what was already so:
   \`plitzi_set_attributes { ref, set, unset }\`, \`plitzi_set_classes { ref, add, remove }\` (the classes it wears and
   you do not name stay), \`plitzi_bind_attribute { ref, to, source }\`, \`plitzi_place_component { component, ref, into,
   props }\`, \`plitzi_add_page { ref, slug, layout }\`. One of them when it says the whole change; anything else is one

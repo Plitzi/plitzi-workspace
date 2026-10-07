@@ -40,9 +40,28 @@ const workingDirectory = (): string => {
 
 const FRAME = /\(?((?:file:\/\/)?[^\s()]+?):(\d+):(\d+)\)?$/;
 
+// V8 keeps ten frames: below the factory's own, a helper inside a helper inside a page would lose the calls that tell
+// its elements apart, and an edit would not know two elements share one. Raised only while the marker is made; an
+// engine without the setting keeps its own.
+const FRAMES = 64;
+
+const deepError = (): Error => {
+  const limit: unknown = Reflect.get(Error, 'stackTraceLimit');
+  if (typeof limit !== 'number' || limit >= FRAMES) {
+    return new Error();
+  }
+
+  Reflect.set(Error, 'stackTraceLimit', FRAMES);
+  try {
+    return new Error();
+  } finally {
+    Reflect.set(Error, 'stackTraceLimit', limit);
+  }
+};
+
 export const markWrittenAt = <T extends object>(spec: T): T => {
   if (!isProduction()) {
-    Object.defineProperty(spec, WRITTEN_AT, { value: new Error(), enumerable: false });
+    Object.defineProperty(spec, WRITTEN_AT, { value: deepError(), enumerable: false });
   }
 
   return spec;

@@ -69,7 +69,7 @@ The server is stateless: it resolves the space per request and reads and writes 
 | `getGrant(req)` | yes | The space this request operates on **and whether the caller may change it** (`{ spaceId, scope, userId?, canWrite }`), decoded from the verified `Authorization` bearer. You own the JWT secret and the authorization model, so both are decided on your side. Return `undefined` for a missing or invalid token. |
 | `getSchema(spaceId, env)` | yes | The element schema the tools read and mutate. |
 | `getStyle(spaceId, env)` | yes | The full style document, including `platform`/`mode`. |
-| `saveSchema(spaceId, env, schema)` | for writes | Persist a mutated schema. Without it, `plitzi_apply` reports `persisted: false`. |
+| `saveSchema(spaceId, env, schema)` | for writes | Persist a mutated schema. Without it, `plitzi_apply` reports `persisted: false` and leads its warnings with what was NOT saved. |
 | `saveStyle(spaceId, env, style)` | for writes | Persist a mutated style document. |
 | `getChanges(spaceId, env, query)` | no | The space's change history, for the `plitzi://changes` resources. Writes arrive with an `SSRWriteContext` (`userId`, one `batch` per tool call) so a consumer can record them. |
 | `getOfflineData(spaceId, env, rev)` | for preview | Read side of draft-preview. Only the preview endpoint calls it. |
@@ -117,8 +117,8 @@ createServer({ adapters }, { screenshot: { serviceUrl, renderBaseUrl }, proxy: {
 |---|---|---|
 | `plitzi_search` | read | Find elements, pages, styles and bindings; returns ready-made URIs |
 | `plitzi_read` | read | Read one or more resources in detail by URI |
-| `plitzi_apply` | write | Apply a batch of operations and persist; answers with the batch's suggestions too. `dryRun` checks it without saving, and `look` renders the page as the batch leaves it (HTML, a PNG or the accessibility outline) |
-| `plitzi_set_attributes`, `plitzi_set_classes`, `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` | write | One change by its intention — an element's attributes, classes added or removed, a binding, a component placed, a page — by the element's ref alone, saved as `plitzi_apply` saves it, answered in a line |
+| `plitzi_apply` | write | Apply a batch of operations and persist; answers with its `effects` — every change it made, read off the space before and after — and its suggestions. `dryRun` checks it without saving, and `look` renders the page as the batch leaves it (HTML, a PNG or the accessibility outline) |
+| `plitzi_set_attributes`, `plitzi_set_classes`, `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` | write | One change by its intention — an element's attributes, classes added or removed, a binding, a component placed, a page — by the element's ref alone, saved as `plitzi_apply` saves it, answered with its `effects`, whether it was `saved`, and what was already so |
 | `plitzi_describe_operation` | read | One operation's schema by its type, or the list of every type |
 | `plitzi_look` | read | See a saved page: its accessibility outline (default), its HTML, or a PNG (desktop, mobile or both) |
 | `plitzi_render` | read | Render a self-contained UI widget, offline, with no space |
