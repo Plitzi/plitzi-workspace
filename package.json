@@ -4,8 +4,8 @@
   "scripts": {
     "start": "turbo start --parallel --filter='!./examples/**' --filter='!./e2e' --filter='!@plitzi/plitzi-desktop'",
     "start:debug": "turbo start:debug --parallel --concurrency=20",
-    "test": "TURBO_RUN=1 turbo test --parallel --filter='!./examples/**'",
-    "test:coverage": "TURBO_RUN=1 turbo test:coverage --parallel --concurrency=20 --filter='!./examples/**'",
+    "test": "TURBO_RUN=1 turbo test --parallel --filter='./apps/*' --filter='./packages/*'",
+    "test:coverage": "TURBO_RUN=1 turbo test:coverage --parallel --concurrency=20 --filter='./apps/*' --filter='./packages/*'",
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "e2e:ci": "PLITZI_CI=1 playwright test --config e2e/playwright.config.ts",
     "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",

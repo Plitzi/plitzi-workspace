@@ -6,6 +6,7 @@ import { createJsonAdapters } from '../../../adapters/jsonAdapters';
 import { offlineDataOf } from '../../../modules/ssr/testing/offlineData';
 import { createAuth } from '../../auth/createAuth';
 import { createServer } from '../../createServer';
+import { unusedPort } from '../../unusedPort';
 
 import type { AccountAdapters, AccountRecord } from '../../auth/api';
 import type { IdentityAdapters } from '../../auth/identity';
@@ -22,11 +23,11 @@ import type { SSRServer, SSRSession } from '@plitzi/sdk-shared';
  * `node:http` rather than `fetch`: the `Sec-Fetch-*` headers are the browser's to set, and `fetch` rewrites them.
  */
 
-const PORT = 39331;
+const PORT = await unusedPort();
 /** A page server that does not serve `/auth` — the api beside it does — and names where to renew. */
-const REMOTE_PORT = 39332;
+const REMOTE_PORT = await unusedPort();
 /** One that serves `/auth` and has renewal turned off. */
-const OFF_PORT = 39333;
+const OFF_PORT = await unusedPort();
 const origin = (port: number) => `http://127.0.0.1:${String(port)}`;
 const BASE = origin(PORT);
 

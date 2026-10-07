@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
 import { createServer } from '../../createServer';
+import { unusedPort } from '../../unusedPort';
 
 import type { OfflineDataRaw, SSRServer, SSRUser } from '@plitzi/sdk-shared';
 
@@ -14,8 +15,8 @@ import type { OfflineDataRaw, SSRServer, SSRUser } from '@plitzi/sdk-shared';
  * was given, and writing the session cookie only for a credential that was accepted.
  */
 
-const PORT = 39321;
-const BARE_PORT = 39322;
+const PORT = await unusedPort();
+const BARE_PORT = await unusedPort();
 const base = (port: number) => `http://127.0.0.1:${String(port)}`;
 
 const offlineData = { schema: { elements: {} }, style: {} } as unknown as OfflineDataRaw;

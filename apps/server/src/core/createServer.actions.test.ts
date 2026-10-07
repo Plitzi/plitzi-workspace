@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './createServer';
+import { unusedPort } from './unusedPort';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
 
 import type { ActionEntry, ElementInteraction, OfflineDataRaw, Schema, SSRServer } from '@plitzi/sdk-shared';
@@ -12,7 +13,7 @@ import type { ActionEntry, ElementInteraction, OfflineDataRaw, Schema, SSRServer
  * two sets of guards — so what a call saved was invisible to every render. Only the assembly can show that.
  */
 
-const PORT = 39313;
+const PORT = await unusedPort();
 const BASE = `http://127.0.0.1:${PORT}`;
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({

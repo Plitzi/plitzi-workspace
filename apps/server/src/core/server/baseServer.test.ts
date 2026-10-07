@@ -3,6 +3,7 @@ import net from 'node:net';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createHttpServer } from './baseServer';
+import { unusedPort } from '../unusedPort';
 
 import type { Handler } from '../transports';
 import type { PluginRegistry, SSRServerConfig } from '@plitzi/sdk-shared';
@@ -42,25 +43,27 @@ describe('createHttpServer lifecycle', () => {
   });
 
   it('closes a listening server and releases the port', async () => {
+    const port = await unusedPort();
     const server = build();
-    server.listen(39301, '127.0.0.1');
-    await vi.waitFor(async () => expect(await isBound(39301)).toBe(true));
+    server.listen(port, '127.0.0.1');
+    await vi.waitFor(async () => expect(await isBound(port)).toBe(true));
 
     await expect(server.close()).resolves.toBeUndefined();
 
     // The port going free is the only proof the transport actually closed.
-    await vi.waitFor(async () => expect(await isBound(39301)).toBe(false));
+    await vi.waitFor(async () => expect(await isBound(port)).toBe(false));
   });
 
   /** A shutdown signal can land before the bind completes, and a teardown path must not blow up on that —
    *  ERR_SERVER_NOT_RUNNING is the state close() is aiming for, not a failure. Same for closing twice. */
   it('closes without waiting for the bind, and again after that', async () => {
+    const port = await unusedPort();
     const server = build();
-    server.listen(39302, '127.0.0.1');
+    server.listen(port, '127.0.0.1');
 
     await expect(server.close()).resolves.toBeUndefined();
     await expect(server.close()).resolves.toBeUndefined();
-    expect(await isBound(39302)).toBe(false);
+    expect(await isBound(port)).toBe(false);
   });
 
   it('refuses HTTP/3 without TLS, naming the server', () => {
@@ -73,18 +76,19 @@ describe('createHttpServer lifecycle', () => {
    * at all — without one there is nothing to hand to `onListenError` either.
    */
   it('reports a port it cannot take, naming the server and the port', async () => {
+    const port = await unusedPort();
     const holder = build();
-    holder.listen(39303, '127.0.0.1');
-    await vi.waitFor(async () => expect(await isBound(39303)).toBe(true));
+    holder.listen(port, '127.0.0.1');
+    await vi.waitFor(async () => expect(await isBound(port)).toBe(true));
 
     const onListenError = vi.fn();
     const blocked = build({ httpVersion: 1, onListenError } as unknown as SSRServerConfig);
-    blocked.listen(39303, '127.0.0.1');
+    blocked.listen(port, '127.0.0.1');
 
     await vi.waitFor(() => expect(onListenError).toHaveBeenCalled());
     const [error, context] = onListenError.mock.calls[0] as [NodeJS.ErrnoException, { port: number; label: string }];
     expect(error.code).toBe('EADDRINUSE');
-    expect(context).toMatchObject({ port: 39303, host: '127.0.0.1', label: 'TEST' });
+    expect(context).toMatchObject({ port, host: '127.0.0.1', label: 'TEST' });
 
     await blocked.close();
     await holder.close();

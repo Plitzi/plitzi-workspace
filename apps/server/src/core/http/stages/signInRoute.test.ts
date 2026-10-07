@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
 import { createServer } from '../../createServer';
+import { unusedPort } from '../../unusedPort';
 
 import type { OfflineDataRaw, SSRServer } from '@plitzi/sdk-shared';
 import type { IncomingMessage, Server } from 'node:http';
@@ -16,8 +17,8 @@ import type { IncomingMessage, Server } from 'node:http';
  * sending anybody off-site on the way back.
  */
 
-const PORT = 39343;
-const ISSUER_PORT = 39344;
+const PORT = await unusedPort();
+const ISSUER_PORT = await unusedPort();
 const base = `http://127.0.0.1:${String(PORT)}`;
 const issuer = `http://127.0.0.1:${String(ISSUER_PORT)}`;
 

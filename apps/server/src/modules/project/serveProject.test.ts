@@ -7,7 +7,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { serveProject } from './serveProject';
-import { freePort } from '../../core/freePort';
+import { unusedPort } from '../../core/unusedPort';
 import { offlineDataOf, oneEmptyPage } from '../ssr/testing/offlineData';
 
 import type { ServedProject } from './serveProject';
@@ -113,7 +113,7 @@ beforeEach(async () => {
   await write('plitzi/author.ts', AUTHOR_SCRIPT);
   await write('.env', 'PLITZI_SIGNING_SECRET=secret\n');
   await write('.env.example', 'PLITZI_SIGNING_SECRET=\n');
-  process.env.PORT = String(await freePort(39400));
+  process.env.PORT = String(await unusedPort());
 });
 
 afterEach(async () => {

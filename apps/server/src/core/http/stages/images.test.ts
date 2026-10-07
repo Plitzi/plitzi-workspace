@@ -8,6 +8,7 @@ import { imagesPathOf } from './images';
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
 import { offlineDataOf } from '../../../modules/ssr/testing/offlineData';
 import { createServer } from '../../createServer';
+import { unusedPort } from '../../unusedPort';
 
 import type { SSRServer } from '@plitzi/sdk-shared';
 
@@ -17,8 +18,8 @@ import type { SSRServer } from '@plitzi/sdk-shared';
  * `modules/images`'s, tested there with no network.
  */
 
-const PORT = 39341;
-const BARE_PORT = 39342;
+const PORT = await unusedPort();
+const BARE_PORT = await unusedPort();
 const base = (port: number) => `http://127.0.0.1:${String(port)}`;
 
 const offlineData = offlineDataOf();

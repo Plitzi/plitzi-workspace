@@ -3,6 +3,7 @@ import { WebSocket } from 'ws';
 
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
+import { unusedPort } from '../../core/unusedPort';
 
 import type { ChannelDeclarations, OfflineDataRaw, SSRServer } from '@plitzi/sdk-shared';
 
@@ -11,8 +12,8 @@ import type { ChannelDeclarations, OfflineDataRaw, SSRServer } from '@plitzi/sdk
  * pipeline — space, auth, channels — the stream goes through.
  */
 
-const PORT = 39316;
-const FAILING_PORT = 39319;
+const PORT = await unusedPort();
+const FAILING_PORT = await unusedPort();
 const BASE = `127.0.0.1:${PORT}`;
 
 const channels: ChannelDeclarations = {

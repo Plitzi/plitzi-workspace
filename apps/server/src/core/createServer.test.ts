@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { createAuth } from './auth/createAuth';
 import { createServer } from './createServer';
+import { unusedPort } from './unusedPort';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
 import { offlineDataOf } from '../modules/ssr/testing/offlineData';
 
@@ -23,7 +24,7 @@ import type { SSRServer, SSRSession } from '@plitzi/sdk-shared';
  * a status is not an answer, and a 2xx that carries nothing is the failure this suite exists to catch.
  */
 
-const PORT = 39311;
+const PORT = await unusedPort();
 const BASE = `http://127.0.0.1:${PORT}`;
 
 const store = () => {

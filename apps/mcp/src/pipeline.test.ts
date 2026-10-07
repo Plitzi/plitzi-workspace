@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { createServer } from '@plitzi/sdk-server';
+import { createServer, unusedPort } from '@plitzi/sdk-server';
 import { healthStage } from '@plitzi/sdk-server/kernel';
 
 import { buildMCPPipeline, mcpExtensions } from './pipeline';
@@ -13,7 +13,8 @@ import { httpRequest, jsonRpc, RPC_HEADERS } from './tests/httpRequest';
 
 import type { OfflineDataRaw, Schema, SSRPageAdapters, SSRServer, Style } from '@plitzi/sdk-shared';
 
-const PORT = 39231;
+const PORT = await unusedPort();
+const OPEN_PORT = await unusedPort();
 
 // The sample space `yarn start` serves. A real one, not a stub: the preview endpoint RENDERS, so an empty
 // schema would only ever prove that the stage was reached, never that it works.
@@ -215,7 +216,6 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
  * layer; it was running a public one.
  */
 describe('the draft-preview endpoint with no secret configured', () => {
-  const OPEN_PORT = PORT + 1;
   const server: SSRServer = createServer(
     { httpVersion: 1, adapters, health: { payload: { ok: true } }, preview: { enabled: true } },
     mcpExtensions()

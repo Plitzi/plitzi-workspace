@@ -400,6 +400,11 @@ Beside the page adapters it offers `getSchema` and `getStyle`, read from the sam
 path, or a function that may answer one — `saveSchema` and `saveStyle`, each writing its document back into the file. So an MCP server
 ([`@plitzi/sdk-mcp`](../mcp/README.md#adapters)) can run over it, with a `getGrant` of yours beside it.
 
+In a test, listen on `await unusedPort()`: a port the system has just handed out, never a fixed number — one in the
+system's ephemeral range can be taken by any outgoing connection of a test running beside it, and the listen fails with
+`EADDRINUSE` on a run with nothing wrong. (`freePort(8080)` is the development server's: the next free one from a port
+people expect.)
+
 ### `JsonAdaptersConfig`
 
 | Option | Type | Description |

@@ -1,11 +1,13 @@
 import { afterAll, describe, expect, it } from 'vitest';
 
+import { unusedPort } from '@plitzi/sdk-server';
+
 import { createServer } from './createServer';
 import { httpRequest, jsonRpc, RPC_HEADERS } from './tests/httpRequest';
 
 import type { SSRAdapters, SSRServer } from '@plitzi/sdk-shared';
 
-const PORT = 39217;
+const PORT = await unusedPort();
 
 const adapters = {
   getOfflineData: () => Promise.resolve(undefined),

@@ -20,11 +20,9 @@
       "persistent": true
     },
     "test": {
-      "dependsOn": ["^test"],
       "cache": false
     },
     "test:coverage": {
-      "dependsOn": ["^test:coverage"],
       "cache": false
     },
     "lint": {

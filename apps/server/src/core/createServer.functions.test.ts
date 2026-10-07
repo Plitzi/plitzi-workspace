@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { createServer } from './createServer';
+import { unusedPort } from './unusedPort';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
 import { createActionsModule } from '../modules/actions';
 import { defineFunctions } from '../modules/functions/contract';
@@ -16,7 +17,7 @@ import type { SSRServer } from '@plitzi/sdk-shared';
  * natively, the space's in isolates — with the visitor's credentials kept out and the host's cookies kept theirs.
  */
 
-const PORT = 39317;
+const PORT = await unusedPort();
 const BASE = `http://127.0.0.1:${PORT}`;
 
 const SPACE_SOURCE = {

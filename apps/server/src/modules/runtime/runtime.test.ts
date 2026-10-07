@@ -10,6 +10,7 @@ import { RUNTIME_DESCRIBE_PATH, startSpaceRuntime } from './host';
 import { createRuntimeProxyStage } from './stages';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
+import { unusedPort } from '../../core/unusedPort';
 import { createActionsModule } from '../actions';
 import { ActionRefusal } from '../actions/runtime/errors';
 import { createSigning } from '../actions/runtime/signing';
@@ -30,8 +31,8 @@ import type { ActionEntry, ElementInteraction, SSRServer } from '@plitzi/sdk-sha
 
 const SECRET = 'a-runtime-secret-that-is-32-chars-long';
 const SIGNING_SECRET = 'the-platform-signing-secret-32-chars';
-const RUNTIME_PORT = 39361;
-const PAGE_PORT = 39362;
+const RUNTIME_PORT = await unusedPort();
+const PAGE_PORT = await unusedPort();
 
 const runtime = defineRuntime({
   start: ({ env }) => ({
@@ -259,8 +260,6 @@ describe('a packed runtime', () => {
  * connection held — still stops: what never ends by itself is ended, so whatever is stopping it is never left waiting.
  */
 describe('a space runtime being stopped', () => {
-  const PORT = 39363;
-
   it('stops with a stream still open on it', async () => {
     const listening = defineRuntime({
       start: () => ({
@@ -279,12 +278,12 @@ describe('a space runtime being stopped', () => {
     const stopping = await startSpaceRuntime({
       runtime: listening,
       secret: SECRET,
-      port: PORT,
+      port: 0,
       host: '127.0.0.1',
       env: {},
       publicUrl: 'http://127.0.0.1'
     });
-    const stream = await fetch(`http://127.0.0.1:${String(PORT)}/mcp`, {
+    const stream = await fetch(`http://127.0.0.1:${String(stopping.address().port)}/mcp`, {
       headers: { authorization: `Bearer ${SECRET}`, accept: 'text/event-stream' }
     });
     expect(stream.status).toBe(200);

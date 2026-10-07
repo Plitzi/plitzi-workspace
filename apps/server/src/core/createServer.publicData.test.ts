@@ -8,6 +8,7 @@ import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 
 import { createServer } from './createServer';
+import { unusedPort } from './unusedPort';
 import { createJsonAdapters } from '../adapters/jsonAdapters';
 import { defineFunctions } from '../modules/functions/contract';
 
@@ -18,8 +19,8 @@ import type { Schema, SSRServer } from '@plitzi/sdk-shared';
  * that data in it — the sections, and the anchors in them — rather than fetch it once the browser has the page.
  */
 
-const PORT = 39314;
-const DATA_PORT = 39315;
+const PORT = await unusedPort();
+const DATA_PORT = await unusedPort();
 const BASE = `http://127.0.0.1:${PORT}`;
 const TITLE = 'Hello from public/data';
 

@@ -5,6 +5,7 @@ import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { offlineDataOf } from './testing/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
+import { unusedPort } from '../../core/unusedPort';
 
 import type { SSRServer } from '@plitzi/sdk-shared';
 
@@ -13,7 +14,7 @@ import type { SSRServer } from '@plitzi/sdk-shared';
  * shift+F12, within what the deployment allows — and the production one otherwise.
  */
 
-const PORT = 39353;
+const PORT = await unusedPort();
 const HOST = `127.0.0.1:${String(PORT)}`;
 
 let server: SSRServer;

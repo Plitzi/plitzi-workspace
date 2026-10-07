@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { offlineDataOf } from './testing/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
+import { unusedPort } from '../../core/unusedPort';
 
 import type { SSRServer } from '@plitzi/sdk-shared';
 
@@ -11,7 +12,7 @@ import type { SSRServer } from '@plitzi/sdk-shared';
  * with the space — kept for good, because it is the name of that text and of no other.
  */
 
-const PORT = 39351;
+const PORT = await unusedPort();
 const base = `http://127.0.0.1:${String(PORT)}`;
 
 const offlineData = offlineDataOf();
