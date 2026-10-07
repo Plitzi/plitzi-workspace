@@ -13,8 +13,8 @@
   }
 
   #{$root} :where(h1, h2, h3, h4, h5, h6) {
-    position: relative;
     margin: 1.5em 0 0.5em;
+    position: relative;
     font-weight: 600;
     line-height: 1.25;
     scroll-margin-top: 1em;
@@ -41,8 +41,8 @@
   }
 
   #{$root} :where(h6) {
-    font-size: 0.85em;
     opacity: 0.75;
+    font-size: 0.85em;
   }
 
   #{$root} :where(p, ul, ol, blockquote, table, pre, .markdown-code) {
@@ -97,8 +97,8 @@
   }
 
   #{$root} :where(img) {
-    max-width: 100%;
     height: auto;
+    max-width: 100%;
   }
 
   #{$root} :where(code) {
@@ -122,9 +122,9 @@
   }
 
   #{$root} :where(table) {
-    display: block;
     width: max-content;
     max-width: 100%;
+    display: block;
     overflow-x: auto;
     border-collapse: collapse;
   }
@@ -153,10 +153,10 @@
   }
 
   #{$root} :where(.markdown-code-header) {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     padding: 0.35em 0.8em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background-color: color-mix(in srgb, currentColor 10%, transparent);
     font-size: 0.8em;
   }
@@ -173,12 +173,12 @@
 
   // The link a heading offers to itself: in the margin before it, shown while the heading is pointed at or it has focus.
   #{$root} :where(.anchor) {
-    position: absolute;
-    right: 100%;
     padding-right: 0.25em;
+    right: 100%;
+    position: absolute;
     color: inherit;
-    text-decoration: none;
     opacity: 0;
+    text-decoration: none;
   }
 
   #{$root} :where(.octicon-link)::before {
