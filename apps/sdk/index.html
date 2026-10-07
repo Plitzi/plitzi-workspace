@@ -13,10 +13,10 @@
     <link rel="preconnect" href="https://api.plitzi.local" />
     <link rel="preconnect" href="https://ssr.plitzi.local" />
 
-    <link rel="modulepreload" href="<%= react %>" crossorigin />
-    <link rel="modulepreload" href="<%= reactDom %>" crossorigin />
-    <link rel="modulepreload" href="<%= jsPath %>" />
-
+    <!--
+      The import map before anything that loads a module: a browser that fetched one already (a modulepreload counts)
+      ignores a map that comes after it, and the SDK's `import "react"` then resolves to nothing.
+    -->
     <script type="importmap">
       {
         "imports": {
@@ -29,6 +29,10 @@
         }
       }
     </script>
+
+    <link rel="modulepreload" href="<%= react %>" crossorigin />
+    <link rel="modulepreload" href="<%= reactDom %>" crossorigin />
+    <link rel="modulepreload" href="<%= jsPath %>" />
 
     <link href="<%= cssPath %>" rel="preload" as="style" />
     <link href="<%= cssPath %>" rel="stylesheet" />

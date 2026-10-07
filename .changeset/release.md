@@ -180,6 +180,13 @@
   agent how to fill it — each finding reproduced first, with evidence, impact, workaround and fix, no secrets — and to
   publish it as an artifact whose link the developer sends. `--previous <url>` continues an earlier report.
 
+## Pages that load on every browser
+
+- **The import map comes before anything that loads a module**, in the page server's HTML, a published site's
+  (`index.hbs` on the platform), the SDK's and the builder's. React's `modulepreload` links came first, and a browser
+  that had fetched a module already — Chrome before 133 — ignored the map: every bare `import "react"` failed
+  ("Failed to resolve module specifier") and the page never hydrated.
+
 ## The dev tools
 
 - **A page loads the React its dev tools need.** The development build only while the visitor has the dev tools on

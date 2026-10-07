@@ -45,6 +45,19 @@ describe('the React a page loads', () => {
     expect(await vendorOf()).toBe('plitzi-sdk-dev-vendor.js');
   });
 
+  // A browser that already fetched a module — a modulepreload counts — ignores an import map after it, and every bare
+  // `import "react"` of the SDK then fails: a page that never hydrates, on Chrome before 133.
+  it('is mapped before anything loads a module', async () => {
+    const html = await (await fetch(`http://${HOST}/`)).text();
+    const map = html.indexOf('<script type="importmap">');
+    const firstModule = Math.min(
+      ...['<link rel="modulepreload"', '<script type="module"'].map(tag => html.indexOf(tag)).filter(at => at >= 0)
+    );
+
+    expect(map).toBeGreaterThan(-1);
+    expect(map).toBeLessThan(firstModule);
+  });
+
   // Authorized, and turned off by the visitor: the page is a production page, React included.
   it('is the production build once the visitor turned the dev tools off', async () => {
     expect(await vendorOf(`${debugCookieName(HOST)}=false`)).toBe('plitzi-sdk-vendor.js');

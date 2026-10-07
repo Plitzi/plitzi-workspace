@@ -77,9 +77,10 @@
     <% } %>
 
     <% if (!locals.ssrOnly) { %>
-    <link rel="modulepreload" href="<%= locals.react || '' %>" crossorigin />
-    <link rel="modulepreload" href="<%= locals.reactDom || '' %>" crossorigin />
-
+    <%#
+      The import map before anything that loads a module: a browser that fetched one already (a modulepreload counts)
+      ignores a map that comes after it, and the SDK's `import "react"` then resolves to nothing.
+    %>
     <script type="importmap">
       {
         "imports": {
@@ -92,6 +93,9 @@
         }
       }
     </script>
+
+    <link rel="modulepreload" href="<%= locals.react || '' %>" crossorigin />
+    <link rel="modulepreload" href="<%= locals.reactDom || '' %>" crossorigin />
     <% } %>
 
     <%# The space, fetched beside the page while the scripts load, rather than carried in it. %>
