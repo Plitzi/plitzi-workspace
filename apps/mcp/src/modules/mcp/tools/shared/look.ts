@@ -11,8 +11,7 @@ import type { ToolContext } from './tool';
  * space or from a batch that was never saved.
  *
  * One path for every tool that shows a page: `plitzi_apply`'s `dryRun` (the batch it just checked, so the agent writes
- * its operations once instead of once to check, once to look and once to save), `plitzi_preview` and
- * `plitzi_screenshot` (what is saved).
+ * its operations once instead of once to check, once to look and once to save), and `plitzi_look` (what is saved).
  */
 
 const VIEWPORTS: Record<'desktop' | 'mobile', Viewport> = {

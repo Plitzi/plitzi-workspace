@@ -160,7 +160,7 @@ describe('plitzi_render', () => {
   it('is registered as a read-only, space-independent tool', () => {
     expect(renderTool.name).toBe('plitzi_render');
     expect(renderTool.access).toBe('read');
-    expect(renderTool.requires).toBeUndefined();
+    expect(renderTool.spaceless).toBe(true);
   });
 });
 

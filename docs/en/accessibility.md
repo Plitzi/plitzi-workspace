@@ -121,10 +121,10 @@ A plugin that draws owns its own markup, and what the linter can't see is up to 
 
 ## 6. Checking a page
 
-- **Through MCP:** `plitzi_screenshot` with `view: "accessibility"` renders a saved page — `plitzi_apply` with `dryRun`
-  and `look: "accessibility"` one not saved yet — and returns its accessibility tree as an outline (`- button "Close"`, `- heading "Plans" [level=1]`). Every
-  control or picture with no name is listed in `unnamed`. It is text, far cheaper than an image. `view: "both"`
-  returns both. It needs the same browser as the image: the cluster's screenshot service (from 0.1.9) or Playwright or
+- **Through MCP:** `plitzi_look` renders a saved page — `plitzi_apply` with `dryRun` and `look: "accessibility"` one not
+  saved yet — and returns its accessibility tree as an outline (`- button "Close"`, `- heading "Plans" [level=1]`), its
+  default view. Every control or picture with no name is listed in `unnamed`. It is text, far cheaper than an image;
+  `view: "both"` adds the image. It needs the same browser as the image: the cluster's screenshot service (from 0.1.9) or Playwright or
   Puppeteer on the machine.
 - **In a Playwright test:** `await expect(page.locator('main')).toMatchAriaSnapshot(…)` pins the same outline.
   `page.getByRole('button', { name: 'Close' })` fails when the name is missing, which makes it a useful test on its

@@ -11,7 +11,8 @@ import type { Operation } from './operations';
 import type { ToolContext } from './shared/tool';
 
 /**
- * Tools that take an intention — set an element's words, dress it with classes, bind it, place a component, add a page
+ * Tools that take an intention — set an element's attributes, add or remove its classes, bind an attribute, place a
+ * component, add a page
  * — instead of a batch: a few parameters, the element named by its ref alone (the page it is on is found), and the
  * operations written for the agent. Each runs through `plitzi_apply`, so it is checked and saved exactly as a batch
  * is, and answers in a line: what changed, and what to do next. For anything they do not say, `plitzi_apply`.
@@ -21,10 +22,16 @@ import type { ToolContext } from './shared/tool';
 type IntentAnswer = { done: string; warnings?: string[]; next: string } | { done: false; errors: unknown[] };
 
 /** The element a ref names, with the page or layout it is on — or the nearest ref there is. */
-const locate = (ctx: ToolContext, ref: string): { root: string } | { done: false; errors: unknown[] } => {
+const locate = (
+  ctx: ToolContext,
+  ref: string
+): { root: string; classes: string[] } | { done: false; errors: unknown[] } => {
   const element = findElementByRef(ctx.space.schema, ref);
   if (element) {
-    return { root: element.definition.rootId };
+    return {
+      root: element.definition.rootId,
+      classes: element.definition.styleSelectors.base.split(/\s+/).filter(Boolean)
+    };
   }
 
   const nearest = closest(ref, Object.keys(ctx.space.schema.flat));
@@ -50,12 +57,12 @@ const run = async (ctx: ToolContext, operations: Operation[], done: string, page
   return {
     done,
     ...(result.warnings ? { warnings: result.warnings } : {}),
-    next: `plitzi_screenshot { pageRef: "${page}" } to see it — or plitzi_search / plitzi_read for what to change next`
+    next: `plitzi_look { pageRef: "${page}" } to see it`
   };
 };
 
-export const setTool = defineTool({
-  name: 'plitzi_set',
+export const setAttributesTool = defineTool({
+  name: 'plitzi_set_attributes',
   title: 'Set an element’s attributes',
   description:
     'Set or remove attributes of one element — its words (`content`), a link’s `href`, an image’s `src` and `alt`, a ' +
@@ -84,15 +91,16 @@ export const setTool = defineTool({
   }
 });
 
-export const classTool = defineTool({
-  name: 'plitzi_class',
-  title: 'Dress an element with classes',
+export const setClassesTool = defineTool({
+  name: 'plitzi_set_classes',
+  title: 'Add or remove an element’s classes',
   description:
-    'The classes one element wears, in order — the whole list, replacing the one it had. A class is a definition ' +
-    'of the space (plitzi_search finds them).',
+    'Add classes to one element, or take them off; the ones it wears and you do not name stay. A class is a ' +
+    'definition of the space (plitzi://definitions/{env}).',
   inputShape: {
     ref: z.string().describe('The element, by its ref'),
-    classes: z.array(z.string()).describe('Every class it wears, by name')
+    add: z.array(z.string()).optional().describe('Classes it should also wear, by name'),
+    remove: z.array(z.string()).optional().describe('Classes it should no longer wear, by name')
   },
   access: 'write',
   run: async (input, ctx) => {
@@ -101,17 +109,23 @@ export const classTool = defineTool({
       return at;
     }
 
+    const removed = new Set(input.remove ?? []);
+    const base = [
+      ...at.classes.filter(name => !removed.has(name)),
+      ...(input.add ?? []).filter(name => !at.classes.includes(name))
+    ];
+
     return run(
       ctx,
-      [{ type: 'patchElement', pageRef: at.root, ref: input.ref, style: { base: input.classes } }],
-      `${input.ref} wears ${input.classes.join(', ') || 'no class'}`,
+      [{ type: 'patchElement', pageRef: at.root, ref: input.ref, style: { base } }],
+      `${input.ref} wears ${base.join(', ') || 'no class'}`,
       at.root
     );
   }
 });
 
-export const bindTool = defineTool({
-  name: 'plitzi_bind',
+export const bindAttributeTool = defineTool({
+  name: 'plitzi_bind_attribute',
   title: 'Bind an element to data',
   description:
     'Feed one attribute of an element from a data source — a list’s `items` from `apiContainer_products.data`, a ' +
@@ -145,8 +159,8 @@ export const bindTool = defineTool({
   }
 });
 
-export const placeTool = defineTool({
-  name: 'plitzi_place',
+export const placeComponentTool = defineTool({
+  name: 'plitzi_place_component',
   title: 'Place a component',
   description:
     'Place an instance of one of the space’s components inside an element, handing it its props. ' +

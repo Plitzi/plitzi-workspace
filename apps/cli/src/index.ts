@@ -28,7 +28,7 @@ import {
 import { shot } from './commands/shot';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
-import { where } from './commands/where';
+import { where, WHERE_READINGS } from './commands/where';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
@@ -372,6 +372,12 @@ program
   .command('where')
   .argument('<query>', 'An element’s id, a class it wears, or words it shows: hero-cta, navLink, "Get started"')
   .description('Where the project’s code writes an element: the file, the line and the call itself')
+  .addOption(
+    new Option(
+      '--by <reading>',
+      'Read the query one way only, not the first of id, class and words that matches'
+    ).choices(WHERE_READINGS)
+  )
   .option('--json', 'One object, for a tool or an agent')
   .action((query: string, options: WhereOptions) => where(query, options));
 

@@ -103,8 +103,8 @@ types its renderer with.
 | `path` | `/mcp` | Where MCP answers inside a server that also serves pages. A dedicated MCP server owns its whole origin and ignores it. |
 | `renderStreaming` | `true` | Whether the `plitzi_render` view paints from the tool arguments while the host still streams them. `false` keeps the view blank until the finished widget arrives. |
 | `proxy` | off | `McpProxyOptions`: with a `secret`, every external URL a render authored is rewritten to this server's signed endpoint (`path`, default `/__proxy`) and fetched here — the origins a widget needs cannot be declared ahead. `baseUrl`, `maxBytes` (8 MiB), `ttl` (7 days), `tools` (`['plitzi_render']`), `enabled`. |
-| `previewClient` | off | `{ url, secret? }`: the SSR `/preview` endpoint, for an MCP server that runs apart from the renderer. Without it the preview tools report `PREVIEW_UNAVAILABLE`. |
-| `screenshot` | off | `{ serviceUrl, renderBaseUrl }`: the browser service `plitzi_screenshot` renders through, and the SSR base it navigates to. Without it the tool is not registered. |
+| `previewClient` | off | `{ url, secret? }`: the SSR `/preview` endpoint, for an MCP server that runs apart from the renderer. Without it `plitzi_look` and `plitzi_apply`'s `look` report `PREVIEW_UNAVAILABLE`. |
+| `screenshot` | off | `{ serviceUrl, renderBaseUrl }`: the browser service a look renders an image or an accessibility outline through, and the SSR base it navigates to. Without it a look answers the HTML, and says so. |
 | `oauth` | off | OAuth 2.1 for remote connectors — see [OAuth](#oauth). |
 
 ```ts
@@ -118,10 +118,9 @@ createServer({ adapters }, { screenshot: { serviceUrl, renderBaseUrl }, proxy: {
 | `plitzi_search` | read | Find elements, pages, styles and bindings; returns ready-made URIs |
 | `plitzi_read` | read | Read one or more resources in detail by URI |
 | `plitzi_apply` | write | Apply a batch of operations and persist; answers with the batch's suggestions too. `dryRun` checks it without saving, and `look` renders the page as the batch leaves it (HTML, a PNG or the accessibility outline) |
-| `plitzi_set`, `plitzi_class`, `plitzi_bind`, `plitzi_place`, `plitzi_add_page` | write | One change by its intention — an element's attributes, its classes, a binding, a component placed, a page — by the element's ref alone, saved as `plitzi_apply` saves it, answered in a line |
+| `plitzi_set_attributes`, `plitzi_set_classes`, `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` | write | One change by its intention — an element's attributes, classes added or removed, a binding, a component placed, a page — by the element's ref alone, saved as `plitzi_apply` saves it, answered in a line |
 | `plitzi_describe_operation` | read | One operation's schema by its type, or the list of every type |
-| `plitzi_preview` | read | Render a saved page to HTML through an SSR server |
-| `plitzi_screenshot` | read | Render a saved page to a PNG (desktop, mobile or both) through the screenshot service |
+| `plitzi_look` | read | See a saved page: its accessibility outline (default), its HTML, or a PNG (desktop, mobile or both) |
 | `plitzi_render` | read | Render a self-contained UI widget, offline, with no space |
 | `plitzi_try_function` | write | Run one task of the space's functions against the draft, in the sandbox: its value, logs and error |
 

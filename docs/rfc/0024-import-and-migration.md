@@ -40,7 +40,7 @@ runs no model for this.
 | `compareSpaces` | `sdk-authoring/decompile/compareSpaces.ts` | Proof that a round trip changed nothing observable |
 | Authoring's linter and fixes | `authorSpace(...).warnings/suggestions`, `fixSpace`, `plitzi fix` | What turns a literal import into an idiomatic one: `custom-css-class`, `custom-css-slot`, lists, `class-overrides-class` |
 | Components | `schema.components` (ex-RFC 0021) | Where a repeated block lands |
-| Screenshots | the screenshot service, `plitzi_screenshot` | Rendering the original and the import side by side |
+| Screenshots | the screenshot service, `plitzi_look` | Rendering the original and the import side by side |
 | Space data and the CDN | `src/data/`, the space's bucket, connectors | Where a CMS and its assets land |
 
 ## 3. What is wrong with today's import
@@ -80,7 +80,7 @@ const { schema, style, report } = await importUi(source, {
 | --- | --- |
 | The builder's Transform panel | As today — paste, preview, insert — through the engine; the report shown beside the preview |
 | `plitzi import`, which takes a file besides a URL: `plitzi import ./block.html [--as component <Name>]`, `plitzi import ./webflow-export.zip` | A file the person owns is converted, not measured: authoring code into `src/space/` (or `src/components/`), then `author`, and what `fix` would change. A URL keeps today's meaning — a measured start, never a copy |
-| An MCP tool (`plitzi_import`) | An agent imports a block into a page, as operations it can `dryRun` and look at with `plitzi_screenshot` |
+| An MCP tool (`plitzi_import`) | An agent imports a block into a page, as operations it can `dryRun` and see with `look` |
 | `POST /utils/transform-to-schema` | Unchanged for its callers |
 
 ### 4.3 Everything imported goes through authoring

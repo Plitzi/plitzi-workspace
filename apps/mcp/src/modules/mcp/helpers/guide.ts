@@ -43,7 +43,7 @@ export const serverInstructions =
   'availableVariants (which variant each of its classes offers). ' +
   'Build pages people can use without sight: screen readers and browser agents (Claude in Chrome) work a page ' +
   'through its accessibility tree, so every control needs words and clicks go on buttons and links — see ' +
-  'Accessibility in plitzi://guide, and plitzi_screenshot view:"accessibility" to check. ' +
+  'Accessibility in plitzi://guide, and plitzi_look (its accessibility outline, the default view) to check. ' +
   'Separately, to SHOW the user a small self-contained widget (offline, no space or backend) instead of editing ' +
   'the space — a card, hero, pricing table, a visual answer — use plitzi_render; read plitzi://render/guide for it.';
 
@@ -149,7 +149,7 @@ element or page — not \`visible\`. Read anywhere as \`{{ flags.x }}\`.
 **Accessible by default:** screen readers and browser agents (Claude in Chrome) read the accessibility tree, so every
 button/link needs words (an icon-only button a \`title\`), every field a \`label\` (\`hideLabel: true\` hides it), every
 image an \`alt\` or \`decorative: true\`; clicks go on a \`button\`/\`link\`, never a container; headings step down one
-level at a time. \`plitzi_screenshot view:"accessibility"\` shows the tree and what has no name.
+level at a time. \`plitzi_look\` shows the tree and what has no name.
 
 **Everything the space holds is public.** Its pages, variables, attributes, flow params and mock data ship to every
 visitor's browser, and a file on a public bucket of its CDN is served to anyone who has its address. A key, a token or
@@ -286,10 +286,11 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   \`look\` (\`"html"\`, \`"image"\`, \`"accessibility"\` or \`"both"\`, with \`pageRef\` and \`viewport\`) to see the page
   as the batch leaves it in the same call. Check and look with \`dryRun\`, then send the same operations without it.
 - **By intention**, a few parameters and the element named by its ref alone — the page is found, the operations
-  written, the batch checked and saved as \`plitzi_apply\` saves it, and the answer is a line: \`plitzi_set { ref, set,
-  unset }\` (its words and attributes), \`plitzi_class { ref, classes }\` (every class it wears), \`plitzi_bind { ref, to,
-  source }\`, \`plitzi_place { component, ref, into, props }\`, \`plitzi_add_page { ref, slug, layout }\`. Reach for one
-  when it says the whole change; anything else is a batch.
+  written, the batch checked and saved as \`plitzi_apply\` saves it, and the answer is a line:
+  \`plitzi_set_attributes { ref, set, unset }\`, \`plitzi_set_classes { ref, add, remove }\` (the classes it wears and
+  you do not name stay), \`plitzi_bind_attribute { ref, to, source }\`, \`plitzi_place_component { component, ref, into,
+  props }\`, \`plitzi_add_page { ref, slug, layout }\`. One of them when it says the whole change; anything else is one
+  batch of \`plitzi_apply\`.
 - \`plitzi_describe_operation\` — one operation's schema by its \`type\` (every field, which are required); without a
   type, every operation type there is. Ask for the one you are writing instead of guessing a field: a field an
   operation does not have is refused naming the one meant (\`"prop" (did you mean "props"?)\`), and a type spelt with
@@ -299,13 +300,12 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
 - \`plitzi_read\` — read many resource **uris in one batch** (pages, elements, definitions, variables). Pass the
   ready-made uris from search / a write response; each result is \`{ uri, stateVersion, data }\` or a teachable error,
   so one bad uri never fails the batch. Use it instead of N single reads whenever you already hold several refs.
-- \`plitzi_preview\` — render a saved page to HTML, to check its structure.
-- \`plitzi_screenshot\` — render a saved page to a PNG (desktop, mobile or \`both\`): the way to SEE overflow,
-  misalignment and broken layout (a change not saved yet: \`plitzi_apply\` with \`dryRun\` and \`look\`).
-  \`view: "accessibility"\` reads the same page as a screen reader and a browser agent (Claude in Chrome) do — its
-  accessibility tree as an outline of roles and names, with every control and picture that has no name listed in
-  \`unnamed\` — as text, far cheaper than an image (\`"both"\` returns both). Both need the SSR render service; where
-  it is missing they answer \`PREVIEW_UNAVAILABLE\`.
+- \`plitzi_look { pageRef, view, viewport }\` — see a saved page. \`view\`: \`"accessibility"\` (default) reads it as a
+  screen reader and a browser agent (Claude in Chrome) do — an outline of roles and names, every control and picture
+  with no name listed in \`unnamed\`, as text and far cheaper than an image; \`"html"\` its markup; \`"image"\` a PNG,
+  the way to SEE overflow and misalignment (desktop, mobile or \`both\`); \`"both"\` image and outline. A change not
+  saved yet is seen with \`plitzi_apply\`'s \`dryRun\` and \`look\`, the same views. It needs the SSR render service
+  (\`PREVIEW_UNAVAILABLE\` without it); without a browser, an image or an outline falls back to the HTML, said.
 - \`plitzi_render\` — a different job: show the user a self-contained widget built offline. It never touches the space.
 
 ## Suggestions — the same page with fewer elements
@@ -1131,7 +1131,7 @@ tree names nothing is invisible to both, however it looks. So build every page t
 The linter warns about these (\`control-without-name\`, \`image-without-alt\`, \`click-on-static-element\`,
 \`dropdown-without-control\`, \`heading-level-skipped\`, \`label-ignored\`, \`control-in-decorative\`) on every element
 you touch; fix them in the same batch. Then look:
-\`plitzi_screenshot\` with \`view: "accessibility"\` shows the page as those readers get it, and lists what has no name.
+\`plitzi_look\` shows the page as those readers get it, and lists what has no name.
 
 ## Semantics
 - **props are fully replaced** on \`upsertElement\`: send every prop you want to keep. To change only some props,

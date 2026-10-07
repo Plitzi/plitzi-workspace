@@ -29,10 +29,6 @@ export interface ToolContext {
   tryFunction?: (task: string, params: Record<string, unknown>) => Promise<ActionRunReport>;
 }
 
-/** A capability a tool depends on; the host skips registering a tool whose capability it did not wire (so
- *  plitzi_screenshot simply does not appear when no browser service is configured). */
-export type ToolRequires = 'screenshot';
-
 /** Build the MCP CallToolResult for an image-returning tool: a text meta block followed by one image block per
  *  PNG, so a vision-capable agent (or MCP client) sees the render directly. */
 export const imageResult = (images: ScreenshotImage[], meta: unknown): CallToolResult => ({
@@ -52,8 +48,6 @@ export interface ToolSpec<Shape extends ZodRawShape> {
   description: string;
   inputShape: Shape;
   access: 'read' | 'write';
-  /** A host capability this tool needs; hosts that did not wire it skip registering the tool. */
-  requires?: ToolRequires;
   /** This tool's input carries the whole operations vocabulary (`plitzi_apply`): the one copy of it a connection lists. */
   carriesOperations?: boolean;
   /**
@@ -83,7 +77,6 @@ export interface ToolDef {
   description: string;
   inputShape: ZodRawShape;
   access: 'read' | 'write';
-  requires?: ToolRequires;
   carriesOperations?: boolean;
   compactInputShape?: ZodRawShape;
   spaceless?: boolean;
@@ -107,7 +100,6 @@ export const defineTool = <Shape extends ZodRawShape>(spec: ToolSpec<Shape>): To
     description: spec.description,
     inputShape: spec.inputShape,
     access: spec.access,
-    requires: spec.requires,
     carriesOperations: spec.carriesOperations,
     compactInputShape: spec.compactInputShape,
     spaceless: spec.spaceless,

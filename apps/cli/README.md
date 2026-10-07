@@ -230,6 +230,7 @@ only if every fix is gone and no problem was added; a fix that would add one is 
 plitzi where hero-cta                            # by id: the file, the line and the call that writes it
 plitzi where navLink                             # every element wearing the class (`nav-link` or `navLink`)
 plitzi where "Get started"                       # every element showing the words
+plitzi where cta --by text                       # one reading only: id, class or text
 plitzi edit hero-cta --set content="Start free"  # an attribute written in that call
 plitzi edit signup --set required=true --remove placeholder
 ```
@@ -238,7 +239,9 @@ plitzi edit signup --set required=true --remove placeholder
 the call is edited instead of the files around it being read. It is asked of the code as it is now: the space is
 authored again and each element's call read back, the way `fix` finds it, so it follows an element wherever somebody
 moved it, with nothing kept that could fall out of step. Ten matches at most, the call shown for the first three;
-`--json` adds the element's attributes when it was asked for by id. A space that does not author is said, with the
+`--json` adds the element's attributes when it was asked for by id. A query is read as an id, then a class, then words —
+the first that matches is answered, and any other that matched too is said with its count and the command for it
+(`--by text`); `--by` reads it one way only. A space that does not author is said, with the
 lines of `src/` holding the words instead.
 
 `edit` writes attributes in that call — `content` given as the factory's first argument (`text('Hi', { … })`) where it

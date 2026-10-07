@@ -15,16 +15,15 @@ describe('MCP tool registry (defineTool descriptors)', () => {
     expect(tools.map(t => t.name).sort()).toEqual([
       'plitzi_add_page',
       'plitzi_apply',
-      'plitzi_bind',
-      'plitzi_class',
+      'plitzi_bind_attribute',
       'plitzi_describe_operation',
-      'plitzi_place',
-      'plitzi_preview',
+      'plitzi_look',
+      'plitzi_place_component',
       'plitzi_read',
       'plitzi_render',
-      'plitzi_screenshot',
       'plitzi_search',
-      'plitzi_set',
+      'plitzi_set_attributes',
+      'plitzi_set_classes',
       'plitzi_try_function'
     ]);
     expect(tools.every(t => typeof t.execute === 'function')).toBe(true);
@@ -128,8 +127,10 @@ describe('MCP createPreview (draft build, pre-render error paths)', () => {
   });
 });
 
-describe('MCP plitzi_preview tool', () => {
-  const previewToolDef = () => tools.find(t => t.name === 'plitzi_preview');
+// The one way to see a saved page — its outline by default, its HTML or a picture when asked.
+describe('MCP plitzi_look tool', () => {
+  const previewToolDef = () => tools.find(t => t.name === 'plitzi_look');
+  const screenshotToolDef = previewToolDef;
 
   it('is registered as a read tool', () => {
     expect(previewToolDef()?.access).toBe('read');
@@ -148,17 +149,14 @@ describe('MCP plitzi_preview tool', () => {
         Promise.resolve({ ok: true as const, pagePath: '/', html: '<!doctype html><html></html>', stateVersion: 'v1' })
     };
     const res = (await previewToolDef()?.execute(
-      { pageRef: 'home' },
+      { pageRef: 'home', view: 'html' },
       { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview }
     )) as { html?: string; pagePath?: string; stateVersion?: string };
     expect(res.html).toContain('<!doctype html>');
     expect(res.pagePath).toBe('/');
     expect(res.stateVersion).toBe('v1');
   });
-});
 
-describe('MCP plitzi_screenshot tool', () => {
-  const screenshotToolDef = () => tools.find(t => t.name === 'plitzi_screenshot');
   const okPreview = {
     render: () =>
       Promise.resolve({
@@ -170,17 +168,13 @@ describe('MCP plitzi_screenshot tool', () => {
       })
   };
 
-  it('declares a screenshot capability requirement', () => {
-    expect(screenshotToolDef()?.requires).toBe('screenshot');
-  });
-
   it('returns image content when the browser service succeeds', async () => {
     const screenshot = {
       capture: () =>
         Promise.resolve({ ok: true as const, images: [{ label: 'desktop', mimeType: 'image/png', data: 'AAAA' }] })
     };
     const res = (await screenshotToolDef()?.execute(
-      { viewport: 'desktop' },
+      { viewport: 'desktop', view: 'image' },
       { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
     )) as { content?: Array<{ type: string; data?: string; mimeType?: string }> };
     const image = res.content?.find(c => c.type === 'image');
@@ -250,7 +244,7 @@ describe('MCP plitzi_screenshot tool', () => {
     expect(res.html).toContain('<!doctype html>');
   });
 
-  it('reads the page as assistive technology does, and lists what has no name, without an image', async () => {
+  it('reads the page as assistive technology does by default, and lists what has no name, without an image', async () => {
     const asked: Array<string[] | undefined> = [];
     const screenshot = {
       capture: (input: { views?: string[] }) => {
@@ -265,7 +259,7 @@ describe('MCP plitzi_screenshot tool', () => {
     };
 
     const res = (await screenshotToolDef()?.execute(
-      { view: 'accessibility' },
+      {},
       { space: buildSpace(), env: 'main', persisters: {}, spaceId: 1, preview: okPreview, screenshot }
     )) as { content?: unknown; accessibility?: unknown; hint?: string };
 

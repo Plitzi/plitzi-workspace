@@ -89,25 +89,22 @@ calls as a small one:
    **suggestions**: a shorter way to what the batch wrote — a header copied onto a third page that a layout would
    hold once, a `text` inside a button that is the button's own `content` — each with the elements it saves. Only what
    the batch opened up is said, and none of them blocks the save.
-4. **`plitzi_screenshot`** — renders the page with the unsaved batch applied, desktop and mobile. With
-   `view: "accessibility"` it reads the page as a screen reader and a browser agent do instead, and lists every
-   control and picture with no name.
-5. **`plitzi_apply`** — saves.
+4. **`plitzi_apply`** without `dryRun` — saves the same batch. A change one intention says whole — an element's
+   attributes, its classes, a binding, a component placed, a page — has a tool of its own that writes the batch.
 
 | Tool | What it is for |
 |---|---|
 | `plitzi_search` | Find elements, pages and style classes; returns the names every edit takes |
 | `plitzi_read` | Read several resources at once by URI |
 | `plitzi_apply` | Apply and save a batch — all of it or none of it; answers with the batch's suggestions too. `dryRun` checks it without saving, `look` renders the page as the batch leaves it |
-| `plitzi_set`, `plitzi_class`, `plitzi_bind`, `plitzi_place`, `plitzi_add_page` | One change by its intention, the element named by its ref alone, saved as `plitzi_apply` saves it and answered in a line |
+| `plitzi_set_attributes`, `plitzi_set_classes`, `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` | One change by its intention, the element named by its ref alone, saved as `plitzi_apply` saves it and answered in a line; classes are added or removed, the rest kept |
 | `plitzi_describe_operation` | One operation's schema by its type, or every type there is. A field an operation does not have is refused naming the one meant; the same batch refused twice is not run again (`REPEATED_BATCH`) |
-| `plitzi_preview` | Render a saved page to HTML |
-| `plitzi_screenshot` | Render a saved page to an image, or to its accessibility tree (`view: "accessibility"`) |
+| `plitzi_look` | See a saved page: its accessibility outline (default), its HTML, or an image |
 | `plitzi_render` | Show the user an offline widget; never touches the space |
 | `plitzi_try_function` | Run one task of the space's [functions](./functions.md) against the draft, in the sandbox: its value, logs and error |
 
-Every tool but `plitzi_apply` and `plitzi_try_function` is marked `readOnlyHint` (from its `access`), so a host can run
-it without asking and ask before the two that change something.
+Every tool that only reads is marked `readOnlyHint` (from its `access`), so a host can run it without asking and ask
+before the ones that change something — `plitzi_apply`, the intent tools and `plitzi_try_function`.
 
 The resources (`plitzi://…`) are the catalog the agent browses: pages, layouts and components, element types, style classes,
 tokens, fonts, variables, [feature flags](./feature-flags.md) (`plitzi://flags/{env}`, written with `upsertFlag` /
@@ -117,8 +114,8 @@ operations of `plitzi_apply`) and its data (`plitzi://data/{env}`: the JSON its 
 `/data/<file>`, written with `upsertDataFile` / `deleteDataFile`). The
 full list, with what each one answers, is the agent's manual at `plitzi://guide`.
 
-`plitzi_preview` and `plitzi_screenshot` need the deployment's SSR render service (and the screenshot service for
-images); where they are missing, the tools say so instead of failing silently.
+A look — `plitzi_look`, or `plitzi_apply`'s `look` — needs the deployment's SSR render service (and the screenshot
+service for an image or an outline); where they are missing, it says so instead of failing silently.
 
 ## 4. What the server guarantees
 

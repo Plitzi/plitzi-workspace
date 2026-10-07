@@ -93,6 +93,13 @@ The CLI's outputs are not the problem; what an agent has to load and read to use
     caught often still pays for every attempt. So mistakes are prevented where they can be, absorbed where they are
     unambiguous, fixed in one retry where they are not, and a loop is broken by the tool rather than left to the model
     (§5.5).
+13. **One reading, everywhere.** A small model that weighs two ways to do one thing spends turns on the choice, or
+    makes the wrong one. So each job has one tool (seeing a saved page is `plitzi_look`, not a choice between three);
+    a name says its verb and its object (`plitzi_set_classes`, not `plitzi_class`); a parameter never changes meaning
+    by default (classes are added or removed, never a list that silently replaces what was there); and an input that
+    could mean two things is answered as one *and says the other* (`plitzi where cta` reads an id, and says the words
+    that also matched, with the command for them), or is read one way when asked (`--by`). What is corrected is
+    corrected only where one reading exists — two types told apart by their capitals alone are not guessed between.
 
 ## 5. The design
 
@@ -101,8 +108,8 @@ The CLI's outputs are not the problem; what an agent has to load and read to use
 **The operations schema once — done (phase 1).** `plitzi_apply` carries the full union (`carriesOperations`);
 `plitzi_render` lists its operations' types only (`compactInputShape`) wherever apply is listed beside it, and keeps the
 whole schema on a guest connection, where it is alone. `plitzi_validate` is gone, with the `validate` function behind it:
-it is `apply`'s `dryRun`. `plitzi_preview` and `plitzi_screenshot` show what is saved and take
-no operations. `plitzi_describe_operation { type }` answers one operation's schema (~800 tokens), or the closed list of
+it is `apply`'s `dryRun`. `plitzi_look` is the one way to see a saved page (outline by default, HTML or image); the
+two tools it replaced, `plitzi_preview` and `plitzi_screenshot`, are gone. `plitzi_describe_operation { type }` answers one operation's schema (~800 tokens), or the closed list of
 types — with the nearest one when the name does not exist. Measured: a connection with a space lists ~18k tokens,
 from ~69k; `e2e/connector.test.ts` holds it to 71.6 KB.
 
@@ -254,8 +261,8 @@ The benchmark's waste line (§5.4) is how each of these is judged.
 4. **Skills in layers — done:** each `SKILL.md` a core held to 1,500 tokens (authoring ~920, CLI ~820, render ~1,050),
    the rest in references the core routes to. References stay at their 3,000-token budget, one subject each; splitting
    them finer waits for the benchmark to say a smaller piece is read better.
-5. **Intention tools and closed vocabularies — done:** on the MCP `plitzi_set`, `plitzi_class`, `plitzi_bind`,
-   `plitzi_place`, `plitzi_add_page` (the §5.1 candidates); on the CLI `plitzi edit`, which writes literals — a class in
+5. **Intention tools and closed vocabularies — done:** on the MCP `plitzi_set_attributes`, `plitzi_set_classes` (add and
+   remove), `plitzi_bind_attribute`, `plitzi_place_component`, `plitzi_add_page` (the §5.1 candidates); on the CLI `plitzi edit`, which writes literals — a class in
    code is a variable, so dressing an element there stays the agent's, at the call `where` shows. A class an element
    wears is held to the ones the space has. The catalogue grows or shrinks by what the benchmark's models fail at.
 6. **Accepting the unambiguous**, with warnings — done: an element type's capitals; the preview renders through

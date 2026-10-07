@@ -29,7 +29,7 @@ model for this.
 | Piece | Where | What it gives this feature |
 | --- | --- | --- |
 | Authoring through the MCP | `apps/mcp` (`plitzi_apply`: pages, elements, components, styles, bindings) | The ops a proposal is made of — validated, refused with the fix in the message, `dryRun` without writing |
-| Screenshots as images the model sees | `plitzi_screenshot` (`imageResult`), the screenshot service | A picture of what a proposal builds, from unsaved operations, at desktop and mobile widths |
+| Screenshots as images the model sees | `plitzi_look` and `plitzi_apply`'s `look` (`imageResult`), the screenshot service | A picture of what a proposal builds, from unsaved operations, at desktop and mobile widths |
 | `sdk-authoring` + lint | `packages/sdk-authoring` | Everything proposed is held to the same rules as hand-written authoring |
 | Components (ex-RFC 0021) | `schema.components` | Repeated sketched blocks can become one component with props |
 | The space's private bucket | `space_cdn_bucket` (functions, data) | Where a sketch's picture is kept |

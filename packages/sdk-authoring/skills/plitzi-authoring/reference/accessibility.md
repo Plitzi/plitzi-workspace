@@ -111,5 +111,4 @@ can't click something that only appears on focus.
 - `authorSpace` warnings: zero, as always.
 - In a test, `page.getByRole('button', { name: 'Close' })` fails when the name is missing.
   `expect(locator).toMatchAriaSnapshot(…)` pins the whole outline.
-- Through MCP, `plitzi_screenshot` with `view: "accessibility"` returns the page's tree and lists everything that has
-  no name.
+- Through MCP, `plitzi_look` returns the page's tree (its default view) and lists everything that has no name.

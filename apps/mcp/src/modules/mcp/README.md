@@ -29,8 +29,8 @@ mcp/
 ├── index.ts                 # Public surface of the module (re-exports the entry points below)
 ├── handler.ts               # HTTP glue: read body, drive one stateless request through a built server
 ├── server.ts                # createMcpServer: registers tools + resources onto an McpServer
-├── previewClient.ts         # HTTP client to the SSR renderer (plitzi_preview)
-├── screenshotClient.ts      # HTTP client to the browser service (plitzi_screenshot)
+├── previewClient.ts         # HTTP client to the SSR renderer (a look's HTML and draft)
+├── screenshotClient.ts      # HTTP client to the browser service (a look's image and outline)
 ├── localScreenshotClient.ts # The same, against a browser this process launches (dev / self-hosted)
 │
 ├── catalogs/                # Reference VOCABULARIES the server validates + advertises against
@@ -118,7 +118,7 @@ owns its whole origin, so MCP answers at the root — no `/mcp` path.
 
 ### `tools/` — the write side
 
-One file per top-level tool (`apply`, `describeOperation`, `search`, `read`, `render`, `preview`, `screenshot`,
+One file per top-level tool (`apply`, `describeOperation`, `intents`, `search`, `read`, `look`, `render`,
 `tryFunction`), registered from `tools/index.ts` into the `tools` array. Every tool that takes operations runs them through
 [`shared/draftBatch.ts`](tools/shared/draftBatch.ts) — expand, validate the input, apply to a copy, lint the copy —
 so `plitzi_apply`'s `dryRun` answers exactly what saving would — errors, warnings and the `suggestions` the batch opened

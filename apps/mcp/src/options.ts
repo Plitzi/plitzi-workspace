@@ -57,11 +57,10 @@ export type McpOptions = {
    *  `/preview` endpoint so the visual-preview tools work. The SDK builds an HTTP preview client from this;
    *  absent → those tools report PREVIEW_UNAVAILABLE. */
   previewClient?: { url: string; secret?: string };
-  /** Dedicated headless-browser service for plitzi_screenshot (off unless set). `serviceUrl` is the browser
-   *  service that turns a URL into PNG(s); `renderBaseUrl` is the SSR base the browser navigates to (a page path
-   *  + the one-shot `__pt` token are appended). When absent, plitzi_screenshot is not registered and only the HTML
-   *  plitzi_preview is available; when the service is unreachable at call time the tool degrades to returning the
-   *  HTML preview with a warning. */
+  /** Dedicated headless-browser service a look renders an image or an accessibility outline through (off unless
+   *  set). `serviceUrl` is the browser service that turns a URL into PNG(s); `renderBaseUrl` is the SSR base the
+   *  browser navigates to (a page path + the one-shot `__pt` token are appended). When absent — or unreachable at call
+   *  time — a look answers the HTML instead, with a warning. */
   screenshot?: { serviceUrl: string; renderBaseUrl: string };
   /** OAuth 2.1 authorization for remote connectors (Claude Desktop, ChatGPT), which cannot send a custom header.
    *  Omit to keep the server anonymous: discovery 404s and every caller is served unauthenticated. */

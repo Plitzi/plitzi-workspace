@@ -1,10 +1,9 @@
 import { applyTool } from './apply';
 import { describeOperationTool } from './describeOperation';
-import { addPageTool, bindTool, classTool, placeTool, setTool } from './intents';
-import { previewTool } from './preview';
+import { addPageTool, bindAttributeTool, placeComponentTool, setAttributesTool, setClassesTool } from './intents';
+import { lookTool } from './look';
 import { readTool } from './read';
 import { renderTool } from './render';
-import { screenshotTool } from './screenshot';
 import { searchTool } from './search';
 import { tryFunctionTool } from './tryFunction';
 
@@ -20,17 +19,16 @@ export { operation } from './operations';
  *  ToolDef descriptor and append it here. */
 export const tools: ToolDef[] = [
   applyTool,
-  setTool,
-  classTool,
-  bindTool,
-  placeTool,
+  setAttributesTool,
+  setClassesTool,
+  bindAttributeTool,
+  placeComponentTool,
   addPageTool,
   searchTool,
   describeOperationTool,
   readTool,
   renderTool,
-  previewTool,
-  screenshotTool,
+  lookTool,
   tryFunctionTool
 ];
 

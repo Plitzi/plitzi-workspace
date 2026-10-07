@@ -36,11 +36,11 @@ import type { SSRAdapters, Environment, ServerLogger, SSRGrant, SSRWriteContext 
 export interface McpServerContext {
   adapters: SSRAdapters;
   getGrant: () => Promise<SSRGrant | undefined>;
-  /** How the visual-preview tools (plitzi_preview / plitzi_screenshot) reach the renderer. Absent → those tools
-   *  report PREVIEW_UNAVAILABLE, so an MCP-only deployment without a renderer still runs every other tool. */
+  /** How a look (plitzi_look, plitzi_apply's `look`) reaches the renderer. Absent → it reports PREVIEW_UNAVAILABLE, so an
+   *  MCP-only deployment without a renderer still runs every other tool. */
   preview?: PreviewClient;
-  /** The dedicated browser service for plitzi_screenshot. Absent → the tool is not registered (only the HTML
-   *  plitzi_preview is offered). */
+  /** The dedicated browser service a look takes an image or an accessibility outline with. Absent → a look answers
+   *  the HTML, and says so. */
   screenshot?: ScreenshotClient;
   /** Structured request-log sink. When set, every tool call and resource read emits an McpLogEvent to it (the
    *  consumer renders them); otherwise logging falls back to the console when MCP_DEBUG=1. */
@@ -216,10 +216,9 @@ export const createMcpServer = async ({
     return tool.executePublic ? args => tool.executePublic?.(args, MCP_ENV) : undefined;
   };
 
-  // What this connection lists: a tool whose capability the host did not wire (plitzi_screenshot without a browser
-  // service) never appears, nor one with nothing to do here.
+  // What this connection lists: a tool with nothing to do here (one that needs a space, on a guest grant) never appears.
   const listed = tools.flatMap(tool => {
-    const behavior = tool.requires === 'screenshot' && !screenshot ? undefined : behaviorOf(tool);
+    const behavior = behaviorOf(tool);
 
     return behavior ? [{ tool, behavior }] : [];
   });

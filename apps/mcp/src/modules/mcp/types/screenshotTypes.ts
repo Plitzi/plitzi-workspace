@@ -34,7 +34,7 @@ export type ScreenshotInput = {
   views?: CaptureView[];
 };
 
-/** How plitzi_screenshot reaches the headless-browser service. The consumer injects an implementation (an HTTP
- *  client to the dedicated browser pod); absent → the tool is not registered. A capture that fails (pod down)
- *  returns `ok:false` rather than throwing, so the tool can degrade to the HTML preview. */
+/** How a look reaches the headless-browser service. The consumer injects an implementation (an HTTP
+ *  client to the dedicated browser pod); absent, or a capture that fails (pod down) and answers `ok:false` rather than
+ *  throwing, and the look answers the HTML instead. */
 export type ScreenshotClient = { capture: (input: ScreenshotInput) => Promise<ScreenshotResult> };

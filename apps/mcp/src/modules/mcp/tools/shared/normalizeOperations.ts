@@ -38,7 +38,15 @@ export const normalizeOperations = (
   operations: Operation[]
 ): { operations: Operation[]; notes: string[] } => {
   const known = knownTypes(space);
-  const byLowerCase = new Map([...known].map(type => [type.toLowerCase(), type]));
+  // Only a spelling one type answers to: were two types told apart by their capitals alone, neither is guessed.
+  const spellings = new Map<string, string[]>();
+  for (const type of known) {
+    spellings.set(type.toLowerCase(), [...(spellings.get(type.toLowerCase()) ?? []), type]);
+  }
+
+  const byLowerCase = new Map(
+    [...spellings].flatMap(([lower, types]): [string, string][] => (types.length === 1 ? [[lower, types[0]]] : []))
+  );
   const notes: string[] = [];
   const normalized = operations.map((operation, index) =>
     operation.type === 'upsertElement'

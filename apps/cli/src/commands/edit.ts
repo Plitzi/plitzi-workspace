@@ -95,7 +95,7 @@ export const parseSets = (
 /** The element as the space authors it now, asked of a fresh process: the file was edited after this one loaded it. */
 const authoredAfresh = async (elementId: string): Promise<WhereAnswer | { problem: string }> => {
   try {
-    const { stdout } = await run(process.execPath, [process.argv[1], 'where', elementId, '--json'], {
+    const { stdout } = await run(process.execPath, [process.argv[1], 'where', elementId, '--by', 'id', '--json'], {
       cwd: process.cwd(),
       maxBuffer: 16 * 1024 * 1024
     });
@@ -156,7 +156,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
     return;
   }
 
-  const found = await whereAnswer(project.root, elementId);
+  const found = await whereAnswer(project.root, elementId, 'id');
   if (found.by === 'source') {
     await refuse(
       `Nothing was changed: ${found.problem ?? 'the space does not author'}. Fix that first (\`npm run author\`).`

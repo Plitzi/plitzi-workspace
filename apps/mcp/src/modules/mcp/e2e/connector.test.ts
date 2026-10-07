@@ -97,17 +97,17 @@ const widgetOperations = [
 // guide. Set with ~0.6k of room.
 //
 // Lowered from 218.5k to 71.6k (RFC 0025): the op union is listed once, by plitzi_apply. plitzi_validate became its
-// `dryRun`; plitzi_preview and plitzi_screenshot show what is saved, and a batch is looked at through `look` on that
-// same `dryRun`; plitzi_render names its operations' types only (`compactInputShape`) while plitzi_apply is listed
+// `dryRun`; a saved page is seen with plitzi_look, and a batch through `look` on that same `dryRun`; plitzi_render names its operations' types only (`compactInputShape`) while plitzi_apply is listed
 // beside it. Measured at 70.9k with ~0.7k of room — the whole listing an agent loads before it does anything.
 //
 // Raised to 73k: every operation now refuses a field it does not have (`additionalProperties: false`, ~1.4k across the
 // 48), where one used to be dropped and the batch answered success — `prop` for `props` applied nothing. Measured at
 // 72.3k with ~0.7k of room.
 //
-// Raised to 76k for the intent tools (plitzi_set, plitzi_class, plitzi_bind, plitzi_place, plitzi_add_page, ~2.3k): a
-// small model changes words, classes and bindings, places a component and adds a page with a few parameters instead of
-// composing operations. Measured at 75.3k with ~0.7k of room.
+// Raised to 76k for the intent tools (plitzi_set_attributes, plitzi_set_classes, plitzi_bind_attribute,
+// plitzi_place_component, plitzi_add_page): a small model changes attributes, classes and bindings, places a component
+// and adds a page with a few parameters instead of composing operations. plitzi_preview and plitzi_screenshot became
+// one plitzi_look. Measured at 75.2k with ~0.8k of room.
 const TOOLS_BUDGET_BYTES = 76_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be

@@ -33,6 +33,15 @@ describe('what plitzi where finds', () => {
     expect(matchElements(elements, 'navLink')).toMatchObject({ by: 'class' });
   });
 
+  // A query that means two things is answered as the first and says the other, with its count — never as one silently.
+  it('says the other readings a query matched, and reads it one way when asked', () => {
+    const withCta = [...elements, element('cta-2', [], 'cta')];
+
+    expect(matchElements(withCta, 'cta')).toMatchObject({ by: 'id', also: [{ by: 'text', count: 1 }] });
+    expect(matchElements(withCta, 'cta', 'text')).toMatchObject({ by: 'text', also: [] });
+    expect(matchElements(withCta, 'cta', 'class')).toBeUndefined();
+  });
+
   it('finds nothing for what nothing is', () => {
     expect(matchElements(elements, 'pricing')).toBeUndefined();
   });

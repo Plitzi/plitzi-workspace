@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildSpace, capturing } from './helpers';
-import { addPageTool, classTool, setTool } from '../tools/intents';
+import { addPageTool, setAttributesTool, setClassesTool } from '../tools/intents';
 
 import type { ToolContext } from '../tools/shared/tool';
 
@@ -17,31 +17,38 @@ const context = () => {
 describe('the intent tools', () => {
   it('sets an element’s attributes by its ref alone, and says what changed in a line', async () => {
     const { ctx, saved } = context();
-    const answer = (await setTool.execute({ ref: 'c1', set: { subType: 'section' } }, ctx)) as {
+    const answer = (await setAttributesTool.execute({ ref: 'c1', set: { subType: 'section' } }, ctx)) as {
       done: string;
       next: string;
     };
 
     expect(answer.done).toBe('subType of c1 written');
-    expect(answer.next).toContain('plitzi_screenshot');
+    expect(answer.next).toBe('plitzi_look { pageRef: "home" } to see it');
     expect(saved().schema.flat.c1.attributes.subType).toBe('section');
   });
 
   it('answers a ref that does not exist with the nearest one', async () => {
     const { ctx } = context();
 
-    expect(await setTool.execute({ ref: 'c2', set: { subType: 'section' } }, ctx)).toMatchObject({
+    expect(await setAttributesTool.execute({ ref: 'c2', set: { subType: 'section' } }, ctx)).toMatchObject({
       done: false,
       errors: [{ message: 'There is no element "c2" — did you mean "c1"?' }]
     });
   });
 
-  it('dresses an element with the classes it wears, and refuses what the batch would refuse', async () => {
+  // "Give it the class" adds it: the classes it already wears stay unless they are named to go.
+  it('adds and removes classes, keeping the ones it does not name, and refuses one the space does not have', async () => {
     const { ctx, saved } = context();
+    ctx.space.style.platform.desktop.card = { ...ctx.space.style.platform.desktop.box, name: 'card' };
 
-    expect(await classTool.execute({ ref: 'c1', classes: ['box'] }, ctx)).toMatchObject({ done: 'c1 wears box' });
-    expect(saved().schema.flat.c1.definition.styleSelectors.base).toContain('box');
-    expect(await classTool.execute({ ref: 'c1', classes: ['no-such-class'] }, ctx)).toMatchObject({ done: false });
+    expect(await setClassesTool.execute({ ref: 'c1', add: ['card'] }, ctx)).toMatchObject({
+      done: 'c1 wears box, card'
+    });
+    expect(saved().schema.flat.c1.definition.styleSelectors.base.split(' ')).toEqual(['box', 'card']);
+    expect(await setClassesTool.execute({ ref: 'c1', remove: ['box'] }, ctx)).toMatchObject({
+      done: 'c1 wears no class'
+    });
+    expect(await setClassesTool.execute({ ref: 'c1', add: ['no-such-class'] }, ctx)).toMatchObject({ done: false });
   });
 
   it('adds a page at its slug', async () => {
