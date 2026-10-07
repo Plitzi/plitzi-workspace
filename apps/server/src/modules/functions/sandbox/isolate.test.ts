@@ -7,6 +7,7 @@ import { createActionsModule } from '../../actions';
 import { createSigning } from '../../actions/runtime/signing';
 import { functionsInHand } from '../space';
 
+import type { IsolateRunner } from './isolate';
 import type { FunctionsConfig } from '../config';
 import type { FunctionLimits, SpaceFunctions } from '../protocol';
 import type { ActionEntry, ElementInteraction, SSRUser } from '@plitzi/sdk-shared';
@@ -561,18 +562,26 @@ describe('what a runner keeps', () => {
     expect(loadA).toHaveBeenCalledTimes(2);
   });
 
+  // Against a cold runner's first invocation, timed beside it, and not a budget in milliseconds: a machine running
+  // every package's tests at once slows both alike, and blew any fixed budget.
   it('is ready before its first invocation once warmed', async () => {
-    const fresh = createIsolateRunner();
-    await fresh.warm();
-    const started = performance.now();
-    await fresh.invoke({
-      bundle: { id: 'after-warm', load: () => Promise.resolve(codeOf('w', 0)) },
-      invocation: invocationOf(),
-      limits: LIMITS,
-      answer: () => Promise.resolve(null),
-      signal: new AbortController().signal
-    });
+    const firstInvocation = async (runner: IsolateRunner): Promise<number> => {
+      const started = performance.now();
+      await runner.invoke({
+        bundle: { id: 'first', load: () => Promise.resolve(codeOf('w', 0)) },
+        invocation: invocationOf(),
+        limits: LIMITS,
+        answer: () => Promise.resolve(null),
+        signal: new AbortController().signal
+      });
 
-    expect(performance.now() - started).toBeLessThan(50);
+      return performance.now() - started;
+    };
+    const warmed = createIsolateRunner();
+    await warmed.warm();
+
+    const cold = await firstInvocation(createIsolateRunner());
+
+    expect(await firstInvocation(warmed)).toBeLessThan(cold);
   });
 });

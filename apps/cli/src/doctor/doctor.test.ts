@@ -122,7 +122,9 @@ afterEach(async () => {
   await fs.rm(home, { recursive: true, force: true });
 });
 
-describe('plitzi doctor', () => {
+// Each run is the whole doctor on a project on disk, some of them twice: far over the default 5 s on a machine running
+// every package's tests at once.
+describe('plitzi doctor', { timeout: 30_000 }, () => {
   it('finds a project as plitzi create wrote it healthy', async () => {
     const report = await run({ strict: true });
 
@@ -130,7 +132,7 @@ describe('plitzi doctor', () => {
     expect(report.ok).toBe(true);
     expect(process.exitCode).toBeUndefined();
     expect(report.areas.every(area => area.status === 'ok')).toBe(true);
-  }, 30_000);
+  });
 
   it('says what Node would refuse to run, which the typecheck lets through', async () => {
     const main = await read('src/main.ts');
@@ -521,7 +523,7 @@ describe('plitzi doctor', () => {
 
     expect(report.repaired.repairs).toContain('deletes tmp/space.json');
     await expect(fs.access(path.join(project, 'tmp/space.json'))).rejects.toThrow();
-  }, 30_000);
+  });
 
   it('writes a signing secret with --fix where there is none', async () => {
     await write('.env', '# PORT=8080\n');
