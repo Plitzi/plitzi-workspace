@@ -5,7 +5,7 @@
 ### Patch Changes
 
 - c7bbc2b: ## A server project's `src/main.ts` is a few lines
-  
+
   - **`serveProject` from `@plitzi/sdk-server/project`**: the generated `src/main.ts` hands the space, its actions and
     its options to the server, and the rest comes with the package — the port, the plugins of `src/plugins` and
     `vendor/plugins`, the functions and runtime, `public/`, `src/data/`, the `kv` in `state/kv.json`, `/health`,
@@ -38,9 +38,8 @@
     `ProjectServerOptions`. `plitzi upgrade files --write` brings an existing project's `main.ts` and `author.ts` up.
   - **`npm run build` no longer fails on a plugin's stylesheet**: `tsconfig.build.json` includes `plitzi/assets.d.ts`,
     which a space importing a plugin's declaration reaches through its component.
-  
+
   ## A write refreshes what shows it
-  
   - **Writes now refresh server-driven providers.** `runServerAction`, `webHook`, `writeRecord` and the
     `invalidateQueries` step reach `runtime: 'server'` api containers by id, by `query` URL, or all of them, just as
     they reach cached browser requests. Before, they reached only the browser's query cache, so a saved write left the
@@ -49,9 +48,8 @@
     `Cache-Control: no-cache`; `/_rsc` resolves such a request again instead of serving its cached slice, and keeps the
     new answer. A `refreshSeconds` timer and a "load more" page still go through the caches.
   - **`refreshRsc`'s fourth argument is an options object**, `{ location?, fresh? }`.
-  
+
   ## A space's functions read its data
-  
   - **`ctx.data('products.json')`** reads one file of the space's data (a project's `src/data/`), parsed and read-only,
     as of the run's version. Plugins' functions are refused it.
   - **Self-hosted servers read `dataDir` through the same lookup as the platform**, so `/data/<file>` providers and
@@ -59,9 +57,8 @@
     error state instead of falling through to `publicDir`.
   - **Importing a file outside `functions/` names the boundary and the fix**: read the space's data with
     `ctx.data('<file>')`.
-  
+
   ## Signing in on a self-hosted server
-  
   - **`createServer({ auth })` tells the pages it renders where to sign in** (`server.auth`: provider, endpoints and
     the session hint cookie), so a space signs in with no auth settings declared. Settings a space does declare still
     win, and a space that names another provider ignores the server's description. New `pageAuth` server option, for a
@@ -74,17 +71,15 @@
     it does, it overrides the token's own expiry.
   - **New authoring reference `auth.md`**: providers, `authLogin` and its result, `authLogout`, `{{ auth.* }}`,
     `accessLevel`, visitor roles, action `access` and `ctx.user`.
-  
+
   ## Flows
-  
   - **Authoring refuses a `when` that asks a step for a key it never publishes** (`condition-field-unpublished`).
     `whenSucceeded` / `whenFailed` after `authLogin` always ran the failure branch: they read a server action's
     `status`. The message names what the step publishes and suggests testing `signedIn.ok` with `when`.
   - **`explain` lists what a step publishes** (`Reads:`) and finds the auth steps by their builders (`authLogin`,
     `authLogout`, `authRefreshDetails`). `authLogin({ username, password })` no longer needs `mode`.
-  
+
   ## Elements
-  
   - **Images no longer default to a 140×140 square**: they are 140px wide and as tall as their ratio, so `width` or
     `aspect-ratio` on a class just works. `object-fit` shows in the builder too.
   - **`formControl` with `subType: 'switch'` renders an on/off switch** (`role="switch"`) — it rendered only its label.
@@ -103,9 +98,8 @@
   - **A link that names a query is current only on that query**: of `/?window=6h` and `/?window=24h`, the one shown
     carries `aria-current` — with the path alone, every one of them did. A link with no query is still current on its
     page whatever the query.
-  
+
   ## The style language says what `customCss` used to
-  
   - **Pseudo-elements on a class**: `pseudos: { after: { css: { content: '"→"' }, states: { hover: { … } } } }` —
     `before`, `after`, `marker`, `placeholder`, `first-letter`, `first-line`, `selection`, each in the class's states and
     variants. Authoring refuses what draws nothing: a `before`/`after` with no `content`, a `content` without its quotes,
@@ -122,9 +116,8 @@
     `customCss` a class can hold now — `.link::after`, one under `@media (prefers-reduced-motion: reduce)`, `.row:first-child`,
     `.row:nth-child(even)`, `.toggle[aria-expanded='true']` — are folded into the class on export and suggested by
     `custom-css-class`.
-  
+
   ## Elements take a class for each part
-  
   - **`formControl`**: `field` (the `<input>` itself), `icon` (the show-password button) and `requiredMark` slots; a switch's
     knob reads in dark mode and takes `--plitzi-switch-thumb`, `--plitzi-switch-thumb-checked`, `--plitzi-switch-thumb-shadow`.
   - **`pagination`**: `previous`, `page` (the one shown is its `current` state), `next`, `loadMore`.
@@ -139,9 +132,8 @@
   - `custom-css-slot` suggests the slot for a `customCss` rule on a part's SDK class — only where a class on the slot can
     say the rest of the selector (a state, a pseudo-element); `element-slot-unknown` warns of a slot an element does not
     have.
-  
+
   ## Links, refreshes and toasts
-  
   - **`current: 'section'` on a link** keeps it current on its page and every page under its path (`aria-current="true"`
     there), styled by the `current` state — no `activeOn` binding for a section.
   - **A refresh asks only about elements the page shown holds**: a provider on the page being left no longer sends a
@@ -160,29 +152,25 @@
     load — is answered `503` with `reason: 'unavailable'`, by the `POST` and in the WebSocket's `ack` alike; a connect,
     a disconnect or a revoke that fails is logged, on either transport. Each used to reject with nobody waiting, and the server's `unhandledRejection` handler
     shut the whole process down.
-  
+
   ## Reporting to Plitzi
-  
   - **`plitzi feedback`** starts a report of what broke, misled or cost time: it writes the page the report is laid out
     in (`tmp/feedback/`) with the installed versions, the project and what `doctor` finds already in it, and tells the
     agent how to fill it — each finding reproduced first, with evidence, impact, workaround and fix, no secrets — and to
     publish it as an artifact whose link the developer sends. `--previous <url>` continues an earlier report.
-  
+
   ## Pages that load on every browser
-  
   - **The import map comes before anything that loads a module**, in the page server's HTML, a published site's
     (`index.hbs` on the platform), the SDK's and the builder's. React's `modulepreload` links came first, and a browser
     that had fetched a module already — Chrome before 133 — ignored the map: every bare `import "react"` failed
     ("Failed to resolve module specifier") and the page never hydrated.
-  
+
   ## The dev tools
-  
   - **A page loads the React its dev tools need.** The development build only while the visitor has the dev tools on
     (shift+F12, within what the deployment allows); turned off, the next load is a production page, React included. It
     followed the authorization alone, so a space that allowed debugging always shipped development React.
-  
+
   ## check and lint
-  
   - **`plitzi check`, `push`, `lint` and `fix` hold the space to what `npm run author` and the server do**: its data
     files too, so `push` no longer sends a space whose browser provider reads `src/data/` (`server-data-in-browser`).
   - **`plitzi check` lists each list's rows as drawn and as held in its source** (`feed 4 of 8 rows`,
@@ -208,6 +196,7 @@
     checked, and `npm start` and `npm run author` print every problem and exit with 1.
   - **New authoring suggestion `class-overrides-class`**: one class's shorthand (`padding`) silently erases a longhand
     (`padding-top`) another class on the same element writes out.
+
 - Updated dependencies [c7bbc2b]
   - @plitzi/sdk-shared@0.38.7
   - @plitzi/plitzi-sdk@0.38.7
