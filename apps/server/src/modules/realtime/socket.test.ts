@@ -12,6 +12,7 @@ import type { ChannelDeclarations, OfflineDataRaw, SSRServer } from '@plitzi/sdk
  */
 
 const PORT = 39316;
+const FAILING_PORT = 39319;
 const BASE = `127.0.0.1:${PORT}`;
 
 const channels: ChannelDeclarations = {
@@ -140,7 +141,6 @@ describe('realtime over a WebSocket', () => {
 });
 
 describe('realtime over a WebSocket, while the pub/sub under it fails', () => {
-  const FAILING_PORT = PORT + 1;
   let failing: SSRServer;
   const rejected: unknown[] = [];
   const onRejection = (reason: unknown): void => {

@@ -30,8 +30,8 @@ import type { ActionEntry, ElementInteraction, SSRServer } from '@plitzi/sdk-sha
 
 const SECRET = 'a-runtime-secret-that-is-32-chars-long';
 const SIGNING_SECRET = 'the-platform-signing-secret-32-chars';
-const RUNTIME_PORT = 39351;
-const PAGE_PORT = 39352;
+const RUNTIME_PORT = 39361;
+const PAGE_PORT = 39362;
 
 const runtime = defineRuntime({
   start: ({ env }) => ({
@@ -259,7 +259,7 @@ describe('a packed runtime', () => {
  * connection held — still stops: what never ends by itself is ended, so whatever is stopping it is never left waiting.
  */
 describe('a space runtime being stopped', () => {
-  const PORT = 39353;
+  const PORT = 39363;
 
   it('stops with a stream still open on it', async () => {
     const listening = defineRuntime({

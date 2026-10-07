@@ -81,7 +81,11 @@ const settleUnknownKeys = (
     // in its place, up where it is read. Only when every key is one it reads and none is written already beside it;
     // anything else is not guessed at, and no less is it dropped.
     const wrapped = record[key];
-    if (isRecord(wrapped) && Object.keys(wrapped).length > 0 && Object.keys(wrapped).every(inner => known.includes(inner))) {
+    if (
+      isRecord(wrapped) &&
+      Object.keys(wrapped).length > 0 &&
+      Object.keys(wrapped).every(inner => known.includes(inner))
+    ) {
       const inners = Object.keys(wrapped);
       if (inners.every(inner => record[inner] === undefined || record[inner] === defaults[inner])) {
         Object.assign(record, wrapped);
