@@ -32,8 +32,8 @@ vi.mock('../helpers/pluginSelector', async importOriginal => {
 });
 
 vi.mock('../ServerStaticShell', () => ({
-  default: ({ id, children }: { id: string; children?: unknown }) =>
-    createElement('div', { 'data-static-shell': id }, children as never)
+  default: ({ id, frozen, children }: { id: string; frozen: boolean; children?: unknown }) =>
+    createElement('div', { 'data-static-shell': id, 'data-frozen': String(frozen) }, children as never)
 }));
 
 const el = (id: string, type: string, runtime?: Element['definition']['runtime']): Element => ({
@@ -152,8 +152,7 @@ describe('useInternalItems', () => {
       clientComponent
     );
 
-    expect(container.querySelector('[data-static-shell]')).toBeNull();
-    expect(container.querySelector('[data-plugin="text"]')).not.toBeNull();
+    expect(container.querySelector('[data-static-shell="s"][data-frozen="false"] [data-plugin="text"]')).not.toBeNull();
   });
 
   /** The one that stays frozen: there is nothing to take over with, so the server's markup is all there is. */
@@ -164,7 +163,7 @@ describe('useInternalItems', () => {
       true
     );
 
-    expect(container.querySelector('[data-static-shell="s"]')).not.toBeNull();
+    expect(container.querySelector('[data-static-shell="s"][data-frozen="true"]')).not.toBeNull();
   });
 
   /** Frozen or not, the element travels INTO the shell — a route change mounts a page whose server markup this

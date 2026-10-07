@@ -46,10 +46,16 @@ const parseStyleString = (styleStr: string): CSSProperties => {
  * server elements were never in this document, and freezing an element against markup that does not exist used to
  * render nothing at all. The element then resolves the way it does anywhere else, from the payload `useRscSync`
  * fetches for the new location.
+ *
+ * `frozen` is whether the snapshot is still what is shown: true while hydrating, false once the element can take
+ * over. The shell itself stays where it is either way, so the element under it keeps its identity — an element that
+ * had nothing to freeze (a provider that draws no markup of its own) is the same element before hydration ends and
+ * after, and nothing under it mounts twice.
  */
-const ServerStaticShell = ({ id, children }: { id: string; children?: ReactNode }) => {
+const ServerStaticShell = ({ id, frozen, children }: { id: string; frozen: boolean; children?: ReactNode }) => {
+  // Read once, on the render that hydrates: past it, the DOM is React's and holds nothing to freeze against.
   const [snapshot] = useState<Snapshot>(() => {
-    if (typeof document === 'undefined') {
+    if (!frozen || typeof document === 'undefined') {
       return null;
     }
 
@@ -78,7 +84,7 @@ const ServerStaticShell = ({ id, children }: { id: string; children?: ReactNode 
     };
   });
 
-  if (!snapshot) {
+  if (!snapshot || !frozen) {
     return children;
   }
 

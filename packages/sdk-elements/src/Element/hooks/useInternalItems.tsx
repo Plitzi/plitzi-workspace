@@ -183,9 +183,13 @@ const useInternalItems = ({
          * So the element takes over once hydration is done, rendering from the same payload the server used. The
          * exception is the element this browser has no component for, which has nothing to take over with.
          */
-        if (rscEnabled && runtime === 'server' && !isServer && previewMode && !(mounted && renderable)) {
+        // The shell stays around the element on both sides of hydration, under the same key, and only stops
+        // freezing: wrapped while hydrating and not after, the element changed type and key the moment hydration was
+        // over, and React tore down everything under it to build it again — a provider with no markup of its own
+        // took the whole layout with it, and every animation in it started over.
+        if (rscEnabled && runtime === 'server' && !isServer && previewMode) {
           return (
-            <ServerStaticShell key={itemId} id={itemId}>
+            <ServerStaticShell key={itemId} id={itemId} frozen={!(mounted && renderable)}>
               {item}
             </ServerStaticShell>
           );

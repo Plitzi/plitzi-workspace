@@ -25,7 +25,7 @@ describe('elementChildren', () => {
 
   it('knows a server element waiting in its shell by the element’s id', () => {
     const children = [
-      <ServerStaticShell key="rates" id="rates">
+      <ServerStaticShell key="rates" id="rates" frozen>
         {item('rates')}
       </ServerStaticShell>,
       item('feed')

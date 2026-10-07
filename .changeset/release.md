@@ -1,6 +1,7 @@
 ---
 '@plitzi/cli': patch
 '@plitzi/sdk-authoring': patch
+'@plitzi/sdk-elements': patch
 '@plitzi/sdk-mcp': patch
 '@plitzi/sdk-shared': patch
 ---
@@ -75,3 +76,12 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   helper inside a helper is still told apart.
 - `locateElements` answers the parts of every component too, in the component (`rootId` is its id): `plitzi where`
   and `plitzi edit` reach an element inside a component as they reach one on a page or a layout.
+
+## Fixed
+
+- **A layout no longer mounts twice when the page hydrates.** An element with `runtime: 'server'` was wrapped in its
+  static shell while hydrating and handed back without it — under another key — on the next render, so React tore
+  down everything under it and built it again. With a server provider around a layout (an `apiContainer` that draws
+  no markup of its own), the whole layout's DOM was replaced on every page, and every `motion` arrival in it played
+  twice: a visible flicker on load. The shell now stays around the element on both sides of hydration, under the same
+  key, and only stops freezing (`frozen`).
