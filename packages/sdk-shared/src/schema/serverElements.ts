@@ -1,5 +1,6 @@
 import { resolveLayoutChain } from './layoutChain';
 import { passesFlagGate } from '../flags/resolveFlags';
+import { processTwigValue } from '../helpers/twigWrapper';
 
 import type { Element, Schema } from '../types';
 
@@ -78,3 +79,26 @@ export const hasServerElements = (
   pageId: string | undefined,
   flags?: Record<string, boolean>
 ): boolean => collectServerElements(schema, pageId, undefined, flags).length > 0;
+
+/**
+ * The server provider of a page whose answer says the address shows nothing — its `notFound`, a template against
+ * that answer (`{{ source.found == false }}`) — by id; the page is then sent with status 404, rendered as written.
+ *
+ * Only `true` counts: a template that does not evaluate comes back as its own text, and a typo must leave the page
+ * found rather than turn every visit into a 404.
+ */
+export const notFoundProvider = (
+  elements: Element[],
+  serverData: Record<string, unknown>,
+  navigation: { routeParams: Record<string, unknown>; queryParams: Record<string, unknown> }
+): string | undefined =>
+  elements.find(element => {
+    const template = element.attributes.notFound;
+
+    return (
+      typeof template === 'string' &&
+      template !== '' &&
+      Object.hasOwn(serverData, element.id) &&
+      processTwigValue(template, { source: serverData[element.id], navigation }) === true
+    );
+  })?.id;

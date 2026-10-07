@@ -23,6 +23,7 @@ export const elementAttributeNames = {
     'loadingSlot',
     'method',
     'mockData',
+    'notFound',
     'pageParam',
     'pagination',
     'query',

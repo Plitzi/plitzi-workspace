@@ -578,7 +578,7 @@ createServer({ compression: false, adapters });
 |---|---|---|---|
 | `encodings` | `('br' \| 'gzip')[]` | `['br', 'gzip']` | What this server offers, most preferred first; the first one the client accepts wins. `[]` disables compression. |
 | `threshold` | `number` | `1024` | Responses smaller than this many bytes go out uncompressed. |
-| `brotliQuality` | `number` | `2` | Brotli quality, 0–11, for a body compressed on every request (a page rendered for that request alone). Measured on a quarter core, 4 cost a tenth of the pages a second to save half a kilobyte each. |
+| `brotliQuality` | `number` | `5` | Brotli quality, 0–11, for a body compressed on every request (a page rendered for that request alone). The first quality under gzip's size for the CPU gzip spends: at 2 a 220 KB page came out larger than gzip (36 KB against 31; 29 at 5). On half a core it costs ~0.1 ms a page — 5–8% of the pages a second of a 6 KB page. |
 | `keptBrotliQuality` | `number` | `6` | Brotli quality for a body compressed once and kept: a cached page, a static file such as the SDK bundle. Paid once; the bundle comes out 10% smaller than at 4, for the same memory. 9 needs ~40 MB more to compress the bundle, which a 128 MB server does not have. |
 | `gzipLevel` | `number` | `6` | Gzip level, 0–9. |
 

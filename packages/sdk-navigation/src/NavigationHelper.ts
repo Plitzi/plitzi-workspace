@@ -6,7 +6,8 @@ export {
   getRouteParams,
   isPageAuthored,
   matchPath,
-  matchRoutePath
+  matchRoutePath,
+  notFoundPageFor
 } from '@plitzi/sdk-shared/navigation';
 
 export type {

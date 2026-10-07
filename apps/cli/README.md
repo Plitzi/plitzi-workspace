@@ -183,11 +183,12 @@ with `--source local`.
 
 ```bash
 plitzi page check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
+plitzi page check /about /writers               # several pages, in one browser
 plitzi page check /products --state --element catalog-count   # and what it holds: state, sources, one element
 plitzi page check / --ssr                       # and what the server's HTML lacks that the hydrated page has
 plitzi page check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
 plitzi page check / --click news-send --fill news-email=ana@example.com   # a form sent as a visitor fills it
-PLITZI_CHECK_PASSWORD=… plitzi page check /studio --as maya   # a page for signed-in visitors, signed in through /auth first
+plitzi page check /studio --as maya             # a page for signed-in visitors, signed in through /auth first
 plitzi page shot /about --width 390 --scheme dark
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
@@ -319,9 +320,12 @@ among its siblings — so a move renames nothing.
 `verify` runs each check the project has a script for, as its package manager runs one, then opens every page with
 no parameter in its path at 1440 and 390 px (the server must be up: `npm start`). Only what fails is printed, with the
 last lines it said, and the first failure ends the run — one broken file fails every step after it the same way — the
-rest said as not run until it passes (`--keep-going` runs them anyway); a page the browser was sent away from — one for signed-in visitors — is said as not checked, never
-as passing — said on its own line, without failing the run, since a space with pages for signed-in visitors always
-has some (`plitzi page check <path> --as <username>` opens one). Exit 1 when anything failed.
+rest said as not run until it passes (`--keep-going` runs them anyway). A page the browser was sent away from — one
+for signed-in visitors — is checked again signed in as the project's account, when `.env` names one:
+`PLITZI_CHECK_USER` and `PLITZI_CHECK_PASSWORD`, the password `page check --as` reads too (the environment wins over
+`.env`, as it does for the project's scripts; never on the command line, which a shell keeps). One that even that
+account is sent away from, or with no account named, is said as not checked, never as passing — on its own line, with
+what checks it, without failing the run. Exit 1 when anything failed.
 
 ## `space lint`
 

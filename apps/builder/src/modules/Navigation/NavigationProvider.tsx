@@ -147,7 +147,8 @@ const NavigationProvider = ({ children }: NavigationProviderProps) => {
     { raw: true }
   );
 
-  if (action.type === 'notFound') {
+  // The space's own "not found" page — a page whose slug is `*` — is a page like any other to edit.
+  if (action.type === 'notFound' && !currentPageId) {
     return 'Not Found';
   }
 

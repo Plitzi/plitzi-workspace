@@ -5,7 +5,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useStoreById } from '@plitzi/nexus/react';
 import AuthContext from '@plitzi/sdk-auth/AuthContext';
 import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
-import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation/NavigationHelper';
+import { getPaths, matchRoutePath, getRouteParams, notFoundPageFor } from '@plitzi/sdk-navigation/NavigationHelper';
 import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import { flagValues, passesFlagGate, resolveFlags } from '@plitzi/sdk-shared/flags';
@@ -210,21 +210,6 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
   const urlSearchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const href = origin ? `${origin}${location.pathname}${location.search}` : '';
 
-  useSdkStoreSync(
-    [
-      'navigation.urlSearchParams',
-      'navigation.routeParams',
-      'navigation.queryParams',
-      'navigation.hostname',
-      'navigation.origin',
-      'navigation.href',
-      'navigation.currentPageId',
-      'navigation.navigate'
-    ],
-    [urlSearchParams, routeParams, stableQueryParams, hostname, origin, href, currentPageId, handleNavigate],
-    { raw: true }
-  );
-
   /**
    * A page gated on a flag that says no is a page that does not exist — the same answer, status included, as a URL
    * nothing matches.
@@ -255,12 +240,31 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
       )
     );
 
+  // What is shown for a page gated off is the space's "not found" page for its address, as for one nothing matches.
+  const shownPageId = pageGatedOff ? (notFoundPageFor(paths, location.pathname) ?? '') : currentPageId;
+
+  useSdkStoreSync(
+    [
+      'navigation.urlSearchParams',
+      'navigation.routeParams',
+      'navigation.queryParams',
+      'navigation.hostname',
+      'navigation.origin',
+      'navigation.href',
+      'navigation.currentPageId',
+      'navigation.navigate'
+    ],
+    [urlSearchParams, routeParams, stableQueryParams, hostname, origin, href, shownPageId, handleNavigate],
+    { raw: true }
+  );
+
   if (action.type === 'notFound' || pageGatedOff) {
     if (ssrResult) {
       ssrResult.status = 404;
     }
 
-    return 'Not Found';
+    // The space's own "not found" page — a page whose slug is `*` — or, in a space that declares none, the words.
+    return shownPageId ? children : 'Not Found';
   }
 
   if (action.type === 'accessDenied') {

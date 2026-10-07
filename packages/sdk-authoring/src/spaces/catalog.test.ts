@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { CATALOG_TEMPLATE_IDENTITY, catalogTemplateFiles } from './index';
 import { space } from '../../templates/catalog/src/space/index';
-import { authorSpace, validateSpace } from '../schema';
+import { authorSpace } from '../index';
+import { validateSpace } from '../schema';
 
 /** The catalog template is a project's first files: it has to author clean, and be the site it says it is. */
 describe('templates/catalog', () => {
@@ -16,8 +17,8 @@ describe('templates/catalog', () => {
     expect(suggestions.map(suggestion => `${suggestion.code}: ${suggestion.message}`)).toEqual([]);
   });
 
-  it('is a home, a catalog and a page per product, in one layout', () => {
-    expect(schema.pages).toEqual(['home', 'catalog', 'product']);
+  it('is a home, a catalog, a page per product and one for an unknown address, in one layout', () => {
+    expect(schema.pages).toEqual(['home', 'catalog', 'product', 'not-found']);
     expect(Object.keys(schema.components)).toEqual(['product-card']);
   });
 

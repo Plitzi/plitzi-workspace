@@ -34,6 +34,12 @@ type PageAttributes = {
 export const isAbsoluteUrl = (url: string): boolean => /^https?:\/\//i.test(url);
 
 /**
+ * A page whose slug is `*`: the page of every address under its folder that no other page answers — the space's own
+ * "not found", sent with status 404.
+ */
+export const isCatchAll = (path: string): boolean => path === '*' || path.endsWith('/*');
+
+/**
  * Is this a destination outside this space — either already absolute, or a token that will resolve to one?
  *
  * The token half matters because the address of an off-site sign-in differs per environment, so a space writes it
@@ -184,8 +190,7 @@ const getPaths = (
   pageFolders: PageFolder[] = [],
   authenticated?: boolean,
   basePath: string = '',
-  previewMode: boolean = true,
-  strictMode: boolean = true
+  previewMode: boolean = true
 ) => {
   const paths = Object.keys(pages)
     .reduce<Path[]>((acum, pageId) => {
@@ -230,28 +235,20 @@ const getPaths = (
 
       return [...acum, ...subPathsParsed] as Path[];
     }, [])
-    .filter((path: Path) => path.path !== '*' || path.hasAccess)
     .sort((pathA: Path, pathB: Path) => {
+      // A catch-all answers only what nothing else does: after every other page — `/*` matches `/` too — and, by the
+      // order below (`*` sorts under any slug), the deepest folder's before the space's.
+      const catchAllA = isCatchAll(pathA.path);
+      if (catchAllA !== isCatchAll(pathB.path)) {
+        return catchAllA ? 1 : -1;
+      }
+
       if (pathA.path === pathB.path) {
         return pathA.accessLevel === 'authenticated' ? -1 : 1;
       }
 
       return pathA.path > pathB.path ? -1 : 1;
     });
-
-  if (!paths.find(path => path.path === '*') && !strictMode) {
-    const defaultPath = paths.find(path => path.path === '/' && path.hasAccess);
-    if (defaultPath && defaultPath.unauthorizedBehaviour === 'redirect' && defaultPath.unauthorizedPageRedirect) {
-      paths.push({
-        ...defaultPath,
-        path: '*',
-        hasAccess: false,
-        isRaw: true,
-        unauthorizedBehaviour: 'redirect',
-        unauthorizedPageRedirect: '/'
-      });
-    }
-  }
 
   return paths;
 };
@@ -280,29 +277,23 @@ const matchRoutePath = (
     }
   });
 
-  // Find the best match
-  let possibleCandidate = candidates.find(
-    ({ path: { accessLevel } }) =>
-      (accessLevel === 'authenticated' && authenticated) || (accessLevel === 'public' && !authenticated) || !accessLevel
-  );
-
-  if (!possibleCandidate) {
-    // Match without permission, possible redirect
-    possibleCandidate = candidates.find(
+  // The best match among some candidates: one this visitor may see, else one they may not — a possible redirect.
+  const best = (among: typeof candidates) =>
+    among.find(
+      ({ path: { accessLevel } }) =>
+        (accessLevel === 'authenticated' && authenticated) ||
+        (accessLevel === 'public' && !authenticated) ||
+        !accessLevel
+    ) ??
+    among.find(
       ({ path: { accessLevel } }) =>
         (accessLevel === 'authenticated' && !authenticated) || (accessLevel === 'public' && authenticated)
     );
-  }
 
-  if (!possibleCandidate) {
-    // @todo: implement a better way to handle this, because if is not found we should render the 404 page
-    // Last opportunity going to root level
-    const possibleCandidatePath = paths.find(candidate => candidate.path === '/' && candidate.hasAccess);
-
-    if (possibleCandidatePath) {
-      return { action: { type: 'redirect', path: '/' }, pathMatch: undefined };
-    }
-  }
+  // A "not found" page only where no page answers at all: a page this visitor may not see still sends them on.
+  const possibleCandidate =
+    best(candidates.filter(({ path }) => !isCatchAll(path.path))) ??
+    best(candidates.filter(({ path }) => isCatchAll(path.path)));
 
   if (!possibleCandidate) {
     return { action: { type: 'notFound', path: undefined }, pathMatch: undefined };
@@ -317,12 +308,20 @@ const matchRoutePath = (
     return { action: { type: 'redirect', path: unauthorizedPageRedirect }, pathMatch: undefined };
   }
 
+  // The space's "not found" page answers with its status, whichever of its addresses was asked for.
   if (hasAccess) {
-    return { action: { type: 'normal', path: undefined }, pathMatch: matchResult, pageId };
+    const notFoundPage = paths.some(path => path.pageId === pageId && isCatchAll(path.path));
+
+    return { action: { type: notFoundPage ? 'notFound' : 'normal', path: undefined }, pathMatch: matchResult, pageId };
   }
 
   return { action: { type: 'accessDenied', path: undefined }, pathMatch: undefined };
 };
+
+/** The space's "not found" page for an address — its deepest folder's, or the space's — when it declares one. */
+const notFoundPageFor = (paths: Path[], pathName: string): string | undefined =>
+  paths.find(path => path.hasAccess && isCatchAll(path.path) && matchPath({ path: path.path, end: true }, pathName))
+    ?.pageId;
 
 const getRouteParams = (path: string) => {
   if (!path || typeof path !== 'string') {
@@ -337,4 +336,13 @@ const getRouteParams = (path: string) => {
 /** The params a page's slug declares, in either spelling a slug accepts: `post/{{slug}}` and `:spaceId/update`. */
 const getSlugParams = (slug: string): string[] => getRouteParams(parsePath(slug));
 
-export { getPageFullPath, getPaths, matchRoutePath, isPageAuthored, getRouteParams, getSlugParams, navigationTarget };
+export {
+  getPageFullPath,
+  getPaths,
+  matchRoutePath,
+  notFoundPageFor,
+  isPageAuthored,
+  getRouteParams,
+  getSlugParams,
+  navigationTarget
+};

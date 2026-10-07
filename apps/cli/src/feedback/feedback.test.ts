@@ -56,7 +56,8 @@ describe('plitzi feedback', () => {
   });
 
   it('continues the reports it is given, and refuses a link that is not one', async () => {
-    const url = 'https://claude.ai/artifact/6LoMfqwmAP4PQjj5zdDJWP';
+    // Any earlier report's link, in the shape claude.ai gives one — not a real report, which may expire.
+    const url = 'https://claude.ai/artifact/earlier-report';
     const answer = await answered({ previous: [url] });
 
     expect(answer.brief).toContain(`  - ${url}`);

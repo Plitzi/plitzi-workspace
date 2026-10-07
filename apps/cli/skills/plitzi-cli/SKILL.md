@@ -31,7 +31,8 @@ npx plitzi feedback                             # a report to Plitzi, for the pe
 ## Running it as an agent
 
 - **Which check.** All of it before you finish: `verify` — only what fails is printed. The space alone: `npm run
-  author`; a page: `page check`. The project around them: `doctor`, before `space push`.
+  author`; a page: `page check`. The project around them: `doctor`, before `space push`. Pages for signed-in visitors
+  are checked as the account `.env` names (`PLITZI_CHECK_USER`, `PLITZI_CHECK_PASSWORD`); `verify` says when none is.
 - **`create` never decides for the person.** With nobody at the terminal it writes nothing and prints each choice as a
   question: ask the user, then run again with their answers as flags. Never guess them.
 - **Signing in happens in the browser** (`login`, `space use`, a first `plugin upload`): tell the person a tab is waiting.

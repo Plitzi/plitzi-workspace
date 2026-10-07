@@ -1,5 +1,6 @@
 import { renderToString } from 'react-dom/server';
 
+import { withNotFound } from './applySSRResult';
 import Component from './Component';
 import { prepareRender } from './prepareRender';
 
@@ -47,6 +48,7 @@ export const buildBody = async (
   const reactStart = metrics ? performance.now() : 0;
   const html = renderToString(<Component {...prep.componentProps} ssrResult={result} />).trim();
   metrics?.record('react', Math.round(performance.now() - reactStart));
+  withNotFound(result, prep.notFound);
 
   if (result.redirect !== undefined) {
     return { result, cacheable: prep.cacheable };

@@ -54,7 +54,12 @@ describe('the skill’s recipes', () => {
       const { warnings, suggestions } = authorSpace(recipe, { plugins });
 
       expect(warnings).toEqual([]);
-      expect(suggestions.map(suggestion => `${suggestion.code}: ${suggestion.message}`)).toEqual([]);
+      // But the page for an unknown address: a recipe shows one thing, and the space it goes into has its own.
+      expect(
+        suggestions
+          .filter(suggestion => suggestion.code !== 'not-found-page')
+          .map(suggestion => `${suggestion.code}: ${suggestion.message}`)
+      ).toEqual([]);
     }
   );
 

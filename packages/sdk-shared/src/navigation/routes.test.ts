@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getPageFullPath, getPaths, getSlugParams, matchRoutePath, navigationTarget } from './routes';
+import { getPageFullPath, getPaths, getSlugParams, matchRoutePath, navigationTarget, notFoundPageFor } from './routes';
 
 import type { Element, PageFolder } from '../types';
 
@@ -205,5 +205,71 @@ describe('who may see a page', () => {
 
     expect(at(false)).toMatchObject({ action: { type: 'normal' }, pageId: 'landing' });
     expect(at(true)).toMatchObject({ action: { type: 'normal' }, pageId: 'app' });
+  });
+});
+
+/**
+ * An address no page answers is not found: answered with a 404, and with the space's own page for it — one whose slug
+ * is `*` — when it declares one. It used to be sent to the home page, which told a crawler every typo was the home page.
+ */
+describe('an address no page answers', () => {
+  it('is not found, with no page, in a space that declares none', () => {
+    expect(matchRoutePath(getPaths(pages, folders), '/nope', false)).toEqual({
+      action: { type: 'notFound', path: undefined },
+      pathMatch: undefined
+    });
+  });
+
+  const withNotFound: Record<string, Element> = {
+    ...pages,
+    notFound: page('notFound', { slug: '*' }),
+    reportsNotFound: page('reportsNotFound', { slug: '*', folder: 'reports' })
+  };
+  const paths = getPaths(withNotFound, folders);
+
+  it('is the space’s own page, after every other — `/*` matches `/` too', () => {
+    expect(matchRoutePath(paths, '/', false)).toMatchObject({ action: { type: 'normal' }, pageId: 'home' });
+    expect(matchRoutePath(paths, '/analytics/audience', false).pageId).toBe('audience');
+    expect(matchRoutePath(paths, '/nope', false)).toMatchObject({ action: { type: 'notFound' }, pageId: 'notFound' });
+  });
+
+  it('is the deepest folder’s own, when it has one', () => {
+    expect(matchRoutePath(paths, '/analytics/reports/42', false).pageId).toBe('run');
+    expect(matchRoutePath(paths, '/analytics/reports/42/x', false)).toMatchObject({
+      action: { type: 'notFound' },
+      pageId: 'reportsNotFound'
+    });
+    expect(matchRoutePath(paths, '/analytics/nope', false).pageId).toBe('notFound');
+  });
+
+  it('is never what a page the visitor may not see answers with: that one still sends them on', () => {
+    const guarded = getPaths(
+      {
+        ...withNotFound,
+        studio: page('studio', {
+          slug: 'studio',
+          accessLevel: 'authenticated',
+          unauthorizedBehaviour: 'redirect',
+          unauthorizedPageRedirect: 'home'
+        })
+      },
+      folders,
+      false
+    );
+
+    expect(matchRoutePath(guarded, '/studio', false).action).toEqual({ type: 'redirect', path: '/' });
+  });
+
+  it('answers with its status at its own address too', () => {
+    expect(matchRoutePath(paths, '/notFound', false)).toMatchObject({
+      action: { type: 'notFound' },
+      pageId: 'notFound'
+    });
+  });
+
+  it('is what a page that exists but is not shown sends a visitor to', () => {
+    expect(notFoundPageFor(paths, '/analytics/audience')).toBe('notFound');
+    expect(notFoundPageFor(paths, '/analytics/reports/42')).toBe('reportsNotFound');
+    expect(notFoundPageFor(getPaths(pages, folders), '/analytics/audience')).toBeUndefined();
   });
 });

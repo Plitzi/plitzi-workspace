@@ -1766,6 +1766,42 @@ describe('lintSpace', () => {
       ]);
     });
 
+    /** A provider's `notFound` decides the status the page is sent with: read by the page server alone. */
+    const story = () =>
+      authorSpace({
+        name: 'Story',
+        permanentUrl: 'story',
+        pages: [
+          {
+            id: 'post',
+            name: 'Post',
+            slug: 'p/:slug',
+            body: [
+              apiContainer({
+                id: 'post-data',
+                runtime: 'server',
+                action: 'story',
+                notFound: '{{ source.found == false }}'
+              })
+            ]
+          }
+        ]
+      });
+
+    it('not-found-in-browser', () => {
+      const { schema, style } = story();
+      delete schema.flat['post-data'].definition.runtime;
+
+      expect(lintSpace({ schema, style }).errors.map(error => error.code)).toContain('not-found-in-browser');
+    });
+
+    it('not-found-not-a-template', () => {
+      const { schema, style } = story();
+      schema.flat['post-data'].attributes.notFound = 'true';
+
+      expect(lintSpace({ schema, style }).errors.map(error => error.code)).toContain('not-found-not-a-template');
+    });
+
     /** The project's own data (`src/data/`) is read by its server alone: a browser read is answered nothing. */
     it('server-data-in-browser', () => {
       const { schema, style } = pricing('landing.data.plans');
@@ -1788,6 +1824,25 @@ describe('lintSpace', () => {
       expect(lintSpace({ schema, style }, { serverData }).warnings.map(warning => warning.code)).toContain(
         'path-not-in-data'
       );
+    });
+
+    /** `notFound` sets the status the page is sent with, which only the page server can, before the page goes out. */
+    it('not-found-in-browser', () => {
+      const { schema, style } = pricing('landing.data.landing.plans');
+      schema.flat.landing.attributes.notFound = '{{ source.data == null }}';
+
+      expect(lintSpace({ schema, style }).errors.map(error => error.code)).toContain('not-found-in-browser');
+
+      schema.flat.landing.definition.runtime = 'server';
+      expect(lintSpace({ schema, style }).errors).toEqual([]);
+    });
+
+    it('not-found-not-a-template', () => {
+      const { schema, style } = pricing('landing.data.landing.plans');
+      schema.flat.landing.definition.runtime = 'server';
+      schema.flat.landing.attributes.notFound = 'true';
+
+      expect(lintSpace({ schema, style }).errors.map(error => error.code)).toEqual(['not-found-not-a-template']);
     });
 
     it('path-not-in-data is not raised for a path the answer has, or with nothing to read it against', () => {

@@ -2,7 +2,7 @@ import { Writable } from 'node:stream';
 
 import { renderToPipeableStream } from 'react-dom/server';
 
-import { applySSRResult } from './applySSRResult';
+import { applySSRResult, isReusable, withNotFound } from './applySSRResult';
 import Component from './Component';
 import { prepareRender } from './prepareRender';
 
@@ -77,7 +77,7 @@ export const streamBody = async (
         res.write(tailBuf);
         res.end();
 
-        if (chunks && cacheKey && htmlCache) {
+        if (chunks && cacheKey && htmlCache && isReusable(result)) {
           htmlCache.set(cacheKey, { html: head + Buffer.concat(chunks).toString('utf-8') + tail, compressed: {} });
         }
 
@@ -98,6 +98,7 @@ export const streamBody = async (
         }
 
         // Redirects/status are decided during the shell render — apply them before any byte is flushed.
+        withNotFound(result, prep.notFound);
         if (applySSRResult(res, result)) {
           abort();
           resolve();

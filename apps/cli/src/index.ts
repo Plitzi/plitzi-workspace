@@ -319,7 +319,7 @@ spaceGroup
 
 pageGroup
   .command('check')
-  .argument('[path]', 'The page: /about. The home page when left out')
+  .argument('[paths...]', 'The pages: /about /writers, in one browser. The home page when left out')
   .description(
     'Whether a page of the running project is whole, in text: every element on screen, no broken image, no console error, no failed flow'
   )
@@ -337,10 +337,10 @@ pageGroup
   )
   .option(
     '--as <username>',
-    'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD'
+    'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
   )
-  .option('--json', 'One object per width, for a tool or an agent')
-  .action((path: string | undefined, options: CheckOptions) => check(path, options));
+  .option('--json', 'One object per page and width, for a tool or an agent')
+  .action((paths: string[], options: CheckOptions) => check(paths, options));
 
 spaceGroup
   .command('fix')

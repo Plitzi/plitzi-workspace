@@ -1,3 +1,4 @@
+import { notFound } from './notFound.ts';
 import { container, heading, paragraph } from '../../elements';
 import { styles } from '../../style';
 
@@ -61,6 +62,7 @@ export const space: SpaceSpec = {
         heading('Home', { id: 'home-title', subType: 'h1' }),
         paragraph({ id: 'home-lede', content: 'What this site is about, in a line.', class: lede })
       ]
-    }
+    },
+    notFound
   ]
 };

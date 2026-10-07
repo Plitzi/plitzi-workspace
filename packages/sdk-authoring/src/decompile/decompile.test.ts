@@ -524,6 +524,8 @@ describe('specToSource', () => {
       'layouts/shell.ts',
       'pages/guide.ts',
       'pages/home.ts',
+      // The page authoring gave the space for an unknown address, the project's own from here on.
+      'pages/plitzi-not-found.ts',
       'styles.ts'
     ]);
     expect(files['pages/home.ts']).toContain("import { card } from '../styles';");

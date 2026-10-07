@@ -3,8 +3,10 @@ export {
   getPageFullPath,
   getPaths,
   isAbsoluteUrl,
+  isCatchAll,
   isPageAuthored,
   matchRoutePath,
+  notFoundPageFor,
   getRouteParams,
   getSlugParams,
   navigationTarget

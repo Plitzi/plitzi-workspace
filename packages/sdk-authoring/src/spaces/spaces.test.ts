@@ -10,7 +10,7 @@ import {
   blankSpace,
   blankSpaceSpec,
   blankTemplateFiles,
-  emptySpaceSource,
+  emptyTemplateFiles,
   emptySpaceSpec,
   toPortableSource
 } from './index';
@@ -45,7 +45,8 @@ describe('spaces/blank', () => {
   it('has a page with content on it', () => {
     const { schema } = blankSpace();
 
-    expect(schema.pages).toEqual(['home']);
+    // And the page of every address no other page answers, which goes back to it.
+    expect(schema.pages).toEqual(['home', 'not-found']);
     expect(Object.keys(schema.flat).length).toBeGreaterThan(10);
   });
 
@@ -66,7 +67,9 @@ describe('spaces/blank', () => {
   /** The first page anybody sees is a way into the docs, and a card that goes nowhere is a dead end on that page. */
   it('links every card and button somewhere real', () => {
     const { schema } = blankSpace();
-    const links = Object.values(schema.flat).filter(element => element.definition.type === 'link');
+    const links = Object.values(schema.flat).filter(
+      element => element.definition.type === 'link' && element.definition.rootId === 'home'
+    );
 
     expect(links.length).toBeGreaterThan(6);
     for (const element of links) {
@@ -409,18 +412,34 @@ describe('spaces/empty', () => {
 
     expect(validateSpace({ schema, style }).valid).toBe(true);
     expect(warnings).toEqual([]);
-    expect(schema.pages).toEqual(['home']);
+    expect(schema.pages).toEqual(['home', 'not-found']);
+  });
+});
+
+/** The first `npm run author` of a new project is what it learns the space's idiom from: nothing to suggest. */
+describe('a new project’s space', () => {
+  it.each([
+    ['welcome', blankSpaceSpec],
+    ['blank', emptySpaceSpec]
+  ])('%s authors, as a project authors it, with nothing to suggest', (_template, spec) => {
+    const { suggestions } = authoring.authorSpace(spec);
+
+    expect(suggestions.map(suggestion => `${suggestion.code}: ${suggestion.message}`)).toEqual([]);
   });
 
-  it('is handed out as a file under the project’s name, importing only what the package exports', () => {
-    const source = emptySpaceSource({ name: 'My Shop' });
-    const match = /^import \{([^}]*)\} from '@plitzi\/sdk-authoring';$/m.exec(source);
+  it('is handed out as files under the project’s name, importing only what the package exports', () => {
+    const files = emptyTemplateFiles({ name: 'My Shop' });
 
-    expect(source).toContain("name: 'My Shop'");
-    expect(source).toContain("permanentUrl: 'my-shop'");
-    expect(source).not.toMatch(/from '\.\./);
-    for (const name of (match?.[1] ?? '').split(',').map(entry => entry.trim())) {
-      expect(authoring, `@plitzi/sdk-authoring exports ${name}`).toHaveProperty(name);
+    expect(Object.keys(files)).toEqual(['src/space/index.ts', 'src/space/notFound.ts']);
+    expect(files['src/space/index.ts']).toContain("name: 'My Shop'");
+    expect(files['src/space/index.ts']).toContain("permanentUrl: 'my-shop'");
+    for (const source of Object.values(files)) {
+      const match = /^import \{([^}]*)\} from '@plitzi\/sdk-authoring';$/m.exec(source);
+
+      expect(source).not.toMatch(/from '\.\./);
+      for (const name of (match?.[1] ?? '').split(',').map(entry => entry.trim())) {
+        expect(authoring, `@plitzi/sdk-authoring exports ${name}`).toHaveProperty(name);
+      }
     }
   });
 });

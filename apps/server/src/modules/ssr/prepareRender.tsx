@@ -2,7 +2,7 @@ import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { pluginDeclarationOf, pluginTypesOf } from '@plitzi/sdk-shared/plugins/declaration';
 import { pageElementTypes } from '@plitzi/sdk-shared/schema/pageElements';
-import { hasServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+import { collectServerElements, notFoundProvider } from '@plitzi/sdk-shared/schema/serverElements';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state/paintedState';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';
@@ -83,6 +83,8 @@ export type RenderPrep = {
   templateParams: SSRTemplateProps & { offlineData: string };
   /** False for a render that must not be served to anybody else from a cache: it carries this request's own runs. */
   cacheable: boolean;
+  /** A server provider of the page said its address shows nothing (`notFound`): sent with status 404. */
+  notFound: boolean;
 };
 
 export const prepareRender = async (
@@ -170,7 +172,9 @@ export const prepareRender = async (
           )
         )
       : undefined;
-  const hasTargets = rscEnabled && pageMatch !== undefined && hasServerElements(schema, pageMatch.pageId, pageFlags);
+  const serverElements =
+    rscEnabled && pageMatch !== undefined ? collectServerElements(schema, pageMatch.pageId, undefined, pageFlags) : [];
+  const hasTargets = serverElements.length > 0;
   // Timed around the adapter alone, and from after the schema is in hand. An RSC read opens by joining that read —
   // the whole point of sharing the loader — and those milliseconds are already billed to `schema`; timing from the
   // call would report one read under two names and make a page that resolved nothing look like it cost a pass.
@@ -192,6 +196,14 @@ export const prepareRender = async (
         : undefined;
 
   const pageSeo = resolvePageSeo(schema, pageMatch?.pageId);
+  // A provider whose answer says this address shows nothing: the page goes out with status 404, rendered as written.
+  const notFound =
+    pageMatch !== undefined && rscData?.serverData !== undefined
+      ? notFoundProvider(serverElements, rscData.serverData, {
+          routeParams: pageMatch.routeParams,
+          queryParams: req.query
+        }) !== undefined
+      : false;
 
   const server = buildServerInfo(req, config, {
     rscPath,
@@ -458,6 +470,7 @@ export const prepareRender = async (
       offlineData: offlineDataStr
     },
     // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page.
-    cacheable: actionRuns === undefined && forcedFlags === undefined
+    cacheable: actionRuns === undefined && forcedFlags === undefined,
+    notFound
   };
 };

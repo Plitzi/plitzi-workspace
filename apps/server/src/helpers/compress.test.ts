@@ -70,7 +70,7 @@ describe('resolving the policy', () => {
     expect(resolveCompression({ gzipLevel: 9 })).toEqual({
       encodings: ['br', 'gzip'],
       threshold: 1024,
-      brotliQuality: 2,
+      brotliQuality: 5,
       keptBrotliQuality: 6,
       gzipLevel: 9
     });
@@ -88,9 +88,11 @@ describe('compressBody quality', () => {
     ''
   );
 
+  // Qualities far apart, set here: the defaults are close enough that this markup alone does not tell them apart.
   it('compresses a body that will be kept harder than one sent once', () => {
-    const once = compressBody(markup, 'br');
-    const kept = compressBody(markup, 'br', undefined, true);
+    const policy = resolveCompression({ brotliQuality: 1, keptBrotliQuality: 9 });
+    const once = compressBody(markup, 'br', policy);
+    const kept = compressBody(markup, 'br', policy, true);
 
     expect(kept.length).toBeLessThan(once.length);
   });

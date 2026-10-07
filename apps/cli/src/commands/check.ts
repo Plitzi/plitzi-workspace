@@ -12,6 +12,7 @@ import {
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { projectHere } from './existingProject';
+import { projectSettings } from './projectSettings';
 import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
 import { launchBrowser, openProjectPage, projectOrigin, withoutDevTools } from '../browser';
@@ -61,16 +62,44 @@ export interface CheckOptions {
   as?: string;
 }
 
-/** Where `--as` reads the account's password: the environment, never the command line, which a shell keeps. */
+/** The account `verify` signs in as for the pages that send a visitor to sign in: the project's, in `.env`. */
+export const CHECK_USER_ENV = 'PLITZI_CHECK_USER';
+
+/** Where the account's password is read: `.env` or the environment, never the command line, which a shell keeps. */
 export const CHECK_PASSWORD_ENV = 'PLITZI_CHECK_PASSWORD';
 
 /** The project's sign-in route: where `createServer({ auth })` mounts its flows unless told otherwise. */
 const SIGN_IN_PATH = '/auth/login';
 
-interface Account {
+export interface Account {
   username: string;
   password: string;
 }
+
+/**
+ * The account a check signs in as: the one named, or the project's own (`PLITZI_CHECK_USER`) — `undefined` when
+ * neither is — with its password from `PLITZI_CHECK_PASSWORD`, each read from the environment over `.env`, as the
+ * project's scripts read them.
+ */
+export const checkAccount = async (
+  root: string,
+  username?: string
+): Promise<Account | { problem: string } | undefined> => {
+  const settings = await projectSettings(root);
+  const named = username ?? settings.value(CHECK_USER_ENV);
+  if (!named) {
+    return undefined;
+  }
+
+  const password = settings.value(CHECK_PASSWORD_ENV);
+  if (!password) {
+    return {
+      problem: `${named} signs in with the password in ${CHECK_PASSWORD_ENV}: set it in .env — never on the command line, which a shell keeps`
+    };
+  }
+
+  return { username: named, password };
+};
 
 /** One problem of a page, as data: what an agent branches on and points at, beside the sentence a person reads. */
 export interface CheckIssue {
@@ -82,7 +111,8 @@ export interface CheckIssue {
     | 'flow-failed'
     | 'not-server-rendered'
     | 'not-signed-in'
-    | 'redirected';
+    | 'redirected'
+    | 'page-status';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;
@@ -116,6 +146,11 @@ export interface CheckReport {
   styles?: ElementStyles | null;
   /** With `--click`: what clicking the element changed. */
   clicked?: ClickReport;
+  /**
+   * The page was sent with status 404, as it should be: the space's page for an address nothing answers, or one whose
+   * server provider said its answer is nothing (`notFound`).
+   */
+  notFound?: true;
 }
 
 /** What a page is, as far as a click can change it: where it is, how far each part is scrolled, what shows. */
@@ -210,19 +245,33 @@ const noPageMessage = (handles: SpaceHandles, pathname: string): string =>
     .map(page => page.path)
     .join(', ')}`;
 
-const pageFor = (handles: SpaceHandles, pathname: string): string | undefined => {
-  const wanted = pathname.replace(/\/$/, '').split('/');
+/** A page whose slug is `*`: the page of every address under its folder that no other page answers. */
+const isCatchAll = (path: string): boolean => path.endsWith('/*');
 
-  return Object.values(handles.pages).find(page => {
-    const segments = page.path.replace(/\/$/, '').split('/');
+/** Where `verify` looks at a page for an address nothing answers: an address under its folder no page has. */
+const NOT_FOUND_PROBE = 'plitzi-check-not-found';
+
+/** The page an address is answered by — as the router picks: every page with a path of its own first, then the "not found" pages, the deepest folder's before the space's. */
+export const pageFor = (handles: SpaceHandles, pathname: string): string | undefined => {
+  const wanted = pathname.replace(/\/$/, '').split('/');
+  const answers = (path: string): boolean => {
+    const catchAll = isCatchAll(path);
+    const segments = (catchAll ? path.slice(0, -2) : path.replace(/\/$/, '')).split('/');
 
     return (
-      segments.length === wanted.length &&
+      (catchAll ? wanted.length > segments.length : segments.length === wanted.length) &&
       segments.every(
         (segment, index) => segment.startsWith(':') || /^\{\{.*\}\}$/.test(segment) || segment === wanted[index]
       )
     );
-  })?.id;
+  };
+  const pages = Object.values(handles.pages);
+  const ordered = [
+    ...pages.filter(page => !isCatchAll(page.path)),
+    ...pages.filter(page => isCatchAll(page.path)).sort((a, b) => b.path.length - a.path.length)
+  ];
+
+  return ordered.find(page => answers(page.path))?.id;
 };
 
 /** The elements a piece of HTML carries, by the id each is marked with. */
@@ -814,7 +863,7 @@ const checkAt = async (
         message:
           signedIn.status() === 404
             ? `nothing answers at ${SIGN_IN_PATH}: --as signs in through the routes createServer({ auth }) mounts there`
-            : `${account.username} was not signed in (${String(signedIn.status())}): ${(await signedIn.text()).slice(0, 200)} — check ${CHECK_PASSWORD_ENV}`,
+            : `${account.username} was not signed in (${String(signedIn.status())}): ${(await signedIn.text()).slice(0, 200)} — check ${CHECK_PASSWORD_ENV} in .env`,
         width
       });
     }
@@ -823,12 +872,22 @@ const checkAt = async (
   const consoleErrors: string[] = [];
   const failedRequests: string[] = [];
   page.on('pageerror', error => consoleErrors.push(error.message));
+  const address = `${origin}${pathname}`;
   page.on('console', message => {
-    if (message.type() === 'error') {
+    // The browser's own line for the page's status — a 404 the page is sent with on purpose — is said apart, below.
+    if (message.type() === 'error' && message.location().url !== address) {
       consoleErrors.push(message.text());
     }
   });
+  let sentWith: number | undefined;
   page.on('response', response => {
+    // The page itself, answered with the status it is sent with: said apart from what it asked for once it loaded.
+    if (sentWith === undefined && response.url() === address) {
+      sentWith = response.status();
+
+      return;
+    }
+
     if (response.status() >= 400 && response.url().startsWith(origin)) {
       failedRequests.push(`${String(response.status())} ${response.url().slice(origin.length)}`);
     }
@@ -863,7 +922,7 @@ const checkAt = async (
         code: 'redirected',
         message: account
           ? `${pathname} sent the browser to ${landed}, signed in as ${account.username}: that account may not see it`
-          : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV}`,
+          : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env`,
         width
       }),
       consoleErrors,
@@ -907,8 +966,22 @@ const checkAt = async (
       ...(flow.on === undefined ? {} : { elementId: flow.on }),
       width
     }));
+  const catchAll = handles && pageId ? isCatchAll(handles.pages[pageId].path) : false;
+  const statusIssues: CheckIssue[] =
+    catchAll && sentWith !== 404
+      ? [
+          {
+            code: 'page-status',
+            message: `${pathname} shows the page for an address nothing answers, sent with status ${String(sentWith)}: a crawler reads it as a page that exists — the server should send it with 404`,
+            width
+          }
+        ]
+      : sentWith !== undefined && sentWith >= 400 && sentWith !== 404
+        ? [{ code: 'page-status', message: `${pathname} was sent with status ${String(sentWith)}`, width }]
+        : [];
   const issues: CheckIssue[] = [
     ...noPage,
+    ...statusIssues,
     ...report.issues.map((issue): CheckIssue => ({ ...issue, width })),
     ...(data?.issues ?? []).map((issue): CheckIssue => ({ ...issue, width })),
     ...(late?.issues ?? []),
@@ -938,7 +1011,8 @@ const checkAt = async (
     ...(!asked.state || devTools.sources === undefined ? {} : { sources: devTools.sources }),
     ...(devTools.element === undefined ? {} : { element: devTools.element }),
     ...(styled === undefined ? {} : { styles: styled }),
-    ...(clicked === undefined ? {} : { clicked })
+    ...(clicked === undefined ? {} : { clicked }),
+    ...(sentWith === 404 ? { notFound: true as const } : {})
   };
 };
 
@@ -1058,6 +1132,7 @@ export const clickedText = (clicked: ClickReport | undefined): string[] => {
 export const reportText = (report: CheckReport, asked: DevToolsInput): string => {
   const head = `${report.path} at ${String(report.width)} px`;
   const held = [
+    ...(report.notFound ? ['  · sent with status 404: the page for an address that shows nothing'] : []),
     ...listsText(report.lists),
     ...browserOnlyText(report),
     ...heldText(report, asked),
@@ -1088,17 +1163,16 @@ export const reportText = (report: CheckReport, asked: DevToolsInput): string =>
 
 const withoutTrailingSlash = (path: string): string => (path.length > 1 ? path.replace(/\/+$/, '') : path);
 
-export const check = async (route: string | undefined, options: CheckOptions): Promise<void> => {
+export const check = async (routes: string[], options: CheckOptions): Promise<void> => {
   const project = await projectHere('whose page to check');
   if (!project) {
     return;
   }
 
-  const password = process.env[CHECK_PASSWORD_ENV];
-  if (options.as && !password) {
-    fail(
-      `--as ${options.as} signs in with the password in ${CHECK_PASSWORD_ENV}: set it — ${CHECK_PASSWORD_ENV}=… npx plitzi page check …`
-    );
+  // Signed in only when asked: a page checked as nobody is what a visitor who has not signed in sees.
+  const account = options.as === undefined ? undefined : await checkAccount(project.root, options.as);
+  if (account && 'problem' in account) {
+    fail(`--as ${account.problem}.`);
 
     return;
   }
@@ -1109,12 +1183,17 @@ export const check = async (route: string | undefined, options: CheckOptions): P
     return;
   }
 
-  const account = options.as && password ? { username: options.as, password } : undefined;
+  if (options.click && routes.length > 1) {
+    fail(`--click clicks one element of one page: ${String(routes.length)} were named.`);
+
+    return;
+  }
+
   const asked: DevToolsInput = {
     state: Boolean(options.state),
     ...(options.element ? { element: options.element } : {})
   };
-  const reports = await checkRoutes(project, [route ?? '/'], {
+  const reports = await checkRoutes(project, routes.length > 0 ? routes : ['/'], {
     widths: options.width ?? [1440, 390],
     asked,
     ssr: Boolean(options.ssr),
@@ -1201,7 +1280,10 @@ export const staticPaths = async (root: string): Promise<string[] | { problem: s
     return authored;
   }
 
-  return Object.values(authored.handles.pages)
-    .map(page => page.path)
-    .filter(pathname => pathname.split('/').every(segment => !segment.startsWith(':') && !/\{\{.*\}\}/.test(segment)));
+  return (
+    Object.values(authored.handles.pages)
+      // The page for an address nothing answers is looked at where it shows: at an address no page has.
+      .map(page => (isCatchAll(page.path) ? `${page.path.slice(0, -1)}${NOT_FOUND_PROBE}` : page.path))
+      .filter(pathname => pathname.split('/').every(segment => !segment.startsWith(':') && !/\{\{.*\}\}/.test(segment)))
+  );
 };

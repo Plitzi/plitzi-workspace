@@ -37,7 +37,11 @@ describe('the authoring surface', () => {
       ]
     });
 
-    expect(Object.keys(schema.flat)).toHaveLength(3);
+    // The page's three, beside the page for an unknown address a space that declares none is given.
+    expect(Object.values(schema.flat).filter(element => element.definition.rootId !== 'plitzi-not-found')).toHaveLength(
+      3
+    );
+    expect(schema.flat['plitzi-not-found'].attributes).toMatchObject({ slug: '*' });
     expect(style.platform.desktop.card.attributes.base.default).toMatchObject({ 'padding-top': '24px' });
     expect(warnings).toEqual([]);
   });
@@ -146,7 +150,9 @@ describe('the step vocabulary', () => {
     );
 
     expect(authored.warnings).toMatchObject([{ code: 'unknown-global-callback' }]);
-    expect(Object.keys(authored.schema.flat)).toHaveLength(2);
+    expect(
+      Object.values(authored.schema.flat).filter(element => element.definition.rootId !== 'plitzi-not-found')
+    ).toHaveLength(2);
   });
 
   /** An element callback and a task belong to an element type or to a server; neither is knowable here. */

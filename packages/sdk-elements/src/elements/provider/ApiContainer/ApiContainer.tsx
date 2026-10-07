@@ -113,6 +113,13 @@ export type ApiContainerProps = {
    * flight. A text field in the builder, hence the string.
    */
   refreshSeconds?: number | string;
+  /**
+   * With `runtime: 'server'`: when this provider's answer means the address shows nothing — `{{ source.found == false
+   * }}` — a template against the answer, as `visible` is. The page server reads it once the answer is in and sends the
+   * page with status 404, rendered as it is written (its own "not found" part). Read by the server alone: a browser
+   * provider's answer arrives after the status was sent.
+   */
+  notFound?: string;
 };
 
 type ProviderSlice = {

@@ -124,6 +124,20 @@ pages: pageFamily(
 
 Every page is now its content and nothing else, and every page is guaranteed the same structure.
 
+## The page for an address nothing answers
+
+```ts
+{ id: 'not-found', name: 'Not found', slug: '*', layout: { id: 'site', slot: 'site-main' }, body: [ … ] }
+```
+
+- **`slug: '*'`** is the page of every address no other page answers — a mistyped link, a page taken down — sent with
+  status 404, in the layout you give it, so the visitor is still on the site with a way back. Its own address answers
+  404 too.
+- **One per folder, if a section wants its own.** In a folder (`folder: 'docs'`) it answers that folder's unknown
+  addresses; the deepest folder's wins, the space's takes the rest. A page whose `flag` is off shows it too.
+- **A space with none is given a plain one** — a title and a link home, in the home page's layout — and `author`
+  suggests writing your own (`not-found-page`): say it in the space's words.
+
 ## Styles follow the same rule
 
 - A role used on several pages is ONE class (`panelCard`, `pageTitle`), declared in the module that owns the area and

@@ -530,6 +530,17 @@ export const AUTHORING_CODES = {
       "a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's",
     fix: 'put the provider on the page, around the instance, and hand the component its rows as a prop'
   },
+  'not-found-in-browser': {
+    kind: 'refused',
+    means:
+      "`notFound` on a provider asked from the browser — its answer arrives after the page was sent with its status",
+    fix: "`runtime: 'server'` on the provider, or `visible` on the page's \"not found\" part instead"
+  },
+  'not-found-not-a-template': {
+    kind: 'refused',
+    means: '`notFound` that is not one `{{ expression }}` against the answer — never `true`, so never a 404',
+    fix: "`notFound: '{{ source.found == false }}'`"
+  },
   'server-data-in-browser': {
     kind: 'refused',
     means:
@@ -1041,6 +1052,12 @@ export const AUTHORING_CODES = {
     means:
       'a colour written out in a class where the space has a token of that value — it stays put in the dark scheme',
     fix: '`var(--token)` when it should follow the scheme; a token of one value of its own when it must stay the same in both'
+  },
+  'not-found-page': {
+    kind: 'suggested',
+    means:
+      'a space with no page of its own for an address no other page answers — a plain one was added, in the home page’s layout, sent with status 404',
+    fix: "a page whose slug is `'*'`: `{ id: 'not-found', name: 'Not found', slug: '*', layout: …, body: [...] }`"
   },
   'unused-component': {
     kind: 'suggested',

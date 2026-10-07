@@ -7,11 +7,11 @@ import { t } from '../tokens.ts';
 
 import type { PageSpec } from '@plitzi/sdk-authoring';
 
-const hero = styles('hero', { display: 'flex', flexDirection: 'column', gap: 16, padding: '48px 0px' });
+export const hero = styles('hero', { display: 'flex', flexDirection: 'column', gap: 16, padding: '48px 0px' });
 
-const lede = styles('lede', { margin: '0px', maxWidth: '560px', color: t.muted, fontSize: '18px' });
+export const lede = styles('lede', { margin: '0px', maxWidth: '560px', color: t.muted, fontSize: '18px' });
 
-const cta = styles('cta', {
+export const cta = styles('cta', {
   css: {
     alignSelf: 'flex-start',
     padding: '10px 18px',

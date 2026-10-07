@@ -1,4 +1,4 @@
-import { blankTemplateFiles, catalogTemplateFiles, emptySpaceSource } from '@plitzi/sdk-authoring';
+import { blankTemplateFiles, catalogTemplateFiles, emptyTemplateFiles } from '@plitzi/sdk-authoring';
 
 import { AUTHOR_FILE, SPACE_DIR, SPACE_ENTRY } from './paths';
 
@@ -194,7 +194,7 @@ export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
 
   if (answers.template === 'blank') {
     return {
-      [SPACE_ENTRY]: emptySpaceSource({ name: answers.name }),
+      ...emptyTemplateFiles({ name: answers.name, dir: SPACE_DIR }),
       [AUTHOR_FILE]: authorScript(),
       // A project with no server keeps its data where the browser fetches it; a server's is `src/data/` (`serverFiles`).
       ...(answers.mode === 'client' ? { 'public/data/.gitkeep': '' } : {})

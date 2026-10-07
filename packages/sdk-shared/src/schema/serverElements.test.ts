@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { collectServerElements, hasServerElements } from './serverElements';
+import { collectServerElements, hasServerElements, notFoundProvider } from './serverElements';
 
 import type { Element, Schema } from '../types';
 
@@ -110,5 +110,34 @@ describe('hasServerElements', () => {
   it('separates a page that consumes server data from one that does not', () => {
     expect(hasServerElements(schema, 'home')).toBe(true);
     expect(hasServerElements(schema, 'ghost')).toBe(false);
+  });
+});
+
+/** A server provider that says when its answer means the address shows nothing: the page then answers 404. */
+describe('notFoundProvider', () => {
+  const provider = (id: string, notFound: unknown): Element => ({
+    ...element(id, [], 'server'),
+    attributes: { notFound }
+  });
+  const navigation = { routeParams: { slug: 'gone' }, queryParams: {} };
+
+  it('names the provider whose template is true against its answer', () => {
+    const post = provider('post', '{{ source.found == false }}');
+
+    expect(notFoundProvider([post], { post: { found: false } }, navigation)).toBe('post');
+    expect(notFoundProvider([post], { post: { found: true } }, navigation)).toBeUndefined();
+  });
+
+  it('reads the address too', () => {
+    const post = provider('post', '{{ source|filter(p => p.slug == navigation.routeParams.slug)|length == 0 }}');
+
+    expect(notFoundProvider([post], { post: [{ slug: 'here' }] }, navigation)).toBe('post');
+    expect(notFoundProvider([post], { post: [{ slug: 'gone' }] }, navigation)).toBeUndefined();
+  });
+
+  it('takes only true: a template that does not evaluate, an answer missing, no template — the page is found', () => {
+    expect(notFoundProvider([provider('post', 'found == false')], { post: {} }, navigation)).toBeUndefined();
+    expect(notFoundProvider([provider('post', '{{ source.found == false }}')], {}, navigation)).toBeUndefined();
+    expect(notFoundProvider([provider('post', '')], { post: { found: false } }, navigation)).toBeUndefined();
   });
 });

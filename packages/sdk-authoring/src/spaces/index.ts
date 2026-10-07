@@ -1,6 +1,7 @@
 /* eslint-disable quotes */
 import { authorSpace, slugify } from '../schema';
 import blankContentSource from './blank/content.ts?raw';
+import blankNotFoundSource from './blank/notFound.ts?raw';
 import { space as blankSpaceSpec } from './blank/spec';
 // The declaration's own source, inlined at build time — the copy `plitzi create` writes into a project. Read as
 // text rather than through the filesystem because this package is bundled for the browser too.
@@ -8,6 +9,7 @@ import blankSpecSource from './blank/spec.ts?raw';
 import blankThemeSource from './blank/theme.ts?raw';
 import blankTokensSource from './blank/tokens.ts?raw';
 import { space as emptySpaceSpec } from './empty/spec';
+import emptyNotFoundSource from './empty/notFound.ts?raw';
 import emptySpecSource from './empty/spec.ts?raw';
 import catalogProducts from '../../templates/catalog/src/data/products.json?raw';
 import catalogCard from '../../templates/catalog/src/space/components/productCard.ts?raw';
@@ -16,6 +18,7 @@ import catalogSpace from '../../templates/catalog/src/space/index.ts?raw';
 import catalogLayout from '../../templates/catalog/src/space/layout.ts?raw';
 import catalogCatalogPage from '../../templates/catalog/src/space/pages/catalog.ts?raw';
 import catalogHomePage from '../../templates/catalog/src/space/pages/home.ts?raw';
+import catalogNotFoundPage from '../../templates/catalog/src/space/pages/notFound.ts?raw';
 import catalogProductPage from '../../templates/catalog/src/space/pages/product.ts?raw';
 import catalogTokens from '../../templates/catalog/src/space/tokens.ts?raw';
 
@@ -142,18 +145,26 @@ export const blankTemplateFiles = ({ name, dir = 'src/space', plugin }: BlankTem
     [`${dir}/index.ts`]: name === undefined ? entry : renameSpace(entry, name),
     [`${dir}/tokens.ts`]: toPortableSource(blankTokensSource),
     [`${dir}/theme.ts`]: toPortableSource(blankThemeSource),
-    [`${dir}/content.ts`]: toPortableSource(blankContentSource)
+    [`${dir}/content.ts`]: toPortableSource(blankContentSource),
+    [`${dir}/notFound.ts`]: toPortableSource(blankNotFoundSource)
   };
 };
 
 /**
- * The space `plitzi create --template blank` starts from, as a file: tokens, a layout and one empty page — for a
- * project about to be something specific, where the welcome tour is the first thing that would be deleted.
+ * The space `plitzi create --template blank` starts from, as its files by path: tokens, a layout and one empty page —
+ * for a project about to be something specific, where the welcome tour is the first thing that would be deleted —
+ * and the page for an address nothing answers, beside it.
  */
-export const emptySpaceSource = ({ name }: { name?: string } = {}): string => {
+export const emptyTemplateFiles = ({ name, dir = 'src/space' }: { name?: string; dir?: string } = {}): Record<
+  string,
+  string
+> => {
   const portable = toPortableSource(emptySpecSource);
 
-  return name === undefined ? portable : renameSpace(portable, name, emptySpaceSpec);
+  return {
+    [`${dir}/index.ts`]: name === undefined ? portable : renameSpace(portable, name, emptySpaceSpec),
+    [`${dir}/notFound.ts`]: toPortableSource(emptyNotFoundSource)
+  };
 };
 
 /** The one line in the declaration a `custom` element is hung off — the hero, so it lands under its buttons. */
@@ -467,6 +478,7 @@ export const catalogTemplateFiles = ({
     'src/space/pages/home.ts': catalogHomePage,
     'src/space/pages/catalog.ts': catalogCatalogPage,
     'src/space/pages/product.ts': catalogProductPage,
+    'src/space/pages/notFound.ts': catalogNotFoundPage,
     [client ? 'public/data/products.json' : 'src/data/products.json']: catalogProducts
   };
 

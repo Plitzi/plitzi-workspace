@@ -114,6 +114,9 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
         'thing; it is off unless set. A flow refreshes it with `performQuery` or the global `invalidateQueries` step, ' +
         'and `refreshSeconds` makes it ask again on its own every N seconds (either runtime; paused while the tab is ' +
         'hidden) — the way to keep a queue, feed or status board current without a plugin. ' +
+        'A server provider (`runtime: "server"`) whose answer means the address shows nothing — a record not found — ' +
+        'says so in `notFound`, a template against its answer (`{{ source.found == false }}`): the page is sent with ' +
+        'status 404, rendered as written. ' +
         'Its `subType` (container tag) is empty by default, and then it renders NO element of its own: its children ' +
         'lay out directly in its parent, and any class, variant or style binding on it applies to nothing. To style ' +
         'the provider itself give it a tag (`subType: "div"`, `section`, …); otherwise style its parent or a child.',

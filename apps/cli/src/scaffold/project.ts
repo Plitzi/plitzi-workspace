@@ -469,7 +469,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 - **Scratch goes in ${code(`${PROJECT_TMP}/`)}, or nowhere.** A one-off script, a dump, a picture to look at — never at the root or beside the source, where it reads as part of the project.
 - **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component, and rows of data are one list. Change it where it is defined, and rename everywhere when you rename.
 - **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space/')} already has. Do not start a parallel layout of your own.
-- **Leave it passing.** ${run('verify')} runs it all and prints only what fails: ${local ? `${run('author')} with zero warnings, ${run('lint:space')} clean, ` : ''}${run('typecheck')}, ${run('lint')} and the format clean, and every page whole (${run('check')}, with the server up).
+- **Leave it passing.** ${run('verify')} runs it all and prints only what fails: ${local ? `${run('author')} with zero warnings, ${run('lint:space')} clean, ` : ''}${run('typecheck')}, ${run('lint')} and the format clean, and every page whole (${run('check')}, with the server up) — those for signed-in visitors too, once ${code('.env')} names an account to check them as: ${code('PLITZI_CHECK_USER')} and ${code('PLITZI_CHECK_PASSWORD')}.
 
 ## The rules that go wrong most
 

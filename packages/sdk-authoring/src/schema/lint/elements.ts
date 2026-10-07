@@ -319,6 +319,12 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
 };
 
 /**
+ * The attributes the page server evaluates in full, by element type — never rendered, so never held to what an
+ * attribute resolves: a provider's `notFound`, read against its answer (`source`) once it is in.
+ */
+const SERVER_EXPRESSIONS: Record<string, readonly string[]> = { apiContainer: ['notFound'] };
+
+/**
  * An attribute's `{{ token }}` against what the attribute will see when it renders — and a condition in an attribute,
  * which is used as written: an attribute only resolves a name with filters.
  */
@@ -327,7 +333,16 @@ const checkAttributeTemplates = (ctx: LintContext, element: Element, where: stri
     return;
   }
 
-  for (const value of stringsIn(element.attributes)) {
+  const evaluated = SERVER_EXPRESSIONS[element.definition.type] ?? [];
+  const rendered = Object.fromEntries(Object.entries(element.attributes).filter(([name]) => !evaluated.includes(name)));
+  for (const name of evaluated) {
+    const value = element.attributes[name];
+    if (typeof value === 'string' && value !== '') {
+      checkTemplate(ctx, value, `${where}: its "${name}"`, { kind: 'binding' }, ctx.scope(element.id), element.id);
+    }
+  }
+
+  for (const value of stringsIn(rendered)) {
     if (hasTemplateSyntax(value) && !hasValidToken(value)) {
       ctx.warn(
         'template-never-resolved',
@@ -340,7 +355,7 @@ const checkAttributeTemplates = (ctx: LintContext, element: Element, where: stri
 
   const routeParams = ctx.routeParams(element.id);
   const scope = ctx.scope(element.id);
-  for (const [name, value] of Object.entries(element.attributes)) {
+  for (const [name, value] of Object.entries(rendered)) {
     if (typeof value === 'string' && hasValidToken(value)) {
       checkTemplate(ctx, value, `${where}: its "${name}"`, { kind: 'attribute', routeParams }, scope, element.id);
     }
@@ -508,6 +523,25 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
       `${where} is resolved on the server (\`runtime: 'server'\`) inside component "${ctx.component.id}", and the page server only resolves what a page and its layouts hold — it would stay loading wherever the component is placed. Put the provider on the page, around the instance, and hand the component what it reads as a prop: \`component('${ctx.component.id}', { props: { rows: … } })\`, its list reading \`props.rows\`.`,
       element.id
     );
+  }
+
+  // `notFound` decides the status the page is sent with: read by the page server once the provider's answer is in. A
+  // browser provider's answer arrives after the page went out, and a value that is not one expression is never true.
+  const notFound = attributes.notFound;
+  if (typeof notFound === 'string' && notFound !== '') {
+    if (element.definition.runtime !== 'server') {
+      ctx.error(
+        'not-found-in-browser',
+        `${where} says when its answer means the address shows nothing (\`notFound\`), but it is asked from the browser, after the page was sent with its status. Give it \`runtime: 'server'\` — or remove \`notFound\` and show the page's "not found" part with \`visible\`.`,
+        element.id
+      );
+    } else if (!/^\s*\{\{[\s\S]*\}\}\s*$/.test(notFound)) {
+      ctx.error(
+        'not-found-not-a-template',
+        `${where} has \`notFound: ${JSON.stringify(notFound)}\`, which is never \`true\`: it is one expression against the answer, \`'{{ source.found == false }}'\`.`,
+        element.id
+      );
+    }
   }
 
   // Server data is on unless the space turns it off: the builder and the MCP never write `rsc`, and a space they made

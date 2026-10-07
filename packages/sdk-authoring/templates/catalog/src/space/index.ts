@@ -9,6 +9,7 @@ import { productCard } from './components/productCard.ts';
 import { layout } from './layout.ts';
 import { catalog } from './pages/catalog.ts';
 import { home } from './pages/home.ts';
+import { notFound } from './pages/notFound.ts';
 import { product } from './pages/product.ts';
 import { variables } from './tokens.ts';
 
@@ -23,5 +24,5 @@ export const space: SpaceSpec = {
   formats: { price: "{{ source|currency('USD', 'en', { trimZeros: true }) }}" },
   layouts: [layout],
   components: [productCard],
-  pages: [home, catalog, product]
+  pages: [home, catalog, product, notFound]
 };

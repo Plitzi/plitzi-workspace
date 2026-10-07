@@ -1,4 +1,4 @@
-import { applySSRResult } from './applySSRResult';
+import { applySSRResult, isReusable } from './applySSRResult';
 import { buildBody } from './buildBody';
 import { draftSessionCookie, takeDraftOverride } from './preview';
 import { streamBody } from './streamBody';
@@ -150,7 +150,7 @@ export const renderSSR = async (
     return;
   }
 
-  if (htmlCache && cacheKey && body !== undefined && cacheable) {
+  if (htmlCache && cacheKey && body !== undefined && cacheable && isReusable(result)) {
     const page = { html: body, compressed: {} };
     htmlCache.set(cacheKey, page);
     res.send(body, { compressed: page.compressed });

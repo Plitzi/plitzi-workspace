@@ -28,6 +28,8 @@ export type Scheme = (typeof SCHEMES)[number];
 export interface PageMessage {
   type(): string;
   text(): string;
+  /** Where it was said from — for a resource that failed to load, that resource. */
+  location(): { url: string };
 }
 
 export interface PageResponse {

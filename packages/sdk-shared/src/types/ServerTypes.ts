@@ -812,8 +812,9 @@ export type SSRCompressionConfig = {
   /** Responses smaller than this many bytes go out uncompressed. Default 1024. */
   threshold?: number;
   /**
-   * Brotli quality, 0–11, for a body compressed on every request — a page rendered for this request alone. Default 2:
-   * measured on a quarter core, going to 4 cost a tenth of the pages a second to save half a kilobyte on each.
+   * Brotli quality, 0–11, for a body compressed on every request — a page rendered for this request alone. Default 5:
+   * the first quality under gzip's size for the CPU gzip spends — 2 came out larger than gzip on a 220 KB page (36 KB
+   * against 31; 5: 29). On half a core it costs ~0.1 ms a page, 5–8% of the pages a second of a 6 KB page.
    */
   brotliQuality?: number;
   /**

@@ -1,13 +1,19 @@
 // @vitest-environment jsdom
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  checkAccount,
   clickedText,
   contestedText,
   inertText,
   listText,
   momentChanges,
   notShownInPage,
+  pageFor,
   renderedRowsInPage
 } from './check';
 
@@ -158,5 +164,68 @@ describe('what a click changed', () => {
       '  · clicking send:',
       '      state.newsSubscribed: unset → true'
     ]);
+  });
+});
+
+describe('the account a check signs in as', () => {
+  const projectWith = async (env: string): Promise<string> => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-check-account-'));
+    await fs.writeFile(path.join(root, '.env'), env);
+
+    return root;
+  };
+
+  it('is the project’s own, from .env, and the one named over it', async () => {
+    const root = await projectWith('PLITZI_CHECK_USER=carla\nPLITZI_CHECK_PASSWORD=inkwell\n');
+
+    expect(await checkAccount(root)).toEqual({ username: 'carla', password: 'inkwell' });
+    expect(await checkAccount(root, 'maya')).toEqual({ username: 'maya', password: 'inkwell' });
+    await fs.rm(root, { recursive: true });
+  });
+
+  it('reads the environment over .env, as the project’s scripts do', async () => {
+    const root = await projectWith('PLITZI_CHECK_USER=carla\nPLITZI_CHECK_PASSWORD=inkwell\n');
+    vi.stubEnv('PLITZI_CHECK_PASSWORD', 'from-the-shell');
+
+    expect(await checkAccount(root)).toEqual({ username: 'carla', password: 'from-the-shell' });
+    vi.unstubAllEnvs();
+    await fs.rm(root, { recursive: true });
+  });
+
+  it('is none when nothing names one, and says the password it lacks', async () => {
+    const root = await projectWith('PLITZI_CHECK_USER=carla\n');
+
+    const lacking = await checkAccount(root);
+
+    expect(lacking && 'problem' in lacking ? lacking.problem : lacking).toContain(
+      'carla signs in with the password in PLITZI_CHECK_PASSWORD: set it in .env'
+    );
+    await fs.writeFile(path.join(root, '.env'), '');
+    expect(await checkAccount(root)).toBeUndefined();
+    await fs.rm(root, { recursive: true });
+  });
+});
+
+describe('the page an address is answered by', () => {
+  const page = (id: string, path: string) => ({ id, path, elements: {} });
+  const handles = {
+    pages: {
+      home: page('home', '/'),
+      post: page('post', '/p/:slug'),
+      lost: page('lost', '/*'),
+      docsLost: page('docsLost', '/docs/*'),
+      docs: page('docs', '/docs/intro')
+    }
+  } as unknown as Parameters<typeof pageFor>[0];
+
+  it('is a page with a path of its own before any "not found" page — `/*` would answer `/` too', () => {
+    expect(pageFor(handles, '/')).toBe('home');
+    expect(pageFor(handles, '/p/hello')).toBe('post');
+    expect(pageFor(handles, '/docs/intro')).toBe('docs');
+  });
+
+  it('is the deepest folder’s "not found" page, then the space’s', () => {
+    expect(pageFor(handles, '/docs/nope')).toBe('docsLost');
+    expect(pageFor(handles, '/nope/at/all')).toBe('lost');
   });
 });

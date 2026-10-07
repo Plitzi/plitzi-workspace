@@ -14,6 +14,7 @@ import {
   withPluginCatalogs
 } from './elements';
 import { BUILTIN_GLOBAL_CALLBACKS, BUILTIN_UTILITIES } from './interactions';
+import { withNotFoundPage } from './notFoundPage';
 import {
   authorSpace as authorSpaceUnchecked,
   authorSnippet as authorSnippetUnchecked,
@@ -217,8 +218,13 @@ const ELEMENT_CATALOGS: AuthorSpaceOptions = {
  * **Bindings.** A source may name the element alone and the prefix it publishes under is filled in — which
  * is the half an author cannot see, and is not always the element's own type.
  */
-export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace =>
-  authorSpaceUnchecked(spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
+export const authorSpace = (spec: SpaceSpec, options: AuthorSpaceOptions = {}): AuthoredSpace => {
+  // A space with no page of its own for an unknown address is given a plain one, and told so.
+  const notFound = withNotFoundPage(spec);
+  const authored = authorSpaceUnchecked(notFound.spec, withPluginCatalogs({ ...ELEMENT_CATALOGS, ...options }));
+
+  return notFound.added ? { ...authored, suggestions: [...authored.suggestions, notFound.added] } : authored;
+};
 
 /**
  * `validateSpace`, holding this SDK's own catalogs — the same gate `authorSpace` puts its output through, for documents

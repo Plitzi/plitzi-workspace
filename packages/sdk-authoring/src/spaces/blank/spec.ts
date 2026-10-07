@@ -1,4 +1,5 @@
 import { DOCS, GUIDES, PATHS } from './content.ts';
+import { notFound } from './notFound.ts';
 import {
   backdrop,
   bodyText,
@@ -252,7 +253,18 @@ export const space: SpaceSpec = {
    * makes the dark scheme work: a hard-coded colour would win against the theme and leave black text on black.
    */
   elements: {
-    page: { base: { 'font-family': 'var(--font-sans)' } },
+    // What every page is: the type, the scheme's colours, a whole screen tall.
+    page: {
+      base: {
+        'font-family': 'var(--font-sans)',
+        'flex-direction': 'column',
+        position: 'relative',
+        'min-width': '100%',
+        'min-height': '100dvh',
+        color: 'var(--foreground)',
+        'background-color': 'var(--background)'
+      }
+    },
     heading: { base: { color: 'var(--foreground)' } },
     text: { base: { color: 'inherit' } },
     paragraph: { base: { color: 'var(--foreground)' } },
@@ -265,12 +277,6 @@ export const space: SpaceSpec = {
       slug: '',
       isDefault: true,
       css: {
-        'flex-direction': 'column',
-        position: 'relative',
-        'min-width': '100%',
-        'min-height': '100dvh',
-        color: 'var(--foreground)',
-        'background-color': 'var(--background)',
         // A glow over the top of the page, in the palette's primary, so it follows the scheme like everything else.
         'background-image': 'radial-gradient(60rem 32rem at 50% -8rem, var(--glow), transparent 70%)',
         'background-repeat': 'no-repeat'
@@ -342,6 +348,7 @@ export const space: SpaceSpec = {
           ]
         })
       ]
-    }
+    },
+    notFound
   ]
 };

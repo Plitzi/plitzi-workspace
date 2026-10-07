@@ -1,13 +1,13 @@
 import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { parseEnv } from 'node:util';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { projectModule } from './projectModules';
 import { editTsConfig, freshSecret, ignoreLines, unignore } from './repairs';
 import { sayer } from './types';
+import { projectSettings } from '../commands/projectSettings';
 import { CLI_DIR, MAIN_FILE, PROJECT_STATE, PROJECT_TMP } from '../scaffold/paths';
 
 import type { Check, DoctorContext, Finding, Repair } from './types';
@@ -326,16 +326,8 @@ const minimumSecret = async (root: string): Promise<number | undefined> => {
   return typeof minimum === 'number' ? minimum : undefined;
 };
 
-/** What the process starts with: what `.env` sets, under what the environment already has — as the server reads it. */
-const settingsOf = async (root: string): Promise<{ file: boolean; value: (name: string) => string }> => {
-  const text = await readOptional(path.join(root, '.env'));
-  const parsed = text === undefined ? {} : parseEnv(text);
-
-  return { file: text !== undefined, value: name => process.env[name] ?? parsed[name] ?? '' };
-};
-
 const envChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> => {
-  const settings = await settingsOf(root);
+  const settings = await projectSettings(root);
   const where = settings.file ? '.env' : 'the environment (there is no .env)';
   const findings: Finding[] = [];
   if (answers.mode === 'client') {

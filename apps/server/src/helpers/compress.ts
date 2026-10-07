@@ -9,7 +9,7 @@ export const DEFAULT_COMPRESSION = {
   encodings: ['br', 'gzip'] as ('br' | 'gzip')[],
   // Below about a KB the compressed body plus its headers is no smaller, and the CPU is spent for nothing.
   threshold: 1024,
-  brotliQuality: 2,
+  brotliQuality: 5,
   keptBrotliQuality: 6,
   gzipLevel: 6
 };
