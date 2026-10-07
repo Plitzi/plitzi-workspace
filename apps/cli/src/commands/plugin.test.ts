@@ -211,7 +211,8 @@ describe('plitzi plugin add', () => {
 
     expect(process.exitCode).toBeUndefined();
     expect(output()).toContain('Registered and declared: the project finds every folder of src/plugins');
-    expect(output()).toContain("custom({ id: 'legend', renderType: 'legend' })");
+    // Written with what it was declared with, so what an agent puts on a page is what the element reads.
+    expect(output()).toMatch(/custom\(\{ id: .legend., renderType: .legend.[ ,}]/);
   });
 
   it('says with --dry-run what it would write — the element, its server half, the list — and writes nothing', async () => {

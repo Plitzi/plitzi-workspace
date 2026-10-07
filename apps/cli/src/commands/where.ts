@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { locateClasses, locateElements, refusalOf } from '@plitzi/sdk-authoring';
+import { closest, locateClasses, locateElements, refusalOf } from '@plitzi/sdk-authoring';
 
 import { findProject } from './existingProject';
 import { filesUnder } from './filesUnder';
@@ -83,6 +83,8 @@ export interface WhereAnswer {
   also?: { by: WhereReading; count: number }[];
   /** Read as a class: where the class is declared, and the `styles()` call that declares it. */
   declared?: { name: string; at?: string; code?: string }[];
+  /** Nothing matched, and the query reads as an id: the nearest id the space has, for a name written one letter off. */
+  nearest?: string;
   /** Lines of `src/` holding the words, when the space could not be authored to find the element. */
   lines?: { at: string; text: string }[];
   problem?: string;
@@ -398,7 +400,18 @@ export const answerOf = async (
 ): Promise<WhereAnswer> => {
   const matched = matchElements(elements, query, by);
   if (!matched) {
-    return { query, ...(by ? { by } : {}), matches: [] };
+    // An id written one letter off is the likeliest miss: the nearest one is offered, never taken for it.
+    const nearest =
+      by === undefined || by === 'id'
+        ? /\s/.test(query)
+          ? undefined
+          : closest(
+              query,
+              elements.map(element => element.elementId)
+            )
+        : undefined;
+
+    return { query, ...(by ? { by } : {}), matches: [], ...(nearest ? { nearest } : {}) };
   }
 
   const declared = matched.by === 'class' ? await declaredClasses(root, query) : [];
@@ -491,7 +504,9 @@ const whereText = (answer: WhereAnswer): string => {
         ? 'has the id, a class or the words'
         : READING_SAID[answer.by].replace(/^by /, 'has the ');
 
-    return `No element ${asked} "${answer.query}". \`plitzi page check\` lists the elements a page shows.`;
+    return answer.nearest
+      ? `No element ${asked} "${answer.query}" — did you mean ${answer.nearest}? plitzi element where ${answer.nearest}`
+      : `No element ${asked} "${answer.query}". \`plitzi page check\` lists the elements a page shows.`;
   }
 
   const said = READING_SAID[answer.by ?? 'id'];

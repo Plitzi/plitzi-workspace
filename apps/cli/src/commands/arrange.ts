@@ -7,7 +7,7 @@ import { findProject } from './existingProject';
 import { filesUnder } from './filesUnder';
 import { projectFormatter } from './projectFormatter';
 import { AGAIN, noteRefused } from './repeats';
-import { readAfresh, readingOf, spaceEffects } from './spaceReading';
+import { effectLines, readAfresh, readingOf, spaceEffects } from './spaceReading';
 import { fail } from './terminal';
 import { answerOf, locatedSpace } from './where';
 import { unifiedDiff } from '../fix/diff';
@@ -83,13 +83,16 @@ const locate = async (elementId: string, command: string[]): Promise<Located | u
     return undefined;
   }
 
-  const element = (await answerOf(project.root, elements, elementId, 'id')).matches.at(0);
+  const found = await answerOf(project.root, elements, elementId, 'id');
+  const element = found.matches.at(0);
   const ts = loadTypeScript(project.root);
   if (!element || !ts) {
     await refuse(
       element
         ? 'The project has no TypeScript to read its source with: install its packages first.'
-        : `No element has the id "${elementId}". \`plitzi element where ${elementId}\` finds it by a class or its words.`
+        : found.nearest
+          ? `No element has the id "${elementId}" — did you mean ${found.nearest}?`
+          : `No element has the id "${elementId}". \`plitzi element where ${elementId}\` finds it by a class or its words.`
     );
 
     return undefined;
@@ -182,7 +185,7 @@ const writeAndRead = async (
   before: string,
   edited: string,
   expected: (effects: SpaceEffect[], after: ElementReading[]) => string[]
-): Promise<{ after: string; effects: SpaceEffect[] } | undefined> => {
+): Promise<{ after: string; effects: SpaceEffect[]; lines: string[] } | undefined> => {
   const absolute = path.resolve(process.cwd(), file);
   const after = await formatLikeBefore(await projectFormatter(located.root), file, before, edited);
   await fs.writeFile(absolute, after);
@@ -198,7 +201,11 @@ const writeAndRead = async (
     return undefined;
   }
 
-  return { after, effects };
+  return {
+    after,
+    effects,
+    lines: 'problem' in read ? [] : effectLines(effects, located.elements.map(readingOf), read)
+  };
 };
 
 const said = (outcome: EditOutcome, before: string): string | { problem: string } => {
@@ -207,6 +214,40 @@ const said = (outcome: EditOutcome, before: string): string | { problem: string 
   }
 
   return applyChanges(before, outcome.changes) ?? { problem: 'two of the changes touch the same place' };
+};
+
+/** The element and everything it holds, by id. */
+export const subtreeOf = (elements: readonly WrittenElement[], elementId: string): Set<string> => {
+  const byId = new Map(elements.map(element => [element.elementId, element]));
+  const ids = new Set<string>();
+  const walk = (id: string): void => {
+    if (ids.has(id)) {
+      return;
+    }
+
+    ids.add(id);
+    byId.get(id)?.children.forEach(walk);
+  };
+  walk(elementId);
+
+  return ids;
+};
+
+/**
+ * The steps of other elements that act on what a removal would take away — a button that opens the modal — each with
+ * where it is written: what the removal would leave pointing at nothing.
+ */
+export const pointedAt = (elements: readonly WrittenElement[], gone: ReadonlySet<string>): string[] => {
+  // Two flows doing the same — a click and a key that open one modal — are one line, said with how many.
+  const counted = new Map<string, number>();
+  for (const element of elements.filter(each => !gone.has(each.elementId))) {
+    for (const target of element.targets.filter(each => gone.has(each.elementId))) {
+      const line = `${element.elementId} ${target.step} → ${target.elementId}${element.at ? ` (${element.at})` : ''}`;
+      counted.set(line, (counted.get(line) ?? 0) + 1);
+    }
+  }
+
+  return [...counted].map(([line, times]) => (times > 1 ? `${line}, in ${String(times)} flows` : line));
 };
 
 /** Only the element and what it holds may go, and its parent lose it: anything else is named. */
@@ -254,6 +295,20 @@ export const remove = async (elementId: string, options: RemoveOptions): Promise
     return;
   }
 
+  // Said before anything is written: a removal that leaves a step pointed at nothing is not one to make and undo.
+  const pointing = pointedAt(located.elements, subtreeOf(located.elements, elementId));
+  if (pointing.length > 0) {
+    await located.refuse(
+      [
+        `Nothing was changed: other elements' flows act on what removing ${elementId} takes away:`,
+        ...pointing.map(line => `  - ${line}`),
+        'Take those steps out, or point them at another element, first — then remove it.'
+      ].join('\n')
+    );
+
+    return;
+  }
+
   const file = item.position.file;
   const before = await fs.readFile(path.resolve(process.cwd(), file), 'utf-8');
   const sourceFile = ts.createSourceFile(file, before, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
@@ -286,7 +341,7 @@ export const remove = async (elementId: string, options: RemoveOptions): Promise
       JSON.stringify({
         elementId,
         at: `${file}:${String(item.position.line)}`,
-        effects: written.effects.map(effect => effect.line),
+        effects: written.lines,
         unused: gone,
         ...(helperUnread ? { unreadHelper: helperUnread } : {})
       })
@@ -302,7 +357,7 @@ export const remove = async (elementId: string, options: RemoveOptions): Promise
         `${elementId} removed${item.via ? ` — the call of ${item.via} that builds it —` : ''} from ${file}:${String(item.position.line)}; the space authors without it.`
       ),
       'Changed in the space:',
-      ...written.effects.map(effect => `  ${effect.line}`),
+      ...written.lines.map(line => `  ${line}`),
       ...(gone.length > 0 ? [`Taken out too, nothing reads them any longer: ${gone.join(', ')}.`] : []),
       ...(helperUnread
         ? [`${helperUnread} is read by nothing now: delete it where it is declared, unless it is kept for later.`]
@@ -332,15 +387,24 @@ export const move = async (elementId: string, options: MoveOptions): Promise<voi
     return;
   }
 
+  if (siblingId === elementId) {
+    fail(`${elementId} beside itself is where it already is: --before or --after names another element of its list.`);
+
+    return;
+  }
+
   const located = await locate(elementId, ['move', elementId, side, siblingId]);
   if (!located) {
     return;
   }
 
   const { ts, element } = located;
-  const sibling = (await answerOf(located.root, located.elements, siblingId, 'id')).matches.at(0);
+  const siblingFound = await answerOf(located.root, located.elements, siblingId, 'id');
+  const sibling = siblingFound.matches.at(0);
   if (!sibling) {
-    await located.refuse(`No element has the id "${siblingId}".`);
+    await located.refuse(
+      `No element has the id "${siblingId}"${siblingFound.nearest ? ` — did you mean ${siblingFound.nearest}?` : '.'}`
+    );
 
     return;
   }
@@ -381,7 +445,7 @@ export const move = async (elementId: string, options: MoveOptions): Promise<voi
   }
 
   if (options.json) {
-    console.log(JSON.stringify({ elementId, side, sibling: siblingId, effects: written.effects.map(e => e.line) }));
+    console.log(JSON.stringify({ elementId, side, sibling: siblingId, effects: written.lines }));
 
     return;
   }
@@ -391,7 +455,7 @@ export const move = async (elementId: string, options: MoveOptions): Promise<voi
       unifiedDiff(file, before, written.after),
       chalk.green(`${elementId} moved ${side} ${siblingId}; the space authors with it.`),
       'Changed in the space:',
-      ...written.effects.map(effect => `  ${effect.line}`),
+      ...written.lines.map(line => `  ${line}`),
       'Next: plitzi page check the page it is on'
     ].join('\n')
   );

@@ -1,10 +1,12 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { authorSpace, refusalOf } from '@plitzi/sdk-authoring';
 import { canonicalJson } from '@plitzi/sdk-shared/helpers/canonicalJson';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { findProject } from './existingProject';
+import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
 import { locatedSpace } from './where';
 
@@ -48,6 +50,9 @@ export interface AskedChange {
 }
 
 const SHOWN = 60;
+
+/** As much of a refusal as says what broke: its head and its first problems, each with where it is. */
+const GATE_LINES = 12;
 
 export const readingOf = ({
   elementId,
@@ -175,6 +180,42 @@ export const spaceEffects = (before: readonly ElementReading[], after: readonly 
 };
 
 /**
+ * The effects as lines to read: an element added or removed with everything inside it said once, by the outermost of
+ * them, with how many it held — nineteen lines of a modal's parts are one. Every other effect is its own line.
+ */
+export const effectLines = (
+  effects: readonly SpaceEffect[],
+  before: readonly ElementReading[],
+  after: readonly ElementReading[]
+): string[] => {
+  const parentIn = (readings: readonly ElementReading[]): Map<string, string> =>
+    new Map(readings.flatMap(reading => reading.children.map((child): [string, string] => [child, reading.elementId])));
+  const parents = { removed: parentIn(before), added: parentIn(after) };
+  const lines: string[] = [];
+  const kinds: readonly ('removed' | 'added')[] = ['removed', 'added'];
+  for (const kind of kinds) {
+    const ids = new Set(effects.filter(effect => effect.kind === kind).map(effect => effect.elementId));
+    const outermost = (id: string): string => {
+      const parent = parents[kind].get(id);
+
+      return parent !== undefined && ids.has(parent) ? outermost(parent) : id;
+    };
+    const inside = new Map<string, number>();
+    for (const id of ids) {
+      const top = outermost(id);
+      inside.set(top, (inside.get(top) ?? 0) + (top === id ? 0 : 1));
+    }
+
+    for (const effect of effects.filter(each => each.kind === kind && inside.has(each.elementId))) {
+      const held = inside.get(effect.elementId) ?? 0;
+      lines.push(held > 0 ? `${effect.line}, with ${String(held)} inside` : effect.line);
+    }
+  }
+
+  return [...lines, ...effects.filter(effect => effect.kind !== 'removed' && effect.kind !== 'added').map(e => e.line)];
+};
+
+/**
  * Why the space after an edit is not what was asked of it: a change that is not there, and every one nobody asked for
  * — a shared call, a constant, a helper that reached another element. Nothing when it is exactly what was asked.
  */
@@ -270,6 +311,23 @@ export const elements = async (): Promise<void> => {
   const project = await findProject(process.cwd());
   if (!project || project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
     fail('Run this in a project whose space is written in it (`src/space/`).');
+
+    return;
+  }
+
+  // Through the same gate `npm run author` is: a space that writes but would be refused — a step pointed at an element
+  // that is gone — is a space an edit broke, and it is said so rather than read as fine.
+  const loaded = await loadProjectSpace(project.root);
+  if ('problem' in loaded) {
+    console.log(JSON.stringify({ problem: loaded.problem }));
+
+    return;
+  }
+
+  try {
+    authorSpace(loaded.space, loaded.authoring);
+  } catch (error) {
+    console.log(JSON.stringify({ problem: refusalOf(error).message.split('\n').slice(0, GATE_LINES).join('\n') }));
 
     return;
   }

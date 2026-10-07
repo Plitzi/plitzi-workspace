@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   bindTemplate,
+  button,
   component,
   container,
   link,
@@ -9,6 +10,9 @@ import {
   listItem,
   locateClasses,
   locateElements,
+  modalContainer,
+  onClick,
+  openModal,
   styles,
   text
 } from '../index';
@@ -56,6 +60,8 @@ describe('locateElements', () => {
       words: ['{{ source }} XP']
     });
     expect(located.find(element => element.elementId === 'nav-home')?.words).toEqual(['Home']);
+
+    expect(located.find(element => element.elementId === 'nav-home')?.targets).toEqual([]);
 
     // A list handed its rows as data: the words its rows show are in its items.
     const plans = locateElements({
@@ -126,5 +132,28 @@ describe('locateElements', () => {
     });
 
     expect(located.map(found => found.name)).toContain('card');
+  });
+
+  // What taking an element away would break: the steps of other elements that act on it.
+  it('answers the elements each one’s flows act on, and the step', () => {
+    const located = locateElements({
+      name: 'Targets',
+      permanentUrl: 'targets',
+      pages: [
+        {
+          id: 'home',
+          name: 'Home',
+          slug: '',
+          body: [
+            button({ id: 'open', content: 'Open', flows: [[onClick(), openModal('dialog')]] }),
+            modalContainer({ id: 'dialog' })
+          ]
+        }
+      ]
+    });
+
+    expect(located.find(element => element.elementId === 'open')?.targets).toEqual([
+      { elementId: 'dialog', step: 'openModal' }
+    ]);
   });
 });

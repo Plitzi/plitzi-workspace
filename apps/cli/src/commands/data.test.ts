@@ -58,4 +58,19 @@ describe('describeData', () => {
 
     expect(describeData(byId).shape).toContain('… 5 more keys');
   });
+
+  // Five hundred articles keyed by slug are one shape, not five hundred: described once, with how many keys.
+  it('reads an object keyed by data as a map of one shape', () => {
+    const { shape } = describeData({
+      comments: {
+        'first-post': [{ id: 'a', likes: 1 }],
+        'second-post': [{ id: 'b', likes: 2 }, { id: 'c' }],
+        'third-post': []
+      }
+    });
+
+    expect(shape).toContain('comments: { [key]: {');
+    expect(shape).toContain('(3 keys: "first-post", "second-post", "third-post")');
+    expect(shape.match(/likes/g)).toHaveLength(1);
+  });
 });

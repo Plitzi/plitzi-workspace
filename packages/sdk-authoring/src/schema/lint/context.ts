@@ -134,6 +134,11 @@ export class LintContext {
    * The attributes this element reads: its type's, and what being where it is adds — an instance reads the props its
    * component declares, each an attribute of its own, and a child of an instance names the slot it fills.
    */
+  /** What the element's type — its component's, for a `custom` one — writes when an attribute is left out. */
+  defaultsFor(element: Element): Record<string, unknown> {
+    return this.catalogs.defaultAttributes?.[this.catalogType(element) ?? element.definition.type] ?? {};
+  }
+
   attributeNamesFor(element: Element): readonly string[] | null {
     const names = this.attributeNames(this.catalogType(element) ?? element.definition.type);
     const parentId = element.definition.parentId;

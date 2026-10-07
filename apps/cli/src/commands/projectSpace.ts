@@ -1,9 +1,14 @@
-import { projectSpaceAt } from '@plitzi/sdk-authoring/node';
+import { moduleProblem, projectSpaceAt } from '@plitzi/sdk-authoring/node';
 
 import type { ProjectSpaceSource } from '@plitzi/sdk-authoring/node';
 
 /** What `projectSpaceAt` refuses with a message that is the whole report: the root, the layout, a module with no space. */
-const REPORTS: ReadonlySet<string> = new Set(['ProjectRootError', 'ProjectLayoutError', 'ProjectSpaceError']);
+const REPORTS: ReadonlySet<string> = new Set([
+  'ProjectRootError',
+  'ProjectLayoutError',
+  'ProjectSpaceError',
+  'ProjectModuleError'
+]);
 
 /**
  * The project's own declaration, loaded as its server and its `author` script load it (`projectSpaceAt`) — for a
@@ -18,6 +23,8 @@ export const loadProjectSpace = async (root: string): Promise<ProjectSpaceSource
       return { problem: error.message };
     }
 
-    throw error;
+    // Anything else thrown while the project's modules load is the project's: a file that does not parse, an import
+    // of nothing, a module that throws as it runs. Said at its file and line, never as a stack a command dies with.
+    return { problem: moduleProblem(error, root) };
   }
 };

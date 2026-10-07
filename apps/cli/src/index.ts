@@ -402,6 +402,7 @@ program
     'Whether the project is left passing: author, lints, types, format and every page, only the problems said'
   )
   .option('--no-pages', 'Leave the pages out — said as such')
+  .option('--keep-going', 'Run every check even after one fails — by default the first failure ends the run')
   .option('--json', 'One object, for a tool or an agent')
   .action((options: VerifyOptions) => verify(options));
 

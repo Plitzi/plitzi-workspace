@@ -75,10 +75,10 @@ describe('plitzi explain', () => {
     expect(EXPLAIN_KINDS.code).toBe('codes');
   });
 
-  it('says what there is when a name is nothing', () => {
+  it('says what there is when a name is nothing', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    explainCommand('teleport', {});
+    await explainCommand('teleport', {});
 
     expect(error.mock.calls.flat().join('')).toContain('--list elements, steps, triggers, codes, transformers');
     expect(process.exitCode).toBe(1);

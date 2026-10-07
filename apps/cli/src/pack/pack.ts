@@ -5,6 +5,7 @@ import path from 'node:path';
 import { build } from 'esbuild';
 import { zipSync } from 'fflate';
 
+import { closest } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE, readFunctionsSource } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { pluginAssetLoaders, pluginImportQueries } from '@plitzi/sdk-shared/plugins/bundle';
@@ -314,6 +315,22 @@ export const packPlugin = async ({
 
   if (source.kind === 'elements') {
     for (const folder of source.folders) {
+      // A folder that is not there at all is most often one written a letter off: the nearest beside it is offered.
+      const exists = await fs.stat(folder).then(
+        stat => stat.isDirectory(),
+        () => false
+      );
+      if (!exists) {
+        const siblings = await fs
+          .readdir(path.dirname(folder), { withFileTypes: true })
+          .then(entries => entries.filter(entry => entry.isDirectory()).map(entry => entry.name))
+          .catch(() => []);
+        const nearest = closest(path.basename(folder), siblings);
+        throw new PackError(
+          `${path.relative(root, folder) || folder} does not exist${nearest ? ` — did you mean ${path.relative(root, path.join(path.dirname(folder), nearest))}?` : '.'}`
+        );
+      }
+
       const missing = [
         ...(elementEntry(folder) ? [] : [`${PLUGIN_ENTRIES.join(' (or ')})`]),
         ...((await fs.access(path.join(folder, PLUGIN_DECLARATION_FILE)).then(

@@ -321,6 +321,17 @@ describe('an attribute edited where the element was written (plitzi element edit
     });
   });
 
+  // `attributes: { … }` written where the attributes were meant: what it holds put in its place, as written.
+  it('unwraps a key into what it holds, each property as written', () => {
+    expect(
+      edited("custom({ id: 'r', renderType: 'rating', attributes: { value: 5, label: LABEL } })", 'custom', {
+        on: 'attribute',
+        op: 'unwrap',
+        key: 'attributes'
+      })
+    ).toBe("custom({ id: 'r', renderType: 'rating', value: 5, label: LABEL })");
+  });
+
   it('shows the call as it is written', () => {
     const text = "const page = [text('Hi', { id: 'a' }), link({ id: 'b' })];";
     const { sourceFile, position } = at(text, 'link');

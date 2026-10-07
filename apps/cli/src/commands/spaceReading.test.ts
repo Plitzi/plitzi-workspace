@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { childrenChange, isReadings, reachedToo, spaceEffects, surprises } from './spaceReading';
+import { childrenChange, effectLines, isReadings, reachedToo, spaceEffects, surprises } from './spaceReading';
 
 import type { ElementReading } from './spaceReading';
 
@@ -79,6 +79,21 @@ describe('how an element’s children changed', () => {
       'faq moved — now after hero, before pricing'
     );
     expect(childrenChange(['a', 'b', 'c'], ['c', 'b', 'a'])).toBe('reordered: c, b, a');
+  });
+});
+
+describe('the effects as lines to read', () => {
+  it('says a subtree removed once, by its outermost element, with how many it held', () => {
+    const modal = { ...reading('modal', {}), children: ['field', 'hits'] };
+    const hits = { ...reading('hits', {}), children: ['hit'] };
+    const shell = { ...reading('shell', {}), children: ['modal'] };
+    const was = [shell, modal, reading('field', {}), hits, reading('hit', {})];
+    const is = [{ ...shell, children: [] }];
+
+    expect(effectLines(spaceEffects(was, is), was, is)).toEqual([
+      'modal (text) removed, with 3 inside',
+      'shell children: −modal'
+    ]);
   });
 });
 

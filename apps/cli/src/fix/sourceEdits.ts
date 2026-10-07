@@ -265,6 +265,19 @@ const editKey = (
     }
   }
 
+  // What the key holds, put in its place one level up — each property as it is written, its value's text kept.
+  if (edit.op === 'unwrap') {
+    if (!ts.isPropertyAssignment(property) || !ts.isObjectLiteralExpression(property.initializer)) {
+      return { unplaced: `\`${edit.key}\` is not written as an object there: move what it holds up by hand` };
+    }
+
+    return one({
+      start: property.getStart(sourceFile),
+      end: property.getEnd(),
+      text: property.initializer.properties.map(inner => inner.getText(sourceFile)).join(', ')
+    });
+  }
+
   return { unplaced: `\`${edit.key}\` is not a property that edit applies to` };
 };
 

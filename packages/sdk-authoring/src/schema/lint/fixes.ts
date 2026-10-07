@@ -1,3 +1,4 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { closest } from '../suggest';
@@ -16,8 +17,11 @@ import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
  */
 export interface FixChange {
   on: 'attribute' | 'field' | 'binding' | { step: string };
-  /** `replace` swaps one literal text for another anywhere under the key — a transformer's action in a binding. */
-  op: 'remove' | 'rename' | 'set' | 'replace';
+  /**
+   * `replace` swaps one literal text for another anywhere under the key — a transformer's action in a binding.
+   * `unwrap` puts what the key holds — an object — in its place, one level up: `attributes: { value: 5 }` → `value: 5`.
+   */
+  op: 'remove' | 'rename' | 'set' | 'replace' | 'unwrap';
   /** The attribute, field or param; a binding's target; the text `replace` looks for. */
   key: string;
   /** What `rename` renames to, and what `replace` writes. */
@@ -64,10 +68,30 @@ const settleUnknownKeys = (
   known: readonly string[],
   what: string,
   on: FixChange['on'],
-  report: Report
+  report: Report,
+  /** What each key reads when left out: one that holds only that is free to be written. */
+  defaults: Record<string, unknown> = {}
 ) => {
   for (const key of Object.keys(record)) {
     if (known.includes(key)) {
+      continue;
+    }
+
+    // What the author meant, wrapped one level too deep — `attributes: { value: 5 }` where `value: 5` was meant: put
+    // in its place, up where it is read. Only when every key is one it reads and none is written already beside it;
+    // anything else is not guessed at, and no less is it dropped.
+    const wrapped = record[key];
+    if (isRecord(wrapped) && Object.keys(wrapped).length > 0 && Object.keys(wrapped).every(inner => known.includes(inner))) {
+      const inners = Object.keys(wrapped);
+      if (inners.every(inner => record[inner] === undefined || record[inner] === defaults[inner])) {
+        Object.assign(record, wrapped);
+        Reflect.deleteProperty(record, key);
+        report(
+          `Moved ${inners.join(', ')} out of the ${what} "${key}", up to where ${inners.length === 1 ? 'it is' : 'they are'} read.`,
+          { on, op: 'unwrap', key }
+        );
+      }
+
       continue;
     }
 
@@ -140,7 +164,7 @@ const FIXERS: Record<string, Fixer> = {
     // The names the linter holds the element to: its type's, and an instance's props and slot besides.
     const names = ctx.attributeNamesFor(element);
     if (!isRoot(element) && names) {
-      settleUnknownKeys(element.attributes, names, 'attribute', 'attribute', report);
+      settleUnknownKeys(element.attributes, names, 'attribute', 'attribute', report, ctx.defaultsFor(element));
     }
   },
 

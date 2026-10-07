@@ -297,7 +297,10 @@ plitzi verify --no-pages                    # the pages left out, said as such
 (`body: [enterpriseFaq()]`), on the helper's call — and are checked as `element edit` is: the space authored again in a fresh
 process and read against the one before. A removal may take the element and what it holds and nothing else; a move
 may change only its parent's order, with the element beside the one it was moved by. Anything more and the file goes
-back, what it would have changed named. A `styles()` declared for the removed element alone goes with it, and its
+back, what it would have changed named — and the space read again goes through the same gate `npm run author` does, so
+a change that leaves it refused is never kept. A removal is refused before anything is written when another element's
+flow acts on what it would take away (`site-search openModal → search-modal`), each said with where it is. What it took
+is said once, by the outermost element, with how many it held. A `styles()` declared for the removed element alone goes with it, and its
 factories' imports, named; a helper left with no caller is said, not deleted. A call written once for several
 elements (a `map`), a page or a layout, and a move between two files are left to the author, said.
 
@@ -306,7 +309,8 @@ among its siblings — so a move renames nothing.
 
 `verify` runs each check the project has a script for, as its package manager runs one, then opens every page with
 no parameter in its path at 1440 and 390 px (the server must be up: `npm start`). Only what fails is printed, with the
-last lines it said; a page the browser was sent away from — one for signed-in visitors — is said as not checked, never
+last lines it said, and the first failure ends the run — one broken file fails every step after it the same way — the
+rest said as not run until it passes (`--keep-going` runs them anyway); a page the browser was sent away from — one for signed-in visitors — is said as not checked, never
 as passing — said on its own line, without failing the run, since a space with pages for signed-in visitors always
 has some (`plitzi page check <path> --as <username>` opens one). Exit 1 when anything failed.
 
@@ -396,7 +400,9 @@ plitzi explain --list steps     # every one of a kind: elements, steps, triggers
 What a name means when authoring, from the catalogues the checks themselves read — the answer to a question that would
 otherwise be a search through the SDK's types. A name no catalogue holds — `pageFamily`, `styles`, `SpaceSpec` — is any
 export of `@plitzi/sdk-authoring`, answered from the `.d.ts` the project installed, so it is the version the project
-runs. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
+runs. An element of the project's own — `src/plugins/<Name>/` — is explained by its type the same way: what it takes
+(each attribute at its default), fires and answers, and the `custom({ … renderType })` that places it, which `plugin
+add` prints too. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
 
 ## `doctor`
 
@@ -514,7 +520,9 @@ plitzi data describe src/data/products.json --json   # { shape, example }
 ```
 
 The fields of a JSON file, their types and which rows have them — `price?: number  (in 812 of 879)` — so a page can
-be bound to half a megabyte of data after reading twenty lines of it.
+be bound to half a megabyte of data after reading twenty lines of it. An object keyed by data — slugs, ids — is one
+shape, said once: `{ [key]: … }  (500 keys: "first-post", …)`. A file written a letter off is offered the nearest one
+beside it.
 
 ## `space pull`
 

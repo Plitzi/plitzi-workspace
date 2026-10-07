@@ -158,3 +158,23 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   not "on screen".
 - `plitzi upgrade` says packages installed locally in one line past three, and a skill rewritten within the same
   version as that, not `0.38.7 → 0.38.7`.
+- **What `element edit`, `remove` and `move` read back goes through the gate `npm run author` does**: a change that
+  leaves the space refused — a flow still opening a modal that was removed — is put back, the refusal said with where.
+  `element remove` refuses before writing when another element's flows act on what it takes away, and says what it
+  took once, by the outermost element (`search-modal removed, with 18 inside`). Moving an element beside itself is
+  refused as nothing to do.
+- **An id, a plugin folder or a data file written a letter off is offered the nearest one** (`element where`, `edit`,
+  `remove`, `move`, `plugin pack`, `data describe`).
+- **A project file that does not load is said at its file and line** — `src/space/hero.ts:139: Expected ','` — by the
+  server, `npm run author` and every CLI command, never as a stack (`ProjectModuleError` and `moduleProblem` in
+  `@plitzi/sdk-authoring/node`).
+- **`plitzi verify` stops at the first failure** — one broken file fails every later step the same way — and says the
+  rest as not run (`--keep-going` runs them anyway); `--no-pages` no longer fails a run that passed.
+- **`plitzi space fix` no longer drops attributes written one level too deep**: `attributes: { value: 5 }` where
+  `value: 5` was meant is put in its place (a new `unwrap` fix), not removed with what it said.
+- **`plitzi explain <type>` explains the project's own elements** (`src/plugins/`), and `plugin add` prints how to place
+  one with the attributes it was declared with.
+- **`plitzi data describe` says an object keyed by data once**, as a map of one shape with how many keys, so a file of
+  five hundred articles reads as one.
+- **`plitzi page check` says a path no page answers before opening it**, with the paths the pages do answer — never a
+  redirect home read as a page for signed-in visitors.

@@ -8,7 +8,7 @@ import { closest, PAGE_SPEC_FIELDS } from '@plitzi/sdk-authoring';
 import { findProject } from './existingProject';
 import { projectFormatter } from './projectFormatter';
 import { AGAIN, noteRefused } from './repeats';
-import { reachedToo, readAfresh, readingOf, spaceEffects, surprises } from './spaceReading';
+import { effectLines, reachedToo, readAfresh, readingOf, spaceEffects, surprises } from './spaceReading';
 import { fail } from './terminal';
 import { answerOf, importedFile, locatedSpace } from './where';
 import { unifiedDiff } from '../fix/diff';
@@ -142,7 +142,9 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
   const element = found.by === 'id' ? found.matches[0] : undefined;
   if (!element) {
     await refuse(
-      `No element has the id "${elementId}". \`plitzi element where ${elementId}\` finds it by a class or its words.`
+      found.nearest
+        ? `No element has the id "${elementId}" — did you mean ${found.nearest}?`
+        : `No element has the id "${elementId}". \`plitzi element where ${elementId}\` finds it by a class or its words.`
     );
 
     return;
@@ -407,12 +409,13 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
     return;
   }
 
+  const lines = 'problem' in after ? [] : effectLines(effects, located.map(readingOf), after);
   if (options.json) {
     console.log(
       JSON.stringify({
         elementId,
         changes: placed.map(one => ({ ...one.change, at: placedAt(one) })),
-        effects: effects.map(effect => effect.line)
+        effects: lines
       })
     );
 
@@ -426,7 +429,7 @@ export const edit = async (elementId: string, options: EditOptions): Promise<voi
         `${elementId}: ${placed.map(one => `${one.change.key} in ${placedAt(one)}`).join(', ')}; the space authors with it.`
       ),
       'Changed in the space:',
-      ...effects.map(effect => `  ${effect.line}`),
+      ...lines.map(line => `  ${line}`),
       'Next: plitzi page check — the page as it renders now'
     ].join('\n')
   );

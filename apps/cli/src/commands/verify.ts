@@ -25,6 +25,8 @@ import type { ExistingProject } from './existingProject';
 export interface VerifyOptions {
   /** Commander's `--no-pages`: false when the pages are to be left out. */
   pages?: boolean;
+  /** Every step, even after one failed: by default the first failure ends the run, the rest said as not run. */
+  keepGoing?: boolean;
   json?: boolean;
 }
 
@@ -109,24 +111,36 @@ export const verify = async (options: VerifyOptions): Promise<void> => {
   }
 
   const results: StepResult[] = [];
-  for (const step of stepsOf(await scriptsOf(project.root))) {
+  const steps = stepsOf(await scriptsOf(project.root));
+  const waiting: string[] = [];
+  for (const [index, step] of steps.entries()) {
     const { code, output } = await run(project.root, step.command);
     const ok = code === 0 && !step.failsOn?.test(output);
-    results.push({
-      name: step.name,
-      ok,
-      ...(ok ? {} : { said: tail(output), ...(step.fix ? { fix: step.fix } : {}) })
-    });
+    // A fix offered only for what it fixes: a file the formatter cannot read is not one it would write.
+    const fixes = step.fix !== undefined && !/\[error\]/.test(output);
+    results.push({ name: step.name, ok, ...(ok ? {} : { said: tail(output), ...(fixes ? { fix: step.fix } : {}) }) });
+    // One broken file fails every step after it the same way: the first is the one to fix, the rest run once it passes.
+    if (!ok && !options.keepGoing) {
+      waiting.push(...steps.slice(index + 1).map(each => each.name), ...(options.pages === false ? [] : ['pages']));
+      break;
+    }
   }
 
-  const pages = options.pages === false ? undefined : await pagesChecked(project);
+  const pages = options.pages === false || waiting.length > 0 ? undefined : await pagesChecked(project);
   const failed =
-    results.some(result => !result.ok) || pages === undefined || 'problem' in pages || pages.failing.length > 0;
+    results.some(result => !result.ok) || (pages !== undefined && ('problem' in pages || pages.failing.length > 0));
 
   if (options.json) {
-    console.log(JSON.stringify({ ok: !failed, steps: results, pages: pages ?? { left: true } }));
+    console.log(
+      JSON.stringify({
+        ok: !failed,
+        steps: results,
+        ...(waiting.length > 0 ? { notRun: waiting } : {}),
+        pages: pages ?? { left: true }
+      })
+    );
   } else {
-    console.log(verifyText(results, pages));
+    console.log(verifyText(results, waiting.length > 0 ? { waiting, after: results.at(-1)?.name ?? '' } : pages));
   }
 
   if (failed) {
@@ -161,7 +175,7 @@ const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { 
 
 export const verifyText = (
   results: readonly StepResult[],
-  pages: PagesChecked | { problem: string } | undefined
+  pages: PagesChecked | { problem: string } | { waiting: string[]; after: string } | undefined
 ): string =>
   [
     ...results.flatMap(result =>
@@ -175,21 +189,27 @@ export const verifyText = (
     ),
     ...(pages === undefined
       ? [chalk.yellow('- pages not checked: --no-pages')]
-      : 'problem' in pages
-        ? [chalk.red(`✗ pages — ${pages.problem}`)]
-        : [
-            pages.failing.length === 0
-              ? chalk.green(`✓ pages — ${String(pages.passing)} checks at ${WIDTHS.join(' and ')} px`)
-              : chalk.red(
-                  `✗ pages — ${String(pages.failing.length)} of ${String(pages.passing + pages.failing.length)} checks`
-                ),
-            ...pages.failing.map(report => reportText(report, { state: false })),
-            ...(pages.unchecked.length > 0
-              ? [
-                  chalk.yellow(
-                    `- not checked — sent elsewhere (a page for signed-in visitors) or not answered: ${pages.unchecked.join(', ')} — plitzi page check <path> --as <username>`
-                  )
-                ]
-              : [])
-          ])
+      : 'waiting' in pages
+        ? [
+            chalk.yellow(
+              `- not run until ${pages.after} passes: ${pages.waiting.join(', ')} (--keep-going runs them anyway)`
+            )
+          ]
+        : 'problem' in pages
+          ? [chalk.red(`✗ pages — ${pages.problem}`)]
+          : [
+              pages.failing.length === 0
+                ? chalk.green(`✓ pages — ${String(pages.passing)} checks at ${WIDTHS.join(' and ')} px`)
+                : chalk.red(
+                    `✗ pages — ${String(pages.failing.length)} of ${String(pages.passing + pages.failing.length)} checks`
+                  ),
+              ...pages.failing.map(report => reportText(report, { state: false })),
+              ...(pages.unchecked.length > 0
+                ? [
+                    chalk.yellow(
+                      `- not checked — sent elsewhere (a page for signed-in visitors) or not answered: ${pages.unchecked.join(', ')} — plitzi page check <path> --as <username>`
+                    )
+                  ]
+                : [])
+            ])
   ].join('\n');

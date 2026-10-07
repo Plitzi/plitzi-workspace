@@ -43,6 +43,22 @@ describe('planFixes', () => {
     ]);
   });
 
+  // `attributes: { … }` written where the attributes themselves were meant: moved up to where they are read, never
+  // dropped with what they say. One the element does not read, or a value no edit can write, is left for the author.
+  it('moves attributes written one level too deep up to where they are read', () => {
+    const { fixes } = planFixes(
+      page([
+        element('text', { id: 'note', content: 'Hi', attributes: { content: 'Hello' } }),
+        element('text', { id: 'lead', attributes: { content: 'Read', title: 'More' } })
+      ])
+    );
+
+    expect(fixes.filter(fix => fix.elementId === 'note')).toEqual([]);
+    expect(fixes.filter(fix => fix.elementId === 'lead').map(fix => fix.edit)).toEqual([
+      { on: 'attribute', op: 'unwrap', key: 'attributes' }
+    ]);
+  });
+
   /** The `content-attribute` suggestion, where it has one way to be written: `plitzi space fix` makes it. */
   it('plans words and an icon held as children as the element’s own, and leaves what cannot move as is', () => {
     const { fixes } = planFixes(

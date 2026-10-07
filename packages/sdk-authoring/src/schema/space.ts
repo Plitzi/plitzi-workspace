@@ -2210,6 +2210,8 @@ export interface WrittenElement {
   attributes: Record<string, unknown>;
   /** The elements it holds, in their order. */
   children: string[];
+  /** The other elements its flows act on, each with the step that does: what taking one of them away would break. */
+  targets: { elementId: string; step: string }[];
   /** The attributes its bindings compute: what the page shows of them is the binding's, never the value written. */
   bound: string[];
   /** Where it was written: `src/space/pages/home.ts:42`. Absent for an element no call of the author's code wrote. */
@@ -2303,6 +2305,11 @@ export const locateElements = (spec: SpaceSpec, options: AuthorSpaceOptions = {}
       words: wordsOf(element, templates),
       attributes: element.attributes,
       children: element.definition.items ?? [],
+      targets: Object.values(element.definition.interactions ?? {}).flatMap(node =>
+        node.type === 'callback' && node.elementId !== null && node.elementId !== element.id
+          ? [{ elementId: node.elementId, step: node.action }]
+          : []
+      ),
       bound: (element.definition.bindings?.attributes ?? []).map(binding => binding.to),
       through: calls.slice(1),
       ...(position ? { at: `${position.file}:${String(position.line)}`, position } : {})

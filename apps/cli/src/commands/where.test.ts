@@ -14,6 +14,7 @@ const element = (elementId: string, classes: string[], content?: string): Writte
   through: [],
   bound: [],
   children: [],
+  targets: [],
   attributes: {},
   ...(content === undefined ? {} : { content })
 });

@@ -131,7 +131,7 @@ export const pluginDeclarations = async (folder: string | URL): Promise<PluginDe
 
   return Promise.all(
     files.map(async file => {
-      const loaded: unknown = await import(pathToFileURL(file).href);
+      const loaded = await importProjectModule(file, root);
       const declaration: unknown =
         typeof loaded === 'object' && loaded !== null && 'default' in loaded ? loaded.default : undefined;
       if (
@@ -238,6 +238,51 @@ export class ProjectSpaceError extends Error {
 Object.defineProperty(ProjectSpaceError, 'name', { value: 'ProjectSpaceError' });
 
 /**
+ * A module of the project that did not load — a file that does not parse, an import of nothing, a module that throws
+ * as it runs — said at the first of the project's own files it points at: `src/space/hero.ts:139: Expected ','…`. The
+ * server, `npm run author` and the CLI each say it in those words, never as a stack.
+ */
+export class ProjectModuleError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ProjectModuleError';
+  }
+}
+
+Object.defineProperty(ProjectModuleError, 'name', { value: 'ProjectModuleError' });
+
+/** Where in the project's own files an error points first, and what it says: a module that did not load, located. */
+export const moduleProblem = (error: unknown, root: string): string => {
+  const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
+  const stack = error instanceof Error ? (error.stack ?? '') : '';
+  const frame = stack
+    .split('\n')
+    .map(line => /(?:file:\/\/)?(\/[^\s:()]+\.(?:tsx?|m?js|json)):(\d+)/.exec(line))
+    .find(match => match !== null && match[1].startsWith(root) && !match[1].includes('/node_modules/'));
+  const at = frame ? `${path.relative(process.cwd(), frame[1])}:${frame[2]}` : undefined;
+
+  return at ? `${at}: ${message}` : message;
+};
+
+/**
+ * A project's module imported: a refusal of authoring's thrown as the module ran (a factory given what it refuses) is
+ * said as it is; anything else is the module not loading, located (`ProjectModuleError`).
+ */
+const importProjectModule = async (file: string, root: string): Promise<unknown> => {
+  try {
+    const loaded: unknown = await import(pathToFileURL(file).href);
+
+    return loaded;
+  } catch (error) {
+    if (error instanceof Error && (error.name === 'AuthoringError' || error.name === 'SpaceRefusedError')) {
+      throw error;
+    }
+
+    throw new ProjectModuleError(moduleProblem(error, root));
+  }
+};
+
+/**
  * What the module exports as `space`, taken as a declaration when it has the shape of one. `authorSpace` checks the
  * rest of it, field by field, and says what is wrong — so this only has to tell a space from anything else.
  */
@@ -259,7 +304,7 @@ export const projectSpaceAt = async (root: string): Promise<ProjectSpaceSource> 
   // it, rather than as a module Node cannot find.
   const authoring = await projectAuthoringAt(root);
   // Compiled when the process runs what `build` emitted (`node dist/main.js`), which carries no TypeScript.
-  const module: unknown = await import(pathToFileURL(projectModule(root, SPACE_ENTRY, process.argv[1])).href);
+  const module = await importProjectModule(projectModule(root, SPACE_ENTRY, process.argv[1]), root);
   const space = isRecord(module) ? module.space : undefined;
   if (!isSpaceSpec(space)) {
     throw new ProjectSpaceError(SPACE_ENTRY);

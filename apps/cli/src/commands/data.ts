@@ -1,6 +1,10 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 
 import chalk from 'chalk';
+
+import { closest } from '@plitzi/sdk-authoring';
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { fail } from './terminal';
 
@@ -16,7 +20,10 @@ type ObjectShape = { count: number; fields: Map<string, { count: number; shape: 
 
 type ArrayShape = { occurrences: number; lengths: Set<number>; item: Shape };
 
-type Shape = { primitives: Set<string>; object?: ObjectShape; array?: ArrayShape };
+/** An object keyed by data — slugs, ids — whose values share one shape: said once, with how many keys. */
+type MapShape = { keys: string[]; value: Shape };
+
+type Shape = { primitives: Set<string>; object?: ObjectShape; array?: ArrayShape; map?: MapShape };
 
 const emptyShape = (): Shape => ({ primitives: new Set() });
 
@@ -36,6 +43,19 @@ const merge = (shape: Shape, value: unknown): void => {
     shape.array.lengths.add(value.length);
     for (const item of value) {
       merge(shape.array.item, item);
+    }
+
+    return;
+  }
+
+  // Keyed by data — no key is a name a program would give a field (`the-quiet-death`, `1042`) — it is a map: every
+  // value merged into one shape, as a list's items are, so five hundred articles read as one.
+  const keys = isPlainObject(value) ? Object.keys(value) : [];
+  if (isPlainObject(value) && keys.length >= 2 && keys.every(key => !KEY.test(key))) {
+    shape.map ??= { keys: [], value: emptyShape() };
+    shape.map.keys.push(...keys);
+    for (const field of Object.values(value)) {
+      merge(shape.map.value, field);
     }
 
     return;
@@ -72,6 +92,17 @@ const render = (shape: Shape, depth: number): string => {
 
   if (shape.array) {
     parts.push(renderArray(shape.array, depth));
+  }
+
+  if (shape.map) {
+    const { keys, value } = shape.map;
+    const sample = keys
+      .slice(0, 3)
+      .map(key => JSON.stringify(key))
+      .join(', ');
+    parts.push(
+      `{ [key]: ${render(value, depth)} }  (${String(keys.length)} keys: ${sample}${keys.length > 3 ? ', …' : ''})`
+    );
   }
 
   return parts.length > 0 ? parts.join(' | ') : 'never';
@@ -179,7 +210,20 @@ export const dataDescribe = async (file: string, options: DataDescribeOptions): 
   try {
     value = JSON.parse(await fs.readFile(file, 'utf-8'));
   } catch (error) {
-    fail(`${file} is not a JSON file this can read: ${error instanceof Error ? error.message : String(error)}`);
+    // A file written a letter off is offered the nearest one beside it, rather than the system's ENOENT.
+    const missing = isRecord(error) && error.code === 'ENOENT';
+    const beside = missing
+      ? await fs.readdir(path.dirname(file)).then(
+          names => names.filter(name => name.endsWith('.json')),
+          () => []
+        )
+      : [];
+    const nearest = closest(path.basename(file), beside);
+    fail(
+      missing
+        ? `${file} does not exist${nearest ? ` — did you mean ${path.join(path.dirname(file), nearest)}?` : beside.length > 0 ? `: the JSON there is ${beside.join(', ')}` : '.'}`
+        : `${file} is not a JSON file this can read: ${error instanceof Error ? error.message : String(error)}`
+    );
 
     return;
   }

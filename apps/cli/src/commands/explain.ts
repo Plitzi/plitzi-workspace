@@ -4,6 +4,8 @@ import { EXPLAIN_KINDS, explain, explainKindOf, explainList, explanationText } f
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project/layout';
 
 import { apiDeclaration, apiText } from './apiDeclarations';
+import { findProject } from './existingProject';
+import { pluginText, projectPlugins } from './projectPlugins';
 import { fail } from './terminal';
 import { LINT_RULES } from '../lint/catalog';
 
@@ -79,7 +81,7 @@ const textOf = (explanation: AnyExplanation): string =>
 
 const kinds = Object.values(EXPLAIN_KINDS).join(', ');
 
-export const explainCommand = (name: string | undefined, options: ExplainOptions): void => {
+export const explainCommand = async (name: string | undefined, options: ExplainOptions): Promise<void> => {
   if (options.list !== undefined) {
     const kind = explainKindOf(options.list);
     if (!kind) {
@@ -117,6 +119,17 @@ export const explainCommand = (name: string | undefined, options: ExplainOptions
     const api = apiDeclaration(process.cwd(), name);
     if (api) {
       console.log(options.json ? JSON.stringify([api]) : apiText(api));
+
+      return;
+    }
+
+    // An element of the project's own, by the type it is placed by: said as one the SDK ships is.
+    const project = await findProject(process.cwd());
+    const own = project
+      ? (await projectPlugins(project.root)).find(declaration => declaration.type === name)
+      : undefined;
+    if (own) {
+      console.log(options.json ? JSON.stringify([own]) : pluginText(own));
 
       return;
     }

@@ -191,6 +191,15 @@ const projectSpace = async (root: string): Promise<Authored | { problem: string 
 };
 
 /** The page a path is, `:slug` and `{{slug}}` matching any segment. */
+/**
+ * That no page answers a path, with every path the space's pages answer — a parameter written as it is matched
+ * (`/p/:slug`), so the one meant is read off the list rather than guessed from letters.
+ */
+const noPageMessage = (handles: SpaceHandles, pathname: string): string =>
+  `no page of the space answers at ${pathname}: its pages are ${Object.values(handles.pages)
+    .map(page => page.path)
+    .join(', ')}`;
+
 const pageFor = (handles: SpaceHandles, pathname: string): string | undefined => {
   const wanted = pathname.replace(/\/$/, '').split('/');
 
@@ -680,6 +689,16 @@ const checkAt = async (
       failedRequests.push(`${String(response.status())} ${response.url().slice(origin.length)}`);
     }
   });
+
+  // A path no page of the space answers is said as that, before the browser opens it: whatever the server does with
+  // it — a redirect home, a not-found — would otherwise be read as something the page did.
+  if (handles && !pageFor(handles, pathname)) {
+    return {
+      ...unchecked({ code: 'no-page', message: noPageMessage(handles, pathname), width }),
+      consoleErrors,
+      failedRequests
+    };
+  }
 
   // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
   const answered = await openPage(page, `${origin}${pathname}`);
