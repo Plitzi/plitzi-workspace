@@ -23,6 +23,7 @@ import { answersFor } from '../commands/upgrade';
 import { CLI_VERSION } from '../scaffold/project';
 
 import type { Check, DoctorArea, DoctorContext, Finding, Repair, Severity } from './types';
+import type { ExistingProject } from '../commands/existingProject';
 
 export type { DoctorArea, Finding, Severity } from './types';
 
@@ -292,28 +293,24 @@ export const reportText = (report: DoctorReport): string => {
 };
 
 /** The project as every check reads it, or a reason there is none to check. */
-const contextOf = async (): Promise<DoctorContext | undefined> => {
-  const project = await projectHere('to check');
-  if (!project) {
-    return undefined;
-  }
-
+/**
+ * What the checks read of `project` — or why it cannot be read: a `package.json` that is not JSON, a project that
+ * `plitzi create` did not write. Said by the caller, which decides whether that ends it.
+ */
+export const projectContext = async (project: ExistingProject): Promise<DoctorContext | { problem: string }> => {
   let manifest: unknown;
   try {
     manifest = JSON.parse(await fs.readFile(path.join(project.root, 'package.json'), 'utf-8'));
   } catch (error) {
-    fail(`package.json is not JSON: ${error instanceof Error ? error.message : String(error)}`);
-
-    return undefined;
+    return { problem: `package.json is not JSON: ${error instanceof Error ? error.message : String(error)}` };
   }
 
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   if (!plitzi || !isRecord(manifest)) {
-    fail(
-      'plitzi doctor checks a project plitzi create wrote — one that depends on @plitzi/plitzi-sdk and starts at src/main.ts — and this is not one.'
-    );
-
-    return undefined;
+    return {
+      problem:
+        'plitzi doctor checks a project plitzi create wrote — one that depends on @plitzi/plitzi-sdk and starts at src/main.ts — and this is not one.'
+    };
   }
 
   // As the files it finds are named: a temporary folder behind a link (`/var` → `/private/var`) is named by where it is.
@@ -332,6 +329,22 @@ const contextOf = async (): Promise<DoctorContext | undefined> => {
     origin,
     record
   };
+};
+
+const contextOf = async (): Promise<DoctorContext | undefined> => {
+  const project = await projectHere('to check');
+  if (!project) {
+    return undefined;
+  }
+
+  const context = await projectContext(project);
+  if ('problem' in context) {
+    fail(context.problem);
+
+    return undefined;
+  }
+
+  return context;
 };
 
 /** Each repair once, though several findings name it (a layout moved at once). */

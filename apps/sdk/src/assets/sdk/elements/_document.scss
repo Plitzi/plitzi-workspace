@@ -1,0 +1,191 @@
+/**
+ * How a document reads before a space dresses it: a `markdown`, and a `richText`'s body.
+ *
+ * Every selector is wrapped in `:where()` and lives in the base layer, so it weighs nothing: a class a space gives a
+ * part through its slot (`heading`, `paragraph`, `table`…) replaces what it sets, property by property, and whatever
+ * the class leaves out still reads as a document. Colours are mixed from the text's own, so the defaults follow any
+ * theme and any palette without naming one.
+ */
+@mixin styles($root) {
+  #{$root} {
+    line-height: 1.6;
+    overflow-wrap: break-word;
+  }
+
+  #{$root} :where(h1, h2, h3, h4, h5, h6) {
+    position: relative;
+    margin: 1.5em 0 0.5em;
+    font-weight: 600;
+    line-height: 1.25;
+    scroll-margin-top: 1em;
+  }
+
+  #{$root} :where(h1) {
+    font-size: 2em;
+  }
+
+  #{$root} :where(h2) {
+    font-size: 1.5em;
+  }
+
+  #{$root} :where(h3) {
+    font-size: 1.25em;
+  }
+
+  #{$root} :where(h4) {
+    font-size: 1em;
+  }
+
+  #{$root} :where(h5) {
+    font-size: 0.875em;
+  }
+
+  #{$root} :where(h6) {
+    font-size: 0.85em;
+    opacity: 0.75;
+  }
+
+  #{$root} :where(p, ul, ol, blockquote, table, pre, .markdown-code) {
+    margin: 0 0 1em;
+  }
+
+  #{$root} :where(.markdown, div) > :where(:first-child) {
+    margin-top: 0;
+  }
+
+  #{$root} :where(a) {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  #{$root} :where(strong, b) {
+    font-weight: 600;
+  }
+
+  #{$root} :where(ul, ol) {
+    padding-left: 1.5em;
+  }
+
+  #{$root} :where(ul) {
+    list-style: disc;
+  }
+
+  #{$root} :where(ol) {
+    list-style: decimal;
+  }
+
+  #{$root} :where(li + li) {
+    margin-top: 0.25em;
+  }
+
+  #{$root} :where(li > ul, li > ol) {
+    margin: 0.25em 0 0;
+  }
+
+  #{$root} :where(blockquote) {
+    padding: 0 1em;
+    border-left: 0.25em solid color-mix(in srgb, currentColor 25%, transparent);
+    opacity: 0.85;
+  }
+
+  #{$root} :where(hr) {
+    height: 0;
+    margin: 1.5em 0;
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  }
+
+  #{$root} :where(img) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  #{$root} :where(code) {
+    padding: 0.15em 0.35em;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, currentColor 8%, transparent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.875em;
+  }
+
+  #{$root} :where(pre) {
+    overflow-x: auto;
+    padding: 1em;
+    border-radius: 6px;
+    background-color: color-mix(in srgb, currentColor 6%, transparent);
+  }
+
+  #{$root} :where(pre code) {
+    padding: 0;
+    background: none;
+  }
+
+  #{$root} :where(table) {
+    display: block;
+    width: max-content;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+  }
+
+  #{$root} :where(th, td) {
+    padding: 0.4em 0.8em;
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    text-align: left;
+  }
+
+  #{$root} :where(th) {
+    font-weight: 600;
+  }
+
+  #{$root} :where(.markdown-code) {
+    overflow: hidden;
+    border-radius: 6px;
+  }
+
+  // The highlighter paints the block itself: the frame only adds the bar over it.
+  #{$root} :where(.markdown-code pre) {
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  #{$root} :where(.markdown-code-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35em 0.8em;
+    background-color: color-mix(in srgb, currentColor 10%, transparent);
+    font-size: 0.8em;
+  }
+
+  #{$root} :where(.markdown-code-copy) {
+    padding: 0.15em 0.5em;
+    border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+    border-radius: 4px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  // The link a heading offers to itself: in the margin before it, shown while the heading is pointed at or it has focus.
+  #{$root} :where(.anchor) {
+    position: absolute;
+    right: 100%;
+    padding-right: 0.25em;
+    color: inherit;
+    text-decoration: none;
+    opacity: 0;
+  }
+
+  #{$root} :where(.octicon-link)::before {
+    content: '#';
+  }
+
+  #{$root} :where(:is(h1, h2, h3, h4, h5, h6):hover .anchor, .anchor:focus-visible) {
+    opacity: 0.6;
+  }
+}

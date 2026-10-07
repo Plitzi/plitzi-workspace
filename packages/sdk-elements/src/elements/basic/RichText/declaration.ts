@@ -27,8 +27,10 @@ const declaration = elementDeclaration<RichTextAttributes>()({
         'a class through the slots a `markdown` has, by the same names: `heading` and `heading1`…`heading6` (a property ' +
         'on one of the two, never both), `paragraph`, `link`, `strong` (`strong`/`b`), `emphasis` (`em`/`i`), ' +
         '`list`, `listItem`, `quote`, `divider`, `code` (inline), `codeBlock` (`pre`), `image`, `table`, `tableHead`, ' +
-        '`tableRow`, `tableHeaderCell`, `tableCell`; the fenced block of a markdown body also sits in `codeBlockFrame`, under `codeBlockHeader` with ' +
-        '`codeBlockLanguage` and `codeBlockCopy`. The SDK styles none of it.',
+        '`tableRow`, `tableHeaderCell`, `tableCell`; the fenced block of a markdown body also sits in ' +
+        '`codeBlockFrame`, under `codeBlockHeader` with `codeBlockLanguage` and `codeBlockCopy`. Unstyled, a body ' +
+        'reads as a document from the base layer of the SDK, which a class on the slot of a part replaces property by ' +
+        'property.',
       items: [],
       bindings: {},
       styleSelectors: {

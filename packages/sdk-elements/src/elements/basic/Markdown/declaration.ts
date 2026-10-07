@@ -27,7 +27,8 @@ const declaration = elementDeclaration<MarkdownAttributes>()({
         'the `codeBlockCopy` button. Every heading carries ' +
         'an id made of its words, which `/page#its-words` lands on, and starts with an empty link to itself — ' +
         '`a.anchor > span.octicon-link`, the `anchor` slot; `headingLinks: false` leaves the link out and keeps the id. ' +
-        'The SDK styles none of it.',
+        'Unstyled, it reads as a document — headings, lists, code, tables — from the base layer of the SDK, which a ' +
+        'class on the slot of a part replaces property by property.',
       bindings: {},
       styleSelectors: {
         base: '',

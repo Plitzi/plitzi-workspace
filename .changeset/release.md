@@ -144,8 +144,10 @@
   `divider`, `tableHead`, `tableRow`, `tableHeaderCell`, `tableCell`, and the code block's frame, header, language and
   copy button. Both heading slots dress one `<h3>`, so `heading-level-overridden` warns when they set the same property
   and the stylesheet's order makes the general one win. A document is drawn by the SDK's own renderer
-  (`MarkdownDocument` in `@plitzi/sdk-elements`), with no stylesheet of its own: plitzi-ui's `Markdown` keeps GitHub's,
-  which no longer reaches a space, so what the space writes on each part is what shows — in the builder as on the page.
+  (`MarkdownDocument` in `@plitzi/sdk-elements`) — plitzi-ui's `Markdown` keeps GitHub's stylesheet for a library's
+  consumers — and reads as a document unstyled: headings, lists, code, tables and quotes get their type from the SDK's
+  base layer, at no weight (`:where()`), so a class on a part's slot replaces what it sets property by property. A
+  `richText` body reads the same.
 - `custom-css-slot` suggests the slot for a `customCss` rule on a part's SDK class — only where a class on the slot can
   say the rest of the selector (a state, a pseudo-element); `element-slot-unknown` warns of a slot an element does not
   have.
@@ -158,6 +160,31 @@
   `/_rsc` about the new address.
 - **The toasts' parts are `notifications` fields**: `minHeight`, `fontWeight`, `lineHeight`, `iconSize`, `iconGap`,
   `closeColor`, `closeOpacity`, `progressHeight`.
+- **A page asked for with its space's token hydrates its own space.** On a host serving many spaces
+  (`?access-token=`), the space document fetched beside the page went without the token, so the host's own space
+  answered it and the browser hydrated another space's document over the page — a hydration error, and its tree
+  rebuilt. The document's address now carries the token the page was asked for with.
+- **The SDK's stylesheet carries the space's variables from the server's HTML.** It read them from what a provider
+  below it publishes while the page renders, which the server had not done yet when it wrote the sheet; it now
+  resolves them from the document itself (`useResolvedVariables` of `@plitzi/sdk-shared/dataSource/hooks`), the same
+  on both sides.
+- **A realtime message the pub/sub cannot deliver is answered, not fatal.** A publish over the WebSocket that Redis
+  refuses — a timeout under load — gets an `ack` with `503` and `reason: 'unavailable'`; a connect, a disconnect or a
+  revoke that fails is logged. Each used to reject with nobody waiting, and the server's `unhandledRejection` handler
+  shut the whole process down.
+
+## Reporting to Plitzi
+
+- **`plitzi feedback`** starts a report of what broke, misled or cost time: it writes the page the report is laid out
+  in (`tmp/feedback/`) with the installed versions, the project and what `doctor` finds already in it, and tells the
+  agent how to fill it — each finding reproduced first, with evidence, impact, workaround and fix, no secrets — and to
+  publish it as an artifact whose link the developer sends. `--previous <url>` continues an earlier report.
+
+## The dev tools
+
+- **A page loads the React its dev tools need.** The development build only while the visitor has the dev tools on
+  (shift+F12, within what the deployment allows); turned off, the next load is a production page, React included. It
+  followed the authorization alone, so a space that allowed debugging always shipped development React.
 
 ## check and lint
 

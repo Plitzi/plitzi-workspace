@@ -12,6 +12,7 @@ import { registerExternalPlugins } from './registerExternalPlugins';
 import { reportMissingPlugins } from './reportMissingPlugins';
 import { resolvePageSeo } from './resolvePageSeo';
 import { publishSpaceDocument } from './spaceDocument';
+import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { imagesPathOf } from '../../core/http/stages/images';
 import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
 import { sdkAssetVersion } from '../../core/sdkAssets';
@@ -293,13 +294,23 @@ export const prepareRender = async (
    * Not for a draft, which no other process could produce when the fetch reaches it, and not for a deployment's own
    * template, which was written for the space inline; a page with no script needs no space at all.
    */
-  const spaceDocumentPath =
+  const publishedDocument =
     offlineData !== undefined &&
     offlineDataOverride === undefined &&
     config.templateFn === undefined &&
     config.ssrOnly !== true
       ? publishSpaceDocument(spaceId, environment, spaceDocument(offlineData))
       : undefined;
+  /**
+   * A page that named its space with a token in its address (`?access-token=`, how a host serving many spaces is asked
+   * for one) has its document asked for the same way: fetched bare, the host's own space answered it — another space's
+   * document, hydrated over this one's page.
+   */
+  const spaceToken = req.query[SPACE_TOKEN_PARAM];
+  const spaceDocumentPath =
+    publishedDocument && spaceToken
+      ? `${publishedDocument}?${SPACE_TOKEN_PARAM}=${encodeURIComponent(spaceToken)}`
+      : publishedDocument;
 
   const offlineDataStr = hydrationPayload(
     offlineData,
@@ -385,7 +396,10 @@ export const prepareRender = async (
 
     return { ...entry, ssr: entry.keyName in pluginComponents, ...(deferred ? { deferred } : {}) };
   });
-  const vendorJs = (debugAuthorized ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
+  // React's development build — its warnings and readable errors — for the page that draws the dev tools, which is what
+  // the visitor chose (shift+F12) within what the deployment allows: the production build otherwise, authorized or not.
+  // A page already running keeps its React; the choice shows on the next load.
+  const vendorJs = (debugRendered ? '/sdk-assets/plitzi-sdk-dev-vendor.js' : '/sdk-assets/plitzi-sdk-vendor.js') + v;
 
   return {
     componentProps: {

@@ -1,3 +1,5 @@
+@use './document';
+
 @mixin styles {
   .plitzi-component__markdown {
     &.plitzi-component__markdown--edit-mode {
@@ -13,4 +15,6 @@
       min-width: 0;
     }
   }
+
+  @include document.styles(':where(.plitzi-component__markdown)');
 }

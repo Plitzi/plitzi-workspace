@@ -374,6 +374,24 @@ It loads the plugins' declarations and the project's own `@plitzi/sdk-server` to
 never starts the server or the runtime. A check that cannot finish is said as an error
 of its area, never a crash.
 
+## `feedback`
+
+```bash
+npx @plitzi/cli feedback                                   # a report to Plitzi, started
+npx @plitzi/cli feedback --previous https://claude.ai/artifact/…   # continuing an earlier one
+```
+
+A report of what broke, misled or cost time, for a developer to send to Plitzi as a link. The CLI reads what a report
+must not get wrong — every `@plitzi` package installed and its version, Node and the machine, the project's mode and
+source, what `plitzi doctor` finds — and writes the page the report is laid out in, `tmp/feedback/report-<date>.html`:
+a tally by severity, what was built, what changed since the earlier reports, where to start, the findings filtered by
+severity and area and each copied as an issue, and what worked — in light and dark, on a phone. It prints how to fill
+it for the agent the developer works with: one `REPORT` object, each finding reproduced on the installed versions
+before it is written, with what happens, the evidence, the impact, the workaround and a fix; no secret, token or
+customer's data. The agent then publishes it as a private artifact and gives the developer its URL. `--previous` hands
+it the earlier reports: their numbering goes on, and what changed of each finding is said. `--json`: `{ file, facts,
+brief }`.
+
 ## `upgrade`
 
 ```bash

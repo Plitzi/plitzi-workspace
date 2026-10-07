@@ -53,6 +53,9 @@ const unique = (candidates: string[]): string[] => [...new Set(candidates.filter
  * both and the typed verifier decides which it actually is — that is what `scope` is for. Trying the wrong kind
  * costs nothing: it fails on its scope claim before any database is touched.
  */
+/** The query parameter a space token rides in: how a page on a host serving many spaces names the one it is. */
+export const SPACE_TOKEN_PARAM = 'access-token';
+
 export const createCarriers = (sessionCookieName: (hostname: string) => string) => ({
   userTokenCandidates: (carrier: CredentialCarrier): string[] =>
     unique([
@@ -62,7 +65,7 @@ export const createCarriers = (sessionCookieName: (hostname: string) => string) 
     ]),
 
   spaceTokenCandidates: (carrier: CredentialCarrier): string[] => {
-    const queryToken = carrier.query?.['access-token'];
+    const queryToken = carrier.query?.[SPACE_TOKEN_PARAM];
 
     return unique([
       headerValue(carrier.headers['x-access-token']),

@@ -30,6 +30,7 @@
 @use './pagination' as pagination;
 @use './dropdown' as dropdown;
 @use './markdown' as markdown;
+@use './rich-text' as richText;
 @use './node-html' as nodeHtml;
 
 @mixin styles {
@@ -65,5 +66,6 @@
   @include pagination.styles;
   @include dropdown.styles;
   @include markdown.styles;
+  @include richText.styles;
   @include nodeHtml.styles;
 }

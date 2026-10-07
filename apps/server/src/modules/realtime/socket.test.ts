@@ -138,3 +138,65 @@ describe('realtime over a WebSocket', () => {
     expect(html).toContain('"realtimeTransport":"websocket"');
   });
 });
+
+describe('realtime over a WebSocket, while the pub/sub under it fails', () => {
+  const FAILING_PORT = PORT + 1;
+  let failing: SSRServer;
+  const rejected: unknown[] = [];
+  const onRejection = (reason: unknown): void => {
+    rejected.push(reason);
+  };
+
+  beforeAll(async () => {
+    process.on('unhandledRejection', onRejection);
+    failing = createServer({
+      port: FAILING_PORT,
+      adapters: createJsonAdapters({ offlineData, deployment: { spaceId: 1, environment: 'main', revision: 0 } }),
+      realtime: {
+        transport: 'websocket',
+        // Redis timing out under load: every publish refused, subscriptions still open.
+        pubsub: {
+          publish: () => Promise.reject(new Error('Command timed out')),
+          subscribe: () => Promise.resolve(() => Promise.resolve())
+        }
+      }
+    });
+    failing.listen(FAILING_PORT, '127.0.0.1');
+    await vi.waitFor(async () => {
+      expect((await fetch(`http://127.0.0.1:${FAILING_PORT}/health`)).status).toBeLessThan(500);
+    });
+  });
+
+  afterAll(async () => {
+    process.off('unhandledRejection', onRejection);
+    await failing.close();
+  });
+
+  // Left to reject, one undelivered cursor reached the process's handler, which shut the whole server down.
+  it('answers the publish as not delivered, and the server goes on', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const socket = new WebSocket(`ws://127.0.0.1:${FAILING_PORT}/_realtime?topics=room:1`);
+    const frames: Frame[] = [];
+    socket.on('message', (data: Buffer) => frames.push(JSON.parse(data.toString('utf8')) as Frame));
+    await vi.waitFor(() => {
+      expect(frames.some(frame => frame.event === 'ready')).toBe(true);
+    });
+
+    socket.send(JSON.stringify({ id: 3, topic: 'room:1', type: 'cursor', data: { x: 1 } }));
+    await vi.waitFor(() => {
+      expect(frames.find(frame => frame.event === 'ack')?.data).toEqual({
+        id: 3,
+        ok: false,
+        status: 503,
+        reason: 'unavailable'
+      });
+    });
+    socket.close();
+    await vi.waitFor(() => {
+      expect(socket.readyState).toBe(WebSocket.CLOSED);
+    });
+
+    expect(rejected).toEqual([]);
+    expect((await fetch(`http://127.0.0.1:${FAILING_PORT}/health`)).status).toBeLessThan(500);
+  });
+});

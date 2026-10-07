@@ -62,6 +62,16 @@ describe('modules/ssr/spaceDocument', () => {
     expect(await response.json()).toEqual(offlineData);
   });
 
+  // A host serving many spaces is asked for one by its token: the document must name the same space the page did, or
+  // the host's own space answers it and another space's document is hydrated over this page.
+  it('names the space with the token the page was asked for it with', async () => {
+    const html = await (await fetch(`${base}/?access-token=a.b%2Bc`)).text();
+    const path = documentPath(html) ?? '';
+
+    expect(path).toMatch(/^\/_plitzi\/space\/[\w-]+\.json\?access-token=a\.b%2Bc$/);
+    expect(await (await fetch(`${base}${path}`)).json()).toEqual(offlineData);
+  });
+
   it('answers no other address under its own', async () => {
     expect((await fetch(`${base}/_plitzi/space/a/b.json`)).status).toBe(404);
   });

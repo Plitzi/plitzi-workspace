@@ -1,5 +1,7 @@
 import { JOIN_TYPE, LEAVE_TYPE, REVOKED_TYPE } from '@plitzi/sdk-shared/realtime';
 
+import { warnRealtime } from './failure';
+
 import type { ChannelDeclaration, PubSubAdapter, RealtimeMessage, RealtimeSender } from '@plitzi/sdk-shared';
 
 /** The space a connection belongs to: its topics are that space's and no other's. */
@@ -94,7 +96,9 @@ export const createRealtimeHub = (pubsub: PubSubAdapter) => {
 
             return opened !== undefined && (grant === undefined || opened === grant);
           });
-          revoked.forEach(member => void releaseTopic(member, message.topic));
+          revoked.forEach(member => {
+            releaseTopic(member, message.topic).catch(warnRealtime(`"${message.topic}" was not let go`));
+          });
         } else if (message) {
           connections.forEach(member => member.send('message', message));
         }

@@ -42,9 +42,12 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
   rendered page: `check`. The project around them (layout, packages, configs, imports, plugins, data): `doctor`,
   before `push`; `--fix` repairs the simple ones (an older project: `npx @plitzi/cli@latest doctor --fix`).
 
-- **After the SDK moves, `upgrade`.** It shows the CLI's files, scripts, versions and skills as they should be now, and
-  each renamed name at its line. `--write` replaces what nobody changed, merges `package.json` and installs; a file
-  you changed comes as a diff — `--take <file>` once read.
+- **Reporting to Plitzi: `feedback`.** It writes the report's page and says how to fill and publish it; give the
+  person the link.
+
+- **After the SDK moves, `upgrade`.** It shows the CLI's files, scripts, versions, skills and renamed names as they
+  should be. `--write` replaces what nobody changed, merges `package.json` and installs; a file you changed comes as a
+  diff — `--take <file>` once read.
 
 - **`create` never decides for the person.** Three choices shape a project — package manager, `--mode`
   (`server`: SSR + RSC on a Node tier, `client`: browser only) and `--source` (`local`: the space lives in the project,
@@ -56,8 +59,8 @@ npx @plitzi/cli functions dev feed.read --watch                   # the same, fr
 - **One space at a time.** Everything goes to the space `whoami` names; `plitzi space` switches it. No command takes a
   space as a flag, so check `whoami --json` (`{ api, user, space }`) before an upload.
 - **Read stdout, exit code and stderr apart.** The answer is on stdout (`--json`: one object, one line); errors and
-  sign-in prompts are on stderr; exit 1 means it did not do what was asked, or a check found something. A flag value
-  that is not one is refused with what it takes — read the message rather than retrying without the flag.
+  sign-in prompts are on stderr; exit 1 means it did not do what was asked, or a check found something. A bad flag
+  value is refused with what it takes: read it, do not drop the flag.
 
 ## The Plitzi MCP or this CLI
 
@@ -117,7 +120,6 @@ The space itself is written with `@plitzi/sdk-authoring` — see the `plitzi-aut
 Taking a space out of Plitzi as a server project of its own, and keeping it in step: read
 [reference/from-space.md](reference/from-space.md) when the task names `--from` or `pull`.
 
-
 ## Elements of your own (`add plugin`)
 
 A plugin is a React component the space renders — a map, a chart, a seat picker: whatever is not text in a box. **Never
@@ -127,7 +129,6 @@ read.
 ```bash
 plitzi add plugin seat-picker                                  # one; asks what the builder calls it and what it is for
 plitzi add plugin seat-picker legend                           # several at once
-plitzi add plugin seat-picker --title "Seat Picker" --description "Pick a seat from a venue map"
 plitzi add plugin ticker --prop interval:number=5000 --prop paused:boolean --trigger onTick:count --callback reset --headless
 ```
 

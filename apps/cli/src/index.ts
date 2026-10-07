@@ -28,6 +28,7 @@ import { shot } from './commands/shot';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { doctor } from './doctor';
+import { feedback } from './feedback';
 import { lint } from './lint';
 import { count, positiveInteger, width, widths } from './options';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
@@ -55,6 +56,7 @@ import type { ShotOptions } from './commands/shot';
 import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 import type { DoctorOptions } from './doctor';
+import type { FeedbackOptions } from './feedback';
 import type { LintOptions } from './lint';
 
 /**
@@ -402,6 +404,20 @@ program
   .option('--strict', 'Warnings fail too (exit 1): for a CI that keeps the project up to its CLI')
   .option('--json', 'One object, for a tool or an agent')
   .action((options: DoctorOptions) => doctor(options));
+
+program
+  .command('feedback')
+  .description(
+    'Start a report to Plitzi: writes the page in tmp/feedback/ with the versions and the project already in it, and tells the agent how to fill and publish it — to send as a link'
+  )
+  .option(
+    '--previous <url>',
+    'An earlier report this one continues — its numbering, and what changed. Repeat it',
+    collect,
+    []
+  )
+  .option('--json', 'One object: { file, facts, brief }, for a tool or an agent')
+  .action((options: FeedbackOptions) => feedback(options));
 
 program
   .command('lint')

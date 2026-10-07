@@ -1,0 +1,5 @@
+@use './document';
+
+@mixin styles {
+  @include document.styles(':where(.plitzi-component__rich-text)');
+}

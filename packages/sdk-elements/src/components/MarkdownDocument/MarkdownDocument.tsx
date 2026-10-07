@@ -26,7 +26,8 @@ export type MarkdownDocumentProps = {
   headingLinks?: boolean;
   /**
    * A class for each part of the output, beside the one it already has: `{ heading: 'doc-heading', link: 'doc-link' }`
-   * — the parts are `MARKDOWN_PARTS`. The output carries no style of its own beyond the code blocks' highlighting.
+   * — the parts are `MARKDOWN_PARTS`. The output carries no stylesheet of its own beyond the code blocks' highlighting:
+   * the SDK's base layer gives an undressed document its type (`_document.scss`), below every class.
    * Keep it the same object from one render to the next: a new one rebuilds every tag of the document.
    */
   classNames?: MarkdownClassNames;
