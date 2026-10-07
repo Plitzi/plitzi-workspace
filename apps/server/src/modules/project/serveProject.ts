@@ -21,6 +21,7 @@ import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
 import { freePort } from '../../core/freePort';
 import { closeOnSignals } from '../../core/server/closeOnSignals';
+import { isFleetWorker } from '../../core/server/fleet/role';
 import { consoleLogger } from '../../helpers/serverLog';
 import { createFileKv } from '../actions/runtime/fileKv';
 import { loadFunctions } from '../functions/load';
@@ -191,7 +192,9 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   const plugins = await projectPlugins(root);
   // What the server serves of a space held in the project: replaced, while developing, by each save authored again.
   const held = space && { documents: { schema: space.schema, style: space.style } };
-  for (const warning of space?.warnings ?? []) {
+  // Said by the process that was started: in production every worker runs this file too, and would say it again.
+  const speaks = !isFleetWorker();
+  for (const warning of speaks ? (space?.warnings ?? []) : []) {
     console.warn(`[author] ${warning.message}`);
   }
 
@@ -244,9 +247,11 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
 
   server.listen(port, host);
   const url = `http://127.0.0.1:${String(port)}`;
-  mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });
-  writeFileSync(path.join(root, DEV_SERVER_FILE), `${JSON.stringify({ name, port, url }, null, 2)}\n`);
-  console.log(`pages on ${url}/`);
+  if (speaks) {
+    mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });
+    writeFileSync(path.join(root, DEV_SERVER_FILE), `${JSON.stringify({ name, port, url }, null, 2)}\n`);
+    console.log(`pages on ${url}/`);
+  }
 
   const watching = developing
     ? [

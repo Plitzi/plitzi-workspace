@@ -50,9 +50,6 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "turbo": "^2.11.7"
   },
-  "resolutions": {
-    "@plitzi/plitzi-ui": "portal:../plitzi-ui"
-  },
   "engines": {
     "node": ">=20"
   },
