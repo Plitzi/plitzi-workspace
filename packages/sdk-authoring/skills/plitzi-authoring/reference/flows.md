@@ -21,8 +21,8 @@ source — `when({ field: 'flags.newCheckout', operator: '=', value: true }, …
 same flags, decided on the server. Use the step builders — they fill in where a step runs and what it takes:
 
 - **Where it runs.** A global callback registers under its source MODULE (`state`, `auth`, `actions`), an element
-  callback under an element's id, a utility under nothing. Naming either half wrong is a control that does nothing,
-  with no error — which is why the builders exist.
+  callback under an element's id, a utility under nothing. Either half named wrong is a control that silently does
+  nothing.
 - **Which `setState`.** `setState({ key })` writes `runtime.state.<key>` and is read as `state.<key>`; never put
   `state.` in the key. `updateElement(…)` changes one element's own attribute or state.
 - **Flip in one step.** `toggleState({ key })` for app state, `toggleElement({ category: 'state', key: 'visibility' },
@@ -143,6 +143,8 @@ without a word.
 `progressHeight`), one CSS value each: `notifications: { background: 'var(--card)', radius: '12px', iconSize: '18px' }`.
 The toast carries no class of the space's, so this — not a `.Toastify__*` rule in `customCss` — is where it is
 dressed.
+
+Copy link: `copyToClipboard('{{ navigation.href }}')`, then the toast — it fails with no clipboard.
 
 ## Modals, dropdowns, tabs
 

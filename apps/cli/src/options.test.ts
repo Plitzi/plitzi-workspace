@@ -1,7 +1,7 @@
 import { InvalidArgumentError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
-import { count, positiveInteger, width, widths } from './options';
+import { count, fill, positiveInteger, width, widths } from './options';
 
 describe('options', () => {
   it('reads widths in the order given, each once', () => {
@@ -29,5 +29,17 @@ describe('options', () => {
     expect(() => count('')).toThrow(InvalidArgumentError);
     expect(() => count('-1')).toThrow(InvalidArgumentError);
     expect(() => count('1.5')).toThrow(InvalidArgumentError);
+  });
+
+  it('reads a field to fill as its id and everything after the first =, one per flag, in order', () => {
+    const first = fill('news-email=ana@example.com', undefined);
+
+    expect(fill('query=a=b', first)).toEqual([
+      { element: 'news-email', value: 'ana@example.com' },
+      { element: 'query', value: 'a=b' }
+    ]);
+    expect(fill('note=', undefined)).toEqual([{ element: 'note', value: '' }]);
+    expect(() => fill('news-email', undefined)).toThrow('<id>=<value>');
+    expect(() => fill('=x', undefined)).toThrow(InvalidArgumentError);
   });
 });

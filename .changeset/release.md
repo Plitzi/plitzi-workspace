@@ -2,6 +2,7 @@
 '@plitzi/cli': patch
 '@plitzi/sdk-authoring': patch
 '@plitzi/sdk-elements': patch
+'@plitzi/sdk-interactions': patch
 '@plitzi/sdk-mcp': patch
 '@plitzi/sdk-schema': patch
 '@plitzi/sdk-shared': patch
@@ -105,7 +106,8 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   static shell while hydrating and handed back without it — under another key — on the next render, so React tore
   down everything under it and built it again. With a server provider around a layout (an `apiContainer` that draws
   no markup of its own), the whole layout's DOM was replaced on every page, and every `motion` arrival in it played
-  twice: a visible flicker on load.
+  twice: a visible flicker on load. The shell now stays around the element on both sides of hydration, under the same
+  key, and only stops freezing (`frozen`).
 - **A component's instance is written somewhere.** `component(…)` — and each child it places in a slot — rebuilt its
   spec with a spread and lost the marker of where the author wrote it: `plitzi element where` could not place an instance and
   `plitzi element edit` refused it. The original marker is carried (`carryWrittenAt`); `where` finds the words an instance
@@ -126,8 +128,7 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   `--every`, each named.
 - **A component prop of a type that does not exist is refused** (`prop-type-unknown`, with the types there are):
   `type: 'string'` was accepted at run time, offered by no editor and checked against nothing. `BUILTIN_PARAM_TYPES`
-  in `@plitzi/sdk-shared` is the list, and `BuiltinParamType` is derived from it. The shell now stays around the element on both sides of hydration, under the same
-  key, and only stops freezing (`frozen`).
+  in `@plitzi/sdk-shared` is the list, and `BuiltinParamType` is derived from it.
 - **`plitzi element remove <id>` and `plitzi element move <id> --before|--after <id>`** take an element out of the code that writes
   it, or reorder it among its siblings — following a section a helper returns to the helper's call — checked as
   `edit` is: a removal may take only the element and what it holds, a move only reorder its parent, or the file goes
@@ -178,3 +179,13 @@ edit` does the same, kept in the project's `tmp/refusals.json`.
   five hundred articles reads as one.
 - **`plitzi page check` says a path no page answers before opening it**, with the paths the pages do answer — never a
   redirect home read as a page for signed-in visitors.
+- **`copyToClipboard(text)`**, a utility step (`@plitzi/sdk-interactions`, built with `copyToClipboard` in
+  `@plitzi/sdk-authoring`): a "Copy link" button had no step to write with. A browser that gives the page no clipboard
+  fails the step, so a toast after it is never said of a copy that was not made.
+- **`plitzi explain` lists the values a param takes only when it is a choice** (`select`): `setState`'s `value` read
+  as `'true' | 'false'`, the examples of a free value taken for its only ones.
+- **`plitzi page check --click` says what the page said** — a toast or an alert, `said: "Link copied"` — and **a form
+  the browser held back**, with the field and the browser's reason, never as a click that changed nothing.
+- **`plitzi page check --click <id> --fill <id>=<value>`** fills fields before the click as a visitor does (typed, an
+  option chosen, a box ticked), so a form's success flow is checked, not only its refusal when empty. A container of
+  several fields is refused with their ids; a field filled inside another element says whose it is.

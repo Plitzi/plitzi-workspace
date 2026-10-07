@@ -43,3 +43,20 @@ export const count = (value: string): number => {
 
   return parsed;
 };
+
+/** A field filled before a click: its element's id, and what goes in it. */
+export interface FieldFill {
+  element: string;
+  value: string;
+}
+
+/** `--fill <id>=<value>`, once per field, in the order given: the value is everything after the first `=`. */
+export const fill = (value: string, previous: readonly FieldFill[] | undefined): FieldFill[] => {
+  const at = value.indexOf('=');
+  const element = at === -1 ? '' : value.slice(0, at).trim();
+  if (element === '') {
+    throw new InvalidArgumentError('A field is filled as <id>=<value>: --fill newsletter-email=ana@example.com.');
+  }
+
+  return [...(previous ?? []), { element, value: value.slice(at + 1) }];
+};

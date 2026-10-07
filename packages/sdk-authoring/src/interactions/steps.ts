@@ -256,6 +256,13 @@ const utilityStep = (action: string, params: Record<string, unknown> = {}): Step
 export const delay = (time: number): StepSpec => utilityStep('delayTime', { time });
 
 /**
+ * Copies `text` to the visitor's clipboard — a template like any param: `copyToClipboard('{{ navigation.href }}')` copies
+ * the page's address. Where the browser offers no clipboard the step fails, so a flow's `onFailure` says so and its
+ * "Copied" never shows for nothing.
+ */
+export const copyToClipboard = (text: string): StepSpec => utilityStep('copyToClipboard', { text });
+
+/**
  * Calls a URL and puts the answer in the flow scope as `{{ <id>.response.status }}` and `{{ <id>.response.data }}`.
  *
  * `body` takes an object for the reason {@link runServerAction}'s `input` does, and this is the surface where it

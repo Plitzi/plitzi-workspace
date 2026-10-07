@@ -18,6 +18,7 @@ import { launchBrowser, openProjectPage, projectOrigin, withoutDevTools } from '
 
 import type { ExistingProject } from './existingProject';
 import type { Browser, BrowserPage, Scheme } from '../browser';
+import type { FieldFill } from '../options';
 import type { DataIssueCode, DevToolsInput, PageIssue, SpaceHandles } from '@plitzi/sdk-authoring';
 import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
 
@@ -51,6 +52,8 @@ export interface CheckOptions {
   ssr?: boolean;
   /** One element clicked, by its id, once the page has settled: what changed because of it, or that nothing did. */
   click?: string;
+  /** Fields filled before the click, as a visitor types in them: what a form's flow is sent. */
+  fill?: FieldFill[];
   /**
    * An account of the project to sign in as first, through its server's `/auth` routes (`createServer({ auth })`), with
    * the password in `PLITZI_CHECK_PASSWORD` — what a page for signed-in visitors is checked as.
@@ -122,11 +125,18 @@ export interface PageMoment {
   scrolls: Record<string, number>;
   /** The elements the browser draws — shown, wherever the page is scrolled — by id. */
   shown: string[];
+  /**
+   * What the page says to the visitor outside its elements — a notification, an alert (`role="alert"`, `"status"`) —
+   * by its words: a toast is drawn by the SDK, not by an element of the space, and is a change all the same.
+   */
+  said: string[];
 }
 
 /** What a click changed — each kind of change, said; none at all is said too. */
 export interface ClickReport {
   element: string;
+  /** The fields filled before it, each with what was put in it. */
+  filled?: string[];
   /** The element could not be clicked: not on the page, hidden, covered. */
   problem?: string;
   changes: string[];
@@ -443,13 +453,47 @@ export const pageMomentInPage = (): PageMoment => {
     }
   }
 
+  const said = Array.from(document.querySelectorAll('[role="alert"], [role="status"]'))
+    .filter(node => node.checkVisibility())
+    .map(node => node.textContent.trim())
+    .filter(Boolean);
+
   return {
     url: `${location.pathname}${location.search}${location.hash}`,
+    said: [...new Set(said)],
     scrolls,
     shown: [
       ...new Set(marked.filter(node => node.checkVisibility()).map(node => node.getAttribute('data-plitzi-el') ?? ''))
     ]
   };
+};
+
+/** Starts noting each field the browser refuses — `invalid`, fired as a form is submitted. Runs in the page. */
+export const listenForRefusedFieldsInPage = (): void => {
+  const noted: string[] = [];
+  Reflect.set(window, '__plitziRefusedFields', noted);
+  document.addEventListener(
+    'invalid',
+    event => {
+      const field = event.target;
+      if (
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLTextAreaElement ||
+        field instanceof HTMLSelectElement
+      ) {
+        const named = field.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el') ?? field.name;
+        noted.push(`${named} — ${field.validationMessage}`);
+      }
+    },
+    true
+  );
+};
+
+/** The fields the browser refused since the listener started, each with what it said. Runs in the page. */
+export const refusedFieldsInPage = (): string[] => {
+  const noted: unknown = Reflect.get(window, '__plitziRefusedFields');
+
+  return Array.isArray(noted) ? [...new Set(noted.filter((entry): entry is string => typeof entry === 'string'))] : [];
 };
 
 /** Every way two moments of the page differ, in words: where it went, what scrolled, what came and went, the state. */
@@ -482,8 +526,90 @@ export const momentChanges = (
     ...scrolled,
     ...(appeared.length > 0 ? [`now shown: ${listed(appeared)}`] : []),
     ...(gone.length > 0 ? [`no longer shown: ${listed(gone)}`] : []),
+    ...after.said.filter(words => !before.said.includes(words)).map(words => `said: "${words}"`),
     ...stateChanges
   ];
+};
+
+/** What `--click` is asked: the element, and the fields filled before it. */
+export interface ClickAsk {
+  element: string;
+  fill: readonly FieldFill[];
+}
+
+const selectorOf = (authored: Authored | undefined, id: string): string =>
+  authored && Object.hasOwn(authored.handles.elements, id)
+    ? authored.handles.elements[id].selector
+    : `[data-plitzi-el="${id}"]`;
+
+const FIELDS = 'input, textarea, select';
+
+/** The elements of the space the fields inside a node belong to: the nearest element around each. */
+const fieldOwnersInPage = (node: Element, selector: string): string[] =>
+  Array.from(node.querySelectorAll(selector), field =>
+    field.closest('[data-plitzi-el]')?.getAttribute('data-plitzi-el')
+  ).map(owner => owner ?? '?');
+
+/**
+ * One field filled as a visitor fills it — typed in, an option chosen, a box ticked with `true` or `false` — in the
+ * element named, or the one field inside it (a `formControl` wraps its input). Which element's field was filled, when
+ * it is another's; or what could not be filled, and why.
+ */
+const fillField = async (
+  page: BrowserPage,
+  authored: Authored | undefined,
+  { element, value }: FieldFill
+): Promise<{ filled: string } | { problem: string }> => {
+  const node = page.locator(selectorOf(authored, element)).first();
+  if ((await node.count()) === 0) {
+    return { problem: `no element ${element} is on this page to fill` };
+  }
+
+  const own = await node.evaluate((each, selector) => each.matches(selector), FIELDS);
+  const owners = own ? [element] : await node.evaluate(fieldOwnersInPage, FIELDS);
+  if (owners.length === 0) {
+    return { problem: `${element} holds no field to fill — an input, a textarea or a select` };
+  }
+
+  // A container of several is not one field: filling the first would put the value where it was not asked.
+  if (owners.length > 1) {
+    return {
+      problem: `${element} holds ${String(owners.length)} fields — fill each by its own id: ${owners.join(', ')}`
+    };
+  }
+
+  const field = own ? node : node.locator(FIELDS).first();
+
+  const kind = await field.evaluate(
+    each =>
+      each instanceof HTMLSelectElement
+        ? 'select'
+        : each instanceof HTMLInputElement && (each.type === 'checkbox' || each.type === 'radio')
+          ? 'check'
+          : 'text',
+    undefined
+  );
+  if (kind === 'check' && value !== 'true' && value !== 'false') {
+    return { problem: `${element} is a box to tick: --fill ${element}=true or ${element}=false` };
+  }
+
+  try {
+    if (kind === 'check') {
+      await field.setChecked(value === 'true', { timeout: 3000 });
+    } else if (kind === 'select') {
+      await field.selectOption(value, { timeout: 3000 });
+    } else {
+      await field.fill(value, { timeout: 3000 });
+    }
+  } catch (error) {
+    return {
+      problem: `${element} could not be filled: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
+    };
+  }
+
+  const shown = `${element} = ${JSON.stringify(value)}`;
+
+  return { filled: owners[0] === element ? shown : `${shown} (the field of ${owners[0]}, inside it)` };
 };
 
 /**
@@ -491,12 +617,24 @@ export const momentChanges = (
  * changed: the flows it ran, where the page went, what scrolled, appeared or went, the state. A click that changed
  * nothing is said as such: a button whose flow does nothing looks the same as one that works until somebody clicks.
  */
-const clickEffects = async (page: BrowserPage, authored: Authored | undefined, id: string): Promise<ClickReport> => {
-  const handle = authored && Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id] : undefined;
-  const selector = handle?.selector ?? `[data-plitzi-el="${id}"]`;
-  const target = page.locator(selector).first();
+const clickEffects = async (
+  page: BrowserPage,
+  authored: Authored | undefined,
+  { element: id, fill }: ClickAsk
+): Promise<ClickReport> => {
+  const target = page.locator(selectorOf(authored, id)).first();
   if ((await target.count()) === 0) {
     return { element: id, problem: `no element ${id} is on this page`, changes: [], failed: [] };
+  }
+
+  const filled: string[] = [];
+  for (const field of fill) {
+    const result = await fillField(page, authored, field);
+    if ('problem' in result) {
+      return { element: id, problem: result.problem, changes: [], failed: [] };
+    }
+
+    filled.push(result.filled);
   }
 
   try {
@@ -507,6 +645,7 @@ const clickEffects = async (page: BrowserPage, authored: Authored | undefined, i
 
   const tools = await readDevTools(page, { state: true });
   const before = await page.evaluate(pageMomentInPage, undefined);
+  await page.evaluate(listenForRefusedFieldsInPage, undefined);
   const ran = new Set(tools.flows.map(flow => `${flow.at}|${flow.trigger}|${String(flow.on)}`));
   try {
     await target.click({ timeout: 3000 });
@@ -520,15 +659,20 @@ const clickEffects = async (page: BrowserPage, authored: Authored | undefined, i
   await page.waitForTimeout(1200);
   const toolsAfter = await readDevTools(page, { state: true });
   const after = await page.evaluate(pageMomentInPage, undefined);
+  const refused = await page.evaluate(refusedFieldsInPage, undefined);
   const flows = toolsAfter.flows.filter(flow => !ran.has(`${flow.at}|${flow.trigger}|${String(flow.on)}`));
 
   return {
     element: id,
+    ...(filled.length > 0 ? { filled } : {}),
     changes: [
       ...flows.map(
         flow =>
           `ran ${flow.trigger}${flow.on ? ` of ${flow.on}` : ''}: ${flow.steps.map(step => `${step.action} ${step.status}`).join(', ') || 'no steps'}`
       ),
+      // The browser's own refusal — a required field left empty — draws a bubble no element of the page holds, and
+      // stops the submit before any flow runs: without this line it reads as a button that does nothing.
+      ...refused.map(field => `the browser held the form back: ${field}`),
       ...momentChanges(before, after, { before: tools.state, after: toolsAfter.state })
     ],
     failed: flows.filter(flow => flow.status === 'failed').map(failedFlowText)
@@ -642,7 +786,7 @@ const checkAt = async (
   asked: DevToolsInput,
   ssr: boolean,
   account: Account | undefined,
-  click?: string
+  click?: ClickAsk
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
   const page = await openProjectPage(browser, origin, { width, height: 900, ...(scheme ? { scheme } : {}) });
@@ -892,9 +1036,10 @@ export const clickedText = (clicked: ClickReport | undefined): string[] => {
   }
 
   return [
+    ...(clicked.filled ? [`  · filled ${clicked.filled.join(', ')}`] : []),
     ...(clicked.changes.length === 0
       ? [
-          `  · clicking ${clicked.element} changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, and the state is as it was`
+          `  · clicking ${clicked.element} changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, nothing was said, and the state is as it was`
         ]
       : [
           `  · clicking ${clicked.element}:`,
@@ -902,7 +1047,7 @@ export const clickedText = (clicked: ClickReport | undefined): string[] => {
           // A flow that ran and succeeded is not a page that changed: when only flows are said, that is said too.
           ...(clicked.changes.every(change => change.startsWith('ran '))
             ? [
-                '      — and nothing on the page changed: the page went nowhere, nothing scrolled, appeared or went, and the state is as it was'
+                '      — and nothing on the page changed: the page went nowhere, nothing scrolled, appeared or went, nothing was said, and the state is as it was'
               ]
             : [])
         ]),
@@ -958,6 +1103,12 @@ export const check = async (route: string | undefined, options: CheckOptions): P
     return;
   }
 
+  if (options.fill && !options.click) {
+    fail('--fill fills fields for a --click: with nothing clicked, nothing they hold is sent anywhere.');
+
+    return;
+  }
+
   const account = options.as && password ? { username: options.as, password } : undefined;
   const asked: DevToolsInput = {
     state: Boolean(options.state),
@@ -969,7 +1120,7 @@ export const check = async (route: string | undefined, options: CheckOptions): P
     ssr: Boolean(options.ssr),
     ...(options.scheme ? { scheme: options.scheme } : {}),
     ...(account ? { account } : {}),
-    ...(options.click ? { click: options.click } : {})
+    ...(options.click ? { click: { element: options.click, fill: options.fill ?? [] } } : {})
   });
   if ('problem' in reports) {
     fail(reports.problem);
@@ -997,7 +1148,7 @@ export const checkRoutes = async (
     ssr: boolean;
     scheme?: Scheme;
     account?: Account;
-    click?: string;
+    click?: ClickAsk;
   }
 ): Promise<CheckReport[] | { problem: string }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;

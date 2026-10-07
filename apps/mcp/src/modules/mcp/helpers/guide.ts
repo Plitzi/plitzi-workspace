@@ -615,7 +615,8 @@ mounted, ignored while someone types in a field; the flow reads the key pressed 
   nothing outside the element needs to know it is open; pick the state one when something else binds to it.
 - \`utility\` — a built-in utility action (no element/source module); nodeType \`utility\`. Use the **exact** param
   names: \`delayTime\` waits \`time\` milliseconds (**not** \`delay\`), \`twigTemplate\` (\`returnMode\`, \`template\`),
-  \`webHook\` (\`url\`, \`method\`, …). See \`utilities\` in \`plitzi://interactions/{env}\`.
+  \`webHook\` (\`url\`, \`method\`, …), \`copyToClipboard\` (\`text\`). See \`utilities\` in
+  \`plitzi://interactions/{env}\`.
 
 **A param value can be a data binding.** Any interaction param may hold a \`{{ source }}\` token instead of a literal —
 it resolves at runtime exactly like a prop binding, using the same source grammar (\`<type>_<name>.<path>\`, or a

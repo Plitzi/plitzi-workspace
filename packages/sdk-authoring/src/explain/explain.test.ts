@@ -183,6 +183,12 @@ describe('explain', () => {
     expect(authoring.MOTION_ENTERS).toContain('fade-up');
     expect(authoring.MOTION_LOOPS).toContain('float');
   });
+
+  // `setState`'s value takes text, a number, a flag or JSON: true/false is only the control the builder shows for a flag.
+  it('says the values a param takes only when it is a choice', () => {
+    expect(explainText('setState')).toMatch(/^ {2}value\?: json — /m);
+    expect(explainText('setState')).not.toContain("value?: 'true' | 'false'");
+  });
 });
 
 const explainText = (name: string): string => explain(name).map(explanationText).join('\n');

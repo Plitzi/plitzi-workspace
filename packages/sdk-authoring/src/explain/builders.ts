@@ -7,6 +7,7 @@
  */
 export const BUILDER_SIGNATURES: Readonly<Record<string, string>> = {
   delay: 'delay(ms)',
+  copyToClipboard: "copyToClipboard('{{ navigation.href }}')",
   authLogout: 'authLogout()',
   authRefreshDetails: 'authRefreshDetails()',
   on: "on('onArrival', params?)",

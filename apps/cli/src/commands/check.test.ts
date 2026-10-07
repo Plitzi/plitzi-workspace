@@ -116,13 +116,13 @@ describe('the styles an element’s classes contest', () => {
 
 // A button whose flow does nothing looks like one that works, until it is clicked and every change is read off.
 describe('what a click changed', () => {
-  const moment = { url: '/enterprise', scrolls: { page: 3309 }, shown: ['footer', 'top'] };
+  const moment = { url: '/enterprise', scrolls: { page: 3309 }, shown: ['footer', 'top'], said: [] };
 
   it('says where the page went, what scrolled, came and went, and the state', () => {
     expect(
       momentChanges(
         moment,
-        { url: '/enterprise#plans', scrolls: { page: 0, faq: 120 }, shown: ['top', 'hero'] },
+        { url: '/enterprise#plans', scrolls: { page: 0, faq: 120 }, shown: ['top', 'hero'], said: ['Link copied'] },
         { before: { menuOpen: false }, after: { menuOpen: true, faq: 'a' } }
       )
     ).toEqual([
@@ -131,6 +131,7 @@ describe('what a click changed', () => {
       'faq scrolled 0 → 120 px',
       'now shown: hero',
       'no longer shown: footer',
+      'said: "Link copied"',
       'state.menuOpen: false → true',
       'state.faq: unset → "a"'
     ]);
@@ -140,7 +141,22 @@ describe('what a click changed', () => {
     expect(
       clickedText({ element: 'top', changes: momentChanges(moment, moment, { before: {}, after: {} }), failed: [] })
     ).toEqual([
-      '  · clicking top changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, and the state is as it was'
+      '  · clicking top changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, nothing was said, and the state is as it was'
+    ]);
+  });
+
+  it('says the fields it filled before the click', () => {
+    expect(
+      clickedText({
+        element: 'send',
+        filled: ['news-email = "ana@example.com"'],
+        changes: ['state.newsSubscribed: unset → true'],
+        failed: []
+      })
+    ).toEqual([
+      '  · filled news-email = "ana@example.com"',
+      '  · clicking send:',
+      '      state.newsSubscribed: unset → true'
     ]);
   });
 });

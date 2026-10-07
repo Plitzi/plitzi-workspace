@@ -1,5 +1,6 @@
+import copyToClipboard from './copyToClipboard';
 import delayTime from './delayTime';
 import twigTemplate from './twigTemplate';
 import webHook from './webHook';
 
-export default { delayTime, twigTemplate, webHook };
+export default { copyToClipboard, delayTime, twigTemplate, webHook };

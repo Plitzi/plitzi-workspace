@@ -186,6 +186,7 @@ plitzi page check / --width 1440,390            # is the page whole? in text, pe
 plitzi page check /products --state --element catalog-count   # and what it holds: state, sources, one element
 plitzi page check / --ssr                       # and what the server's HTML lacks that the hydrated page has
 plitzi page check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
+plitzi page check / --click news-send --fill news-email=ana@example.com   # a form sent as a visitor fills it
 PLITZI_CHECK_PASSWORD=… plitzi page check /studio --as maya   # a page for signed-in visitors, signed in through /auth first
 plitzi page shot /about --width 390 --scheme dark
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
@@ -211,10 +212,18 @@ picture.
 
 `--click <id>` clicks one element once the page has settled, as a visitor does — brought into view first, which is
 not the click's doing — and says what changed: the flows it ran and how each step ended, where the page went, what
-scrolled, what is shown now and what no longer is, the state. A click that changed nothing says so in those words, and a
-flow that ran and succeeded with nothing on the page changed is said as that too: a button whose flow does nothing
-looks like one that works until it is clicked. A click that could not be made, or a flow that failed, fails the check
-(`--json`: `clicked: { element, changes, failed, problem? }`).
+scrolled, what is shown now and what no longer is, what the page said (a toast, an alert: `said: "Link copied"`), the
+state. A form the browser held back is said with the field and the browser's reason (`the browser held the form back:
+email — Please fill out this field.`), not as a click that ran nothing. A click that changed nothing says so in those
+words, and a flow that ran and succeeded with nothing on the page changed is said as that too: a button whose flow
+does nothing looks like one that works until it is clicked. A click that could not be made, or a flow that failed,
+fails the check (`--json`: `clicked: { element, filled?, changes, failed, problem? }`).
+
+`--fill <id>=<value>`, once per field, fills a field before the click as a visitor does — typed in, an option chosen, a
+box ticked with `true` or `false` — so a form's flow is run with what it is for, not only refused empty. The id is the
+field's element, or one that holds that one field (a `formControl`'s wrapper); one that holds several is refused with
+their ids, and a field filled inside another element says whose it is. Without `--click` it is refused: nothing filled
+is sent anywhere.
 
 `--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
 default, and `page shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A

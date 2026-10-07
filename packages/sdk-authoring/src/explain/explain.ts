@@ -117,7 +117,9 @@ const fromSpec = (spec: ParamSpec): ParamInfo[] =>
     type: param.type,
     description: param.description,
     ...(param.default === undefined ? {} : { default: param.default }),
-    ...(param.options ? { options: param.options } : {}),
+    // The values it takes only when it is a choice: a `json` param's options are a hint for one of the builder's
+    // controls (a boolean picked from true/false), and said as its only values they would read as all it takes.
+    ...(param.options && param.type === 'select' ? { options: param.options } : {}),
     ...(param.required ? { required: true } : {})
   }));
 

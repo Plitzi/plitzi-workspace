@@ -35,7 +35,7 @@ import { where, WHERE_READINGS } from './commands/where';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
-import { count, positiveInteger, width, widths } from './options';
+import { count, fill, positiveInteger, width, widths } from './options';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
@@ -329,6 +329,12 @@ pageGroup
   .option('--element <id>', 'Also one element: what it reads, its own state, whether it is on screen')
   .option('--ssr', 'Also the HTML the server sent against the hydrated page: what a server provider sent late')
   .option('--click <id>', 'Click one element once the page settles, and say what it changed — or that nothing did')
+  .addOption(
+    new Option(
+      '--fill <id=value>',
+      'Fill a field before the click, as a visitor types in it — once per field; a box takes true or false'
+    ).argParser(fill)
+  )
   .option(
     '--as <username>',
     'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD'

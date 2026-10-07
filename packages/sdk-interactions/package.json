@@ -154,6 +154,14 @@
       "types": "./dist/utility/index.d.ts",
       "import": "./dist/utility/index.mjs"
     },
+    "./utility/copyToClipboard": {
+      "types": "./dist/utility/copyToClipboard.d.ts",
+      "import": "./dist/utility/copyToClipboard.mjs"
+    },
+    "./utility/copyToClipboardSpec": {
+      "types": "./dist/utility/copyToClipboardSpec.d.ts",
+      "import": "./dist/utility/copyToClipboardSpec.mjs"
+    },
     "./utility/delayTime": {
       "types": "./dist/utility/delayTime.d.ts",
       "import": "./dist/utility/delayTime.mjs"

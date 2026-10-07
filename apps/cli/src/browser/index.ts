@@ -35,13 +35,20 @@ export interface PageResponse {
   url(): string;
 }
 
-/** One element of a page, as `shot --clip` and `--scroll-to` reach it. */
+/** One element of a page, as `shot --clip` and `--scroll-to` reach it, and `check --click` and `--fill` use it. */
 export interface PageElement {
   screenshot(): Promise<Uint8Array>;
   scrollIntoViewIfNeeded(options?: { timeout: number }): Promise<void>;
   /** How many elements the selector finds: none is an element not on the page. */
   count(): Promise<number>;
   click(options: { timeout: number }): Promise<void>;
+  /** The elements inside it the selector finds. */
+  locator(selector: string): { first(): PageElement };
+  /** A function run in the page on the element itself. */
+  evaluate<R, A>(fn: (node: Element, input: A) => R, input: A): Promise<R>;
+  fill(value: string, options: { timeout: number }): Promise<void>;
+  setChecked(checked: boolean, options: { timeout: number }): Promise<void>;
+  selectOption(value: string, options: { timeout: number }): Promise<unknown>;
 }
 
 export interface BrowserPage {
