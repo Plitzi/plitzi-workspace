@@ -1,4 +1,4 @@
-import { ActionRefusal } from '../actions/runtime/errors';
+import { ActionRefusal, isActionRefusal } from '../actions/runtime/errors';
 import { changeKv } from '../actions/runtime/kvChange';
 import { requestFromWire, responseOf, wireResponseFrom, wireResponseOf } from '../functions/capabilities';
 import { createFunctionsDriver, describeFunctions } from '../functions/driver';
@@ -8,7 +8,6 @@ import type { FunctionsDefinition } from '../functions/contract';
 import type { FunctionRunner } from '../functions/protocol';
 
 /** A refusal, however it was made: the platform's class, or a bundle's own copy of it — known by its name. */
-const isRefusal = (error: unknown): error is Error => error instanceof Error && error.name === 'ActionRefusal';
 
 /**
  * A runtime's functions as a runner: the same protocol as the sandbox's, answered by code loaded in this process. The
@@ -33,7 +32,7 @@ export const createRuntimeRunner = (definition: FunctionsDefinition = {}): Funct
     try {
       return await driver.invoke(definition, invocation);
     } catch (error) {
-      if (isRefusal(error)) {
+      if (isActionRefusal(error)) {
         throw new FunctionFailure('refused', error.message);
       }
 

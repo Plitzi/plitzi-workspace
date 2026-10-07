@@ -99,7 +99,7 @@ const normalColour = (text: string): string => {
 const tokensOf = (style: Declared): { name: string; value: StyleVariableValue }[] =>
   Object.values(style.variables).flatMap(group => Object.entries(group).map(([name, value]) => ({ name, value })));
 
-const unusedTokenNames = (schema: Schema, style: Declared): string[] => {
+const unusedTokenNames = (schema: Schema, style: Declared, stylesheets: readonly string[] = []): string[] => {
   const tokens = tokensOf(style);
   if (tokens.length === 0) {
     return [];
@@ -112,7 +112,8 @@ const unusedTokenNames = (schema: Schema, style: Declared): string[] => {
     ...items.map(item => JSON.stringify(item.attributes)),
     ...items.map(item => JSON.stringify(item.variables ?? {})),
     JSON.stringify(style.variables),
-    JSON.stringify(style.fonts ?? [])
+    JSON.stringify(style.fonts ?? []),
+    ...stylesheets
   );
 
   return tokens
@@ -134,7 +135,7 @@ const unusedTokens = (unused: string[]): Suggestion[] => {
       saves: 0,
       message:
         `${String(unused.length)} ${plural(unused.length, 'token is', 'tokens are')} declared and read nowhere — no ` +
-        `\`var(--…)\` in a class, an element, \`customCss\` or another token: ${list(unused)}. Remove ` +
+        `\`var(--…)\` in a class, an element, \`customCss\`, another token or a plugin's stylesheet: ${list(unused)}. Remove ` +
         `${plural(unused.length, 'it', 'them')} from \`variables\`, or use ${plural(unused.length, 'it', 'them')} where a ` +
         'colour is written out instead.'
     }
@@ -269,15 +270,21 @@ const unusedComponents = (schema: Schema, unused: string[]): Suggestion[] => {
  */
 export const unusedDeclarations = (
   schema: Schema,
-  style: Declared
+  style: Declared,
+  /** The CSS the pages load besides the space's own — its plugins' stylesheets — whose `var(--…)` read tokens too. */
+  stylesheets: readonly string[] = []
 ): { classes: string[]; tokens: string[]; components: string[] } => ({
   classes: unusedClassNames(schema, style),
-  tokens: unusedTokenNames(schema, style),
+  tokens: unusedTokenNames(schema, style, stylesheets),
   components: unusedComponentIds(schema)
 });
 
-export const suggestDeclarations = (schema: Schema, style: Style): Suggestion[] => {
-  const unused = unusedDeclarations(schema, style);
+export const suggestDeclarations = (
+  schema: Schema,
+  style: Style,
+  stylesheets: readonly string[] = []
+): Suggestion[] => {
+  const unused = unusedDeclarations(schema, style, stylesheets);
 
   return [
     ...unusedComponents(schema, unused.components),

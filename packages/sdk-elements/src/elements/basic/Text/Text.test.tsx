@@ -36,4 +36,15 @@ describe('Text Tests', () => {
 
     expect(getByText('UTC').getAttribute('title')).toBe('Coordinated Universal Time');
   });
+
+  // A seal or a mark drawn for the look: a screen reader skips it, as it skips a decorative container.
+  it('is skipped by a screen reader when it is decorative', () => {
+    const { getByText } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Text content="福" decorative />
+      </ElementContext>
+    );
+
+    expect(getByText('福').getAttribute('aria-hidden')).toBe('true');
+  });
 });

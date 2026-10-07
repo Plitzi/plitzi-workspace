@@ -38,6 +38,17 @@ describe('List Tests', () => {
 
     expect(baseElement).toBeTruthy();
   });
+
+  // A group of options drawn as a list has a name of its own, as the group it is.
+  it('is named for a screen reader by its label', () => {
+    const { container } = render(
+      <ElementContext value={skipHocEntry()}>
+        <List label="Kinds of capsule" />
+      </ElementContext>
+    );
+
+    expect(container.querySelector('ul')?.getAttribute('aria-label')).toBe('Kinds of capsule');
+  });
 });
 
 /**

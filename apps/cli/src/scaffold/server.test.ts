@@ -92,7 +92,7 @@ describe('the server a project starts', () => {
       expect(files['src/main.ts']).not.toContain('env.ts');
       expect(files['src/main.ts']).not.toContain('loadEnvFile');
       for (const name of ['start', 'start:prod', ...(source === 'local' ? ['author'] : [])]) {
-        expect(scripts[name]).toMatch(/^node --env-file-if-exists=\.env /);
+        expect(scripts[name]).toMatch(/^(NODE_ENV=production )?node --env-file-if-exists=\.env /);
       }
 
       // Node's flag under `--watch-path` has the watcher restart on any write in the project's root — the server's

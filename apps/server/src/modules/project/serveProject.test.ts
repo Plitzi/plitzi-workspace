@@ -181,7 +181,9 @@ describe('serveProject — a space held in the project', () => {
     expect(existsSync(path.join(root, 'tmp/dev-server.json'))).toBe(false);
   });
 
+  // A deployment: one that does not author never serves. While developing it comes up saying why (below).
   it('says a space that does not author as authoring says it, and exits', async () => {
+    process.env.NODE_ENV = 'production';
     const refused = new Error('Space "Shop" was not written — one problem:\n\n1. [no-pages] a space with no pages');
     refused.name = 'SpaceRefusedError';
 
@@ -193,12 +195,33 @@ describe('serveProject — a space held in the project', () => {
 
   // Anything else is a bug of the project's code or of the server's, and its stack is what finds it.
   it('throws what is not a refusal as it was thrown', async () => {
+    process.env.NODE_ENV = 'production';
     const exit = vi.spyOn(process, 'exit');
 
     await expect(
       serveProject({ space: () => Promise.reject(new TypeError('space.pages is undefined')) })
     ).rejects.toThrow(TypeError);
     expect(exit).not.toHaveBeenCalled();
+  });
+
+  // A restart of `start:dev` while the space had an error of its own died on it, and fixing the space woke nothing.
+  it('comes up while developing with a space that does not author, says why, and serves it once a save authors', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const running = await serve({ space: () => Promise.reject(new ReferenceError('when is not defined')) });
+
+    const page = await fetch(`${running.url}/`, { headers: { accept: 'text/html' } });
+    expect(page.status).toBe(503);
+    expect(await page.text()).toContain('ReferenceError: when is not defined');
+    expect(error.mock.calls.flat().join('\n')).toContain('fix the space and save');
+
+    const reload = await listen(running.url);
+    await reload.heard('hello');
+    await write('next.json', JSON.stringify(titled('authored after the fix')));
+    await write('src/space/index.ts', 'export const space = { fixed: true };\n');
+    await reload.heard('reload');
+    await reload.stop();
+
+    expect(await pageOf(running.url)).toContain('<title>authored after the fix</title>');
   });
 
   it('says what works and should not stay, while developing — and starts', async () => {

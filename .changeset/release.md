@@ -7,6 +7,7 @@
 '@plitzi/sdk-navigation': patch
 '@plitzi/plitzi-sdk': patch
 '@plitzi/plitzi-builder': patch
+'@plitzi/sdk-dev-tools': patch
 ---
 
 - **`unusedPort()`** (`@plitzi/sdk-server`): a port the system has just handed out, for a test to listen on. The
@@ -39,3 +40,31 @@
   the space lacks — `not-found-page` — is answered by writing it.
 - **`feedback --previous`** (`@plitzi/cli`): the brief says what to do when an earlier report's link no longer opens —
   say so, and ask the person for the highest id it had.
+- **`start:prod` runs in production by itself** (`@plitzi/cli`): `NODE_ENV=production node …`. Without the variable a
+  deployed project was a development server — dev tools on, and every public action answering its `steps` and `trace`
+  (each step's result, what the `output` was meant to leave out). `doctor` says a `start:prod` that does not
+  (`start-prod-not-production`); `plitzi upgrade --write` rewrites the script.
+- **A project's `ActionRefusal` reaches the flow** (`@plitzi/sdk-server`): a functions bundle carries its own copy of the
+  class, so `instanceof` never knew it and the run lost its reason (`{{ x.error }}` empty). Told apart by name now.
+- **Plugins are not remounted after hydration** (`@plitzi/sdk-elements`): the registry wrapped each plugin again when
+  the host handed it over again, a new component type every time — the server's HTML thrown away, entrances replayed,
+  effects run twice. Each plugin component is wrapped once.
+- **`start:dev` survives a space that does not author** (`@plitzi/sdk-server`): a restart while the space had an error
+  died, and fixing the space woke nothing. It comes up answering every page with what is wrong (503), and loads the
+  space the first time a save authors.
+- **`page check` sees what is cut off at the screen's edge** (`@plitzi/sdk-authoring`, `@plitzi/cli`): a link or words an
+  ancestor hides past the viewport, which no sideways scroll shows (`cut-off`).
+- **`page shot --click <element...> --sheet`** (`@plitzi/cli`): elements clicked in order — a name or a CSS selector,
+  inside a plugin too — pictured after each (`--frames`/`--every`), with how much changed, and every picture on one
+  contact sheet. The dev tools' badge is no longer in a picture: its shadow root is marked (`@plitzi/sdk-dev-tools`).
+- **`formControl` is optional unless it says `required: true`** (`@plitzi/sdk-elements`), as an HTML field is. A field
+  left without `required` in an older space was required, and is not now.
+- **`text({ decorative })`, `list({ label })`** (`@plitzi/sdk-elements`); **`writing-mode`, `text-orientation`** in the
+  CSS vocabulary (`@plitzi/sdk-shared`).
+- **`unused-token` reads the plugins' stylesheets** (`@plitzi/sdk-authoring`): `authorSpace`'s `stylesheets`, which
+  `projectAuthoring` fills with every `.css` under `src/plugins/` — a token only a plugin used was said to be unused.
+- **`id-taken` on a provider placed on two pages points at the layout they share** (`@plitzi/sdk-authoring`), not at
+  `scope()`, which renamed its source and every template reading it.
+- **The welcome template's tokens keep their names** (`@plitzi/sdk-authoring`): `satisfies`, not an annotation, so
+  `tokens(variables).card` typechecks as the cheatsheet teaches.
+

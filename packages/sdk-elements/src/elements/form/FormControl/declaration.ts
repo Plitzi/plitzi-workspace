@@ -234,7 +234,9 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       autoFocus: false,
       disabled: false,
       options: [],
-      required: true,
+      // Optional unless it says so, as an HTML field is: required by default, an empty field nobody meant to require
+      // stopped the whole submit without a word.
+      required: false,
       requiredMessage: '',
       minLength: 0,
       minLengthMessage: '',

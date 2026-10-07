@@ -96,4 +96,36 @@ describe('ComponentProvider plugins handed over after mount', () => {
     // A new registry object is what a consumer memoised on it recomputes from.
     expect(latest.components).not.toBe(first.components);
   });
+
+  // The host hands the same plugins over again once hydration ends: a new wrapper was a new type, and remounted them all.
+  it('keeps the component a plugin renders as when the host hands the same plugins over again', () => {
+    const seen: ComponentContextValue[] = [];
+    const Probe = () => {
+      seen.push(use(ComponentContext));
+
+      return null;
+    };
+    const machine = makeComponent('machine');
+    const { rerender } = render(
+      <ComponentProvider localCustomComponents={{ machine }}>
+        <Probe />
+      </ComponentProvider>
+    );
+    const before = seen[seen.length - 1].components.current.machine;
+
+    rerender(
+      <ComponentProvider localCustomComponents={{ machine }}>
+        <Probe />
+      </ComponentProvider>
+    );
+
+    expect(seen[seen.length - 1].components.current.machine).toBe(before);
+    // Another component under the same name — a plugin swapped in while developing — renders as itself.
+    rerender(
+      <ComponentProvider localCustomComponents={{ machine: makeComponent('machine') }}>
+        <Probe />
+      </ComponentProvider>
+    );
+    expect(seen[seen.length - 1].components.current.machine).not.toBe(before);
+  });
 });

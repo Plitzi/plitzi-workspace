@@ -67,7 +67,7 @@ const Settings = ({
   autoComplete = true,
   autoFocus = false,
   options,
-  required = true,
+  required = false,
   requiredMessage = '',
   minLength = 0,
   minLengthMessage = '',

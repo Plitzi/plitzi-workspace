@@ -153,7 +153,9 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
            * runs what `build` emitted and carries no TypeScript at all.
            */
           build: 'tsc -p tsconfig.build.json',
-          'start:prod': nodeWithEnv(`${BUILD_DIR}/main.js`)
+          // Production by itself: without the variable the server is a development one — dev tools, every action's
+          // trace in the answer — wherever somebody deployed it and forgot to set it.
+          'start:prod': `NODE_ENV=production ${nodeWithEnv(`${BUILD_DIR}/main.js`)}`
         }
       : {
           start: 'vite',
@@ -271,7 +273,7 @@ export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space reloads it' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\` with \`NODE_ENV=production\`: the compiled server, with no TypeScript in the process.`
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space reloads it' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\`, which sets \`NODE_ENV=production\` itself: the compiled server, with no TypeScript in the process.`
     : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
 
 const spaceSection = (answers: CreateAnswers): string => {
@@ -443,7 +445,7 @@ ${commands.join('\n')}
 - **Settings are ${code('.env')}**, never committed; ${code('.env.example')} names them, committed — a new one goes in both. ${settingsNote}
 ${dataNote}
 - **${code('public/')} is on the internet.** Every file in it is served to anyone who asks for it, as it is, the moment the project is deployed — no sign-in, no check. Never put in it a secret, a key, a ${code('.env')}, a private document, a database dump, or data only some visitors may read: that goes through a server action or a provider that checks who is asking.
-${serverNotes}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — and with ${code('--click <id>')}, what clicking one element changed, or that nothing did (${code('--fill <id>=<value>')} first, for a form) — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
+${serverNotes}- **Check a page in text first:** ${code(`${runCommand(answers.packageManager, 'check')} -- / --width 1440,390`)} says whether every element is on screen, nothing overflows and the console is clean — and with ${code('--click <id>')}, what clicking one element changed, or that nothing did (${code('--fill <id>=<value>')} first, for a form) — a picture only when it says something is wrong: ${code(`${runCommand(answers.packageManager, 'shot')} -- / --width 390`)} (add ${code('--scheme dark')}; ${code('--frames 4')} to see what moves, ${code('--click <id|selector> --sheet')} for an interaction; ${code('--compare <url>')} against another site: by section, and each text measured). ${run('visual')} runs the checks as tests.
 - **What the page holds, in text:** ${code(`${runCommand(answers.packageManager, 'check')} -- /products --state --element <id>`)} adds its state, every source by name and one element (what it reads, its own state, whether it is on screen); every check already lists the flows that failed. Read it instead of guessing from classes in the DOM.
 
 ## Do not read

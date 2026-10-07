@@ -213,6 +213,22 @@ const scaffoldChecks = async (context: DoctorContext): Promise<Finding[]> => {
 /** The scripts that start Node on a file of the project — not `start:prod`, whose file `build` writes. */
 const NODE_SCRIPTS = ['start', 'start:dev', 'author'] as const;
 
+/** The variables a script sets before its command — `NODE_ENV=production node …` — by name. */
+const assignmentsOf = (command: string): Record<string, string> =>
+  Object.fromEntries(
+    [...(/^((?:\w+=\S*\s+)*)/.exec(command)?.[1] ?? '').matchAll(/(\w+)=(\S*)/g)].map(([, name, value]) => [
+      name,
+      value
+    ])
+  );
+
+/** A script's words when its command runs Node — after any variable it sets first — and none when it runs anything else. */
+const nodeWords = (command: string | undefined): string[] => {
+  const words = (command ?? '').replace(/^(?:\w+=\S*\s+)*/, '').split(/\s+/);
+
+  return words[0] === 'node' ? words : [];
+};
+
 /**
  * What a script that runs Node needs on disk: the file it starts, and every folder `--watch-path` names — Node stops at
  * start when one of them is not there, which is why each watched folder keeps a `.gitkeep`.
@@ -222,7 +238,7 @@ const scriptTargetChecks = async ({ root, manifest }: DoctorContext): Promise<Fi
   const findings: Finding[] = [];
   for (const name of NODE_SCRIPTS) {
     const command = scripts[name];
-    const words = command && /^node\s/.test(command) ? command.split(/\s+/).slice(1) : [];
+    const words = nodeWords(command).slice(1);
     const watched = words.flatMap(word => /^--watch-path=(.+)$/.exec(word)?.[1] ?? []);
     const started = words.filter(word => !word.startsWith('-')).at(-1);
     for (const folder of watched) {
@@ -288,9 +304,24 @@ const scriptEnvChecks = ({ answers, manifest }: DoctorContext): Finding[] => {
   const scripts = stringsOf(manifest.scripts);
 
   return SERVER_SCRIPTS.flatMap(name => {
-    const words = /^node\s/.test(scripts[name] ?? '') ? scripts[name].split(/\s+/) : [];
+    const words = nodeWords(scripts[name]);
     if (words.length === 0) {
       return [];
+    }
+
+    // What runs in production says so itself: without it the server is a development one — its dev tools, the trace of
+    // every action in the answer a visitor gets — wherever it was deployed and somebody forgot the variable.
+    if (name === 'start:prod' && assignmentsOf(scripts[name]).NODE_ENV !== 'production') {
+      return [
+        say.warning(
+          'start-prod-not-production',
+          'The script start:prod does not set NODE_ENV=production: wherever it runs without it, the server is a development one — its dev tools on, and the trace of every action in what a visitor is answered.',
+          {
+            file: 'package.json',
+            fix: `NODE_ENV=production before node in start:prod — ${UPGRADE_PACKAGES} rewrites a script the CLI wrote.`
+          }
+        )
+      ];
     }
 
     const flagged = words.some(word => ENV_FLAG.test(word));

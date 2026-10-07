@@ -398,6 +398,11 @@ pageGroup
   .option('--clip <element>', 'Only this element — its name or a CSS selector — scrolled to wherever it is')
   .option('--scroll-to <element>', 'The page scrolled until this element is in view; the picture is the screen there')
   .option('--viewport', 'Only what fits the viewport, not the whole page')
+  .option(
+    '--click <element...>',
+    'Click these in order once the page settles — each its name or a CSS selector, inside a plugin too — picturing what each changed (--frames pictures --every ms apart after each)'
+  )
+  .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
   .option('--reduced-motion', 'As a visitor who asked for less motion')
   .option('--json', 'One object, for a tool or an agent')
   .action((path: string | undefined, options: ShotOptions) => shot(path, options));

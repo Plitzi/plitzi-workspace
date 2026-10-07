@@ -6,7 +6,7 @@ import type { SpaceSpec } from '../../schema';
  * `default` is what a browser with no preference gets. No class names a colour directly — they are all `var(--…)` — so
  * switching the palette here re-themes the whole page, in both schemes, without touching a rule.
  */
-export const variables: SpaceSpec['variables'] = {
+export const variables = {
   color: {
     background: { light: '#fbfbfd', dark: '#09090b', default: '#fbfbfd' },
     foreground: { light: '#17171c', dark: '#fafafa', default: '#17171c' },
@@ -54,7 +54,7 @@ export const variables: SpaceSpec['variables'] = {
       'Geist, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     'font-mono': '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
   }
-};
+} satisfies SpaceSpec['variables'];
 
 /** Loaded by the page itself: a face the space names here is the only one it ever fetches. */
 export const fonts: SpaceSpec['fonts'] = [

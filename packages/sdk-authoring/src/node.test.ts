@@ -93,6 +93,8 @@ describe('projectAuthoring', () => {
   mkdirSync(path.join(project, 'src/plugins/Board'), { recursive: true });
   writeFileSync(path.join(project, 'src/plugins/Board/index.ts'), 'export default () => null;\n');
   writeFileSync(path.join(project, 'src/plugins/Board/declaration.ts'), "export default { type: 'board' };\n");
+  mkdirSync(path.join(project, 'src/plugins/Board/parts'), { recursive: true });
+  writeFileSync(path.join(project, 'src/plugins/Board/parts/sticky.css'), '.sticky { background: var(--glass); }\n');
   mkdirSync(path.join(project, 'src/data'), { recursive: true });
   writeFileSync(path.join(project, 'src/data/products.json'), JSON.stringify({ items: [{ name: 'Lamp' }] }));
   mkdirSync(path.join(project, 'public/data'), { recursive: true });
@@ -140,6 +142,13 @@ describe('projectAuthoring', () => {
     await expect(projectAuthoring()).rejects.toThrow(
       `${path.join(project, 'src')} is not the root of a Plitzi project: it has no package.json and no src/. Run it from the project's root`
     );
+  });
+
+  // A token only a plugin's own CSS reads was said to be unused, and its colour deleted.
+  it('reads its plugins’ stylesheets, at any depth, for the tokens they use', async () => {
+    runIn(tmpdir());
+
+    expect((await projectAuthoringAt(project)).stylesheets).toEqual(['.sticky { background: var(--glass); }\n']);
   });
 
   it('reads a project found from another folder — the CLI’s — held to the same check', async () => {

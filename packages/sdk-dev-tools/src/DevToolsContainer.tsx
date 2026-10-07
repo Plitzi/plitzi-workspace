@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 
 import { DevStoreScopeContext } from '@plitzi/nexus/react';
+import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools/chrome';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import useAgentInspector from './agentInspector/useAgentInspector';
@@ -165,26 +166,30 @@ const DevToolsContainer = ({
             />
           )}
           {renderMode === 'shadow' && (
-            <ContainerShadow>
-              {devToolsIconsLink && <ContainerShadow.Link href={devToolsIconsLink} />}
-              {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
-              <ContainerShadow.Content>
-                <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
-                <DevToolsOverlay
-                  className={clsx({ dark: resolvedTheme === 'dark' })}
-                  collapsed={collapsed}
-                  orientation={dockedAt}
-                  tabSelected={tabSelected}
-                  logTypeFilter={logTypeFilter}
-                  onOpen={handleOpen}
-                  onCollapse={handleCollapse}
-                  onTabSelect={handleTabSelect}
-                  onChangeOrientation={handleChangeOrientation}
-                  pageRef={pageRef}
-                  qa={qa}
-                />
-              </ContainerShadow.Content>
-            </ContainerShadow>
+            // Marked from outside: a capture hides the dev tools by a rule on the page (`HIDE_DEV_TOOLS_CSS`), and a
+            // page's rules stop at a shadow root — the badge inside it was in every `plitzi page shot`.
+            <div style={{ display: 'contents' }} {...{ [DEV_TOOLS_ATTRIBUTE]: '' }}>
+              <ContainerShadow>
+                {devToolsIconsLink && <ContainerShadow.Link href={devToolsIconsLink} />}
+                {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
+                <ContainerShadow.Content>
+                  <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
+                  <DevToolsOverlay
+                    className={clsx({ dark: resolvedTheme === 'dark' })}
+                    collapsed={collapsed}
+                    orientation={dockedAt}
+                    tabSelected={tabSelected}
+                    logTypeFilter={logTypeFilter}
+                    onOpen={handleOpen}
+                    onCollapse={handleCollapse}
+                    onTabSelect={handleTabSelect}
+                    onChangeOrientation={handleChangeOrientation}
+                    pageRef={pageRef}
+                    qa={qa}
+                  />
+                </ContainerShadow.Content>
+              </ContainerShadow>
+            </div>
           )}
         </Suspense>
       </DevToolsContextProvider>

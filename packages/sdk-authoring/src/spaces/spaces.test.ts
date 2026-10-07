@@ -6,6 +6,10 @@ import { pathToFileURL } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { custom } from '../elements';
+import * as authoring from '../index';
+import { authorSpace, validateSpace } from '../schema';
+import { variables as blankVariables } from './blank/tokens';
 import {
   blankSpace,
   blankSpaceSpec,
@@ -14,9 +18,7 @@ import {
   emptySpaceSpec,
   toPortableSource
 } from './index';
-import { custom } from '../elements';
-import * as authoring from '../index';
-import { authorSpace, validateSpace } from '../schema';
+import { tokens } from '../style/tokens';
 
 import type { SpaceSpec } from '../schema';
 
@@ -414,6 +416,14 @@ describe('spaces/empty', () => {
     expect(validateSpace({ schema, style }).valid).toBe(true);
     expect(warnings).toEqual([]);
     expect(schema.pages).toEqual(['home', 'not-found']);
+  });
+});
+
+/** A project's tokens read by name, as the cheatsheet teaches: an annotation on `variables` erased the names. */
+describe('a new project’s tokens', () => {
+  it('are each a name `tokens()` answers to', () => {
+    // A type error here, not only a failed assertion, when the template stops keeping the names.
+    expect(tokens(blankVariables).background).toBe('var(--background)');
   });
 });
 

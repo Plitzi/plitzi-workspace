@@ -20,9 +20,11 @@ export type TextProps = {
    * may not say it, so nothing only it says should matter.
    */
   title?: string;
+  /** Words drawn for the look alone — a seal, a mark — that a screen reader skips, as a decorative container is. */
+  decorative?: boolean;
 };
 
-const Text = ({ ref, content = 'Text', className = '', title = '' }: TextProps) => {
+const Text = ({ ref, content = 'Text', className = '', title = '', decorative = false }: TextProps) => {
   const { id } = useElement();
   const {
     settings: { previewMode },
@@ -51,7 +53,12 @@ const Text = ({ ref, content = 'Text', className = '', title = '' }: TextProps) 
   );
 
   return (
-    <RootElement ref={ref} className={clsx('plitzi-component__text', className)} title={title || undefined}>
+    <RootElement
+      ref={ref}
+      className={clsx('plitzi-component__text', className)}
+      title={title || undefined}
+      {...(decorative ? { 'aria-hidden': true } : {})}
+    >
       {previewMode && finalContent}
       {!previewMode && (
         <Contenteditable

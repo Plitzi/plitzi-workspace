@@ -6,10 +6,11 @@ type SettingsProps = {
   subType?: 'ul' | 'ol';
   source?: 'none' | 'controlled';
   itemKey?: string;
+  label?: string;
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
-const Settings = ({ subType = 'ul', source = 'none', itemKey = '', onUpdate }: SettingsProps) => {
+const Settings = ({ subType = 'ul', source = 'none', itemKey = '', label = '', onUpdate }: SettingsProps) => {
   const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
 
   return (
@@ -32,6 +33,13 @@ const Settings = ({ subType = 'ul', source = 'none', itemKey = '', onUpdate }: S
         <option value="ul">Unordered</option>
         <option value="ol">Ordered</option>
       </Select>
+      <Input
+        value={label}
+        label="List Name"
+        placeholder="e.g. Kinds of capsule, Search results"
+        onChange={handleChange('label')}
+        size="xs"
+      />
     </div>
   );
 };

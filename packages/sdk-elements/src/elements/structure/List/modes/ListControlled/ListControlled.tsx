@@ -25,6 +25,8 @@ export type ListControlledProps<T = unknown> = {
   children: ReactNode;
   items: T[];
   itemKey?: string;
+  /** The list's accessible name. */
+  label?: string;
 };
 
 const ListControlled = ({
@@ -33,11 +35,12 @@ const ListControlled = ({
   subType = 'ul',
   children,
   items = [],
-  itemKey
+  itemKey,
+  label = ''
 }: ListControlledProps) => {
   const {
     id,
-    definition: { label }
+    definition: { label: elementLabel }
   } = useElement();
   const sourceName = getSourceName(declaration.sourceType, id);
   const {
@@ -67,12 +70,18 @@ const ListControlled = ({
     [sourceName, finalItems]
   );
 
-  useRegisterSource({ id, source: sourceName, name: label ? label : `List - ${id}`, fields: sourceFields });
+  useRegisterSource({
+    id,
+    source: sourceName,
+    name: elementLabel ? elementLabel : `List - ${id}`,
+    fields: sourceFields
+  });
 
   return (
     <RootElement
       ref={ref}
       tag={subType}
+      aria-label={label || undefined}
       className={clsx('plitzi-component__controlled-list', className, {
         'controlled-list--build-mode': !previewMode
       })}

@@ -1,20 +1,6 @@
-import type { OAuthConsentView } from '@plitzi/sdk-shared';
+import { escapeHtml } from '../../helpers/escapeHtml';
 
-const escapeHtml = (value: string): string =>
-  value.replace(/[&<>"']/gu, character => {
-    switch (character) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      default:
-        return '&#39;';
-    }
-  });
+import type { OAuthConsentView } from '@plitzi/sdk-shared';
 
 // Deliberately one stylesheet and zero script tags: this page decides what a connector may reach, so the less of
 // it that can be influenced from anywhere else, the better. It is also why the flow is plain form POSTs and not

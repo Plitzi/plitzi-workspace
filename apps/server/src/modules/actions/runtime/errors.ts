@@ -36,3 +36,11 @@ export class ActionRefusal extends Error {
     this.name = 'ActionRefusal';
   }
 }
+
+/**
+ * Whether an error is a refusal — told apart by its NAME, never by `instanceof`: a functions bundle carries its own copy
+ * of the class (`functions/build.ts`), so a project's code loaded from one throws a refusal this class never made, and
+ * its reason was dropped on the way to the page.
+ */
+export const isActionRefusal = (error: unknown): error is Error =>
+  error instanceof Error && error.name === 'ActionRefusal';

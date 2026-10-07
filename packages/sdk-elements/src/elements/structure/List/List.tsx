@@ -18,13 +18,24 @@ export type ListProps<T = unknown> = {
    * filtered or reordered, and mounts again when its item changes. Left out: the item's `id`, else its position.
    */
   itemKey?: string;
+  /** What a screen reader calls the list — a group of options, a set of results — said before its rows. */
+  label?: string;
 };
 
-const List = ({ ref, className = '', subType = 'ul', children, items = [], source = 'none', itemKey }: ListProps) => {
+const List = ({
+  ref,
+  className = '',
+  subType = 'ul',
+  children,
+  items = [],
+  source = 'none',
+  itemKey,
+  label = ''
+}: ListProps) => {
   switch (source) {
     case 'controlled':
       return (
-        <ListControlled ref={ref} className={className} subType={subType} items={items} itemKey={itemKey}>
+        <ListControlled ref={ref} className={className} subType={subType} items={items} itemKey={itemKey} label={label}>
           {children}
         </ListControlled>
       );
@@ -32,7 +43,7 @@ const List = ({ ref, className = '', subType = 'ul', children, items = [], sourc
     case 'none':
     default:
       return (
-        <ListBasic ref={ref} className={className} subType={subType}>
+        <ListBasic ref={ref} className={className} subType={subType} label={label}>
           {children}
         </ListBasic>
       );

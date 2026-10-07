@@ -385,7 +385,8 @@ describe('the scaffold', () => {
     };
 
     expect(scripts.build).toBe('tsc -p tsconfig.build.json');
-    expect(scripts['start:prod']).toBe('node --env-file-if-exists=.env dist/main.js');
+    // Production by itself: without the variable a deployed server is a development one.
+    expect(scripts['start:prod']).toBe('NODE_ENV=production node --env-file-if-exists=.env dist/main.js');
     expect(build.compilerOptions).toMatchObject({
       noEmit: false,
       outDir: 'dist',

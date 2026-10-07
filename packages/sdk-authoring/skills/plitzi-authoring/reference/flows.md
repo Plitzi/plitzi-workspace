@@ -131,8 +131,8 @@ form({
 });
 ```
 
-A `formControl` is `required` by default: an optional field says `required: false`, or an empty one stops the submit
-without a word.
+A `formControl` is optional unless it says `required: true`, as an HTML field is. A required field that is empty stops
+the submit, and the browser says which.
 
 ## Notifications
 

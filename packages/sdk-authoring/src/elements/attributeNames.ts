@@ -105,7 +105,7 @@ export const elementAttributeNames = {
   image: ['alt', 'decorative', 'fetchPriority', 'height', 'loadMode', 'resize', 'sizes', 'src', 'width'],
   layoutContainer: ['layout', 'layoutContainer', 'subType'],
   link: ['content', 'contentPlacement', 'current', 'hash', 'href', 'icon', 'iconPlacement', 'label', 'mode', 'target'],
-  list: ['itemKey', 'items', 'source', 'subType'],
+  list: ['itemKey', 'items', 'label', 'source', 'subType'],
   listItem: [],
   loading: [],
   markdown: ['content', 'headingLinks'],
@@ -409,7 +409,7 @@ export const elementAttributeNames = {
   tabContainerBody: [],
   tabContainerHeader: [],
   tabContainerItem: [],
-  text: ['content', 'title'],
+  text: ['content', 'decorative', 'title'],
   themeToggle: ['darkLabel', 'lightLabel', 'showSystem', 'subType', 'systemLabel'],
   video: ['autoPlay', 'loop', 'muted', 'playsInline', 'src']
 } as const satisfies Readonly<Record<string, readonly string[] | null>>;

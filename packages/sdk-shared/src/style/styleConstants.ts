@@ -213,6 +213,9 @@ const styleConstants = {
   TEXT_INDENT: 'text-indent',
   TEXT_TRANSFORM: 'text-transform',
   DIRECTION: 'direction',
+  // Text set in columns — vertical Japanese or Chinese — and how each character stands in them.
+  WRITING_MODE: 'writing-mode',
+  TEXT_ORIENTATION: 'text-orientation',
   WHITE_SPACE: 'white-space',
   TEXT_WRAP: 'text-wrap',
   WORD_BREAK: 'word-break',
@@ -457,6 +460,8 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   [styleConstants.TEXT_INDENT]: '0px',
   [styleConstants.TEXT_TRANSFORM]: 'none',
   [styleConstants.DIRECTION]: 'ltr',
+  [styleConstants.WRITING_MODE]: 'horizontal-tb',
+  [styleConstants.TEXT_ORIENTATION]: 'mixed',
   [styleConstants.WHITE_SPACE]: 'normal',
   [styleConstants.TEXT_WRAP]: 'wrap',
   [styleConstants.WORD_BREAK]: 'normal',

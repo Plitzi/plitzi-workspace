@@ -505,6 +505,22 @@ describe('a template the runtime never resolves', () => {
 
 describe('a name used twice', () => {
   // Ids are one namespace for the whole space; a helper called once per page is where it bites.
+  // A provider's id is its source's name: `scope()` renamed every template reading it, the layout reads it as it was.
+  it('points a provider declared on two pages at the layout they share', () => {
+    const pool = () => authoring.apiContainer({ id: 'pool', query: '/data/pool.json' });
+
+    expect(() =>
+      authoring.authorSpace({
+        name: 'Twice',
+        permanentUrl: 'twice',
+        pages: [
+          { name: 'One', slug: '', body: [pool()] },
+          { name: 'Two', slug: 'two', body: [pool()] }
+        ]
+      })
+    ).toThrow(/Provider "pool" .* is declared again .* put it once in the layout those pages share/);
+  });
+
   it('says where the name was taken first', () => {
     const foot = () => authoring.container({ id: 'foot' });
 

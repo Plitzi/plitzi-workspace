@@ -191,6 +191,7 @@ plitzi page check / --click news-send --fill news-email=ana@example.com   # a fo
 plitzi page check /studio --as maya             # a page for signed-in visitors, signed in through /auth first
 plitzi page shot /about --width 390 --scheme dark
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
+plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 --sheet   # an interaction, on one sheet
 plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
 ```
 
@@ -198,7 +199,8 @@ Both run on the project's own Playwright against its running server (`npm start`
 another project. They wait for the page to settle — loaded, then half a second with nothing asked for — counting no
 stream that stays open, so a page with a realtime `channel` is checked like any other (`openPage` of
 `@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `page check` reports every element the space owes the page that is missing or hidden (with why), broken
-images, sideways scroll, text in the colour behind it, console errors, refused requests and failed flows — and the
+images, sideways scroll, a link or words cut off at the screen's edge (an ancestor hiding them, nothing scrolling to
+them), text in the colour behind it, console errors, refused requests and failed flows — and the
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
 the page is not showing, which is not mounted — a provider that failed, and each list's rows, drawn and in its source
 (`feed 4 of 8 rows`, `hits not rendered (16 in its source)`; `--json`: `lists: { id: { rendered, source } }`). A page's state in a few hundred tokens, where a screenshot costs thousands.
@@ -777,7 +779,8 @@ for a clone to copy and fill in. A server project's `.env` is read as each scrip
 `node --import @plitzi/sdk-server/env` (Node's flag there has its watcher restart on every write in the project) —
 before any of its modules is evaluated, so `src/config/serverOptions.ts` and the actions find their settings in
 `process.env` as they load. A change to it is read on the next start, and a deployment that sets its environment needs
-no file. A browser
+no file. `start:prod` also sets `NODE_ENV=production` itself — without it a deployed server is a development one, its
+dev tools on and every action's trace in what a visitor is answered (`doctor` says a `start:prod` that does not). A browser
 project's is Vite's: only `VITE_*` reaches the page, and ships in it.
 `create` gives each one a signing key there, made for it: `PLITZI_SIGNING_SECRET`, what `ctx.sign` and `ctx.verify`
 sign with — at least 32 characters (`doctor --fix` writes one where it is missing). `PORT` is left commented out: 8080,

@@ -9,11 +9,18 @@ export type ListBasicProps = {
   className?: string;
   subType?: 'ul' | 'ol';
   children?: ReactNode;
+  /** The list's accessible name. */
+  label?: string;
 };
 
-const ListBasic = ({ ref, className = '', subType = 'ul', children }: ListBasicProps) => {
+const ListBasic = ({ ref, className = '', subType = 'ul', children, label = '' }: ListBasicProps) => {
   return (
-    <RootElement ref={ref} tag={subType} className={clsx('plitzi-component__list', className)}>
+    <RootElement
+      ref={ref}
+      tag={subType}
+      className={clsx('plitzi-component__list', className)}
+      aria-label={label || undefined}
+    >
       {children}
     </RootElement>
   );

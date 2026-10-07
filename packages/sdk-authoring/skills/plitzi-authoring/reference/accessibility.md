@@ -38,6 +38,8 @@ image({ src: '/grain.png', decorative: true })                      // an orname
 image({ decorative: true, bind: { src: 'post.record.cover' } })     // a cover under its own headline adds nothing
 image({ bind: { src: 'row.item.cover', alt: 'row.item.title' } })   // …unless it is alone in a link: then it names it
 fontAwesome({ icon: 'fa-solid fa-triangle-exclamation', label: 'Overdue' })  // an icon that says something alone
+text('福', { decorative: true })                                     // a seal or a mark drawn for the look alone
+list({ label: 'Kinds of capsule', … })                               // a group of options is named, as a group
 ```
 
 ## Clicks go on controls

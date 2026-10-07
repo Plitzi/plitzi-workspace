@@ -52,6 +52,7 @@ const clean: ProbeFindings = {
   byWidth: [],
   brokenImages: [],
   overflow: null,
+  cutOff: [],
   illegible: []
 };
 
@@ -124,6 +125,7 @@ describe('testing/describeFindings', () => {
         hidden: [{ id: 'rows', reason: 'display:none on "inner-slot"' }],
         brokenImages: [{ source: '/logo.png', elementId: 'logo' }],
         overflow: { pixels: 37, widest: ['"cover"', '<img.x>'], elementIds: ['cover'] },
+        cutOff: [{ id: 'title', pixels: 60 }],
         illegible: [{ text: '<p>: "Hi"' }]
       }).map(({ code, elementId }) => ({ code, elementId }))
     ).toEqual([
@@ -131,6 +133,7 @@ describe('testing/describeFindings', () => {
       { code: 'element-hidden', elementId: 'rows' },
       { code: 'image-not-loaded', elementId: 'logo' },
       { code: 'sideways-scroll', elementId: 'cover' },
+      { code: 'cut-off', elementId: 'title' },
       { code: 'illegible-text', elementId: undefined }
     ]);
   });

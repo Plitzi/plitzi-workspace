@@ -358,6 +358,22 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     ]);
   });
 
+  // Deployed without the variable, the server was a development one: dev tools on, every action's trace in its answer.
+  it('says a start:prod that does not run in production by itself', async () => {
+    const changed = await manifest();
+    const scripts = isRecord(changed.scripts)
+      ? { ...changed.scripts, 'start:prod': 'node --env-file-if-exists=.env dist/main.js' }
+      : {};
+    await write('package.json', JSON.stringify({ ...changed, scripts }, null, 2));
+
+    const report = await run();
+
+    expect(report.findings.filter(finding => finding.code === 'start-prod-not-production')).toEqual([
+      expect.objectContaining({ severity: 'warning', file: 'package.json' })
+    ]);
+    expect(report.findings.filter(finding => finding.code === 'script-env-unread')).toEqual([]);
+  });
+
   /** Node's watcher, handed `--env-file`, watches the project's root: every write in it is a restart. */
   it('says a watched script reading .env with Node’s flag, which restarts on every write', async () => {
     const changed = await manifest();

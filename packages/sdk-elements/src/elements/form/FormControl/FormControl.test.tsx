@@ -121,3 +121,10 @@ describe('FormControl field', () => {
     expect(new Set(fields)).toEqual(new Set(['transparent']));
   });
 });
+
+/** Required by default, an empty field nobody meant to require stopped the whole submit without a word. */
+describe('FormControl required', () => {
+  it('is optional unless it says so, as an HTML field is', () => {
+    expect(declaration.content.attributes.required).toBe(false);
+  });
+});

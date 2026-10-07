@@ -49,6 +49,30 @@ describe('a server’s own functions from a directory', () => {
     expect(result.output.value).toBe('3 items');
   });
 
+  // The bundle carries its own copy of the class: told apart by its name, the reason reached the page; by `instanceof`, never.
+  it('refuse with a reason that reaches whoever ran them', async () => {
+    await write(
+      'index.ts',
+      'import { ActionRefusal, defineFunctions } from "@plitzi/sdk-server/functions";\nexport default defineFunctions({ tasks: [{ namespace: "own", action: "make", title: "Make", params: {}, run: () => { throw new ActionRefusal("The link has to start with https://"); } }] });'
+    );
+    const module = createActionsModule({
+      lookups: { getAction: () => Promise.resolve(undefined) },
+      functions: { native: await loadFunctions(dir) }
+    });
+    const result = await module.runAction({
+      entry: functionTryEntry('own.make', {}),
+      input: {},
+      callerId: 'local',
+      user: { id: 1, username: 'ada', email: 'ada@example.com', verified: true, permissions: [], roles: [], token: '' },
+      spaceId: 1,
+      environment: 'main',
+      trigger: 'call',
+      runId: 'run-1'
+    });
+
+    expect([result.status, result.error]).toEqual(['failed', 'The link has to start with https://']);
+  });
+
   it('are none where there is nothing', async () => {
     expect(await loadFunctions(path.join(dir, 'missing'))).toEqual([]);
   });

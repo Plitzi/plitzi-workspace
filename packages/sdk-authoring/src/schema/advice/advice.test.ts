@@ -497,6 +497,10 @@ describe('suggestions', () => {
 
       expect(unusedDeclarations(schema, style).tokens).toContain('spare');
       expect(unusedDeclarations(schema, withRing).tokens).not.toContain('spare');
+      // A plugin's own stylesheet reads it: the space's pages load it, and the colour is in use.
+      expect(unusedDeclarations(schema, style, ['.sticky { background: var(--spare); }']).tokens).not.toContain(
+        'spare'
+      );
     });
 
     it('names a component no page places, and says what removing it saves', () => {

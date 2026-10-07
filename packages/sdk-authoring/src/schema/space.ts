@@ -330,7 +330,7 @@ class SpaceAuthor {
 
     // Where each suggestion's first element was written, as a refusal says it: the line to go and change.
     const suggestions = [
-      ...suggestSpace({ schema, style }),
+      ...suggestSpace({ schema, style }, { stylesheets: this.options.stylesheets ?? [] }),
       ...withoutQuieted(schema, this.classOverrides(schema, style.mode ?? 'desktop-first'))
     ].map(suggestion => {
       const first = suggestion.elementIds.at(0);
@@ -1067,11 +1067,15 @@ class SpaceAuthor {
       // A page or a layout holding the name is not a helper called twice: `scope()` would not help, a new name does.
       const holder = (tree.map.flat[element.id] as Element | undefined)?.definition.type;
       const root = holder === 'page' ? 'page' : holder === 'layoutContainer' ? 'layout' : undefined;
+      // A provider's id is its source's name: `scope()` would rename it, and every template reading it with it.
+      const provider = holder === 'apiContainer' && element.definition.type === 'apiContainer';
       throw new AuthoringError(
         'id-taken',
         root
           ? `Element "${element.id}" (${element.definition.type}) at ${path} uses the name of the ${root} at ${earlier} — ids are one namespace for the whole space, pages and layouts included. Give the element a name of its own: \`id: '${element.id}-${element.definition.type.toLowerCase()}'\`.`
-          : `Element "${element.id}" (${element.definition.type}) at ${path} uses a name already taken at ${earlier}. Ids are one namespace for the whole space — layouts and every page share it — so wrap the function called more than once in \`scope('<what it is for>', ref => …)\`, which prefixes every id inside it.`
+          : provider
+            ? `Provider "${element.id}" at ${path} is declared again — it is at ${earlier} too. Ids are one namespace for the whole space, and a provider's id is the name its source is read by: put it once in the layout those pages share (\`layouts\`, and \`layout: { id, slot }\` on each page), where every page reads it as it does now — a provider in a layout serves every page.`
+            : `Element "${element.id}" (${element.definition.type}) at ${path} uses a name already taken at ${earlier}. Ids are one namespace for the whole space — layouts and every page share it — so wrap the function called more than once in \`scope('<what it is for>', ref => …)\`, which prefixes every id inside it.`
       );
     }
 

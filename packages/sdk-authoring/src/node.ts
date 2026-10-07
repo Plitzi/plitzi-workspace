@@ -176,10 +176,24 @@ const builtPluginTypes = (folder: string): string[] =>
         })
     : [];
 
+/**
+ * The stylesheets of the plugins under `folder` — every `.css` in a plugin's folder, at any depth — as their text, for
+ * `authorSpace`'s `stylesheets`: the tokens a plugin's own CSS reads are tokens the space uses.
+ */
+const pluginStylesheets = (folder: string): string[] =>
+  existsSync(folder)
+    ? readdirSync(folder, { recursive: true, withFileTypes: true })
+        .filter(entry => entry.isFile() && entry.name.endsWith('.css'))
+        .map(entry => path.join(entry.parentPath, entry.name))
+        .sort()
+        .map(file => readFileSync(file, 'utf-8'))
+    : [];
+
 /** What a project `@plitzi/cli` writes checks its space against: the part of `authorSpace`'s options its files say. */
 export type ProjectAuthoring = {
   plugins: PluginDeclarationData[];
   pluginTypes: string[];
+  stylesheets: string[];
   serverData?: (query: string) => unknown;
   data: (query: string) => unknown;
 };
@@ -190,6 +204,7 @@ export type ProjectAuthoring = {
  *
  * - `plugins`: every plugin folder's declaration (`src/plugins/<Name>/declaration.ts`, `pluginDeclarations`);
  * - `pluginTypes`: the element types of the plugins it runs as they were built (`vendor/plugins/`);
+ * - `stylesheets`: its plugins' own CSS, every `.css` under `src/plugins/`, for the tokens they read;
  * - `serverData`: the project's own data, which only its server reads (`src/data/`, `projectData`) — a server-mode
  *   project's; one with no server has no such folder, and its providers read `public/data/` from the browser;
  * - `data`: the JSON files it serves (`public/`, `publicData`).
@@ -219,6 +234,7 @@ export const projectAuthoringAt = async (root: string): Promise<ProjectAuthoring
   return {
     plugins: await pluginDeclarations(path.join(at, PLUGINS_DIR)),
     pluginTypes: builtPluginTypes(path.join(at, VENDOR_PLUGINS_DIR)),
+    stylesheets: pluginStylesheets(path.join(at, PLUGINS_DIR)),
     ...(existsSync(serverData) ? { serverData: projectData(serverData) } : {}),
     data: publicData(path.join(at, PUBLIC_DIR))
   };

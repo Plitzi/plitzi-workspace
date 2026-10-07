@@ -3,7 +3,7 @@ import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { createEmailSender } from './email';
-import { ActionRefusal, ActionRunError } from './errors';
+import { ActionRunError, isActionRefusal } from './errors';
 import { flagsForRun } from './flags';
 import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
@@ -580,7 +580,7 @@ export const createActionRunner = (
         });
       } else {
         failure = error instanceof Error ? error.message : String(error);
-        if (error instanceof ActionRefusal) {
+        if (isActionRefusal(error)) {
           refusal = redact(error.message);
         }
 

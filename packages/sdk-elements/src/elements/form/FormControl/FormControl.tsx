@@ -62,6 +62,7 @@ export type FormControlProps = {
   autoFocus: boolean;
   disabled: boolean;
   options: { label: string; value: string }[];
+  /** Optional unless it says so, as an HTML field is: a required field left empty stops the submit. */
   required: boolean;
   /**
    * The rules a value has to meet before the form submits, checked by the form at submit time and by the control when
@@ -109,7 +110,7 @@ const FormControl = ({
   autoFocus = false,
   disabled = false,
   options = [],
-  required = true,
+  required = false,
   maxLength = 0,
   readOnly = false,
   // HOC

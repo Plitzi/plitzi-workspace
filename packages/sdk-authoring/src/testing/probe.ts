@@ -22,6 +22,8 @@ export interface ProbeFindings {
   brokenImages: { source: string; elementId?: string }[];
   /** `elementIds`: the widest ones the space named, for a tool to point at. */
   overflow: { pixels: number; widest: string[]; elementIds: string[] } | null;
+  /** A link, a control or words of the space's cut at the screen's edge — by how many pixels fall outside it. */
+  cutOff: { id: string; pixels: number }[];
   illegible: { text: string; elementId?: string }[];
 }
 
@@ -239,6 +241,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
    * scroll an inner pane and the document would then report no overflow whatever the page contained.
    */
   let overflow: ProbeFindings['overflow'] = null;
+  const cutOff: ProbeFindings['cutOff'] = [];
   if (input.overflow) {
     const viewport = document.documentElement.clientWidth;
     /**
@@ -268,6 +271,72 @@ export function probePage(input: ProbeInput): ProbeFindings {
 
       return right;
     };
+    const visibleLeft = (node: Element): number => {
+      let left = node.getBoundingClientRect().left;
+      for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        if (keepsOverflow(ancestor)) {
+          left = Math.max(left, ancestor.getBoundingClientRect().left);
+        }
+      }
+
+      return left;
+    };
+
+    /**
+     * What is CUT at the screen's edge rather than scrolled to: a link, a control or words of the space's whose box runs
+     * past the viewport while an ancestor hides the part that spills — a header whose last links fell off a phone, with
+     * no sideways scroll to show for it, which read as a page with nothing wrong. Not inside a row a person scrolls on
+     * purpose, nor anything a transform moves (a marquee, a carousel's track), nor what is not drawn.
+     */
+    const scrolledOnPurpose = (node: Element): boolean => {
+      for (let ancestor = node.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        const { overflowX } = getComputedStyle(ancestor);
+        const pageScroller =
+          ancestor === document.documentElement || ancestor === document.body || ancestor.matches('.plitzi-sdk');
+        if ((overflowX === 'auto' || overflowX === 'scroll') && !pageScroller) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+    const moved = (node: Element): boolean => {
+      for (let at: Element | null = node; at; at = at.parentElement) {
+        const { transform } = getComputedStyle(at);
+        if (transform !== 'none' && transform !== '') {
+          return true;
+        }
+      }
+
+      return false;
+    };
+    const saysSomething = (node: Element): boolean =>
+      node.matches('a, button, input, select, textarea, label') ||
+      [...node.childNodes].some(child => child.nodeType === Node.TEXT_NODE && (child.textContent ?? '').trim() !== '');
+    for (const node of document.querySelectorAll('[data-plitzi-el]')) {
+      const box = node.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0 || !saysSomething(node)) {
+        continue;
+      }
+
+      const outside = Math.max(box.right - viewport, -box.left);
+      // Hidden by an ancestor, not shown past the edge — that much is the sideways scroll's, said above.
+      const hiddenPart = Math.max(box.right - visibleRight(node), visibleLeft(node) - box.left);
+      if (
+        outside <= 1 ||
+        hiddenPart <= 1 ||
+        !node.checkVisibility({ opacityProperty: true, visibilityProperty: true }) ||
+        scrolledOnPurpose(node) ||
+        moved(node)
+      ) {
+        continue;
+      }
+
+      const id = node.getAttribute('data-plitzi-el');
+      if (id) {
+        cutOff.push({ id, pixels: Math.round(Math.min(outside, hiddenPart)) });
+      }
+    }
     const wide = [...document.querySelectorAll('body *')]
       .map(node => ({ node, right: visibleRight(node) }))
       .filter(entry => entry.right > viewport + 1)
@@ -382,6 +451,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     byWidth,
     brokenImages,
     overflow,
+    cutOff,
     illegible
   };
 }

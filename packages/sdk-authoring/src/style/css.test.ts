@@ -32,6 +32,14 @@ describe('css', () => {
   });
 
   // What a marketing page masks and highlights with: a dotted map faded at its edges, a heading tinted line by line.
+  // Vertical Japanese or Chinese: refused, a column one character wide was the only way to write it.
+  it('takes text set in columns, and how each character stands in them', () => {
+    expect(css({ 'writing-mode': 'vertical-rl', 'text-orientation': 'upright' })).toEqual({
+      'writing-mode': 'vertical-rl',
+      'text-orientation': 'upright'
+    });
+  });
+
   it('takes masks, the prefixed text clip and box-decoration-break', () => {
     const effects = {
       'mask-image': 'radial-gradient(black, transparent)',

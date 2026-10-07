@@ -665,6 +665,11 @@ export interface AuthorSpaceOptions {
    */
   plugins?: readonly PluginDeclarationData[];
   /**
+   * The CSS the space's pages load besides its own — its plugins' stylesheets. Read for the tokens they use: one only a
+   * plugin reads (`var(--glass)` in its `.css`) is not said to be unused, which would have its colour deleted.
+   */
+  stylesheets?: readonly string[];
+  /**
    * What this document breaks ON PURPOSE — a fixture for how the runtime copes with something no author would write,
    * like a provider whose URL names a route param no page has. See {@link AllowedBreak}.
    */

@@ -30,7 +30,13 @@ export interface InspectOptions extends OnScreenOptions {
 
 /** What kind of problem a page check found: what a tool branches on, where `message` is what a person reads. */
 export type PageIssueCode =
-  'not-rendered' | 'element-missing' | 'element-hidden' | 'image-not-loaded' | 'sideways-scroll' | 'illegible-text';
+  | 'not-rendered'
+  | 'element-missing'
+  | 'element-hidden'
+  | 'image-not-loaded'
+  | 'sideways-scroll'
+  | 'cut-off'
+  | 'illegible-text';
 
 export interface PageIssue {
   code: PageIssueCode;
@@ -113,6 +119,11 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
       ...about(elementId)
     })),
     ...sidewaysOf(findings.overflow),
+    ...findings.cutOff.map(({ id, pixels }): PageIssue => ({
+      code: 'cut-off',
+      message: `${named(id)} is cut off at the edge of the screen by ${String(pixels)}px — an ancestor hides what spills past it, so nothing scrolls to it: let the row wrap, or give it room`,
+      elementId: id
+    })),
     ...findings.illegible.map(({ text, elementId }): PageIssue => ({
       code: 'illegible-text',
       message: `text drawn in the colour behind it: ${text}`,

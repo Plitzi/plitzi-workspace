@@ -63,6 +63,13 @@ export interface ShotOptions {
   scrollTo?: string;
   /** What fits the viewport, rather than the whole page. */
   viewport?: boolean;
+  /**
+   * Elements clicked one after another once the page settles — each its name or a CSS selector, which reaches inside a
+   * plugin too — with what each click changed pictured: `frames` pictures `every` ms apart after each, or one.
+   */
+  click?: string[];
+  /** Every picture taken — before, after each click, or each of `frames` — on one contact sheet. */
+  sheet?: boolean;
   json?: boolean;
 }
 
@@ -102,6 +109,17 @@ interface ShotReport {
   settled?: number;
   /** Pictures of this page not drawn when it was taken. */
   unloaded?: number;
+  /** With `click`: each element clicked, and the share of the picture that changed after it. */
+  clicked?: { target: string; changed: number }[];
+  /** The pictures after the first, each with what it shows — or, with `sheet`, the one sheet that holds them all. */
+  pictures?: { label: string; out: string }[];
+  sheet?: string;
+}
+
+/** One picture of a page as it plays: what it shows — `before`, `<target> +250 ms` — and the picture. */
+interface Moment {
+  label: string;
+  png: Uint8Array;
 }
 
 interface View {
@@ -350,6 +368,91 @@ const compareWith = async (
   };
 };
 
+/**
+ * The pictures on one sheet, each under what it shows, four to a row and each 360 px wide: runs in the page, so it is
+ * self-contained — no import, nothing it closes over.
+ */
+function contactSheet(cells: { label: string; src: string }[]): Promise<string> {
+  const CELL_WIDTH = 360;
+  const LABEL = 24;
+  const GAP = 12;
+  const load = (src: string) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('a picture of the sheet did not load'));
+      image.src = src;
+    });
+
+  return Promise.all(cells.map(cell => load(cell.src))).then(images => {
+    const columns = Math.min(4, images.length);
+    const heightOf = (image: HTMLImageElement) => Math.round((image.naturalHeight * CELL_WIDTH) / image.naturalWidth);
+    const cellHeight = Math.max(...images.map(heightOf));
+    const rows = Math.ceil(images.length / columns);
+    const canvas = document.createElement('canvas');
+    canvas.width = GAP + columns * (CELL_WIDTH + GAP);
+    canvas.height = GAP + rows * (LABEL + cellHeight + GAP);
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('no canvas to draw the sheet on');
+    }
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.font = '13px ui-monospace, monospace';
+    images.forEach((image, index) => {
+      const x = GAP + (index % columns) * (CELL_WIDTH + GAP);
+      const y = GAP + Math.floor(index / columns) * (LABEL + cellHeight + GAP);
+      context.fillStyle = '#16181d';
+      context.fillText(cells[index].label, x, y + 16);
+      context.drawImage(image, x, y + LABEL, CELL_WIDTH, heightOf(image));
+      context.strokeStyle = '#d0d4dc';
+      context.strokeRect(x + 0.5, y + LABEL + 0.5, CELL_WIDTH - 1, heightOf(image) - 1);
+    });
+
+    return canvas.toDataURL('image/png');
+  });
+}
+
+/**
+ * Each element clicked in turn, and the page pictured after it — `frames` pictures `every` ms apart, or one. What a
+ * click changed is measured against the picture before it: nothing at all is said, as a click that did nothing.
+ */
+const clickThrough = async (
+  taken: Taken,
+  how: Framing,
+  clicks: readonly string[],
+  { frames, every }: { frames: number; every: number }
+): Promise<{ moments: Moment[]; clicked: { target: string; changed: number }[] } | { problem: string }> => {
+  const moments: Moment[] = [{ label: 'before', png: taken.png }];
+  const clicked: { target: string; changed: number }[] = [];
+  for (const target of clicks) {
+    const element = taken.page.locator(selectorOf(target)).first();
+    if ((await element.count()) === 0) {
+      return { problem: `${target} is not on the page: --click takes an element's name or a CSS selector.` };
+    }
+
+    const before = moments[moments.length - 1].png;
+    try {
+      await element.click({ timeout: 3000 });
+    } catch (error) {
+      return {
+        problem: `${target} could not be clicked — hidden, covered or disabled: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
+      };
+    }
+
+    for (let frame = 1; frame <= Math.max(1, frames); frame += 1) {
+      await taken.page.waitForTimeout(every);
+      moments.push({ label: `${target} +${String(frame * every)} ms`, png: await capture(taken.page, how) });
+    }
+
+    const after = moments[moments.length - 1].png;
+    clicked.push({ target, changed: (await comparePictures(taken.page, dataUrl(before), dataUrl(after))).changed });
+  }
+
+  return { moments, clicked };
+};
+
 export const shot = async (route: string | undefined, options: ShotOptions): Promise<void> => {
   const project = await projectHere('whose page to picture');
   if (!project) {
@@ -366,6 +469,25 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
     fail(browser.problem);
+
+    return;
+  }
+
+  const clicks = options.click ?? [];
+  if (options.compare && clicks.length > 0) {
+    await browser.close();
+    fail(
+      '`--compare` sets the page beside another site as it loads: leave out --click, or picture the click on its own.'
+    );
+
+    return;
+  }
+
+  if (options.sheet && clicks.length === 0 && (options.frames ?? 0) <= 1) {
+    await browser.close();
+    fail(
+      '`--sheet` lays out the pictures a --click or --frames takes: with neither, there is one picture and no sheet.'
+    );
 
     return;
   }
@@ -391,7 +513,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
       ...(options.viewport ? { viewport: true } : {}),
       // Frames are about what moves, so they are taken as the page plays.
-      still: !options.clip && !options.scrollTo && !options.viewport && (options.frames ?? 0) <= 1
+      still:
+        !options.clip && !options.scrollTo && !options.viewport && (options.frames ?? 0) <= 1 && clicks.length === 0
     };
     const how = framing(view);
 
@@ -436,13 +559,26 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     }
 
     const frames = options.frames ?? 0;
-    if (frames > 1) {
-      const every = options.every ?? 500;
+    const every = options.every ?? 500;
+    let moments: Moment[] = [];
+    if (clicks.length > 0) {
+      const played = await clickThrough(taken, how, clicks, { frames, every });
+      if ('problem' in played) {
+        fail(played.problem);
+
+        return;
+      }
+
+      moments = played.moments;
+      report.clicked = played.clicked;
+    } else if (frames > 1) {
       const pictures = [taken.png];
       for (let frame = 1; frame < frames; frame += 1) {
         await taken.page.waitForTimeout(every);
         pictures.push(await capture(taken.page, how));
       }
+
+      moments = pictures.map((png, frame) => ({ label: frame === 0 ? 'before' : `+${String(frame * every)} ms`, png }));
 
       const diffs: PictureDiff[] = [];
       for (let frame = 1; frame < pictures.length; frame += 1) {
@@ -462,6 +598,23 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         moving: moved.filter(region => region.changed > MOVING_PERCENT),
         still: moved.filter(region => region.changed <= MOVING_PERCENT).map(region => region.name)
       };
+    }
+
+    // The pictures taken after the first: on one sheet, or each in a file of its own beside it.
+    if (moments.length > 1 && options.sheet) {
+      const sheet = await taken.page.evaluate(
+        contactSheet,
+        moments.map(moment => ({ label: moment.label, src: dataUrl(moment.png) }))
+      );
+      report.sheet = `${base}-sheet.png`;
+      await writeFile(report.sheet, Buffer.from(sheet.replace(/^data:image\/png;base64,/, ''), 'base64'));
+    } else if (moments.length > 1 && clicks.length > 0) {
+      report.pictures = [];
+      for (const [index, moment] of moments.slice(1).entries()) {
+        const file = `${base}-${String(index + 1)}.png`;
+        await writeFile(file, moment.png);
+        report.pictures.push({ label: moment.label, out: file });
+      }
     }
 
     if (options.json) {
@@ -485,6 +638,22 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     if (report.compare) {
       console.log(compareText(report.compare).join('\n'));
+    }
+
+    for (const { target, changed } of report.clicked ?? []) {
+      console.log(
+        changed > 0
+          ? `clicked ${target}: ${String(changed)}% of the picture changed`
+          : chalk.yellow(`clicked ${target}: nothing changed — the click did nothing to see`)
+      );
+    }
+
+    if (report.sheet) {
+      console.log(`sheet: ${report.sheet}`);
+    }
+
+    for (const picture of report.pictures ?? []) {
+      console.log(`${picture.label}: ${picture.out}`);
     }
 
     if (report.frames) {

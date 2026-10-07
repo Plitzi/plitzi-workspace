@@ -37,14 +37,18 @@ const quietCodes = (schema: Schema): Map<string, string[]> =>
  * Each names what to write instead, and the ones about elements say how many it saves, which is what they are ranked
  * by.
  */
-export const suggestSpace = ({ schema, style }: { schema: Schema; style: Style }): Suggestion[] =>
+export const suggestSpace = (
+  { schema, style }: { schema: Schema; style: Style },
+  /** The CSS the pages load besides the space's own — its plugins' stylesheets: a token read there is read. */
+  { stylesheets = [] }: { stylesheets?: readonly string[] } = {}
+): Suggestion[] =>
   withoutQuieted(schema, [
     ...suggestRepeats(schema, style),
     ...suggestContent(schema, style),
     ...suggestCustomCss(schema, style),
     ...suggestCustomCssSlots(schema),
     ...suggestMotion(schema, style),
-    ...suggestDeclarations(schema, style)
+    ...suggestDeclarations(schema, style, stylesheets)
   ]).sort((a, b) => b.saves - a.saves);
 
 /** The suggestions no element they are about quiets — for those read beside the documents, too (authoring's own). */

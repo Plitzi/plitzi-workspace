@@ -203,7 +203,9 @@ describe('plitzi upgrade', () => {
       const written: unknown = JSON.parse(await read('package.json'));
       for (const name of Object.keys(olderScripts)) {
         expect(written).toHaveProperty(['scripts', name], ours[name]);
-        expect(ours[name]).toMatch(/^node (--env-file-if-exists=\.env|--import @plitzi\/sdk-server\/env) /);
+        expect(ours[name]).toMatch(
+          /^(NODE_ENV=production )?node (--env-file-if-exists=\.env|--import @plitzi\/sdk-server\/env) /
+        );
       }
 
       const record = await readScaffoldRecord(root);

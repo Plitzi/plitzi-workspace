@@ -9,7 +9,7 @@ import { parseRouteKey, reservedRouteProblem } from './manifest';
 import { FunctionFailure } from './protocol';
 import { pluginOfPath } from './scope';
 import { serverLog } from '../../helpers/serverLog';
-import { ActionRefusal } from '../actions/runtime/errors';
+import { isActionRefusal } from '../actions/runtime/errors';
 
 import type { FunctionsConfig } from './config';
 import type { FunctionContext, FunctionRoute, FunctionsDefinition } from './contract';
@@ -105,7 +105,7 @@ const withoutCookies = (response: Response): Response => {
  * of anything else the visitor gets that it failed, and the server's log gets why.
  */
 const failed = (visit: RouteVisit, key: string, error: unknown): Response => {
-  if (error instanceof ActionRefusal || (error instanceof FunctionFailure && error.reason === 'refused')) {
+  if (isActionRefusal(error) || (error instanceof FunctionFailure && error.reason === 'refused')) {
     return Response.json({ error: error.message }, { status: 400 });
   }
 

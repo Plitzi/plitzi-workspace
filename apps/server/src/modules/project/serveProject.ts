@@ -13,8 +13,11 @@ import {
   RUNTIME_ENTRY
 } from '@plitzi/sdk-shared/project/paths';
 import { projectModule, projectRoot } from '@plitzi/sdk-shared/project/root';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
 
 import { projectPlugins, watchProjectPlugins } from './plugins';
+import { createSpaceFailure } from './spaceFailure';
 import { watchSpace } from './watchSpace';
 import { createCloudAdapters } from '../../adapters/cloudAdapters';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
@@ -156,16 +159,43 @@ const actionLookups = (
   listScheduledSpaces: () => Promise.resolve([SPACE_ID])
 });
 
-/** The space this project serves, authored from its own source — or Plitzi's, named for `/health`. */
-const spaceToServe = async ({ space, cloud }: ServeProjectOptions): Promise<{ space?: ProjectSpace; name: string }> => {
+/**
+ * The space this project serves, authored from its own source — or Plitzi's, named for `/health`.
+ *
+ * While developing, one that does not author is not the end of the server: it comes up saying why (`spaceFailure`),
+ * named after the project's folder, and serves the space the first time a save authors. A deployment refuses to start.
+ */
+const spaceToServe = async (
+  { space, cloud }: ServeProjectOptions,
+  developing: boolean,
+  root: string
+): Promise<{ space?: ProjectSpace; failure?: string; name: string }> => {
   if (!space) {
     return { name: cloud.name };
   }
 
-  const authored = await space();
+  try {
+    const authored = await space();
 
-  return { space: authored, name: authored.schema.definition.permanentUrl };
+    return { space: authored, name: authored.schema.definition.permanentUrl };
+  } catch (error) {
+    if (!developing) {
+      throw error;
+    }
+
+    // A refusal is the whole report already; anything else is the project's code, and its stack is what finds it.
+    const said = isReport(error)
+      ? error.message
+      : error instanceof Error
+        ? (error.stack ?? error.message)
+        : String(error);
+
+    return { failure: said, name: path.basename(root) };
+  }
 };
+
+/** What is served of a space that has not authored yet: nothing — every page answers with why (`spaceFailure`). */
+const NOTHING_AUTHORED: AuthoredDocuments = { schema: EMPTY_SCHEMA.schema, style: EMPTY_STYLE_SCHEMA };
 
 const startProject = async (options: ServeProjectOptions): Promise<ServedProject> => {
   const { actions, connectors = new Map<string, ConnectorManifest>(), serverOptions = {} } = options;
@@ -188,10 +218,18 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   /** Where people reach this server: `PUBLIC_URL` behind a proxy, its own address otherwise. */
   const publicUrl = (process.env.PUBLIC_URL ?? `http://127.0.0.1:${String(port)}`).replace(/\/+$/, '');
 
-  const { space, name } = await spaceToServe(options);
+  const { space, failure, name } = await spaceToServe(options, developing, root);
   const plugins = await projectPlugins(root);
   // What the server serves of a space held in the project: replaced, while developing, by each save authored again.
-  const held = space && { documents: { schema: space.schema, style: space.style } };
+  const held: { documents?: AuthoredDocuments } | undefined = options.space
+    ? { ...(space ? { documents: { schema: space.schema, style: space.style } } : {}) }
+    : undefined;
+  const spaceFailure = createSpaceFailure();
+  if (failure !== undefined) {
+    spaceFailure.fail(failure);
+    console.error(`[author] ${failure}`);
+    console.error('[author] The server is up: fix the space and save, and the page loads it.');
+  }
   // Said by the process that was started: in production every worker runs this file too, and would say it again.
   const speaks = !isFleetWorker();
   for (const warning of speaks ? (space?.warnings ?? []) : []) {
@@ -200,7 +238,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
 
   const adapters = held
     ? createJsonAdapters({
-        offlineData: () => held.documents,
+        offlineData: () => held.documents ?? NOTHING_AUTHORED,
         deployment: { spaceId: SPACE_ID, environment: 'main', revision: 0, pluginNames: plugins.names }
       })
     : cloudAdapters(plugins.names);
@@ -242,7 +280,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
         ...(actions ? { lookups: actionLookups(actions, connectors) } : {})
       }
     },
-    { preAuth: runtime ? [runtime.stage] : [] }
+    { preAuth: [spaceFailure.stage, ...(runtime ? [runtime.stage] : [])] }
   );
 
   server.listen(port, host);
@@ -259,6 +297,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
           ? [
               watchSpace(root, authored => {
                 held.documents = authored;
+                spaceFailure.clear();
                 server.reloadPages();
               })
             ]
