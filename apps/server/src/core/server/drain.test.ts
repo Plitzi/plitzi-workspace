@@ -40,11 +40,17 @@ describe('watchConnections().drain', () => {
   });
 
   it('lets a request that is being answered finish, and closes its connection once it has', async () => {
+    let received: () => void = () => undefined;
+    const arrived = new Promise<void>(resolve => {
+      received = resolve;
+    });
     const { connections, url } = await serve((_req, res) => {
+      received();
       setTimeout(() => res.end('done'), 150);
     });
     const answer = fetch(url).then(response => response.text());
-    await new Promise(resolve => setTimeout(resolve, 30));
+    // Drained before the request reached the handler, its connection is idle, and closing it is right.
+    await arrived;
 
     // Not the seconds the client would keep the connection alive for.
     expect(await elapsed(connections.drain('test', 5000))).toBeLessThan(1000);
@@ -67,13 +73,19 @@ describe('watchConnections().drain', () => {
   });
 
   it('cuts what is still open once the grace runs out', async () => {
-    const { connections, url } = await serve(() => undefined);
+    let received: () => void = () => undefined;
+    const arrived = new Promise<void>(resolve => {
+      received = resolve;
+    });
+    const { connections, url } = await serve(() => {
+      received();
+    });
     const { port } = new URL(url);
     const socket = net.connect(Number(port), '127.0.0.1');
     const closed = new Promise<void>(resolve => socket.once('close', () => resolve()));
     // A request that is never answered: a handler that holds it, as a socket that switched protocols is held.
     socket.write('GET / HTTP/1.1\r\nhost: localhost\r\n\r\n');
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await arrived;
 
     const took = await elapsed(connections.drain('test', 200));
 
