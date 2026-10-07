@@ -105,6 +105,8 @@ const serverOptionsModule = (
  *
  * - \`images: { domains: ['images.example.com'] }\` — pictures from those hosts resized here, with \`sharp\` installed.
 ${local ? ACTION_OPTIONS_DOC : ''} * - \`rsc: { elementTimeoutMs }\` — how long a section resolved on the server is waited for: 5 s by default.
+ * - \`devMode\` — the development build, the dev tools, a public action's trace: on unless \`NODE_ENV\` is \`production\`.
+ *   \`devMode: false\` keeps them off wherever the server is started, \`NODE_ENV\` or not. \`devReload\` follows it.
  */
 export const serverOptions: ProjectServerOptions = {};
 `;

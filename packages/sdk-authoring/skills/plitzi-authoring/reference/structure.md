@@ -93,7 +93,9 @@ pages: [
 
 Adding a page is adding an entry; two entries of one id or slug are refused as any two pages are. For one shape over
 records a visitor browses — a product, a post — a single page with a route param (`slug: 'posts/:postId'`) reading
-the record is the answer instead: one page, as many addresses as records.
+the record is the answer instead: one page, as many addresses as records. Its `seoTitle` and `seoDescription` are
+words of its own, one for every record — the head is written as it is, and a template there is refused
+(`seo-template`); a `pageFamily` page is the one whose title can say its entry.
 
 ## Names
 

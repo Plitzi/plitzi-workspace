@@ -31,3 +31,18 @@ describe('PAGE_SPEC_FIELDS', () => {
     }
   });
 });
+
+describe('a page’s seoTitle and seoDescription', () => {
+  it('refuses a template: the head is written as it is, and would show the braces', () => {
+    const write = (seo: Pick<PageSpec, 'seoTitle' | 'seoDescription'>) => () =>
+      authorSpace({
+        name: 'Seo',
+        permanentUrl: 'seo',
+        pages: [{ id: 'capsule', name: 'Capsule', slug: 'c/:slug', ...seo, body: [] }]
+      });
+
+    expect(write({ seoTitle: '{{ apiContainer_capsule.title }} — Shop' })).toThrow(/template in `seoTitle`/);
+    expect(write({ seoDescription: '{% if x %}…{% endif %}' })).toThrow(/template in `seoDescription`/);
+    expect(write({ seoTitle: 'A capsule — Shop' })).not.toThrow();
+  });
+});

@@ -254,12 +254,15 @@ const declaration = elementDeclaration<FormControlAttributes>()({
       type: 'formControl',
       description:
         'A single labelled input (text/select/checkbox/… per its subType) inside a form; captures one field of user ' +
-        'input. A select offers its `options`: `[{ label, value }, …]` — the text shown, and what the field takes. A ' +
+        'input. Optional unless `required: true`, as an HTML field is: a `requiredMessage` alone requires nothing. ' +
+        'A select offers its `options`: `[{ label, value }, …]` — the text shown, and what the field takes. A ' +
         '`switch` is a checkbox announced and drawn as an on/off switch (`role="switch"`), for a setting that applies at ' +
         'once; both hold `true`/`false`, and a `defaultValue` of `"true"` starts them on. Its slots: `label`, ' +
         '`requiredMark` (the `*` that ends the label of a required field), `input` (the box a typed field or a select ' +
         'is drawn in — a textarea, checkbox or switch is its own box), `field` (the `<input>` or `<select>` inside ' +
-        'that box), `icon` (the show/hide button of a password) and `error`. The thumb of a switch is no element a ' +
+        'that box), `icon` (the show/hide button of a password) and `error`. The box is ringed (`2px solid ' +
+        'currentColor`) while the field inside has keyboard focus: restyle it with a `focus-within` state on the ' +
+        '`input` slot — the box never takes `focus` itself. The thumb of a switch is no element a ' +
         'class reaches: the class on its `input` slot sets `--plitzi-switch-thumb` (off), ' +
         '`--plitzi-switch-thumb-checked` (on, white by default) and `--plitzi-switch-thumb-shadow`.',
       bindings: {},

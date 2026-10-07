@@ -36,7 +36,8 @@ import type { CreateAnswers } from '../scaffold';
  *   is left to the author, said with the command that would take the registry's.
  * - `skills`: `.claude/skills/plitzi-*` from the packages installed, each replaced whole.
  * - `renames`: a name a version renamed, still written in the source (`canTemplate`), at its file and line — and with
- *   `--write`, renamed.
+ *   `--write`, renamed. With it, what a version changed that the source may count on — a `formControl` written
+ *   before fields became optional — at its file and line, for a project last upgraded before: said, never written.
  *
  * Shown by default; `--write` makes it. What the space is — its pages, plugins, data — is the project's, never named.
  *
@@ -138,6 +139,67 @@ const renamesIn = (file: string, text: string): RenameFound[] =>
           : []
       )
   );
+
+// --- changes -------------------------------------------------------------------------------------------------------
+
+/** Before this version a `formControl` was required unless it said `required: false`; from it, optional unless `true`. */
+const OPTIONAL_FIELDS_SINCE = '0.38.9';
+
+interface ChangeFound {
+  file: string;
+  line: number;
+  since: string;
+  what: string;
+}
+
+/** The text of the call whose `(` is at `open`, up to its `)` — strings skipped, so a `)` inside one closes nothing. */
+const callArguments = (text: string, open: number): string => {
+  let depth = 0;
+  let quote: string | undefined;
+  for (let at = open; at < text.length; at++) {
+    const char = text[at];
+    if (quote && char === '\\') {
+      at++;
+      continue;
+    }
+
+    if (quote) {
+      quote = char === quote ? undefined : quote;
+      continue;
+    }
+
+    if (/['"`]/.test(char)) {
+      quote = char;
+    } else if (char === '(') {
+      depth++;
+    } else if (char === ')' && --depth === 0) {
+      return text.slice(open + 1, at);
+    }
+  }
+
+  return text.slice(open + 1);
+};
+
+/**
+ * A `formControl(…)` that writes no `required`: one that, written before fields became optional, was required, and now
+ * takes an empty answer. Said, never written — whether a field must be answered is the space's to say. Found as written
+ * in the call: one built by a helper of the project's own is the helper's to look at.
+ */
+const optionalFieldsIn = (file: string, text: string): ChangeFound[] =>
+  [...text.matchAll(/\bformControl\(/g)].flatMap(match => {
+    const open = match.index + match[0].length - 1;
+
+    return /\brequired\s*:/.test(callArguments(text, open))
+      ? []
+      : [
+          {
+            file,
+            line: text.slice(0, match.index).split('\n').length,
+            since: OPTIONAL_FIELDS_SINCE,
+            what: 'a formControl with no `required` is optional now — write `required: true` if it must be answered'
+          }
+        ];
+  });
 
 // --- packages ------------------------------------------------------------------------------------------------------
 
@@ -283,6 +345,14 @@ const readText = async (file: string): Promise<string | undefined> => {
   }
 };
 
+const holdsFiles = async (folder: string): Promise<boolean> => {
+  try {
+    return (await fs.readdir(folder)).length > 0;
+  } catch {
+    return false;
+  }
+};
+
 const planFiles = async (
   root: string,
   files: Record<string, string>,
@@ -292,6 +362,15 @@ const planFiles = async (
   Promise.all(
     Object.entries(files).map(async ([file, ours]): Promise<FilePlan> => {
       const yours = await readText(path.join(root, file));
+      // A `.gitkeep` keeps a folder in git while it is empty: one with files of its own needs none.
+      if (
+        yours === undefined &&
+        path.basename(file) === '.gitkeep' &&
+        (await holdsFiles(path.join(root, file, '..')))
+      ) {
+        return { file, status: 'current', ours };
+      }
+
       if (yours === undefined) {
         return { file, status: 'added', ours };
       }
@@ -472,6 +551,8 @@ interface UpgradeReport {
   };
   skills?: SkillPlan[];
   renames?: RenameFound[];
+  /** What a version changed that the source may count on, where it is written — for a project last upgraded before. */
+  changes?: ChangeFound[];
 }
 
 const statusLine: Record<FileStatus, (file: string) => string> = {
@@ -563,6 +644,15 @@ const reportText = (report: UpgradeReport, install: string): string => {
         chalk.yellow(
           `  ${report.write ? '~' : '!'} ${found.file}:${String(found.line)} ${found.name} → ${found.to} (${found.since}: ${found.what})`
         )
+      )
+    );
+  }
+
+  if (report.changes && report.changes.length > 0) {
+    lines.push('changes the source may count on (look, then decide — never written):');
+    lines.push(
+      ...report.changes.map(found =>
+        chalk.yellow(`  ! ${found.file}:${String(found.line)} (${found.since}) ${found.what}`)
       )
     );
   }
@@ -709,8 +799,15 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
 
   if (wanted.has('renames')) {
     const found: RenameFound[] = [];
+    const changes: ChangeFound[] = [];
+    // A project the CLI last upgraded at or after the change was told then; one without a record cannot say, and is.
+    const before = record === undefined || isBelow(record.cli, OPTIONAL_FIELDS_SINCE);
     for (const file of await sourceFiles(root)) {
       const text = await readText(path.join(root, file));
+      if (before && text !== undefined) {
+        changes.push(...optionalFieldsIn(file, text));
+      }
+
       const inFile = text === undefined ? [] : renamesIn(file, text);
       if (write && text !== undefined && inFile.length > 0) {
         const renamed = [...new Set(inFile.map(entry => entry.name))].reduce(
@@ -724,6 +821,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     }
 
     report.renames = found;
+    report.changes = changes;
   }
 
   console.log(options.json ? JSON.stringify(report) : reportText(report, installCommand(manager)));

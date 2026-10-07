@@ -38,22 +38,15 @@ import type { ConnectorManifest } from '../connectors';
 import type { ActionEntry, Environment, SSRPageAdapters, SSRServer } from '@plitzi/sdk-shared';
 
 /** What `serveProject` sets itself, from the project's layout — so never the project's options'. */
-type SetByProject =
-  | 'port'
-  | 'devMode'
-  | 'devReload'
-  | 'health'
-  | 'adapters'
-  | 'plugins'
-  | 'publicDir'
-  | 'dataDir'
-  | 'functions'
-  | 'action';
+type SetByProject = 'port' | 'health' | 'adapters' | 'plugins' | 'publicDir' | 'dataDir' | 'functions' | 'action';
 
 /**
  * What a project's server does besides serving its space — its `src/config/serverOptions.ts`: what `createServer`
  * takes, but for what `serveProject` wires from the project's layout, and an action's `lookups`, which are the
- * project's `src/actions/`. `logLevel` and `logger` are the project's to change; `action.kv` too.
+ * project's `src/actions/`. `logLevel` and `logger` are the project's to change; `action.kv` too. So are `devMode` and
+ * `devReload`, which follow `NODE_ENV` when left out — on unless it is `production`. A deployment started without it (a
+ * container's `CMD`, a process manager with no environment) says `devMode: false` here, and a public action answers
+ * with its output alone, never the trace of every step.
  */
 export type ProjectServerOptions = Partial<Omit<ServerConfig, SetByProject>> & {
   action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
@@ -263,8 +256,8 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       logger: consoleLogger,
       ...serverOptions,
       port,
-      devMode: developing,
-      devReload: developing,
+      devMode: serverOptions.devMode ?? developing,
+      devReload: serverOptions.devReload ?? serverOptions.devMode ?? developing,
       health: { name },
       adapters,
       plugins: plugins.sources,

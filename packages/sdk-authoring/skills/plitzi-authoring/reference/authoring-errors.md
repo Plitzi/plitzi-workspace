@@ -127,6 +127,7 @@ The space is not written until these are fixed.
 | `rule-set-mixed` | a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css` | `{ css: { desktop: { … } }, states: { hover: { … } } }` — the rules under `css`, each of the others beside it |
 | `selector-invalid` | a `selector` that is not a CSS class name | letters, digits, `-` and `_` |
 | `selector-taken` | a `selector` that is a declared class, or another element's | `class` to share rules; a selector of an element's own is its alone |
+| `seo-template` | a template in a page's `seoTitle` or `seoDescription` — written into the head as it is, braces included, never evaluated | words of its own: one title for every record a detail page shows |
 | `server-data-in-browser` | a provider asking for the project's own data (`/data/…`, read by its server from `src/data/` and never served) from the browser | `runtime: 'server'` on the provider: the page arrives with the data in it |
 | `server-provider-in-component` | a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's | put the provider on the page, around the instance, and hand the component its rows as a prop |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |
@@ -185,6 +186,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `embed-without-title` | an `embed` with no `title` — a frame a screen reader cannot describe | say what it shows in `title` |
 | `flag-rule-empty` | a flag rule with no conditions — skipped, never read as "always" | give it a condition, or set the flag's `value` instead |
 | `flag-unused` | a declared flag nothing gates on and no template reads | gate what it switches (`flag: 'x'`), or remove it once the feature has shipped |
+| `focus-on-field-box` | a `focus` or `focus-visible` state on a text field's or a select's `input` slot — the box the field is drawn in, which never takes focus, so no ring is ever shown | `'focus-within'` on the same class, or the state on the `field` slot |
 | `FORM_SUBMIT_UNMANAGED` | a form the browser would submit itself, reloading the page | `managedByInteractions: true` |
 | `form-control-name-taken` | two controls in one form with one name — one overwrites the other | a name each |
 | `form-control-unnamed` | a control in a form with no `name` — its value never reaches `values` | `formControl({ name: 'email', … })` |
@@ -202,6 +204,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `path-not-in-data` | a binding onto a provider whose answer the author could read (`data`), through a path that answer does not have | the path the message lists the keys for — `p.data.plans`, not `p.data.landing.plans` |
 | `plugin-attribute-reserved` | a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin | rename it in the plugin (`variant` → `kind`) |
 | `provider-without-source` | an `apiContainer` that asks nothing | a `query` (or `action`, `connector`, `resource`) |
+| `required-message-unused` | a `requiredMessage` on a field nothing requires — fields are optional unless `required: true`, so it is never shown and an empty answer is sent | `required: true` on the field, or no message |
 | `route-param-undeclared` | `navigation.routeParams.x` read on a page whose slug has no `:x` — always empty | add `:x` to the slug, or read `navigation.queryParams.x` |
 | `server-data-without-rsc` | a `runtime: 'server'` provider — `connector`, `action` or `query` — in a space that turns server data off (`rsc: { enabled: false }`) | drop `rsc: { enabled: false }`: server data is on unless a space turns it off |
 | `span-holds-block` | a `container` with `subType: 'span'` or `'p'` holding a heading, a paragraph, a list, a form or prose | a `div` (leave `subType` out), or words and inline elements: a `text`, a `link` |

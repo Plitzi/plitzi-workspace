@@ -110,6 +110,12 @@ export const AUTHORING_CODES = {
     means: 'a page that sends visitors it is not for to a page the space does not have',
     fix: "a page's id or slug (`''` is the home page), or a full URL"
   },
+  'seo-template': {
+    kind: 'refused',
+    means:
+      "a template in a page's `seoTitle` or `seoDescription` — written into the head as it is, braces included, never evaluated",
+    fix: 'words of its own: one title for every record a detail page shows'
+  },
   'folder-undeclared': {
     kind: 'refused',
     means: 'a page, a layout or a folder filed in a folder the space does not declare',
@@ -290,6 +296,12 @@ export const AUTHORING_CODES = {
     kind: 'refused',
     means: "an ancestor condition keyed by something that is neither a class name nor `'>'` (the parent)",
     fix: "`[card.name]` for a `styles()` declaration, or `'>'` for the parent whatever it wears"
+  },
+  'focus-on-field-box': {
+    kind: 'warned',
+    means:
+      "a `focus` or `focus-visible` state on a text field's or a select's `input` slot — the box the field is drawn in, which never takes focus, so no ring is ever shown",
+    fix: "`'focus-within'` on the same class, or the state on the `field` slot"
   },
   'heading-level-overridden': {
     kind: 'warned',
@@ -562,6 +574,12 @@ export const AUTHORING_CODES = {
     kind: 'warned',
     means: 'a control in a form with no `name` — its value never reaches `values`',
     fix: "`formControl({ name: 'email', … })`"
+  },
+  'required-message-unused': {
+    kind: 'warned',
+    means:
+      'a `requiredMessage` on a field nothing requires — fields are optional unless `required: true`, so it is never shown and an empty answer is sent',
+    fix: '`required: true` on the field, or no message'
   },
   'form-control-name-taken': {
     kind: 'warned',

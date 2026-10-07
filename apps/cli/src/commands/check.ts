@@ -101,6 +101,30 @@ export const checkAccount = async (
   return { username: named, password };
 };
 
+/** Signs the page's browser in as the account, through the server's `/auth` routes: what went wrong, or nothing. */
+export const signInAs = async (page: BrowserPage, origin: string, account: Account): Promise<string | undefined> => {
+  const answer = await page.request.post(`${origin}${SIGN_IN_PATH}`, {
+    data: { username: account.username, password: account.password }
+  });
+  if (answer.ok()) {
+    return undefined;
+  }
+
+  return answer.status() === 404
+    ? `nothing answers at ${SIGN_IN_PATH}: --as signs in through the routes createServer({ auth }) mounts there`
+    : `${account.username} was not signed in (${String(answer.status())}): ${(await answer.text()).slice(0, 200)} — check ${CHECK_PASSWORD_ENV} in .env`;
+};
+
+const withoutTrailingSlash = (path: string): string => (path.length > 1 ? path.replace(/\/+$/, '') : path);
+
+/** Where the page landed, when that is not the path it was opened at — sent to the sign-in, most often. */
+export const sentElsewhere = (page: BrowserPage, pathname: string): string | undefined => {
+  const landed = new URL(page.url()).pathname;
+  const asked = new URL(pathname, page.url()).pathname;
+
+  return withoutTrailingSlash(landed) === withoutTrailingSlash(asked) ? undefined : landed;
+};
+
 /** One problem of a page, as data: what an agent branches on and points at, beside the sentence a person reads. */
 export interface CheckIssue {
   code:
@@ -859,20 +883,9 @@ const checkAt = async (
     devTools: false,
     lists: {}
   });
-  if (account) {
-    const signedIn = await page.request.post(`${origin}${SIGN_IN_PATH}`, {
-      data: { username: account.username, password: account.password }
-    });
-    if (!signedIn.ok()) {
-      return unchecked({
-        code: 'not-signed-in',
-        message:
-          signedIn.status() === 404
-            ? `nothing answers at ${SIGN_IN_PATH}: --as signs in through the routes createServer({ auth }) mounts there`
-            : `${account.username} was not signed in (${String(signedIn.status())}): ${(await signedIn.text()).slice(0, 200)} — check ${CHECK_PASSWORD_ENV} in .env`,
-        width
-      });
-    }
+  const notSignedIn = account && (await signInAs(page, origin, account));
+  if (notSignedIn) {
+    return unchecked({ code: 'not-signed-in', message: notSignedIn, width });
   }
 
   const consoleErrors: string[] = [];
@@ -921,8 +934,8 @@ const checkAt = async (
 
   // A page that sent the browser elsewhere — a page for signed-in visitors, to the sign-in — is not the page asked for:
   // every element of it would read as missing.
-  const landed = new URL(page.url()).pathname;
-  if (withoutTrailingSlash(landed) !== withoutTrailingSlash(new URL(`${origin}${pathname}`).pathname)) {
+  const landed = sentElsewhere(page, pathname);
+  if (landed) {
     return {
       ...unchecked({
         code: 'redirected',
@@ -1166,8 +1179,6 @@ export const reportText = (report: CheckReport, asked: DevToolsInput): string =>
     ...held
   ].join('\n');
 };
-
-const withoutTrailingSlash = (path: string): string => (path.length > 1 ? path.replace(/\/+$/, '') : path);
 
 export const check = async (routes: string[], options: CheckOptions): Promise<void> => {
   const project = await projectHere('whose page to check');

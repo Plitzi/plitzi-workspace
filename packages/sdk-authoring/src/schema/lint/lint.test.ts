@@ -14,6 +14,8 @@ import {
   carousel,
   elementAncestorTypes,
   elementPartTypes,
+  form,
+  formControl,
   lintSpace,
   list,
   listItem,
@@ -1451,6 +1453,77 @@ describe('lintSpace', () => {
       expect(
         headings({ 'prose-heading2': { 'font-size': '26px' }, 'prose-heading': { 'scroll-margin-top': '80px' } })
       ).toEqual([]);
+    });
+
+    it('required-message-unused', () => {
+      const unused = (required?: boolean) =>
+        lintSpace(
+          authorSpace({
+            name: 'Form',
+            permanentUrl: 'form',
+            pages: [
+              {
+                id: 'home',
+                name: 'Home',
+                slug: '',
+                body: [
+                  form({
+                    id: 'riddle',
+                    children: [
+                      formControl({
+                        id: 'answer',
+                        name: 'answer',
+                        label: 'Answer',
+                        requiredMessage: 'Write something',
+                        ...(required === undefined ? {} : { required })
+                      })
+                    ]
+                  })
+                ]
+              }
+            ]
+          })
+        ).warnings.filter(issue => issue.code === 'required-message-unused');
+
+      expect(unused()).toHaveLength(1);
+      expect(unused()[0].message).toContain('("Write something") but nothing requires it');
+      expect(unused(false)).toHaveLength(1);
+      expect(unused(true)).toEqual([]);
+    });
+
+    it('focus-on-field-box', () => {
+      const ring = { outline: '2px solid red' };
+      const focused = (subType: 'email' | 'select' | 'textarea', state: 'focus' | 'focus-visible' | 'focus-within') =>
+        lintSpace(
+          authorSpace({
+            name: 'Form',
+            permanentUrl: 'form',
+            classes: { box: { css: { padding: '8px' }, states: { [state]: ring } } },
+            pages: [
+              {
+                id: 'home',
+                name: 'Home',
+                slug: '',
+                body: [
+                  form({
+                    id: 'signup',
+                    children: [
+                      formControl({ id: 'email', subType, name: 'email', label: 'Email', slots: { input: 'box' } })
+                    ]
+                  })
+                ]
+              }
+            ]
+          })
+        ).warnings.filter(issue => issue.code === 'focus-on-field-box');
+
+      const dead = focused('email', 'focus');
+      expect(dead).toHaveLength(1);
+      expect(dead[0].message).toContain('"email" field whose `input` slot ("box") sets `focus`');
+      expect(focused('select', 'focus-visible')).toHaveLength(1);
+      // The box's own state, and a field that is its own box, are seen.
+      expect(focused('email', 'focus-within')).toEqual([]);
+      expect(focused('textarea', 'focus')).toEqual([]);
     });
 
     it('element-slot-unknown', () => {

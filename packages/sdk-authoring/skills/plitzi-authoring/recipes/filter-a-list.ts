@@ -31,8 +31,6 @@ export const recipe: SpaceSpec = {
             { label: 'Graphics cards', value: 'gpu' }
           ],
           defaultValue: 'all',
-          // A filter always has an answer: the select is not a question that must be filled in.
-          required: false,
           flows: [
             [named('picked', on('onChange')), setState({ key: 'category', type: 'text', value: '{{ picked.value }}' })]
           ]

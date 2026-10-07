@@ -38,7 +38,8 @@ export const recipe: SpaceSpec = {
             [named('sent', onSubmit()), setState({ key: 'email', type: 'text', value: '{{ sent.values.email }}' })]
           ],
           children: [
-            formControl({ name: 'email', label: 'Email', subType: 'email' }),
+            // Optional unless it says so, as an HTML field is: a sign-up without an address is no sign-up.
+            formControl({ name: 'email', label: 'Email', subType: 'email', required: true }),
             button({ content: 'Sign up', subType: 'submit' })
           ]
         }),

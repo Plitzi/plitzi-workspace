@@ -168,8 +168,7 @@ const declaration = elementDeclaration<DialogContainerAttributes>()({
             top: '0',
             position: 'absolute',
             'z-index': '210',
-            'background-color': 'black',
-            opacity: '0.5'
+            'background-color': 'rgb(0 0 0 / 50%)'
           }
         },
         rootContainer: {

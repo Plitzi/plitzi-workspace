@@ -7,6 +7,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { serveProject } from './serveProject';
+import { DEV_RELOAD_PATH } from '../../core/http/stages/devReload';
 import { unusedPort } from '../../core/unusedPort';
 import { offlineDataOf, oneEmptyPage } from '../ssr/testing/offlineData';
 
@@ -353,6 +354,24 @@ describe('serveProject — a space held in the project', () => {
 
     expect(existsSync(path.join(root, 'runs'))).toBe(false);
     expect(await pageOf(running.url)).toContain('<title>authored at boot</title>');
+  });
+
+  it('takes devMode from the project over NODE_ENV: off, a started server offers no reload stream', async () => {
+    /** The status the reload stream answers with — a stream left open, so read and dropped. */
+    const reloadStatus = async (url: string): Promise<number> => {
+      const stop = new AbortController();
+      const answer = await fetch(`${url}${DEV_RELOAD_PATH}`, { signal: stop.signal });
+      stop.abort();
+
+      return answer.status;
+    };
+
+    const developing = await serve({ space: () => titled('a'), serverOptions: { workers: false } });
+    expect(await reloadStatus(developing.url)).toBe(200);
+    await developing.close();
+
+    const deployed = await serve({ space: () => titled('a'), serverOptions: { workers: false, devMode: false } });
+    expect(await reloadStatus(deployed.url)).toBe(404);
   });
 });
 

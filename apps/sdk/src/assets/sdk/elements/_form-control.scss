@@ -129,7 +129,7 @@
     box-shadow: none;
 
     &:focus-visible {
-      outline: inherit;
+      outline: none;
     }
   }
 
@@ -388,7 +388,19 @@
     box-shadow: none;
 
     &:focus-visible {
-      outline: inherit;
+      outline: none;
+    }
+  }
+
+  // Where the keyboard is. A field drawn in a box never takes the ring itself: the box does, while the field inside has
+  // focus — and a textarea, its own box, takes its own. Kept to one class of specificity, so whatever a space writes
+  // about the outline wins; and left out of the builder's canvas (`.plitzi-component`), where the selection is the ring.
+  :where(.plitzi-component__form-control:not(.plitzi-component)) {
+    .form-control__input-container:where(:has(:focus-visible)),
+    .form-control__select-container:where(:has(:focus-visible)),
+    .form-control__textarea-container:where(:focus-visible) {
+      outline: 2px solid currentColor;
+      outline-offset: 2px;
     }
   }
 

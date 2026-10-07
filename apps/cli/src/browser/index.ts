@@ -54,7 +54,7 @@ export interface PageElement {
 }
 
 export interface BrowserPage {
-  goto(url: string, options: { waitUntil: 'load' | 'networkidle' }): Promise<unknown>;
+  goto(url: string, options: { waitUntil: 'load' | 'domcontentloaded' | 'networkidle' }): Promise<unknown>;
   screenshot(options: { fullPage: boolean }): Promise<Uint8Array>;
   /** The first element the selector finds — Playwright's own, which scrolls whatever pane holds it into view. */
   locator(selector: string): { first(): PageElement };

@@ -535,6 +535,40 @@ describe('plitzi upgrade', () => {
     expect(await read('src/space/own.ts')).toBe('export type TemplateSpec = { id: string };\n');
   });
 
+  it('says where a field written before fields became optional takes an empty answer now, and writes nothing', async () => {
+    const form = [
+      "formControl({ name: 'answer', label: 'Answer (required)', requiredMessage: 'Write something' })",
+      "formControl({ name: 'title', required: true })",
+      "formControl({ name: 'q', required: false })"
+    ].join('\n');
+    await fs.writeFile(file('src/space/form.ts'), `${form}\n`);
+    await writeScaffoldRecord(root, '0.38.8', { files: {} });
+
+    const shown = await run(['renames']);
+    expect(shown.changes).toEqual([
+      expect.objectContaining({ file: path.join('src', 'space', 'form.ts'), line: 1, since: '0.38.9' })
+    ]);
+    await run(['renames'], { write: true });
+    expect(await read('src/space/form.ts')).toBe(`${form}\n`);
+
+    // Upgraded since: said then, not again.
+    await writeScaffoldRecord(root, '0.38.9', { files: {} });
+    expect((await run(['renames'])).changes).toEqual([]);
+  });
+
+  it('adds no .gitkeep to a folder that has files of its own', async () => {
+    await fs.rm(file('src/functions/.gitkeep'), { force: true });
+    await fs.writeFile(file('src/functions/index.ts'), 'export {};\n');
+
+    await run(['files'], { write: true });
+    await expect(fs.access(file('src/functions/.gitkeep'))).rejects.toThrow();
+
+    // Empty again, it keeps the folder.
+    await fs.rm(file('src/functions/index.ts'));
+    await run(['files'], { write: true });
+    expect(await read('src/functions/.gitkeep')).toBe('');
+  });
+
   it('writes no file of a project laid out as an older CLI did, and says what moves it', async () => {
     await fs.rename(file('src/space/index.ts'), file('src/space.ts'));
     const main = await read('src/main.ts');

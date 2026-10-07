@@ -7,7 +7,7 @@ import { didYouMean } from '../suggest';
 import { textOf } from './context';
 import { checkGlobalRead } from './globalReads';
 import { checkPageTarget } from './pages';
-import { checkHeadingLevels, checkSlots } from './slots';
+import { checkFocusOnFieldBox, checkHeadingLevels, checkSlots } from './slots';
 import { checkPropsRead, checkTemplate } from './templates';
 
 import type { LintContext } from './context';
@@ -676,6 +676,28 @@ const warnFormControls = (ctx: LintContext): void => {
   }
 };
 
+/**
+ * A field is optional unless `required: true`, as an HTML field is. One with a `requiredMessage` and nothing requiring
+ * it was written for a field that must be answered: the message is never shown, and an empty answer is sent — what a
+ * space written while fields were required by default does after an upgrade, without a word.
+ */
+const checkRequiredMessage = (ctx: LintContext, element: Element, where: string): void => {
+  const { required, requiredMessage } = element.attributes;
+  const message = textOf(requiredMessage).trim();
+  const requires =
+    required === true || required === 'true' || (typeof required === 'string' && required.includes('{{'));
+  const bound = bindingsOf(element).some(({ binding }) => binding.to === 'required');
+  if (element.definition.type !== 'formControl' || message === '' || requires || bound) {
+    return;
+  }
+
+  ctx.warn(
+    'required-message-unused',
+    `${where} has a \`requiredMessage\` ("${shorten(message)}") but nothing requires it — a field is optional unless \`required: true\` — so the message is never shown and an empty answer is sent. Add \`required: true\`, or drop the message.`,
+    element.id
+  );
+};
+
 /** An `svg` draws one `<svg>…</svg>`; anything else renders nothing at all. */
 const checkSvgMarkup = (ctx: LintContext, element: Element, where: string): void => {
   const { content } = element.attributes;
@@ -725,8 +747,10 @@ export const lintElements = (ctx: LintContext): void => {
     checkAttributeTemplates(ctx, element, where);
     checkIntent(ctx, element, where);
     checkSvgMarkup(ctx, element, where);
+    checkRequiredMessage(ctx, element, where);
     checkSlots(ctx, element, where);
     checkHeadingLevels(ctx, element, where);
+    checkFocusOnFieldBox(ctx, element, where);
     warnRouteParams(ctx, element, where);
   }
 

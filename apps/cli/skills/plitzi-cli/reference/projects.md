@@ -19,7 +19,7 @@ What a project gives you, so you use it rather than rebuild it:
 | `npx plitzi element where <id\|class\|words>` | where the code writes an element: file:line and the call — edit it there, not the files around it. `npx plitzi element edit <id> --set content="…"` writes an attribute in it, `remove <id>` takes it out, `move <id> --before <id>` reorders it — each checked |
 | `check -- /path --width 1440,390` | whether a page is whole, in text: elements on screen, overflow, console, refused requests, failed flows, a binding its data lacks; `--state`, `--element <id>`: what it holds; `--ssr`: SSR misses; `--as <user>`; `--json` |
 | `npx plitzi page import <url>` | a page the user owns, as a start: tokens, its blocks' layout, lists as `data/*.json` — never the words. **Only when the user asks**; a site not on this machine needs `--account`: ask first |
-| `shot -- /path --width 390 --scheme dark` | a picture of one page — `--clip <element>` one element, `--frames 4` what moves, `--compare <url>` what differs from another site |
+| `shot -- /path --width 390 --scheme dark` | a picture of one page — `--clip <element>` one element, `--frames 4` what moves (`--from load`: as the page arrives), `--compare <url>` what differs from another site, `--as <user>` signed in (said, when the page sent it elsewhere) |
 | `visual` | a browser asserts every element the space names is visible |
 | `typecheck`, `lint`, `format` | before calling a change done |
 

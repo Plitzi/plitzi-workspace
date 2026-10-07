@@ -1,3 +1,6 @@
+import formControl from '@plitzi/sdk-elements/elements/form/FormControl/declaration';
+
+import { textOf } from './context';
 import { didYouMean } from '../suggest';
 
 import type { LintContext } from './context';
@@ -64,6 +67,50 @@ export const lintTypeSlots = (ctx: LintContext): void => {
 const LEVEL_SLOT = /^heading([1-6])$/;
 
 const classesOf = (selector: string | undefined): string[] => (selector ?? '').split(/\s+/).filter(Boolean);
+
+/** The fields drawn as a box — the `input` slot — with the `<input>` or `<select>` inside it, the `field` slot. */
+const BOXED_FIELDS = new Set(
+  Object.entries(formControl.content.defaultStyle.subTypes)
+    .filter(([, variant]) => 'field' in variant.style)
+    .map(([subType]) => subType)
+);
+
+const FOCUS_STATES = ['focus', 'focus-visible'];
+
+/**
+ * A text field's or a select's `input` slot is the box the field is drawn in, a `<div>` that never takes focus: a
+ * `focus` state on its class is never seen, and a keyboard user tabbing to the field finds no ring at all.
+ * `focus-within` is the box's own, lit while the field inside has focus.
+ */
+export const checkFocusOnFieldBox = (ctx: LintContext, element: Element, where: string): void => {
+  if (element.definition.type !== 'formControl') {
+    return;
+  }
+
+  const subType = textOf(element.attributes.subType, textOf(ctx.defaultsFor(element).subType, 'text'));
+  if (!BOXED_FIELDS.has(subType)) {
+    return;
+  }
+
+  for (const className of classesOf(element.definition.styleSelectors.input)) {
+    for (const items of Object.values(ctx.style.platform)) {
+      const item = Object.hasOwn(items, className) ? items[className] : undefined;
+      const states = item?.type === 'class' ? item.attributes.base.states : undefined;
+      const state = FOCUS_STATES.find(name => states && Object.hasOwn(states, name));
+      if (!state) {
+        continue;
+      }
+
+      ctx.warn(
+        'focus-on-field-box',
+        `${where} is a "${subType}" field whose \`input\` slot ("${className}") sets \`${state}\` — but \`input\` is the box the field is drawn in, which never takes focus, so the rule is never seen and a keyboard user finds no ring. Write it as \`'focus-within'\` on the same class (the box lights up while the field inside has focus), or put the state on the \`field\` slot.`,
+        element.id
+      );
+
+      return;
+    }
+  }
+};
 
 /** A class's own rules at one breakpoint — its base, and each of its states — by where they apply, property by property. */
 const classRules = (items: Record<string, StyleItem>, name: string): Map<string, Map<string, StyleValue>> => {

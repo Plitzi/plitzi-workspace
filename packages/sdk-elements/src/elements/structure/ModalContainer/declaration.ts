@@ -38,7 +38,14 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
     definition: {
       label: 'Modal Container',
       type: 'modalContainer',
-      description: 'A modal overlay container opened and closed through interactions; use for dialogs over the page.',
+      description:
+        'A modal overlay container opened and closed through interactions; use for dialogs over the page. The element ' +
+        'itself is fixed over the whole viewport, and holds two layers side by side — neither inside the other: ' +
+        '`backgroundContainer`, the dim layer, `rgb(0 0 0 / 50%)` (its `background-color` is the whole dim), and ' +
+        '`rootContainer`, the dialog, centred by `top: 50%`, `left: 50%` and ' +
+        '`transform: translate3d(-50%, -50%, 0)` — to sit it near the top, set `top` and `transform: ' +
+        'translateX(-50%)`; flex alignment on the dim layer moves nothing. Inside the dialog, top to bottom: ' +
+        '`headerContainer` (with `headerTitle` and `headerCloseButton`) and `bodyContainer`.',
       items: [],
       bindings: {},
       /**
@@ -100,8 +107,7 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
             top: '0',
             position: 'absolute',
             'z-index': '210',
-            'background-color': 'black',
-            opacity: '0.5'
+            'background-color': 'rgb(0 0 0 / 50%)'
           }
         },
         rootContainer: {

@@ -24,8 +24,8 @@
     top: 0;
     position: absolute;
     z-index: $zIndex + 10;
-    background-color: black;
-    opacity: 0.5;
+    // The dim in the colour, not in `opacity`: a colour a space gives the layer is drawn as it is, not halved.
+    background-color: rgb(0 0 0 / 50%);
   }
 
   // As tall as what it holds and never taller than the screen: a fixed 300px let a longer body spill out of the panel.

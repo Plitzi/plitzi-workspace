@@ -193,6 +193,8 @@ plitzi page shot /about --width 390 --scheme dark
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 --sheet   # an interaction, on one sheet
 plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
+plitzi page shot /studio --width 390 --as maya   # a page for signed-in visitors: the picture is of it, not of the sign-in
+plitzi page shot / --viewport --frames 6 --every 200 --from load --sheet   # what plays as the page arrives
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
@@ -324,7 +326,7 @@ no parameter in its path at 1440 and 390 px (the server must be up: `npm start`)
 last lines it said, and the first failure ends the run — one broken file fails every step after it the same way — the
 rest said as not run until it passes (`--keep-going` runs them anyway). A page the browser was sent away from — one
 for signed-in visitors — is checked again signed in as the project's account, when `.env` names one:
-`PLITZI_CHECK_USER` and `PLITZI_CHECK_PASSWORD`, the password `page check --as` reads too (the environment wins over
+`PLITZI_CHECK_USER` and `PLITZI_CHECK_PASSWORD`, the password `page check --as` and `page shot --as` read too (the environment wins over
 `.env`, as it does for the project's scripts; never on the command line, which a shell keeps). One that even that
 account is sent away from, or with no account named, is said as not checked, never as passing — on its own line, with
 what checks it, without failing the run. Exit 1 when anything failed.
@@ -513,7 +515,9 @@ plitzi upgrade --write --take plitzi/author.ts
 A project brought up to the CLI it has now, part by part: `files` (the machinery — `author.ts`, `main.ts`, the
 Playwright and lint configs, `AGENTS.md`), `packages` (`package.json` merged, `@plitzi/*` raised to this version, then
 the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill no longer has goes with it) and
-`renames` (a name a version renamed, at its file and line). A file nobody changed since the CLI wrote it is replaced;
+`renames` (a name a version renamed, at its file and line — and, for a project last upgraded before a change it may
+count on, where that change lands: a `formControl` with no `required`, optional since 0.38.9; said, never written). A
+`.gitkeep` is written only in a folder with nothing else in it. A file nobody changed since the CLI wrote it is replaced;
 one the project made its own is a diff, left unless `--take` names it (`all` for every one). The generated
 `.prettierignore` names them, so the project's `format` never turns one into a file `upgrade` believes was changed. A file of the project's own
 that the machinery reads (`src/config/serverOptions.ts`, `src/actions/index.ts`) is written when the project has none and the
@@ -780,7 +784,8 @@ for a clone to copy and fill in. A server project's `.env` is read as each scrip
 before any of its modules is evaluated, so `src/config/serverOptions.ts` and the actions find their settings in
 `process.env` as they load. A change to it is read on the next start, and a deployment that sets its environment needs
 no file. `start:prod` also sets `NODE_ENV=production` itself — without it a deployed server is a development one, its
-dev tools on and every action's trace in what a visitor is answered (`doctor` says a `start:prod` that does not). A browser
+dev tools on and every action's trace in what a visitor is answered (`doctor` says a `start:prod` that does not). A
+deployment started some other way says `devMode: false` in `src/config/serverOptions.ts`, which wins over `NODE_ENV`. A browser
 project's is Vite's: only `VITE_*` reaches the page, and ships in it.
 `create` gives each one a signing key there, made for it: `PLITZI_SIGNING_SECRET`, what `ctx.sign` and `ctx.verify`
 sign with — at least 32 characters (`doctor --fix` writes one where it is missing). `PORT` is left commented out: 8080,

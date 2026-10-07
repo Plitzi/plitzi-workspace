@@ -26,7 +26,7 @@ import {
   setRuntimeVariable,
   unsetRuntimeVariable
 } from './commands/runtime';
-import { shot } from './commands/shot';
+import { shot, SHOT_MOMENTS } from './commands/shot';
 import { elements } from './commands/spaceReading';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
@@ -394,6 +394,14 @@ pageGroup
     ).argParser(positiveInteger)
   )
   .addOption(new Option('--every <ms>', 'How far apart --frames are taken').argParser(positiveInteger).default(500))
+  .addOption(
+    new Option(
+      '--from <moment>',
+      'When --frames start: once the page settles, or as soon as its HTML is in (load) — what plays as it arrives'
+    )
+      .choices([...SHOT_MOMENTS])
+      .default('settled')
+  )
   .option('--wait-for <element>', 'An element to wait for first: its name (data-plitzi-el) or a CSS selector')
   .option('--clip <element>', 'Only this element — its name or a CSS selector — scrolled to wherever it is')
   .option('--scroll-to <element>', 'The page scrolled until this element is in view; the picture is the screen there')
@@ -404,6 +412,10 @@ pageGroup
   )
   .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
   .option('--reduced-motion', 'As a visitor who asked for less motion')
+  .option(
+    '--as <username>',
+    'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
+  )
   .option('--json', 'One object, for a tool or an agent')
   .action((path: string | undefined, options: ShotOptions) => shot(path, options));
 

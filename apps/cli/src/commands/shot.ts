@@ -15,6 +15,7 @@ import {
 } from '@plitzi/sdk-authoring';
 import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
 
+import { checkAccount, CHECK_PASSWORD_ENV, sentElsewhere, signInAs } from './check';
 import { projectHere } from './existingProject';
 import { fail } from './terminal';
 import {
@@ -28,6 +29,7 @@ import {
 } from '../browser';
 import { PROJECT_TMP } from '../scaffold/paths';
 
+import type { Account } from './check';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { PictureDiff, PictureRegion, TextComparison, TextDifference } from '@plitzi/sdk-authoring';
 
@@ -44,6 +46,11 @@ import type { PictureDiff, PictureRegion, TextComparison, TextDifference } from 
  * dev tools' badge is never in the picture; a picture of the whole page has every lazy image loaded and shows every
  * arrival that waits for the scroll as it ends — taken without scrolling, they would be holes where the sections are.
  */
+
+/** When a run's first picture is taken: once the page settles, or as soon as its HTML is in. */
+export const SHOT_MOMENTS = ['settled', 'load'] as const;
+
+export type ShotMoment = (typeof SHOT_MOMENTS)[number];
 
 export interface ShotOptions {
   /** The numbers and the scheme are validated where the flags are declared (options.ts). */
@@ -70,6 +77,10 @@ export interface ShotOptions {
   click?: string[];
   /** Every picture taken — before, after each click, or each of `frames` — on one contact sheet. */
   sheet?: boolean;
+  /** Signed in first as this account, the password from `PLITZI_CHECK_PASSWORD` — as `page check --as` does. */
+  as?: string;
+  /** When the first picture is taken: once the page settles (the default), or as soon as its HTML is in. */
+  from?: ShotMoment;
   json?: boolean;
 }
 
@@ -109,6 +120,8 @@ interface ShotReport {
   settled?: number;
   /** Pictures of this page not drawn when it was taken. */
   unloaded?: number;
+  /** Where the page sent the browser instead — a page for signed-in visitors, to the sign-in: the picture is of that. */
+  sentTo?: string;
   /** With `click`: each element clicked, and the share of the picture that changed after it. */
   clicked?: { target: string; changed: number }[];
   /** The pictures after the first, each with what it shows — or, with `sheet`, the one sheet that holds them all. */
@@ -133,6 +146,10 @@ interface View {
   viewport?: boolean;
   /** Every declared motion held at its end: a whole page taken in one picture, never scrolled. */
   still: boolean;
+  /** Signed in as first — on the project's own page only, never another site's. */
+  account?: Account;
+  /** The first picture taken as soon as the HTML is in, not once the page settles: what plays while it loads. */
+  fromLoad?: boolean;
 }
 
 interface Taken {
@@ -141,6 +158,7 @@ interface Taken {
   scheme: Scheme;
   settled: number;
   unloaded: number;
+  sentTo?: string;
 }
 
 /** A region moves when more than this share of it changed between two frames: below is anti-aliasing and carets. */
@@ -194,11 +212,21 @@ const pictureOf = async (
         colorScheme: view.scheme ?? 'light',
         reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference'
       });
-  // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
-  const answered = await openPage(page, url);
-  if (!answered) {
-    return { problem: `Nothing answers at ${url}.` };
+  const notSignedIn = origin && view.account && (await signInAs(page, origin, view.account));
+  if (notSignedIn) {
+    return { problem: `--as ${notSignedIn}.` };
   }
+
+  // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles. From the load, the
+  // first picture is taken once the HTML is in — what plays as the page arrives has ended by the time it settles.
+  const answered = view.fromLoad
+    ? await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => null)
+    : await openPage(page, url);
+  if (!answered) {
+    return { problem: `Nothing answers at ${url}.${origin ? ' Start the project first: npm start' : ''}` };
+  }
+
+  const sentTo = origin ? sentElsewhere(page, new URL(url).pathname) : undefined;
 
   if (view.waitFor) {
     const found = await page.waitForSelector(selectorOf(view.waitFor), { timeout: 10_000 }).catch(() => null);
@@ -240,7 +268,8 @@ const pictureOf = async (
     png: await capture(page, framing(view)),
     scheme: await paintedScheme(page, view.scheme ?? 'light'),
     settled,
-    unloaded: pictures?.missing ?? 0
+    unloaded: pictures?.missing ?? 0,
+    ...(sentTo ? { sentTo } : {})
   };
 };
 
@@ -466,6 +495,14 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
+  // Signed in only when asked: a page pictured as nobody is what a visitor who has not signed in sees.
+  const account = options.as === undefined ? undefined : await checkAccount(project.root, options.as);
+  if (account && 'problem' in account) {
+    fail(`--as ${account.problem}.`);
+
+    return;
+  }
+
   const browser = await launchBrowser(project.root);
   if ('problem' in browser) {
     fail(browser.problem);
@@ -492,6 +529,25 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
+  const fromLoad = options.from === 'load';
+  if (fromLoad && ((options.frames ?? 0) <= 1 || clicks.length > 0 || options.compare)) {
+    await browser.close();
+    fail(
+      '`--from load` starts --frames as the HTML arrives, for what plays while the page loads: give it --frames, and leave out --click and --compare.'
+    );
+
+    return;
+  }
+
+  if (fromLoad && !options.clip && !options.scrollTo && !options.viewport) {
+    await browser.close();
+    fail(
+      '`--from load` pictures the screen as the page arrives, never the whole page — unrolling it waits for it to settle: add --viewport or --clip.'
+    );
+
+    return;
+  }
+
   if (options.compare && (options.clip || options.scrollTo || options.viewport)) {
     await browser.close();
     fail(
@@ -512,6 +568,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(options.clip ? { clip: options.clip } : {}),
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
       ...(options.viewport ? { viewport: true } : {}),
+      ...(account ? { account } : {}),
+      ...(fromLoad ? { fromLoad } : {}),
       // Frames are about what moves, so they are taken as the page plays.
       still:
         !options.clip && !options.scrollTo && !options.viewport && (options.frames ?? 0) <= 1 && clicks.length === 0
@@ -520,7 +578,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     const taken = await pictureOf(browser, `${where.origin}${pathname}`, view, where.origin);
     if ('problem' in taken) {
-      fail(`${taken.problem} Start the project first: npm start`);
+      fail(taken.problem);
 
       return;
     }
@@ -542,7 +600,8 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       scheme: taken.scheme,
       out,
       ...(taken.settled > 0 ? { settled: taken.settled } : {}),
-      ...(taken.unloaded > 0 ? { unloaded: taken.unloaded } : {})
+      ...(taken.unloaded > 0 ? { unloaded: taken.unloaded } : {}),
+      ...(taken.sentTo ? { sentTo: taken.sentTo } : {})
     };
 
     if (options.compare) {
@@ -578,7 +637,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         pictures.push(await capture(taken.page, how));
       }
 
-      moments = pictures.map((png, frame) => ({ label: frame === 0 ? 'before' : `+${String(frame * every)} ms`, png }));
+      moments = pictures.map((png, frame) => ({
+        label: frame === 0 ? (fromLoad ? 'HTML in' : 'before') : `+${String(frame * every)} ms`,
+        png
+      }));
 
       const diffs: PictureDiff[] = [];
       for (let frame = 1; frame < pictures.length; frame += 1) {
@@ -624,6 +686,16 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     }
 
     console.log(out);
+    if (report.sentTo) {
+      console.log(
+        chalk.yellow(
+          account
+            ? `${pathname} sent the browser to ${report.sentTo}, signed in as ${account.username}: the picture is of ${report.sentTo} — that account may not see ${pathname}`
+            : `${pathname} sent the browser to ${report.sentTo}: the picture is of ${report.sentTo}. A page for signed-in visitors? \`--as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env`
+        )
+      );
+    }
+
     if (report.settled) {
       console.log(
         chalk.dim(
