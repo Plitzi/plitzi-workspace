@@ -29,6 +29,7 @@ export type AppMainProps = {
   children?: ReactNode;
   debugMode?: boolean;
   functionsWorkerUrl?: string;
+  sdkIconsStylePath?: string;
 };
 
 const AppMain = ({
@@ -42,7 +43,8 @@ const AppMain = ({
   includeRealTime = true,
   externalStyle = '',
   debugMode = false,
-  functionsWorkerUrl = ''
+  functionsWorkerUrl = '',
+  sdkIconsStylePath = ''
 }: AppMainProps) => {
   const [previewMode, setPreviewMode] = useState(false);
   const [displayBorderComponents, setDisplayBorderComponents] = useStorage<AppContextValue['displayBorderComponents']>(
@@ -86,7 +88,8 @@ const AppMain = ({
       setDisplayMode,
       mobilePreview,
       setMobilePreview,
-      functionsWorkerUrl
+      functionsWorkerUrl,
+      sdkIconsStylePath
     }),
     [
       previewMode,
@@ -106,7 +109,8 @@ const AppMain = ({
       setDisplayMode,
       mobilePreview,
       setMobilePreview,
-      functionsWorkerUrl
+      functionsWorkerUrl,
+      sdkIconsStylePath
     ]
   );
 

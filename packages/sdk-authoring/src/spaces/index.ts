@@ -68,26 +68,28 @@ export interface BlankTemplateOptions {
   /** The folder the files are written in, relative to the project: `src/space` unless said. */
   dir?: string;
   /**
-   * Add a `custom` element hosting a plugin the receiver supplies — or several, one after another, given a list.
+   * Add an element of a plugin the receiver supplies — or several, one after another, given a list.
    *
    * Off by default, and it has to be: the platform authors a new space from this same declaration and hosts none
-   * of anybody's plugins, so a `custom` element in it would render "Custom Component … Not Found" on every space
-   * anyone ever signed up for. It is on for `plitzi create`, where the project being scaffolded carries the
-   * component and registers it — which is the one fact about Plitzi a page of built-in elements cannot show.
+   * of anybody's plugins, so the element would render "Custom Component … Not Found" on every space anyone ever
+   * signed up for. It is on for `plitzi create`, where the project being scaffolded carries the component and its
+   * declaration — which is the one fact about Plitzi a page of built-in elements cannot show.
    */
   plugin?: PluginHostOptions | readonly PluginHostOptions[];
 }
 
 export interface PluginHostOptions {
-  renderType: string;
+  /** The plugin's type, as its declaration names it — and the name of the factory the copy authors it with. */
+  type: string;
   id: string;
   /**
-   * How the space hosts it. `custom` (the default) is a `custom` element naming the component by `renderType` — a
-   * component the page registers itself, as a project's own are. `element` is an element OF the plugin's type, the
-   * way the builder adds a plugin somebody dropped: the one shape a plugin loaded from its manifest renders as.
+   * Its declaration, as the copy imports it: the module, relative to the folder the files are written in, and the
+   * attributes type it exports — `{ from: '../plugins/StatCard/declaration.ts', attributes: 'StatCardAttributes' }`.
+   * The copy authors the element with `defineElement<StatCardAttributes>(declaration)`: an element of the plugin's
+   * own type, its attributes typed by what it declares — the way a space places a plugin's element, wherever it runs.
    */
-  as?: 'custom' | 'element';
-  /** Written on the `custom` element as attributes, which the component receives as props of the same names. */
+  declaration: { from: string; attributes: string };
+  /** Written on the element as attributes, which the component receives as props of the same names. */
   attributes: Record<string, unknown>;
   /**
    * A provider around the plugin, and the props it feeds: `{ id: 'stats', query: '/data/stats.json', bind: { value:
@@ -139,7 +141,10 @@ export const blankTemplateFiles = ({ name, dir = 'src/space', plugin }: BlankTem
   string
 > => {
   const plugins = plugin === undefined ? [] : Array.isArray(plugin) ? plugin : [plugin];
-  const entry = toPortableSource(plugins.length > 0 ? withPluginHost(blankSpecSource, plugins) : blankSpecSource);
+  const entry =
+    plugins.length > 0
+      ? withPluginDeclarations(toPortableSource(withPluginHost(blankSpecSource, plugins)), plugins)
+      : toPortableSource(blankSpecSource);
 
   return {
     [`${dir}/index.ts`]: name === undefined ? entry : renameSpace(entry, name),
@@ -167,17 +172,15 @@ export const emptyTemplateFiles = ({ name, dir = 'src/space' }: { name?: string;
   };
 };
 
-/** The one line in the declaration a `custom` element is hung off — the hero, so it lands under its buttons. */
+/** The one line in the declaration a plugin's element is hung off — the hero, so it lands under its buttons. */
 const PLUGIN_ANCHOR = 'children: [heroEyebrow, heroTitle, heroLede, heroActions]';
 
-/** One plugin's host — a `custom(…)` or an `element(…)` call, inside its provider when it has one — at `pad`. */
+/** One plugin's element — a call of the factory its declaration makes, inside its provider when it has one — at `pad`. */
 const hostSource = (plugin: PluginHostOptions, pad: string): string => {
-  const asElement = plugin.as === 'element';
   const host = (inner: string): string =>
     [
-      asElement ? `element('${plugin.renderType}', {` : 'custom({',
+      `${plugin.type}({`,
       `  id: '${plugin.id}',`,
-      ...(asElement ? [] : [`  renderType: '${plugin.renderType}',`]),
       ...Object.entries(plugin.attributes).map(([key, value]) => `  ${key}: ${toSource(value)},`),
       ...(plugin.data ? [`  bind: ${toSource(plugin.data.bind)},`] : []),
       "  css: { desktop: { 'margin-top': '24px' } }",
@@ -202,9 +205,10 @@ const hostSource = (plugin: PluginHostOptions, pad: string): string => {
  * The copy, with a slot for a component the receiver writes.
  *
  * Done to the source rather than to the spec because the spec is not what travels: the copy is a FILE, and what
- * has to end up in it is a `custom(…)` call somebody can read, move and change. The import is prepended as a line
- * of its own rather than merged into the existing one — `toPortableSource` folds every relative import into a
- * single sorted statement afterwards, so this needs to know nothing about what the declaration already imports.
+ * has to end up in it is a call somebody can read, move and change. The import is prepended as a line of its own
+ * rather than merged into the existing one — `toPortableSource` folds every relative import into a single sorted
+ * statement afterwards, so this needs to know nothing about what the declaration already imports. The plugin's own
+ * declaration is not one of this package's modules: `withPluginDeclarations` adds it once the copy is portable.
  *
  * The anchor is a whole authored line, and a miss throws. It is the same bargain as the rename: a source
  * transform that silently does nothing hands back a plausible file with the interesting half missing.
@@ -217,7 +221,6 @@ const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): 
     );
   }
 
-  const asElement = plugins.every(plugin => plugin.as === 'element');
   const fed = plugins.flatMap(plugin => (plugin.data ? [plugin.data.query] : []));
   // As deep as the anchor sits: the declaration's own indentation, so the copy reads as written rather than reflowed.
   const indent = /^\s*/.exec(source.split('\n').find(line => line.includes(PLUGIN_ANCHOR)) ?? '')?.[0] ?? '';
@@ -225,17 +228,10 @@ const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): 
   const comment = [
     `${plugins.length === 1 ? 'A component' : 'Components'} of YOUR OWN, rendered by the space.`,
     '',
-    ...(asElement
-      ? [
-          "An element of a plugin's own type — what the builder adds when somebody drops the plugin on a page, and",
-          'how a space that loads it from its manifest hosts it. Every attribute arrives in the component as a prop',
-          'of the same name — written here, or bound to a source.'
-        ]
-      : [
-          '`renderType` is the name it is registered under in `src/main.ts`; every other attribute arrives in',
-          'the component as a prop of the same name — written here, or bound to a source. See',
-          '`plitzi/README.md`.'
-        ]),
+    "An element of the plugin's own type, authored from its declaration — what the",
+    'builder adds when somebody drops the plugin on a page. Every attribute arrives in',
+    'the component as a prop of the same name — written here, or bound to a source —',
+    'and is typed by what the declaration says it reads.',
     ...(fed.length > 0
       ? [
           '',
@@ -254,13 +250,51 @@ const withPluginHost = (source: string, plugins: readonly PluginHostOptions[]): 
     `${indent}]`
   ].join('\n');
 
-  const imports = [
-    ...(fed.length > 0 ? ['apiContainer'] : []),
-    ...(plugins.some(plugin => plugin.as !== 'element') ? ['custom'] : []),
-    ...(plugins.some(plugin => plugin.as === 'element') ? ['element'] : [])
-  ].join(', ');
+  const imports = [...(fed.length > 0 ? ['apiContainer'] : []), 'defineElement'].join(', ');
 
   return `import { ${imports} } from '../../elements';\n${source.replace(PLUGIN_ANCHOR, element)}`;
+};
+
+/**
+ * The portable copy, given each plugin's declaration and the factory made from it.
+ *
+ * After `toPortableSource`, not before: the declaration is the receiver's module, not this package's, and the rewrite
+ * refuses — rightly — any other import that climbs out of the folder. Its import goes beside the package's, its
+ * attributes type first among the types, and the factory right under the imports, where the hero calls it.
+ */
+const withPluginDeclarations = (source: string, plugins: readonly PluginHostOptions[]): string => {
+  const lines = source.split('\n');
+  const { statements, end } = leadingImports(lines);
+  const values = plugins.map(({ type, declaration }) => `import ${type}Declaration from '${declaration.from}';`);
+  const types = plugins.map(
+    ({ declaration }) => `import type { ${declaration.attributes} } from '${declaration.from}';`
+  );
+  const isType = (text: string): boolean => text.startsWith('import type ');
+  const isPackage = (text: string): boolean => !isType(text) && text.endsWith("from '@plitzi/sdk-authoring';");
+
+  // The groups `toPortableSource` laid out, kept apart as it wrote them: each statement, and whether a blank line follows.
+  const written = lines.slice(0, end).join('\n');
+  const header: string[] = [];
+  let typed = false;
+  for (const [index, statement] of statements.entries()) {
+    if (isType(statement.text) && !typed) {
+      header.push(...types);
+      typed = true;
+    }
+
+    header.push(statement.written, ...(isPackage(statement.text) ? values : []));
+    const next = statements.at(index + 1);
+    if (next && written.includes(`${statement.written}\n\n${next.written}`)) {
+      header.push('');
+    }
+  }
+
+  const factories = plugins.map(
+    ({ type, declaration }) => `const ${type} = defineElement<${declaration.attributes}>(${type}Declaration);`
+  );
+  const comment = `/** ${plugins.length === 1 ? "The plugin's element, typed by its declaration" : "The plugins' elements, typed by their declarations"}. */`;
+
+  return [...header, ...(typed ? [] : ['', ...types]), '', comment, ...factories, ...lines.slice(end)].join('\n');
 };
 
 /** Replaces one declared literal, and refuses to hand back a copy where it silently did not appear. */

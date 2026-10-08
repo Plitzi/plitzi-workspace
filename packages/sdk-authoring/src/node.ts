@@ -112,25 +112,31 @@ export const publicData = (folder: string | URL): ((query: string) => unknown) =
 export const projectData = (folder: string | URL): ((query: string) => unknown) =>
   fileReader(folder, PROJECT_DATA_PREFIX);
 
+/** A plugin of the project's own: the folder it is in — the name a space imports its declaration by — and what it declares. */
+export interface PluginFolder {
+  /** The folder's name under the plugins folder: `StatCard`. */
+  name: string;
+  declaration: PluginDeclarationData;
+}
+
 /**
- * The declaration of every plugin under `folder` — `src/plugins/<Name>/declaration.ts`, its default export — for
- * `authorSpace`'s `plugins`: what each fires, answers and reads. Found by folder, as the server finds the plugins
- * themselves, so a plugin is declared by being there and no list can forget one. A folder without the file is a
- * component and nothing else; one whose default export is not a declaration is refused, naming the file. In folder
- * order, so the same folders always author the same space.
+ * Every plugin under `folder` — `src/plugins/<Name>/declaration.ts`, its default export — with the folder it is in.
+ * Found by folder, as the server finds the plugins themselves, so a plugin is declared by being there and no list can
+ * forget one. A folder without the file is a component and nothing else; one whose default export is not a declaration
+ * is refused, naming the file. In folder order, so the same folders always author the same space.
  */
-export const pluginDeclarations = async (folder: string | URL): Promise<PluginDeclarationData[]> => {
+export const pluginFolders = async (folder: string | URL): Promise<PluginFolder[]> => {
   const root = pathOf(folder);
-  const files = existsSync(root)
+  const names = existsSync(root)
     ? readdirSync(root, { withFileTypes: true })
-        .filter(entry => entry.isDirectory())
-        .map(entry => path.join(root, entry.name, PLUGIN_DECLARATION_FILE))
-        .filter(file => existsSync(file))
+        .filter(entry => entry.isDirectory() && existsSync(path.join(root, entry.name, PLUGIN_DECLARATION_FILE)))
+        .map(entry => entry.name)
         .sort()
     : [];
 
   return Promise.all(
-    files.map(async file => {
+    names.map(async name => {
+      const file = path.join(root, name, PLUGIN_DECLARATION_FILE);
       const loaded = await importProjectModule(file, root);
       const declaration: unknown =
         typeof loaded === 'object' && loaded !== null && 'default' in loaded ? loaded.default : undefined;
@@ -144,10 +150,14 @@ export const pluginDeclarations = async (folder: string | URL): Promise<PluginDe
       }
 
       // A record with its `type`: `authorSpace` checks every other field, and says which is wrong.
-      return declaration as PluginDeclarationData;
+      return { name, declaration: declaration as PluginDeclarationData };
     })
   );
 };
+
+/** The declaration of every plugin under `folder`, for `authorSpace`'s `plugins`: what each fires, answers and reads. */
+export const pluginDeclarations = async (folder: string | URL): Promise<PluginDeclarationData[]> =>
+  (await pluginFolders(folder)).map(({ declaration }) => declaration);
 
 /** The manifest of a plugin run as it was built, read; nothing when it cannot be — the layout check says why first. */
 const manifestOf = (file: string): Record<string, unknown> => {

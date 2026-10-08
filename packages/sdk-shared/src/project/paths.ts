@@ -35,7 +35,7 @@ export const SPACE_ENTRY = `${SPACE_DIR}/index.ts`;
 
 /**
  * The project's own components: every folder is one, registered under its name in camelCase — `src/plugins/StatCard`
- * renders a space's `custom({ renderType: 'statCard' })` — built from its entry (`PLUGIN_ENTRIES`) and declared by its
+ * renders a space's `statCard` element, placed from its declaration — built from its entry (`PLUGIN_ENTRIES`) and declared by its
  * `declaration.ts`.
  */
 export const PLUGINS_DIR = 'src/plugins';

@@ -195,7 +195,8 @@ Never download a whole tree you do not need.
 - \`plitzi://types\` — element types **observed in this space** (ground truth): props, slots, subTypes, plus each
   type's \`label\`, \`description\` (what it is FOR) and \`category\`, and a \`source\` (\`builtin\` | \`plugin\` | \`unknown\`).
   Read the descriptions to pick the right type — e.g. \`apiContainer\` fetches backend data into the frontend,
-  \`link\` navigates between pages, \`list\` repeats a template over a data array. \`plugin\` types are custom elements.
+  \`link\` navigates between pages, \`list\` repeats a template over a data array. \`plugin\` types are the elements
+  of the plugins the space installed: added by their type, like a built-in.
 - \`plitzi://css-properties\` — valid kebab-case CSS property keys.
 - \`plitzi://explain/{name}\` — what a name means: an element type's attributes, triggers and callbacks; a step's
   params and what it publishes; what a trigger hands its flow; a problem code's fix. \`plitzi://explain/steps\` (or

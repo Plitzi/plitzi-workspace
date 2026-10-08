@@ -126,10 +126,10 @@ export const explainCommand = async (name: string | undefined, options: ExplainO
     // An element of the project's own, by the type it is placed by: said as one the SDK ships is.
     const project = await findProject(process.cwd());
     const own = project
-      ? (await projectPlugins(project.root)).find(declaration => declaration.type === name)
+      ? (await projectPlugins(project.root)).find(plugin => plugin.declaration.type === name)
       : undefined;
     if (own) {
-      console.log(options.json ? JSON.stringify([own]) : pluginText(own));
+      console.log(options.json ? JSON.stringify([own.declaration]) : pluginText(own));
 
       return;
     }

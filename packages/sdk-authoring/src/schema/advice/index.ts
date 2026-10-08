@@ -3,6 +3,7 @@ import { suggestCustomCss } from './customCss';
 import { suggestCustomCssSlots } from './customCssSlots';
 import { suggestDeclarations } from './declarations';
 import { suggestMotion } from './motion';
+import { suggestPluginHosts } from './pluginHosts';
 import { suggestRepeats } from './repeats';
 
 import type { Suggestion } from './types';
@@ -41,12 +42,15 @@ export const suggestSpace = (
   { schema, style }: { schema: Schema; style: Style },
   {
     stylesheets = [],
-    families = []
+    families = [],
+    pluginTypes = []
   }: {
     /** The CSS the pages load besides the space's own — its plugins' stylesheets: a token read there is read. */
     stylesheets?: readonly string[];
     /** The pages each `pageFamily` wrote, by id: what they share is written once, never a copy. */
     families?: readonly (readonly string[])[];
+    /** The types of the plugins the space has the declarations of: a `custom` element naming one is placed by name. */
+    pluginTypes?: readonly string[];
   } = {}
 ): Suggestion[] =>
   withoutQuieted(schema, [
@@ -55,7 +59,8 @@ export const suggestSpace = (
     ...suggestCustomCss(schema, style),
     ...suggestCustomCssSlots(schema),
     ...suggestMotion(schema, style),
-    ...suggestDeclarations(schema, style, stylesheets)
+    ...suggestDeclarations(schema, style, stylesheets),
+    ...suggestPluginHosts(schema, pluginTypes)
   ]).sort((a, b) => b.saves - a.saves);
 
 /** The suggestions no element they are about quiets — for those read beside the documents, too (authoring's own). */

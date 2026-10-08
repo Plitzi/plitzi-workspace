@@ -459,7 +459,13 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
 
     await fs.rename(path.join(project, 'src/space/index.ts'), path.join(project, 'src/space.ts'));
     await fs.rmdir(path.join(project, 'src/space'));
-    await write('src/space.ts', (await read('src/space.ts')).replaceAll("from './", "from './site/"));
+    // One level up: the parts beside it are in `site/` now, and the project's plugins one folder nearer.
+    await write(
+      'src/space.ts',
+      (await read('src/space.ts'))
+        .replaceAll("from './", "from './site/")
+        .replaceAll("from '../plugins/", "from './plugins/")
+    );
     await fs.rename(path.join(project, 'plitzi/author.ts'), path.join(project, 'src/author.ts'));
     const changed = await manifest();
     const scripts = isRecord(changed.scripts)
@@ -515,9 +521,10 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
 
     const report = await run({ fix: true });
 
-    expect(report.ok).toBe(true);
     expect(codes(report)).toEqual([]);
+    expect(report.ok).toBe(true);
     expect(await read('src/space/index.ts')).toContain("from './tokens.ts'");
+    expect(await read('src/space/index.ts')).toContain("from '../plugins/StatCard/declaration.ts'");
     expect(await read('plitzi/author.ts')).toContain('await projectSpace()');
     expect(await manifest()).toHaveProperty(['scripts', 'author'], 'node --env-file-if-exists=.env plitzi/author.ts');
     await expect(fs.access(path.join(project, '.sdk-plugins'))).rejects.toThrow();

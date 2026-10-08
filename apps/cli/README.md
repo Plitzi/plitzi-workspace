@@ -427,8 +427,8 @@ What a name means when authoring, from the catalogues the checks themselves read
 otherwise be a search through the SDK's types. A name no catalogue holds — `pageFamily`, `styles`, `SpaceSpec` — is any
 export of `@plitzi/sdk-authoring`, answered from the `.d.ts` the project installed, so it is the version the project
 runs. An element of the project's own — `src/plugins/<Name>/` — is explained by its type the same way: what it takes
-(each attribute at its default), fires and answers, and the `custom({ … renderType })` that places it, which `plugin
-add` prints too. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
+(each attribute at its default), fires and answers, and how it is placed — its declaration imported and
+`defineElement<…Attributes>(declaration)` called — which `plugin add` prints too. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
 
 ## `doctor`
 
@@ -610,8 +610,9 @@ from: `index.ts`, or `index.tsx` for one that writes its JSX there, never both. 
 builder shows, and what it is for, and checks every folder is free before writing any.
 
 - **In a project `plitzi create` wrote**, it goes in `src/plugins`, where the project already looks: nothing to
-  register, and a running `start:dev` picks it up without a restart. Host it with `custom({ renderType: 'seatPicker' })` in `src/space/`
-  — or, when the space lives in Plitzi, with a Custom element in the builder.
+  register, and a running `start:dev` picks it up without a restart. Place it in `src/space/` from its declaration —
+  `defineElement<SeatPickerAttributes>(declaration)`, then `seatPicker({ id: 'seats' })` — or, when the space lives in
+  Plitzi, pack and upload it and add it in the builder.
 - **In a plugin package**, it goes in `src/`, and is added to `src/elements.ts` and `src/declarations.ts`, from which
   the package publishes it.
 - **In any other project**, it asks which folder holds the project's components (`--dir` answers it) and prints how

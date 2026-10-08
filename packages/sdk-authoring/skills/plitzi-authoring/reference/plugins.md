@@ -1,11 +1,15 @@
 # Plugins
 
-A plugin is a React component of the project's own — a chart, a map, a game — hosted in the space by a `custom`
-element that names it by `renderType`:
+A plugin is a React component of the project's own — a chart, a map, a game — and an element type of its own. The
+space places it from its `declaration.ts`, typed by what it declares:
 
 ```ts
-custom({ id: 'arcade', renderType: 'nebulaRun', shipColor: 'amber', bind: { best: 'state.arcadeBest' } })
+const nebulaRun = defineElement<NebulaRunAttributes>(nebulaRunDeclaration);
+nebulaRun({ id: 'arcade', shipColor: 'amber', bind: { best: 'state.arcadeBest' } })
 ```
+
+The same element on a project's server, on Plitzi and in the builder, which adds it when somebody drops it.
+(`custom({ renderType })` is for a component registered by name, with no declaration.)
 
 ## Creating one
 
@@ -25,7 +29,7 @@ while the flow runs is dropped, and the stale first report would stick.
 
 ## Props
 
-**The host element's attributes ARE the component's props.** Whatever the space writes on the `custom` element arrives
+**The element's attributes ARE the component's props.** Whatever the space writes on it arrives
 by the same name, and so does whatever a binding writes — which is what makes a plugin live: bind an attribute to
 `state`, a provider or a row, and the component re-renders with the answer. Prefer this to anything else.
 
@@ -73,7 +77,7 @@ on ([kept state](kept-state.md)), what a plugin writes there — its layout, a c
 ## Laying out the space's elements
 
 A plugin that arranges elements — a dock, tabs, a masonry — HOLDS them: they are its children in the space
-(`custom({ renderType: 'dock', children: [feed, tools] })`, or dropped into it in the builder), and the component
+(`dock({ id: 'dock', children: [feed, tools] })`, or dropped into it in the builder), and the component
 places each in a box of its own, by the id it was authored under:
 
 ```tsx
@@ -138,16 +142,15 @@ with thousands of shapes fast — see [drawing](drawing.md).
 ## Registering
 
 A project `plitzi create` wrote registers every folder of `src/plugins` by itself, under the folder's name in
-camelCase (`StatCard` → `statCard`). Anywhere else, the entry registers the component under its `renderType`: the
-third argument to `render()`, `<PlitziSdk.Plugin>` in a React application, `plugins` on a page server of your own. A `renderType` nothing registered
-renders "Custom Component … Not Found", and a page server logs the missing `renderType` at `error` once per
-space: on a server, register it in `plugins` AND name it in the deployment's `pluginNames`.
+camelCase (`StatCard` → `statCard`): its type. Anywhere else, the entry registers the component under its type: the
+third argument to `render()`, `<PlitziSdk.Plugin>` in a React application, `plugins` on a page server of your own. A
+type nothing registered renders "Custom Component … Not Found", and a page server logs it at `error` once per space:
+on a server, register it in `plugins` AND name it in the deployment's `pluginNames`.
 
-A plugin PACKAGE, loaded by a space from its `plugin-manifest.json`, is an element TYPE of its own rather than a
-`custom` host — it is how the builder adds one somebody dropped. Author it with a typed factory:
-`defineElement<SeatPickerAttributes>(declaration)` from the plugin's own `declaration.ts`, or
-`elementsFromManifest<{ seatPicker: SeatPickerAttributes }>(manifest)` from what it published — or untyped,
-`element('seatPicker', { id: 'seats', start: 3 })`.
+On Plitzi, every element loads from the plugin the space installed (`plitzi plugin pack` and `upload`: several folders
+are one plugin). A plugin PACKAGE is placed the same way:
+`defineElement` from its `declaration.ts`, or `elementsFromManifest<{ seatPicker: SeatPickerAttributes }>(manifest)`
+from what it published.
 
 ## Checked like a built-in element
 
@@ -160,11 +163,10 @@ import declaration from './plugins/SeatPicker/declaration';
 authorSpace(space, { plugins: [declaration] });
 ```
 
-It is then held to what it declares, whether it is authored as its own type or hosted by `custom({ renderType:
-'seatPicker' })`: a flow on an event it never fires, a step sent to an action it does not answer, an attribute it does
-not read — each is refused with the name it should have been. (`pluginTypes: ['seatPicker']` only tells the linter the
-type exists; nothing about how the space uses it is checked.) A `custom` host whose component is NOT handed over is not
-judged on its events at all — nothing here knows them.
+It is then held to what it declares: a flow on an event it never fires, a step sent to an action it does not answer,
+an attribute it does not read — each is refused with the name it should have been. (`pluginTypes: ['seatPicker']`
+only tells the linter the type exists; nothing about how the space uses it is checked.) A plugin whose declaration is
+NOT handed over is not judged on its events at all — nothing here knows them.
 
 Its events and actions have builders typed from the same declaration, so a name it does not declare is a compile error:
 

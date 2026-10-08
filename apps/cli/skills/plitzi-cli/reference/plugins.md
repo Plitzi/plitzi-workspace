@@ -28,7 +28,8 @@ Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 
 - **Registered by itself**: every folder of `src/plugins` is, under its name in camelCase (`SeatPicker` → `seatPicker`).
   Elsewhere the command prints the line that registers it (for `render()`, `<PlitziSdk>` or a page server).
-- **Host it** with `custom({ renderType: 'seatPicker', … })` in `src/space/` — or a Custom element in the builder.
+- **Place it** from its declaration in `src/space/`: `const seatPicker = defineElement<SeatPickerAttributes>(declaration)`,
+  then `seatPicker({ id: 'seats', … })` — what `plugin add` and `explain` print. On Plitzi, the builder adds the same.
 - **Checked like a built-in element**: its folder's `declaration.ts` is found by itself and handed to
   `authorSpace(space, { plugins })`: flows on its events, steps to its actions and its attributes are
   refused when wrong; `declaredTrigger(declaration, 'onPick')` and `declaredCallback(declaration, 'reset', { on: 'seats' })`
@@ -50,7 +51,7 @@ plitzi create packages/seat-picker --plugin --name @acme/plitzi-plugin-seat-pick
 
 Its scripts: `start` (the elements inside a space, hot-replaced), `visual`, `typecheck`, `lint`. Add more elements with
 `plugin add` from inside it — they are listed in `src/elements.ts` and `src/declarations.ts`, which the package
-publishes from. A package's element is authored as a TYPE of its own: `defineElement<SeatPickerAttributes>(declaration)`.
+publishes from. A package's element is placed the same way: `defineElement<SeatPickerAttributes>(declaration)`.
 
 ## Building and shipping (`plugin pack`, `plugin upload`)
 

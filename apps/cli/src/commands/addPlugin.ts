@@ -207,24 +207,26 @@ const registration = (added: { names: PluginNames; target: string }[]): string =
 const placement = async (root: string, project: PlitziProject, added: PluginNames[]): Promise<string> => {
   if (project.source === 'cloud') {
     return (
-      `In the builder, add a Custom element with the render type ${added.map(names => `"${names.type}"`).join(', ')}. ` +
-      'The builder does not load this project’s components, so it shows “Not Found” there; the pages this project ' +
-      'serves render them.'
+      `In the builder, add the element${added.length > 1 ? 's' : ''} ${added.map(names => `"${names.type}"`).join(', ')} once the plugin is ` +
+      'packed and uploaded (plitzi plugin pack, plitzi plugin upload): until then the builder does not load this ' +
+      'project’s components, and the pages this project serves render them.'
     );
   }
 
   // Written with the attributes each was just declared with, read back as the project reads them: what to put is
   // what works, and `explain` says the rest.
   const declared = await projectPlugins(root);
-  const written = added.map(names => {
-    const declaration = declared.find(each => each.type === names.type);
+  const written = added.flatMap(names => {
+    const plugin = declared.find(each => each.declaration.type === names.type);
 
-    return declaration
-      ? placementOf(declaration, names.base)
-      : `custom({ id: '${names.base}', renderType: '${names.type}' })`;
+    return plugin ? placementOf(plugin, names.base) : [`${names.type}: its declaration.ts did not load`];
   });
 
-  return `Put them on a page in src/space/: ${written.join(', ')}. plitzi explain ${added[0]?.type ?? '<type>'} says what each takes, fires and answers.`;
+  return [
+    `Put ${added.length > 1 ? 'them' : 'it'} on a page in src/space/, authored from ${added.length > 1 ? 'their declarations' : 'its declaration'}:`,
+    ...written.map(line => `  ${line}`),
+    `plitzi explain ${added[0]?.type ?? '<type>'} says what each takes, fires and answers.`
+  ].join('\n');
 };
 
 /** A plugin package's two lists, extended with what was added — or said to be the author's when they were changed. */
@@ -428,7 +430,7 @@ const addPlugin = async (namesGiven: string[], options: AddPluginOptions): Promi
       await listInPackage(project.root, plitzi.components, addedNames);
     } else if (plitzi?.kind === 'project') {
       console.log(
-        `\nRegistered and declared: the project finds every folder of src/plugins, its declaration.ts with it. ${await placement(project.root, plitzi, addedNames)}`
+        `\nRegistered and declared: the project finds every folder of src/plugins, its declaration.ts with it.\n${await placement(project.root, plitzi, addedNames)}`
       );
     } else {
       await registerElsewhere(project.root, added);

@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { button, component, container, fontAwesome, heading, link, list, text } from '../../elements';
+import {
+  button,
+  component,
+  container,
+  custom,
+  defineElement,
+  fontAwesome,
+  heading,
+  link,
+  list,
+  text
+} from '../../elements';
 import { onClick } from '../../elements/steps';
 import { setState, toggleState } from '../../interactions';
 import { authorSpace } from '../space';
@@ -532,5 +543,35 @@ describe('suggestions', () => {
       expect(unused?.message).not.toContain('`Used`');
       expect(unused?.saves).toBe(2);
     });
+  });
+});
+
+/** A plugin is placed from its declaration: a `custom` host naming one the space was handed is pointed there. */
+describe('plugin hosts', () => {
+  const seats = {
+    type: 'seatPicker',
+    triggers: {},
+    callbacks: {},
+    content: { attributes: { start: 0 }, definition: { label: 'Seat picker' } }
+  };
+
+  it('offers the declaration for a `custom` host of a declared plugin', () => {
+    const spec = space([page('home', [custom({ id: 'seats', renderType: 'seatPicker' })])]);
+    const suggestion = authorSpace(spec, { plugins: [seats] }).suggestions.find(
+      entry => entry.code === 'plugin-custom-host'
+    );
+
+    expect(suggestion?.elementIds).toEqual(['seats']);
+    expect(suggestion?.message).toContain('defineElement<…Attributes>(declaration)');
+    expect(suggestion?.saves).toBe(0);
+  });
+
+  it('leaves the plugin placed by its own type, and a component with no declaration', () => {
+    const spec = space([
+      page('home', [defineElement(seats)({ id: 'seats' }), custom({ id: 'chart', renderType: 'trafficChart' })])
+    ]);
+    const codes = authorSpace(spec, { plugins: [seats] }).suggestions.map(entry => entry.code);
+
+    expect(codes).not.toContain('plugin-custom-host');
   });
 });

@@ -30,6 +30,8 @@ export type AppContextValue = {
   setMobilePreview: Dispatch<SetStateAction<boolean>>;
   /** Where the Functions panel's TypeScript worker is served; empty when the host serves none. */
   functionsWorkerUrl: string;
+  /** Where the SDK's icon sheet is served, for the canvases to link; empty when the host serves none. */
+  sdkIconsStylePath: string;
 };
 
 const appContextDefaultValue: AppContextValue = {} as AppContextValue;

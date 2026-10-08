@@ -22,6 +22,7 @@ import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
+import { canvasIconsAssets } from '@pmodules/Builder/helpers/canvasIcons';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import styleFrame from '../../../Builder/Assets/index-iframe.scss?inline';
@@ -38,7 +39,8 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   const previewRender = useRenderOverride(previewOverride);
   const { environment } = useBuilderNetwork();
   const { rootRef } = use(ContainerRootContext);
-  const { displayBorderComponents } = use(AppContext);
+  const { displayBorderComponents, sdkIconsStylePath } = use(AppContext);
+  const assets = useMemo(() => canvasIconsAssets(sdkIconsStylePath), [sdkIconsStylePath]);
   // The same area the canvas uses: a preview of the space is the space, so it is painted the way the space is.
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
   const [
@@ -135,7 +137,12 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
   }, [components, element, id]);
 
   return (
-    <ContainerFrame className={clsx('builder-area flex', className)} css={css} style={{ colorScheme: resolvedTheme }}>
+    <ContainerFrame
+      className={clsx('builder-area flex', className)}
+      css={css}
+      assets={assets}
+      style={{ colorScheme: resolvedTheme }}
+    >
       <PlitziServiceProvider value={plitziContextValue}>
         {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding
             settings with that one flag flipped beats threading it as a prop through every provider under here.

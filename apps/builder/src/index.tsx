@@ -74,6 +74,7 @@ export type PlitziBuilderProps = {
   state?: object;
   debugMode?: boolean;
   functionsWorkerUrl?: AppProps['functionsWorkerUrl'];
+  sdkIconsStylePath?: AppProps['sdkIconsStylePath'];
 };
 
 const PlitziBuilder = (props: PlitziBuilderProps) => {

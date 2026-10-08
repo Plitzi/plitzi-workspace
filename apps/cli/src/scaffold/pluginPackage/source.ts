@@ -36,7 +36,7 @@ export type ${name}Attributes = Omit<${name}Props, 'className'>;
  * builder adds when somebody drops it on a page. Data only, no React — the build reads it to write the manifest.
  */
 const declaration = {
-  /** What a space names it by: the \`renderType\` of the \`custom\` element that hosts it. Renaming it orphans every one. */
+  /** What a space names it by: the element type \`defineElement(declaration)\` authors. Renaming it orphans every one. */
   type: '${type}',
   /** The events it fires. The component registers these; the builder offers them as what a flow can start on. */
   triggers: {

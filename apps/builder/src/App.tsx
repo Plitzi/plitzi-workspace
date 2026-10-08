@@ -96,6 +96,11 @@ export type AppProps = {
    * of this package, from wherever the host serves the builder's files. Absent, the panel edits and saves without it.
    */
   functionsWorkerUrl?: string;
+  /**
+   * Where the SDK's Font Awesome sheet (`plitzi-sdk-icons.css`) is served, with its `webfonts/` beside it — the one
+   * the host already gives the pages it renders. The canvas links it; absent, its icons draw as empty boxes.
+   */
+  sdkIconsStylePath?: string;
 };
 
 const components = {

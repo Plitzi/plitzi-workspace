@@ -22,7 +22,7 @@ import type { PluginSource, SSRServer } from '@plitzi/sdk-shared';
  * plugin of `vendor/plugins` run as it was built — each with its server half, when it has one.
  */
 export type ProjectPlugins = {
-  /** How each is built, by the name a space's `custom({ renderType })` renders it by. */
+  /** How each is built, by the type a space's element of it is — `defineElement(declaration)` — rendered by. */
   sources: Record<string, PluginSource>;
   /**
    * Which of them the space renders with — the deployment's `pluginNames`. Registering a plugin is not turning it on:

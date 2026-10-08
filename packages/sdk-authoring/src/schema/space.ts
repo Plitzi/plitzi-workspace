@@ -345,7 +345,14 @@ class SpaceAuthor {
 
     // Where each suggestion's first element was written, as a refusal says it: the line to go and change.
     const suggestions = [
-      ...suggestSpace({ schema, style }, { stylesheets: this.options.stylesheets ?? [], families: this.families }),
+      ...suggestSpace(
+        { schema, style },
+        {
+          stylesheets: this.options.stylesheets ?? [],
+          families: this.families,
+          pluginTypes: (this.options.plugins ?? []).map(plugin => plugin.type)
+        }
+      ),
       ...withoutQuieted(schema, this.classOverrides(schema, style.mode ?? 'desktop-first'))
     ].map(suggestion => {
       const first = suggestion.elementIds.at(0);

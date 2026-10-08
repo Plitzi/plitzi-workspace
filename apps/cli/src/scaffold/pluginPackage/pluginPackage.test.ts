@@ -149,8 +149,13 @@ describe('a package of several elements', () => {
   it('previews and checks every one of them', () => {
     const files = several();
 
-    expect(files['preview/space/index.ts']).toContain("element('seatPicker', {");
-    expect(files['preview/space/index.ts']).toContain("element('legend', {");
+    expect(files['preview/space/index.ts']).toContain(
+      'const seatPicker = defineElement<SeatPickerAttributes>(seatPickerDeclaration);'
+    );
+    expect(files['preview/space/index.ts']).toContain(
+      "import legendDeclaration from '../../src/Legend/declaration.ts';"
+    );
+    expect(files['preview/space/index.ts']).toContain('legend({');
     expect(files['visual/plugin.spec.ts']).toContain("{ id: 'legend', label: 'Legend' }");
   });
 

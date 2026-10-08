@@ -118,7 +118,8 @@ export const AUTHORING_CODES = {
   },
   'declared-callback-target': {
     kind: 'refused',
-    means: "a `declaredCallback` target with a key beside `on` and `params` — read nowhere, so the step runs without it",
+    means:
+      'a `declaredCallback` target with a key beside `on` and `params` — read nowhere, so the step runs without it',
     fix: "the value in `params`: `{ on: 'calendar', params: { date } }`"
   },
   'folder-undeclared': {
@@ -1031,6 +1032,11 @@ export const AUTHORING_CODES = {
     kind: 'suggested',
     means: 'the same structure written again and again with different words — cards, rows, tiles',
     fix: 'a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards'
+  },
+  'plugin-custom-host': {
+    kind: 'suggested',
+    means: 'a `custom` element naming, by `renderType`, a plugin whose declaration the space was handed',
+    fix: 'place it from its declaration — `const seatPicker = defineElement<SeatPickerAttributes>(declaration)`, then `seatPicker({ id, … })`: typed by what it declares, the element the builder adds too'
   },
   'content-attribute': {
     kind: 'suggested',

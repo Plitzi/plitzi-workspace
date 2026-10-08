@@ -106,16 +106,16 @@ export const previewFiles = ([main, ...others]: PluginNames[]): ProjectFiles => 
   'index.html': indexHtml(main),
   'preview/preflight.css': preflightCss(),
   'preview/main.ts': mainFile(),
-  // The space a new account starts with, carrying every element in its hero as an element of its own type — how the
-  // builder adds one, and how a space that loads the package from its manifest hosts it. The preview's to change: put
-  // each element where it will really live, give it the attributes it will really get.
+  // The space a new account starts with, carrying every element in its hero, authored from its declaration — an element
+  // of its own type, as the builder adds one. The preview's to change: put each element where it will really live,
+  // give it the attributes it will really get.
   ...blankTemplateFiles({
     name: `${main.title} preview`,
     dir: 'preview/space',
     plugin: [main, ...others].map(names => ({
       id: names.base,
-      renderType: names.type,
-      as: 'element' as const,
+      type: names.type,
+      declaration: { from: `../../src/${names.component}/declaration.ts`, attributes: `${names.component}Attributes` },
       attributes: { label: names.title, start: 0, step: 1 }
     }))
   })

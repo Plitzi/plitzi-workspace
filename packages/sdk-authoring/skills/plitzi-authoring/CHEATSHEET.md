@@ -55,7 +55,7 @@ form({ id, managedByInteractions: true, flows, children })
 formControl({ name: 'email', label: 'Email', subType: 'email', required: true })   // optional without required; select: options: [{ label, value }]
 modalContainer({ id, visible: false, title, children })
 component('card', { props: { title }, children: { body: [ … ] } })
-custom({ renderType: 'myPlugin' }); defineElement<Props>(declaration)      // a plugin
+const seats = defineElement<SeatsAttributes>(seatsDeclaration); seats({ id }) // a plugin
 ```
 
 ## Styles

@@ -85,6 +85,8 @@ function ejsPlugin(devMode?: boolean): Plugin {
             reactDom: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
             reactDomClient: devMode ? '/plitzi-builder-dev-vendor.js' : '/plitzi-builder-vendor.js',
             functionsWorkerPath: '/plitzi-functions-worker.js',
+            // The SDK's assets are not shipped beside the builder: a host links the icon sheet it already serves.
+            sdkIconsStylePath: '',
             version: PACKAGE.version
           },
           { async: false }
@@ -142,6 +144,10 @@ export default defineConfig(({ mode, command }) => {
         functionsWorkerPath: devMode
           ? '/src/modules/Functions/editor/typescriptWorker.ts'
           : '/plitzi-functions-worker.js',
+        // The workspace's SDK build, whose fonts the dev server finds beside the sheet.
+        sdkIconsStylePath: devMode
+          ? `/@fs${path.resolve(import.meta.dirname, '../sdk/dist/plitzi-sdk-icons.css')}`
+          : '',
         version: PACKAGE.version
       }),
       command === 'build' && ejsPlugin(devMode),

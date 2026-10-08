@@ -19,6 +19,7 @@ import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
 import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
+import { canvasIconsAssets } from '@pmodules/Builder/helpers/canvasIcons';
 import CollaboratorArea from '@pmodules/Collaboration/components/CollaboratorArea';
 import { fontsBaseUrl } from '@pmodules/Fonts/fontsBaseUrl';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -75,7 +76,8 @@ const BuilderArea = ({
   } = use(BuilderContext);
   // The scheme the SPACE is painted in — see the `canvas` area in `themeStore`. Not the editor's own.
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
-  const { displayBorderComponents, displayGrid, motionPlaying, motionReplays, zoom } = use(AppContext);
+  const { displayBorderComponents, displayGrid, motionPlaying, motionReplays, zoom, sdkIconsStylePath } =
+    use(AppContext);
   /**
    * The families the space declares, resolved for the canvas the same way the published page resolves them.
    *
@@ -84,7 +86,11 @@ const BuilderArea = ({
    * fallback — and why a bold in the canvas was the browser's synthetic one.
    */
   const fontHead = useMemo(() => fontsToHead(fonts, fontUrlResolver(fontsBaseUrl(server))), [fonts, server]);
-  const assetsWithFonts = useMemo(() => ({ ...assets, ...fontLinkAssets(fontHead) }), [assets, fontHead]);
+  // The icons first: the SDK's layer order opens their sheet, and the first stylesheet to name a layer places it.
+  const canvasAssets = useMemo(
+    () => ({ ...canvasIconsAssets(sdkIconsStylePath), ...assets, ...fontLinkAssets(fontHead) }),
+    [sdkIconsStylePath, assets, fontHead]
+  );
 
   const css = useMemo(() => {
     const cssVariables = schemaVariablesToCss(variables as Record<string, string>);
@@ -230,7 +236,7 @@ const BuilderArea = ({
             ref={ref}
             id={`i-builder-${baseElementId}`}
             css={frameCss}
-            assets={assetsWithFonts}
+            assets={canvasAssets}
             className="absolute h-full w-full origin-top-left"
             style={{ colorScheme: resolvedTheme }}
           >

@@ -212,7 +212,9 @@ describe('plitzi plugin add', () => {
     expect(process.exitCode).toBeUndefined();
     expect(output()).toContain('Registered and declared: the project finds every folder of src/plugins');
     // Written with what it was declared with, so what an agent puts on a page is what the element reads.
-    expect(output()).toMatch(/custom\(\{ id: .legend., renderType: .legend.[ ,}]/);
+    expect(output()).toContain("import legendDeclaration from '../plugins/Legend/declaration.ts';");
+    expect(output()).toContain('const legend = defineElement<LegendAttributes>(legendDeclaration);');
+    expect(output()).toMatch(/legend\(\{ id: .legend.[ ,}]/);
   });
 
   it('says with --dry-run what it would write — the element, its server half, the list — and writes nothing', async () => {
@@ -240,7 +242,7 @@ describe('plitzi plugin add', () => {
       await from(dir, () => addPlugin(['seat-picker'], {}));
     });
 
-    expect(output()).toContain('In the builder, add a Custom element with the render type "seatPicker"');
+    expect(output()).toContain('In the builder, add the element "seatPicker" once the plugin is packed and uploaded');
     expect(output()).not.toContain('src/space/index.ts');
   });
 

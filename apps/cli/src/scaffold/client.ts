@@ -82,14 +82,14 @@ body {
 `;
 
 /**
- * The project's own components, by the `renderType` the space names them with.
+ * The project's own components, by the type the space names them with.
  *
  * Written into both entry points, because how a plugin is registered does not change with where the space lives.
  */
 const PLUGINS = `/**
  * The project's own components: every folder of \`src/plugins\` is one, registered under its name in camelCase —
- * \`src/plugins/StatCard\` is what a space's \`custom({ renderType: 'statCard' })\` renders, and its attributes arrive
- * as the component's props — built from its \`index.ts\`, or \`index.tsx\`. \`plitzi plugin add\` writes a new one
+ * \`src/plugins/StatCard\` is what a space's \`statCard\` element (\`defineElement\` of its declaration) renders, and its
+ * attributes arrive as the component's props — built from its \`index.ts\`, or \`index.tsx\`. \`plitzi plugin add\` writes a new one
  * there, and Vite picks it up. There is no server here, so the plugins are part of this project's bundle and
  * hot-replaced like any other module; see \`${CLI_DIR}/README.md\`.
  */

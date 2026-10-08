@@ -5,6 +5,7 @@ import { use, useEffect, useMemo } from 'react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
+import { getRemoteSettings } from '../../../Element/helpers/pluginSelector';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import PluginRemote from '../../../Element/PluginRemote';
@@ -36,7 +37,7 @@ const Custom = ({
   const {
     contexts: { PluginsContext }
   } = usePlitziServiceContext();
-  const { registerCustomAssets, unregisterCustomAssets } = use(PluginsContext);
+  const { plugins, registerCustomAssets, unregisterCustomAssets } = use(PluginsContext);
   const { components } = use(ComponentContext);
   const settingsParsed = useMemo<Element['attributes'] | false>(() => {
     if (!settings) {
@@ -98,6 +99,14 @@ const Custom = ({
   const Plugin = components.current[renderType] as ComponentPluginWithHOC | undefined;
   if (Plugin && !settingsMalformed) {
     return <Plugin internalProps={internalPropsMemo} extraProps={Plugin.extraProps} />;
+  }
+
+  // A type the page has not registered may still be one of a plugin the space installed — its main element or any of
+  // the others it packs: loaded from that plugin, as an element of the type itself is (`JsxManager`). A page that
+  // registered only the plugin's main element would otherwise say every other one is not found.
+  const remote = renderType && !settingsMalformed ? getRemoteSettings({ type: renderType, plugins }) : undefined;
+  if (remote) {
+    return <PluginRemote url={remote.url} type={renderType} internalProps={internalPropsMemo} />;
   }
 
   return (

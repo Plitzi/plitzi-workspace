@@ -9,11 +9,12 @@ import type { CreateAnswers } from './types';
 
 const PLUGINS = ({ mode }: CreateAnswers): string => `## \`src/plugins/\` — components of your own
 
-Every folder is one, registered under its name in camelCase — \`StatCard\` is the \`renderType\` \`statCard\` — and built
-from its \`index.ts\` (or \`index.tsx\`): code several plugins share goes outside \`src/plugins/\`. The space
-hosts it with a \`custom\` element naming that type — \`custom({ renderType: 'statCard', … })\` — and the element's
-attributes arrive as the component's props. Its \`declaration.ts\` says what it fires, answers and reads; the space is
-checked against every folder's, found by folder like the plugins themselves.
+Every folder is one, registered under its name in camelCase — \`StatCard\` is the type \`statCard\` — and built from
+its \`index.ts\` (or \`index.tsx\`): code several plugins share goes outside \`src/plugins/\`. Its \`declaration.ts\` says
+what it fires, answers and reads, and the space places it from there — \`const statCard =
+defineElement<StatCardAttributes>(statCardDeclaration)\`, then \`statCard({ id: 'stats', … })\` — an element of its own
+type, whose attributes arrive as the component's props, typed by what it declares. The space is checked against every
+folder's declaration, found by folder like the plugins themselves.
 
 ${
   mode === 'server'

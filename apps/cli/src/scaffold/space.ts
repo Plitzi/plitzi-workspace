@@ -1,6 +1,8 @@
+import path from 'node:path';
+
 import { blankTemplateFiles, catalogTemplateFiles, emptyTemplateFiles } from '@plitzi/sdk-authoring';
 
-import { AUTHOR_FILE, SPACE_DIR } from './paths';
+import { AUTHOR_FILE, PLUGINS_DIR, SPACE_DIR } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 import type { PluginHostOptions } from '@plitzi/sdk-authoring';
@@ -166,11 +168,19 @@ const STATS = { value: 12480, series: [8, 12, 9, 17, 14, 21, 19, 26] };
  * it. Its attributes are the component's props, by name. A client project serves `public/`, so there the numbers
  * come from a data file through a provider — the way a project with no backend shows data it did not invent.
  */
+const STAT_CARD = {
+  type: 'statCard',
+  id: 'stat-card',
+  declaration: {
+    from: path.posix.relative(SPACE_DIR, `${PLUGINS_DIR}/StatCard/declaration.ts`),
+    attributes: 'StatCardAttributes'
+  }
+};
+
 const pluginHost = ({ mode }: CreateAnswers): PluginHostOptions =>
   mode === 'client'
     ? {
-        id: 'stat-card',
-        renderType: 'statCard',
+        ...STAT_CARD,
         attributes: { label: 'Requests today', unit: 'reqs' },
         data: {
           id: 'stats',
@@ -178,7 +188,7 @@ const pluginHost = ({ mode }: CreateAnswers): PluginHostOptions =>
           bind: { value: 'stats.data.value', series: 'stats.data.series' }
         }
       }
-    : { id: 'stat-card', renderType: 'statCard', attributes: { label: 'Requests today', unit: 'reqs', ...STATS } };
+    : { ...STAT_CARD, attributes: { label: 'Requests today', unit: 'reqs', ...STATS } };
 
 export const spaceFiles = (answers: CreateAnswers): ProjectFiles => {
   if (answers.source === 'cloud') {

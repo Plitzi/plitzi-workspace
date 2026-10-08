@@ -3,8 +3,8 @@ import { elementTypeNames } from '@plitzi/sdk-authoring';
 /**
  * Everything a plugin is called, from the one name somebody gives it.
  *
- * A plugin is named four ways and they must agree: npm knows the package, a space knows the `type` (the `renderType`
- * of the `custom` element that hosts it, and the manifest's `root`), the code knows the component, and the builder's
+ * A plugin is named four ways and they must agree: npm knows the package, a space knows the `type` (the element type it
+ * authors with `defineElement`, and the manifest's `root`), the code knows the component, and the builder's
  * catalogue shows a title. Asking for four names is asking for four spellings of one; they are derived instead.
  */
 

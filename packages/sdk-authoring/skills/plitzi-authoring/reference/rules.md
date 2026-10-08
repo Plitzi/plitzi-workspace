@@ -50,7 +50,7 @@ refuses or warns of, with the fix.
     every switch through `computed` (`plates: '{{ state.platesOff ? false : true }}'`) so its default shows before
     anybody touches it.
 12. **Hand plugins over as their declarations**: `authorSpace(space, { plugins: [declaration] })` holds a plugin —
-    its own type, or a `custom({ renderType })` host — to the events, actions and attributes it declares. See
+    placed with `defineElement(declaration)` — to the events, actions and attributes it declares. See
     [plugins](plugins.md).
 13. **Usable without sight.** Screen readers and browser agents (Claude in Chrome) find a page's controls in its
     accessibility tree: every button and link has words (an icon-only button a `title`), every field a `label`

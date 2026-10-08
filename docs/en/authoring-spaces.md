@@ -193,14 +193,15 @@ move).
 
 ### Elements this SDK does not ship
 
-A type from a plugin, or one a deployment brings itself, is authored the same way:
+A type from a plugin, or one a deployment brings itself, is authored the same way. A plugin's element is placed from
+its `declaration.ts` — that is what the CLI writes, `plugin add` and `explain` print, and the skills teach:
 
 ```ts
 // A factory as typed as any built-in one
-const speciesStatus = defineElement<{ status?: string; latin?: string }>({
-  type: 'speciesStatus',
-  content: { definition: { label: 'Species Status' } }
-});
+import speciesStatusDeclaration from '../plugins/SpeciesStatus/declaration.ts';
+import type { SpeciesStatusAttributes } from '../plugins/SpeciesStatus/declaration.ts';
+
+const speciesStatus = defineElement<SpeciesStatusAttributes>(speciesStatusDeclaration);
 
 speciesStatus({ status: 'vulnerable', class: 'panel' });
 
@@ -214,8 +215,13 @@ const { chart } = elementsFromManifest<{ chart: { kind?: string } }>(manifest);
 `defineElement` takes a declaration or a plugin's `pluginSchema` entry — they are the same shape, which is why a
 plugin type costs nothing extra to author.
 
-Hand the same declaration to `authorSpace` and the plugin is checked like a built-in element — authored as its own
-type, or hosted by `custom({ renderType })`:
+Why one way, when `custom({ renderType })` renders a registered component too: an element of the plugin's own type is
+what the builder adds when somebody drops it, it is typed by the declaration, and it resolves the same on every host —
+registered by a project's server, or loaded from the plugin a space installed on Plitzi, where a pack of several folders
+is ONE plugin and only its main element is registered up front (`JsxManager` and `Custom` both fall back to the
+installed plugin for the rest). `custom` stays for a component registered by name with no declaration.
+
+Hand the same declaration to `authorSpace` and the plugin is checked like a built-in element:
 
 ```ts
 authorSpace(space, { plugins: [declaration] });
