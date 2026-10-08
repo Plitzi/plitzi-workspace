@@ -2,7 +2,7 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { useMemo } from 'react';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { collectServerElements, pageSeoContext, pageSeoText } from '@plitzi/sdk-shared/schema/serverElements';
+import { collectServerElements, pageServerContext, pageSeoText } from '@plitzi/sdk-shared/schema/serverElements';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 export type PageHeadProps = {
@@ -26,7 +26,7 @@ const PageHead = ({ pageId, title, description }: PageHeadProps) => {
   // A render with no schema in its store (a widget, a test) has no providers to read.
   const elements = useMemo(() => (isRecord(flat) ? collectServerElements({ flat }, pageId) : []), [flat, pageId]);
   const context = useMemo(
-    () => pageSeoContext(elements, serverData ?? {}, { routeParams, queryParams }),
+    () => pageServerContext(elements, serverData ?? {}, { routeParams, queryParams }),
     [elements, serverData, routeParams, queryParams]
   );
   const shownTitle = pageSeoText(title, context);

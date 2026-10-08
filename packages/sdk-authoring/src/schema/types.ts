@@ -264,6 +264,13 @@ export interface PageSpec {
   seoTitle?: string;
   seoDescription?: string;
   /**
+   * One expression over the same answers that says this address shows nothing — a record that is not there: the page is
+   * sent with status 404, rendered as written. For a record read by a provider the page shares with others, in its
+   * layout, whose own `notFound` cannot say it for one page: `'{{ not (apiContainer_feed.topics|find('slug',
+   * navigation.routeParams.slug)) }}'`.
+   */
+  notFound?: string;
+  /**
    * Who this page is FOR, and the trap is that omitting it is not the same as `public`.
    *
    * A page with no `accessLevel` is authored for everybody and matches in both states. `public` means *signed-out

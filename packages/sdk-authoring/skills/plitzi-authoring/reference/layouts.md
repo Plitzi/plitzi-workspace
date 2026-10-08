@@ -139,8 +139,10 @@ Every page is now its content and nothing else, and every page is guaranteed the
   suggests writing your own (`not-found-page`): say it in the space's words.
 - **A page that exists but finds nothing** — `/products/:slug` for a slug no product has — is sent with 404 too when
   its server provider says so: `notFound: "{{ not (source.data.products|find('slug', navigation.routeParams.slug)) }}"`,
-  one expression against its answer, on a `runtime: 'server'` provider of the page (not of its layout, which every
-  page shares). The page renders as written: show its "not found" part with `visible`.
+  one expression against its answer, on a `runtime: 'server'` provider of the page. When the record comes from a
+  provider of its layout, which every page shares, the page says it: `notFound` on the page reads its server providers
+  by name — `"{{ not (apiContainer_feed.products|find('slug', navigation.routeParams.slug)) }}"`. The page renders as
+  written: show its "not found" part with `visible`.
 
 ## Styles follow the same rule
 

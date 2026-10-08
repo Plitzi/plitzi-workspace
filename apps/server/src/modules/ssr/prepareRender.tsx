@@ -2,7 +2,12 @@ import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { pluginDeclarationOf, pluginTypesOf } from '@plitzi/sdk-shared/plugins/declaration';
 import { pageElementTypes } from '@plitzi/sdk-shared/schema/pageElements';
-import { collectServerElements, notFoundProvider, pageSeoContext } from '@plitzi/sdk-shared/schema/serverElements';
+import {
+  collectServerElements,
+  notFoundProvider,
+  pageNotFound,
+  pageServerContext
+} from '@plitzi/sdk-shared/schema/serverElements';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state/paintedState';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';
@@ -196,16 +201,16 @@ export const prepareRender = async (
         : undefined;
 
   const navigation = { routeParams: pageMatch?.routeParams ?? {}, queryParams: req.query };
-  // A title written as a template says the record the page shows: its server providers have answered by now.
-  const pageSeo = resolvePageSeo(
-    schema,
-    pageMatch?.pageId,
-    pageSeoContext(serverElements, rscData?.serverData ?? {}, navigation)
-  );
-  // A provider whose answer says this address shows nothing: the page goes out with status 404, rendered as written.
+  // What the page's own templates read: its server providers have answered by now.
+  const pageContext = pageServerContext(serverElements, rscData?.serverData ?? {}, navigation);
+  // A title written as a template says the record the page shows.
+  const pageSeo = resolvePageSeo(schema, pageMatch?.pageId, pageContext);
+  // A provider — or the page itself, over a provider its layout shares — saying this address shows nothing: the page
+  // goes out with status 404, rendered as written.
   const notFound =
     pageMatch !== undefined && rscData?.serverData !== undefined
-      ? notFoundProvider(serverElements, rscData.serverData, navigation) !== undefined
+      ? notFoundProvider(serverElements, rscData.serverData, navigation) !== undefined ||
+        pageNotFound(schema?.flat[pageMatch.pageId]?.attributes.notFound, pageContext)
       : false;
 
   const server = buildServerInfo(req, config, {

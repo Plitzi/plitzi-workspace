@@ -132,7 +132,14 @@ afterEach(async () => {
   await fs.rm(root, { recursive: true, force: true });
 });
 
-describe('serveProject — a space held in the project', () => {
+/**
+ * Each test here starts the project's author script in a process of its own, builds plugins and waits for a save to
+ * travel back — up to 15 s a wait (`listen`, the runs). Held to the default 5 s, a test timed out under a loaded machine
+ * before the waits it was written with could end, and failed with nothing wrong.
+ */
+const PROJECT_TEST_TIMEOUT = 30_000;
+
+describe('serveProject — a space held in the project', { timeout: PROJECT_TEST_TIMEOUT }, () => {
   /** What a refusal leaves of the process: what it printed, and the code it exited with — instead of exiting. */
   const refusal = async (options: Parameters<typeof serveProject>[0]): Promise<{ said: string; code: unknown }> => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);

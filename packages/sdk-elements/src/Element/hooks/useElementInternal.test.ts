@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { describe, it, expect } from 'vitest';
 
 import { getProps } from './useElementInternal';

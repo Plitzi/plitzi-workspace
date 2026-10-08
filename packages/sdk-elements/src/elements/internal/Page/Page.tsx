@@ -24,6 +24,11 @@ export type PageProps = {
   seoEnabled?: boolean;
   seoPageTitle?: string;
   seoPageDescription?: string;
+  /**
+   * A template over the page's server providers and `navigation` that says this address shows nothing — a record that
+   * is not there: the page server sends it with status 404, rendered as written. Read there only (`serverTemplates`).
+   */
+  notFound?: string;
   className?: string;
   layout?: string;
   layoutContainer?: string;

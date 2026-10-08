@@ -30,10 +30,15 @@
   providers (its layouts' too) and `navigation` — `'{{ apiContainer_post.title }} — Blog'`. The server evaluates them
   as it writes the head, from the answers it already has; the browser evaluates the same over `rsc.data`, so the tab
   follows a navigation from record to record. One that reads anything else — a browser provider, `state` — is refused
-  (`seo-template`): it was written into the head as it was, braces included. A declaration's `serverTemplates` names
+  (`page-template`): it was written into the head as it was, braces included. A declaration's `serverTemplates` names
   the attributes the page server evaluates against a context of its own (a page's title and description, a provider's
   `notFound`): the element runtime leaves them as written — interpolated where the page renders, a `|default(…)`
   resolved to its fallback before the head could read the providers — and the authoring lint reads the same list.
+- **A page says when its address shows nothing** (`@plitzi/sdk-server`, `@plitzi/sdk-authoring`): `notFound` on the
+  page, one expression over the same answers its title reads — `"{{ not (apiContainer_feed.topics|find('slug',
+  navigation.routeParams.slug)) }}"` — sends it with status 404, rendered as written. A provider's own `notFound` reads
+  only its answer, and one in a layout is every page's: a record read from the layout had no way to say it was not
+  there, and the page answered 200.
 - **`plitzi upgrade` says where fields became optional** (`@plitzi/cli`): for a project last upgraded before 0.38.9,
   each `formControl(…)` with no `required`, at its file and line — said, never written. And a `.gitkeep` is written only
   in a folder with nothing else in it (`src/functions/` with code got one).

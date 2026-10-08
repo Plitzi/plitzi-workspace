@@ -1455,7 +1455,7 @@ describe('lintSpace', () => {
       ).toEqual([]);
     });
 
-    it('seo-template', () => {
+    it('page-template', () => {
       // The fixture's home page has no server provider: only `navigation` is there when the head is written.
       const seo = (template: string) =>
         lintSpace(
@@ -1464,7 +1464,7 @@ describe('lintSpace', () => {
             home.attributes.seoEnabled = true;
             home.attributes.seoPageTitle = template;
           })
-        ).errors.filter(issue => issue.code === 'seo-template');
+        ).errors.filter(issue => issue.code === 'page-template');
 
       expect(seo('{{ navigation.routeParams.slug }} — Blog')).toEqual([]);
       expect(seo('{{ state.title }} — Blog')[0].message).toContain('`seoTitle` reads `state`');

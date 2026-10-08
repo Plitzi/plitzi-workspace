@@ -102,7 +102,7 @@ The space is not written until these are fixed.
 | `motion-no-tag` | a `motion` on an element with no tag of its own — nothing to move | the motion on what it wraps, or a `subType` on it |
 | `no-pages` | a space with no pages | `pages: [{ id: 'home', name: 'Home', slug: '', body: [] }]` |
 | `not-found-in-browser` | `notFound` on a provider asked from the browser — its answer arrives after the page was sent with its status | `runtime: 'server'` on the provider, or `visible` on the page's "not found" part instead |
-| `not-found-not-a-template` | `notFound` that is not one `{{ expression }}` against the answer — never `true`, so never a 404 | `notFound: '{{ source.found == false }}'` |
+| `not-found-not-a-template` | `notFound`, a provider's or a page's, that is not one `{{ expression }}` — never `true`, so never a 404 | `notFound: '{{ source.found == false }}'` |
 | `notifications-shape` | `notifications` with a field it does not have, or a value that is not one CSS value | the field it suggests, or one it lists; one CSS value, like 'var(--card)', '12px' or '500' |
 | `outside-ancestor` | an element that reads the state of an element it is not inside | nest it in the element the message names |
 | `page-access-level` | an `accessLevel` that is not one the router reads | one of the values the message lists |
@@ -110,6 +110,7 @@ The space is not written until these are fixed.
 | `page-route-taken` | two pages at one address for the same visitors | another slug — or `accessLevel` `'public'` on one and `'authenticated'` on the other |
 | `page-target-unknown` | a link or `navigate` to a page id that does not exist | an existing page id, or a path with its slash (`'/about'`) |
 | `page-target-url` | a URL, `mailto:` or `tel:` in a link left in page mode | `mode: 'external'` |
+| `page-template` | a template in a page's `seoTitle`, `seoDescription` or `notFound` that reads what is not there when the server answers — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read | read the record from a provider with `runtime: 'server'` on the page or its layout — `'{{ apiContainer_post.title }} — Blog'` — or words of its own |
 | `page-without-slug` | a page with no `slug` | `slug: ''` for the home page, its path for any other: `'about'`, `'blog/:slug'` |
 | `part-missing` | a compound element — a carousel, a tab container, a dropdown — without a part it renders through | the part the message names, inside it (`carousel()` writes its own track) |
 | `prop-missing` | an instance without a prop its component requires | `component('card', { props: { name: … } })`, or bind it |
@@ -127,7 +128,6 @@ The space is not written until these are fixed.
 | `rule-set-mixed` | a style that writes its rules beside `states`, `variants` or `ancestors` instead of under `css` | `{ css: { desktop: { … } }, states: { hover: { … } } }` — the rules under `css`, each of the others beside it |
 | `selector-invalid` | a `selector` that is not a CSS class name | letters, digits, `-` and `_` |
 | `selector-taken` | a `selector` that is a declared class, or another element's | `class` to share rules; a selector of an element's own is its alone |
-| `seo-template` | a template in a page's `seoTitle` or `seoDescription` that reads what is not there when the server writes the head — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read | read the record from a provider with `runtime: 'server'` on the page or its layout — `'{{ apiContainer_post.title }} — Blog'` — or words of its own |
 | `server-data-in-browser` | a provider asking for the project's own data (`/data/…`, read by its server from `src/data/` and never served) from the browser | `runtime: 'server'` on the provider: the page arrives with the data in it |
 | `server-provider-in-component` | a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's | put the provider on the page, around the instance, and hand the component its rows as a prop |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |

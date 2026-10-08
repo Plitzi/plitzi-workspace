@@ -16,6 +16,7 @@ describe('PAGE_SPEC_FIELDS', () => {
       accessLevel: 'authenticated',
       seoTitle: 'About — Example',
       seoDescription: 'Who we are.',
+      notFound: '{{ navigation.routeParams.slug == "gone" }}',
       body: []
     };
     const { schema } = authorSpace({
@@ -62,8 +63,32 @@ describe('a page’s seoTitle and seoDescription', () => {
 
   it('refuses what is not there yet: a browser provider, or a template it cannot read', () => {
     expect(write({ seoTitle: '{{ apiContainer_capsule-data.title }} — Shop' }, 'client')).toThrow(
-      /`seoTitle` reads `apiContainer_capsule-data`, which is not there when the head is written/
+      /`seoTitle` reads `apiContainer_capsule-data`, which is not there when the server answers/
     );
     expect(write({ seoDescription: '{{ state.title }}' }, 'server')).toThrow(/`seoDescription` reads `state`/);
+  });
+
+  it('takes a notFound of the page itself over the same answers, and refuses one that is never true', () => {
+    expect(write({ seoTitle: 'Capsule' }, 'server')).not.toThrow();
+    const notFound = (template: string) => () =>
+      authorSpace({
+        name: 'Seo',
+        permanentUrl: 'seo',
+        pages: [
+          {
+            id: 'capsule',
+            name: 'Capsule',
+            slug: 'c/:slug',
+            notFound: template,
+            body: [apiContainer({ id: 'capsule-data', query: '/data/capsules.json', runtime: 'server' })]
+          }
+        ]
+      });
+
+    expect(
+      notFound('{{ not (apiContainer_capsule-data.data|find("slug", navigation.routeParams.slug)) }}')
+    ).not.toThrow();
+    expect(notFound('true')).toThrow(/which is never `true`/);
+    expect(notFound('{{ not state.capsule }}')).toThrow(/`notFound` reads `state`/);
   });
 });

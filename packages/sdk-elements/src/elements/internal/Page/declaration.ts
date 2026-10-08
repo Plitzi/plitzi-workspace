@@ -9,7 +9,7 @@ export type PageAttributes = AuthorableAttributes<PageProps>;
 
 const declaration = elementDeclaration<PageAttributes>()({
   type: 'page',
-  serverTemplates: ['seoPageTitle', 'seoPageDescription'],
+  serverTemplates: ['seoPageTitle', 'seoPageDescription', 'notFound'],
   triggers: {
     onPageLoad: {
       action: 'onPageLoad',

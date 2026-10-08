@@ -4,7 +4,7 @@ import {
   collectServerElements,
   hasServerElements,
   notFoundProvider,
-  pageSeoContext,
+  pageServerContext,
   pageSeoText
 } from './serverElements';
 
@@ -153,7 +153,7 @@ describe('pageSeoText', () => {
     ...element('capsule', [], 'server'),
     definition: { ...element('capsule', [], 'server').definition, type: 'apiContainer' }
   };
-  const context = pageSeoContext(
+  const context = pageServerContext(
     [capsule],
     { capsule: { title: 'Montaña nº 37' } },
     {

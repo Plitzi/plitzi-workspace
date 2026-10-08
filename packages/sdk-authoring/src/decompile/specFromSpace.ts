@@ -177,6 +177,7 @@ const PAGE_ATTRIBUTES = new Set([
   'seoEnabled',
   'seoPageTitle',
   'seoPageDescription',
+  'notFound',
   'enabled'
 ]);
 
@@ -1125,6 +1126,7 @@ class SpecReader {
         : undefined;
     const seoTitle = typeof attributes.seoPageTitle === 'string' ? attributes.seoPageTitle : '';
     const seoDescription = typeof attributes.seoPageDescription === 'string' ? attributes.seoPageDescription : '';
+    const notFound = typeof attributes.notFound === 'string' ? attributes.notFound : '';
 
     if (BINDING_CATEGORIES.some(category => bindingsOf(page.definition.bindings, category).length > 0)) {
       this.correct('dropped-field', `${where} had bindings of its own, which a page cannot declare.`, page.id);
@@ -1137,6 +1139,7 @@ class SpecReader {
       ...(isDefault ? { isDefault: true } : index === 0 ? { isDefault: false } : {}),
       ...(seoTitle ? { seoTitle } : {}),
       ...(seoDescription ? { seoDescription } : {}),
+      ...(notFound ? { notFound } : {}),
       ...(folder ? { folder } : {}),
       ...(layout ? { layout } : {}),
       ...(accessLevel ? { accessLevel } : {}),

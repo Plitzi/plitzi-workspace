@@ -25,7 +25,7 @@ type PageSeoAttributes = {
  * page that opted out. Blank strings are treated as absent for the same reason — the builder writes one for a
  * field the author cleared, and an empty <title> is worse than a generic one.
  *
- * Either may be a template over the page's server providers and the address (`pageSeoContext`): a detail page says
+ * Either may be a template over the page's server providers and the address (`pageServerContext`): a detail page says
  * the title of the record it shows, in the HTML a crawler reads. One that does not evaluate is nothing, as a blank is.
  */
 export const resolvePageSeo = (

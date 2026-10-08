@@ -110,10 +110,10 @@ export const AUTHORING_CODES = {
     means: 'a page that sends visitors it is not for to a page the space does not have',
     fix: "a page's id or slug (`''` is the home page), or a full URL"
   },
-  'seo-template': {
+  'page-template': {
     kind: 'refused',
     means:
-      "a template in a page's `seoTitle` or `seoDescription` that reads what is not there when the server writes the head — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read",
+      "a template in a page's `seoTitle`, `seoDescription` or `notFound` that reads what is not there when the server answers — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read",
     fix: "read the record from a provider with `runtime: 'server'` on the page or its layout — `'{{ apiContainer_post.title }} — Blog'` — or words of its own"
   },
   'folder-undeclared': {
@@ -550,7 +550,7 @@ export const AUTHORING_CODES = {
   },
   'not-found-not-a-template': {
     kind: 'refused',
-    means: '`notFound` that is not one `{{ expression }}` against the answer — never `true`, so never a 404',
+    means: "`notFound`, a provider's or a page's, that is not one `{{ expression }}` — never `true`, so never a 404",
     fix: "`notFound: '{{ source.found == false }}'`"
   },
   'server-data-in-browser': {

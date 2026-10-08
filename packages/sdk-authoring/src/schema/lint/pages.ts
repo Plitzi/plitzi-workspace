@@ -58,26 +58,39 @@ const folderPath = (ctx: LintContext, folderId: string): string => {
   return parts.join('/');
 };
 
-/** A page's title and description, by the attribute the document holds and the field of the page that writes it. */
-const SEO_FIELDS = [
+/** A page's own templates, by the attribute the document holds and the field of the page that writes it. */
+const PAGE_TEMPLATES = [
   ['seoPageTitle', 'seoTitle'],
-  ['seoPageDescription', 'seoDescription']
+  ['seoPageDescription', 'seoDescription'],
+  ['notFound', 'notFound']
 ] as const;
 
+/** One expression, whole: what a `notFound` is, and anything else is never `true`. */
+const ONE_EXPRESSION = /^\s*\{\{[\s\S]*\}\}\s*$/;
+
 /**
- * A page's title or description written as a template is evaluated by the server as it writes the head, and again in
- * the browser over the same answers: it reads only what is there by then — the server providers of the page and of its
- * layouts, by their source names (`apiContainer_capsule`), and `navigation`. Anything else is not there yet, and the
- * head would carry the deployment's own title instead of the one written.
+ * A page's title, description and `notFound` written as templates are evaluated by the server as it answers — the head,
+ * the status — and the title again in the browser over the same answers: they read only what is there by then, the
+ * server providers of the page and of its layouts by their source names (`apiContainer_capsule`), and `navigation`.
+ * Anything else is not there yet: the head would carry the deployment's own title, and the address would answer 200.
  */
-const checkSeoTemplates = (ctx: LintContext, pageId: string, where: string): void => {
+const checkPageTemplates = (ctx: LintContext, pageId: string, where: string): void => {
   const page = ctx.element(pageId);
   const providers = collectServerElements({ flat: ctx.flat }, pageId).map(element =>
     getSourceName(element.definition.type, element.id)
   );
   const readable = new Set(['navigation', ...providers]);
-  for (const [attribute, field] of SEO_FIELDS) {
+  for (const [attribute, field] of PAGE_TEMPLATES) {
     const template = page?.attributes[attribute];
+    if (attribute === 'notFound' && typeof template === 'string' && template !== '' && !ONE_EXPRESSION.test(template)) {
+      ctx.error(
+        'not-found-not-a-template',
+        `${where} has \`notFound: ${JSON.stringify(template)}\`, which is never \`true\`: it is one expression over the page's server providers, \`'{{ not apiContainer_post.found }}'\`.`,
+        pageId
+      );
+      continue;
+    }
+
     if (typeof template !== 'string' || !hasTemplateSyntax(template)) {
       continue;
     }
@@ -91,14 +104,14 @@ const checkSeoTemplates = (ctx: LintContext, pageId: string, where: string): voi
     const why =
       issues.length > 0
         ? `cannot be read as written — ${issues.join('; ')}`
-        : `reads ${unreadable.map(name => `\`${name}\``).join(', ')}, which is not there when the head is written`;
+        : `reads ${unreadable.map(name => `\`${name}\``).join(', ')}, which is not there when the server answers`;
     const can =
       providers.length > 0
         ? providers.map(name => `\`${name}\``).join(', ')
         : 'none: no provider on it runs on the server';
     ctx.error(
-      'seo-template',
-      `${where}: \`${field}\` ${why}. A page's title is written by the server before the page reaches the browser, from its server providers — ${can} — and \`navigation\`. Read the record from a provider with \`runtime: 'server'\` on the page (or its layout), or write words of its own.`,
+      'page-template',
+      `${where}: \`${field}\` ${why}. A page's own templates are evaluated by the server before the page reaches the browser, from its server providers — ${can} — and \`navigation\`. Read the record from a provider with \`runtime: 'server'\` on the page (or its layout), or write words of its own.`,
       pageId
     );
   }
@@ -118,7 +131,7 @@ export const lintPages = (ctx: LintContext): void => {
     }
 
     const where = ctx.describe(pageId);
-    checkSeoTemplates(ctx, pageId, where);
+    checkPageTemplates(ctx, pageId, where);
     const { accessLevel, slug, folder } = page.attributes;
     if (accessLevel !== undefined && accessLevel !== '' && !ACCESS_LEVELS.includes(accessLevel as 'public')) {
       ctx.error(

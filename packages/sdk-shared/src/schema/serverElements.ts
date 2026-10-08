@@ -108,12 +108,12 @@ export const notFoundProvider = (
   })?.id;
 
 /**
- * What a page's title and description read when they are templates: every server provider of the page and of the
- * shells around it, by the name its descendants read it by (`apiContainer_capsule`), with its answer — and
+ * What a page's own templates read — its title, its description, its `notFound`: every server provider of the page and
+ * of the shells around it, by the name its descendants read it by (`apiContainer_capsule`), with its answer — and
  * `navigation`. The server has both before it writes the head, and the browser has the same answer in `rsc.data`, so
  * the two write one title.
  */
-export const pageSeoContext = (
+export const pageServerContext = (
   elements: Element[],
   serverData: Record<string, unknown>,
   navigation: ServerNavigation
@@ -130,7 +130,7 @@ const TEMPLATE = /\{[{%]/;
 
 /**
  * A page's title or description as the head carries it: its words, or its template evaluated against
- * `pageSeoContext`. Blank, or a template that did not evaluate — it comes back as its own text — is nothing, and the
+ * `pageServerContext`. Blank, or a template that did not evaluate — it comes back as its own text — is nothing, and the
  * deployment's own title stays: braces never reach a tab or a link preview.
  */
 export const pageSeoText = (value: unknown, context: Record<string, unknown>): string | undefined => {
@@ -143,3 +143,11 @@ export const pageSeoText = (value: unknown, context: Record<string, unknown>): s
 
   return text === '' || TEMPLATE.test(text) ? undefined : text;
 };
+
+/**
+ * Whether a page's own `notFound` — a template over `pageServerContext` — says the address shows nothing: a record
+ * read by a provider the page shares with others, in its layout, which cannot say it for any one page itself. Only
+ * `true` counts, as for a provider's.
+ */
+export const pageNotFound = (template: unknown, context: Record<string, unknown>): boolean =>
+  typeof template === 'string' && template !== '' && processTwigValue(template, context) === true;

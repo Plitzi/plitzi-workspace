@@ -95,7 +95,7 @@ Adding a page is adding an entry; two entries of one id or slug are refused as a
 records a visitor browses — a product, a post — a single page with a route param (`slug: 'posts/:postId'`) reading
 the record is the answer instead: one page, as many addresses as records. Its `seoTitle` can say the record —
 `'{{ apiContainer_post.title }} — Blog'` — read from a provider on the page with `runtime: 'server'`, or from
-`navigation`: the server writes the head with it, so a link preview shows it. Anything else is refused (`seo-template`).
+`navigation`: the server writes the head with it, so a link preview shows it. Anything else is refused (`page-template`).
 
 ## Names
 

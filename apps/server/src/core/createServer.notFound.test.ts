@@ -42,9 +42,27 @@ const schema: Schema = {
         notFound: '{{ source.data|filter(p => p.slug == navigation.routeParams.slug)|length == 0 }}'
       },
       definition: { ...node('post-data', 'apiContainer', 'post', [], 'post').definition, runtime: 'server' }
+    },
+    // The page says it itself, over a provider with no `notFound` of its own — as one in a layout, shared by pages.
+    tag: {
+      ...node('tag', 'page', 'tag', ['tag-data']),
+      attributes: {
+        name: 'Tag',
+        slug: 't/:slug',
+        folder: '',
+        notFound: '{{ not (apiContainer_tag-data.data|find("slug", navigation.routeParams.slug)) }}',
+        seoEnabled: true,
+        seoPageTitle:
+          '{{ (apiContainer_tag-data.data|find("slug", navigation.routeParams.slug)).name|default("No tag") }}'
+      }
+    },
+    'tag-data': {
+      ...node('tag-data', 'apiContainer', 'tag', [], 'tag'),
+      attributes: { query: '/data/tags.json' },
+      definition: { ...node('tag-data', 'apiContainer', 'tag', [], 'tag').definition, runtime: 'server' }
     }
   },
-  pages: ['home', 'lost', 'post'],
+  pages: ['home', 'lost', 'post', 'tag'],
   rsc: { enabled: true }
 };
 
@@ -55,6 +73,7 @@ beforeAll(async () => {
   base = mkdtempSync(path.join(tmpdir(), 'plitzi-not-found-'));
   mkdirSync(path.join(base, 'data'), { recursive: true });
   writeFileSync(path.join(base, 'data/posts.json'), JSON.stringify([{ slug: 'here' }]));
+  writeFileSync(path.join(base, 'data/tags.json'), JSON.stringify([{ slug: 'ops', name: 'Operations' }]));
 
   server = createServer({
     port: PORT,
@@ -93,5 +112,15 @@ describe('an address that shows nothing', () => {
     expect(found.status).toBe(200);
     expect(gone.status).toBe(404);
     expect(await gone.text()).toContain('data-plitzi-el="post"');
+  });
+
+  it('answers 404 where the page says so over its server providers, and titles the record it shows', async () => {
+    const found = await fetch(`${BASE}/t/ops`);
+    const gone = await fetch(`${BASE}/t/nothing`);
+
+    expect(found.status).toBe(200);
+    expect(await found.text()).toContain('<title>Operations</title>');
+    expect(gone.status).toBe(404);
+    expect(await gone.text()).toContain('<title>No tag</title>');
   });
 });
