@@ -8,6 +8,7 @@
 '@plitzi/sdk-authoring': patch
 '@plitzi/cli': patch
 '@plitzi/sdk-mcp': patch
+'@plitzi/plitzi-sdk': patch
 ---
 
 - **`server.cache.invalidate` drops what a page is rendered from** (`@plitzi/sdk-server`): the pages, the RSC answers
@@ -117,12 +118,34 @@
   sequence) is left out of the contrast measure, which compared `color` with the tile behind it and failed `verify`
   in the theme whose text colour was close to the tile. A symbol drawn as text (✓, ★) is still measured.
 
+- **`declared-callback-target`** (refused): a value beside `on` in `declaredCallback(…, { on, date })` — written as
+  `openModal`'s target reads — was read nowhere, and the step ran without it. Refused, with the `params` it goes in
+  (`{ on: 'calendar', params: { date } }`) and whether it is one of the callback's declared params.
+- The skill's list rows show the typed form beside the untyped one: with `items` typed by a sample, `r.item` is a path
+  (`from: r.item.title`), not text to put in a template string.
+- **`slot-not-class`** (refused): rules written in place in a slot — `slots: { error: [fieldError, { color }] }`, past
+  the type in JavaScript or a spec rebuilt from JSON — were taken for a declaration with no rules, and `authorSpace`
+  failed later with `Cannot read properties of undefined (reading 'desktop')`, naming nothing. Refused where the slot
+  is written, naming the slot and the element, with the `styles()` declaration to hand instead.
+
 ## CLI
 
 - **`page shot --click` (and `--clip`, `--wait-for`, `--scroll-to`, `--steps`) takes any selector**: a value that is
   not an element's name (letters, digits, `-`, `_`) is a selector, CSS or Playwright's own (`button:has-text("Orbit")`).
   It was wrapped as a name, and an invalid selector ended the command with Playwright's stack trace; it is now refused
   with the reason.
+
+- **`plitzi functions add <package>`**: a package the functions use comes with them, as a function carries its
+  dependencies. Installed in the project, it is bundled (web APIs only, minified, its licence kept) into
+  `src/functions/vendor/<package>.js`, with a `.d.ts` re-exporting the installed package's types, imported as
+  `./vendor/<package>.js` and pushed, built and run with the rest — nothing is resolved anywhere else, so the builder,
+  the sandbox and the push are unchanged. A package that reaches Node (`fs`, `node:*`) is refused, naming what it
+  reached; one past the functions' 1 MB is too; one that reads `process`/`Buffer` is warned about. The build's refusal
+  of a package import now names the command.
+- **`page shot` targets**: a bare word is an element's name, or — no element named so — a tag (`textarea`); resolved on
+  the loaded page for `--click`, `--clip`, `--scroll-to`, `--wait-for` and `--steps`. In `--steps`, `type` takes a
+  quoted element with spaces (`type ".panel textarea" hola`) — it was cut at its first space and typed the rest — and
+  fails when the click leaves no field focused, rather than sending the keys to the page's shortcuts.
 
 ## Server
 
@@ -143,4 +166,26 @@
   and MySQL queues implement it, and the shared contract tests it. **MySQL**: `action_jobs` gains `job_key` (and the
   `action_jobs_key` index), added on first use; with `createTables: false`, run that statement of
   `mysqlJobSchemaUpgrades()`. A queue of a deployment's own implements `cancelPending` (`09-schedules` shows one).
+- **A project's `kv` file has one holder** (`@plitzi/sdk-server`): `createFileKv` takes `<file>.lock` with its pid;
+  a second process — another `npm start`, a `--watch` left running — is refused, naming the first (`the server of
+  "orbita", on port 8080`) instead of both writing their whole map over each other's changes, and a lock whose process
+  is gone is taken over. `close()` writes what is pending and lets go. A server with `workers` opens the file once, in
+  the primary, and its workers reach it through the fleet (`fleetKv`): each used to open a copy of its own.
+- **A self-hosted project's credentials** (`@plitzi/sdk-server`, `@plitzi/cli`): `serveProject` answers
+  `getCredential` from `PLITZI_CREDENTIALS` in `.env` — one JSON object, credential id → its keys — so
+  `ctx.fetch({ credential })`, a connector and an `http.request` step work on the project's own server, not only in
+  `functions dev`. The same variable for both (it was `PLITZI_FUNCTIONS_CREDENTIALS`, read by the CLI alone); a value
+  that is not that object is refused with how to write it, instead of every credential going missing.
+- **`HOST` beyond loopback says where to open it**: with `HOST=0.0.0.0`, `serveProject` prints the machine's network
+  addresses — what a tablet on the same Wi-Fi opens — and that anyone on that network can. `.env.example` names `HOST`
+  and `PLITZI_CREDENTIALS`.
+
+## SDK
+
+- **`useElementSize(ref)`** (`@plitzi/plitzi-sdk`): the size a plugin's own box is drawn at, followed as it changes —
+  what `useDisplayMode()` cannot say: a tablet held upright is `mobile` by the window and still a week wide by the
+  plugin's box. `undefined` until measured, so the server's page and the hydrated one agree. The breakpoints are
+  unchanged.
+- The functions docs say how a task's `params` types (how the builder edits them: `codemirror-json`) and an action's
+  `input` types (what the value is: `json`) correspond.
 

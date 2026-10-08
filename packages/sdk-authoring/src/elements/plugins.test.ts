@@ -114,6 +114,15 @@ describe('authorSpace with plugins', () => {
       params: { all: true }
     });
   });
+
+  /** `{ on, all }` read like `openModal`'s target, and the step ran with no `all`: refused, with where it goes. */
+  it('refuses a value beside `on`, saying it goes in `params`', () => {
+    const misplaced: { on: string } = Object.assign({ on: 'seats' }, { all: true });
+
+    expect(() => declaredCallback(declaration, 'reset', misplaced)).toThrow(
+      /"all" beside `on`, where nothing reads it: a callback's values go in `params` — `\{ on: 'seats', params: \{ all: true \} \}`/
+    );
+  });
 });
 
 /**

@@ -1431,6 +1431,10 @@
       "types": "./dist/style/useDisplayMode.d.ts",
       "import": "./dist/style/useDisplayMode.mjs"
     },
+    "./style/useElementSize": {
+      "types": "./dist/style/useElementSize.d.ts",
+      "import": "./dist/style/useElementSize.mjs"
+    },
     "./theme": {
       "types": "./dist/theme/index.d.ts",
       "import": "./dist/theme/index.mjs"

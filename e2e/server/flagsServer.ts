@@ -30,5 +30,5 @@ const server = createServer({
   cacheTtlMs: 0
 });
 
-server.listen(PORT, '127.0.0.1');
+await server.listen(PORT, '127.0.0.1');
 console.log(`[e2e] the flags space${debugMode ? ', debugging authorized,' : ''} on http://127.0.0.1:${PORT}/`);

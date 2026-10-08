@@ -100,6 +100,6 @@ const server = createServer({
   })
 });
 
-server.listen(PORT, '127.0.0.1');
+await server.listen(PORT, '127.0.0.1');
 closeOnSignals(server);
 console.log(`[e2e] a space loading a CLI-built plugin on http://127.0.0.1:${PORT}/`);

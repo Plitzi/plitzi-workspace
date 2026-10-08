@@ -3,8 +3,8 @@
  * queue that fills, a restart, an opening watched frame by frame. What `--click` cannot say: a wait between two
  * presses, a picture only where it is asked for, text typed into a field.
  *
- *   click <element>          a press — its name (`data-plitzi-el`) or a CSS selector, inside a plugin too
- *   type <element> <text>    text typed into a field
+ *   click <element>          a press — its name (`data-plitzi-el`), a tag or a CSS selector, inside a plugin too
+ *   type <element> <text>    text typed into a field — an element with spaces in quotes: type ".panel textarea" hi
  *   press <key>              a key, as Playwright names it: Enter, Escape, ArrowDown…
  *   wait <ms>                time passing
  *   wait-for <element>       until it is on the page and shown (10 s at most)
@@ -64,12 +64,16 @@ export const parseSteps = (script: string, every: number): ShotStep[] | { proble
         steps.push({ kind: name, target: argument });
         break;
       case 'type': {
-        const [target, ...words] = rest;
-        if (!target || words.length === 0) {
-          return { problem: `${at}: type needs an element and the text — type <element> <text>` };
+        // An element with a space in it is quoted — read whole, rather than cut at its first space into element and text.
+        const quoted = /^(["'])(.+?)\1\s+(.+)$/s.exec(rest.join(' '));
+        const [target, text] = quoted ? [quoted[2], quoted[3]] : [rest[0], rest.slice(1).join(' ')];
+        if (!target || text === '') {
+          return {
+            problem: `${at}: type needs an element and the text — type <element> <text>, type ".panel textarea" hi`
+          };
         }
 
-        steps.push({ kind: 'type', target, text: unquoted(words.join(' ')) });
+        steps.push({ kind: 'type', target, text: unquoted(text) });
         break;
       }
       case 'press':

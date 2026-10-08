@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { networkInterfaces } from 'node:os';
 import path from 'node:path';
 
 import { assertProjectLayout, layoutFindingText } from '@plitzi/sdk-shared/project/layout';
@@ -25,7 +26,9 @@ import { createServer } from '../../core/createServer';
 import { freePort } from '../../core/freePort';
 import { closeOnSignals } from '../../core/server/closeOnSignals';
 import { isFleetWorker } from '../../core/server/fleet/role';
+import { fleetKv } from '../../core/server/fleet/stores';
 import { consoleLogger } from '../../helpers/serverLog';
+import { credentialsFromEnv } from '../actions/runtime/credentials';
 import { createFileKv } from '../actions/runtime/fileKv';
 import { loadFunctions } from '../functions/load';
 import { loadRuntime, loadRuntimeModule } from '../runtime/bundle';
@@ -33,7 +36,8 @@ import { serveRuntime } from '../runtime/stages';
 
 import type { AuthoredDocuments } from './watchSpace';
 import type { ServerConfig } from '../../core/createServer';
-import type { ActionLookups } from '../actions/types';
+import type { FileKv } from '../actions/runtime/fileKv';
+import type { ActionCredential, ActionLookups } from '../actions/types';
 import type { ConnectorManifest } from '../connectors';
 import type { ActionEntry, Environment, SSRPageAdapters, SSRServer } from '@plitzi/sdk-shared';
 
@@ -142,11 +146,33 @@ const cloudAdapters = (pluginNames: string[]): SSRPageAdapters => {
   });
 };
 
+const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost']);
+
+/** Where another device reaches a server listening on `host`: this machine's own network addresses, when it is open. */
+const networkUrls = (host: string, port: number): string[] => {
+  if (LOOPBACK.has(host)) {
+    return [];
+  }
+
+  const addresses =
+    host === '0.0.0.0' || host === '::'
+      ? Object.values(networkInterfaces())
+          .flat()
+          .flatMap(entry => (entry && entry.family === 'IPv4' && !entry.internal ? [entry.address] : []))
+      : [host];
+
+  return addresses.map(address => `http://${address}:${String(port)}/`);
+};
+
 const actionLookups = (
   actions: readonly ActionEntry[],
-  connectors: ReadonlyMap<string, ConnectorManifest>
+  connectors: ReadonlyMap<string, ConnectorManifest>,
+  credentials: Readonly<Record<string, ActionCredential>>
 ): ActionLookups => ({
   getAction: (_spaceId, actionId) => Promise.resolve(actions.find(entry => entry.id === actionId)),
+  // The project's own: a self-hosted space has no credential store but its environment (`PLITZI_CREDENTIALS`).
+  getCredential: (_spaceId, identifier) =>
+    Promise.resolve(Object.hasOwn(credentials, identifier) ? credentials[identifier] : undefined),
   listActions: () => Promise.resolve([...actions]),
   getConnector: (_spaceId, connectorId) => Promise.resolve(connectors.get(connectorId)),
   listScheduledSpaces: () => Promise.resolve([SPACE_ID])
@@ -248,6 +274,18 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       : undefined);
   const runtime = spaceRuntime && (await serveRuntime(spaceRuntime, { env: process.env, publicUrl }));
 
+  // What the actions and functions keep, in one file this process holds — a second server of the project is refused,
+  // naming this one, rather than both writing over each other's changes. A worker reaches it through the primary.
+  let keptKv: FileKv | undefined;
+  const kv = fleetKv(() => {
+    keptKv = createFileKv({
+      file: path.join(root, KV_FILE),
+      owner: `the server of "${name}", on port ${String(port)}`
+    });
+
+    return keptKv;
+  });
+
   // `name` is what `/health` answers with, and `tmp/dev-server.json` records: how a tool knows it reached THIS project.
   const server = createServer(
     {
@@ -268,9 +306,9 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       // `kv` outlives a restart; a deployment with several processes names its own store (`action.kv`).
       action: {
         signingSecret: process.env.PLITZI_SIGNING_SECRET,
-        kv: createFileKv({ file: path.join(root, KV_FILE) }),
+        kv,
         ...serverOptions.action,
-        ...(actions ? { lookups: actionLookups(actions, connectors) } : {})
+        ...(actions ? { lookups: actionLookups(actions, connectors, credentialsFromEnv()) } : {})
       }
     },
     { preAuth: [spaceFailure.stage, ...(runtime ? [runtime.stage] : [])] }
@@ -283,6 +321,11 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });
     writeFileSync(path.join(root, DEV_SERVER_FILE), `${JSON.stringify({ name, port, url }, null, 2)}\n`);
     console.log(`pages on ${url}/`);
+    // Open past this machine — a tablet on the same Wi-Fi: where to point it, and that anyone on that network can too.
+    const network = networkUrls(host, port);
+    if (network.length > 0) {
+      console.log(`also on ${network.join(', ')} — anyone on this network can open it (HOST=${host})`);
+    }
   }
 
   const watching = developing
@@ -303,6 +346,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     watching.forEach(stop => stop());
     await server.close();
     await runtime?.close();
+    await keptKv?.close();
   };
   // A deploy, a restart or ^C closes the server instead of dropping it: requests in flight are answered, and the jobs
   // it runs finish first. A second ^C exits at once.

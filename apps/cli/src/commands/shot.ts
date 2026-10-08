@@ -164,6 +164,8 @@ interface View {
 
 interface Taken {
   page: BrowserPage;
+  /** How each picture of it is taken: the element `clip` named, found on this page. */
+  how: Framing;
   png: Uint8Array;
   scheme: Scheme;
   settled: number;
@@ -186,19 +188,36 @@ const DRIFT_PX = 2;
 /** An arrival that waits for the scroll and has not had it: one waiting to be seen, or one tied to the scroll. */
 const WAITING_FOR_SCROLL = '[data-motion-on="view"]:not([data-motion-seen]), [data-motion-on="scroll"]';
 
-/**
- * An element's name — letters, digits, `-` and `_`, as an id is written — or else a selector, CSS or Playwright's own
- * (`button:has-text("Orbit")`, `text=Saved`, `role=button[name="Publish"]`).
- */
-const selectorOf = (target: string): string => (/^[\w-]+$/.test(target) ? `[data-plitzi-el="${target}"]` : target);
+const BARE = /^[\w-]+$/;
+
+/** A bare word: an element's name — letters, digits, `-` and `_`, as an id is written — or else a tag (`textarea`). */
+const namedBy = (target: string): string => `[data-plitzi-el="${target}"]`;
+
+/** What a wait waits for: an element by name or, a bare word naming none, a tag — whichever shows first. */
+const awaited = (target: string): string => (BARE.test(target) ? `${namedBy(target)}, ${target}` : target);
 
 /**
- * Whether a target finds an element (1) or none (0), or why it is no selector at all: Playwright throws on one it
- * cannot read, and an uncaught throw ended the command with a stack trace.
+ * A target found on the page: an element's name, a tag no element is named by (`textarea`), or a selector — CSS or
+ * Playwright's own (`button:has-text("Orbit")`, `text=Saved`, `role=button[name="Publish"]`). With how many it finds
+ * (none is one not on the page), or why it is no selector at all: Playwright throws on one it cannot read, and an
+ * uncaught throw ended the command with a stack trace.
  */
-const countOf = async (page: BrowserPage, target: string): Promise<number | { problem: string }> => {
+const targetOn = async (
+  page: BrowserPage,
+  target: string
+): Promise<{ selector: string; found: boolean } | { problem: string }> => {
   try {
-    return await page.locator(selectorOf(target)).first().count();
+    if (!BARE.test(target)) {
+      return { selector: target, found: (await page.locator(target).first().count()) > 0 };
+    }
+
+    if ((await page.locator(namedBy(target)).first().count()) > 0) {
+      return { selector: namedBy(target), found: true };
+    }
+
+    return (await page.locator(target).first().count()) > 0
+      ? { selector: target, found: true }
+      : { selector: namedBy(target), found: false };
   } catch (error) {
     return {
       problem: `${target} is neither an element's name nor a selector the page can read: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
@@ -206,9 +225,9 @@ const countOf = async (page: BrowserPage, target: string): Promise<number | { pr
   }
 };
 
-const framing = (view: { clip?: string; viewport?: boolean; scrollTo?: string }): Framing => {
-  if (view.clip) {
-    return { kind: 'element', selector: selectorOf(view.clip) };
+const framing = (view: { viewport?: boolean; scrollTo?: string }, clip?: string): Framing => {
+  if (clip) {
+    return { kind: 'element', selector: clip };
   }
 
   return view.viewport || view.scrollTo ? { kind: 'viewport' } : { kind: 'page' };
@@ -256,28 +275,40 @@ const pictureOf = async (
   const sentTo = origin ? sentElsewhere(page, new URL(url).pathname) : undefined;
 
   for (const target of [view.waitFor, view.scrollTo, view.clip]) {
-    const found = target === undefined ? 0 : await countOf(page, target);
-    if (typeof found !== 'number') {
-      return found;
+    const read = target === undefined ? undefined : await targetOn(page, target);
+    if (read && 'problem' in read) {
+      return read;
     }
   }
 
   if (view.waitFor) {
-    const found = await page.waitForSelector(selectorOf(view.waitFor), { timeout: 10_000 }).catch(() => null);
+    const found = await page.waitForSelector(awaited(view.waitFor), { timeout: 10_000 }).catch(() => null);
     if (!found) {
       return { problem: `${view.waitFor} did not appear on ${url} within 10 s.` };
     }
   }
 
+  /** The element a target names, once it is there: what it is scrolled to, or pictured alone. */
+  const shown: Record<string, string> = {};
   for (const target of [view.scrollTo, view.clip]) {
-    if (target && !(await page.waitForSelector(selectorOf(target), { timeout: 10_000 }).catch(() => null))) {
+    if (target === undefined) {
+      continue;
+    }
+
+    const there = await page.waitForSelector(awaited(target), { timeout: 10_000 }).catch(() => null);
+    const read = there ? await targetOn(page, target) : undefined;
+    if (!read || 'problem' in read || !read.found) {
       return { problem: `${target} is not on ${url}.` };
     }
+
+    shown[target] = read.selector;
   }
 
   if (view.scrollTo) {
-    await page.locator(selectorOf(view.scrollTo)).first().scrollIntoViewIfNeeded();
+    await page.locator(shown[view.scrollTo]).first().scrollIntoViewIfNeeded();
   }
+
+  const how = framing(view, view.clip === undefined ? undefined : shown[view.clip]);
 
   await withoutDevTools(page);
   // Counted before the walk below, which shows every one of them.
@@ -287,7 +318,7 @@ const pictureOf = async (
   // A whole page is taken without scrolling: a lazy picture below the fold would be a hole, and an arrival waiting
   // for the scroll would be one too. Loaded, unrolled (the SDK scrolls a pane of its own, which a full-page picture
   // cannot extend) and held at its end, the page is what a reader scrolling down ends up seeing.
-  const whole = framing(view).kind === 'page';
+  const whole = how.kind === 'page';
   const pictures = whole ? await page.evaluate(loadImages, IMAGES_BUDGET_MS) : undefined;
   if (whole) {
     await page.evaluate(unrollPage, undefined);
@@ -299,7 +330,8 @@ const pictureOf = async (
 
   return {
     page,
-    png: await capture(page, framing(view)),
+    how,
+    png: await capture(page, how),
     scheme: await paintedScheme(page, view.scheme ?? 'light'),
     settled,
     unloaded: pictures?.missing ?? 0,
@@ -490,16 +522,16 @@ const clickThrough = async (
   const moments: Moment[] = [{ label: 'before', png: taken.png }];
   const clicked: { target: string; changed: number }[] = [];
   for (const target of clicks) {
-    const found = await countOf(taken.page, target);
-    if (typeof found !== 'number') {
-      return found;
+    const read = await targetOn(taken.page, target);
+    if ('problem' in read) {
+      return read;
     }
 
-    if (found === 0) {
-      return { problem: `${target} is not on the page: --click takes an element's name or a selector.` };
+    if (!read.found) {
+      return { problem: `${target} is not on the page: --click takes an element's name, a tag or a selector.` };
     }
 
-    const element = taken.page.locator(selectorOf(target)).first();
+    const element = taken.page.locator(read.selector).first();
 
     const before = moments[moments.length - 1].png;
     try {
@@ -565,15 +597,30 @@ const playSteps = async (
   for (const [index, step] of steps.entries()) {
     try {
       if (step.kind === 'click' || step.kind === 'type') {
-        const element = page.locator(selectorOf(step.target)).first();
-        if ((await element.count()) === 0) {
+        const read = await targetOn(page, step.target);
+        if ('problem' in read || !read.found) {
           return {
-            problem: `Step ${String(index + 1)}: ${step.target} is not on the page — its name or a CSS selector.`
+            problem: `Step ${String(index + 1)}: ${'problem' in read ? read.problem : `${step.target} is not on the page — its name, a tag or a selector; one with spaces in quotes: type ".panel textarea" hola`}.`
           };
         }
 
-        await element.click({ timeout: 3000 });
+        await page.locator(read.selector).first().click({ timeout: 3000 });
+        // Typed into what has the focus: a click that left it on no field sent the text to the page's own shortcuts.
         if (step.kind === 'type') {
+          const editable = await page.evaluate(() => {
+            const focused = document.activeElement;
+
+            return (
+              focused instanceof HTMLElement &&
+              (focused.isContentEditable || focused.matches('input, textarea, select'))
+            );
+          }, undefined);
+          if (!editable) {
+            return {
+              problem: `Step ${String(index + 1)}: clicking ${step.target} leaves no field focused, so the text would go to the page itself — name the field: type ".panel textarea" hola`
+            };
+          }
+
           await page.keyboard.type(step.text);
         }
       } else if (step.kind === 'press') {
@@ -581,7 +628,7 @@ const playSteps = async (
       } else if (step.kind === 'wait') {
         await page.waitForTimeout(step.ms);
       } else if (step.kind === 'wait-for') {
-        await page.waitForSelector(selectorOf(step.target), { timeout: 10_000 });
+        await page.waitForSelector(awaited(step.target), { timeout: 10_000 });
       } else if (step.kind === 'shot') {
         await picture(step.label ?? `step ${String(index + 1)}`);
       } else {
@@ -720,14 +767,14 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       still:
         !options.clip && !options.scrollTo && !options.viewport && (options.frames ?? 0) <= 1 && clicks.length === 0
     };
-    const how = framing(view);
-
     const taken = await pictureOf(browser, `${where.origin}${pathname}`, view, where.origin);
     if ('problem' in taken) {
       fail(taken.problem);
 
       return;
     }
+
+    const { how } = taken;
 
     // Named by the theme the page was painted in, which is the space's default when none was asked for.
     const name = pathname === '/' ? 'home' : pathname.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');

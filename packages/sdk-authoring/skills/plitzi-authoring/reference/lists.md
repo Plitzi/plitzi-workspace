@@ -9,6 +9,7 @@ list bound to its records (see the provider in data-and-visibility).
 ```ts
 list({ id: 'games', class: gameGrid, items: 'catalog.data.games', row: 'game-card' })   // a component per game
 list({ id: 'games', items: 'catalog.data.games', row: r => listItem({ children: [text({ from: `${r.item}.title` })] }) })
+// typed by a sample (`items: catalog.data.games`): `r.item` is a path — `from: r.item.title`, never `${r.item}.title`
 list({ id: 'plans', items: ['Free', 'Pro'], children: [listItem({ children: [text({ from: 'plans.item' })] })] })  // fixed
 ```
 

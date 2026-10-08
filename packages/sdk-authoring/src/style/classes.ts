@@ -40,6 +40,18 @@ export const styles = (name: string, rules: StyleSpec): StyleDeclaration =>
 export const isStyleDeclaration = (value: StyleSpec | StyleDeclaration): value is StyleDeclaration =>
   'rules' in value && 'name' in value && typeof value.name === 'string';
 
+/**
+ * Whether a value is a class at all — a name, or a `styles()` declaration. The types say a class list holds nothing
+ * else, but a space written in JavaScript, or rebuilt from JSON, arrives without them.
+ */
+export const isClassRef = (value: unknown): value is ClassRef =>
+  typeof value === 'string' ||
+  (typeof value === 'object' &&
+    value !== null &&
+    'rules' in value &&
+    'name' in value &&
+    typeof value.name === 'string');
+
 /** The class name a value names, however it was written. */
 export const className = (value: ClassRef): string => (typeof value === 'string' ? value : value.name);
 

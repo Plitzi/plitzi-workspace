@@ -37,6 +37,7 @@ import usePluginRoute from '@plitzi/sdk-shared/server/usePluginRoute';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { styleCacheFromDocument } from '@plitzi/sdk-shared/style';
 import useDisplayMode from '@plitzi/sdk-shared/style/useDisplayMode';
+import useElementSize from '@plitzi/sdk-shared/style/useElementSize';
 
 import App from './App';
 import { getEnvironmentServer } from './config';
@@ -430,6 +431,9 @@ export {
   elementChildren,
   // Which of the space's breakpoints the page shows, by the widths its styles are compiled at.
   useDisplayMode,
+  // The size a plugin's own box is drawn at — narrower than the window beside a sidebar, wider than `mobile` says on a
+  // tablet held upright — `undefined` until measured, so the server's page and the hydrated one agree.
+  useElementSize,
   // The other half of `useRscData`. An element whose data is resolved on the server could read the payload and had
   // no way to ask for a fresh one — so anything that has to keep up with a feed had to fetch it itself from the
   // browser, which is the whole thing a server-resolved element exists to avoid.

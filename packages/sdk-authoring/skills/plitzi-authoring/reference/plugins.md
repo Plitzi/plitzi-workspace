@@ -83,8 +83,8 @@ import { elementChildren } from '@plitzi/plitzi-sdk';
 ```
 
 Never write `style` onto an element the plugin does not render: nothing promises to keep it. Its boxes share one
-stacking context, the plugin's. `useDisplayMode()` names the breakpoint showing — `desktop`, `tablet` or `mobile` — at
-the widths the space's styles use, instead of a width of the plugin's own.
+stacking context, the plugin's. `useDisplayMode()` names the breakpoint showing (`desktop`, `tablet`, `mobile`) at the
+space's widths; `useElementSize(ref)`, its own box (`undefined` until measured).
 
 ## Its own server code
 

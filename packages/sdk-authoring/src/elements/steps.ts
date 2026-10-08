@@ -392,6 +392,16 @@ export const declaredCallback = <D extends DeclaresInteractions>(
   target: { on: string; params?: Record<string, unknown> }
 ): StepSpec => {
   const declared = declaration.callbacks?.[callback];
+  // Beside `on` a value is read nowhere — `{ on, date }` was a step with no date, and nothing said so: it goes in `params`.
+  const stray = Object.keys(target).filter(key => key !== 'on' && key !== 'params');
+  if (stray.length > 0) {
+    const named = Object.keys(declared?.params ?? {});
+    const moved = stray.map(key => `${key}: ${JSON.stringify(Reflect.get(target, key))}`).join(', ');
+    throw new AuthoringError(
+      'declared-callback-target',
+      `declaredCallback(…, '${callback}') is given ${stray.map(key => `"${key}"`).join(', ')} beside \`on\`, where nothing reads it${stray.every(key => named.includes(key)) ? ` — ${stray.length === 1 ? 'it is a param' : 'they are params'} of "${callback}"` : ''}: a callback's values go in \`params\` — \`{ on: '${target.on}', params: { ${moved} } }\`.`
+    );
+  }
 
   return {
     type: 'callback',

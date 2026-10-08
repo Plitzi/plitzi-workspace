@@ -9,11 +9,13 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   changes aside, `functions pull`, apply them again, `functions push`. Never `--force` over somebody else's work to get past it.
 - **A push is checked, not just stored.** A problem comes back as `src/functions/<file>:<line> <message>` and nothing is
   saved — fix it and push again. `index.ts` must default-export `defineFunctions({ … })`; files import each other by
-  relative path and `@plitzi/sdk-server/functions`, nothing else. `src/data/` is read with `ctx.data('x.json')`, never
+  relative path and `@plitzi/sdk-server/functions`, nothing else — a package (installed in the project) is bundled in with
+  `functions add <package>`, as `./vendor/<package>.js`; one that needs Node is refused. `src/data/` is read with `ctx.data('x.json')`, never
   imported (`dev` reads the project's).
 - **`try` runs the saved draft for real** (its fetches and writes happen). `dev` runs `src/functions/` on this machine with
   the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
-  nothing to the space; `PLITZI_FUNCTIONS_CREDENTIALS='{"stripe":{"apiKey":"…"}}'` gives it credentials to name.
+  nothing to the space. Credentials are `PLITZI_CREDENTIALS={"stripe":{"apiKey":"…"}}` in `.env` — what `dev` and the
+  project's own server hand `ctx.fetch({ credential })`; in the cloud, the space's Credentials.
 - **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or
   `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
 - **What must happen in N seconds whether or not a page is open** — a turn that runs out, a bot's move — is

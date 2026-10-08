@@ -24,6 +24,14 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
     ]);
   });
 
+  /** Cut at its first space, `.composer textarea hola` typed "textarea hola" into `.composer`, and said nothing. */
+  it('reads an element with a space in it whole when it is quoted', () => {
+    expect(parseSteps('type ".oc-composer textarea" Café a las 9; type \'textarea\' "hola"', 500)).toEqual([
+      { kind: 'type', target: '.oc-composer textarea', text: 'Café a las 9' },
+      { kind: 'type', target: 'textarea', text: 'hola' }
+    ]);
+  });
+
   it('says which step is wrong, and what the steps are', () => {
     expect(parseSteps('click a; tap b', 500)).toEqual({
       problem: 'step 2 ("tap b"): "tap" is not a step — the steps are click, type, press, wait, wait-for, shot, frames'
@@ -32,7 +40,8 @@ press Enter; wait-for .gm__capsule; shot opened; frames 2`,
       problem: 'step 1 ("wait soon"): "soon" is not a whole number from 1 to 30000'
     });
     expect(parseSteps('type title', 500)).toEqual({
-      problem: 'step 1 ("type title"): type needs an element and the text — type <element> <text>'
+      problem:
+        'step 1 ("type title"): type needs an element and the text — type <element> <text>, type ".panel textarea" hi'
     });
     expect(parseSteps('# only a note', 500)).toEqual({
       problem: '--steps has no step: click, type, press, wait, wait-for, shot or frames, separated by ";"'

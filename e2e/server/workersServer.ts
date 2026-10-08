@@ -50,5 +50,5 @@ const server = createServer({
   ]
 });
 
-server.listen(PORT, '127.0.0.1');
+await server.listen(PORT, '127.0.0.1');
 closeOnSignals(server);

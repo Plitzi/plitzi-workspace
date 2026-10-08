@@ -4,6 +4,7 @@ import { createIsolateRunner } from './sandbox/isolate';
 import { functionsInHand } from './space';
 import { functionTryEntry } from './tryEntry';
 import { createActionsModule } from '../actions';
+import { credentialsFromEnv } from '../actions/runtime/credentials';
 import { dataDirLookup } from '../actions/runtime/projectData';
 
 import type { FunctionsSource } from './build';
@@ -12,7 +13,7 @@ import type { ActionRunResult, ActionsModule } from '../actions';
 import type { FunctionsProblem, SSRUser } from '@plitzi/sdk-shared';
 
 export type LocalFunctionsOptions = {
-  /** Credentials `ctx.fetch` may name, by id — a project's own, from its environment; none by default. */
+  /** Credentials `ctx.fetch` may name, by id — by default the project's own, from its environment (`PLITZI_CREDENTIALS`). */
   credentials?: Record<string, Record<string, string>>;
   /** As the platform's: a plan's limits, for code that must fit them there. */
   limits?: Partial<FunctionLimits>;
@@ -47,7 +48,7 @@ const LOCAL_USER: SSRUser = {
  * does. What `plitzi functions dev` is made of; needs `isolated-vm` and `core-js` installed, as any runner does.
  */
 export const createLocalFunctions = ({
-  credentials = {},
+  credentials = credentialsFromEnv(),
   limits,
   dataDir,
   fetchImpl

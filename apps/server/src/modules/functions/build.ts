@@ -95,7 +95,7 @@ const sourcePlugin = (files: Map<string, string>): esbuild.Plugin => ({
         return {
           errors: [
             {
-              text: `"${args.path}" cannot be imported: functions import their own files and ${CONTRACT_SPECIFIER}, nothing else`
+              text: `"${args.path}" cannot be imported: functions import their own files and ${CONTRACT_SPECIFIER}, nothing else — a package of web APIs is bundled in as one of their files with \`plitzi functions add ${args.path.startsWith('node:') ? '<package>' : args.path}\``
             }
           ]
         };

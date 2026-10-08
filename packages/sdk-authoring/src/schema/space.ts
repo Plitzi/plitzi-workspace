@@ -20,6 +20,7 @@ import {
   BREAKPOINTS,
   classNames,
   classRefs,
+  isClassRef,
   isStyleDeclaration,
   modifierClassName,
   sameBlocks,
@@ -743,9 +744,17 @@ class SpaceAuthor {
       };
       // Rules of the element's own on top of its classes are not a declaration: they are written with the element.
       collect(spec.class === undefined ? undefined : splitClassList(spec.class).refs, element);
-      Object.entries(spec.slots ?? {}).forEach(([slot, value]) =>
-        collect(value, () => `the "${slot}" slot of ${element()}`)
-      );
+      Object.entries(spec.slots ?? {}).forEach(([slot, value]) => {
+        const entries: readonly unknown[] = Array.isArray(value) ? value : [value];
+        if (!entries.every(isClassRef)) {
+          throw new AuthoringError(
+            'slot-not-class',
+            `The "${slot}" slot of ${element()} is handed rules of its own, or no class at all. A slot wears classes only: declare the rules with \`styles()\` and hand the declaration — \`slots: { ${slot}: [base, styles('…', { … })] }\`.`
+          );
+        }
+
+        collect(value, () => `the "${slot}" slot of ${element()}`);
+      });
       spec.children?.forEach(walk);
     };
 

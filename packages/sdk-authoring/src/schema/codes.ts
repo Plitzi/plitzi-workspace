@@ -116,6 +116,11 @@ export const AUTHORING_CODES = {
       "a template in a page's `seoTitle`, `seoDescription` or `notFound` that reads what is not there when the server answers — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read",
     fix: "read the record from a provider with `runtime: 'server'` on the page or its layout — `'{{ apiContainer_post.title }} — Blog'` — or words of its own"
   },
+  'declared-callback-target': {
+    kind: 'refused',
+    means: "a `declaredCallback` target with a key beside `on` and `params` — read nowhere, so the step runs without it",
+    fix: "the value in `params`: `{ on: 'calendar', params: { date } }`"
+  },
   'folder-undeclared': {
     kind: 'refused',
     means: 'a page, a layout or a folder filed in a folder the space does not declare',
@@ -219,6 +224,11 @@ export const AUTHORING_CODES = {
     kind: 'refused',
     means: 'a `slots` key the element type does not have — its class would dress nothing',
     fix: 'one of the slots `plitzi explain <type>` lists; the element itself takes `class`'
+  },
+  'slot-not-class': {
+    kind: 'refused',
+    means: 'a `slots` entry that is not a class — rules written in place, or nothing — which a slot cannot wear',
+    fix: 'the rules as a `styles()` declaration, handed to the slot beside its other classes'
   },
   'class-conflict': {
     kind: 'refused',

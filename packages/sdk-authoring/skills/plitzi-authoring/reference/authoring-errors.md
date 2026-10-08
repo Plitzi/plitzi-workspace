@@ -64,6 +64,7 @@ The space is not written until these are fixed.
 | `css-property-twice` | one property written twice in a rule set — `paddingTop` beside `'padding-top'` — so one would silently win | keep one |
 | `css-property-unknown` | a CSS property that does not exist | the property it suggests; a custom property starts with `--` |
 | `css-value` | an empty CSS value, or one with `;` or `{}` | one value per property; leave a property out instead of writing it empty |
+| `declared-callback-target` | a `declaredCallback` target with a key beside `on` and `params` — read nowhere, so the step runs without it | the value in `params`: `{ on: 'calendar', params: { date } }` |
 | `element-ids-target` | a step refreshing containers by id (`invalidateElements`, `invalidateQueries({ elements })`) naming one the space does not have, or one that is not an `apiContainer` | the id of the `apiContainer` whose data the step changes: `invalidateElements: ['posts']` |
 | `element-load-strategy` | a `loadStrategy` the element does not take | one of the values the message lists |
 | `element-rejected` | an element the schema refused to hold | the problem listed with it |
@@ -131,6 +132,7 @@ The space is not written until these are fixed.
 | `server-provider-in-component` | a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's | put the provider on the page, around the instance, and hand the component its rows as a prop |
 | `setting-misplaced` | `settings.computed` or `settings.channels` written inside `settings` | `computed` and `channels` at the top of the space |
 | `slot-children` | children handed to an instance outside its slots | `children: { slotName: [ … ] }`; a component with no slots takes no children |
+| `slot-not-class` | a `slots` entry that is not a class — rules written in place, or nothing — which a slot cannot wear | the rules as a `styles()` declaration, handed to the slot beside its other classes |
 | `slot-unknown` | a component slot that is not an element of its tree | the id of an element inside the component — usually an empty container |
 | `source-field-unknown` | a path into a typed source that its sample does not have | read a field the sample has, or add the field to the sample |
 | `state-key-list` | `settings.transientState` / `paintedState` that is not a list of top-level state keys | `transientState: ['demoStep']` — a dotted path names its top key |

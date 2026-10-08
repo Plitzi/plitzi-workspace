@@ -13,6 +13,7 @@ import { edit } from './commands/edit';
 import { explainCommand } from './commands/explain';
 import { fix } from './commands/fix';
 import { devFunction, pullFunctions, pushFunctions, tryFunction } from './commands/functions';
+import { addFunctionsPackage } from './commands/functionsAdd';
 import { importPage } from './commands/importPage';
 import packPluginCommand from './commands/packPlugin';
 import packSourceCommand from './commands/packSource';
@@ -601,6 +602,15 @@ functions
   .option(...API_OPTION)
   .option(...DRY_RUN_OPTION)
   .action((options: FunctionsOptions) => pushFunctions(options));
+
+functions
+  .command('add')
+  .argument('<package>', 'An npm package the project installed — ical.js, @scope/name')
+  .description(
+    `Bundle a package into ${FUNCTIONS_DIR}/vendor/ for the functions to import, as a function carries its dependencies — web APIs only`
+  )
+  .option(...DRY_RUN_OPTION)
+  .action((name: string, options: DryRunOptions) => addFunctionsPackage(name, options));
 
 functions
   .command('try')

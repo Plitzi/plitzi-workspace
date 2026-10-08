@@ -27,7 +27,7 @@ describe('createFileKv', () => {
     const before = createFileKv({ file });
     await before.set('saved:layout', '{"windows":2}');
     await before.increment('visits', 3);
-    await before.flush();
+    await before.close();
 
     const after = createFileKv({ file });
 
@@ -40,7 +40,7 @@ describe('createFileKv', () => {
     const before = createFileKv({ file });
     await before.set('cache', 'fresh', 60);
     await before.set('gone', 'soon', 1);
-    await before.flush();
+    await before.close();
 
     const document = JSON.parse(fs.readFileSync(file, 'utf8')) as { entries: Record<string, { expiresAt?: number }> };
     expect(document.entries.cache.expiresAt).toBeGreaterThan(Date.now());
@@ -61,7 +61,7 @@ describe('createFileKv', () => {
     const before = createFileKv({ file });
     await before.set('a', '1');
     await before.delete('a');
-    await before.flush();
+    await before.close();
 
     expect(await createFileKv({ file }).get('a')).toBeUndefined();
   });
@@ -72,7 +72,7 @@ describe('createFileKv', () => {
     const renames = vi.spyOn(fs.promises, 'rename');
     try {
       await Promise.all(Array.from({ length: 50 }, (_, index) => kv.set(`key:${String(index)}`, String(index))));
-      await kv.flush();
+      await kv.close();
 
       expect(renames.mock.calls.length).toBeGreaterThan(0);
       expect(renames.mock.calls.length).toBeLessThan(5);
@@ -82,6 +82,31 @@ describe('createFileKv', () => {
     } finally {
       renames.mockRestore();
     }
+  });
+
+  /** Two processes on one file each write their map over the other's: a second is refused, naming the first. */
+  it('is held by one store at a time, and says who holds it', async () => {
+    const file = fileIn();
+    const first = createFileKv({ file, owner: 'the server of "orbita", on port 8080' });
+
+    expect(() => createFileKv({ file })).toThrow(
+      `${file} is in use by process ${String(process.pid)} — the server of "orbita", on port 8080`
+    );
+
+    await first.close();
+    expect(fs.existsSync(`${file}.lock`)).toBe(false);
+    await createFileKv({ file }).close();
+  });
+
+  it('takes over a file whose holder is gone', async () => {
+    const file = fileIn();
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    // No process runs as pid 2^30 on any machine these tests run on: a crash that left its lock behind.
+    fs.writeFileSync(`${file}.lock`, JSON.stringify({ pid: 2 ** 30, since: '2026-10-08T00:00:00.000Z' }));
+
+    const kv = createFileKv({ file });
+    await kv.set('a', '1');
+    await kv.close();
   });
 
   it('refuses a file it did not write, naming it and what to do', () => {

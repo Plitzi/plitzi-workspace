@@ -22,7 +22,7 @@ npx @plitzi/cli plugin upload                  # that zip, on the space you work
   several separated by commas), `--api` for the platform, `--json` for a tool or an agent.
 - **`--dry-run` says what it would do, and does none of it** — on every command that writes or sends: `create`,
   `plugin add`, `runtime add`, `space pull`, `space push`, `plugin pack`, `source pack`, `page import`, `plugin upload`, `functions pull`/
-  `functions push`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills update`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
+  `functions push`/`functions add`, `runtime push`/`start`/`stop`/`size`/`vars`, `skills update`, `doctor --fix`. Each file it would write (`+` new, `~` replaced, `-`
   removed), what it would install or run, what it would send and where. It still reads what it needs to say so — the
   project, the files it would send, the space it would pull, signing in for that. `upgrade` and `space fix` only show until
   `--write`.
@@ -239,8 +239,9 @@ waiting for the scroll shown as it ends — in `tmp/shots/` unless `--out` says 
 
 Both load a page as one that watches its realtime channels: it hears them — a topic the server refuses is still
 reported — and says nothing on them, so nobody on the page sees it arrive, join their members or send. `--presence`
-makes it take part as a visitor does. `--click` in `page shot` takes an element's name or any selector, CSS or
-Playwright's own (`button:has-text("Orbit")`).
+makes it take part as a visitor does. `--click` in `page shot` takes an element's name, a tag no element is named by
+(`textarea`) or any selector, CSS or Playwright's own (`button:has-text("Orbit")`). In `--steps`, an element with a
+space in it is quoted — `type ".panel textarea" hola` — and `type` fails when the click leaves no field focused.
 
 `page shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
 is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
@@ -770,13 +771,14 @@ plitzi functions pull                                              # the space's
 plitzi functions push                                              # src/functions/ saved as the space's draft, built and checked
 plitzi functions try seismic.feed --params '{"minMagnitude":"4"}'  # one task of the saved draft, in the sandbox
 plitzi functions dev seismic.feed --params '{}' --watch            # on this machine, as the platform runs it
+plitzi functions add ical.js                                       # an installed package bundled into src/functions/vendor/
 ```
 
 A space's own server code — tasks its actions run as steps, routes under `/fn/` — and `src/functions/` is a working copy
 of it: `.plitzi/functions.json` keeps what was pulled, so `functions pull` refuses to overwrite what is not pushed (`--force`
 throws it away) and `functions push` refuses when the space moved on since. A problem comes back as
 `src/functions/<file>:<line> <message>`. `dev` runs with the project's own `@plitzi/sdk-server` (`isolated-vm` and
-`core-js` beside it); credentials come from `PLITZI_FUNCTIONS_CREDENTIALS`. See `docs/en/functions.md`.
+`core-js` beside it); credentials come from `PLITZI_CREDENTIALS` (`.env`), as they do for the project's server. See `docs/en/functions.md`.
 
 ## Credentials
 

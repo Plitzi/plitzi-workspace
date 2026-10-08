@@ -427,33 +427,6 @@ const projectRunner = async (root: string): Promise<LocalRunner | undefined> => 
   return undefined;
 };
 
-/** `PLITZI_FUNCTIONS_CREDENTIALS`, a JSON object of credential id → its keys: what `ctx.fetch` may name locally. */
-const localCredentials = (): Record<string, Record<string, string>> => {
-  const raw = process.env.PLITZI_FUNCTIONS_CREDENTIALS;
-  try {
-    const value: unknown = raw ? JSON.parse(raw) : {};
-
-    return isRecord(value)
-      ? Object.fromEntries(
-          Object.entries(value).flatMap(([id, keys]) =>
-            isRecord(keys)
-              ? [
-                  [
-                    id,
-                    Object.fromEntries(
-                      Object.entries(keys).filter((pair): pair is [string, string] => typeof pair[1] === 'string')
-                    )
-                  ]
-                ]
-              : []
-          )
-        )
-      : {};
-  } catch {
-    return {};
-  }
-};
-
 export interface FunctionsDevOptions {
   params?: string;
   watch?: boolean;
@@ -494,7 +467,8 @@ export const devFunction = async (task: string, options: FunctionsDevOptions): P
     return;
   }
 
-  const local = runner.createLocalFunctions({ credentials: localCredentials(), dataDir: path.join(root, DATA_DIR) });
+  // Its credentials are the project's environment (`PLITZI_CREDENTIALS`), read by the runner as the project's server reads them.
+  const local = runner.createLocalFunctions({ dataDir: path.join(root, DATA_DIR) });
   const run = async (): Promise<void> => {
     const loaded = await local.load(await readFunctionsFiles(root));
     if (!loaded.ok) {

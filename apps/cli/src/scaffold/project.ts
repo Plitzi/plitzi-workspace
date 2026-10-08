@@ -273,7 +273,7 @@ export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space reloads it' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\`, which sets \`NODE_ENV=production\` itself: the compiled server, with no TypeScript in the process.`
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one; \`HOST=0.0.0.0\` opens it to your network — a tablet on the same Wi-Fi — and prints the address to open there). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space reloads it' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\`, which sets \`NODE_ENV=production\` itself: the compiled server, with no TypeScript in the process.`
     : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
 
 const spaceSection = (answers: CreateAnswers): string => {
@@ -545,6 +545,12 @@ PLITZI_SIGNING_SECRET=
 
 # Left out: 8080, or the next free port while developing.
 # PORT=8080
+
+# Left out: this machine only. 0.0.0.0 opens it to the network — a tablet on the same Wi-Fi, and anyone else on it.
+# HOST=0.0.0.0
+
+# The secrets the space's actions and functions name — ctx.fetch's credential, a connector's: credential id → its keys.
+# PLITZI_CREDENTIALS={"google":{"clientId":"…","clientSecret":"…"}}
 `;
 
 /** A `.env` with the signing key `plitzi create` made for the project in its place. */

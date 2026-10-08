@@ -51,5 +51,5 @@ const server = createServer(
   { preAuth: [probeAnswers] }
 );
 
-server.listen(PORT, '127.0.0.1');
+await server.listen(PORT, '127.0.0.1');
 console.log(`[e2e] a space with users on http://127.0.0.1:${PORT}/`);

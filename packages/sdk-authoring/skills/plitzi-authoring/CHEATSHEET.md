@@ -44,6 +44,7 @@ svg(svgFile(new URL('./logo.svg', import.meta.url)))  // a file, compacted: svgF
 fontAwesome({ icon: 'fa-solid fa-xmark' })
 list({ id: 'rows', items: 'p.data.rows', row: 'row-card' })    // a <ul>; a component per row, its root an <li>
 list({ id: 'rows', items: 'p.data.rows', row: r => listItem({ children: [text({ from: `${r.item}.title` })] }) })
+// typed items (site.data.rows): r.item is a path — from: r.item.title
 carousel({ id: 'hero', items: 'p.data.slides', autoplay: 5000, row: 'slide-card', children: [/* carouselNext('hero') arrows */] })
                                                // rows follow their item's `id`, or `itemKey: 'slug'`
 apiContainer({ id: 'p', query: '/data/x.json', cache: true, children })   // publishes p.data; no box of its own

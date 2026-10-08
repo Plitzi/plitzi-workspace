@@ -51,8 +51,14 @@ export default defineFunctions({
 });
 ```
 
+- **A task's `params` name how the builder edits each one** — `text`, `textarea`, `number`, `boolean`, `select`,
+  `codemirror-json` for JSON — while an action's `input` names what the value is (`text`, `number`, `boolean`, `date`,
+  `json`, `file`). A JSON value is `codemirror-json` in a task's params and `json` in an action's input.
 - **Files import each other by relative path**, and `@plitzi/sdk-server/functions` — nothing else: no package, no
-  Node built-in (`fs`, `process`, `Buffer`). Saving refuses anything else, with the file and line.
+  Node built-in (`fs`, `process`, `Buffer`). Saving refuses anything else, with the file and line. A package the code
+  needs — an iCal reader, a CSV parser — comes with it, as a function carries its dependencies: installed in the
+  project, `plitzi functions add ical.js` bundles it into `src/functions/vendor/` (web APIs only; one that reaches Node
+  is refused), imported as `./vendor/ical.js.js` and pushed with the rest, within the 1 MB the functions weigh built.
 - **Web-standard only.** `Request`, `Response`, `Headers`, `URL`, `URLSearchParams`, `TextEncoder`/`TextDecoder`,
   `AbortController`/`AbortSignal`, `setTimeout`, `structuredClone`, `atob`/`btoa`, `crypto.randomUUID`,
   `crypto.getRandomValues` and `crypto.subtle` — digests, HMAC (what verifying a webhook needs) and PBKDF2
@@ -162,7 +168,8 @@ plitzi functions dev seismic.feed --params '{}' --watch   # on this machine, as 
 `src/functions/` is a working copy: `.plitzi/functions.json` keeps what was pulled, so a pull knows what it would
 overwrite. `dev` runs the files with the project's own `@plitzi/sdk-server` (install `isolated-vm` and `core-js` beside
 it) — the same build, checks, isolates and limits as the platform; nothing reaches the space. Credentials for `dev`
-come from `PLITZI_FUNCTIONS_CREDENTIALS`, a JSON object of credential id → its keys.
+come from `PLITZI_CREDENTIALS`, a JSON object of credential id → its keys — the same variable a project's own server
+(`serveProject`) reads in production, so a self-hosted space's code names its secrets the same way.
 
 **By an agent**, over MCP: the `upsertFunctionFile` / `deleteFunctionFile` operations of `plitzi_apply`, the
 `plitzi://functions/{env}` resources, and `plitzi_try_function`. The same build, checks and history as a person's —

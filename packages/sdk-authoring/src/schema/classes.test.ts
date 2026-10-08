@@ -182,6 +182,16 @@ describe('an element that wears several classes', () => {
     expect(selectorOf(spec, 'field', 'input')).toBe('panel wide');
   });
 
+  it('refuses rules of its own in a slot, naming the slot and the element', () => {
+    // As JavaScript hands it, past the type that would have caught it: a slot takes classes, never rules in place.
+    const field = { type: 'formControl', id: 'field', slots: { input: panel } };
+    Reflect.set(field.slots, 'input', [panel, { color: 'red' }]);
+
+    expect(() => authorSpace(spaceWith([field]))).toThrow(
+      /The "input" slot of formControl "field".* is handed rules of its own/
+    );
+  });
+
   it('dresses a page with several classes too', () => {
     const { schema } = authorSpace({
       name: 'Paged',
