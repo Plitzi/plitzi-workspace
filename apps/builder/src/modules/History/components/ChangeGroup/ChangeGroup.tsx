@@ -39,7 +39,7 @@ const ChangeGroup = ({ group, onDismiss }: ChangeGroupProps) => {
         onClick={handleToggle}
       >
         <span className="flex min-w-0 items-center gap-2 text-xs">
-          <span className={clsx('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium', ORIGIN_TONE[newest.origin])}>
+          <span className={clsx('shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium', ORIGIN_TONE[newest.origin])}>
             {ORIGIN_LABEL[newest.origin]}
           </span>
           <span className="truncate font-medium text-zinc-800 dark:text-zinc-100">{authorLabel(newest)}</span>

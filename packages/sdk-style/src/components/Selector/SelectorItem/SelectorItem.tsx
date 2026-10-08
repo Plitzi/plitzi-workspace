@@ -53,16 +53,15 @@ const SelectorItem = ({
 
   return (
     <div
-      className={clsx(
-        'relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1 text-white select-none',
-        className,
-        {
-          'bg-primary-400': type === 'element' && active,
-          'bg-secondary-400': type !== 'element' && active,
-          'bg-gray-500': !active,
-          'max-w-full min-w-0': !editable
-        }
-      )}
+      className={clsx('relative flex cursor-pointer items-center gap-1 rounded-sm px-2 py-1 select-none', className, {
+        // The class being edited is the strongest mark in the panel; the element's type defaults, a softer one;
+        // the classes it also wears but are not being edited, neutral.
+        'bg-primary-600 text-white': type !== 'element' && active,
+        'bg-primary-500/20 text-primary-800 dark:text-primary-200': type === 'element' && active,
+        'bg-gray-200 text-zinc-700 hover:bg-gray-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600':
+          !active,
+        'max-w-full min-w-0': !editable
+      })}
       onClick={handleClick}
       title={`${type}: ${selector}`}
     >

@@ -100,7 +100,7 @@ const AddGoogleFont = ({ declared, onAdd }: AddGoogleFontProps) => {
             <Flex justify="between" alignItems="center" gap={2}>
               <span className="truncate text-sm">{entry.family}</span>
               {declaredSet.has(entry.family) ? (
-                <span className="text-[10px] text-gray-500 dark:text-zinc-400">Declared</span>
+                <span className="text-[11px] text-gray-500 dark:text-zinc-400">Declared</span>
               ) : (
                 <Button size="xs" intent="secondary" onClick={() => handleExpand(entry)}>
                   {expanded === entry.family ? 'Cancel' : 'Choose weights'}

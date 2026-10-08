@@ -4,6 +4,7 @@ import BoxShadow from './BoxShadow';
 import Filter from './Filters/Filter';
 import Transform from './Transform';
 import Transition from './Transition';
+import { EFFECTS_KEYS } from '../../categoryKeys';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
@@ -12,33 +13,6 @@ import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-
-const dotKeys = [
-  'opacity',
-  'visibility',
-  'cursor',
-  'transition',
-  'box-shadow',
-  'filter',
-  'backdrop-filter',
-  'mix-blend-mode',
-  'isolation',
-  'clip-path',
-  'transform',
-  'transform-origin',
-  'perspective',
-  'will-change'
-] as StyleCategory[];
-
-const advancedKeys = [
-  'transform-origin',
-  'perspective',
-  'backdrop-filter',
-  'mix-blend-mode',
-  'isolation',
-  'clip-path',
-  'will-change'
-] as StyleCategory[];
 
 export type EffectsProps = {
   replaceTokens?: boolean;
@@ -64,7 +38,7 @@ const Effects = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Effe
     perspective,
     'will-change': willChange
   } = useInspectorValues({
-    keys: dotKeys,
+    keys: EFFECTS_KEYS.dot,
     asValue: true,
     strictMode: true,
     defaultValues: {
@@ -96,9 +70,9 @@ const Effects = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Effe
 
   return (
     <CategoryContainer
-      title="Effects"
-      dotKeys={dotKeys}
-      advancedKeys={advancedKeys}
+      title={EFFECTS_KEYS.title}
+      dotKeys={EFFECTS_KEYS.dot}
+      advancedKeys={EFFECTS_KEYS.advanced}
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >

@@ -31,7 +31,7 @@ const NewFile = ({ placeholder, nameOf, onAdd, onCancel }: NewFileProps) => {
   return (
     <div className="flex flex-col gap-1" onKeyDown={handleKeyDown}>
       <Input size="xs" value={name} placeholder={placeholder} autoFocus onChange={setName} />
-      <span className="text-[10px] text-gray-500 dark:text-zinc-400">Enter to add · Esc to cancel</span>
+      <span className="text-[11px] text-gray-500 dark:text-zinc-400">Enter to add · Esc to cancel</span>
     </div>
   );
 };

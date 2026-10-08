@@ -5,6 +5,8 @@ import { useCallback } from 'react';
 
 import { makeId } from '@plitzi/sdk-shared/helpers/utils';
 
+import { ITEM_CLASS } from './helpers';
+
 import type { SelectorValue } from '../Selector';
 import type { TagType } from '@plitzi/sdk-shared';
 
@@ -26,11 +28,12 @@ const ItemOptions = ({ selector = '', type = 'class', onAction }: ItemOptionsPro
 
   const handleClickDelete = useCallback(async () => {
     const response = await showDialog(
-      <Modal.Header>
-        <h4>Remove Selector</h4>
-      </Modal.Header>,
+      <Modal.Header>Delete .{selector}</Modal.Header>,
       <Modal.Body>
-        <h4>Do you want to remove this item ?</h4>
+        <p className="m-0 text-sm">
+          The class is deleted from the space, and every element that wears it loses the styles it gives. To take it off
+          this element only, use “Remove from this element”.
+        </p>
       </Modal.Body>,
       undefined,
       { size: 'sm' },
@@ -48,26 +51,26 @@ const ItemOptions = ({ selector = '', type = 'class', onAction }: ItemOptionsPro
         <Icon icon="fa-solid fa-ellipsis-vertical" className="h-4 w-4 !min-w-4" />
       </ContainerFloating.Trigger>
       <ContainerFloating.Content className="text-xs text-zinc-700 dark:text-zinc-300">
-        <div className="rounded border border-gray-200 bg-gray-50 py-1 dark:border-zinc-700 dark:bg-zinc-800">
-          <div className="mb-1 px-2 font-bold text-zinc-800 dark:text-zinc-200">Actions</div>
-          <ul className="flex flex-col gap-1 px-2">
-            <li
-              onClick={handleClickDuplicate}
-              className="cursor-pointer rounded-sm px-2 py-1 hover:bg-gray-200 dark:hover:bg-zinc-700"
-            >
-              Duplicate
+        <div className="min-w-44 rounded-md border border-gray-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+          <ul className="m-0 flex list-none flex-col p-0">
+            <li>
+              <button type="button" className={ITEM_CLASS} onClick={handleClickDuplicate}>
+                Duplicate class
+              </button>
             </li>
-            <li
-              onClick={handleClickRemove}
-              className="cursor-pointer rounded-sm px-2 py-1 hover:bg-gray-200 dark:hover:bg-zinc-700"
-            >
-              Remove
+            <li>
+              <button type="button" className={ITEM_CLASS} onClick={handleClickRemove}>
+                Remove from this element
+              </button>
             </li>
-            <li
-              onClick={handleClickDelete}
-              className="cursor-pointer rounded-sm px-2 py-1 text-red-400 hover:bg-gray-200 dark:hover:bg-zinc-700"
-            >
-              Delete
+            <li>
+              <button
+                type="button"
+                className={`${ITEM_CLASS} text-red-600 dark:text-red-400`}
+                onClick={handleClickDelete}
+              >
+                Delete from the space…
+              </button>
             </li>
           </ul>
         </div>

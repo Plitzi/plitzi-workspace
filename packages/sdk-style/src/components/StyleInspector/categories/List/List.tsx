@@ -7,6 +7,7 @@ import ListSquares from '@plitzi/plitzi-ui/icons/ListSquares';
 import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { memo, useCallback, useMemo, use } from 'react';
 
+import { LIST_KEYS } from '../../categoryKeys';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
@@ -23,8 +24,6 @@ const LIST_SQUARES = 'square';
 const LIST_LETTERS = 'lower-alpha';
 const LIST_ROMAN = 'lower-roman';
 
-const dotKeys = ['list-style'] as StyleCategory[];
-
 export type ListProps = {
   replaceTokens?: boolean;
   isCollapsed?: boolean;
@@ -33,7 +32,7 @@ export type ListProps = {
 
 const List = ({ replaceTokens = false, isCollapsed = true, onCollapse }: ListProps) => {
   const { setValue } = use(StyleInspectorContext);
-  const { ['list-style']: listStyle } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  const { ['list-style']: listStyle } = useInspectorValues({ keys: LIST_KEYS.dot, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('list', isCollapsed), [onCollapse]);
 
@@ -56,8 +55,13 @@ const List = ({ replaceTokens = false, isCollapsed = true, onCollapse }: ListPro
   );
 
   return (
-    <CategoryContainer title="List" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
-      <CategorySection keys={dotKeys} label="Style">
+    <CategoryContainer
+      title={LIST_KEYS.title}
+      dotKeys={LIST_KEYS.dot}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
+      <CategorySection keys={LIST_KEYS.dot} label="Style">
         <CategoryOption onChange={handleChange} type="iconGroup" items={items} />
       </CategorySection>
     </CategoryContainer>

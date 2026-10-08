@@ -20,7 +20,7 @@ const IssueGroup = ({ title, issues, severity, onDismiss }: IssueGroupProps) => 
 
   return (
     <section className="flex flex-col gap-1">
-      <h5 className={clsx('text-[10px] font-bold tracking-wider uppercase', MUTED)}>
+      <h5 className={clsx('text-[11px] font-bold tracking-wider uppercase', MUTED)}>
         {title} · {issues.length}
       </h5>
       <ul className="flex flex-col">

@@ -29,7 +29,7 @@ const TryResult = ({ report, task }: TryResultProps) => {
       </div>
       {step?.logs && step.logs.length > 0 && (
         <div className="flex flex-col gap-0.5 rounded-sm border border-gray-200 p-1.5 dark:border-zinc-700">
-          <span className="text-[10px] font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400">Logs</span>
+          <span className="text-[11px] font-medium tracking-wide text-gray-500 uppercase dark:text-zinc-400">Logs</span>
           {step.logs.map((line, index) => (
             <code key={`${String(index)} ${line}`} className="text-gray-600 dark:text-zinc-300">
               {line}

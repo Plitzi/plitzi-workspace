@@ -98,3 +98,17 @@ export const createFunctionValue = (name: string): TransformFunctionValue => {
 
   return { name, args };
 };
+
+/** The functions by category, in the order the picker lists them. */
+export const TRANSFORM_FUNCTION_GROUPS = TRANSFORM_FUNCTIONS.reduce<
+  { category: string; specs: typeof TRANSFORM_FUNCTIONS }[]
+>((groups, spec) => {
+  const group = groups.find(item => item.category === spec.category);
+  if (group) {
+    group.specs.push(spec);
+  } else {
+    groups.push({ category: spec.category, specs: [spec] });
+  }
+
+  return groups;
+}, []);

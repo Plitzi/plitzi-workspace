@@ -30,7 +30,7 @@ const SuggestionItem = ({ suggestion, onDismiss }: SuggestionItemProps) => {
         <p className="text-xs leading-relaxed text-zinc-700 dark:text-zinc-200">{message}</p>
         {fix && <IssueFix fix={fix} label="The short way" />}
         {saves > 0 && (
-          <span className={clsx('text-[10px] tracking-wider uppercase', MUTED)}>
+          <span className={clsx('text-[11px] tracking-wider uppercase', MUTED)}>
             {`Saves ${String(saves)} element${saves === 1 ? '' : 's'}`}
           </span>
         )}

@@ -36,7 +36,9 @@ const OptionIconGroup = ({ items = [], onChange }: OptionIconGroupProps) => {
           className={clsx('cursor-pointer rounded-sm p-0.5', {
             'bg-zinc-300 dark:bg-zinc-800': item.active,
             'text-xs': typeof item.icon === 'string',
-            'h-5 w-5': item.size !== 'custom'
+            'h-5 w-5': item.size !== 'custom',
+            // Words, not glyphs (Outside / Inside, Cover / Contain): each takes an equal share, as a segmented control.
+            'flex-1 justify-center': item.size === 'custom'
           })}
           active={item.active}
           key={i}

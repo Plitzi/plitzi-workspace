@@ -19,11 +19,13 @@ const VariableGroup = ({ category, variables = {}, onUpdate, onRemove }: Variabl
   return (
     <ContainerCollapsable collapsed>
       <ContainerCollapsable.Header
-        className="h-6 text-sm"
+        className="h-7 px-1"
         title={
-          <span className="flex w-full items-center justify-between gap-1 font-bold">
+          <span className="flex w-full items-center justify-between gap-1 text-xs font-medium text-zinc-700 capitalize dark:text-zinc-200">
             {category}
-            <span className="text-xs font-normal text-gray-500">({variablesCount})</span>
+            <span className="text-[11px] font-normal text-zinc-500 tabular-nums dark:text-zinc-400">
+              {variablesCount}
+            </span>
           </span>
         }
         placement="right"

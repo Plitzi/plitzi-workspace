@@ -12,7 +12,7 @@ const CollaboratorAvatar = ({ ref, color = '#000', firstName = '', surName = '' 
   return (
     <div
       ref={ref}
-      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 text-xs text-[9px] font-bold text-white select-none"
+      className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 text-[11px] font-bold text-white select-none"
       style={{ borderColor: color }}
       title={`${firstName} ${surName}`}
     >

@@ -7,6 +7,7 @@ import {
   ancestorRemovals,
   conditionOptions,
   pseudoOptions,
+  targetParts,
   unusedAncestors
 } from './helpers';
 
@@ -162,5 +163,24 @@ describe('ancestorRemovals', () => {
       { displayMode: 'desktop', styleSelector: 'label', styleAncestor: 'card' },
       { displayMode: 'mobile', styleSelector: 'base', styleAncestor: 'card' }
     ]);
+  });
+});
+
+describe('targetParts', () => {
+  it('is empty while the plain rules of the base selector are edited', () => {
+    expect(targetParts({ styleSelector: 'base' })).toEqual([]);
+  });
+
+  it('names every step of the target, the ancestor first', () => {
+    expect(
+      targetParts({ styleSelector: 'icon', styleAncestor: 'card', styleVariant: 'compact', styleState: 'hover' })
+    ).toEqual(['icon part', 'inside .card', 'variant compact', expect.any(String)]);
+  });
+
+  it('names a pseudo-element and a condition by their labels', () => {
+    const parts = targetParts({ styleSelector: 'base', stylePseudo: 'before', styleCondition: 'motion-reduce' });
+
+    expect(parts).toHaveLength(2);
+    expect(parts.every(part => part.length > 0)).toBe(true);
   });
 });

@@ -8,8 +8,10 @@ import { useCallback, useMemo } from 'react';
 
 import CategoryOption from '../../../../components/CategoryOption';
 import CategorySection from '../../../../components/CategorySection';
+import { asText } from '../../../../cssValues';
 
 import type { BackgroundLayer } from '../../helpers/backgroundParser';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type BackgroundTileProps = { layer: BackgroundLayer; onChange?: (layer: BackgroundLayer) => void };
 
@@ -45,7 +47,8 @@ const BackgroundTile = ({ layer, onChange }: BackgroundTileProps) => {
   );
 
   const handleRepeatChange = useCallback(
-    (value: unknown) => onChange?.({ ...layer, repeat: String(value) }),
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
+      onChange?.({ ...layer, repeat: asText(value) }),
     [layer, onChange]
   );
 

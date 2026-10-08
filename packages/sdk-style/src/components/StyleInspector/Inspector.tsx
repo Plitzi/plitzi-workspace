@@ -1,8 +1,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
-import Switch from '@plitzi/plitzi-ui/Switch';
 import { produce } from 'immer';
-import { use, useCallback, useMemo } from 'react';
+import { use, useCallback, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 
@@ -21,9 +20,15 @@ import Size from './categories/Size';
 import Spacing from './categories/Spacing';
 import Typography from './categories/Typography';
 import Variables from './categories/Variables';
+import { CATEGORY_IDS, CATEGORY_KEYS } from './categoryKeys';
+import InspectorFooter from './components/InspectorFooter';
+import InspectorSearch from './components/InspectorSearch';
 import useStyleInherit from './hooks/useStyleInherit';
+import InspectorSearchContext from './InspectorSearchContext';
+import { categoryMatches, normalizeQuery } from './search';
 import StyleInspectorProvider from './StyleInspectorProvider';
 
+import type { CategoryId } from './categoryKeys';
 import type {
   DisplayMode,
   Element,
@@ -74,6 +79,8 @@ const Inspector = ({
   );
   const [showAllOptions, setShowAllOptions] = useStorage(`builder-state.styleInspector.${mode}.showAllOptions`, false);
   const [replaceTokens, setReplaceTokens] = useStorage(`builder-state.styleInspector.${mode}.replaceTokens`, false);
+  const [search, setSearch] = useState('');
+  const query = normalizeQuery(search);
   const inheritData = useStyleInherit({
     element,
     componentType,
@@ -89,6 +96,11 @@ const Inspector = ({
 
   const handleChangeCollapse = useCallback(
     (id: string, isCollapsed: boolean) => setCollapsedCache(state => ({ ...state, [id]: isCollapsed })),
+    [setCollapsedCache]
+  );
+
+  const handleCollapseAll = useCallback(
+    () => setCollapsedCache(Object.fromEntries(CATEGORY_IDS.map(id => [id, true]))),
     [setCollapsedCache]
   );
 
@@ -177,6 +189,29 @@ const Inspector = ({
     [inheritData]
   );
 
+  // What a search shows is what the element would show anyway, narrowed: a category it has no use for stays hidden.
+  const applies = useCallback(
+    (id: CategoryId) => {
+      if (id === 'list' || id === 'listItem') {
+        return isList;
+      }
+
+      if (id === 'displayFlexChild') {
+        return isFlexChild;
+      }
+
+      return true;
+    },
+    [isFlexChild, isList]
+  );
+  const shown = useCallback(
+    (id: CategoryId) => applies(id) && categoryMatches(CATEGORY_KEYS[id], query),
+    [applies, query]
+  );
+  // While searching every match is open; the folds the person chose come back with an empty search.
+  const collapsed = useCallback((id: CategoryId) => !query && (collapsedCache[id] ?? true), [collapsedCache, query]);
+  const nothingFound = !!query && !CATEGORY_IDS.some(shown);
+
   return (
     <StyleInspectorProvider
       componentType={componentType}
@@ -192,89 +227,110 @@ const Inspector = ({
       inheritData={inheritData}
       onChange={handleChange}
     >
-      <div className="flex grow flex-col justify-between">
-        <div className="flex grow flex-col">
-          {isList && (
-            <List
-              replaceTokens={replaceTokens}
-              isCollapsed={collapsedCache.list ?? true}
-              onCollapse={handleChangeCollapse}
-            />
-          )}
-          {isList && (
-            <ListItem
-              replaceTokens={replaceTokens}
-              isCollapsed={collapsedCache.listItem ?? true}
-              onCollapse={handleChangeCollapse}
-            />
-          )}
-          <Display
+      <InspectorSearchContext value={query}>
+        <div className="flex grow flex-col justify-between">
+          <div className="flex grow flex-col">
+            <InspectorSearch value={search} onChange={setSearch} />
+            {nothingFound && (
+              <p className="m-0 px-3 py-4 text-xs text-zinc-500 dark:text-zinc-400">
+                No property here matches “{search.trim()}”.
+                {!showAllOptions &&
+                  mode === 'element' &&
+                  ' “All options” includes the categories this element does not use.'}
+              </p>
+            )}
+            {shown('list') && (
+              <List replaceTokens={replaceTokens} isCollapsed={collapsed('list')} onCollapse={handleChangeCollapse} />
+            )}
+            {shown('listItem') && (
+              <ListItem
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('listItem')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('display') && (
+              <Display
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('display')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('displayFlexChild') && (
+              <DisplayFlexChild
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('displayFlexChild')}
+                isFlexVertical={isFlexVertical}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('spacing') && (
+              <Spacing
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('spacing')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('size') && (
+              <Size replaceTokens={replaceTokens} isCollapsed={collapsed('size')} onCollapse={handleChangeCollapse} />
+            )}
+            {shown('position') && (
+              <Position
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('position')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('typography') && (
+              <Typography
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('typography')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('background') && (
+              <Background
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('background')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('border') && (
+              <Border
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('border')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('effects') && (
+              <Effects
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('effects')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('others') && (
+              <Others
+                replaceTokens={replaceTokens}
+                isCollapsed={collapsed('others')}
+                onCollapse={handleChangeCollapse}
+              />
+            )}
+            {shown('variables') && <Variables isCollapsed={collapsed('variables')} onCollapse={handleChangeCollapse} />}
+            {shown('rawStyle') && (
+              <RawStyle isCollapsed={collapsed('rawStyle')} selectors={selectors} onCollapse={handleChangeCollapse} />
+            )}
+          </div>
+          <InspectorFooter
             replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.display ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          {isFlexChild && (
-            <DisplayFlexChild
-              replaceTokens={replaceTokens}
-              isCollapsed={collapsedCache.displayFlexChild ?? true}
-              isFlexVertical={isFlexVertical}
-              onCollapse={handleChangeCollapse}
-            />
-          )}
-          <Spacing
-            replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.spacing ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          <Size
-            replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.size ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          <Position
-            replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.position ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          <Typography
-            replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.typography ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          <Background
-            replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.background ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          <Border
-            replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.border ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          <Effects
-            replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.effects ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          <Others
-            replaceTokens={replaceTokens}
-            isCollapsed={collapsedCache.others ?? true}
-            onCollapse={handleChangeCollapse}
-          />
-          <Variables isCollapsed={collapsedCache.variables ?? true} onCollapse={handleChangeCollapse} />
-          <RawStyle
-            isCollapsed={collapsedCache.rawStyle ?? true}
-            selectors={selectors}
-            onCollapse={handleChangeCollapse}
+            showAllOptions={showAllOptions}
+            canShowAllOptions={mode === 'element'}
+            onCollapseAll={handleCollapseAll}
+            onChangeReplaceTokens={handleChangeReplaceTokens}
+            onChangeShowAllOptions={handleChangeShowAllOptions}
           />
         </div>
-        <div className="flex items-center justify-end gap-4 border-t border-gray-200 px-2 py-1 dark:border-zinc-700">
-          <Switch size="xs" label="Replace Tokens" checked={replaceTokens} onChange={handleChangeReplaceTokens} />
-          {mode === 'element' && (
-            <Switch size="xs" label="Show All Options" checked={showAllOptions} onChange={handleChangeShowAllOptions} />
-          )}
-        </div>
-      </div>
+      </InspectorSearchContext>
     </StyleInspectorProvider>
   );
 };

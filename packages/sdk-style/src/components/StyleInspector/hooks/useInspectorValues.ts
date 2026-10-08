@@ -4,6 +4,7 @@ import { use, useMemo } from 'react';
 import { baseDefaultValue } from '@plitzi/sdk-shared';
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
 
+import { resolveTokens } from '../cssValues';
 import StyleInspectorContext from '../StyleInspectorContext';
 
 import type { StyleInspectorContextValue } from '../StyleInspectorContext';
@@ -92,7 +93,6 @@ const useInspectorValues = <TAsValue extends boolean>({
       return valuesParsedAux;
     }
 
-    const VARIABLE_REGEX_GLOBAL = new RegExp(VARIABLE_REGEX, 'g');
     keys.forEach(key => {
       let value: StyleValue | undefined;
       if (strictMode) {
@@ -109,10 +109,8 @@ const useInspectorValues = <TAsValue extends boolean>({
         );
       }
 
-      if (replaceTokens && typeof value === 'string' && VARIABLE_REGEX.test(value)) {
-        [...value.matchAll(VARIABLE_REGEX_GLOBAL)].forEach(match => {
-          value = (value as string).replace(match[0], get(variables, match[1] ? match[1] : match[2], match[0]));
-        });
+      if (replaceTokens && typeof value === 'string') {
+        value = resolveTokens(value, variables);
       }
 
       valuesParsedAux[key] = value;

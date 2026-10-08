@@ -24,7 +24,7 @@ const IssueFix = ({ fix, label = 'Write instead' }: IssueFixProps) => (
     {partsOf(fix).map((part, index) => (
       <Fragment key={index}>
         {part.code && (
-          <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">{part.text}</code>
+          <code className="rounded bg-zinc-100 px-1 font-mono text-[11px] dark:bg-zinc-800">{part.text}</code>
         )}
         {!part.code && part.text}
       </Fragment>

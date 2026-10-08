@@ -37,7 +37,7 @@ const BuilderContextSubMenu = ({ items, width = 150, iframeDOM, onClick }: Build
       onMouseOver={handleMouseEnter}
     >
       <div className="flex items-center">Select Parent Element</div>
-      <div className="context-sub-menu__arrow text-[10px] text-zinc-400 dark:text-zinc-500">
+      <div className="context-sub-menu__arrow text-[11px] text-zinc-400 dark:text-zinc-500">
         <i className="fas fa-chevron-right" />
       </div>
       {showMenu && items && items.length > 0 && (

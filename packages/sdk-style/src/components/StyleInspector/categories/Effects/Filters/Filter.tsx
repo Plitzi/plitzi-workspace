@@ -1,11 +1,11 @@
-import Icon from '@plitzi/plitzi-ui/Icon';
 import { useCallback } from 'react';
 
 import FilterItem from './FilterItem';
-import InspectorLabel from '../../../components/InspectorLabel';
+import { FILTER_SPECS, serializeFilter } from './helpers';
+import ValueList from '../../../components/ValueList';
+import { splitBySpaceOutsideParens } from '../../../cssValues';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-import type { MouseEvent } from 'react';
 
 export type FilterProps = {
   styleKey?: StyleCategory;
@@ -15,56 +15,35 @@ export type FilterProps = {
 };
 
 const Filter = ({ styleKey = 'filter', label = 'Filters', value, onChange }: FilterProps) => {
-  let filters: string[] = [];
-  if (value && value !== '') {
-    filters = (value as string).split(' ');
-  }
+  // Split outside parentheses: `drop-shadow(0 2px 4px black)` is one function, not four.
+  const filters = typeof value === 'string' && value !== '' ? splitBySpaceOutsideParens(value) : [];
+  const itemTitle = styleKey === 'backdrop-filter' ? 'Backdrop filter' : 'Filter';
 
-  const handleClickRemoveItem = (index: number) => (e: MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    filters.splice(index, 1);
-    if (filters.length > 0) {
-      onChange?.(filters.join(' '));
-    } else {
-      onChange?.('');
+  const emit = useCallback((next: string[]) => onChange?.(next.length > 0 ? next.join(' ') : ''), [onChange]);
+
+  const handleRemoveItem = (index: number) => () => emit(filters.filter((_, i) => i !== index));
+
+  const handleChangeItem = (index: number) => (item: string) => {
+    if (item !== filters[index]) {
+      emit(filters.map((filter, i) => (i === index ? item : filter)));
     }
   };
 
-  const handleChangeItem = (index: number) => (filterItemValue: string) => {
-    if (filterItemValue !== filters[index]) {
-      filters[index] = filterItemValue;
-      onChange?.(filters.join(' '));
-    }
-  };
-
-  const handleClickAddItem = useCallback(() => {
-    if (value) {
-      onChange?.(`${value} blur(5px)`);
-    } else {
-      onChange?.('blur(5px)');
-    }
-  }, [value, onChange]);
+  const handleAdd = () => emit([...filters, serializeFilter({ name: 'blur', amount: FILTER_SPECS.blur.default })]);
 
   return (
-    <>
-      <div className="flex w-full justify-between">
-        <InspectorLabel keyValue={[styleKey]}>{label}</InspectorLabel>
-        <Icon className="cursor-pointer" icon="fas fa-plus" onClick={handleClickAddItem} />
-      </div>
-      {filters.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {filters.map((filter, index) => (
-            <FilterItem
-              key={index}
-              value={filter}
-              onChange={handleChangeItem(index)}
-              onRemove={handleClickRemoveItem(index)}
-            />
-          ))}
-        </div>
-      )}
-    </>
+    <ValueList label={label} keys={[styleKey]} addLabel={`Add ${itemTitle.toLowerCase()}`} onAdd={handleAdd}>
+      {filters.length > 0 &&
+        filters.map((filter, index) => (
+          <FilterItem
+            key={index}
+            value={filter}
+            title={itemTitle}
+            onChange={handleChangeItem(index)}
+            onRemove={handleRemoveItem(index)}
+          />
+        ))}
+    </ValueList>
   );
 };
 

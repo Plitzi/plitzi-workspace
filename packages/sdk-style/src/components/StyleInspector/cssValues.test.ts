@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { splitByCommaOutsideParens, splitBySpaceOutsideParens } from './helpers';
+import { splitByCommaOutsideParens, splitBySpaceOutsideParens } from './cssValues';
 
 describe('splitByCommaOutsideParens', () => {
   describe('basic values', () => {

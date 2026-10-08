@@ -76,7 +76,7 @@ const UsageList = ({ category, items }: UsageListProps) => {
         </span>
         <Switch size="xs" label={copy.unusedFilter} checked={unusedOnly} onChange={handleUnusedOnly} />
       </div>
-      {hasUnused && <p className="px-1 text-[10px] leading-snug text-zinc-500 dark:text-zinc-400">{UNUSED_NOTE}</p>}
+      {hasUnused && <p className="px-1 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">{UNUSED_NOTE}</p>}
       <div className="flex min-h-0 grow basis-0 flex-col overflow-y-auto">
         {items.length === 0 && (
           <div className="py-4 text-center text-xs text-zinc-400 italic dark:text-zinc-500">{copy.empty}</div>

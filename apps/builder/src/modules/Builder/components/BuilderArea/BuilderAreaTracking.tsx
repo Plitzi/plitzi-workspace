@@ -11,6 +11,7 @@ import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store
 import AppContext from '@pmodules/App/AppContext';
 import useCollaboratorCursor from '@pmodules/Collaboration/hooks/useCollaboratorCursor';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
+import { isHelpShortcut, isPanelsShortcut, ShortcutsContext } from '@pmodules/Shortcuts';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
 import { processPaste } from '../../BuilderHelper';
@@ -62,6 +63,7 @@ const BuilderAreaTracking = ({
   const { mutate } = useBuilderNetwork();
   const { componentDefinitions } = use(ComponentContext);
   const { openSearch } = use(BuilderSearchContext);
+  const { openHelp, togglePanels } = use(ShortcutsContext);
 
   const handleMouseLeave = useCallback(() => {
     if (elementHovered) {
@@ -150,6 +152,24 @@ const BuilderAreaTracking = ({
           break;
         }
 
+        case '?':
+        case '\\': {
+          // The workspace's own shortcuts, pressed with the canvas focused: forwarded, as the search's is below.
+          if (!iframeDOM?.contentWindow?.document.body.contains(nodeOf(e.target))) {
+            break;
+          }
+
+          if (isPanelsShortcut(e)) {
+            e.preventDefault();
+            togglePanels();
+          } else if (isHelpShortcut(e)) {
+            e.preventDefault();
+            openHelp();
+          }
+
+          break;
+        }
+
         case 'P':
         case 'p': {
           // A key pressed inside the canvas stays in its iframe and never reaches the document the search listens on.
@@ -213,6 +233,8 @@ const BuilderAreaTracking = ({
       setSelected,
       builderSetBaseContext,
       openSearch,
+      openHelp,
+      togglePanels,
       canRedo,
       undoableRedo,
       canUndo,

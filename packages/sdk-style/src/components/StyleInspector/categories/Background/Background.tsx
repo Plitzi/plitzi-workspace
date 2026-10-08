@@ -9,40 +9,21 @@ import {
   newStopId,
   serializeLayersToCSS
 } from './helpers/backgroundParser';
+import { BACKGROUND_KEYS } from '../../categoryKeys';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
+import { BG_LAYER_KEYS, layerValuesKey } from './helpers/layerValues';
 import parseToBgLayers from './helpers/parseToBgLayers';
-import InspectorLabel from '../../components/InspectorLabel';
+import ValueList from '../../components/ValueList';
 
 import type { BackgroundLayer as TBackgroundLayer } from './helpers/backgroundParser';
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-const DOT_KEYS = [
-  'background-color',
-  'background-image',
-  'background-attachment',
-  'background-position',
-  'background-repeat',
-  'background-clip',
-  'background-size',
-  'background-blend-mode',
-  'mask-image'
-] as StyleCategory[];
-
-const BG_LAYER_KEYS: StyleCategory[] = [
-  'background-image',
-  'background-size',
-  'background-position',
-  'background-repeat',
-  'background-attachment',
-  'background-clip'
-];
-
-const ADVANCED_KEYS = ['background-blend-mode', 'mask-image'] as StyleCategory[];
+const BASE_COLOR_KEYS: StyleCategory[] = ['background-color'];
 
 export type BackgroundProps = {
   replaceTokens?: boolean;
@@ -50,13 +31,12 @@ export type BackgroundProps = {
   onCollapse?: (category: string, isCollapsed: boolean) => void;
 };
 
-const cssKeyFromRecord = (record: Partial<Record<StyleCategory, StyleValue>>): string =>
-  BG_LAYER_KEYS.map(k => String(record[k])).join('||');
-
 const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: BackgroundProps) => {
   const { setValue } = use(StyleInspectorContext);
 
-  const layerValues = useInspectorValues({ keys: BG_LAYER_KEYS, asValue: true, strictMode: true, replaceTokens });
+  // Never with the tokens resolved: every layer is written back on any edit, and a resolved token would be written in
+  // place of the token itself. The previews resolve them for themselves.
+  const layerValues = useInspectorValues({ keys: BG_LAYER_KEYS, asValue: true, strictMode: true });
   const {
     'background-color': bgColor,
     'background-blend-mode': bgBlendMode,
@@ -67,7 +47,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
     replaceTokens
   });
 
-  const cssKey = cssKeyFromRecord(layerValues);
+  const cssKey = layerValuesKey(layerValues);
   const layerValuesRef = useRef(layerValues);
   layerValuesRef.current = layerValues;
 
@@ -90,7 +70,7 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
   const applyLayers = useCallback(
     (newLayers: TBackgroundLayer[]) => {
       const css = serializeLayersToCSS(newLayers);
-      internalCssKeyRef.current = cssKeyFromRecord(css);
+      internalCssKeyRef.current = layerValuesKey(css);
       setLayers(newLayers);
       setValue(undefined, css);
     },
@@ -166,52 +146,40 @@ const Background = ({ replaceTokens = false, isCollapsed = true, onCollapse }: B
 
   return (
     <CategoryContainer
-      title="Background"
-      dotKeys={DOT_KEYS}
-      advancedKeys={ADVANCED_KEYS}
+      title={BACKGROUND_KEYS.title}
+      dotKeys={BACKGROUND_KEYS.dot}
+      advancedKeys={BACKGROUND_KEYS.advanced}
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >
       <div className="flex flex-col gap-2">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <InspectorLabel keyValue={BG_LAYER_KEYS}>Layers</InspectorLabel>
-            <button
-              type="button"
-              className="flex cursor-pointer items-center gap-1 rounded px-1.5 py-0.5 text-xs text-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/30"
-              onClick={handleAddLayer}
-              title="Add background layer"
-            >
-              <i className="fas fa-plus text-[10px]" />
-              Add
-            </button>
-          </div>
-
+        <ValueList
+          label="Layers"
+          keys={BG_LAYER_KEYS}
+          addLabel="Add a layer — the first one is drawn on top"
+          onAdd={handleAddLayer}
+        >
           {!layers.length && (
-            <div className="rounded border border-dashed border-gray-300 py-3 text-center text-xs text-gray-400 dark:border-zinc-600 dark:text-zinc-500">
-              No layers — click Add to start
-            </div>
+            <p className="m-0 rounded-md border border-dashed border-gray-300 px-3 py-2.5 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+              No layers. Add one for a gradient or an image.
+            </p>
           )}
+          {layers.length > 0 &&
+            layers.map((layer, index) => (
+              <BackgroundLayer
+                key={layer.id}
+                index={index}
+                layer={layer}
+                expanded={expandedId === layer.id}
+                onExpand={handleToggleExpand}
+                onChange={handleLayerChange(index)}
+                onRemove={handleRemoveLayer(index)}
+                onReorder={handleReorder}
+              />
+            ))}
+        </ValueList>
 
-          {layers.length > 0 && (
-            <div className="flex flex-col gap-1">
-              {layers.map((layer, index) => (
-                <BackgroundLayer
-                  key={layer.id}
-                  index={index}
-                  layer={layer}
-                  expanded={expandedId === layer.id}
-                  onExpand={handleToggleExpand}
-                  onChange={handleLayerChange(index)}
-                  onRemove={handleRemoveLayer(index)}
-                  onReorder={handleReorder}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        <CategorySection label="Base Color" keys={['background-color']}>
+        <CategorySection label="Color" keys={BASE_COLOR_KEYS}>
           <CategoryOption type="color" value={bgColor} onChange={handleBgColorChange} />
         </CategorySection>
 

@@ -1,69 +1,49 @@
 import { useCallback } from 'react';
 
-import TypographyTextShadowItem from './TypographyTextShadowItem';
-import CategorySection from '../../components/CategorySection';
-import InspectorLabel from '../../components/InspectorLabel';
+import ShadowItem from '../../components/ShadowItem';
+import ValueList from '../../components/ValueList';
+import { splitByCommaOutsideParens } from '../../cssValues';
+import { DEFAULT_SHADOW, serializeShadow } from '../../shadowValue';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-import type { MouseEvent } from 'react';
 
 export type TypographyTextShadowProps = {
   value?: StyleValue;
   onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
 };
 
+const TEXT_SHADOW_KEYS: StyleCategory[] = ['text-shadow'];
+
 const TypographyTextShadow = ({ value, onChange }: TypographyTextShadowProps) => {
-  const handleClickRemoveItem = useCallback(
-    (index: number) => (e: MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const valueParts = (value as string).split(',').toSpliced(index, 1);
-      onChange?.(valueParts.length > 0 ? valueParts.join(',') : '');
-    },
-    [onChange, value]
-  );
+  // Split outside parentheses: the comma inside `rgba(0, 0, 0, .5)` does not start another shadow.
+  const shadows = typeof value === 'string' && value !== '' ? splitByCommaOutsideParens(value).map(s => s.trim()) : [];
 
-  const handleChangeItem = useCallback(
-    (index: number) => (shadowItemValue: string) => {
-      const valueParts = (value as string).split(',');
-      valueParts[index] = shadowItemValue;
-      onChange?.(valueParts.join(','));
-    },
-    [onChange, value]
-  );
+  const emit = useCallback((next: string[]) => onChange?.(next.length > 0 ? next.join(', ') : ''), [onChange]);
 
-  const handleClickAddItem = useCallback(() => {
-    const valueParts = value === '' ? [] : (value as string).split(',');
-    valueParts.push('2px 2px 5px black');
-    onChange?.(valueParts.join(','));
-  }, [onChange, value]);
+  const handleRemoveItem = (index: number) => () => emit(shadows.filter((_, i) => i !== index));
 
-  let valueParts: string[] = [];
-  if (value !== '') {
-    valueParts = (value as string).split(',');
-  }
+  const handleChangeItem = (index: number) => (item: string) => {
+    if (item !== shadows[index]) {
+      emit(shadows.map((shadow, i) => (i === index ? item : shadow)));
+    }
+  };
+
+  const handleAdd = () =>
+    emit([...shadows, serializeShadow({ ...DEFAULT_SHADOW, y: '1px', blur: '2px' }, { withSpread: false })]);
 
   return (
-    <CategorySection direction="column">
-      <div className="flex w-full justify-between">
-        <InspectorLabel keyValue={['text-shadow']}>Text Shadow</InspectorLabel>
-        <button className="cursor-pointer" type="button" onClick={handleClickAddItem}>
-          <i className="fas fa-plus" />
-        </button>
-      </div>
-      {valueParts.length > 0 && (
-        <div className="mt-1">
-          {valueParts.map((textShadow, index) => (
-            <TypographyTextShadowItem
-              key={index}
-              value={textShadow}
-              onChange={handleChangeItem(index)}
-              onRemove={handleClickRemoveItem(index)}
-            />
-          ))}
-        </div>
-      )}
-    </CategorySection>
+    <ValueList label="Text Shadow" keys={TEXT_SHADOW_KEYS} addLabel="Add text shadow" onAdd={handleAdd}>
+      {shadows.length > 0 &&
+        shadows.map((shadow, index) => (
+          <ShadowItem
+            key={index}
+            value={shadow}
+            withSpread={false}
+            onChange={handleChangeItem(index)}
+            onRemove={handleRemoveItem(index)}
+          />
+        ))}
+    </ValueList>
   );
 };
 

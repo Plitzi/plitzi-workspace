@@ -12,6 +12,7 @@ import TypographyStyle from './TypographyStyle';
 import TypographyTextShadow from './TypographyTextShadow';
 import TypographyTransform from './TypographyTransform';
 import useSpaceFonts from '../../../../hooks/useSpaceFonts';
+import { TYPOGRAPHY_KEYS } from '../../categoryKeys';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
@@ -20,49 +21,6 @@ import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
-
-const dotKeys = [
-  'font-family',
-  'font-weight',
-  'font-size',
-  'line-height',
-  'color',
-  'text-align',
-  'font-style',
-  'text-decoration',
-  'text-decoration-thickness',
-  'text-underline-offset',
-  'letter-spacing',
-  'word-spacing',
-  'text-indent',
-  'text-transform',
-  'direction',
-  'text-shadow',
-  'white-space',
-  'text-wrap',
-  'word-break',
-  'overflow-wrap',
-  'hyphens',
-  'vertical-align',
-  'text-overflow',
-  'line-clamp',
-  'font-variant-numeric',
-  'font-feature-settings',
-  '-webkit-text-fill-color'
-] as StyleCategory[];
-
-const advancedKeys = [
-  'text-decoration-thickness',
-  'text-underline-offset',
-  'word-break',
-  'overflow-wrap',
-  'hyphens',
-  'vertical-align',
-  'text-shadow',
-  'font-variant-numeric',
-  'font-feature-settings',
-  '-webkit-text-fill-color'
-] as StyleCategory[];
 
 const keyValueLetter = ['letter-spacing', 'word-spacing', 'text-indent'] as StyleCategory[];
 
@@ -103,7 +61,7 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, onCollapse }: T
     'font-variant-numeric': fontVariantNumeric,
     'font-feature-settings': fontFeatureSettings,
     '-webkit-text-fill-color': textFillColor
-  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  } = useInspectorValues({ keys: TYPOGRAPHY_KEYS.dot, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('typography', isCollapsed), [onCollapse]);
 
@@ -124,9 +82,9 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, onCollapse }: T
 
   return (
     <CategoryContainer
-      title="Typography"
-      dotKeys={dotKeys}
-      advancedKeys={advancedKeys}
+      title={TYPOGRAPHY_KEYS.title}
+      dotKeys={TYPOGRAPHY_KEYS.dot}
+      advancedKeys={TYPOGRAPHY_KEYS.advanced}
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >
@@ -171,10 +129,10 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, onCollapse }: T
         textUnderlineOffset={textUnderlineOffset}
         onChange={handleChange}
       />
-      <CategorySection label="Letter" keys={keyValueLetter}>
+      <CategorySection label="Spacing" keys={keyValueLetter}>
         <CategoryOption
           keys={['letter-spacing']}
-          label="Spacing"
+          label="Letter"
           value={letterSpacing}
           onChange={handleChange('letter-spacing')}
           type="metric"

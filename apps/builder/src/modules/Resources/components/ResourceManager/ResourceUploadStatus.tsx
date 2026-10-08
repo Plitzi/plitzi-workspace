@@ -20,7 +20,7 @@ const ResourceUploadStatus = ({
           <>
             <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white bg-[#00000040] p-1 text-xs font-bold group-hover:hidden">
               <span>{progressUpload}</span>
-              <span className="text-[10px]">%</span>
+              <span className="text-[11px]">%</span>
             </div>
             <div className="hidden group-hover:block" title="Cancel">
               <i className="fa-solid fa-circle-xmark fa-2x hover:text-red-400" onClick={onCancel} />

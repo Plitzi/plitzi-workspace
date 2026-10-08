@@ -18,7 +18,7 @@ const SuggestionGroup = ({ suggestions, onDismiss }: SuggestionGroupProps) => {
 
   return (
     <section className="flex flex-col gap-1">
-      <h5 className={clsx('text-[10px] font-bold tracking-wider uppercase', MUTED)}>
+      <h5 className={clsx('text-[11px] font-bold tracking-wider uppercase', MUTED)}>
         Suggestions · {suggestions.length}
       </h5>
       <p className={clsx('text-[11px] leading-relaxed', MUTED)}>

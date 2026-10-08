@@ -77,7 +77,7 @@ const Components = ({ filter }: ComponentsProps) => {
   return (
     <Flex direction="column" gap={1}>
       <Flex items="center" justify="between" gap={2}>
-        <span className="px-1 text-[10px] font-semibold tracking-wide text-gray-400 uppercase dark:text-zinc-500">
+        <span className="px-1 text-[11px] font-semibold tracking-wide text-gray-400 uppercase dark:text-zinc-500">
           Components
         </span>
         <Button size="xs" title="New component" onClick={handleAdd} iconPlacement="before">

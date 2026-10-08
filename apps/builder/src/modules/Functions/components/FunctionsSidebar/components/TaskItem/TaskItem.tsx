@@ -30,7 +30,7 @@ const TaskItem = ({ name, title, cpu, selected, unsaved, onSelect }: TaskItemPro
       <span className="flex items-center justify-between gap-2">
         <span className="truncate text-xs font-medium text-gray-900 dark:text-zinc-100">{title || name}</span>
         <span
-          className={clsx('shrink-0 rounded-sm px-1 font-mono text-[10px]', {
+          className={clsx('shrink-0 rounded-sm px-1 font-mono text-[11px]', {
             'bg-primary-100 text-primary-800 dark:bg-primary-500/20 dark:text-primary-200': cpu.asked,
             'bg-gray-100 text-gray-500 dark:bg-zinc-800 dark:text-zinc-400': !cpu.asked
           })}
@@ -43,7 +43,7 @@ const TaskItem = ({ name, title, cpu, selected, unsaved, onSelect }: TaskItemPro
         <code className="truncate text-[11px] text-gray-500 dark:text-zinc-400">{name}</code>
         {unsaved && (
           <span
-            className="shrink-0 text-[10px] font-medium text-amber-700 dark:text-amber-400"
+            className="shrink-0 text-[11px] font-medium text-amber-700 dark:text-amber-400"
             title="Written, not saved yet: save to run it"
           >
             not saved

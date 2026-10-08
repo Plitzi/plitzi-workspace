@@ -1,10 +1,13 @@
 import clsx from 'clsx';
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import { use, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
+import { stopPct } from './helpers';
+import { resolveTokens } from '../../../../cssValues';
+import StyleInspectorContext from '../../../../StyleInspectorContext';
 import normalizeLeft from '../../helpers/normalizeLeft';
 
 import type { GradientStop } from '../../helpers/backgroundParser';
-import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
+import type { KeyboardEvent, MouseEvent, PointerEvent as ReactPointerEvent, RefObject } from 'react';
 
 type GradientStopHandleProps = {
   stop: GradientStop;
@@ -12,20 +15,29 @@ type GradientStopHandleProps = {
   trackRef: RefObject<HTMLDivElement | null>;
   onPositionChange: (stopId: string, pct: number) => void;
   onSelect: (stopId: string) => void;
+  onRemove: (stopId: string) => void;
 };
 
-const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSelect }: GradientStopHandleProps) => {
-  const handleRef = useRef<HTMLDivElement>(null);
+/**
+ * A stop on the gradient: dragged along it, or moved with the arrow keys (Shift for ten at a time); Delete removes it.
+ */
+const GradientStopHandle = ({
+  stop,
+  selected,
+  trackRef,
+  onPositionChange,
+  onSelect,
+  onRemove
+}: GradientStopHandleProps) => {
+  const { variables } = use(StyleInspectorContext);
+  const handleRef = useRef<HTMLButtonElement>(null);
   const isCapturing = useRef(false);
   const hasMoved = useRef(false);
   const left = useMemo(
-    () =>
-      normalizeLeft(
-        stop.position,
-        (handleRef.current?.parentNode as HTMLElement | null)?.getBoundingClientRect().width ?? Infinity
-      ),
-    [stop.position]
+    () => normalizeLeft(stop.position.split(' ')[0] ?? '', trackRef.current?.getBoundingClientRect().width ?? Infinity),
+    [stop.position, trackRef]
   );
+  const color = useMemo(() => resolveTokens(stop.color, variables), [stop.color, variables]);
 
   const getPct = useCallback(
     (clientX: number): number => {
@@ -34,9 +46,9 @@ const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSele
         return 0;
       }
 
-      const { left, width } = track.getBoundingClientRect();
+      const { left: trackLeft, width } = track.getBoundingClientRect();
 
-      return Math.round(Math.max(0, Math.min(100, ((clientX - left) / width) * 100)));
+      return Math.round(Math.max(0, Math.min(100, ((clientX - trackLeft) / width) * 100)));
     },
     [trackRef]
   );
@@ -48,18 +60,20 @@ const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSele
   }, [left]);
 
   const handlePointerDown = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
+    (e: ReactPointerEvent<HTMLButtonElement>) => {
       e.preventDefault();
+      e.stopPropagation();
       hasMoved.current = false;
       isCapturing.current = true;
       handleRef.current?.setPointerCapture(e.pointerId);
+      handleRef.current?.focus();
       onSelect(stop.id);
     },
     [onSelect, stop.id]
   );
 
   const handlePointerMove = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
+    (e: ReactPointerEvent<HTMLButtonElement>) => {
       if (!isCapturing.current || !handleRef.current) {
         return;
       }
@@ -71,7 +85,7 @@ const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSele
   );
 
   const handlePointerUp = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
+    (e: ReactPointerEvent<HTMLButtonElement>) => {
       if (!isCapturing.current) {
         return;
       }
@@ -86,20 +100,45 @@ const GradientStopHandle = ({ stop, selected, trackRef, onPositionChange, onSele
     [getPct, onPositionChange, stop.id]
   );
 
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLButtonElement>) => {
+      const step = e.shiftKey ? 10 : 1;
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        const next = stopPct(stop.position) + (e.key === 'ArrowLeft' ? -step : step);
+        onPositionChange(stop.id, Math.max(0, Math.min(100, next)));
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        // Kept from reaching the canvas, where the same keys delete the selected element.
+        e.stopPropagation();
+        onRemove(stop.id);
+      }
+    },
+    [onPositionChange, onRemove, stop.id, stop.position]
+  );
+
+  // The bar under the handle adds a stop where it is clicked; a click on a stop only selects it.
+  const handleClick = useCallback((e: MouseEvent) => e.stopPropagation(), []);
+
   return (
-    <div
+    <button
       ref={handleRef}
+      type="button"
       className={clsx(
-        'absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 shadow-sm',
-        selected
-          ? 'z-10 border-blue-500 ring-1 ring-blue-300 dark:ring-blue-700'
-          : 'z-0 border-white hover:border-gray-300 dark:border-zinc-500'
+        'pointer-events-auto absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 cursor-grab rounded-full border-2 shadow-md outline-none active:cursor-grabbing',
+        {
+          'ring-primary-500 dark:ring-primary-400 z-10 border-white ring-2': selected,
+          'z-0 border-white/90 hover:border-white': !selected
+        }
       )}
-      style={{ left, backgroundColor: stop.color }}
+      style={{ left, backgroundColor: color }}
+      title={`${stop.color} · ${stop.position || 'auto'} — drag, or use the arrow keys`}
+      aria-label={`Color stop ${stop.color} at ${stop.position || 'auto'}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      title={`${stop.color} • ${stop.position}`}
+      onKeyDown={handleKeyDown}
+      onClick={handleClick}
     />
   );
 };

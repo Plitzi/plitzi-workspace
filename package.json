@@ -53,6 +53,9 @@
   "engines": {
     "node": ">=20"
   },
+  "resolutions": {
+    "@plitzi/plitzi-ui": "portal:../plitzi-ui"
+  },
   "packageManager": "yarn@4.2.2",
   "workspaces": [
     "apps/*",

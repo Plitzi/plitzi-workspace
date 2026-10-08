@@ -1,104 +1,92 @@
-import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
-import Icon from '@plitzi/plitzi-ui/Icon';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 
+import { FILTER_GROUPS, FILTER_SPECS, parseFilter, serializeFilter } from './helpers';
 import CategoryOption from '../../../components/CategoryOption';
-import CategorySection from '../../../components/CategorySection';
+import ValueListItem from '../../../components/ValueListItem';
+import { asText } from '../../../cssValues';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-import type { MouseEvent } from 'react';
 
 export type FilterItemProps = {
-  value?: string;
-  onChange?: (value: string) => void;
-  onRemove?: (e: MouseEvent) => void;
+  value: string;
+  title: string;
+  onChange: (value: string) => void;
+  onRemove: () => void;
 };
 
-const FilterItem = ({ value = 'blur(5px)', onRemove, onChange }: FilterItemProps) => {
-  const valueParts = value.match(/[a-z-]+|[0-9.-]+(px|%|deg|)/gim);
-  let { propType = 'blur', amount = '5px' } = {};
-  if (valueParts?.length === 2) {
-    [propType, amount] = valueParts;
-  }
+type OptionValue = StyleValue | Record<StyleCategory, StyleValue> | boolean;
 
-  const valueRef = useRef({ propType, amount });
-  valueRef.current = { propType, amount };
+const FILTER_ENTRIES = Object.entries(FILTER_SPECS);
 
-  const handleChange = useCallback(
-    (type: 'propType' | 'amount') => (itemValue: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
-      const valueAux = { ...valueRef.current };
-      valueAux[type] = itemValue as string;
-      const { propType } = valueAux;
-      let { amount } = valueAux;
-      if (type === 'propType' && valueRef.current.amount !== itemValue) {
-        if (itemValue === 'blur') {
-          amount = '5px';
-        } else if (itemValue === 'hue-rotate') {
-          amount = '0deg';
-        } else {
-          amount = '0.5';
-        }
+/**
+ * One function of a filter list. The ones without a control here — `drop-shadow(…)`, `url(#…)`, a token — are edited
+ * as the text they are.
+ */
+const FilterItem = ({ value, title, onRemove, onChange }: FilterItemProps) => {
+  const filter = parseFilter(value);
+  const filterRef = useRef(filter);
+  filterRef.current = filter;
+  const spec = filter ? FILTER_SPECS[filter.name] : undefined;
+
+  const handleChangeName = useCallback(
+    (name: OptionValue) => {
+      const fn = asText(name);
+      if (!Object.hasOwn(FILTER_SPECS, fn)) {
+        return;
       }
 
-      onChange?.(`${propType}(${amount})`);
+      // A new function starts at its own default: 5px of blur means nothing to a sepia.
+      onChange(serializeFilter({ name: fn, amount: FILTER_SPECS[fn].default }));
     },
     [onChange]
   );
 
-  const fieldSpecs = useMemo(() => {
-    if (propType === 'hue-rotate') {
-      return { units: [{ label: 'DEG', value: 'deg' }] };
-    }
+  const handleChangeAmount = useCallback(
+    (amount: OptionValue) => {
+      if (filterRef.current) {
+        onChange(serializeFilter({ ...filterRef.current, amount: asText(amount) }));
+      }
+    },
+    [onChange]
+  );
 
-    if (propType === 'blur') {
-      return { units: [{ label: 'PX', value: 'px' }] };
-    }
-
-    return { units: undefined, max: 1, step: 0.1 };
-  }, [propType]);
+  const handleChangeRaw = useCallback((raw: OptionValue) => onChange(asText(raw)), [onChange]);
 
   return (
-    <ContainerFloating className="w-full" closeOnClick={false} containerTopOffset={5}>
-      <ContainerFloating.Trigger className="flex w-full cursor-pointer items-center justify-between rounded-sm border border-gray-300 bg-white px-2 py-0.5 select-none hover:bg-gray-100 dark:border-zinc-600 dark:bg-zinc-800 dark:hover:bg-zinc-700/60">
-        <div className="flex items-center">
-          <div className="flex">{value}</div>
-        </div>
-        <div className="flex">
-          <Icon size="xs" icon="fas fa-trash-alt" onClick={onRemove} intent="danger" title="Remove" />
-        </div>
-      </ContainerFloating.Trigger>
-      <ContainerFloating.Content className="w-[260px]">
-        <div className="flex w-full flex-col gap-2 p-2">
-          <CategorySection label="Type">
-            <CategoryOption label="Property" onChange={handleChange('propType')} type="select" value={propType}>
-              <optgroup label="General">
-                <option value="blur">Blur</option>
+    <ValueListItem summary={value} title={title} removeLabel={`Remove ${title.toLowerCase()}`} onRemove={onRemove}>
+      {!filter && (
+        <>
+          <CategoryOption label="Value" type="input" value={value} onChange={handleChangeRaw} />
+          <p className="m-0 text-[11px] text-zinc-500 dark:text-zinc-400">
+            A function the editor has no control for, so it is edited as written.
+          </p>
+        </>
+      )}
+      {filter && spec && (
+        <div className="grid grid-cols-2 gap-2">
+          <CategoryOption label="Function" type="select" value={filter.name} onChange={handleChangeName}>
+            {FILTER_GROUPS.map(group => (
+              <optgroup key={group} label={group}>
+                {FILTER_ENTRIES.filter(([, entry]) => entry.group === group).map(([name, entry]) => (
+                  <option key={name} value={name}>
+                    {entry.label}
+                  </option>
+                ))}
               </optgroup>
-              <optgroup label="Color Adjustments">
-                <option value="brightness">Brightness</option>
-                <option value="contrast">Contrast</option>
-                <option value="hue-rotate">Hue Rotate</option>
-                <option value="saturate">Saturation</option>
-              </optgroup>
-              <optgroup label="Color Effects">
-                <option value="grayscale">Grayscale</option>
-                <option value="invert">Invert</option>
-                <option value="sepia">Sepia</option>
-              </optgroup>
-            </CategoryOption>
-            <CategoryOption
-              label="Amount"
-              value={amount}
-              onChange={handleChange('amount')}
-              type="metric"
-              units={fieldSpecs.units}
-              step={fieldSpecs.step}
-              max={fieldSpecs.max}
-            />
-          </CategorySection>
+            ))}
+          </CategoryOption>
+          <CategoryOption
+            label="Amount"
+            type="metric"
+            value={filter.amount}
+            units={spec.units}
+            step={spec.step}
+            min={filter.name === 'hue-rotate' ? -Infinity : 0}
+            onChange={handleChangeAmount}
+          />
         </div>
-      </ContainerFloating.Content>
-    </ContainerFloating>
+      )}
+    </ValueListItem>
   );
 };
 

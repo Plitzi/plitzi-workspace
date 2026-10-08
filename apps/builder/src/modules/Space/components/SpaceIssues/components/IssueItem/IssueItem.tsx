@@ -22,7 +22,7 @@ const IssueItem = ({ issue, severity, onDismiss }: IssueItemProps) => (
       <p className="text-xs leading-relaxed text-zinc-700 dark:text-zinc-200">{issue.message}</p>
       {issue.fix && <IssueFix fix={issue.fix} />}
       {issue.fixable && (
-        <span className={clsx('text-[10px] tracking-wider uppercase', MUTED)}>Fixable automatically</span>
+        <span className={clsx('text-[11px] tracking-wider uppercase', MUTED)}>Fixable automatically</span>
       )}
       {issue.elementId !== null && <ElementChip elementId={issue.elementId} onDismiss={onDismiss} />}
     </div>

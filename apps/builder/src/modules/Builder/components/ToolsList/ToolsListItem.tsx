@@ -12,14 +12,22 @@ const ToolsListItem = ({ id = '', title = '', active = false, onClick }: ToolsLi
   const handleClick = useCallback(() => onClick?.(id), [id, onClick]);
 
   return (
-    <li
-      className={clsx(
-        'hover:text-primary-text -mb-0.5 flex grow basis-0 cursor-pointer items-center justify-center border-b-4 px-1 text-xs',
-        { 'border-transparent': !active, 'border-primary-ui text-primary-text': active }
-      )}
-      onClick={handleClick}
-    >
-      {title}
+    <li className="-mb-px flex grow" role="presentation">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={active}
+        className={clsx(
+          'focus-visible:outline-primary-500 flex grow cursor-pointer items-center justify-center border-b-2 px-1.5 py-1.5 text-xs whitespace-nowrap transition-colors duration-150 focus-visible:outline-2 focus-visible:-outline-offset-2',
+          {
+            'border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100': !active,
+            'border-primary-ui text-primary-text font-medium': active
+          }
+        )}
+        onClick={handleClick}
+      >
+        {title}
+      </button>
     </li>
   );
 };

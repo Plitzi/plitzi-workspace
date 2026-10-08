@@ -1,69 +1,47 @@
-import Icon from '@plitzi/plitzi-ui/Icon';
 import { useCallback } from 'react';
 
-import BoxShadowItem from './BoxShadowItem';
-import { splitByCommaOutsideParens } from './helpers';
-import InspectorLabel from '../../../components/InspectorLabel';
+import ShadowItem from '../../../components/ShadowItem';
+import ValueList from '../../../components/ValueList';
+import { splitByCommaOutsideParens } from '../../../cssValues';
+import { DEFAULT_SHADOW, serializeShadow } from '../../../shadowValue';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-import type { MouseEvent } from 'react';
 
 export type BoxShadowProps = {
   value?: StyleValue;
   onChange?: (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => void;
 };
 
+const BOX_SHADOW_KEYS: StyleCategory[] = ['box-shadow'];
+
 const BoxShadow = ({ value = '', onChange }: BoxShadowProps) => {
-  let boxShadows: string[] = [];
-  if (value && value !== '') {
-    boxShadows = splitByCommaOutsideParens(value as string);
-  }
+  const shadows = typeof value === 'string' && value !== '' ? splitByCommaOutsideParens(value).map(s => s.trim()) : [];
 
-  const handleClickRemoveItem = (index: number) => (e: MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    boxShadows.splice(index, 1);
-    if (boxShadows.length > 0) {
-      onChange?.(boxShadows.join(','));
-    } else {
-      onChange?.('');
+  const emit = useCallback((next: string[]) => onChange?.(next.length > 0 ? next.join(', ') : ''), [onChange]);
+
+  const handleRemoveItem = (index: number) => () => emit(shadows.filter((_, i) => i !== index));
+
+  const handleChangeItem = (index: number) => (item: string) => {
+    if (item !== shadows[index]) {
+      emit(shadows.map((shadow, i) => (i === index ? item : shadow)));
     }
   };
 
-  const handleChangeItem = (index: number) => (shadowItemValue: string) => {
-    if (shadowItemValue !== boxShadows[index]) {
-      boxShadows[index] = shadowItemValue;
-      onChange?.(boxShadows.join(','));
-    }
-  };
-
-  const handleClickAddItem = useCallback(() => {
-    if (value) {
-      onChange?.(`${value},1px 1px 3px 1px black`);
-    } else {
-      onChange?.('1px 1px 3px 1px black');
-    }
-  }, [value, onChange]);
+  const handleAdd = () => emit([...shadows, serializeShadow(DEFAULT_SHADOW, { withSpread: true })]);
 
   return (
-    <>
-      <div className="flex items-center justify-between">
-        <InspectorLabel keyValue={['box-shadow']}>Box Shadow</InspectorLabel>
-        <Icon className="cursor-pointer" icon="fas fa-plus" onClick={handleClickAddItem} />
-      </div>
-      {boxShadows.length > 0 && (
-        <div className="flex flex-col gap-2">
-          {boxShadows.map((boxShadow, index) => (
-            <BoxShadowItem
-              key={index}
-              value={boxShadow.trim()}
-              onChange={handleChangeItem(index)}
-              onRemove={handleClickRemoveItem(index)}
-            />
-          ))}
-        </div>
-      )}
-    </>
+    <ValueList label="Box Shadow" keys={BOX_SHADOW_KEYS} addLabel="Add box shadow" onAdd={handleAdd}>
+      {shadows.length > 0 &&
+        shadows.map((shadow, index) => (
+          <ShadowItem
+            key={index}
+            value={shadow}
+            withSpread
+            onChange={handleChangeItem(index)}
+            onRemove={handleRemoveItem(index)}
+          />
+        ))}
+    </ValueList>
   );
 };
 

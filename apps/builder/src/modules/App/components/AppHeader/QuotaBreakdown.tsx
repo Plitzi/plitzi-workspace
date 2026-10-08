@@ -41,7 +41,7 @@ const Allowance = ({ entry }: { entry: QuotaReading }) => (
 
 const Section = ({ title, children }: { title: string; children: ReactNode }) => (
   <div className="flex flex-col gap-1.5">
-    <h5 className={clsx('text-[10px] font-bold tracking-wider uppercase', MUTED)}>{title}</h5>
+    <h5 className={clsx('text-[11px] font-bold tracking-wider uppercase', MUTED)}>{title}</h5>
     {children}
   </div>
 );

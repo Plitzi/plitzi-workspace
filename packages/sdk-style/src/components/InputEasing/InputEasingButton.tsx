@@ -15,7 +15,10 @@ const InputEasingButton = ({ children, title = '', className = '', onClick }: In
       type="button"
       title={title}
       onClick={onClick}
-      className={clsx('m-1 h-6 w-6 rounded-sm p-1 hover:bg-gray-100', className)}
+      className={clsx(
+        'hover:text-primary-600 dark:hover:text-primary-300 m-0.5 h-7 w-7 cursor-pointer rounded-md p-1 text-zinc-600 hover:bg-gray-100 dark:text-zinc-300 dark:hover:bg-zinc-800',
+        className
+      )}
     >
       <svg viewBox="0 0 30 30" className="overflow-visible">
         {children}

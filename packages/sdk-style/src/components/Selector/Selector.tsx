@@ -249,7 +249,9 @@ const Selector = ({
           allowLeftSide: true,
           allowRightSide: true,
           placement: 'floating',
-          width: 600
+          // Two columns — the selectors and the inspector — each wide enough to read without cutting a label.
+          width: 720,
+          height: 640
         });
       }
     },

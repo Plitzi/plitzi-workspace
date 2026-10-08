@@ -9,6 +9,7 @@ import PositionAdvanced from './PositionAdvanced';
 import PositionAdvancedButtons from './PositionAdvancedButtons';
 import PositionClear from './PositionClear';
 import PositionFloat from './PositionFloat';
+import { POSITION_KEYS } from '../../categoryKeys';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
@@ -18,10 +19,7 @@ import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-const dotKeys = ['position', 'top', 'bottom', 'z-index', 'float', 'clear', 'left', 'right'] as StyleCategory[];
 const keyValue = ['position', 'top', 'bottom', 'left', 'right'] as StyleCategory[];
-
-const advancedKeys = ['float', 'clear'] as StyleCategory[];
 
 export type PositionProps = {
   replaceTokens?: boolean;
@@ -40,7 +38,7 @@ const Position = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Pos
     float,
     clear,
     'z-index': zIndex
-  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  } = useInspectorValues({ keys: POSITION_KEYS.dot, asValue: true, replaceTokens });
   const advancedbuttons = useMemo(
     () => ({ top, bottom, left, right }) as Record<StyleCategory, StyleValue>,
     [top, bottom, left, right]
@@ -98,9 +96,9 @@ const Position = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Pos
 
   return (
     <CategoryContainer
-      title="Position"
-      dotKeys={dotKeys}
-      advancedKeys={advancedKeys}
+      title={POSITION_KEYS.title}
+      dotKeys={POSITION_KEYS.dot}
+      advancedKeys={POSITION_KEYS.advanced}
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >

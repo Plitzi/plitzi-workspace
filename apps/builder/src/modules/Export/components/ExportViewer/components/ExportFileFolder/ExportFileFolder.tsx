@@ -39,7 +39,7 @@ const ExportFileFolder = ({ folder, selectedPath, onSelect }: ExportFileFolderPr
           )}
         />
         <span className="grow truncate">{folder.name}</span>
-        <span className="text-[10px] text-zinc-400 dark:text-zinc-500">{folder.paths.length}</span>
+        <span className="text-[11px] text-zinc-400 dark:text-zinc-500">{folder.paths.length}</span>
       </button>
       {open && (
         <div className="mt-0.5 ml-[13px] space-y-0.5 border-l border-zinc-200 pl-1 dark:border-zinc-700">

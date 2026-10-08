@@ -17,7 +17,7 @@ const SaveDetail = ({ change, onDismiss }: SaveDetailProps) => {
   return (
     <li className="flex gap-2 py-1.5">
       <span
-        className={clsx('flex w-10 shrink-0 flex-col font-mono text-[10px] leading-4', MUTED)}
+        className={clsx('flex w-10 shrink-0 flex-col font-mono text-[11px] leading-4', MUTED)}
         title={formatTime(change.at)}
       >
         <span>{`#${change.seq}`}</span>

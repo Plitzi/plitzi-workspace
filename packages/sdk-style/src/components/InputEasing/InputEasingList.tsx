@@ -12,9 +12,11 @@ const InputEasingList = ({ className = '', onChange }: InputEasingListProps) => 
   const handleClick = useCallback((type: string) => () => onChange?.(type), [onChange]);
 
   return (
-    <div className={clsx('flex flex-col border-r border-gray-300', className)}>
+    <div className={clsx('flex flex-col', className)}>
       <div className="flex flex-col">
-        <div className="bg-blue-400 p-1 text-xs text-white">Default</div>
+        <div className="px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          Default
+        </div>
         <div className="flex flex-wrap">
           <InputEasingButton title="Linear" onClick={handleClick('linear')}>
             <path d="M30,0 C22.5,7.5 7.5,22.5 0,30" className="fill-transparent stroke-current stroke-2" />
@@ -34,7 +36,9 @@ const InputEasingList = ({ className = '', onChange }: InputEasingListProps) => 
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="bg-blue-400 p-1 text-xs text-white">Ease In</div>
+        <div className="px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          Ease In
+        </div>
         <div className="flex flex-wrap">
           <InputEasingButton title="Ease In Quad" onClick={handleClick('easeInQuad')}>
             <path
@@ -66,7 +70,9 @@ const InputEasingList = ({ className = '', onChange }: InputEasingListProps) => 
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="bg-blue-400 p-1 text-xs text-white">Ease Out</div>
+        <div className="px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          Ease Out
+        </div>
         <div className="flex flex-wrap">
           <InputEasingButton title="Ease Out Quad" onClick={handleClick('easeOutQuad')}>
             <path
@@ -104,7 +110,9 @@ const InputEasingList = ({ className = '', onChange }: InputEasingListProps) => 
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="bg-blue-400 p-1 text-xs text-white">Ease In Out</div>
+        <div className="px-1 pt-2 pb-0.5 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase dark:text-zinc-400">
+          Ease In Out
+        </div>
         <div className="flex flex-wrap">
           <InputEasingButton title="Ease In Out Quad" onClick={handleClick('easeInOutQuad')}>
             <path

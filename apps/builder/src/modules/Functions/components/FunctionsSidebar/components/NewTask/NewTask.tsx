@@ -74,7 +74,7 @@ const NewTask = ({ namespace: usual, onCreate, onCancel }: NewTaskProps) => {
         value={title}
         onChange={setTitle}
       />
-      <span className="text-[10px] text-gray-500 dark:text-zinc-400">
+      <span className="text-[11px] text-gray-500 dark:text-zinc-400">
         {valid ? `A step called ${namespace}.${action}` : 'Lowercase words and dashes: seismic, feed-week'}
       </span>
       <div className="flex justify-end gap-1.5">

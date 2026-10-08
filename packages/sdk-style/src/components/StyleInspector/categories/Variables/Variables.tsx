@@ -5,6 +5,7 @@ import { use, useCallback } from 'react';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 
+import { VARIABLES_KEYS } from '../../categoryKeys';
 import CategoryContainer from '../../components/CategoryContainer';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
@@ -93,7 +94,7 @@ const Variables = ({ isCollapsed, onCollapse }: VariablesProps) => {
   }
 
   return (
-    <CategoryContainer title="Variables" isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer title={VARIABLES_KEYS.title} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
       <StyleVariables
         variables={selector.variables}
         onAdd={handleAddStyleVariable}

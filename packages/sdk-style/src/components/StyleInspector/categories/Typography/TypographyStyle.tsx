@@ -76,7 +76,7 @@ const TypographyStyle = ({
       <CategorySection label="">
         <CategoryOption
           keys={['font-style']}
-          label="Italicize"
+          label="Style"
           onChange={onChange?.('font-style')}
           type="iconGroup"
           items={itemsItalicize}

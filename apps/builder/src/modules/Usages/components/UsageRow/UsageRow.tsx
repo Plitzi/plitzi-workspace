@@ -43,18 +43,18 @@ const UsageRow = ({ item, category, open, unusedText, onToggle }: UsageRowProps)
           {item.name}
         </span>
         {item.detail && item.detail !== item.name && (
-          <span className="max-w-[40%] shrink-0 truncate text-[10px] text-zinc-500 dark:text-zinc-400">
+          <span className="max-w-[40%] shrink-0 truncate text-[11px] text-zinc-500 dark:text-zinc-400">
             {item.detail}
           </span>
         )}
         {unused && (
-          <span className="shrink-0 rounded bg-yellow-100 px-1.5 text-[10px] font-medium text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
+          <span className="shrink-0 rounded bg-yellow-100 px-1.5 text-[11px] font-medium text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300">
             unused
           </span>
         )}
         {!unused && (
           <span
-            className="min-w-5 shrink-0 rounded bg-zinc-100 px-1.5 text-center text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+            className="min-w-5 shrink-0 rounded bg-zinc-100 px-1.5 text-center text-[11px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
             title={usageSummary(item.elements, item.references)}
           >
             {usageCount(item)}
@@ -67,7 +67,7 @@ const UsageRow = ({ item, category, open, unusedText, onToggle }: UsageRowProps)
           {unused && <p className="text-[11px] leading-relaxed text-yellow-700 dark:text-yellow-400">{unusedText}</p>}
           {item.references.length > 0 && <UsageReferences references={item.references} />}
           {item.elements.length > 0 && (
-            <span className="text-[10px] tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+            <span className="text-[11px] tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
               {usageSummary(item.elements, item.references)}
             </span>
           )}

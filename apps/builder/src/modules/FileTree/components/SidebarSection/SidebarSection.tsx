@@ -19,7 +19,7 @@ const SidebarSection = ({ title, count, actionTitle, onAction, children }: Sideb
       <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-gray-500 uppercase dark:text-zinc-400">
         {title}
         {count !== undefined && (
-          <span className="rounded-full bg-gray-100 px-1.5 text-[10px] font-medium text-gray-600 dark:bg-zinc-800 dark:text-zinc-300">
+          <span className="rounded-full bg-gray-100 px-1.5 text-[11px] font-medium text-gray-600 dark:bg-zinc-800 dark:text-zinc-300">
             {count}
           </span>
         )}

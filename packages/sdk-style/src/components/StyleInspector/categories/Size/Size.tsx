@@ -4,6 +4,7 @@ import SizeContainer from './SizeContainer';
 import SizeFit from './SizeFit';
 import SizeOverflow from './SizeOverflow';
 import SizePosition from './SizePosition';
+import { SIZE_KEYS } from '../../categoryKeys';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
@@ -12,31 +13,6 @@ import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-
-const dotKeys = [
-  'width',
-  'height',
-  'min-width',
-  'min-height',
-  'max-width',
-  'max-height',
-  'aspect-ratio',
-  'box-sizing',
-  'overflow',
-  'object-fit',
-  'object-position',
-  'container-type',
-  'container-name'
-] as StyleCategory[];
-
-const advancedKeys = [
-  'aspect-ratio',
-  'box-sizing',
-  'object-position',
-  'object-fit',
-  'container-type',
-  'container-name'
-] as StyleCategory[];
 
 const keyValueSize = ['width', 'height'] as StyleCategory[];
 const keyValueSizeMin = ['min-width', 'min-height'] as StyleCategory[];
@@ -64,7 +40,7 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
     'object-fit': objectFit,
     'container-type': containerType,
     'container-name': containerName
-  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  } = useInspectorValues({ keys: SIZE_KEYS.dot, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('size', isCollapsed), [onCollapse]);
 
@@ -76,9 +52,9 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
 
   return (
     <CategoryContainer
-      title="Size"
-      dotKeys={dotKeys}
-      advancedKeys={advancedKeys}
+      title={SIZE_KEYS.title}
+      dotKeys={SIZE_KEYS.dot}
+      advancedKeys={SIZE_KEYS.advanced}
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >

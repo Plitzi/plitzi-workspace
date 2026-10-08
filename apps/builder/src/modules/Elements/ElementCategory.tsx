@@ -17,7 +17,7 @@ const ElementCategory = ({ components, category, titled = false }: ElementCatego
   return (
     <section className="flex flex-col gap-1" aria-label={display.label}>
       {titled && (
-        <span className="px-1 text-[10px] font-semibold tracking-wide text-gray-400 uppercase dark:text-zinc-500">
+        <span className="px-1 text-[11px] font-semibold tracking-wide text-gray-400 uppercase dark:text-zinc-500">
           {display.label}
         </span>
       )}

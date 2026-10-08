@@ -48,7 +48,7 @@ const FunctionInspector = ({
           </span>
           <span className="truncate text-sm font-semibold text-gray-900 dark:text-zinc-50">{task.title || name}</span>
           {!task.saved && (
-            <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
+            <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">
               Not saved
             </span>
           )}

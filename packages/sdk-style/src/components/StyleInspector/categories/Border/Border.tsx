@@ -5,30 +5,12 @@ import BorderPlacements from './BorderPlacements';
 import BorderRadius from './BorderRadius';
 import BorderStyle from './BorderStyle';
 import BorderWidth from './BorderWidth';
+import { BORDER_KEYS } from '../../categoryKeys';
 import CategoryContainer from '../../components/CategoryContainer';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-
-const dotKeys = [
-  'border-top-style',
-  'border-top-width',
-  'border-top-color',
-  'border-bottom-style',
-  'border-bottom-width',
-  'border-bottom-color',
-  'border-left-style',
-  'border-left-width',
-  'border-left-color',
-  'border-right-style',
-  'border-right-width',
-  'border-right-color',
-  'border-top-left-radius',
-  'border-top-right-radius',
-  'border-bottom-left-radius',
-  'border-bottom-right-radius'
-] as StyleCategory[];
 
 export type BorderProps = {
   replaceTokens?: boolean;
@@ -39,7 +21,7 @@ export type BorderProps = {
 const Border = ({ replaceTokens = false, isCollapsed = true, onCollapse }: BorderProps) => {
   const [currentPlacement, setCurrentPlacement] = useState<'all' | 'top' | 'bottom' | 'left' | 'right'>('all');
   const { setValue } = use(StyleInspectorContext);
-  const values = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens }) as Record<
+  const values = useInspectorValues({ keys: BORDER_KEYS.dot, asValue: true, replaceTokens }) as Record<
     StyleCategory,
     StyleValue | undefined
   >;
@@ -110,7 +92,12 @@ const Border = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Borde
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('border', isCollapsed), [onCollapse]);
 
   return (
-    <CategoryContainer title="Border" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer
+      title={BORDER_KEYS.title}
+      dotKeys={BORDER_KEYS.dot}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
       <div className="flex flex-col gap-2">
         <BorderRadius values={values} onChange={handleChange('radius')} onChangeSegment={handleChange} />
         <div className="flex w-full flex-col gap-2">

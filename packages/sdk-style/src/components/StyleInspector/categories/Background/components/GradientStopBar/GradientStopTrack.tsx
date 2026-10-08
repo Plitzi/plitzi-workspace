@@ -9,9 +9,11 @@ type GradientStopTrackProps = {
   selectedId: string;
   onChange?: (stops: GradientStop[]) => void;
   onSelect: (id: string) => void;
+  onRemove: (id: string) => void;
 };
 
-const GradientStopTrack = ({ stops, selectedId, onChange, onSelect }: GradientStopTrackProps) => {
+/** The handles, laid over the bar inset by half a handle, so a stop at 0% or 100% stays whole and grabbable. */
+const GradientStopTrack = ({ stops, selectedId, onChange, onSelect, onRemove }: GradientStopTrackProps) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const stopsRef = useRef(stops);
   stopsRef.current = stops;
@@ -24,8 +26,7 @@ const GradientStopTrack = ({ stops, selectedId, onChange, onSelect }: GradientSt
   );
 
   return (
-    <div ref={trackRef} className="relative h-5 w-full select-none">
-      <div className="absolute top-1/2 right-0 left-0 h-px -translate-y-1/2 bg-gray-300 dark:bg-zinc-600" />
+    <div ref={trackRef} className="pointer-events-none absolute inset-y-0 right-2.5 left-2.5 select-none">
       {stops.map(stop => (
         <GradientStopHandle
           key={stop.id}
@@ -34,6 +35,7 @@ const GradientStopTrack = ({ stops, selectedId, onChange, onSelect }: GradientSt
           selected={selectedId === stop.id}
           onPositionChange={handleChange}
           onSelect={onSelect}
+          onRemove={onRemove}
         />
       ))}
     </div>

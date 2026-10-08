@@ -31,7 +31,7 @@ const ExportViewTab = ({ view, label, icon, count, selected, onSelect }: ExportV
       <i className={clsx(icon, 'text-[11px]')} />
       {label}
       {count !== undefined && (
-        <span className="rounded-full bg-zinc-100 px-1.5 text-[10px] leading-4 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+        <span className="rounded-full bg-zinc-100 px-1.5 text-[11px] leading-4 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
           {count}
         </span>
       )}

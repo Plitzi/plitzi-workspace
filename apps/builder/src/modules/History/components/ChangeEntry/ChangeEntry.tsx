@@ -9,7 +9,7 @@ export type ChangeEntryProps = { entry: Entry };
 /** The fields an edit changed, each as `field: before → after`. Its line above already says what the entity is. */
 const ChangeEntry = ({ entry }: ChangeEntryProps) => (
   <li className="flex flex-col gap-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-700">
-    <span className={clsx('font-mono text-[10px]', MUTED)}>{entry.id}</span>
+    <span className={clsx('font-mono text-[11px]', MUTED)}>{entry.id}</span>
     {detailOf(entry).map(({ path, before, after }) => (
       <span key={path} className="flex flex-wrap items-baseline gap-x-1 font-mono text-[11px] leading-4">
         <span className={MUTED}>{`${path}:`}</span>

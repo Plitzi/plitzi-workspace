@@ -28,7 +28,7 @@ const UsageElement = ({ usage, onReveal }: UsageElementProps) => {
       <i
         className={clsx(
           get(componentDefinitions.current, `${usage.elementType}.market.icon`, 'fa-solid fa-shapes'),
-          'w-3 shrink-0 text-center text-[10px] text-zinc-400 dark:text-zinc-500'
+          'w-3 shrink-0 text-center text-[11px] text-zinc-400 dark:text-zinc-500'
         )}
       />
       <span className="min-w-0 shrink truncate font-mono text-[11px] text-indigo-700 dark:text-indigo-300">
@@ -36,7 +36,7 @@ const UsageElement = ({ usage, onReveal }: UsageElementProps) => {
         {usage.label && <span className="font-sans text-zinc-500 dark:text-zinc-400"> · {usage.label}</span>}
       </span>
       {via && (
-        <span className="ml-auto min-w-0 shrink-[2] truncate font-mono text-[10px] text-zinc-400 dark:text-zinc-500">
+        <span className="ml-auto min-w-0 shrink-[2] truncate font-mono text-[11px] text-zinc-400 dark:text-zinc-500">
           {via}
         </span>
       )}

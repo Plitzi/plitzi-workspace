@@ -1,30 +1,33 @@
-import type { MouseEvent } from 'react';
+import { use, useMemo } from 'react';
+
+import { CHECKERBOARD } from '../../../../components/ColorSwatch/helpers';
+import { resolveTokens } from '../../../../cssValues';
+import StyleInspectorContext from '../../../../StyleInspectorContext';
+
+import type { MouseEvent, ReactNode } from 'react';
 
 type GradientPreviewBarProps = {
   gradientCSS: string;
+  children?: ReactNode;
   onClick: (e: MouseEvent<HTMLDivElement>) => void;
 };
 
-const GradientPreviewBar = ({ gradientCSS, onClick }: GradientPreviewBarProps) => (
-  <div
-    className="relative h-6 w-full cursor-crosshair overflow-hidden rounded-sm border border-gray-300 dark:border-zinc-600"
-    onClick={onClick}
-    title="Click to add a color stop"
-  >
+/** The stops drawn on a bar over a checkerboard, with their handles on it; a click on the bar adds a stop there. */
+const GradientPreviewBar = ({ gradientCSS, children, onClick }: GradientPreviewBarProps) => {
+  const { variables } = use(StyleInspectorContext);
+  const background = useMemo(() => ({ background: resolveTokens(gradientCSS, variables) }), [gradientCSS, variables]);
+
+  return (
     <div
-      className="absolute inset-0"
-      style={{
-        backgroundImage:
-          'linear-gradient(45deg,#ccc 25%,transparent 25%),' +
-          'linear-gradient(-45deg,#ccc 25%,transparent 25%),' +
-          'linear-gradient(45deg,transparent 75%,#ccc 75%),' +
-          'linear-gradient(-45deg,transparent 75%,#ccc 75%)',
-        backgroundSize: '10px 10px',
-        backgroundPosition: '0 0,0 5px,5px -5px,-5px 0'
-      }}
-    />
-    <div className="absolute inset-0" style={{ background: gradientCSS }} />
-  </div>
-);
+      className="relative h-7 w-full cursor-copy rounded-md ring-1 ring-black/15 ring-inset dark:ring-white/20"
+      style={CHECKERBOARD}
+      title="Click the bar to add a stop"
+      onClick={onClick}
+    >
+      <div className="absolute inset-0 rounded-md" style={background} />
+      {children}
+    </div>
+  );
+};
 
 export default GradientPreviewBar;

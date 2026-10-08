@@ -1,44 +1,61 @@
 import { useCallback } from 'react';
 
+import {
+  CENTER_X_WORDS,
+  CENTER_Y_WORDS,
+  centerParts,
+  customExtentFor,
+  isExtentKeyword,
+  joinCenter,
+  RADIAL_EXTENTS
+} from './helpers';
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
-import BackgroundPosition from '../components/BackgroundPosition';
-import BackgroundSize from '../components/BackgroundSize';
-import BackgroundTile from '../components/BackgroundTile';
+import { asText } from '../../../cssValues';
 import GradientStopBar from '../components/GradientStopBar';
 
 import type { BackgroundLayer, GradientStop } from '../helpers/backgroundParser';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type RadialGradientModeProps = {
   layer: BackgroundLayer;
   onChange?: (layer: BackgroundLayer) => void;
 };
 
+type OptionValue = StyleValue | Record<StyleCategory, StyleValue> | boolean;
+
+const CUSTOM = 'custom';
+
 const RadialGradientMode = ({ layer, onChange }: RadialGradientModeProps) => {
+  const [centerX, centerY] = centerParts(layer.radialPosition);
+  const customExtent = !isExtentKeyword(layer.radialExtent);
+
   const handleShapeChange = useCallback(
-    (value: unknown) => onChange?.({ ...layer, radialShape: value as BackgroundLayer['radialShape'] }),
+    (value: OptionValue) => onChange?.({ ...layer, radialShape: asText(value) === 'circle' ? 'circle' : 'ellipse' }),
+    [layer, onChange]
+  );
+
+  const handleExtentKindChange = useCallback(
+    (value: OptionValue) => {
+      const kind = asText(value);
+      onChange?.({ ...layer, radialExtent: kind === CUSTOM ? customExtentFor(layer.radialShape) : kind });
+    },
     [layer, onChange]
   );
 
   const handleExtentChange = useCallback(
-    (value: unknown) => onChange?.({ ...layer, radialExtent: String(value) }),
+    (value: OptionValue) => onChange?.({ ...layer, radialExtent: asText(value) }),
     [layer, onChange]
   );
 
-  const handlePositionXChange = useCallback(
-    (value: unknown) => {
-      const parts = layer.radialPosition.split(' ');
-      onChange?.({ ...layer, radialPosition: `${String(value)} ${parts[1] ?? '50%'}` });
-    },
-    [layer, onChange]
+  const handleCenterXChange = useCallback(
+    (value: OptionValue) => onChange?.({ ...layer, radialPosition: joinCenter(asText(value), centerY) }),
+    [centerY, layer, onChange]
   );
 
-  const handlePositionYChange = useCallback(
-    (value: unknown) => {
-      const parts = layer.radialPosition.split(' ');
-      onChange?.({ ...layer, radialPosition: `${parts[0] ?? '50%'} ${String(value)}` });
-    },
-    [layer, onChange]
+  const handleCenterYChange = useCallback(
+    (value: OptionValue) => onChange?.({ ...layer, radialPosition: joinCenter(centerX, asText(value)) }),
+    [centerX, layer, onChange]
   );
 
   const handleStopsChange = useCallback((stops: GradientStop[]) => onChange?.({ ...layer, stops }), [layer, onChange]);
@@ -51,34 +68,42 @@ const RadialGradientMode = ({ layer, onChange }: RadialGradientModeProps) => {
           <option value="circle">Circle</option>
         </CategoryOption>
       </CategorySection>
-      <CategorySection label="Size">
-        <CategoryOption type="select" value={layer.radialExtent} onChange={handleExtentChange}>
-          <option value="farthest-corner">Farthest Corner</option>
-          <option value="farthest-side">Farthest Side</option>
-          <option value="closest-corner">Closest Corner</option>
-          <option value="closest-side">Closest Side</option>
+      <CategorySection label="Extent">
+        <CategoryOption
+          type="select"
+          value={customExtent ? CUSTOM : layer.radialExtent}
+          onChange={handleExtentKindChange}
+        >
+          {RADIAL_EXTENTS.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+          <option value={CUSTOM}>Custom size</option>
         </CategoryOption>
       </CategorySection>
-      <CategorySection label="Position">
+      {customExtent && (
+        <CategorySection label="Radius">
+          <CategoryOption type="input" value={layer.radialExtent} onChange={handleExtentChange} />
+        </CategorySection>
+      )}
+      <CategorySection label="Center">
         <CategoryOption
           type="metric"
-          value={layer.radialPosition.split(' ')[0] ?? '50%'}
-          allowedWords={['center', 'left', 'right']}
-          onChange={handlePositionXChange}
+          value={centerX}
+          allowedWords={CENTER_X_WORDS}
+          min={-Infinity}
+          onChange={handleCenterXChange}
         />
         <CategoryOption
           type="metric"
-          value={layer.radialPosition.split(' ')[1] ?? '50%'}
-          allowedWords={['center', 'top', 'bottom']}
-          onChange={handlePositionYChange}
+          value={centerY}
+          allowedWords={CENTER_Y_WORDS}
+          min={-Infinity}
+          onChange={handleCenterYChange}
         />
       </CategorySection>
-      <CategorySection label="Gradient" direction="column">
-        <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
-      </CategorySection>
-      <BackgroundSize layer={layer} onChange={onChange} />
-      <BackgroundPosition layer={layer} onChange={onChange} />
-      <BackgroundTile layer={layer} onChange={onChange} />
+      <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
     </>
   );
 };

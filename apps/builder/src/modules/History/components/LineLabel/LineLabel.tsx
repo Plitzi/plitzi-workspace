@@ -13,7 +13,7 @@ const LineLabel = ({ line }: LineLabelProps) => (
     <Icon
       icon={ACTION_ICON[line.action]}
       intent="custom"
-      className={clsx('w-3 shrink-0 text-center text-[10px]', ACTION_TONE[line.action])}
+      className={clsx('w-3 shrink-0 text-center text-[11px]', ACTION_TONE[line.action])}
     />
     <span className="min-w-0 break-words">{line.text}</span>
   </span>

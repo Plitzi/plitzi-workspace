@@ -1009,4 +1009,4 @@ and answers `{ exportName, files, corrections, differences }`.
 | `plitzi-sdk-server/prisma/seeds/spaces/examples/shippingQuote` | a form that runs a server action — whose step is the space's own function — and shows the answer |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo/blog` | six pages, a custom element, visitor roles, bindings throughout |
 | `plitzi-sdk-server/prisma/seeds/spaces/demo/saasLanding/pricingCard.ts` | a snippet: one subtree and the style it carries, uploaded to a space's CDN |
-| `plitzi-sdk-server/prisma/seeds/spaces/demo` | the demo spaces, seeded on every deployment — `website1` and `comingSoon` read back from JSON with `specFromSpace` |
+| `plitzi-sdk-server/prisma/seeds/spaces/demo` | the demo spaces, seeded on every deployment — `comingSoon` read back from JSON with `specFromSpace`, the others written by hand |

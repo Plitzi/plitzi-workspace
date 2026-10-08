@@ -2,22 +2,12 @@ import { memo, useCallback, use, useState } from 'react';
 
 import SpacingEditor from './SpacingEditor';
 import SpacingMargin from './SpacingMargin';
+import { SPACING_KEYS } from '../../categoryKeys';
 import CategoryContainer from '../../components/CategoryContainer';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-
-const dotKeys = [
-  'margin-top',
-  'margin-bottom',
-  'margin-left',
-  'margin-right',
-  'padding-top',
-  'padding-bottom',
-  'padding-left',
-  'padding-right'
-] as StyleCategory[];
 
 export type SpacingProps = {
   replaceTokens?: boolean;
@@ -28,7 +18,7 @@ export type SpacingProps = {
 const Spacing = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SpacingProps) => {
   const [isLinked, setIsLinked] = useState(false);
   const { setValue } = use(StyleInspectorContext);
-  const values = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  const values = useInspectorValues({ keys: SPACING_KEYS.dot, asValue: true, replaceTokens });
   const [fragmentSelected, setFragmentSelected] = useState<StyleCategory | undefined>();
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('spacing', isCollapsed), [onCollapse]);
@@ -70,7 +60,12 @@ const Spacing = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Spac
   );
 
   return (
-    <CategoryContainer title="Spacing" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer
+      title={SPACING_KEYS.title}
+      dotKeys={SPACING_KEYS.dot}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
       <div className="flex flex-col">
         <SpacingMargin
           values={values}

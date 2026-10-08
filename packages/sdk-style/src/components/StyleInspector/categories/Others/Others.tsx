@@ -7,66 +7,13 @@ import OthersScrollbar from './OthersScrollbar';
 import OthersScrollSnap from './OthersScrollSnap';
 import OthersSvg from './OthersSvg';
 import OthersTable from './OthersTable';
+import { OTHERS_KEYS } from '../../categoryKeys';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-
-const dotKeys = [
-  'pointer-events',
-  'user-select',
-  'touch-action',
-  'resize',
-  'appearance',
-  'scroll-behavior',
-  'overscroll-behavior',
-  'scroll-snap-type',
-  'scroll-snap-align',
-  'scroll-snap-stop',
-  'scroll-padding-top',
-  'scroll-margin-top',
-  'accent-color',
-  'caret-color',
-  'color-scheme',
-  'scrollbar-width',
-  'scrollbar-color',
-  'outline-width',
-  'outline-style',
-  'outline-color',
-  'outline-offset',
-  'border-collapse',
-  'border-spacing',
-  'table-layout',
-  'fill',
-  'stroke',
-  'stroke-width'
-] as StyleCategory[];
-
-const advancedKeys = [
-  'touch-action',
-  'resize',
-  'appearance',
-  'scroll-behavior',
-  'overscroll-behavior',
-  'scroll-snap-type',
-  'scroll-snap-align',
-  'scroll-snap-stop',
-  'scroll-padding-top',
-  'scroll-margin-top',
-  'accent-color',
-  'caret-color',
-  'color-scheme',
-  'scrollbar-width',
-  'scrollbar-color',
-  'border-collapse',
-  'border-spacing',
-  'table-layout',
-  'fill',
-  'stroke',
-  'stroke-width'
-] as StyleCategory[];
 
 export type OthersProps = {
   replaceTokens?: boolean;
@@ -104,7 +51,7 @@ const Others = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Other
     fill,
     stroke,
     'stroke-width': strokeWidth
-  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  } = useInspectorValues({ keys: OTHERS_KEYS.dot, asValue: true, replaceTokens });
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('others', isCollapsed), [onCollapse]);
 
@@ -116,9 +63,9 @@ const Others = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Other
 
   return (
     <CategoryContainer
-      title="Others"
-      dotKeys={dotKeys}
-      advancedKeys={advancedKeys}
+      title={OTHERS_KEYS.title}
+      dotKeys={OTHERS_KEYS.dot}
+      advancedKeys={OTHERS_KEYS.advanced}
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >

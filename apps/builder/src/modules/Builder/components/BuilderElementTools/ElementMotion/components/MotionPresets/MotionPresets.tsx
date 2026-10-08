@@ -66,7 +66,7 @@ const MotionPresets = ({ kind, title, none, presets, value, still, onChange }: M
             {isEmphasised(kind, shown) && (
               <span
                 title={`Shown ${String(LOOP_PREVIEW_EMPHASIS)}× stronger here than on the page, where it is meant to be barely noticed`}
-                className="absolute top-1 right-1 rounded bg-gray-200 px-1 text-[10px] leading-4 text-gray-600 dark:bg-zinc-700 dark:text-zinc-300"
+                className="absolute top-1 right-1 rounded bg-gray-200 px-1 text-[11px] leading-4 text-gray-600 dark:bg-zinc-700 dark:text-zinc-300"
               >
                 {LOOP_PREVIEW_EMPHASIS}× here
               </span>

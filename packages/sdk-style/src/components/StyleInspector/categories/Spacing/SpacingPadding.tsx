@@ -46,11 +46,11 @@ const SpacingPadding = ({
   } = values ?? {};
 
   return (
-    <div className="relative grow rounded-md border border-gray-300 dark:border-zinc-600">
+    <div className="relative grow rounded-md border border-gray-300 bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800/70">
       <div className="flex items-center justify-center py-0.5">
         <InspectorLabel
           keyValue={keyValue}
-          className="absolute top-0 left-0 overflow-hidden rounded-br-md !p-0 text-[10px]"
+          className="absolute top-0 left-0 overflow-hidden rounded-br-md !p-0 text-[11px]"
           size="custom"
         >
           PADDING
@@ -70,7 +70,8 @@ const SpacingPadding = ({
           />
         </div>
         <div
-          className="flex grow items-center justify-center rounded-md border border-gray-300 bg-slate-100 py-1 dark:border-zinc-600 dark:bg-zinc-700/50"
+          className="flex grow items-center justify-center rounded border border-gray-300 bg-white py-1 text-zinc-500 hover:text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          title={isLinked ? 'Sides linked: a change applies to all four' : 'Link the four sides'}
           onClick={onLinkSelected}
         >
           {isLinked && <i className="fa-solid fa-link text-sm" />}

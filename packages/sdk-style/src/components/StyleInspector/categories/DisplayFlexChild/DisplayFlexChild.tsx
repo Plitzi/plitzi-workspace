@@ -6,6 +6,7 @@ import { memo, useCallback, use, useMemo } from 'react';
 
 import DisplayAlignSelf from './DisplayAlignSelf';
 import DisplayOrder from './DisplayOrder';
+import { FLEX_CHILD_KEYS } from '../../categoryKeys';
 import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
@@ -13,8 +14,6 @@ import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-
-const dotKeys: StyleCategory[] = ['align-self', 'order', 'flex-grow', 'flex-shrink', 'flex-basis'];
 
 export type DisplayFlexChildProps = {
   replaceTokens?: boolean;
@@ -38,7 +37,7 @@ const DisplayFlexChild = ({
     'flex-basis': flexBasis,
     'align-self': alignSelf,
     order
-  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  } = useInspectorValues({ keys: FLEX_CHILD_KEYS.dot, asValue: true, replaceTokens });
 
   const handleChangeSizing = useCallback(
     (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => {
@@ -107,7 +106,12 @@ const DisplayFlexChild = ({
   );
 
   return (
-    <CategoryContainer title="Flex Child" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer
+      title={FLEX_CHILD_KEYS.title}
+      dotKeys={FLEX_CHILD_KEYS.dot}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
       <CategoryOption
         keys={keyValues}
         label="Sizing"

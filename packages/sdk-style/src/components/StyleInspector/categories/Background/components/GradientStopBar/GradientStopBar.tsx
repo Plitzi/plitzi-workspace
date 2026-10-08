@@ -1,10 +1,9 @@
-import Icon from '@plitzi/plitzi-ui/Icon';
-import clsx from 'clsx';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import GradientPreviewBar from './GradientPreviewBar';
 import GradientStopEditor from './GradientStopEditor';
 import GradientStopTrack from './GradientStopTrack';
+import { colorNear, sortStops, stopsPreview } from './helpers';
 import { newStopId } from '../../helpers/backgroundParser';
 
 import type { GradientStop } from '../../helpers/backgroundParser';
@@ -15,139 +14,102 @@ export type GradientStopBarProps = {
   onChange?: (stops: GradientStop[]) => void;
 };
 
-function stopPct(pos: string): number {
-  const n = parseFloat(pos);
+/** How far the handles are inset from the bar's ends — half a handle — and so where 0% and 100% fall on it. */
+const HANDLE_INSET = 10;
 
-  return isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
-}
-
+/**
+ * A gradient's stops: the bar that draws them with a handle per stop, and the selected stop's color and position. A
+ * click on the bar adds a stop there in the color around it; a gradient keeps at least two.
+ */
 const GradientStopBar = ({ stops, onChange }: GradientStopBarProps) => {
   const stopsRef = useRef(stops);
   stopsRef.current = stops;
-
   const [selectedId, setSelectedId] = useState<string>(stops[0]?.id ?? '');
 
-  const sortedStops = useMemo(() => [...stops].sort((a, b) => stopPct(a.position) - stopPct(b.position)), [stops]);
+  const gradientCSS = useMemo(() => stopsPreview(stops), [stops]);
+  const selectedStop = stops.find(s => s.id === selectedId) ?? stops.at(0);
 
-  const gradientCSS = useMemo(() => {
-    const parts = sortedStops.map(s => (s.position ? `${s.color} ${s.position}` : s.color)).join(', ');
-
-    return `linear-gradient(90deg, ${parts})`;
-  }, [sortedStops]);
-
-  const selectedStop = (stops.find(s => s.id === selectedId) ?? stops[0]) as GradientStop | undefined;
-
-  const handleBarClick = useCallback(
-    (e: MouseEvent<HTMLDivElement>) => {
-      const { left, width } = e.currentTarget.getBoundingClientRect();
-      const pct = Math.round(Math.max(0, Math.min(100, ((e.clientX - left) / width) * 100)));
+  const addStop = useCallback(
+    (pct: number) => {
       const current = stopsRef.current;
-      const nearest = [...current]
-        .sort((a, b) => Math.abs(stopPct(a.position) - pct) - Math.abs(stopPct(b.position) - pct))
-        .at(0);
-      const newStop: GradientStop = { id: newStopId(), color: nearest?.color ?? '#808080', position: `${pct}%` };
-      const newStops = [...current, newStop].sort((a, b) => stopPct(a.position) - stopPct(b.position));
-      onChange?.(newStops);
+      const newStop: GradientStop = { id: newStopId(), color: colorNear(current, pct), position: `${pct}%` };
+      onChange?.(sortStops([...current, newStop]));
       setSelectedId(newStop.id);
     },
     [onChange]
   );
 
+  const handleBarClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      const { left, width } = e.currentTarget.getBoundingClientRect();
+      const track = width - HANDLE_INSET * 2;
+      addStop(Math.round(Math.max(0, Math.min(100, ((e.clientX - left - HANDLE_INSET) / track) * 100))));
+    },
+    [addStop]
+  );
+
+  const handleAddStop = useCallback(() => addStop(50), [addStop]);
+
   const handleColorChange = useCallback(
     (color: string) => {
-      if (!selectedStop) {
-        return;
+      if (selectedStop) {
+        onChange?.(stopsRef.current.map(s => (s.id === selectedStop.id ? { ...s, color } : s)));
       }
-
-      onChange?.(stopsRef.current.map(s => (s.id === selectedStop.id ? { ...s, color } : s)));
     },
     [onChange, selectedStop]
   );
 
-  const handleChangeTrack = useCallback(
-    (newStops: GradientStop[]) => {
-      onChange?.(newStops.sort((a, b) => stopPct(a.position) - stopPct(b.position)));
+  const handlePositionChange = useCallback(
+    (position: string) => {
+      if (selectedStop) {
+        onChange?.(sortStops(stopsRef.current.map(s => (s.id === selectedStop.id ? { ...s, position } : s))));
+      }
+    },
+    [onChange, selectedStop]
+  );
+
+  const handleChangeTrack = useCallback((next: GradientStop[]) => onChange?.(sortStops(next)), [onChange]);
+
+  const removeStop = useCallback(
+    (id: string) => {
+      if (stopsRef.current.length <= 2) {
+        return;
+      }
+
+      const remaining = stopsRef.current.filter(s => s.id !== id);
+      onChange?.(remaining);
+      setSelectedId(remaining[0]?.id ?? '');
     },
     [onChange]
   );
 
-  const handlePositionChange = useCallback(
-    (value: unknown) => {
-      if (!selectedStop) {
-        return;
-      }
-
-      onChange?.(
-        stopsRef.current
-          .map(s => (s.id === selectedStop.id ? { ...s, position: String(value) } : s))
-          .sort((a, b) => stopPct(a.position) - stopPct(b.position))
-      );
-    },
-    [onChange, selectedStop]
-  );
-
-  const handleRemoveStop = useCallback(() => {
-    if (!selectedStop || stopsRef.current.length <= 2) {
-      return;
+  const handleRemoveSelected = useCallback(() => {
+    if (selectedStop) {
+      removeStop(selectedStop.id);
     }
-
-    const remaining = stopsRef.current.filter(s => s.id !== selectedStop.id);
-    onChange?.(remaining);
-    setSelectedId(remaining[0]?.id ?? '');
-  }, [onChange, selectedStop]);
-
-  const handleAddStopAtMiddle = useCallback(() => {
-    const newStop: GradientStop = { id: newStopId(), color: '#808080', position: '50%' };
-    const newStops = [...stopsRef.current, newStop].sort((a, b) => stopPct(a.position) - stopPct(b.position));
-    onChange?.(newStops);
-    setSelectedId(newStop.id);
-  }, [onChange]);
+  }, [removeStop, selectedStop]);
 
   return (
     <div className="flex flex-col gap-2">
-      <GradientPreviewBar gradientCSS={gradientCSS} onClick={handleBarClick} />
-      <div className="flex px-2">
+      <GradientPreviewBar gradientCSS={gradientCSS} onClick={handleBarClick}>
         <GradientStopTrack
           stops={stops}
-          selectedId={selectedId}
+          selectedId={selectedStop?.id ?? ''}
           onChange={handleChangeTrack}
           onSelect={setSelectedId}
+          onRemove={removeStop}
         />
-      </div>
+      </GradientPreviewBar>
       {selectedStop && (
         <GradientStopEditor
           stop={selectedStop}
-          showRemove={stops.length > 2}
+          canRemove={stops.length > 2}
           onColorChange={handleColorChange}
           onPositionChange={handlePositionChange}
-          onRemove={handleRemoveStop}
+          onAdd={handleAddStop}
+          onRemove={handleRemoveSelected}
         />
       )}
-      <div className="flex flex-wrap gap-1">
-        {sortedStops.map(stop => (
-          <button
-            key={stop.id}
-            type="button"
-            className={clsx(
-              'h-5 w-5 cursor-pointer rounded-sm border shadow-sm',
-              selectedId === stop.id
-                ? 'border-blue-500 ring-1 ring-blue-300 dark:ring-blue-700'
-                : 'border-gray-300 hover:border-gray-400 dark:border-zinc-600'
-            )}
-            style={{ backgroundColor: stop.color }}
-            onClick={() => setSelectedId(stop.id)}
-            title={`${stop.color} • ${stop.position}`}
-          />
-        ))}
-        <button
-          type="button"
-          className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-sm border border-dashed border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-500 dark:border-zinc-600 dark:text-zinc-500"
-          title="Add stop at 50%"
-          onClick={handleAddStopAtMiddle}
-        >
-          <Icon icon="fas fa-plus" size="xs" />
-        </button>
-      </div>
     </div>
   );
 };

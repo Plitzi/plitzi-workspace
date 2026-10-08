@@ -46,7 +46,7 @@ const ElementMatchItem = ({ match, rootLabel, active = false, onSelect, onHover 
     >
       <i
         className={clsx(
-          'w-3 shrink-0 text-center text-[10px] opacity-70',
+          'w-3 shrink-0 text-center text-[11px] opacity-70',
           get(componentDefinitions.current, `${match.type}.market.icon`, 'fa-solid fa-shapes')
         )}
       />
@@ -54,7 +54,7 @@ const ElementMatchItem = ({ match, rootLabel, active = false, onSelect, onHover 
         {match.id}
         {match.label && <span className="opacity-50"> · {match.label}</span>}
       </span>
-      {rootLabel && <span className="shrink-0 truncate text-[10px] opacity-60">{rootLabel}</span>}
+      {rootLabel && <span className="shrink-0 truncate text-[11px] opacity-60">{rootLabel}</span>}
     </button>
   );
 };

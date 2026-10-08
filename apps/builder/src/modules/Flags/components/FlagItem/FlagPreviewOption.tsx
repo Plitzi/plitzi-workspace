@@ -17,7 +17,7 @@ const FlagPreviewOption = ({ name, option, active, onForce }: FlagPreviewOptionP
     <button
       type="button"
       title={option.title}
-      className={clsx('px-1.5 py-0.5 text-[10px] font-medium', {
+      className={clsx('px-1.5 py-0.5 text-[11px] font-medium', {
         'bg-blue-600 text-white': active,
         'text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700': !active
       })}

@@ -23,7 +23,7 @@ const VersionContents = ({ environment, revision, title }: VersionContentsProps)
 
   return (
     <section className="flex flex-col gap-2 rounded-md border border-zinc-200 p-3 dark:border-zinc-700">
-      <h5 className={`text-[10px] font-bold tracking-wider uppercase ${MUTED}`}>{title}</h5>
+      <h5 className={`text-[11px] font-bold tracking-wider uppercase ${MUTED}`}>{title}</h5>
       {loading && <p className={`text-xs ${MUTED}`}>Reading what it holds…</p>}
       {error && (
         <p className="text-xs text-red-600 dark:text-red-400">What it holds could not be read ({error.message}).</p>

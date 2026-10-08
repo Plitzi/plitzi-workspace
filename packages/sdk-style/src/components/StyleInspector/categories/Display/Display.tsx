@@ -9,30 +9,12 @@ import DisplayFlexJustify from './DisplayFlexJustify';
 import DisplayGap from './DisplayGap';
 import DisplayGridGap from './DisplayGridGap';
 import DisplayGridTemplate from './DisplayGridTemplate';
+import { DISPLAY_KEYS } from '../../categoryKeys';
 import CategoryContainer from '../../components/CategoryContainer';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
-
-const dotKeys = [
-  'flex-direction',
-  'flex-wrap',
-  'align-items',
-  'justify-content',
-  'align-content',
-  'column-gap',
-  'row-gap',
-  'grid-row-gap',
-  'grid-column-gap',
-  'grid-template-areas',
-  'grid-template-columns',
-  'grid-template-rows',
-  'grid-auto-flow',
-  'grid-auto-rows',
-  'grid-auto-columns',
-  'display'
-] as StyleCategory[];
 
 export type DisplayProps = {
   replaceTokens?: boolean;
@@ -59,7 +41,7 @@ const Display = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Disp
     'grid-row-gap': gridRowGap,
     'grid-column-gap': gridColumnGap,
     'align-content': alignContent
-  } = useInspectorValues({ keys: dotKeys, asValue: true, replaceTokens });
+  } = useInspectorValues({ keys: DISPLAY_KEYS.dot, asValue: true, replaceTokens });
 
   const handleChange = useCallback(
     (type: StyleCategory, partialValue: StyleValue) => {
@@ -96,7 +78,12 @@ const Display = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Disp
   const isReverseWrap = typeof flexWrap === 'string' && flexWrap.includes('reverse');
 
   return (
-    <CategoryContainer title="Layout" dotKeys={dotKeys} isCollapsed={isCollapsed} onCollapse={handleCollapse}>
+    <CategoryContainer
+      title={DISPLAY_KEYS.title}
+      dotKeys={DISPLAY_KEYS.dot}
+      isCollapsed={isCollapsed}
+      onCollapse={handleCollapse}
+    >
       <DisplayElements value={display} onChange={handleChange} />
       {display === 'flex' && (
         <>

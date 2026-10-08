@@ -1,5 +1,7 @@
 import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import useDidUpdateEffect from '@plitzi/plitzi-ui/hooks/useDidUpdateEffect';
+import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
+import Icon from '@plitzi/plitzi-ui/Icon';
 import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { clsx } from 'clsx';
@@ -13,6 +15,7 @@ import { isParentAncestor } from '@plitzi/sdk-shared/style/styleStates';
 
 import Selector from '../Selector';
 import AncestorRules from './components/AncestorRules';
+import TargetSummary from './components/TargetSummary';
 import {
   ancestorClasses,
   ancestorConditions,
@@ -20,7 +23,9 @@ import {
   ancestorRemovals,
   conditionOptions,
   pseudoOptions,
+  moreTargetsHint,
   STYLE_STATE_OPTIONS,
+  targetParts,
   unusedAncestors
 } from './helpers';
 import Inspector from './Inspector';
@@ -79,6 +84,7 @@ const StyleInspector = ({
   useBuilderStoreSync('stylePseudo', stylePseudo, { enabled: mode === 'element' });
   useBuilderStoreSync('styleCondition', styleCondition, { enabled: mode === 'element' });
   const [[flat, platform]] = useBuilderStore(['schema.flat', 'style.platform']);
+  const [moreTargets, setMoreTargets] = useStorage('builder-state.styleInspector.moreTargets', false);
   const { builderHandler } = use(BuilderContext);
   const selectorName = useMemo(() => get(styleSelectors, styleSelector, ''), [styleSelectors, styleSelector]);
   const selectorsFiltered = useMemo(
@@ -137,6 +143,10 @@ const StyleInspector = ({
   );
   // The parent is named by its state, never by a variant: the variant picker goes while it is the ancestor
   const parentPicked = !!styleAncestor && isParentAncestor(styleAncestor);
+  // The three rarer ways to aim a rule fold away — but never while one of them is what is being edited.
+  const targetInUse = !!styleAncestor || !!stylePseudo || !!styleCondition;
+  const showMoreTargets = moreTargets || targetInUse;
+  const parts = targetParts({ styleSelector, styleVariant, styleState, styleAncestor, stylePseudo, styleCondition });
 
   useEffect(() => {
     setStyleSelector('base');
@@ -249,6 +259,17 @@ const StyleInspector = ({
     },
     [builderHandler, displayMode]
   );
+
+  const handleToggleMoreTargets = useCallback(() => setMoreTargets(state => !state), [setMoreTargets]);
+
+  const handleResetTarget = useCallback(() => {
+    setStyleSelector('base');
+    setStyleState(undefined);
+    setStyleVariant(undefined);
+    setStyleAncestor(undefined);
+    setStylePseudo(undefined);
+    setStyleCondition(undefined);
+  }, []);
 
   const handleChangeComponentSubType = useCallback((value: string) => setComponentSubType(value), []);
 
@@ -494,9 +515,20 @@ const StyleInspector = ({
                 />
               </div>
             )}
+            {allowStyleState && (
+              <Icon
+                className={clsx('shrink-0 cursor-pointer rounded-sm p-1 text-xs', {
+                  'bg-primary-500/15 text-primary-600 dark:text-primary-300': showMoreTargets,
+                  'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100': !showMoreTargets
+                })}
+                icon="fa-solid fa-crosshairs"
+                title={moreTargetsHint(targetInUse, showMoreTargets)}
+                onClick={targetInUse ? undefined : handleToggleMoreTargets}
+              />
+            )}
           </div>
         )}
-        {hasControls && allowStyleState && !!ancestors.length && (
+        {hasControls && allowStyleState && showMoreTargets && !!ancestors.length && (
           <Select2
             className="w-full"
             value={styleAncestor}
@@ -509,7 +541,7 @@ const StyleInspector = ({
             onRemove={handleRemoveStyleAncestor}
           />
         )}
-        {hasControls && allowStyleState && !styleAncestor && (
+        {hasControls && allowStyleState && showMoreTargets && !styleAncestor && (
           <div className="flex w-full items-center gap-2">
             <div className="grow basis-0">
               <Select2
@@ -550,6 +582,7 @@ const StyleInspector = ({
             onRemoveUnused={handleRemoveUnused}
           />
         )}
+        {parts.length > 0 && <TargetSummary selectorName={value} parts={parts} onReset={handleResetTarget} />}
       </div>
       <div className="flex grow basis-0 flex-col overflow-auto border-t border-gray-300 dark:border-zinc-700">
         <Inspector

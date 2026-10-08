@@ -59,9 +59,15 @@ const StyleVariables = ({
       <VariableList variables={variables} onUpdate={handleUpdate} onRemove={handleClickRemove} />
       {!newVariable && (
         <div className="flex w-full px-1">
-          <Button className="w-full" size="xs" onClick={handleClickAddNewVariable} iconPlacement="before">
+          <Button
+            className="w-full"
+            size="xs"
+            intent="secondary"
+            onClick={handleClickAddNewVariable}
+            iconPlacement="before"
+          >
             <Button.Icon icon="fa-solid fa-plus" />
-            Add Style Variable
+            Add style variable
           </Button>
         </div>
       )}

@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
 
+import { ANGLE_UNITS, LINEAR_DIRECTIONS } from './helpers';
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
-import BackgroundPosition from '../components/BackgroundPosition';
-import BackgroundSize from '../components/BackgroundSize';
-import BackgroundTile from '../components/BackgroundTile';
+import { asText } from '../../../cssValues';
 import GradientStopBar from '../components/GradientStopBar';
 
 import type { BackgroundLayer, GradientStop } from '../helpers/backgroundParser';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type LinearGradientModeProps = {
   layer: BackgroundLayer;
@@ -16,7 +16,7 @@ export type LinearGradientModeProps = {
 
 const LinearGradientMode = ({ layer, onChange }: LinearGradientModeProps) => {
   const handleAngleChange = useCallback(
-    (value: unknown) => onChange?.({ ...layer, angle: String(value) }),
+    (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) => onChange?.({ ...layer, angle: asText(value) }),
     [layer, onChange]
   );
 
@@ -24,36 +24,17 @@ const LinearGradientMode = ({ layer, onChange }: LinearGradientModeProps) => {
 
   return (
     <>
-      <CategorySection label="Angle">
+      <CategorySection label="Direction">
         <CategoryOption
           type="metric"
-          value={layer.angle}
-          units={[
-            { label: 'deg', value: 'deg' },
-            { label: 'rad', value: 'rad' },
-            { label: 'turn', value: 'turn' }
-          ]}
-          allowedWords={[
-            'to top',
-            'to right',
-            'to bottom',
-            'to left',
-            'to top right',
-            'to bottom right',
-            'to bottom left',
-            'to top left'
-          ]}
-          min={0}
-          max={360}
+          value={layer.angle || 'to bottom'}
+          units={ANGLE_UNITS}
+          allowedWords={LINEAR_DIRECTIONS}
+          min={-Infinity}
           onChange={handleAngleChange}
         />
       </CategorySection>
-      <CategorySection label="Gradient" direction="column">
-        <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
-      </CategorySection>
-      <BackgroundSize layer={layer} onChange={onChange} />
-      <BackgroundPosition layer={layer} onChange={onChange} />
-      <BackgroundTile layer={layer} onChange={onChange} />
+      <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
     </>
   );
 };

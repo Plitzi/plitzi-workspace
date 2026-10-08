@@ -19,6 +19,7 @@ import type {
   StyleAncestors,
   StyleBlock,
   StyleItem,
+  StylePseudo,
   StyleState
 } from '@plitzi/sdk-shared';
 
@@ -160,3 +161,43 @@ export const ancestorRemovals = (
           .map(styleAncestor => ({ displayMode, styleSelector, styleAncestor }))
     )
   );
+
+export type InspectorTarget = {
+  styleSelector: string;
+  styleVariant?: string;
+  styleState?: StyleState;
+  styleAncestor?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
+};
+
+/**
+ * What the inspector writes to besides the selector's own plain rules, step by step as the summary above the
+ * categories reads it — empty while it writes those. An ancestor comes first: with one picked, the variant and the state
+ * are the ancestor's.
+ */
+export const targetParts = ({
+  styleSelector,
+  styleVariant,
+  styleState,
+  styleAncestor,
+  stylePseudo,
+  styleCondition
+}: InspectorTarget): string[] =>
+  [
+    styleSelector !== 'base' ? `${styleSelector} part` : undefined,
+    styleAncestor ? `inside ${ancestorName(styleAncestor)}` : undefined,
+    styleVariant ? `variant ${styleVariant}` : undefined,
+    styleState ? STYLE_STATE_LABELS[styleState] : undefined,
+    stylePseudo ? STYLE_PSEUDO_LABELS[stylePseudo] : undefined,
+    styleCondition ? conditionLabel(styleCondition) : undefined
+  ].filter((part): part is string => !!part);
+
+/** What the toggle for the rarer targets says it does — or, while one of them is in use, why it cannot fold them. */
+export const moreTargetsHint = (inUse: boolean, shown: boolean): string => {
+  if (inUse) {
+    return 'An ancestor, pseudo-element or condition is in use';
+  }
+
+  return shown ? 'Hide ancestor, pseudo-element and condition' : 'Target an ancestor, a pseudo-element or a condition';
+};

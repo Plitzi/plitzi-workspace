@@ -1,79 +1,69 @@
 import { useCallback } from 'react';
 
+import { ANGLE_UNITS, CENTER_X_WORDS, CENTER_Y_WORDS, centerParts, joinCenter } from './helpers';
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
-import BackgroundPosition from '../components/BackgroundPosition';
-import BackgroundSize from '../components/BackgroundSize';
-import BackgroundTile from '../components/BackgroundTile';
+import { asText } from '../../../cssValues';
 import GradientStopBar from '../components/GradientStopBar';
 
 import type { BackgroundLayer, GradientStop } from '../helpers/backgroundParser';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type ConicGradientModeProps = {
   layer: BackgroundLayer;
   onChange?: (layer: BackgroundLayer) => void;
 };
 
+type OptionValue = StyleValue | Record<StyleCategory, StyleValue> | boolean;
+
 const ConicGradientMode = ({ layer, onChange }: ConicGradientModeProps) => {
+  const [centerX, centerY] = centerParts(layer.conicPosition);
+
   const handleAngleChange = useCallback(
-    (value: unknown) => onChange?.({ ...layer, conicAngle: String(value) }),
+    (value: OptionValue) => onChange?.({ ...layer, conicAngle: asText(value) }),
     [layer, onChange]
   );
 
-  const handlePositionXChange = useCallback(
-    (value: unknown) => {
-      const parts = layer.conicPosition.split(' ');
-      onChange?.({ ...layer, conicPosition: `${String(value)} ${parts[1] ?? '50%'}` });
-    },
-    [layer, onChange]
+  const handleCenterXChange = useCallback(
+    (value: OptionValue) => onChange?.({ ...layer, conicPosition: joinCenter(asText(value), centerY) }),
+    [centerY, layer, onChange]
   );
 
-  const handlePositionYChange = useCallback(
-    (value: unknown) => {
-      const parts = layer.conicPosition.split(' ');
-      onChange?.({ ...layer, conicPosition: `${parts[0] ?? '50%'} ${String(value)}` });
-    },
-    [layer, onChange]
+  const handleCenterYChange = useCallback(
+    (value: OptionValue) => onChange?.({ ...layer, conicPosition: joinCenter(centerX, asText(value)) }),
+    [centerX, layer, onChange]
   );
 
   const handleStopsChange = useCallback((stops: GradientStop[]) => onChange?.({ ...layer, stops }), [layer, onChange]);
 
   return (
     <>
-      <CategorySection label="Start Angle">
+      <CategorySection label="Start angle">
         <CategoryOption
           type="metric"
           value={layer.conicAngle}
-          units={[
-            { label: 'deg', value: 'deg' },
-            { label: 'rad', value: 'rad' },
-            { label: 'turn', value: 'turn' }
-          ]}
-          min={0}
-          max={360}
+          units={ANGLE_UNITS}
+          min={-Infinity}
           onChange={handleAngleChange}
         />
       </CategorySection>
-      <CategorySection label="Position">
+      <CategorySection label="Center">
         <CategoryOption
           type="metric"
-          value={layer.conicPosition.split(' ')[0] ?? '50%'}
-          allowedWords={['center', 'left', 'right']}
-          onChange={handlePositionXChange}
+          value={centerX}
+          allowedWords={CENTER_X_WORDS}
+          min={-Infinity}
+          onChange={handleCenterXChange}
         />
         <CategoryOption
           type="metric"
-          value={layer.conicPosition.split(' ')[1] ?? '50%'}
-          allowedWords={['center', 'top', 'bottom']}
-          onChange={handlePositionYChange}
+          value={centerY}
+          allowedWords={CENTER_Y_WORDS}
+          min={-Infinity}
+          onChange={handleCenterYChange}
         />
       </CategorySection>
-      <CategorySection label="Gradient" direction="column">
-        <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
-      </CategorySection>
-      <BackgroundSize layer={layer} onChange={onChange} />
-      <BackgroundPosition layer={layer} onChange={onChange} />
-      <BackgroundTile layer={layer} onChange={onChange} />
+      <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
     </>
   );
 };

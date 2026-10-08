@@ -98,7 +98,7 @@ const StyleSelectorTag = ({
           </Button>
         </div>
         {elementsCount > 0 && (
-          <div className="bg-secondary-400 flex items-center justify-center rounded-sm px-1.5 py-1 text-xs text-white">
+          <div className="bg-primary-600 flex items-center justify-center rounded-sm px-1.5 py-1 text-xs text-white">
             {elementsCount}
           </div>
         )}

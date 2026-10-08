@@ -1,79 +1,82 @@
 import { useCallback, useMemo } from 'react';
 
+import { sizeParts, sizePreset } from './helpers';
 import CategoryOption from '../../../../components/CategoryOption';
 import CategorySection from '../../../../components/CategorySection';
+import { asText } from '../../../../cssValues';
 
 import type { BackgroundLayer } from '../../helpers/backgroundParser';
+import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
 export type BackgroundSizeProps = { layer: BackgroundLayer; onChange?: (layer: BackgroundLayer) => void };
 
+type OptionValue = StyleValue | Record<StyleCategory, StyleValue> | boolean;
+
 const BackgroundSize = ({ layer, onChange }: BackgroundSizeProps) => {
-  const isCustomSize = layer.size === 'auto' || layer.size.includes(' ') || /^\d/.test(layer.size);
+  const preset = sizePreset(layer.size);
+  const [width, height] = sizeParts(layer.size);
 
-  const sizeParts = useMemo(() => (layer.size.includes(' ') ? layer.size.split(' ') : ['auto', 'auto']), [layer.size]);
+  const handlePresetChange = useCallback(
+    (value: OptionValue) => {
+      const next = asText(value);
+      if (next !== 'custom') {
+        onChange?.({ ...layer, size: next });
 
-  const handleSizePresetChange = useCallback(
-    (value: unknown) => {
-      const v = String(value);
-      if (v === 'cover' || v === 'contain') {
-        onChange?.({ ...layer, size: v });
-      } else {
-        // "auto" → custom mode with existing size
-        const current = layer.size;
-        onChange?.({ ...layer, size: current === 'cover' || current === 'contain' ? 'auto auto' : current });
+        return;
       }
+
+      // Leaving cover or contain for a size of its own starts from the natural size, not from a word it cannot read.
+      onChange?.({ ...layer, size: preset === 'custom' ? layer.size : 'auto' });
     },
-    [layer, onChange]
+    [layer, onChange, preset]
   );
 
-  const sizePreset = layer.size === 'cover' ? 'cover' : layer.size === 'contain' ? 'contain' : 'auto';
-
-  const handleSizeWidthChange = useCallback(
-    (value: unknown) => onChange?.({ ...layer, size: `${String(value)} ${sizeParts[1] ?? 'auto'}` }),
-    [layer, onChange, sizeParts]
+  const handleWidthChange = useCallback(
+    (value: OptionValue) => onChange?.({ ...layer, size: `${asText(value)} ${height}` }),
+    [height, layer, onChange]
   );
 
-  const handleSizeHeightChange = useCallback(
-    (value: unknown) => onChange?.({ ...layer, size: `${sizeParts[0] ?? 'auto'} ${String(value)}` }),
-    [layer, onChange, sizeParts]
+  const handleHeightChange = useCallback(
+    (value: OptionValue) => onChange?.({ ...layer, size: `${width} ${asText(value)}` }),
+    [layer, onChange, width]
   );
 
-  const itemsSize = useMemo(
+  const items = useMemo(
     () => [
       {
-        value: 'auto',
-        icon: <div className="px-1 text-xs select-none">Custom</div>,
-        description: 'Custom dimensions',
-        active: sizePreset === 'auto',
+        value: 'custom',
+        icon: <span className="px-1.5 text-xs select-none">Custom</span>,
+        description: 'A width and a height of its own',
+        active: preset === 'custom',
         size: 'custom' as const
       },
       {
         value: 'cover',
-        icon: <div className="px-1 text-xs select-none">Cover</div>,
-        description: 'Cover the element',
-        active: sizePreset === 'cover',
+        icon: <span className="px-1.5 text-xs select-none">Cover</span>,
+        description: 'Fill the element, cropping what overflows',
+        active: preset === 'cover',
         size: 'custom' as const
       },
       {
         value: 'contain',
-        icon: <div className="px-1 text-xs select-none">Contain</div>,
-        description: 'Fit inside the element',
-        active: sizePreset === 'contain',
+        icon: <span className="px-1.5 text-xs select-none">Contain</span>,
+        description: 'Fit inside the element, whole',
+        active: preset === 'contain',
         size: 'custom' as const
       }
     ],
-    [sizePreset]
+    [preset]
   );
 
   return (
     <>
       <CategorySection label="Size">
-        <CategoryOption type="iconGroup" items={itemsSize} onChange={handleSizePresetChange} />
+        <CategoryOption type="iconGroup" items={items} onChange={handlePresetChange} />
       </CategorySection>
-      {isCustomSize && (
-        <CategorySection>
-          <CategoryOption label="W" type="metric" value={sizeParts[0]} onChange={handleSizeWidthChange} />
-          <CategoryOption label="H" type="metric" value={sizeParts[1]} onChange={handleSizeHeightChange} />
+      {preset === 'custom' && (
+        <CategorySection label="">
+          <CategoryOption label="Width" type="metric" value={width} onChange={handleWidthChange} />
+          <CategoryOption label="Height" type="metric" value={height} onChange={handleHeightChange} />
         </CategorySection>
       )}
     </>

@@ -9,6 +9,7 @@ import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import BuilderSearch from '@pmodules/Builder/components/BuilderSearch';
 import { useOpenComponent } from '@pmodules/Components';
 import FontPreviews from '@pmodules/Fonts/FontPreviews';
+import ShortcutsProvider from '@pmodules/Shortcuts';
 
 import AppContext from '../AppContext';
 import AppHeader from '../components/AppHeader';
@@ -30,6 +31,8 @@ export type AppContainerProps = {
 
 const separatorsBefore = ['layerManager', 'server'];
 
+const LEFT_PANEL_WIDTH = 335;
+
 const FULL_VIEWS: Record<FullViewId, ReactNode> = {
   server: <ContainerServer />,
   settings: <ContainerSettings />
@@ -50,6 +53,7 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
     []
   );
   const [, setPopupsActiveRight] = useStorage<string[]>('builder-state.popupSidePanel.popupsActive.right', []);
+  const [leftWidth, setLeftWidth] = useStorage('builder-state.popupSidePanel.width.left', LEFT_PANEL_WIDTH);
   const [sitemapOpen] = useSitemapOpen();
   // What replaces the canvas: an entry of the sidebar that is a whole view, or else the pages' map. An id kept from
   // an older builder names nothing here, and the canvas is drawn.
@@ -97,27 +101,31 @@ const AppContainer = ({ externalStyle = '' }: AppContainerProps) => {
               renderRightPopup={false}
               renderFloatingPopup={!previewMode}
             >
-              <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
-                {!previewMode && (
-                  <PopupSidePanel
-                    size="md"
-                    className="max-h-[calc(100vh-48px)] overflow-y-auto"
-                    placementTabs="left"
-                    placement="left"
-                    separatorsBefore={separatorsBefore}
-                    minWidth={335}
-                    maxWidth={800}
-                    canHide
-                  />
-                )}
-                <div className="flex grow basis-0 flex-col overflow-hidden">
-                  {fullView}
-                  {!fullView && sitemapOpen && <ContainerSitemap />}
-                  {!fullView && !sitemapOpen && (
-                    <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
+              <ShortcutsProvider>
+                <div className="bg-grayviolet-200 relative flex max-w-screen grow basis-0 overflow-hidden">
+                  {!previewMode && (
+                    <PopupSidePanel
+                      size="md"
+                      className="max-h-[calc(100vh-48px)] overflow-y-auto"
+                      placementTabs="left"
+                      placement="left"
+                      separatorsBefore={separatorsBefore}
+                      minWidth={280}
+                      maxWidth={800}
+                      width={leftWidth}
+                      canHide
+                      onResize={setLeftWidth}
+                    />
                   )}
+                  <div className="flex grow basis-0 flex-col overflow-hidden">
+                    {fullView}
+                    {!fullView && sitemapOpen && <ContainerSitemap />}
+                    {!fullView && !sitemapOpen && (
+                      <ContainerDefault externalStyle={externalStyle} previewMode={previewMode} />
+                    )}
+                  </div>
                 </div>
-              </div>
+              </ShortcutsProvider>
             </PopupProvider>
           </BuilderProvider>
         </StoreProvider>

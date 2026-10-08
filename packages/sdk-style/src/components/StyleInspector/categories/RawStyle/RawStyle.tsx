@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import { processSelectors } from '../../../../helpers';
+import { RAW_STYLE_KEYS } from '../../categoryKeys';
 import CategoryContainer from '../../components/CategoryContainer';
 
 import type { StyleItem } from '@plitzi/sdk-shared';
@@ -25,7 +26,7 @@ const RawStyle = ({ selectors, isCollapsed, onCollapse }: VariablesProps) => {
     <CategoryContainer
       className={isCollapsed ? '' : 'grow'}
       classNameContent={clsx('p-0', { grow: !isCollapsed })}
-      title="Raw Style"
+      title={RAW_STYLE_KEYS.title}
       isCollapsed={isCollapsed}
       onCollapse={handleCollapse}
     >

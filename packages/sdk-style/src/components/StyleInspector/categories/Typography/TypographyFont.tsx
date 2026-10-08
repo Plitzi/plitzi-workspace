@@ -33,7 +33,7 @@ const TypographyFont = ({ partialValue, onChange }: TypographyFontProps) => {
   );
 
   return (
-    <CategorySection label="F. Family" keys={['font-family']}>
+    <CategorySection label="Font" keys={['font-family']}>
       <CategoryOption value={selected} onChange={handleChange} type="select">
         {fonts.map(font => (
           <option key={font.family} style={{ fontFamily: fontFamilyStack(font) }} value={font.family}>
