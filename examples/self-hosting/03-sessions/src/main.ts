@@ -39,7 +39,7 @@ const server = createServer({
   auth
 });
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);
 
 console.log(`[example] a space with users on http://127.0.0.1:${PORT}/`);
 console.log('[example] sign in:  curl -i -X POST http://127.0.0.1:%d/auth/login \\', PORT);

@@ -74,7 +74,7 @@ beforeAll(async () => {
     adapters: createJsonAdapters({ offlineData, deployment: { spaceId: 1, environment: 'main', revision: 0 } }),
     realtime: { transport: 'websocket', allowedOrigins: ['https://allowed.example'] }
   });
-  server.listen(PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
   await vi.waitFor(async () => {
     expect((await fetch(`http://${BASE}/health`)).status).toBeLessThan(500);
   });
@@ -162,7 +162,7 @@ describe('realtime over a WebSocket, while the pub/sub under it fails', () => {
         }
       }
     });
-    failing.listen(FAILING_PORT, '127.0.0.1');
+    await failing.listen(FAILING_PORT, '127.0.0.1');
     await vi.waitFor(async () => {
       expect((await fetch(`http://127.0.0.1:${FAILING_PORT}/health`)).status).toBeLessThan(500);
     });

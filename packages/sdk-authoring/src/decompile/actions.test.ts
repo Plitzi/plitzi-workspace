@@ -37,7 +37,8 @@ const everything: ActionSpec = {
     },
     { id: 'nightly', type: 'schedule', cron: '0 3 * * *', timezone: 'Europe/Madrid', enabled: false },
     { type: 'render', access: 'session', cacheSeconds: 60 },
-    { type: 'custom', access: 'public', name: 'mqtt' }
+    { type: 'custom', access: 'public', name: 'mqtt' },
+    { id: 'timeout', type: 'later', input: { board: { type: 'text', required: true, label: 'Board' } } }
   ],
   steps: [
     { id: 'board', task: 'kv.get', params: { key: 'board:{{ input.board }}' } },

@@ -106,6 +106,8 @@ const unavailable = (what: string) => () => Promise.reject(new Error(`This serve
 
 const unsigned = () => Promise.reject(new Error('This server signs nothing: its actions were given no signingSecret'));
 
+const noJobs = () => Promise.reject(new Error('This server runs no jobs: nothing can be set to run later'));
+
 /**
  * A plugin reads none of its space's data. The space keeps there what its pages must not carry, and a plugin was trusted
  * to draw, not with what the space keeps — the same line as its credentials: handed the data, its `fetch` could send
@@ -147,6 +149,8 @@ export const functionContextFor = (
       publish: ctx.publish ?? unavailable('publish'),
       grant: ctx.grant ?? unavailable('grant'),
       revoke: ctx.revoke ?? unavailable('revoke'),
+      later: ctx.later ?? noJobs,
+      cancelLater: ctx.cancelLater ?? noJobs,
       data: ctx.data
     };
   }
@@ -157,6 +161,9 @@ export const functionContextFor = (
   const { sign, verify } = ctx;
   const noChannel = () =>
     Promise.reject(new Error('The functions of a plugin reach none of the realtime channels of its space'));
+  // The space's actions are the space's: a plugin starts none of them, now or later.
+  const noLater = () =>
+    Promise.reject(new Error('The functions of a plugin set none of the actions of its space to run'));
 
   return {
     ...shared,
@@ -167,6 +174,8 @@ export const functionContextFor = (
     publish: noChannel,
     grant: noChannel,
     revoke: noChannel,
+    later: noLater,
+    cancelLater: noLater,
     data: noData
   };
 };

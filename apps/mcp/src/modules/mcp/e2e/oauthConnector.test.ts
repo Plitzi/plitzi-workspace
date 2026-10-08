@@ -191,7 +191,7 @@ beforeAll(async () => {
       }
     }
   );
-  server.listen(port, '127.0.0.1');
+  await server.listen(port, '127.0.0.1');
 });
 
 afterAll(() => server.close());

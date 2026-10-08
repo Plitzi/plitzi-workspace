@@ -1,4 +1,5 @@
 import type { FunctionContext, FunctionFetchInit } from './contract';
+import type { LaterRequest } from '../actions/jobs/later';
 import type { RateLimit } from '../actions/runtime/rateLimit';
 import type { FunctionsManifest } from '@plitzi/sdk-shared';
 
@@ -69,6 +70,8 @@ export type FunctionCall =
   | { op: 'publish'; topic: string; type: string; data: unknown }
   | { op: 'grant'; topic: string; ttlSeconds?: number }
   | { op: 'revoke'; topic: string; grant?: string }
+  | { op: 'later'; request: LaterRequest }
+  | { op: 'cancelLater'; key: string }
   | { op: 'rateLimit'; bucket: string; limit: RateLimit }
   | { op: 'sign'; value: string }
   | { op: 'verify'; value: string; signature: string }

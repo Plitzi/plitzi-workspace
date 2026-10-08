@@ -19,6 +19,7 @@ const space: SpaceSpec = {
   pages: [{ id, name, slug: '', layout: { id: 'shell', slot: 'main' }, body: [] }]   // slot: where the body goes
 };                                             // slug '' is home; 'products/:slug' takes a param
 pageFamily({ folder, layout, seoTitle, body: entry => [...] }, ENTRIES)   // pages of one shape, from data; ids scoped per page
+pageFolders: [{ id: 'docs', name: 'Docs' }]                               // on the space: a `folder` is declared here, /docs/…
 const { schema, style, warnings, suggestions } = authorSpace(space, { plugins: [declaration] });
 ```
 

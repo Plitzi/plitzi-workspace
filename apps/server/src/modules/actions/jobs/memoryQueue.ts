@@ -43,7 +43,8 @@ export const JOB_QUEUE_METHODS: StoreMethods<ActionJobQueue> = {
   getJob: true,
   listSchedules: true,
   requeue: true,
-  cancel: true
+  cancel: true,
+  cancelPending: true
 };
 
 /**
@@ -314,6 +315,31 @@ export const createMemoryJobQueue = ({
       job.updatedAt = now();
 
       return Promise.resolve(true);
+    },
+
+    cancelPending: ({ spaceId, key, olderThan }) => {
+      const newest = olderThan === undefined ? undefined : jobs.get(olderThan);
+      const isOlder = (job: ActionJob): boolean =>
+        newest === undefined ||
+        job.createdAt < newest.createdAt ||
+        (job.createdAt === newest.createdAt && job.id < newest.id);
+      const at = now();
+      let dropped = 0;
+      for (const job of jobs.values()) {
+        if (
+          job.spaceId === spaceId &&
+          job.key === key &&
+          job.status === 'pending' &&
+          job.id !== olderThan &&
+          isOlder(job)
+        ) {
+          job.status = 'cancelled';
+          job.updatedAt = at;
+          dropped += 1;
+        }
+      }
+
+      return Promise.resolve(dropped);
     }
   };
 };

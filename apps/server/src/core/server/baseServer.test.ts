@@ -18,8 +18,7 @@ const handler = (() => undefined) as unknown as Handler;
 const build = (config: SSRServerConfig = { httpVersion: 1 } as SSRServerConfig, onDestroy?: () => void) =>
   createHttpServer(config, () => handler, { label: 'TEST', cache: null, plugins: noPlugins, onDestroy });
 
-/** Whether anything is accepting connections on the port. listen() is fire-and-forget, so a test that closes
- *  right after it would never prove the port was bound in the first place. */
+/** Whether anything is accepting connections on the port: what proves a bind, or its release. */
 const isBound = (port: number): Promise<boolean> =>
   new Promise(resolve => {
     const socket = net.connect({ port, host: '127.0.0.1' });
@@ -42,11 +41,12 @@ describe('createHttpServer lifecycle', () => {
     expect(onDestroy).toHaveBeenCalledOnce();
   });
 
-  it('closes a listening server and releases the port', async () => {
+  /** What says "ready" after `listen` — a log line, a file a tool reads — is said when the port already answers. */
+  it('resolves its listen once the port answers, and releases it on close', async () => {
     const port = await unusedPort();
     const server = build();
-    server.listen(port, '127.0.0.1');
-    await vi.waitFor(async () => expect(await isBound(port)).toBe(true));
+    await server.listen(port, '127.0.0.1');
+    expect(await isBound(port)).toBe(true);
 
     await expect(server.close()).resolves.toBeUndefined();
 
@@ -59,7 +59,7 @@ describe('createHttpServer lifecycle', () => {
   it('closes without waiting for the bind, and again after that', async () => {
     const port = await unusedPort();
     const server = build();
-    server.listen(port, '127.0.0.1');
+    void server.listen(port, '127.0.0.1');
 
     await expect(server.close()).resolves.toBeUndefined();
     await expect(server.close()).resolves.toBeUndefined();
@@ -78,12 +78,11 @@ describe('createHttpServer lifecycle', () => {
   it('reports a port it cannot take, naming the server and the port', async () => {
     const port = await unusedPort();
     const holder = build();
-    holder.listen(port, '127.0.0.1');
-    await vi.waitFor(async () => expect(await isBound(port)).toBe(true));
+    await holder.listen(port, '127.0.0.1');
 
     const onListenError = vi.fn();
     const blocked = build({ httpVersion: 1, onListenError } as unknown as SSRServerConfig);
-    blocked.listen(port, '127.0.0.1');
+    void blocked.listen(port, '127.0.0.1');
 
     await vi.waitFor(() => expect(onListenError).toHaveBeenCalled());
     const [error, context] = onListenError.mock.calls[0] as [NodeJS.ErrnoException, { port: number; label: string }];

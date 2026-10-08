@@ -19,8 +19,9 @@ export type PrecheckResult = { trigger: ElementInteraction; values: Record<strin
 
 const authorize = (access: ActionAccess | undefined, kind: ActionTriggerType, user?: SSRUser) => {
   // A schedule has no caller: nothing about a clock is a session, and demanding a rule here would only invite one
-  // that means nothing. Every other way in states its own — the validator refuses a document that does not.
-  if (kind === 'schedule') {
+  // that means nothing. Nor has a run set for later — the run that set it was the one let in. Every other way in
+  // states its own — the validator refuses a document that does not.
+  if (kind === 'schedule' || kind === 'later') {
     return;
   }
 

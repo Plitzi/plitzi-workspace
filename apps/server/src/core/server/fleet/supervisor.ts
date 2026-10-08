@@ -7,7 +7,11 @@ import { serverLog } from '../../../helpers/serverLog';
 
 import type { Worker } from 'node:cluster';
 
-export type Fleet = { stop: () => Promise<void> };
+export type Fleet = {
+  /** Resolved once a worker takes connections: the port answers from then on. */
+  listening: Promise<void>;
+  stop: () => Promise<void>;
+};
 
 const RESTART_WINDOW_MS = 60_000;
 const RESTART_BASE_MS = 500;
@@ -21,7 +25,7 @@ const RESTART_MAX_MS = 30_000;
 export const restartDelay = (deathsInWindow: number, count: number): number =>
   deathsInWindow <= count ? 0 : Math.min(RESTART_MAX_MS, RESTART_BASE_MS * 2 ** (deathsInWindow - count - 1));
 
-type FleetState = { count: number; servers: number; stop: () => Promise<void> };
+type FleetState = { count: number; servers: number; listening: Promise<void>; stop: () => Promise<void> };
 
 /** One fleet per process: a second server in the same primary shares the workers the first one started. */
 let shared: FleetState | undefined;
@@ -59,7 +63,7 @@ export const startFleet = (
     shared.servers += 1;
     const state = shared;
 
-    return { stop: () => leave(state) };
+    return { listening: state.listening, stop: () => leave(state) };
   }
 
   const workers = new Set<Worker>();
@@ -68,6 +72,10 @@ export const startFleet = (
   let deaths: number[] = [];
   let served = false;
   let stopping = false;
+  let listened = (): void => undefined;
+  const listening = new Promise<void>(resolve => {
+    listened = resolve;
+  });
 
   const stopAll = (): Promise<void> => {
     restarts.forEach(timer => clearTimeout(timer));
@@ -95,6 +103,7 @@ export const startFleet = (
     workers.add(worker);
     worker.once('listening', () => {
       served = true;
+      listened();
     });
     worker.once('exit', (code: number | null, signal: string | null) => {
       workers.delete(worker);
@@ -139,6 +148,7 @@ export const startFleet = (
   const state: FleetState = {
     count,
     servers: 1,
+    listening,
     stop: async () => {
       stopping = true;
       await stopAll();
@@ -146,7 +156,7 @@ export const startFleet = (
   };
   shared = state;
 
-  return { stop: () => leave(state) };
+  return { listening, stop: () => leave(state) };
 };
 
 /** The workers stop when the last server of this process that started them closes. */

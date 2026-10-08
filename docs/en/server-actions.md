@@ -39,8 +39,8 @@ Everything about how a run begins lives on the step that begins it:
 
 | On the trigger step | What it decides |
 |---|---|
-| Its kind | `call` from a page, `webhook`, `schedule`, `render` |
-| Who may | Anyone / signed-in visitors / visitors holding named permissions. No default — an unstated rule is either a lock-out or a hole. A `schedule` has no caller, so it has no rule |
+| Its kind | `call` from a page, `webhook`, `schedule`, `later`, `render` |
+| Who may | Anyone / signed-in visitors / visitors holding named permissions. No default — an unstated rule is either a lock-out or a hole. A `schedule` or a `later` has no caller, so it has no rule |
 | Input it accepts | What a caller may send **through that way in**, as a JSON field map. Anything undeclared is dropped before a single step runs |
 
 Which means authoring one is: **open the flow, pick a trigger, name it, fill in its two fields, chain the tasks.**
@@ -472,6 +472,22 @@ Missed fires are **not** replayed as a burst. After an outage the overdue fire r
 the next occurrence, recording how many went by — a digest missed for a day sends once and says it missed 23,
 rather than sending 23 times.
 
+### Later: a run in so many seconds
+
+A turn that runs out, a bot's move, a hold that lapses: one run setting another to start in a while, on the server,
+whether or not a page is still open. The action that runs later says so with a **later** trigger step — like a
+schedule it has no caller of its own, since the run that set it was the one let in — and declares the input it takes.
+
+From a flow, the `flow.later` step names the action, the seconds and the input; from a space's function,
+`ctx.later({ action: 'game.timeout', in: 45, input: { room }, key: 'turn:' + room })`. Either answers the job and when
+it is due. A **key** names it: set again under the same key, the one still waiting is replaced — a move ends the turn,
+and its timer is set afresh — and `flow.cancelLater` / `ctx.cancelLater(key)` drops it. The one already running is left
+alone: it is usually the run setting the next.
+
+It is a job like a schedule's, with every property above: due by the store's clock (from 0 to 30 days ahead, about a
+second late at most), run once across replicas, retried, and shown in the queue. Refused before anything is queued —
+an action with no later trigger, a switched-off one, a time out of range, a server that runs no jobs — and said why.
+
 ### Watching the queue
 
 Runs are history; the queue is the work. In the Plitzi dashboard, **Automations → Queue** shows what is scheduled and
@@ -752,8 +768,9 @@ createServer({ action: { lookups, kv: createMongoKv({ db }), jobs: { queue: crea
 ```
 
 On MySQL a key is bytes (`VARBINARY`) — `Board` and `board` are two keys, as they are in Redis — and a value is a
-`MEDIUMTEXT`, so one past 64 KB is kept whole. A table made before that is brought up to it on first use; with
-`createTables: false`, run `mysqlJobSchemaUpgrades()` in your own migrations, once.
+`MEDIUMTEXT`, so one past 64 KB is kept whole, and a job carries the `job_key` a run set for later is replaced by.
+A table made before those is brought up to them on first use; with `createTables: false`, run the statements of
+`mysqlJobSchemaUpgrades()` your tables still lack in your own migrations, once each.
 
 Anything else — Postgres, Redis Streams, a managed queue — is the same seam written against that store.
 [`09-schedules`](../../examples/self-hosting/09-schedules) is one written out: every method of the queue

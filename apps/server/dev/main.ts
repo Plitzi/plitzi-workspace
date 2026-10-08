@@ -136,4 +136,4 @@ const active = Object.entries(services)
   .map(([name]) => name);
 console.log(`[dev] services: ${active.join(', ') || 'none'}`);
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);

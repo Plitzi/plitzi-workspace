@@ -45,6 +45,7 @@ const TRIGGER_TITLES: Record<string, string> = {
   call: 'When a page calls it',
   webhook: 'When a webhook arrives',
   schedule: 'On a schedule',
+  later: 'When another run set it for later',
   render: 'While a page renders'
 };
 
@@ -137,6 +138,8 @@ const triggerParamsFor = (credentials: SpaceCredential[]): Record<string, Trigge
     }
   },
   webhook: { ...callerParams, ...signatureParams(credentials) },
+  // Started by a run that was let in already — `flow.later`, `ctx.later` — so it states only what it is handed.
+  later: { input: callerParams.input },
   schedule: {
     cron: { type: 'text', defaultValue: '0 * * * *', label: 'Cron', canBind: false },
     timezone: {

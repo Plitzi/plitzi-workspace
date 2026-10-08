@@ -490,6 +490,15 @@ export function probePage(input: ProbeInput): ProbeFindings {
     const MIN_CONTRAST = 2;
 
     /**
+     * What is painted in a colour emoji's own colours rather than in `color`: a character shown as an emoji by default
+     * (🎲), one asked to be (`❤️`, a keycap `1️⃣`), and the joiners and skin tones between them. Measured as text, an icon
+     * sat on a tinted tile failed in whichever theme's `color` was close to the tile — while the icon read perfectly.
+     * A symbol drawn as text (✓, ★) takes the text's colour, and is measured.
+     */
+    const COLOUR_EMOJI =
+      /[#*0-9]\uFE0F?\u20E3|\p{Extended_Pictographic}\uFE0F|\p{Emoji_Presentation}|\p{Emoji_Modifier}|\u200D|\uFE0F/gu;
+
+    /**
      * Every element that draws words of its own on the space's page: the space's elements, and whatever a plugin draws
      * inside one of them — the part of a page that is often the most read, with colours of its own. Words hidden from a
      * screen reader (`aria-hidden`) are a decoration, and an SVG's are painted with `fill`, not `color`.
@@ -518,6 +527,10 @@ export function probePage(input: ProbeInput): ProbeFindings {
         .map(child => child.textContent ?? '')
         .join(' ')
         .trim();
+      if (words.replace(COLOUR_EMOJI, '').trim() === '') {
+        continue;
+      }
+
       const ink = parse(getComputedStyle(node).color);
       const paper = ink ? behind(node) : null;
       if (!ink || !paper) {

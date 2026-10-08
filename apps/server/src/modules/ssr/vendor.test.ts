@@ -31,7 +31,7 @@ beforeAll(async () => {
     debugMode: true,
     adapters: createJsonAdapters({ offlineData: offlineDataOf() })
   });
-  server.listen(PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
   await vi.waitFor(async () => {
     expect((await fetch(`http://${HOST}/`)).status).toBe(200);
   });

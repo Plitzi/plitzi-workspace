@@ -54,6 +54,7 @@ type JobRow = {
   due_at: Numeric;
   max_attempts: Numeric;
   missed: Numeric | null;
+  job_key: string | null;
   status: string;
   run_at: Numeric;
   attempts: Numeric;
@@ -98,6 +99,7 @@ const toJob = (row: JobRow): ActionJob => ({
   dueAt: Number(row.due_at),
   maxAttempts: Number(row.max_attempts),
   ...(row.missed === null ? {} : { missed: Number(row.missed) }),
+  ...(row.job_key === null ? {} : { key: row.job_key }),
   status: row.status as ActionJobStatus,
   runAt: Number(row.run_at),
   attempts: Number(row.attempts),
@@ -226,8 +228,8 @@ export const createMysqlJobQueue = ({
         await execute(
           conn,
           `INSERT INTO ${t.jobs} (id, space_id, action_id, environment, trigger_type, input, due_at, max_attempts,
-            missed, status, run_at, attempts, created_at, updated_at, history)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, '[]')`,
+            missed, job_key, status, run_at, attempts, created_at, updated_at, history)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, '[]')`,
           [
             job.id,
             job.spaceId,
@@ -238,6 +240,7 @@ export const createMysqlJobQueue = ({
             job.dueAt,
             job.maxAttempts,
             job.missed ?? null,
+            job.key ?? null,
             // The fire's own instant, so a job produced late is still claimable at once rather than waiting again.
             job.dueAt,
             at,
@@ -574,6 +577,27 @@ export const createMysqlJobQueue = ({
       );
 
       return flagged.affectedRows === 1;
+    },
+
+    cancelPending: async ({ spaceId, key, olderThan }) => {
+      const conn = await db();
+      const newest =
+        olderThan === undefined
+          ? undefined
+          : await selectOne<Pick<JobRow, 'id' | 'created_at'>>(
+              conn,
+              `SELECT id, created_at FROM ${t.jobs} WHERE id = ?`,
+              [olderThan]
+            );
+      const at = await clock.now();
+      const dropped = await execute(
+        conn,
+        `UPDATE ${t.jobs} SET status = 'cancelled', updated_at = ?, expires_at = ?, worker_id = NULL
+        WHERE space_id = ? AND job_key = ? AND status = 'pending'${newest ? ' AND (created_at < ? OR (created_at = ? AND id < ?))' : ''}`,
+        [at, expiryOf(at), spaceId, key, ...(newest ? [newest.created_at, newest.created_at, newest.id] : [])]
+      );
+
+      return dropped.affectedRows;
     }
   };
 };

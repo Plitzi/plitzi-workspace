@@ -1,3 +1,4 @@
+import type { LaterAnswer, LaterRequest } from './jobs/later';
 import type { ActionEmailSender } from './runtime/email';
 import type { FunctionsConfig } from '../functions/config';
 import type { SpaceFunctions } from '../functions/protocol';
@@ -227,6 +228,13 @@ export type ActionTaskContext = {
   grant?: (topic: string, ttlSeconds?: number) => Promise<string>;
   /** Revokes `grant` for `topic` — or every grant for it, naming none — and lets go whoever is on it with one. */
   revoke?: (topic: string, grant?: string) => Promise<void>;
+  /**
+   * Starts one of this space's actions in so many seconds, by its `later` trigger (`jobs/later.ts`) — `undefined` when
+   * the server runs no jobs. What `flow.later` and a function's `ctx.later` go through.
+   */
+  later?: (request: LaterRequest) => Promise<LaterAnswer>;
+  /** Drops the runs waiting under `key`, and answers how many. */
+  cancelLater?: (key: string) => Promise<number>;
   /** Signs with the space's own key (`ActionsConfig.signingSecret`) — `undefined` when the deployment gave none. */
   sign?: SpaceSigning['sign'];
   verify?: SpaceSigning['verify'];

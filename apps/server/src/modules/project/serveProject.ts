@@ -276,7 +276,8 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     { preAuth: [spaceFailure.stage, ...(runtime ? [runtime.stage] : [])] }
   );
 
-  server.listen(port, host);
+  // Said once the port answers: a tool that waits for "pages on" — or reads `tmp/dev-server.json` — asks right away.
+  await server.listen(port, host);
   const url = `http://127.0.0.1:${String(port)}`;
   if (speaks) {
     mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });

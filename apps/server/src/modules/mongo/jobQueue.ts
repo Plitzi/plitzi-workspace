@@ -128,6 +128,8 @@ export const createMongoJobQueue = ({
       jobsOf().createIndex({ status: 1, leaseUntil: 1 }),
       jobsOf().createIndex({ spaceId: 1, updatedAt: -1 }),
       jobsOf().createIndex({ spaceId: 1, actionId: 1, updatedAt: -1 }),
+      // Only runs set for later carry a key: the index holds those and nothing else.
+      jobsOf().createIndex({ spaceId: 1, key: 1, status: 1 }, { partialFilterExpression: { key: { $exists: true } } }),
       jobsOf().createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
       schedulesOf().createIndex({ enabled: 1, nextRunAt: 1 }),
       schedulesOf().createIndex({ spaceId: 1 })
@@ -420,6 +422,30 @@ export const createMongoJobQueue = ({
       );
 
       return flagged.matchedCount === 1;
+    },
+
+    cancelPending: async ({ spaceId, key, olderThan }) => {
+      const { jobs } = await collections();
+      const newest = olderThan === undefined ? undefined : await jobs.findOne({ _id: olderThan });
+      const at = await clock.now();
+      const dropped = await jobs.updateMany(
+        {
+          spaceId,
+          key,
+          status: 'pending',
+          ...(newest
+            ? {
+                $or: [
+                  { createdAt: { $lt: newest.createdAt } },
+                  { createdAt: newest.createdAt, _id: { $lt: newest._id } }
+                ]
+              }
+            : {})
+        },
+        { $set: { status: 'cancelled', updatedAt: at, expiresAt: expiryOf(at) }, $unset: { workerId: '' } }
+      );
+
+      return dropped.modifiedCount;
     }
   };
 };

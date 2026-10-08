@@ -184,5 +184,68 @@ const rateLimit: ActionTask<{
   }
 };
 
-export const flowTasks = [delay, fail, output, onFailure, rateLimit] as ActionTask<Record<string, unknown>>[];
+const jsonInput = (value: unknown): unknown => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value || '{}') as unknown;
+  } catch {
+    throw new Error('The input of a run set for later is JSON: `{ "room": "{{ input.room }}" }`');
+  }
+};
+
+/**
+ * Starts one of the space's actions in so many seconds — the turn that runs out, the bot's move, the hold that lapses —
+ * by that action's `later` trigger, held by the server's job queue: it runs whether or not a page is still open. A
+ * `key` names it: set again under the same key, the one still waiting is replaced (the timer of a turn a move ended);
+ * `flow.cancelLater` drops it.
+ */
+const later: ActionTask<{ action: string; in: string | number; input: unknown; key: string }> = {
+  namespace: 'flow',
+  action: 'later',
+  title: 'Run Later',
+  description: 'Starts one of the space’s actions — one with a “later” trigger — in so many seconds, on the server.',
+  params: {
+    action: { type: 'text', canBind: true, defaultValue: '', label: 'Action (its identifier)' },
+    in: { type: 'text', canBind: true, defaultValue: '30', label: 'In (seconds)' },
+    input: { type: 'codemirror-json', canBind: true, defaultValue: '{}', label: 'Its input' },
+    key: { type: 'text', canBind: true, defaultValue: '', label: 'Known as (replaces what waits under it)' }
+  },
+  run: async ({ action, in: seconds, input, key }, ctx) => {
+    if (!ctx.later) {
+      throw new Error('This server runs no jobs: nothing can be set to run later');
+    }
+
+    const given = jsonInput(input);
+
+    return ctx.later({
+      action,
+      in: Number(seconds),
+      input: typeof given === 'object' && given !== null && !Array.isArray(given) ? { ...given } : {},
+      ...(key === '' ? {} : { key })
+    });
+  }
+};
+
+/** Drops what `flow.later` set under a key and is still waiting — the timer of a game that ended. */
+const cancelLater: ActionTask<{ key: string }> = {
+  namespace: 'flow',
+  action: 'cancelLater',
+  title: 'Cancel Later',
+  description: 'Drops the runs set for later under a key that are still waiting.',
+  params: { key: { type: 'text', canBind: true, defaultValue: '', label: 'Known as' } },
+  run: async ({ key }, ctx) => {
+    if (!ctx.cancelLater) {
+      throw new Error('This server runs no jobs: nothing was set to run later');
+    }
+
+    return { key, cancelled: await ctx.cancelLater(key) };
+  }
+};
+
+export const flowTasks = [delay, fail, output, onFailure, rateLimit, later, cancelLater] as ActionTask<
+  Record<string, unknown>
+>[];
 export const streamTasks = [emit] as ActionTask<Record<string, unknown>>[];

@@ -1,6 +1,19 @@
+import { markWrittenAt } from './writtenAt';
 import { scope } from '../elements/scope';
 
 import type { ElementSpec, LayoutRef, PageSpec } from './types';
+
+const FAMILY = Symbol('plitzi.pageFamily');
+
+/**
+ * The family a page was written by, when it was: one object shared by its pages and no others. Carried unseen — a
+ * page spec is the author's, and what it says is all a document is made of.
+ */
+export const familyOf = (page: PageSpec): object | undefined => {
+  const family: unknown = Reflect.get(page, FAMILY);
+
+  return typeof family === 'object' && family !== null ? family : undefined;
+};
 
 /** What one page of a family says that its siblings do not. */
 export interface PageFamilyEntry {
@@ -43,15 +56,25 @@ export interface PageFamily<Entry extends PageFamilyEntry> {
 export const pageFamily = <Entry extends PageFamilyEntry>(
   { folder, layout, accessLevel, seoTitle, body }: PageFamily<Entry>,
   entries: readonly Entry[]
-): PageSpec[] =>
-  entries.map(entry => ({
-    id: entry.id,
-    name: entry.title,
-    slug: entry.slug,
-    seoTitle: seoTitle ? seoTitle(entry) : entry.title,
-    ...(entry.description ? { seoDescription: entry.description } : {}),
-    ...(folder ? { folder } : {}),
-    ...(layout ? { layout } : {}),
-    ...(accessLevel ? { accessLevel } : {}),
-    body: scope(entry.id, ref => body(entry, ref))
-  }));
+): PageSpec[] => {
+  const family = {};
+
+  // Each page placed where the family is written — a refusal of one of them names that line — and known as one of it:
+  // what its pages share is written once, and is no copy of anything (`repeated-shape`).
+  return entries.map(entry => {
+    const page = markWrittenAt<PageSpec>({
+      id: entry.id,
+      name: entry.title,
+      slug: entry.slug,
+      seoTitle: seoTitle ? seoTitle(entry) : entry.title,
+      ...(entry.description ? { seoDescription: entry.description } : {}),
+      ...(folder ? { folder } : {}),
+      ...(layout ? { layout } : {}),
+      ...(accessLevel ? { accessLevel } : {}),
+      body: scope(entry.id, ref => body(entry, ref))
+    });
+    Object.defineProperty(page, FAMILY, { value: family, enumerable: false });
+
+    return page;
+  });
+};

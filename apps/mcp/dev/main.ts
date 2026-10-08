@@ -69,4 +69,4 @@ const server = createServer({
   adapters
 });
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);

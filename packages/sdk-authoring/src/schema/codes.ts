@@ -119,7 +119,7 @@ export const AUTHORING_CODES = {
   'folder-undeclared': {
     kind: 'refused',
     means: 'a page, a layout or a folder filed in a folder the space does not declare',
-    fix: 'declare the folder, or the name it suggests'
+    fix: "declare it on the space — `pageFolders: [{ id: 'docs', name: 'Docs' }]`, its slug starting its pages' addresses — or use the name it suggests"
   },
   'folder-cycle': {
     kind: 'refused',

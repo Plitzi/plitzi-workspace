@@ -50,6 +50,7 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
       due_at BIGINT NOT NULL,
       max_attempts INT NOT NULL,
       missed INT NULL,
+      job_key VARCHAR(191) NULL,
       status VARCHAR(16) NOT NULL,
       run_at BIGINT NOT NULL,
       attempts INT NOT NULL DEFAULT 0,
@@ -66,6 +67,7 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
       KEY action_jobs_pending (status, run_at),
       KEY action_jobs_lease (status, lease_until),
       KEY action_jobs_space (space_id, updated_at),
+      KEY action_jobs_key (space_id, job_key, status),
       KEY action_jobs_expires (expires_at)
     ) ${CHARSET}`,
     `CREATE TABLE IF NOT EXISTS ${t.schedules} (
@@ -93,26 +95,53 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
   ];
 };
 
-/**
- * What brings a `kv` table made before the columns above up to them — for a deployment that runs its own migrations,
- * once. `ensureJobTables` does it by itself, and only when the table needs it: the `ALTER` copies the table.
- */
-export const mysqlJobSchemaUpgrades = (prefix = ''): string[] => [
-  `ALTER TABLE ${jobTables(prefix).kv} MODIFY k VARBINARY(764) NOT NULL, MODIFY v MEDIUMTEXT NOT NULL`
-];
+/** A change to tables made before it, and how to tell a table still needs it. */
+type SchemaUpgrade = {
+  needed: (db: Queryable, prefix: string) => Promise<boolean>;
+  statements: (prefix: string) => string[];
+};
 
-/** Whether the `kv` table still has the columns it was first made with. */
-const kvNeedsUpgrade = async (db: Queryable, prefix: string): Promise<boolean> => {
+/** The columns a table of this database has, by name, with their types. */
+const columnsOf = async (db: Queryable, table: string): Promise<Map<string, string>> => {
   const columns = await selectRows<{ name: string; type: string }>(
     db,
     `SELECT COLUMN_NAME AS name, DATA_TYPE AS type FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME IN ('k', 'v')`,
-    [`${prefix}action_kv`]
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?`,
+    [table]
   );
-  const typeOf = (name: string) => columns.find(column => column.name === name)?.type.toLowerCase();
 
-  return typeOf('k') !== 'varbinary' || typeOf('v') !== 'mediumtext';
+  return new Map(columns.map(column => [column.name, column.type.toLowerCase()]));
 };
+
+const UPGRADES: readonly SchemaUpgrade[] = [
+  // A `kv` key as bytes and a value past 64 KB: the table was first made with `VARCHAR` and `TEXT`.
+  {
+    needed: async (db, prefix) => {
+      const columns = await columnsOf(db, `${prefix}action_kv`);
+
+      return columns.get('k') !== 'varbinary' || columns.get('v') !== 'mediumtext';
+    },
+    statements: prefix => [
+      `ALTER TABLE ${jobTables(prefix).kv} MODIFY k VARBINARY(764) NOT NULL, MODIFY v MEDIUMTEXT NOT NULL`
+    ]
+  },
+  // The key a run set for later is replaced and cancelled by.
+  {
+    needed: async (db, prefix) => !(await columnsOf(db, `${prefix}action_jobs`)).has('job_key'),
+    statements: prefix => [
+      `ALTER TABLE ${jobTables(prefix).jobs} ADD COLUMN job_key VARCHAR(191) NULL AFTER missed,
+      ADD KEY action_jobs_key (space_id, job_key, status)`
+    ]
+  }
+];
+
+/**
+ * What brings tables made before the columns above up to them — for a deployment that runs its own migrations: each
+ * statement once, the ones its tables still lack. `ensureJobTables` does it by itself, and only where a table needs
+ * it: an `ALTER` copies the table.
+ */
+export const mysqlJobSchemaUpgrades = (prefix = ''): string[] =>
+  UPGRADES.flatMap(upgrade => upgrade.statements(prefix));
 
 /** The server's now, in epoch ms, as an SQL expression — what every comparison reads instead of a caller's clock. */
 export const NOW_MS = 'CAST(ROUND(UNIX_TIMESTAMP(NOW(3)) * 1000) AS SIGNED)';
@@ -131,9 +160,11 @@ export const ensureJobTables = (db: Queryable, prefix: string, create: boolean):
         await execute(db, statement);
       }
 
-      if (await kvNeedsUpgrade(db, prefix)) {
-        for (const statement of mysqlJobSchemaUpgrades(prefix)) {
-          await execute(db, statement);
+      for (const upgrade of UPGRADES) {
+        if (await upgrade.needed(db, prefix)) {
+          for (const statement of upgrade.statements(prefix)) {
+            await execute(db, statement);
+          }
         }
       }
     })().catch((error: unknown) => {

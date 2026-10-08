@@ -195,7 +195,7 @@ beforeAll(async () => {
     auth
   });
 
-  server.listen(PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
 
   // listen() is fire-and-forget: wait until the port actually answers rather than racing the first request.
   await vi.waitFor(async () => {

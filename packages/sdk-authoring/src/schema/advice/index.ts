@@ -39,11 +39,18 @@ const quietCodes = (schema: Schema): Map<string, string[]> =>
  */
 export const suggestSpace = (
   { schema, style }: { schema: Schema; style: Style },
-  /** The CSS the pages load besides the space's own — its plugins' stylesheets: a token read there is read. */
-  { stylesheets = [] }: { stylesheets?: readonly string[] } = {}
+  {
+    stylesheets = [],
+    families = []
+  }: {
+    /** The CSS the pages load besides the space's own — its plugins' stylesheets: a token read there is read. */
+    stylesheets?: readonly string[];
+    /** The pages each `pageFamily` wrote, by id: what they share is written once, never a copy. */
+    families?: readonly (readonly string[])[];
+  } = {}
 ): Suggestion[] =>
   withoutQuieted(schema, [
-    ...suggestRepeats(schema, style),
+    ...suggestRepeats(schema, style, families),
     ...suggestContent(schema, style),
     ...suggestCustomCss(schema, style),
     ...suggestCustomCssSlots(schema),

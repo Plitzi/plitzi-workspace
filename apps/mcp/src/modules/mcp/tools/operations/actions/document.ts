@@ -22,7 +22,7 @@ export const actionTriggerParams = z
     access: z
       .enum(['public', 'session', 'role'])
       .optional()
-      .describe('Who may start a run THIS way. Required for every kind but schedule, which has no caller'),
+      .describe('Who may start a run THIS way — required, except on schedule and later (no caller)'),
     permissions: z.string().optional().describe('Comma separated; only for access "role"'),
     input: z
       .string()
@@ -63,8 +63,8 @@ export const actionNode = z
     action: z
       .string()
       .describe(
-        'A trigger names its KIND — call | webhook | schedule | render | custom — and one action may have ' +
-          'several, one per kind, each heading its own chain. A task names "<namespace>.<action>" from ' +
+        'A trigger names its KIND — call | webhook | schedule | later | render | custom — and one action may have ' +
+          'several, one per kind, each heading a chain. A task names "<namespace>.<action>" from ' +
           'plitzi://actions/{env}/tasks. A browser step (setState, navigate) cannot run here'
       ),
     params: z

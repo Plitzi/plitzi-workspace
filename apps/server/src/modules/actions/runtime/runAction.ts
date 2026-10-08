@@ -15,8 +15,10 @@ import { createSigning } from './signing';
 import { createRunFetch, taskContextFor } from './taskContext';
 import { onAbort } from '../../../helpers/onAbort';
 import { serverLog } from '../../../helpers/serverLog';
+import { DEFAULT_MAX_ATTEMPTS } from '../jobs/schedules';
 
 import type { TaskContextRequest } from './taskContext';
+import type { LaterDeps } from '../jobs/later';
 import type {
   ActionKvAdapter,
   ActionRunRecord,
@@ -28,7 +30,13 @@ import type {
   RegisteredTask,
   ResolvedActionLimits
 } from '../types';
-import type { ActionRunStep, ElementInteraction, InteractionNode, InteractionNodeStatus } from '@plitzi/sdk-shared';
+import type {
+  ActionJobQueue,
+  ActionRunStep,
+  ElementInteraction,
+  InteractionNode,
+  InteractionNodeStatus
+} from '@plitzi/sdk-shared';
 import type { RuleValue } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 
 /** How often a run asks the shared store whether it has been cancelled. Once a second is far finer than the
@@ -288,12 +296,19 @@ export type TaskContextSource = (
 export const createActionRunner = (
   config: ActionsConfig,
   registryFor: (request: ActionRunRequest) => ActionTaskRegistry | Promise<ActionTaskRegistry>,
-  baseFetch: typeof fetch = fetch
+  baseFetch: typeof fetch = fetch,
+  /** The queue runs set for later go into, read when asked: it is made after the runner, and a server may run none. */
+  jobsQueue: () => ActionJobQueue | undefined = () => undefined
 ): ActionRunner & { taskContext: TaskContextSource } => {
   const kv = createKvStore(config.kv ?? createMemoryKv());
   // Over the server's own store rather than a space's: the counter that limits a flow is not a key the flow can reach.
   const emailSender = createEmailSender({ ...config.email, kv });
   const signing = config.signingSecret ? createSigning(config.signingSecret) : undefined;
+  const later: LaterDeps = {
+    queue: jobsQueue,
+    lookups: config.lookups,
+    maxAttempts: (config.jobs === false ? undefined : config.jobs?.maxAttempts) ?? DEFAULT_MAX_ATTEMPTS
+  };
 
   /** Never allowed to fail a run: a logging outage must not take an action down, the same rule metering follows. */
   const record = async (entry: ActionRunRecord) => {
@@ -341,7 +356,7 @@ export const createActionRunner = (
      * reach the outside world after the flow's signal was aborted or its request budget spent.
      */
     const contextFor = (signal: AbortSignal, runFetch: typeof fetch) =>
-      taskContextFor(config, { kv, email: emailSender, redactor, signing }, request, signal, runFetch);
+      taskContextFor(config, { kv, email: emailSender, redactor, signing, later }, request, signal, runFetch);
     /** The request budget ran out: said on the server's log at once, and in the step that hit it. */
     let budgetSpent: string | undefined;
     const buildContext = contextFor(
@@ -696,7 +711,7 @@ export const createActionRunner = (
   const taskContext: TaskContextSource = (contextRequest, signal, lineage) =>
     taskContextFor(
       config,
-      { kv, email: emailSender, redactor: createRedactor(), signing },
+      { kv, email: emailSender, redactor: createRedactor(), signing, later },
       contextRequest,
       signal,
       createRunFetch(baseFetch, signal, resolveLimits(config.limits, undefined), lineage)

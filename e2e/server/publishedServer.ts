@@ -71,5 +71,5 @@ const server = createServer({
   action: { lookups, email: { allowPrivateHosts: true } }
 });
 
-server.listen(PORT, '127.0.0.1');
+await server.listen(PORT, '127.0.0.1');
 console.log(`[e2e] a published site${spaceDebugMode ? ' with dev tools on' : ''} on http://127.0.0.1:${PORT}/`);

@@ -17,5 +17,5 @@ const server = createServer({
   logger: consoleLogger
 });
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);
 console.log(`[example] pages on http://127.0.0.1:${PORT}/`);

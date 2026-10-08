@@ -109,7 +109,7 @@ export const createHttpServer = (
           throw new Error(`[${label}] This server runs no actions, so no plugin's functions`);
         })
     },
-    listen(port: number, host = '0.0.0.0') {
+    listen(port: number, host = '0.0.0.0'): Promise<void> {
       // Said where the count is decided: each worker runs this same config, and would repeat it.
       if (plan.requested !== undefined && role !== 'worker') {
         serverLog.warn(
@@ -121,24 +121,26 @@ export const createHttpServer = (
       if (role === 'primary') {
         // The primary serves nothing itself: it prepares what the workers share, starts them, and keeps them running.
         // The supervisor is loaded only here, so a single server never loads it.
-        void (parts.beforeFork?.() ?? Promise.resolve())
-          .catch((error: unknown) => serverLog.error(label, 'preparing for the workers failed', error))
-          .then(async () => {
-            const { startFleet } = await import('./fleet/supervisor');
-            // Closed while it prepared: starting workers now would outlive the server that was asked to stop.
-            if (closed) {
-              return;
-            }
+        return new Promise<void>(resolve => {
+          void (parts.beforeFork?.() ?? Promise.resolve())
+            .catch((error: unknown) => serverLog.error(label, 'preparing for the workers failed', error))
+            .then(async () => {
+              const { startFleet } = await import('./fleet/supervisor');
+              // Closed while it prepared: starting workers now would outlive the server that was asked to stop.
+              if (closed) {
+                return;
+              }
 
-            fleet = startFleet(plan.count, label);
-            serverLog.info(label, `${plan.count} workers on ${host}:${port}`);
-          })
-          .catch((error: unknown) => {
-            serverLog.error(label, 'the workers could not start', error);
-            process.exitCode = 1;
-          });
-
-        return;
+              fleet = startFleet(plan.count, label);
+              serverLog.info(label, `${plan.count} workers on ${host}:${port}`);
+              await fleet.listening;
+              resolve();
+            })
+            .catch((error: unknown) => {
+              serverLog.error(label, 'the workers could not start', error);
+              process.exitCode = 1;
+            });
+        });
       }
 
       const handler = makeHandlerForPort(port);
@@ -159,9 +161,14 @@ export const createHttpServer = (
         process.exit(1);
       });
 
-      primary.listen(port, host, () => {
-        serverLog.info(label, `${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
-        parts.onListen?.();
+      const bound = primary;
+
+      return new Promise<void>(resolve => {
+        bound.listen(port, host, () => {
+          serverLog.info(label, `${protoLabel(version, !!config.tls)} - listening on ${host}:${port}`);
+          parts.onListen?.();
+          resolve();
+        });
       });
     },
     // Tears down what the server owns whether or not it ever listened. A built-but-never-started server still

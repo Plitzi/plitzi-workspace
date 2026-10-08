@@ -88,7 +88,7 @@ const server = createServer({
   auth
 });
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);
 
 // The pool outlives the process otherwise: node will not exit while a MySQL connection is open, so ^C hangs.
 const shutdown = (): void => {

@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   due_at INTEGER NOT NULL,
   max_attempts INTEGER NOT NULL,
   missed INTEGER,
+  job_key TEXT,
   status TEXT NOT NULL,
   run_at INTEGER NOT NULL,
   attempts INTEGER NOT NULL DEFAULT 0,
@@ -40,6 +41,7 @@ CREATE TABLE IF NOT EXISTS jobs (
 );
 CREATE INDEX IF NOT EXISTS jobs_claimable ON jobs (status, run_at);
 CREATE INDEX IF NOT EXISTS jobs_by_space ON jobs (space_id, updated_at);
+CREATE INDEX IF NOT EXISTS jobs_by_key ON jobs (space_id, job_key, status);
 
 CREATE TABLE IF NOT EXISTS schedules (
   space_id INTEGER NOT NULL,

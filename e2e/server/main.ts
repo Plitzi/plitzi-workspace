@@ -56,5 +56,5 @@ const server = createServer(
   mcpExtensions()
 );
 
-server.listen(PORT, '127.0.0.1');
+await server.listen(PORT, '127.0.0.1');
 console.log(`[e2e] pages, RSC, preview and MCP on http://127.0.0.1:${PORT}/`);

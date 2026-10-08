@@ -53,6 +53,6 @@ const server = createServer({
   logger: consoleLogger
 });
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);
 console.log(`[example] MCP on http://127.0.0.1:${PORT}/   (space copy: ${workingCopy})`);
 console.log('[example] point an MCP client at it, or run `yarn inspector`');

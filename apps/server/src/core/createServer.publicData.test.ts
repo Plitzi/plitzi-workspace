@@ -63,7 +63,7 @@ beforeAll(async () => {
     adapters: createJsonAdapters({ offlineData: { schema, style: EMPTY_STYLE_SCHEMA } }),
     publicDir: base
   });
-  server.listen(PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
   await vi.waitFor(async () => {
     expect((await fetch(`${BASE}/_rsc?location=/&ids=site`)).status).toBe(200);
   });
@@ -116,7 +116,7 @@ describe('createServer with the project’s own data', () => {
         ]
       }
     });
-    dataServer.listen(DATA_PORT, '127.0.0.1');
+    await dataServer.listen(DATA_PORT, '127.0.0.1');
     await vi.waitFor(async () => {
       expect((await fetch(`${DATA_BASE}/_rsc?location=/&ids=site`)).status).toBe(200);
     });

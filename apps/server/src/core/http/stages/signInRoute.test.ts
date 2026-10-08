@@ -94,7 +94,7 @@ beforeAll(async () => {
     },
     adapters: { ...createJsonAdapters({ offlineData, deployment: { spaceId: 5 } }), exchangeCredential }
   });
-  server.listen(PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
 
   await vi.waitFor(async () => {
     expect((await get('/auth/sign-in')).status).toBe(303);

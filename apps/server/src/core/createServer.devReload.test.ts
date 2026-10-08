@@ -41,7 +41,7 @@ const start = async (
       ...(plugins ? { deployment: { spaceId: 1, environment: 'main', revision: 0, pluginNames: plugins.names } } : {})
     })
   });
-  started.listen(PORT, '127.0.0.1');
+  await started.listen(PORT, '127.0.0.1');
   await vi.waitFor(async () => {
     expect((await fetch(`${BASE}/health`)).status).toBe(200);
   });

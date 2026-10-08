@@ -32,7 +32,7 @@ export type ActionDocumentReport = {
 
 const FIELD_TYPES = ['text', 'number', 'boolean', 'date', 'json', 'file'];
 const ACCESS_MODES = ['public', 'session', 'role'];
-const TRIGGER_TYPES = ['call', 'webhook', 'schedule', 'render', 'custom'];
+const TRIGGER_TYPES = ['call', 'webhook', 'schedule', 'later', 'render', 'custom'];
 const SIGNATURE_ALGORITHMS = ['sha256', 'sha1'];
 /**
  * What the RUN publishes in the flow scope — see `runAction`. A step id may not shadow one. `failure` is published only
@@ -121,8 +121,8 @@ const validateTrigger = (
   }
 
   // A schedule has no caller to authorize: nothing about a clock is a session, and asking for an access rule here
-  // would only invite one that means nothing.
-  if (kind !== 'schedule') {
+  // would only invite one that means nothing. Nor has a run set for later: the run that set it was the one let in.
+  if (kind !== 'schedule' && kind !== 'later') {
     if (!isFilledString(params.access) || !ACCESS_MODES.includes(params.access)) {
       // No default: a way in whose access nobody wrote down would have to be guessed at, and every guess is
       // either a lock-out or a hole.

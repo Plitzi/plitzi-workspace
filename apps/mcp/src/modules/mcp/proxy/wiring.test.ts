@@ -45,7 +45,7 @@ const freePort = (): Promise<number> =>
     });
   });
 
-const startServer = (port: number, tools?: string[]): Deployment => {
+const startServer = async (port: number, tools?: string[]): Promise<Deployment> => {
   const stored = seedSpace();
   let saved: Schema | undefined;
 
@@ -67,7 +67,7 @@ const startServer = (port: number, tools?: string[]): Deployment => {
     { httpVersion: 1, adapters },
     { proxy: { secret: 'deployment-secret', ...(tools ? { tools } : {}) } }
   );
-  server.listen(port, '127.0.0.1');
+  await server.listen(port, '127.0.0.1');
 
   return { server, port, saved: () => saved };
 };
@@ -111,8 +111,8 @@ let defaults: Deployment;
 let widened: Deployment;
 
 beforeAll(async () => {
-  defaults = startServer(await freePort());
-  widened = startServer(await freePort(), ['plitzi_render', 'plitzi_apply']);
+  defaults = await startServer(await freePort());
+  widened = await startServer(await freePort(), ['plitzi_render', 'plitzi_apply']);
 });
 
 afterAll(async () => {

@@ -148,7 +148,7 @@ beforeAll(async () => {
     { httpVersion: 1, adapters },
     { oauth: { adapters: oauthAdapters(), signInUrl: SIGN_IN_URL, guest: { target: GUEST_TARGET } } }
   );
-  server.listen(port, '127.0.0.1');
+  await server.listen(port, '127.0.0.1');
 });
 
 afterAll(() => server.close());
@@ -506,7 +506,7 @@ describe('MCP OAuth without a guest connection', () => {
       { httpVersion: 1, adapters },
       { oauth: { adapters: oauthAdapters(), signInUrl: SIGN_IN_URL } }
     );
-    strictServer.listen(port, '127.0.0.1');
+    await strictServer.listen(port, '127.0.0.1');
   });
 
   afterAll(() => strictServer.close());

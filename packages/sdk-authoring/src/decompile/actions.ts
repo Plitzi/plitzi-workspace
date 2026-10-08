@@ -20,7 +20,7 @@ import type { ActionDocument, ActionEntry, ActionField, ActionFieldType, Element
 export type ActionReading = { ok: true; spec: ActionSpec } | { ok: false; reason: string };
 
 const OUTPUT_TASK = 'flow.output';
-const TRIGGER_TYPES = ['call', 'render', 'webhook', 'custom', 'schedule'] as const;
+const TRIGGER_TYPES = ['call', 'render', 'webhook', 'custom', 'schedule', 'later'] as const;
 const FIELD_TYPES: readonly ActionFieldType[] = ['text', 'number', 'boolean', 'date', 'json', 'file'];
 
 type TriggerType = (typeof TRIGGER_TYPES)[number];
@@ -135,6 +135,10 @@ const triggerOf = (node: ElementInteraction, defaultId: string): ActionTriggerSp
     const timezone = text(node.params, 'timezone');
 
     return { ...common, type, cron, ...(timezone ? { timezone } : {}) };
+  }
+
+  if (type === 'later') {
+    return { ...common, type };
   }
 
   const access = accessOf(node);

@@ -30,7 +30,7 @@ import type { ManifestReading } from '../functions/manifest';
 import type { RouteHandler, RouteVisit } from '../functions/routes';
 import type { FunctionScope } from '../functions/scope';
 import type { PreparedFunctions } from '../functions/space';
-import type { ActionDocument } from '@plitzi/sdk-shared';
+import type { ActionDocument, ActionJobQueue } from '@plitzi/sdk-shared';
 
 export type ActionsModule = ActionRunner & {
   /** The deployment's own tasks: shipped, and its native functions. */
@@ -131,7 +131,9 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
     )
       ? registry
       : registryFor(request.spaceId, request.at);
-  const { runAction, taskContext } = createActionRunner(config, registryForRun, config.fetchImpl);
+  // Read when a run asks: the queue is made below, from the module this runner is part of.
+  let jobsQueue: ActionJobQueue | undefined;
+  const { runAction, taskContext } = createActionRunner(config, registryForRun, config.fetchImpl, () => jobsQueue);
   const routes = createRoutes({
     config: config.functions ?? {},
     plugins: () => plugins,
@@ -180,6 +182,7 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
 
   if (config.jobs !== false && config.lookups.listActions) {
     module.jobs = createActionJobs(config.jobs ?? {}, module, config.lookups);
+    jobsQueue = module.jobs.queue;
   }
 
   return module;

@@ -57,7 +57,7 @@ const server = createServer(
   mcpExtensions()
 );
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);
 console.log(`[example] pages   http://127.0.0.1:${PORT}/`);
 console.log(`[example] MCP     http://127.0.0.1:${PORT}/mcp`);
 console.log(`[example] preview POST http://127.0.0.1:${PORT}/__preview  (x-preview-secret: ${PREVIEW_SECRET})`);

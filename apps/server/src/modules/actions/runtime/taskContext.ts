@@ -1,10 +1,12 @@
 import { ActionRunError } from './errors';
 import { namespaceKv } from './namespaceKv';
 import { projectDataReader } from './projectData';
+import { laterFor } from '../jobs/later';
 
 import type { createEmailSender } from './email';
 import type { createRedactor } from './scope';
 import type { createSigning } from './signing';
+import type { LaterDeps } from '../jobs/later';
 import type { ActionKvStore, ActionRunRequest, ActionsConfig, ActionTaskContext, ResolvedActionLimits } from '../types';
 
 /**
@@ -103,6 +105,8 @@ export type TaskContextDeps = {
   redactor: ReturnType<typeof createRedactor>;
   /** Absent when the deployment gave no `signingSecret`: its spaces then sign nothing. */
   signing?: ReturnType<typeof createSigning>;
+  /** What runs set for later go through: the module's queue, read when asked. */
+  later: LaterDeps;
 };
 
 /** Who and what the context is for — a run's request, or anything shaped like one (a function's route). */
@@ -118,7 +122,7 @@ export type TaskContextRequest = Pick<
  */
 export const taskContextFor = (
   config: ActionsConfig,
-  { kv, email, redactor, signing }: TaskContextDeps,
+  { kv, email, redactor, signing, later }: TaskContextDeps,
   request: TaskContextRequest,
   signal: AbortSignal,
   runFetch: typeof fetch
@@ -176,6 +180,13 @@ export const taskContextFor = (
     emit: chunk => request.emit?.(redactor.redact(chunk)),
     data: readData,
     ...signing?.({ spaceId: request.spaceId, environment: request.environment }),
+    ...(later.queue()
+      ? laterFor(later, {
+          spaceId: request.spaceId,
+          environment: request.environment,
+          ...(request.at ? { at: request.at } : {})
+        })
+      : {}),
     ...(realtime
       ? {
           publish: (topic: string, type: string, data: unknown) =>

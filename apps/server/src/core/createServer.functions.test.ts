@@ -68,7 +68,7 @@ beforeAll(async () => {
       runner
     }
   });
-  server.listen(PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
   await vi.waitFor(async () => {
     expect((await fetch(`${BASE}/fn/health-of-mine`)).status).toBe(200);
   });

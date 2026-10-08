@@ -55,9 +55,9 @@ interface TriggerCommon {
 /**
  * Who may start a run this way. `'public'` and `'session'` are the two that carry nothing else.
  *
- * Required on every kind but `schedule`, and by the TYPE rather than by a check at run time: a trigger with no
- * rule is refused by the runner, so the alternative is a way in that authors fine and answers `forbidden` to
- * everybody. A clock has no caller and states none.
+ * Required on every kind but `schedule` and `later`, and by the TYPE rather than by a check at run time: a trigger
+ * with no rule is refused by the runner, so the alternative is a way in that authors fine and answers `forbidden` to
+ * everybody. A clock has no caller and states none, and a run set for later was let in by the run that set it.
  */
 export type AccessSpec = ActionAccess | 'public' | 'session';
 
@@ -67,7 +67,13 @@ export type ActionTriggerSpec =
   | (TriggerCommon & { type: 'webhook'; access: AccessSpec; verify?: WebhookVerifySpec })
   /** `name` is what the deployment mounts this trigger under, and there is nothing to mount without it. */
   | (TriggerCommon & { type: 'custom'; access: AccessSpec; name: string })
-  | (TriggerCommon & { type: 'schedule'; cron: string; timezone?: string });
+  | (TriggerCommon & { type: 'schedule'; cron: string; timezone?: string })
+  /**
+   * Started by another run in so many seconds — `flow.later`, a function's `ctx.later` — on the server, whether or
+   * not a page is still open: a turn that runs out, a bot's move, a hold that lapses. Its `input` is what that run hands
+   * it.
+   */
+  | (TriggerCommon & { type: 'later' });
 
 export interface ActionStepSpec {
   /**

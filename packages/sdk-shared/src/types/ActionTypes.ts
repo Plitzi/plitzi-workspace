@@ -68,10 +68,11 @@ export type ActionWebhookVerification = {
  * The ways into an action, as the `action` of a trigger STEP rather than a list beside the flow.
  *
  * `call` — a client flow through the action endpoint. `webhook` — an inbound request, public by construction.
- * `schedule` — a cron tick. `render` — a `runtime: 'server'` element naming this action. `custom` — a trigger the
- * deployment mounted itself.
+ * `schedule` — a cron tick. `later` — a run another one set to start N seconds from then (`ctx.later`, `flow.later`):
+ * a turn that runs out, a bot's move, a hold that lapses. `render` — a `runtime: 'server'` element naming this action.
+ * `custom` — a trigger the deployment mounted itself.
  */
-export type ActionTriggerType = 'call' | 'webhook' | 'schedule' | 'render' | 'custom';
+export type ActionTriggerType = 'call' | 'webhook' | 'schedule' | 'later' | 'render' | 'custom';
 
 /**
  * What a trigger step carries, in its `params`.
@@ -572,6 +573,11 @@ export type ActionJobInput = {
   maxAttempts: number;
   /** Fires that went by unclaimed before this one. Shown to an operator; never acted on. */
   missed?: number;
+  /**
+   * What a run set to run later (`trigger: 'later'`) was named by: setting it again under the same name replaces the
+   * one still waiting, and cancelling it by name drops it.
+   */
+  key?: string;
 };
 
 /** One unit of work the queue is holding, as an operator sees it. */
@@ -705,4 +711,10 @@ export type ActionJobQueue = {
   requeue: (spaceIds: number[], jobId: string) => Promise<boolean>;
   /** An operator stopping a job: dropped if it is waiting, aborted at its next step if it is running. */
   cancel: (spaceIds: number[], jobId: string) => Promise<boolean>;
+  /**
+   * Drops the space's jobs waiting under `key` (`cancelled`), and answers how many. With `olderThan`, only the ones
+   * enqueued before that job — created earlier, or at the same instant with a smaller id — so of two set at once the
+   * newer is the one left, on every replica. A running one is left: it is usually the run that set the next.
+   */
+  cancelPending: (params: { spaceId: number; key: string; olderThan?: string }) => Promise<number>;
 };

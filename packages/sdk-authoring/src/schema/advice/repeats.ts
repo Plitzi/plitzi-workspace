@@ -206,9 +206,28 @@ const groupBy = (ids: string[], signatures: Map<string, Signatures>, key: 'exact
   return [...groups.values()].sort((a, b) => (signatures.get(b[0])?.size ?? 0) - (signatures.get(a[0])?.size ?? 0));
 };
 
-export const suggestRepeats = (schema: Schema, style: Style): Suggestion[] => {
+export const suggestRepeats = (
+  schema: Schema,
+  style: Style,
+  families: readonly (readonly string[])[] = []
+): Suggestion[] => {
   const { flat } = schema;
   const pages = new Set(schema.pages);
+  const familyOfPage = new Map(families.flatMap((members, family) => members.map(page => [page, family] as const)));
+  /**
+   * Copies that are the same part of the pages of one `pageFamily`, one on each: its body, written once. Not copies of
+   * each other, whatever the document holds — and the family is what the docs ask for pages of one shape.
+   */
+  const writtenOnce = (ids: readonly string[]): boolean => {
+    const roots = ids.map(id => flat[id].definition.rootId);
+    const [family] = new Set(roots.map(root => familyOfPage.get(root)));
+
+    return (
+      family !== undefined &&
+      new Set(roots).size === ids.length &&
+      roots.every(root => familyOfPage.get(root) === family)
+    );
+  };
   const signatures = signaturesOf(flat, declaredClasses(style));
   const sizeOf = (id: string): number => signatures.get(id)?.size ?? 0;
   const inPages = Object.keys(flat).filter(id => pages.has(flat[id].definition.rootId) && !pages.has(id));
@@ -262,7 +281,12 @@ export const suggestRepeats = (schema: Schema, style: Style): Suggestion[] => {
     for (const group of groupBy(inPages, signatures, key)) {
       const fresh = group.filter(id => !isCovered(id) && atEdge(id));
       const pagesWithIt = new Set(fresh.map(id => flat[id].definition.rootId));
-      if (fresh.length < 2 || pagesWithIt.size !== fresh.length || sizeOf(fresh[0]) < MIN_CHROME) {
+      if (
+        fresh.length < 2 ||
+        pagesWithIt.size !== fresh.length ||
+        sizeOf(fresh[0]) < MIN_CHROME ||
+        writtenOnce(fresh)
+      ) {
         continue;
       }
 
@@ -311,7 +335,7 @@ export const suggestRepeats = (schema: Schema, style: Style): Suggestion[] => {
   for (const group of groupBy(everywhere, signatures, 'shape')) {
     const fresh = group.filter(id => !isCovered(id));
     const size = sizeOf(group[0]);
-    if (size < MIN_SHAPE || fresh.length < (size >= MIN_PAIR ? 2 : MIN_SHAPE_COPIES)) {
+    if (size < MIN_SHAPE || fresh.length < (size >= MIN_PAIR ? 2 : MIN_SHAPE_COPIES) || writtenOnce(fresh)) {
       continue;
     }
 

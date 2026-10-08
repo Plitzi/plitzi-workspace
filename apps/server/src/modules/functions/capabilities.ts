@@ -2,6 +2,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import type { FunctionContext, FunctionFetchInit } from './contract';
 import type { FunctionCall, WireBody, WireRequest, WireResponse } from './protocol';
+import type { LaterRequest } from '../actions/jobs/later';
 import type { KvListEntry, KvListPutOptions, KvListRange } from '../actions/runtime/kvList';
 import type { RateLimit } from '../actions/runtime/rateLimit';
 import type { ActionKvStore } from '../actions/types';
@@ -208,6 +209,19 @@ const fetchInitOf = (value: unknown): FunctionFetchInit => {
 const optionalString = (value: unknown, what: string): string | undefined =>
   value === undefined || value === null ? undefined : stringArg(value, what);
 
+/** What a run set for later is checked against where it is queued (`laterFor`); here only that it is what it claims. */
+const laterOf = (value: unknown): LaterRequest => {
+  const request = recordArg(value, 'A run set for later');
+  const key = optionalString(request.key, 'A key');
+
+  return {
+    action: stringArg(request.action, 'An action'),
+    in: numberArg(request.in, 'in'),
+    ...(request.input === undefined ? {} : { input: recordArg(request.input, 'An input') }),
+    ...(key === undefined ? {} : { key })
+  };
+};
+
 /** A limit's numbers are checked where it is counted (`countRate`); here only that they are what they claim. */
 const rateLimitOf = (value: unknown): RateLimit => {
   const limit = recordArg(value, 'A rate limit');
@@ -255,6 +269,10 @@ export const readCall = (value: unknown): FunctionCall => {
 
       return { op: 'revoke', topic: stringArg(call.topic, 'A topic'), ...(grant === undefined ? {} : { grant }) };
     }
+    case 'later':
+      return { op: 'later', request: laterOf(call.request) };
+    case 'cancelLater':
+      return { op: 'cancelLater', key: stringArg(call.key, 'A key') };
     case 'rateLimit':
       return { op: 'rateLimit', bucket: stringArg(call.bucket, 'A bucket'), limit: rateLimitOf(call.limit) };
     case 'sign':
@@ -292,6 +310,10 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
       return ctx.grant(call.topic, call.ttlSeconds);
     case 'revoke':
       return ctx.revoke(call.topic, call.grant);
+    case 'later':
+      return ctx.later(call.request);
+    case 'cancelLater':
+      return ctx.cancelLater(call.key);
     case 'rateLimit':
       return ctx.rateLimit(call.bucket, call.limit);
     case 'sign':

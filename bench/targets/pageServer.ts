@@ -20,4 +20,4 @@ const server = createServer({
   adapters: createJsonAdapters({ offlineData: offlineDataPath, deployment: { spaceId: 1, environment, revision: 0 } })
 });
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);

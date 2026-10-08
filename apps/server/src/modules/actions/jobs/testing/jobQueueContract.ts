@@ -358,6 +358,27 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
       expect(await queue.getJob([SPACE], 'running')).toMatchObject({ status: 'running', cancelRequested: true });
       expect(await queue.heartbeat({ jobIds: ['running'], workerId: 'pod-a', leaseMs: 60_000 })).toEqual(['running']);
     });
+
+    /** A turn's timer set again: the one still waiting goes, the newest stays — on every replica, whoever came first. */
+    it('drops what waits under a key — all of it, or what came before one job — and leaves what runs', async () => {
+      const later = async (id: string, key: string) =>
+        queue.enqueue(await job({ id, key, trigger: 'later', dueAt: (await nowMs()) + 60_000 }));
+      await queue.enqueue(await job({ id: 'turn-running', key: 'turn:A', trigger: 'later' }));
+      await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+      await later('turn-1', 'turn:A');
+      await wait(5);
+      await later('turn-2', 'turn:A');
+      await later('other', 'turn:B');
+
+      expect(await queue.cancelPending({ spaceId: SPACE, key: 'turn:A', olderThan: 'turn-2' })).toBe(1);
+      expect(await queue.getJob([SPACE], 'turn-1')).toMatchObject({ status: 'cancelled', key: 'turn:A' });
+      expect(await queue.getJob([SPACE], 'turn-2')).toMatchObject({ status: 'pending', key: 'turn:A' });
+      expect(await queue.getJob([SPACE], 'turn-running')).toMatchObject({ status: 'running' });
+
+      expect(await queue.cancelPending({ spaceId: OTHER_SPACE, key: 'turn:B' })).toBe(0);
+      expect(await queue.cancelPending({ spaceId: SPACE, key: 'turn:B' })).toBe(1);
+      expect(await queue.getJob([SPACE], 'other')).toMatchObject({ status: 'cancelled' });
+    });
   });
 };
 

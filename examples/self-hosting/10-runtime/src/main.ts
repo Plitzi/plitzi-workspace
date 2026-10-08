@@ -38,7 +38,7 @@ const server = createServer(
   { preAuth: [runtime.stage] }
 );
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);
 closeOnSignals(server, { afterClose: () => runtime.close() });
 
 console.log(

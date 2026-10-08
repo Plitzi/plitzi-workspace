@@ -124,6 +124,8 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       revoke: async (topic: string, grant?: string) => {
         await call({ op: 'revoke', topic, grant });
       },
+      later: (request: unknown) => call({ op: 'later', request }),
+      cancelLater: (key: string) => call({ op: 'cancelLater', key }),
       rateLimit: (bucket: string, limit: unknown) => call({ op: 'rateLimit', bucket, limit }),
       sign: (value: string) => call({ op: 'sign', value }),
       verify: (value: string, signature: string) => call({ op: 'verify', value, signature }),

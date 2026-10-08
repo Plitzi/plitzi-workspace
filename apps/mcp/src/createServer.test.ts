@@ -20,7 +20,7 @@ const server: SSRServer = createServer({
   adapters,
   health: { payload: { role: 'mcp', ok: true } }
 });
-server.listen(PORT, '127.0.0.1');
+await server.listen(PORT, '127.0.0.1');
 
 describe('createServer (dedicated MCP server end-to-end)', () => {
   afterAll(() => server.close());

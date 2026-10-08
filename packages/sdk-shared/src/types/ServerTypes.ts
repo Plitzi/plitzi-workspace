@@ -1245,7 +1245,12 @@ export type SSRContext = {
 };
 
 export type SSRServer = {
-  listen: (port: number, host?: string) => void;
+  /**
+   * Binds the port. Resolves once it takes connections — in a fleet, once the first worker does — so what says "ready"
+   * (a log line, a file a tool reads, a test's first request) says it after, never before. A port it could not take
+   * ends the process, or goes to `onListenError`: the promise is then never resolved.
+   */
+  listen: (port: number, host?: string) => Promise<void>;
   close: () => Promise<void>;
   readonly cache: CacheManager | null;
   readonly plugins: PluginRegistry;

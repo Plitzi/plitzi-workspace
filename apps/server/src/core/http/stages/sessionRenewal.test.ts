@@ -145,9 +145,9 @@ beforeAll(async () => {
     auth,
     sessionRenewal: false
   });
-  server.listen(PORT, '127.0.0.1');
-  remote.listen(REMOTE_PORT, '127.0.0.1');
-  off.listen(OFF_PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
+  await remote.listen(REMOTE_PORT, '127.0.0.1');
+  await off.listen(OFF_PORT, '127.0.0.1');
 
   // Three servers booting while the rest of the workspace tests beside them: the default second is not enough.
   await vi.waitFor(

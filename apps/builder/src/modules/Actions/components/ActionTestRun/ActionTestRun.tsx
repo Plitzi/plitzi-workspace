@@ -26,6 +26,7 @@ const TRIGGER_TITLES: Record<string, string> = {
   call: 'As a page calling it',
   webhook: 'As an inbound webhook',
   schedule: 'As its schedule firing now',
+  later: 'As a run set for later, due now',
   render: 'As a page rendering',
   custom: 'As the trigger this deployment mounts'
 };

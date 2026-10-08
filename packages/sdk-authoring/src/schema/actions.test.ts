@@ -207,6 +207,7 @@ describe('defineAction', () => {
     const specs: ActionSpec[] = [
       minimal(),
       minimal({ trigger: { type: 'schedule', cron: '0 9 * * 1-5' } }),
+      minimal({ trigger: { type: 'later' } }),
       minimal({ trigger: { type: 'custom', access: 'public', name: 'queue' } }),
       minimal({
         trigger: { type: 'webhook', access: 'public', verify: { credential: 'stripe' } },

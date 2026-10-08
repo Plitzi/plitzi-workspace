@@ -25,6 +25,7 @@ export const docsLayout: LayoutSpec = {
 };
 
 // in the space
+pageFolders: [{ id: 'docs', name: 'Docs' }],   // declared once: its slug (the id) starts its pages' addresses — /docs/quickstart
 layouts: [appLayout, docsLayout],
 pages: [{ name: 'Quickstart', slug: 'quickstart', folder: 'docs', layout: { id: 'docs-layout', slot: 'docs-slot' }, body: [ … ] }]
 ```

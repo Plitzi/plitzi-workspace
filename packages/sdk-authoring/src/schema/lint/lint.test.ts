@@ -692,6 +692,20 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('attribute-value');
     });
 
+    /** An `ol` is a list's tag, not a container's typo of `dl`. */
+    it('attribute-value names the element a tag belongs to', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat.box.attributes.subType = 'ol';
+      });
+
+      expect(lintSpace(documents).errors).toEqual([
+        expect.objectContaining({
+          code: 'attribute-value',
+          message: expect.stringMatching(/which is what a "list" renders: write `list\(\{ subType: 'ol' \}\)`/) as string
+        })
+      ]);
+    });
+
     it('span-holds-block', () => {
       const inline = withChange(({ schema }) => {
         schema.flat.box.attributes.subType = 'span';

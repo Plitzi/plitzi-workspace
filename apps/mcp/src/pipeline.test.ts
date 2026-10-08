@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createServer, unusedPort } from '@plitzi/sdk-server';
 import { healthStage } from '@plitzi/sdk-server/kernel';
@@ -71,7 +71,7 @@ describe('mcpExtensions mounted in a real sdk-server page server', () => {
     },
     mcpExtensions()
   );
-  server.listen(PORT, '127.0.0.1');
+  beforeAll(() => server.listen(PORT, '127.0.0.1'));
 
   afterAll(() => server.close());
 
@@ -220,7 +220,7 @@ describe('the draft-preview endpoint with no secret configured', () => {
     { httpVersion: 1, adapters, health: { payload: { ok: true } }, preview: { enabled: true } },
     mcpExtensions()
   );
-  server.listen(OPEN_PORT, '127.0.0.1');
+  beforeAll(() => server.listen(OPEN_PORT, '127.0.0.1'));
 
   afterAll(() => server.close());
 

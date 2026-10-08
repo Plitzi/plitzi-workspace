@@ -52,7 +52,7 @@ two. An outage is not replayed as a burst.
 
 **The queue is a seam, and this example fills it.** [`src/store/queue.ts`](./src/store/queue.ts) is the
 `ActionJobQueue` contract written out in full over SQLite — the same one `sdk-server` keeps in memory by default,
-which is right for one process and silently wrong for two. Four rules make it safe to run anywhere, and each one is a
+which is right for one process and silently wrong for two. Five rules make it safe to run anywhere, and each one is a
 single place in that file:
 
 | Rule | Where |
@@ -61,6 +61,7 @@ single place in that file:
 | `enqueue` is idempotent by id | `ON CONFLICT (id) DO NOTHING`, answering whether it inserted |
 | `claim` is atomic, and it reaps | one `BEGIN IMMEDIATE` that takes due jobs AND jobs whose lease lapsed |
 | `advanceSchedule` is compare-and-set | `WHERE next_run_at = from` |
+| `cancelPending` keeps the newer of two | only what was enqueued before `olderThan` — `created_at`, then `id` |
 
 Against Postgres the same shape is `SELECT … FOR UPDATE SKIP LOCKED`. For Mongo and MySQL you do not write it at all —
 see [On Mongo or MySQL](#on-mongo-or-mysql) below.

@@ -1,3 +1,4 @@
+import type { LaterAnswer, LaterRequest } from '../actions/jobs/later';
 import type { RateCount, RateLimit } from '../actions/runtime/rateLimit';
 import type { ActionKvStore } from '../actions/types';
 import type { Environment, FunctionTimeLimits, InteractionCallbackParam } from '@plitzi/sdk-shared';
@@ -71,6 +72,15 @@ export type FunctionContext = {
   grant: (topic: string, ttlSeconds?: number) => Promise<string>;
   /** Takes a grant back — or every grant for the topic, naming none. */
   revoke: (topic: string, grant?: string) => Promise<void>;
+  /**
+   * Starts one of the space's actions — one with a `later` trigger — in so many seconds, on the server, whether or not a
+   * page is still open: a turn that runs out, a bot's move, a hold that lapses. A `key` names it: set again under the
+   * same key, the one still waiting is replaced. Answers the job and when it is due (epoch ms, by the queue's clock).
+   * `ctx.later({ action: 'game.timeout', in: 45, input: { room }, key: 'turn:' + room })`.
+   */
+  later: (request: LaterRequest) => Promise<LaterAnswer>;
+  /** Drops what waits under `key` — the timer of a game that ended — and answers how many. */
+  cancelLater: (key: string) => Promise<number>;
   /**
    * One file of the space's data — a project's `src/data/<file>` — parsed, as of the version the run belongs to: what
    * a page must not carry, read here and answered only as far as it is shown. Read-only. `ctx.data('products.json')`.

@@ -179,7 +179,7 @@ export const createJobWorker = ({
       run = await module.guards.begin({
         spaceId: job.spaceId,
         actionId: job.actionId,
-        callerId: 'schedule',
+        callerId: job.trigger,
         input: job.input,
         // The JOB is the unit of work, so the job's own id is its single-flight key. That is what stops a worker
         // that merely stalled — lease lapsed, job handed to somebody else — from running the same flow twice
@@ -221,7 +221,7 @@ export const createJobWorker = ({
         spaceId: job.spaceId,
         environment: job.environment,
         trigger: job.trigger,
-        callerId: 'schedule',
+        callerId: job.trigger,
         runId: run.runId,
         signal: run.controller.signal
       });

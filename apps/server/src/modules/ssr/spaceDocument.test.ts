@@ -26,7 +26,7 @@ const payloadOf = (html: string): Record<string, unknown> =>
 
 beforeAll(async () => {
   server = createServer({ port: PORT, devMode: true, adapters: createJsonAdapters({ offlineData }) });
-  server.listen(PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
 
   await vi.waitFor(async () => {
     expect((await fetch(`${base}/`)).status).toBe(200);

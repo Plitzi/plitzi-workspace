@@ -296,6 +296,24 @@ describe('probePage / text in the colour behind it', () => {
     expect(probePage(legibility).illegible).toEqual([]);
   });
 
+  /** A colour emoji is painted in its own colours, whatever `color` says; a symbol drawn as text takes the text's. */
+  it('leaves a colour emoji on a tile of the text’s colour, and still reads a symbol drawn as text', () => {
+    document.body.innerHTML = `
+      <main style="background-color: rgb(250, 250, 250)">
+        <span data-plitzi-el="dice" style="color: rgb(255, 255, 255)">🎲</span>
+        <span data-plitzi-el="heart" style="color: rgb(255, 255, 255)">❤️</span>
+        <span data-plitzi-el="family" style="color: rgb(255, 255, 255)">👩‍👩‍👧 1️⃣</span>
+        <span data-plitzi-el="tick" style="color: rgb(255, 255, 255)">✓</span>
+      </main>`;
+    for (const node of document.querySelectorAll('span')) {
+      at(node, 100);
+    }
+
+    stackedAt(document.querySelector('main'), document.body);
+
+    expect(probePage(legibility).illegible.map(found => found.elementId)).toEqual(['tick']);
+  });
+
   it('leaves a muted caption, and words hidden from a screen reader as a decoration', () => {
     document.body.innerHTML = `
       <main style="background-color: rgb(255, 255, 255)">

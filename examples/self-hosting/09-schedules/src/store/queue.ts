@@ -20,7 +20,7 @@ import type { DatabaseSync } from 'node:sqlite';
  *
  * `sdk-server` ships a queue in memory, which is right for exactly one process: stop it and every waiting job is
  * gone, start a second and each keeps its own schedules, so the nightly email goes out twice. This is the same
- * contract over a file, and the four rules the contract cannot be written without are each one place below:
+ * contract over a file, and the five rules the contract cannot be written without are each one place below:
  *
  * | Rule | Where |
  * |---|---|
@@ -28,6 +28,7 @@ import type { DatabaseSync } from 'node:sqlite';
  * | `enqueue` is idempotent by id | `ON CONFLICT (id) DO NOTHING`, answering whether it inserted |
  * | `claim` is atomic, and it reaps | one `BEGIN IMMEDIATE` that takes due jobs AND jobs whose lease lapsed |
  * | `advanceSchedule` is compare-and-set | `WHERE next_run_at = from` |
+ * | `cancelPending` keeps the newer of two | only what was enqueued before `olderThan` — `created_at`, then `id` |
  *
  * Against Postgres the same shape is `SELECT … FOR UPDATE SKIP LOCKED`; against Mongo, `findOneAndUpdate`. The
  * rules do not change with the store.
@@ -36,7 +37,7 @@ import type { DatabaseSync } from 'node:sqlite';
 const TERMINAL: ActionJobStatus[] = ['succeeded', 'failed', 'dead', 'cancelled'];
 const STATUSES: ActionJobStatus[] = ['pending', 'running', ...TERMINAL];
 const ENVIRONMENTS: Environment[] = ['production', 'staging', 'development', 'main'];
-const TRIGGERS: ActionTriggerType[] = ['call', 'webhook', 'schedule', 'render', 'custom'];
+const TRIGGERS: ActionTriggerType[] = ['call', 'webhook', 'schedule', 'later', 'render', 'custom'];
 const ATTEMPT_STATUSES: ActionJobAttempt['status'][] = ['succeeded', 'failed', 'cancelled', 'lost'];
 
 const oneOf = <T extends string>(allowed: readonly T[], value: string, what: string): T => {
@@ -80,6 +81,7 @@ const toJob = (row: Row): ActionJob => {
   const workerId = optionalText(row, 'worker_id');
   const runId = optionalText(row, 'run_id');
   const error = optionalText(row, 'error');
+  const key = optionalText(row, 'job_key');
 
   return {
     id: text(row, 'id'),
@@ -98,6 +100,7 @@ const toJob = (row: Row): ActionJob => {
     updatedAt: integer(row, 'updated_at'),
     history: parseHistory(text(row, 'history')),
     ...(missed === undefined ? {} : { missed }),
+    ...(key === undefined ? {} : { key }),
     ...(leaseUntil === undefined ? {} : { leaseUntil }),
     ...(workerId === undefined ? {} : { workerId }),
     ...(runId === undefined ? {} : { runId }),
@@ -173,8 +176,8 @@ export const createSqliteJobQueue = (
     const { changes } = db
       .prepare(
         `INSERT INTO jobs (id, space_id, action_id, environment, trigger_type, input, due_at, max_attempts, missed,
-                           status, run_at, attempts, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?)
+                           job_key, status, run_at, attempts, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?)
          ON CONFLICT (id) DO NOTHING`
       )
       .run(
@@ -187,6 +190,7 @@ export const createSqliteJobQueue = (
         job.dueAt,
         job.maxAttempts,
         job.missed ?? null,
+        job.key ?? null,
         job.dueAt,
         at,
         at
@@ -438,6 +442,22 @@ export const createSqliteJobQueue = (
   };
 
   /**
+   * Runs set for later under `key` that still wait: dropped — all of them, or those enqueued before `olderThan`, so of
+   * two set at once the newer stays. A running one is left: it is usually the run that set the next.
+   */
+  const cancelPending = ({ spaceId, key, olderThan }: { spaceId: number; key: string; olderThan?: string }): number => {
+    const newest = olderThan === undefined ? undefined : findJob(olderThan);
+    const { changes } = db
+      .prepare(
+        `UPDATE jobs SET status = 'cancelled', worker_id = NULL, updated_at = ?
+         WHERE space_id = ? AND job_key = ? AND status = 'pending'${newest ? ' AND (created_at < ? OR (created_at = ? AND id < ?))' : ''}`
+      )
+      .run(now(), spaceId, key, ...(newest ? [newest.createdAt, newest.createdAt, newest.id] : []));
+
+    return Number(changes);
+  };
+
+  /**
    * The contract is asynchronous because most stores are; this one answers synchronously, so each method is wrapped
    * rather than rewritten. A throw still arrives as a rejection, which is what the scheduler and the worker expect.
    */
@@ -464,6 +484,7 @@ export const createSqliteJobQueue = (
     getJob: later((spaceIds: number[], jobId: string) => owned(spaceIds, jobId)),
     listSchedules: later(listSchedules),
     requeue: later(requeue),
-    cancel: later(cancel)
+    cancel: later(cancel),
+    cancelPending: later(cancelPending)
   };
 };

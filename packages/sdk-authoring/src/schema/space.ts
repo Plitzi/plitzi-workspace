@@ -60,6 +60,7 @@ import { fixSpace, lintSpace } from './lint';
 import { CUSTOM_TYPE } from './lint/context';
 import { MAIN_ATTRIBUTES } from './mainAttributes';
 import { withNotificationsCss } from './notifications';
+import { familyOf } from './pageFamily';
 import { refusalOf, SpaceRefusedError } from './refusals';
 import { didYouMean } from './suggest';
 import { assertSpaceValid, validateSpace } from './validate';
@@ -117,6 +118,16 @@ const pageFieldHint = (key: string): string => {
   return ['keepState', 'transientState', 'paintedState', 'stateStorage'].includes(key)
     ? ' Keeping state across visits is a setting of the whole space: `settings: { keepState: true }`, with `transientState` for the keys to leave out.'
     : '';
+};
+
+/**
+ * The end of a refusal for a folder nobody declared: the name it may have meant, or how to declare it — a folder is a
+ * segment of the address its pages answer at, so a misspelt one is never declared on the author's behalf.
+ */
+const undeclaredFolder = (folder: string, declared: Iterable<string>, written?: object): string => {
+  const at = written === undefined ? undefined : writtenAt(written);
+
+  return `${didYouMean(folder, declared) || `. Declare it on the space: \`pageFolders: [{ id: '${folder}', name: '…' }]\``}${at === undefined ? '' : ` (${at})`}.`;
 };
 
 /** A `styles()` declaration in words: its name, and the line of the author's that wrote it when it is known. */
@@ -222,6 +233,8 @@ class SpaceAuthor {
   private readonly authoredAt = new Map<string, string>();
   /** The spec each element was written from, by the id it got: where a fix to its document is a fix to its source. */
   private readonly specs = new Map<string, ElementSpec>();
+  /** The pages each `pageFamily` wrote, by id: one body, written once, however many pages carry it. */
+  private families: string[][] = [];
 
   /** Each folder's route prefix, resolved through its parents. Filled before any page is written. */
   private readonly folderPrefixes = new Map<string, string>();
@@ -331,7 +344,7 @@ class SpaceAuthor {
 
     // Where each suggestion's first element was written, as a refusal says it: the line to go and change.
     const suggestions = [
-      ...suggestSpace({ schema, style }, { stylesheets: this.options.stylesheets ?? [] }),
+      ...suggestSpace({ schema, style }, { stylesheets: this.options.stylesheets ?? [], families: this.families }),
       ...withoutQuieted(schema, this.classOverrides(schema, style.mode ?? 'desktop-first'))
     ].map(suggestion => {
       const first = suggestion.elementIds.at(0);
@@ -501,6 +514,14 @@ class SpaceAuthor {
     const declared = this.collecting(() => components.map(component => this.addComponent(component)));
     this.collecting(() => layouts.forEach(layout => this.addLayout(layout)));
     const pages = this.collecting(() => this.spec.pages.map((page, index) => this.addPage(page, index)));
+    const families = new Map<object, string[]>();
+    this.spec.pages.forEach((page, index) => {
+      const family = familyOf(page);
+      if (family !== undefined) {
+        families.set(family, [...(families.get(family) ?? []), pages[index]]);
+      }
+    });
+    this.families = [...families.values()];
     if (this.skipped > 0) {
       throw new SpaceRefusedError(this.spec.permanentUrl, this.refusals, { linted: false });
     }
@@ -1353,7 +1374,7 @@ class SpaceAuthor {
       if (folder.parent !== undefined && !byId.has(folder.parent)) {
         throw new AuthoringError(
           'folder-undeclared',
-          `Page folder "${folder.id}" sits in "${folder.parent}", which this space does not declare${didYouMean(folder.parent, [...byId.keys()])}`
+          `Page folder "${folder.id}" sits in "${folder.parent}", which this space does not declare${undeclaredFolder(folder.parent, byId.keys())}`
         );
       }
     }
@@ -1461,7 +1482,7 @@ class SpaceAuthor {
     if (page.folder !== undefined && !this.folderPrefixes.has(page.folder)) {
       throw new AuthoringError(
         'folder-undeclared',
-        `Page "${page.name}" is in folder "${page.folder}", which this space does not declare${didYouMean(page.folder, [...this.folderPrefixes.keys()])}`
+        `Page "${page.name}" is in folder "${page.folder}", which this space does not declare${undeclaredFolder(page.folder, this.folderPrefixes.keys(), page)}`
       );
     }
 
@@ -1639,7 +1660,7 @@ class SpaceAuthor {
     if (layout.folder && !this.folderPrefixes.has(layout.folder)) {
       throw new AuthoringError(
         'folder-undeclared',
-        `${where} is filed in folder "${layout.folder}", which this space does not declare${didYouMean(layout.folder, [...this.folderPrefixes.keys()])}`
+        `${where} is filed in folder "${layout.folder}", which this space does not declare${undeclaredFolder(layout.folder, this.folderPrefixes.keys(), layout)}`
       );
     }
 

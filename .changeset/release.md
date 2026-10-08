@@ -7,6 +7,7 @@
 '@plitzi/sdk-elements': patch
 '@plitzi/sdk-authoring': patch
 '@plitzi/cli': patch
+'@plitzi/sdk-mcp': patch
 ---
 
 - **`server.cache.invalidate` drops what a page is rendered from** (`@plitzi/sdk-server`): the pages, the RSC answers
@@ -102,9 +103,44 @@
 - `unknown-attribute` for `decorative` on an `svg` or a `fontAwesome` says what it means: without a `label` it is
   already hidden from screen readers.
 
+- **A folder nobody declared says where to declare it**: `folder-undeclared` (a page, a layout, a folder's parent)
+  ends with `pageFolders: [{ id, name }]` on the space, and with the line of the `pageFamily` that wrote the page. A
+  folder starts its pages' addresses (`/docs/quickstart`), so a misspelt one is never declared on the author's behalf.
+  The skill's `pageFamily` example declares its folder.
+- **A tag is an element**: a `subType` this element has not but another has — `container({ subType: 'ol' })` — names
+  that element (`list({ subType: 'ol' })`) instead of the value two letters away (`dl`). Read off the elements'
+  declarations, for every element and tag.
+- **A `pageFamily`'s body is written once**: `repeated-shape` and `repeated-on-pages` no longer count the same part of
+  each page of one family as copies — they were offering a component for exactly what the docs recommend. Copies within
+  one page, or across pages written one by one, are still offered.
+- **Colour emoji are not text to `page check`**: a character painted in its own colours (🎲, `❤️`, a keycap, a ZWJ
+  sequence) is left out of the contrast measure, which compared `color` with the tile behind it and failed `verify`
+  in the theme whose text colour was close to the tile. A symbol drawn as text (✓, ★) is still measured.
+
 ## CLI
 
 - **`page shot --click` (and `--clip`, `--wait-for`, `--scroll-to`, `--steps`) takes any selector**: a value that is
   not an element's name (letters, digits, `-`, `_`) is a selector, CSS or Playwright's own (`button:has-text("Orbit")`).
   It was wrapped as a name, and an invalid selector ended the command with Playwright's stack trace; it is now refused
   with the reason.
+
+## Server
+
+- **`server.listen()` resolves once the port answers** (`@plitzi/sdk-server`) — in a fleet, once the first worker
+  does. `serveProject` writes `tmp/dev-server.json` and says `pages on …` after it, not on the line after `listen`:
+  for about 0.4 s a tool trusting the line (CI, Playwright's `webServer`, `page check`) was refused. A port it cannot
+  take still ends the process, or goes to `onListenError`, and the promise is then never resolved.
+- **Runs set for later** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`, `@plitzi/sdk-authoring`, `@plitzi/plitzi-builder`):
+  a turn that runs out, a bot's move, a hold that lapses — one run starting one of the space's actions in N seconds,
+  whether or not a page is still open. The action says it may be with a **`later` trigger** (no access rule: the run
+  that set it was let in); a flow sets it with `flow.later { action, in, input, key }`, a function with
+  `ctx.later({ … })`, and `flow.cancelLater` / `ctx.cancelLater(key)` drops it. A `key` names it: set again under the
+  same key, the one still waiting is replaced — the newer of two set at once, on every replica — and a running one is
+  left. It is a job of the queue schedules use: due by the store's clock (0 s to 30 days, about a second late at most),
+  once across replicas, retried, shown in Automations → Queue. Refused before anything is queued, with why: no `later`
+  trigger, one switched off, a time out of range, a key that is not one, a server with no jobs. A plugin's functions
+  set none. `ActionJobQueue` gains `cancelPending({ spaceId, key, olderThan? })` and jobs a `key`: the memory, Mongo
+  and MySQL queues implement it, and the shared contract tests it. **MySQL**: `action_jobs` gains `job_key` (and the
+  `action_jobs_key` index), added on first use; with `createTables: false`, run that statement of
+  `mysqlJobSchemaUpgrades()`. A queue of a deployment's own implements `cancelPending` (`09-schedules` shows one).
+

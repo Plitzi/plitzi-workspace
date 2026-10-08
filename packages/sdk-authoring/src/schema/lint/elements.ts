@@ -124,11 +124,20 @@ const checkAttributes = (ctx: LintContext, element: Element, where: string): voi
     }
 
     if (Object.hasOwn(enums, name) && !(typeof value === 'string' && enums[name].includes(value))) {
-      ctx.error(
-        'attribute-value',
-        `${where}: \`${name}\` is ${JSON.stringify(value)}${(typeof value === 'string' && didYouMean(value, enums[name])) || '.'} It is one of ${enums[name].map(item => `'${item}'`).join(', ')}.`,
-        element.id
-      );
+      // A tag is an element: a `subType` this element has not but another has is that element, not a typo of a
+      // tag of this one's — an `ol` is a `list`, never the `dl` two letters away.
+      const tag = name === 'subType' && typeof value === 'string' ? value : undefined;
+      const owner =
+        tag === undefined
+          ? undefined
+          : Object.entries(ctx.catalogs.attributeValues ?? {}).find(
+              ([other, values]) => other !== type && Object.hasOwn(values, 'subType') && values.subType.includes(tag)
+            )?.[0];
+      const hint =
+        owner === undefined || tag === undefined
+          ? `${(typeof value === 'string' && didYouMean(value, enums[name])) || '.'} It is one of ${enums[name].map(item => `'${item}'`).join(', ')}.`
+          : `, which is what a "${owner}" renders: write \`${owner}({ subType: '${tag}' })\`.`;
+      ctx.error('attribute-value', `${where}: \`${name}\` is ${JSON.stringify(value)}${hint}`, element.id);
       continue;
     }
 

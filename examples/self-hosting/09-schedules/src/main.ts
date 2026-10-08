@@ -85,7 +85,7 @@ const server = createServer({
   }
 });
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);
 
 /**
  * ^C drains rather than drops: `close` stops claiming, waits for the jobs this replica is RUNNING to finish — renewing

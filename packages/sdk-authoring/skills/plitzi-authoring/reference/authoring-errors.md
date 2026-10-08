@@ -79,7 +79,7 @@ The space is not written until these are fixed.
 | `flow-empty` | a flow with no steps | `[onClick(), setState({ … })]` |
 | `flow-without-trigger` | a flow whose first step is not the event that runs it | `[onClick(), setState(…)]` |
 | `folder-cycle` | a page folder inside itself | a `parent` that leads to the top |
-| `folder-undeclared` | a page, a layout or a folder filed in a folder the space does not declare | declare the folder, or the name it suggests |
+| `folder-undeclared` | a page, a layout or a folder filed in a folder the space does not declare | declare it on the space — `pageFolders: [{ id: 'docs', name: 'Docs' }]`, its slug starting its pages' addresses — or use the name it suggests |
 | `font-invalid` | a font the space cannot load as declared | the field the message names |
 | `format-unknown` | an `as` that names no format of the space's `formats` | declare it once — `formats: { price: "{{ source\|currency('USD') }}" }` — or write the template in its place |
 | `from-and-bind` | the main attribute bound twice, with `from` and in `bind` | keep `from`, and give `bind` the other attributes |

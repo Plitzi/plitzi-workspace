@@ -75,7 +75,7 @@ const server = createServer({
 
 const base = `http://127.0.0.1:${PORT}`;
 
-server.listen(PORT, HOST);
+await server.listen(PORT, HOST);
 console.log(`[example] pages + RSC on http://127.0.0.1:${PORT}/`);
 console.log(`[example] all slices:  curl '${base}/_rsc?location=%2F'`);
 console.log(`[example] one slice:   curl '${base}/_rsc?location=%2F&ids=${ids.server}'`);

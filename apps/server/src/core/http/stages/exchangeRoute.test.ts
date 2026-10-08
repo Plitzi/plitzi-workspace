@@ -60,8 +60,8 @@ beforeAll(async () => {
     adapters: { ...createJsonAdapters({ offlineData }), exchangeCredential }
   });
   bare = createServer({ port: BARE_PORT, devMode: true, adapters: createJsonAdapters({ offlineData }) });
-  server.listen(PORT, '127.0.0.1');
-  bare.listen(BARE_PORT, '127.0.0.1');
+  await server.listen(PORT, '127.0.0.1');
+  await bare.listen(BARE_PORT, '127.0.0.1');
 
   await vi.waitFor(async () => {
     expect((await exchange('{}')).status).toBe(400);

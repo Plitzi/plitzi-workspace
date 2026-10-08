@@ -16,6 +16,9 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   nothing to the space; `PLITZI_FUNCTIONS_CREDENTIALS='{"stripe":{"apiKey":"…"}}'` gives it credentials to name.
 - **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or
   `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
+- **What must happen in N seconds whether or not a page is open** — a turn that runs out, a bot's move — is
+  `ctx.later({ action, in, input, key })` on an action with a `later` trigger (`flow.later` from a flow): never a page's
+  timer asking the server back. The same `key` replaces what still waits; `ctx.cancelLater(key)` drops it.
 - **The live site runs what the space was last published with.** A push changes the draft; publishing is the person's.
 
 ## A space's runtime (`runtime`)

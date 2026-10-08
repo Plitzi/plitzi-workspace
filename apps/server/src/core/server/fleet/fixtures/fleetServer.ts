@@ -143,5 +143,5 @@ const fleetRoute = async (path: string, query: Record<string, string>, res: SSRR
   }
 };
 
-server.listen(port, '127.0.0.1');
+void server.listen(port, '127.0.0.1');
 closeOnSignals(server);
