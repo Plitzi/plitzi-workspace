@@ -5,6 +5,13 @@ import type { ColorScheme, Theme, ThemeState } from '../types';
 export const createThemeState = (): ThemeState => ({ mode: 'system', scheme: 'light', areas: {} });
 
 /**
+ * The state a surface starts in, before anything could ask the machine: the mode it opens with, and `light` for what a
+ * `system` mode resolves to until the browser answers — the one guess a server has to make, and the one the
+ * stylesheet's media queries correct without a class.
+ */
+export const startingThemeState = (mode: Theme): ThemeState => ({ ...createThemeState(), mode });
+
+/**
  * The theme, as a store rather than a context.
  *
  * It is read by things that render outside the app's provider tree — the dev-tools panel in its shadow root, an

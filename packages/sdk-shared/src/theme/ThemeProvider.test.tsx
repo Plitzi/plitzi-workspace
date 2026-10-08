@@ -1,4 +1,5 @@
 import { render, act } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { describe, expect, it, beforeEach } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
@@ -45,6 +46,28 @@ describe('ThemeProvider scope', () => {
 
     expect(surface?.theme).toBe('system');
     expect(document.documentElement.className).toBe('');
+  });
+
+  /**
+   * The server runs no effect, so the store is never set there: the page was drawn from the store's own start, and a
+   * `{{ theme.resolved }}` in a picture's address named the light one under a `class="dark"` — swapped as it hydrated.
+   */
+  it('renders on the server in the theme its host supplied, without touching the shared store', () => {
+    const Printed = () => {
+      const { theme, resolvedTheme } = useTheme();
+
+      return <i>{`${theme}/${resolvedTheme}`}</i>;
+    };
+    const html = renderToString(
+      <StoreProvider value={{}}>
+        <ThemeProvider cookieName="test-theme" theme="dark">
+          <Printed />
+        </ThemeProvider>
+      </StoreProvider>
+    );
+
+    expect(html).toContain('dark/dark');
+    expect(themeStore.getState().mode).toBe('system');
   });
 
   it('stamps the document when the surface is the page', () => {

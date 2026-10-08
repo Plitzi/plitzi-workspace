@@ -1,5 +1,4 @@
 import { PREVIEW_TOKEN_PARAM } from '@plitzi/sdk-server/kernel';
-import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
 
 import { outlineOfSnapshot, outlineOfTree } from './accessibilityOutline';
 
@@ -34,11 +33,10 @@ type Page = {
   setViewportSize?: (size: { width: number; height: number }) => Promise<void>;
   setViewport?: (size: { width: number; height: number }) => Promise<void>;
   /** Playwright's. */
-  emulateMedia?: (options: { colorScheme: ColorScheme }) => Promise<void>;
+  emulateMedia?: (options: { colorScheme?: ColorScheme; reducedMotion?: 'reduce' }) => Promise<void>;
   /** Puppeteer's. */
   emulateMediaFeatures?: (features: { name: string; value: string }[]) => Promise<void>;
   evaluate: <T>(fn: () => T) => Promise<T>;
-  addStyleTag: (options: { content: string }) => Promise<unknown>;
   screenshot: (options: Record<string, unknown>) => Promise<Buffer | Uint8Array>;
   /** Playwright's: the page's accessibility tree, already written as an outline. */
   locator?: (selector: string) => { ariaSnapshot: () => Promise<string> };
@@ -123,11 +121,19 @@ const readOutline = async (page: Page): Promise<string | undefined> => {
   return undefined;
 };
 
-/** Before the navigation: a space on the `system` theme paints from `prefers-color-scheme` from its first frame. */
-const emulateColorScheme = async (page: Page, colorScheme: ColorScheme): Promise<void> => {
+/**
+ * Before the navigation, so the first frame already answers them: the scheme a space on the `system` theme paints from,
+ * and less motion. A picture is of the page at rest — the declared motion, and a space's own keyframes written to honour
+ * the query, shown finished rather than caught halfway; a window grown to the whole page would otherwise reveal every
+ * arrival waiting to be seen at once, mid-flight. The browser pod asks for the same.
+ */
+const emulateCaptureMedia = async (page: Page, colorScheme: ColorScheme | undefined): Promise<void> => {
   await (page.emulateMedia
-    ? page.emulateMedia({ colorScheme })
-    : page.emulateMediaFeatures?.([{ name: 'prefers-color-scheme', value: colorScheme }]));
+    ? page.emulateMedia({ reducedMotion: 'reduce', ...(colorScheme ? { colorScheme } : {}) })
+    : page.emulateMediaFeatures?.([
+        { name: 'prefers-reduced-motion', value: 'reduce' },
+        ...(colorScheme ? [{ name: 'prefers-color-scheme', value: colorScheme }] : [])
+      ]));
 };
 
 /**
@@ -179,9 +185,7 @@ export const createLocalScreenshotClient = async ({
         for (const viewport of viewports) {
           const page = await browser.newPage();
           await setViewport(page, viewport);
-          if (colorScheme) {
-            await emulateColorScheme(page, colorScheme);
-          }
+          await emulateCaptureMedia(page, colorScheme);
 
           const response = await page.goto(url.toString(), { waitUntil: 'networkidle0' });
           // An error page paints like any other, and a picture of "Space not found" is not a picture of the space.
@@ -190,9 +194,6 @@ export const createLocalScreenshotClient = async ({
           }
 
           await page.evaluate(FONTS_READY);
-          // The declared motion held at its end: a window grown to the whole page reveals every arrival waiting to be
-          // seen at once, and the picture would catch them halfway in.
-          await page.addStyleTag({ content: MOTION_STILL_CSS });
 
           if (fullPage) {
             const height = Math.min(await page.evaluate(CONTENT_HEIGHT), MAX_HEIGHT);

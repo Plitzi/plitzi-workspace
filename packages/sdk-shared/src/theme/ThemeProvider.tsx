@@ -1,13 +1,14 @@
-import { use, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
+import { use, useEffect, useId, useRef, useState } from 'react';
 
 import { StoreContext, useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 
 import { applyThemeClass, readThemeCookie, THEME_COOKIE_NAME, writeThemeCookie } from './themeCookie';
-import ThemeScopeContext from './ThemeScope';
+import ThemeScopeContext, { ThemeStartContext, useThemeState } from './ThemeScope';
 import defaultThemeStore, { createThemeStore, resolveScheme, setMachineScheme, setThemeMode } from './themeStore';
 import { useCommonStoreSync } from '../store';
 
-import type { ColorScheme, Theme, ThemeState } from '../types';
+import type { ThemeStoreInstance } from './themeStore';
+import type { ColorScheme, Theme } from '../types';
 import type { ReactNode } from 'react';
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';
@@ -52,7 +53,8 @@ const machineScheme = (): ColorScheme => (window.matchMedia(DARK_QUERY).matches 
  * line in the devtools store viewer that answers "which theme is this" without opening code. A binding reads the
  * `theme` SOURCE instead, which `GlobalSources` publishes beside the other globals.
  */
-const ThemeMirror = ({ state }: { state: ThemeState }) => {
+const ThemeMirror = ({ store }: { store: ThemeStoreInstance }) => {
+  const state = useThemeState(store);
   useCommonStoreSync(
     ['theme.mode', 'theme.resolved', 'theme.areas'],
     [state.mode, resolveScheme(state.mode, state.scheme), state.areas]
@@ -122,7 +124,8 @@ const ThemeProvider = ({
     });
   }, [defaultTheme, theme, cookieName, scoped, store]);
 
-  const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
+  // The mode this surface starts in, for the renders before the effect above: the server's and the hydration's.
+  const start = theme ?? defaultTheme;
   // A host application can mount this with no Plitzi store anywhere above it — the desktop window does, to own the
   // theme of its own chrome — and there is nothing to mirror into there. A component rather than an `enabled` flag
   // because the sync hook resolves its store before it reads any option, so not calling it is the only way out.
@@ -167,21 +170,23 @@ const ThemeProvider = ({
     return store.subscribe(apply);
   }, [cookieName, scoped, store]);
 
-  const mirror = hasAppStore ? <ThemeMirror state={state} /> : null;
+  const mirror = hasAppStore ? <ThemeMirror store={store} /> : null;
 
   if (!scoped) {
     return (
-      <>
+      <ThemeStartContext value={start}>
         {mirror}
         {children}
-      </>
+      </ThemeStartContext>
     );
   }
 
   return (
     <ThemeScopeContext value={ownStore}>
-      {mirror}
-      {children}
+      <ThemeStartContext value={start}>
+        {mirror}
+        {children}
+      </ThemeStartContext>
     </ThemeScopeContext>
   );
 };

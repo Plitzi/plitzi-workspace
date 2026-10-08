@@ -5,6 +5,7 @@
 '@plitzi/plitzi-sdk': patch
 '@plitzi/sdk-server': patch
 '@plitzi/sdk-shared': patch
+'@plitzi/sdk-mcp': patch
 ---
 
 - **`focus-on-field-box`** (`@plitzi/sdk-authoring`): a warning for a `focus` or `focus-visible` state on a text
@@ -74,3 +75,12 @@
 - **`page shot --as <username>`** (`@plitzi/cli`): signs in first, as `page check --as` does, the password from
   `PLITZI_CHECK_PASSWORD` in `.env`. A page for signed-in visitors was pictured as the sign-in page it sent the browser
   to, without a word; `page shot` now says when the page sent it elsewhere, and that the picture is of that page.
+- **A capture is of the page at rest** (`@plitzi/sdk-mcp`): the local screenshot client takes every picture with
+  `prefers-reduced-motion: reduce`, as the browser pod now does — the declared motion and a space's own keyframes that
+  honour the query are shown finished. A splash still covering its page, or an arrival caught halfway, was what a
+  thumbnail or a `plitzi_look` showed of a page that animates as it loads.
+- **The server renders in the visitor's theme, not only the class** (`@plitzi/sdk-shared`): `ThemeProvider` set the
+  starting theme from a layout effect, which never runs on a server, so a page was drawn from the theme store's own
+  start — `{{ theme.resolved }}` was `light` under a `<html class="dark">`, and whatever named the scheme (a picture's
+  address, a `when` rule) was swapped for the other one as the page hydrated. The theme a host supplies (the cookie) is
+  now the server's snapshot of the store, and the hydration's; the shared store is never written on the server.

@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { useThemeStore } from './ThemeScope';
+import { useThemeState, useThemeStore } from './ThemeScope';
 import { resolveScheme, setAreaTheme, setThemeMode, themeFor } from './themeStore';
 
 import type { ThemeValue } from '../types';
@@ -34,7 +34,7 @@ export const SPACE_THEME_AREA = 'canvas';
  */
 const useTheme = (area?: string): ThemeValue => {
   const store = useThemeStore();
-  const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
+  const state = useThemeState(store);
   const theme = themeFor(state, area);
   const resolvedTheme = resolveScheme(theme, state.scheme);
 
