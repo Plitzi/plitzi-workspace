@@ -9,6 +9,7 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 import useElementDataSource from './useElementDataSource';
 import useElementState from './useElementState';
 import useInternalItems from './useInternalItems';
+import { serverTemplatesByType } from '../../elements/declarations';
 import { isVisible } from '../helpers/isVisible';
 import { omitKeys } from '../helpers/omitKeys';
 import parseStyleSelectors from '../helpers/parseStyleSelectors';
@@ -108,10 +109,14 @@ export const getProps = (
 
   // Only what was authored with a template is interpolated, so an element with none — nearly every one — builds no
   // template data and copies no attributes: that was work on every element of every render, for nothing.
+  // What the page server evaluates against its own context (a page's title over its providers) is left as written.
+  const evaluatedElsewhere = serverTemplatesByType[definition.type] ?? [];
   const templated = Object.keys(attributes).filter(key => {
     const value = attributes[key];
 
-    return typeof value === 'string' && value === authored[key] && hasValidToken(value);
+    return (
+      typeof value === 'string' && value === authored[key] && hasValidToken(value) && !evaluatedElsewhere.includes(key)
+    );
   });
   if (templated.length > 0) {
     attributes = interpolateAttributes(attributes, templated, dataSource);
@@ -144,8 +149,13 @@ export const getProps = (
   };
 };
 
-const templatesIn = (attributes: Record<string, unknown> | undefined): string[] =>
-  Object.values(attributes ?? {}).filter((value): value is string => typeof value === 'string' && hasValidToken(value));
+const templatesIn = (attributes: Record<string, unknown> | undefined, type: string): string[] => {
+  const evaluatedElsewhere = serverTemplatesByType[type] ?? [];
+
+  return Object.entries(attributes ?? {}).flatMap(([key, value]) =>
+    typeof value === 'string' && hasValidToken(value) && !evaluatedElsewhere.includes(key) ? [value] : []
+  );
+};
 
 /** Every source path an attribute's templates read, and the variables — which a template reads by their bare name. */
 const templateSources = (templates: string[]): string[] => [
@@ -179,11 +189,12 @@ const useElementInternal = ({
    * Subscribed for every element, those made the whole page render again on each navigation, templates or not: a
    * route change writes new params and new variables, and every element on the page was listening.
    */
+  const { type } = element.definition;
   const sources = useMemo(() => {
-    const templates = [...templatesIn(element.attributes), ...templatesIn(internalProps.attributes)];
+    const templates = [...templatesIn(element.attributes, type), ...templatesIn(internalProps.attributes, type)];
 
     return templates.length > 0 ? templateSources(templates) : undefined;
-  }, [element.attributes, internalProps.attributes]);
+  }, [element.attributes, type, internalProps.attributes]);
   const usesTemplates = sources !== undefined;
   const [[routeParams, queryParams, origin]] = useCommonStore(
     ['navigation.routeParams', 'navigation.queryParams', 'navigation.origin'],

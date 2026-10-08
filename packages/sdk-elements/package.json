@@ -798,6 +798,10 @@
       "types": "./dist/elements/internal/Page/Page.d.ts",
       "import": "./dist/elements/internal/Page/Page.mjs"
     },
+    "./elements/internal/Page/PageHead": {
+      "types": "./dist/elements/internal/Page/PageHead.d.ts",
+      "import": "./dist/elements/internal/Page/PageHead.mjs"
+    },
     "./elements/internal/Page/Settings": {
       "types": "./dist/elements/internal/Page/Settings.d.ts",
       "import": "./dist/elements/internal/Page/Settings.mjs"

@@ -1,3 +1,5 @@
+import { pageSeoText } from '@plitzi/sdk-shared/schema/serverElements';
+
 import type { Element, Schema } from '@plitzi/sdk-shared';
 
 export type PageSeo = {
@@ -22,8 +24,15 @@ type PageSeoAttributes = {
  * `seoEnabled: false` returns nothing rather than a default, so the deployment's own title stays in charge of a
  * page that opted out. Blank strings are treated as absent for the same reason — the builder writes one for a
  * field the author cleared, and an empty <title> is worse than a generic one.
+ *
+ * Either may be a template over the page's server providers and the address (`pageSeoContext`): a detail page says
+ * the title of the record it shows, in the HTML a crawler reads. One that does not evaluate is nothing, as a blank is.
  */
-export const resolvePageSeo = (schema: Schema | undefined, pageId: string | undefined): PageSeo => {
+export const resolvePageSeo = (
+  schema: Schema | undefined,
+  pageId: string | undefined,
+  context: Record<string, unknown> = {}
+): PageSeo => {
   if (!schema || !pageId) {
     return {};
   }
@@ -33,8 +42,8 @@ export const resolvePageSeo = (schema: Schema | undefined, pageId: string | unde
     return {};
   }
 
-  const title = page.attributes.seoPageTitle?.trim();
-  const description = page.attributes.seoPageDescription?.trim();
+  const title = pageSeoText(page.attributes.seoPageTitle, context);
+  const description = pageSeoText(page.attributes.seoPageDescription, context);
 
   return {
     ...(title ? { title } : {}),

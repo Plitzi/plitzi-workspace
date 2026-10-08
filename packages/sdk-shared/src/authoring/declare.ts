@@ -70,6 +70,14 @@ export interface ElementDeclarationData {
    * `plitzi page check`), which would otherwise wait for it to be on screen and report it hidden.
    */
   drawsNothing?: boolean;
+  /**
+   * The attributes the page server evaluates against a context of its own, never where the element renders: a
+   * provider's `notFound`, read against its answer; a page's title and description, read against its server providers.
+   * Interpolated in the element's own scope they resolved to nothing — a `|default(…)` to its fallback — before the
+   * reader that has their names could see them. Read by the element runtime, which leaves them as written, and by the
+   * authoring lint, which holds them to that context.
+   */
+  serverTemplates?: readonly string[];
   content?: {
     attributes?: Record<string, unknown>;
     definition?: { label?: string };

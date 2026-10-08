@@ -113,8 +113,8 @@ export const AUTHORING_CODES = {
   'seo-template': {
     kind: 'refused',
     means:
-      "a template in a page's `seoTitle` or `seoDescription` — written into the head as it is, braces included, never evaluated",
-    fix: 'words of its own: one title for every record a detail page shows'
+      "a template in a page's `seoTitle` or `seoDescription` that reads what is not there when the server writes the head — anything but the page's `runtime: 'server'` providers and `navigation` — or cannot be read",
+    fix: "read the record from a provider with `runtime: 'server'` on the page or its layout — `'{{ apiContainer_post.title }} — Blog'` — or words of its own"
   },
   'folder-undeclared': {
     kind: 'refused',

@@ -1,4 +1,5 @@
 import { resolveLayoutChain } from './layoutChain';
+import getSourceName from '../dataSource/helpers/getSourceName';
 import { passesFlagGate } from '../flags/resolveFlags';
 import { processTwigValue } from '../helpers/twigWrapper';
 
@@ -26,7 +27,7 @@ import type { Element, Schema } from '../types';
  * rendered, so nothing in it wants data, and resolving it would put a feature that is off into the payload anyway.
  */
 export const collectServerElements = (
-  schema: Schema,
+  schema: Pick<Schema, 'flat'>,
   pageId: string | undefined,
   ids?: string[],
   flags?: Record<string, boolean>
@@ -80,6 +81,9 @@ export const hasServerElements = (
   flags?: Record<string, boolean>
 ): boolean => collectServerElements(schema, pageId, undefined, flags).length > 0;
 
+/** Where the visitor is: what a template on the server reads beside the page's data, as `navigation`. */
+export type ServerNavigation = { routeParams: Record<string, unknown>; queryParams: Record<string, unknown> };
+
 /**
  * The server provider of a page whose answer says the address shows nothing — its `notFound`, a template against
  * that answer (`{{ source.found == false }}`) — by id; the page is then sent with status 404, rendered as written.
@@ -90,7 +94,7 @@ export const hasServerElements = (
 export const notFoundProvider = (
   elements: Element[],
   serverData: Record<string, unknown>,
-  navigation: { routeParams: Record<string, unknown>; queryParams: Record<string, unknown> }
+  navigation: ServerNavigation
 ): string | undefined =>
   elements.find(element => {
     const template = element.attributes.notFound;
@@ -102,3 +106,40 @@ export const notFoundProvider = (
       processTwigValue(template, { source: serverData[element.id], navigation }) === true
     );
   })?.id;
+
+/**
+ * What a page's title and description read when they are templates: every server provider of the page and of the
+ * shells around it, by the name its descendants read it by (`apiContainer_capsule`), with its answer — and
+ * `navigation`. The server has both before it writes the head, and the browser has the same answer in `rsc.data`, so
+ * the two write one title.
+ */
+export const pageSeoContext = (
+  elements: Element[],
+  serverData: Record<string, unknown>,
+  navigation: ServerNavigation
+): Record<string, unknown> => ({
+  ...Object.fromEntries(
+    elements
+      .filter(element => Object.hasOwn(serverData, element.id))
+      .map(element => [getSourceName(element.definition.type, element.id), serverData[element.id]])
+  ),
+  navigation
+});
+
+const TEMPLATE = /\{[{%]/;
+
+/**
+ * A page's title or description as the head carries it: its words, or its template evaluated against
+ * `pageSeoContext`. Blank, or a template that did not evaluate — it comes back as its own text — is nothing, and the
+ * deployment's own title stays: braces never reach a tab or a link preview.
+ */
+export const pageSeoText = (value: unknown, context: Record<string, unknown>): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const written = TEMPLATE.test(value) ? processTwigValue(value, context) : value;
+  const text = typeof written === 'string' || typeof written === 'number' ? String(written).trim() : '';
+
+  return text === '' || TEMPLATE.test(text) ? undefined : text;
+};

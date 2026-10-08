@@ -1,5 +1,4 @@
 /* eslint-disable react-refresh/only-export-components */
-import { Helmet } from '@dr.pogodin/react-helmet';
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
@@ -13,6 +12,7 @@ import LayoutBody from '../../../Element/LayoutBody';
 import RootElement from '../../../Element/RootElement';
 import LayoutContainer from '../LayoutContainer';
 import declaration from './declaration';
+import PageHead from './PageHead';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { ElementLayout } from '@plitzi/sdk-shared';
@@ -114,10 +114,7 @@ const Page = ({
       interactionTriggers={declaration.triggers}
     >
       {seoEnabled && previewMode && ownsHead && (
-        <Helmet>
-          {!!seoPageTitle && <title>{seoPageTitle}</title>}
-          {!!seoPageDescription && <meta name="description" content={seoPageDescription} />}
-        </Helmet>
+        <PageHead pageId={id} title={seoPageTitle} description={seoPageDescription} />
       )}
       {body}
     </RootElement>

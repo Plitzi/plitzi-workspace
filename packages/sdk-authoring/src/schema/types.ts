@@ -256,6 +256,11 @@ export interface PageSpec {
   /** Route, without a leading slash. Empty is the home page. */
   slug: string;
   isDefault?: boolean;
+  /**
+   * The page's title and description in the head, for search engines and link previews. Either may be a template over
+   * the page's server providers (`runtime: 'server'`, its layouts' too) and `navigation` — `'{{ apiContainer_post.title
+   * }} — Blog'` — which the server evaluates as it writes the head.
+   */
   seoTitle?: string;
   seoDescription?: string;
   /**

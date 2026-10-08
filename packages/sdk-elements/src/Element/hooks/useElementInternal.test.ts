@@ -29,6 +29,19 @@ describe('getProps (element resolution)', () => {
     expect(result.definition.styleSelectors.base).toContain('el1');
   });
 
+  it('leaves what the page server evaluates as written: a page title read against providers it cannot see', () => {
+    const title = "{{ apiContainer_post.title|default('No such post') }} — Blog";
+    const page: Element = {
+      ...makeElement(undefined, { seoPageTitle: title, name: '{{ site }}' }),
+      definition: { ...makeElement().definition, type: 'page' }
+    };
+    const result = getProps(page, internal, { variables: { site: 'Blog' } });
+
+    expect(result.attributes.seoPageTitle).toBe(title);
+    // Any other attribute of the page is still its own template.
+    expect(result.attributes.name).toBe('Blog');
+  });
+
   it('resolves an attribute binding from the dataSource map', () => {
     const element = makeElement({
       attributes: [{ id: 'b1', source: 'variables.title', to: 'text', enabled: true }]

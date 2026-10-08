@@ -1,5 +1,7 @@
 import { FUNCTION_ROUTES_PREFIX, isFunctionRoutePath } from '@plitzi/sdk-shared/actions';
-import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
+import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { collectServerElements } from '@plitzi/sdk-shared/schema/serverElements';
 
 import { ACCESS_LEVELS } from '../guard';
 import { didYouMean } from '../suggest';
@@ -56,6 +58,52 @@ const folderPath = (ctx: LintContext, folderId: string): string => {
   return parts.join('/');
 };
 
+/** A page's title and description, by the attribute the document holds and the field of the page that writes it. */
+const SEO_FIELDS = [
+  ['seoPageTitle', 'seoTitle'],
+  ['seoPageDescription', 'seoDescription']
+] as const;
+
+/**
+ * A page's title or description written as a template is evaluated by the server as it writes the head, and again in
+ * the browser over the same answers: it reads only what is there by then — the server providers of the page and of its
+ * layouts, by their source names (`apiContainer_capsule`), and `navigation`. Anything else is not there yet, and the
+ * head would carry the deployment's own title instead of the one written.
+ */
+const checkSeoTemplates = (ctx: LintContext, pageId: string, where: string): void => {
+  const page = ctx.element(pageId);
+  const providers = collectServerElements({ flat: ctx.flat }, pageId).map(element =>
+    getSourceName(element.definition.type, element.id)
+  );
+  const readable = new Set(['navigation', ...providers]);
+  for (const [attribute, field] of SEO_FIELDS) {
+    const template = page?.attributes[attribute];
+    if (typeof template !== 'string' || !hasTemplateSyntax(template)) {
+      continue;
+    }
+
+    const { issues, freeNames } = inspectTemplate(template);
+    const unreadable = freeNames.filter(name => !readable.has(name));
+    if (issues.length === 0 && unreadable.length === 0) {
+      continue;
+    }
+
+    const why =
+      issues.length > 0
+        ? `cannot be read as written — ${issues.join('; ')}`
+        : `reads ${unreadable.map(name => `\`${name}\``).join(', ')}, which is not there when the head is written`;
+    const can =
+      providers.length > 0
+        ? providers.map(name => `\`${name}\``).join(', ')
+        : 'none: no provider on it runs on the server';
+    ctx.error(
+      'seo-template',
+      `${where}: \`${field}\` ${why}. A page's title is written by the server before the page reaches the browser, from its server providers — ${can} — and \`navigation\`. Read the record from a provider with \`runtime: 'server'\` on the page (or its layout), or write words of its own.`,
+      pageId
+    );
+  }
+};
+
 /**
  * Pages: who each is for, and that no two answer the same visitors at one address — the router takes one and the
  * other can never be reached. Two pages on one path is a supported shape only when they differ by `accessLevel`: a
@@ -70,6 +118,7 @@ export const lintPages = (ctx: LintContext): void => {
     }
 
     const where = ctx.describe(pageId);
+    checkSeoTemplates(ctx, pageId, where);
     const { accessLevel, slug, folder } = page.attributes;
     if (accessLevel !== undefined && accessLevel !== '' && !ACCESS_LEVELS.includes(accessLevel as 'public')) {
       ctx.error(

@@ -128,6 +128,41 @@ describe('Page Tests', () => {
     await waitFor(() => expect(document.title).toBe('Tremor'));
   });
 
+  it('says the record a detail page shows: a template read against its server providers and the address', async () => {
+    document.title = 'Host';
+    const node = (id: string, type: string, items: string[] = [], runtime?: 'server') => ({
+      id,
+      attributes: {},
+      definition: { type, label: id, rootId: 'capsule-page', items, styleSelectors: { base: '' }, runtime }
+    });
+    const flat = {
+      'capsule-page': node('capsule-page', 'page', ['capsule']),
+      capsule: node('capsule', 'apiContainer', [], 'server')
+    };
+    render(
+      <HelmetProvider>
+        <StoreProvider
+          value={{
+            navigation: { routeParams: { slug: 'montana-37' }, queryParams: {} },
+            schema: { flat },
+            rsc: { data: { capsule: { title: 'Montaña nº 37' } } }
+          }}
+        >
+          <ElementContext value={skipHocEntry('capsule-page')}>
+            <Page
+              seoEnabled
+              seoPageTitle="{{ apiContainer_capsule.title }} — Shop"
+              seoPageDescription="Capsule {{ navigation.routeParams.slug }}"
+            />
+          </ElementContext>
+        </StoreProvider>
+      </HelmetProvider>
+    );
+
+    await waitFor(() => expect(document.title).toBe('Montaña nº 37 — Shop'));
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Capsule montana-37');
+  });
+
   /**
    * The builder's canvas: the page is drawn in a frame, and the head its code would write is the editor's. A second
    * head manager there rewrote the host page's tags — the builder's own stylesheet with them — on every preview.

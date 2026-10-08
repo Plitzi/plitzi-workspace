@@ -1,3 +1,4 @@
+import { serverTemplatesByType } from '@plitzi/sdk-elements/elements/declarations';
 import { isSvgMarkup } from '@plitzi/sdk-elements/elements/media/Svg/sanitizeSvg';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
@@ -319,12 +320,6 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
 };
 
 /**
- * The attributes the page server evaluates in full, by element type — never rendered, so never held to what an
- * attribute resolves: a provider's `notFound`, read against its answer (`source`) once it is in.
- */
-const SERVER_EXPRESSIONS: Record<string, readonly string[]> = { apiContainer: ['notFound'] };
-
-/**
  * An attribute's `{{ token }}` against what the attribute will see when it renders — and a condition in an attribute,
  * which is used as written: an attribute only resolves a name with filters.
  */
@@ -333,7 +328,8 @@ const checkAttributeTemplates = (ctx: LintContext, element: Element, where: stri
     return;
   }
 
-  const evaluated = SERVER_EXPRESSIONS[element.definition.type] ?? [];
+  // What the page server evaluates against a context of its own: a provider's `notFound`, read against its answer.
+  const evaluated = serverTemplatesByType[element.definition.type] ?? [];
   const rendered = Object.fromEntries(Object.entries(element.attributes).filter(([name]) => !evaluated.includes(name)));
   for (const name of evaluated) {
     const value = element.attributes[name];

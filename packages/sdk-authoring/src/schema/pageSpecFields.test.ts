@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorSpace, PAGE_SPEC_FIELDS } from '../index';
+import { apiContainer, authorSpace, PAGE_SPEC_FIELDS } from '../index';
 
 import type { PageSpec } from '../index';
 
@@ -33,16 +33,37 @@ describe('PAGE_SPEC_FIELDS', () => {
 });
 
 describe('a page’s seoTitle and seoDescription', () => {
-  it('refuses a template: the head is written as it is, and would show the braces', () => {
-    const write = (seo: Pick<PageSpec, 'seoTitle' | 'seoDescription'>) => () =>
-      authorSpace({
-        name: 'Seo',
-        permanentUrl: 'seo',
-        pages: [{ id: 'capsule', name: 'Capsule', slug: 'c/:slug', ...seo, body: [] }]
-      });
+  const write = (seo: Pick<PageSpec, 'seoTitle' | 'seoDescription'>, runtime: 'server' | 'client') => () =>
+    authorSpace({
+      name: 'Seo',
+      permanentUrl: 'seo',
+      pages: [
+        {
+          id: 'capsule',
+          name: 'Capsule',
+          slug: 'c/:slug',
+          ...seo,
+          body: [apiContainer({ id: 'capsule-data', query: '/data/capsules.json', runtime })]
+        }
+      ]
+    });
 
-    expect(write({ seoTitle: '{{ apiContainer_capsule.title }} — Shop' })).toThrow(/template in `seoTitle`/);
-    expect(write({ seoDescription: '{% if x %}…{% endif %}' })).toThrow(/template in `seoDescription`/);
-    expect(write({ seoTitle: 'A capsule — Shop' })).not.toThrow();
+  it('reads the page’s server providers and the address, which the server has when it writes the head', () => {
+    expect(
+      write(
+        {
+          seoTitle: '{{ apiContainer_capsule-data.title }} — Shop',
+          seoDescription: 'Capsule {{ navigation.routeParams.slug }}'
+        },
+        'server'
+      )
+    ).not.toThrow();
+  });
+
+  it('refuses what is not there yet: a browser provider, or a template it cannot read', () => {
+    expect(write({ seoTitle: '{{ apiContainer_capsule-data.title }} — Shop' }, 'client')).toThrow(
+      /`seoTitle` reads `apiContainer_capsule-data`, which is not there when the head is written/
+    );
+    expect(write({ seoDescription: '{{ state.title }}' }, 'server')).toThrow(/`seoDescription` reads `state`/);
   });
 });

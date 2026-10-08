@@ -134,3 +134,13 @@ export {
   ThemeToggleDeclaration,
   VideoDeclaration
 };
+
+/**
+ * Each type's `serverTemplates`, by the type a document names: the attributes the page server evaluates against a
+ * context of its own, which the element runtime leaves as written and the authoring lint holds to that context.
+ */
+export const serverTemplatesByType: Readonly<Record<string, readonly string[]>> = Object.fromEntries(
+  Object.values(elementDeclarations).flatMap(declaration =>
+    'serverTemplates' in declaration ? [[declaration.type, declaration.serverTemplates]] : []
+  )
+);

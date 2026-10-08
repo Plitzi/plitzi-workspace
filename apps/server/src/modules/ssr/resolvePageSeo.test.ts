@@ -29,6 +29,25 @@ describe('resolvePageSeo', () => {
     expect(resolvePageSeo(s, 'home')).toEqual({ title: 'Café Mirabel', description: 'A small kitchen.' });
   });
 
+  it('evaluates a template against the page’s server providers and the address', () => {
+    const s = schema({
+      capsule: page('capsule', {
+        seoEnabled: true,
+        seoPageTitle: '{{ apiContainer_capsule.title }} — Shop',
+        seoPageDescription: 'Capsule {{ navigation.routeParams.slug }}'
+      })
+    });
+    const context = {
+      apiContainer_capsule: { title: 'Montaña nº 37' },
+      navigation: { routeParams: { slug: 'montana-37' }, queryParams: {} }
+    };
+
+    expect(resolvePageSeo(s, 'capsule', context)).toEqual({
+      title: 'Montaña nº 37 — Shop',
+      description: 'Capsule montana-37'
+    });
+  });
+
   it('says nothing for a page that turned SEO off, so the deployment default stays in charge', () => {
     const s = schema({ home: page('home', { seoEnabled: false, seoPageTitle: 'Ignored' }) });
 

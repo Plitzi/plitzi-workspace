@@ -1455,6 +1455,21 @@ describe('lintSpace', () => {
       ).toEqual([]);
     });
 
+    it('seo-template', () => {
+      // The fixture's home page has no server provider: only `navigation` is there when the head is written.
+      const seo = (template: string) =>
+        lintSpace(
+          withChange(({ schema }) => {
+            const home = schema.flat[homeId(schema)];
+            home.attributes.seoEnabled = true;
+            home.attributes.seoPageTitle = template;
+          })
+        ).errors.filter(issue => issue.code === 'seo-template');
+
+      expect(seo('{{ navigation.routeParams.slug }} — Blog')).toEqual([]);
+      expect(seo('{{ state.title }} — Blog')[0].message).toContain('`seoTitle` reads `state`');
+    });
+
     it('required-message-unused', () => {
       const unused = (required?: boolean) =>
         lintSpace(

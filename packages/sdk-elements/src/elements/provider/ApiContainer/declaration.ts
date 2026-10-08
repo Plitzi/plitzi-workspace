@@ -28,6 +28,7 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
     pagination: valuesOf<NonNullable<ApiContainerProps['pagination']>>()(['none', 'url', 'append'])
   },
   sourceType: 'apiContainer',
+  serverTemplates: ['notFound'],
   triggers: {
     onApiError: {
       action: 'onApiError',

@@ -4,6 +4,7 @@
 '@plitzi/cli': patch
 '@plitzi/plitzi-sdk': patch
 '@plitzi/sdk-server': patch
+'@plitzi/sdk-shared': patch
 ---
 
 - **`focus-on-field-box`** (`@plitzi/sdk-authoring`): a warning for a `focus` or `focus-visible` state on a text
@@ -24,8 +25,15 @@
 - **`required-message-unused`** (`@plitzi/sdk-authoring`): a warning for a `requiredMessage` on a field nothing requires —
   since 0.38.9 a field is optional unless `required: true`, so the message is never shown and an empty answer is sent.
   The formControl's description, the cheat sheet and the forms recipe say the default.
-- **`seo-template`** (`@plitzi/sdk-authoring`): a template in a page's `seoTitle` or `seoDescription` is refused. It was
-  written into the head as it was, braces included, on the server and in the browser.
+- **A page's title can say its record** (`@plitzi/sdk-shared`, `@plitzi/sdk-server`, `@plitzi/sdk-elements`,
+  `@plitzi/sdk-authoring`): `seoTitle` and `seoDescription` may be templates over the page's `runtime: 'server'`
+  providers (its layouts' too) and `navigation` — `'{{ apiContainer_post.title }} — Blog'`. The server evaluates them
+  as it writes the head, from the answers it already has; the browser evaluates the same over `rsc.data`, so the tab
+  follows a navigation from record to record. One that reads anything else — a browser provider, `state` — is refused
+  (`seo-template`): it was written into the head as it was, braces included. A declaration's `serverTemplates` names
+  the attributes the page server evaluates against a context of its own (a page's title and description, a provider's
+  `notFound`): the element runtime leaves them as written — interpolated where the page renders, a `|default(…)`
+  resolved to its fallback before the head could read the providers — and the authoring lint reads the same list.
 - **`plitzi upgrade` says where fields became optional** (`@plitzi/cli`): for a project last upgraded before 0.38.9,
   each `formControl(…)` with no `required`, at its file and line — said, never written. And a `.gitkeep` is written only
   in a folder with nothing else in it (`src/functions/` with code got one).

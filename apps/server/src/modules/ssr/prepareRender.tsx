@@ -2,7 +2,7 @@ import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { pluginDeclarationOf, pluginTypesOf } from '@plitzi/sdk-shared/plugins/declaration';
 import { pageElementTypes } from '@plitzi/sdk-shared/schema/pageElements';
-import { collectServerElements, notFoundProvider } from '@plitzi/sdk-shared/schema/serverElements';
+import { collectServerElements, notFoundProvider, pageSeoContext } from '@plitzi/sdk-shared/schema/serverElements';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state/paintedState';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';
@@ -195,14 +195,17 @@ export const prepareRender = async (
         ? { serverData: {} }
         : undefined;
 
-  const pageSeo = resolvePageSeo(schema, pageMatch?.pageId);
+  const navigation = { routeParams: pageMatch?.routeParams ?? {}, queryParams: req.query };
+  // A title written as a template says the record the page shows: its server providers have answered by now.
+  const pageSeo = resolvePageSeo(
+    schema,
+    pageMatch?.pageId,
+    pageSeoContext(serverElements, rscData?.serverData ?? {}, navigation)
+  );
   // A provider whose answer says this address shows nothing: the page goes out with status 404, rendered as written.
   const notFound =
     pageMatch !== undefined && rscData?.serverData !== undefined
-      ? notFoundProvider(serverElements, rscData.serverData, {
-          routeParams: pageMatch.routeParams,
-          queryParams: req.query
-        }) !== undefined
+      ? notFoundProvider(serverElements, rscData.serverData, navigation) !== undefined
       : false;
 
   const server = buildServerInfo(req, config, {

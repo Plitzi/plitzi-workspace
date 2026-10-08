@@ -1474,15 +1474,6 @@ class SpaceAuthor {
       );
     }
 
-    // Written into the head as they are: a template would reach every tab and link preview with its braces.
-    const templated = (['seoTitle', 'seoDescription'] as const).find(field => /\{[{%]/.test(page[field] ?? ''));
-    if (templated) {
-      throw new AuthoringError(
-        'seo-template',
-        `Page "${page.name}" has a template in \`${templated}\` (${JSON.stringify(page[templated])}), which is written into the page's head as it is — the braces included — never evaluated against its data. Give it words of its own: one title for every record a detail page shows.`
-      );
-    }
-
     const element: Element = {
       id,
       attributes: {

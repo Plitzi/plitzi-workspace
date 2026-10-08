@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { collectServerElements, hasServerElements, notFoundProvider } from './serverElements';
+import {
+  collectServerElements,
+  hasServerElements,
+  notFoundProvider,
+  pageSeoContext,
+  pageSeoText
+} from './serverElements';
 
 import type { Element, Schema } from '../types';
 
@@ -139,5 +145,35 @@ describe('notFoundProvider', () => {
     expect(notFoundProvider([provider('post', 'found == false')], { post: {} }, navigation)).toBeUndefined();
     expect(notFoundProvider([provider('post', '{{ source.found == false }}')], {}, navigation)).toBeUndefined();
     expect(notFoundProvider([provider('post', '')], { post: { found: false } }, navigation)).toBeUndefined();
+  });
+});
+
+describe('pageSeoText', () => {
+  const capsule: Element = {
+    ...element('capsule', [], 'server'),
+    definition: { ...element('capsule', [], 'server').definition, type: 'apiContainer' }
+  };
+  const context = pageSeoContext(
+    [capsule],
+    { capsule: { title: 'Montaña nº 37' } },
+    {
+      routeParams: { slug: 'montana-numero-37' },
+      queryParams: {}
+    }
+  );
+
+  it('reads each server provider by the name its descendants read it by, and the address', () => {
+    expect(pageSeoText('{{ apiContainer_capsule.title }} — Shop', context)).toBe('Montaña nº 37 — Shop');
+    expect(pageSeoText('Capsule {{ navigation.routeParams.slug }}', context)).toBe('Capsule montana-numero-37');
+  });
+
+  it('keeps words as they are written, and gives nothing for a blank one', () => {
+    expect(pageSeoText('  About — Shop ', context)).toBe('About — Shop');
+    expect(pageSeoText('   ', context)).toBeUndefined();
+    expect(pageSeoText(undefined, context)).toBeUndefined();
+  });
+
+  it('never gives braces: a template that does not evaluate is nothing', () => {
+    expect(pageSeoText('{{ apiContainer_capsule.title ', context)).toBeUndefined();
   });
 });
