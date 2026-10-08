@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-interactions",
-  "version": "0.38.10",
+  "version": "0.38.11",
   "license": "AGPL-3.0",
   "files": [
     "dist"
@@ -202,7 +202,7 @@
     "vitest": "^5.0.3"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.32",
+    "@plitzi/plitzi-ui": "^1.6.33",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"

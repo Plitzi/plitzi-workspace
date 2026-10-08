@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-authoring",
-  "version": "0.38.10",
+  "version": "0.38.11",
   "license": "AGPL-3.0",
   "files": [
     "dist/index.js",
@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.59.3",
-    "@plitzi/plitzi-ui": "^1.6.32",
+    "@plitzi/plitzi-ui": "^1.6.33",
     "@plitzi/sdk-elements": "workspace:*",
     "@plitzi/sdk-interactions": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",

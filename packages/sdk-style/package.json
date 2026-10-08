@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-style",
-  "version": "0.38.10",
+  "version": "0.38.11",
   "license": "AGPL-3.0",
   "files": [
     "dist"
@@ -134,6 +134,10 @@
       "types": "./dist/components/Selector/SelectorItem/SelectorItem.d.ts",
       "import": "./dist/components/Selector/SelectorItem/SelectorItem.mjs"
     },
+    "./components/Selector/SelectorItem/helpers": {
+      "types": "./dist/components/Selector/SelectorItem/helpers.d.ts",
+      "import": "./dist/components/Selector/SelectorItem/helpers.mjs"
+    },
     "./components/Selector/SelectorItem/index": {
       "types": "./dist/components/Selector/SelectorItem/index.d.ts",
       "import": "./dist/components/Selector/SelectorItem/index.mjs"
@@ -170,6 +174,10 @@
       "types": "./dist/components/StyleInspector/Inspector.d.ts",
       "import": "./dist/components/StyleInspector/Inspector.mjs"
     },
+    "./components/StyleInspector/InspectorSearchContext": {
+      "types": "./dist/components/StyleInspector/InspectorSearchContext.d.ts",
+      "import": "./dist/components/StyleInspector/InspectorSearchContext.mjs"
+    },
     "./components/StyleInspector/StyleInspector": {
       "types": "./dist/components/StyleInspector/StyleInspector.d.ts",
       "import": "./dist/components/StyleInspector/StyleInspector.mjs"
@@ -190,6 +198,18 @@
       "types": "./dist/components/StyleInspector/categories/Background/Background.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/Background.mjs"
     },
+    "./components/StyleInspector/categories/Background/components/BackgroundAttachment": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundAttachment/index.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundAttachment/index.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/BackgroundAttachment/BackgroundAttachment": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundAttachment/BackgroundAttachment.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundAttachment/BackgroundAttachment.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/BackgroundAttachment/index": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundAttachment/index.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundAttachment/index.mjs"
+    },
     "./components/StyleInspector/categories/Background/components/BackgroundLayer": {
       "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundLayer/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundLayer/index.mjs"
@@ -197,6 +217,10 @@
     "./components/StyleInspector/categories/Background/components/BackgroundLayer/BackgroundLayer": {
       "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundLayer/BackgroundLayer.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundLayer/BackgroundLayer.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/BackgroundLayer/helpers": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundLayer/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundLayer/helpers.mjs"
     },
     "./components/StyleInspector/categories/Background/components/BackgroundLayer/index": {
       "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundLayer/index.d.ts",
@@ -221,6 +245,10 @@
     "./components/StyleInspector/categories/Background/components/BackgroundSize/BackgroundSize": {
       "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundSize/BackgroundSize.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundSize/BackgroundSize.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/BackgroundSize/helpers": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundSize/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundSize/helpers.mjs"
     },
     "./components/StyleInspector/categories/Background/components/BackgroundSize/index": {
       "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundSize/index.d.ts",
@@ -262,13 +290,33 @@
       "types": "./dist/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopTrack.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/components/GradientStopBar/GradientStopTrack.mjs"
     },
+    "./components/StyleInspector/categories/Background/components/GradientStopBar/helpers": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/GradientStopBar/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/GradientStopBar/helpers.mjs"
+    },
     "./components/StyleInspector/categories/Background/components/GradientStopBar/index": {
       "types": "./dist/components/StyleInspector/categories/Background/components/GradientStopBar/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/components/GradientStopBar/index.mjs"
     },
+    "./components/StyleInspector/categories/Background/components/LayerGroup": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/LayerGroup/index.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/LayerGroup/index.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/LayerGroup/LayerGroup": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/LayerGroup/LayerGroup.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/LayerGroup/LayerGroup.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/LayerGroup/index": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/LayerGroup/index.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/LayerGroup/index.mjs"
+    },
     "./components/StyleInspector/categories/Background/helpers/backgroundParser": {
       "types": "./dist/components/StyleInspector/categories/Background/helpers/backgroundParser.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/helpers/backgroundParser.mjs"
+    },
+    "./components/StyleInspector/categories/Background/helpers/layerValues": {
+      "types": "./dist/components/StyleInspector/categories/Background/helpers/layerValues.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/helpers/layerValues.mjs"
     },
     "./components/StyleInspector/categories/Background/helpers/normalizeLeft": {
       "types": "./dist/components/StyleInspector/categories/Background/helpers/normalizeLeft.d.ts",
@@ -297,6 +345,14 @@
     "./components/StyleInspector/categories/Background/modes/RadialGradientMode": {
       "types": "./dist/components/StyleInspector/categories/Background/modes/RadialGradientMode.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/modes/RadialGradientMode.mjs"
+    },
+    "./components/StyleInspector/categories/Background/modes/RawMode": {
+      "types": "./dist/components/StyleInspector/categories/Background/modes/RawMode.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/modes/RawMode.mjs"
+    },
+    "./components/StyleInspector/categories/Background/modes/helpers": {
+      "types": "./dist/components/StyleInspector/categories/Background/modes/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/modes/helpers.mjs"
     },
     "./components/StyleInspector/categories/Border": {
       "types": "./dist/components/StyleInspector/categories/Border/index.d.ts",
@@ -410,14 +466,6 @@
       "types": "./dist/components/StyleInspector/categories/Effects/BoxShadow/BoxShadow.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/BoxShadow/BoxShadow.mjs"
     },
-    "./components/StyleInspector/categories/Effects/BoxShadow/BoxShadowItem": {
-      "types": "./dist/components/StyleInspector/categories/Effects/BoxShadow/BoxShadowItem.d.ts",
-      "import": "./dist/components/StyleInspector/categories/Effects/BoxShadow/BoxShadowItem.mjs"
-    },
-    "./components/StyleInspector/categories/Effects/BoxShadow/helpers": {
-      "types": "./dist/components/StyleInspector/categories/Effects/BoxShadow/helpers.d.ts",
-      "import": "./dist/components/StyleInspector/categories/Effects/BoxShadow/helpers.mjs"
-    },
     "./components/StyleInspector/categories/Effects/BoxShadow/index": {
       "types": "./dist/components/StyleInspector/categories/Effects/BoxShadow/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/BoxShadow/index.mjs"
@@ -437,6 +485,10 @@
     "./components/StyleInspector/categories/Effects/Filters/FilterItem": {
       "types": "./dist/components/StyleInspector/categories/Effects/Filters/FilterItem.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/Filters/FilterItem.mjs"
+    },
+    "./components/StyleInspector/categories/Effects/Filters/helpers": {
+      "types": "./dist/components/StyleInspector/categories/Effects/Filters/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Effects/Filters/helpers.mjs"
     },
     "./components/StyleInspector/categories/Effects/Filters/index": {
       "types": "./dist/components/StyleInspector/categories/Effects/Filters/index.d.ts",
@@ -470,9 +522,17 @@
       "types": "./dist/components/StyleInspector/categories/Effects/Transition/Transition.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/Transition/Transition.mjs"
     },
+    "./components/StyleInspector/categories/Effects/Transition/TransitionEasing": {
+      "types": "./dist/components/StyleInspector/categories/Effects/Transition/TransitionEasing.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Effects/Transition/TransitionEasing.mjs"
+    },
     "./components/StyleInspector/categories/Effects/Transition/TransitionItem": {
       "types": "./dist/components/StyleInspector/categories/Effects/Transition/TransitionItem.d.ts",
       "import": "./dist/components/StyleInspector/categories/Effects/Transition/TransitionItem.mjs"
+    },
+    "./components/StyleInspector/categories/Effects/Transition/helpers": {
+      "types": "./dist/components/StyleInspector/categories/Effects/Transition/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Effects/Transition/helpers.mjs"
     },
     "./components/StyleInspector/categories/Effects/Transition/index": {
       "types": "./dist/components/StyleInspector/categories/Effects/Transition/index.d.ts",
@@ -682,10 +742,6 @@
       "types": "./dist/components/StyleInspector/categories/Typography/TypographyTextShadow.d.ts",
       "import": "./dist/components/StyleInspector/categories/Typography/TypographyTextShadow.mjs"
     },
-    "./components/StyleInspector/categories/Typography/TypographyTextShadowItem": {
-      "types": "./dist/components/StyleInspector/categories/Typography/TypographyTextShadowItem.d.ts",
-      "import": "./dist/components/StyleInspector/categories/Typography/TypographyTextShadowItem.mjs"
-    },
     "./components/StyleInspector/categories/Typography/TypographyTransform": {
       "types": "./dist/components/StyleInspector/categories/Typography/TypographyTransform.d.ts",
       "import": "./dist/components/StyleInspector/categories/Typography/TypographyTransform.mjs"
@@ -705,6 +761,10 @@
     "./components/StyleInspector/categories/Variables/index": {
       "types": "./dist/components/StyleInspector/categories/Variables/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Variables/index.mjs"
+    },
+    "./components/StyleInspector/categoryKeys": {
+      "types": "./dist/components/StyleInspector/categoryKeys.d.ts",
+      "import": "./dist/components/StyleInspector/categoryKeys.mjs"
     },
     "./components/StyleInspector/components/AncestorRules": {
       "types": "./dist/components/StyleInspector/components/AncestorRules/index.d.ts",
@@ -794,6 +854,22 @@
       "types": "./dist/components/StyleInspector/components/CategorySection/index.d.ts",
       "import": "./dist/components/StyleInspector/components/CategorySection/index.mjs"
     },
+    "./components/StyleInspector/components/ColorSwatch": {
+      "types": "./dist/components/StyleInspector/components/ColorSwatch/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ColorSwatch/index.mjs"
+    },
+    "./components/StyleInspector/components/ColorSwatch/ColorSwatch": {
+      "types": "./dist/components/StyleInspector/components/ColorSwatch/ColorSwatch.d.ts",
+      "import": "./dist/components/StyleInspector/components/ColorSwatch/ColorSwatch.mjs"
+    },
+    "./components/StyleInspector/components/ColorSwatch/helpers": {
+      "types": "./dist/components/StyleInspector/components/ColorSwatch/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/components/ColorSwatch/helpers.mjs"
+    },
+    "./components/StyleInspector/components/ColorSwatch/index": {
+      "types": "./dist/components/StyleInspector/components/ColorSwatch/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ColorSwatch/index.mjs"
+    },
     "./components/StyleInspector/components/InspectorDots": {
       "types": "./dist/components/StyleInspector/components/InspectorDots/index.d.ts",
       "import": "./dist/components/StyleInspector/components/InspectorDots/index.mjs"
@@ -806,6 +882,22 @@
       "types": "./dist/components/StyleInspector/components/InspectorDots/index.d.ts",
       "import": "./dist/components/StyleInspector/components/InspectorDots/index.mjs"
     },
+    "./components/StyleInspector/components/InspectorFooter": {
+      "types": "./dist/components/StyleInspector/components/InspectorFooter/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/InspectorFooter/index.mjs"
+    },
+    "./components/StyleInspector/components/InspectorFooter/InspectorFooter": {
+      "types": "./dist/components/StyleInspector/components/InspectorFooter/InspectorFooter.d.ts",
+      "import": "./dist/components/StyleInspector/components/InspectorFooter/InspectorFooter.mjs"
+    },
+    "./components/StyleInspector/components/InspectorFooter/helpers": {
+      "types": "./dist/components/StyleInspector/components/InspectorFooter/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/components/InspectorFooter/helpers.mjs"
+    },
+    "./components/StyleInspector/components/InspectorFooter/index": {
+      "types": "./dist/components/StyleInspector/components/InspectorFooter/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/InspectorFooter/index.mjs"
+    },
     "./components/StyleInspector/components/InspectorLabel": {
       "types": "./dist/components/StyleInspector/components/InspectorLabel/index.d.ts",
       "import": "./dist/components/StyleInspector/components/InspectorLabel/index.mjs"
@@ -814,9 +906,77 @@
       "types": "./dist/components/StyleInspector/components/InspectorLabel/InspectorLabel.d.ts",
       "import": "./dist/components/StyleInspector/components/InspectorLabel/InspectorLabel.mjs"
     },
+    "./components/StyleInspector/components/InspectorLabel/helpers": {
+      "types": "./dist/components/StyleInspector/components/InspectorLabel/helpers.d.ts",
+      "import": "./dist/components/StyleInspector/components/InspectorLabel/helpers.mjs"
+    },
     "./components/StyleInspector/components/InspectorLabel/index": {
       "types": "./dist/components/StyleInspector/components/InspectorLabel/index.d.ts",
       "import": "./dist/components/StyleInspector/components/InspectorLabel/index.mjs"
+    },
+    "./components/StyleInspector/components/InspectorSearch": {
+      "types": "./dist/components/StyleInspector/components/InspectorSearch/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/InspectorSearch/index.mjs"
+    },
+    "./components/StyleInspector/components/InspectorSearch/InspectorSearch": {
+      "types": "./dist/components/StyleInspector/components/InspectorSearch/InspectorSearch.d.ts",
+      "import": "./dist/components/StyleInspector/components/InspectorSearch/InspectorSearch.mjs"
+    },
+    "./components/StyleInspector/components/InspectorSearch/index": {
+      "types": "./dist/components/StyleInspector/components/InspectorSearch/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/InspectorSearch/index.mjs"
+    },
+    "./components/StyleInspector/components/ShadowItem": {
+      "types": "./dist/components/StyleInspector/components/ShadowItem/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ShadowItem/index.mjs"
+    },
+    "./components/StyleInspector/components/ShadowItem/ShadowItem": {
+      "types": "./dist/components/StyleInspector/components/ShadowItem/ShadowItem.d.ts",
+      "import": "./dist/components/StyleInspector/components/ShadowItem/ShadowItem.mjs"
+    },
+    "./components/StyleInspector/components/ShadowItem/index": {
+      "types": "./dist/components/StyleInspector/components/ShadowItem/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ShadowItem/index.mjs"
+    },
+    "./components/StyleInspector/components/TargetSummary": {
+      "types": "./dist/components/StyleInspector/components/TargetSummary/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/TargetSummary/index.mjs"
+    },
+    "./components/StyleInspector/components/TargetSummary/TargetSummary": {
+      "types": "./dist/components/StyleInspector/components/TargetSummary/TargetSummary.d.ts",
+      "import": "./dist/components/StyleInspector/components/TargetSummary/TargetSummary.mjs"
+    },
+    "./components/StyleInspector/components/TargetSummary/index": {
+      "types": "./dist/components/StyleInspector/components/TargetSummary/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/TargetSummary/index.mjs"
+    },
+    "./components/StyleInspector/components/ValueList": {
+      "types": "./dist/components/StyleInspector/components/ValueList/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ValueList/index.mjs"
+    },
+    "./components/StyleInspector/components/ValueList/ValueList": {
+      "types": "./dist/components/StyleInspector/components/ValueList/ValueList.d.ts",
+      "import": "./dist/components/StyleInspector/components/ValueList/ValueList.mjs"
+    },
+    "./components/StyleInspector/components/ValueList/index": {
+      "types": "./dist/components/StyleInspector/components/ValueList/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ValueList/index.mjs"
+    },
+    "./components/StyleInspector/components/ValueListItem": {
+      "types": "./dist/components/StyleInspector/components/ValueListItem/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ValueListItem/index.mjs"
+    },
+    "./components/StyleInspector/components/ValueListItem/ValueListItem": {
+      "types": "./dist/components/StyleInspector/components/ValueListItem/ValueListItem.d.ts",
+      "import": "./dist/components/StyleInspector/components/ValueListItem/ValueListItem.mjs"
+    },
+    "./components/StyleInspector/components/ValueListItem/index": {
+      "types": "./dist/components/StyleInspector/components/ValueListItem/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ValueListItem/index.mjs"
+    },
+    "./components/StyleInspector/cssValues": {
+      "types": "./dist/components/StyleInspector/cssValues.d.ts",
+      "import": "./dist/components/StyleInspector/cssValues.mjs"
     },
     "./components/StyleInspector/helpers": {
       "types": "./dist/components/StyleInspector/helpers.d.ts",
@@ -837,6 +997,14 @@
     "./components/StyleInspector/index": {
       "types": "./dist/components/StyleInspector/index.d.ts",
       "import": "./dist/components/StyleInspector/index.mjs"
+    },
+    "./components/StyleInspector/search": {
+      "types": "./dist/components/StyleInspector/search.d.ts",
+      "import": "./dist/components/StyleInspector/search.mjs"
+    },
+    "./components/StyleInspector/shadowValue": {
+      "types": "./dist/components/StyleInspector/shadowValue.d.ts",
+      "import": "./dist/components/StyleInspector/shadowValue.mjs"
     },
     "./components/StyleManager": {
       "types": "./dist/components/StyleManager/index.d.ts",
@@ -944,7 +1112,7 @@
     "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.32",
+    "@plitzi/plitzi-ui": "^1.6.33",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@plitzi/sdk-variables": "workspace:*",

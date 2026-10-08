@@ -33,11 +33,11 @@
     "build-storybook": "storybook build",
     "changeset": "changeset",
     "generate-tarballs": "yarn workspaces foreach -A --no-private exec yarn pack",
-    "check-tgz": "yarn generate-tarballs && bash -c 'for tgz in packages/*/*.tgz apps/*/*.tgz; do echo \"---- $tgz ----\"; if tar -xOzf \"$tgz\" package/package.json | grep -q \"workspace:*\"; then echo \"⚠️  Contiene workspace:*\"; else echo \"✅ No workspace:*\"; fi; done'",
+    "check-tgz": "yarn generate-tarballs && bash -c 'for tgz in packages/*/*.tgz apps/*/*.tgz; do echo \"---- $tgz ----\"; if tar -xOzf \"$tgz\" package/package.json | grep -qF \"\\\"workspace:\"; then echo \"⚠️  Contiene workspace:*\"; else echo \"✅ No workspace:*\"; fi; done'",
     "ci:publish": "yarn workspaces foreach -A --no-private --topological-dev --exclude . exec yarn npm publish --tolerate-republish --access public && changeset tag"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.32",
+    "@plitzi/plitzi-ui": "^1.6.33",
     "@plitzi/sdk-shared": "workspace:*",
     "react-router": "^8.4.0"
   },
@@ -52,9 +52,6 @@
   },
   "engines": {
     "node": ">=20"
-  },
-  "resolutions": {
-    "@plitzi/plitzi-ui": "portal:../plitzi-ui"
   },
   "packageManager": "yarn@4.2.2",
   "workspaces": [

@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-shared",
-  "version": "0.38.10",
+  "version": "0.38.11",
   "license": "AGPL-3.0",
   "files": [
     "dist",
@@ -1580,7 +1580,7 @@
   },
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
-    "@plitzi/plitzi-ui": "^1.6.32",
+    "@plitzi/plitzi-ui": "^1.6.33",
     "date-fns": "^4.4.0",
     "immer": "^11.1.21",
     "zod": "^4.6.5"
