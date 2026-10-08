@@ -34,13 +34,14 @@ describeTarget('server', subject => {
     expect(await response.json()).toEqual({ role: 'e2e', ok: true });
   });
 
-  /** A path no page claims is redirected to the default page rather than answered with a 404. That is the SDK
-   *  router's decision, not this server's — pinned here because it is the kind of behaviour that changes by
-   *  accident, and because a site that answers 200 for every URL ever typed is a deliberate choice to have made. */
-  test('sends a path no page claims to the default page', async ({ request }) => {
+  /** A path no page claims is answered by the space's `'*'` page, with status 404 — not redirected home, which told a
+   *  crawler and a mistyped link alike that every URL ever typed exists. Pinned here because it is the kind of
+   *  behaviour that changes by accident: the status and the page both come from the server, before any script. */
+  test('answers a path no page claims with its not-found page, as a 404', async ({ request }) => {
     const response = await request.get(`${subject.origin}/nothing-here`, { maxRedirects: 0 });
 
-    expect(response.status()).toBe(302);
-    expect(response.headers().location).toBe('/');
+    expect(response.status()).toBe(404);
+    expect(response.headers().location).toBeUndefined();
+    expect(await response.text(), 'the not-found page is missing from the server response').toContain('Page not found');
   });
 });
