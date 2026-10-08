@@ -67,6 +67,10 @@
   with its step and the time since the first, and said when nothing changed since the one before. A queue filling, a
   restart, an opening frame by frame took a Playwright script of the project's own. Targets take Playwright's selectors
   too (`text=Saved`).
+- **A space's task may take a `number` param** (`@plitzi/sdk-server`): saved functions refused it ("a type the builder
+  cannot draw") while a project's server ran it, so code that worked self-hosted failed on the platform — and the
+  builder draws one, a callback's. A step's params now arrive as the types the task declares, on every server: a
+  `number` written as text is the number, a `boolean` written `'true'` is `true`, as the browser reads a callback's.
 - **`page shot --as <username>`** (`@plitzi/cli`): signs in first, as `page check --as` does, the password from
   `PLITZI_CHECK_PASSWORD` in `.env`. A page for signed-in visitors was pictured as the sign-in page it sent the browser
   to, without a word; `page shot` now says when the page sent it elsewhere, and that the picture is of that page.

@@ -35,6 +35,7 @@ describe('reading what a bundle declared', () => {
             params: {
               url: { type: 'text', label: 'URL', defaultValue: 'x', canBind: true },
               mode: { type: 'select', options: [{ label: 'A', value: 'a' }] },
+              count: { type: 'number', label: 'Count', defaultValue: 1 },
               computed: { label: 'No type' }
             }
           }
@@ -47,7 +48,8 @@ describe('reading what a bundle declared', () => {
 
     expect(manifest.tasks[0]?.params).toEqual({
       url: { type: 'text', label: 'URL', defaultValue: 'x', canBind: true },
-      mode: { type: 'select', options: [{ label: 'A', value: 'a' }] }
+      mode: { type: 'select', options: [{ label: 'A', value: 'a' }] },
+      count: { type: 'number', label: 'Count', defaultValue: 1 }
     });
     expect(problems).toEqual([expect.stringContaining('param "computed" has a type the builder cannot draw')]);
   });

@@ -92,6 +92,42 @@ describe('runAction', () => {
     expect(result.trace).toHaveLength(1);
   });
 
+  it('hands a task its params as the types it declares — a number written as text is the number', async () => {
+    const seen: unknown[] = [];
+    const task: FunctionTask<{ count: number; open: boolean; label: string }> = {
+      namespace: 'test',
+      action: 'typed',
+      title: 'Typed',
+      params: {
+        count: { type: 'number', canBind: true, defaultValue: 1, label: 'Count' },
+        open: { type: 'boolean', canBind: true, defaultValue: false, label: 'Open' },
+        label: { type: 'text', canBind: true, defaultValue: '', label: 'Label' }
+      },
+      run: params => {
+        seen.push(params);
+
+        return Promise.resolve({});
+      }
+    };
+    const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
+    const step = (params: Record<string, unknown>) =>
+      buildEntry({
+        nodes: {
+          start: callTrigger({}, 'typed'),
+          typed: node('typed', { action: 'test.typed', params, afterNode: 'out' }),
+          out: node('out', { action: 'flow.output', params: { values: '{"ok": true}' } })
+        }
+      });
+
+    await runAction(request(step({ count: '5', open: 'true', label: '7' })));
+    await runAction(request(step({ count: ' ', open: 'false', label: '' })));
+
+    expect(seen).toEqual([
+      { count: 5, open: true, label: '7' },
+      { count: 1, open: false, label: '' }
+    ]);
+  });
+
   describe('when a step fails after the flow already did something', () => {
     /** Records what each step was asked to do, in order: the property under test is WHICH steps ran. */
     const recorder = () => {

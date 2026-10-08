@@ -79,6 +79,9 @@ const paramOf = (value: unknown): TaskParam | string => {
         type: value.type,
         ...(typeof defaultValue === 'string' || typeof defaultValue === 'number' ? { defaultValue } : {})
       };
+    // Drawn as text, and handed to the task as a number (`withDefaults`), as a callback's `number` is in the browser.
+    case 'number':
+      return { ...base, type: 'number', ...(typeof defaultValue === 'number' ? { defaultValue } : {}) };
     case 'codemirror-text':
     case 'codemirror-json':
       return { ...base, type: value.type, ...(typeof defaultValue === 'string' ? { defaultValue } : {}) };
@@ -100,7 +103,7 @@ const paramOf = (value: unknown): TaskParam | string => {
       return { ...base, type: 'select', options, ...(typeof defaultValue === 'string' ? { defaultValue } : {}) };
     }
     default:
-      return `has a type the builder cannot draw ("${String(value.type)}"): text, textarea, codemirror-text, codemirror-json, boolean, elements or select`;
+      return `has a type the builder cannot draw ("${String(value.type)}"): text, number, textarea, codemirror-text, codemirror-json, boolean, elements or select`;
   }
 };
 

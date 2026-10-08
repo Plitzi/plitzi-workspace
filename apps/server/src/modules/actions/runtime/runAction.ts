@@ -203,12 +203,32 @@ const stepOf = (
 const MAX_LOG_LINES = 100;
 const MAX_LOG_LINE = 1000;
 
+/**
+ * A value written as text, read as the type its task declares: a `number` param written `5` — or bound to text that says
+ * it — arrives as 5, a `boolean` one written `'true'` as `true`, an empty number as nothing (so the default applies). The
+ * browser reads a callback's params the same way (`coerceDeclaredParams`): a task's author never writes `Number(…)`.
+ */
+const asDeclared = (type: string, value: unknown): unknown => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  if (type === 'number') {
+    const parsed = Number(value.trim());
+
+    return value.trim() === '' ? undefined : Number.isFinite(parsed) ? parsed : value;
+  }
+
+  return type === 'boolean' && (value === 'true' || value === 'false') ? value === 'true' : value;
+};
+
 const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Record<string, unknown> =>
   Object.entries(task.params).reduce<Record<string, unknown>>(
     (acum, [key, param]) => {
-      if (acum[key] === undefined || acum[key] === '') {
-        acum[key] = param.defaultValue ?? '';
-      }
+      // A type that follows the other params is asked with them.
+      const type = typeof param.type === 'function' ? param.type(acum) : param.type;
+      const value = asDeclared(type, acum[key]);
+      acum[key] = value === undefined || value === '' ? (param.defaultValue ?? '') : value;
 
       return acum;
     },
