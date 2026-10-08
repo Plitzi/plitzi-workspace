@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 import { HIDE_DEV_TOOLS_CSS } from '@plitzi/sdk-shared/devTools/chrome';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime/topics';
 import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme/themeCookie';
 
 import { DEV_SERVER_FILE } from '../scaffold/paths';
@@ -191,6 +192,11 @@ export interface ProjectView {
   /** The space's theme, chosen as a visitor's toggle chooses it. Left out, the space's own default. */
   scheme?: Scheme;
   reducedMotion?: boolean;
+  /**
+   * Taking part in the page's channels as a visitor does: arriving, announcing itself, sending. Left out, the page only
+   * watches them — `OBSERVER_COOKIE_NAME` — so a check is never somebody walking into a room people are in.
+   */
+  presence?: boolean;
 }
 
 /**
@@ -205,9 +211,12 @@ export const openProjectPage = async (browser: Browser, origin: string, view: Pr
     colorScheme: view.scheme ?? 'light',
     reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference'
   });
-  if (view.scheme) {
-    await page.context().addCookies([{ name: THEME_COOKIE_NAME, value: view.scheme, url: origin }]);
-  }
+  await page
+    .context()
+    .addCookies([
+      ...(view.scheme ? [{ name: THEME_COOKIE_NAME, value: view.scheme, url: origin }] : []),
+      ...(view.presence ? [] : [{ name: OBSERVER_COOKIE_NAME, value: '1', url: origin }])
+    ]);
 
   return page;
 };

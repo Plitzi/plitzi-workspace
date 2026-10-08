@@ -18,7 +18,7 @@ import { fail } from './terminal';
 import { launchBrowser, openProjectPage, projectOrigin, SCHEMES, withoutDevTools } from '../browser';
 
 import type { ExistingProject } from './existingProject';
-import type { Browser, BrowserPage, Scheme } from '../browser';
+import type { Browser, BrowserPage, ProjectView, Scheme } from '../browser';
 import type { FieldFill } from '../options';
 import type { DataIssueCode, DevToolsInput, PageIssue, SpaceHandles } from '@plitzi/sdk-authoring';
 import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
@@ -60,6 +60,8 @@ export interface CheckOptions {
    * the password in `PLITZI_CHECK_PASSWORD` — what a page for signed-in visitors is checked as.
    */
   as?: string;
+  /** Taking part in the page's channels — arriving, announcing itself, sending — as a visitor does. */
+  presence?: boolean;
 }
 
 /** The account `verify` signs in as for the pages that send a visitor to sign in: the project's, in `.env`. */
@@ -866,7 +868,7 @@ const checkAt = async (
   origin: string,
   pathname: string,
   width: number,
-  scheme: Scheme | undefined,
+  view: Pick<ProjectView, 'scheme' | 'presence'>,
   authored: Authored | undefined,
   asked: DevToolsInput,
   ssr: boolean,
@@ -874,7 +876,7 @@ const checkAt = async (
   click?: ClickAsk
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
-  const page = await openProjectPage(browser, origin, { width, height: 900, ...(scheme ? { scheme } : {}) });
+  const page = await openProjectPage(browser, origin, { width, height: 900, ...view });
   /** A report of a page that could not be looked at — nothing answered, no sign-in, sent elsewhere. */
   const unchecked = (issue: CheckIssue): CheckReport => ({
     path: pathname,
@@ -1221,6 +1223,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     asked,
     ssr: Boolean(options.ssr),
     ...(options.scheme ? { scheme: options.scheme } : {}),
+    presence: options.presence === true,
     ...(account ? { account } : {}),
     ...(options.click ? { click: { element: options.click, fill: options.fill ?? [] } } : {})
   });
@@ -1249,6 +1252,8 @@ export const checkRoutes = async (
     asked: DevToolsInput;
     ssr: boolean;
     scheme?: Scheme;
+    /** Taking part in the page's channels, as a visitor does — otherwise it only watches them. */
+    presence?: boolean;
     account?: Account;
     click?: ClickAsk;
   }
@@ -1278,7 +1283,7 @@ export const checkRoutes = async (
           where.origin,
           route,
           width,
-          options.scheme,
+          { ...(options.scheme ? { scheme: options.scheme } : {}), presence: options.presence === true },
           authored,
           options.asked,
           options.ssr,

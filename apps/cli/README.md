@@ -237,6 +237,11 @@ default, and `page shot` names the file by the theme it was painted in. The dev 
 full-page `page shot` is the whole page — the pane the SDK scrolls in unrolled, every lazy picture loaded, every arrival
 waiting for the scroll shown as it ends — in `tmp/shots/` unless `--out` says where.
 
+Both load a page as one that watches its realtime channels: it hears them — a topic the server refuses is still
+reported — and says nothing on them, so nobody on the page sees it arrive, join their members or send. `--presence`
+makes it take part as a visitor does. `--click` in `page shot` takes an element's name or any selector, CSS or
+Playwright's own (`button:has-text("Orbit")`).
+
 `page shot --compare` writes the two pictures side by side and the differences in red. It compares each section where it
 is on the other page, so a page 400 px longer is said once, with the section the drift starts at; then it pairs the
 texts both pages have and says what each does differently there — `h1 "Learn CSS" — font-size 68px → 60px · y +19px`.

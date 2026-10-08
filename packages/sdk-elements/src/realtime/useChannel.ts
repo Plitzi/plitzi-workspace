@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { REVOKED_TYPE, realtimeClientFor, trackPresence } from '@plitzi/sdk-shared/realtime';
+import {
+  REVOKED_TYPE,
+  isValidTopic,
+  matchChannel,
+  realtimeClientFor,
+  trackPresence
+} from '@plitzi/sdk-shared/realtime';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
-import type { RealtimeMessage } from '@plitzi/sdk-shared';
+import type { RealtimeMessage, RealtimePublishOptions } from '@plitzi/sdk-shared';
 import type { PresenceTracker, RealtimeMember } from '@plitzi/sdk-shared/realtime';
 
 export type UseChannelOptions = {
@@ -27,7 +33,8 @@ export type ChannelHandle = {
   /** This page's name on the channel — the `from` of what it sends. */
   me: string | undefined;
   members: RealtimeMember[];
-  publish: (type: string, data: unknown) => Promise<boolean>;
+  /** Heard by every other page on the topic — and by this one too with `{ echo: true }`, once the server took it. */
+  publish: (type: string, data: unknown, options?: RealtimePublishOptions) => Promise<boolean>;
   setPresence: (state: unknown) => void;
 };
 
@@ -40,9 +47,16 @@ export type ChannelHandle = {
  * connect to (the builder, an embed), and on the server.
  */
 const useChannel = (
-  topic: string | undefined,
+  asked: string | undefined,
   { grant, presence, onMessage, onJoin, onLeave }: UseChannelOptions = {}
 ): ChannelHandle => {
+  const [channels] = useCommonStore('schema.settings.channels');
+  /**
+   * Only a topic the server would let in is opened. One written from data that has not arrived yet — `room:` while the
+   * provider loads, or its template still as text — is refused by the server, request and console error included, on
+   * every load: it is waited for instead, and opened once it names one. The same `matchChannel` the server decides by.
+   */
+  const topic = asked && (channels ? matchChannel(asked, channels) : isValidTopic(asked)) ? asked : undefined;
   const [endpoint] = useCommonStore('realtime.endpoint');
   const [transport] = useCommonStore('realtime.transport');
   const client = useMemo(
@@ -108,7 +122,8 @@ const useChannel = (
   }, [announced, client, topic]);
 
   const publish = useCallback(
-    (type: string, data: unknown) => (client && topic ? client.publish(topic, type, data) : Promise.resolve(false)),
+    (type: string, data: unknown, options?: RealtimePublishOptions) =>
+      client && topic ? client.publish(topic, type, data, options) : Promise.resolve(false),
     [client, topic]
   );
   const setPresence = useCallback((state: unknown) => tracker.current?.set(state), []);

@@ -81,6 +81,8 @@ export interface ShotOptions {
   sheet?: boolean;
   /** Signed in first as this account, the password from `PLITZI_CHECK_PASSWORD` — as `page check --as` does. */
   as?: string;
+  /** Taking part in the page's channels — arriving, announcing itself — as a visitor does, so the others see it. */
+  presence?: boolean;
   /** When the first picture is taken: once the page settles (the default), or as soon as its HTML is in. */
   from?: ShotMoment;
   /** A script of steps played on the page (`shotSteps.ts`), or `@file` holding one. */
@@ -154,6 +156,8 @@ interface View {
   still: boolean;
   /** Signed in as first — on the project's own page only, never another site's. */
   account?: Account;
+  /** Taking part in the project page's channels; otherwise it only watches them. */
+  presence?: boolean;
   /** The first picture taken as soon as the HTML is in, not once the page settles: what plays while it loads. */
   fromLoad?: boolean;
 }
@@ -182,9 +186,25 @@ const DRIFT_PX = 2;
 /** An arrival that waits for the scroll and has not had it: one waiting to be seen, or one tied to the scroll. */
 const WAITING_FOR_SCROLL = '[data-motion-on="view"]:not([data-motion-seen]), [data-motion-on="scroll"]';
 
-/** A selector — CSS, or Playwright's own (`text=Saved`, `role=button[name="Publish"]`) — or an element's name. */
-const selectorOf = (target: string): string =>
-  /^([#.[]|(text|role|css|xpath)=)/.test(target) ? target : `[data-plitzi-el="${target}"]`;
+/**
+ * An element's name — letters, digits, `-` and `_`, as an id is written — or else a selector, CSS or Playwright's own
+ * (`button:has-text("Orbit")`, `text=Saved`, `role=button[name="Publish"]`).
+ */
+const selectorOf = (target: string): string => (/^[\w-]+$/.test(target) ? `[data-plitzi-el="${target}"]` : target);
+
+/**
+ * Whether a target finds an element (1) or none (0), or why it is no selector at all: Playwright throws on one it
+ * cannot read, and an uncaught throw ended the command with a stack trace.
+ */
+const countOf = async (page: BrowserPage, target: string): Promise<number | { problem: string }> => {
+  try {
+    return await page.locator(selectorOf(target)).first().count();
+  } catch (error) {
+    return {
+      problem: `${target} is neither an element's name nor a selector the page can read: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
+    };
+  }
+};
 
 const framing = (view: { clip?: string; viewport?: boolean; scrollTo?: string }): Framing => {
   if (view.clip) {
@@ -234,6 +254,13 @@ const pictureOf = async (
   }
 
   const sentTo = origin ? sentElsewhere(page, new URL(url).pathname) : undefined;
+
+  for (const target of [view.waitFor, view.scrollTo, view.clip]) {
+    const found = target === undefined ? 0 : await countOf(page, target);
+    if (typeof found !== 'number') {
+      return found;
+    }
+  }
 
   if (view.waitFor) {
     const found = await page.waitForSelector(selectorOf(view.waitFor), { timeout: 10_000 }).catch(() => null);
@@ -463,10 +490,16 @@ const clickThrough = async (
   const moments: Moment[] = [{ label: 'before', png: taken.png }];
   const clicked: { target: string; changed: number }[] = [];
   for (const target of clicks) {
-    const element = taken.page.locator(selectorOf(target)).first();
-    if ((await element.count()) === 0) {
-      return { problem: `${target} is not on the page: --click takes an element's name or a CSS selector.` };
+    const found = await countOf(taken.page, target);
+    if (typeof found !== 'number') {
+      return found;
     }
+
+    if (found === 0) {
+      return { problem: `${target} is not on the page: --click takes an element's name or a selector.` };
+    }
+
+    const element = taken.page.locator(selectorOf(target)).first();
 
     const before = moments[moments.length - 1].png;
     try {
@@ -680,6 +713,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(options.clip ? { clip: options.clip } : {}),
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
       ...(options.viewport ? { viewport: true } : {}),
+      ...(options.presence ? { presence: true } : {}),
       ...(account ? { account } : {}),
       ...(fromLoad ? { fromLoad } : {}),
       // Frames are about what moves, so they are taken as the page plays.

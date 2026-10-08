@@ -339,6 +339,10 @@ pageGroup
     '--as <username>',
     'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
   )
+  .option(
+    '--presence',
+    'Take part in the page’s realtime channels as a visitor does — arrive, announce, send. Otherwise it only watches them'
+  )
   .option('--json', 'One object per page and width, for a tool or an agent')
   .action((paths: string[], options: CheckOptions) => check(paths, options));
 
@@ -419,6 +423,10 @@ pageGroup
   .option(
     '--as <username>',
     'Sign in first as this account, through the server’s /auth routes — the password from PLITZI_CHECK_PASSWORD, in .env'
+  )
+  .option(
+    '--presence',
+    'Take part in the page’s realtime channels as a visitor does — arrive, announce, send. Otherwise it only watches them'
   )
   .option('--json', 'One object, for a tool or an agent')
   .action((path: string | undefined, options: ShotOptions) => shot(path, options));

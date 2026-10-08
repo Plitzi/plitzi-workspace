@@ -1,9 +1,10 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 
 import { accessRefusal } from '@plitzi/sdk-shared/actions';
-import { PRESENCE_TYPE, channelLimits, matchChannel } from '@plitzi/sdk-shared/realtime';
+import { OBSERVER_COOKIE_NAME, PRESENCE_TYPE, channelLimits, matchChannel } from '@plitzi/sdk-shared/realtime';
 
 import { warnRealtime } from './failure';
+import { readCookies } from '../../core/auth/credentials';
 import { openEventStream } from '../../core/http/sse';
 import { onAbort } from '../../helpers/onAbort';
 
@@ -80,6 +81,8 @@ export type Admission =
       /** The grant each accepted topic of a `grant: true` channel was opened with. */
       granted: Map<string, string>;
       refused: RealtimeRefusal[];
+      /** It hears and never speaks: the page asked to watch (`OBSERVER_COOKIE_NAME`). */
+      observer: boolean;
     };
 
 /**
@@ -143,7 +146,8 @@ export const admit = async (
     ...(user ? { user: { id: user.id, name: user.username } } : {}),
     accepted,
     granted,
-    refused
+    refused,
+    observer: Object.hasOwn(readCookies(req), OBSERVER_COOKIE_NAME)
   };
 };
 
@@ -160,6 +164,7 @@ export const connectionFor = (
   topics: admission.accepted,
   grants: admission.granted,
   announced: new Set(),
+  observer: admission.observer,
   sent: new Map(),
   send,
   end
@@ -183,7 +188,7 @@ const withinRate = (connection: RealtimeConnection, topic: string, perSecond: nu
 export const publishFrom = async (
   hub: RealtimeHub,
   connection: RealtimeConnection,
-  { topic, type, data }: { topic?: unknown; type?: unknown; data?: unknown }
+  { topic, type, data, echo }: { topic?: unknown; type?: unknown; data?: unknown; echo?: unknown }
 ): Promise<RealtimeAnswer> => {
   const name = typeof topic === 'string' ? topic : '';
   const declaration = connection.topics.get(name);
@@ -193,6 +198,12 @@ export const publishFrom = async (
 
   if (declaration.publish === 'server') {
     return { status: 403, error: `Only the server publishes on "${name}"`, reason: 'server_only' };
+  }
+
+  // Taken and never said: a page that watches goes on as a page would — announcing itself, sending what a click sends
+  // — and nobody on the topic hears any of it.
+  if (connection.observer) {
+    return { status: 204 };
   }
 
   const kind = typeof type === 'string' ? type : '';
@@ -220,7 +231,8 @@ export const publishFrom = async (
   }
 
   try {
-    await hub.publish(connection.space, hub.from(connection, name, kind, value));
+    // Presence is a member's state, never a message of its own: nobody hears their own announcement.
+    await hub.publish(connection.space, hub.from(connection, name, kind, value, echo === true && !presence));
   } catch (error) {
     warnRealtime('a message was not delivered')(error);
 

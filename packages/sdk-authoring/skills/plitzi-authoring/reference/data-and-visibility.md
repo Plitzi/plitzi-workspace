@@ -18,6 +18,8 @@ the value), or a format the space names once in `formats: { price: "{{ source|cu
 `bindTemplate(to, source, template, { category?, returns? })` is the computed attribute — a template over the value
 at `source`. `returns: 'value'` hands over what a single `{{ expression }}` evaluates to instead of its text: a list's
 `items`, a number, a flag (see [lists](lists.md)).
+A colour from data binds a custom property — `[{ to: '--who', source, category: 'style' }]` — that the class reads
+(`var(--who, var(--muted))`); a value with `;` or braces is not written.
 
 **A source names the id you gave the element** — `'posts.title'`, `'postList.item.cover'` — and the prefix is
 completed from what the element publishes (`apiContainer_posts`, `list_postList`; a `form` publishes under
@@ -72,6 +74,8 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
   `"{{ source ? apiUrl ~ '/workspaces/' ~ source ~ '/stats' : '' }}"` with `source: 'state.workspace.id'`. A server
   provider's bound `input` (`bindTemplate('input', 'state.c', '{{ { country: source } }}', { returns: 'value' })`)
   asks again on every change; `reloadApi('p', { … })` asks once.
+- An action is handed the page's route and query params as input (`r/:room` → `input.room`). A written `input` is
+  sent as is: a `{{ }}` in it is refused (`provider-input-template`) — bind it.
 - `isLoading` is true while it is asked again, in either runtime. A newer ask drops the older one; `cancelApi('p')` is a
   STOP: what is shown stays.
 - `runtime: 'server'` is resolved by the page server — server data is on unless a space says `rsc: { enabled: false }`.
@@ -106,9 +110,8 @@ server action answering only what is shown, its `access` checking who asks.
 - **Refreshed by writes:** a `webHook` that is not a GET refreshes every request to its own site by default
   (`invalidateQueries: 'origin'`); a `runServerAction` refreshes everything (`'all'`). Narrow it with
   `'elements'` + `invalidateElements: ['orders']`, or stop it with `'none'`.
-- **Say `'none'` when a refresh would move the page on.** A page that decides where to go from a provider's answer
-  ("profile complete → leave") will act on the refreshed answer in the middle of a multi-step form that saves as it
-  goes, and skip the last step.
+- **Say `'none'` when a refresh would move the page on.** A page that leaves on a provider's answer ("profile complete
+  → leave") would leave in the middle of a multi-step form that saves as it goes.
 
 ## Visibility
 
@@ -156,10 +159,9 @@ Rules for a condition's template:
   `'true'` or `'false'` is written as it says. A plain source, or a template that answers nothing (`''`), writes
   nothing: the element stays as it started — hidden for `visible`, shown for a binding written by hand.
 - **So a hiding flag is `visible: '!state.folded'`** (or a binding with no `visible`): on screen before anybody has set
-  it. A condition that answers "not known yet" with `'false'` from a value that IS there — a "folded" read off
-  something always set — hid every label of a sidebar for everybody.
-- **Hide the element itself.** Never wrap it in a container that is shown while the inner one is hidden: an empty
-  visible wrapper still takes a slot in its parent's `gap`, and leaves a hole in the page.
+  it.
+- **Hide the element itself**, not inside a wrapper left shown: an empty wrapper still takes a slot in its parent's
+  `gap`, a hole in the page.
 
 ### Loading, empty, error
 
@@ -183,9 +185,8 @@ shows on every load. Test for "arrived and empty" (`is defined and … is empty`
 
 ## Never ask the data for an opposite
 
-Both sides of one question are `visible: 'x'` and `visible: '!x'`, not an `x` and a `notX` in the server's answer.
-`!` reads a boolean that travelled as text (`"false"`, `"0"`) correctly. A three-state condition
-(`Boolean(post) && !canEdit`) still belongs where the data is made.
+Both sides of one question are `visible: 'x'` and `visible: '!x'`, never a `notX` in the answer — `!` reads `"false"`
+and `"0"` as false. A three-state condition still belongs where the data is made.
 
 ## State that outlives a reload
 

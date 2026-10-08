@@ -1,6 +1,6 @@
 /**
  * Style without copies: colours are tokens with a light and a dark value, a look used twice is a class, "this class
- * plus one thing" is rules on top of it (`class: [card, { … }]`, which needs an `id`), and a rule for tablet AND phone
+ * plus one thing" is rules on top of it (`class: [card, { … }]`), and a rule for tablet AND phone
  * is written once under `compact`.
  */
 import { container, heading, styles, text } from '@plitzi/sdk-authoring';

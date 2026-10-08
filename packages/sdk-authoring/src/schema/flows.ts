@@ -13,6 +13,15 @@ import type { ElementInteraction, WhileRunning } from '@plitzi/sdk-shared';
  */
 export type { Rule, RuleGroup };
 
+/** The operators that ask about the field alone — whether it holds anything — and so compare it with no value. */
+type FieldOnlyOperator = 'empty' | 'notEmpty';
+
+/** A rule as {@link when} takes it: `{ field, operator: 'empty' }` needs no `value`, which nothing would read. */
+export type WhenRule =
+  Rule | { id?: string; field: string; operator: FieldOnlyOperator; enabled?: boolean; isBinding?: false };
+
+const ruleOf = (rule: WhenRule): Rule => ('value' in rule ? rule : { ...rule, value: '' });
+
 /**
  * Where a step runs, when it did not say.
  *
@@ -146,8 +155,8 @@ export const named = (id: string, step: StepSpec): StepSpec => ({ ...step, id })
  * Written out, a condition is a query-builder group: a combinator and a list of rules, four levels of nesting for
  * "did that work?". Here it is the rule.
  */
-export const when = (rules: Rule | Rule[], step: StepSpec, combinator: 'and' | 'or' = 'and'): StepSpec => {
-  const group: RuleGroup = { combinator, rules: Array.isArray(rules) ? rules : [rules] };
+export const when = (rules: WhenRule | WhenRule[], step: StepSpec, combinator: 'and' | 'or' = 'and'): StepSpec => {
+  const group: RuleGroup = { combinator, rules: (Array.isArray(rules) ? rules : [rules]).map(ruleOf) };
 
   return { ...step, when: step.when ? both(step.when, group) : group };
 };

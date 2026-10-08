@@ -3,6 +3,10 @@
 '@plitzi/sdk-style': patch
 '@plitzi/plitzi-builder': patch
 '@plitzi/sdk-variables': patch
+'@plitzi/sdk-shared': patch
+'@plitzi/sdk-elements': patch
+'@plitzi/sdk-authoring': patch
+'@plitzi/cli': patch
 ---
 
 - **`server.cache.invalidate` drops what a page is rendered from** (`@plitzi/sdk-server`): the pages, the RSC answers
@@ -60,3 +64,46 @@
 - **Panels keep their width**: each side panel opens at the width it was left at; the right one starts at 380px.
 - **Text no smaller than 11px** across the builder's panels (it went down to 10px in fifty places).
 
+## Realtime
+
+- **A page hears what it sent when it asks to** (`@plitzi/sdk-shared`, `@plitzi/sdk-server`, `@plitzi/sdk-elements`):
+  `publishOn('room', 'react', data, { echo: true })`, `useChannel().publish(type, data, { echo: true })` and the
+  channel's `publish` callback (`echo`) hand the message back to the page that sent it too, once the server took it —
+  stamped like everyone's, with `echo: true`, its `from` the channel's `me`. Without it a page still never hears its
+  own messages, and the docs said "every page on its topic hears it": they now say every OTHER page. Presence never
+  echoes.
+- **A topic is opened only once it names one** (`@plitzi/sdk-elements`): `useChannel` — and so the `channel` element —
+  opens a topic only when a channel of the space covers it, by the same `matchChannel` the server decides by. A topic
+  written from data that has not arrived (`room:` while its provider loads, or its template still as text) asked the
+  server for both, was refused with a 403 and a console error on every load, and is now waited for.
+- **Pages that watch** (`@plitzi/sdk-server`, `@plitzi/cli`): a connection whose page carries the `plitzi-observer`
+  cookie hears its topics and says nothing on them — no `$join`, no presence, its publishes taken and dropped.
+  `page check`, `page shot` and `verify` load pages that way, so checking a live site is no longer a visitor walking
+  into a room (`X walked in`, a member more in every picture). `--presence` takes part as a visitor does.
+
+## Authoring
+
+- **`provider-input-template`** (refused): a `{{ }}` in a provider's written `input` is sent as its own text — neither
+  the page server nor the browser evaluates what an object holds — and replaced the route param of the same name the
+  action was already given, so `input: { room: '{{ navigation.routeParams.room }}' }` reached the task as `""` and the
+  page answered 404. The action is handed the page's route and query params as its input; anything else is a bound
+  `input`.
+- **Rules on top of a class need no `id`** (`class: [card, { gap: '6px' }]`): they are named after the id the element
+  is given, written or not. `modifier-without-id` is gone; a one-off tweak no longer needs a name nothing reads.
+- **Typed list rows have `inTemplate`**, as untyped ones do, and `bindTemplate`, `visibleWhen`, `hiddenWhen` and
+  `variantFrom` take a typed source's path as well as a name: turning a list typed broke every template of its rows.
+- **`when({ field, operator: 'empty' })`** takes no `value` (nor `notEmpty`), as flows.md recommends; it did not
+  type-check.
+- **Data-driven colours**: a style binding on a custom property (`{ to: '--who', category: 'style' }`) is written as
+  named — it was camel-cased into `who` — so a class reads `var(--who, var(--muted))`. A style binding's value carrying
+  `;` or braces is not written: the page server writes inline styles as text, and such a value added declarations of
+  its own. `binding-target-unknown` on `style` or a CSS property says to bind it in the `style` category.
+- `unknown-attribute` for `decorative` on an `svg` or a `fontAwesome` says what it means: without a `label` it is
+  already hidden from screen readers.
+
+## CLI
+
+- **`page shot --click` (and `--clip`, `--wait-for`, `--scroll-to`, `--steps`) takes any selector**: a value that is
+  not an element's name (letters, digits, `-`, `_`) is a selector, CSS or Playwright's own (`button:has-text("Orbit")`).
+  It was wrapped as a name, and an invalid selector ended the command with Playwright's stack trace; it is now refused
+  with the reason.

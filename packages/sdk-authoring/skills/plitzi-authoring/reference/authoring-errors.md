@@ -47,7 +47,7 @@ The space is not written until these are fixed.
 | `channel-grant` | a topic of a private channel opened with no grant to it | the grant the message names, or a public channel |
 | `channel-topic` | a `channel` element with no topic | a topic a channel of the space covers |
 | `children-in-leaf` | children on a type that renders only its own attributes (`heading`, `text`, `image`…) | a `container` — for a heading made of parts, `container({ subType: 'h1', children })` |
-| `class-and-css` | an element wearing a shared class AND `css` or `states` of its own — it has one base selector | the rules on top of the class: `class: [card, { opacity: '0.5' }]` (needs an `id`) — or into the class |
+| `class-and-css` | an element wearing a shared class AND `css` or `states` of its own — it has one base selector | the rules on top of the class: `class: [card, { opacity: '0.5' }]` — or into the class |
 | `class-and-selector` | an element with a shared class and a `selector` of its own | drop one: a shared class IS its selector |
 | `class-conflict` | two different declarations for one class name | rename one, or make them agree |
 | `class-listed-under-other-name` | a `styles()` declaration listed in `classes` under another name | list it under its own name |
@@ -97,7 +97,6 @@ The space is not written until these are fixed.
 | `list-without-items` | a controlled list with nothing to render | `items: [ … ]` or `bind: { items: 'provider.data.rows' }` |
 | `loading-slot-unknown` | an `apiContainer`'s `loadingSlot` that is not the id of one of its children | the id of the child to show until the first answer — `loadingSlot: 'catalog-skeleton'` beside that child |
 | `modifier-count` | more than one set of rules in a class list | one set, after the classes: `class: [card, { opacity: '0.5', 'margin-top': '8px' }]` |
-| `modifier-without-id` | rules on top of a class on an element with no `id` — the id names the class they become | `id: 'hero-bg'` |
 | `motion-invalid` | a `motion` with a preset, a trigger or a timing the page cannot play | `motion: { enter: 'fade-up', on: 'view' }` — the message lists the presets |
 | `motion-no-tag` | a `motion` on an element with no tag of its own — nothing to move | the motion on what it wraps, or a `subType` on it |
 | `no-pages` | a space with no pages | `pages: [{ id: 'home', name: 'Home', slug: '', body: [] }]` |
@@ -119,6 +118,7 @@ The space is not written until these are fixed.
 | `prop-unknown` | a prop the component does not declare, handed in or read | the prop it suggests, or declare it: `props: { name: { type: 'text' } }` |
 | `prop-value` | a prop handed in with a value its declaration does not take | a value of the declared type, or one of its options |
 | `props-outside-component` | `props.x` read outside a component | read the source it would have come from |
+| `provider-input-template` | a `{{ }}` in a provider's written `input` — sent as its own text, never evaluated, and over the route param of the same name | nothing for a route or query param: the action is already handed them as `input.<name>`; anything else, a bound `input` (`bindTemplate('input', …, { returns: 'value' })`) |
 | `quiet-unknown` | an element's `quiet` naming something that is not a suggestion's code — a problem is never quieted | the code of the suggestion it was offered: `quiet: ['repeated-shape']` |
 | `redirect-target-unknown` | a page that sends visitors it is not for to a page the space does not have | a page's id or slug (`''` is the home page), or a full URL |
 | `row-and-children` | a list with a `row` and `children` — the row is what it renders | one of the two |

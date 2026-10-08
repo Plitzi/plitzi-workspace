@@ -3,6 +3,7 @@ import { isSvgMarkup } from '@plitzi/sdk-elements/elements/media/Svg/sanitizeSvg
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import { isCssProperty, isCustomProperty } from '../../style';
 import { BINDING_CATEGORIES, LOAD_STRATEGIES, RUNTIMES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
 import { textOf } from './context';
@@ -104,12 +105,15 @@ const checkAttributes = (ctx: LintContext, element: Element, where: string): voi
   const defaults = ctx.catalogs.defaultAttributes?.[type] ?? {};
   for (const [name, value] of Object.entries(element.attributes)) {
     if (names && !names.includes(name)) {
-      const trigger = /^on[A-Z]/.test(name)
+      // A drawing that names nothing — an svg, an icon — is decoration already: `label` is what makes it mean something.
+      const hint = /^on[A-Z]/.test(name)
         ? ` What happens on an event is a flow: \`flows: [[${name}(), setState({ … })]]\`.`
-        : '';
+        : name === 'decorative' && names.includes('label')
+          ? ` Without a \`label\` a "${type}" is already decorative — hidden from screen readers: leave \`decorative\` out.`
+          : '';
       ctx.error(
         'unknown-attribute',
-        `${where} sets "${name}", which a "${type}" never reads${didYouMean(name, names) || '.'}${trigger || ` It reads ${names.join(', ')}.`}`,
+        `${where} sets "${name}", which a "${type}" never reads${didYouMean(name, names) || '.'}${hint || ` It reads ${names.join(', ')}.`}`,
         element.id
       );
       continue;
@@ -262,9 +266,14 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
     // follows the data.
     const unread = binding.to !== 'visibility' && binding.to !== 'className' && !names?.includes(binding.to);
     if (category === 'attributes' && names && unread) {
+      // A style is bound by the property it sets, in its own category — a custom one when the class keeps the palette.
+      const styled = binding.to === 'style' || isCssProperty(binding.to) || isCustomProperty(binding.to);
+      const how = styled
+        ? ` A style is bound in the \`style\` category, one property at a time — \`bindTemplate('${binding.to === 'style' ? 'background-color' : binding.to}', '${binding.source}', '{{ source }}', { category: 'style' })\` — or a custom property its class reads: \`'--who'\` beside \`background-color: var(--who)\`.`
+        : ` It reads ${names.join(', ')}.`;
       ctx.error(
         'binding-target-unknown',
-        `${at} lands on "${binding.to}", which a "${element.definition.type}" never reads — the value arrives and nothing shows it${didYouMean(binding.to, names) || '.'} It reads ${names.join(', ')}.`,
+        `${at} lands on "${binding.to}", which a "${element.definition.type}" never reads — the value arrives and nothing shows it${(!styled && didYouMean(binding.to, names)) || '.'}${how}`,
         element.id
       );
     }
@@ -430,6 +439,51 @@ const warnRowsNotItems = (ctx: LintContext, list: Element): void => {
   }
 };
 
+const ADDRESS_PARAM = /navigation\.(?:routeParams|queryParams)\.([\w-]+)/g;
+
+/** A provider's written `input` — an object, or its JSON text as the builder's editor keeps it. */
+const writtenInput = (input: unknown): Record<string, unknown> | undefined => {
+  if (typeof input !== 'string') {
+    return isRecord(input) ? input : undefined;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(input || '{}');
+
+    return isRecord(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * A `{{ }}` in a provider's written `input` is sent as its own text: the input is a value, and neither the page server
+ * nor the browser evaluates what an object holds. It also replaces the route param of the same name, which the action
+ * was already given — so `{ room: '{{ navigation.routeParams.room }}' }` hands the action braces instead of the room.
+ */
+const checkWrittenInput = (ctx: LintContext, input: unknown, where: string, elementId: string): void => {
+  const templated = Object.entries(writtenInput(input) ?? {}).filter(([, value]) =>
+    stringsIn(value).some(hasTemplateSyntax)
+  );
+  if (templated.length === 0) {
+    return;
+  }
+
+  const keys = templated.map(([key]) => key);
+  const fromAddress = templated.filter(([key, value]) =>
+    stringsIn(value).some(text => [...text.matchAll(ADDRESS_PARAM)].some(match => match[1] === key))
+  );
+  const how =
+    fromAddress.length === templated.length
+      ? `The action is already handed the page's route and query params as its input — \`input.${keys[0]}\` — so remove ${keys.length === 1 ? 'it' : 'them'} from \`input\`.`
+      : `Bind the input instead, evaluated where it runs: \`bindTemplate('input', 'state.${keys[0]}', '{{ { ${keys[0]}: source } }}', { returns: 'value' })\`. The page's route and query params already reach the action as its input.`;
+  ctx.error(
+    'provider-input-template',
+    `${where} writes ${keys.map(key => `"${key}"`).join(', ')} into its \`input\` as a template, which is never evaluated: a written input is sent as it is, braces and all. ${how}`,
+    elementId
+  );
+};
+
 /**
  * What renders, and renders something other than what it plainly means. Refused where there is no other reading — a
  * controlled list with nothing to render — and warned where there is a rare legitimate one.
@@ -538,6 +592,10 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
         element.id
       );
     }
+  }
+
+  if (type === 'apiContainer' && !bound('input')) {
+    checkWrittenInput(ctx, attributes.input, where, element.id);
   }
 
   // Server data is on unless the space turns it off: the builder and the MCP never write `rsc`, and a space they made

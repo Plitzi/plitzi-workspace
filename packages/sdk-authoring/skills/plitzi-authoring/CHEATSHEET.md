@@ -63,7 +63,7 @@ const card = styles('card', { padding: 24, borderRadius: 16 });        // shorth
 styles('title', { fontSize: { desktop: '48px', compact: '32px' }, fontWeight: 700 });   // one property per breakpoint
 styles('card', { css: { desktop: { … }, compact: { … } }, states: { hover: { … } }, variants: { active: { … } } });
 container({ class: card });                                    // a shared class…
-container({ id: 'hero', class: [card, { opacity: '0.5' }] });  // …plus one thing (needs an id)
+container({ class: [card, { opacity: '0.5' }] });              // …plus one thing
 container({ css: { padding: '8px' } });                        // rules of its own — never with `class`
 ```
 

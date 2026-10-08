@@ -4,8 +4,10 @@ import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstant
 
 import { AuthoringError } from './codes';
 import { didYouMean } from './suggest';
+import { sourceName } from '../elements/source';
 
 import type { BindingSpec, BindingsSpec } from './types';
+import type { SourceName } from '../elements/source';
 import type { ClassRef } from '../style';
 import type { BindingCategory, ElementBinding } from '@plitzi/sdk-shared';
 
@@ -102,9 +104,9 @@ export const toBindingSpecs = (bind: BindingsSpec): BindingSpec[] =>
  * and getting it wrong writes a `visibility` attribute no element reads, so the element stays visible and nothing
  * reports anything.
  */
-export const visibleWhen = (source: string, template?: string): BindingSpec => ({
+export const visibleWhen = (source: SourceName, template?: string): BindingSpec => ({
   to: 'visibility',
-  source,
+  source: sourceName(source),
   category: 'initialState',
   ...(template ? { transformers: [{ action: 'twigTemplate', params: { template } }] } : {})
 });
@@ -146,12 +148,12 @@ export interface BindTemplateOptions {
  */
 export const bindTemplate = (
   to: string,
-  source: string,
+  source: SourceName,
   template: string,
   options: BindTemplateOptions = {}
 ): BindingSpec => ({
   to,
-  source,
+  source: sourceName(source),
   ...(options.category ? { category: options.category } : {}),
   transformers: [
     {
@@ -169,7 +171,7 @@ export const bindTemplate = (
  * is a field per question whose only reason to exist is the missing word, and it puts "when is this hidden?" in
  * whatever service produced the data rather than in the page that hides it. This inverts the value on the way in.
  */
-export const hiddenWhen = (source: string): BindingSpec => ({
+export const hiddenWhen = (source: SourceName): BindingSpec => ({
   ...visibleWhen(source),
   transformers: [{ action: 'not', params: {} }]
 });
@@ -197,12 +199,12 @@ export interface VariantFromOptions {
  * declaration, the key cannot drift from the class it means. The value at `source` names the variant, or `template`
  * turns it into one.
  */
-export const variantFrom = (cls: ClassRef, source: string, options: VariantFromOptions = {}): BindingSpec => {
+export const variantFrom = (cls: ClassRef, source: SourceName, options: VariantFromOptions = {}): BindingSpec => {
   const { slot = 'base', template } = options;
 
   return {
     to: 'styleVariant',
-    source,
+    source: sourceName(source),
     category: 'initialState',
     transformers: [
       ...(template ? [{ action: 'twigTemplate', params: { template } }] : []),

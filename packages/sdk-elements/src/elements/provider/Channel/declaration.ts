@@ -19,7 +19,7 @@ const declaration = elementDeclaration<ChannelAttributes>()({
       title: 'On Message',
       type: 'trigger',
       params: {},
-      preview: { type: '', data: '', from: '', user: '', at: '' }
+      preview: { type: '', data: '', from: '', user: '', at: '', echo: false }
     },
     onJoin: {
       action: 'onJoin',
@@ -44,7 +44,8 @@ const declaration = elementDeclaration<ChannelAttributes>()({
       preview: {},
       params: {
         type: { label: 'Type', defaultValue: '', type: 'text' },
-        data: { label: 'Data (JSON or a template)', defaultValue: '', type: 'text' }
+        data: { label: 'Data (JSON or a template)', defaultValue: '', type: 'text' },
+        echo: { label: 'Heard on this page too', defaultValue: false, type: 'boolean' }
       }
     },
     setPresence: {
@@ -66,13 +67,14 @@ const declaration = elementDeclaration<ChannelAttributes>()({
       label: 'Channel',
       type: 'channel',
       description:
-        'A realtime channel: every page on the same `topic` hears what any of them publishes, within milliseconds. ' +
+        'A realtime channel: every OTHER page on the same `topic` hears what one publishes, within milliseconds — the ' +
+        'page that sent it too with `echo` (its `from` is then the channel\'s `me`). ' +
         'The topic must match a channel the space declares in its settings (`channels`), e.g. `board:{{ id }}` ' +
         'under `board:{id}`. A topic of a private channel (`grant: true`) opens only with `grant`, bound to the grant ' +
         'the action that let this visitor in returned (its `realtime.grant` step). ITS DESCENDANTS bind to its source `channel_<id>`: `connected`, `members` (with the ' +
         'state each announced), `messages` (the last `keep`) and `last`. It fires `onMessage`; `onJoin` when ' +
         'somebody who came after this page has announced who they are, and `onLeave` when somebody goes — each with ' +
-        '`from`, `user` and the `state` they announced; and answers `publish({ type, data })` and `setPresence({ data })`; `presence` is the state this ' +
+        '`from`, `user` and the `state` they announced; and answers `publish({ type, data, echo })` and `setPresence({ data })`; `presence` is the state this ' +
         'page announces (a name, a colour). Closed in the builder and anywhere without a server.',
       items: [],
       bindings: {},

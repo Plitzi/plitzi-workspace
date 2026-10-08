@@ -119,3 +119,10 @@ export const JOIN_TYPE = '$join';
  * topic, and hears nothing more on it until a new grant opens it again.
  */
 export const REVOKED_TYPE = '$revoked';
+
+/**
+ * A page that watches its channels without taking part: what `plitzi page check` and `page shot` load pages with. It
+ * hears every topic it may open, and says nothing on any — no arrival, no presence, nothing it publishes — so a check
+ * of a live site is never a visitor walking into somebody's room. Anyone may set it; it silences only that page.
+ */
+export const OBSERVER_COOKIE_NAME = 'plitzi-observer';

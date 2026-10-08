@@ -27,6 +27,14 @@ const getValues = (
   };
 };
 
+/**
+ * A value a style binding may write: one CSS value, and nothing that ends it. The page server writes inline styles as
+ * `name:value;` text, so a value from data carrying `;` or braces — a colour a visitor typed — would add declarations
+ * of its own to the element (`red;position:fixed;inset:0`). Such a value is not written.
+ */
+const isStyleValue = (value: unknown): boolean =>
+  typeof value === 'number' || (typeof value === 'string' && !/[;{}<>]/.test(value));
+
 const getBindingsDetails = (
   dataSource: Record<string, RuleValue>,
   element: Element,
@@ -51,7 +59,8 @@ const getBindingsDetails = (
           return;
         }
 
-        if (bkey === 'style') {
+        // A custom property (`--who`) is written as it is named: the class reads it as `var(--who)`.
+        if (bkey === 'style' && !toPath.startsWith('--')) {
           toPath = camelCase(toPath);
         }
 
@@ -84,6 +93,10 @@ const getBindingsDetails = (
          */
         if (bkey === 'initialState' && toPath === 'visibility' && source && get(dataSource, source) !== undefined) {
           resultValue = isTrue(resultValue);
+        }
+
+        if (bkey === 'style' && !isStyleValue(resultValue)) {
+          return;
         }
 
         if (typeof resultValue === 'boolean' || typeof resultValue === 'number' || resultValue) {

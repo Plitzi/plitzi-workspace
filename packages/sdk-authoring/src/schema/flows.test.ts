@@ -24,6 +24,15 @@ describe('when', () => {
     });
   });
 
+  /** `empty` asks whether the field holds anything: there is nothing to compare it with. */
+  it('takes `empty` and `notEmpty` with no value', () => {
+    const conditional = when({ field: 'state.myName', operator: 'empty' }, step('setState'));
+
+    expect(conditional.when?.rules).toEqual([{ field: 'state.myName', operator: 'empty', value: '' }]);
+    // @ts-expect-error — an operator that compares the field with something needs that something.
+    when({ field: 'state.myName', operator: '=' }, step('setState'));
+  });
+
   it('takes several rules, and the combinator', () => {
     const conditional = when(
       [

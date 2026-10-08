@@ -2,7 +2,7 @@ import { REVOKED_TYPE } from './topics';
 import { pConsole } from '../devTools/utils/PlitziConsole';
 
 import type { LogRealtime, LogType } from '../types/DevToolsTypes';
-import type { RealtimeMessage, RealtimeTransport } from '../types/RealtimeTypes';
+import type { RealtimeMessage, RealtimePublishOptions, RealtimeTransport } from '../types/RealtimeTypes';
 
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'closed';
 
@@ -18,8 +18,11 @@ export type RealtimeClient = {
    * reopens nothing the server already let in. `undefined` forgets it.
    */
   grant: (topic: string, grant: string | undefined) => void;
-  /** Sends on a topic this page listens to. `false` when the server refused it or there is no connection. */
-  publish: (topic: string, type: string, data: unknown) => Promise<boolean>;
+  /**
+   * Sends on a topic this page listens to — heard by every other page on it, and by this one too with `echo`. `false`
+   * when the server refused it or there is no connection.
+   */
+  publish: (topic: string, type: string, data: unknown, options?: RealtimePublishOptions) => Promise<boolean>;
   onStatus: (listener: StatusListener) => () => void;
   readonly status: RealtimeStatus;
   /** This page's name on its channels — the `from` of what it sends — once connected. */
@@ -119,7 +122,7 @@ type Connection = {
   transport: RealtimeTransport;
   me?: string;
   close: () => void;
-  publish: (topic: string, type: string, data: unknown) => Promise<boolean>;
+  publish: (topic: string, type: string, data: unknown, options: RealtimePublishOptions) => Promise<boolean>;
 };
 
 /**
@@ -220,7 +223,7 @@ export const createRealtimeClient = (
       topics,
       transport: 'sse',
       close: () => controller.abort(),
-      publish: async (topic, type, data) => {
+      publish: async (topic, type, data, { echo }) => {
         if (!token) {
           return false;
         }
@@ -229,7 +232,7 @@ export const createRealtimeClient = (
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ token, topic, type, data })
+          body: JSON.stringify({ token, topic, type, data, ...(echo ? { echo } : {}) })
         }).catch(() => undefined);
         if (response?.status === 401 && current === connection) {
           // The server no longer knows this connection — it restarted, or dropped it. A new one gets a new secret.
@@ -316,7 +319,7 @@ export const createRealtimeClient = (
         settleAll();
         socket.close();
       },
-      publish: (topic, type, data) =>
+      publish: (topic, type, data, { echo }) =>
         new Promise(resolve => {
           if (socket.readyState !== socket.OPEN) {
             resolve(false);
@@ -334,7 +337,7 @@ export const createRealtimeClient = (
             clearTimeout(timer);
             resolve(ok);
           });
-          socket.send(JSON.stringify({ id, topic, type, data }));
+          socket.send(JSON.stringify({ id, topic, type, data, ...(echo ? { echo } : {}) }));
         })
     };
 
@@ -456,8 +459,8 @@ export const createRealtimeClient = (
         reopenSoon(true);
       }
     },
-    publish: async (topic, type, data) => {
-      const delivered = (await whenOpen(topic)) && current ? await current.publish(topic, type, data) : false;
+    publish: async (topic, type, data, options = {}) => {
+      const delivered = (await whenOpen(topic)) && current ? await current.publish(topic, type, data, options) : false;
       say(delivered ? 'info' : 'danger', `${topic} → ${type}${delivered ? '' : ' (not delivered)'}`, {
         event: 'published',
         topic,

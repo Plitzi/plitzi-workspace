@@ -70,11 +70,11 @@ a row's button posts `{ jobId: '{{ list_jobRows.item.id }}' }` — the row that 
 
 **Pass objects, not JSON text.** `input: { title: '{{ form.values.title }}' }` rather than `input: '{"title": …}'`:
 each value keeps its own type, and nothing depends on the quoting. (JSON text works — a value inside one of its strings
-is escaped for it — but an object says the same without the punctuation.)
+is escaped for it — but an object needs no punctuation.)
 
 **A field left empty is not in `values`.** A form sends what was typed, and a field nobody typed in sends nothing —
 so `when({ field: 'sent.values.code', operator: '=', value: '' }, …)` never holds for it. Ask
-`operator: 'empty'` / `'notEmpty'`, which treat missing and `''` alike.
+`operator: 'empty'` / `'notEmpty'` (no `value`), which treat missing and `''` alike.
 
 ## Writes and what they refresh
 

@@ -21,6 +21,8 @@ export type RealtimeConnection = {
   grants: Map<string, string>;
   /** The topics it announced itself on, which hear `$leave` when it goes. */
   announced: Set<string>;
+  /** A page that watches (`page check`, `page shot`): it hears its topics, arrives on none and says nothing on any. */
+  observer: boolean;
   /** Messages sent this second, by topic — the rate a channel allows is per connection, and a connection is here. */
   sent: Map<string, { second: number; count: number }>;
   send: (event: string, data: unknown) => void;
@@ -127,14 +129,24 @@ export const createRealtimeHub = (pubsub: PubSubAdapter) => {
     }
   };
 
-  /** A stamped message from this connection: `from` and `user` are the server's, whatever was sent. */
-  const from = (connection: RealtimeConnection, topic: string, type: string, data: unknown): RealtimeMessage => ({
+  /**
+   * A stamped message from this connection: `from` and `user` are the server's, whatever was sent. `echo` carries the
+   * sender's asking to hear it too, which its page reads.
+   */
+  const from = (
+    connection: RealtimeConnection,
+    topic: string,
+    type: string,
+    data: unknown,
+    echo = false
+  ): RealtimeMessage => ({
     topic,
     type,
     data,
     from: connection.id,
     ...(connection.user ? { user: connection.user } : {}),
-    at: Date.now()
+    at: Date.now(),
+    ...(echo ? { echo: true } : {})
   });
 
   /**
@@ -174,7 +186,7 @@ export const createRealtimeHub = (pubsub: PubSubAdapter) => {
       byToken.set(connection.token, connection);
       for (const [topic, declaration] of connection.topics) {
         await join(connection, topic);
-        if (declaration.presence) {
+        if (declaration.presence && !connection.observer) {
           await publish(connection.space, from(connection, topic, JOIN_TYPE, null));
         }
       }

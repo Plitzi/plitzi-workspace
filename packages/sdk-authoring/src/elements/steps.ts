@@ -236,17 +236,24 @@ export const openModal = (target: string, metadata?: string): StepSpec => ({
 });
 
 /**
- * Says something on a `channel`, by id: every page on its topic hears it — `onMessage`, and the channel's source.
+ * Says something on a `channel`, by id: every OTHER page on its topic hears it — `onMessage`, and the channel's source.
+ * The page that said it hears it too with `{ echo: true }` — a reaction, a chat line: what the sender shows the moment
+ * it sends — once the server took it, its `from` the channel's `me`.
  *
  * `data` is what they receive: a template (`'{{ state.draft }}'`) or JSON text. `type` is yours to name — `chat`,
  * `wave`, `move` — and a flow on `onMessage` tells them apart with `when({ field: '<step>.type', … })`.
  */
-export const publishOn = (target: string, type: string, data: unknown = null): StepSpec => ({
+export const publishOn = (
+  target: string,
+  type: string,
+  data: unknown = null,
+  { echo = false }: { echo?: boolean } = {}
+): StepSpec => ({
   type: 'callback',
   action: 'publish',
   title: 'Publish',
   on: target,
-  params: { type, data: typeof data === 'string' ? data : JSON.stringify(data) }
+  params: { type, data: typeof data === 'string' ? data : JSON.stringify(data), ...(echo ? { echo } : {}) }
 });
 
 /** Announces this page on a `channel` with presence — a name, a colour: what the other members see of it. */

@@ -909,8 +909,9 @@ class SpaceAuthor {
    */
   private selectorFor(
     path: string,
+    /** The element's id, written or given: rules on top of a class become a class named after it. */
+    id: string,
     spec: {
-      id?: string;
       type: string;
       class?: ElementClassList;
       css?: CssSpec;
@@ -943,7 +944,7 @@ class SpaceAuthor {
         });
       }
 
-      const modifier = this.modifierFor(spec, modifiers, place);
+      const modifier = this.modifierFor(id, spec, modifiers, place);
 
       return [...names, ...(modifier ? [modifier] : [])].join(' ');
     }
@@ -981,7 +982,7 @@ class SpaceAuthor {
    * The class an element's own rules on top of its classes become — `<id>--own`, written after every shared class so it
    * wins over them. One set per element, and only on an element with an `id`, which is what names it for good.
    */
-  private modifierFor(spec: { id?: string; type: string }, modifiers: StyleSpec[], place: string): string | undefined {
+  private modifierFor(id: string, spec: { type: string }, modifiers: StyleSpec[], place: string): string | undefined {
     if (modifiers.length === 0) {
       return undefined;
     }
@@ -996,18 +997,7 @@ class SpaceAuthor {
       });
     }
 
-    if (spec.id === undefined) {
-      this.refusals.push({
-        place,
-        at: writtenAt(spec),
-        code: 'modifier-without-id',
-        message: `${where} has rules of its own in its class list but no \`id\`. Those rules become a class named after the element, so it needs a name: \`id: 'hero-bg'\`.`
-      });
-
-      return undefined;
-    }
-
-    const name = modifierClassName(spec.id);
+    const name = modifierClassName(id);
     this.assertOwnSelector(name, where);
     const blocks = toBlocks(modifiers[0]);
     this.writeSelector(name, blocks, where);
@@ -1016,7 +1006,7 @@ class SpaceAuthor {
       written: () => {
         const at = writtenAt(spec);
 
-        return `the own rules of "${spec.id ?? name}"${at === undefined ? '' : ` at ${at}`}`;
+        return `the own rules of "${id}"${at === undefined ? '' : ` at ${at}`}`;
       }
     });
 
@@ -1495,7 +1485,7 @@ class SpaceAuthor {
         rootId: id,
         items: [],
         styleSelectors: {
-          base: this.selectorFor(path, { type: 'page', css: page.css, class: page.class, selector: page.selector })
+          base: this.selectorFor(path, id, { type: 'page', css: page.css, class: page.class, selector: page.selector })
         },
         ...(page.flows ? { interactions: authorFlows(page.flows, id) } : {}),
         ...(page.flag === undefined ? {} : { flag: flagGateOf(page.flag, `Page "${page.name}"`) })
@@ -1669,7 +1659,7 @@ class SpaceAuthor {
         type: 'layoutContainer',
         rootId: layout.id,
         items: [],
-        styleSelectors: { base: this.selectorFor(path, { type: 'layoutContainer', ...layout }) },
+        styleSelectors: { base: this.selectorFor(path, layout.id, { type: 'layoutContainer', ...layout }) },
         initialState: { visibility: true },
         ...(bindings?.length ? { bindings: groupBindings(path, bindings, sourceIndex, where) } : {}),
         ...(layout.flows ? { interactions: authorFlows(layout.flows, layout.id) } : {})
@@ -1983,7 +1973,7 @@ class SpaceAuthor {
         // A slot names a class outright: it dresses a part of an element that already exists, and a selector of
         // its own per control would write the same rule once per input on the page.
         styleSelectors: {
-          base: this.selectorFor(identity, spec, place),
+          base: this.selectorFor(identity, id, spec, place),
           ...this.declaredSlots(spec.type),
           ...this.slotSelectors(spec, place)
         },

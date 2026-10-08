@@ -52,10 +52,14 @@ describe('rules on top of a class', () => {
     expect(style.platform.desktop['badge--own'].attributes.base.states?.hover).toEqual({ opacity: '0.8' });
   });
 
-  it('need the element’s id, which names them, and come one set at a time', () => {
-    expect(() => authorSpace(space([container({ class: [cover, { opacity: '0.5' }] })]))).toThrow(
-      /rules of its own in its class list but no `id`/
-    );
+  /** A one-off tweak needs no name of its own: the id the element is given names its rules, as a written one does. */
+  it('are named after the element’s id, written or given, and come one set at a time', () => {
+    const { schema, style } = authorSpace(space([container({ class: [cover, { opacity: '0.5' }] })]));
+    const [tweaked] = Object.values(schema.flat).filter(element => element.definition.type === 'container');
+    const own = `${tweaked.id}--own`;
+
+    expect(tweaked.definition.styleSelectors.base).toBe(`cover ${own}`);
+    expect(style.platform.desktop[own].attributes.base.default).toEqual({ opacity: '0.5' });
     expect(() =>
       authorSpace(space([container({ id: 'two', class: [cover, { opacity: '0.5' }, { margin: '0' }] })]))
     ).toThrow(/2 sets of rules in its class list/);

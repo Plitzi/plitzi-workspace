@@ -51,10 +51,24 @@ export type RealtimeMessage = RealtimeSender & {
   data: unknown;
   /** Server time, in milliseconds. */
   at: number;
+  /**
+   * The sender asked to hear it too ({@link RealtimePublishOptions}): it reaches the page that sent it as well, which
+   * knows it for its own by `from` — its channel's `me`. Without it, a page never hears what it sent.
+   */
+  echo?: true;
+};
+
+/** What a page asks of a publish beyond the message itself. */
+export type RealtimePublishOptions = {
+  /**
+   * Hear it too, once the server took it — a reaction, a chat line: what the sender shows the moment it sends. Off by
+   * default, so what moves at the speed of a cursor is not drawn twice.
+   */
+  echo?: boolean;
 };
 
 /** What a page sends to publish: the secret its connection was given, and the message. */
-export type RealtimePublishRequest = { token: string; topic: string; type: string; data: unknown };
+export type RealtimePublishRequest = RealtimePublishOptions & { token: string; topic: string; type: string; data: unknown };
 
 /**
  * How messages move between the processes and replicas of a deployment — transport only, strings in and out.

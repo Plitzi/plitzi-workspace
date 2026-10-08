@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { actionSource, apiContainer, authorSpace, heading, list, scope, source, text, twig } from '../index';
+import {
+  actionSource,
+  apiContainer,
+  authorSpace,
+  bindTemplate,
+  heading,
+  hiddenWhen,
+  list,
+  scope,
+  source,
+  text,
+  twig,
+  variantFrom
+} from '../index';
 
 import type { ElementSpec, SpaceSpec } from '../schema';
 
@@ -65,6 +78,28 @@ describe('source', () => {
     const row = list({ id: 'grid', items: site.data.grid, row: g => text({ from: g.item.badge }) });
 
     expect(row.children?.[0].from).toBe('list_grid.item.badge');
+  });
+
+  /** A list turned typed keeps every template its rows were written with, and its paths go wherever a name does. */
+  it('hands a typed row the names an untyped one has, and its paths to a binding', () => {
+    const row = list({
+      id: 'grid',
+      items: site.data.grid,
+      row: g =>
+        text({
+          content: `{{ ${g.inTemplate.item}.title }}`,
+          bind: [bindTemplate('title', g.item.title, '{{ source|upper }}'), hiddenWhen(g.item.badge)]
+        })
+    });
+
+    expect(row.children?.[0]).toMatchObject({
+      attributes: { content: '{{ list_grid.item.title }}' },
+      bind: [
+        { to: 'title', source: 'list_grid.item.title' },
+        { to: 'visibility', source: 'list_grid.item.badge' }
+      ]
+    });
+    expect(variantFrom('pill', site.data.total).source).toBe('apiContainer_site.data.total');
   });
 
   it('refuses a field the sample does not have, where the types were not looking', () => {

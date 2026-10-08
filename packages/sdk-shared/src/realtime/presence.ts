@@ -95,7 +95,8 @@ const createShared = (client: RealtimeClient, topic: string, release: () => void
   };
 
   const stopListening = client.subscribe(topic, message => {
-    if (message.from === client.me) {
+    // A page hears what it sent only when it asked to: its own presence, never.
+    if (message.from === client.me && message.echo !== true) {
       return;
     }
 

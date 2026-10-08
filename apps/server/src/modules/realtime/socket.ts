@@ -46,7 +46,7 @@ const originAllowed = (raw: IncomingMessage, req: SSRRequest, allowed: readonly 
   return origin === undefined || origin === requestOrigin(req) || allowed.includes(origin);
 };
 
-type Incoming = { id?: unknown; topic?: unknown; type?: unknown; data?: unknown };
+type Incoming = { id?: unknown; topic?: unknown; type?: unknown; data?: unknown; echo?: unknown };
 
 /** A frame's text, whichever of the shapes `ws` hands a frame over in. */
 const parse = (frame: RawData): Incoming | undefined => {

@@ -3,6 +3,7 @@ export { trackPresence } from './presence';
 export {
   JOIN_TYPE,
   LEAVE_TYPE,
+  OBSERVER_COOKIE_NAME,
   PRESENCE_TYPE,
   REVOKED_TYPE,
   channelLimits,

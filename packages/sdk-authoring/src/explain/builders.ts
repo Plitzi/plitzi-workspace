@@ -21,7 +21,7 @@ export const BUILDER_SIGNATURES: Readonly<Record<string, string>> = {
   closeModal: "closeModal('modal-id')",
   openDialog: "openDialog('dialog-id', data?)",
   closeDialog: "closeDialog('dialog-id')",
-  publishOn: "publishOn('channel-id', type, data?)",
+  publishOn: "publishOn('channel-id', type, data?, { echo: true }?)",
   announceOn: "announceOn('channel-id', state)",
   scrollBy: "scrollBy('row-id', { x: '80%' })",
   scrollTo: "scrollTo('row-id', { x: 'end' })",

@@ -182,7 +182,7 @@ describe('the skill’s recipes', () => {
             }),
             button({
               content: 'Wave',
-              flows: [[onClick(), publishOn('room', 'wave', { from: '{{ state.name }}' })]]
+              flows: [[onClick(), publishOn('room', 'wave', { from: '{{ state.name }}' }, { echo: true })]]
             })
           ]
         }

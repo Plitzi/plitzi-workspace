@@ -108,6 +108,7 @@ import { useChannel } from '@plitzi/plitzi-sdk';
 
 const room = useChannel(roomTopic, { onMessage: message => move(message.from, message.data) });
 room.publish('pointer', { x, y });   // throttle it: ~20 a second, the latest position each time
+room.publish('react', { emoji }, { echo: true }); // and heard here too
 room.members;                        // who is here, with the state each announced
 ```
 

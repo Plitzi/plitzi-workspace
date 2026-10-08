@@ -91,12 +91,17 @@ const buildRes = () => {
   return { res, sent };
 };
 
-const request = (query: Record<string, string>, user?: Partial<SSRUser>, body?: unknown): SSRRequest =>
+const request = (
+  query: Record<string, string>,
+  user?: Partial<SSRUser>,
+  body?: unknown,
+  headers: Record<string, string> = {}
+): SSRRequest =>
   ({
     method: 'GET',
     path: '/_realtime',
     query,
-    headers: {},
+    headers,
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     ctx: { spaceDeployment: { spaceId: 1, environment: 'main', revision: 0 }, ...(user ? { user } : {}) }
   }) as unknown as SSRRequest;
@@ -107,13 +112,14 @@ const connect = async (
   topics: string,
   user?: Partial<SSRUser>,
   grants?: string,
-  store: RealtimeGrants = GRANTS
+  store: RealtimeGrants = GRANTS,
+  headers?: Record<string, string>
 ) => {
   const { raw, events } = buildRaw();
   const { res, sent } = buildRes();
   const controller = new AbortController();
   const done = handleRealtimeSubscribe({
-    req: request({ topics, ...(grants === undefined ? {} : { grants }) }, user),
+    req: request({ topics, ...(grants === undefined ? {} : { grants }) }, user, undefined, headers),
     res,
     raw,
     signal: controller.signal,
@@ -210,6 +216,19 @@ describe('realtime channels', () => {
     await Promise.all([alice.close(), bob.close(), elsewhere.close()]);
   });
 
+  /** The sender asked to hear it too: every page reads the mark, the sender knows it for its own by `from`. */
+  it('carries a publish’s echo, and never a presence’s', async () => {
+    const hub = createRealtimeHub(createMemoryPubSub());
+    const alice = await connect(hub, 'board:1');
+
+    await publish(hub, { token: alice.ready?.token, topic: 'board:1', type: 'react', data: null, echo: true });
+    await publish(hub, { token: alice.ready?.token, topic: 'board:1', type: '$presence', data: {}, echo: true });
+
+    expect(alice.heard().find(entry => entry.type === 'react')).toMatchObject({ echo: true });
+    expect(alice.heard().find(entry => entry.type === '$presence')).not.toHaveProperty('echo');
+    await alice.close();
+  });
+
   it('refuses a publish that is not the connection’s, too big, too fast, or on a server channel', async () => {
     const hub = createRealtimeHub(createMemoryPubSub());
     const page = await connect(hub, 'board:1,scores:1');
@@ -269,6 +288,24 @@ describe('realtime channels', () => {
         .filter(entry => entry.type === '$leave')
         .map(entry => entry.from)
     ).toEqual([bob.ready?.connection]);
+    await alice.close();
+  });
+
+  /** `page check` on a live site: it hears the room, and nobody in the room hears it. */
+  it('lets a page that watches hear its topics, and never arrive or speak on them', async () => {
+    const hub = createRealtimeHub(createMemoryPubSub());
+    const alice = await connect(hub, 'board:1');
+    const check = await connect(hub, 'board:1', undefined, undefined, GRANTS, { cookie: 'plitzi-observer=1' });
+
+    expect(
+      await publish(hub, { token: check.ready?.token, topic: 'board:1', type: '$presence', data: { name: 'Check' } })
+    ).toBe(204);
+    expect(await publish(hub, { token: check.ready?.token, topic: 'board:1', type: 'react', data: null })).toBe(204);
+    expect(await publish(hub, { token: alice.ready?.token, topic: 'board:1', type: 'react', data: null })).toBe(204);
+    await check.close();
+
+    expect(alice.heard().filter(entry => entry.from === check.ready?.connection)).toEqual([]);
+    expect(check.heard().map(entry => entry.from)).toContain(alice.ready?.connection);
     await alice.close();
   });
 

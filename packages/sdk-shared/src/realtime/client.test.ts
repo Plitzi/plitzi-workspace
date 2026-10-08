@@ -377,6 +377,27 @@ describe('trackPresence', () => {
     expect(departed).toEqual([]);
   });
 
+  /** A reaction is shown by the page that sent it too, when it asks: once the server took it, stamped as everyone's. */
+  it('hands a page back what it sent only when it asked to hear it', async () => {
+    const server = fakeServer();
+    const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
+    const heard: RealtimeMessage[] = [];
+    const tracker = trackPresence(client, 'board:1', { onChange: () => undefined, onMessage: entry => heard.push(entry) });
+    stops.push(tracker.stop);
+    await wait();
+    server.streams[0].push('ready', { connection: 'me', token: 'secret', topics: ['board:1'], refused: [] });
+    await wait(10);
+
+    await client.publish('board:1', 'react', { emoji: '✨' }, { echo: true });
+    await client.publish('board:1', 'cursor', { x: 1 });
+    expect(server.posts.map(post => post.echo)).toEqual([true, undefined]);
+
+    server.streams[0].push('message', message({ type: 'react', from: 'me', echo: true }));
+    server.streams[0].push('message', message({ type: 'cursor', from: 'me' }));
+    await wait(10);
+    expect(heard.map(entry => entry.type)).toEqual(['react']);
+  });
+
   it('keeps who announced themselves, drops who left, and answers a newcomer with its own state', async () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });

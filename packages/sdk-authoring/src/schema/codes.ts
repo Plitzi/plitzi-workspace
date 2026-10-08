@@ -233,7 +233,7 @@ export const AUTHORING_CODES = {
   'class-and-css': {
     kind: 'refused',
     means: 'an element wearing a shared class AND `css` or `states` of its own — it has one base selector',
-    fix: "the rules on top of the class: `class: [card, { opacity: '0.5' }]` (needs an `id`) — or into the class"
+    fix: "the rules on top of the class: `class: [card, { opacity: '0.5' }]` — or into the class"
   },
   'class-and-selector': {
     kind: 'refused',
@@ -244,11 +244,6 @@ export const AUTHORING_CODES = {
     kind: 'refused',
     means: 'more than one set of rules in a class list',
     fix: "one set, after the classes: `class: [card, { opacity: '0.5', 'margin-top': '8px' }]`"
-  },
-  'modifier-without-id': {
-    kind: 'refused',
-    means: 'rules on top of a class on an element with no `id` — the id names the class they become',
-    fix: "`id: 'hero-bg'`"
   },
   'selector-invalid': {
     kind: 'refused',
@@ -541,6 +536,12 @@ export const AUTHORING_CODES = {
     means:
       "a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's",
     fix: 'put the provider on the page, around the instance, and hand the component its rows as a prop'
+  },
+  'provider-input-template': {
+    kind: 'refused',
+    means:
+      "a `{{ }}` in a provider's written `input` — sent as its own text, never evaluated, and over the route param of the same name",
+    fix: "nothing for a route or query param: the action is already handed them as `input.<name>`; anything else, a bound `input` (`bindTemplate('input', …, { returns: 'value' })`)"
   },
   'not-found-in-browser': {
     kind: 'refused',

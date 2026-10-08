@@ -20,6 +20,7 @@ import {
   list,
   listItem,
   markdown,
+  svg,
   text
 } from '../../index';
 import {
@@ -645,6 +646,42 @@ describe('lintSpace', () => {
       });
 
       expect(errorsOf(documents)).toContain('unknown-attribute');
+    });
+
+    /** A colour from data is a style binding, on a custom property the class reads. */
+    it('binding-target-unknown points a style at the style category', () => {
+      const written = (to: string, category?: 'style') =>
+        authorSpace({
+          name: 'Who',
+          permanentUrl: 'who',
+          pages: [
+            {
+              name: 'Home',
+              slug: '',
+              body: [container({ bind: [{ to, source: 'state.color', ...(category ? { category } : {}) }] })]
+            }
+          ]
+        });
+
+      expect(lintSpace(written('--who', 'style')).errors).toEqual([]);
+      expect(() => written('background-color')).toThrow(/in the `style` category/);
+    });
+
+    /** A drawing with no `label` is already hidden from readers: the refusal says so rather than list attributes. */
+    it('unknown-attribute says a drawing without a label is already decorative', () => {
+      const { schema, style } = authorSpace({
+        name: 'Mark',
+        permanentUrl: 'mark',
+        pages: [{ name: 'Home', slug: '', body: [svg('<svg viewBox="0 0 8 8"></svg>', { id: 'mark' })] }]
+      });
+      schema.flat.mark.attributes.decorative = true;
+
+      expect(lintSpace({ schema, style }).errors).toEqual([
+        expect.objectContaining({
+          code: 'unknown-attribute',
+          message: expect.stringContaining('already decorative') as string
+        })
+      ]);
     });
 
     it('attribute-value', () => {
@@ -1881,6 +1918,28 @@ describe('lintSpace', () => {
       delete schema.flat['post-data'].definition.runtime;
 
       expect(lintSpace({ schema, style }).errors.map(error => error.code)).toContain('not-found-in-browser');
+    });
+
+    /** A written input is a value: its braces reach the action as text, over the route param it meant to read. */
+    it('provider-input-template', () => {
+      const { schema, style } = story();
+      const { attributes } = schema.flat['post-data'];
+      attributes.input = { slug: '{{ navigation.routeParams.slug }}' };
+      expect(lintSpace({ schema, style }).errors).toEqual([
+        expect.objectContaining({
+          code: 'provider-input-template',
+          elementId: 'post-data',
+          message: expect.stringContaining('remove it from `input`') as string
+        })
+      ]);
+
+      attributes.input = JSON.stringify({ q: '{{ state.search }}', page: 1 });
+      expect(lintSpace({ schema, style }).errors).toEqual([
+        expect.objectContaining({ message: expect.stringMatching(/bindTemplate\('input', 'state\.q'/) as string })
+      ]);
+
+      attributes.input = { slug: 'fixed', page: 1 };
+      expect(lintSpace({ schema, style }).errors).toEqual([]);
     });
 
     it('not-found-not-a-template', () => {

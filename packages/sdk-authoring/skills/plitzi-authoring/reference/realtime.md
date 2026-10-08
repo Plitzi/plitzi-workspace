@@ -14,7 +14,10 @@ channel({ id: 'room', topic: 'room:{{ id }}', keep: 0, bind: { presence: 'comput
 
 Its descendants bind `room.members`, `room.connected`, `room.last`; flows use `on('onMessage')` (`type`, `data`,
 `from`), `onJoin`/`onLeave` (`from`, `user` and the `state` the member announced — `onJoin` only for who came after
-this page), `publishOn('room', 'reaction', data)` and `announceOn('room', state)`. State everyone must
+this page), `publishOn('room', 'reaction', data)` and `announceOn('room', state)`. What a page publishes reaches
+every OTHER page on the topic: one that shows it the moment it sends — a reaction, a chat line — says
+`publishOn('room', 'reaction', data, { echo: true })` and hears it back once the server took it (its `from` is
+`room.me`). What a server action publishes reaches every page, the one that ran it included. State everyone must
 agree on goes through a server action whose last step is `realtime.publish` — validated and saved first, announced
 after.
 

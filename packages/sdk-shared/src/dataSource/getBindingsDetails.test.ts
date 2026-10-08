@@ -175,6 +175,23 @@ describe('getBindingsDetails', () => {
     expect(getBindingsDetails({ state: { preset: 'scale' } }, element).attributes.content).toBe('scale / Text');
   });
 
+  /** A colour from data, under a palette the class keeps: `background-color: var(--who, var(--muted))`. */
+  it('writes a custom property as it is named', () => {
+    const element = makeElement({ style: [binding({ source: 'variables.col', to: '--who' })] });
+
+    expect(getBindingsDetails({ variables: { col: '#4422ee' } }, element).style).toEqual({ '--who': '#4422ee' });
+  });
+
+  /** The page server writes inline styles as text: a value that ends its declaration would add others. */
+  it('writes no style value that could end its declaration', () => {
+    const element = makeElement({ style: [binding({ source: 'variables.col', to: 'background-color' })] });
+
+    expect(getBindingsDetails({ variables: { col: 'red;position:fixed' } }, element).style).toEqual({});
+    expect(getBindingsDetails({ variables: { col: 'rgb(0 0 0 / 50%)' } }, element).style).toEqual({
+      backgroundColor: 'rgb(0 0 0 / 50%)'
+    });
+  });
+
   describe('falsy write predicate (current behavior — no allowEmpty)', () => {
     it('does NOT write an empty string (keeps the design-time value)', () => {
       const element = makeElement(
