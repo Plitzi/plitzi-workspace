@@ -118,7 +118,6 @@ The space is not written until these are fixed.
 | `prop-unknown` | a prop the component does not declare, handed in or read | the prop it suggests, or declare it: `props: { name: { type: 'text' } }` |
 | `prop-value` | a prop handed in with a value its declaration does not take | a value of the declared type, or one of its options |
 | `props-outside-component` | `props.x` read outside a component | read the source it would have come from |
-| `provider-input-template` | a `{{ }}` in a provider's written `input` — sent as its own text, never evaluated, and over the route param of the same name | nothing for a route or query param: the action is already handed them as `input.<name>`; anything else, a bound `input` (`bindTemplate('input', …, { returns: 'value' })`) |
 | `quiet-unknown` | an element's `quiet` naming something that is not a suggestion's code — a problem is never quieted | the code of the suggestion it was offered: `quiet: ['repeated-shape']` |
 | `redirect-target-unknown` | a page that sends visitors it is not for to a page the space does not have | a page's id or slug (`''` is the home page), or a full URL |
 | `row-and-children` | a list with a `row` and `children` — the row is what it renders | one of the two |
@@ -146,6 +145,7 @@ The space is not written until these are fixed.
 | `style-pseudo-unknown` | a pseudo-element a class cannot dress | one of `before`, `after`, `marker`, `placeholder`, `first-letter`, `first-line`, `selection` — without the `::` |
 | `style-state-unknown` | a state a selector does not react to | one of the states it lists (`hover`, `focus`, `active`…) |
 | `svg-not-svg` | an `svg` whose `content` is not one `<svg>…</svg>` — it draws nothing | the SVG markup alone; HTML around it goes in a `blockHtml` |
+| `template-in-value` | a `{{ }}` inside an attribute that is an object or a list — a provider's `input`, a list's `items`, a plugin's settings: only an attribute that is text is evaluated | a binding on the attribute (`bindTemplate(name, source, template, { returns: 'value' })`); for a provider's `input`, nothing for a route or query param — the action is already handed them as `input.<name>` |
 | `template-short-source` | a source named without its prefix inside a template or a step | the full name: `apiContainer_stats`, `list_rows` |
 | `template-source-out-of-scope` | a template reading the source of an element it is not inside | move the element inside it, or share the value through `state` |
 | `template-text-into-value` | a template, which renders text, feeding an attribute that holds a list or an object | `bindTemplate('items', source, '{{ … }}', { returns: 'value' })` |

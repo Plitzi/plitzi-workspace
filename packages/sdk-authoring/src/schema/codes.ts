@@ -537,11 +537,11 @@ export const AUTHORING_CODES = {
       "a `runtime: 'server'` element inside a component: the page server resolves a page's and its layouts', never a component's",
     fix: 'put the provider on the page, around the instance, and hand the component its rows as a prop'
   },
-  'provider-input-template': {
+  'template-in-value': {
     kind: 'refused',
     means:
-      "a `{{ }}` in a provider's written `input` — sent as its own text, never evaluated, and over the route param of the same name",
-    fix: "nothing for a route or query param: the action is already handed them as `input.<name>`; anything else, a bound `input` (`bindTemplate('input', …, { returns: 'value' })`)"
+      "a `{{ }}` inside an attribute that is an object or a list — a provider's `input`, a list's `items`, a plugin's settings: only an attribute that is text is evaluated",
+    fix: "a binding on the attribute (`bindTemplate(name, source, template, { returns: 'value' })`); for a provider's `input`, nothing for a route or query param — the action is already handed them as `input.<name>`"
   },
   'not-found-in-browser': {
     kind: 'refused',

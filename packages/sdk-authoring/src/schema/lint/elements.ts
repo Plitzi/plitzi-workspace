@@ -328,6 +328,29 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
   }
 };
 
+/** A sample of an answer, shown by the builder: what it holds is content, never a template. */
+const DATA_ATTRIBUTES = new Set(['mockData']);
+
+/**
+ * A `{{ }}` inside an attribute that is an object or a list: only an attribute that is TEXT is interpolated — by the
+ * browser as it renders, and an object is handed over as it is, by the page server too — so the braces arrive as
+ * written wherever the value goes: a provider's `input`, a list's `items`, a plugin's settings. A provider's `input`
+ * has its own advice (`checkWrittenInput`).
+ */
+const checkTemplateInValue = (ctx: LintContext, element: Element, where: string, name: string, value: unknown): void => {
+  const isProviderInput = element.definition.type === 'apiContainer' && name === 'input';
+  const template = stringsIn(value).find(hasTemplateSyntax);
+  if (template === undefined || DATA_ATTRIBUTES.has(name) || isProviderInput) {
+    return;
+  }
+
+  ctx.error(
+    'template-in-value',
+    `${where}: its "${name}" holds "${shorten(template)}" inside ${Array.isArray(value) ? 'a list' : 'an object'}, which is never evaluated — only an attribute that is text is, and this one is handed over as written. Bind "${name}" instead, evaluated where it renders: \`bindTemplate('${name}', source, '{{ … }}', { returns: 'value' })\`.`,
+    element.id
+  );
+};
+
 /**
  * An attribute's `{{ token }}` against what the attribute will see when it renders — and a condition in an attribute,
  * which is used as written: an attribute only resolves a name with filters.
@@ -347,8 +370,10 @@ const checkAttributeTemplates = (ctx: LintContext, element: Element, where: stri
     }
   }
 
-  for (const value of stringsIn(rendered)) {
-    if (hasTemplateSyntax(value) && !hasValidToken(value)) {
+  for (const [name, value] of Object.entries(rendered)) {
+    if (typeof value !== 'string') {
+      checkTemplateInValue(ctx, element, where, name, value);
+    } else if (hasTemplateSyntax(value) && !hasValidToken(value)) {
       ctx.warn(
         'template-never-resolved',
         `${where} carries "${shorten(value)}", which is never resolved: an attribute only reads a name with filters (\`{{ post.slug|upper }}\`). Move the expression into a binding's \`twigTemplate\`, where it is evaluated in full.`,
@@ -457,8 +482,8 @@ const writtenInput = (input: unknown): Record<string, unknown> | undefined => {
 };
 
 /**
- * A `{{ }}` in a provider's written `input` is sent as its own text: the input is a value, and neither the page server
- * nor the browser evaluates what an object holds. It also replaces the route param of the same name, which the action
+ * A `{{ }}` in a provider's written `input` is sent as its own text (`template-in-value`), as its JSON text too: the page
+ * server reads the attribute as saved. It also replaces the route param of the same name, which the action
  * was already given — so `{ room: '{{ navigation.routeParams.room }}' }` hands the action braces instead of the room.
  */
 const checkWrittenInput = (ctx: LintContext, input: unknown, where: string, elementId: string): void => {
@@ -478,7 +503,7 @@ const checkWrittenInput = (ctx: LintContext, input: unknown, where: string, elem
       ? `The action is already handed the page's route and query params as its input — \`input.${keys[0]}\` — so remove ${keys.length === 1 ? 'it' : 'them'} from \`input\`.`
       : `Bind the input instead, evaluated where it runs: \`bindTemplate('input', 'state.${keys[0]}', '{{ { ${keys[0]}: source } }}', { returns: 'value' })\`. The page's route and query params already reach the action as its input.`;
   ctx.error(
-    'provider-input-template',
+    'template-in-value',
     `${where} writes ${keys.map(key => `"${key}"`).join(', ')} into its \`input\` as a template, which is never evaluated: a written input is sent as it is, braces and all. ${how}`,
     elementId
   );

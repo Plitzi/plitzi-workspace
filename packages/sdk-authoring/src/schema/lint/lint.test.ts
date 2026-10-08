@@ -1921,13 +1921,29 @@ describe('lintSpace', () => {
     });
 
     /** A written input is a value: its braces reach the action as text, over the route param it meant to read. */
-    it('provider-input-template', () => {
+    /** Only an attribute that is text is interpolated: braces inside an object or a list arrive as written. */
+    it('template-in-value, for any attribute that is an object or a list', () => {
+      const { schema, style } = story();
+      const { attributes } = schema.flat['post-data'];
+      attributes.mockData = { title: '{{ literally }}' };
+      expect(lintSpace({ schema, style }).errors).toEqual([]);
+
+      attributes.headers = { authorization: '{{ state.token }}' };
+      expect(lintSpace({ schema, style }).errors).toEqual([
+        expect.objectContaining({
+          code: 'template-in-value',
+          message: expect.stringContaining('its "headers" holds "{{ state.token }}" inside an object') as string
+        })
+      ]);
+    });
+
+    it('template-in-value, for a provider’s input', () => {
       const { schema, style } = story();
       const { attributes } = schema.flat['post-data'];
       attributes.input = { slug: '{{ navigation.routeParams.slug }}' };
       expect(lintSpace({ schema, style }).errors).toEqual([
         expect.objectContaining({
-          code: 'provider-input-template',
+          code: 'template-in-value',
           elementId: 'post-data',
           message: expect.stringContaining('remove it from `input`') as string
         })

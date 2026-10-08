@@ -75,7 +75,7 @@ apiContainer({ id: 'board', runtime: 'server', action: 'queue-board' })         
   provider's bound `input` (`bindTemplate('input', 'state.c', '{{ { country: source } }}', { returns: 'value' })`)
   asks again on every change; `reloadApi('p', { … })` asks once.
 - An action is handed the page's route and query params as input (`r/:room` → `input.room`). A written `input` is
-  sent as is: a `{{ }}` in it is refused (`provider-input-template`) — bind it.
+  sent as is: a `{{ }}` in it is refused (`template-in-value`) — bind it.
 - `isLoading` is true while it is asked again, in either runtime. A newer ask drops the older one; `cancelApi('p')` is a
   STOP: what is shown stays.
 - `runtime: 'server'` is resolved by the page server — server data is on unless a space says `rsc: { enabled: false }`.

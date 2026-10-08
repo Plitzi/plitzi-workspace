@@ -83,11 +83,12 @@
 
 ## Authoring
 
-- **`provider-input-template`** (refused): a `{{ }}` in a provider's written `input` is sent as its own text — neither
-  the page server nor the browser evaluates what an object holds — and replaced the route param of the same name the
-  action was already given, so `input: { room: '{{ navigation.routeParams.room }}' }` reached the task as `""` and the
-  page answered 404. The action is handed the page's route and query params as its input; anything else is a bound
-  `input`.
+- **`template-in-value`** (refused): a `{{ }}` inside an attribute that is an object or a list — a provider's
+  `input`, a list's `items`, a plugin's settings — is never evaluated: only an attribute that is text is interpolated,
+  and the page server reads attributes as saved. A provider's `input` also replaced the route param of the same name
+  the action was already given, so `input: { room: '{{ navigation.routeParams.room }}' }` reached the task as `""` and
+  the page answered 404; its refusal says the action is handed the page's route and query params already. Anything
+  else is a binding on the attribute. `mockData`, a sample, is not held to it.
 - **Rules on top of a class need no `id`** (`class: [card, { gap: '6px' }]`): they are named after the id the element
   is given, written or not. `modifier-without-id` is gone; a one-off tweak no longer needs a name nothing reads.
 - **Typed list rows have `inTemplate`**, as untyped ones do, and `bindTemplate`, `visibleWhen`, `hiddenWhen` and
