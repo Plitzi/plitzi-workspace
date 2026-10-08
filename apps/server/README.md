@@ -610,7 +610,7 @@ Responses include an `X-Cache: HIT` or `X-Cache: MISS` header for observability.
 
 ### Cache manager
 
-`server.cache` exposes programmatic cache control, useful when content changes and you need to invalidate entries without restarting the server.
+`server.cache` exposes programmatic cache control, useful when content changes and you need to invalidate entries without restarting the server. It reaches every cache a render is kept in — the pages, the RSC answers and the schema data they are rendered from — so a page invalidated is rendered again from the space as it is now, never from the copy it was cached with.
 
 ```ts
 const server = createServer({ cacheTtlMs: 300_000, adapters });
@@ -631,7 +631,7 @@ server.cache?.clear();
 console.log(server.cache?.size);
 ```
 
-`server.cache` is `null` when caching is disabled (`cacheTtlMs: 0`).
+`server.cache` is `null` when nothing is cached (`cacheTtlMs: 0` and `rsc.cacheTtlMs: 0`). `size` counts the entries of all three caches.
 
 #### `CacheFilter`
 
@@ -641,7 +641,7 @@ console.log(server.cache?.size);
 | `environment` | `string` | Match entries for this environment. |
 | `hostname` | `string` | Match entries for this hostname. |
 
-All fields are optional and combined with AND logic. Calling `invalidate()` with no filter (or an empty object) clears the entire cache.
+All fields are optional and combined with AND logic. Calling `invalidate()` with no filter (or an empty object) clears the entire cache. The schema data belongs to no one host, so a filter on `hostname` drops it too — the host's pages are rendered from it — and it is read again on the next miss.
 
 ## Plugins
 

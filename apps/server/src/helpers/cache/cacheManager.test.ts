@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildCacheManager } from './cacheManager';
-import { buildHtmlCacheKey } from './keys';
-import { TtlCache } from './TtlCache';
+import { buildHtmlCacheKey, buildOfflineDataCacheKey, buildRscCacheKey } from './keys';
+import { createServerCaches, destroyServerCaches } from './serverCaches';
+
+import type { ServerCaches } from './serverCaches';
 
 /**
  * `server.cache` over keys written the way a render writes them. The filter read the key by positions of its own, and
@@ -10,31 +12,32 @@ import { TtlCache } from './TtlCache';
  * — a publish webhook that cleared no page, and no error anywhere.
  */
 
-const stores: TtlCache<string>[] = [];
+const made: ServerCaches[] = [];
+
+const request = (hostname: string, cookie?: string) => ({
+  hostname,
+  path: '/pricing',
+  search: '?plan=pro',
+  headers: { cookie, host: hostname }
+});
 
 const page = (
   spaceId: number,
   environment: string,
   hostname: string,
   { token, cookie }: { token?: string; cookie?: string } = {}
-): string =>
-  buildHtmlCacheKey(token, spaceId, environment, 3, {
-    hostname,
-    path: '/pricing',
-    search: '?plan=pro',
-    headers: { cookie, host: hostname }
-  });
+): string => buildHtmlCacheKey(token, spaceId, environment, 3, request(hostname, cookie));
 
-const cacheOf = (keys: string[]) => {
-  const store = new TtlCache<string>(60_000);
-  stores.push(store);
-  keys.forEach(key => store.set(key, '<html></html>'));
+const pagesOf = (keys: string[]) => {
+  const caches = createServerCaches(60_000, 60_000);
+  made.push(caches);
+  keys.forEach(key => caches.html?.set(key, { html: '<html></html>', compressed: {} }));
 
-  return { store, manager: buildCacheManager(store) };
+  return { caches, manager: buildCacheManager(caches) };
 };
 
 afterEach(() => {
-  stores.splice(0).forEach(store => store.destroy());
+  made.splice(0).forEach(destroyServerCaches);
 });
 
 describe('buildCacheManager', () => {
@@ -46,14 +49,14 @@ describe('buildCacheManager', () => {
   ];
 
   it('drops every page of a space, whoever it was rendered for and in whichever theme', () => {
-    const { store, manager } = cacheOf(keys);
+    const { caches, manager } = pagesOf(keys);
 
     expect(manager.invalidate({ spaceId: 42 })).toBe(3);
-    expect(store.size).toBe(1);
+    expect(caches.html?.size).toBe(1);
   });
 
   it('narrows by environment and host, together', () => {
-    const { manager } = cacheOf(keys);
+    const { manager } = pagesOf(keys);
 
     expect(manager.invalidate({ spaceId: 42, environment: 'production' })).toBe(2);
     expect(manager.invalidate({ hostname: 'a.example' })).toBe(1);
@@ -61,7 +64,7 @@ describe('buildCacheManager', () => {
   });
 
   it('matches nothing that is not there', () => {
-    const { manager } = cacheOf(keys);
+    const { manager } = pagesOf(keys);
 
     expect(manager.invalidate({ spaceId: 99 })).toBe(0);
     expect(manager.invalidate({ environment: 'main' })).toBe(0);
@@ -69,9 +72,46 @@ describe('buildCacheManager', () => {
   });
 
   it('clears everything with no filter', () => {
-    const { manager } = cacheOf(keys);
+    const { manager } = pagesOf(keys);
 
     expect(manager.invalidate()).toBe(4);
+    expect(manager.size).toBe(0);
+  });
+
+  /**
+   * A page dropped while the space it was rendered from stayed was rendered again from that space: a publish that
+   * invalidated the space cleared every page and changed none of them, until the space's own TTL ran out.
+   */
+  it('drops the space a page is rendered from and its RSC answers with the page', () => {
+    const { caches, manager } = pagesOf([page(42, 'production', 'a.example'), page(7, 'production', 'a.example')]);
+    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, 'flags'), '{}');
+    caches.offlineData?.set(buildOfflineDataCacheKey(7, 'production', 0, 'flags'), '{}');
+    caches.rsc?.set(buildRscCacheKey(42, 'production', 0, undefined, undefined, request('a.example')), '{}');
+
+    expect(manager.invalidate({ spaceId: 42, environment: 'production' })).toBe(3);
+    expect(caches.html?.size).toBe(1);
+    expect(caches.offlineData?.size).toBe(1);
+    expect(caches.rsc?.size).toBe(0);
+  });
+
+  it('drops the space a host is rendered from when the host is invalidated, and the other host’s pages stay', () => {
+    const { caches, manager } = pagesOf([page(42, 'production', 'a.example'), page(42, 'production', 'b.example')]);
+    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, 'flags'), '{}');
+
+    expect(manager.invalidate({ hostname: 'a.example' })).toBe(2);
+    expect(caches.html?.size).toBe(1);
+    expect(caches.offlineData?.size).toBe(0);
+  });
+
+  it('clears and counts all three', () => {
+    const { caches, manager } = pagesOf([page(42, 'production', 'a.example')]);
+    caches.offlineData?.set(buildOfflineDataCacheKey(42, 'production', 0, ''), '{}');
+    caches.rsc?.set(buildRscCacheKey(42, 'production', 0, 5, 'el1', request('a.example')), '{}');
+
+    expect(manager.size).toBe(3);
+
+    manager.clear();
+
     expect(manager.size).toBe(0);
   });
 });

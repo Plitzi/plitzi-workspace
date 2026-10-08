@@ -85,16 +85,27 @@ export const buildHtmlCacheKey = (
 };
 
 /**
+ * What a cached entry says about what it holds — the fields `server.cache.invalidate` filters on. `hostname` is absent
+ * from an entry that is not any one host's: the space as read for a render serves every host the space is on.
+ */
+export type CacheKeyFacts = { spaceId: string; environment: string; hostname?: string };
+
+/** One field of a key joined from `fields`, read back by the same list: never by a position written down twice. */
+const fieldOf = <F extends string>(fields: readonly F[], key: string, field: F): string =>
+  key.split('\0')[fields.indexOf(field)] ?? '';
+
+/**
  * What an HTML key says about the page it holds, read by the one list that also writes it. `server.cache.invalidate`
  * filters on these; it used to split the key by positions of its own, and when the key grew a field in front the
  * filter went on reading the wrong ones — every invalidation by space matched nothing.
  */
-export const readHtmlCacheKey = (key: string): { spaceId: string; environment: string; hostname: string } => {
-  const parts = key.split('\0');
-  const at = (field: (typeof HTML_KEY_FIELDS)[number]): string => parts[HTML_KEY_FIELDS.indexOf(field)] ?? '';
+export const readHtmlCacheKey = (key: string): CacheKeyFacts => ({
+  spaceId: fieldOf(HTML_KEY_FIELDS, key, 'spaceId'),
+  environment: fieldOf(HTML_KEY_FIELDS, key, 'environment'),
+  hostname: fieldOf(HTML_KEY_FIELDS, key, 'hostname')
+});
 
-  return { spaceId: at('spaceId'), environment: at('environment'), hostname: at('hostname') };
-};
+const OFFLINE_DATA_KEY_FIELDS = ['spaceId', 'environment', 'revision', 'flags'] as const;
 
 /** The space as read for a render: its revision, and what its flags are at when they change apart from it. */
 export const buildOfflineDataCacheKey = (
@@ -102,7 +113,35 @@ export const buildOfflineDataCacheKey = (
   environment: string,
   revision: number,
   flagsVersion: string | undefined
-): string => `${spaceId}|${environment}|${revision}|${flagsVersion ?? ''}`;
+): string => {
+  const fields: Record<(typeof OFFLINE_DATA_KEY_FIELDS)[number], string> = {
+    spaceId: String(spaceId),
+    environment,
+    revision: String(revision),
+    flags: flagsVersion ?? ''
+  };
+
+  return OFFLINE_DATA_KEY_FIELDS.map(field => fields[field]).join('\0');
+};
+
+export const readOfflineDataCacheKey = (key: string): CacheKeyFacts => ({
+  spaceId: fieldOf(OFFLINE_DATA_KEY_FIELDS, key, 'spaceId'),
+  environment: fieldOf(OFFLINE_DATA_KEY_FIELDS, key, 'environment')
+});
+
+const RSC_KEY_FIELDS = [
+  'spaceId',
+  'environment',
+  'revision',
+  'flags',
+  'user',
+  'ids',
+  'hostname',
+  'path',
+  'search'
+] as const;
+
+type RscCacheKeyFields = Record<(typeof RSC_KEY_FIELDS)[number], string>;
 
 // The request URL is part of the key because RSC slices are route-dependent: a connector compiles its filters
 // from routeParams/queryParams, so `/blog/a` and `/blog/b` resolve to different data under the same space,
@@ -115,5 +154,24 @@ export const buildRscCacheKey = (
   userId: string | number | undefined,
   idsParam: string | undefined,
   req: CacheKeyRequest
-): string =>
-  `${spaceId}\0${environment}\0${revision}\0${flagsVersionOf(req)}\0${userId ?? 'anon'}\0${idsParam ?? ''}\0${req.hostname}\0${req.path}\0${req.search}`;
+): string => {
+  const fields: RscCacheKeyFields = {
+    spaceId: String(spaceId),
+    environment,
+    revision: String(revision),
+    flags: flagsVersionOf(req),
+    user: userId === undefined ? 'anon' : String(userId),
+    ids: idsParam ?? '',
+    hostname: req.hostname,
+    path: req.path,
+    search: req.search
+  };
+
+  return RSC_KEY_FIELDS.map(field => fields[field]).join('\0');
+};
+
+export const readRscCacheKey = (key: string): CacheKeyFacts => ({
+  spaceId: fieldOf(RSC_KEY_FIELDS, key, 'spaceId'),
+  environment: fieldOf(RSC_KEY_FIELDS, key, 'environment'),
+  hostname: fieldOf(RSC_KEY_FIELDS, key, 'hostname')
+});

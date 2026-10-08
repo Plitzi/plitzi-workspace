@@ -54,7 +54,7 @@ export const createPageServer = (
   }
 
   const caches = createServerCaches(htmlTtlMs, config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc);
-  const cache: CacheManager | null = caches.html ? buildCacheManager(caches.html) : null;
+  const cache: CacheManager | null = caches.html || caches.rsc ? buildCacheManager(caches) : null;
   const renderFn = config.templateFn ?? compileTemplate();
 
   const pluginManager = new PluginManager(
