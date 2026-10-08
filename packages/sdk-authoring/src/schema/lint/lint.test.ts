@@ -701,7 +701,9 @@ describe('lintSpace', () => {
       expect(lintSpace(documents).errors).toEqual([
         expect.objectContaining({
           code: 'attribute-value',
-          message: expect.stringMatching(/which is what a "list" renders: write `list\(\{ subType: 'ol' \}\)`/) as string
+          message: expect.stringMatching(
+            /which is what a "list" renders: write `list\(\{ subType: 'ol' \}\)`/
+          ) as string
         })
       ]);
     });

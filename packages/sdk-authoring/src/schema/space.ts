@@ -350,7 +350,7 @@ class SpaceAuthor {
         {
           stylesheets: this.options.stylesheets ?? [],
           families: this.families,
-          pluginTypes: (this.options.plugins ?? []).map(plugin => plugin.type)
+          pluginTypes: this.options.pluginTypes ?? []
         }
       ),
       ...withoutQuieted(schema, this.classOverrides(schema, style.mode ?? 'desktop-first'))

@@ -346,7 +346,13 @@ const DATA_ATTRIBUTES = new Set(['mockData']);
  * written wherever the value goes: a provider's `input`, a list's `items`, a plugin's settings. A provider's `input`
  * has its own advice (`checkWrittenInput`).
  */
-const checkTemplateInValue = (ctx: LintContext, element: Element, where: string, name: string, value: unknown): void => {
+const checkTemplateInValue = (
+  ctx: LintContext,
+  element: Element,
+  where: string,
+  name: string,
+  value: unknown
+): void => {
   const isProviderInput = element.definition.type === 'apiContainer' && name === 'input';
   const template = stringsIn(value).find(hasTemplateSyntax);
   if (template === undefined || DATA_ATTRIBUTES.has(name) || isProviderInput) {

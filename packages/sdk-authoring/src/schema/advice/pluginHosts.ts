@@ -12,17 +12,17 @@ import type { Schema } from '@plitzi/sdk-shared';
  * registered by name with no declaration.
  */
 export const suggestPluginHosts = (schema: Schema, pluginTypes: readonly string[]): Suggestion[] => {
-  if (pluginTypes.length === 0) {
+  // A declared plugin is listed under the name its `custom` host is checked by, as the linter reads it.
+  const declared = new Set(pluginTypes.filter(type => type.startsWith(`${CUSTOM_TYPE}:`)));
+  if (declared.size === 0) {
     return [];
   }
-
-  const declared = new Set(pluginTypes);
 
   return [schema.flat, ...Object.values(schema.components).map(component => component.flat)]
     .flatMap(flat => Object.values(flat))
     .flatMap(element => {
       const type = textOf(element.attributes.renderType);
-      if (element.definition.type !== CUSTOM_TYPE || !declared.has(type)) {
+      if (element.definition.type !== CUSTOM_TYPE || !declared.has(`${CUSTOM_TYPE}:${type}`)) {
         return [];
       }
 

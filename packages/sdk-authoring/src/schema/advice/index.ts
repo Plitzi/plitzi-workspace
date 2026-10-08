@@ -49,7 +49,10 @@ export const suggestSpace = (
     stylesheets?: readonly string[];
     /** The pages each `pageFamily` wrote, by id: what they share is written once, never a copy. */
     families?: readonly (readonly string[])[];
-    /** The types of the plugins the space has the declarations of: a `custom` element naming one is placed by name. */
+    /**
+     * The plugin types authoring was handed, as `withPluginCatalogs` lists them: `custom:<type>` for each plugin whose
+     * declaration it has — a `custom` element naming one placed it by name.
+     */
     pluginTypes?: readonly string[];
   } = {}
 ): Suggestion[] =>

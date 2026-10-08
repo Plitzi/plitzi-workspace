@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { suggestSpace, unusedDeclarations } from './index';
 import {
   button,
   component,
@@ -13,9 +14,9 @@ import {
   text
 } from '../../elements';
 import { onClick } from '../../elements/steps';
+import { authorSpace as authorPublic } from '../../index';
 import { setState, toggleState } from '../../interactions';
 import { authorSpace } from '../space';
-import { suggestSpace, unusedDeclarations } from './index';
 
 import type { ElementSpec, PageSpec, SpaceSpec } from '../types';
 
@@ -557,7 +558,7 @@ describe('plugin hosts', () => {
 
   it('offers the declaration for a `custom` host of a declared plugin', () => {
     const spec = space([page('home', [custom({ id: 'seats', renderType: 'seatPicker' })])]);
-    const suggestion = authorSpace(spec, { plugins: [seats] }).suggestions.find(
+    const suggestion = authorPublic(spec, { plugins: [seats] }).suggestions.find(
       entry => entry.code === 'plugin-custom-host'
     );
 
@@ -570,7 +571,7 @@ describe('plugin hosts', () => {
     const spec = space([
       page('home', [defineElement(seats)({ id: 'seats' }), custom({ id: 'chart', renderType: 'trafficChart' })])
     ]);
-    const codes = authorSpace(spec, { plugins: [seats] }).suggestions.map(entry => entry.code);
+    const codes = authorPublic(spec, { plugins: [seats] }).suggestions.map(entry => entry.code);
 
     expect(codes).not.toContain('plugin-custom-host');
   });

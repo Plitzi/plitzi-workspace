@@ -201,6 +201,33 @@ describe('plitzi space lint', () => {
     expect(relayed.every(each => each.docs === `npx plitzi explain ${each.code}`)).toBe(true);
   }, 30_000);
 
+  it('says a plugin of the project placed by name is placed from its declaration, at the line that wrote it', async () => {
+    await write(
+      'src/plugins/SeatPicker/declaration.ts',
+      "export default { type: 'seatPicker', triggers: {}, callbacks: {}, content: { attributes: { start: 0 } } };\n"
+    );
+    await write(
+      'src/plugins/SeatPicker/index.ts',
+      "import declaration from './declaration';\n\nexport default Object.assign(() => null, declaration);\n"
+    );
+    await write('src/space/index.ts', SPACE_INDEX);
+    await write(
+      'src/space/pages/home.ts',
+      page(
+        "    custom({ id: 'home-seats', renderType: 'seatPicker' })",
+        "import { custom } from '@plitzi/sdk-authoring';"
+      )
+    );
+
+    const report = await run();
+
+    expect(report.findings.map(each => each.code)).toEqual(['plugin-custom-host']);
+    expect(only(report, 'plugin-custom-host')).toMatchObject([
+      { file: 'src/space/pages/home.ts', line: 8, severity: 'warning', origin: 'authoring' }
+    ]);
+    expect(only(report, 'plugin-custom-host')[0].message).toContain('defineElement');
+  }, 30_000);
+
   it('says a comment naming a suggestion silences nothing, and how a suggestion is quieted', async () => {
     await write('src/space/index.ts', SPACE_INDEX);
     await write(
