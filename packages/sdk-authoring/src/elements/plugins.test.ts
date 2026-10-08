@@ -10,7 +10,8 @@ import {
   defineElement,
   onClick,
   setState,
-  singlePageSpace
+  singlePageSpace,
+  specFromSpace
 } from '..';
 
 import type { StepSpec } from '../schema';
@@ -144,6 +145,23 @@ describe('a component hosted by custom', () => {
 
   it('accepts the events and actions of the component once it is declared', () => {
     expect(hosted([picked], [declaration])).toBe('');
+  });
+
+  it('keeps them through the Export and back: the host is judged by its component, never by `custom`', () => {
+    const documents = authorSpace(
+      singlePageSpace([
+        custom({ id: 'seats', renderType: 'seatPicker', flows: [picked] }),
+        button({
+          id: 'clear',
+          content: 'Clear',
+          flows: [[onClick(), declaredCallback(declaration, 'reset', { on: 'seats' })]]
+        })
+      ]),
+      { plugins: [declaration] }
+    );
+    const { corrections } = specFromSpace(documents, { pluginTypes: [declaration.type] });
+
+    expect(corrections).toEqual([]);
   });
 
   it('holds the host to the declaration: an event it never fires, an attribute it never reads', () => {

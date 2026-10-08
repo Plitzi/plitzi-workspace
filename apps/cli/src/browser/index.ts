@@ -61,6 +61,8 @@ export interface BrowserPage {
   evaluate<R, A>(fn: (input: A) => R | Promise<R>, input: A): Promise<R>;
   waitForSelector(selector: string, options: { timeout: number }): Promise<unknown>;
   waitForTimeout(milliseconds: number): Promise<void>;
+  /** The keyboard, as a person types on it: into whatever has the focus. */
+  keyboard: { press(key: string): Promise<void>; type(text: string): Promise<void> };
   /** A stylesheet added to the page as it is now: what a capture leaves out or holds still. */
   addStyleTag(options: { content: string }): Promise<unknown>;
   /** The browser context the page lives in — its cookies, set before the page is asked for. */

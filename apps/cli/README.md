@@ -195,6 +195,7 @@ plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 -
 plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
 plitzi page shot /studio --width 390 --as maya   # a page for signed-in visitors: the picture is of it, not of the sign-in
 plitzi page shot / --viewport --frames 6 --every 200 --from load --sheet   # what plays as the page arrives
+plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; frames 6 150; wait-for .gm__capsule; shot opened"   # an interaction, step by step
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
@@ -202,7 +203,8 @@ another project. They wait for the page to settle — loaded, then half a second
 stream that stays open, so a page with a realtime `channel` is checked like any other (`openPage` of
 `@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `page check` reports every element the space owes the page that is missing or hidden (with why), broken
 images, sideways scroll, a link or words cut off at the screen's edge (an ancestor hiding them, nothing scrolling to
-them), text in the colour behind it, console errors, refused requests and failed flows — and the
+them), words that cannot be told from what is behind them (under 2:1 — the space's elements and what a plugin draws
+inside one; `aria-hidden` words are a decoration), console errors, refused requests and failed flows — and the
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
 the page is not showing, which is not mounted — a provider that failed, and each list's rows, drawn and in its source
 (`feed 4 of 8 rows`, `hits not rendered (16 in its source)`; `--json`: `lists: { id: { rendered, source } }`). A page's state in a few hundred tokens, where a screenshot costs thousands.
@@ -322,7 +324,8 @@ An element's own selector and its bindings are named after its place under its n
 among its siblings — so a move renames nothing.
 
 `verify` runs each check the project has a script for, as its package manager runs one, then opens every page with
-no parameter in its path at 1440 and 390 px (the server must be up: `npm start`). Only what fails is printed, with the
+no parameter in its path at 1440 and 390 px, in every theme the space can be painted in — light and dark, unless
+it says light only — (the server must be up: `npm start`). Only what fails is printed, with the
 last lines it said, and the first failure ends the run — one broken file fails every step after it the same way — the
 rest said as not run until it passes (`--keep-going` runs them anyway). A page the browser was sent away from — one
 for signed-in visitors — is checked again signed in as the project's account, when `.env` names one:

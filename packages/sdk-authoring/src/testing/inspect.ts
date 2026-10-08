@@ -124,9 +124,9 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
       message: `${named(id)} is cut off at the edge of the screen by ${String(pixels)}px — an ancestor hides what spills past it, so nothing scrolls to it: let the row wrap, or give it room`,
       elementId: id
     })),
-    ...findings.illegible.map(({ text, elementId }): PageIssue => ({
+    ...findings.illegible.map(({ text, contrast, elementId }): PageIssue => ({
       code: 'illegible-text',
-      message: `text drawn in the colour behind it: ${text}`,
+      message: `text that cannot be told from what is behind it — contrast ${String(contrast)}:1, where body text asks 4.5:1: ${text}. A colour meant for one theme, painted in the other, is the usual cause: read the space's tokens (\`var(--…)\`), never a fixed colour`,
       ...about(elementId)
     }))
   ];

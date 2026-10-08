@@ -39,14 +39,34 @@
   navigation.routeParams.slug)) }}"` — sends it with status 404, rendered as written. A provider's own `notFound` reads
   only its answer, and one in a layout is every page's: a record read from the layout had no way to say it was not
   there, and the page answered 200.
+- **The Export keeps the flows of a plugin hosted by `custom`** (`@plitzi/sdk-authoring`): `specFromSpace` judged such
+  an element by `custom`'s own triggers and callbacks, and dropped a flow on the component's event (`onChange` on an
+  editor) as one "a custom never fires" — the space read back was not the space written.
+- **`page check` reads every word on the page, in the colour the browser paints it** (`@plitzi/sdk-authoring`): what a
+  plugin draws inside an element of the space is measured too, named by the element and a selector; the measure is
+  WCAG's contrast (under 2:1 is unreadable), not "nearly the same colour"; and a colour the browser answers as
+  `oklch()`, `oklab()` or `color(srgb …)` — every token and every `color-mix()` — is read as that, where it was read as
+  `rgb()` numbers and came out near black. A plugin's dark-on-dark status line passed as "nothing wrong".
+- **`verify` checks every theme the space can be painted in** (`@plitzi/cli`): light and dark, unless the space says
+  light only — "48 checks at 1440 and 390 px, light and dark". A page unreadable in the dark theme passed in the light
+  one; a failure names the theme it was found in.
 - **`plitzi upgrade` says where fields became optional** (`@plitzi/cli`): for a project last upgraded before 0.38.9,
-  each `formControl(…)` with no `required`, at its file and line — said, never written. And a `.gitkeep` is written only
-  in a folder with nothing else in it (`src/functions/` with code got one).
+  each `formControl(…)` with no `required`, at its file and line — said, never written. And a `.gitkeep` is asked for
+  only in a folder with nothing else in it: `upgrade` wrote one beside code, and `doctor` called it missing once deleted
+  as AGENTS.md asks ("nothing unused") — the three now say the same.
 - **`devMode` and `devReload` are the project's** (`@plitzi/sdk-server`): `src/config/serverOptions.ts` may set them,
   over `NODE_ENV`, which they still follow when left out. A deployment started without `NODE_ENV` (a container's `CMD`)
   says `devMode: false`, and a public action answers with its output alone.
 - **`page shot --from load`** (`@plitzi/cli`): `--frames` start as soon as the page's HTML is in, not once it settles —
   an entrance that plays while the page loads had ended before the first picture.
+- **`heavy-animation` says where each animation is** (`@plitzi/sdk-authoring`): the class and its variant, state or
+  slot — or the `customCss` rule — and writes the fix against that selector. It said "in `customCss`" for an animation
+  declared on a class's variant, and offered `.glow`, a class no space has.
+- **`page shot --steps`** (`@plitzi/cli`): an interaction played step by step — `click`, `type`, `press`, `wait`,
+  `wait-for`, `shot [label]`, `frames <n> [ms]`, separated by `;` or written in a file (`@file`) — each picture labelled
+  with its step and the time since the first, and said when nothing changed since the one before. A queue filling, a
+  restart, an opening frame by frame took a Playwright script of the project's own. Targets take Playwright's selectors
+  too (`text=Saved`).
 - **`page shot --as <username>`** (`@plitzi/cli`): signs in first, as `page check --as` does, the password from
   `PLITZI_CHECK_PASSWORD` in `.env`. A page for signed-in visitors was pictured as the sign-in page it sent the browser
   to, without a word; `page shot` now says when the page sent it elsewhere, and that the picture is of that page.

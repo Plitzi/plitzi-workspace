@@ -422,6 +422,21 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(report, 'record-unreadable')).toMatchObject({ file: '.plitzi/scaffold.json' });
   });
 
+  // What AGENTS.md says ("nothing unused") and what upgrade writes agree: a `.gitkeep` keeps an EMPTY folder in git.
+  it('asks for a folder’s .gitkeep only while the folder is empty', async () => {
+    await fs.rm(path.join(project, 'src/functions/.gitkeep'), { force: true });
+    await write('src/functions/index.ts', 'export {};\n');
+
+    expect(
+      (await run()).findings.filter(
+        finding => finding.code === 'machinery-missing' && finding.file?.endsWith('.gitkeep')
+      )
+    ).toEqual([]);
+
+    await fs.rm(path.join(project, 'src/functions/index.ts'));
+    expect(findingOf(await run(), 'machinery-missing')).toMatchObject({ file: 'src/functions/.gitkeep' });
+  });
+
   it('fails on warnings only with --strict', async () => {
     await write('src/data/notes.txt', 'not data');
 

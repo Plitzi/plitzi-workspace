@@ -411,6 +411,10 @@ pageGroup
     'Click these in order once the page settles — each its name or a CSS selector, inside a plugin too — picturing what each changed (--frames pictures --every ms apart after each)'
   )
   .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
+  .option(
+    '--steps <script>',
+    'An interaction, step by step: "click <el>; type <el> <text>; press <key>; wait <ms>; wait-for <el>; shot [label]; frames <n> [ms]" — or @file with one per line'
+  )
   .option('--reduced-motion', 'As a visitor who asked for less motion')
   .option(
     '--as <username>',

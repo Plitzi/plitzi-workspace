@@ -467,7 +467,7 @@ ${code('.claude/skills/plitzi-cli/SKILL.md')} first: ${code('plitzi plugin add')
 
 What you leave behind is the next reader's problem — the user's, or the next agent's. Before calling a change done:
 
-- **Nothing unused.** Delete what you made and no longer use — a file, a page, a component, a class, a token, a data file, an import, a plugin folder. No commented-out code, no ${code('console.log')} left from debugging, no copy of a file kept "just in case": git keeps the history.
+- **Nothing unused.** Delete what you made and no longer use — a file, a page, a component, a class, a token, a data file, an import, a plugin folder. A folder's ${code('.gitkeep')} keeps it in git while it is empty; once the folder holds files it does nothing, and ${code('doctor')} and ${code('upgrade')} ask for it no more. No commented-out code, no ${code('console.log')} left from debugging, no copy of a file kept "just in case": git keeps the history.
 - **Scratch goes in ${code(`${PROJECT_TMP}/`)}, or nowhere.** A one-off script, a dump, a picture to look at — never at the root or beside the source, where it reads as part of the project.
 - **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component, and rows of data are one list. Change it where it is defined, and rename everywhere when you rename.
 - **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space/')} already has. Do not start a parallel layout of your own.

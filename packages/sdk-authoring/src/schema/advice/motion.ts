@@ -100,16 +100,23 @@ const keyframesIn = (segments: StylesheetSegment[], found: Map<string, Map<strin
   return found;
 };
 
-/** One place an animation is named: the keyframes it names, whether it loops, and whether it starts paused there. */
+/**
+ * One place an animation is named: the keyframes it names, whether it loops, whether it starts paused there — and where
+ * that is, said the way an author finds it (`the class \`badge\`, variant \`epic\``), with the CSS selector it is drawn
+ * by when there is one to write a rule for.
+ */
 interface AnimationUse {
   names: string[];
   infinite: boolean;
   paused: boolean;
+  where: string;
+  selector?: string;
 }
 
 const animationUseOf = (
   declarations: [string, string][],
-  keyframes: Map<string, unknown>
+  keyframes: Map<string, unknown>,
+  at: { where: string; selector?: string }
 ): AnimationUse | undefined => {
   const names = declarations
     .filter(([property]) => ANIMATION_NAMES.has(property))
@@ -121,7 +128,12 @@ const animationUseOf = (
   const says = (longhand: string, word: RegExp) =>
     declarations.some(([property, value]) => (property === longhand || property === 'animation') && word.test(value));
 
-  return { names, infinite: says('animation-iteration-count', INFINITE), paused: says('animation-play-state', PAUSED) };
+  return {
+    names,
+    infinite: says('animation-iteration-count', INFINITE),
+    paused: says('animation-play-state', PAUSED),
+    ...at
+  };
 };
 
 interface CssUses {
@@ -150,7 +162,10 @@ const cssUsesIn = (segments: StylesheetSegment[], keyframes: Map<string, unknown
     }
 
     const declarations = declarationsIn(segment.body);
-    const use = animationUseOf(declarations, keyframes);
+    const use = animationUseOf(declarations, keyframes, {
+      where: `the \`customCss\` rule \`${segment.selector}\``,
+      selector: segment.selector
+    });
     if (use) {
       uses.push(use);
     }
@@ -173,24 +188,40 @@ type StyleLayer = {
   ancestors?: StyleAncestors;
 };
 
-/** Every rule set of a selector: its own, its states', its variants' and its ancestors'. */
-const ruleSetsOf = (layer: StyleLayer): StyleObject[] => [
-  ...(layer.default ? [layer.default] : []),
-  ...Object.values(layer.states ?? {}),
-  ...Object.values(layer.variants ?? {}).flatMap(ruleSetsOf),
-  ...Object.values(layer.ancestors ?? {}).flatMap(ruleSetsOf)
+/** Every rule set of a selector — its own, its states', its variants' and its ancestors' — with what it is. */
+const ruleSetsOf = (layer: StyleLayer, within = ''): [string, StyleObject][] => [
+  ...(layer.default ? [[within, layer.default] as [string, StyleObject]] : []),
+  ...Object.entries(layer.states ?? {}).map(([state, rules]): [string, StyleObject] => [
+    `${within}, state \`${state}\``,
+    rules
+  ]),
+  ...Object.entries(layer.variants ?? {}).flatMap(([variant, rules]) =>
+    ruleSetsOf(rules, `${within}, variant \`${variant}\``)
+  ),
+  ...Object.entries(layer.ancestors ?? {}).flatMap(([ancestor, rules]) =>
+    ruleSetsOf(rules, `${within}, inside \`${ancestor}\``)
+  )
 ];
 
 /** The animations the style schema starts — its classes, ids and element styles, at every breakpoint. */
 const styleUsesIn = (style: Style, keyframes: Map<string, unknown>): AnimationUse[] =>
   Object.values(style.platform)
     .flatMap(items => Object.values(items))
-    .flatMap(item => Object.values(item.attributes))
-    .flatMap(ruleSetsOf)
-    .flatMap(rules => {
+    .flatMap(item =>
+      Object.entries(item.attributes).flatMap(([slot, layer]) =>
+        ruleSetsOf(layer).map(([within, rules]) => ({ item, slot, within, rules }))
+      )
+    )
+    .flatMap(({ item, slot, within, rules }) => {
+      const isClass = item.type === 'class';
+      const owner = isClass ? `the class \`${item.name}\`` : `the ${item.type} \`${item.name}\``;
       const use = animationUseOf(
         Object.entries(rules).map(([property, value]) => [property, String(value)]),
-        keyframes
+        keyframes,
+        {
+          where: `${owner}${slot === 'base' ? '' : `, slot \`${slot}\``}${within}`,
+          ...(isClass && slot === 'base' ? { selector: `.${item.name}` } : {})
+        }
       );
 
       return use ? [use] : [];
@@ -199,12 +230,13 @@ const styleUsesIn = (style: Style, keyframes: Map<string, unknown>): AnimationUs
 const COST_ORDER: Cost[] = ['layout', 'blur', 'paint'];
 
 /** The way out of each cost, given in `COST_ORDER`. */
-const CLAUSES: Record<Cost, string> = {
-  layout: 'a size or a position is a `transform` (`translate`, `scale`) of an element already at its full size',
-  blur: 'a blur or a shadow is drawn once, on a layer whose `opacity` changes',
-  paint:
-    'a loop that has to animate anything else is decoration — start it `paused` and run it once the page is ' +
-    'hydrated: `[data-hydrated] .glow { animation-play-state: running; }` in `customCss`'
+const CLAUSES: Record<Cost, (selector: string) => string> = {
+  layout: () => 'a size or a position is a `transform` (`translate`, `scale`) of an element already at its full size',
+  blur: () => 'a blur or a shadow is drawn once, on a layer whose `opacity` changes',
+  paint: selector =>
+    'a loop that has to animate anything else is decoration — start it `paused` where it is declared ' +
+    `(\`animation-play-state: paused\`) and run it once the page is hydrated: \`[data-hydrated] ${selector} { ` +
+    'animation-play-state: running; }` in `customCss`'
 };
 
 export const suggestMotion = (schema: Schema, style: Style): Suggestion[] => {
@@ -231,7 +263,7 @@ export const suggestMotion = (schema: Schema, style: Style): Suggestion[] => {
     const looping = named.some(use => use.infinite && !(hydratedGate && use.paused));
     const properties = [...costs].filter(([, cost]) => cost !== 'paint' || looping);
 
-    return properties.length > 0 ? [{ name, properties }] : [];
+    return properties.length > 0 ? [{ name, properties, named }] : [];
   });
   if (heavy.length === 0) {
     return [];
@@ -239,8 +271,14 @@ export const suggestMotion = (schema: Schema, style: Style): Suggestion[] => {
 
   const costs = new Set(heavy.flatMap(({ properties }) => properties.map(([, cost]) => cost)));
   const listed = heavy.map(
-    ({ name, properties }) => `\`${name}\` (${properties.map(([property]) => `\`${property}\``).join(', ')})`
+    ({ name, properties, named }) =>
+      `\`${name}\` (${properties.map(([property]) => `\`${property}\``).join(', ')}) in ${named
+        .map(use => use.where)
+        .join(' and ')}`
   );
+  // The fix written against a selector the space has, where there is one: a class's, or the `customCss` rule's.
+  const selector =
+    heavy.flatMap(({ named }) => named).find(use => use.selector !== undefined)?.selector ?? '.your-class';
   const one = heavy.length === 1;
 
   return [
@@ -249,12 +287,12 @@ export const suggestMotion = (schema: Schema, style: Style): Suggestion[] => {
       elementIds: [],
       saves: 0,
       message:
-        `${String(heavy.length)} animation${one ? '' : 's'} in \`customCss\` ${one ? 'animates' : 'animate'} what the ` +
+        `${String(heavy.length)} animation${one ? '' : 's'} ${one ? 'animates' : 'animate'} what the ` +
         `browser repaints or lays out again on every frame — ${listed.slice(0, 4).join(', ')}` +
         `${listed.length > 4 ? ', …' : ''} — on the main thread, so ${one ? 'it stutters' : 'they stutter'} whenever ` +
         "the page's scripts are busy, most of all while it loads. Animate `opacity` and `transform`: " +
         COST_ORDER.filter(cost => costs.has(cost))
-          .map(cost => CLAUSES[cost])
+          .map(cost => CLAUSES[cost](selector))
           .join('; ') +
         '.'
     }

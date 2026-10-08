@@ -24,7 +24,8 @@ export interface ProbeFindings {
   overflow: { pixels: number; widest: string[]; elementIds: string[] } | null;
   /** A link, a control or words of the space's cut at the screen's edge — by how many pixels fall outside it. */
   cutOff: { id: string; pixels: number }[];
-  illegible: { text: string; elementId?: string }[];
+  /** Words that cannot be told from what is behind them, with their contrast against it (WCAG's ratio, 1 to 21). */
+  illegible: { text: string; contrast: number; elementId?: string }[];
 }
 
 /**
@@ -357,14 +358,59 @@ export function probePage(input: ProbeInput): ProbeFindings {
     }
   }
 
-  const illegible: { text: string; elementId?: string }[] = [];
+  const illegible: ProbeFindings['illegible'] = [];
   if (input.legibility) {
+    /**
+     * A computed colour as `[r, g, b, alpha]`, 0–255 and 0–1 — or `null` for one this cannot read, which is then not
+     * judged rather than judged wrong. The browser answers in the space the colour was written in: `rgb()` for a hex or
+     * a name, `color(srgb …)` for a `color-mix()`, `oklch()`/`oklab()` as written. Read as `rgb()`, the last two came out
+     * near black, and a page every visitor could read was said to be unreadable.
+     */
     const parse = (value: string): number[] | null => {
-      const parts = value.match(/[\d.]+/g);
+      const numbers = (value.match(/-?[\d.]+(?:e-?\d+)?%?/g) ?? []).map(part =>
+        part.endsWith('%') ? Number(part.slice(0, -1)) / 100 : Number(part)
+      );
+      const alpha = (at: number): number => (numbers.length > at ? numbers[at] : 1);
+      const gamma = (linear: number): number =>
+        255 * Math.min(1, Math.max(0, linear <= 0.0031308 ? 12.92 * linear : 1.055 * linear ** (1 / 2.4) - 0.055));
+      const fromOklab = (l: number, a: number, b: number, opacity: number): number[] => {
+        const [lc, mc, sc] = [
+          (l + 0.3963377774 * a + 0.2158037573 * b) ** 3,
+          (l - 0.1055613458 * a - 0.0638541728 * b) ** 3,
+          (l - 0.0894841775 * a - 1.291485548 * b) ** 3
+        ];
 
-      return parts && parts.length >= 3
-        ? [...parts.slice(0, 3).map(Number), parts.length > 3 ? Number(parts[3]) : 1]
-        : null;
+        return [
+          gamma(4.0767416621 * lc - 3.3077115913 * mc + 0.2309699292 * sc),
+          gamma(-1.2684380046 * lc + 2.6097574011 * mc - 0.3413193965 * sc),
+          gamma(-0.0041960863 * lc - 0.7034186147 * mc + 1.707614701 * sc),
+          opacity
+        ];
+      };
+
+      if (numbers.length < 3) {
+        return null;
+      }
+
+      if (value.startsWith('rgb')) {
+        return [numbers[0], numbers[1], numbers[2], alpha(3)];
+      }
+
+      if (value.startsWith('color(srgb ')) {
+        return [numbers[0] * 255, numbers[1] * 255, numbers[2] * 255, alpha(3)];
+      }
+
+      if (value.startsWith('oklab(')) {
+        return fromOklab(numbers[0], numbers[1], numbers[2], alpha(3));
+      }
+
+      if (value.startsWith('oklch(')) {
+        const hue = (numbers[2] * Math.PI) / 180;
+
+        return fromOklab(numbers[0], numbers[1] * Math.cos(hue), numbers[1] * Math.sin(hue), alpha(3));
+      }
+
+      return null;
     };
 
     /**
@@ -421,23 +467,73 @@ export function probePage(input: ProbeInput): ProbeFindings {
       );
     };
 
-    for (const node of document.querySelectorAll('[data-plitzi-el]')) {
-      const text = node.textContent.trim();
-      if (!text || node.children.length > 0 || !isVisible(node)) {
+    /** WCAG's relative luminance of a colour, and the contrast between two: 1 is the same colour, 21 black on white. */
+    const luminance = (colour: number[]): number => {
+      const [r, g, b] = colour.slice(0, 3).map(value => {
+        const channel = value / 255;
+
+        return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+      });
+
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const contrastOf = (one: number[], other: number[]): number => {
+      const [light, dark] = [luminance(one), luminance(other)].sort((a, b) => b - a);
+
+      return (light + 0.05) / (dark + 0.05);
+    };
+
+    /**
+     * Below this nobody reads it — far under what WCAG asks of body text (4.5:1), so a muted caption is not a finding;
+     * text this close to what is behind it is a colour that was meant for the other theme.
+     */
+    const MIN_CONTRAST = 2;
+
+    /**
+     * Every element that draws words of its own on the space's page: the space's elements, and whatever a plugin draws
+     * inside one of them — the part of a page that is often the most read, with colours of its own. Words hidden from a
+     * screen reader (`aria-hidden`) are a decoration, and an SVG's are painted with `fill`, not `color`.
+     */
+    const writers = new Set<Element>();
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+      const parent = text.parentElement;
+      if (
+        parent &&
+        text.textContent?.trim() &&
+        parent.closest('[data-plitzi-el]') &&
+        !parent.closest('svg, script, style, noscript, [aria-hidden="true"]')
+      ) {
+        writers.add(parent);
+      }
+    }
+
+    for (const node of writers) {
+      if (!isVisible(node)) {
         continue;
       }
 
+      const words = [...node.childNodes]
+        .filter(child => child.nodeType === Node.TEXT_NODE)
+        .map(child => child.textContent ?? '')
+        .join(' ')
+        .trim();
       const ink = parse(getComputedStyle(node).color);
       const paper = ink ? behind(node) : null;
       if (!ink || !paper) {
         continue;
       }
 
-      const distance = Math.abs(ink[0] - paper[0]) + Math.abs(ink[1] - paper[1]) + Math.abs(ink[2] - paper[2]);
-      if (ink[3] === 0 || distance < 24) {
+      // A translucent colour is what it leaves over what is behind it.
+      const seen = [0, 1, 2].map(channel => ink[channel] * ink[3] + paper[channel] * (1 - ink[3]));
+      const contrast = contrastOf(seen, paper);
+      if (contrast < MIN_CONTRAST) {
         const elementId = elementIdOf(node);
+        const host = node.closest('[data-plitzi-el]');
+        const name = node.hasAttribute('data-plitzi-el') || !host ? nameOf(node) : `${nameOf(host)} › ${nameOf(node)}`;
         illegible.push({
-          text: `${nameOf(node)}: "${text.slice(0, 40)}"`,
+          text: `${name}: "${words.slice(0, 40)}"`,
+          contrast: Math.round(contrast * 100) / 100,
           ...(elementId === undefined ? {} : { elementId })
         });
       }

@@ -15,7 +15,7 @@ import { projectHere } from './existingProject';
 import { projectSettings } from './projectSettings';
 import { loadProjectSpace } from './projectSpace';
 import { fail } from './terminal';
-import { launchBrowser, openProjectPage, projectOrigin, withoutDevTools } from '../browser';
+import { launchBrowser, openProjectPage, projectOrigin, SCHEMES, withoutDevTools } from '../browser';
 
 import type { ExistingProject } from './existingProject';
 import type { Browser, BrowserPage, Scheme } from '../browser';
@@ -147,6 +147,8 @@ export interface CheckIssue {
 export interface CheckReport {
   path: string;
   width: number;
+  /** The theme it was painted in, when one was asked for. */
+  scheme?: Scheme;
   ok: boolean;
   /** The elements the space owes this page that were looked for — 0 for a space that is not in the project. */
   checked: number;
@@ -238,8 +240,11 @@ export interface ListRows {
   source: number | null;
 }
 
-/** The space the project declares, authored: what each page owes (the handles) and what it reads (the schema). */
-type Authored = { handles: SpaceHandles; schema: Schema };
+/**
+ * The space the project declares, authored: what each page owes (the handles), what it reads (the schema), and the
+ * themes it can be painted in — a visitor whose system is dark sees the dark one.
+ */
+type Authored = { handles: SpaceHandles; schema: Schema; schemes: Scheme[] };
 
 /** The space the project declares, authored. Only for one written here. */
 const projectSpace = async (root: string): Promise<Authored | { problem: string }> => {
@@ -249,9 +254,10 @@ const projectSpace = async (root: string): Promise<Authored | { problem: string 
   }
 
   try {
-    const { handles, schema } = authorSpace(project.space, project.authoring);
+    const { handles, schema, style } = authorSpace(project.space, project.authoring);
+    const schemes = SCHEMES.filter(scheme => style.theme.schemes.includes(scheme));
 
-    return { handles, schema };
+    return { handles, schema, schemes };
   } catch (error) {
     return {
       problem: `The space does not author — npm run author says why: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
@@ -1149,7 +1155,7 @@ export const clickedText = (clicked: ClickReport | undefined): string[] => {
 };
 
 export const reportText = (report: CheckReport, asked: DevToolsInput): string => {
-  const head = `${report.path} at ${String(report.width)} px`;
+  const head = `${report.path} at ${String(report.width)} px${report.scheme ? `, ${report.scheme}` : ''}`;
   const held = [
     ...(report.notFound ? ['  · sent with status 404: the page for an address that shows nothing'] : []),
     ...listsText(report.lists),
@@ -1267,20 +1273,19 @@ export const checkRoutes = async (
     const reports: CheckReport[] = [];
     for (const route of routes) {
       for (const width of options.widths) {
-        reports.push(
-          await checkAt(
-            browser,
-            where.origin,
-            route,
-            width,
-            options.scheme,
-            authored,
-            options.asked,
-            options.ssr,
-            options.account,
-            options.click
-          )
+        const report = await checkAt(
+          browser,
+          where.origin,
+          route,
+          width,
+          options.scheme,
+          authored,
+          options.asked,
+          options.ssr,
+          options.account,
+          options.click
         );
+        reports.push({ ...report, ...(options.scheme ? { scheme: options.scheme } : {}) });
       }
     }
 
@@ -1290,17 +1295,19 @@ export const checkRoutes = async (
   }
 };
 
-/** The paths of the space's pages that take no parameter — the ones a check can open as they are. */
-export const staticPaths = async (root: string): Promise<string[] | { problem: string }> => {
+/** What a whole-project check opens: every page with no parameter in its path, in every theme the space can show. */
+export const staticPaths = async (
+  root: string
+): Promise<{ paths: string[]; schemes: Scheme[] } | { problem: string }> => {
   const authored = await projectSpace(root);
   if ('problem' in authored) {
     return authored;
   }
 
-  return (
-    Object.values(authored.handles.pages)
-      // The page for an address nothing answers is looked at where it shows: at an address no page has.
-      .map(page => (isNotFoundPage(page) ? `${page.path.slice(0, -1)}${NOT_FOUND_PROBE}` : page.path))
-      .filter(pathname => pathname.split('/').every(segment => !segment.startsWith(':') && !/\{\{.*\}\}/.test(segment)))
-  );
+  const paths = Object.values(authored.handles.pages)
+    // The page for an address nothing answers is looked at where it shows: at an address no page has.
+    .map(page => (isNotFoundPage(page) ? `${page.path.slice(0, -1)}${NOT_FOUND_PROBE}` : page.path))
+    .filter(pathname => pathname.split('/').every(segment => !segment.startsWith(':') && !/\{\{.*\}\}/.test(segment)));
+
+  return { paths, schemes: authored.schemes };
 };

@@ -13,6 +13,7 @@ import { authorFlows, COMPONENT_SOURCES, GLOBAL_SOURCES } from '../schema';
 import { isSuggestionCode } from '../schema/codes';
 import { flagSpecOf } from '../schema/flags';
 import { splitKeyframesCss } from '../schema/keyframes';
+import { CUSTOM_TYPE } from '../schema/lint/context';
 import { splitNotificationsCss } from '../schema/notifications';
 import { css, modifierClassName } from '../style';
 import { foldCustomCss } from './customCss';
@@ -1599,11 +1600,15 @@ class SpecReader {
    *
    * Both are what an older builder leaves behind — an animation step from before animations were removed, a submit
    * flow on a button — and authoring refuses both, so they are dropped here and reported rather than written into a
-   * spec that could not be authored again. Only built-in types are judged: a plugin's registers what nobody here sees.
+   * spec that could not be authored again. Only built-in types are judged: a plugin's registers what nobody here sees —
+   * and so does a `custom` host, whose triggers and callbacks are the component it renders, never `custom`'s own.
    */
   private liveSteps(chain: ElementInteraction[], element: Element): ElementInteraction[] {
     const typeOf = (id: string): string | undefined => {
       const type = (this.flat[id] as Element | undefined)?.definition.type;
+      if (type === CUSTOM_TYPE) {
+        return undefined;
+      }
 
       return type && Object.hasOwn(LEGACY_ELEMENT_TYPES, type) ? LEGACY_ELEMENT_TYPES[type].type : type;
     };

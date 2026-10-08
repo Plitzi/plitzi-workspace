@@ -105,14 +105,14 @@ describe('testing/describeFindings', () => {
         hidden: [{ id: 'rows', reason: 'display:none on "inner-slot"' }],
         brokenImages: [{ source: 'https://cdn.test/logo.png' }],
         overflow: { pixels: 37, widest: ['<img.cover>'], elementIds: [] },
-        illegible: [{ text: '"title": "Hi"', elementId: 'title' }]
+        illegible: [{ text: '"title": "Hi"', contrast: 1, elementId: 'title' }]
       })
     ).toEqual([
       'heading "title" is not on the page',
       'list "rows" is on the page but not visible: display:none on "inner-slot"',
       'an image never loaded: https://cdn.test/logo.png',
       'the page scrolls sideways by 37px — widest: <img.cover>',
-      'text drawn in the colour behind it: "title": "Hi"'
+      'text that cannot be told from what is behind it — contrast 1:1, where body text asks 4.5:1: "title": "Hi". A colour meant for one theme, painted in the other, is the usual cause: read the space\'s tokens (`var(--…)`), never a fixed colour'
     ]);
   });
 
@@ -126,7 +126,7 @@ describe('testing/describeFindings', () => {
         brokenImages: [{ source: '/logo.png', elementId: 'logo' }],
         overflow: { pixels: 37, widest: ['"cover"', '<img.x>'], elementIds: ['cover'] },
         cutOff: [{ id: 'title', pixels: 60 }],
-        illegible: [{ text: '<p>: "Hi"' }]
+        illegible: [{ text: '<p>: "Hi"', contrast: 1 }]
       }).map(({ code, elementId }) => ({ code, elementId }))
     ).toEqual([
       { code: 'element-missing', elementId: 'title' },

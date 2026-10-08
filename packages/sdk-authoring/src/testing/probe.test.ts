@@ -259,7 +259,56 @@ describe('probePage / text in the colour behind it', () => {
 
     stackedAt(document.querySelector('header'), lede, document.querySelector('main'), document.body);
 
-    expect(probePage(legibility).illegible).toEqual([{ text: '"lede": "Hello"', elementId: 'lede' }]);
+    expect(probePage(legibility).illegible).toEqual([{ text: '"lede": "Hello"', contrast: 1.04, elementId: 'lede' }]);
+  });
+
+  it('reads the words a plugin draws inside an element of the space, by the element and a selector', () => {
+    // A colour fixed for the light theme, drawn on the dark one: the status line under a plugin's machine.
+    document.body.innerHTML = `
+      <main style="background-color: rgb(29, 29, 32)">
+        <div data-plitzi-el="machine"><p class="gm__status" style="color: rgb(28, 27, 31)">Ready</p></div>
+      </main>`;
+    const status = document.querySelector('p');
+    if (status) {
+      at(status, 100);
+    }
+
+    stackedAt(status, document.querySelector('div'), document.querySelector('main'), document.body);
+
+    expect(probePage(legibility).illegible).toEqual([
+      { text: '"machine" › <p.gm__status>: "Ready"', contrast: 1.02, elementId: 'machine' }
+    ]);
+  });
+
+  it('reads a colour as the browser writes it — oklch, a mix — never its numbers as rgb', () => {
+    // Near white on black, written as the space's tokens are: read as rgb, it was "near black on black".
+    document.body.innerHTML = `
+      <main style="background-color: rgb(0, 0, 0)">
+        <p data-plitzi-el="token" style="color: oklch(0.97 0 0)">Light</p>
+        <p data-plitzi-el="mixed" style="color: color(srgb 0.95 0.95 0.95 / 0.9)">Mixed</p>
+      </main>`;
+    for (const node of document.querySelectorAll('p')) {
+      at(node, 100);
+    }
+
+    stackedAt(document.querySelector('main'), document.body);
+
+    expect(probePage(legibility).illegible).toEqual([]);
+  });
+
+  it('leaves a muted caption, and words hidden from a screen reader as a decoration', () => {
+    document.body.innerHTML = `
+      <main style="background-color: rgb(255, 255, 255)">
+        <p data-plitzi-el="caption" style="color: rgb(120, 120, 120)">Muted</p>
+        <span data-plitzi-el="watermark" aria-hidden="true" style="color: rgb(250, 250, 250)">01</span>
+      </main>`;
+    for (const node of document.querySelectorAll('p, span')) {
+      at(node, 100);
+    }
+
+    stackedAt(document.querySelector('main'), document.body);
+
+    expect(probePage(legibility).illegible).toEqual([]);
   });
 
   it('reads its ancestors where the pane it scrolls in cuts it off — what the point hits there is another page part', () => {

@@ -9,7 +9,8 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { checkAccount, checkRoutes, CHECK_PASSWORD_ENV, CHECK_USER_ENV, reportText, staticPaths } from './check';
 import { projectHere } from './existingProject';
 
-import type { CheckReport } from './check';
+import type { Account, CheckReport } from './check';
+import type { Scheme } from '../browser';
 import type { ExistingProject } from './existingProject';
 
 /**
@@ -152,6 +153,8 @@ export const verify = async (options: VerifyOptions): Promise<void> => {
 };
 
 interface PagesChecked {
+  /** The themes every page was checked in: each the space can be painted in — dark too, unless it says light only. */
+  schemes: Scheme[];
   passing: number;
   failing: CheckReport[];
   /** Pages a browser could not look at — one for signed-in visitors, sent to sign in: by path. */
@@ -166,39 +169,66 @@ interface PagesChecked {
 const NOT_STARTED = 'start it (npm start) and verify again, or --no-pages to leave them';
 
 const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { problem: string }> => {
-  const paths = await staticPaths(project.root);
-  if ('problem' in paths) {
-    return paths;
+  const found = await staticPaths(project.root);
+  if ('problem' in found) {
+    return found;
   }
 
-  const options = { widths: WIDTHS, asked: { state: false }, ssr: false };
-  const reports = await checkRoutes(project, paths, options);
+  const { paths, schemes } = found;
+  // Every theme the space can be painted in: a colour fixed for the light one is unreadable in the dark one, and a
+  // visitor whose system is dark sees that one.
+  const inEveryTheme = async (routes: string[], account?: Account): Promise<CheckReport[] | { problem: string }> => {
+    const all: CheckReport[] = [];
+    for (const scheme of schemes) {
+      const reports = await checkRoutes(project, routes, {
+        widths: WIDTHS,
+        asked: { state: false },
+        ssr: false,
+        scheme,
+        ...(account ? { account } : {})
+      });
+      if ('problem' in reports) {
+        return { problem: `${reports.problem} — ${NOT_STARTED}` };
+      }
+
+      all.push(...reports);
+    }
+
+    return all;
+  };
+
+  const reports = await inEveryTheme(paths);
   if ('problem' in reports) {
-    return { problem: `${reports.problem} — ${NOT_STARTED}` };
+    return reports;
   }
 
   const sentAway = [...new Set(reports.filter(redirected).map(report => report.path))];
   if (sentAway.length === 0) {
-    return summary(reports);
+    return summary(schemes, reports);
   }
 
   const account = await checkAccount(project.root);
   if (!account || 'problem' in account) {
-    return summary(reports, account ?? { none: true });
+    return summary(schemes, reports, account ?? { none: true });
   }
 
-  const signedIn = await checkRoutes(project, sentAway, { ...options, account });
+  const signedIn = await inEveryTheme(sentAway, account);
   if ('problem' in signedIn) {
-    return { problem: `${signedIn.problem} — ${NOT_STARTED}` };
+    return signedIn;
   }
 
-  return summary([...reports.filter(report => !sentAway.includes(report.path)), ...signedIn], {
+  return summary(schemes, [...reports.filter(report => !sentAway.includes(report.path)), ...signedIn], {
     as: account.username,
     checks: signedIn.filter(report => !unchecked(report)).length
   });
 };
 
-const summary = (reports: readonly CheckReport[], signedIn?: PagesChecked['signedIn']): PagesChecked => ({
+const summary = (
+  schemes: Scheme[],
+  reports: readonly CheckReport[],
+  signedIn?: PagesChecked['signedIn']
+): PagesChecked => ({
+  schemes,
   passing: reports.filter(report => report.ok).length,
   failing: reports.filter(report => !report.ok && !unchecked(report)),
   unchecked: [...new Set(reports.filter(unchecked).map(report => report.path))],
@@ -247,7 +277,7 @@ export const verifyText = (
           : [
               pages.failing.length === 0
                 ? chalk.green(
-                    `✓ pages — ${String(pages.passing)} checks at ${WIDTHS.join(' and ')} px${pages.signedIn && 'as' in pages.signedIn ? `, ${String(pages.signedIn.checks)} of them signed in as ${pages.signedIn.as}` : ''}`
+                    `✓ pages — ${String(pages.passing)} checks at ${WIDTHS.join(' and ')} px, ${pages.schemes.join(' and ')}${pages.signedIn && 'as' in pages.signedIn ? `, ${String(pages.signedIn.checks)} of them signed in as ${pages.signedIn.as}` : ''}`
                   )
                 : chalk.red(
                     `✗ pages — ${String(pages.failing.length)} of ${String(pages.passing + pages.failing.length)} checks`

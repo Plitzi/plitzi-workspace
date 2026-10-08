@@ -367,6 +367,22 @@ describe('suggestions', () => {
       ).toHaveLength(1);
     });
 
+    it('says where each animation is — a class and its variant — and writes the fix against that class', () => {
+      const [suggestion] = animated('@keyframes foil { to { background-position: -300% 0; } }', {
+        'rarity-badge': {
+          css: { padding: '2px' },
+          variants: { epico: { css: { animation: 'foil 3.2s linear infinite' } } }
+        }
+      });
+
+      expect(suggestion.message).toContain(
+        '`foil` (`background-position`) in the class `rarity-badge`, variant `epico`'
+      );
+      expect(suggestion.message).toContain('`[data-hydrated] .rarity-badge { animation-play-state: running; }`');
+      expect(suggestion.message).not.toContain('in `customCss` animate');
+      expect(suggestion.message).not.toContain('.glow');
+    });
+
     it('lets main-thread decoration through once it waits for the page to be hydrated', () => {
       const keyframes = '@keyframes glow { to { --glow: 1; } }';
       const gate = '[data-hydrated] .glow { animation-play-state: running; }';

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import chalk from 'chalk';
@@ -17,6 +17,7 @@ import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
 
 import { checkAccount, CHECK_PASSWORD_ENV, sentElsewhere, signInAs } from './check';
 import { projectHere } from './existingProject';
+import { parseSteps } from './shotSteps';
 import { fail } from './terminal';
 import {
   dataUrl,
@@ -30,6 +31,7 @@ import {
 import { PROJECT_TMP } from '../scaffold/paths';
 
 import type { Account } from './check';
+import type { ShotStep } from './shotSteps';
 import type { Browser, BrowserPage, Scheme } from '../browser';
 import type { PictureDiff, PictureRegion, TextComparison, TextDifference } from '@plitzi/sdk-authoring';
 
@@ -81,6 +83,8 @@ export interface ShotOptions {
   as?: string;
   /** When the first picture is taken: once the page settles (the default), or as soon as its HTML is in. */
   from?: ShotMoment;
+  /** A script of steps played on the page (`shotSteps.ts`), or `@file` holding one. */
+  steps?: string;
   json?: boolean;
 }
 
@@ -124,6 +128,8 @@ interface ShotReport {
   sentTo?: string;
   /** With `click`: each element clicked, and the share of the picture that changed after it. */
   clicked?: { target: string; changed: number }[];
+  /** With `steps`: each picture the script took, and the share of it that changed since the one before. */
+  steps?: { label: string; changed: number }[];
   /** The pictures after the first, each with what it shows — or, with `sheet`, the one sheet that holds them all. */
   pictures?: { label: string; out: string }[];
   sheet?: string;
@@ -176,8 +182,9 @@ const DRIFT_PX = 2;
 /** An arrival that waits for the scroll and has not had it: one waiting to be seen, or one tied to the scroll. */
 const WAITING_FOR_SCROLL = '[data-motion-on="view"]:not([data-motion-seen]), [data-motion-on="scroll"]';
 
-/** A selector, or an element's name — what `data-plitzi-el` carries. */
-const selectorOf = (target: string): string => (/^[#.[]/.test(target) ? target : `[data-plitzi-el="${target}"]`);
+/** A selector — CSS, or Playwright's own (`text=Saved`, `role=button[name="Publish"]`) — or an element's name. */
+const selectorOf = (target: string): string =>
+  /^([#.[]|(text|role|css|xpath)=)/.test(target) ? target : `[data-plitzi-el="${target}"]`;
 
 const framing = (view: { clip?: string; viewport?: boolean; scrollTo?: string }): Framing => {
   if (view.clip) {
@@ -482,6 +489,87 @@ const clickThrough = async (
   return { moments, clicked };
 };
 
+/** What a step is, as its label says it. */
+const stepText = (step: ShotStep): string => {
+  switch (step.kind) {
+    case 'click':
+    case 'wait-for':
+      return `${step.kind} ${step.target}`;
+    case 'type':
+      return `type ${step.target}`;
+    case 'press':
+      return `press ${step.key}`;
+    case 'wait':
+      return `wait ${String(step.ms)} ms`;
+    case 'shot':
+      return step.label ?? 'shot';
+    case 'frames':
+      return `frames ${String(step.count)}`;
+  }
+};
+
+/**
+ * A `--steps` script played on the page: what each step does, and every picture the script asks for — each labelled with
+ * its step and the time since the first, and measured against the one before it, so "nothing changed" is said.
+ */
+const playSteps = async (
+  taken: Taken,
+  how: Framing,
+  steps: readonly ShotStep[]
+): Promise<{ moments: Moment[]; changes: { label: string; changed: number }[] } | { problem: string }> => {
+  const { page } = taken;
+  const started = Date.now();
+  const moments: Moment[] = [{ label: 'before', png: taken.png }];
+  const changes: { label: string; changed: number }[] = [];
+  const picture = async (label: string): Promise<void> => {
+    const before = moments[moments.length - 1].png;
+    const png = await capture(page, how);
+    const at = `${label} · +${String(Date.now() - started)} ms`;
+    moments.push({ label: at, png });
+    changes.push({ label: at, changed: (await comparePictures(page, dataUrl(before), dataUrl(png))).changed });
+  };
+
+  for (const [index, step] of steps.entries()) {
+    try {
+      if (step.kind === 'click' || step.kind === 'type') {
+        const element = page.locator(selectorOf(step.target)).first();
+        if ((await element.count()) === 0) {
+          return {
+            problem: `Step ${String(index + 1)}: ${step.target} is not on the page — its name or a CSS selector.`
+          };
+        }
+
+        await element.click({ timeout: 3000 });
+        if (step.kind === 'type') {
+          await page.keyboard.type(step.text);
+        }
+      } else if (step.kind === 'press') {
+        await page.keyboard.press(step.key);
+      } else if (step.kind === 'wait') {
+        await page.waitForTimeout(step.ms);
+      } else if (step.kind === 'wait-for') {
+        await page.waitForSelector(selectorOf(step.target), { timeout: 10_000 });
+      } else if (step.kind === 'shot') {
+        await picture(step.label ?? `step ${String(index + 1)}`);
+      } else {
+        for (let frame = 1; frame <= step.count; frame += 1) {
+          if (frame > 1) {
+            await page.waitForTimeout(step.every);
+          }
+
+          await picture(`frame ${String(frame)}/${String(step.count)}`);
+        }
+      }
+    } catch (error) {
+      return {
+        problem: `Step ${String(index + 1)} (${stepText(step)}) did not happen: ${error instanceof Error ? error.message.split('\n')[0] : String(error)}`
+      };
+    }
+  }
+
+  return { moments, changes };
+};
+
 export const shot = async (route: string | undefined, options: ShotOptions): Promise<void> => {
   const project = await projectHere('whose page to picture');
   if (!project) {
@@ -511,6 +599,30 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
   }
 
   const clicks = options.click ?? [];
+  const script = options.steps?.startsWith('@')
+    ? await readFile(path.resolve(options.steps.slice(1)), 'utf-8').catch(() => undefined)
+    : options.steps;
+  if (options.steps !== undefined && script === undefined) {
+    await browser.close();
+    fail(`${options.steps.slice(1)} cannot be read: --steps @<file> names a file of steps.`);
+
+    return;
+  }
+
+  const steps = script === undefined ? undefined : parseSteps(script, options.every ?? 500);
+  if (steps && 'problem' in steps) {
+    await browser.close();
+    fail(`--steps: ${steps.problem}.`);
+
+    return;
+  }
+
+  if (steps && (clicks.length > 0 || options.compare || (options.frames ?? 0) > 1)) {
+    await browser.close();
+    fail('`--steps` is the whole interaction — its own clicks and frames: leave out --click, --frames and --compare.');
+
+    return;
+  }
   if (options.compare && clicks.length > 0) {
     await browser.close();
     fail(
@@ -520,10 +632,10 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  if (options.sheet && clicks.length === 0 && (options.frames ?? 0) <= 1) {
+  if (options.sheet && clicks.length === 0 && (options.frames ?? 0) <= 1 && options.steps === undefined) {
     await browser.close();
     fail(
-      '`--sheet` lays out the pictures a --click or --frames takes: with neither, there is one picture and no sheet.'
+      '`--sheet` lays out the pictures a --click, --frames or --steps takes: with none of them, there is one picture and no sheet.'
     );
 
     return;
@@ -620,7 +732,17 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     const frames = options.frames ?? 0;
     const every = options.every ?? 500;
     let moments: Moment[] = [];
-    if (clicks.length > 0) {
+    if (steps) {
+      const played = await playSteps(taken, how, steps);
+      if ('problem' in played) {
+        fail(played.problem);
+
+        return;
+      }
+
+      moments = played.moments;
+      report.steps = played.changes;
+    } else if (clicks.length > 0) {
       const played = await clickThrough(taken, how, clicks, { frames, every });
       if ('problem' in played) {
         fail(played.problem);
@@ -670,7 +792,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       );
       report.sheet = `${base}-sheet.png`;
       await writeFile(report.sheet, Buffer.from(sheet.replace(/^data:image\/png;base64,/, ''), 'base64'));
-    } else if (moments.length > 1 && clicks.length > 0) {
+    } else if (moments.length > 1 && (clicks.length > 0 || steps)) {
       report.pictures = [];
       for (const [index, moment] of moments.slice(1).entries()) {
         const file = `${base}-${String(index + 1)}.png`;
@@ -710,6 +832,14 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     if (report.compare) {
       console.log(compareText(report.compare).join('\n'));
+    }
+
+    for (const { label, changed } of report.steps ?? []) {
+      console.log(
+        changed > 0
+          ? `${label}: ${String(changed)}% of the picture changed`
+          : chalk.yellow(`${label}: nothing changed since the picture before`)
+      );
     }
 
     for (const { target, changed } of report.clicked ?? []) {

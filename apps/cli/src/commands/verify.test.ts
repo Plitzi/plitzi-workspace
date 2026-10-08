@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { verifyText } from './verify';
 
 describe('what verify says of the pages for signed-in visitors', () => {
-  const pages = { passing: 12, failing: [], unchecked: ['/studio', '/write'] };
+  const pages = { schemes: ['light' as const], passing: 12, failing: [], unchecked: ['/studio', '/write'] };
 
   it('says how to have them checked when the project names no account', () => {
     expect(stripVTControlCharacters(verifyText([], { ...pages, signedIn: { none: true } }))).toContain(
@@ -23,10 +23,17 @@ describe('what verify says of the pages for signed-in visitors', () => {
 
   it('counts the checks made signed in, and names what even the account was sent away from', () => {
     const said = stripVTControlCharacters(
-      verifyText([], { passing: 22, failing: [], unchecked: ['/studio/team'], signedIn: { as: 'carla', checks: 10 } })
+      verifyText([], {
+        schemes: ['light', 'dark'],
+        passing: 22,
+        failing: [],
+        unchecked: ['/studio/team'],
+        signedIn: { as: 'carla', checks: 10 }
+      })
     );
 
-    expect(said).toContain('✓ pages — 22 checks at 1440 and 390 px, 10 of them signed in as carla');
+    // Every theme the space can be painted in, said: a page unreadable in the dark one is not a pass in the light one.
+    expect(said).toContain('✓ pages — 22 checks at 1440 and 390 px, light and dark, 10 of them signed in as carla');
     expect(said).toContain('- not checked, even signed in as carla: /studio/team — that account may not see them');
   });
 });
