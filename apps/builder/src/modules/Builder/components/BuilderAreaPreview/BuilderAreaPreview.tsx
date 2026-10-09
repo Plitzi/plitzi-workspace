@@ -76,7 +76,6 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
       settings: { ...settings, previewMode, theme: resolvedTheme },
       root: { baseElementId: id },
       utils: { getWindow, rootRef },
-      customContexts: {},
       contexts: {
         ComponentContext,
         PluginsContext,

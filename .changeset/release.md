@@ -110,7 +110,8 @@
   `@plitzi/sdk-interactions` reaches it, declared where every package can name it and implemented by
   `InteractionsManager`. `usePlitziServiceContext()` takes no type arguments and its `InteractionsContext` is typed —
   `interactionTrigger`, `createChildManager`… — where it was `any`. Its `contexts` no longer carry `EventBridgeContext`,
-  which nothing read through them: the bridge is `@plitzi/sdk-event-bridge`'s own context.
+  which nothing read through them: the bridge is `@plitzi/sdk-event-bridge`'s own context. `customContexts` is gone
+  too: every host wrote it and nothing read it.
 - **`getPathsFromObject`** (`@plitzi/sdk-shared/helpers/utils`), spelt right; `getPathsFromObeject` is gone.
 - **`ElementWords` places itself** (`@plitzi/sdk-elements`): `contentPlacement` and the element's children, so a button
   and a link write their words once.

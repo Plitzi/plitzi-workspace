@@ -124,7 +124,6 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
         getWindow,
         rootRef
       },
-      customContexts: {},
       contexts: {
         ComponentContext,
         NetworkContext,

@@ -177,10 +177,8 @@ const BuilderArea = ({
       },
       root: { baseElementId },
       utils: { displayBorderComponents, getWindow, rootRef },
-      customContexts: {},
       contexts: {
         ComponentContext,
-        ContainerRootContext,
         NetworkContext,
         PluginsContext,
         InteractionsContext,

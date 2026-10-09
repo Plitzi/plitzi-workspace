@@ -22,9 +22,6 @@ export type PlitziServiceContextValue = {
     getWindow: () => Window | null;
     rootRef: RefObject<HTMLElement | null>;
   };
-  // Each a host's own context, of a value only it knows; a context is invariant, so no common type holds them all.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  customContexts: Record<string, Context<any>>;
   contexts: {
     ComponentContext: Context<ComponentContextValue>;
     PluginsContext: Context<PluginsContextValue>;

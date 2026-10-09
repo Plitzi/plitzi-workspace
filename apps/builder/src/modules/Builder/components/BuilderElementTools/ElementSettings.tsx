@@ -70,7 +70,6 @@ const ElementSettings = ({
         getWindow,
         rootRef
       },
-      customContexts: { ContainerRootContext },
       contexts: {
         ComponentContext,
         NetworkContext,
