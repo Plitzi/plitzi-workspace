@@ -104,6 +104,8 @@ const fieldStyle = {
 const selectFieldStyle = {
   height: '100%',
   width: '100%',
+  // The chevron's room, and a gap before it: the chosen option never runs under it (the stylesheet draws the chevron).
+  'padding-right': 'calc(1.15em + 8px)',
   display: 'block',
   ...noBorder,
   'background-color': 'transparent',
