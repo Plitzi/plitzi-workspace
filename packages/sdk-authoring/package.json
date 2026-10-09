@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-authoring",
-  "version": "0.38.12",
+  "version": "0.38.13",
   "license": "AGPL-3.0",
   "files": [
     "dist/index.js",
@@ -8,6 +8,8 @@
     "dist/index-*.js",
     "dist/node.js",
     "dist/node.d.ts",
+    "dist/plugin.js",
+    "dist/plugin.d.ts",
     "skills"
   ],
   "main": "dist/index.js",
