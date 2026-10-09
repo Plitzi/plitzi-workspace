@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 /** Whether a node is drawn: neither it nor anything around it is `display: none` — what hiding an element does. */
 const isDrawn = (node: Element): boolean =>
@@ -18,7 +18,7 @@ const isDrawn = (node: Element): boolean =>
 const useElementVisible = (id: string): boolean | undefined => {
   const {
     utils: { rootRef }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const [visible, setVisible] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {

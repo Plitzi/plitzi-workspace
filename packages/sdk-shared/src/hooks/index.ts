@@ -1,9 +1,9 @@
 import useFontHead from './useFontHead';
 import useNetwork from './useNetwork';
-import usePlitziServiceContext from './usePlitziServiceContext';
+import usePlitzi from './usePlitzi';
 import useStableValue from './useStableValue';
 
 export * from './useNetwork';
-export * from './usePlitziServiceContext';
+export * from './usePlitzi';
 
-export { useFontHead, useNetwork, usePlitziServiceContext, useStableValue };
+export { useFontHead, useNetwork, usePlitzi, useStableValue };

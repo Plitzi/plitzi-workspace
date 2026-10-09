@@ -1,8 +1,9 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import { metadataOf } from './metadataOf';
 import pathFields from '../../../dataSource/pathFields';
@@ -39,9 +40,8 @@ const useOverlay = ({ name, sourceType, callbacks, events, autoHideAfterClick }:
   } = useElement();
   const sourceName = getSourceName(sourceType, id);
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const [metadata, setMetadata] = useState<Record<string, unknown>>({});
 

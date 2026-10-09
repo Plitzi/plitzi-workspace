@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import { useId, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style/styleStates';
@@ -219,7 +219,7 @@ const ElementReference = ({ ref, className, referenceId, previewMode }: ElementR
 const Reference = ({ ref, className = '', referenceType = 'element', referenceId = '' }: ReferenceProps) => {
   const {
     settings: { previewMode = true }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
 
   if (referenceType === 'component') {
     return <ComponentInstance ref={ref} className={className} componentId={referenceId} previewMode={previewMode} />;

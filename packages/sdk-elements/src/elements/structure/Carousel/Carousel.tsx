@@ -3,9 +3,10 @@ import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import CarouselContext from './CarouselContext';
 import { clampIndex, directionOf, slideStep, stepIndex } from './carouselIndex';
@@ -68,9 +69,8 @@ const Carousel = ({
   } = useElement();
   const source = getSourceName(declaration.sourceType, id);
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const list = useMemo(() => (Array.isArray(items) ? items : []), [items]);
   const keys = useMemo(() => rowKeys(list, itemKey), [list, itemKey]);

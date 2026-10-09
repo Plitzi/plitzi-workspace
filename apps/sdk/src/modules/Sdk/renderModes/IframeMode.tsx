@@ -3,19 +3,19 @@ import { memo, useMemo } from 'react';
 
 import { Page } from '@plitzi/sdk-elements/elements';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import OverQuotaNotice from '../components/OverQuotaNotice';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
-import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';
 import type { RefObject } from 'react';
 
 export type IframeModeProps = {
   pageId?: string;
   style?: string;
-  plitziContextValue: PlitziServiceContextValue;
+  plitziContextValue: PlitziContextValue;
   assets: Record<string, Asset>;
   ref: RefObject<HTMLIFrameElement | null>;
 };
@@ -26,14 +26,14 @@ const IframeMode = ({ pageId = '', style = '', plitziContextValue, assets = empt
   return (
     <ContainerFrame ref={ref} id="i-sdk" css={style} assets={assets} className="w-full grow">
       <SpaceContainer>
-        <PlitziServiceProvider value={plitziContextValue}>
+        <PlitziProvider value={plitziContextValue}>
           {/* No key on the page: a key here remounts the WHOLE tree on every navigation, and the layout shell
               (header, sidebar) is rendered inside the page — so two pages naming the same `layoutContainer` tore it
               down and rebuilt it anyway, losing its element state and its scroll position for nothing. Reconciling
               by position keeps the shell mounted across a navigation and swaps only the body: the page's own items
               are keyed by element id and pages never share one, so nothing from the old page survives. */}
           {pageId && <Page internalProps={pageValueMemo} />}
-        </PlitziServiceProvider>
+        </PlitziProvider>
         <OverQuotaNotice />
       </SpaceContainer>
     </ContainerFrame>

@@ -4,7 +4,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import { useMemo, use, useCallback, useEffect } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import IconField from '../../../components/IconField';
@@ -37,9 +37,6 @@ const Settings = ({
   current = 'page',
   onUpdate
 }: SettingsProps) => {
-  const {
-    contexts: { NetworkContext }
-  } = usePlitziServiceContext();
   const [[flat, pageIds, pageFolders]] = useCommonStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
   const { server } = use(NetworkContext);
   const domain = useMemo(() => get(server, 'domain', 'https://subdomain.plitzi.app'), [server]);

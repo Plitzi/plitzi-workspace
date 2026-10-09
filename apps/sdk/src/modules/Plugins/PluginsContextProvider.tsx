@@ -3,9 +3,9 @@ import { get, omit, isEmpty } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useMemo, useState } from 'react';
 
 import { getStyle } from '@plitzi/sdk-plugins/PluginHelper';
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import { useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import type { Asset, ComponentDefinition, ComponentPlugin } from '@plitzi/sdk-shared';

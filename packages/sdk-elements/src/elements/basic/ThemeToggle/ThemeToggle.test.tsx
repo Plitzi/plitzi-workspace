@@ -35,15 +35,12 @@ vi.mock('@plitzi/sdk-shared/theme/useTheme', () => ({
 // note about. A component test wants the component, so the HOC is the identity here.
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', async () => {
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => ({ settings: { previewMode: true } }) }));
+
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
   const { createContext } = await import('react');
 
-  return {
-    default: () => ({
-      settings: { previewMode: true },
-      contexts: { InteractionsContext: createContext({ interactionsManager: { interactionTrigger } }) }
-    })
-  };
+  return { default: createContext({ interactionsManager: { interactionTrigger } }) };
 });
 
 vi.mock('../../../Element/hooks/useElement', () => ({

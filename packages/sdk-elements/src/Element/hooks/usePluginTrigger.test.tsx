@@ -1,20 +1,26 @@
 import { renderHook } from '@testing-library/react';
-import { createContext } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import usePluginTrigger from './usePluginTrigger';
 
-const interactionTrigger = vi.fn();
-const service = { previewMode: true };
+const { interactionTrigger, service } = vi.hoisted(() => ({
+  interactionTrigger: vi.fn(),
+  service: { previewMode: true }
+}));
 
 vi.mock('./useElement', () => ({ default: () => ({ id: 'seats' }) }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({
-    settings: { previewMode: service.previewMode },
-    contexts: { InteractionsContext: createContext({ interactionsManager: { interactionTrigger } }) }
+    settings: { previewMode: service.previewMode }
   })
 }));
+
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+  const { createContext } = await import('react');
+
+  return { default: createContext({ interactionsManager: { interactionTrigger } }) };
+});
 
 const declaration = {
   triggers: {

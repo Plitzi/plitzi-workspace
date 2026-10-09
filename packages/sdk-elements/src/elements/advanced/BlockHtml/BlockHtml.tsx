@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import { useCallback, useEffect } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';
@@ -18,7 +18,7 @@ export type BlockHtmlProps = {
 const BlockHtml = ({ ref, content = '', className = '' }: BlockHtmlProps) => {
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
 
   const insertScript = useCallback(
     (sourceScript: HTMLScriptElement) =>

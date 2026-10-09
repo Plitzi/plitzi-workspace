@@ -38,12 +38,13 @@ vi.mock('../../../Element/hooks/useElement', () => ({
 
 vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ default: () => undefined }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', async () => {
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => ({ settings: { previewMode: preview.on } }) }));
+
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
   const { createContext } = await import('react');
   const manager = { createChildManager: () => manager, removeChildManager: () => undefined, interactionTrigger };
-  const InteractionsContext = createContext({ interactionsManager: manager });
 
-  return { default: () => ({ settings: { previewMode: preview.on }, contexts: { InteractionsContext } }) };
+  return { default: createContext({ interactionsManager: manager }) };
 });
 
 // jsdom has no layout, and so no `ResizeObserver`: the marquee measures nothing here, which is all these tests need.

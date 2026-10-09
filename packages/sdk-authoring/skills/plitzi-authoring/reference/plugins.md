@@ -192,14 +192,14 @@ the component: the flow is visible in the space, and a button can do the same.
 The builder draws the element on its canvas while somebody edits the page: a click selects it, a drag moves it, a key
 belongs to the editor.
 
-- **Outside preview, do nothing on your own.** `usePlitziServiceContext().settings.previewMode` is `false` while the
+- **Outside preview, do nothing on your own.** `usePlitzi().settings.previewMode` is `false` while the
   page is edited: gate your own click handlers, timers, listeners, permission prompts and map gestures on it, and
   still render something to select.
 - **A drag lives in state, not in refs read while rendering** (the project's lint refuses that): keep the gesture
   in `useState`, mirror the latest props into a ref inside an effect, and attach `pointermove` on `pointerdown`.
 - **Never the global `window` or `document`.** The canvas is a frame of its own and the code runs in the builder's
   window: listen, measure and go full screen through the node's own page (`ref.current.ownerDocument`, its
-  `defaultView`) or `usePlitziServiceContext().utils.getWindow()`. An `instanceof` check takes its class from there too.
+  `defaultView`) or `usePlitzi().utils.getWindow()`. An `instanceof` check takes its class from there too.
 
 ## The plugin's stylesheet and the space's CSS
 

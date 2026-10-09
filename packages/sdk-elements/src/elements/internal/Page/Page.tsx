@@ -2,7 +2,8 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -76,9 +77,8 @@ const Page = ({
 }: PageProps) => {
   const { id } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   // Written only into a head that is the page's own — never the builder's, around the canvas this page is drawn in.
   const { ownsHead } = useRenderSettings();

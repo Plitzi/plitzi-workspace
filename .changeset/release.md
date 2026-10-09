@@ -85,6 +85,9 @@
 
 - **A dialog opened with an id** (`@plitzi/sdk-elements`): `openDialog('dialog', '{{ row.id }}')` reads the id as its
   `content`, as `openModal` already did — a numeric id parsed as the number and the dialog's bindings read nothing.
+- **A select's chevron** (`@plitzi/plitzi-sdk`): a drawn chevron in the field's own colour, sized by its type, in place
+  of the `▼` glyph — and laid out in the box, so it ends where the box's padding begins whatever that padding is, and
+  the chosen option stops short of it instead of running under it. A disabled select's is faded.
 - **Every element has its settings** (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`): the builder found none for
   `tabContainerHeader` (registered under a misspelt type), `themeToggle`, `dropdownPopup`, `loading` and `notFound`.
   The theme toggle's panel sets its mode, its labels and whether it offers "System"; the registry is typed by element
@@ -106,12 +109,16 @@
 
 ## Typed for plugins and hosts
 
+- **`usePlitzi()` and `PlitziProvider`** (`@plitzi/sdk-shared/hooks/usePlitzi`, `@plitzi/plitzi-sdk`): what were
+  `usePlitziServiceContext()` and `PlitziServiceProvider` (and `PlitziServiceContextValue`, now `PlitziContextValue`),
+  holding only what the host rendering a space knows — `settings`, `root`, `utils`. Its `contexts` and
+  `customContexts` are gone: every context it carried is a shared one already, imported from its own module
+  (`@plitzi/sdk-interactions/InteractionsContext`, `@plitzi/sdk-shared/network/NetworkContext`…), and
+  `PluginsContext` moves to `@plitzi/sdk-shared/plugins/PluginsContext` beside the others.
 - **`InteractionsManagerApi`** (`@plitzi/sdk-shared`): the interactions manager as everything outside
   `@plitzi/sdk-interactions` reaches it, declared where every package can name it and implemented by
-  `InteractionsManager`. `usePlitziServiceContext()` takes no type arguments and its `InteractionsContext` is typed —
-  `interactionTrigger`, `createChildManager`… — where it was `any`. Its `contexts` no longer carry `EventBridgeContext`,
-  which nothing read through them: the bridge is `@plitzi/sdk-event-bridge`'s own context. `customContexts` is gone
-  too: every host wrote it and nothing read it.
+  `InteractionsManager`, so `use(InteractionsContext)` is typed — `interactionTrigger`, `createChildManager`… — where it
+  was `any`.
 - **`getPathsFromObject`** (`@plitzi/sdk-shared/helpers/utils`), spelt right; `getPathsFromObeject` is gone.
 - **`ElementWords` places itself** (`@plitzi/sdk-elements`): `contentPlacement` and the element's children, so a button
   and a link write their words once.

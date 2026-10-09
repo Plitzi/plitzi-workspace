@@ -3,7 +3,7 @@ import { useMemo, memo } from 'react';
 
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
 import { Page } from '@plitzi/sdk-elements/elements';
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 import { RUNTIME_STYLE_ID } from '@plitzi/sdk-shared/style';
 
@@ -11,13 +11,13 @@ import SpaceContainer from '../../Space/SpaceContainer';
 import OverQuotaNotice from '../components/OverQuotaNotice';
 
 import type { RenderMode } from '@plitzi/sdk-shared';
-import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 export type RawModeProps = {
   renderMode?: RenderMode;
   pageId?: string;
   style?: string;
-  plitziContextValue: PlitziServiceContextValue;
+  plitziContextValue: PlitziContextValue;
 };
 
 const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'raw' }: RawModeProps) => {
@@ -37,7 +37,7 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
       <style type="text/css" rel="stylesheet" data-id={RUNTIME_STYLE_ID}>
         {style}
       </style>
-      <PlitziServiceProvider value={plitziContextValue}>
+      <PlitziProvider value={plitziContextValue}>
         {/* No key on the page: a key here remounts the WHOLE tree on every navigation, and the layout shell
             (header, sidebar) is rendered inside the page — so two pages naming the same `layoutContainer` tore it
             down and rebuilt it anyway, losing its element state and its scroll position for nothing. Reconciling
@@ -45,7 +45,7 @@ const RawMode = ({ pageId = '', style = '', plitziContextValue, renderMode = 'ra
             are keyed by element id and pages never share one, so nothing from the old page survives. */}
         {pageId && renderMode !== 'widget' && <Page internalProps={pageValueMemo} />}
         {pageId && renderMode === 'widget' && <PluginManager key={pageId} type={type} internalProps={pageValueMemo} />}
-      </PlitziServiceProvider>
+      </PlitziProvider>
       <OverQuotaNotice />
     </SpaceContainer>
   );

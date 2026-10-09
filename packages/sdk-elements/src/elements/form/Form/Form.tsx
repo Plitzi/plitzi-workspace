@@ -5,10 +5,11 @@ import { produce } from 'immer';
 import { useCallback, useMemo, useState, use, useEffect, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';
@@ -80,9 +81,8 @@ const Form = ({
   } = useElement();
   const sourceName = getSourceName(declaration.sourceType, id);
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
 
   const registerField = useCallback(

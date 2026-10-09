@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import { embeddableSrc } from './embeddableSrc';
 import withElement from '../../../Element/hocs/withElement';
@@ -36,7 +36,7 @@ const Embed = ({
 }: EmbedProps) => {
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const address = embeddableSrc(src);
   const frame = {
     src: address,

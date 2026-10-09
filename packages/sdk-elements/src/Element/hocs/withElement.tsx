@@ -3,7 +3,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import { Profiler, use, useEffect, useId, useMemo, useRef } from 'react';
 
 import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { diffProps, tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 
@@ -86,7 +86,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
     const {
       settings: { previewMode, debugMode },
       root: { baseElementId }
-    } = usePlitziServiceContext();
+    } = usePlitzi();
     // The collector hears renders and never teardowns, so it is told when this instance leaves — or it keeps drawing a
     // page that was navigated away from, and the body of a modal that closed.
     useEffect(() => {

@@ -10,8 +10,8 @@ vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
-  default: () => ({ settings: { previewMode: true }, contexts: {} })
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
+  default: () => ({ settings: { previewMode: true } })
 }));
 
 const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12l5 5L20 7"/></svg>';

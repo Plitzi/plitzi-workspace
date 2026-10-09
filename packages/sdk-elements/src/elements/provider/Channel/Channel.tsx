@@ -4,10 +4,11 @@ import clsx from 'clsx';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { isTrue } from '@plitzi/sdk-shared/dataSource/utility/truthiness';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { JOIN_TYPE, LEAVE_TYPE, PRESENCE_TYPE } from '@plitzi/sdk-shared/realtime';
 
 import declaration from './declaration';
@@ -72,9 +73,8 @@ const Channel = ({
     definition: { label = 'Channel' }
   } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const limit = Math.max(0, Number(keep) || 0);
   const [messages, setMessages] = useState<RealtimeMessage[]>([]);

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import useReducedMotion from './useReducedMotion';
 
@@ -60,7 +60,7 @@ const useAnimationFrame = (
   onFrame: (frame: Frame) => void,
   { paused = false, fps, target }: AnimationFrameOptions = {}
 ): { running: boolean } => {
-  const previewMode = usePlitziServiceContext().settings.previewMode ?? true;
+  const previewMode = usePlitzi().settings.previewMode ?? true;
   const reduced = useReducedMotion();
   const shown = useSyncExternalStore(subscribeVisibility, pageShown, () => false);
   const onScreen = useOnScreen(target);

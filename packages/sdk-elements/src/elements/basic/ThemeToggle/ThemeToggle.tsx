@@ -2,7 +2,8 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, use, useSyncExternalStore } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import declaration from './declaration';
@@ -79,9 +80,8 @@ const ThemeToggle = ({
     definition: { styleSelectors }
   } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   // False while hydrating and true from the render after it, so the "which one is chosen" marker is only written
   // once the browser is the one rendering. Before that nobody can know what was stored.

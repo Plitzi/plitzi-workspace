@@ -6,20 +6,18 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import AppContext from '@pmodules/App/AppContext';
 import InstanceTools from '@pmodules/Components/components/InstanceTools';
 
 import type { ComponentPlugin, ElementRuntime } from '@plitzi/sdk-shared';
-import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';
 import type { FC } from 'react';
 
 export type ElementSettingsProps = {
@@ -55,7 +53,7 @@ const ElementSettings = ({
 
   const getWindow = useCallback(() => window, []);
 
-  const plitziContextValue = useMemo<PlitziServiceContextValue>(
+  const plitziContextValue = useMemo<PlitziContextValue>(
     () => ({
       settings: {
         previewMode,
@@ -69,12 +67,6 @@ const ElementSettings = ({
         displayBorderComponents,
         getWindow,
         rootRef
-      },
-      contexts: {
-        ComponentContext,
-        NetworkContext,
-        PluginsContext,
-        InteractionsContext
       }
     }),
     [previewMode, currentPageId, resolvedTheme, baseElementId, displayBorderComponents, getWindow, rootRef]
@@ -90,7 +82,7 @@ const ElementSettings = ({
 
   const children = useMemo(
     () => (
-      <PlitziServiceProvider value={plitziContextValue}>
+      <PlitziProvider value={plitziContextValue}>
         <ErrorBoundary>
           {Settings && (
             <div className={clsx('flex h-full flex-col', { dark: resolvedTheme === 'dark' })}>
@@ -103,7 +95,7 @@ const ElementSettings = ({
           )}
           {!Settings && <div className="element-tools--empty">Settings not available.</div>}
         </ErrorBoundary>
-      </PlitziServiceProvider>
+      </PlitziProvider>
     ),
     [plitziContextValue, Settings, resolvedTheme, attributes, id, runtime, variables, handleChange, componentId]
   );

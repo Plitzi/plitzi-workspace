@@ -21,10 +21,9 @@ vi.mock('./modes/ListControlled/ListControlledItem', () => ({
 
 vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ default: () => undefined }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({
-    settings: { previewMode: true },
-    contexts: {}
+    settings: { previewMode: true }
   })
 }));
 

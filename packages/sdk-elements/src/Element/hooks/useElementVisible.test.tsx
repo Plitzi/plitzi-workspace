@@ -5,7 +5,7 @@ import useElementVisible from './useElementVisible';
 
 const root = document.createElement('div');
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({ utils: { rootRef: { current: root } } })
 }));
 

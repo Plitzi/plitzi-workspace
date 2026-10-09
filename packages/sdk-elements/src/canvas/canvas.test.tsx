@@ -2,12 +2,12 @@
 import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PlitziServiceContext } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { PlitziContext } from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import { createShaderProgram, ShaderError, useCanvas2d } from './index';
 
 import type { Frame } from './index';
-import type { PlitziServiceContextValue } from '@plitzi/sdk-shared';
+import type { PlitziContextValue } from '@plitzi/sdk-shared';
 
 /** A 2D context with only what the hook and these draws touch. */
 const fake2d = () => ({ setTransform: vi.fn(), clearRect: vi.fn() });
@@ -15,9 +15,8 @@ const fake2d = () => ({ setTransform: vi.fn(), clearRect: vi.fn() });
 const service = (previewMode: boolean) =>
   ({
     settings: { previewMode },
-    root: { baseElementId: 'root' },
-    contexts: {}
-  }) as unknown as PlitziServiceContextValue;
+    root: { baseElementId: 'root' }
+  }) as unknown as PlitziContextValue;
 
 type Draw = (context: unknown, frame: Frame & { width: number; pixelRatio: number }) => void;
 
@@ -30,9 +29,9 @@ const Probe = ({ draw }: { draw: Draw }) => {
 
 const mount = (draw: Draw, previewMode = true) => {
   const { container } = render(
-    <PlitziServiceContext value={service(previewMode)}>
+    <PlitziContext value={service(previewMode)}>
       <Probe draw={draw} />
-    </PlitziServiceContext>
+    </PlitziContext>
   );
   const canvas = container.querySelector('canvas');
   if (!canvas) {

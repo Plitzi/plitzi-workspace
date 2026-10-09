@@ -3,7 +3,8 @@ import { use } from 'react';
 
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 
 import App from '../../../../App';
 
@@ -19,9 +20,8 @@ export type PlitziSdkProps = {
 
 const PlitziSdk = ({ ref, className, spaceKey, environment = 'main' }: PlitziSdkProps) => {
   const {
-    settings: { previewMode },
-    contexts: { NetworkContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { server } = use(NetworkContext);
 
   return (

@@ -1,6 +1,7 @@
 import { use, useCallback, useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import useElement from './useElement';
 
@@ -28,15 +29,19 @@ export const contentText = (content: unknown): string => {
 const useEditableContent = (content: unknown) => {
   const { id } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { BuilderContext }
-  } = usePlitziServiceContext();
-  const builderContext = BuilderContext ? use(BuilderContext) : undefined;
+    settings: { previewMode }
+  } = usePlitzi();
+  const builderContext = use(BuilderContext);
   const text = useMemo(() => contentText(content), [content]);
 
+  // Only the editor writes, and it is drawn only while editing — inside the builder, whose context this then is.
   const handleChange = useCallback(
-    (value: string) => builderContext?.updateElement(id, 'content', value),
-    [builderContext, id]
+    (value: string) => {
+      if (!previewMode) {
+        builderContext.updateElement(id, 'content', value);
+      }
+    },
+    [builderContext, id, previewMode]
   );
 
   return { previewMode, text, handleChange };

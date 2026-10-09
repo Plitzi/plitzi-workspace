@@ -14,10 +14,6 @@
       "types": "./dist/PluginHelper.d.ts",
       "import": "./dist/PluginHelper.mjs"
     },
-    "./PluginsContext": {
-      "types": "./dist/PluginsContext.d.ts",
-      "import": "./dist/PluginsContext.mjs"
-    },
     "./helpers/manifestAssetToAsset": {
       "types": "./dist/helpers/manifestAssetToAsset.d.ts",
       "import": "./dist/helpers/manifestAssetToAsset.mjs"

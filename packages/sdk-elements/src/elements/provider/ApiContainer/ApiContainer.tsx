@@ -5,10 +5,11 @@ import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { useServerQuery } from '@plitzi/sdk-shared/queries';
 import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
 import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
@@ -174,9 +175,8 @@ const ApiContainer = ({
   } = useRscData<Record<string, unknown>>();
   const sourceName = getSourceName(declaration.sourceType, id);
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const [[routeParams, queryParams, navigate]] = useSdkStore([
     'navigation.routeParams',

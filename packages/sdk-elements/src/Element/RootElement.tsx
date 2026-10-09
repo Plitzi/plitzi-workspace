@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { use, useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { motionAttributes } from '@plitzi/sdk-shared/schema/motion';
 
 import parseStyle from './helpers/parseStyle';
@@ -8,9 +9,8 @@ import renderStaticTag from './helpers/renderStaticTag';
 import useElement from './hooks/useElement';
 import useRootElementInteractions from './hooks/useRootElementInteractions';
 
-import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
-import type { Context, CSSProperties, JSX, ReactNode, RefObject } from 'react';
+import type { CSSProperties, JSX, ReactNode, RefObject } from 'react';
 
 export type RootElementProps<T extends keyof JSX.IntrinsicElements> = {
   ref?: RefObject<HTMLElement | null>;
@@ -43,7 +43,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
 }: RootElementProps<T>) => {
   const styleParsed = useMemo(() => parseStyle(styleProp), [styleProp]);
   const elementContext = useElement();
-  const serviceContext = usePlitziServiceContext();
+  const serviceContext = usePlitzi();
   const previewMode = serviceContext.settings.previewMode ?? true;
   const debugMode = Boolean(serviceContext.settings.debugMode);
 
@@ -52,12 +52,11 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   }
 
   const {
-    root: { baseElementId },
-    contexts
+    root: { baseElementId }
   } = serviceContext;
-  // The service-context type declares InteractionsContext as required, but interaction-less trees (SSR, tests) omit
-  // it, so we narrow to nullable to keep the static-tag fallback below.
-  const InteractionsContext = contexts.InteractionsContext as Context<InteractionsContextValue> | undefined;
+  // A tree with no interactions provider above it — rendered on its own, in a test, a static export — reads the
+  // context's default, which has no manager: the element is then the static tag below.
+  const interactive = Boolean(use(InteractionsContext).interactionsManager as unknown);
   const {
     id,
     rootId,
@@ -98,7 +97,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
           'data-root-render-element': true
         };
 
-  if (!InteractionsContext) {
+  if (!interactive) {
     return renderStaticTag({
       tag,
       refProp: ref,
@@ -117,7 +116,6 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const interactions = useRootElementInteractions({
     elementContext,
-    InteractionsContext,
     previewMode,
     debugMode,
     baseElementId,

@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import { fitSvg, isSvgMarkup, sanitizeSvg } from './sanitizeSvg';
 import withElement from '../../../Element/hocs/withElement';
@@ -22,7 +22,7 @@ export type SvgProps = {
 const Svg = ({ ref, content = '', label = '', className = '' }: SvgProps) => {
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const markup = useMemo(() => (isSvgMarkup(content) ? fitSvg(sanitizeSvg(content)) : ''), [content]);
   const meaning = label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true };
 

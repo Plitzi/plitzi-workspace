@@ -1,7 +1,7 @@
 import { memo, use } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 
 import pluginSelector from './helpers/pluginSelector';
 
@@ -15,9 +15,6 @@ export type PluginManagerProps = {
 
 const PluginManager = ({ plitziElementLayout = undefined, type = '', internalProps }: PluginManagerProps) => {
   const { components } = use(ComponentContext);
-  const {
-    contexts: { PluginsContext }
-  } = usePlitziServiceContext();
   const { plugins } = use(PluginsContext);
 
   return pluginSelector({

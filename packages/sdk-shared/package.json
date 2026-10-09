@@ -571,9 +571,9 @@
       "types": "./dist/hooks/useNetwork.d.ts",
       "import": "./dist/hooks/useNetwork.mjs"
     },
-    "./hooks/usePlitziServiceContext": {
-      "types": "./dist/hooks/usePlitziServiceContext.d.ts",
-      "import": "./dist/hooks/usePlitziServiceContext.mjs"
+    "./hooks/usePlitzi": {
+      "types": "./dist/hooks/usePlitzi.d.ts",
+      "import": "./dist/hooks/usePlitzi.mjs"
     },
     "./hooks/useStableValue": {
       "types": "./dist/hooks/useStableValue.d.ts",
@@ -1098,6 +1098,10 @@
     "./network/spaceEvents": {
       "types": "./dist/network/spaceEvents.d.ts",
       "import": "./dist/network/spaceEvents.mjs"
+    },
+    "./plugins/PluginsContext": {
+      "types": "./dist/plugins/PluginsContext.d.ts",
+      "import": "./dist/plugins/PluginsContext.mjs"
     },
     "./plugins/bundle": {
       "types": "./dist/plugins/bundle.d.ts",

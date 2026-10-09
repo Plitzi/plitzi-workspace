@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import { ariaCurrent } from './ariaCurrent';
@@ -77,7 +77,7 @@ const Link = ({
   } = useElement();
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const [[pageDefinitions, pageFolders, routeParams, queryParams, navigate, location]] = useSdkStore([
     'pageDefinitions',
     'schema.pageFolders',

@@ -32,7 +32,8 @@ import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import useChannel from '@plitzi/sdk-elements/realtime/useChannel';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
-import baseUsePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi, { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
 import usePluginRoute from '@plitzi/sdk-shared/server/usePluginRoute';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
@@ -77,7 +78,7 @@ import type {
   RuntimeStateInstance,
   Theme,
   ThemeScope,
-  PlitziServiceContextValue as BasePlitziServiceContextValue
+  PlitziContextValue
 } from '@plitzi/sdk-shared';
 import type { RealtimeMessage } from '@plitzi/sdk-shared';
 import type { PluginDeclaration } from '@plitzi/sdk-shared/authoring/declare';
@@ -401,17 +402,15 @@ const PlitziSdk = ({
 
 PlitziSdk.Plugin = Sdk.Plugin;
 
-type PlitziServiceContextValue = BasePlitziServiceContextValue;
-
-const usePlitziServiceContext = baseUsePlitziServiceContext;
-
 export {
   track,
   useSdkStore as useStore,
   ComponentProvider,
   ComponentContext,
-  usePlitziServiceContext,
-  PlitziServiceProvider,
+  // The plugins the space has and the assets they load: a plugin that brings code or styles of its own registers them here.
+  PluginsContext,
+  usePlitzi,
+  PlitziProvider,
   RootElement,
   withElement,
   JsxManager,
@@ -464,7 +463,7 @@ export type {
   Style,
   ComponentPlugin,
   ComponentPluginFC,
-  PlitziServiceContextValue,
+  PlitziContextValue,
   OfflineDataRaw,
   InteractionCallback,
   InteractionCallbackParamValues,

@@ -27,7 +27,7 @@ const element: Element = { id: 'el1', attributes: {}, definition };
 
 vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: vi.fn() }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
 }));
 

@@ -1,5 +1,5 @@
 import { fireEvent, render, waitFor } from '@testing-library/react';
-import { createContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
@@ -14,16 +14,27 @@ import type { ReactNode } from 'react';
 type ServiceContext = {
   settings: { previewMode?: boolean; debugMode?: boolean };
   root: { baseElementId: string };
-  contexts: Record<string, unknown>;
 };
 
 let serviceContext: ServiceContext;
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({ default: () => serviceContext }));
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => serviceContext }));
 
 const interactionsManager = { interactionTrigger: vi.fn() };
 const useInteractions = vi.fn();
-const InteractionsContext = createContext({ interactionsManager, useInteractions });
+
+/** What the interactions context holds: nothing — no provider above — until a test wires a manager in. */
+const { interactions } = vi.hoisted(() => {
+  const held: { interactionsManager?: typeof interactionsManager; useInteractions?: typeof useInteractions } = {};
+
+  return { interactions: held };
+});
+
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+  const { createContext } = await import('react');
+
+  return { default: createContext(interactions) };
+});
 
 const fullContext = (overrides: Partial<ElementContextValue> = {}): ElementContextValue => ({
   id: 'el1',
@@ -58,9 +69,10 @@ describe('RootElement', () => {
   beforeEach(() => {
     serviceContext = {
       settings: { previewMode: true, debugMode: false },
-      root: { baseElementId: 'root' },
-      contexts: {}
+      root: { baseElementId: 'root' }
     };
+    delete interactions.interactionsManager;
+    delete interactions.useInteractions;
     vi.clearAllMocks();
   });
 
@@ -136,7 +148,8 @@ describe('RootElement', () => {
 
   describe('with InteractionsContext', () => {
     beforeEach(() => {
-      serviceContext.contexts.InteractionsContext = InteractionsContext;
+      interactions.interactionsManager = interactionsManager;
+      interactions.useInteractions = useInteractions;
     });
 
     it('keeps the anchor once interactions are wired', () => {

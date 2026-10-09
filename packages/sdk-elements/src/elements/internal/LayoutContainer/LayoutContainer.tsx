@@ -4,7 +4,7 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, useEffect } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import { boxOf, maskFrameOf } from './mask';
 import withElement from '../../../Element/hocs/withElement';
@@ -42,7 +42,7 @@ const LayoutContainer = ({ ref, className = '', children, subType = 'div' }: Lay
   const { plitziElementLayout } = useElement();
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
 
   const updateMask = useCallback((parent?: HTMLElement, child?: Element | null) => {
     if (!parent) {

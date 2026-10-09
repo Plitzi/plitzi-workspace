@@ -23,17 +23,14 @@ vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ defaul
 
 const { interactionTrigger } = vi.hoisted(() => ({ interactionTrigger: vi.fn() }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', async () => {
-  const { createContext: create } = await import('react');
-  const InteractionsContext = create({ interactionsManager: { interactionTrigger }, useInteractions: () => undefined });
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
+  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
+}));
 
-  return {
-    default: () => ({
-      settings: { previewMode: true },
-      root: { baseElementId: 'root' },
-      contexts: { InteractionsContext }
-    })
-  };
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+  const { createContext } = await import('react');
+
+  return { default: createContext({ interactionsManager: { interactionTrigger }, useInteractions: () => undefined }) };
 });
 
 // One object for the life of the module: a store handed a new value on every render resets itself on every render.

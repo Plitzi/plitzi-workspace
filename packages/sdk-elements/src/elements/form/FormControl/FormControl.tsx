@@ -3,7 +3,8 @@ import clsx from 'clsx';
 import { use, useCallback, useEffect } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/react';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import Label from './components/Label';
 import { VISUALLY_HIDDEN } from './components/visuallyHidden';
@@ -126,9 +127,8 @@ const FormControl = ({
     definition: { styleSelectors }
   } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const { useStore } = createStoreHook<{ runtime?: { sources?: { form?: FormContextValue } } }>();
   const [form] = useStore('runtime.sources.form');

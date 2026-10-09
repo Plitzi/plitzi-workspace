@@ -15,8 +15,8 @@ import type { ReactNode } from 'react';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
-  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' }, contexts: {} })
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
+  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
 }));
 
 const ref = { current: document.createElement('div') };

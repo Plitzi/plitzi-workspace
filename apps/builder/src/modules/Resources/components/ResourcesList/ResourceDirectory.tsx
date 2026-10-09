@@ -5,7 +5,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import { mainPluginOf } from '../../helpers';

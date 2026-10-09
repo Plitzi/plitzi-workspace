@@ -11,12 +11,10 @@ import LayoutBody from '../LayoutBody';
 import type { ComponentContextValue, Element } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-vi.mock('@plitzi/sdk-shared', async importOriginal => {
-  const actual = await importOriginal<typeof import('@plitzi/sdk-shared')>();
-  const React = await import('react');
-  const PluginsContext = React.createContext({ plugins: {} });
+vi.mock('@plitzi/sdk-shared/plugins/PluginsContext', async () => {
+  const { createContext } = await import('react');
 
-  return { ...actual, usePlitziServiceContext: () => ({ contexts: { PluginsContext } }) };
+  return { default: createContext({ plugins: {} }) };
 });
 
 vi.mock('../helpers/pluginSelector', async importOriginal => {

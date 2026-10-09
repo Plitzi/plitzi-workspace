@@ -3,7 +3,7 @@ import { useCallback, useMemo, useEffect, useState } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/react';
 import { getDisplayName } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import { validateField } from '../helpers/validateField';
 
@@ -64,7 +64,7 @@ const withFieldValue = <T extends object>(WrappedComponent: FC<T>) => {
     } = props;
     const {
       settings: { previewMode }
-    } = usePlitziServiceContext();
+    } = usePlitzi();
     const { useStore } = createStoreHook<{ runtime?: { sources?: { form?: FormContextValue } } }>();
     const [form] = useStore('runtime.sources.form');
     /**

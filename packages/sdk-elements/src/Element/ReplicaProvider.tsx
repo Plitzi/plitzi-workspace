@@ -1,16 +1,12 @@
 import { use, useEffect, useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 
 import type { ReactNode } from 'react';
 
 export type ReplicaProviderProps = { children?: ReactNode };
 
 const ReplicaProvider = ({ children }: ReplicaProviderProps) => {
-  const {
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
-
   // Interactions
 
   const interactionsContext = use(InteractionsContext);

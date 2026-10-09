@@ -9,12 +9,11 @@ import { elementEntry } from '../../../testUtils/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({
     settings: { previewMode: true },
     root: { baseElementId: '' },
-    utils: { getWindow: () => window },
-    contexts: {}
+    utils: { getWindow: () => window }
   })
 }));
 

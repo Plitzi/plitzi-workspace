@@ -14,7 +14,7 @@ import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
 import RootElement from '@plitzi/sdk-elements/Element/RootElement';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
-import usePlitziServiceContext, { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi, { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Builder from '@pmodules/Builder';
 
@@ -99,8 +99,8 @@ export {
   useBuilderStore,
   ComponentProvider,
   ComponentContext,
-  usePlitziServiceContext,
-  PlitziServiceProvider,
+  usePlitzi,
+  PlitziProvider,
   RootElement,
   withElement,
   JsxManager,

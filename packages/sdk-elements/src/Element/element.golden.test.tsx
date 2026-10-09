@@ -1,15 +1,14 @@
 import { render } from '@testing-library/react';
-import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { PlitziServiceContext } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { PlitziContext } from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import Text from '../elements/basic/Text/Text';
 import List from '../elements/structure/List/List';
 
-import type { ComponentContextValue, Element, PlitziServiceContextValue } from '@plitzi/sdk-shared';
+import type { ComponentContextValue, Element, PlitziContextValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: () => undefined }));
@@ -18,17 +17,27 @@ vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: () =>
 // init order under vitest. Local elements never use it, so stub it to keep the pipeline graph acyclic for the test.
 vi.mock('./PluginRemote', () => ({ default: () => null }));
 
-const InteractionsContext = createContext({
-  interactionsManager: { interactionTrigger: () => undefined },
-  useInteractions: () => ({})
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+  const { createContext } = await import('react');
+
+  return {
+    default: createContext({
+      interactionsManager: { interactionTrigger: () => undefined },
+      useInteractions: () => ({})
+    })
+  };
 });
-const PluginsContext = createContext({ plugins: {} });
+
+vi.mock('@plitzi/sdk-shared/plugins/PluginsContext', async () => {
+  const { createContext } = await import('react');
+
+  return { default: createContext({ plugins: {} }) };
+});
 
 const serviceValue = {
   settings: { previewMode: true, debugMode: false },
-  root: { baseElementId: 'root' },
-  contexts: { InteractionsContext, PluginsContext, BuilderContext: undefined }
-} as unknown as PlitziServiceContextValue;
+  root: { baseElementId: 'root' }
+} as unknown as PlitziContextValue;
 
 const element: Element = {
   id: 'el1',
@@ -56,10 +65,10 @@ const listOf = (id: string, subType?: 'ul' | 'ol'): Element => ({
 const rows = listOf('rows');
 const steps = listOf('steps', 'ol');
 
-const renderTree = (children: ReactNode, settings?: Partial<PlitziServiceContextValue['settings']>) =>
+const renderTree = (children: ReactNode, settings?: Partial<PlitziContextValue['settings']>) =>
   render(
     <StoreProvider value={{ schema: { flat: { el1: element, child, moving, rows, steps } }, runtime: { sources: {} } }}>
-      <PlitziServiceContext value={{ ...serviceValue, settings: { ...serviceValue.settings, ...settings } }}>
+      <PlitziContext value={{ ...serviceValue, settings: { ...serviceValue.settings, ...settings } }}>
         <ComponentContext
           value={
             { components: { current: {} }, componentDefinitions: { current: {} } } as unknown as ComponentContextValue
@@ -67,7 +76,7 @@ const renderTree = (children: ReactNode, settings?: Partial<PlitziServiceContext
         >
           {children}
         </ComponentContext>
-      </PlitziServiceContext>
+      </PlitziContext>
     </StoreProvider>
   );
 
@@ -162,7 +171,7 @@ describe('Element pipeline (golden)', () => {
     const templated: Element = { ...element, attributes: { content: '{{ props.blurb }}|{{ redirect }}' } };
     const { container } = render(
       <StoreProvider value={{ schema: { flat: { el1: templated } }, runtime: { sources: { props: { blurb: null } } } }}>
-        <PlitziServiceContext value={serviceValue}>
+        <PlitziContext value={serviceValue}>
           <ComponentContext
             value={
               { components: { current: {} }, componentDefinitions: { current: {} } } as unknown as ComponentContextValue
@@ -170,7 +179,7 @@ describe('Element pipeline (golden)', () => {
           >
             <Text internalProps={{ id: 'el1', rootId: 'root' }} />
           </ComponentContext>
-        </PlitziServiceContext>
+        </PlitziContext>
       </StoreProvider>
     );
 

@@ -6,7 +6,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useState } from 'react';
 
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
 import ElementAdvancedEditor from '../../../components/ElementAdvancedEditor';
@@ -22,9 +22,6 @@ type SettingsProps = {
 
 const Settings = ({ content = '', props: componentProps = '{}', onUpdate }: SettingsProps) => {
   const { resolvedTheme } = useTheme();
-  const {
-    contexts: { NetworkContext }
-  } = usePlitziServiceContext();
   const { server, webKey } = use(NetworkContext);
   const [error, setError] = useState<{ message: string; reasonCode: number } | undefined>(undefined);
   const { networkQuery, networkLoading } = useNetwork({ initLoading: false, server, webKey });

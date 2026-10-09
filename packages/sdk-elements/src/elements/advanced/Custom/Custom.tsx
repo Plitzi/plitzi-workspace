@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 
 import { getRemoteSettings } from '../../../Element/helpers/pluginSelector';
 import withElement from '../../../Element/hocs/withElement';
@@ -34,9 +34,6 @@ const Custom = ({
   scriptUrl = ''
 }: CustomProps) => {
   const { id, rootId } = useElement();
-  const {
-    contexts: { PluginsContext }
-  } = usePlitziServiceContext();
   const { plugins, registerCustomAssets, unregisterCustomAssets } = use(PluginsContext);
   const { components } = use(ComponentContext);
   const settingsParsed = useMemo<Element['attributes'] | false>(() => {

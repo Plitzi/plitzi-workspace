@@ -13,17 +13,14 @@ vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ defaul
 
 const { interactionTrigger } = vi.hoisted(() => ({ interactionTrigger: vi.fn() }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', async () => {
-  const { createContext: create } = await import('react');
-  const InteractionsContext = create({ interactionsManager: { interactionTrigger }, useInteractions: () => undefined });
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
+  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
+}));
 
-  return {
-    default: () => ({
-      settings: { previewMode: true },
-      root: { baseElementId: 'root' },
-      contexts: { InteractionsContext }
-    })
-  };
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+  const { createContext } = await import('react');
+
+  return { default: createContext({ interactionsManager: { interactionTrigger }, useInteractions: () => undefined }) };
 });
 
 /** A page with a button that opens the overlay, the way a flow would: the overlay's own visibility, in its state. */

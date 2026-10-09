@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
 import { imageSrcSet, imageUrl, isResizableImage } from '@plitzi/sdk-shared/helpers/images';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import { getFallbackSVGBase64 } from './ImageHelper';
@@ -73,7 +73,7 @@ const Image = ({
 }: ImageProps) => {
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
 
   /**
    * An empty `src` is an absent one.

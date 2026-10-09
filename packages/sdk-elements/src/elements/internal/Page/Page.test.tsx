@@ -1,6 +1,5 @@
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { render, waitFor } from '@testing-library/react';
-import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
@@ -13,17 +12,22 @@ vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({
-    settings: { previewMode: true },
-    contexts: {
-      InteractionsContext: createContext({
-        useInteractions: () => ({}),
-        interactionsManager: { interactionTrigger: () => {} }
-      })
-    }
+    settings: { previewMode: true }
   })
 }));
+
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+  const { createContext } = await import('react');
+
+  return {
+    default: createContext({
+      useInteractions: () => ({}),
+      interactionsManager: { interactionTrigger: () => {} }
+    })
+  };
+});
 
 vi.mock('../LayoutContainer', async () => {
   const { useLayoutBody } =

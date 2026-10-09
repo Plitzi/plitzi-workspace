@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
@@ -20,7 +20,7 @@ const NotFound = ({ ref, className = '' }: NotFoundProps) => {
   } = useElement();
   const {
     settings: { isHydrating, previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   if (typeof window === 'undefined' || previewMode || isHydrating) {
     return undefined;
   }

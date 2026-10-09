@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import { classHtmlParts } from './classHtmlParts';
 import { rebaseHtmlMedia, sanitizeHtml } from './sanitizeHtml';
@@ -30,7 +30,7 @@ export type RichTextProps = {
 const RichText = ({ ref, className = '', content = '', format = 'html', mediaBaseUrl = '' }: RichTextProps) => {
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const {
     definition: { styleSelectors }
   } = useElement();

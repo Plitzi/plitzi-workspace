@@ -9,10 +9,9 @@ vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({
-    settings: { previewMode: true },
-    contexts: {}
+    settings: { previewMode: true }
   })
 }));
 

@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { uniqueAnchor } from '@plitzi/sdk-shared/schema/anchor';
 
 import useMarkdownClassNames from './hooks/useMarkdownClassNames';
@@ -26,7 +26,7 @@ export type MarkdownProps = {
 const Markdown = ({ ref, content = 'Markdown', className = '', headingLinks = true }: MarkdownProps) => {
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const {
     definition: { styleSelectors }
   } = useElement();

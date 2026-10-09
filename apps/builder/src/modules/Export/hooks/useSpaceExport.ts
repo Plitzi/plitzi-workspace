@@ -1,7 +1,7 @@
 import { use, useCallback } from 'react';
 
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 

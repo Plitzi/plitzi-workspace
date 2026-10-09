@@ -1,11 +1,8 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import useResolvedVariables from '@plitzi/sdk-shared/dataSource/hooks/useResolvedVariables';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
 import useImagesSync from '@plitzi/sdk-shared/server/actions/useImagesSync';
 import useRealtimeSync from '@plitzi/sdk-shared/server/actions/useRealtimeSync';
@@ -123,12 +120,6 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
         displayBorderComponents: false,
         getWindow,
         rootRef
-      },
-      contexts: {
-        ComponentContext,
-        NetworkContext,
-        PluginsContext,
-        InteractionsContext
       }
     }),
     [

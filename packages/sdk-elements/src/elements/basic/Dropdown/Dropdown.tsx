@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import { useCallback, useMemo, useRef } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import DropdownContext from './DropdownContext';
 import useDropdown from './useDropdown';
@@ -47,7 +47,7 @@ const Dropdown = ({
   const {
     settings: { previewMode },
     utils: { getWindow }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const popupRef = useRef<HTMLDivElement | null>(null);
   const backgroundContainerRef = useRef<HTMLDivElement>(null);
   const windowInstance = useMemo(() => getWindow(), [getWindow]);

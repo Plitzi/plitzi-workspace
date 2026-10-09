@@ -9,12 +9,9 @@ import { useCallback, use, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { MOTION_SEEN_CSS } from '@plitzi/sdk-shared/schema/motion';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
@@ -75,13 +72,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
     () => ({
       settings: { ...settings, previewMode, theme: resolvedTheme },
       root: { baseElementId: id },
-      utils: { getWindow, rootRef },
-      contexts: {
-        ComponentContext,
-        PluginsContext,
-        NetworkContext,
-        InteractionsContext
-      }
+      utils: { getWindow, rootRef }
     }),
     [previewMode, settings, resolvedTheme, id, getWindow, rootRef]
   );
@@ -140,7 +131,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
       assets={assets}
       style={{ colorScheme: resolvedTheme }}
     >
-      <PlitziServiceProvider value={plitziContextValue}>
+      <PlitziProvider value={plitziContextValue}>
         {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding
             settings with that one flag flipped beats threading it as a prop through every provider under here.
             `live`, because a nexus scope inherits nothing by default: without it this one held `render` and nothing
@@ -162,7 +153,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
             </InteractionsSourcesProvider>
           </GlobalSources>
         </StoreProvider>
-      </PlitziServiceProvider>
+      </PlitziProvider>
     </ContainerFrame>
   );
 };

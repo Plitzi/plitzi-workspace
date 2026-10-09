@@ -1,31 +1,40 @@
 import { render, cleanup } from '@testing-library/react';
-import { createContext } from 'react';
 import { vi, afterEach, test } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { PlitziServiceContext } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { PlitziContext } from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import Text from '../elements/basic/Text/Text';
 import Container from '../elements/structure/Container/Container';
 
-import type { ComponentContextValue, Element, PlitziServiceContextValue } from '@plitzi/sdk-shared';
+import type { ComponentContextValue, Element, PlitziContextValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
 vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: () => undefined }));
 vi.mock('./PluginRemote', () => ({ default: () => null }));
 
-const InteractionsContext = createContext({
-  interactionsManager: { interactionTrigger: () => undefined },
-  useInteractions: () => ({})
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+  const { createContext } = await import('react');
+
+  return {
+    default: createContext({
+      interactionsManager: { interactionTrigger: () => undefined },
+      useInteractions: () => ({})
+    })
+  };
 });
-const PluginsContext = createContext({ plugins: {} });
+
+vi.mock('@plitzi/sdk-shared/plugins/PluginsContext', async () => {
+  const { createContext } = await import('react');
+
+  return { default: createContext({ plugins: {} }) };
+});
 
 const serviceValue = {
   settings: { previewMode: true, debugMode: false },
-  root: { baseElementId: 'root' },
-  contexts: { InteractionsContext, PluginsContext, BuilderContext: undefined }
-} as unknown as PlitziServiceContextValue;
+  root: { baseElementId: 'root' }
+} as unknown as PlitziContextValue;
 
 const components = {
   components: { current: { container: Container, text: Text } },
@@ -72,11 +81,11 @@ const nestedSchema = (depth: number): Record<string, Element> => {
 
 const renderTree = (flat: Record<string, Element>): ReactNode => (
   <StoreProvider value={{ schema: { flat }, runtime: { sources: {} } }}>
-    <PlitziServiceContext value={serviceValue}>
+    <PlitziContext value={serviceValue}>
       <ComponentContext value={components}>
         <Container internalProps={{ id: 'root', rootId: 'root' }} />
       </ComponentContext>
-    </PlitziServiceContext>
+    </PlitziContext>
   </StoreProvider>
 );
 

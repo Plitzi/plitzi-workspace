@@ -1,9 +1,9 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { Fragment, isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
 
-import { usePlitziServiceContext } from '@plitzi/sdk-shared';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
 import { passesFlagGate } from '@plitzi/sdk-shared/flags';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';
@@ -53,9 +53,6 @@ const useInternalItems = ({
   // come and go with it. Published stable, so a container re-renders only when a flag actually changed.
   const [flags = NO_FLAGS] = useCommonStore('runtime.sources.flags');
   const { components, componentDefinitions } = use(ComponentContext);
-  const {
-    contexts: { PluginsContext }
-  } = usePlitziServiceContext();
   const { plugins } = use(PluginsContext);
   const { items } = definition;
   // The registry's type promises a definition for every key; a remote plugin that has not loaded yet has none.

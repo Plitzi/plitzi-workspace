@@ -2,8 +2,9 @@
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import buildPageWindow from './buildPageWindow';
@@ -89,9 +90,8 @@ const Pagination = ({
     definition: { styleSelectors }
   } = useElement();
   const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode }
+  } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   const [navigate] = useSdkStore('navigation.navigate');
 

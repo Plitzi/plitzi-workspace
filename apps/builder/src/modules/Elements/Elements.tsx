@@ -2,8 +2,8 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useState } from 'react';
 
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { REUSE } from '@pmodules/Builder/helpers/reuse';
 import Components from '@pmodules/Components';

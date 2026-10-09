@@ -1,6 +1,7 @@
 import { use, useCallback } from 'react';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import useElement from './useElement';
 
@@ -23,9 +24,8 @@ export type PluginTriggerDeclaration = { triggers: Record<string, { action: stri
 const usePluginTrigger = <const D extends PluginTriggerDeclaration>(declaration: D) => {
   const { id } = useElement();
   const {
-    settings: { previewMode = true },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
+    settings: { previewMode = true }
+  } = usePlitzi();
   const { interactionsManager } = use(InteractionsContext);
 
   return useCallback(

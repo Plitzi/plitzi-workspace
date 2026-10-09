@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { use, useCallback, useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react';
 
 import { StoreContext } from '@plitzi/nexus/react';
+import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import { liveSources } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
@@ -16,9 +17,8 @@ import useScrollInteractions from './useScrollInteractions';
 import { interactionBasicTriggers, nativeEventsList } from '../helpers/elementConstants';
 
 import type { ElementContextValue } from '../ElementContext';
-import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
-import type { Context, RefObject } from 'react';
+import type { RefObject } from 'react';
 
 /**
  * The events an element's trigger has already answered without propagating it.
@@ -39,7 +39,6 @@ const nativeOf = (event: object): object =>
 
 export type UseRootElementInteractionsProps = {
   elementContext: ElementContextValue;
-  InteractionsContext: Context<InteractionsContextValue>;
   previewMode: boolean;
   debugMode: boolean;
   baseElementId?: string;
@@ -60,10 +59,9 @@ export type RootElementInteractions = {
 
 // Interactions branch of RootElement, wires native events + the interaction rule engine and computes the element's
 // internal class names. Extracted as a hook so RootElement stays a single flat component (custom hooks add no level to
-// the React DevTools tree); only called when an InteractionsContext is present, so its hooks run as if unconditional.
+// the React DevTools tree); only called under an interactions provider, so its hooks run as if unconditional.
 const useRootElementInteractions = ({
   elementContext,
-  InteractionsContext,
   previewMode,
   debugMode,
   baseElementId,

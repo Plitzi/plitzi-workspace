@@ -6,7 +6,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import ListControlledItem from './ListControlledItem';
 import { rowKeys } from './rowKeys';
@@ -46,7 +46,7 @@ const ListControlled = ({
   const sourceName = getSourceName(declaration.sourceType, id);
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const finalItems = useMemo(() => {
     if (Array.isArray(items)) {
       return items;

@@ -1,5 +1,4 @@
 import { act, render, waitFor } from '@testing-library/react';
-import { createContext } from 'react';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 
 import { createStore } from '@plitzi/nexus';
@@ -16,18 +15,23 @@ vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({
     settings: { previewMode: true },
-    root: { baseElementId: '' },
-    contexts: {
-      InteractionsContext: createContext({
-        useInteractions: () => ({}),
-        interactionsManager: { interactionTrigger: () => Promise.resolve() }
-      })
-    }
+    root: { baseElementId: '' }
   })
 }));
+
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+  const { createContext } = await import('react');
+
+  return {
+    default: createContext({
+      useInteractions: () => ({}),
+      interactionsManager: { interactionTrigger: () => Promise.resolve() }
+    })
+  };
+});
 
 describe('ApiContainer Tests', () => {
   it('Render Component', () => {

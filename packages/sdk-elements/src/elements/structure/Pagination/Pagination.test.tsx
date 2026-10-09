@@ -9,15 +9,12 @@ import type { ReactNode } from 'react';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', async () => {
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => ({ settings: { previewMode: true } }) }));
+
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
   const { createContext } = await import('react');
 
-  return {
-    default: () => ({
-      settings: { previewMode: true },
-      contexts: { InteractionsContext: createContext({ interactionsManager: { interactionTrigger: vi.fn() } }) }
-    })
-  };
+  return { default: createContext({ interactionsManager: { interactionTrigger: vi.fn() } }) };
 });
 
 vi.mock('@plitzi/sdk-shared/store', () => ({ useSdkStore: () => [vi.fn()] }));

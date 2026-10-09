@@ -26,14 +26,15 @@ vi.mock('../../../../../Element/hooks/useElement', () => ({
 
 vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ default: () => undefined }));
 
-// `ReplicaProvider` (mounted by each row) reads the interactions manager from this context, so the mock owns a real
-// React context whose default value carries a minimal manager.
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', async () => {
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => ({ settings: { previewMode: true } }) }));
+
+// `ReplicaProvider` (mounted by each row) reads the interactions manager from this context, so the mock is a real React
+// context whose default value carries a minimal manager.
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
   const { createContext } = await import('react');
   const manager = { createChildManager: () => manager, removeChildManager: () => undefined };
-  const InteractionsContext = createContext({ interactionsManager: manager });
 
-  return { default: () => ({ settings: { previewMode: true }, contexts: { InteractionsContext } }) };
+  return { default: createContext({ interactionsManager: manager }) };
 });
 
 type Item = { id: string; name: string };

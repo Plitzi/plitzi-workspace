@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import { createContext } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import ElementContext from '@plitzi/sdk-elements/Element/ElementContext';
@@ -14,13 +13,18 @@ vi.mock('@plitzi/sdk-elements/Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', () => ({
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
   default: () => ({
     settings: { previewMode: true },
-    root: { baseElementId: 'root' },
-    contexts: { NetworkContext: createContext({}) }
+    root: { baseElementId: 'root' }
   })
 }));
+
+vi.mock('@plitzi/sdk-shared/network/NetworkContext', async () => {
+  const { createContext } = await import('react');
+
+  return { default: createContext({}) };
+});
 
 describe('PlitziSdk', () => {
   it('should render successfully', () => {

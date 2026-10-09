@@ -1,3 +1,7 @@
+// A select's chevron: the same stroke as the SDK's other icons, as a mask so it takes the field's colour.
+$select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+$select-chevron-size: 1.15em;
+
 @mixin styles {
   .plitzi-component__form-control {
     &.form-control--invalid {
@@ -352,27 +356,31 @@
       outline: inherit;
     }
 
-    &::-ms-expand {
-      display: none;
+    // The chevron: drawn in the field's own colour, sized by its type, and laid out as the box's last item — over the
+    // room the select keeps free at its end — so it ends where the box's padding begins, whatever that padding is.
+    // Clicks go through it to the select underneath, which opens as it would anywhere else.
+    &::after {
+      content: '';
+      height: $select-chevron-size;
+      width: $select-chevron-size;
+      margin-left: -$select-chevron-size;
+      flex-shrink: 0;
+      background-color: currentColor;
+      opacity: 0.65;
+      mask: $select-chevron center / contain no-repeat;
+      pointer-events: none;
     }
 
-    &::after {
-      padding: 4px;
-      right: 0;
-      top: 50%;
-      position: absolute;
-      display: flex;
-      font-weight: 900;
-      transform: translate(-50%, -50%);
-      content: '▼';
-      cursor: pointer;
-      pointer-events: none;
+    &:has(.select-container__select:disabled)::after {
+      opacity: 0.35;
     }
   }
 
   .select-container__select {
     height: 100%;
     width: 100%;
+    // The chevron's room, and a gap before it: the chosen option never runs under it.
+    padding-right: calc(#{$select-chevron-size} + 8px);
     display: block;
     border-right-style: none;
     border-bottom-style: none;

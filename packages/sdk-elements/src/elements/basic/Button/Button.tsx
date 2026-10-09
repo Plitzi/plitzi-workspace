@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import ElementWords from '../../../Element/ElementWords';
 import withElement from '../../../Element/hocs/withElement';
@@ -75,7 +75,7 @@ const Button = ({
 }: ButtonProps) => {
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const {
     definition: { styleSelectors }
   } = useElement();

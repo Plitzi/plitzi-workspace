@@ -1,6 +1,6 @@
-import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
+import { sharedContext } from '../helpers/sharedContext';
 
-import type { PluginsContextValue } from '@plitzi/sdk-shared';
+import type { PluginsContextValue } from '../types';
 
 const pluginsContextDefaultValue = { assets: {} } as PluginsContextValue;
 

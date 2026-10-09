@@ -4,12 +4,9 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { PlitziServiceProvider } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import { isMotionAnimation } from '@plitzi/sdk-shared/schema/motion';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver, layoutGridCss } from '@plitzi/sdk-shared/style';
@@ -176,14 +173,7 @@ const BuilderArea = ({
         theme: resolvedTheme
       },
       root: { baseElementId },
-      utils: { displayBorderComponents, getWindow, rootRef },
-      contexts: {
-        ComponentContext,
-        NetworkContext,
-        PluginsContext,
-        InteractionsContext,
-        BuilderContext
-      }
+      utils: { displayBorderComponents, getWindow, rootRef }
     }),
     [previewMode, debugMode, currentPageId, resolvedTheme, baseElementId, displayBorderComponents, getWindow, rootRef]
   );
@@ -247,14 +237,14 @@ const BuilderArea = ({
                   previewMode={previewMode}
                 >
                   <SpaceContainer>
-                    <PlitziServiceProvider value={plitziContextValue}>
+                    <PlitziProvider value={plitziContextValue}>
                       {/* No key on the base element: a key here remounts the whole canvas on every page
                             switch, and the layout shell is rendered inside the page — so two pages naming the
                             same `layoutContainer` rebuilt it anyway. `Plugin` is resolved per base element, so
                             switching to a root of a different KIND still changes the component type and remounts;
                             page to page keeps the shell and swaps only the body. */}
                       <Plugin internalProps={baseElementValueMemo} />
-                    </PlitziServiceProvider>
+                    </PlitziProvider>
                   </SpaceContainer>
 
                   {!previewMode && (

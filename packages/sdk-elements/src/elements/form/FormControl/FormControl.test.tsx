@@ -12,19 +12,15 @@ import type { FormControlProps } from './FormControl';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitziServiceContext', async () => {
+vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
+  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
+}));
+
+vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
   const { createContext } = await import('react');
-  const InteractionsContext = createContext({
-    interactionsManager: { interactionTrigger: vi.fn() },
-    useInteractions: () => undefined
-  });
 
   return {
-    default: () => ({
-      settings: { previewMode: true },
-      root: { baseElementId: 'root' },
-      contexts: { InteractionsContext }
-    })
+    default: createContext({ interactionsManager: { interactionTrigger: vi.fn() }, useInteractions: () => undefined })
   };
 });
 

@@ -285,7 +285,7 @@ const callbacksSource = (callbacks: string[]): string =>
 export const shapedComponent = ({ component: name, title }: PluginNames, shape: ElementShape): string => {
   const { props, triggers, callbacks, headless } = shape;
   const reactImports = callbacks.length > 0 ? ['useMemo'] : [];
-  const sdkImports = ['RootElement', ...(headless ? ['usePlitziServiceContext'] : [])];
+  const sdkImports = ['RootElement', ...(headless ? ['usePlitzi'] : [])];
   const imports = [
     ...(reactImports.length > 0 ? [`import { ${reactImports.join(', ')} } from 'react';`, ''] : []),
     `import { ${sdkImports.join(', ')} } from '@plitzi/plitzi-sdk';`,
@@ -318,7 +318,7 @@ export const shapedComponent = ({ component: name, title }: PluginNames, shape: 
     ? `
   const {
     settings: { previewMode }
-  } = usePlitziServiceContext();
+  } = usePlitzi();
   const style = previewMode ? HIDDEN : BADGE;
 `
     : `
