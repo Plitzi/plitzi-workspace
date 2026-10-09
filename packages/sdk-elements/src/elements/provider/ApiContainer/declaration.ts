@@ -105,7 +105,6 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
     },
     definition: {
       label: 'Api Container',
-      type: 'apiContainer',
       description:
         'Fetches data from a backend HTTP API (its `query`/`method`/`credentials`) and exposes the response as a data ' +
         'source ITS DESCENDANTS bind to (source `apiContainer_<id>.data`; only elements inside it can consume it). ' +
@@ -121,44 +120,20 @@ const declaration = elementDeclaration<ApiContainerAttributes>()({
         'Its `subType` (container tag) is empty by default, and then it renders NO element of its own: its children ' +
         'lay out directly in its parent, and any class, variant or style binding on it applies to nothing. To style ' +
         'the provider itself give it a tag (`subType: "div"`, `section`, …); otherwise style its parent or a child.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      items: []
     },
     market: {
       category: 'provider',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-server'
     },
     defaultStyle: {
-      name: 'Api Container',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   }
 });
 

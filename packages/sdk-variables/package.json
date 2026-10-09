@@ -34,10 +34,6 @@
       "types": "./dist/components/SchemaVariables/SchemaVariables.d.ts",
       "import": "./dist/components/SchemaVariables/SchemaVariables.mjs"
     },
-    "./components/SchemaVariables/VariableActions": {
-      "types": "./dist/components/SchemaVariables/VariableActions.d.ts",
-      "import": "./dist/components/SchemaVariables/VariableActions.mjs"
-    },
     "./components/SchemaVariables/VariableDetails": {
       "types": "./dist/components/SchemaVariables/VariableDetails.d.ts",
       "import": "./dist/components/SchemaVariables/VariableDetails.mjs"
@@ -62,10 +58,6 @@
       "types": "./dist/components/StyleVariables/StyleVariables.d.ts",
       "import": "./dist/components/StyleVariables/StyleVariables.mjs"
     },
-    "./components/StyleVariables/VariableActions": {
-      "types": "./dist/components/StyleVariables/VariableActions.d.ts",
-      "import": "./dist/components/StyleVariables/VariableActions.mjs"
-    },
     "./components/StyleVariables/VariableDetails": {
       "types": "./dist/components/StyleVariables/VariableDetails.d.ts",
       "import": "./dist/components/StyleVariables/VariableDetails.mjs"
@@ -85,6 +77,18 @@
     "./components/StyleVariables/index": {
       "types": "./dist/components/StyleVariables/index.d.ts",
       "import": "./dist/components/StyleVariables/index.mjs"
+    },
+    "./components/VariableActions": {
+      "types": "./dist/components/VariableActions/index.d.ts",
+      "import": "./dist/components/VariableActions/index.mjs"
+    },
+    "./components/VariableActions/VariableActions": {
+      "types": "./dist/components/VariableActions/VariableActions.d.ts",
+      "import": "./dist/components/VariableActions/VariableActions.mjs"
+    },
+    "./components/VariableActions/index": {
+      "types": "./dist/components/VariableActions/index.d.ts",
+      "import": "./dist/components/VariableActions/index.mjs"
     },
     "./components/index": {
       "types": "./dist/components/index.d.ts",

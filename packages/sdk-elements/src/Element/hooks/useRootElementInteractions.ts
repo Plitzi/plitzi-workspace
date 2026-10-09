@@ -1,6 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
-import { use, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import { use, useCallback, useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react';
 
 import { StoreContext } from '@plitzi/nexus/react';
 import { liveSources } from '@plitzi/sdk-shared/dataSource';
@@ -180,9 +180,10 @@ const useRootElementInteractions = ({
   // Deferred past the commit for the reason `onPageLoad` is (see Page): the global sources register their callbacks
   // from effects ABOVE this element, which React runs after this one, so a synchronous trigger on the first mount
   // ran a flow whose `state.setState` did not exist yet — and a page's `onLoad` did nothing on the load it is for.
-  useEffect(() => {
+  // Once, on the element's first mount — read as the element is then, not re-run as it changes.
+  const fireLoad = useEffectEvent(() => {
     if (!previewMode || !interactions || !Object.keys(interactions).length) {
-      return;
+      return undefined;
     }
 
     let cancelled = false;
@@ -197,8 +198,9 @@ const useRootElementInteractions = ({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
+
+  useEffect(() => fireLoad(), []);
 
   useEffect(() => {
     if (!debugMode) {

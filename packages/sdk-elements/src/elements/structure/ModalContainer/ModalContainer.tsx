@@ -1,23 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
-import clsx from 'clsx';
-import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
-
-import { StoreProvider } from '@plitzi/nexus/react';
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
-import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
-
 import declaration from './declaration';
-import { metadataOf } from './metadataOf';
-import useModalDialog from './useModalDialog';
-import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
-import RootElement from '../../../Element/RootElement';
+import OverlayShell from '../Overlay/OverlayShell';
+import useOverlay from '../Overlay/useOverlay';
 
-import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallbackParamValues, InteractionCallback } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type ModalContainerProps = {
@@ -35,113 +21,28 @@ const ModalContainer = ({
   title = 'Modal Header',
   autoHideAfterClick = true
 }: ModalContainerProps) => {
-  const {
-    id,
-    rootId,
-    visible,
-    definition: { styleSelectors, label = 'Modal' },
-    elementState,
-    setElementState
-  } = useElement();
-  const sourceName = getSourceName(declaration.sourceType, id);
-  const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
-  const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
-  const panelRef = useRef<HTMLDivElement>(null);
-  const titleId = `${rootId}_${id}_title`;
-
-  const handleOpenModal = useCallback(
-    (params: InteractionCallbackParamValues) => {
-      setInternalMetadata(metadataOf(params.metadata));
-      setElementState(state => ({ ...state, visibility: true }));
-    },
-    [setElementState, setInternalMetadata]
-  );
-
-  const handleClickClose = useCallback(() => {
-    void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
-    setInternalMetadata({});
-    setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
-
-  const handleClickBackground = useCallback(() => {
-    if (!autoHideAfterClick) {
-      return;
-    }
-
-    void interactionsManager.interactionTrigger(id, 'onModalClose', { metadata: internalMetadata });
-    setInternalMetadata({});
-    setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
-
-  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
-    return {
-      openModal: { ...declaration.callbacks.openModal, title: `Open ${label}`, callback: handleOpenModal },
-      closeModal: { ...declaration.callbacks.closeModal, title: `Close ${label}`, callback: handleClickClose }
-    };
-  }, [handleClickClose, handleOpenModal, label]);
-
-  useModalDialog({ panelRef, open: Boolean(previewMode) && visible, onClose: handleClickClose });
-
-  useEffect(() => {
-    if (elementState.visibility !== false) {
-      void interactionsManager.interactionTrigger(id, 'onModalOpen', { metadata: internalMetadata });
-    }
-  }, [id, interactionsManager, internalMetadata, elementState.visibility]);
-
-  const sourceFields = useCallback(() => pathFields(internalMetadata), [internalMetadata]);
-
-  useRegisterSource({ id, source: sourceName, name: label ? label : `Modal - ${id}`, fields: sourceFields });
-
-  const storeContextValue = useMemo(
-    () => (sourceName ? { runtime: { sources: { [sourceName]: internalMetadata } } } : emptyObject),
-    [sourceName, internalMetadata]
-  );
+  const overlay = useOverlay({
+    name: 'Modal',
+    sourceType: declaration.sourceType,
+    callbacks: { open: declaration.callbacks.openModal, close: declaration.callbacks.closeModal },
+    events: { open: 'onModalOpen', close: 'onModalClose' },
+    autoHideAfterClick
+  });
 
   return (
-    <RootElement
+    <OverlayShell
       ref={ref}
-      className={clsx('plitzi-component__modal-container', className)}
-      interactionTriggers={declaration.triggers}
-      interactionCallbacks={interactionCallbacks}
+      className={className}
+      block="modal-container"
+      role="dialog"
+      storeName="Modal"
+      title={title || 'Modal Header'}
+      overlay={overlay}
+      triggers={declaration.triggers}
+      onDismiss={overlay.close}
     >
-      <div
-        className={clsx('modal-container__background', styleSelectors.backgroundContainer)}
-        aria-hidden="true"
-        onClick={handleClickBackground}
-      />
-      <div
-        ref={panelRef}
-        className={clsx('modal-container__root', styleSelectors.rootContainer)}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-      >
-        <div className={clsx('modal-container__header', styleSelectors.headerContainer)}>
-          <div id={titleId} className={clsx('modal-container__header__title', styleSelectors.headerTitle)}>
-            {title ? title : 'Modal Header'}
-          </div>
-          <button
-            type="button"
-            className={clsx('modal-container__close', styleSelectors.headerCloseButton)}
-            aria-label="Close"
-            title="Close"
-            onClick={handleClickClose}
-          >
-            <i className="fa-solid fa-xmark" aria-hidden="true" />
-          </button>
-        </div>
-        <div className={clsx('modal-container__body', styleSelectors.bodyContainer)}>
-          <StoreProvider inherit="live" name={`Modal:${id}`} value={storeContextValue}>
-            {children}
-          </StoreProvider>
-        </div>
-      </div>
-    </RootElement>
+      {children}
+    </OverlayShell>
   );
 };
 

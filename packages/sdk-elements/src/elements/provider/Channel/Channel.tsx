@@ -7,12 +7,12 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
 import { isTrue } from '@plitzi/sdk-shared/dataSource/utility/truthiness';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 import { JOIN_TYPE, LEAVE_TYPE, PRESENCE_TYPE } from '@plitzi/sdk-shared/realtime';
 
 import declaration from './declaration';
 import pathFields from '../../../dataSource/pathFields';
+import sourceStore from '../../../dataSource/sourceStore';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -147,10 +147,7 @@ const Channel = ({
   const sourceFields = useCallback(() => pathFields(publishedData), [publishedData]);
   useRegisterSource({ id, source: sourceName, name: label ? label : `Channel - ${id}`, fields: sourceFields });
 
-  const storeContext = useMemo(
-    () => (sourceName ? { runtime: { sources: { [sourceName]: publishedData } } } : emptyObject),
-    [publishedData, sourceName]
-  );
+  const storeContext = useMemo(() => sourceStore(sourceName, publishedData), [publishedData, sourceName]);
 
   return (
     <RootElement

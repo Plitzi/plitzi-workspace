@@ -45,6 +45,7 @@ const PluginRemote = ({
 
   const Component = useMemo(
     () => lazy(loadComponent(url, register, autoRegister, plitziJsxSkipHOC, type)),
+    // Made again only when what it loads changes: every new `lazy` is a new component, and remounts the plugin.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [url, type]
   );

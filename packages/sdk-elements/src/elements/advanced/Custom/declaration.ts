@@ -23,37 +23,14 @@ const declaration = elementDeclaration<CustomAttributes>()({
     },
     definition: {
       label: 'Custom',
-      type: 'custom',
-      description: 'A custom element slot whose behaviour is supplied by a host/plugin component.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      description: 'A custom element slot whose behaviour is supplied by a host/plugin component.'
     },
     market: {
       category: 'advanced',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-paintbrush'
     },
     defaultStyle: {
       name: 'Custom Element',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -63,8 +40,7 @@ const declaration = elementDeclaration<CustomAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

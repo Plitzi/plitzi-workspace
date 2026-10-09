@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -114,5 +114,31 @@ describe('ModalContainer / DialogContainer — what assistive technology is told
 
     expect(interactionTrigger).toHaveBeenCalledWith('overlay', 'onDialogReject', { metadata: {} });
     expect(interactionTrigger).not.toHaveBeenCalledWith('overlay', 'onDialogAccept', expect.anything());
+  });
+
+  it('runs the accept flow when the dialog is accepted, and closes it once that flow is done', async () => {
+    render(<Page kind="dialog" />);
+    const opener = screen.getByRole('button', { name: 'Open' });
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    expect(interactionTrigger).toHaveBeenCalledWith('overlay', 'onDialogAccept', { metadata: {} });
+    // Closed, the keyboard is handed back to what opened it.
+    await waitFor(() => expect(document.activeElement).toBe(opener));
+    expect(interactionTrigger).not.toHaveBeenCalledWith('overlay', 'onDialogReject', expect.anything());
+  });
+
+  it('closes from its backdrop, as its close callback does', () => {
+    const { container } = render(<Page kind="modal" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    const backdrop = container.querySelector('.modal-container__background');
+    if (!backdrop) {
+      throw new Error('no backdrop');
+    }
+
+    fireEvent.click(backdrop);
+
+    expect(interactionTrigger).toHaveBeenCalledWith('overlay', 'onModalClose', { metadata: {} });
   });
 });

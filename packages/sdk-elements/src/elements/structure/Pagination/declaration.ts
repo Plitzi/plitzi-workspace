@@ -35,7 +35,6 @@ const declaration = elementDeclaration<PaginationAttributes>()({
     },
     definition: {
       label: 'Pagination',
-      type: 'pagination',
       description:
         'Pages through a list. Bind it to a provider page info: in URL mode it writes the page into the address bar so ' +
         'the result stays shareable and indexable, and in load-more mode it announces the next page for the provider ' +
@@ -43,39 +42,18 @@ const declaration = elementDeclaration<PaginationAttributes>()({
         'shown carries `aria-current="page"`, so the class\'s `current` state dresses it), `next` and `loadMore`; one ' +
         'with nowhere to go is disabled, the `disabled` state.',
       items: [],
-      bindings: {},
       styleSelectors: {
-        base: '',
         previous: '',
         page: '',
         next: '',
         loadMore: ''
-      },
-      initialState: {
-        visibility: true
       }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-ellipsis'
     },
     defaultStyle: {
-      name: 'Pagination',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -89,8 +67,7 @@ const declaration = elementDeclaration<PaginationAttributes>()({
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   }
 });
 

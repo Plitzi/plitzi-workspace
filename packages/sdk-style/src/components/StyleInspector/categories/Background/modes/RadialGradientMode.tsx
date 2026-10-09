@@ -1,17 +1,10 @@
 import { useCallback } from 'react';
 
-import {
-  CENTER_X_WORDS,
-  CENTER_Y_WORDS,
-  centerParts,
-  customExtentFor,
-  isExtentKeyword,
-  joinCenter,
-  RADIAL_EXTENTS
-} from './helpers';
+import { customExtentFor, isExtentKeyword, RADIAL_EXTENTS } from './helpers';
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
 import { asText } from '../../../cssValues';
+import GradientCenter from '../components/GradientCenter';
 import GradientStopBar from '../components/GradientStopBar';
 
 import type { BackgroundLayer, GradientStop } from '../helpers/backgroundParser';
@@ -27,7 +20,6 @@ type OptionValue = StyleValue | Record<StyleCategory, StyleValue> | boolean;
 const CUSTOM = 'custom';
 
 const RadialGradientMode = ({ layer, onChange }: RadialGradientModeProps) => {
-  const [centerX, centerY] = centerParts(layer.radialPosition);
   const customExtent = !isExtentKeyword(layer.radialExtent);
 
   const handleShapeChange = useCallback(
@@ -48,14 +40,9 @@ const RadialGradientMode = ({ layer, onChange }: RadialGradientModeProps) => {
     [layer, onChange]
   );
 
-  const handleCenterXChange = useCallback(
-    (value: OptionValue) => onChange?.({ ...layer, radialPosition: joinCenter(asText(value), centerY) }),
-    [centerY, layer, onChange]
-  );
-
-  const handleCenterYChange = useCallback(
-    (value: OptionValue) => onChange?.({ ...layer, radialPosition: joinCenter(centerX, asText(value)) }),
-    [centerX, layer, onChange]
+  const handleCenterChange = useCallback(
+    (position: string) => onChange?.({ ...layer, radialPosition: position }),
+    [layer, onChange]
   );
 
   const handleStopsChange = useCallback((stops: GradientStop[]) => onChange?.({ ...layer, stops }), [layer, onChange]);
@@ -87,22 +74,7 @@ const RadialGradientMode = ({ layer, onChange }: RadialGradientModeProps) => {
           <CategoryOption type="input" value={layer.radialExtent} onChange={handleExtentChange} />
         </CategorySection>
       )}
-      <CategorySection label="Center">
-        <CategoryOption
-          type="metric"
-          value={centerX}
-          allowedWords={CENTER_X_WORDS}
-          min={-Infinity}
-          onChange={handleCenterXChange}
-        />
-        <CategoryOption
-          type="metric"
-          value={centerY}
-          allowedWords={CENTER_Y_WORDS}
-          min={-Infinity}
-          onChange={handleCenterYChange}
-        />
-      </CategorySection>
+      <GradientCenter position={layer.radialPosition} onChange={handleCenterChange} />
       <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
     </>
   );

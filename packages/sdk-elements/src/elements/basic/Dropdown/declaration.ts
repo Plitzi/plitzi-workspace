@@ -25,39 +25,17 @@ const declaration = elementDeclaration<DropdownAttributes>()({
     },
     definition: {
       label: 'Dropdown',
-      type: 'dropdown',
       description: 'A trigger that toggles an attached popup panel (dropdownPopup) — menus, selects, flyouts.',
       items: [],
-      bindings: {},
       styleSelectors: {
-        base: '',
         backgroundContainer: ''
-      },
-      initialState: {
-        visibility: true
       }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-angle-down'
     },
     defaultStyle: {
-      name: 'Dropdown',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -77,8 +55,7 @@ const declaration = elementDeclaration<DropdownAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   },
   initialItems: ['dropdownPopup']
 });

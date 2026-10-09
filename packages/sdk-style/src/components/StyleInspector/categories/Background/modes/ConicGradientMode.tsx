@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 
-import { ANGLE_UNITS, CENTER_X_WORDS, CENTER_Y_WORDS, centerParts, joinCenter } from './helpers';
+import { ANGLE_UNITS } from './helpers';
 import CategoryOption from '../../../components/CategoryOption';
 import CategorySection from '../../../components/CategorySection';
 import { asText } from '../../../cssValues';
+import GradientCenter from '../components/GradientCenter';
 import GradientStopBar from '../components/GradientStopBar';
 
 import type { BackgroundLayer, GradientStop } from '../helpers/backgroundParser';
@@ -17,21 +18,14 @@ export type ConicGradientModeProps = {
 type OptionValue = StyleValue | Record<StyleCategory, StyleValue> | boolean;
 
 const ConicGradientMode = ({ layer, onChange }: ConicGradientModeProps) => {
-  const [centerX, centerY] = centerParts(layer.conicPosition);
-
   const handleAngleChange = useCallback(
     (value: OptionValue) => onChange?.({ ...layer, conicAngle: asText(value) }),
     [layer, onChange]
   );
 
-  const handleCenterXChange = useCallback(
-    (value: OptionValue) => onChange?.({ ...layer, conicPosition: joinCenter(asText(value), centerY) }),
-    [centerY, layer, onChange]
-  );
-
-  const handleCenterYChange = useCallback(
-    (value: OptionValue) => onChange?.({ ...layer, conicPosition: joinCenter(centerX, asText(value)) }),
-    [centerX, layer, onChange]
+  const handleCenterChange = useCallback(
+    (position: string) => onChange?.({ ...layer, conicPosition: position }),
+    [layer, onChange]
   );
 
   const handleStopsChange = useCallback((stops: GradientStop[]) => onChange?.({ ...layer, stops }), [layer, onChange]);
@@ -47,22 +41,7 @@ const ConicGradientMode = ({ layer, onChange }: ConicGradientModeProps) => {
           onChange={handleAngleChange}
         />
       </CategorySection>
-      <CategorySection label="Center">
-        <CategoryOption
-          type="metric"
-          value={centerX}
-          allowedWords={CENTER_X_WORDS}
-          min={-Infinity}
-          onChange={handleCenterXChange}
-        />
-        <CategoryOption
-          type="metric"
-          value={centerY}
-          allowedWords={CENTER_Y_WORDS}
-          min={-Infinity}
-          onChange={handleCenterYChange}
-        />
-      </CategorySection>
+      <GradientCenter position={layer.conicPosition} onChange={handleCenterChange} />
       <GradientStopBar stops={layer.stops} onChange={handleStopsChange} />
     </>
   );

@@ -45,39 +45,15 @@ const declaration = elementDeclaration<CarouselAttributes>()({
     },
     definition: {
       label: 'Carousel',
-      type: 'carousel',
       description:
         'Items shown one at a time, scrolled past as a marquee, or swiped as a row — with controls of its own inside.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      items: []
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-images'
     },
     defaultStyle: {
-      name: 'Carousel',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -85,8 +61,7 @@ const declaration = elementDeclaration<CarouselAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   },
   initialItems: ['carouselTrack']
 });

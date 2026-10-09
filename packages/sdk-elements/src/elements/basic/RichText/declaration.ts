@@ -20,7 +20,6 @@ const declaration = elementDeclaration<RichTextAttributes>()({
     },
     definition: {
       label: 'Rich Text',
-      type: 'richText',
       description:
         'Renders a body field coming from a CMS — HTML, markdown or plain text. Scripts and event handlers are ' +
         'stripped before rendering, so third-party content cannot execute. The parts of an HTML or markdown body take ' +
@@ -32,9 +31,7 @@ const declaration = elementDeclaration<RichTextAttributes>()({
         'reads as a document from the base layer of the SDK, which a class on the slot of a part replaces property by ' +
         'property.',
       items: [],
-      bindings: {},
       styleSelectors: {
-        base: '',
         heading: '',
         heading1: '',
         heading2: '',
@@ -62,40 +59,20 @@ const declaration = elementDeclaration<RichTextAttributes>()({
         tableRow: '',
         tableHeaderCell: '',
         tableCell: ''
-      },
-      initialState: {
-        visibility: true
       }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-file-lines'
     },
     defaultStyle: {
-      name: 'Rich Text',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   }
 });
 

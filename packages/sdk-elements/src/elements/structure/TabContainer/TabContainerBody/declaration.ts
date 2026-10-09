@@ -14,46 +14,28 @@ const declaration = elementDeclaration<TabContainerBodyAttributes>()({
     attributes: {},
     definition: {
       label: 'Tab Container Body',
-      type: 'tabContainerBody',
       description: 'The panel area inside a tabContainer that shows the active tab item.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
+      items: []
     },
     builder: {
       canDelete: false,
-      canSelect: true,
       canDragDrop: false,
       canMove: false,
       canSnippet: false,
-      itemsAllowed: ['tabContainerItem'],
-      itemsNotAllowed: []
+      itemsAllowed: ['tabContainerItem']
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-table-columns'
     },
     defaultStyle: {
-      name: 'Tab Container Body',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   },
   initialItems: ['tabContainerItem', 'tabContainerItem', 'tabContainerItem']
 });

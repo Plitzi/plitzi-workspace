@@ -1,34 +1,23 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
-
-import { StoreProvider } from '@plitzi/nexus/react';
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
-import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
+import { useCallback, useState } from 'react';
 
 import declaration from './declaration';
-import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
-import RootElement from '../../../Element/RootElement';
-import { metadataOf } from '../ModalContainer/metadataOf';
-import useModalDialog from '../ModalContainer/useModalDialog';
+import OverlayShell from '../Overlay/OverlayShell';
+import useOverlay from '../Overlay/useOverlay';
 
-import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
 import type { ReactNode, RefObject } from 'react';
 
 export type DialogContainerProps = {
-  ref: RefObject<HTMLElement>;
-  className: string;
-  children: ReactNode;
-  headerLabel: string;
-  acceptButtonLabel: string;
-  acceptButtonLabelLoading: string;
-  rejectButtonLabel: string;
-  autoHideAfterClick: boolean;
+  ref?: RefObject<HTMLElement>;
+  className?: string;
+  children?: ReactNode;
+  headerLabel?: string;
+  acceptButtonLabel?: string;
+  acceptButtonLabelLoading?: string;
+  rejectButtonLabel?: string;
+  autoHideAfterClick?: boolean;
 };
 
 const DialogContainer = ({
@@ -41,127 +30,44 @@ const DialogContainer = ({
   rejectButtonLabel = 'Cancel',
   autoHideAfterClick = true
 }: DialogContainerProps) => {
-  const {
-    id,
-    rootId,
-    visible,
-    setElementState,
-    definition: { styleSelectors, label = 'Dialog' },
-    elementState
-  } = useElement();
-  const sourceName = getSourceName(declaration.sourceType, id);
-  const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
-  const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
-  const [internalMetadata, setInternalMetadata] = useState<Record<string, unknown>>({});
+  const overlay = useOverlay({
+    name: 'Dialog',
+    sourceType: declaration.sourceType,
+    callbacks: { open: declaration.callbacks.openDialog, close: declaration.callbacks.closeDialog },
+    events: { open: 'onDialogOpen', close: 'onDialogClose' },
+    autoHideAfterClick
+  });
+  const { styleSelectors, trigger, hide } = overlay;
   const [processing, setProcessing] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const titleId = `${rootId}_${id}_title`;
 
-  const handleOpenDialog = useCallback(
-    (params: InteractionCallbackParamValues) => {
-      setInternalMetadata(metadataOf(params.metadata));
-      setElementState(state => ({ ...state, visibility: true }));
+  /** Runs the flow of the answer given, and closes once it is done: accepting may take a request. */
+  const answer = useCallback(
+    async (event: 'onDialogAccept' | 'onDialogReject') => {
+      setProcessing(true);
+      await trigger(event);
+      setProcessing(false);
+      hide();
     },
-    [setElementState, setInternalMetadata]
+    [hide, trigger]
   );
 
-  const handleClickClose = useCallback(() => {
-    void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
-    setInternalMetadata({});
-    setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, setElementState, setInternalMetadata, internalMetadata, id]);
+  const handleClickAccept = useCallback(() => void answer('onDialogAccept'), [answer]);
 
-  const handleClickBackground = useCallback(() => {
-    if (!autoHideAfterClick) {
-      return;
-    }
-
-    void interactionsManager.interactionTrigger(id, 'onDialogClose', { metadata: internalMetadata });
-    setInternalMetadata({});
-    setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
-
-  const handleClickAccept = useCallback(async () => {
-    setProcessing(true);
-    await interactionsManager.interactionTrigger(id, 'onDialogAccept', { metadata: internalMetadata });
-    setProcessing(false);
-    setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, id, internalMetadata, setElementState]);
-
-  const handleClickCancel = useCallback(async () => {
-    setProcessing(true);
-    await interactionsManager.interactionTrigger(id, 'onDialogReject', { metadata: internalMetadata });
-    setProcessing(false);
-    setElementState(state => ({ ...state, visibility: false }));
-  }, [interactionsManager, id, internalMetadata, setElementState]);
-
-  const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
-    return {
-      openDialog: { ...declaration.callbacks.openDialog, title: `Open ${label}`, callback: handleOpenDialog },
-      closeDialog: { ...declaration.callbacks.closeDialog, title: `Close ${label}`, callback: handleClickClose }
-    };
-  }, [handleClickClose, handleOpenDialog, label]);
-
-  // Escape answers as the close button does: the dialog is turned down, not accepted.
-  useModalDialog({ panelRef, open: Boolean(previewMode) && visible, onClose: () => void handleClickCancel() });
-
-  useEffect(() => {
-    if (elementState.visibility !== false) {
-      void interactionsManager.interactionTrigger(id, 'onDialogOpen', { metadata: internalMetadata });
-    }
-  }, [id, interactionsManager, internalMetadata, elementState.visibility]);
-
-  const sourceFields = useCallback(() => pathFields(internalMetadata), [internalMetadata]);
-
-  useRegisterSource({ id, source: sourceName, name: label ? label : `Dialog - ${id}`, fields: sourceFields });
-
-  const storeContext = useMemo(
-    () => (sourceName ? { runtime: { sources: { [sourceName]: internalMetadata } } } : emptyObject),
-    [sourceName, internalMetadata]
-  );
+  // The close button and Escape turn the dialog down; they never accept it.
+  const handleClickCancel = useCallback(() => void answer('onDialogReject'), [answer]);
 
   return (
-    <RootElement
+    <OverlayShell
       ref={ref}
-      className={clsx('plitzi-component__dialog-container', className)}
-      interactionTriggers={declaration.triggers}
-      interactionCallbacks={interactionCallbacks}
-    >
-      <div
-        className={clsx('dialog-container__background', styleSelectors.backgroundContainer)}
-        aria-hidden="true"
-        onClick={handleClickBackground}
-      />
-      <div
-        ref={panelRef}
-        className={clsx('dialog-container__root', styleSelectors.rootContainer)}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-      >
-        <div className={clsx('dialog-container__header', styleSelectors.headerContainer)}>
-          <div id={titleId} className={clsx('dialog-container__header__title', styleSelectors.headerTitle)}>
-            {headerLabel ? headerLabel : 'Dialog Header'}
-          </div>
-          <button
-            type="button"
-            className={clsx('dialog-container__close', styleSelectors.headerCloseButton)}
-            aria-label="Close"
-            title="Close"
-            onClick={handleClickCancel}
-          >
-            <i className="fa-solid fa-xmark" aria-hidden="true" />
-          </button>
-        </div>
-        <div className={clsx('dialog-container__body', styleSelectors.bodyContainer)}>
-          <StoreProvider inherit="live" name={`Dialog:${id}`} value={storeContext}>
-            {children}
-          </StoreProvider>
-        </div>
+      className={className}
+      block="dialog-container"
+      role="alertdialog"
+      storeName="Dialog"
+      title={headerLabel || 'Dialog Header'}
+      overlay={overlay}
+      triggers={declaration.triggers}
+      onDismiss={handleClickCancel}
+      footer={
         <div className={clsx('dialog-container__footer', styleSelectors.footerContainer)}>
           <button
             type="button"
@@ -186,8 +92,10 @@ const DialogContainer = ({
             {rejectButtonLabel}
           </button>
         </div>
-      </div>
-    </RootElement>
+      }
+    >
+      {children}
+    </OverlayShell>
   );
 };
 

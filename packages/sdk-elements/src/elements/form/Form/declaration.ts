@@ -59,46 +59,21 @@ const declaration = elementDeclaration<FormAttributes>()({
     },
     definition: {
       label: 'Form',
-      type: 'form',
       description:
         'A <form> that groups form controls and handles submission; wire its submit through an interaction flow.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      items: []
     },
     market: {
       category: 'form',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-rectangle-list'
     },
     defaultStyle: {
-      name: 'Form',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

@@ -33,6 +33,7 @@ lost, it simply stops being read as a plan.
 | [0022](./0022-sketch-to-page.md) | Sketch to page ("make it real") | Proposal | builder, `apps/mcp`, preview service, Pizarra later |
 | [0024](./0024-import-and-migration.md) | Import and migration: UI in, sites over | Proposal | an import engine in the workspace, the builder, CLI, MCP, the platform's transformers |
 | [0025](./0025-agents-on-small-models.md) | Agents on small models: fewer tokens, the same result | Accepted — built, first benchmark run pending | `apps/mcp`, `apps/cli`, `sdk-authoring`, the skills, an agent benchmark |
+| [0026](./0026-plitzi-academy.md) | Plitzi Academy: learning to author a space, kept true release after release | Proposal | a docs space and account seeded in plitzi-sdk-server, the website's docs pages, the visual suite, the release checklist |
 
 ## Conventions
 

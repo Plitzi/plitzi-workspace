@@ -1,10 +1,3 @@
-import ListCircles from '@plitzi/plitzi-ui/icons/ListCircles';
-import ListDots from '@plitzi/plitzi-ui/icons/ListDots';
-import ListLetters from '@plitzi/plitzi-ui/icons/ListLetters';
-import ListNumbers from '@plitzi/plitzi-ui/icons/ListNumbers';
-import ListRoman from '@plitzi/plitzi-ui/icons/ListRoman';
-import ListSquares from '@plitzi/plitzi-ui/icons/ListSquares';
-import XMark from '@plitzi/plitzi-ui/icons/XMark';
 import { memo, useCallback, useMemo, use } from 'react';
 
 import { LIST_ITEM_KEYS } from '../../categoryKeys';
@@ -13,6 +6,7 @@ import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
 import StyleInspectorContext from '../../StyleInspectorContext';
+import { listMarkerItems } from '../listMarkers';
 
 import type { StyleValue, StyleCategory } from '@plitzi/sdk-shared';
 
@@ -38,18 +32,7 @@ const ListItem = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Lis
     [setValue]
   );
 
-  const items = useMemo(
-    () => [
-      { value: 'none', icon: <XMark />, description: '', active: listItemStyle === 'none' },
-      { value: 'disc', icon: <ListDots />, description: '', active: listItemStyle === 'disc' },
-      { value: 'circle', icon: <ListCircles />, description: '', active: listItemStyle === 'circle' },
-      { value: 'square', icon: <ListSquares />, description: '', active: listItemStyle === 'square' },
-      { value: 'decimal', icon: <ListNumbers />, description: '', active: listItemStyle === 'decimal' },
-      { value: 'lower-alpha', icon: <ListLetters />, description: '', active: listItemStyle === 'lower-alpha' },
-      { value: 'lower-roman', icon: <ListRoman />, description: '', active: listItemStyle === 'lower-roman' }
-    ],
-    [listItemStyle]
-  );
+  const items = useMemo(() => listMarkerItems(listItemStyle), [listItemStyle]);
 
   return (
     <CategoryContainer

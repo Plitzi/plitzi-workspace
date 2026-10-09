@@ -33,40 +33,21 @@ const declaration = elementDeclaration<PageAttributes>()({
     },
     definition: {
       label: 'Page',
-      type: 'page',
       description:
         'The root of a routable screen. Managed through the page ops (upsertPage/deletePage), not added as a child ' +
         'element.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
+      items: []
     },
     builder: {
       canDelete: false,
-      canSelect: true,
       canDragDrop: false,
-      canMove: false,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      canMove: false
     },
     market: {
       category: 'internal',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fas fa-file'
     },
     defaultStyle: {
-      name: 'Page',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -84,8 +65,7 @@ const declaration = elementDeclaration<PageAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

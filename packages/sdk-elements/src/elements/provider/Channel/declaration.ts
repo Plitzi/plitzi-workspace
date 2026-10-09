@@ -65,7 +65,6 @@ const declaration = elementDeclaration<ChannelAttributes>()({
     },
     definition: {
       label: 'Channel',
-      type: 'channel',
       description:
         'A realtime channel: every OTHER page on the same `topic` hears what one publishes, within milliseconds — the ' +
         'page that sent it too with `echo` (its `from` is then the `me` of the channel). ' +
@@ -76,36 +75,16 @@ const declaration = elementDeclaration<ChannelAttributes>()({
         'somebody who came after this page has announced who they are, and `onLeave` when somebody goes — each with ' +
         '`from`, `user` and the `state` they announced; and answers `publish({ type, data, echo })` and `setPresence({ data })`; `presence` is the state this ' +
         'page announces (a name, a colour). Closed in the builder and anywhere without a server.',
-      items: [],
-      bindings: {},
-      styleSelectors: { base: '' },
-      initialState: { visibility: true }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      items: []
     },
     market: {
       category: 'provider',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-tower-broadcast'
     },
     defaultStyle: {
-      name: 'Channel',
-      displayMode: 'desktop',
       style: { base: { default: {} } },
       subTypes: {}
-    },
-    settings: {}
+    }
   }
 });
 

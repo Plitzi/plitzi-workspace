@@ -13,37 +13,16 @@ const declaration = elementDeclaration<NotFoundAttributes>()({
     attributes: {},
     definition: {
       label: 'Not Found',
-      type: 'notFound',
-      description: 'The 404 screen shown when no route matches.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
+      description: 'The 404 screen shown when no route matches.'
     },
     builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: false,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      canDragDrop: false
     },
     market: {
       category: 'internal',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
     },
     defaultStyle: {
-      name: 'Not Found',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -53,8 +32,7 @@ const declaration = elementDeclaration<NotFoundAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

@@ -31,7 +31,6 @@ const declaration = elementDeclaration<LinkAttributes>()({
     },
     definition: {
       label: 'Link',
-      type: 'link',
       description:
         'Navigation. Moves the user between pages of the site or to an external URL (its `mode`/`href` decide which). Use ' +
         'this to go page-to-page rather than a button + interaction. Its words are its own `content` and an icon beside ' +
@@ -39,36 +38,18 @@ const declaration = elementDeclaration<LinkAttributes>()({
         'current on the page it leads to (`aria-current`, the `current` style state); its `current` set to `section` ' +
         'keeps it current on every page under its path too — a menu entry for a section and its pages.',
       items: [],
-      bindings: {},
       styleSelectors: {
-        base: '',
         icon: ''
-      },
-      initialState: {
-        visibility: true
       }
     },
     builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
       itemsNotAllowed: ['link']
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-link'
     },
     defaultStyle: {
-      name: 'Link',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -80,8 +61,7 @@ const declaration = elementDeclaration<LinkAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

@@ -118,6 +118,10 @@
       "types": "./dist/Element/hocs/withElement.d.ts",
       "import": "./dist/Element/hocs/withElement.mjs"
     },
+    "./Element/hooks/useEditableContent": {
+      "types": "./dist/Element/hooks/useEditableContent.d.ts",
+      "import": "./dist/Element/hooks/useEditableContent.mjs"
+    },
     "./Element/hooks/useElement": {
       "types": "./dist/Element/hooks/useElement.d.ts",
       "import": "./dist/Element/hooks/useElement.mjs"
@@ -293,6 +297,10 @@
     "./dataSource/pathFields": {
       "types": "./dist/dataSource/pathFields.d.ts",
       "import": "./dist/dataSource/pathFields.mjs"
+    },
+    "./dataSource/sourceStore": {
+      "types": "./dist/dataSource/sourceStore.d.ts",
+      "import": "./dist/dataSource/sourceStore.mjs"
     },
     "./dataSource/useFlag": {
       "types": "./dist/dataSource/useFlag.d.ts",
@@ -622,6 +630,10 @@
       "types": "./dist/elements/basic/ThemeToggle/index.d.ts",
       "import": "./dist/elements/basic/ThemeToggle/index.mjs"
     },
+    "./elements/basic/ThemeToggle/Settings": {
+      "types": "./dist/elements/basic/ThemeToggle/Settings.d.ts",
+      "import": "./dist/elements/basic/ThemeToggle/Settings.mjs"
+    },
     "./elements/basic/ThemeToggle/ThemeToggle": {
       "types": "./dist/elements/basic/ThemeToggle/ThemeToggle.d.ts",
       "import": "./dist/elements/basic/ThemeToggle/ThemeToggle.mjs"
@@ -774,6 +786,10 @@
       "types": "./dist/elements/internal/Loading/Loading.d.ts",
       "import": "./dist/elements/internal/Loading/Loading.mjs"
     },
+    "./elements/internal/Loading/Settings": {
+      "types": "./dist/elements/internal/Loading/Settings.d.ts",
+      "import": "./dist/elements/internal/Loading/Settings.mjs"
+    },
     "./elements/internal/Loading/declaration": {
       "types": "./dist/elements/internal/Loading/declaration.d.ts",
       "import": "./dist/elements/internal/Loading/declaration.mjs"
@@ -789,6 +805,10 @@
     "./elements/internal/NotFound/NotFound": {
       "types": "./dist/elements/internal/NotFound/NotFound.d.ts",
       "import": "./dist/elements/internal/NotFound/NotFound.mjs"
+    },
+    "./elements/internal/NotFound/Settings": {
+      "types": "./dist/elements/internal/NotFound/Settings.d.ts",
+      "import": "./dist/elements/internal/NotFound/Settings.mjs"
     },
     "./elements/internal/NotFound/declaration": {
       "types": "./dist/elements/internal/NotFound/declaration.d.ts",
@@ -1242,13 +1262,21 @@
       "types": "./dist/elements/structure/ModalContainer/index.d.ts",
       "import": "./dist/elements/structure/ModalContainer/index.mjs"
     },
-    "./elements/structure/ModalContainer/metadataFromText": {
-      "types": "./dist/elements/structure/ModalContainer/metadataFromText.d.ts",
-      "import": "./dist/elements/structure/ModalContainer/metadataFromText.mjs"
+    "./elements/structure/Overlay/OverlayShell": {
+      "types": "./dist/elements/structure/Overlay/OverlayShell.d.ts",
+      "import": "./dist/elements/structure/Overlay/OverlayShell.mjs"
     },
-    "./elements/structure/ModalContainer/useModalDialog": {
-      "types": "./dist/elements/structure/ModalContainer/useModalDialog.d.ts",
-      "import": "./dist/elements/structure/ModalContainer/useModalDialog.mjs"
+    "./elements/structure/Overlay/metadataOf": {
+      "types": "./dist/elements/structure/Overlay/metadataOf.d.ts",
+      "import": "./dist/elements/structure/Overlay/metadataOf.mjs"
+    },
+    "./elements/structure/Overlay/useModalDialog": {
+      "types": "./dist/elements/structure/Overlay/useModalDialog.d.ts",
+      "import": "./dist/elements/structure/Overlay/useModalDialog.mjs"
+    },
+    "./elements/structure/Overlay/useOverlay": {
+      "types": "./dist/elements/structure/Overlay/useOverlay.d.ts",
+      "import": "./dist/elements/structure/Overlay/useOverlay.mjs"
     },
     "./elements/structure/Pagination": {
       "types": "./dist/elements/structure/Pagination/index.d.ts",
@@ -1357,6 +1385,10 @@
     "./elements/structure/TabContainer/index": {
       "types": "./dist/elements/structure/TabContainer/index.d.ts",
       "import": "./dist/elements/structure/TabContainer/index.mjs"
+    },
+    "./elements/structure/TabContainer/useTabItems": {
+      "types": "./dist/elements/structure/TabContainer/useTabItems.d.ts",
+      "import": "./dist/elements/structure/TabContainer/useTabItems.mjs"
     },
     "./index": {
       "types": "./dist/index.d.ts",

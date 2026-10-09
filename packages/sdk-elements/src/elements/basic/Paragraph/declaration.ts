@@ -15,37 +15,13 @@ const declaration = elementDeclaration<ParagraphAttributes>()({
     },
     definition: {
       label: 'Paragraph',
-      type: 'paragraph',
-      description: 'A block of body text (a <p>). Use for longer prose passages.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      description: 'A block of body text (a <p>). Use for longer prose passages.'
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-paragraph'
     },
     defaultStyle: {
-      name: 'Paragraph',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -54,8 +30,7 @@ const declaration = elementDeclaration<ParagraphAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

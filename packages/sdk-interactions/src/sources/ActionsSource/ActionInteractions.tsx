@@ -532,6 +532,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
       if (!response.ok) {
         reportRefusal(response.status, payload, endpoint);
         settle(refusedRun(payload));
+        // As every other mode does: a flow listening on the launching element hears a refusal however it was run.
+        reportFlow(context?.hostElementId, 'onFlowError', refusalOf(actionId, payload));
         // The reason is the server's own vocabulary — `duplicate`, `over_capacity`, `recursion` — and naming it is
         // what lets an author tell "my flow is wrong" from "I clicked twice".
         pConsole.warning(

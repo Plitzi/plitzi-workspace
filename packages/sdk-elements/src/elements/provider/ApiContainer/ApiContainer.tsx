@@ -25,6 +25,7 @@ import useInputRefresh from './hooks/useInputRefresh';
 import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
 import pathFields from '../../../dataSource/pathFields';
+import sourceStore from '../../../dataSource/sourceStore';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import useRscData from '../../../Element/hooks/useRscData';
@@ -472,10 +473,7 @@ const ApiContainer = ({
     [children, isInitialLoad, loadingSlot, previewMode]
   );
 
-  const storeContext = useMemo(
-    () => (sourceName ? { runtime: { sources: { [sourceName]: publishedData } } } : emptyObject),
-    [publishedData, sourceName]
-  );
+  const storeContext = useMemo(() => sourceStore(sourceName, publishedData), [publishedData, sourceName]);
 
   return (
     <RootElement

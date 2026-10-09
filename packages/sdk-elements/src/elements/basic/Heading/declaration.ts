@@ -19,37 +19,13 @@ const declaration = elementDeclaration<HeadingAttributes>()({
     },
     definition: {
       label: 'Heading',
-      type: 'heading',
-      description: 'A section heading (<h1>–<h6>) for titles and document hierarchy.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      description: 'A section heading (<h1>–<h6>) for titles and document hierarchy.'
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-heading'
     },
     defaultStyle: {
-      name: 'Heading',
-      displayMode: 'desktop',
       style: { base: { default: { 'margin-top': '25px', 'margin-bottom': '25px', 'font-weight': 700 } } },
       subTypes: {
         h1: {
@@ -144,8 +120,7 @@ const declaration = elementDeclaration<HeadingAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

@@ -57,7 +57,6 @@ const declaration = elementDeclaration<ThemeToggleAttributes>()({
     },
     definition: {
       label: 'Theme Toggle',
-      type: 'themeToggle',
       description:
         'Lets a visitor choose light or dark. It writes the choice on the document root, where a space stylesheet is already looking for it, and remembers it — so the machine decides until somebody says otherwise. It ships no colours of its own: its buttons carry no browser look and take the colour and type around them — style ' +
         'them with the space own classes. A `segmented` one marks the chosen option with `aria-pressed`, which is the ' +
@@ -65,45 +64,23 @@ const declaration = elementDeclaration<ThemeToggleAttributes>()({
         '`data-theme-icon` to change that. A `switch` marks the icon of the scheme in use — the one chosen, or the ' +
         'machine one while none is — with `aria-current`, the `current` state of its `icon` slot.',
       items: [],
-      bindings: {},
       styleSelectors: {
-        base: '',
         icon: '',
         option: ''
-      },
-      initialState: {
-        visibility: true
       }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-circle-half-stroke'
     },
     defaultStyle: {
-      name: 'Theme Toggle',
-      displayMode: 'desktop',
       style: {
         base: { default: buttonReset },
         icon: { default: {} },
         option: { default: { ...buttonReset, 'row-gap': '4px', 'column-gap': '4px' } }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   }
 });
 

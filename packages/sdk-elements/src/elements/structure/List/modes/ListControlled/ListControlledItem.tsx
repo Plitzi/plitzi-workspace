@@ -2,8 +2,8 @@ import clsx from 'clsx';
 import { useId, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 
+import sourceStore from '../../../../../dataSource/sourceStore';
 import ReplicaProvider from '../../../../../Element/ReplicaProvider';
 
 import type { ReactNode } from 'react';
@@ -44,7 +44,7 @@ const ListControlledItem = ({
    */
   const storeContextValue = useMemo(
     // A number, so a template counts with it (`index + 1`); `==` reads `'2'` and `2` alike, so text compares as before.
-    () => (source ? { runtime: { sources: { [source]: { item: record, index } } } } : emptyObject),
+    () => sourceStore(source, { item: record, index }),
     [source, record, index]
   );
 

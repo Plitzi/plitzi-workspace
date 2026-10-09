@@ -1,12 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import Contenteditable from '@plitzi/plitzi-ui/ContentEditable';
 import clsx from 'clsx';
-import { useMemo, use, useCallback } from 'react';
-
-import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import withElement from '../../../Element/hocs/withElement';
-import useElement from '../../../Element/hooks/useElement';
+import useEditableContent from '../../../Element/hooks/useEditableContent';
 import RootElement from '../../../Element/RootElement';
 
 import type { RefObject } from 'react';
@@ -25,32 +22,7 @@ export type TextProps = {
 };
 
 const Text = ({ ref, content = 'Text', className = '', title = '', decorative = false }: TextProps) => {
-  const { id } = useElement();
-  const {
-    settings: { previewMode },
-    contexts: { BuilderContext }
-  } = usePlitziServiceContext();
-  const builderContext = BuilderContext ? use(BuilderContext) : undefined;
-  const finalContent = useMemo(() => {
-    if (typeof content !== 'string' && typeof content !== 'number') {
-      return JSON.stringify(content);
-    }
-
-    if (!content && content !== '' && !previewMode) {
-      return 'Text';
-    }
-
-    if (typeof content === 'number') {
-      return `${content}`;
-    }
-
-    return content;
-  }, [content, previewMode]);
-
-  const handleChange = useCallback(
-    (value: string) => builderContext?.updateElement(id, 'content', value),
-    [builderContext, id]
-  );
+  const { previewMode, text, handleChange } = useEditableContent(content);
 
   return (
     <RootElement
@@ -59,11 +31,11 @@ const Text = ({ ref, content = 'Text', className = '', title = '', decorative = 
       title={title || undefined}
       {...(decorative ? { 'aria-hidden': true } : {})}
     >
-      {previewMode && finalContent}
+      {previewMode && text}
       {!previewMode && (
         <Contenteditable
           className="focus-visible:outline-hidden"
-          value={finalContent}
+          value={text}
           onChange={handleChange}
           openMode="doubleClick"
         />

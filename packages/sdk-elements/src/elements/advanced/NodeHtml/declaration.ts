@@ -22,38 +22,14 @@ const declaration = elementDeclaration<NodeHtmlAttributes>()({
     },
     definition: {
       label: 'Html Node',
-      type: 'nodeHtml',
       description: 'A single raw HTML tag with custom attributes.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      items: []
     },
     market: {
       category: 'advanced',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-brands fa-html5'
     },
     defaultStyle: {
-      name: 'Html Node',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
@@ -72,8 +48,7 @@ const declaration = elementDeclaration<NodeHtmlAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

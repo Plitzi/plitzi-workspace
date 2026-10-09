@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import useInteractions from './hooks/useInteractions';
 import InteractionsContext from './InteractionsContext';
@@ -21,8 +21,8 @@ const InteractionsContextProvider = ({
   routeParams,
   queryParams
 }: InteractionsContextProviderProps) => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const interactionsManager = useMemo(() => new InteractionsManager(currentPageId, routeParams, queryParams), []);
+  // One manager for the provider's life: what changes after it is made is handed to it as `interactionsData` below.
+  const [interactionsManager] = useState(() => new InteractionsManager(currentPageId, routeParams, queryParams));
   const interactionsData = useMemo(
     () => ({ currentPageId, ...routeParams, ...queryParams }),
     [currentPageId, routeParams, queryParams]

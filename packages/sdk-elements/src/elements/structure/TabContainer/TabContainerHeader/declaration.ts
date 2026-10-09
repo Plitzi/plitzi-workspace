@@ -14,46 +14,28 @@ const declaration = elementDeclaration<TabContainerHeaderAttributes>()({
     attributes: {},
     definition: {
       label: 'Tab Container Header',
-      type: 'tabContainerHeader',
       description: 'The row of tab triggers inside a tabContainer.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
+      items: []
     },
     builder: {
       canDelete: false,
-      canSelect: true,
       canDragDrop: false,
       canMove: false,
       canSnippet: false,
-      itemsAllowed: ['tabContainerItem'],
-      itemsNotAllowed: []
+      itemsAllowed: ['tabContainerItem']
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-table-columns'
     },
     defaultStyle: {
-      name: 'Tab Container Header',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   },
   initialItems: ['tabContainerItem', 'tabContainerItem', 'tabContainerItem']
 });

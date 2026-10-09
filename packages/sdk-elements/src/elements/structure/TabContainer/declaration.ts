@@ -13,46 +13,24 @@ const declaration = elementDeclaration<TabContainerAttributes>()({
     attributes: {},
     definition: {
       label: 'Tab Container',
-      type: 'tabContainer',
       description: 'A tabbed container that switches between panels; composed of header/body/item parts.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
+      items: []
     },
     builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: ['tabContainerHeader', 'tabContainerBody'],
-      itemsNotAllowed: []
+      itemsAllowed: ['tabContainerHeader', 'tabContainerBody']
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-table-columns'
     },
     defaultStyle: {
-      name: 'Tab Container',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   },
   initialItems: ['tabContainerHeader', 'tabContainerBody']
 });

@@ -29,46 +29,24 @@ const declaration = elementDeclaration<LayoutContainerAttributes>()({
     },
     definition: {
       label: 'Layout Container',
-      type: 'layoutContainer',
       description: 'A reusable layout shell (header/footer chrome) shared across pages.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
+      items: []
     },
     builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: false,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      canDragDrop: false
     },
     market: {
       category: 'internal',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-border-all'
     },
     defaultStyle: {
-      name: 'Layout Container',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   }
 });
 

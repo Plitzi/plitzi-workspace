@@ -5,7 +5,6 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import CarouselContext from './CarouselContext';
@@ -13,6 +12,7 @@ import { clampIndex, directionOf, slideStep, stepIndex } from './carouselIndex';
 import declaration from './declaration';
 import useAutoplay from './useAutoplay';
 import pathFields from '../../../dataSource/pathFields';
+import sourceStore from '../../../dataSource/sourceStore';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
@@ -187,10 +187,7 @@ const Carousel = ({
   const sourceFields = useCallback(() => pathFields(published), [published]);
   useRegisterSource({ id, source, name: elementLabel || `Carousel - ${id}`, fields: sourceFields });
 
-  const storeContextValue = useMemo(
-    () => (source ? { runtime: { sources: { [source]: published } } } : emptyObject),
-    [source, published]
-  );
+  const storeContextValue = useMemo(() => sourceStore(source, published), [source, published]);
 
   const context = useMemo<CarouselContextValue>(
     () => ({

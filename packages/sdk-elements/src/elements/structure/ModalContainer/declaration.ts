@@ -37,7 +37,6 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
     },
     definition: {
       label: 'Modal Container',
-      type: 'modalContainer',
       description:
         'A modal overlay container opened and closed through interactions; use for dialogs over the page. The element ' +
         'itself is fixed over the whole viewport, and holds two layers side by side — neither inside the other: ' +
@@ -47,7 +46,6 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
         'translateX(-50%)`; flex alignment on the dim layer moves nothing. Inside the dialog, top to bottom: ' +
         '`headerContainer` (with `headerTitle` and `headerCloseButton`) and `bodyContainer`.',
       items: [],
-      bindings: {},
       /**
        * A modal nobody opens is the commonest hidden subtree on a page, and before this it was built, bound and
        * subscribed on every render of the page it sat in. `lazy` rather than `visible` so what a visitor typed into
@@ -55,39 +53,19 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
        */
       loadStrategy: 'lazy',
       styleSelectors: {
-        base: '',
         backgroundContainer: '',
         rootContainer: '',
         headerContainer: '',
         headerTitle: '',
         headerCloseButton: '',
         bodyContainer: ''
-      },
-      initialState: {
-        visibility: true
       }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-regular fa-clone'
     },
     defaultStyle: {
-      name: 'Modal Container',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -191,8 +169,7 @@ const declaration = elementDeclaration<ModalContainerAttributes>()({
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   },
   initialItems: ['container']
 });

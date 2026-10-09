@@ -15,37 +15,13 @@ const declaration = elementDeclaration<TextAttributes>()({
     },
     definition: {
       label: 'Text',
-      type: 'text',
-      description: 'Inline plain-text content. Use for short runs of copy; bind its content to data for dynamic text.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      description: 'Inline plain-text content. Use for short runs of copy; bind its content to data for dynamic text.'
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-align-left'
     },
     defaultStyle: {
-      name: 'Text',
-      displayMode: 'desktop',
       style: {
         base: {
           // Only how it flows: its size and line height are the words around it, which a span inside a heading or a
@@ -55,8 +31,7 @@ const declaration = elementDeclaration<TextAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

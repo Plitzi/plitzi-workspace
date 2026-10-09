@@ -23,40 +23,16 @@ const declaration = elementDeclaration<ImageAttributes>()({
     },
     definition: {
       label: 'Image',
-      type: 'image',
       description:
         'Displays an image from a URL. It starts 140px wide and as tall as the picture is for that width (`height: ' +
         'auto`, never wider than where it sits): a class that sets only a `width` or an `aspect-ratio` is obeyed, and ' +
-        '`object-fit` decides how the picture fills a box that sets both.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+        '`object-fit` decides how the picture fills a box that sets both.'
     },
     market: {
       category: 'media',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-image'
     },
     defaultStyle: {
-      name: 'Image',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -67,8 +43,7 @@ const declaration = elementDeclaration<ImageAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

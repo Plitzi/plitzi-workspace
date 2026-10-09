@@ -978,6 +978,18 @@
       "types": "./dist/components/PayloadView/index.d.ts",
       "import": "./dist/components/PayloadView/index.mjs"
     },
+    "./components/ResizableSidebar": {
+      "types": "./dist/components/ResizableSidebar/index.d.ts",
+      "import": "./dist/components/ResizableSidebar/index.mjs"
+    },
+    "./components/ResizableSidebar/ResizableSidebar": {
+      "types": "./dist/components/ResizableSidebar/ResizableSidebar.d.ts",
+      "import": "./dist/components/ResizableSidebar/ResizableSidebar.mjs"
+    },
+    "./components/ResizableSidebar/index": {
+      "types": "./dist/components/ResizableSidebar/index.d.ts",
+      "import": "./dist/components/ResizableSidebar/index.mjs"
+    },
     "./freshness": {
       "types": "./dist/freshness/index.d.ts",
       "import": "./dist/freshness/index.mjs"

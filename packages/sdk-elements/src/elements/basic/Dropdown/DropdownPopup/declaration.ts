@@ -14,36 +14,21 @@ const declaration = elementDeclaration<DropdownPopupAttributes>()({
     attributes: {},
     definition: {
       label: 'Dropdown Popup',
-      type: 'dropdownPopup',
       description: 'The floating panel revealed by a dropdown.',
       items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
       initialState: {}
     },
     builder: {
       canDelete: false,
-      canSelect: true,
       canDragDrop: false,
       canMove: false,
-      canSnippet: false,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      canSnippet: false
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-regular fa-window-restore'
     },
     defaultStyle: {
-      name: 'Dropdown Popup',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -68,8 +53,7 @@ const declaration = elementDeclaration<DropdownPopupAttributes>()({
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   },
   initialItems: []
 });

@@ -251,7 +251,6 @@ const declaration = elementDeclaration<FormControlAttributes>()({
     },
     definition: {
       label: 'Form Control',
-      type: 'formControl',
       description:
         'A single labelled input (text/select/checkbox/… per its subType) inside a form; captures one field of user ' +
         'input. Optional unless `required: true`, as an HTML field is: a `requiredMessage` alone requires nothing. ' +
@@ -265,41 +264,23 @@ const declaration = elementDeclaration<FormControlAttributes>()({
         '`input` slot — the box never takes `focus` itself. The thumb of a switch is no element a ' +
         'class reaches: the class on its `input` slot sets `--plitzi-switch-thumb` (off), ' +
         '`--plitzi-switch-thumb-checked` (on, white by default) and `--plitzi-switch-thumb-shadow`.',
-      bindings: {},
       styleSelectors: {
-        base: '',
         label: '',
         requiredMark: '',
         input: '',
         field: '',
         icon: '',
         error: ''
-      },
-      initialState: {
-        visibility: true
       }
     },
     builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: false,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      canSnippet: false
     },
     market: {
       category: 'form',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-i-cursor'
     },
     defaultStyle: {
-      name: 'Form Control',
-      displayMode: 'desktop',
       style: { base: { default: {} } },
       subTypes: {
         hidden: typed('Form Control Hidden', {}),
@@ -345,8 +326,7 @@ const declaration = elementDeclaration<FormControlAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

@@ -42,50 +42,27 @@ const declaration = elementDeclaration<ButtonAttributes>()({
     },
     definition: {
       label: 'Button',
-      type: 'button',
       description:
         'A clickable button. On its own it only renders; wire an interaction flow (trigger onClick → callbacks) to make ' +
         'it DO something. Its words are its `content` and an icon beside them its `icon` (Font Awesome classes) — no ' +
         'text or fontAwesome element inside it for them.',
       items: [],
-      bindings: {},
       styleSelectors: {
-        base: '',
         icon: ''
-      },
-      initialState: {
-        visibility: true
       }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-hand-pointer'
     },
     defaultStyle: {
-      name: 'Button',
-      displayMode: 'desktop',
       style: { base: { default: buttonStyle } },
       subTypes: {
         button: { name: 'Default Button', displayMode: 'desktop', style: { base: { default: buttonStyle } } },
         reset: { name: 'Reset Button', displayMode: 'desktop', style: { base: { default: buttonStyle } } },
         submit: { name: 'Submit Button', displayMode: 'desktop', style: { base: { default: buttonStyle } } }
       }
-    },
-    settings: {}
+    }
   }
 });
 

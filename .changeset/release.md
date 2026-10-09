@@ -85,5 +85,15 @@
 
 - **A dialog opened with an id** (`@plitzi/sdk-elements`): `openDialog('dialog', '{{ row.id }}')` reads the id as its
   `content`, as `openModal` already did — a numeric id parsed as the number and the dialog's bindings read nothing.
-- **A tab header's settings** (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`): the builder found no settings for
-  `tabContainerHeader`, registered under a misspelt type; the registry now accepts only element types.
+- **Every element has its settings** (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`): the builder found none for
+  `tabContainerHeader` (registered under a misspelt type), `themeToggle`, `dropdownPopup`, `loading` and `notFound`.
+  The theme toggle's panel sets its mode, its labels and whether it offers "System"; the registry is typed by element
+  type and must hold one for each.
+- **A refused run reaches `onFlowError` in every mode** (`@plitzi/sdk-interactions`): an awaited server action the
+  server refused fired no `onFlowError` on the element that started it, as `detached` and `stream` ones do — a board
+  rolling its edits back on a refusal never did.
+- **A text's words in the builder** (`@plitzi/sdk-elements`): a `paragraph`, `text` or `heading` whose `content` is
+  `0` shows `0` while editing too, not its placeholder; one bound to nothing shows nothing rather than `null`.
+- **Built-in declarations** (`@plitzi/sdk-shared`): `elementDeclaration` fills in what every element shares — the
+  builder's gestures, Plitzi's catalogue entry, a visible element with no bindings, its style named by its label —
+  from the defaults `definePlugin` uses; each element's declaration says only what is its own (a third of the lines).

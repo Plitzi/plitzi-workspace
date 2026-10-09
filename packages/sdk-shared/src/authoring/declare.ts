@@ -1,6 +1,7 @@
 import type { InteractionCallback, InteractionCallbackPreviews } from '../types/InteractionTypes';
 import type { PluginBuilder, PluginSchema } from '../types/PluginTypes';
 import type { ElementDefinition } from '../types/SchemaTypes';
+import type { DisplayMode, StyleAttributes } from '../types/StyleTypes';
 
 /**
  * How an element says what it can be authored with.
@@ -166,15 +167,122 @@ export const valuesOf =
   ): readonly string[] =>
     values;
 
+/**
+ * The builder's gestures every element allows unless it says otherwise. A new object on every call: a declaration is
+ * data its readers keep and may change, and two elements must never share one list.
+ */
+const builderDefaults = (): Required<PluginBuilder> => ({
+  canDelete: true,
+  canSelect: true,
+  canDragDrop: true,
+  canMove: true,
+  canSnippet: true,
+  itemsAllowed: [],
+  itemsNotAllowed: []
+});
+
+/** The definition every element starts with unless it says otherwise, around what it does say. */
+const definitionWith = <Definition extends { styleSelectors?: Record<string, string> }>(
+  type: string,
+  definition: Definition
+) => ({
+  type,
+  bindings: {},
+  initialState: { visibility: true },
+  ...definition,
+  styleSelectors: { base: '', ...definition.styleSelectors }
+});
+
+/** What a built-in element writes in its declaration's `content`: what is its own — the rest is filled in. */
+export interface ElementContentSpec {
+  attributes: Record<string, unknown>;
+  /** Left out: `type` (the declaration's), no bindings, visible, and the `base` style selector beside its own. */
+  definition: Omit<
+    Partial<ElementDefinition>,
+    'type' | 'rootId' | 'parentId' | 'interactions' | 'runtime' | 'styleSelectors'
+  > & {
+    label: string;
+    /** What the element is for, in a sentence: the builder shows it, and an agent reads it to choose the element. */
+    description?: string;
+    styleSelectors?: Record<string, string>;
+  };
+  /** Left out, every gesture, and children of any type. */
+  builder?: PluginBuilder;
+  /** Its place in the catalogue; the rest is Plitzi's own entry. */
+  market: { category: string; icon: string };
+  /** Left out: named by its label, for desktop. */
+  defaultStyle: {
+    name?: string;
+    displayMode?: DisplayMode;
+    style: StyleAttributes;
+    /** A style of its own for each `subType` — a heading's `h1`… — written whole. */
+    subTypes?: Record<string, { name: string; displayMode: DisplayMode; style: StyleAttributes }>;
+  };
+  settings?: Record<string, string | number | boolean>;
+}
+
+/** What {@link elementDeclaration} takes: the declaration as written, `content` holding only what is the element's. */
+export interface ElementDeclarationSpec extends Omit<ElementDeclarationData, 'content'> {
+  content: ElementContentSpec;
+}
+
+/** What {@link elementDeclaration} fills in, typed as the declaration then carries it. */
+export interface ElementContentDefaults {
+  definition: {
+    type: string;
+    bindings: NonNullable<ElementDefinition['bindings']>;
+    initialState: Record<string, unknown>;
+    styleSelectors: Record<string, string> & { base: string };
+  };
+  builder: Required<PluginBuilder>;
+  market: { owner: string; verified: boolean; license: string; website: string; backgroundColor: string };
+  defaultStyle: { name: string; displayMode: DisplayMode };
+  settings: Record<string, string | number | boolean>;
+}
+
+/** A built-in element's whole declaration: what it wrote, what was filled in, and the attributes it accepts. */
+export type DeclaredElement<D extends ElementDeclarationSpec, A> = D & {
+  content: ElementContentDefaults;
+} & ElementAttributesBrand<A>;
+
+/**
+ * A built-in element's declaration, written from what is its own — its type, words, attributes, style, place in the
+ * catalogue — with the rest at the defaults every element shares: the builder's gestures, Plitzi's catalogue entry,
+ * a visible element with no bindings, its style named by its label.
+ *
+ * Called twice, as {@link definePlugin} is: the first call takes the attributes the element accepts, the second the
+ * declaration.
+ */
 export const elementDeclaration =
   <A>() =>
   // `const` so the declaration's own `type` stays the literal it was written as: the authoring surface maps a
   // document type name back to the element that declares it, and a widened `string` collapses that map into one
   // union of every element there is.
-  <const D extends ElementDeclarationData>(declaration: D): D & ElementAttributesBrand<A> =>
-    // The brand is type-only and there is no value to attach, which is exactly why this cast has no runtime
-    // counterpart: what comes back is the same object it was handed.
-    declaration as D & ElementAttributesBrand<A>;
+  <const D extends ElementDeclarationSpec>(declaration: D): DeclaredElement<D, A> => {
+    const { definition, builder, market, defaultStyle, settings } = declaration.content;
+    const filled = {
+      ...declaration,
+      content: {
+        ...declaration.content,
+        definition: definitionWith(declaration.type, definition),
+        builder: { ...builderDefaults(), ...builder },
+        market: {
+          owner: 'Plitzi',
+          verified: true,
+          license: 'MIT',
+          website: 'https://plitzi.com',
+          backgroundColor: '#4422ee',
+          ...market
+        },
+        defaultStyle: { name: definition.label, displayMode: 'desktop' as const, ...defaultStyle },
+        settings: settings ?? {}
+      }
+    };
+
+    // Each default was filled in above and the brand is type-only: the object is the declaration it says it is, which
+    // spreading a generic `D` cannot tell the compiler.
+    return filled as unknown as DeclaredElement<D, A>;
+  };
 
 /** An event a plugin fires, as {@link definePlugin} takes it: what a flow it starts reads (`preview`) — the rest derived. */
 export type PluginTriggerSpec = {
@@ -311,26 +419,13 @@ export const definePlugin =
       ),
       content: {
         attributes,
-        definition: {
+        definition: definitionWith(type, {
           label,
-          type,
           ...(description ? { description } : {}),
           items: [],
-          bindings: {},
-          styleSelectors: { base: '' },
-          initialState: { visibility: true },
           ...definition
-        },
-        builder: {
-          canDelete: true,
-          canSelect: true,
-          canDragDrop: true,
-          canMove: true,
-          canSnippet: true,
-          itemsAllowed: [],
-          itemsNotAllowed: [],
-          ...builder
-        },
+        }),
+        builder: { ...builderDefaults(), ...builder },
         market: {
           category: label,
           owner: '',

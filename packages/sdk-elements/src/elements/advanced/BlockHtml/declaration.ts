@@ -15,44 +15,19 @@ const declaration = elementDeclaration<BlockHtmlAttributes>()({
     },
     definition: {
       label: 'HTML Block',
-      type: 'blockHtml',
-      description: 'Renders an arbitrary raw HTML string as a block. Escape hatch when no structured element fits.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      description: 'Renders an arbitrary raw HTML string as a block. Escape hatch when no structured element fits.'
     },
     market: {
       category: 'advanced',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-brands fa-html5'
     },
     defaultStyle: {
-      name: 'HTML Block',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

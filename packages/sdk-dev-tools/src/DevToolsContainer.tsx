@@ -146,25 +146,26 @@ const DevToolsContainer = ({
   // The page stays in the document's flow only while there is no panel to share the screen with. Read as collapsed
   // until hydration, like the dock position above: the server has no storage to know otherwise.
   const inFlow = scroll === 'document' && (!hydrated || collapsed);
+  const panel = (
+    <DevToolsOverlay
+      className={clsx({ dark: resolvedTheme === 'dark' })}
+      collapsed={collapsed}
+      orientation={dockedAt}
+      tabSelected={tabSelected}
+      logTypeFilter={logTypeFilter}
+      onOpen={handleOpen}
+      onCollapse={handleCollapse}
+      onTabSelect={handleTabSelect}
+      onChangeOrientation={handleChangeOrientation}
+      pageRef={pageRef}
+      qa={qa}
+    />
+  );
   const overlay = isSelected && hydrated && (
     <DevToolsRoot>
       <DevToolsContextProvider>
         <Suspense fallback={null}>
-          {renderMode === 'default' && (
-            <DevToolsOverlay
-              className={clsx({ dark: resolvedTheme === 'dark' })}
-              collapsed={collapsed}
-              orientation={dockedAt}
-              tabSelected={tabSelected}
-              logTypeFilter={logTypeFilter}
-              onOpen={handleOpen}
-              onCollapse={handleCollapse}
-              onTabSelect={handleTabSelect}
-              onChangeOrientation={handleChangeOrientation}
-              pageRef={pageRef}
-              qa={qa}
-            />
-          )}
+          {renderMode === 'default' && panel}
           {renderMode === 'shadow' && (
             // Marked from outside: a capture hides the dev tools by a rule on the page (`HIDE_DEV_TOOLS_CSS`), and a
             // page's rules stop at a shadow root — the badge inside it was in every `plitzi page shot`.
@@ -174,19 +175,7 @@ const DevToolsContainer = ({
                 {devToolsStyleLink && <ContainerShadow.Link href={devToolsStyleLink} />}
                 <ContainerShadow.Content>
                   <style dangerouslySetInnerHTML={{ __html: devToolsStyle }} />
-                  <DevToolsOverlay
-                    className={clsx({ dark: resolvedTheme === 'dark' })}
-                    collapsed={collapsed}
-                    orientation={dockedAt}
-                    tabSelected={tabSelected}
-                    logTypeFilter={logTypeFilter}
-                    onOpen={handleOpen}
-                    onCollapse={handleCollapse}
-                    onTabSelect={handleTabSelect}
-                    onChangeOrientation={handleChangeOrientation}
-                    pageRef={pageRef}
-                    qa={qa}
-                  />
+                  {panel}
                 </ContainerShadow.Content>
               </ContainerShadow>
             </div>

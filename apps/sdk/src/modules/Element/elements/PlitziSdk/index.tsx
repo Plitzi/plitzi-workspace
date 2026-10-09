@@ -1,55 +1,12 @@
 import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo';
 
+import declaration from './declaration';
 import BasePlitziSdk from './PlitziSdk';
 
+// The catalogue icon is a React component, so it is attached here rather than in the data-only declaration.
 const PlitziSdk = Object.assign(BasePlitziSdk, {
-  type: 'plitziSdk',
-  content: {
-    attributes: {
-      spaceId: '',
-      spaceKey: '',
-      environment: 'main'
-    },
-    definition: {
-      label: 'Plitzi Sdk',
-      type: 'plitziSdk',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
-    },
-    market: {
-      category: 'advanced',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
-      icon: <PlitziLogo />
-    },
-    defaultStyle: {
-      name: 'Plitzi Sdk',
-      displayMode: 'desktop',
-      style: {
-        base: {
-          default: {}
-        }
-      }
-    },
-    settings: {}
-  }
+  ...declaration,
+  content: { ...declaration.content, market: { ...declaration.content.market, icon: <PlitziLogo /> } }
 });
 
 export default PlitziSdk;

@@ -5,11 +5,12 @@ import { useCallback, useMemo } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject, getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ListControlledItem from './ListControlledItem';
 import { rowKeys } from './rowKeys';
+import sourceStore from '../../../../../dataSource/sourceStore';
 import useElement from '../../../../../Element/hooks/useElement';
 import RootElement from '../../../../../Element/RootElement';
 import declaration from '../../declaration';
@@ -65,10 +66,7 @@ const ListControlled = ({
     [finalItems]
   );
 
-  const storeContextValue = useMemo(
-    () => (sourceName ? { runtime: { sources: { [sourceName]: { items: finalItems } } } } : emptyObject),
-    [sourceName, finalItems]
-  );
+  const storeContextValue = useMemo(() => sourceStore(sourceName, { items: finalItems }), [sourceName, finalItems]);
 
   useRegisterSource({
     id,

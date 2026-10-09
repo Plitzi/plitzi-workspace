@@ -16,37 +16,14 @@ const declaration = elementDeclaration<SvgAttributes>()({
     },
     definition: {
       label: 'SVG',
-      type: 'svg',
-      description: 'A drawing written as SVG markup, coloured by its class.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      description: 'A drawing written as SVG markup, coloured by its class.'
     },
     market: {
       category: 'media',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-bezier-curve'
     },
     defaultStyle: {
       name: 'Svg',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -56,8 +33,7 @@ const declaration = elementDeclaration<SvgAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

@@ -5,6 +5,7 @@ import NodeHtml from './advanced/NodeHtml/Settings';
 import PlitziSdk from './advanced/PlitziSdk/Settings';
 import Reference from './advanced/Reference/Settings';
 import Button from './basic/Button/Settings';
+import DropdownPopup from './basic/Dropdown/DropdownPopup/Settings';
 import Dropdown from './basic/Dropdown/Settings';
 import Heading from './basic/Heading/Settings';
 import Link from './basic/Link/Settings';
@@ -12,9 +13,12 @@ import Markdown from './basic/Markdown/Settings';
 import Paragraph from './basic/Paragraph/Settings';
 import RichText from './basic/RichText/Settings';
 import Text from './basic/Text/Settings';
+import ThemeToggle from './basic/ThemeToggle/Settings';
 import Form from './form/Form/Settings';
 import FormControl from './form/FormControl/Settings';
 import LayoutContainer from './internal/LayoutContainer/Settings';
+import Loading from './internal/Loading/Settings';
+import NotFound from './internal/NotFound/Settings';
 import Page from './internal/Page/Settings';
 import Embed from './media/Embed/Settings';
 import FontAwesome from './media/FontAwesome/Settings';
@@ -42,16 +46,20 @@ import type { FC } from 'react';
 // `plitziSdk` is declared where it renders — `apps/sdk`, since it runs a whole space — and only its settings live here.
 type ElementType = (typeof elementDeclarations)[keyof typeof elementDeclarations]['type'] | 'plitziSdk';
 
-// Keyed by the element's type, which is what the builder looks one up by: a key that is not one is a panel never shown.
+// Keyed by the element's type, which is what the builder looks one up by — and every element has one, even with nothing
+// of its own to set: a key that is not a type is a panel never shown, and a type with none reads as a broken element.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const defaultElementsSettings: Record<string, FC<any>> = {
   dropdown: Dropdown,
+  dropdownPopup: DropdownPopup,
   plitziSdk: PlitziSdk,
   custom: Custom,
   reference: Reference,
   blockHtml: BlockHtml,
   blockJsx: BlockJsx,
   page: Page,
+  loading: Loading,
+  notFound: NotFound,
   container: Container,
   layoutContainer: LayoutContainer,
   dialogContainer: DialogContainer,
@@ -71,6 +79,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   button: Button,
   paragraph: Paragraph,
   text: Text,
+  themeToggle: ThemeToggle,
   markdown: Markdown,
   richText: RichText,
   pagination: Pagination,
@@ -83,6 +92,6 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   apiContainer: ApiContainer,
   channel: Channel
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} satisfies Partial<Record<ElementType, FC<any>>>;
+} satisfies Record<ElementType, FC<any>>;
 
 export { defaultElementsSettings };

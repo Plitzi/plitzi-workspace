@@ -13,44 +13,22 @@ const declaration = elementDeclaration<LoadingAttributes>()({
     attributes: {},
     definition: {
       label: 'Loading',
-      type: 'loading',
-      description: 'A loading placeholder shown while data or a suspense boundary resolves.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
+      description: 'A loading placeholder shown while data or a suspense boundary resolves.'
     },
     builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: false,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      canDragDrop: false
     },
     market: {
       category: 'internal',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'https://cdn.plitzi.com/resources/img/favicon.svg'
     },
     defaultStyle: {
-      name: 'Loading',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

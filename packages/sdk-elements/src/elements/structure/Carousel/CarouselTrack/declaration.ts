@@ -14,38 +14,17 @@ const declaration = elementDeclaration<CarouselTrackAttributes>()({
     attributes: {},
     definition: {
       label: 'Carousel Track',
-      type: 'carouselTrack',
       description: 'Where a carousel shows its slides: what is inside is one slide, rendered once per item.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
+      items: []
     },
     builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: false,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      canSnippet: false
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-film'
     },
     defaultStyle: {
-      name: 'Carousel Track',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {
@@ -54,8 +33,7 @@ const declaration = elementDeclaration<CarouselTrackAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

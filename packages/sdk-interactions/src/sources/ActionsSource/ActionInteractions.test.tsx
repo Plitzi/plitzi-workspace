@@ -259,6 +259,22 @@ describe('ActionInteractions', () => {
     expect(warning).toHaveBeenCalled();
   });
 
+  it('reports a refused awaited run to the element that launched it, as every other mode does', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(409, { error: 'board is full', reason: 'refused', runId: 'run-9' })))
+    );
+
+    await mount().run({ actionId: 'apply', input: '{}', mode: 'await' }, { hostElementId: 'board1' });
+
+    expect(interactionTrigger).toHaveBeenCalledWith('board1', 'onFlowError', {
+      actionId: 'apply',
+      runId: 'run-9',
+      error: 'board is full',
+      reason: 'refused'
+    });
+  });
+
   it('cancels a run by id, and reads the server’s answer', async () => {
     const fetchMock = vi.fn(() =>
       Promise.resolve({ ok: true, status: 204, json: () => Promise.resolve({}) } as Response)

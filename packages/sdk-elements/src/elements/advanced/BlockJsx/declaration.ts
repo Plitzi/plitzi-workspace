@@ -20,44 +20,19 @@ const declaration = elementDeclaration<BlockJsxAttributes>()({
     },
     definition: {
       label: 'Block JSX',
-      type: 'blockJsx',
-      description: 'A compiled JSX block for advanced authoring.',
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      description: 'A compiled JSX block for advanced authoring.'
     },
     market: {
       category: 'advanced',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-code'
     },
     defaultStyle: {
-      name: 'Block JSX',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

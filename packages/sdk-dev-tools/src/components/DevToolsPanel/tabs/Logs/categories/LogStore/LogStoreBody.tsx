@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 
 import buildDiff from './helpers/buildDiff';
 import buildHunks from './helpers/buildHunks';
@@ -48,15 +48,17 @@ const LogStoreBody = ({ path, prev, next, contextLines = 10 }: LogStoreBodyProps
     [activeHunk, hunks.length, scrollToHunk]
   );
 
-  useEffect(() => {
+  // A new diff starts at its first change; nothing else that changes moves the reader.
+  const showFirstHunk = useEffectEvent(() => {
     if (!hasDiffs) {
       return;
     }
 
     setActiveHunk(0);
     scrollToHunk(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [diff]);
+  });
+
+  useEffect(() => showFirstHunk(), [diff]);
 
   const handleClickPrevious = useCallback(() => navigate(-1), [navigate]);
 

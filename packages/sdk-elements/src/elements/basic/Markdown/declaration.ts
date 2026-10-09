@@ -16,7 +16,6 @@ const declaration = elementDeclaration<MarkdownAttributes>()({
     },
     definition: {
       label: 'Markdown',
-      type: 'markdown',
       description:
         'Renders a Markdown source string (GitHub-flavoured) as HTML, inside a `div.markdown`. Each part of it takes a ' +
         'class through the slot named for it: `heading` (every `h1`–`h6`) and `heading1`…`heading6` (that level only, ' +
@@ -29,9 +28,7 @@ const declaration = elementDeclaration<MarkdownAttributes>()({
         '`a.anchor > span.octicon-link`, the `anchor` slot; `headingLinks: false` leaves the link out and keeps the id. ' +
         'Unstyled, it reads as a document — headings, lists, code, tables — from the base layer of the SDK, which a ' +
         'class on the slot of a part replaces property by property.',
-      bindings: {},
       styleSelectors: {
-        base: '',
         heading: '',
         heading1: '',
         heading2: '',
@@ -60,39 +57,19 @@ const declaration = elementDeclaration<MarkdownAttributes>()({
         tableHeaderCell: '',
         tableCell: '',
         anchor: ''
-      },
-      initialState: {
-        visibility: true
       }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
     },
     market: {
       category: 'basic',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-brands fa-markdown'
     },
     defaultStyle: {
-      name: 'Markdown',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       }
-    },
-    settings: {}
+    }
   }
 });
 

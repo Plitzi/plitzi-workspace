@@ -266,6 +266,18 @@
       "types": "./dist/components/StyleInspector/categories/Background/components/BackgroundTile/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/components/BackgroundTile/index.mjs"
     },
+    "./components/StyleInspector/categories/Background/components/GradientCenter": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/GradientCenter/index.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/GradientCenter/index.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientCenter/GradientCenter": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/GradientCenter/GradientCenter.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/GradientCenter/GradientCenter.mjs"
+    },
+    "./components/StyleInspector/categories/Background/components/GradientCenter/index": {
+      "types": "./dist/components/StyleInspector/categories/Background/components/GradientCenter/index.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Background/components/GradientCenter/index.mjs"
+    },
     "./components/StyleInspector/categories/Background/components/GradientStopBar": {
       "types": "./dist/components/StyleInspector/categories/Background/components/GradientStopBar/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Background/components/GradientStopBar/index.mjs"
@@ -682,6 +694,10 @@
       "types": "./dist/components/StyleInspector/categories/Spacing/Spacing.d.ts",
       "import": "./dist/components/StyleInspector/categories/Spacing/Spacing.mjs"
     },
+    "./components/StyleInspector/categories/Spacing/SpacingBox": {
+      "types": "./dist/components/StyleInspector/categories/Spacing/SpacingBox.d.ts",
+      "import": "./dist/components/StyleInspector/categories/Spacing/SpacingBox.mjs"
+    },
     "./components/StyleInspector/categories/Spacing/SpacingEditor": {
       "types": "./dist/components/StyleInspector/categories/Spacing/SpacingEditor.d.ts",
       "import": "./dist/components/StyleInspector/categories/Spacing/SpacingEditor.mjs"
@@ -761,6 +777,14 @@
     "./components/StyleInspector/categories/Variables/index": {
       "types": "./dist/components/StyleInspector/categories/Variables/index.d.ts",
       "import": "./dist/components/StyleInspector/categories/Variables/index.mjs"
+    },
+    "./components/StyleInspector/categories/blendModes": {
+      "types": "./dist/components/StyleInspector/categories/blendModes.d.ts",
+      "import": "./dist/components/StyleInspector/categories/blendModes.mjs"
+    },
+    "./components/StyleInspector/categories/listMarkers": {
+      "types": "./dist/components/StyleInspector/categories/listMarkers.d.ts",
+      "import": "./dist/components/StyleInspector/categories/listMarkers.mjs"
     },
     "./components/StyleInspector/categoryKeys": {
       "types": "./dist/components/StyleInspector/categoryKeys.d.ts",

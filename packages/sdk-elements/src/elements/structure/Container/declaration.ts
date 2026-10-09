@@ -59,48 +59,23 @@ const declaration = elementDeclaration<ContainerAttributes>()({
     },
     definition: {
       label: 'Container',
-      type: 'container',
       description:
         'Generic layout box (a div). The primary building block for structure: groups and positions child elements with ' +
         'flex/grid. Reach for it whenever you need to wrap or arrange other elements.',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      items: []
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-crop-simple'
     },
     defaultStyle: {
-      name: 'Container',
-      displayMode: 'desktop',
       style: {
         base: {
           default: {}
         }
       },
       subTypes: {}
-    },
-    settings: {}
+    }
   }
 });
 

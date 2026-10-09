@@ -61,6 +61,18 @@ const useDropdown = ({
     return null;
   }, [myWindow]);
 
+  // Controlled from outside (`open` given), it only asks to change; otherwise it changes itself, and says so.
+  const toggle = useCallback(() => {
+    if (openProp !== undefined) {
+      onChange?.(!open, false);
+
+      return;
+    }
+
+    onChange?.(!open, true);
+    setOpen(state => !state);
+  }, [onChange, open, openProp]);
+
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       // The popup renders inside the trigger's element, so its clicks bubble here — and a click on a control in an
@@ -72,16 +84,9 @@ const useDropdown = ({
 
       e.stopPropagation();
       e.preventDefault();
-      if (openProp !== undefined) {
-        onChange?.(!open, false);
-
-        return;
-      }
-
-      onChange?.(!open, true);
-      setOpen(state => !state);
+      toggle();
     },
-    [disabled, loading, onChange, open, openProp, popupRef]
+    [disabled, loading, popupRef, toggle]
   );
 
   const handleClickPopup = useCallback(
@@ -92,16 +97,9 @@ const useDropdown = ({
 
       e.stopPropagation();
       e.preventDefault();
-      if (openProp !== undefined) {
-        onChange?.(!open, false);
-
-        return;
-      }
-
-      onChange?.(!open, true);
-      setOpen(state => !state);
+      toggle();
     },
-    [closeOnClickPopup, disabled, loading, onChange, open, openProp]
+    [closeOnClickPopup, disabled, loading, toggle]
   );
 
   useEffect(() => {

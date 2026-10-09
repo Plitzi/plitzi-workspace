@@ -22,41 +22,17 @@ const declaration = elementDeclaration<ListAttributes>()({
     },
     definition: {
       label: 'List',
-      type: 'list',
       description:
         'Repeats a template (its row: a listItem, or a container with subType "li") once per entry of a data array — ' +
         'the way to render a dynamic collection, as a <ul> (subType "ol" for a numbered one). Bind its items to a ' +
         'data source (e.g. an apiContainer response).',
-      items: [],
-      bindings: {},
-      styleSelectors: {
-        base: ''
-      },
-      initialState: {
-        visibility: true
-      }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
+      items: []
     },
     market: {
       category: 'structure',
-      owner: 'Plitzi',
-      verified: true,
-      license: 'MIT',
-      website: 'https://plitzi.com',
-      backgroundColor: '#4422ee',
       icon: 'fa-solid fa-list'
     },
     defaultStyle: {
-      name: 'List',
-      displayMode: 'desktop',
       style: { base: { default: { 'margin-top': '0px', 'margin-bottom': '10px', 'padding-left': '40px' } } },
       subTypes: {
         ul: {
@@ -86,8 +62,7 @@ const declaration = elementDeclaration<ListAttributes>()({
           }
         }
       }
-    },
-    settings: {}
+    }
   },
   initialItems: ['listItem', 'listItem', 'listItem']
 });
