@@ -68,7 +68,12 @@ export type RealtimePublishOptions = {
 };
 
 /** What a page sends to publish: the secret its connection was given, and the message. */
-export type RealtimePublishRequest = RealtimePublishOptions & { token: string; topic: string; type: string; data: unknown };
+export type RealtimePublishRequest = RealtimePublishOptions & {
+  token: string;
+  topic: string;
+  type: string;
+  data: unknown;
+};
 
 /**
  * How messages move between the processes and replicas of a deployment — transport only, strings in and out.

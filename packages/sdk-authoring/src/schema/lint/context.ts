@@ -22,6 +22,19 @@ export type LintIssue = SchemaValidationError;
 /** An attribute read as text: a document stores what an editor wrote, which is not always the string a type says. */
 export const textOf = (value: unknown, fallback = ''): string => (typeof value === 'string' ? value : fallback);
 
+/** Every string inside a value, however deep — a step's params nest objects and lists of them. */
+export const stringsIn = (value: unknown): string[] => {
+  if (typeof value === 'string') {
+    return [value];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(stringsIn);
+  }
+
+  return typeof value === 'object' && value !== null ? Object.values(value).flatMap(stringsIn) : [];
+};
+
 /**
  * One reading of a space, shared by every rule: who is where, who publishes what, and the words to name them with.
  *

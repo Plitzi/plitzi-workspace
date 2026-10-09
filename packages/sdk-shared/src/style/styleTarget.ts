@@ -1,6 +1,7 @@
 import { canonicalCondition } from './styleConditions';
 import { isStylePseudo } from './stylePseudos';
 import { isParentAncestor } from './styleStates';
+import { isRecord } from '../helpers/isRecord';
 
 import type { StyleBlock, StyleObject, StyleTarget } from '../types/StyleTypes';
 
@@ -65,9 +66,6 @@ export const styleTargetProblem = (target: StyleTarget): string | undefined => {
 
   return undefined;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** The value at `keys` under `root`, or `undefined` where any step is missing. */
 export const valueAtKeys = (root: unknown, keys: readonly string[]): unknown => {

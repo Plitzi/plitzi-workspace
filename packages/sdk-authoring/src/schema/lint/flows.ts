@@ -6,6 +6,7 @@ import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
 
 import { STEP_TYPES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
+import { stringsIn } from './context';
 import { checkGlobalRead } from './globalReads';
 import { checkPageTarget } from './pages';
 import { checkTemplate } from './templates';
@@ -29,19 +30,6 @@ export const STATE_PATH_PARAMS: Record<string, readonly string[]> = {
 
 /** The element callbacks that write one field of the element they run on, named by `category` and `key`. */
 const FIELD_CALLBACKS = new Set(['setState', 'toggleState']);
-
-/** Every string inside a value, however deep — a step's params nest objects and lists of them. */
-const stringsIn = (value: unknown): string[] => {
-  if (typeof value === 'string') {
-    return [value];
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(stringsIn);
-  }
-
-  return typeof value === 'object' && value !== null ? Object.values(value).flatMap(stringsIn) : [];
-};
 
 /**
  * The flows an element declares, each in the order it runs.

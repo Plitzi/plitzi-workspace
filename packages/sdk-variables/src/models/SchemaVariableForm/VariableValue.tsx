@@ -28,38 +28,19 @@ const VariableValue = ({
   onClickDown
 }: VariableValueProps) => {
   const label = hasSubValues ? 'Fallback Value' : 'Value';
-  const placeholder = hasSubValues ? 'Fallback Value' : 'Value';
+  const field = { name, label, placeholder: label, size: 'xs', className: 'w-full min-w-0' } as const;
 
   return (
     <div className="flex items-end gap-2">
-      {['text', 'email', 'password', 'number'].includes(valueType) && (
-        <Form.Input
-          type={valueType as 'text' | 'email' | 'password' | 'number'}
-          name={name}
-          label={label}
-          placeholder={placeholder}
-          size="xs"
-          className="w-full min-w-0"
-        />
+      {(valueType === 'text' || valueType === 'email' || valueType === 'password' || valueType === 'number') && (
+        <Form.Input type={valueType} {...field} />
       )}
-      {valueType === 'select' && (
-        <Form.Select name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
-      )}
-      {valueType === 'select2' && (
-        <Form.Select2 name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
-      )}
-      {valueType === 'textarea' && (
-        <Form.TextArea name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
-      )}
-      {valueType === 'switch' && (
-        <Form.Switch name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
-      )}
-      {valueType === 'checkbox' && (
-        <Form.Checkbox name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
-      )}
-      {valueType === 'color' && (
-        <Form.Color name={name} label={label} placeholder={placeholder} size="xs" className="w-full min-w-0" />
-      )}
+      {valueType === 'select' && <Form.Select {...field} />}
+      {valueType === 'select2' && <Form.Select2 {...field} />}
+      {valueType === 'textarea' && <Form.TextArea {...field} />}
+      {valueType === 'switch' && <Form.Switch {...field} />}
+      {valueType === 'checkbox' && <Form.Checkbox {...field} />}
+      {valueType === 'color' && <Form.Color {...field} />}
       {isSubValue && (
         <VariableSubValueActions
           index={index}

@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { StyleVariableCategory } from '@plitzi/sdk-shared';
 
-import VariableActions from './VariableActions';
+import VariableActions from '../VariableActions';
 import VariableDetails from './VariableDetails';
 import VariableValue from './VariableValue';
 import { StyleVariableForm } from '../../models';

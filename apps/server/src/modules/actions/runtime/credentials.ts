@@ -1,10 +1,9 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import type { ActionCredential } from '../types';
 
 /** Where a project's server — and `plitzi functions dev` — reads the credentials its space's code names. */
 export const CREDENTIALS_ENV = 'PLITZI_CREDENTIALS';
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 const EXAMPLE = '{"google":{"clientId":"…","clientSecret":"…"}}';
 

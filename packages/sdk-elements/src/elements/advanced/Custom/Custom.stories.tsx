@@ -10,9 +10,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 const meta = {
   title: 'Custom',
   component: Custom,
-  // parameters: {
-  //   layout: 'centered'
-  // }
   tags: ['autodocs'],
   argTypes: {},
   args: {}

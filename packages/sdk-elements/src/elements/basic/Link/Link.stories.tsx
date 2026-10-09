@@ -5,9 +5,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 const meta = {
   title: 'Link',
   component: Link,
-  // parameters: {
-  //   layout: 'centered'
-  // }
   tags: ['autodocs'],
   argTypes: {},
   args: {}

@@ -1,5 +1,6 @@
 import { memo, use, useCallback } from 'react';
 
+import { BLEND_MODES } from '../blendModes';
 import BoxShadow from './BoxShadow';
 import Filter from './Filters/Filter';
 import Transform from './Transform';
@@ -183,22 +184,11 @@ const Effects = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Effe
               onChange={handleChange('mix-blend-mode')}
               type="select"
             >
-              <option value="normal">Normal</option>
-              <option value="multiply">Multiply</option>
-              <option value="screen">Screen</option>
-              <option value="overlay">Overlay</option>
-              <option value="darken">Darken</option>
-              <option value="lighten">Lighten</option>
-              <option value="color-dodge">Color Dodge</option>
-              <option value="color-burn">Color Burn</option>
-              <option value="hard-light">Hard Light</option>
-              <option value="soft-light">Soft Light</option>
-              <option value="difference">Difference</option>
-              <option value="exclusion">Exclusion</option>
-              <option value="hue">Hue</option>
-              <option value="saturation">Saturation</option>
-              <option value="color">Color</option>
-              <option value="luminosity">Luminosity</option>
+              {BLEND_MODES.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </CategoryOption>
             <CategoryOption
               keys={['isolation']}

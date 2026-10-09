@@ -4,9 +4,9 @@ import { credentialsFromEnv } from './credentials';
 
 describe('credentialsFromEnv', () => {
   it('reads the credentials a project keeps in its environment, by id', () => {
-    expect(
-      credentialsFromEnv({ PLITZI_CREDENTIALS: '{"google":{"clientId":"id","clientSecret":"secret"}}' })
-    ).toEqual({ google: { clientId: 'id', clientSecret: 'secret' } });
+    expect(credentialsFromEnv({ PLITZI_CREDENTIALS: '{"google":{"clientId":"id","clientSecret":"secret"}}' })).toEqual({
+      google: { clientId: 'id', clientSecret: 'secret' }
+    });
     expect(credentialsFromEnv({})).toEqual({});
     expect(credentialsFromEnv({ PLITZI_CREDENTIALS: '  ' })).toEqual({});
   });

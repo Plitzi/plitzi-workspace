@@ -33,17 +33,20 @@ import ModalContainer from './structure/ModalContainer/Settings';
 import Pagination from './structure/Pagination/Settings';
 import TabContainer from './structure/TabContainer/Settings';
 import TabContainerBody from './structure/TabContainer/TabContainerBody/Settings';
-import TabContainerheader from './structure/TabContainer/TabContainerHeader/Settings';
+import TabContainerHeader from './structure/TabContainer/TabContainerHeader/Settings';
 import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings';
 
+import type { elementDeclarations } from './declarations';
 import type { FC } from 'react';
 
+// `plitziSdk` is declared where it renders — `apps/sdk`, since it runs a whole space — and only its settings live here.
+type ElementType = (typeof elementDeclarations)[keyof typeof elementDeclarations]['type'] | 'plitziSdk';
+
+// Keyed by the element's type, which is what the builder looks one up by: a key that is not one is a panel never shown.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const defaultElementsSettings: Record<string, FC<any>> = {
   dropdown: Dropdown,
   plitziSdk: PlitziSdk,
-  // notFound: NotFound,
-  // loading: Loading,
   custom: Custom,
   reference: Reference,
   blockHtml: BlockHtml,
@@ -57,7 +60,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   carouselTrack: CarouselTrack,
   tabContainer: TabContainer,
   tabContainerBody: TabContainerBody,
-  tabContainerheader: TabContainerheader,
+  tabContainerHeader: TabContainerHeader,
   tabContainerItem: TabContainerItem,
   heading: Heading,
   image: Image,
@@ -79,6 +82,7 @@ const defaultElementsSettings: Record<string, FC<any>> = {
   formControl: FormControl,
   apiContainer: ApiContainer,
   channel: Channel
-};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} satisfies Partial<Record<ElementType, FC<any>>>;
 
 export { defaultElementsSettings };

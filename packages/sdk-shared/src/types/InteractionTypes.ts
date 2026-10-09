@@ -53,39 +53,40 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
    * code runs: what a task otherwise checked by hand in its first lines.
    */
   required?: boolean;
-} & (
+} &
   /** Handed to a task as text, whatever was written or bound — a number as its digits — at most `maxLength` long. */
-  | { type: 'text'; defaultValue?: string | number; maxLength?: number }
-  /** Written as text — a number or a template — and handed to the callback as a number, within `min` and `max`. */
-  | { type: 'number'; defaultValue?: number; min?: number; max?: number }
-  | { type: 'textarea'; defaultValue?: string | number; maxLength?: number }
-  | { type: 'codemirror-text'; defaultValue?: string }
-  | { type: 'codemirror-json'; defaultValue?: string }
-  | { type: 'boolean'; defaultValue?: boolean }
-  | {
-      /**
-       * Several elements of the space, stored as their ids. The editor offers the elements of `elementType` to pick
-       * from — it is the one that knows the page — so a step never asks for ids typed by hand.
-       */
-      type: 'elements';
-      defaultValue?: string[];
-      elementType?: string;
-    }
-  | {
-      type: 'select';
-      defaultValue?: string;
-      options:
-        | { label: string; value: string }[]
-        | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
-    }
-  | {
-      type: (params: InteractionCallbackParamValues<T>) => InteractionParamType;
-      defaultValue?: string | number | boolean | string[];
-      options?:
-        | { label: string; value: string }[]
-        | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
-    }
-);
+  (
+    | { type: 'text'; defaultValue?: string | number; maxLength?: number }
+    /** Written as text — a number or a template — and handed to the callback as a number, within `min` and `max`. */
+    | { type: 'number'; defaultValue?: number; min?: number; max?: number }
+    | { type: 'textarea'; defaultValue?: string | number; maxLength?: number }
+    | { type: 'codemirror-text'; defaultValue?: string }
+    | { type: 'codemirror-json'; defaultValue?: string }
+    | { type: 'boolean'; defaultValue?: boolean }
+    | {
+        /**
+         * Several elements of the space, stored as their ids. The editor offers the elements of `elementType` to pick
+         * from — it is the one that knows the page — so a step never asks for ids typed by hand.
+         */
+        type: 'elements';
+        defaultValue?: string[];
+        elementType?: string;
+      }
+    | {
+        type: 'select';
+        defaultValue?: string;
+        options:
+          | { label: string; value: string }[]
+          | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
+      }
+    | {
+        type: (params: InteractionCallbackParamValues<T>) => InteractionParamType;
+        defaultValue?: string | number | boolean | string[];
+        options?:
+          | { label: string; value: string }[]
+          | ((params: InteractionCallbackParamValues<T>) => { label: string; value: string }[]);
+      }
+  );
 
 /**
  * What a field a step or a trigger hands its flow looks like — a sample, shown where a flow is written, never sent: `0`

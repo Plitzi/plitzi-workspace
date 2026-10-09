@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 import { findTriggerNode } from '../runtime/triggers';
 
 import type { ActionLookups } from '../types';
@@ -36,9 +38,6 @@ export type LaterDeps = {
 };
 
 export type LaterScope = { spaceId: number; environment: Environment; at?: SpaceRevision };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
  * Runs of a space's actions that start in a while — a turn that runs out, a bot's move, a hold that lapses — held by the

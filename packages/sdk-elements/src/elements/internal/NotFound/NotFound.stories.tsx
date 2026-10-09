@@ -5,9 +5,6 @@ import type { Meta, StoryObj } from '@storybook/react';
 const meta = {
   title: 'NotFound',
   component: NotFound,
-  // parameters: {
-  //   layout: 'centered'
-  // }
   tags: ['autodocs'],
   argTypes: {},
   args: {}

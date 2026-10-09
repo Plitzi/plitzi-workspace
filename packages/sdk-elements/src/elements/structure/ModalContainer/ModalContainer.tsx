@@ -9,7 +9,7 @@ import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import declaration from './declaration';
-import { metadataFromText } from './metadataFromText';
+import { metadataOf } from './metadataOf';
 import useModalDialog from './useModalDialog';
 import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
@@ -54,18 +54,8 @@ const ModalContainer = ({
   const titleId = `${rootId}_${id}_title`;
 
   const handleOpenModal = useCallback(
-    (params: InteractionCallbackParamValues<{ metadata?: Record<string, unknown> }>) => {
-      const { metadata } = params;
-      if (metadata && typeof metadata === 'object') {
-        setInternalMetadata(metadata);
-      } else if (typeof metadata === 'string') {
-        setInternalMetadata(metadataFromText(metadata));
-      } else if (typeof metadata === 'boolean' || typeof metadata === 'number') {
-        setInternalMetadata({ content: metadata });
-      } else {
-        setInternalMetadata({});
-      }
-
+    (params: InteractionCallbackParamValues) => {
+      setInternalMetadata(metadataOf(params.metadata));
       setElementState(state => ({ ...state, visibility: true }));
     },
     [setElementState, setInternalMetadata]

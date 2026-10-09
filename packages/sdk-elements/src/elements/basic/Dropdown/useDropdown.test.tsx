@@ -211,21 +211,6 @@ describe('useDropdown hook', () => {
     expect(floatingPos.top).toBeLessThanOrEqual(vh - popupRect.height);
   });
 
-  // it('should handle SSR safety with undefined window', () => {
-  //   const originalWindow = global.window;
-  //   // @ts-ignore
-  //   delete global.window;
-
-  //   const triggerRect = createRect({ top: 10, left: 10, bottom: 60, right: 60, width: 50, height: 50 });
-  //   mockGetBoundingClientRect(triggerRef.current, triggerRect);
-
-  //   const { result } = renderHook(() => useDropdown({ ref: triggerRef, open: true }));
-
-  //   expect(result.current[5]).toBeUndefined();
-
-  //   global.window = originalWindow;
-  // });
-
   /** A menu of controls stays open while they are used: the popup's own clicks bubble to the trigger, and are not its. */
   it('ignores, at the trigger, a click that happened inside the popup', () => {
     const control = document.createElement('button');

@@ -265,29 +265,32 @@ class SourceWriter {
     return this.files;
   }
 
+  /** Every `class` the space writes — an element's, a slot's, a page's or a layout's — as it is written: a name or a list. */
+  private forEachClassValue(visit: (value: unknown) => void): void {
+    const walk = (element: ElementSpec): void => {
+      visit(element.class);
+      Object.values(element.slots ?? {}).forEach(visit);
+      element.children?.forEach(walk);
+    };
+
+    for (const root of [...(this.spec.layouts ?? []), ...this.spec.pages]) {
+      visit(root.class);
+      root.body.forEach(walk);
+    }
+
+    (this.spec.components ?? []).forEach(component => walk(component.root));
+  }
+
   /** The classes an element, a slot, a page or a layout names — the ones worth a variable. */
   private namedClasses(): Set<string> {
     const named = new Set<string>();
-    const add = (value: unknown): void => {
+    this.forEachClassValue(value => {
       for (const name of Array.isArray(value) ? value : [value]) {
         if (typeof name === 'string') {
           named.add(name);
         }
       }
-    };
-
-    const walk = (element: ElementSpec): void => {
-      add(element.class);
-      Object.values(element.slots ?? {}).forEach(add);
-      element.children?.forEach(walk);
-    };
-
-    for (const root of [...(this.spec.layouts ?? []), ...this.spec.pages]) {
-      add(root.class);
-      root.body.forEach(walk);
-    }
-
-    (this.spec.components ?? []).forEach(component => walk(component.root));
+    });
 
     return new Set(Object.keys(this.spec.classes ?? {}).filter(name => named.has(name)));
   }
@@ -316,7 +319,7 @@ class SourceWriter {
   /** Every class that shares a selector with another — `class: ['panel-card', 'quota-panel']`. */
   private stackedClasses(): Set<string> {
     const stacked = new Set<string>();
-    const add = (value: unknown): void => {
+    this.forEachClassValue(value => {
       if (Array.isArray(value)) {
         value.forEach(name => {
           if (typeof name === 'string') {
@@ -324,20 +327,7 @@ class SourceWriter {
           }
         });
       }
-    };
-
-    const walk = (element: ElementSpec): void => {
-      add(element.class);
-      Object.values(element.slots ?? {}).forEach(add);
-      element.children?.forEach(walk);
-    };
-
-    for (const root of [...(this.spec.layouts ?? []), ...this.spec.pages]) {
-      add(root.class);
-      root.body.forEach(walk);
-    }
-
-    (this.spec.components ?? []).forEach(component => walk(component.root));
+    });
 
     return stacked;
   }

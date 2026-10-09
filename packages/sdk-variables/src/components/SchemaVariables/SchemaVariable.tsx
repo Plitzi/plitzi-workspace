@@ -1,7 +1,7 @@
 import { omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useState } from 'react';
 
-import VariableActions from './VariableActions';
+import VariableActions from '../VariableActions';
 import VariableDetails from './VariableDetails';
 import VariableValue from './VariableValue';
 import SchemaVariableForm from '../../models/SchemaVariableForm';

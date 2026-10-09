@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { canonicalCondition } from '@plitzi/sdk-shared/style/styleConditions';
 import { isStylePseudo } from '@plitzi/sdk-shared/style/stylePseudos';
 
@@ -15,9 +14,10 @@ import type {
   StyleVariants
 } from '@plitzi/sdk-shared';
 
-const isPrimitive = (v: any) => typeof v === 'string' || typeof v === 'number' || typeof v === 'undefined';
+const isPrimitive = (v: unknown): boolean => typeof v === 'string' || typeof v === 'number' || typeof v === 'undefined';
 
-const isPlainObject = (v: any) => v !== null && typeof v === 'object' && !Array.isArray(v);
+// Not a type guard: every caller already holds the style type it checks, and narrowing it to a record would lose it.
+const isPlainObject = (v: unknown): boolean => isRecord(v);
 
 // ===== validators =====
 
@@ -136,7 +136,6 @@ const isValidValue = (
   }
 
   if (!path && !styleSelector && styleVariant) {
-    // hey
     return isStyleVariants(value as StyleVariants);
   }
 

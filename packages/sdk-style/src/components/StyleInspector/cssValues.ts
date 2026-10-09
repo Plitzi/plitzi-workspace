@@ -9,57 +9,27 @@ import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
  * inside a function (`rgba(0, 0, 0, .5)`, `cubic-bezier(.4, 0, .2, 1)`) is not a separator.
  */
 
-export const splitByCommaOutsideParens = (value: string): string[] => {
+const splitOutsideParens = (value: string, separator: string, keepEmpty: boolean): string[] => {
   const result: string[] = [];
   let current = '';
   let depth = 0;
 
-  for (let i = 0; i < value.length; i++) {
-    const char = value[i];
-
-    if (char === '(') {
-      depth++;
-      current += char;
-    } else if (char === ')') {
-      depth--;
-      current += char;
-    } else if (char === ',' && depth === 0) {
-      result.push(current);
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-
-  if (current) {
-    result.push(current);
-  }
-
-  return result;
-};
-
-export const splitBySpaceOutsideParens = (value: string): string[] => {
-  const result: string[] = [];
-  let current = '';
-  let depth = 0;
-
-  for (let i = 0; i < value.length; i++) {
-    const char = value[i];
-
-    if (char === '(') {
-      depth++;
-      current += char;
-    } else if (char === ')') {
-      depth--;
-      current += char;
-    } else if (char === ' ' && depth === 0) {
-      if (current) {
+  for (const char of value) {
+    if (char === separator && depth === 0) {
+      if (keepEmpty || current) {
         result.push(current);
       }
       current = '';
-    } else {
-      current += char;
+      continue;
     }
+
+    if (char === '(') {
+      depth++;
+    } else if (char === ')') {
+      depth--;
+    }
+
+    current += char;
   }
 
   if (current) {
@@ -68,6 +38,12 @@ export const splitBySpaceOutsideParens = (value: string): string[] => {
 
   return result;
 };
+
+/** `a,,b` keeps the empty middle: a list written with a gap in it is read with the gap. */
+export const splitByCommaOutsideParens = (value: string): string[] => splitOutsideParens(value, ',', true);
+
+/** Runs of spaces are one separator. */
+export const splitBySpaceOutsideParens = (value: string): string[] => splitOutsideParens(value, ' ', false);
 
 /**
  * A value with its tokens (`var(--accent)`, `{{ accent }}`) replaced by what the space's variables say they are — for

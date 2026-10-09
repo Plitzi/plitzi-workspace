@@ -176,6 +176,23 @@ const reportRefusal = (status: number, payload: ActionResponse, url: string) => 
   }
 };
 
+/** A refused run as the run list records it: the server's own reason, error and steps, when it sent them. */
+const refusedRun = (payload: ActionResponse): Parameters<typeof updateActionRun>[1] => ({
+  status: 'failed',
+  ...(payload.runId ? { runId: payload.runId } : {}),
+  ...(payload.reason ? { reason: payload.reason } : {}),
+  ...(payload.error ? { error: payload.error } : {}),
+  ...(payload.steps ? { steps: payload.steps } : {})
+});
+
+/** A refused run as `onFlowError` hands it to the element that launched it. */
+const refusalOf = (actionId: string, payload: ActionResponse) => ({
+  actionId,
+  runId: payload.runId ?? '',
+  error: payload.error ?? '',
+  reason: payload.reason ?? 'failed'
+});
+
 /**
  * Running a server action from a client flow.
  *
@@ -325,19 +342,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             const payload = (await response.json().catch(() => ({}))) as ActionResponse;
             if (!response.ok) {
               reportRefusal(response.status, payload, endpoint);
-              settle({
-                status: 'failed',
-                ...(payload.runId ? { runId: payload.runId } : {}),
-                ...(payload.reason ? { reason: payload.reason } : {}),
-                ...(payload.error ? { error: payload.error } : {}),
-                ...(payload.steps ? { steps: payload.steps } : {})
-              });
-              reportFlow(context?.hostElementId, 'onFlowError', {
-                actionId,
-                runId: payload.runId ?? '',
-                error: payload.error ?? '',
-                reason: payload.reason ?? 'failed'
-              });
+              settle(refusedRun(payload));
+              reportFlow(context?.hostElementId, 'onFlowError', refusalOf(actionId, payload));
 
               return;
             }
@@ -415,19 +421,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         if (!response.ok || !response.body) {
           const payload = (await response.json().catch(() => ({}))) as ActionResponse;
           reportRefusal(response.status, payload, endpoint);
-          settle({
-            status: 'failed',
-            ...(payload.runId ? { runId: payload.runId } : {}),
-            ...(payload.reason ? { reason: payload.reason } : {}),
-            ...(payload.error ? { error: payload.error } : {}),
-            ...(payload.steps ? { steps: payload.steps } : {})
-          });
-          reportFlow(context?.hostElementId, 'onFlowError', {
-            actionId,
-            runId: payload.runId ?? '',
-            error: payload.error ?? '',
-            reason: payload.reason ?? 'failed'
-          });
+          settle(refusedRun(payload));
+          reportFlow(context?.hostElementId, 'onFlowError', refusalOf(actionId, payload));
 
           return {
             status: 'failed',
@@ -536,13 +531,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
       const payload = (await response.json().catch(() => ({}))) as ActionResponse;
       if (!response.ok) {
         reportRefusal(response.status, payload, endpoint);
-        settle({
-          status: 'failed',
-          ...(payload.runId ? { runId: payload.runId } : {}),
-          ...(payload.reason ? { reason: payload.reason } : {}),
-          ...(payload.error ? { error: payload.error } : {}),
-          ...(payload.steps ? { steps: payload.steps } : {})
-        });
+        settle(refusedRun(payload));
         // The reason is the server's own vocabulary — `duplicate`, `over_capacity`, `recursion` — and naming it is
         // what lets an author tell "my flow is wrong" from "I clicked twice".
         pConsole.warning(

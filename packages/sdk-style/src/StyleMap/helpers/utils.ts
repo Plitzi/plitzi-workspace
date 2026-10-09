@@ -2,6 +2,7 @@
 
 import { omit } from '@plitzi/plitzi-ui/helpers';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { isStyleRules, setAtKeys, styleTargetKeys, valueAtKeys } from '@plitzi/sdk-shared/style/styleTarget';
 
 import { isStyleObject } from './isValueValid';
@@ -43,9 +44,6 @@ const parseValue = (
 
 const isEmptyObject = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length === 0;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 // The keys of a part a target names on its way down (`['variants', 'primary']`), after its ancestor or condition
 const partsOf = (keys: string[]): [string, string][] => {

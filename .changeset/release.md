@@ -45,8 +45,8 @@
   of is offered the declaration instead — suggestion `plugin-custom-host`. `custom` stays for a component registered
   by name with no declaration. The skills, the CLI README, the MCP guide, `docs/en` and the website say the same.
 - **`definePlugin`** (`@plitzi/sdk-authoring/plugin`, a new entry of 3 KB with nothing else in it): a plugin's
-  declaration written from what only it can say — `definePlugin<SeatPickerAttributes>()({ type, label, description,
-  attributes, triggers: { onPick: { preview: { seat: '' } } }, callbacks: { reset: {} } })` — and every other field
+  declaration written from what only it can say —
+  `definePlugin<SeatPickerAttributes>()({ type, label, attributes, triggers, callbacks })` — and every other field
   at the default all plugins share (the builder's gestures, the catalogue entry, each attribute bindable, an empty
   style). It answers the whole declaration, branded with its attributes, so `defineElement(declaration)` is typed
   without a generic. `plitzi plugin add` and `create --plugin` write declarations with it (about a third of the lines).
@@ -81,3 +81,9 @@
   holding the SDK's grey — the same by default, and the space's palette inside a card that is a link. The template
   every space starts from writes its colours once, on the page.
 
+## Fixes
+
+- **A dialog opened with an id** (`@plitzi/sdk-elements`): `openDialog('dialog', '{{ row.id }}')` reads the id as its
+  `content`, as `openModal` already did — a numeric id parsed as the number and the dialog's bindings read nothing.
+- **A tab header's settings** (`@plitzi/plitzi-builder`, `@plitzi/sdk-elements`): the builder found no settings for
+  `tabContainerHeader`, registered under a misspelt type; the registry now accepts only element types.

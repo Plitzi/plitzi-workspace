@@ -13,6 +13,7 @@ import pathFields from '../../../dataSource/pathFields';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
+import { metadataOf } from '../ModalContainer/metadataOf';
 import useModalDialog from '../ModalContainer/useModalDialog';
 
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
@@ -59,25 +60,9 @@ const DialogContainer = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = `${rootId}_${id}_title`;
 
-  // Dialog methods
-
-  const handleOpeDialog = useCallback(
+  const handleOpenDialog = useCallback(
     (params: InteractionCallbackParamValues) => {
-      const { metadata } = params;
-      if (metadata && typeof metadata === 'object') {
-        setInternalMetadata(metadata as Record<string, unknown>);
-      } else if (typeof metadata === 'string') {
-        try {
-          setInternalMetadata(JSON.parse(metadata) as Record<string, unknown>);
-        } catch {
-          setInternalMetadata({ content: metadata });
-        }
-      } else if (typeof metadata === 'boolean' || typeof metadata === 'number') {
-        setInternalMetadata({ content: metadata });
-      } else {
-        setInternalMetadata({});
-      }
-
+      setInternalMetadata(metadataOf(params.metadata));
       setElementState(state => ({ ...state, visibility: true }));
     },
     [setElementState, setInternalMetadata]
@@ -99,8 +84,6 @@ const DialogContainer = ({
     setElementState(state => ({ ...state, visibility: false }));
   }, [interactionsManager, autoHideAfterClick, setElementState, setInternalMetadata, internalMetadata, id]);
 
-  // Dialog Methods
-
   const handleClickAccept = useCallback(async () => {
     setProcessing(true);
     await interactionsManager.interactionTrigger(id, 'onDialogAccept', { metadata: internalMetadata });
@@ -117,10 +100,10 @@ const DialogContainer = ({
 
   const interactionCallbacks = useMemo<Record<string, InteractionCallback>>(() => {
     return {
-      openDialog: { ...declaration.callbacks.openDialog, title: `Open ${label}`, callback: handleOpeDialog },
+      openDialog: { ...declaration.callbacks.openDialog, title: `Open ${label}`, callback: handleOpenDialog },
       closeDialog: { ...declaration.callbacks.closeDialog, title: `Close ${label}`, callback: handleClickClose }
     };
-  }, [handleClickClose, handleOpeDialog, label]);
+  }, [handleClickClose, handleOpenDialog, label]);
 
   // Escape answers as the close button does: the dialog is turned down, not accepted.
   useModalDialog({ panelRef, open: Boolean(previewMode) && visible, onClose: () => void handleClickCancel() });

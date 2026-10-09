@@ -1,10 +1,9 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+
 /**
  * Following a binding's path into a value — a provider's answer, a sample of it — the one way the linter (against a
  * sample of the answer) and a page check (against the answer itself) both do it, so the two say the same thing.
  */
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /** A path as its steps: `apiContainer_site.data.rows[2].title` is `apiContainer_site`, `data`, `rows`, `2`, `title`. */
 export const pathSteps = (path: string): string[] => path.split(/[.[\]]/).filter(step => step !== '');

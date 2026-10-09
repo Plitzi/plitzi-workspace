@@ -42,14 +42,9 @@ const DisplayOrder = ({ value, onChange }: DisplayOrderProps) => {
         active: value === '1',
         size: 'custom' as const
       }
-      // { type: 'input', value, extraValue: { type: ORDER } }
     ],
     [value]
   );
-
-  // return (
-  //   <GroupButtons classNameContainer="w-[180px]" items={items} label="Order" keyValue={ORDER} onChange={handleChange} />
-  // );
 
   return (
     <CategorySection label="Align" keys={keyValues}>

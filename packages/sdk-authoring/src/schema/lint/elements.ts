@@ -6,7 +6,7 @@ import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twi
 import { isCssProperty, isCustomProperty } from '../../style';
 import { BINDING_CATEGORIES, LOAD_STRATEGIES, RUNTIMES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
-import { textOf } from './context';
+import { stringsIn, textOf } from './context';
 import { checkGlobalRead } from './globalReads';
 import { checkPageTarget } from './pages';
 import { checkFocusOnFieldBox, checkHeadingLevels, checkSlots } from './slots';
@@ -25,18 +25,6 @@ const PROSE_TYPES = new Set(['markdown', 'richText', 'blockHtml', 'blockJsx', 'n
 const SETTLED_SOURCES = new Set(['state', 'navigation', 'variables', 'theme', 'computed']);
 
 const shorten = (value: string): string => (value.length > 80 ? `${value.slice(0, 77)}…` : value);
-
-const stringsIn = (value: unknown): string[] => {
-  if (typeof value === 'string') {
-    return [value];
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(stringsIn);
-  }
-
-  return typeof value === 'object' && value !== null ? Object.values(value).flatMap(stringsIn) : [];
-};
 
 const bindingsOf = (element: Element): { category: string; binding: ElementBinding }[] =>
   Object.entries(element.definition.bindings ?? {}).flatMap(([category, list]) =>

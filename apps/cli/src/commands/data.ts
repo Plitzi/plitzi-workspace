@@ -27,9 +27,6 @@ type Shape = { primitives: Set<string>; object?: ObjectShape; array?: ArrayShape
 
 const emptyShape = (): Shape => ({ primitives: new Set() });
 
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 const merge = (shape: Shape, value: unknown): void => {
   if (value === null) {
     shape.primitives.add('null');
@@ -50,8 +47,8 @@ const merge = (shape: Shape, value: unknown): void => {
 
   // Keyed by data — no key is a name a program would give a field (`the-quiet-death`, `1042`) — it is a map: every
   // value merged into one shape, as a list's items are, so five hundred articles read as one.
-  const keys = isPlainObject(value) ? Object.keys(value) : [];
-  if (isPlainObject(value) && keys.length >= 2 && keys.every(key => !KEY.test(key))) {
+  const keys = isRecord(value) ? Object.keys(value) : [];
+  if (isRecord(value) && keys.length >= 2 && keys.every(key => !KEY.test(key))) {
     shape.map ??= { keys: [], value: emptyShape() };
     shape.map.keys.push(...keys);
     for (const field of Object.values(value)) {
@@ -61,7 +58,7 @@ const merge = (shape: Shape, value: unknown): void => {
     return;
   }
 
-  if (isPlainObject(value)) {
+  if (isRecord(value)) {
     shape.object ??= { count: 0, fields: new Map() };
     shape.object.count += 1;
     for (const [key, field] of Object.entries(value)) {
@@ -142,7 +139,7 @@ const rowsOf = (value: unknown): { path: string; rows: unknown[] } | undefined =
   const candidates: { path: string; rows: unknown[] }[] = [];
   const visit = (node: unknown, at: string): void => {
     if (Array.isArray(node)) {
-      if (node.some(isPlainObject)) {
+      if (node.some(isRecord)) {
         candidates.push({ path: at, rows: node });
       }
 
@@ -151,7 +148,7 @@ const rowsOf = (value: unknown): { path: string; rows: unknown[] } | undefined =
       return;
     }
 
-    if (isPlainObject(node)) {
+    if (isRecord(node)) {
       for (const [key, field] of Object.entries(node)) {
         visit(field, at ? `${at}.${key}` : key);
       }
@@ -175,7 +172,7 @@ const shorten = (value: unknown): unknown => {
       : value.map(shorten);
   }
 
-  if (isPlainObject(value)) {
+  if (isRecord(value)) {
     return Object.fromEntries(Object.entries(value).map(([key, field]) => [key, shorten(field)]));
   }
 
@@ -193,7 +190,7 @@ export const describeData = (value: unknown): DataDescription => {
   const shape = emptyShape();
   merge(shape, value);
   const rows = rowsOf(value);
-  const first = rows?.rows.find(isPlainObject);
+  const first = rows?.rows.find(isRecord);
 
   return {
     shape: render(shape, 0),

@@ -12,8 +12,6 @@ import MetricInput from '@plitzi/plitzi-ui/MetricInput';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 
-// import InspectorButton from '@pmodules/Style/components/InspectorButton';
-
 const iconsMap = {
   'margin-top': <MarginTop />,
   'margin-bottom': <MarginBottom />,

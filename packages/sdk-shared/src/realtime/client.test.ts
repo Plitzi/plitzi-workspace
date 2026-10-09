@@ -382,7 +382,10 @@ describe('trackPresence', () => {
     const server = fakeServer();
     const client = createRealtimeClient('/_realtime', { fetchImpl: server.fetchImpl });
     const heard: RealtimeMessage[] = [];
-    const tracker = trackPresence(client, 'board:1', { onChange: () => undefined, onMessage: entry => heard.push(entry) });
+    const tracker = trackPresence(client, 'board:1', {
+      onChange: () => undefined,
+      onMessage: entry => heard.push(entry)
+    });
     stops.push(tracker.stop);
     await wait();
     server.streams[0].push('ready', { connection: 'me', token: 'secret', topics: ['board:1'], refused: [] });
