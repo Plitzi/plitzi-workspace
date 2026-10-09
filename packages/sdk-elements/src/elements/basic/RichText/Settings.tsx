@@ -1,6 +1,7 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback } from 'react';
+
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 type SettingsProps = {
   format?: 'html' | 'markdown' | 'text';
@@ -9,11 +10,11 @@ type SettingsProps = {
 };
 
 const Settings = ({ format = 'html', mediaBaseUrl = '', onUpdate }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   return (
     <div className="flex grow flex-col gap-4 py-2">
-      <Select value={format} label="Content Format" onChange={handleChange('format')} size="xs">
+      <Select value={format} label="Content Format" onChange={update.text('format')} size="xs">
         <option value="html">HTML</option>
         <option value="markdown">Markdown</option>
         <option value="text">Plain text</option>
@@ -23,7 +24,7 @@ const Settings = ({ format = 'html', mediaBaseUrl = '', onUpdate }: SettingsProp
         label="Media Base URL"
         placeholder="https://cms.example.com"
         title="Prefix for relative image and link paths inside the body."
-        onChange={handleChange('mediaBaseUrl')}
+        onChange={update.text('mediaBaseUrl')}
         size="xs"
       />
       <span className="text-xs text-gray-500">

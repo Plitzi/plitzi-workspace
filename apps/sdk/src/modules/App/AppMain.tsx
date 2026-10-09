@@ -21,6 +21,7 @@ import devtoolsCssUrl from '../../assets/plitzi-sdk-devtools.scss?url';
 import styleUrl from '../../assets/plitzi-sdk.scss?url';
 
 import type { StoreApi } from '@plitzi/nexus';
+import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type { HostActions } from '@plitzi/sdk-shared';
 import type {
   AnalyticsConfig,
@@ -28,7 +29,6 @@ import type {
   Server,
   RenderMode,
   RuntimeStateInstance,
-  EventBridgeContextValue,
   OfflineDataRaw,
   SdkState
 } from '@plitzi/sdk-shared';

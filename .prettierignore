@@ -1,4 +1,7 @@
-# Prose written and wrapped by hand: the docs and the agent skills. Their tables are laid out for reading in a plain
-# editor, and a formatter run over one file re-aligns every table in it — someone else's sections included.
+# Prose written and wrapped by hand: the docs, the READMEs and the agent skills. Their tables are laid out for reading in
+# a plain editor, and a formatter run over one file re-aligns every table in it — someone else's sections included.
 docs/**/*.md
+apps/*/README.md
+packages/*/README.md
+apps/*/skills/**/*.md
 packages/*/skills/**/*.md

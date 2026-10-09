@@ -1,4 +1,4 @@
-import { memo, useCallback, use } from 'react';
+import { memo, useCallback } from 'react';
 
 import SizeContainer from './SizeContainer';
 import SizeFit from './SizeFit';
@@ -10,9 +10,9 @@ import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
-import StyleInspectorContext from '../../StyleInspectorContext';
+import usePropertyChange from '../../hooks/usePropertyChange';
 
-import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleCategory } from '@plitzi/sdk-shared';
 
 const keyValueSize = ['width', 'height'] as StyleCategory[];
 const keyValueSizeMin = ['min-width', 'min-height'] as StyleCategory[];
@@ -25,7 +25,6 @@ export type SizeProps = {
 };
 
 const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizeProps) => {
-  const { setValue } = use(StyleInspectorContext);
   const {
     width,
     height,
@@ -44,11 +43,7 @@ const Size = ({ replaceTokens = false, isCollapsed = true, onCollapse }: SizePro
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('size', isCollapsed), [onCollapse]);
 
-  const handleChange = useCallback(
-    (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      setValue(type, value as StyleValue),
-    [setValue]
-  );
+  const handleChange = usePropertyChange();
 
   return (
     <CategoryContainer

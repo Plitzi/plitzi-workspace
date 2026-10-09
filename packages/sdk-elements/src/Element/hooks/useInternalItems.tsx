@@ -213,7 +213,6 @@ const useInternalItems = ({
     }
 
     return itemsParsed.length === 1 ? itemsParsed[0] : itemsParsed;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hasItems,
     mountItems,
@@ -228,7 +227,6 @@ const useInternalItems = ({
     layoutKeyIdentifier,
     components,
     plugins,
-    id, // due that this is memoised, we need to verify the id as well
     isSlot,
     layoutBody
   ]);

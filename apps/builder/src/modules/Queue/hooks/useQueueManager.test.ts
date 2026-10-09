@@ -22,6 +22,7 @@ const prevState = { flat: { home: page }, pages: ['home'] } as unknown as Schema
 const edit = () => {
   const dispatch = vi.fn();
   const item = {
+    kind: 'schema' as const,
     action: { type: SchemaActions.SCHEMA_UPDATE_PAGE, page: { ...page, attributes: { name: 'Renamed' } } },
     prevState,
     state: prevState,

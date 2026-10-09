@@ -429,8 +429,8 @@ const ApiContainer = ({
       // do and a lie if nobody can say it: this is how a page tells its visitor the numbers are from before.
       isStale: serverMode && rscStale
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, slice.records, slice.record, records, isLoading, isLoadingMore, singleRecord, hasError, serverMode, rscStale]
+    // `slice` is `data`, read as a provider's answer: the same object, so it changes when the answer does.
+    [data, slice, records, isLoading, isLoadingMore, singleRecord, hasError, serverMode, rscStale]
   );
 
   const sourceFields = useCallback(() => pathFields(publishedData), [publishedData]);

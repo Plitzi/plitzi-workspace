@@ -1,6 +1,7 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback } from 'react';
+
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 import type { Environment } from '@plitzi/sdk-shared';
 
@@ -11,12 +12,12 @@ type SettingsProps = {
 };
 
 const Settings = ({ spaceKey = '', environment = 'main', onUpdate }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input value={spaceKey} label="Space Key" onChange={handleChange('spaceKey')} />
-      <Select value={environment} label="Environment" onChange={handleChange('environment')}>
+      <Input value={spaceKey} label="Space Key" onChange={update.text('spaceKey')} />
+      <Select value={environment} label="Environment" onChange={update.text('environment')}>
         <option value="main">Main</option>
         <option value="development">Development</option>
         <option value="staging">Staging</option>

@@ -20,8 +20,6 @@ import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
 import type {
   DropPosition,
   Element,
@@ -53,14 +51,14 @@ const SchemaContextProvider = ({
     () => ({ ...EMPTY_SCHEMA.schema, ...(schemaProp ? schemaProp : internalData.schema) }),
     [schemaProp, internalData.schema]
   );
-  const { enqueueMiddleware } = use(QueueContext);
-  const { undoableMiddleware } = use(UndoableContext);
+  const { enqueueSchema } = use(QueueContext);
+  const { undoableSchema } = use(UndoableContext);
   // The history middleware is deliberately unfiltered: it has to SEE another session's edit to know its snapshots
   // are stale (it drops them). The queue must not, or it would send the server back the change it just received.
   const [schema, dispatchSchema] = useReducerWithMiddleware(SchemaReducer, schemaPropMemo, [
-    { middleware: undoableMiddleware as ReducerMiddlewareCallback<Schema, [action: SchemaReducerActions]> },
+    { middleware: undoableSchema },
     {
-      middleware: enqueueMiddleware as ReducerMiddlewareCallback<Schema, [action: SchemaReducerActions]>,
+      middleware: enqueueSchema,
       filterCallback: isUserEdit
     }
   ]);

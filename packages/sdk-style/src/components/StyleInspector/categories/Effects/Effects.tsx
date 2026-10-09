@@ -1,4 +1,4 @@
-import { memo, use, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 
 import { BLEND_MODES } from '../blendModes';
 import BoxShadow from './BoxShadow';
@@ -11,9 +11,7 @@ import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
-import StyleInspectorContext from '../../StyleInspectorContext';
-
-import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import usePropertyChange from '../../hooks/usePropertyChange';
 
 export type EffectsProps = {
   replaceTokens?: boolean;
@@ -22,7 +20,6 @@ export type EffectsProps = {
 };
 
 const Effects = ({ replaceTokens = false, isCollapsed = true, onCollapse }: EffectsProps) => {
-  const { setValue } = use(StyleInspectorContext);
   const {
     opacity,
     visibility,
@@ -63,11 +60,7 @@ const Effects = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Effe
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('effects', isCollapsed), [onCollapse]);
 
-  const handleChange = useCallback(
-    (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      setValue(type, value as StyleValue),
-    [setValue]
-  );
+  const handleChange = usePropertyChange();
 
   return (
     <CategoryContainer

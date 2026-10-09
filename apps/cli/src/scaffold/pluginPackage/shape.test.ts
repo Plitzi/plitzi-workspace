@@ -1,9 +1,14 @@
 /* eslint-disable quotes -- the generated code quotes its own strings, and reads best in the other quotes */
+import { format } from 'prettier';
 import { describe, expect, it } from 'vitest';
 
 import { pluginNames } from './names';
 import { shapeFromFlags } from './shape';
 import { elementFiles } from './source';
+import { qualityFilesFor } from '../quality';
+
+/** The Prettier a new project is formatted with. */
+const PRETTIER = JSON.parse(qualityFilesFor('browser', [])['.prettierrc']) as Record<string, unknown>;
 
 const ticker = () => {
   const { shape } = shapeFromFlags({
@@ -104,8 +109,14 @@ describe('a shaped element', () => {
   it('gives the builder a control per attribute, by its type', () => {
     const settings = ticker()['Settings.tsx'];
 
-    expect(settings).toContain('type="number" value={interval}');
+    expect(settings).toContain("onChange={event => onUpdate?.('interval', Number(event.target.value))}");
     expect(settings).toContain('type="checkbox" checked={paused}');
     expect(settings).toContain("onUpdate?.('label', event.target.value)");
+  });
+
+  it('writes the panel as Prettier would, a control too long for one line one attribute per line', async () => {
+    const settings = ticker()['Settings.tsx'];
+
+    expect(await format(settings, { ...PRETTIER, filepath: 'Settings.tsx' })).toBe(settings);
   });
 });

@@ -1,16 +1,14 @@
-import { omit } from '@plitzi/plitzi-ui/helpers';
-
-import type { UndoableItem } from './UndoableContext';
+import type { UndoableChange } from './UndoableContext';
 
 export type UndoableReducerActions =
-  | ({ type: 'undoableAddUndo' } & UndoableItem)
-  | { type: 'undoableUndo'; past: UndoableItem[]; future: UndoableItem[] }
-  | { type: 'undoableRedo'; past: UndoableItem[]; future: UndoableItem[] }
+  | { type: 'undoableAddUndo'; change: UndoableChange }
+  | { type: 'undoableUndo'; past: UndoableChange[]; future: UndoableChange[] }
+  | { type: 'undoableRedo'; past: UndoableChange[]; future: UndoableChange[] }
   | { type: 'undoableClearHistory' };
 
 export type UndoableState = {
-  past: UndoableItem[];
-  future: UndoableItem[];
+  past: UndoableChange[];
+  future: UndoableChange[];
   canUndo: boolean;
   canRedo: boolean;
 };
@@ -25,7 +23,7 @@ export const initialState: UndoableState = {
 const UndoableReducer = (state: UndoableState = initialState, action: UndoableReducerActions): UndoableState => {
   switch (action.type) {
     case 'undoableAddUndo': {
-      const present = omit(action, ['type']);
+      const present = action.change;
       const newPast = [...state.past, present];
 
       return {

@@ -1,5 +1,6 @@
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback } from 'react';
+
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 import type { JSX } from 'react';
 
@@ -9,11 +10,11 @@ type SettingsProps = {
 };
 
 const Settings = ({ subType = 'span', onUpdate }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Select label="Node Tag" value={subType} onChange={handleChange('subType')}>
+      <Select label="Node Tag" value={subType} onChange={update.text('subType')}>
         <option value="div">Div (Container)</option>
         <option value="section">Section</option>
         <option value="article">Article</option>

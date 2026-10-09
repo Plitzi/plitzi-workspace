@@ -35,6 +35,7 @@ import { tracingCollector, tracingMiddleware } from '@plitzi/sdk-shared/store/tr
 import { getEnvironmentServer } from './config';
 
 import type { SdkPluginProps } from '@modules/Sdk/SdkPlugin';
+import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
   AnalyticsConfig,
   Theme,
@@ -42,7 +43,6 @@ import type {
   ComponentPlugin,
   ComponentPluginFC,
   Environment,
-  EventBridgeContextValue,
   OfflineDataRaw,
   RenderMode,
   Server,

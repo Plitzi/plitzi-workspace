@@ -151,13 +151,15 @@ const Link = ({
 
   return (
     <RootElement tag="a" {...propsMemo} onClick={handleClick}>
-      {contentPlacement === 'before' && (
-        <ElementWords content={content} icon={icon} iconPlacement={iconPlacement} iconClassName={styleSelectors.icon} />
-      )}
-      {children}
-      {contentPlacement === 'after' && (
-        <ElementWords content={content} icon={icon} iconPlacement={iconPlacement} iconClassName={styleSelectors.icon} />
-      )}
+      <ElementWords
+        content={content}
+        icon={icon}
+        iconPlacement={iconPlacement}
+        iconClassName={styleSelectors.icon}
+        contentPlacement={contentPlacement}
+      >
+        {children}
+      </ElementWords>
     </RootElement>
   );
 };

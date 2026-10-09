@@ -4,10 +4,9 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { COMMIT_ORIGIN_LABEL, durationColor, formatMs, formatPercent, rowDuration } from '../../helpers';
 import CommitCause from '../CommitCause';
-import DetailSidebar from '../DetailSidebar';
 import DurationLegend from '../DurationLegend';
 import MetricToggle from '../MetricToggle';
-import SidebarShell, { SidebarEmpty } from '../SidebarShell';
+import SidebarShell from '../SidebarShell';
 import SidebarToggle from '../SidebarToggle';
 
 import type { CommitOrigin, DurationMetric, FlameModel, FlameNode } from '../../helpers';
@@ -179,11 +178,7 @@ const RankedList = ({
           })}
         </div>
 
-        {sidebarOpen && (
-          <SidebarShell>
-            {active ? <DetailSidebar node={active} commit={commit} model={model} /> : <SidebarEmpty />}
-          </SidebarShell>
-        )}
+        {sidebarOpen && <SidebarShell active={active} commit={commit} model={model} />}
       </div>
 
       <DurationLegend />

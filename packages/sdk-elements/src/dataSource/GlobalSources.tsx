@@ -7,7 +7,7 @@ import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSo
 import useResolvedVariables from '@plitzi/sdk-shared/dataSource/hooks/useResolvedVariables';
 import { flagValues, undeclaredFlagOverrides } from '@plitzi/sdk-shared/flags';
 import useFlagResolution from '@plitzi/sdk-shared/flags/useFlagResolution';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
 import { useCommonStore, useCommonStoreSync } from '@plitzi/sdk-shared/store';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
@@ -35,7 +35,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   // before this provider has published anything.
   const variablesValue = useResolvedVariables();
   const variablesFields = useCallback(
-    () => getPathsFromObeject(variablesValue).map(path => ({ path, name: `variables.${path}` })),
+    () => getPathsFromObject(variablesValue).map(path => ({ path, name: `variables.${path}` })),
     [variablesValue]
   );
   useRegisterSource({ id: 'global', source: 'variables', name: 'Variables', fields: variablesFields });
@@ -69,7 +69,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
     [routeParams, queryParams, origin, href, currentPageId, pendingLocation]
   );
   const navigationFields = useCallback(() => {
-    const fields = getPathsFromObeject({ routeParams, queryParams }).map(path => ({
+    const fields = getPathsFromObject({ routeParams, queryParams }).map(path => ({
       path,
       name: `navigation.${path}`
     })) as SourceField[];
@@ -118,7 +118,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
     } satisfies ShapedGlobalValue<'auth'>;
   }, [provider, user, authenticated, status]);
   const authFields = useCallback(
-    () => getPathsFromObeject(authValue).map(path => ({ path, name: `user.${path}` })),
+    () => getPathsFromObject(authValue).map(path => ({ path, name: `user.${path}` })),
     [authValue]
   );
   useRegisterSource({ id: 'global', source: 'auth', name: 'Auth State', fields: authFields });
@@ -161,7 +161,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   // --- state (canonical runtime/application state) ---
   const [state] = useCommonStore('runtime.state');
   const stateFields = useCallback(
-    () => getPathsFromObeject(state).map(path => ({ path, name: `state.${path}` })),
+    () => getPathsFromObject(state).map(path => ({ path, name: `state.${path}` })),
     [state]
   );
   useRegisterSource({ id: 'global', source: 'state', name: 'State', fields: stateFields });
@@ -177,7 +177,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
    * Empty for a space that IS the page — nobody is embedding it, so nobody has anything to hand it.
    */
   const [host] = useCommonStore('runtime.host');
-  const hostFields = useCallback(() => getPathsFromObeject(host).map(path => ({ path, name: `host.${path}` })), [host]);
+  const hostFields = useCallback(() => getPathsFromObject(host).map(path => ({ path, name: `host.${path}` })), [host]);
   useRegisterSource({ id: 'global', source: 'host', name: 'Host', fields: hostFields });
   useCommonStoreSync('runtime.sources.host', host);
 
@@ -194,7 +194,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
     [theme, resolvedTheme]
   );
   const themeFields = useCallback(
-    () => getPathsFromObeject(themeValue).map(path => ({ path, name: `theme.${path}` })),
+    () => getPathsFromObject(themeValue).map(path => ({ path, name: `theme.${path}` })),
     [themeValue]
   );
   useRegisterSource({ id: 'global', source: 'theme', name: 'Theme', fields: themeFields });
@@ -229,7 +229,7 @@ const GlobalSources = ({ children }: GlobalSourcesProps) => {
   );
   previousComputed.current = computedValue;
   const computedFields = useCallback(
-    () => getPathsFromObeject(computedValue).map(path => ({ path, name: `computed.${path}` })),
+    () => getPathsFromObject(computedValue).map(path => ({ path, name: `computed.${path}` })),
     [computedValue]
   );
   useRegisterSource({ id: 'global', source: 'computed', name: 'Computed', fields: computedFields });

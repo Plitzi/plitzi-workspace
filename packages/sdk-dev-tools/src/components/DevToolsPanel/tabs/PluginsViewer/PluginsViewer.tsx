@@ -23,10 +23,12 @@ const ORIGIN_LABEL: Record<PluginEntry['origin'], string> = {
 const PluginsViewer = ({ className }: PluginsViewerProps) => {
   const { plugins } = use(PluginsContext);
   const { components } = use(ComponentContext);
+  // The registry is replaced whole as plugins load, so the object read on this render says whether it changed.
+  const registry = components.current;
 
   const pluginsParsed = useMemo<ListItem<PluginEntry>[]>(() => {
     const entries = new Map<string, PluginEntry>();
-    Object.entries(components.current).forEach(([type, component]) => {
+    Object.entries(registry).forEach(([type, component]) => {
       // Named origins only: an absent origin is an SDK element, not a plugin.
       const { origin } = component;
       if (origin !== 'local-custom' && origin !== 'remote') {
@@ -62,8 +64,7 @@ const PluginsViewer = ({ className }: PluginsViewerProps) => {
         </div>
       )
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plugins, components.current]);
+  }, [plugins, registry]);
 
   const [plugin, setPlugin] = useState<ListItem<PluginEntry> | undefined>();
   const handleItemSelected = useCallback((pluginSelected?: ListItem<PluginEntry>) => setPlugin(pluginSelected), []);

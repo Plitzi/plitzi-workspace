@@ -8,6 +8,7 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import IconField from '../../../components/IconField';
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 type SettingsProps = {
   mode?: 'page' | 'internal' | 'external';
@@ -54,7 +55,7 @@ const Settings = ({
     }, []);
   }, [flat, pageIds]);
 
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   const handleChangeHref = useCallback((value: string) => onUpdate?.('href', value), [onUpdate]);
 
@@ -98,14 +99,14 @@ const Settings = ({
         value={content}
         label="Content"
         placeholder="The link's words, without a text inside it"
-        onChange={handleChange('content')}
+        onChange={update.text('content')}
         size="sm"
       />
-      <Select value={contentPlacement} label="Content Placement" onChange={handleChange('contentPlacement')} size="sm">
+      <Select value={contentPlacement} label="Content Placement" onChange={update.text('contentPlacement')} size="sm">
         <option value="before">Before Elements</option>
         <option value="after">After Elements</option>
       </Select>
-      <Select value={target} label="Target" onChange={handleChange('target')} size="sm">
+      <Select value={target} label="Target" onChange={update.text('target')} size="sm">
         <option value="blank">Blank</option>
         <option value="self">Self</option>
         <option value="parent">Parent</option>
@@ -139,7 +140,7 @@ const Settings = ({
         </div>
       )}
       {mode !== 'external' && (
-        <Select value={current} label="Current On" onChange={handleChange('current')} size="sm">
+        <Select value={current} label="Current On" onChange={update.text('current')} size="sm">
           <option value="page">Its Page</option>
           <option value="section">Its Page And The Pages Under It</option>
         </Select>
@@ -149,7 +150,7 @@ const Settings = ({
           value={hash}
           label="Section"
           placeholder="An element's anchor, without the #"
-          onChange={handleChange('hash')}
+          onChange={update.text('hash')}
           size="sm"
         />
       )}
@@ -157,7 +158,7 @@ const Settings = ({
         value={label}
         label="Accessible Name"
         placeholder="For a link that wraps a whole card"
-        onChange={handleChange('label')}
+        onChange={update.text('label')}
         size="sm"
       />
       <IconField icon={icon} iconPlacement={iconPlacement} onUpdate={onUpdate} />

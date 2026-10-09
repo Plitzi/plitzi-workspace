@@ -6,10 +6,8 @@ import useQueueManager from './hooks/useQueueManager';
 import QueueContext from './QueueContext';
 import QueueStatusContext from './QueueStatusContext';
 
-import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
-import type { Schema, Style } from '@plitzi/sdk-shared';
-import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
-import type { ActionDispatch, ReactNode } from 'react';
+import type { QueueContextValue } from './QueueContext';
+import type { ReactNode } from 'react';
 
 export type QueueContextProviderProps = {
   children: ReactNode;
@@ -26,17 +24,17 @@ const QueueContextProvider = ({ children, includeSubscriptions = true }: QueueCo
     disabled: !includeSubscriptions
   });
 
-  const enqueueMiddleware = useCallback(
-    (
-      prevState: Style | Schema,
-      state: Style | Schema,
-      dispatch: ActionDispatch<[action: StyleReducerActions | SchemaReducerActions]>,
-      action: StyleReducerActions | SchemaReducerActions
-    ) => enqueue({ action, prevState, state, dispatch }),
+  const enqueueSchema = useCallback<QueueContextValue['enqueueSchema']>(
+    (prevState, state, dispatch, action) => enqueue({ kind: 'schema', action, prevState, state, dispatch }),
     [enqueue]
   );
 
-  const queueValue = useMemo(() => ({ enqueueMiddleware }), [enqueueMiddleware]);
+  const enqueueStyle = useCallback<QueueContextValue['enqueueStyle']>(
+    (prevState, state, dispatch, action) => enqueue({ kind: 'style', action, prevState, state, dispatch }),
+    [enqueue]
+  );
+
+  const queueValue = useMemo(() => ({ enqueueSchema, enqueueStyle }), [enqueueSchema, enqueueStyle]);
 
   return (
     <QueueContext value={queueValue}>

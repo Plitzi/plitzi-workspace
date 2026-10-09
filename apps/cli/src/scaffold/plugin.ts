@@ -2,8 +2,10 @@ import { PLUGIN_INLINED_ASSETS } from '@plitzi/sdk-shared/plugins/bundle';
 
 import { CLI_DIR, PLUGINS_DIR } from './paths';
 import { pluginNames } from './pluginPackage/names';
-import { shapedDeclaration } from './pluginPackage/shape';
+import { shapedDeclaration, shapedSettings } from './pluginPackage/shape';
+import { elementIndex } from './pluginPackage/source';
 
+import type { ElementShape } from './pluginPackage/shape';
 import type { CreateAnswers, ProjectFiles } from './types';
 
 /**
@@ -160,12 +162,7 @@ const CHART: CSSProperties = { width: '100%', height: \`\${HEIGHT}px\`, overflow
 export default StatCard;
 `;
 
-const barrel = (): string => `import StatCard from './StatCard';
-
-export * from './StatCard';
-
-export default StatCard;
-`;
+const STAT_CARD = pluginNames('stat-card');
 
 /**
  * What a plugin imports besides code, typed as the server's bundler hands it over (`@plitzi/sdk-shared/plugins/bundle`):
@@ -195,32 +192,36 @@ declare module '*?inline' {
  * What the example is authored with, as `plitzi plugin add --prop …` writes it: its props, which are the attributes the
  * space gives it and a binding fills — so authoring holds the space's use of it to them, as it does every plugin.
  */
+const STAT_CARD_SHAPE: ElementShape = {
+  props: [
+    { name: 'label', type: 'string', value: 'Metric' },
+    { name: 'value', type: 'number', value: 0 },
+    { name: 'unit', type: 'string', value: '' },
+    { name: 'series', type: 'list', value: [] }
+  ],
+  triggers: [],
+  callbacks: [],
+  headless: false
+};
+
 const declaration = ({ name }: CreateAnswers): string =>
   shapedDeclaration(
-    pluginNames('stat-card'),
+    STAT_CARD,
     {
       title: 'Stat Card',
       description: 'A number, its trend as a sparkline, and the point under the cursor.',
       owner: name
     },
-    {
-      props: [
-        { name: 'label', type: 'string', value: 'Metric' },
-        { name: 'value', type: 'number', value: 0 },
-        { name: 'unit', type: 'string', value: '' },
-        { name: 'series', type: 'list', value: [] }
-      ],
-      triggers: [],
-      callbacks: [],
-      headless: false
-    }
+    STAT_CARD_SHAPE
   );
 
 /** The example plugin's folder, whole, by what writes each file. */
 const EXAMPLE_PLUGIN: Readonly<Record<string, (answers: CreateAnswers) => string>> = {
   [`${PLUGINS_DIR}/StatCard/StatCard.tsx`]: component,
   [`${PLUGINS_DIR}/StatCard/declaration.ts`]: declaration,
-  [`${PLUGINS_DIR}/StatCard/index.ts`]: barrel
+  // The panel the builder edits it with, and the index that puts the three together: what `plugin add` writes too.
+  [`${PLUGINS_DIR}/StatCard/Settings.tsx`]: () => shapedSettings(STAT_CARD, STAT_CARD_SHAPE),
+  [`${PLUGINS_DIR}/StatCard/index.ts`]: () => elementIndex(STAT_CARD)
 };
 
 /** Every file of the example plugin: what a project made from a space takes out again (`projectFromSpace`). */

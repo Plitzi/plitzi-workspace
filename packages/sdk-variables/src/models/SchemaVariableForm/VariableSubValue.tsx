@@ -3,7 +3,7 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo } from 'react';
 
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import VariableValue from './VariableValue';
 
@@ -36,7 +36,7 @@ const VariableSubValue = ({
 }: VariableSubValueProps) => {
   const fieldsDataSource = useMemo(
     () =>
-      getPathsFromObeject(whenData).reduce(
+      getPathsFromObject(whenData).reduce(
         (acum, path) => ({ ...acum, [path]: { name: path, label: path, placeholder: `Enter ${path}` } }),
         {}
       ),

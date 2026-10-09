@@ -3,8 +3,9 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback } from 'react';
 
+import useSettingsUpdate from '../../useSettingsUpdate';
+
 import type { CarouselMode, CarouselTransition } from './CarouselContext';
-import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
   mode?: CarouselMode;
@@ -29,7 +30,7 @@ const Settings = ({
   label = '',
   onUpdate
 }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   // An empty or unreadable number is none: 0 is what the carousel reads as "off".
   const handleChangeNumber = useCallback(
@@ -37,21 +38,16 @@ const Settings = ({
     [onUpdate]
   );
 
-  const handleChangeChecked = useCallback(
-    (key: string) => (e: ChangeEvent<HTMLInputElement>) => onUpdate?.(key, e.target.checked),
-    [onUpdate]
-  );
-
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input label="Label" size="xs" placeholder="Featured products" value={label} onChange={handleChange('label')} />
-      <Select label="Mode" value={mode} onChange={handleChange('mode')} size="xs">
+      <Input label="Label" size="xs" placeholder="Featured products" value={label} onChange={update.text('label')} />
+      <Select label="Mode" value={mode} onChange={update.text('mode')} size="xs">
         <option value="slide">One slide at a time</option>
         <option value="marquee">Marquee</option>
         <option value="scroll">Scrolling row</option>
       </Select>
       {mode === 'slide' && (
-        <Select label="Transition" value={transition} onChange={handleChange('transition')} size="xs">
+        <Select label="Transition" value={transition} onChange={update.text('transition')} size="xs">
           <option value="slide">Slide</option>
           <option value="fade">Fade</option>
           <option value="none">None</option>
@@ -75,20 +71,15 @@ const Settings = ({
           onChange={handleChangeNumber('speed')}
         />
       )}
-      <Checkbox
-        checked={pauseOnHover}
-        onChange={handleChangeChecked('pauseOnHover')}
-        label="Pause on hover"
-        size="xs"
-      />
-      {mode === 'slide' && <Checkbox checked={loop} onChange={handleChangeChecked('loop')} label="Loop" size="xs" />}
+      <Checkbox checked={pauseOnHover} onChange={update.checked('pauseOnHover')} label="Pause on hover" size="xs" />
+      {mode === 'slide' && <Checkbox checked={loop} onChange={update.checked('loop')} label="Loop" size="xs" />}
       <Input
         label="Row key"
         size="xs"
         placeholder="id"
         value={itemKey}
         title="The field of each item that names it, so a slide stays with its item when the items change."
-        onChange={handleChange('itemKey')}
+        onChange={update.text('itemKey')}
       />
     </div>
   );

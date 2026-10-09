@@ -10,6 +10,7 @@ import { useCallback, useMemo } from 'react';
 import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
+import useSettingsUpdate from '../../useSettingsUpdate';
 import LayoutPicker from '../LayoutPicker';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
@@ -61,7 +62,7 @@ const Settings = ({
     [flat, id, pages]
   );
 
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   const handleChangeName = useCallback(
     (value: string) => {
@@ -185,7 +186,7 @@ const Settings = ({
         <Select
           label="Unauthorized Behaviour"
           value={unauthorizedBehaviour}
-          onChange={handleChange('unauthorizedBehaviour')}
+          onChange={update.text('unauthorizedBehaviour')}
           placeholder="None"
           size="xs"
         >
@@ -196,7 +197,7 @@ const Settings = ({
         <Select
           value={unauthorizedPageRedirect}
           label="Redirect Page"
-          onChange={handleChange('unauthorizedPageRedirect')}
+          onChange={update.text('unauthorizedPageRedirect')}
           placeholder="None"
           size="xs"
         >
@@ -210,11 +211,11 @@ const Settings = ({
       <Checkbox label=" SEO Enabled" checked={seoEnabled} onChange={handleChangeSeoEnabled} size="xs" />
       {seoEnabled && (
         <>
-          <Input value={seoPageTitle} label="SEO Title" onChange={handleChange('seoPageTitle')} size="xs" />
+          <Input value={seoPageTitle} label="SEO Title" onChange={update.text('seoPageTitle')} size="xs" />
           <TextArea
             label="SEO Description"
             value={seoPageDescription}
-            onChange={handleChange('seoPageDescription')}
+            onChange={update.text('seoPageDescription')}
             rows={3}
             size="xs"
           />

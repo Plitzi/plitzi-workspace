@@ -3,9 +3,11 @@ import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import Input from '@plitzi/plitzi-ui/Input';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 import type { ChangeEvent } from 'react';
 
@@ -29,7 +31,7 @@ const Settings = ({
   const { resolvedTheme } = useTheme();
   const [jsonValid, setJsonValid] = useState(true);
 
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   const handleChangeSettings = useCallback(
     (value: string) => {
@@ -55,7 +57,8 @@ const Settings = ({
     [onUpdate]
   );
 
-  useEffect(() => {
+  // Read as the panel opens for the element: an empty `settings` starts as `{}`, and valid JSON is laid out to read.
+  const normaliseSettings = useEffectEvent(() => {
     if (!onUpdate || !settings) {
       onUpdate?.('settings', '{}');
       setJsonValid(true);
@@ -64,7 +67,6 @@ const Settings = ({
     }
 
     try {
-      // Format settings
       const newSettings = JSON.stringify(JSON.parse(settings), null, 2);
       if (newSettings !== settings) {
         onUpdate('settings', newSettings);
@@ -72,15 +74,15 @@ const Settings = ({
 
       setJsonValid(true);
     } catch {
-      // Nothing to do
       setJsonValid(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onUpdate]);
+  });
+
+  useEffect(() => normaliseSettings(), [onUpdate]);
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input value={renderType} label="Render Type" onChange={handleChange('renderType')} size="xs" />
+      <Input value={renderType} label="Render Type" onChange={update.text('renderType')} size="xs" />
       <div className="flex flex-col">
         <label>Settings</label>
         <CodeMirror
@@ -101,8 +103,8 @@ const Settings = ({
       <Checkbox checked={isPlugin} onChange={handleChangeIsPlugin} label="Is Plugin" size="xs" />
       {isPlugin && (
         <>
-          <Input value={scriptUrl} label="Plugin Script Url" onChange={handleChange('scriptUrl')} size="xs" />
-          <TextArea value={assets} label="Plugin Assets (Styles)" onChange={handleChange('assets')} size="xs" />
+          <Input value={scriptUrl} label="Plugin Script Url" onChange={update.text('scriptUrl')} size="xs" />
+          <TextArea value={assets} label="Plugin Assets (Styles)" onChange={update.text('assets')} size="xs" />
         </>
       )}
     </div>

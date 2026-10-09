@@ -4,7 +4,7 @@ import type { SupportedLocale } from '../../helpers';
 import type { DataSourceUtility, DataSourceUtilityParamsValue } from '../../types';
 
 const callback = (
-  source: string | number,
+  source: unknown,
   { format = 'dd/MM/yyyy', asAge = false, isUnix = true, isUtc = false, locale = 'en' }: DataSourceUtilityParamsValue
 ) => {
   if (typeof source !== 'string' && typeof source !== 'number') {

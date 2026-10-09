@@ -6,7 +6,6 @@ import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
 import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -76,7 +75,6 @@ const ElementSettings = ({
         ComponentContext,
         NetworkContext,
         PluginsContext,
-        EventBridgeContext,
         InteractionsContext
       }
     }),

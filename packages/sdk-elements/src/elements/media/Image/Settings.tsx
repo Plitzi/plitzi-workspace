@@ -5,6 +5,8 @@ import { useCallback, useMemo } from 'react';
 
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import useSettingsUpdate from '../../useSettingsUpdate';
+
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -34,7 +36,7 @@ const Settings = ({
 }: SettingsProps) => {
   const urlPreview = useMemo(() => processTwig(src, variables, true) as string, [variables, src]);
 
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   // An empty field is no size at all: 0 is what the element reads as "not given".
   const handleChangeNumber = useCallback(
@@ -50,7 +52,7 @@ const Settings = ({
   return (
     <div className="flex h-full flex-col gap-4 py-2">
       <div className="flex flex-col">
-        <Input value={src} label="Url" onChange={handleChange('src')} size="xs" />
+        <Input value={src} label="Url" onChange={update.text('src')} size="xs" />
         {urlPreview && (
           <div className="relative mt-2 flex items-center justify-center rounded-sm border border-gray-300 p-2">
             <div className="absolute top-2 left-2 rounded-tl rounded-br border border-gray-300 bg-white p-1 text-xs">
@@ -65,7 +67,7 @@ const Settings = ({
           value={alt}
           label="Alt Text"
           placeholder="What the picture shows, for who cannot see it"
-          onChange={handleChange('alt')}
+          onChange={update.text('alt')}
           size="xs"
         />
       )}
@@ -75,12 +77,12 @@ const Settings = ({
         onChange={handleChangeDecorative}
         size="xs"
       />
-      <Select value={fetchPriority} label="Fetch Priority" onChange={handleChange('fetchPriority')} size="xs">
+      <Select value={fetchPriority} label="Fetch Priority" onChange={update.text('fetchPriority')} size="xs">
         <option value="auto">Auto</option>
         <option value="high">Hight</option>
         <option value="low">Low</option>
       </Select>
-      <Select value={loadMode} label="Load Mode" onChange={handleChange('loadMode')} size="xs">
+      <Select value={loadMode} label="Load Mode" onChange={update.text('loadMode')} size="xs">
         <option value="auto">Auto</option>
         <option value="lazy">Lazy</option>
         <option value="eager">Eager</option>
@@ -89,7 +91,7 @@ const Settings = ({
         value={sizes}
         label="Sizes"
         placeholder="(max-width: 48rem) 100vw, 360px"
-        onChange={handleChange('sizes')}
+        onChange={update.text('sizes')}
         size="xs"
       />
       <div className="flex gap-2">

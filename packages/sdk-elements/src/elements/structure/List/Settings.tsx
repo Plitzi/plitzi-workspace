@@ -1,6 +1,7 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback } from 'react';
+
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 type SettingsProps = {
   subType?: 'ul' | 'ol';
@@ -11,11 +12,11 @@ type SettingsProps = {
 };
 
 const Settings = ({ subType = 'ul', source = 'none', itemKey = '', label = '', onUpdate }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Select label="Source" value={source} onChange={handleChange('source')} size="xs">
+      <Select label="Source" value={source} onChange={update.text('source')} size="xs">
         <option value="none">None</option>
         <option value="controlled">Controlled</option>
       </Select>
@@ -26,10 +27,10 @@ const Settings = ({ subType = 'ul', source = 'none', itemKey = '', label = '', o
           placeholder="id"
           value={itemKey}
           title="The field of each item that names it, so a row stays with its item when the list is filtered."
-          onChange={handleChange('itemKey')}
+          onChange={update.text('itemKey')}
         />
       )}
-      <Select label="List Type" value={subType} onChange={handleChange('subType')} size="xs">
+      <Select label="List Type" value={subType} onChange={update.text('subType')} size="xs">
         <option value="ul">Unordered</option>
         <option value="ol">Ordered</option>
       </Select>
@@ -37,7 +38,7 @@ const Settings = ({ subType = 'ul', source = 'none', itemKey = '', label = '', o
         value={label}
         label="List Name"
         placeholder="e.g. Kinds of capsule, Search results"
-        onChange={handleChange('label')}
+        onChange={update.text('label')}
         size="xs"
       />
     </div>

@@ -1390,6 +1390,10 @@
       "types": "./dist/elements/structure/TabContainer/useTabItems.d.ts",
       "import": "./dist/elements/structure/TabContainer/useTabItems.mjs"
     },
+    "./elements/useSettingsUpdate": {
+      "types": "./dist/elements/useSettingsUpdate.d.ts",
+      "import": "./dist/elements/useSettingsUpdate.mjs"
+    },
     "./index": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"

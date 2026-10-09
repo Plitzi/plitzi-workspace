@@ -390,6 +390,15 @@ export default ${name};
 `;
 };
 
+/** An `<input>` with these attributes at this indent, on one line while it fits in 120 columns — one per line past that. */
+const inputTag = (attributes: string[], indent: string): string => {
+  const inline = `${indent}<input ${attributes.join(' ')} />`;
+
+  return inline.length <= 120
+    ? inline
+    : [`${indent}<input`, ...attributes.map(attribute => `${indent}  ${attribute}`), `${indent}/>`].join('\n');
+};
+
 const settingsControl = (prop: PropShape): string => {
   const label = titleOf(prop.name);
   if (prop.type === 'list' || prop.type === 'json') {
@@ -398,19 +407,23 @@ const settingsControl = (prop: PropShape): string => {
 
   if (prop.type === 'boolean') {
     return `    <label style={FIELD}>
-      <input type="checkbox" checked={${prop.name}} onChange={event => onUpdate?.('${prop.name}', event.target.checked)} />
+${inputTag(['type="checkbox"', `checked={${prop.name}}`, `onChange={event => onUpdate?.('${prop.name}', event.target.checked)}`], '      ')}
       ${label}
     </label>`;
   }
 
-  const input =
+  const attributes =
     prop.type === 'number'
-      ? `type="number" value={${prop.name}} onChange={event => onUpdate?.('${prop.name}', Number(event.target.value))}`
-      : `value={${prop.name}} onChange={event => onUpdate?.('${prop.name}', event.target.value)}`;
+      ? [
+          'type="number"',
+          `value={${prop.name}}`,
+          `onChange={event => onUpdate?.('${prop.name}', Number(event.target.value))}`
+        ]
+      : [`value={${prop.name}}`, `onChange={event => onUpdate?.('${prop.name}', event.target.value)}`];
 
   return `    <label style={FIELD}>
       ${label}
-      <input style={INPUT} ${input} />
+${inputTag(['style={INPUT}', ...attributes], '      ')}
     </label>`;
 };
 

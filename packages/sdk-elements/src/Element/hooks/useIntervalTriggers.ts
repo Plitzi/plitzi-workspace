@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { INTERVAL_TRIGGER, intervalOf } from '@plitzi/sdk-shared/helpers/interval';
 
-import type { InteractionsManager } from '@plitzi/sdk-interactions';
+import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
 import type { IntervalTriggerPayload } from '@plitzi/sdk-shared/helpers/interval';
 
@@ -10,7 +10,7 @@ export type UseIntervalTriggersProps = {
   id: string;
   interactions?: Record<string, ElementInteraction>;
   previewMode: boolean;
-  interactionsManager: InteractionsManager;
+  interactionsManager: InteractionsManagerApi;
 };
 
 /**

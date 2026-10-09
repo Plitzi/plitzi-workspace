@@ -3,6 +3,8 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback } from 'react';
 
+import useSettingsUpdate from '../../useSettingsUpdate';
+
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -34,7 +36,7 @@ type SettingsProps = {
 };
 
 const Settings = ({ subType = 'div', label = '', decorative = false, onUpdate }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   const handleChangeDecorative = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('decorative', e.target.checked),
@@ -43,7 +45,7 @@ const Settings = ({ subType = 'div', label = '', decorative = false, onUpdate }:
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Select label="ContainerTag" value={subType} onChange={handleChange('subType')} size="xs">
+      <Select label="ContainerTag" value={subType} onChange={update.text('subType')} size="xs">
         <option value="div">Div</option>
         <option value="header">Header</option>
         <option value="footer">Footer</option>
@@ -70,7 +72,7 @@ const Settings = ({ subType = 'div', label = '', decorative = false, onUpdate }:
         value={label}
         label="Region Name"
         placeholder="e.g. Main navigation, Search results"
-        onChange={handleChange('label')}
+        onChange={update.text('label')}
         size="xs"
       />
       <Checkbox

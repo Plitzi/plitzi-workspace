@@ -1,7 +1,7 @@
 import Input from '@plitzi/plitzi-ui/Input';
-import { useCallback } from 'react';
 
 import ElementAdvancedEditor from '../../../components/ElementAdvancedEditor';
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 type SettingsProps = {
   content?: string;
@@ -10,7 +10,7 @@ type SettingsProps = {
 };
 
 const Settings = ({ content = '', label = '', onUpdate }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   return (
     <div className="flex h-full flex-col gap-4 py-2">
@@ -18,9 +18,9 @@ const Settings = ({ content = '', label = '', onUpdate }: SettingsProps) => {
         value={label}
         label="Label"
         placeholder="What it means — empty for decoration"
-        onChange={handleChange('label')}
+        onChange={update.text('label')}
       />
-      <ElementAdvancedEditor className="grow" value={content} mode="html" onChange={handleChange('content')} />
+      <ElementAdvancedEditor className="grow" value={content} mode="html" onChange={update.text('content')} />
     </div>
   );
 };

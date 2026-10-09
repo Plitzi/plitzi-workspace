@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';
 
 import ListControlledItem from './ListControlledItem';
@@ -59,7 +59,7 @@ const ListControlled = ({
 
   const sourceFields = useCallback(
     () =>
-      getPathsFromObeject({ item: get(finalItems, '0', {}), index: 0 }).reduce<SourceField[]>(
+      getPathsFromObject({ item: get(finalItems, '0', {}), index: 0 }).reduce<SourceField[]>(
         (acum, path) => [...acum, { path, name: path }],
         []
       ),

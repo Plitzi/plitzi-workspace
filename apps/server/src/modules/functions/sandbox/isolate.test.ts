@@ -572,26 +572,33 @@ describe('what a runner keeps', () => {
     expect(loadA).toHaveBeenCalledTimes(2);
   });
 
-  // Against a cold runner's first invocation, timed beside it, and not a budget in milliseconds: a machine running
-  // every package's tests at once slows both alike, and blew any fixed budget.
+  // What warming leaves done, rather than how long the first invocation then takes: a timing beside a cold runner lost
+  // whenever the machine ran every package's tests at once.
   it('is ready before its first invocation once warmed', async () => {
-    const firstInvocation = async (runner: IsolateRunner): Promise<number> => {
-      const started = performance.now();
-      await runner.invoke({
+    const { default: ivm } = await import('isolated-vm');
+    const firstInvocation = (fresh: IsolateRunner) =>
+      fresh.invoke({
         bundle: { id: 'first', load: () => Promise.resolve(codeOf('w', 0)) },
         invocation: invocationOf(),
         limits: LIMITS,
         answer: () => Promise.resolve(null),
         signal: new AbortController().signal
       });
-
-      return performance.now() - started;
-    };
     const warmed = createIsolateRunner();
     await warmed.warm();
+    const createSnapshot = vi.spyOn(ivm.Isolate, 'createSnapshot');
 
-    const cold = await firstInvocation(createIsolateRunner());
+    try {
+      await firstInvocation(warmed);
 
-    expect(await firstInvocation(warmed)).toBeLessThan(cold);
+      expect(createSnapshot).not.toHaveBeenCalled();
+
+      // …which a runner nobody warmed builds on its first invocation, on the visitor's time.
+      await firstInvocation(createIsolateRunner());
+
+      expect(createSnapshot).toHaveBeenCalledTimes(1);
+    } finally {
+      createSnapshot.mockRestore();
+    }
   });
 });

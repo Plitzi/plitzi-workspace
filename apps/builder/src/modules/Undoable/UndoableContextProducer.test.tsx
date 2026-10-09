@@ -29,8 +29,8 @@ const renderProducer = () => {
 
 // What the reducers hand the middleware: the state on either side of the action, the dispatch to replay it with, and
 // the action itself.
-const dispatchThrough = (undoable: UndoableContextValue, action: Parameters<typeof undoable.undoableMiddleware>[3]) =>
-  act(() => undoable.undoableMiddleware(snapshot, snapshot, vi.fn(), action));
+const dispatchThrough = (undoable: UndoableContextValue, action: Parameters<typeof undoable.undoableSchema>[3]) =>
+  act(() => undoable.undoableSchema(snapshot, snapshot, vi.fn(), action));
 
 describe('what the undo history remembers', () => {
   it('records the edits this session makes', () => {

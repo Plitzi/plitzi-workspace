@@ -275,6 +275,24 @@ describe('ActionInteractions', () => {
     });
   });
 
+  it.each(['await', 'detached'] as const)('reports a %s run the server answered failed as an error', async mode => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse(200, { status: 'failed', runId: 'run-3', error: 'No seats left' })))
+    );
+
+    await mount().run({ actionId: 'book', input: '{}', mode }, { hostElementId: 'button1' });
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(interactionTrigger).toHaveBeenCalledWith('button1', 'onFlowError', {
+      actionId: 'book',
+      runId: 'run-3',
+      error: 'No seats left',
+      reason: 'failed'
+    });
+    expect(interactionTrigger).not.toHaveBeenCalledWith('button1', 'onFlowEnd', expect.anything());
+  });
+
   it('cancels a run by id, and reads the server’s answer', async () => {
     const fetchMock = vi.fn(() =>
       Promise.resolve({ ok: true, status: 204, json: () => Promise.resolve({}) } as Response)

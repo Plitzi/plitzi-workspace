@@ -89,11 +89,28 @@
   `tabContainerHeader` (registered under a misspelt type), `themeToggle`, `dropdownPopup`, `loading` and `notFound`.
   The theme toggle's panel sets its mode, its labels and whether it offers "System"; the registry is typed by element
   type and must hold one for each.
-- **A refused run reaches `onFlowError` in every mode** (`@plitzi/sdk-interactions`): an awaited server action the
-  server refused fired no `onFlowError` on the element that started it, as `detached` and `stream` ones do — a board
-  rolling its edits back on a refusal never did.
+- **A plugin's panel** (`@plitzi/cli`): `plitzi doctor` warns of a plugin with no `Settings.tsx`, or one its entry never
+  passes as `pluginSettings` (`plugin-settings-missing`); the example `create` writes has its panel, as every element
+  `plugin add` writes does, and the panels it generates are laid out as the project's Prettier lays them out.
+- **A refused or failed run reaches `onFlowError` in every mode** (`@plitzi/sdk-interactions`): an awaited server
+  action the server refused fired no `onFlowError` on the element that started it, as `detached` and `stream` ones do
+  — a board rolling its edits back on a refusal never did; and a run answered `status: 'failed'` fired `onFlowEnd`
+  (detached) or nothing (awaited) rather than `onFlowError`.
+- **A source renamed** (`@plitzi/sdk-shared`): the binding picker lists a provider, a form or a modal by the name its
+  element has now, not the one it had when it mounted.
 - **A text's words in the builder** (`@plitzi/sdk-elements`): a `paragraph`, `text` or `heading` whose `content` is
   `0` shows `0` while editing too, not its placeholder; one bound to nothing shows nothing rather than `null`.
 - **Built-in declarations** (`@plitzi/sdk-shared`): `elementDeclaration` fills in what every element shares — the
   builder's gestures, Plitzi's catalogue entry, a visible element with no bindings, its style named by its label —
   from the defaults `definePlugin` uses; each element's declaration says only what is its own (a third of the lines).
+
+## Typed for plugins and hosts
+
+- **`InteractionsManagerApi`** (`@plitzi/sdk-shared`): the interactions manager as everything outside
+  `@plitzi/sdk-interactions` reaches it, declared where every package can name it and implemented by
+  `InteractionsManager`. `usePlitziServiceContext()` takes no type arguments and its `InteractionsContext` is typed —
+  `interactionTrigger`, `createChildManager`… — where it was `any`. Its `contexts` no longer carry `EventBridgeContext`,
+  which nothing read through them: the bridge is `@plitzi/sdk-event-bridge`'s own context.
+- **`getPathsFromObject`** (`@plitzi/sdk-shared/helpers/utils`), spelt right; `getPathsFromObeject` is gone.
+- **`ElementWords` places itself** (`@plitzi/sdk-elements`): `contentPlacement` and the element's children, so a button
+  and a link write their words once.

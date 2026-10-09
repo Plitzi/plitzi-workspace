@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { ElementInteraction } from './SchemaTypes';
 import type { SpaceCredentialProvider } from './SpaceTypes';
 import type { RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
@@ -145,8 +143,55 @@ export type Subscriptor<T extends Record<string, unknown> = Record<string, unkno
   triggers: Record<string, Trigger<T>>;
 };
 
-export type InteractionsContextValue<TManager = any> = {
-  interactionsManager: TManager;
+/**
+ * The interactions manager as everything outside sdk-interactions reaches it — through its context. Declared here, where
+ * every package can name it, and implemented by sdk-interactions' `InteractionsManager`, which the compiler holds to it.
+ *
+ * Methods, not function-valued fields: a manager's children are managers of its own class, which only this way can
+ * stand for the interface.
+ */
+export interface InteractionsManagerApi {
+  /** The page's id and its route and query params: what a flow reads as `navigation`. */
+  interactionsData: Record<string, string | number | boolean>;
+  /**
+   * Fires `eventName` on the element `subscriptorId`: the flows it starts, with `params` for them to read — what each
+   * answered, or nothing when there is no element to fire on.
+   */
+  interactionTrigger(
+    subscriptorId: string | undefined,
+    eventName: string,
+    params?: Record<string, unknown>
+  ): Promise<unknown[]> | undefined;
+  subscribe<TParams extends Record<string, unknown> = Record<string, unknown>>(
+    id: string,
+    interactions?: Record<string, ElementInteraction>,
+    triggers?: Record<string, InteractionCallback<TParams>>,
+    callbacks?: Record<string, InteractionCallback<TParams>>,
+    getAdditionalParams?: Subscriptor<TParams>['getAdditionalParams']
+  ): boolean;
+  update<TParams extends Record<string, unknown> = Record<string, unknown>>(
+    id: string,
+    interactions?: Record<string, ElementInteraction>,
+    triggers?: Record<string, InteractionCallback<TParams>>,
+    callbacks?: Record<string, InteractionCallback<TParams>>,
+    getAdditionalParams?: Subscriptor<TParams>['getAdditionalParams']
+  ): boolean;
+  unsubscribe(id: string): boolean;
+  getSubscriptor(subscriptorId: string): Subscriptor | undefined;
+  /** Every callback an element answers, by element and action — the step picker's list. */
+  getCallbacksAvailables(): Record<string, Record<string, InteractionCallback>>;
+  /** A manager for a replica — a list's row — whose route and query params are its own. */
+  createChildManager(
+    routeParams?: Record<string, string>,
+    queryParams?: Record<string, string>
+  ): InteractionsManagerApi;
+  removeChildManager(childManager: InteractionsManagerApi): void;
+  /** Called with the time of each change to what is subscribed; answers how to stop. */
+  onUpdate(listener: (timestamp: number) => void): () => void;
+}
+
+export type InteractionsContextValue = {
+  interactionsManager: InteractionsManagerApi;
   useInteractions: <T extends Record<string, unknown> = Record<string, unknown>>(props: {
     // The element's id — the key interactions wire by, and the same name the builder's tree shows.
     id?: string;

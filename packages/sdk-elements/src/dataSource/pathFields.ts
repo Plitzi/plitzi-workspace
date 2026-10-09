@@ -1,4 +1,4 @@
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { SourceField } from '@plitzi/sdk-shared';
 
@@ -7,6 +7,6 @@ import type { SourceField } from '@plitzi/sdk-shared';
  * modal or a dialog. Only ever run when the picker asks: see `useRegisterSource`.
  */
 const pathFields = (data: Record<string, unknown>): SourceField[] =>
-  getPathsFromObeject(data).map(path => ({ path, name: path.split('.').slice(-2).join(' ') }));
+  getPathsFromObject(data).map(path => ({ path, name: path.split('.').slice(-2).join(' ') }));
 
 export default pathFields;

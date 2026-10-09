@@ -30,9 +30,11 @@ const NetworkSubscriptionsContextProvider = ({
   const { webKey, instanceId, server, userKey } = useBuilderNetwork();
 
   const registerCallback = useCallback(
-    (type: RTEvent, callback: RTCallback, subscriberId: string = instanceId) => {
+    <E extends RTEvent>(type: E, callback: RTCallback<E>, subscriberId: string = instanceId) => {
       const callbacks = callbacksRef.current.get(type) ?? new Map<string, RTCallback>();
-      callbacks.set(subscriberId, callback);
+      // Kept under its own event and only ever called with that event's payload (`processMessage`), which a map of
+      // every event's listeners cannot say: a listener of one event is not a listener of all of them.
+      callbacks.set(subscriberId, callback as unknown as RTCallback);
       callbacksRef.current.set(type, callbacks);
     },
     [instanceId]

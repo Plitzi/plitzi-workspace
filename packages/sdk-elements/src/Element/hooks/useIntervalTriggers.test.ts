@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import useIntervalTriggers from './useIntervalTriggers';
 
-import type { InteractionsManager } from '@plitzi/sdk-interactions';
+import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
 
 const trigger = (id: string, interval: number | string, enabled = true): ElementInteraction => ({
@@ -22,7 +22,7 @@ const trigger = (id: string, interval: number | string, enabled = true): Element
 
 const fired = vi.fn<(id: string, action: string, payload: unknown) => Promise<void>>();
 // The hook calls one method of the manager; the rest of it has nothing to do with clocks.
-const manager = { interactionTrigger: fired } as unknown as InteractionsManager;
+const manager = { interactionTrigger: fired } as unknown as InteractionsManagerApi;
 
 const setVisibility = (state: DocumentVisibilityState) => {
   Object.defineProperty(document, 'visibilityState', { configurable: true, value: state });

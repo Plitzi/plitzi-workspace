@@ -1,4 +1,4 @@
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { Field } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { QueryParams, RouteParams } from '@plitzi/sdk-shared';
@@ -18,7 +18,7 @@ export const flagRuleFields = ({
   queryParams: QueryParams;
   visitorRoles: string[];
 }): Record<string, Field> => {
-  const urlFields = getPathsFromObeject({ routeParams, queryParams }).map((path): Field => ({
+  const urlFields = getPathsFromObject({ routeParams, queryParams }).map((path): Field => ({
     name: path,
     label: path,
     placeholder: `Enter ${path}`

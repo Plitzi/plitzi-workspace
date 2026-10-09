@@ -434,10 +434,6 @@
       "types": "./dist/components/StyleInspector/categories/Display/DisplayGap.d.ts",
       "import": "./dist/components/StyleInspector/categories/Display/DisplayGap.mjs"
     },
-    "./components/StyleInspector/categories/Display/DisplayGridGap": {
-      "types": "./dist/components/StyleInspector/categories/Display/DisplayGridGap.d.ts",
-      "import": "./dist/components/StyleInspector/categories/Display/DisplayGridGap.mjs"
-    },
     "./components/StyleInspector/categories/Display/DisplayGridTemplate": {
       "types": "./dist/components/StyleInspector/categories/Display/DisplayGridTemplate.d.ts",
       "import": "./dist/components/StyleInspector/categories/Display/DisplayGridTemplate.mjs"
@@ -962,6 +958,18 @@
       "types": "./dist/components/StyleInspector/components/ShadowItem/index.d.ts",
       "import": "./dist/components/StyleInspector/components/ShadowItem/index.mjs"
     },
+    "./components/StyleInspector/components/ShadowList": {
+      "types": "./dist/components/StyleInspector/components/ShadowList/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ShadowList/index.mjs"
+    },
+    "./components/StyleInspector/components/ShadowList/ShadowList": {
+      "types": "./dist/components/StyleInspector/components/ShadowList/ShadowList.d.ts",
+      "import": "./dist/components/StyleInspector/components/ShadowList/ShadowList.mjs"
+    },
+    "./components/StyleInspector/components/ShadowList/index": {
+      "types": "./dist/components/StyleInspector/components/ShadowList/index.d.ts",
+      "import": "./dist/components/StyleInspector/components/ShadowList/index.mjs"
+    },
     "./components/StyleInspector/components/TargetSummary": {
       "types": "./dist/components/StyleInspector/components/TargetSummary/index.d.ts",
       "import": "./dist/components/StyleInspector/components/TargetSummary/index.mjs"
@@ -1009,6 +1017,10 @@
     "./components/StyleInspector/hooks/useInspectorValues": {
       "types": "./dist/components/StyleInspector/hooks/useInspectorValues.d.ts",
       "import": "./dist/components/StyleInspector/hooks/useInspectorValues.mjs"
+    },
+    "./components/StyleInspector/hooks/usePropertyChange": {
+      "types": "./dist/components/StyleInspector/hooks/usePropertyChange.d.ts",
+      "import": "./dist/components/StyleInspector/hooks/usePropertyChange.mjs"
     },
     "./components/StyleInspector/hooks/useStyleBinding": {
       "types": "./dist/components/StyleInspector/hooks/useStyleBinding.d.ts",

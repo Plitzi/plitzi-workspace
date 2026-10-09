@@ -6,7 +6,7 @@ import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { clsx } from 'clsx';
 import { produce } from 'immer';
-import { use, useCallback, useEffect, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
 import { useBuilderStore, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
@@ -148,7 +148,9 @@ const StyleInspector = ({
   const showMoreTargets = moreTargets || targetInUse;
   const parts = targetParts({ styleSelector, styleVariant, styleState, styleAncestor, stylePseudo, styleCondition });
 
-  useEffect(() => {
+  // Another element selected: the inspector starts again on its base selector, with nothing narrowed — read in the
+  // mode it is in then, which changing the mode alone does not redo.
+  const startOnSelector = useEffectEvent(() => {
     setStyleSelector('base');
     if (mode !== 'element') {
       return;
@@ -162,8 +164,9 @@ const StyleInspector = ({
     setStylePseudo(undefined);
     setStyleCondition(undefined);
     setComponentSubType(undefined);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onChange, styleSelectors]);
+  });
+
+  useEffect(() => startOnSelector(), [onChange, styleSelectors]);
 
   useDidUpdateEffect(() => {
     if (mode !== 'element') {

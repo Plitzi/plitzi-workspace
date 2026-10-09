@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import arrayMap from './arrayMap';
 import capitalize from './capitalize';
 import dateConverter from './dateConverter';
@@ -22,6 +20,9 @@ const utilities = {
   not,
   styleSelector,
   styleVariant
+  // Each utility types its own params and source, and a callback taking narrower ones is not a callback taking any: a
+  // registry of them is read by action name and called with what the binding resolved, which only `any` can say.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as Record<string, DataSourceUtility<any, any, any>>;
 
 export const utilityOptions = Object.values(utilities).map(({ title, action }) => ({ label: title, value: action }));

@@ -7,10 +7,7 @@ import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
 import UndoableContext from './UndoableContext';
 import UndoableReducer, { initialState } from './UndoableReducer';
 
-import type { UndoableContextValue, UndoableItem } from './UndoableContext';
-import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
-import type { Schema, Style } from '@plitzi/sdk-shared';
-import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
+import type { UndoableChange, UndoableContextValue } from './UndoableContext';
 import type { ReactNode } from 'react';
 
 export type UndoableContextProducerProps = {
@@ -22,43 +19,18 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
   const undoableRef = useRef(undoable);
   undoableRef.current = undoable;
 
-  const processItem = useCallback(
-    (item: UndoableItem<Schema, SchemaReducerActions> | UndoableItem<Style, StyleReducerActions>, isUndo = true) => {
-      switch (item.action.type) {
-        case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
-          const schemaItem = item as UndoableItem<Schema, SchemaReducerActions>;
-          schemaItem.dispatch({
-            type: SchemaActions.SCHEMA_UPDATE,
-            schema: isUndo ? schemaItem.prevState : schemaItem.nextState
-          });
-          return;
-        }
+  const processItem = useCallback((change: UndoableChange, isUndo = true) => {
+    if (change.kind === 'schema') {
+      change.dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: isUndo ? change.prevState : change.nextState });
 
-        case StyleActions[item.action.type as keyof typeof StyleActions]: {
-          const styleItem = item as UndoableItem<Style, StyleReducerActions>;
-          styleItem.dispatch({
-            type: StyleActions.STYLE_UPDATE,
-            style: isUndo ? styleItem.prevState : styleItem.nextState
-          });
-          return;
-        }
+      return;
+    }
 
-        default:
-          return;
-      }
-    },
-    []
-  );
+    change.dispatch({ type: StyleActions.STYLE_UPDATE, style: isUndo ? change.prevState : change.nextState });
+  }, []);
 
   const undoableAddUndo = useCallback(
-    (
-      prevState: UndoableItem['prevState'],
-      action: UndoableItem['action'],
-      nextState: UndoableItem['nextState'],
-      dispatch: UndoableItem['dispatch']
-    ) => {
-      dispatchUndoable({ type: 'undoableAddUndo', prevState, action, nextState, dispatch });
-    },
+    (change: UndoableChange) => dispatchUndoable({ type: 'undoableAddUndo', change }),
     [dispatchUndoable]
   );
 
@@ -107,19 +79,29 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
    * A `queryFailed` revert is neither: the queue is putting back what a rejected mutation left behind, which the user
    * did not do and which invalidates nothing.
    */
-  const undoableMiddleware = useCallback<UndoableContextValue['undoableMiddleware']>(
-    (prevState, state, dispatch, action) => {
-      if (isUserEdit(action)) {
-        undoableAddUndo(prevState, action, state, dispatch);
+  const remember = useCallback(
+    (change: UndoableChange) => {
+      if (isUserEdit(change.action)) {
+        undoableAddUndo(change);
 
         return;
       }
 
-      if (action.fromSubscriptions) {
+      if (change.action.fromSubscriptions) {
         undoableClearHistory();
       }
     },
     [undoableAddUndo, undoableClearHistory]
+  );
+
+  const undoableSchema = useCallback<UndoableContextValue['undoableSchema']>(
+    (prevState, nextState, dispatch, action) => remember({ kind: 'schema', prevState, nextState, dispatch, action }),
+    [remember]
+  );
+
+  const undoableStyle = useCallback<UndoableContextValue['undoableStyle']>(
+    (prevState, nextState, dispatch, action) => remember({ kind: 'style', prevState, nextState, dispatch, action }),
+    [remember]
   );
 
   const { canUndo, canRedo } = undoable;
@@ -133,7 +115,8 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
       undoableUndo,
       undoableRedo,
       undoableClearHistory,
-      undoableMiddleware
+      undoableSchema,
+      undoableStyle
     }),
     [
       canUndo,
@@ -143,7 +126,8 @@ const UndoableContextProducer = ({ children }: UndoableContextProducerProps) => 
       undoableUndo,
       undoableRedo,
       undoableClearHistory,
-      undoableMiddleware
+      undoableSchema,
+      undoableStyle
     ]
   );
 

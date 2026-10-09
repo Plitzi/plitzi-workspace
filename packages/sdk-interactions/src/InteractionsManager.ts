@@ -13,6 +13,7 @@ import type {
   ElementInteraction,
   EventBridgeEvent,
   InteractionCallback,
+  InteractionsManagerApi,
   QueryParams,
   RouteParams,
   Subscriptor,
@@ -43,12 +44,13 @@ const answersFiring = (node: ElementInteraction, payload: Record<string, unknown
   return true;
 };
 
-class InteractionsManager {
+class InteractionsManager implements InteractionsManagerApi {
   eventBridge: InstanceType<typeof EventBridge>;
   parentManager?: InteractionsManager;
   childManagers: InteractionsManager[];
   interactionsData: Record<string, string | number | boolean>;
   subscriptors: Record<string, Subscriptor>;
+  // Every element's callbacks, each typed by its own params: a registry of them read by name can only say `any`.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   callbacksAvailables: Record<string, Record<string, InteractionCallback<any>>>;
   /**
@@ -375,7 +377,7 @@ class InteractionsManager {
     return childManager;
   };
 
-  removeChildManager = (childManager: InteractionsManager) => {
+  removeChildManager = (childManager: InteractionsManagerApi) => {
     this.childManagers = this.childManagers.filter(manager => manager !== childManager);
   };
 

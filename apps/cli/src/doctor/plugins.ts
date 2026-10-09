@@ -89,6 +89,49 @@ const packageOf = (specifier: string): string =>
     .slice(0, specifier.startsWith('@') ? 2 : 1)
     .join('/');
 
+/** A plugin's panel for the builder, as `plugin add` writes it: `Settings.tsx` beside the entry. */
+const PANEL_FILE = /^Settings\.[cm]?[jt]sx?$/;
+
+/**
+ * Every element has its panel in the builder, even with nothing of its own to set: one without reads "Settings not
+ * available", which is what a broken element looks like. Held to what the entry's bundle takes in, since a `Settings.tsx`
+ * the entry never imports is no panel either.
+ */
+const panelFindings = async (root: string, entry: string, inputs: readonly string[]): Promise<Finding[]> => {
+  const folder = path.dirname(entry);
+  const imported = inputs.some(input => path.dirname(input) === folder && PANEL_FILE.test(path.basename(input)));
+  if (imported) {
+    return [];
+  }
+
+  const written = (await fs.readdir(path.join(root, folder)).catch(() => [])).find(file => PANEL_FILE.test(file));
+  if (written) {
+    const file = path.join(folder, written);
+
+    return [
+      say.warning(
+        'plugin-settings-missing',
+        `${file} is not part of the plugin: ${entry} never imports it, so the builder has no panel for the element.`,
+        {
+          file,
+          fix: 'Pass it with the component: Object.assign(Component, declaration, { pluginSettings: Settings }).'
+        }
+      )
+    ];
+  }
+
+  return [
+    say.warning(
+      'plugin-settings-missing',
+      `${folder} has no Settings.tsx: the builder shows "Settings not available." for the element.`,
+      {
+        file: entry,
+        fix: 'Write one, with a control per attribute (as `plitzi plugin add` does), and pass it as `pluginSettings`.'
+      }
+    )
+  ];
+};
+
 /**
  * Whether the plugin builds as the server builds it — for the browser, from the project's own install: every package
  * it imports one `package.json` declares — and exports its component by default. Its files of other kinds (styles,
@@ -148,6 +191,7 @@ const builds = async (root: string, entry: string, declared: ReadonlySet<string>
 
   return [
     ...said(),
+    ...(await panelFindings(root, entry, Object.keys(result.metafile.inputs))),
     ...(exported.includes('default')
       ? []
       : [

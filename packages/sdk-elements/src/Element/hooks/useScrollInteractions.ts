@@ -11,7 +11,7 @@ import {
   scrollState
 } from '@plitzi/sdk-shared/helpers/scroll';
 
-import type { InteractionsManager } from '@plitzi/sdk-interactions';
+import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
 import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
 import type { ScrollStepBehavior, ScrollStepPosition, ScrollTriggerPayload } from '@plitzi/sdk-shared/helpers/scroll';
 import type { RefObject } from 'react';
@@ -22,7 +22,7 @@ export type UseScrollInteractionsProps = {
   nodeRef: RefObject<HTMLElement | null>;
   interactions?: Record<string, ElementInteraction>;
   previewMode: boolean;
-  interactionsManager: InteractionsManager;
+  interactionsManager: InteractionsManagerApi;
 };
 
 type ScrollParams = { x?: unknown; y?: unknown; behavior?: unknown };

@@ -2,6 +2,8 @@ import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback } from 'react';
 
+import useSettingsUpdate from '../../useSettingsUpdate';
+
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -21,7 +23,7 @@ const Settings = ({
   autoHideAfterClick = true,
   onUpdate
 }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   const handleChangeAutoHide = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('autoHideAfterClick', e.target.checked),
@@ -30,23 +32,23 @@ const Settings = ({
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input label="Header Label" value={headerLabel} onChange={handleChange('headerLabel')} size="xs" />
+      <Input label="Header Label" value={headerLabel} onChange={update.text('headerLabel')} size="xs" />
       <Input
         label="Accept Label Button"
         value={acceptButtonLabel}
-        onChange={handleChange('acceptButtonLabel')}
+        onChange={update.text('acceptButtonLabel')}
         size="xs"
       />
       <Input
         label="Reject Label Button"
         value={rejectButtonLabel}
-        onChange={handleChange('rejectButtonLabel')}
+        onChange={update.text('rejectButtonLabel')}
         size="xs"
       />
       <Input
         label="Accept Label Button Loading"
         value={acceptButtonLabelLoading}
-        onChange={handleChange('acceptButtonLabelLoading')}
+        onChange={update.text('acceptButtonLabelLoading')}
         size="xs"
       />
       <Checkbox

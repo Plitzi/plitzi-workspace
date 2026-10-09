@@ -2,9 +2,8 @@ import { useCallback, useMemo } from 'react';
 
 import { COMMIT_ORIGIN_LABEL } from '../../helpers';
 import CommitCause from '../CommitCause';
-import DetailSidebar from '../DetailSidebar';
 import DurationLegend from '../DurationLegend';
-import SidebarShell, { SidebarEmpty } from '../SidebarShell';
+import SidebarShell from '../SidebarShell';
 import SidebarToggle from '../SidebarToggle';
 import FlameFrame, { ROW_HEIGHT } from './FlameFrame';
 
@@ -157,11 +156,7 @@ const Flamegraph = ({
             ))}
           </div>
         </div>
-        {sidebarOpen && (
-          <SidebarShell>
-            {active ? <DetailSidebar node={active} commit={commit} model={model} /> : <SidebarEmpty />}
-          </SidebarShell>
-        )}
+        {sidebarOpen && <SidebarShell active={active} commit={commit} model={model} />}
       </div>
 
       <DurationLegend />

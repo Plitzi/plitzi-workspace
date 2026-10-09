@@ -1,5 +1,5 @@
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 
@@ -42,7 +42,7 @@ const delayTime: InteractionCallback<{ returnMode: 'jsonObject' | 'json' | 'text
         if (templateParsed && typeof templateParsed === 'object') {
           return {
             template: '',
-            content: getPathsFromObeject(templateParsed).reduce(
+            content: getPathsFromObject(templateParsed).reduce(
               (acum, templateItem) => ({ ...acum, [templateItem]: '' }),
               {}
             )

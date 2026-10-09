@@ -6,10 +6,7 @@ import BuilderStyleContextProvider from '@plitzi/sdk-style/BuilderStyleContextPr
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui';
-import type { Style } from '@plitzi/sdk-shared';
 import type { BuilderStyleMiddleware } from '@plitzi/sdk-style/BuilderStyleContextProvider';
-import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
 
 export type StyleContextProviderProps = {
   children: React.ReactNode;
@@ -18,20 +15,20 @@ export type StyleContextProviderProps = {
 
 const StyleContextProvider = ({ children, includeSubscriptions = true }: StyleContextProviderProps) => {
   const { style } = use(NetworkInternalContext);
-  const { enqueueMiddleware } = use(QueueContext);
-  const { undoableMiddleware } = use(UndoableContext);
+  const { enqueueStyle } = use(QueueContext);
+  const { undoableStyle } = use(UndoableContext);
 
   // The history middleware is deliberately unfiltered: it has to SEE another session's edit to know its snapshots are
   // stale (it drops them). The queue must not, or it would send the server back the change it just received.
   const middlewares = useMemo<BuilderStyleMiddleware[]>(
     () => [
-      { middleware: undoableMiddleware as ReducerMiddlewareCallback<Style, [action: StyleReducerActions]> },
+      { middleware: undoableStyle },
       {
-        middleware: enqueueMiddleware as ReducerMiddlewareCallback<Style, [action: StyleReducerActions]>,
+        middleware: enqueueStyle,
         filterCallback: isUserEdit
       }
     ],
-    [enqueueMiddleware, undoableMiddleware]
+    [enqueueStyle, undoableStyle]
   );
 
   return (

@@ -12,6 +12,7 @@ import { useSdkStore } from '@plitzi/sdk-shared/store';
 import { useBuilderStore, useCommonStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 
+import useSettingsUpdate from '../../useSettingsUpdate';
 import FiltersInput from './components/FiltersInput';
 
 import type { ConnectorFilterValue } from './components/FiltersInput';
@@ -93,7 +94,7 @@ const Settings = ({
     'navigation.currentPageId'
   ]);
 
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   const handleChangeQuery = useCallback((value: string) => onUpdate?.('query', value), [onUpdate]);
 
@@ -206,7 +207,7 @@ const Settings = ({
               way in this element uses.
             </div>
           )}
-          <Select value={action} label="Action" onChange={handleChange('action')} size="xs">
+          <Select value={action} label="Action" onChange={update.text('action')} size="xs">
             <option value="">Select an action…</option>
             {(actionCatalog ?? []).map(item => (
               <option key={item.identifier} value={item.identifier}>
@@ -230,7 +231,7 @@ const Settings = ({
               on the server.
             </div>
           )}
-          <Select value={connector} label="Connector" onChange={handleChange('connector')} size="xs">
+          <Select value={connector} label="Connector" onChange={update.text('connector')} size="xs">
             <option value="">Select a connector…</option>
             {connectorOptions.map(item => (
               <option key={item.identifier} value={item.identifier}>
@@ -239,7 +240,7 @@ const Settings = ({
             ))}
           </Select>
           {readEndpoints.length > 1 && (
-            <Select value={endpoint} label="Endpoint" onChange={handleChange('endpoint')} size="xs">
+            <Select value={endpoint} label="Endpoint" onChange={update.text('endpoint')} size="xs">
               {readEndpoints.map(name => (
                 <option key={name} value={name}>
                   {name}
@@ -252,7 +253,7 @@ const Settings = ({
             label="Resource"
             placeholder="posts"
             title="The collection read through the connector — what {{resource}} becomes in the endpoint path."
-            onChange={handleChange('resource')}
+            onChange={update.text('resource')}
             size="xs"
           />
           <FiltersInput value={filters} operators={operators} onChange={handleChangeFilters} />
@@ -264,8 +265,8 @@ const Settings = ({
           />
           {!singleRecord && (
             <>
-              <Input value={limit} label="Records per page" onChange={handleChange('limit')} size="xs" />
-              <Select value={pagination} label="Pagination" onChange={handleChange('pagination')} size="xs">
+              <Input value={limit} label="Records per page" onChange={update.text('limit')} size="xs" />
+              <Select value={pagination} label="Pagination" onChange={update.text('pagination')} size="xs">
                 <option value="none">None</option>
                 <option value="url">URL (indexable)</option>
                 <option value="append">Load more</option>
@@ -275,7 +276,7 @@ const Settings = ({
                   value={pageParam}
                   label="Page parameter"
                   title="Query-string key this list pages on. Give each list its own so they page independently."
-                  onChange={handleChange('pageParam')}
+                  onChange={update.text('pageParam')}
                   size="xs"
                 />
               )}
@@ -298,7 +299,7 @@ const Settings = ({
               onChange={handleChangeQuery}
             />
           </div>
-          <Select value={method} label="Method" onChange={handleChange('method')} size="xs">
+          <Select value={method} label="Method" onChange={update.text('method')} size="xs">
             <option value="get">Get</option>
             <option value="post">Post</option>
           </Select>
@@ -307,10 +308,10 @@ const Settings = ({
             label="Access Token"
             title="Bind this to the signed-in visitor's token. A value typed here is saved in the page and served to
               every visitor — put anything secret behind a connector instead."
-            onChange={handleChange('accessToken')}
+            onChange={update.text('accessToken')}
             size="xs"
           />
-          <Select value={credentials} label="Include Credentials" onChange={handleChange('credentials')} size="xs">
+          <Select value={credentials} label="Include Credentials" onChange={update.text('credentials')} size="xs">
             <option value="include">Include</option>
             <option value="omit">Omit</option>
             <option value="same-origin">Same Origin</option>
@@ -323,14 +324,14 @@ const Settings = ({
                 label="Fresh for (s)"
                 title="How long an answer is reused without asking again — here and by every provider requesting the
                   same thing. Past it, the answer stays on screen while a fresh one is fetched. 0 asks on every mount."
-                onChange={handleChange('staleTime')}
+                onChange={update.text('staleTime')}
                 size="xs"
               />
               <Input
                 value={String(gcTime)}
                 label="Keep unused for (s)"
                 title="How long an answer nobody is showing is kept, so coming back to it within that time paints at once."
-                onChange={handleChange('gcTime')}
+                onChange={update.text('gcTime')}
                 size="xs"
               />
               <div className="rounded-sm border border-gray-300 p-2 text-xs text-gray-500 dark:border-zinc-600 dark:text-zinc-400">
@@ -361,7 +362,7 @@ const Settings = ({
         label="Refresh every (s)"
         title="Asks again on its own this often, for a page showing something that keeps moving. Paused while the tab
           is hidden. 0 never does."
-        onChange={handleChange('refreshSeconds')}
+        onChange={update.text('refreshSeconds')}
         size="xs"
       />
       <Switch checked={advancedSettings} size="sm" label="Advanced Settings" onChange={handleChangeEnabled} />

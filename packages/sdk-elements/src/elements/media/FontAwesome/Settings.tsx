@@ -1,8 +1,8 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback } from 'react';
 
 import IconPicker from '../../../components/IconPicker';
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 type SettingsProps = {
   icon?: string;
@@ -13,7 +13,7 @@ type SettingsProps = {
 };
 
 const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', label = '', onUpdate }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   return (
     <div className="flex grow basis-0 flex-col gap-4 py-2">
@@ -21,14 +21,14 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', label = '', o
         value={label}
         label="Meaning"
         placeholder="Only for an icon that says something alone"
-        onChange={handleChange('label')}
+        onChange={update.text('label')}
         size="xs"
       />
       <Select
         label="Icon Animation"
         value={iconAnimation}
         placeholder="None"
-        onChange={handleChange('iconAnimation')}
+        onChange={update.text('iconAnimation')}
         size="xs"
       >
         <option value="fa-beat">Beat</option>
@@ -39,13 +39,13 @@ const Settings = ({ icon = '', size = 'fa-1x', iconAnimation = '', label = '', o
         <option value="fa-shake">Shake</option>
         <option value="fa-spin">Spin</option>
       </Select>
-      <Select value={size} label="Icon Size" onChange={handleChange('size')} size="xs">
+      <Select value={size} label="Icon Size" onChange={update.text('size')} size="xs">
         <option value="fa-1x">1X</option>
         <option value="fa-2x">2X</option>
         <option value="fa-3x">3X</option>
         <option value="fa-4x">4X</option>
       </Select>
-      <IconPicker value={icon} onChange={handleChange('icon')} />
+      <IconPicker value={icon} onChange={update.text('icon')} />
     </div>
   );
 };

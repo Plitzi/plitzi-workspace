@@ -1,4 +1,4 @@
-import { memo, use, useCallback } from 'react';
+import { memo, useCallback } from 'react';
 
 import OthersForm from './OthersForm';
 import OthersInteraction from './OthersInteraction';
@@ -11,9 +11,7 @@ import { OTHERS_KEYS } from '../../categoryKeys';
 import CategoryAdvanced from '../../components/CategoryAdvanced';
 import CategoryContainer from '../../components/CategoryContainer';
 import useInspectorValues from '../../hooks/useInspectorValues';
-import StyleInspectorContext from '../../StyleInspectorContext';
-
-import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
+import usePropertyChange from '../../hooks/usePropertyChange';
 
 export type OthersProps = {
   replaceTokens?: boolean;
@@ -22,7 +20,6 @@ export type OthersProps = {
 };
 
 const Others = ({ replaceTokens = false, isCollapsed = true, onCollapse }: OthersProps) => {
-  const { setValue } = use(StyleInspectorContext);
   const {
     'pointer-events': pointerEvents,
     'user-select': userSelect,
@@ -55,11 +52,7 @@ const Others = ({ replaceTokens = false, isCollapsed = true, onCollapse }: Other
 
   const handleCollapse = useCallback((isCollapsed: boolean) => onCollapse?.('others', isCollapsed), [onCollapse]);
 
-  const handleChange = useCallback(
-    (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      setValue(type, value as StyleValue),
-    [setValue]
-  );
+  const handleChange = usePropertyChange();
 
   return (
     <CategoryContainer

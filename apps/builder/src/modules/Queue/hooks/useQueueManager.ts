@@ -7,11 +7,9 @@ import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
 
 import { worthRetrying, writeFailed } from '../helpers';
 
-import type { QueueItem } from '../QueueContext';
-import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
-import type { BuilderMutationsMap, BuilderQueriesMap, Element, Schema, Style } from '@plitzi/sdk-shared';
+import type { QueuedChange } from '../QueueContext';
+import type { BuilderMutationsMap, BuilderQueriesMap, Element, Schema } from '@plitzi/sdk-shared';
 import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
-import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
 
 export type UseQueueManagerProps = {
   delay?: number;
@@ -28,11 +26,11 @@ const useQueueManager = ({
   retryTimeout = 2500,
   disabled = false
 }: UseQueueManagerProps) => {
-  const queue = useMemo<QueueItem[]>(() => [], []);
+  const queue = useMemo<QueuedChange[]>(() => [], []);
   const [processing, setProcessing] = useState(false);
 
   const processItem = useCallback(
-    async (item: QueueItem<Schema, SchemaReducerActions> | QueueItem<Style, StyleReducerActions>) => {
+    async (item: QueuedChange) => {
       switch (item.action.type) {
         // Schema
 
@@ -318,29 +316,15 @@ const useQueueManager = ({
   // Putting back the state a rejected mutation left behind. `queryFailed` is what keeps this dispatch out of both
   // middlewares (`isUserEdit`): the user did not make this change, so it is not undoable, and re-queueing it would
   // send the server the very state it just refused.
-  const revertItem = useCallback(
-    (item: QueueItem<Schema, SchemaReducerActions> | QueueItem<Style, StyleReducerActions>) => {
-      switch (item.action.type) {
-        case SchemaActions[item.action.type as keyof typeof SchemaActions]: {
-          const schemaItem = item as QueueItem<Schema, SchemaReducerActions>;
-          schemaItem.dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: schemaItem.prevState, queryFailed: true });
+  const revertItem = useCallback((item: QueuedChange) => {
+    if (item.kind === 'schema') {
+      item.dispatch({ type: SchemaActions.SCHEMA_UPDATE, schema: item.prevState, queryFailed: true });
 
-          return;
-        }
+      return;
+    }
 
-        case StyleActions[item.action.type as keyof typeof StyleActions]: {
-          const styleItem = item as QueueItem<Style, StyleReducerActions>;
-          styleItem.dispatch({ type: StyleActions.STYLE_UPDATE, style: styleItem.prevState, queryFailed: true });
-
-          return;
-        }
-
-        default:
-          return;
-      }
-    },
-    []
-  );
+    item.dispatch({ type: StyleActions.STYLE_UPDATE, style: item.prevState, queryFailed: true });
+  }, []);
 
   const processQueue = useCallback(async () => {
     if (queue.length === 0) {
@@ -371,7 +355,7 @@ const useQueueManager = ({
   const processQueueDebounced = useMemo(() => debounce(processQueue, delay), [processQueue, delay]);
 
   const enqueue = useCallback(
-    (item: QueueItem) => {
+    (item: QueuedChange) => {
       if (disabled) {
         return;
       }

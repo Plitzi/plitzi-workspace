@@ -2,6 +2,8 @@ import Checkbox from '@plitzi/plitzi-ui/Checkbox';
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback } from 'react';
 
+import useSettingsUpdate from '../../useSettingsUpdate';
+
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -11,7 +13,7 @@ type SettingsProps = {
 };
 
 const Settings = ({ title = 'Modal Header', autoHideAfterClick = true, onUpdate }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   const handleChangeAutoHide = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('autoHideAfterClick', e.target.checked),
@@ -20,7 +22,7 @@ const Settings = ({ title = 'Modal Header', autoHideAfterClick = true, onUpdate 
 
   return (
     <div className="flex flex-col gap-4 py-2">
-      <Input label="Title" value={title} onChange={handleChange('title')} size="xs" />
+      <Input label="Title" value={title} onChange={update.text('title')} size="xs" />
       <Checkbox
         label="Hide after click background"
         checked={autoHideAfterClick}

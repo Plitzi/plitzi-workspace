@@ -1,6 +1,6 @@
 import type { DataSourceUtility, DataSourceUtilityParamsValue, DataSourceUtilityParamType } from '../../types';
 
-const callback = (_source: string, params: DataSourceUtilityParamsValue) => {
+const callback = (_source: unknown, params: DataSourceUtilityParamsValue) => {
   const { valueType, value } = params;
   if (valueType === 'select') {
     return value === 'true';

@@ -8,7 +8,7 @@ export type BuilderSubscriptionsContextValue = {
   subscriptionsPush: (data: RTMessageManagedClient) => void;
   // `subscriberId` namespaces the slot: several listeners of the same event (one per collaborator) have to
   // coexist, and without it each registration replaced the previous one.
-  subscriptionsRegisterCallback: (type: RTEvent, callback: RTCallback, subscriberId?: string) => void;
+  subscriptionsRegisterCallback: <E extends RTEvent>(type: E, callback: RTCallback<E>, subscriberId?: string) => void;
   subscriptionsUnregisterCallback: (type: RTEvent, subscriberId?: string) => void;
 };
 

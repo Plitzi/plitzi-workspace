@@ -246,7 +246,7 @@ const INPUT: CSSProperties = {
 export default Settings;
 `;
 
-const elementIndex = ({ component: name }: PluginNames): string => `import Base${name} from './${name}';
+export const elementIndex = ({ component: name }: PluginNames): string => `import Base${name} from './${name}';
 import declaration from './declaration';
 import Settings from './Settings';
 

@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, memo } from 'react';
 
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import NodeBody from './NodeBody';
 import NodeFooter from './NodeFooter';
@@ -138,7 +138,7 @@ const WorkflowNode = ({
 
       return {
         ...acum1,
-        ...getPathsFromObeject(params).reduce(
+        ...getPathsFromObject(params).reduce(
           (acum2, path) => ({
             ...acum2,
             [`${nodeId}_${path}`]: {
@@ -150,7 +150,7 @@ const WorkflowNode = ({
           }),
           {}
         ),
-        ...getPathsFromObeject(previewData[nodeId]).reduce(
+        ...getPathsFromObject(previewData[nodeId]).reduce(
           (acum2, path) => ({
             ...acum2,
             [`${nodeId}_${path.replaceAll('.', '_')}`]: {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-refresh/only-export-components */
 import { use } from 'react';
 
@@ -6,16 +5,10 @@ import { sharedContext } from '../helpers/sharedContext';
 
 import type { BuilderContextValue } from '../builder';
 import type { NetworkContextValue } from '../network';
-import type {
-  ComponentContextValue,
-  EventBridgeContextValue,
-  InteractionsContextValue,
-  PluginsContextValue,
-  ColorScheme
-} from '../types';
+import type { ComponentContextValue, InteractionsContextValue, PluginsContextValue, ColorScheme } from '../types';
 import type { Context, ReactNode, RefObject } from 'react';
 
-export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> = {
+export type PlitziServiceContextValue = {
   settings: {
     isHydrating?: boolean;
     previewMode?: boolean;
@@ -29,12 +22,13 @@ export type PlitziServiceContextValue<TEventBridge = any, TInteractions = any> =
     getWindow: () => Window | null;
     rootRef: RefObject<HTMLElement | null>;
   };
+  // Each a host's own context, of a value only it knows; a context is invariant, so no common type holds them all.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   customContexts: Record<string, Context<any>>;
   contexts: {
     ComponentContext: Context<ComponentContextValue>;
-    EventBridgeContext: Context<EventBridgeContextValue<TEventBridge>>;
     PluginsContext: Context<PluginsContextValue>;
-    InteractionsContext: Context<InteractionsContextValue<TInteractions>>;
+    InteractionsContext: Context<InteractionsContextValue>;
     NetworkContext: Context<NetworkContextValue>;
     BuilderContext?: Context<BuilderContextValue>;
   };
@@ -47,8 +41,8 @@ const PlitziServiceContext = sharedContext<PlitziServiceContextValue>(
   plitziServiceContextDefaultValue
 );
 
-const usePlitziServiceContext = <TEventBridge = any, TInteractions = any>() => {
-  const context = use(PlitziServiceContext) as PlitziServiceContextValue<TEventBridge, TInteractions> | undefined;
+const usePlitziServiceContext = () => {
+  const context = use(PlitziServiceContext) as PlitziServiceContextValue | undefined;
   if (context === undefined) {
     throw new Error(
       'ServiceContext value is undefined. Make sure you use the PlitziServiceProvider before using the hook.'

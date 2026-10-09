@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { Element } from './SchemaTypes';
 import type { Field, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 
@@ -32,11 +30,12 @@ export type DataSourceUtilityParamsValue<T = string | boolean | number> = Record
 
 export type DataSourceUtilityParamType = 'text' | 'select' | 'textarea' | 'checkbox' | 'codemirror-text';
 
-export type DataSourceUtility<
-  TSource = any,
-  TSourceReturn = string | boolean | number,
-  TParams = string | boolean | number
-> = {
+/**
+ * A step a binding's value goes through on its way to an attribute. It receives whatever the binding resolved to — or
+ * the step before it answered — and a value it has no use for goes on untouched, so both ends are `unknown` unless one
+ * says more.
+ */
+export type DataSourceUtility<TSource = unknown, TSourceReturn = unknown, TParams = string | boolean | number> = {
   action: string;
   title: string;
   type: 'utility' | 'unknown';
@@ -46,7 +45,7 @@ export type DataSourceUtility<
     source: TSource,
     params: DataSourceUtilityParamsValue<TParams>,
     element: Partial<Element>,
-    dataSources?: Record<string, any>
+    dataSources?: Record<string, unknown>
   ) => TSourceReturn;
 };
 

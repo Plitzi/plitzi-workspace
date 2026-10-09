@@ -18,9 +18,10 @@ import CategoryContainer from '../../components/CategoryContainer';
 import CategoryOption from '../../components/CategoryOption';
 import CategorySection from '../../components/CategorySection';
 import useInspectorValues from '../../hooks/useInspectorValues';
+import usePropertyChange from '../../hooks/usePropertyChange';
 import StyleInspectorContext from '../../StyleInspectorContext';
 
-import type { StyleCategory, StyleObject, StyleValue } from '@plitzi/sdk-shared';
+import type { StyleCategory, StyleObject } from '@plitzi/sdk-shared';
 
 const keyValueLetter = ['letter-spacing', 'word-spacing', 'text-indent'] as StyleCategory[];
 
@@ -72,11 +73,7 @@ const Typography = ({ replaceTokens = false, isCollapsed = true, onCollapse }: T
     font => font.family === primaryFamily(typeof fontFamily === 'string' ? fontFamily : '')
   );
 
-  const handleChange = useCallback(
-    (type: StyleCategory) => (value: StyleValue | Record<StyleCategory, StyleValue> | boolean) =>
-      setValue(type, value as StyleValue),
-    [setValue]
-  );
+  const handleChange = usePropertyChange();
 
   const handleChangeClamp = useCallback((values: StyleObject) => setValue(undefined, values), [setValue]);
 

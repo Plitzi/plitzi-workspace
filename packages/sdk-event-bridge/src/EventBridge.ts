@@ -4,6 +4,8 @@ import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
 
 import type { EventBridgeEvent, EventBridgeModule } from '@plitzi/sdk-shared';
 
+// Each event's listeners take that event's own arguments, and nothing yet maps an event to them: a listener of one is
+// not a listener of every one, so the bridge's registry can only say `any`.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventBridgeCallback<T = any> = (...data: T[]) => T | Promise<T>;
 

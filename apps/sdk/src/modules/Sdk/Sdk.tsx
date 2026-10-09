@@ -1,7 +1,6 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import useResolvedVariables from '@plitzi/sdk-shared/dataSource/hooks/useResolvedVariables';
@@ -130,7 +129,6 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
         ComponentContext,
         NetworkContext,
         PluginsContext,
-        EventBridgeContext,
         InteractionsContext
       }
     }),

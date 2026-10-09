@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useEffectEvent, useMemo } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/react';
 
@@ -28,18 +28,31 @@ const useRegisterSource = ({ id = '', source, name, fields = [] }: UseRegisterSo
   ) => void;
   const uniqueId = useMemo(() => `${id}_${makeId(8)}`, [id]);
 
+  // Registered once per source; its name and fields are kept current by the effects below, so neither re-registers it.
+  const register = useEffectEvent(() => {
+    setStore(`sources.${uniqueId}`, { id: uniqueId, meta: { id, source, name, fields } });
+  });
+
   useEffect(() => {
     if (!source) {
       return undefined;
     }
 
-    setStore(`sources.${uniqueId}`, { id: uniqueId, meta: { id, source, name, fields } });
+    register();
 
     // `unmount` removes the key outright instead of leaving a dead `sources.<id>: undefined` the source registry
     // would still have to defend against (see `getSourcesByElementId`).
     return () => setStore(`sources.${uniqueId}`, undefined, { unmount: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uniqueId, source]);
+  }, [uniqueId, source, setStore]);
+
+  // An element renamed in the builder: the binding picker lists the source by the name it has now.
+  useEffect(() => {
+    if (!source) {
+      return;
+    }
+
+    setStore(`sources.${uniqueId}.meta.name`, name);
+  }, [name, source, uniqueId, setStore]);
 
   useEffect(() => {
     if (!source) {

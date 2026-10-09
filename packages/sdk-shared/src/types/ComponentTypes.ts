@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ComponentDefinition, InternalPropsSTG1 } from './ElementTypes';
 import type { Asset } from './PluginTypes';
 import type { FC, ReactNode, RefObject } from 'react';
@@ -20,6 +19,8 @@ export type ComponentPlugin<T = unknown> = ComponentPluginFC<T> & {
   plugins?: Record<string, ComponentPlugin<T>>;
   origin: ComponentOrigin;
   extraProps?: Record<string, unknown>;
+  // The panel takes the plugin's own attributes as its props, which only the plugin knows.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pluginSettings?: FC<any>;
   version?: string;
   initialItems?: string[];
@@ -47,6 +48,8 @@ export type ComponentPluginWithHOC<T = unknown> = ComponentPluginFC<T & { intern
   plugins?: Record<string, ComponentPluginWithHOC<T>>;
   origin: ComponentOrigin;
   extraProps?: Record<string, unknown>;
+  // The panel takes the plugin's own attributes as its props, which only the plugin knows.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   pluginSettings?: FC<any>;
   version?: string;
   initialItems?: string[];

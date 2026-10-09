@@ -9,7 +9,6 @@ import { useCallback, use, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
@@ -82,8 +81,7 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
         ComponentContext,
         PluginsContext,
         NetworkContext,
-        InteractionsContext,
-        EventBridgeContext
+        InteractionsContext
       }
     }),
     [previewMode, settings, resolvedTheme, id, getWindow, rootRef]

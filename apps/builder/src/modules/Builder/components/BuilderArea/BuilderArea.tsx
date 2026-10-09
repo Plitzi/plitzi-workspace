@@ -4,7 +4,6 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import PluginsContext from '@plitzi/sdk-plugins/PluginsContext';
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
@@ -185,7 +184,6 @@ const BuilderArea = ({
         NetworkContext,
         PluginsContext,
         InteractionsContext,
-        EventBridgeContext,
         BuilderContext
       }
     }),

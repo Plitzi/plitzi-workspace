@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import EventBridge from './EventBridge';
 import EventBridgeContext from './EventBridgeContext';
 
-import type { EventBridgeContextValue } from '@plitzi/sdk-shared';
+import type { EventBridgeContextValue } from './EventBridgeContext';
 import type { ReactNode } from 'react';
 
 export type EventBridgeContextProviderProps = {

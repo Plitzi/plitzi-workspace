@@ -4,9 +4,6 @@ import usePlitziServiceContext from '@plitzi/sdk-shared/hooks/usePlitziServiceCo
 
 import useElement from './useElement';
 
-import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
-import type { Context } from 'react';
-
 /** What a flow started by an event reads, as the plugin hands it: one value for each field its `preview` names. */
 export type PluginTriggerPayload<Preview> = Preview extends object
   ? { [Field in keyof Preview]: unknown }
@@ -29,8 +26,7 @@ const usePluginTrigger = <const D extends PluginTriggerDeclaration>(declaration:
     settings: { previewMode = true },
     contexts: { InteractionsContext }
   } = usePlitziServiceContext();
-  // The service context declares the manager loosely (`any`), as `RootElement` reads it too: this is the one it holds.
-  const { interactionsManager } = use(InteractionsContext as Context<InteractionsContextValue>);
+  const { interactionsManager } = use(InteractionsContext);
 
   return useCallback(
     <Event extends keyof D['triggers'] & string>(

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import useScrollInteractions from './useScrollInteractions';
 
-import type { InteractionsManager } from '@plitzi/sdk-interactions';
+import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
 import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
 
 const onScroll: ElementInteraction = {
@@ -22,7 +22,7 @@ const onScroll: ElementInteraction = {
 
 const fired = vi.fn<(id: string, action: string, payload: unknown) => Promise<void>>();
 // The hook calls one method of the manager; the rest of it has nothing to do with scrolling.
-const manager = { interactionTrigger: fired } as unknown as InteractionsManager;
+const manager = { interactionTrigger: fired } as unknown as InteractionsManagerApi;
 
 /** A row of cards 1000px wide in a 400px box: jsdom lays nothing out, so its sizes are set by hand. */
 const rowOfCards = () => {

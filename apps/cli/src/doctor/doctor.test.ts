@@ -173,6 +173,21 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(report, 'plugin-does-not-build')?.message).toContain('./Bar');
   });
 
+  it('asks every plugin for its panel in the builder, and for the entry to pass it', async () => {
+    await write('src/plugins/Gauge/declaration.ts', "export default { type: 'gauge' };\n");
+    await write('src/plugins/Gauge/index.ts', 'export default () => null;\n');
+    await write('src/plugins/Dial/declaration.ts', "export default { type: 'dial' };\n");
+    await write('src/plugins/Dial/Settings.tsx', 'export default () => null;\n');
+    await write('src/plugins/Dial/index.ts', 'export default () => null;\n');
+
+    const panels = (await run()).findings.filter(finding => finding.code === 'plugin-settings-missing');
+
+    expect(panels).toEqual([
+      expect.objectContaining({ severity: 'warning', file: 'src/plugins/Dial/Settings.tsx' }),
+      expect.objectContaining({ severity: 'warning', file: 'src/plugins/Gauge/index.ts' })
+    ]);
+  });
+
   /**
    * What the server and `npm run author` refuse to start with, and what works and should not stay — said as they say
    * it (`checkProjectLayout`), with the rest of the project still checked; `--fix` makes each fix with one reading.

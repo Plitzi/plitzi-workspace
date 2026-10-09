@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unnecessary-type-parameters */
 
 import type { SubscriptionCollaborator } from '../types';
@@ -91,7 +90,11 @@ export type RTMessageManagedServer =
   | { type: RTEvent.COLLABORATOR_CONNECTED; payload: SubscriptionCollaborator }
   | { type: RTEvent.COLLABORATOR_DISCONNECTED; payload: SubscriptionCollaborator };
 
-export type RTCallback = (...args: any[]) => void;
+/** What a message of one event carries, as the server sends it. */
+export type RTPayload<E extends RTEvent> = Extract<RTMessageManagedServer, { type: E }>['payload'];
+
+/** A listener for one realtime event, handed what that event carries. */
+export type RTCallback<E extends RTEvent = RTEvent> = (payload: RTPayload<E>) => void;
 
 export type RTMessage<T = unknown> = {
   type: RTEvent;

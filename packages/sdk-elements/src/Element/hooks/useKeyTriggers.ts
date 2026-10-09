@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { isFieldEditing, KEY_TRIGGER, keyPressCombo, parseKeys } from '@plitzi/sdk-shared/helpers/keys';
 
-import type { InteractionsManager } from '@plitzi/sdk-interactions';
+import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
 import type { KeyTriggerPayload } from '@plitzi/sdk-shared/helpers/keys';
 
@@ -18,7 +18,7 @@ export type UseKeyTriggersProps = {
   id: string;
   interactions?: Record<string, ElementInteraction>;
   previewMode: boolean;
-  interactionsManager: InteractionsManager;
+  interactionsManager: InteractionsManagerApi;
 };
 
 /**

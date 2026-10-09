@@ -48,6 +48,7 @@ type ElementType = (typeof elementDeclarations)[keyof typeof elementDeclarations
 
 // Keyed by the element's type, which is what the builder looks one up by — and every element has one, even with nothing
 // of its own to set: a key that is not a type is a panel never shown, and a type with none reads as a broken element.
+// Each panel takes its element's own attributes as props, so no one props type holds them all.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const defaultElementsSettings: Record<string, FC<any>> = {
   dropdown: Dropdown,

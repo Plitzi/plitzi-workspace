@@ -4,7 +4,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, use, useMemo, useState } from 'react';
 
-import { getPathsFromObeject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import WorkflowContext from '../WorkflowContext';
 
@@ -112,7 +112,7 @@ const ParamBinding = ({ nodeId: nodeIdProp = '', id, value = '', onChange }: Par
         resolve(finalFields);
       });
     } else if (previewData[node.value] as Record<string, unknown> | undefined) {
-      paths = getPathsFromObeject(previewData[node.value]).reduce<Exclude<Option, OptionGroup>[]>(
+      paths = getPathsFromObject(previewData[node.value]).reduce<Exclude<Option, OptionGroup>[]>(
         (acum, path) => [...acum, { value: `${node.value}.${path}`, label: path }],
         []
       );

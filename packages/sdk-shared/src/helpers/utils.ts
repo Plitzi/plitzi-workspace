@@ -15,7 +15,7 @@ Object.freeze(emptyObject);
 
 export { emptyObject };
 
-export const getPathsFromObeject = (
+export const getPathsFromObject = (
   object?: { [key: string]: unknown },
   basePath = '',
   glue = '.',
@@ -38,7 +38,7 @@ export const getPathsFromObeject = (
       return [...acum, path];
     }
 
-    return [...acum, path, ...getPathsFromObeject(object[key] as { [key: string]: unknown }, path, glue, skipArray)];
+    return [...acum, path, ...getPathsFromObject(object[key] as { [key: string]: unknown }, path, glue, skipArray)];
   }, []);
 };
 

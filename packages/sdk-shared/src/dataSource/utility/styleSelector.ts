@@ -3,7 +3,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import type { DataSourceUtility, DataSourceUtilityParamsValue, DisplayMode, Element, Style } from '../../types';
 
 const callback = (
-  _source: string,
+  _source: unknown,
   params: DataSourceUtilityParamsValue,
   _element: Partial<Element>,
   dataSources = {} as Record<string, unknown>

@@ -1,6 +1,7 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
-import { useCallback } from 'react';
+
+import useSettingsUpdate from '../../useSettingsUpdate';
 
 type SettingsProps = {
   mode?: 'pages' | 'loadMore';
@@ -25,15 +26,15 @@ const Settings = ({
   label = 'Pagination',
   onUpdate
 }: SettingsProps) => {
-  const handleChange = useCallback((key: string) => (value: string) => onUpdate?.(key, value), [onUpdate]);
+  const update = useSettingsUpdate(onUpdate);
 
   return (
     <div className="flex grow flex-col gap-4 py-2">
-      <Select value={mode} label="Mode" onChange={handleChange('mode')} size="xs">
+      <Select value={mode} label="Mode" onChange={update.text('mode')} size="xs">
         <option value="pages">Numbered pages</option>
         <option value="loadMore">Load more</option>
       </Select>
-      <Select value={target} label="On Page Change" onChange={handleChange('target')} size="xs">
+      <Select value={target} label="On Page Change" onChange={update.text('target')} size="xs">
         <option value="url">Update the URL</option>
         <option value="interaction">Only fire the trigger</option>
       </Select>
@@ -42,25 +43,25 @@ const Settings = ({
           value={pageParam}
           label="Page parameter"
           title="Must match the page parameter of the provider this pager belongs to."
-          onChange={handleChange('pageParam')}
+          onChange={update.text('pageParam')}
           size="xs"
         />
       )}
       {mode === 'pages' && (
         <>
-          <Input value={windowSize} label="Pages shown" onChange={handleChange('windowSize')} size="xs" />
-          <Input value={previousLabel} label="Previous label" onChange={handleChange('previousLabel')} size="xs" />
-          <Input value={nextLabel} label="Next label" onChange={handleChange('nextLabel')} size="xs" />
+          <Input value={windowSize} label="Pages shown" onChange={update.text('windowSize')} size="xs" />
+          <Input value={previousLabel} label="Previous label" onChange={update.text('previousLabel')} size="xs" />
+          <Input value={nextLabel} label="Next label" onChange={update.text('nextLabel')} size="xs" />
         </>
       )}
       {mode === 'loadMore' && (
-        <Input value={loadMoreLabel} label="Button label" onChange={handleChange('loadMoreLabel')} size="xs" />
+        <Input value={loadMoreLabel} label="Button label" onChange={update.text('loadMoreLabel')} size="xs" />
       )}
       <Input
         value={label}
         label="Navigation name"
         title="What a screen reader calls this pager, in the site's language."
-        onChange={handleChange('label')}
+        onChange={update.text('label')}
         size="xs"
       />
       <span className="text-xs text-gray-500">

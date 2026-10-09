@@ -58,8 +58,7 @@ import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementCo
 import type { ElementChild } from '@plitzi/sdk-elements/Element/helpers/elementChildren';
 import type { PluginTriggerPayload } from '@plitzi/sdk-elements/Element/hooks/usePluginTrigger';
 import type { ChannelHandle } from '@plitzi/sdk-elements/realtime/useChannel';
-import type EventBridge from '@plitzi/sdk-event-bridge';
-import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
+import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
   ActionRunSummary,
   AnalyticsConfig,
@@ -71,7 +70,6 @@ import type {
   InteractionCallback,
   InteractionCallbackParamValues,
   Environment,
-  EventBridgeContextValue,
   HostActions,
   OfflineDataRaw,
   RenderMode,
@@ -403,12 +401,9 @@ const PlitziSdk = ({
 
 PlitziSdk.Plugin = Sdk.Plugin;
 
-type PlitziServiceContextValue = BasePlitziServiceContextValue<
-  InstanceType<typeof EventBridge>,
-  InstanceType<typeof InteractionsManager>
->;
+type PlitziServiceContextValue = BasePlitziServiceContextValue;
 
-const usePlitziServiceContext = baseUsePlitziServiceContext as () => PlitziServiceContextValue;
+const usePlitziServiceContext = baseUsePlitziServiceContext;
 
 export {
   track,

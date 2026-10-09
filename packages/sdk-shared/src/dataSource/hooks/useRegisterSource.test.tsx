@@ -56,6 +56,28 @@ describe('useRegisterSource', () => {
     expect(entry.meta.name).toBe('My Form');
   });
 
+  it('lists the source by the name its element has now, renamed without registering it again', () => {
+    const storeRef = { current: undefined as StoreApi<SourceState> | undefined };
+    let hook: { rerender: (props: { name: string }) => void } | undefined;
+
+    act(() => {
+      hook = renderHook(
+        ({ name }: { name: string }) => {
+          useStoreCapture(storeRef);
+          useRegisterSource({ id: 'form', source: 'form', name, fields: [] });
+        },
+        { wrapper: makeWrapper({}), initialProps: { name: 'My Form' } }
+      );
+    });
+    const [key] = Object.keys(getSources(storeRef.current));
+
+    act(() => hook?.rerender({ name: 'Booking' }));
+
+    const sources = getSources(storeRef.current);
+    expect(Object.keys(sources)).toEqual([key]);
+    expect((sources[key] as { meta: { name: string } }).meta.name).toBe('Booking');
+  });
+
   it('removes sources.<uniqueId> entirely on unmount (cleanup, no dead undefined entry)', () => {
     const storeRef = { current: undefined as StoreApi<SourceState> | undefined };
 

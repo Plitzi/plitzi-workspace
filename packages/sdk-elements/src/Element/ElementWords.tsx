@@ -1,5 +1,7 @@
 import clsx from 'clsx';
 
+import type { ReactNode } from 'react';
+
 export type IconPlacement = 'before' | 'after';
 
 type ElementIconProps = {
@@ -30,18 +32,38 @@ export type ElementWordsProps = {
   iconPlacement?: IconPlacement;
   /** What the element's `icon` slot carries. */
   iconClassName?: string;
+  /** Where the words go beside the element's children. */
+  contentPlacement?: 'before' | 'after';
+  children?: ReactNode;
 };
 
 /**
  * What a button or a link says itself — its words and an icon beside them, one element instead of a `text` and a
- * `fontAwesome` inside it. Each element places the whole beside its children with its own `contentPlacement`.
+ * `fontAwesome` inside it — placed before or after the element's children, as its `contentPlacement` says.
  */
-const ElementWords = ({ content = '', icon = '', iconPlacement = 'before', iconClassName }: ElementWordsProps) => (
-  <>
-    {iconPlacement === 'before' && <ElementIcon icon={icon} className={iconClassName} />}
-    {content}
-    {iconPlacement === 'after' && <ElementIcon icon={icon} className={iconClassName} />}
-  </>
-);
+const ElementWords = ({
+  content = '',
+  icon = '',
+  iconPlacement = 'before',
+  iconClassName,
+  contentPlacement = 'after',
+  children
+}: ElementWordsProps) => {
+  const words = (
+    <>
+      {iconPlacement === 'before' && <ElementIcon icon={icon} className={iconClassName} />}
+      {content}
+      {iconPlacement === 'after' && <ElementIcon icon={icon} className={iconClassName} />}
+    </>
+  );
+
+  return (
+    <>
+      {contentPlacement === 'before' && words}
+      {children}
+      {contentPlacement === 'after' && words}
+    </>
+  );
+};
 
 export default ElementWords;

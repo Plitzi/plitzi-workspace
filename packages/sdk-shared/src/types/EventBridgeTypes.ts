@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-export type EventBridgeContextValue<T = any> = { eventBridge: T };
+/** What sdk-event-bridge's context holds: its bridge, whose class is that package's own. */
+export type EventBridgeContextValue<T> = { eventBridge: T };
 
 export type EventBridgeModule = 'main' | 'builder' | 'snippet' | 'interaction' | 'element';
 

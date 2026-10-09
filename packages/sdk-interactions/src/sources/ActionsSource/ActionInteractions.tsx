@@ -176,17 +176,18 @@ const reportRefusal = (status: number, payload: ActionResponse, url: string) => 
   }
 };
 
-/** A refused run as the run list records it: the server's own reason, error and steps, when it sent them. */
-const refusedRun = (payload: ActionResponse): Parameters<typeof updateActionRun>[1] => ({
+/** A run refused, or answered failed, as the run list records it: the server's own reason, error, steps and trace. */
+const failedRun = (payload: ActionResponse): Parameters<typeof updateActionRun>[1] => ({
   status: 'failed',
   ...(payload.runId ? { runId: payload.runId } : {}),
   ...(payload.reason ? { reason: payload.reason } : {}),
   ...(payload.error ? { error: payload.error } : {}),
-  ...(payload.steps ? { steps: payload.steps } : {})
+  ...(payload.steps ? { steps: payload.steps } : {}),
+  ...(payload.trace ? { trace: payload.trace } : {})
 });
 
-/** A refused run as `onFlowError` hands it to the element that launched it. */
-const refusalOf = (actionId: string, payload: ActionResponse) => ({
+/** A run refused, or answered failed, as `onFlowError` hands it to the element that launched it. */
+const flowErrorOf = (actionId: string, payload: ActionResponse) => ({
   actionId,
   runId: payload.runId ?? '',
   error: payload.error ?? '',
@@ -230,9 +231,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         return;
       }
 
-      void (
-        interactionsManager as { interactionTrigger: (id: string, name: string, params: object) => unknown }
-      ).interactionTrigger(hostElementId, event, params);
+      void interactionsManager.interactionTrigger(hostElementId, event, params);
     },
     [interactionsManager]
   );
@@ -342,8 +341,24 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
             const payload = (await response.json().catch(() => ({}))) as ActionResponse;
             if (!response.ok) {
               reportRefusal(response.status, payload, endpoint);
-              settle(refusedRun(payload));
-              reportFlow(context?.hostElementId, 'onFlowError', refusalOf(actionId, payload));
+              settle(failedRun(payload));
+              reportFlow(context?.hostElementId, 'onFlowError', flowErrorOf(actionId, payload));
+
+              return;
+            }
+
+            // Answered, and failed: a step of it refused or threw. That is an error to the flow listening, as a refusal is
+            // — `onFlowEnd` carrying `status: 'failed'` left every author to tell the two apart by hand.
+            if (payload.status === 'failed') {
+              settle(failedRun(payload));
+              pConsole.warning(
+                'actions',
+                <span>
+                  Server action <b>{actionId}</b> failed
+                </span>,
+                { actionId, mode, runId: payload.runId, reason: payload.reason, error: payload.error }
+              );
+              reportFlow(context?.hostElementId, 'onFlowError', flowErrorOf(actionId, payload));
 
               return;
             }
@@ -421,8 +436,8 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         if (!response.ok || !response.body) {
           const payload = (await response.json().catch(() => ({}))) as ActionResponse;
           reportRefusal(response.status, payload, endpoint);
-          settle(refusedRun(payload));
-          reportFlow(context?.hostElementId, 'onFlowError', refusalOf(actionId, payload));
+          settle(failedRun(payload));
+          reportFlow(context?.hostElementId, 'onFlowError', flowErrorOf(actionId, payload));
 
           return {
             status: 'failed',
@@ -531,9 +546,9 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
       const payload = (await response.json().catch(() => ({}))) as ActionResponse;
       if (!response.ok) {
         reportRefusal(response.status, payload, endpoint);
-        settle(refusedRun(payload));
+        settle(failedRun(payload));
         // As every other mode does: a flow listening on the launching element hears a refusal however it was run.
-        reportFlow(context?.hostElementId, 'onFlowError', refusalOf(actionId, payload));
+        reportFlow(context?.hostElementId, 'onFlowError', flowErrorOf(actionId, payload));
         // The reason is the server's own vocabulary — `duplicate`, `over_capacity`, `recursion` — and naming it is
         // what lets an author tell "my flow is wrong" from "I clicked twice".
         pConsole.warning(
@@ -575,6 +590,9 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
         ...(payload.steps ? { steps: payload.steps } : {}),
         ...(payload.trace ? { trace: payload.trace } : {})
       });
+      if (payload.status === 'failed') {
+        reportFlow(context?.hostElementId, 'onFlowError', flowErrorOf(actionId, payload));
+      }
 
       // `error` is there only when a step refused with a reason written for the caller — the server keeps every
       // other failure's message to itself — so a flow can say `{{ step.error }}` and fall back when it is empty.

@@ -1,25 +1,25 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
 import { omit } from '@plitzi/plitzi-ui/helpers';
 
-const toPascalCase = (pkgName: string) => {
-  return (
-    pkgName
-      // Quita `@` inicial si existe
-      .replace(/^@/, '')
-      // Reemplaza separadores `/` o `-` por espacios temporales
-      .replace(/[-/]/g, ' ')
-      // Convierte cada palabra en mayúscula inicial
-      .replace(/\b\w/g, match => match.toUpperCase())
-      // Quita los espacios
-      .replace(/\s+/g, '')
-  );
+import { isRecord } from './isRecord';
+
+/** `@plitzi/sdk-shared` → `PlitziSdkShared`: the name a module is published under on `window`. */
+const toPascalCase = (pkgName: string) =>
+  pkgName
+    .replace(/^@/, '')
+    .replace(/[-/]/g, ' ')
+    .replace(/\b\w/g, match => match.toUpperCase())
+    .replace(/\s+/g, '');
+
+/** The modules published on `window` under `windowKey` — a key chosen at run time, so read without a type to trust. */
+const publishedModule = (windowKey: string, name: string): Record<string, unknown> => {
+  const registry: unknown = Reflect.get(window, windowKey);
+  const module = isRecord(registry) ? registry[name] : undefined;
+
+  return isRecord(module) ? module : {};
 };
 
 const createFacadeBlob = (name: string, windowKey = 'PlitziFacade') => {
-  const keys: string[] = typeof window !== 'undefined' ? Object.keys((window as any)[windowKey]?.[name] ?? {}) : [];
+  const keys = typeof window !== 'undefined' ? Object.keys(publishedModule(windowKey, name)) : [];
   if (keys.length === 0) {
     return '';
   }
@@ -80,8 +80,10 @@ const generateFacade = (modules: Record<string, unknown>, windowKey = 'PlitziFac
     return;
   }
 
-  (window as any)[windowKey] = Object.fromEntries(
-    Object.entries(modulesFiltered).map(([key, module]) => [toPascalCase(key), module])
+  Reflect.set(
+    window,
+    windowKey,
+    Object.fromEntries(Object.entries(modulesFiltered).map(([key, module]) => [toPascalCase(key), module]))
   );
 
   const importMapJSON = generateImportMap(modulesFiltered, windowKey);
