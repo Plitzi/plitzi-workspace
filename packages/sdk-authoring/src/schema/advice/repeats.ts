@@ -64,6 +64,18 @@ const classesKey = (styleSelectors: Element['definition']['styleSelectors'], dec
     )
   );
 
+/**
+ * The form of a binding's template, apart from what a prop could say: every `{{ … }}` expression with its names replaced
+ * by one placeholder, the words around them left out — `'{{ views.total|number }} views'` and
+ * `'{{ edits.total|number }} edits'` are one form; `'{{ total }} of {{ quota }}'` another.
+ */
+const templateForm = (template: unknown): string =>
+  typeof template === 'string'
+    ? [...template.matchAll(/\{\{([\s\S]*?)\}\}/g)]
+        .map(([, expression]) => expression.replace(/[A-Za-z_$][\w$]*(\.[\w$]+)*/g, '§').replace(/\s+/g, ''))
+        .join(',')
+    : '';
+
 /** The element a binding's source is published by — `apiContainer_feed.items` and `feed.items` both name `feed`. */
 const providerOf = (flat: Schema['flat'], source: string): string | undefined => {
   const [head] = source.split('.');
@@ -165,10 +177,26 @@ const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, 
     ]);
 
     const body = `${type}|${stable(element.attributes)}|${stable(initialState?.visibility ?? null)}|${stable(reads)}`;
+    // What it binds, by attribute and the form of each template: copies that read their data in different forms — one a
+    // count, one a total of a quota — are not one item a prop can tell apart.
+    const binds = stable(
+      Object.values(bindings ?? {})
+        .flat()
+        .map(
+          binding =>
+            `${binding.to}:${(binding.transformers ?? [])
+              .map(transformer => `${transformer.action}(${templateForm(transformer.params.template)})`)
+              .join('+')}`
+        )
+        .sort()
+    );
+    // A provider resolved on the server is found again in the browser by its own id (`data-rsc-id`): a component would
+    // give every copy the first one's id, and each the first one's render. So it is no copy of anything.
+    const serverRendered = element.definition.runtime === 'server' ? `|server:${id}` : '';
     const signatures = {
       exact: `${body}|${classes}(${children.map(child => child.exact).join(',')})`,
       near: `${body}(${children.map(child => child.near).join(',')})`,
-      shape: `${type}|${classes}|${flows}(${children.map(child => child.shape).join(',')})`,
+      shape: `${type}|${classes}|${flows}|${binds}${serverRendered}(${children.map(child => child.shape).join(',')})`,
       outside,
       wiring: [...wired].sort().join('\n'),
       size: 1 + children.reduce((sum, child) => sum + child.size, 0)

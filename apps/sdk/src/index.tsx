@@ -22,6 +22,7 @@ import elementChildren from '@plitzi/sdk-elements/Element/helpers/elementChildre
 import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
 import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
 import useElementVisible from '@plitzi/sdk-elements/Element/hooks/useElementVisible';
+import usePluginTrigger from '@plitzi/sdk-elements/Element/hooks/usePluginTrigger';
 import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
 import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
 import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
@@ -55,6 +56,7 @@ import type { DeferredPlugin, PluginComponent } from './modules/Sdk/deferredPlug
 import type { CanvasHandle, CanvasOptions, CanvasSize, Frame } from '@plitzi/sdk-elements/canvas';
 import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
 import type { ElementChild } from '@plitzi/sdk-elements/Element/helpers/elementChildren';
+import type { PluginTriggerPayload } from '@plitzi/sdk-elements/Element/hooks/usePluginTrigger';
 import type { ChannelHandle } from '@plitzi/sdk-elements/realtime/useChannel';
 import type EventBridge from '@plitzi/sdk-event-bridge';
 import type InteractionsManager from '@plitzi/sdk-interactions/InteractionsManager';
@@ -426,6 +428,8 @@ export {
   useRscData,
   // Whether another element is on the page, for a plugin that acts when it appears: a window a flow opened.
   useElementVisible,
+  // Fires one of a plugin's declared events, typed by its declaration — on a live page, never on the builder's canvas.
+  usePluginTrigger,
   // A plugin that lays out the space's elements put inside it — a dock, tabs, a masonry: each child with its id, to
   // wrap in a box of its own rather than restyling an element that is not its own.
   elementChildren,
@@ -470,6 +474,7 @@ export type {
   InteractionCallback,
   InteractionCallbackParamValues,
   PluginDeclaration,
+  PluginTriggerPayload,
   ChannelHandle,
   ElementChild,
   RealtimeMember,

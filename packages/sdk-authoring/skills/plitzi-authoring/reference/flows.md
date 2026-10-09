@@ -69,8 +69,7 @@ A step's params are templates, evaluated in full (conditions, loops, filters). A
 a row's button posts `{ jobId: '{{ list_jobRows.item.id }}' }` — the row that was clicked; the short name is refused.
 
 **Pass objects, not JSON text.** `input: { title: '{{ form.values.title }}' }` rather than `input: '{"title": …}'`:
-each value keeps its own type, and nothing depends on the quoting. (JSON text works — a value inside one of its strings
-is escaped for it — but an object needs no punctuation.)
+each value keeps its own type, and nothing depends on the quoting.
 
 **A field left empty is not in `values`.** A form sends what was typed, and a field nobody typed in sends nothing —
 so `when({ field: 'sent.values.code', operator: '=', value: '' }, …)` never holds for it. Ask
@@ -106,7 +105,7 @@ ticks while the element is mounted and the tab is in view, never in the builder 
 
 **A number that goes round, or stops:** `cycleState({ key: 'slide', length: 4 })` is "next" — after the last the first
 — and `by: -1` "previous"; `stepState({ key: 'shown', by: 40, max: 'apiContainer_site.data.total' })` adds and stops
-at the bound. Each is the `setState` it stands for, with the arithmetic written once.
+at the bound.
 
 **Scrolling** is a step on the element whose box scrolls (`overflow-x: auto` on a row of cards): `scrollBy('cards',
 { x: '80%' })` moves it by most of what it shows (`'-80%'` back, `'240'` pixels), `scrollTo('cards', { x: 'end' })`
@@ -165,6 +164,8 @@ Pages that see each other — cursors, presence, a shared board — talk over a 
 asks it. `appendState({ key, value, withId: true })` stores `{ id, value }` — bind `.value`, address by `.id`.
 `whenFailed` matches every outcome that is not `completed` (also `skipped`, `aborted`). A failed run gives `reason`,
 and `error` only when the server or a step wrote one for the caller (a task throwing `ActionRefusal`, `flow.fail` with
-`tellCaller`) — so show `{{ saved.error ? saved.error : "…" }}`, never the bare `error`.
+`tellCaller`) — so show `{{ saved.error ? saved.error : "…" }}`, never the bare `error`. That pair is one call:
+`...runServerActionOrNotify('saved', { actionId, input }, 'Could not save')` — the named run, then that toast
+(`{ appearance, placement }` fourth).
 
 `when(rule, step)` around a step that already has a `when` adds to it: both must hold.

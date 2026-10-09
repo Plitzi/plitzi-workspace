@@ -381,6 +381,16 @@ describe('a space’s task, run in an isolate', () => {
     expect((await space.run()).value).toEqual([true, true, false]);
   });
 
+  it('refuses past a rate limit with the words the code gave it, when it gave some', async () => {
+    const space = await spaceWith(
+      sourceOf(`
+        for (let i = 0; i < 3; i++) { await ctx.rateLimit('make', { most: 2, perSeconds: 60, refuse: 'Wait a minute' }); }
+        return 'never';`)
+    );
+
+    expect((await space.run()).refusal).toBe('Wait a minute');
+  });
+
   it('signs with the space’s own key, which the code never holds', async () => {
     const space = await spaceWith(
       sourceOf(`

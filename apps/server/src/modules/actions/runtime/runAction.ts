@@ -3,7 +3,7 @@ import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
 import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { createEmailSender } from './email';
-import { ActionRunError, isActionRefusal } from './errors';
+import { ActionRefusal, ActionRunError, isActionRefusal } from './errors';
 import { flagsForRun } from './flags';
 import { runCancelKey } from './guards';
 import { createKvStore } from './kvStore';
@@ -213,10 +213,15 @@ const MAX_LOG_LINE = 1000;
 
 /**
  * A value written as text, read as the type its task declares: a `number` param written `5` — or bound to text that says
- * it — arrives as 5, a `boolean` one written `'true'` as `true`, an empty number as nothing (so the default applies). The
- * browser reads a callback's params the same way (`coerceDeclaredParams`): a task's author never writes `Number(…)`.
+ * it — arrives as 5, a `boolean` one written `'true'` as `true`, an empty number as nothing (so the default applies), and
+ * a `text` one bound to a number as its digits. The browser reads a callback's params the same way
+ * (`coerceDeclaredParams`): a task's author never writes `Number(…)` or `String(…)`.
  */
 const asDeclared = (type: string, value: unknown): unknown => {
+  if (typeof value === 'number' && (type === 'text' || type === 'textarea')) {
+    return String(value);
+  }
+
   if (typeof value !== 'string') {
     return value;
   }
@@ -230,18 +235,72 @@ const asDeclared = (type: string, value: unknown): unknown => {
   return type === 'boolean' && (value === 'true' || value === 'false') ? value === 'true' : value;
 };
 
-const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Record<string, unknown> =>
-  Object.entries(task.params).reduce<Record<string, unknown>>(
+type TaskParam = RegisteredTask['params'][string];
+
+/**
+ * Why a value does not fit the rules its param declares — `required`, a text's `maxLength`, a number's `min` and `max` —
+ * in the words the page shows: what a task's code otherwise checked by hand before doing anything. A param that
+ * declares none is never judged.
+ */
+const paramProblem = (key: string, param: TaskParam, value: unknown): string | undefined => {
+  const name = param.label ?? key;
+  const empty = value === undefined || value === null || (typeof value === 'string' && value.trim() === '');
+  if (empty) {
+    // A default fills an empty value: only a param with none is missing.
+    const defaulted = param.defaultValue !== undefined && param.defaultValue !== '';
+
+    return param.required && !defaulted ? `${name} is required` : undefined;
+  }
+
+  if ((param.type === 'text' || param.type === 'textarea') && param.maxLength !== undefined) {
+    return typeof value === 'string' && value.length > param.maxLength
+      ? `${name} is longer than ${String(param.maxLength)} characters`
+      : undefined;
+  }
+
+  if (param.type === 'number' && (param.min !== undefined || param.max !== undefined)) {
+    if (typeof value !== 'number') {
+      return `${name} is not a number`;
+    }
+
+    if (param.min !== undefined && value < param.min) {
+      return `${name} is at least ${String(param.min)}`;
+    }
+
+    if (param.max !== undefined && value > param.max) {
+      return `${name} is at most ${String(param.max)}`;
+    }
+  }
+
+  return undefined;
+};
+
+const withDefaults = (task: RegisteredTask, params: Record<string, unknown>): Record<string, unknown> => {
+  const problems: string[] = [];
+  const values = Object.entries(task.params).reduce<Record<string, unknown>>(
     (acum, [key, param]) => {
       // A type that follows the other params is asked with them.
       const type = typeof param.type === 'function' ? param.type(acum) : param.type;
       const value = asDeclared(type, acum[key]);
+      const problem = paramProblem(key, param, value);
+      if (problem) {
+        problems.push(problem);
+      }
+
       acum[key] = value === undefined || value === '' ? (param.defaultValue ?? '') : value;
 
       return acum;
     },
     { ...params }
   );
+
+  // Every rule the call broke at once, as the step's error — a refusal, so its words reach the page.
+  if (problems.length > 0) {
+    throw new ActionRefusal(problems.join('; '));
+  }
+
+  return values;
+};
 
 type NodeOutcome = { status: InteractionNodeStatus; result: unknown };
 

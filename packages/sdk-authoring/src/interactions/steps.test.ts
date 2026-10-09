@@ -12,9 +12,11 @@ import {
   invalidateQueries,
   navigate,
   runServerAction,
+  runServerActionOrNotify,
   SET_STATE_TYPES,
   setState
 } from './steps';
+import { named, whenFailed } from '../schema/flows';
 
 import type { StepSpec } from '../schema/types';
 
@@ -105,6 +107,37 @@ describe('setState', () => {
       key: 'picked',
       type: 'json',
       value: '{{ list_rows.item }}'
+    });
+  });
+});
+
+describe('runServerActionOrNotify', () => {
+  it('is the run and the notice a flow used to write for it, the action’s own refusal first', () => {
+    const params = { actionId: 'pulsar-open', input: { room: '{{ state.room }}' } };
+
+    expect(runServerActionOrNotify('opened', params, "The room didn't open")).toEqual([
+      named('opened', runServerAction(params)),
+      whenFailed(
+        'opened',
+        addNotification({
+          content: `{{ opened.error ? opened.error : "The room didn't open" }}`,
+          appearance: 'danger',
+          placement: 'bottom-center'
+        })
+      )
+    ]);
+  });
+
+  it('says it the way it is told, and keeps a quote of each kind a string', () => {
+    const [, notice] = runServerActionOrNotify('sent', { actionId: 'send' }, `It's "gone"`, {
+      appearance: 'warning',
+      placement: 'top-center'
+    });
+
+    expect(notice.params).toMatchObject({
+      content: `{{ sent.error ? sent.error : 'It\\'s "gone"' }}`,
+      appearance: 'warning',
+      placement: 'top-center'
     });
   });
 });

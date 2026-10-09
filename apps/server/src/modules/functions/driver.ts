@@ -126,7 +126,15 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       },
       later: (request: unknown) => call({ op: 'later', request }),
       cancelLater: (key: string) => call({ op: 'cancelLater', key }),
-      rateLimit: (bucket: string, limit: unknown) => call({ op: 'rateLimit', bucket, limit }),
+      rateLimit: async (bucket: string, limit: unknown) => {
+        const count = await call({ op: 'rateLimit', bucket, limit });
+        // The words to refuse with stay here: the platform only counts, and the code is what asked to be refused.
+        if (isRecord(limit) && typeof limit.refuse === 'string' && isRecord(count) && count.allowed === false) {
+          throw refusal(limit.refuse);
+        }
+
+        return count;
+      },
       sign: (value: string) => call({ op: 'sign', value }),
       verify: (value: string, signature: string) => call({ op: 'verify', value, signature }),
       data: (file: string) => call({ op: 'data', file }),

@@ -25,85 +25,40 @@ export interface ElementText {
 const declarationFile = (
   { component: name, type }: PluginNames,
   { title, description, owner }: ElementText
-): string => `import type { ${name}Props } from './${name}';
-import type { PluginDeclaration } from '@plitzi/plitzi-sdk';
+): string => `import { definePlugin } from '@plitzi/sdk-authoring/plugin';
+
+import type { ${name}Props } from './${name}';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type ${name}Attributes = Omit<${name}Props, 'className'>;
 
 /**
- * Static declaration for ${name}: its type, the events it fires and the actions it answers to, and the element the
- * builder adds when somebody drops it on a page. Data only, no React — the build reads it to write the manifest.
+ * ${name}, declared: what a space names it by, its words, its defaults, the events it fires and the actions it answers.
+ * Data only, no React — the build reads it to write the manifest. \`definePlugin\` writes the rest (the builder's
+ * gestures, the catalogue entry, every attribute bindable), and a space places it with \`defineElement(declaration)\`.
  */
-const declaration = {
-  /** What a space names it by: the element type \`defineElement(declaration)\` authors. Renaming it orphans every one. */
+export default definePlugin<${name}Attributes>()({
+  /** What a space names it by — the element type. Renaming it orphans every one. */
   type: '${type}',
-  /** The events it fires. The component registers these; the builder offers them as what a flow can start on. */
-  triggers: {
-    // \`preview\` names what a flow started by the event can read — shown in the builder, never sent.
-    onCount: { action: 'onCount', title: 'On Count', type: 'trigger', params: {}, preview: { count: '' } }
-  },
-  /** The actions it answers to, static half: the component adds the function, and a title naming its label. */
-  callbacks: {
-    reset: { action: 'reset', title: 'Reset', type: 'callback', params: {} }
-  },
-  content: {
-    /** The starting attributes — the component's defaults, written where the builder can show them. */
-    attributes: { label: ${tsString(title)}, start: 0, step: 1 },
-    definition: {
-      label: ${tsString(title)},
-      type: '${type}',
-      /** What it is for: the builder shows it, and an agent connected over MCP reads it to choose the element. */
-      description: ${tsString(description)},
-      items: [],
-      bindings: {},
-      styleSelectors: { base: '' },
-      initialState: { visibility: true }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
-    },
-    market: {
-      category: ${tsString(title)},
-      owner: ${tsString(owner)},
-      license: 'MIT',
-      website: '',
-      backgroundColor: '#4422ee',
-      icon: ''
-    },
-    defaultStyle: {
-      name: ${tsString(title)},
-      displayMode: 'desktop',
-      style: { base: { default: {} } },
-      /** The attributes a data source may be pointed at — what the builder offers when somebody connects data to it. */
-      bindingsAllowed: {
-        attributes: [
-          { path: 'label', label: 'Label' },
-          { path: 'start', label: 'Starts at' },
-          { path: 'step', label: 'Step' }
-        ],
-        initialState: []
-      }
-    },
-    settings: {}
-  }
-} satisfies PluginDeclaration<${name}Attributes>;
-
-export default declaration;
+  label: ${tsString(title)},
+  /** What it is for: the builder shows it, and an agent connected over MCP reads it to choose the element. */
+  description: ${tsString(description)},
+  /** The starting attributes — the component's defaults, written where the builder can show them. */
+  attributes: { label: ${tsString(title)}, start: 0, step: 1 },
+  /** The events it fires, and what a flow started by each reads — what \`usePluginTrigger\` hands it. */
+  triggers: { onCount: { preview: { count: '' } } },
+  /** The actions it answers to, static half: the component adds the function that does each. */
+  callbacks: { reset: {} },
+  market: { owner: ${tsString(owner)} }
+});
 `;
 
 const component = ({
   component: name,
   title
-}: PluginNames): string => `import { use, useCallback, useMemo, useState } from 'react';
+}: PluginNames): string => `import { useCallback, useMemo, useState } from 'react';
 
-import { RootElement, useElement, usePlitziServiceContext } from '@plitzi/plitzi-sdk';
+import { RootElement, usePluginTrigger } from '@plitzi/plitzi-sdk';
 
 import declaration from './declaration';
 
@@ -113,7 +68,7 @@ import type { CSSProperties } from 'react';
 /**
  * The props ARE the element's attributes.
  *
- * Whatever a space writes on the \`custom\` element that hosts this arrives here by the same name — and so does whatever
+ * Whatever a space writes on the element arrives here by the same name — and so does whatever
  * a binding writes later, which is what makes a plugin a live component rather than a static one. Everything is
  * optional and everything has a default: an attribute nobody has authored yet, or a binding whose source has not
  * answered, is \`undefined\`, and a plugin that renders nothing in that moment is a hole in the page.
@@ -137,18 +92,15 @@ export interface ${name}Props {
  * live belongs in an effect.
  */
 const ${name} = ({ label = ${tsString(title)}, start = 0, step = 1, className }: ${name}Props) => {
-  const { id } = useElement();
-  const {
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext);
+  // Fires a declared event, typed by the declaration — on a page, never on the builder's canvas, where no flow runs.
+  const fire = usePluginTrigger(declaration);
   const [count, setCount] = useState(start);
 
   const handleAdd = useCallback(() => {
     const next = count + step;
     setCount(next);
-    void interactionsManager.interactionTrigger(id, declaration.triggers.onCount.action, { count: next });
-  }, [count, step, interactionsManager, id]);
+    fire('onCount', { count: next });
+  }, [count, step, fire]);
 
   const handleReset = useCallback(() => setCount(start), [start]);
 

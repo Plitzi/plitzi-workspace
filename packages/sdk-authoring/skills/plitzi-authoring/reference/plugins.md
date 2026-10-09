@@ -4,11 +4,10 @@ A plugin is a React component of the project's own — a chart, a map, a game �
 space places it from its `declaration.ts`, typed by what it declares:
 
 ```ts
-const nebulaRun = defineElement<NebulaRunAttributes>(nebulaRunDeclaration);
+const nebulaRun = defineElement(nebulaRunDeclaration);
 nebulaRun({ id: 'arcade', shipColor: 'amber', bind: { best: 'state.arcadeBest' } })
 ```
 
-The same element on a project's server, on Plitzi and in the builder, which adds it when somebody drops it.
 (`custom({ renderType })` is for a component registered by name, with no declaration.)
 
 ## Creating one
@@ -16,14 +15,17 @@ The same element on a project's server, on Plitzi and in the builder, which adds
 The CLI writes it, in the shape Plitzi's own elements are written in: `npx @plitzi/cli plugin add seat-picker` (a
 package of its own and packing it: the CLI skill).
 
-One folder, four files: `SeatPicker.tsx` (the component), `declaration.ts` (its `type`, the `triggers` it fires, the
-`callbacks` it answers to, and the element the builder adds — data only), `Settings.tsx` (its panel in the builder), and
-`index.ts` (`Object.assign(Component, declaration, { pluginSettings: Settings })`). An event or an action is declared in
-`declaration.ts` and registered by the component from there, never only in the component.
+One folder, four files: `SeatPicker.tsx` (the component), `declaration.ts`, `Settings.tsx` (its panel in the builder),
+and `index.ts` (`Object.assign(Component, declaration, { pluginSettings: Settings })`). The declaration is data only,
+`definePlugin<SeatPickerAttributes>()({ type, label, attributes, triggers, callbacks })` from
+`@plitzi/sdk-authoring/plugin`: the rest of what the builder needs is derived. An event or an action is declared there
+and registered by the component from there, never only in the component.
 
-A plugin fires its events with `interactionsManager.interactionTrigger(id, action, payload)` whenever it has news —
-from its first effect too: a flow starts once the page has finished mounting, so the `setState` it calls is there. No
-`queueMicrotask` or delay of your own. An event that REPORTS a state, and may fire again before its flow ends (as a
+A plugin fires its events with `const fire = usePluginTrigger(declaration)` (`@plitzi/plitzi-sdk`), typed by the
+declaration: `fire('onPick', { seat })` — an undeclared event, or a payload missing a field its `preview` names, does
+not compile. Nothing fires while the page is edited. Fire whenever there is news — from the first effect too: a flow
+starts once the page has finished mounting, so the `setState` it calls is there. No `queueMicrotask` or delay of your
+own. An event that REPORTS a state, and may fire again before its flow ends (as a
 component reads its real value right after mounting), wants `whileRunning('queue', …)` on the flow: by default a firing
 while the flow runs is dropped, and the stale first report would stick.
 
@@ -38,6 +40,8 @@ panel edits for a plugin it has no controls for; from code, write attributes. A 
 "Settings Malformed" in the page.
 
 Every prop is optional with a default: an attribute not authored yet, or a binding not answered yet, is `undefined`.
+One whose declared default is a number or a boolean arrives as one, written or bound: type it `number`, never
+`number | string`.
 
 ## The component
 
@@ -177,9 +181,9 @@ button({ content: 'Clear', flows: [[onClick(), declaredCallback(declaration, 're
 
 A plugin says what HAPPENED through its events (`onPick`, with the seat in the payload) and lets the space's flows
 decide what that means — write `state`, open a modal, call a server action. Prefer that to writing `state` from inside
-the component: the flow is visible in the space, the builder shows it, and the same act can come from a button too.
+the component: the flow is visible in the space, and a button can do the same.
 
-- A param declared `number` or `boolean` arrives as one, written or bound; any other arrives as written.
+- An action's param declared `number` or `boolean` arrives as one, written or bound; any other arrives as written.
 - To act when another element appears, `useElementVisible('tools')` (`@plitzi/plitzi-sdk`) — never watch classes.
 - A name for screen readers is a prop of its own: declare `label`, write it as the root's `aria-label`.
 
@@ -189,8 +193,8 @@ The builder draws the element on its canvas while somebody edits the page: a cli
 belongs to the editor.
 
 - **Outside preview, do nothing on your own.** `usePlitziServiceContext().settings.previewMode` is `false` while the
-  page is edited. Declared interactions are already held back then; your own click handlers, timers, global listeners,
-  permission prompts and map gestures are not — gate them on `previewMode`, and still render something to select.
+  page is edited: gate your own click handlers, timers, listeners, permission prompts and map gestures on it, and
+  still render something to select.
 - **A drag lives in state, not in refs read while rendering** (the project's lint refuses that): keep the gesture
   in `useState`, mirror the latest props into a ref inside an effect, and attach `pointermove` on `pointerdown`.
 - **Never the global `window` or `document`.** The canvas is a frame of its own and the code runs in the builder's
@@ -211,5 +215,4 @@ fonts a stylesheet names are carried the same way.
 A map, a chart library, anything that positions its own markers or popups: its roots are the library's to place. Never
 give them a class that sets `position` — the element falls into the page's flow, offset by every marker before it. Put
 the look in the plugin's own stylesheet (imported CSS ships beside the bundle) and take colours from custom properties
-the space sets (`--seat-accent: var(--accent)` in `customCss`); a canvas or WebGL layer resolves them through a probe
-element with `getComputedStyle(probe).color`, again whenever `theme.resolved` changes (bind it as a prop).
+the space sets (`--seat-accent: var(--accent)` in `customCss`).

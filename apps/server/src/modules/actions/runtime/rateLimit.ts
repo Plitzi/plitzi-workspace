@@ -1,7 +1,18 @@
+import { ActionRefusal } from './errors';
+
 import type { ActionKvStore } from '../types';
 
 /** How much of something is allowed: `most` in every `perSeconds`, for each caller or for everyone together. */
-export type RateLimit = { most: number; perSeconds: number; per?: 'caller' | 'everyone' };
+export type RateLimit = {
+  most: number;
+  perSeconds: number;
+  per?: 'caller' | 'everyone';
+  /**
+   * Over the limit, the call is refused with these words — the step's error, on the page — rather than answered
+   * `allowed: false` for the code to check: `ctx.rateLimit('make', { most: 5, perSeconds: 600, refuse: 'Wait ten minutes' })`.
+   */
+  refuse?: string;
+};
 
 /** Where a limit stands after counting one more: whether that one was within it, and how many are left. */
 export type RateCount = { allowed: boolean; count: number; remaining: number };
@@ -27,4 +38,13 @@ export const countRate = async (
   const count = await kv.increment(`$rate:${bucket}:${who}:${String(window)}`, 1, perSeconds + 1);
 
   return { allowed: count <= most, count, remaining: Math.max(0, most - count) };
+};
+
+/** A count past its limit, refused with the limit's own words when it says some; within it, or with none, as counted. */
+export const refusedOver = (count: RateCount, limit: RateLimit): RateCount => {
+  if (!count.allowed && limit.refuse) {
+    throw new ActionRefusal(limit.refuse);
+  }
+
+  return count;
 };

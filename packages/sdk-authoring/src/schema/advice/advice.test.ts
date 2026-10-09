@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { suggestSpace, unusedDeclarations } from './index';
 import {
+  apiContainer,
   button,
   component,
   container,
@@ -16,6 +17,7 @@ import {
 import { onClick } from '../../elements/steps';
 import { authorSpace as authorPublic } from '../../index';
 import { setState, toggleState } from '../../interactions';
+import { bindTemplate } from '../bindings';
 import { authorSpace } from '../space';
 
 import type { ElementSpec, PageSpec, SpaceSpec } from '../types';
@@ -53,6 +55,11 @@ const space = (pages: PageSpec[], extra: Partial<SpaceSpec> = {}): SpaceSpec => 
     'menu-button': {},
     'menu-label': {},
     'menu-hint': {},
+    tile: {},
+    'tile-label': {},
+    'tile-value': {},
+    'tile-note': {},
+    panel: {},
     includes: {},
     tick: {},
     line: {}
@@ -172,6 +179,58 @@ describe('suggestions', () => {
     expect(
       codesOf(space([page('home', [container({ children: [tile('A', 'one'), tile('B', 'two'), tile('C', 'one')] })])]))
     ).not.toContain('repeated-shape');
+  });
+
+  // Three figures a dashboard writes: alike, each in a panel of its own, each reading its own number.
+  const figure = (field: string, template: string) =>
+    container({
+      class: 'tile',
+      children: [
+        text({ class: 'tile-label', content: field }),
+        text({ class: 'tile-value', bind: [bindTemplate('content', `state.${field}`, template)] }),
+        text({ class: 'tile-note', content: 'this month' })
+      ]
+    });
+  const dashboard = (...figures: ElementSpec[]) =>
+    space([
+      page(
+        'home',
+        figures.map(each => container({ children: [each] }))
+      )
+    ]);
+
+  it('takes figures that read their data in one form for one component, the field a prop', () => {
+    const alike = dashboard(
+      figure('views', '{{ source|number }} views'),
+      figure('edits', '{{ source|number }} edits'),
+      figure('pages', '{{ source|number }} pages')
+    );
+
+    expect(codesOf(alike)).toContain('repeated-shape');
+  });
+
+  it('does not take figures that read their data in different forms for one component', () => {
+    const unlike = dashboard(
+      figure('views', '{{ source|number }} views'),
+      figure('quota', '{{ source }} of {{ state.limit }}'),
+      figure('share', '{{ (source * 100)|round }}%')
+    );
+
+    expect(codesOf(unlike)).not.toContain('repeated-shape');
+  });
+
+  it('does not take panels holding a provider resolved on the server for copies: each is found by its own id', () => {
+    const panel = (id: string) =>
+      container({
+        class: 'panel',
+        children: [
+          heading({ content: id }),
+          apiContainer({ id, query: `/data/${id}.json`, runtime: 'server', children: [text({ content: 'rows' })] }),
+          text({ content: 'More' })
+        ]
+      });
+
+    expect(codesOf(dashboard(panel('feed'), panel('picks'), panel('later')))).not.toContain('repeated-shape');
   });
 
   // Three filter menus a helper writes: alike, side by side, each reading its own options and keeping its own choice.
@@ -563,7 +622,7 @@ describe('plugin hosts', () => {
     );
 
     expect(suggestion?.elementIds).toEqual(['seats']);
-    expect(suggestion?.message).toContain('defineElement<…Attributes>(declaration)');
+    expect(suggestion?.message).toContain('defineElement(declaration)');
     expect(suggestion?.saves).toBe(0);
   });
 
@@ -574,5 +633,33 @@ describe('plugin hosts', () => {
     const codes = authorPublic(spec, { plugins: [seats] }).suggestions.map(entry => entry.code);
 
     expect(codes).not.toContain('plugin-custom-host');
+  });
+});
+
+/** A colour named once on the page is what every element reads: one restated on a type says nothing. */
+describe('element colours', () => {
+  const coloured = (elements: SpaceSpec['elements']) =>
+    space([page('home', [heading({ content: 'Hi' })])], { elements });
+
+  it('offers to drop a type’s colour that is `inherit`, or the very colour the page has', () => {
+    const suggestion = authorSpace(
+      coloured({
+        page: { base: { color: 'var(--ink)' } },
+        heading: { base: { color: 'var(--ink)' } },
+        text: { base: { color: 'inherit' } },
+        paragraph: { base: { color: 'var(--muted)' } }
+      })
+    ).suggestions.find(entry => entry.code === 'element-color-inherited');
+
+    expect(suggestion?.subjects).toEqual(['text', 'heading']);
+    expect(suggestion?.message).toContain('`elements.page`');
+  });
+
+  it('leaves a type that chooses a colour of its own, or a page with none', () => {
+    const codes = codesOf(
+      coloured({ heading: { base: { color: 'var(--ink)' } }, paragraph: { base: { color: 'var(--muted)' } } })
+    );
+
+    expect(codes).not.toContain('element-color-inherited');
   });
 });

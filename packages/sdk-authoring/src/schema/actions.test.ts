@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { actionName, validateActionDocument } from '@plitzi/sdk-shared/actions';
 
-import { defineAction } from './index';
+import { defineAction, taskAction } from './index';
 
 import type { ActionSpec } from './index';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
@@ -234,5 +234,64 @@ describe('defineAction', () => {
     expect(
       nodesOf(minimal({ trigger: { type: 'render', access: 'public', cacheSeconds: 30 } })).start.params
     ).toMatchObject({ cacheSeconds: '30' });
+  });
+});
+
+/** A task of the space's own, as `functions/` declares it: what `taskAction` derives a way in from. */
+const saveDraft = {
+  namespace: 'inkwell',
+  action: 'saveDraft',
+  title: 'Save draft',
+  description: 'Keeps the draft as it is typed.',
+  params: {
+    title: { type: 'text', canBind: true, defaultValue: '', label: 'Title', required: true },
+    words: { type: 'number', canBind: true, label: 'Words' },
+    blocks: { type: 'codemirror-json', canBind: true, label: 'Blocks' },
+    pick: { type: (): string => 'text', label: 'Computed' }
+  }
+};
+
+describe('taskAction', () => {
+  it('is the action that runs the task and answers its result, written from the task', () => {
+    const derived = taskAction(saveDraft, { trigger: { type: 'call', access: 'public' } });
+    const written = defineAction({
+      id: 'inkwell-save-draft',
+      name: 'Save draft',
+      description: 'Keeps the draft as it is typed.',
+      trigger: {
+        type: 'call',
+        access: 'public',
+        input: {
+          title: { type: 'text', label: 'Title', defaultValue: '', required: true },
+          words: { type: 'number', label: 'Words' },
+          blocks: { type: 'json', label: 'Blocks' },
+          pick: { type: 'text', label: 'Computed' }
+        }
+      },
+      steps: [{ id: 'result', task: 'inkwell.saveDraft' }]
+    });
+
+    expect(derived).toEqual(written);
+  });
+
+  it('takes what is written over what it derives, and every way in the action has', () => {
+    const derived = taskAction(saveDraft, {
+      id: 'draft',
+      name: 'Draft',
+      output: '{{ result.saved }}',
+      trigger: [
+        { type: 'render', access: 'session', cacheSeconds: 5 },
+        { type: 'call', access: 'session' }
+      ]
+    });
+    const narrowed = taskAction(saveDraft, {
+      trigger: { type: 'call', access: 'public', input: { title: { type: 'text', required: true } } }
+    });
+
+    expect(derived.id).toBe('draft');
+    expect(derived.document.name).toBe('Draft');
+    expect(derived.document.nodes.answer.params).toEqual({ values: '{{ result.saved }}' });
+    expect(Object.values(derived.document.nodes).filter(node => node.type === 'trigger')).toHaveLength(2);
+    expect(narrowed.document.nodes.result.params).toEqual({ title: '{{input.title}}' });
   });
 });

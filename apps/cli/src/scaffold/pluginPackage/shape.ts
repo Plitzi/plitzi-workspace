@@ -212,139 +212,52 @@ const literal = (value: PropValue): string => {
   return typeof value === 'object' ? JSON.stringify(value) : String(value);
 };
 
-/**
- * The attributes a binding may fill, as the project's Prettier writes them: on one line while there is one, a line each
- * once there are more — an array of several objects is always broken.
- */
-const bindableList = (props: readonly PropShape[]): string => {
-  const items = props.map(prop => `{ path: '${prop.name}', label: ${tsString(titleOf(prop.name))} }`);
-
-  return items.length > 1 ? `[\n          ${items.join(',\n          ')}\n        ]` : `[${items.join('')}]`;
-};
-
 export const shapedDeclaration = (
   { component: name, type }: PluginNames,
   { title, description, owner }: ElementText,
   shape: ElementShape
-): string => `import type { ${name}Props } from './${name}';
-import type { PluginDeclaration } from '@plitzi/plitzi-sdk';
+): string => `import { definePlugin } from '@plitzi/sdk-authoring/plugin';
+
+import type { ${name}Props } from './${name}';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type ${name}Attributes = Omit<${name}Props, 'className'>;
 
 /**
- * Static declaration for ${name}: its type, the events it fires and the actions it answers to, and the element the
- * builder adds when somebody drops it on a page. Data only, no React — the build reads it to write the manifest.
+ * ${name}, declared: what a space names it by, its words, its defaults, the events it fires and the actions it answers.
+ * Data only, no React — the build reads it to write the manifest. \`definePlugin\` writes the rest (the builder's
+ * gestures, the catalogue entry, every attribute bindable), and a space places it with \`defineElement(declaration)\`.
  */
-const declaration = {
-  /** What a space names it by: the element type \`defineElement(declaration)\` authors. Renaming it orphans every one. */
-  type: '${type}',${
+export default definePlugin<${name}Attributes>()({
+  /** What a space names it by — the element type. Renaming it orphans every one. */
+  type: '${type}',
+  label: ${tsString(title)},
+  /** What it is for: the builder shows it, and an agent connected over MCP reads it to choose the element. */
+  description: ${tsString(description)},${
     shape.headless
       ? `
   /** It draws nothing on a page — it is there for what it does — so a page check never looks for it on screen. */
   drawsNothing: true,`
       : ''
   }
-  /** The events it fires; \`preview\` names what a flow started by one reads — shown in the builder, never sent. */
+  /** The starting attributes — the component's defaults, written where the builder can show them. */
+  attributes: { ${shape.props.map(prop => `${prop.name}: ${literal(prop.value)}`).join(', ')} },${
+    shape.triggers.length > 0
+      ? `
+  /** The events it fires, and what a flow started by each reads — what \`usePluginTrigger\` hands it. */
   triggers: {${shape.triggers
-    .map(
-      trigger => `
-    ${trigger.name}: {
-      action: '${trigger.name}',
-      title: ${tsString(titleOf(trigger.name))},
-      type: 'trigger',
-      params: {},
-      preview: { ${trigger.fields.map(field => `${field}: ''`).join(', ')} }
-    }`
-    )
-    .join(',')}${shape.triggers.length > 0 ? '\n  ' : ''}},
+    .map(trigger => `\n    ${trigger.name}: { preview: { ${trigger.fields.map(field => `${field}: ''`).join(', ')} } }`)
+    .join(',')}\n  },`
+      : ''
+  }${
+    shape.callbacks.length > 0
+      ? `
   /** The actions it answers to, static half: the component adds the function that does each. */
-  callbacks: {${shape.callbacks
-    .map(
-      callback => `
-    ${callback}: { action: '${callback}', title: ${tsString(titleOf(callback))}, type: 'callback', params: {} }`
-    )
-    .join(',')}${shape.callbacks.length > 0 ? '\n  ' : ''}},
-  content: {
-    /** The starting attributes — the component's defaults, written where the builder can show them. */
-    attributes: { ${shape.props.map(prop => `${prop.name}: ${literal(prop.value)}`).join(', ')} },
-    definition: {
-      label: ${tsString(title)},
-      type: '${type}',
-      /** What it is for: the builder shows it, and an agent connected over MCP reads it to choose the element. */
-      description: ${tsString(description)},
-      items: [],
-      bindings: {},
-      styleSelectors: { base: '' },
-      initialState: { visibility: true }
-    },
-    builder: {
-      canDelete: true,
-      canSelect: true,
-      canDragDrop: true,
-      canMove: true,
-      canSnippet: true,
-      itemsAllowed: [],
-      itemsNotAllowed: []
-    },
-    market: {
-      category: ${tsString(title)},
-      owner: ${tsString(owner)},
-      license: 'MIT',
-      website: '',
-      backgroundColor: '#4422ee',
-      icon: ''
-    },
-    defaultStyle: {
-      name: ${tsString(title)},
-      displayMode: 'desktop',
-      style: { base: { default: {} } },
-      /** The attributes a data source may be pointed at — what the builder offers when somebody connects data to it. */
-      bindingsAllowed: {
-        attributes: ${bindableList(shape.props)},
-        initialState: []
-      }
-    },
-    settings: {}
+  callbacks: { ${shape.callbacks.map(callback => `${callback}: {}`).join(', ')} },`
+      : ''
   }
-} satisfies PluginDeclaration<${name}Attributes>;
-
-export default declaration;
-`;
-
-const eventsSource = (name: string, triggers: TriggerShape[]): string =>
-  triggers.length === 0
-    ? ''
-    : `
-/** What a flow started by each event reads — \`{{ <step>.${triggers[0].fields[0] ?? 'field'} }}\`. */
-export type ${name}Events = {
-${triggers.map(trigger => `  ${trigger.name}: ${trigger.fields.length > 0 ? `{ ${trigger.fields.map(field => `${field}: unknown`).join('; ')} }` : 'Record<string, never>'};`).join('\n')}
-};
-
-/**
- * Fires one of the element's events: \`fire('${triggers[0].name}', { ${triggers[0].fields.map(field => `${field}: …`).join(', ')} })\`. A flow on that event
- * runs, and reads what it was handed.
- */
-export const use${name}Events = () => {
-  const { id } = useElement();
-  const {
-    settings: { previewMode },
-    contexts: { InteractionsContext }
-  } = usePlitziServiceContext();
-  const { interactionsManager } = use(InteractionsContext);
-
-  return useCallback(
-    <Event extends keyof ${name}Events>(event: Event, payload: ${name}Events[Event]) => {
-      // In the builder the element is being edited, not used: its flows run on a page, never on the canvas.
-      if (!previewMode) {
-        return;
-      }
-
-      void interactionsManager.interactionTrigger(id, event, payload);
-    },
-    [interactionsManager, id, previewMode]
-  );
-};
+  market: { owner: ${tsString(owner)} }
+});
 `;
 
 const callbacksSource = (callbacks: string[]): string =>
@@ -371,15 +284,8 @@ const callbacksSource = (callbacks: string[]): string =>
 
 export const shapedComponent = ({ component: name, title }: PluginNames, shape: ElementShape): string => {
   const { props, triggers, callbacks, headless } = shape;
-  const reactImports = [
-    ...(triggers.length > 0 ? ['use', 'useCallback'] : []),
-    ...(callbacks.length > 0 ? ['useMemo'] : [])
-  ];
-  const sdkImports = [
-    'RootElement',
-    ...(triggers.length > 0 ? ['useElement'] : []),
-    ...(triggers.length > 0 || headless ? ['usePlitziServiceContext'] : [])
-  ];
+  const reactImports = callbacks.length > 0 ? ['useMemo'] : [];
+  const sdkImports = ['RootElement', ...(headless ? ['usePlitziServiceContext'] : [])];
   const imports = [
     ...(reactImports.length > 0 ? [`import { ${reactImports.join(', ')} } from 'react';`, ''] : []),
     `import { ${sdkImports.join(', ')} } from '@plitzi/plitzi-sdk';`,
@@ -451,12 +357,19 @@ export interface ${name}Props {
 ${props.map(prop => `  ${prop.name}?: ${TS_TYPES[prop.type]};\n`).join('')}  /** Supplied by the runtime, not authored: the classes the element's own style rules are written against. */
   className?: string;
 }
-${eventsSource(name, triggers)}
+
 /**
  * ${
    headless
      ? 'Nothing to see on a page: it is there for what it does. In the builder it shows as a badge with its attributes, so it can be selected; on a page it renders hidden — still an element, so its events and actions are its own.'
      : 'What it draws — for now its attributes, to be replaced by what it is. Deterministic on its first render (the same markup on a server and in the browser); anything live goes in an effect.'
+ }${
+   triggers.length > 0
+     ? `
+ *
+ * It fires its events with \`usePluginTrigger(declaration)\` from \`@plitzi/plitzi-sdk\`, typed by the declaration:
+ * \`const fire = usePluginTrigger(declaration); fire('${triggers[0].name}', { ${triggers[0].fields.map(field => `${field}: …`).join(', ')} })\`.`
+     : ''
  }
  */
 const ${name} = ({ ${params} }: ${name}Props) => {${look}${callbacksSource(callbacks)}

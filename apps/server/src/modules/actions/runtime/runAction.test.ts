@@ -128,6 +128,60 @@ describe('runAction', () => {
     ]);
   });
 
+  it('refuses a call that breaks the rules a task declares, every one at once, before its code runs', async () => {
+    const ran: unknown[] = [];
+    const task: FunctionTask<{ title: string; seconds: number; note: string }> = {
+      namespace: 'test',
+      action: 'ruled',
+      title: 'Ruled',
+      params: {
+        title: { type: 'text', canBind: true, label: 'Title', required: true, maxLength: 5 },
+        seconds: { type: 'number', canBind: true, label: 'Seconds', min: 30, max: 300, defaultValue: 90 },
+        note: { type: 'text', canBind: true, label: 'Note', required: true, defaultValue: 'none' }
+      },
+      run: params => {
+        ran.push(params);
+
+        return Promise.resolve({});
+      }
+    };
+    const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
+    const step = (params: Record<string, unknown>) =>
+      buildEntry({
+        nodes: {
+          start: callTrigger({}, 'ruled'),
+          ruled: node('ruled', { action: 'test.ruled', params, afterNode: 'out' }),
+          out: node('out', { action: 'flow.output', params: { values: '{"ok": true}' } })
+        }
+      });
+
+    const refused = await runAction(request(step({ title: '  ', seconds: '999', note: '' })));
+    const long = await runAction(request(step({ title: 'Too long', seconds: '45' })));
+    await runAction(request(step({ title: 12, seconds: '' })));
+
+    expect(refused.error).toBe('Title is required; Seconds is at most 300');
+    expect(long.error).toBe('Title is longer than 5 characters');
+    // A number bound to a text param arrives as its digits, and a required param with a default is never missing.
+    expect(ran).toEqual([{ title: '12', seconds: 90, note: 'none' }]);
+  });
+
+  it('refuses past a rate limit with the words the task gave it, in a server of its own too', async () => {
+    const task: FunctionTask<Record<string, never>> = {
+      namespace: 'test',
+      action: 'limited',
+      title: 'Limited',
+      params: {},
+      run: async (_params, ctx) => ctx.rateLimit('make', { most: 1, perSeconds: 60, refuse: 'Wait a minute' })
+    };
+    const { runAction } = createActionsModule({ lookups, functions: tasksOf(task) });
+    const entry = buildEntry({
+      nodes: { start: callTrigger({}, 'limited'), limited: node('limited', { action: 'test.limited', params: {} }) }
+    });
+
+    expect((await runAction(request(entry))).status).toBe('completed');
+    expect((await runAction(request(entry))).error).toBe('Wait a minute');
+  });
+
   describe('when a step fails after the flow already did something', () => {
     /** Records what each step was asked to do, in order: the property under test is WHICH steps ran. */
     const recorder = () => {

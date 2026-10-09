@@ -2,6 +2,7 @@ import { suggestContent } from './content';
 import { suggestCustomCss } from './customCss';
 import { suggestCustomCssSlots } from './customCssSlots';
 import { suggestDeclarations } from './declarations';
+import { suggestElementColours } from './elementColors';
 import { suggestMotion } from './motion';
 import { suggestPluginHosts } from './pluginHosts';
 import { suggestRepeats } from './repeats';
@@ -63,7 +64,8 @@ export const suggestSpace = (
     ...suggestCustomCssSlots(schema),
     ...suggestMotion(schema, style),
     ...suggestDeclarations(schema, style, stylesheets),
-    ...suggestPluginHosts(schema, pluginTypes)
+    ...suggestPluginHosts(schema, pluginTypes),
+    ...suggestElementColours(style)
   ]).sort((a, b) => b.saves - a.saves);
 
 /** The suggestions no element they are about quiets — for those read beside the documents, too (authoring's own). */

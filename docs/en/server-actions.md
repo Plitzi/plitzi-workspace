@@ -92,6 +92,24 @@ It writes exactly what the builder would, and three things stop being written tw
 Write a step's `params` whenever it takes anything else — a constant, an earlier step's result, a value
 interpolated into a larger string.
 
+**An action that only runs one task** is written from the task itself:
+
+```ts
+import { taskAction } from '@plitzi/sdk-authoring';
+
+import { tasks } from '../functions/index.ts';
+
+export const updatePost = taskAction(tasks.updatePost, {
+  trigger: { type: 'call', access: { mode: 'role', permissions: ['postPublish'] } }
+});
+runServerAction({ actionId: updatePost.id, input: { slug: '{{ post.slug }}' } });
+```
+
+Its input is the task's params, field for field — label, default, `required` — its id `<namespace>-<action>` in kebab
+case (`blog-update-post`), its name and description the task's, and its output the task's whole result. Each can be
+given instead; anything more — a second step, an output that leaves fields out, an input that is not the params — is a
+`defineAction`.
+
 `limits` tightens the deployment's ceilings for this action alone (`limits: { timeoutMs: 2000 }`), and widens none.
 
 **Reading one back.** An action saved in the builder reads back into the declaration that writes it:
@@ -237,6 +255,8 @@ Three triggers fire on the element that launched the run:
 ```ts
 named('saved', runServerAction({ actionId: 'rename', input: { title: '{{ form.values.title }}' } })),
 whenFailed('saved', addNotification({ content: '{{ saved.error ? saved.error : "Could not rename it" }}' }))
+// …the run and a `danger` toast with that fallback, in one call
+...runServerActionOrNotify('saved', { actionId: 'rename', input: { title: '{{ form.values.title }}' } }, 'Could not rename it')
 ```
 
 A step's own failure message never leaves the server — it can hold a query, a URL, a credential's name — so `error`

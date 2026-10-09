@@ -40,9 +40,10 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    // Two entries: everything, and what only an author on Node can do (`./node`: reading SVG files), apart so the
-    // main one never imports `node:fs` into a browser's bundle.
-    lib: { entry: { index: './src/index.ts', node: './src/node.ts' }, formats: ['es'] },
+    // Three entries: everything; what only an author on Node can do (`./node`: reading SVG files), apart so the main one
+    // never imports `node:fs` into a browser's bundle; and what a plugin's declaration is written with (`./plugin`),
+    // apart so a plugin's bundle and the pack's reading of it carry `definePlugin` and nothing else.
+    lib: { entry: { index: './src/index.ts', node: './src/node.ts', plugin: './src/plugin.ts' }, formats: ['es'] },
     rollupOptions: {
       external: [/^node:/],
       output: { entryFileNames: '[name].js', chunkFileNames: 'index-[name].js' }
@@ -55,6 +56,12 @@ export default defineConfig({
     environment: 'node',
     reporters: ['default'],
     // The skill's recipes import the package by name, as a project does; in its own tests that name is its source.
-    alias: { '@plitzi/sdk-authoring': fileURLToPath(new URL('./src/index.ts', import.meta.url)) }
+    alias: [
+      { find: /^@plitzi\/sdk-authoring$/, replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)) },
+      {
+        find: /^@plitzi\/sdk-authoring\/plugin$/,
+        replacement: fileURLToPath(new URL('./src/plugin.ts', import.meta.url))
+      }
+    ]
   }
 });

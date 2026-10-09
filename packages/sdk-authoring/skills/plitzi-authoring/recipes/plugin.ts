@@ -11,18 +11,20 @@ import {
   onClick,
   setState
 } from '@plitzi/sdk-authoring';
+import { definePlugin } from '@plitzi/sdk-authoring/plugin';
 
 import type { PluginDeclarationData, SpaceSpec } from '@plitzi/sdk-authoring';
 
-// In a project: `import declaration from './plugins/seatPicker/declaration';`
-const declaration = {
+// In a project, `src/plugins/SeatPicker/declaration.ts` — `export default definePlugin<SeatPickerAttributes>()({ … })`.
+const declaration = definePlugin<{ rows?: number }>()({
   type: 'seatPicker',
-  triggers: { onPick: { action: 'onPick', title: 'On Pick', type: 'trigger', params: {}, preview: { seat: '' } } },
-  callbacks: { reset: { action: 'reset', title: 'Reset', type: 'callback', params: {} } },
-  content: { attributes: { rows: 10 }, definition: { label: 'Seat Picker' } }
-} as const;
+  label: 'Seat Picker',
+  attributes: { rows: 10 },
+  triggers: { onPick: { preview: { seat: '' } } },
+  callbacks: { reset: {} }
+});
 
-const seatPicker = defineElement<{ rows?: number }>(declaration);
+const seatPicker = defineElement(declaration);
 
 // `authorSpace(recipe, { plugins })` — in a project, every `src/plugins/<Name>/declaration.ts`, found by folder.
 export const plugins: PluginDeclarationData[] = [declaration];

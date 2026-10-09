@@ -68,8 +68,11 @@ const paramOf = (value: unknown): TaskParam | string => {
   const base = {
     ...(typeof value.canBind === 'boolean' ? { canBind: value.canBind } : {}),
     ...(typeof value.label === 'string' ? { label: value.label } : {}),
-    ...(typeof value.when === 'boolean' ? { when: value.when } : {})
+    ...(typeof value.when === 'boolean' ? { when: value.when } : {}),
+    ...(typeof value.required === 'boolean' ? { required: value.required } : {})
   };
+  const bound = (key: 'maxLength' | 'min' | 'max') =>
+    typeof value[key] === 'number' && Number.isFinite(value[key]) ? { [key]: value[key] } : {};
   const defaultValue = value.defaultValue;
   switch (value.type) {
     case 'text':
@@ -77,11 +80,18 @@ const paramOf = (value: unknown): TaskParam | string => {
       return {
         ...base,
         type: value.type,
-        ...(typeof defaultValue === 'string' || typeof defaultValue === 'number' ? { defaultValue } : {})
+        ...(typeof defaultValue === 'string' || typeof defaultValue === 'number' ? { defaultValue } : {}),
+        ...bound('maxLength')
       };
     // Drawn as text, and handed to the task as a number (`withDefaults`), as a callback's `number` is in the browser.
     case 'number':
-      return { ...base, type: 'number', ...(typeof defaultValue === 'number' ? { defaultValue } : {}) };
+      return {
+        ...base,
+        type: 'number',
+        ...(typeof defaultValue === 'number' ? { defaultValue } : {}),
+        ...bound('min'),
+        ...bound('max')
+      };
     case 'codemirror-text':
     case 'codemirror-json':
       return { ...base, type: value.type, ...(typeof defaultValue === 'string' ? { defaultValue } : {}) };

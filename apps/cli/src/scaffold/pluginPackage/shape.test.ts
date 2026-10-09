@@ -69,18 +69,19 @@ describe('a shaped element', () => {
     // Headless: a page check does not look for it on screen.
     expect(declaration).toContain('drawsNothing: true,');
     expect(declaration).toContain("preview: { count: '' }");
-    expect(declaration).toContain("reset: { action: 'reset', title: 'Reset', type: 'callback', params: {} }");
-    expect(declaration).toContain("{ path: 'interval', label: 'Interval' }");
+    expect(declaration).toContain('callbacks: { reset: {} }');
+    // Everything else every plugin shares is `definePlugin`'s to write: the builder's gestures, the catalogue, bindings.
+    expect(declaration).toContain('export default definePlugin<TickerAttributes>()({');
+    expect(declaration).not.toContain('bindingsAllowed');
   });
 
-  it('fires its events through a typed hook, and answers its actions', () => {
+  it('fires its events through the SDK’s typed hook, and answers its actions', () => {
     const component = ticker()['Ticker.tsx'];
 
-    expect(component).toContain('export const useTickerEvents = () =>');
-    expect(component).toContain('onTick: { count: unknown };');
+    // No hook of its own to copy: `usePluginTrigger` reads the events, and what each hands a flow, off the declaration.
+    expect(component).toContain("usePluginTrigger(declaration); fire('onTick', { count: … })");
+    expect(component).not.toContain('useTickerEvents');
     expect(component).toContain('...declaration.callbacks.reset');
-    // Never on the canvas: the element is being edited there, not used.
-    expect(component).toContain('if (!previewMode) {');
   });
 
   /** Data — rows, a record — is what a binding fills: typed as such, empty until then, and with no control of its own. */

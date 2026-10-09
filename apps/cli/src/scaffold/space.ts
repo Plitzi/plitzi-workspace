@@ -171,10 +171,7 @@ const STATS = { value: 12480, series: [8, 12, 9, 17, 14, 21, 19, 26] };
 const STAT_CARD = {
   type: 'statCard',
   id: 'stat-card',
-  declaration: {
-    from: path.posix.relative(SPACE_DIR, `${PLUGINS_DIR}/StatCard/declaration.ts`),
-    attributes: 'StatCardAttributes'
-  }
+  declaration: { from: path.posix.relative(SPACE_DIR, `${PLUGINS_DIR}/StatCard/declaration.ts`) }
 };
 
 const pluginHost = ({ mode }: CreateAnswers): PluginHostOptions =>

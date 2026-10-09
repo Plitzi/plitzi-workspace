@@ -8,6 +8,7 @@ import { gunzipSync } from 'node:zlib';
 import { unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 
+import { linkAuthoring } from './linkAuthoring.testUtil';
 import { PackError, packPlugin } from './pack';
 import { writeFiles } from '../commands/terminal';
 import { pluginFunctionsFile, pluginNames, scaffoldElement, scaffoldPlugin } from '../scaffold';
@@ -18,8 +19,10 @@ import { pluginFunctionsFile, pluginNames, scaffoldElement, scaffoldPlugin } fro
  * built for real, with esbuild, into a folder of its own.
  */
 
+/** A project of its own, with that and nothing else installed — TypeScript included. */
 const inTemp = async (run: (dir: string) => Promise<void>): Promise<void> => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'plitzi-pack-'));
+  await linkAuthoring(dir);
   try {
     await run(dir);
   } finally {
@@ -148,7 +151,10 @@ describe('the source a plugin is packed from', () => {
     try {
       await fs.writeFile(
         path.join(dir, 'package.json'),
-        JSON.stringify({ name: 'site', dependencies: { react: '^19.0.0', '@plitzi/plitzi-sdk': '^0.37.0' } })
+        JSON.stringify({
+          name: 'site',
+          dependencies: { react: '^19.0.0', '@plitzi/plitzi-sdk': '^0.37.0', '@plitzi/sdk-authoring': '^0.37.0' }
+        })
       );
       await element(dir, 'seat-picker', 'Seats');
       const zip = path.join(dir, 'dist/plugins/seat-picker-1.0.0.zip');
@@ -365,7 +371,12 @@ describe('a plugin’s server half', () => {
         path.join(dir, 'package.json'),
         JSON.stringify({
           name: 'site',
-          dependencies: { react: '^19.0.0', '@plitzi/plitzi-sdk': '^0.38.0', '@plitzi/sdk-server': '^0.38.0' }
+          dependencies: {
+            react: '^19.0.0',
+            '@plitzi/plitzi-sdk': '^0.38.0',
+            '@plitzi/sdk-authoring': '^0.38.0',
+            '@plitzi/sdk-server': '^0.38.0'
+          }
         })
       );
       await element(dir, 'board', 'Board');

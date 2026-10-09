@@ -9,6 +9,7 @@ import addPlugin from './addPlugin';
 import createPlugin from './createPlugin';
 import { coveredByWorkspace, findProject } from './existingProject';
 import packPluginCommand from './packPlugin';
+import { linkAuthoring } from '../pack/linkAuthoring.testUtil';
 import { scaffold } from '../scaffold';
 
 import type { CreateAnswers } from '../scaffold';
@@ -174,6 +175,7 @@ const cliProject = async (dir: string, over: Partial<CreateAnswers> = {}): Promi
     ...over
   });
   await Promise.all(Object.entries(files).map(([file, contents]) => write(path.join(dir, file), contents)));
+  await linkAuthoring(dir);
 };
 
 /** Everything the command printed on stdout, as one string. */
@@ -213,7 +215,7 @@ describe('plitzi plugin add', () => {
     expect(output()).toContain('Registered and declared: the project finds every folder of src/plugins');
     // Written with what it was declared with, so what an agent puts on a page is what the element reads.
     expect(output()).toContain("import legendDeclaration from '../plugins/Legend/declaration.ts';");
-    expect(output()).toContain('const legend = defineElement<LegendAttributes>(legendDeclaration);');
+    expect(output()).toContain('const legend = defineElement(legendDeclaration);');
     expect(output()).toMatch(/legend\(\{ id: .legend.[ ,}]/);
   });
 
@@ -423,6 +425,7 @@ describe('plitzi plugin pack', () => {
     await inTemp(async dir => {
       const pkg = path.join(dir, 'seat-picker');
       await from(dir, () => createPlugin(pkg, { install: false, packageManager: 'npm', elements: 'legend' }));
+      await linkAuthoring(dir);
 
       await from(pkg, () => packPluginCommand([], {}));
 

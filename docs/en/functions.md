@@ -73,6 +73,10 @@ export default defineFunctions({
 - **A task is a step.** `params` are drawn in the action editor the way any step's are — static ones only: a computed
   `type`, `when` or `options` is code, and the builder never runs a space's code. A namespace the platform uses (`kv`,
   `list`, `http`, `flow`, `realtime`, `email`, …) is refused.
+- **A param says what it takes**, and a call outside it is refused with the reason before `run` — the page reads it as
+  `{{ step.error }}`: `required: true` (empty, and no default), `maxLength` on a `text` or `textarea`
+  (`title is longer than 80 characters`), `min`/`max` on a `number`. A number handed to a `text` param arrives as its
+  text. `run` need not check them again.
 - **The whole bundle is at most 1 MB** once built.
 
 ## 2. What a function can do: `ctx`
@@ -82,7 +86,7 @@ Everything a function does besides computing goes through `ctx` — the same obj
 | | |
 |---|---|
 | `ctx.kv` | The space's key/value store: `get`, `set`, `delete`, `increment`, `swap` (compare-and-set), `change` (read, change and write back — again when somebody wrote first) and scored lists (`listPut`, `listRange`, `listRemove`) — the same store the `kv.*` and `list.*` steps use |
-| `ctx.rateLimit(bucket, { most, perSeconds, per })` | Counts one more and answers `{ allowed, count, remaining }` — per caller, or `per: 'everyone'`. The same count as `flow.rateLimit` on that bucket; what to answer past it is the code's |
+| `ctx.rateLimit(bucket, { most, perSeconds, per, refuse })` | Counts one more and answers `{ allowed, count, remaining }` — per caller, or `per: 'everyone'`. The same count as `flow.rateLimit` on that bucket. With `refuse`, past the limit it refuses the call with those words instead; without, what to answer is the code's |
 | `ctx.sign(value)`, `ctx.verify(value, signature)` | HMAC-SHA-256 with a key of the space's own that the platform keeps: a link, an invitation, a key handed to a page. The code never holds the key, and what one space or environment signed no other verifies |
 | `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare |
 | `ctx.publish`, `ctx.grant`, `ctx.revoke` | The space's realtime channels, as the server — see [Realtime channels](./realtime.md) |
@@ -111,9 +115,12 @@ an error can carry a query, a URL or a credential's name, and a page is read by 
 ```ts
 import { ActionRefusal, defineFunctions } from '@plitzi/sdk-server/functions';
 
-if (!(await ctx.rateLimit(`open:${id}`, { most: 10, perSeconds: 300 })).allowed) {
-  throw new ActionRefusal('Too many tries — wait a few minutes and try again');
+if (!isBoardId(id)) {
+  throw new ActionRefusal(`"${id}" is not a board`);
 }
+
+// The same refusal, from a rate limit told what to say
+await ctx.rateLimit(`open:${id}`, { most: 10, perSeconds: 300, refuse: 'Too many tries — wait a few minutes' });
 ```
 
 `ctx.kv.change` refuses the same way when others kept winning the value: `Many people are changing this at once`.

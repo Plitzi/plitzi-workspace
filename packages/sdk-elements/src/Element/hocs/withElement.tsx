@@ -9,6 +9,7 @@ import { diffProps, tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 
 import ElementContext from '../ElementContext';
 import ElementParentContext from '../ElementParentContext';
+import { declaredAttributes } from '../helpers/declaredAttributes';
 import { isVisible } from '../helpers/isVisible';
 import { omitKeys } from '../helpers/omitKeys';
 import useElementInternal from '../hooks/useElementInternal';
@@ -136,7 +137,7 @@ const withElement = <T extends object>(WrappedComponent: FC<T>) => {
 
     const content = useMemo(() => {
       let wrappedProps = {
-        ...internalProps.attributes,
+        ...declaredAttributes(WrappedComponent, internalProps.attributes),
         ...props.extraProps,
         ...customProps,
         // Props injected via other elements

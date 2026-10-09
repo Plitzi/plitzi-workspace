@@ -14,7 +14,7 @@ plitzi plugin add ticker --prop interval:number=5000 --prop paused:boolean --tri
 
 **Say its shape and it is written in it**: `--prop name:type=default` (string, number, boolean; `list`/`json` for data
 a binding fills) per attribute — typed, bindable, with a control in its panel; `--trigger onTick:count` per event and
-what a flow reads, fired with its `use<Name>Events()` hook; `--callback reset` per action a flow calls; `--headless`
+what a flow reads, fired with `usePluginTrigger(declaration)` — `fire('onTick', { count })`, typed; `--callback reset` per action a flow calls; `--headless`
 for one with nothing to see. Without them it writes a counter showing the three ways an element talks to a space.
 
 Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
@@ -22,13 +22,13 @@ Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):
 | File | What it holds |
 | --- | --- |
 | `SeatPicker.tsx` | the component. Its props ARE the element's attributes; render through `RootElement` |
-| `declaration.ts` | its `type`, the `triggers` (events) it fires, the `callbacks` (actions) it answers, its default attributes — data only |
+| `declaration.ts` | `definePlugin<…Attributes>()({ type, label, attributes, triggers, callbacks })` — the events it fires, the actions it answers, its defaults; the rest derived. Data only |
 | `Settings.tsx` | its panel in the builder |
 | `index.ts` | the three put together |
 
 - **Registered by itself**: every folder of `src/plugins` is, under its name in camelCase (`SeatPicker` → `seatPicker`).
   Elsewhere the command prints the line that registers it (for `render()`, `<PlitziSdk>` or a page server).
-- **Place it** from its declaration in `src/space/`: `const seatPicker = defineElement<SeatPickerAttributes>(declaration)`,
+- **Place it** from its declaration in `src/space/`: `const seatPicker = defineElement(declaration)`,
   then `seatPicker({ id: 'seats', … })` — what `plugin add` and `explain` print. On Plitzi, the builder adds the same.
 - **Checked like a built-in element**: its folder's `declaration.ts` is found by itself and handed to
   `authorSpace(space, { plugins })`: flows on its events, steps to its actions and its attributes are
@@ -51,7 +51,7 @@ plitzi create packages/seat-picker --plugin --name @acme/plitzi-plugin-seat-pick
 
 Its scripts: `start` (the elements inside a space, hot-replaced), `visual`, `typecheck`, `lint`. Add more elements with
 `plugin add` from inside it — they are listed in `src/elements.ts` and `src/declarations.ts`, which the package
-publishes from. A package's element is placed the same way: `defineElement<SeatPickerAttributes>(declaration)`.
+publishes from. A package's element is placed the same way: `defineElement(declaration)`.
 
 ## Building and shipping (`plugin pack`, `plugin upload`)
 

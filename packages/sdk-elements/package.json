@@ -66,6 +66,10 @@
       "types": "./dist/Element/ServerStaticShell.d.ts",
       "import": "./dist/Element/ServerStaticShell.mjs"
     },
+    "./Element/helpers/declaredAttributes": {
+      "types": "./dist/Element/helpers/declaredAttributes.d.ts",
+      "import": "./dist/Element/helpers/declaredAttributes.mjs"
+    },
     "./Element/helpers/elementChildren": {
       "types": "./dist/Element/helpers/elementChildren.d.ts",
       "import": "./dist/Element/helpers/elementChildren.mjs"
@@ -157,6 +161,10 @@
     "./Element/hooks/useLayoutChain": {
       "types": "./dist/Element/hooks/useLayoutChain.d.ts",
       "import": "./dist/Element/hooks/useLayoutChain.mjs"
+    },
+    "./Element/hooks/usePluginTrigger": {
+      "types": "./dist/Element/hooks/usePluginTrigger.d.ts",
+      "import": "./dist/Element/hooks/usePluginTrigger.mjs"
     },
     "./Element/hooks/useRootElementInteractions": {
       "types": "./dist/Element/hooks/useRootElementInteractions.d.ts",

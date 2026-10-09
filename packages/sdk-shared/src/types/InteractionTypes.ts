@@ -48,11 +48,17 @@ export type InteractionCallbackParam<T extends Record<string, unknown> = Record<
    * space's credentials of that kind to pick from, rather than a text box somebody has to type an identifier into.
    */
   credentialProvider?: SpaceCredentialProvider;
+  /**
+   * A space's task refuses to run without it — empty, or only spaces — saying so with the param's `label`, before its
+   * code runs: what a task otherwise checked by hand in its first lines.
+   */
+  required?: boolean;
 } & (
-  | { type: 'text'; defaultValue?: string | number }
-  /** Written as text — a number or a template — and handed to the callback as a number. */
-  | { type: 'number'; defaultValue?: number }
-  | { type: 'textarea'; defaultValue?: string | number }
+  /** Handed to a task as text, whatever was written or bound — a number as its digits — at most `maxLength` long. */
+  | { type: 'text'; defaultValue?: string | number; maxLength?: number }
+  /** Written as text — a number or a template — and handed to the callback as a number, within `min` and `max`. */
+  | { type: 'number'; defaultValue?: number; min?: number; max?: number }
+  | { type: 'textarea'; defaultValue?: string | number; maxLength?: number }
   | { type: 'codemirror-text'; defaultValue?: string }
   | { type: 'codemirror-json'; defaultValue?: string }
   | { type: 'boolean'; defaultValue?: boolean }

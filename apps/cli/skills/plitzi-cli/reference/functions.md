@@ -16,6 +16,10 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
   nothing to the space. Credentials are `PLITZI_CREDENTIALS={"stripe":{"apiKey":"…"}}` in `.env` — what `dev` and the
   project's own server hand `ctx.fetch({ credential })`; in the cloud, the space's Credentials.
+- **An action that only runs one task** is `taskAction(tasks.make, { trigger: { type: 'call', access: 'public' } })`
+  (`@plitzi/sdk-authoring`): its input is the task's params, its id `<namespace>-<action>`. A param says what it
+  takes — `required`, `maxLength`, `min`/`max` — and a call outside it is refused with the reason before `run`;
+  `ctx.rateLimit('make', { most: 5, perSeconds: 600, refuse: 'Wait ten minutes' })` refuses over the limit alike.
 - **A run gets 100 ms of CPU and 10 s.** A task that needs more asks with `limits: { cpuMs, wallMs }` (or
   `defineFunctions({ limits })` for all), up to the plan's ceiling; asking above it is a problem the push reports.
 - **What must happen in N seconds whether or not a page is open** — a turn that runs out, a bot's move — is

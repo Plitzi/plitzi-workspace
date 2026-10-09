@@ -13,6 +13,7 @@ import {
   singlePageSpace,
   specFromSpace
 } from '..';
+import { definePlugin } from '../plugin';
 
 import type { StepSpec } from '../schema';
 
@@ -180,5 +181,35 @@ describe('a component hosted by custom', () => {
 
   it('judges nothing it cannot know when the component was not declared', () => {
     expect(hosted([picked])).toBe('');
+  });
+});
+
+/** A declaration `definePlugin` wrote is a plugin's declaration like any: authored by type, checked, typed. */
+describe('a plugin written with definePlugin', () => {
+  const seats = definePlugin<{ start?: number; label?: string }>()({
+    type: 'seatPicker',
+    label: 'Seat Picker',
+    attributes: { start: 0, label: 'Seats' },
+    triggers: { onPick: { preview: { seat: '' } } },
+    callbacks: { reset: {} }
+  });
+  const seatPicker = defineElement(seats);
+
+  it('authors the element by its type, its attributes typed without being told, its events and actions held to it', () => {
+    // @ts-expect-error — `start` is the number the plugin declared it reads.
+    seatPicker({ id: 'wrong', start: 'three' });
+    const spec = singlePageSpace([
+      seatPicker({
+        id: 'seats',
+        start: 3,
+        flows: [[declaredTrigger(seats, 'onPick'), setState({ key: 'seat', type: 'text', value: '{{ source.seat }}' })]]
+      }),
+      button({ content: 'Clear', flows: [[onClick(), declaredCallback(seats, 'reset', { on: 'seats' })]] })
+    ]);
+
+    const { schema } = authorSpace(spec, { plugins: [seats] });
+
+    expect(schema.flat.seats.definition.type).toBe('seatPicker');
+    expect(schema.flat.seats.attributes).toMatchObject({ start: 3 });
   });
 });

@@ -197,11 +197,10 @@ A type from a plugin, or one a deployment brings itself, is authored the same wa
 its `declaration.ts` — that is what the CLI writes, `plugin add` and `explain` print, and the skills teach:
 
 ```ts
-// A factory as typed as any built-in one
+// A factory as typed as any built-in one: `definePlugin` gave the declaration its attributes' type
 import speciesStatusDeclaration from '../plugins/SpeciesStatus/declaration.ts';
-import type { SpeciesStatusAttributes } from '../plugins/SpeciesStatus/declaration.ts';
 
-const speciesStatus = defineElement<SpeciesStatusAttributes>(speciesStatusDeclaration);
+const speciesStatus = defineElement(speciesStatusDeclaration);
 
 speciesStatus({ status: 'vulnerable', class: 'panel' });
 

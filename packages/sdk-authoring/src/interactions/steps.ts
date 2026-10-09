@@ -1,5 +1,6 @@
 import { BUILTIN_GLOBAL_CALLBACKS } from './globalCallbacks';
 import { AuthoringError } from '../schema/codes';
+import { named, whenFailed } from '../schema/flows';
 
 import type { StepSpec } from '../schema/types';
 import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
@@ -228,6 +229,40 @@ export const runServerAction = (params: {
   /** Api container ids — with `invalidateQueries: 'elements'`. */
   invalidateElements?: string[];
 }): StepSpec => globalStep('runServerAction', { mode: 'await', input: {}, ...params });
+
+/** A text as a Twig string literal: in the quotes it holds fewer of, the other kind escaped. */
+const twigString = (text: string): string => {
+  // \x22 and \x27 are the two quotes: spelled so, neither needs a quote of the other kind around it.
+  const quote = text.includes('\x27') && !text.includes('\x22') ? '\x22' : '\x27';
+
+  return `${quote}${text.replace(/\\/g, '\\\\').replaceAll(quote, `\\${quote}`)}${quote}`;
+};
+
+/**
+ * A server action run under `id`, and the notice the visitor reads when it fails: the action's own refusal — the words a
+ * task's `ActionRefusal` or a broken param rule gave — or `fallback` when it gave none. Two steps, to spread into a
+ * flow; later steps read the run as `{{ <id>.output }}` and go on with `whenSucceeded(id, …)`.
+ *
+ * ```ts
+ * [onClick(), ...runServerActionOrNotify('saved', { actionId: save.id, input: { title: '{{ state.title }}' } }, 'That did not save. Try again.')]
+ * ```
+ */
+export const runServerActionOrNotify = (
+  id: string,
+  params: Parameters<typeof runServerAction>[0],
+  fallback: string,
+  notice: { appearance?: 'danger' | 'warning'; placement?: Parameters<typeof addNotification>[0]['placement'] } = {}
+): StepSpec[] => [
+  named(id, runServerAction(params)),
+  whenFailed(
+    id,
+    addNotification({
+      content: `{{ ${id}.error ? ${id}.error : ${twigString(fallback)} }}`,
+      appearance: notice.appearance ?? 'danger',
+      placement: notice.placement ?? 'bottom-center'
+    })
+  )
+];
 
 export const cancelServerAction = (params: { runId: string }): StepSpec => globalStep('cancelServerAction', params);
 

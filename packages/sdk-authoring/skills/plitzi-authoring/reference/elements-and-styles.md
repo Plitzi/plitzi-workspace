@@ -73,7 +73,7 @@ indented with space below it: `{ margin: '0px', padding: '0px' }` on its class t
 children sit in the parent's layout and a `class` on it styles nothing (`STYLE_WITHOUT_TAG`). Put the layout on the
 parent, or give it `attributes: { subType: 'div' }`.
 
-A plugin's type is authored the same way: `defineElement<Props>({ type, … })` — see [plugins](plugins.md).
+A plugin's type is authored the same way: `defineElement(declaration)` — see [plugins](plugins.md).
 
 **What a type takes:** `npx @plitzi/cli explain formControl`, or the exported catalogues ([validation.md](validation.md)).
 

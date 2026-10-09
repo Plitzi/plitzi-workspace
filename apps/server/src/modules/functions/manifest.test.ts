@@ -33,9 +33,9 @@ describe('reading what a bundle declared', () => {
             action: 'read',
             title: 'Read',
             params: {
-              url: { type: 'text', label: 'URL', defaultValue: 'x', canBind: true },
+              url: { type: 'text', label: 'URL', defaultValue: 'x', canBind: true, required: true, maxLength: 200 },
               mode: { type: 'select', options: [{ label: 'A', value: 'a' }] },
-              count: { type: 'number', label: 'Count', defaultValue: 1 },
+              count: { type: 'number', label: 'Count', defaultValue: 1, min: 1, max: 'ten' },
               computed: { label: 'No type' }
             }
           }
@@ -46,10 +46,11 @@ describe('reading what a bundle declared', () => {
       CEILINGS
     );
 
+    // The rules a task declares travel with it — the runner checks them before the code runs — and only as numbers.
     expect(manifest.tasks[0]?.params).toEqual({
-      url: { type: 'text', label: 'URL', defaultValue: 'x', canBind: true },
+      url: { type: 'text', label: 'URL', defaultValue: 'x', canBind: true, required: true, maxLength: 200 },
       mode: { type: 'select', options: [{ label: 'A', value: 'a' }] },
-      count: { type: 'number', label: 'Count', defaultValue: 1 }
+      count: { type: 'number', label: 'Count', defaultValue: 1, min: 1 }
     });
     expect(problems).toEqual([expect.stringContaining('param "computed" has a type the builder cannot draw')]);
   });

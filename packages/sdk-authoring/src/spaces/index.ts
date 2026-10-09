@@ -83,12 +83,13 @@ export interface PluginHostOptions {
   type: string;
   id: string;
   /**
-   * Its declaration, as the copy imports it: the module, relative to the folder the files are written in, and the
-   * attributes type it exports — `{ from: '../plugins/StatCard/declaration.ts', attributes: 'StatCardAttributes' }`.
-   * The copy authors the element with `defineElement<StatCardAttributes>(declaration)`: an element of the plugin's
-   * own type, its attributes typed by what it declares — the way a space places a plugin's element, wherever it runs.
+   * Its declaration, as the copy imports it: the module, relative to the folder the files are written in —
+   * `{ from: '../plugins/StatCard/declaration.ts' }`. The copy authors the element with `defineElement(declaration)`:
+   * an element of the plugin's own type, typed by what it declares (a `definePlugin` declaration carries its
+   * attributes) — the way a space places a plugin's element, wherever it runs. `attributes` names the type to give it
+   * instead, for a declaration written without `definePlugin`.
    */
-  declaration: { from: string; attributes: string };
+  declaration: { from: string; attributes?: string };
   /** Written on the element as attributes, which the component receives as props of the same names. */
   attributes: Record<string, unknown>;
   /**
@@ -266,8 +267,8 @@ const withPluginDeclarations = (source: string, plugins: readonly PluginHostOpti
   const lines = source.split('\n');
   const { statements, end } = leadingImports(lines);
   const values = plugins.map(({ type, declaration }) => `import ${type}Declaration from '${declaration.from}';`);
-  const types = plugins.map(
-    ({ declaration }) => `import type { ${declaration.attributes} } from '${declaration.from}';`
+  const types = plugins.flatMap(({ declaration }) =>
+    declaration.attributes ? [`import type { ${declaration.attributes} } from '${declaration.from}';`] : []
   );
   const isType = (text: string): boolean => text.startsWith('import type ');
   const isPackage = (text: string): boolean => !isType(text) && text.endsWith("from '@plitzi/sdk-authoring';");
@@ -290,11 +291,13 @@ const withPluginDeclarations = (source: string, plugins: readonly PluginHostOpti
   }
 
   const factories = plugins.map(
-    ({ type, declaration }) => `const ${type} = defineElement<${declaration.attributes}>(${type}Declaration);`
+    ({ type, declaration }) =>
+      `const ${type} = defineElement${declaration.attributes ? `<${declaration.attributes}>` : ''}(${type}Declaration);`
   );
   const comment = `/** ${plugins.length === 1 ? "The plugin's element, typed by its declaration" : "The plugins' elements, typed by their declarations"}. */`;
+  const trailingTypes = typed || types.length === 0 ? [] : ['', ...types];
 
-  return [...header, ...(typed ? [] : ['', ...types]), '', comment, ...factories, ...lines.slice(end)].join('\n');
+  return [...header, ...trailingTypes, '', comment, ...factories, ...lines.slice(end)].join('\n');
 };
 
 /** Replaces one declared literal, and refuses to hand back a copy where it silently did not appear. */

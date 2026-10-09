@@ -160,7 +160,8 @@ with its fix). A plugin is declared by its folder: the server, `author` and `pag
 `src/plugins/<Name>/declaration.ts` (`pluginDeclarations` from `@plitzi/sdk-authoring/node`). What the server does
 besides serving the space is the project's own, in files it reads: `src/config/serverOptions.ts` (handed to `serveProject` —
 `images`, `action.limits`, `action.kv`, `rsc`) and, with `--source local`, `src/actions/index.ts` (the space's server
-actions, one `defineAction` each, a file each as they grow).
+actions, one `defineAction` each — `taskAction(task, { trigger })` for one that only runs a task — a file each as they
+grow).
 What `serveProject` wires itself — where the space comes from, the plugins, `public/`, `src/data/`, `src/functions/`,
 the actions' lookups — is left out of `serverOptions`' type (`ProjectServerOptions`), and comes after it, so an option
 there can never unwire it.
@@ -428,7 +429,7 @@ otherwise be a search through the SDK's types. A name no catalogue holds — `pa
 export of `@plitzi/sdk-authoring`, answered from the `.d.ts` the project installed, so it is the version the project
 runs. An element of the project's own — `src/plugins/<Name>/` — is explained by its type the same way: what it takes
 (each attribute at its default), fires and answers, and how it is placed — its declaration imported and
-`defineElement<…Attributes>(declaration)` called — which `plugin add` prints too. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
+`defineElement(declaration)` called — which `plugin add` prints too. `--json` answers in one object; over MCP it is `plitzi://explain/{name}`.
 
 ## `doctor`
 
@@ -604,14 +605,14 @@ said before anything is sent, with what to do: a provider reading a file `src/da
 
 Adds elements of your own to the project you are in — one, several at once (`plugin add seat-picker legend`), or one at
 a time as the need comes. Each is a folder, written the way Plitzi's own elements are (`@plitzi/sdk-elements`): the
-component, its `declaration.ts` (its `type`, the events it fires, the actions it answers to, and the element the builder
-adds), its `Settings.tsx` panel for the builder, and the `index.ts` that puts them together — what the folder is built
+component, its `declaration.ts` (`definePlugin` from `@plitzi/sdk-authoring/plugin`: its `type`, the events it fires,
+the actions it answers to, its defaults — the element the builder adds is derived from them), its `Settings.tsx` panel for the builder, and the `index.ts` that puts them together — what the folder is built
 from: `index.ts`, or `index.tsx` for one that writes its JSX there, never both. It asks what to call each, what the
 builder shows, and what it is for, and checks every folder is free before writing any.
 
 - **In a project `plitzi create` wrote**, it goes in `src/plugins`, where the project already looks: nothing to
   register, and a running `start:dev` picks it up without a restart. Place it in `src/space/` from its declaration —
-  `defineElement<SeatPickerAttributes>(declaration)`, then `seatPicker({ id: 'seats' })` — or, when the space lives in
+  `defineElement(declaration)`, then `seatPicker({ id: 'seats' })` — or, when the space lives in
   Plitzi, pack and upload it and add it in the builder.
 - **In a plugin package**, it goes in `src/`, and is added to `src/elements.ts` and `src/declarations.ts`, from which
   the package publishes it.
@@ -629,7 +630,8 @@ plitzi plugin add ticker --prop interval:number=5000 --prop paused:boolean --tri
 `--prop name:type=default` (string, number or boolean) is an attribute: in the props, the declaration's defaults and
 `bindingsAllowed`, and a control in `Settings.tsx`; `--prop rows:list` and `--prop meta:json` are data a binding fills
 (`unknown[]`, `Record<string, unknown>`, empty until it does). `--trigger onTick:count,at` is an event and what a flow
-started by it reads, fired with the `useTickerEvents()` hook it gets — never on the builder's canvas. `--callback reset`
+started by it reads, fired with `usePluginTrigger(declaration)` — `fire('onTick', { count, at })`, typed by the
+declaration, and never on the builder's canvas. `--callback reset`
 is an action a flow can call. `--headless` is an element with nothing to see: hidden on a page, a badge in the builder,
 and `drawsNothing` in its declaration, so a page check does not look for it. The files are written as the project's
 Prettier writes them.
@@ -696,7 +698,6 @@ plitzi source pack src/runtime/index.ts --kind runtime --name runtime -o runtime
 ```
 
 What `plugin upload` and `runtime push` keep, written to a file to look at: the closure of the entries named, gzipped.
-
 
 ## `login`, `space use` and `plugin upload`
 

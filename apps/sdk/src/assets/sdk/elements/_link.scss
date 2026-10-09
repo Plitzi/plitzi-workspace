@@ -1,8 +1,10 @@
 @mixin styles {
   .plitzi-component__link {
     display: inline-block;
-    // The same floor as the page it sits in, and for the same reason — see `_page.scss`.
-    color: light-dark(#333, oklch(0.92 0.004 286.32));
+    // The page's colour, whatever the space made it: the page already holds the SDK's floor (`_page.scss`), and a colour
+    // of the link's own would hold its words to that floor wherever a space chose another — a heading inside a card that
+    // is a link read in the SDK's grey, not the palette's ink.
+    color: inherit;
     text-decoration: none;
     cursor: pointer;
 

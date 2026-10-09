@@ -115,7 +115,7 @@ export const previewFiles = ([main, ...others]: PluginNames[]): ProjectFiles => 
     plugin: [main, ...others].map(names => ({
       id: names.base,
       type: names.type,
-      declaration: { from: `../../src/${names.component}/declaration.ts`, attributes: `${names.component}Attributes` },
+      declaration: { from: `../../src/${names.component}/declaration.ts` },
       attributes: { label: names.title, start: 0, step: 1 }
     }))
   })

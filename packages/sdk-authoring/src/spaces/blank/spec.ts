@@ -247,10 +247,9 @@ export const space: SpaceSpec = {
   variables,
   fonts,
   /**
-   * What text is, before any class touches it.
-   *
-   * Per element TYPE, so every heading and paragraph follows the palette without naming a colour — which is what
-   * makes the dark scheme work: a hard-coded colour would win against the theme and leave black text on black.
+   * What text is, before any class touches it: the page's type and colours, which every element inherits — headings,
+   * paragraphs, icons and the words inside a link alike. Named once, on the page, so the dark scheme works: a colour
+   * hard-coded on an element would win against the theme and leave black text on black.
    */
   elements: {
     // What every page is: the type, the scheme's colours, a whole screen tall.
@@ -264,11 +263,7 @@ export const space: SpaceSpec = {
         color: 'var(--foreground)',
         'background-color': 'var(--background)'
       }
-    },
-    heading: { base: { color: 'var(--foreground)' } },
-    text: { base: { color: 'inherit' } },
-    paragraph: { base: { color: 'var(--foreground)' } },
-    fontAwesome: { base: { color: 'inherit' } }
+    }
   },
   pages: [
     {

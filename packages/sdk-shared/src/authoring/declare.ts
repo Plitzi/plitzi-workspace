@@ -1,4 +1,4 @@
-import type { InteractionCallback } from '../types/InteractionTypes';
+import type { InteractionCallback, InteractionCallbackPreviews } from '../types/InteractionTypes';
 import type { PluginBuilder, PluginSchema } from '../types/PluginTypes';
 import type { ElementDefinition } from '../types/SchemaTypes';
 
@@ -175,3 +175,185 @@ export const elementDeclaration =
     // The brand is type-only and there is no value to attach, which is exactly why this cast has no runtime
     // counterpart: what comes back is the same object it was handed.
     declaration as D & ElementAttributesBrand<A>;
+
+/** An event a plugin fires, as {@link definePlugin} takes it: what a flow it starts reads (`preview`) — the rest derived. */
+export type PluginTriggerSpec = {
+  /** Left out, the event's name in words: `onEdit` is "On Edit". */
+  title?: string;
+  /** What a flow started by it reads, `{ ops: '' }` — and so what the plugin hands it (`usePluginTrigger`). */
+  preview?: InteractionCallbackPreviews;
+  params?: InteractionCallback['params'];
+};
+
+/** An action a plugin answers, as {@link definePlugin} takes it: its params — the rest derived. */
+export type PluginCallbackSpec = { title?: string; params?: InteractionCallback['params'] };
+
+type PluginContent<A extends object> = PluginDeclaration<A>['content'];
+
+/** What a plugin is, said once: {@link definePlugin} writes the rest of its declaration from it. */
+export interface PluginSpec<
+  A extends object,
+  T extends Record<string, PluginTriggerSpec>,
+  C extends Record<string, PluginCallbackSpec>
+> extends Omit<ElementDeclarationData, 'type' | 'triggers' | 'callbacks' | 'content'> {
+  /** What a space names it by — the element type. Renaming it orphans every one. */
+  type: string;
+  /** What the builder's catalogue calls it. */
+  label: string;
+  /** What it is for, in a sentence: the builder shows it, and an agent reads it to choose the element. */
+  description?: string;
+  /** Its starting attributes: the component's defaults. */
+  attributes: A;
+  triggers?: T;
+  callbacks?: C;
+  /** What the builder lets a person do with it. Left out, every gesture, and no children. */
+  builder?: PluginBuilder;
+  /** How the catalogue shows it. Left out, under its label, by nobody, MIT. */
+  market?: Partial<PluginContent<A>['market']>;
+  /** The attributes a data source may be pointed at. Left out, every one. */
+  bindable?: readonly (keyof A & string)[];
+  /** Its style before anybody styles it. */
+  style?: PluginSchema['defaultStyle']['style'];
+  /** More of the element's definition — children it starts with (`items`), its style selectors. */
+  definition?: Partial<PluginContent<A>['definition']>;
+  settings?: PluginContent<A>['settings'];
+}
+
+/** A plugin's events and actions as its declaration carries them: each named by its key, its preview kept as written. */
+export type DeclaredTriggers<T extends Record<string, PluginTriggerSpec>> = {
+  [K in keyof T & string]: Omit<InteractionCallback, 'action' | 'preview'> & {
+    action: K;
+    preview: T[K]['preview'] extends object ? T[K]['preview'] : Record<string, never>;
+  };
+};
+
+export type DeclaredCallbacks<C extends Record<string, PluginCallbackSpec>> = {
+  [K in keyof C & string]: Omit<InteractionCallback, 'action'> & { action: K };
+};
+
+/** What {@link definePlugin} answers: the declaration, its events and actions named, and its attributes in its type. */
+export type DefinedPlugin<
+  A extends object,
+  T extends Record<string, PluginTriggerSpec>,
+  C extends Record<string, PluginCallbackSpec>
+> = Omit<PluginDeclaration<A>, 'triggers' | 'callbacks'> & {
+  triggers: DeclaredTriggers<T>;
+  callbacks: DeclaredCallbacks<C>;
+} & ElementAttributesBrand<A>;
+
+/** A name as words: `onEdit` → "On Edit", `seatPicker` → "Seat Picker". */
+const wordsOf = (name: string): string =>
+  name.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, first => first.toUpperCase());
+
+/**
+ * A plugin's declaration, written from what only it can say — its type, its words, its attributes, what it fires and
+ * answers — with everything else at the default every plugin shares: the builder's gestures, the catalogue entry, a
+ * bindable attribute for each one, an empty style.
+ *
+ * ```ts
+ * export default definePlugin<SeatPickerAttributes>()({
+ *   type: 'seatPicker',
+ *   label: 'Seat Picker',
+ *   description: 'Picks a seat from a plan.',
+ *   attributes: { start: 0, label: 'Seats' },
+ *   triggers: { onPick: { preview: { seat: '' } } },
+ *   callbacks: { reset: {} }
+ * });
+ * ```
+ *
+ * Called twice, as `elementDeclaration` is: the first call takes the attributes the element accepts (its component's
+ * props, minus what the runtime supplies), which TypeScript cannot read off defaults that leave some out; the second the
+ * rest, whose events it reads as written. The whole declaration comes back — what the build writes into the manifest
+ * and the builder reads — branded with the attributes, so `defineElement(declaration)` authors the element typed
+ * without being told.
+ */
+export const definePlugin =
+  <A extends object>() =>
+  <
+    const T extends Record<string, PluginTriggerSpec> = never,
+    const C extends Record<string, PluginCallbackSpec> = never
+  >({
+    type,
+    label,
+    description,
+    attributes,
+    triggers,
+    callbacks,
+    builder,
+    market,
+    bindable,
+    style,
+    definition,
+    settings,
+    ...rest
+  }: PluginSpec<A, T, C>): DefinedPlugin<A, T, C> => {
+    const callbackOf = (
+      kind: 'trigger' | 'callback',
+      action: string,
+      spec: PluginTriggerSpec
+    ): InteractionCallback => ({
+      action,
+      title: spec.title ?? wordsOf(action),
+      type: kind,
+      params: spec.params ?? {},
+      ...(kind === 'trigger' ? { preview: spec.preview ?? {} } : {})
+    });
+    // `Object.keys` answers `string[]` for any object; these are the keys of `attributes`, which is an `A`.
+    const bound = bindable ?? (Object.keys(attributes) as (keyof A & string)[]);
+    const declaration = {
+      ...rest,
+      type,
+      triggers: Object.fromEntries(
+        Object.entries(triggers ?? {}).map(([action, spec]) => [action, callbackOf('trigger', action, spec)])
+      ),
+      callbacks: Object.fromEntries(
+        Object.entries(callbacks ?? {}).map(([action, spec]) => [action, callbackOf('callback', action, spec)])
+      ),
+      content: {
+        attributes,
+        definition: {
+          label,
+          type,
+          ...(description ? { description } : {}),
+          items: [],
+          bindings: {},
+          styleSelectors: { base: '' },
+          initialState: { visibility: true },
+          ...definition
+        },
+        builder: {
+          canDelete: true,
+          canSelect: true,
+          canDragDrop: true,
+          canMove: true,
+          canSnippet: true,
+          itemsAllowed: [],
+          itemsNotAllowed: [],
+          ...builder
+        },
+        market: {
+          category: label,
+          owner: '',
+          license: 'MIT',
+          website: '',
+          backgroundColor: '#4422ee',
+          icon: '',
+          ...market
+        },
+        defaultStyle: {
+          name: label,
+          displayMode: 'desktop' as const,
+          style: style ?? { base: { default: {} } },
+          bindingsAllowed: {
+            attributes: bound.map(path => ({ path, label: wordsOf(path) })),
+            initialState: []
+          }
+        },
+        settings: settings ?? {}
+      }
+    };
+
+    // The triggers and callbacks were built from `T` and `C` key by key, and the brand is type-only — the object is the
+    // declaration it says it is, which `Object.fromEntries` cannot tell the compiler.
+    return declaration as unknown as DefinedPlugin<A, T, C>;
+  };

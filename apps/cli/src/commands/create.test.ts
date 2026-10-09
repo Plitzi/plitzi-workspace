@@ -75,7 +75,6 @@ describe('the scaffold', () => {
     // Relative imports would resolve to nothing outside the package the copy came from: the one that climbs out of the
     // folder is the project's own plugin, which the project has.
     expect(files['src/space/index.ts'].match(/from '\.\.[^']*'/g) ?? []).toEqual([
-      "from '../plugins/StatCard/declaration.ts'",
       "from '../plugins/StatCard/declaration.ts'"
     ]);
     expect(files['src/plugins/StatCard/declaration.ts']).toBeDefined();
@@ -239,9 +238,7 @@ describe('the scaffold', () => {
     expect(files['src/plugins/StatCard/index.ts']).toContain('export default StatCard');
     expect(files['plitzi/README.md']).toContain('defineElement');
     // The element that renders it — authored from its declaration — and the attributes that reach the component as props.
-    expect(files['src/space/index.ts']).toContain(
-      'const statCard = defineElement<StatCardAttributes>(statCardDeclaration);'
-    );
+    expect(files['src/space/index.ts']).toContain('const statCard = defineElement(statCardDeclaration);');
     expect(files['src/space/index.ts']).toContain(
       "import statCardDeclaration from '../plugins/StatCard/declaration.ts';"
     );

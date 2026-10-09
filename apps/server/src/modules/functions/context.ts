@@ -3,7 +3,7 @@ import { processTwigParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { pluginKvPrefix, pluginSigned } from './scope';
 import { fetchOutbound } from '../../helpers/outboundGuard';
 import { prefixKv } from '../actions/runtime/namespaceKv';
-import { countRate } from '../actions/runtime/rateLimit';
+import { countRate, refusedOver } from '../actions/runtime/rateLimit';
 
 import type { FunctionContext, FunctionFetch, FunctionUser } from './contract';
 import type { FunctionScope } from './scope';
@@ -143,7 +143,7 @@ export const functionContextFor = (
     return {
       ...shared,
       kv: ctx.kv,
-      rateLimit: (bucket, limit) => countRate(ctx.kv, ctx.callerId, bucket, limit),
+      rateLimit: async (bucket, limit) => refusedOver(await countRate(ctx.kv, ctx.callerId, bucket, limit), limit),
       sign: ctx.sign ?? unsigned,
       verify: ctx.verify ?? unsigned,
       publish: ctx.publish ?? unavailable('publish'),
@@ -168,7 +168,7 @@ export const functionContextFor = (
   return {
     ...shared,
     kv,
-    rateLimit: (bucket, limit) => countRate(kv, ctx.callerId, bucket, limit),
+    rateLimit: async (bucket, limit) => refusedOver(await countRate(kv, ctx.callerId, bucket, limit), limit),
     sign: sign ? value => sign(pluginSigned(scope.plugin, value)) : unsigned,
     verify: verify ? (value, signature) => verify(pluginSigned(scope.plugin, value), signature) : unsigned,
     publish: noChannel,

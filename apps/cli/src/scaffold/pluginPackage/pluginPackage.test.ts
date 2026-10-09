@@ -87,9 +87,11 @@ describe('the plugin package', () => {
     const component = files['src/SeatPicker/SeatPicker.tsx'];
 
     expect(declaration).toContain("type: 'seatPicker'");
-    expect(declaration).toContain('satisfies PluginDeclaration<SeatPickerAttributes>');
-    // Data only: the build reads it with no React to load.
-    expect(declaration).not.toMatch(/^import (?!type)/m);
+    expect(declaration).toContain('export default definePlugin<SeatPickerAttributes>()({');
+    // Data only: the build reads it with no React to load — what writes it is `@plitzi/sdk-authoring/plugin` alone.
+    expect(declaration.match(/^import (?!type).*$/gm)).toEqual([
+      "import { definePlugin } from '@plitzi/sdk-authoring/plugin';"
+    ]);
     expect(component).toContain('...declaration.triggers.onCount');
     expect(component).toContain('...declaration.callbacks.reset');
   });
@@ -149,9 +151,7 @@ describe('a package of several elements', () => {
   it('previews and checks every one of them', () => {
     const files = several();
 
-    expect(files['preview/space/index.ts']).toContain(
-      'const seatPicker = defineElement<SeatPickerAttributes>(seatPickerDeclaration);'
-    );
+    expect(files['preview/space/index.ts']).toContain('const seatPicker = defineElement(seatPickerDeclaration);');
     expect(files['preview/space/index.ts']).toContain(
       "import legendDeclaration from '../../src/Legend/declaration.ts';"
     );

@@ -24,6 +24,11 @@
       "import": "./dist/node.js",
       "default": "./dist/node.js"
     },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "import": "./dist/plugin.js",
+      "default": "./dist/plugin.js"
+    },
     "./skills/*": "./skills/*",
     "./package.json": "./package.json"
   },

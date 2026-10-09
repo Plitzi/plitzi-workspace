@@ -20,10 +20,15 @@ export interface ProjectPlugin extends PluginFolder {
   attributes?: string;
 }
 
-/** The attributes type a declaration exports — `plugin add` writes `export type <Name>Attributes` — when it has one. */
+/**
+ * The attributes type to give `defineElement`, for a declaration that does not carry its own: one `definePlugin` wrote
+ * does (what `plugin add` writes), and needs none; one written by hand names it as `export type <Name>Attributes`.
+ */
 const attributesTypeOf = (file: string): string | undefined => {
   try {
-    return /^export type (\w+Attributes)\b/m.exec(readFileSync(file, 'utf-8'))?.[1];
+    const source = readFileSync(file, 'utf-8');
+
+    return /\bdefinePlugin</.test(source) ? undefined : /^export type (\w+Attributes)\b/m.exec(source)?.[1];
   } catch {
     return undefined;
   }

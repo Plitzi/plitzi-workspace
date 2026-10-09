@@ -301,3 +301,101 @@ export const defineAction = (spec: ActionSpec): ActionEntry => {
     }
   };
 };
+
+/**
+ * A task of the space's own as `taskAction` reads it — what a `FunctionTask` of `@plitzi/sdk-server/functions` is, and
+ * only what a way into it needs: its address, its words and its params. Structural, so any task is one.
+ */
+export interface ActionTask {
+  namespace: string;
+  action: string;
+  title: string;
+  description?: string;
+  params: Record<
+    string,
+    { type: unknown; label?: string; defaultValue?: unknown; required?: boolean; options?: unknown }
+  >;
+}
+
+/** The kinds of way in a task is reached by, each with its input left to the task unless written. */
+export type TaskActionTrigger = ActionTriggerSpec extends infer Trigger
+  ? Trigger extends ActionTriggerSpec
+    ? Omit<Trigger, 'input'> & { input?: Record<string, ActionField> }
+    : never
+  : never;
+
+export interface TaskActionOptions {
+  trigger: TaskActionTrigger | TaskActionTrigger[];
+  /** Left out, `<namespace>-<action>` with the action in kebab case: `inkwell.saveDraft` is `inkwell-save-draft`. */
+  id?: string;
+  /** Left out, the task's `title`. */
+  name?: string;
+  /** Left out, the task's `description`. */
+  description?: string;
+  /** Left out, the task's whole result. */
+  output?: string;
+  limits?: ActionLimits;
+}
+
+/** What a param of a task takes in from a caller: the same value, as the field of an action's input. */
+const fieldTypeOf = (type: unknown): ActionField['type'] => {
+  if (type === 'number' || type === 'boolean') {
+    return type;
+  }
+
+  return type === 'codemirror-json' || type === 'elements' ? 'json' : 'text';
+};
+
+/** A task's params as the input of an action that runs it: each param a field, with its label, default and need. */
+const inputOf = (params: ActionTask['params']): Record<string, ActionField> =>
+  Object.fromEntries(
+    Object.entries(params).map(([key, param]) => {
+      const { defaultValue } = param;
+      const field: ActionField = {
+        type: fieldTypeOf(param.type),
+        ...(param.label ? { label: param.label } : {}),
+        ...(typeof defaultValue === 'string' || typeof defaultValue === 'number' || typeof defaultValue === 'boolean'
+          ? { defaultValue }
+          : {}),
+        ...(param.required ? { required: true } : {})
+      };
+
+      return [key, field];
+    })
+  );
+
+const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+/**
+ * A server action that runs one of the space's tasks and answers its result — the way in a task is reached by from a
+ * page (`call`), the HTML (`render`) or anywhere else, written once: the task's params are the action's input, its
+ * title and description the action's, its address the id.
+ *
+ * ```ts
+ * export const make = taskAction(tasks.make, { trigger: { type: 'call', access: 'public' } });
+ * runServerAction({ actionId: make.id, input: { title: '{{ state.title }}' } });
+ * ```
+ *
+ * An action of more than one step, or one whose input is not the task's params, is a `defineAction`.
+ */
+export const taskAction = (
+  task: ActionTask,
+  { trigger, id, name, description, output, limits }: TaskActionOptions
+): ActionEntry => {
+  const input = inputOf(task.params);
+  const triggers = (Array.isArray(trigger) ? trigger : [trigger]).map((each): ActionTriggerSpec => ({
+    ...each,
+    input: each.input ?? input
+  }));
+  const about = description ?? task.description;
+
+  return defineAction({
+    id: id ?? `${task.namespace}-${kebab(task.action)}`,
+    name: name ?? task.title,
+    ...(about ? { description: about } : {}),
+    trigger: triggers.length === 1 ? triggers[0] : triggers,
+    steps: [{ id: 'result', task: `${task.namespace}.${task.action}` }],
+    ...(output ? { output } : {}),
+    ...(limits ? { limits } : {})
+  });
+};

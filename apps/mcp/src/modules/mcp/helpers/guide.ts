@@ -322,8 +322,8 @@ space already had is not repeated on every batch — and none of them blocks any
   page being shown: the \`current\` state marks it (see *Pages & folders*).
 - \`repeated-shape\` — one structure written again with other words: a **component** with props
   (\`upsertComponent { fromRef }\` turns one copy into it), or, for sibling rows of data, one \`repeatElement\`/\`list\`.
-  A few cards a person rewords by hand can stay cards; siblings that read different data or keep different state are
-  controls written alike, and are not offered.
+  A few cards a person rewords by hand can stay cards; siblings that bind different data, keep different state, fill
+  from a template of their own or render on the server are controls written alike, and are not offered.
 - \`content-attribute\` — a \`button\` or \`link\` whose children are only a \`text\` and/or a \`fontAwesome\`: its words
   are its own \`content\` and the icon its \`icon\`. What the text's class adds (\`white-space: nowrap\`) moves to the
   box's class — never the class itself; the icon's class goes in the \`icon\` slot.
@@ -334,6 +334,8 @@ space already had is not repeated on every batch — and none of them blocks any
 - \`unused-class\`, \`unused-token\`, \`unused-component\` — declared and read by nothing: remove it
   (\`deleteDefinition\`, \`deleteStyleVariable\`, \`deleteComponent\`), or use it where it was meant to go. Said
   when a batch leaves one behind.
+- \`element-color-inherited\` — the space's \`elements\` giving a type \`color: inherit\` or the page's own colour,
+  which every element — a link's words included — takes by itself: remove it, and name the colour once on the page.
 - \`literal-colour\` — a class painted from the palette typing out a token's light value: \`var(--token)\` when it
   should follow the scheme; a token of one value when it must stay the same in both.
 \`plitzi://explain/<code>\` explains each. Take one unless the copies are about to diverge; one left on purpose is

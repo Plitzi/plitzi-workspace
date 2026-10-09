@@ -1030,13 +1030,20 @@ export const AUTHORING_CODES = {
   },
   'repeated-shape': {
     kind: 'suggested',
-    means: 'the same structure written again and again with different words — cards, rows, tiles',
+    means:
+      'the same structure written again and again with different words — cards, rows, tiles; copies that bind different data, read their own template or render on the server are controls, not repeats',
     fix: 'a component with props (`components`, `component(id, { props })`), or one `list` when they are rows of data side by side — a few cards a person rewords on the canvas can stay cards'
+  },
+  'element-color-inherited': {
+    kind: 'suggested',
+    means:
+      "`elements` giving a type — a heading, a text, a link — `color: inherit` or the page's own colour, which it takes by itself",
+    fix: 'remove it, and name the colour once on `elements.page`: every element reads in the page’s colour, a link’s words included'
   },
   'plugin-custom-host': {
     kind: 'suggested',
     means: 'a `custom` element naming, by `renderType`, a plugin whose declaration the space was handed',
-    fix: 'place it from its declaration — `const seatPicker = defineElement<SeatPickerAttributes>(declaration)`, then `seatPicker({ id, … })`: typed by what it declares, the element the builder adds too'
+    fix: 'place it from its declaration — `const seatPicker = defineElement(declaration)`, then `seatPicker({ id, … })`: typed by what it declares (a `definePlugin` declaration carries its attributes), the element the builder adds too'
   },
   'content-attribute': {
     kind: 'suggested',

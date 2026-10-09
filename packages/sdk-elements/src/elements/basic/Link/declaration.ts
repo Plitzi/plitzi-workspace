@@ -73,7 +73,8 @@ const declaration = elementDeclaration<LinkAttributes>()({
         base: {
           default: {
             display: 'inline-block',
-            color: 'light-dark(#333, oklch(0.92 0.004 286.32))',
+            // The page's colour, whatever the space made it — as the stylesheet renders it (`_link.scss`).
+            color: 'inherit',
             'text-decoration': 'none',
             cursor: 'pointer'
           }
