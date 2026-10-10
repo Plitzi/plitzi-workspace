@@ -203,7 +203,8 @@ const tlsFromEnv = (root: string): ProjectTls | undefined => {
  * opens one is refused the page, which happens when the router hands this machine a new address.
  */
 const reachedBy = (addresses: string[], tls: ProjectTls | undefined): { names: string[]; unnamed: string[] } => {
-  if (!tls) {
+  // Listening on loopback alone, nothing else on the network reaches it — whatever names its certificate carries.
+  if (!tls || addresses.length === 0) {
     return { names: addresses, unnamed: [] };
   }
 

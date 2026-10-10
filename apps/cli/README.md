@@ -822,6 +822,7 @@ Every project has a `.env`, never committed, and a `.env.example`, committed: th
 for a clone to copy and fill in. A server project's `.env` is read as each script starts —
 `node --env-file-if-exists=.env` in `start`, `start:prod` and `author`, and in `start:dev`, which Node watches,
 `node --import @plitzi/sdk-server/env` (Node's flag there has its watcher restart on every write in the project) —
+`start:dev-inspect` is the same with Node's inspector open on 127.0.0.1:9229, for a debugger to attach —
 before any of its modules is evaluated, so `src/config/serverOptions.ts` and the actions find their settings in
 `process.env` as they load. A change to it is read on the next start, and a deployment that sets its environment needs
 no file. `start:prod` also sets `NODE_ENV=production` itself — without it a deployed server is a development one, its

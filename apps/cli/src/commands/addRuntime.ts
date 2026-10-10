@@ -49,29 +49,47 @@ export default defineRuntime({
 });
 `;
 
-/** `start:dev` brought to restart on the runtime too — when it is the CLI's; one the project changed is said, not rewritten. */
-const planStartDev = async (
-  root: string,
-  answers: Awaited<ReturnType<typeof answersFor>>
-): Promise<{ command: string; script?: string; yours?: string }> => {
-  const command = projectScripts({ ...answers, runtime: true })['start:dev'];
-  const text = await fs.readFile(path.join(root, 'package.json'), 'utf-8');
-  const manifest: unknown = JSON.parse(text);
+/** The scripts that restart the server on its own code: a runtime is one folder more each of them watches. */
+const WATCHING = ['start:dev', 'start:dev-inspect'] as const;
+
+type WatchingPlan = {
+  /** The CLI's own scripts, as they are rewritten to restart on the runtime too. */
+  changed: Record<string, string>;
+  /** `package.json` with the CLI's own scripts brought to restart on the runtime too — none when nothing changes. */
+  script?: string;
+  /** The ones the project changed itself: said, not rewritten. */
+  yours: { name: string; command: string }[];
+};
+
+/** The watching scripts brought to restart on the runtime too — those that are the CLI's; one the project changed is said. */
+const planWatching = async (root: string, answers: Awaited<ReturnType<typeof answersFor>>): Promise<WatchingPlan> => {
+  const withRuntime = projectScripts({ ...answers, runtime: true });
+  const without = projectScripts({ ...answers, runtime: false });
+  const recorded = (await readScaffoldRecord(root))?.scripts ?? {};
+  const manifest: unknown = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf-8'));
   const scripts = isRecord(manifest) && isRecord(manifest.scripts) ? manifest.scripts : {};
-  const current = scripts['start:dev'];
-  if (current === command) {
-    return { command };
+  const changed: Record<string, string> = {};
+  const yours: WatchingPlan['yours'] = [];
+  for (const name of WATCHING) {
+    const current = scripts[name];
+    if (typeof current !== 'string' || current === withRuntime[name]) {
+      continue;
+    }
+
+    if (current === without[name] || current === recorded[name]) {
+      changed[name] = withRuntime[name];
+    } else {
+      yours.push({ name, command: current });
+    }
   }
 
-  const recorded = (await readScaffoldRecord(root))?.scripts?.['start:dev'];
-  const theCli = current === projectScripts({ ...answers, runtime: false })['start:dev'] || current === recorded;
-  if (typeof current === 'string' && theCli) {
-    const next = { ...(isRecord(manifest) ? manifest : {}), scripts: { ...scripts, 'start:dev': command } };
-
-    return { command, script: `${JSON.stringify(next, null, 2)}\n` };
+  if (Object.keys(changed).length === 0) {
+    return { changed, yours };
   }
 
-  return { command, yours: typeof current === 'string' ? current : '' };
+  const next = { ...(isRecord(manifest) ? manifest : {}), scripts: { ...scripts, ...changed } };
+
+  return { changed, script: `${JSON.stringify(next, null, 2)}\n`, yours };
 };
 
 const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
@@ -110,12 +128,12 @@ const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
   );
   const format = await projectFormatter(project.root);
   const module = await format(RUNTIME_ENTRY, RUNTIME_MODULE);
-  const startDev = await planStartDev(project.root, answers);
+  const watching = await planWatching(project.root, answers);
 
   if (options.dryRun) {
     sayDryRun('plitzi runtime add', [
       ...(await filesWouldWrite(project.root, [RUNTIME_ENTRY])),
-      ...(startDev.script ? ['~ package.json — start:dev restarts on src/runtime/ too'] : [])
+      ...(watching.script ? [`~ package.json — ${WATCHING.join(' and ')} restart on ${RUNTIME_DIR}/ too`] : [])
     ]);
 
     return;
@@ -123,11 +141,11 @@ const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
 
   await writeFiles(project.root, {
     [RUNTIME_ENTRY]: module,
-    ...(startDev.script ? { 'package.json': startDev.script } : {})
+    ...(watching.script ? { 'package.json': watching.script } : {})
   });
-  if (startDev.script) {
+  if (watching.script) {
     const recorded = (await readScaffoldRecord(project.root))?.scripts ?? {};
-    await writeScaffoldRecord(project.root, CLI_VERSION, { scripts: { ...recorded, 'start:dev': startDev.command } });
+    await writeScaffoldRecord(project.root, CLI_VERSION, { scripts: { ...recorded, ...watching.changed } });
   }
 
   console.log(chalk.green(`\n${RUNTIME_ENTRY} — the space's runtime`));
@@ -135,10 +153,10 @@ const addRuntime = async (options: AddRuntimeOptions): Promise<void> => {
     '\nThe server runs it — `/hello` answers on this project — and `plitzi runtime push` sends it to the space: ' +
       'the same module, tried here before it goes.'
   );
-  if (startDev.yours !== undefined) {
+  for (const { name, command } of watching.yours) {
     console.log(
       chalk.yellow(
-        `\nstart:dev is yours ("${startDev.yours}"): add --watch-path=./${RUNTIME_DIR} to it, for a save to the runtime to restart the server.`
+        `\n${name} is yours ("${command}"): add --watch-path=./${RUNTIME_DIR} to it, for a save to the runtime to restart the server.`
       )
     );
   }

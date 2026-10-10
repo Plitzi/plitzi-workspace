@@ -512,6 +512,20 @@ describe('the scaffold', () => {
     expect(files['AGENTS.md']).toContain('.claude/skills/plitzi-cli/SKILL.md');
   });
 
+  // A debugger attaches to the server it runs; a browser project has none — the browser's own tools are its debugger.
+  it('offers the server with its inspector open, in server mode only', () => {
+    const scriptsOf = (mode: 'server' | 'client'): Record<string, string> =>
+      (JSON.parse(scaffold(answers({ mode }))['package.json']) as { scripts: Record<string, string> }).scripts;
+
+    expect(scriptsOf('server')['start:dev-inspect']).toBe(
+      scriptsOf('server')['start:dev'].replace(
+        '--import @plitzi/sdk-server/env ',
+        '--import @plitzi/sdk-server/env --inspect '
+      )
+    );
+    expect(scriptsOf('client')).not.toHaveProperty('start:dev-inspect');
+  });
+
   /**
    * Vite binds `localhost`, which is IPv6 here, while everything waiting for a dev server asks 127.0.0.1 — unless `.env`
    * opens it to the network, as a server project's does.

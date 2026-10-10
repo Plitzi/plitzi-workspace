@@ -13,6 +13,7 @@ What a project gives you, so you use it rather than rebuild it:
 | --- | --- |
 | `start` | serve it — in client mode Vite, which hot-replaces on save. The server prints only what goes wrong; `-- --verbose` adds every request |
 | `start:dev` | server mode: restarted on a save to its code; a plugin is swapped in the open page. Options in `src/config/serverOptions.ts`, actions in `src/actions/`; `plitzi/` is the CLI's, never edit it |
+| `start:dev-inspect` | `start:dev` with Node's inspector on 127.0.0.1:9229, for a debugger to attach to the server |
 | `author` | author `src/space/`: every problem at once (file:line, what to change), then the suggestions (`[suggest]`: a shorter way to the same page, the most elements saved first); `-- --json` for a tool |
 | `lint:space` | how `src/space/` is written, at file:line, and authoring's suggestions; `-- --max-warnings 0`. On purpose: `// plitzi-lint-disable-next-line <code> -- why` (a suggestion: `quiet` on its element) |
 | `npx plitzi space fix` | what `author` reports that has one fix, as a diff of your source; `--write` writes it, formatted, and keeps it only if the space then authors with it gone and nothing new |

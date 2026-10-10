@@ -53,6 +53,11 @@ describe('plitzi runtime add', () => {
       ['scripts', 'start:dev'],
       expect.stringContaining('--watch-path=./src/runtime')
     );
+    // Debugging it is the same server: it restarts on the runtime too.
+    expect(await startDev()).toHaveProperty(
+      ['scripts', 'start:dev-inspect'],
+      expect.stringMatching(/--inspect .*--watch-path=\.\/src\/runtime/)
+    );
     // The server already runs whatever is there: nothing of the CLI's changes.
     expect(await read('src/main.ts')).toContain('await serveProject({');
   });

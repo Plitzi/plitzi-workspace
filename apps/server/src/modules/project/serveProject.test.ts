@@ -14,6 +14,13 @@ import { offlineDataOf, oneEmptyPage } from '../ssr/testing/offlineData';
 import type { ServedProject } from './serveProject';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
+// This machine, as its network names it: `studio.local`, the name the `network` fixture is made for.
+vi.mock('node:os', async importOriginal => {
+  const os = await importOriginal<typeof import('node:os')>();
+
+  return { ...os, default: { ...os, hostname: () => 'Studio' }, hostname: () => 'Studio' };
+});
+
 /**
  * The author script a project's server runs on a save, as the CLI writes it in what matters here: it hands the
  * documents over IPC and exits 0, or says what it refused and exits 1. These documents are the ones in `next.json`,
@@ -75,7 +82,7 @@ const ENV_KEYS = [
   'TLS_KEY'
 ] as const;
 
-/** A self-signed certificate naming nothing, and its key — the runtime's fixtures. */
+/** The runtime's fixtures: `own`, a self-signed certificate naming nothing; `network`, one naming `studio.local`. */
 const FIXTURES = path.join(import.meta.dirname, '../runtime/__fixtures__');
 
 let root: string;
@@ -426,6 +433,33 @@ describe('serveProject — on this machine and on its network', { timeout: PROJE
     process.env.TLS_KEY = 'tmp/tls/missing.pem';
     await expect(serveProject({ space: () => titled('a') })).rejects.toThrow(
       'TLS_KEY in .env is "tmp/tls/missing.pem", which cannot be read'
+    );
+  });
+
+  it('is reached by nothing but this machine on loopback, whatever names its certificate carries', async () => {
+    process.env.TLS_CERT = path.join(FIXTURES, 'network.crt');
+    process.env.TLS_KEY = path.join(FIXTURES, 'network.key');
+    const said = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    await serve({ space: () => titled('a') });
+
+    expect(JSON.parse(await fs.readFile(path.join(root, 'tmp/dev-server.json'), 'utf-8'))).toMatchObject({
+      network: []
+    });
+    expect(said.mock.calls.flat().join('\n')).toContain('only this machine opens it');
+  });
+
+  it('is opened by its mDNS name too, open to the network with a certificate that names it', async () => {
+    process.env.HOST = '0.0.0.0';
+    process.env.TLS_CERT = path.join(FIXTURES, 'network.crt');
+    process.env.TLS_KEY = path.join(FIXTURES, 'network.key');
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    served = await serveProject({ space: () => titled('a') });
+
+    const recorded: unknown = JSON.parse(await fs.readFile(path.join(root, 'tmp/dev-server.json'), 'utf-8'));
+    expect(recorded).toHaveProperty(
+      'network',
+      expect.arrayContaining([`https://studio.local:${String(process.env.PORT)}`])
     );
   });
 

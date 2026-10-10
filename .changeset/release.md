@@ -118,6 +118,9 @@
   `NOTES.md`, `AGENTS.md` sends every agent to it, and nothing the CLI does touches it; `doctor --fix` writes one for
   a project that has none.
 
+- **`start:dev-inspect`** (`@plitzi/cli`): a server project's `start:dev` with Node's inspector open on
+  127.0.0.1:9229, so a debugger (VS Code, `chrome://inspect`) attaches to the server, and again after each restart.
+  `plitzi upgrade` adds it; `plitzi runtime add` has it restart on the runtime too.
 - **`plitzi cert`** (`@plitzi/cli`): HTTPS while developing, for a phone or a tablet on the Wi-Fi — over http its
   browser gives a page no microphone, camera or clipboard. A certificate from mkcert's local authority for this machine,
   its network addresses and its `.local` name, in `tmp/tls/`, named in `.env`; what to install on the phone, said.
