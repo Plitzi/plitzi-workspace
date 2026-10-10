@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
 import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers/enclosingSpace';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
 import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
 import { isMotionAnimation } from '@plitzi/sdk-shared/schema/motion';
@@ -237,14 +238,17 @@ const BuilderArea = ({
                   previewMode={previewMode}
                 >
                   <SpaceContainer>
-                    <PlitziProvider value={plitziContextValue}>
-                      {/* No key on the base element: a key here remounts the whole canvas on every page
+                    {/* The canvas is a space drawn by the editor: one drawn inside it leaves the editor's document be. */}
+                    <EnclosingSpaceContext value>
+                      <PlitziProvider value={plitziContextValue}>
+                        {/* No key on the base element: a key here remounts the whole canvas on every page
                             switch, and the layout shell is rendered inside the page — so two pages naming the
                             same `layoutContainer` rebuilt it anyway. `Plugin` is resolved per base element, so
                             switching to a root of a different KIND still changes the component type and remounts;
                             page to page keeps the shell and swaps only the body. */}
-                      <Plugin internalProps={baseElementValueMemo} />
-                    </PlitziProvider>
+                        <Plugin internalProps={baseElementValueMemo} />
+                      </PlitziProvider>
+                    </EnclosingSpaceContext>
                   </SpaceContainer>
 
                   {!previewMode && (

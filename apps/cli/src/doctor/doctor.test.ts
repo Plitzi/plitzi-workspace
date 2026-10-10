@@ -312,6 +312,30 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(report, 'tsconfig-src-left-out')?.severity).toBe('error');
   });
 
+  it('makes a tsconfig.json from before the base extend it, keeping only what the project changed', async () => {
+    const base: unknown = JSON.parse(await read('plitzi/tsconfig.base.json'));
+    const options = isRecord(base) && isRecord(base.compilerOptions) ? base.compilerOptions : {};
+    await write(
+      'tsconfig.json',
+      JSON.stringify(
+        { compilerOptions: { ...options, noUnusedLocals: true }, include: ['plitzi', 'src', 'scripts'] },
+        null,
+        2
+      )
+    );
+
+    expect(findingOf(await run(), 'tsconfig-stands-alone')?.severity).toBe('warning');
+
+    await run({ fix: true });
+
+    expect(JSON.parse(await read('tsconfig.json'))).toEqual({
+      compilerOptions: { noUnusedLocals: true },
+      include: ['plitzi', 'src', 'scripts'],
+      extends: './plitzi/tsconfig.base.json'
+    });
+    expect(findingOf(await run(), 'tsconfig-stands-alone')).toBeUndefined();
+  });
+
   it('says a secret committed to git', async () => {
     try {
       execFileSync('git', ['init', '-q'], { cwd: project });

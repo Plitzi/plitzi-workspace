@@ -6,6 +6,7 @@ import { flowReadsSpace } from './flowReads';
 import { keptStateSpace } from './keptState';
 import { keysSpace } from './keys';
 import { minimalSpace } from './minimal';
+import { nestedSpace } from './nested';
 import { plainSpace } from './plain';
 import { querySpace } from './queries';
 import { rendersSpace } from './renders';
@@ -23,6 +24,7 @@ export * from './fromSpace';
 export * from './keptState';
 export * from './keys';
 export * from './minimal';
+export * from './nested';
 export * from './plain';
 export * from './queries';
 export * from './renders';
@@ -49,6 +51,7 @@ export * from './unaskedQueries';
  *  | `rendersSpace()` | A counter, labels that read nothing, and labels reading a computed list — for counting what an interaction renders |
  *  | `keptStateSpace()` | Kept state with one transient key — for what comes back after a reload and what starts fresh |
  *  | `themedSpace()` | A page painted only from a light/dark palette, and a theme toggle — for asserting the colours a theme puts in force |
+ *  | `nestedSpace(inner)` | `minimalSpace()` with the `plitziSdk` element drawing `inner` from its documents — for what a space inside another may touch |
  *
  *  Only `sampleSpace()` carries **custom plugins** (its three RSC elements), and only a deployment that provides
  *  their components can render it whole. Anywhere else it draws "Component … Not Found" where they should be, so
@@ -100,6 +103,7 @@ export {
   keptStateSpace,
   keysSpace,
   minimalSpace,
+  nestedSpace,
   plainSpace,
   querySpace,
   rendersSpace,

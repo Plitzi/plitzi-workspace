@@ -170,12 +170,18 @@ export type RenderSettings = {
   /**
    * Whether the page may write the document's head — its SEO title and description. On, as a page's own document is.
    *
-   * Off where the page is drawn in a frame of a host whose document is not the page's: the builder's canvas. A head
-   * manager writes the head of the document its code runs in, which there is the editor's — and the builder is itself
+   * Off where the page is drawn in a host whose document is not the page's: the builder's canvas, a space drawn inside
+   * another one. A head manager writes the head of the document its code runs in, which there is the editor's — and the builder is itself
    * mounted in a page that manages that head, so a second manager under it rewrote the host's tags and took the
    * builder's own stylesheet away the moment a preview showed a page with SEO.
    */
   ownsHead?: boolean;
+  /**
+   * Whether this space is drawn inside another one — the `plitziSdk` element, a plugin rendering a space. The
+   * document is then the outer space's: this one wears its theme on its own root, keeps its stylesheet to that root,
+   * and starts in the outer space's theme when its own is left to the machine.
+   */
+  enclosed?: boolean;
 };
 
 // `enabled` is the single answer to "is RSC live in this render": the schema asking for it is not enough, a server

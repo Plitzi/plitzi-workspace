@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import https from 'node:https';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -90,6 +91,7 @@ export interface Browser {
     viewport: { width: number; height: number };
     colorScheme: Scheme;
     reducedMotion: 'reduce' | 'no-preference';
+    ignoreHTTPSErrors?: boolean;
   }): Promise<BrowserPage>;
   close(): Promise<void>;
 }
@@ -132,8 +134,8 @@ export const launchBrowser = async (root: string): Promise<Browser | { problem: 
   }
 };
 
-/** What `npm start` wrote down when it took a port: the port, and the name its `/health` answers with. */
-const recorded = async (root: string): Promise<{ port?: number; name?: string }> => {
+/** What `npm start` wrote down when it took a port: the port, where it answers, and the name its `/health` answers with. */
+const recorded = async (root: string): Promise<{ port?: number; url?: string; name?: string }> => {
   try {
     const value: unknown = JSON.parse(await readFile(path.join(root, DEV_SERVER_FILE), 'utf8'));
     if (!isRecord(value)) {
@@ -142,6 +144,7 @@ const recorded = async (root: string): Promise<{ port?: number; name?: string }>
 
     return {
       ...(typeof value.port === 'number' ? { port: value.port } : {}),
+      ...(typeof value.url === 'string' ? { url: value.url } : {}),
       ...(typeof value.name === 'string' ? { name: value.name } : {})
     };
   } catch {
@@ -150,30 +153,66 @@ const recorded = async (root: string): Promise<{ port?: number; name?: string }>
 };
 
 /**
- * Where the project's server answers: `PORT` when set, the port `npm start` took otherwise, else the mode's default —
- * and, when `npm start` named itself, that what answers there is this project. Something else on the port answers too,
- * with a page and a `200`, and a picture of the wrong server looks like one of the right one.
+ * A server of this machine serving HTTPS: a project's own, with a certificate made for the browsers of its network
+ * (mkcert) that nothing here was told to trust. What answers is checked by its name instead (`/health`).
+ */
+export const isLocalTls = (origin: string): boolean => {
+  const { protocol, hostname } = new URL(origin);
+
+  return protocol === 'https:' && ['127.0.0.1', 'localhost', '[::1]'].includes(hostname);
+};
+
+/** `/health`, read the way the tools read the pages: a local certificate taken as it is. */
+const readHealth = (origin: string): Promise<unknown> => {
+  if (!isLocalTls(origin)) {
+    return fetch(`${origin}/health`)
+      .then(response => response.json())
+      .catch(() => null);
+  }
+
+  return new Promise(resolve => {
+    https
+      .get(`${origin}/health`, { rejectUnauthorized: false }, response => {
+        let body = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk: string) => (body += chunk));
+        response.on('end', () => {
+          try {
+            resolve(JSON.parse(body));
+          } catch {
+            resolve(null);
+          }
+        });
+      })
+      .on('error', () => resolve(null));
+  });
+};
+
+/**
+ * Where the project's server answers: where `npm start` said it does — scheme included, `https` for a project serving
+ * a certificate — on `PORT` when that is set, else the mode's default; and, when `npm start` named itself, that what
+ * answers there is this project. Something else on the port answers too, with a page and a `200`, and a picture of the
+ * wrong server looks like one of the right one.
  */
 export const projectOrigin = async (
   root: string,
   project: PlitziProject | undefined
 ): Promise<{ origin: string } | { problem: string }> => {
   const server = await recorded(root);
-  const port = Number(process.env.PORT ?? server.port ?? (project?.mode === 'client' ? 5173 : 8080));
-  const origin = `http://127.0.0.1:${String(port)}`;
+  const where = new URL(server.url ?? 'http://127.0.0.1');
+  where.port = String(process.env.PORT ?? server.port ?? (project?.mode === 'client' ? 5173 : 8080));
+  const { origin, port } = where;
   if (!server.name) {
     return { origin };
   }
 
-  const health: unknown = await fetch(`${origin}/health`)
-    .then(response => response.json())
-    .catch(() => null);
+  const health = await readHealth(origin);
   const answered = isRecord(health) && typeof health.Server === 'string' ? health.Server : '';
   if (answered !== server.name) {
     return {
       problem: answered
-        ? `Port ${String(port)} answers as "${answered}", not this project ("${server.name}"). Start it: npm start`
-        : `Nothing of this project answers on port ${String(port)}. Start it: npm start`
+        ? `Port ${port} answers as "${answered}", not this project ("${server.name}"). Start it: npm start`
+        : `Nothing of this project answers on port ${port}. Start it: npm start`
     };
   }
 
@@ -209,7 +248,8 @@ export const openProjectPage = async (browser: Browser, origin: string, view: Pr
   const page = await browser.newPage({
     viewport: { width: view.width, height: view.height },
     colorScheme: view.scheme ?? 'light',
-    reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference'
+    reducedMotion: view.reducedMotion ? 'reduce' : 'no-preference',
+    ignoreHTTPSErrors: isLocalTls(origin)
   });
   await page
     .context()

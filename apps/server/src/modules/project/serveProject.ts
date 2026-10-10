@@ -32,6 +32,7 @@ import { credentialsFromEnv } from '../actions/runtime/credentials';
 import { createFileKv } from '../actions/runtime/fileKv';
 import { loadFunctions } from '../functions/load';
 import { loadRuntime, loadRuntimeModule } from '../runtime/bundle';
+import { reachOwnServer } from '../runtime/inside';
 import { serveRuntime } from '../runtime/stages';
 
 import type { AuthoredDocuments } from './watchSpace';
@@ -105,7 +106,7 @@ export type ServeProjectOptions = ServeProjectBase &
 /** The project's server, running. */
 export type ServedProject = {
   server: SSRServer;
-  /** Where it listens, as `tmp/dev-server.json` records it: `http://127.0.0.1:<port>`. */
+  /** Where this machine reaches it, as `tmp/dev-server.json` records it: `http://127.0.0.1:<port>`, `https` with a certificate. */
   url: string;
   /** Stops watching, closes the server and the runtime — what a signal does, for a caller that stops it itself. */
   close: () => Promise<void>;
@@ -147,21 +148,27 @@ const cloudAdapters = (pluginNames: string[]): SSRPageAdapters => {
 };
 
 const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost']);
+const ANY_ADDRESS = new Set(['0.0.0.0', '::']);
+
+/** An address as a URL writes it: an IPv6 one in brackets. */
+const urlHost = (address: string): string => (address.includes(':') ? `[${address}]` : address);
+
+/** Where this machine reaches a server listening on `host`: its loopback, unless it listens on one address only. */
+const localAddress = (host: string): string => (host === '::1' ? host : LOOPBACK.has(host) || ANY_ADDRESS.has(host) ? '127.0.0.1' : host);
 
 /** Where another device reaches a server listening on `host`: this machine's own network addresses, when it is open. */
-const networkUrls = (host: string, port: number): string[] => {
+const networkUrls = (host: string, port: number, scheme: string): string[] => {
   if (LOOPBACK.has(host)) {
     return [];
   }
 
-  const addresses =
-    host === '0.0.0.0' || host === '::'
-      ? Object.values(networkInterfaces())
-          .flat()
-          .flatMap(entry => (entry && entry.family === 'IPv4' && !entry.internal ? [entry.address] : []))
-      : [host];
+  const addresses = ANY_ADDRESS.has(host)
+    ? Object.values(networkInterfaces())
+        .flat()
+        .flatMap(entry => (entry && entry.family === 'IPv4' && !entry.internal ? [entry.address] : []))
+    : [host];
 
-  return addresses.map(address => `http://${address}:${String(port)}/`);
+  return addresses.map(address => `${scheme}://${urlHost(address)}:${String(port)}`);
 };
 
 const actionLookups = (
@@ -234,8 +241,23 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   const host = process.env.HOST ?? '127.0.0.1';
   // `PORT` set: that port, and an error if it is taken. Not set, while developing: 8080 or the next free one.
   const port = process.env.PORT ? Number(process.env.PORT) : developing ? await freePort(8080, host) : 8080;
-  /** Where people reach this server: `PUBLIC_URL` behind a proxy, its own address otherwise. */
-  const publicUrl = (process.env.PUBLIC_URL ?? `http://127.0.0.1:${String(port)}`).replace(/\/+$/, '');
+  // The scheme it answers on: with a certificate it serves HTTPS only, and every address it gives says so.
+  const scheme = serverOptions.tls ? 'https' : 'http';
+  const localUrl = `${scheme}://${urlHost(localAddress(host))}:${String(port)}`;
+  const network = networkUrls(host, port, scheme);
+  /**
+   * Where people reach this server: `PUBLIC_URL` behind a proxy; open to the network, the address another device uses
+   * — what an OAuth provider sends a tablet back to; this machine's otherwise.
+   */
+  const publicUrl = (process.env.PUBLIC_URL ?? network.at(0) ?? localUrl).replace(/\/+$/, '');
+  // Its own requests to that address — a runtime calling its own MCP — reach it here, whatever certificate it serves.
+  if (serverOptions.tls && process.env.PUBLIC_URL === undefined) {
+    await reachOwnServer({
+      publicUrl,
+      listener: { host: localAddress(host), port },
+      cert: serverOptions.tls.cert
+    });
+  }
 
   const { space, failure, name } = await spaceToServe(options, developing, root);
   const plugins = await projectPlugins(root);
@@ -316,15 +338,18 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
 
   // Said once the port answers: a tool that waits for "pages on" — or reads `tmp/dev-server.json` — asks right away.
   await server.listen(port, host);
-  const url = `http://127.0.0.1:${String(port)}`;
   if (speaks) {
     mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });
-    writeFileSync(path.join(root, DEV_SERVER_FILE), `${JSON.stringify({ name, port, url }, null, 2)}\n`);
-    console.log(`pages on ${url}/`);
+    writeFileSync(
+      path.join(root, DEV_SERVER_FILE),
+      `${JSON.stringify({ name, port, url: localUrl, network, publicUrl }, null, 2)}\n`
+    );
+    console.log(`pages on ${localUrl}/`);
     // Open past this machine — a tablet on the same Wi-Fi: where to point it, and that anyone on that network can too.
-    const network = networkUrls(host, port);
     if (network.length > 0) {
-      console.log(`also on ${network.join(', ')} — anyone on this network can open it (HOST=${host})`);
+      console.log(
+        `also on ${network.map(address => `${address}/`).join(', ')} — anyone on this network can open it (HOST=${host})`
+      );
     }
   }
 
@@ -354,7 +379,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
 
   return {
     server,
-    url,
+    url: localUrl,
     close: async () => {
       stopListening();
       await close();

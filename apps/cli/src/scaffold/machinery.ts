@@ -1,4 +1,4 @@
-import { CLI_DIR, FUNCTIONS_DIR, MAIN_FILE } from './paths';
+import { CLI_DIR, FUNCTIONS_DIR, MAIN_FILE, TSCONFIG_BASE } from './paths';
 
 /**
  * The files of a project that are this CLI's machinery rather than the project's own: what `plitzi upgrade` keeps up
@@ -18,10 +18,10 @@ export const MACHINERY: ReadonlySet<string> = new Set([
   `${CLI_DIR}/preflight.css`,
   `${CLI_DIR}/assets.d.ts`,
   `${CLI_DIR}/README.md`,
+  TSCONFIG_BASE,
   // What the tools find at the project's root.
   'index.html',
   'vite.config.ts',
-  'tsconfig.json',
   'tsconfig.build.json',
   '.gitignore',
   'AGENTS.md',

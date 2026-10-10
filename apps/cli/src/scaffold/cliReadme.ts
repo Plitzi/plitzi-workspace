@@ -1,4 +1,4 @@
-import { AUTHOR_FILE, CLI_DIR, DATA_DIR, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR } from './paths';
+import { AUTHOR_FILE, CLI_DIR, DATA_DIR, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR, TSCONFIG_BASE } from './paths';
 
 import type { CreateAnswers } from './types';
 
@@ -97,6 +97,8 @@ whole project to what follows — and to what Node, the server and \`space push\
       ? `\n- \`${CLI_DIR}/assets.d.ts\` — the types of what a plugin imports besides code: a stylesheet, an image, \`?raw\`, \`?inline\`.`
       : `\n- \`${CLI_DIR}/preflight.css\` — the page's base styles.`
   }
+- \`${TSCONFIG_BASE}\` — the compiler options, which \`tsconfig.json\` extends. \`tsconfig.json\` is yours: a folder of
+  your own (\`scripts/\`, \`tools/\`) goes in its \`include\`.
 
 ${server ? 'What the server does besides serving the space is yours, in `src/config/serverOptions.ts`.\n\n' : ''}${PLUGINS(answers)}
 ${server ? `${FUNCTIONS}\n${RUNTIME}\n` : ''}${DATA(answers)}${answers.fromSpace ? `\n${FROM_SPACE}` : ''}`;

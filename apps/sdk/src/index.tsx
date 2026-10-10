@@ -363,11 +363,13 @@ export type PlitziSdkProps = {
    */
   hostActions?: HostActions;
   /**
-   * Whose theme this space follows and repaints. `document` (the default) is a space that IS the page.
+   * Whose theme this space follows and repaints. `document` (the default for a space on its own) is a space that IS
+   * the page.
    *
    * `container` is a space EMBEDDED in an application with a theme of its own: it wears the class on its own root
    * and keeps a theme store of its own, so toggling it never reaches the application around it, and two spaces in
-   * one document do not answer for each other.
+   * one document do not answer for each other. A space drawn inside another one — the `plitziSdk` element, a plugin
+   * rendering a space — is `container` unless it says otherwise.
    */
   themeScope?: ThemeScope;
   /** The theme the host already settled — from the cookie a server read before it rendered the document. */

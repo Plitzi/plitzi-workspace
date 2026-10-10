@@ -104,7 +104,7 @@ describe('plitzi upgrade', () => {
       'plitzi/author.ts': 'updated',
       'playwright.config.ts': 'yours',
       'eslint.config.mjs': 'added',
-      'tsconfig.json': 'current'
+      'plitzi/tsconfig.base.json': 'current'
     });
     // Shown is not written.
     expect(await read('plitzi/author.ts')).toBe('// the author script of an older CLI\n');

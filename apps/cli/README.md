@@ -125,7 +125,9 @@ when an install fails the CLI says which setting names it.
 - **The authoring skill**, in `.claude/skills/`, so an agent working in the project knows how a space is put
   together before it touches one: a cheatsheet to start from, references by subject and recipes by intent — each a
   file that authors with no warning. `.claude` is left out of the project's lint and formatting.
-- **`AGENTS.md`**: the commands, the port, where data goes, how to look at a page, and what not to read.
+- **`AGENTS.md`**: the commands, the port, where data goes, how to look at a page, and what not to read. The CLI's,
+  like `CLAUDE.md`, which imports it: `upgrade` replaces both. What the project's own sessions have to know goes in
+  **`NOTES.md`**, which both point at and nothing the CLI does touches.
 - **Quiet output.** `author` prints one line when the space is fine (every problem with its code when it is not), the
   server only what goes wrong (`npm start -- --verbose` for every request), `typecheck` one line per error. Under the
   warnings, `author` prints the space's **suggestions**
@@ -147,8 +149,9 @@ when an install fails the CLI says which setting names it.
 | `.plitzi/` | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `space pull`, `space push` and `upgrade` stand on | yes |
 
 **`plitzi/` is the CLI's; `src/` is yours — but `src/main.ts`.** `plitzi/` holds `author.ts`, the types plugins import
-(`assets.d.ts`, server mode) or the page's base styles (`preflight.css`, client mode), and a `README.md` saying what
-each folder of `src/` is. `src/main.ts`, the entry point, is the CLI's too, kept in `src/` where an entry point is
+(`assets.d.ts`, server mode) or the page's base styles (`preflight.css`, client mode), the compiler options
+(`tsconfig.base.json`, which the project's own `tsconfig.json` extends — a folder of yours, `scripts/` or `tools/`, goes
+in its `include`), and a `README.md` saying what each folder of `src/` is. `src/main.ts`, the entry point, is the CLI's too, kept in `src/` where an entry point is
 looked for; `upgrade` keeps all of them current, and the build compiles `src/` into `dist/main.js`. In server mode it is a few lines: it authors the space
 (`authorProjectSpace` from `@plitzi/sdk-authoring/node`, which reads `src/space/` as `author` reads it) and hands
 it, the actions and the options to `serveProject` from `@plitzi/sdk-server/project`, which wires the rest from where the
@@ -312,7 +315,7 @@ and that running it once more will not change the answer (kept in `tmp/refusals.
 ```bash
 plitzi element remove ent-trust                     # the element's call taken out, with the styles and imports only it used
 plitzi element move ent-faq --before ent-pricing    # put before (or --after) a sibling of the same list of children
-plitzi verify                               # author, lint:space, typecheck, lint, format and every page: what fails
+plitzi verify                               # author, lint:space, typecheck, lint, test, format and every page: what fails
 plitzi verify --no-pages                    # the pages left out, said as such
 ```
 

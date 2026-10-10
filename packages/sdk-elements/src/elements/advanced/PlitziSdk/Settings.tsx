@@ -23,6 +23,11 @@ const Settings = ({ spaceKey = '', environment = 'main', onUpdate }: SettingsPro
         <option value="staging">Staging</option>
         <option value="production">Production</option>
       </Select>
+      <p className="text-xs">
+        Or bind <code>offlineData</code> to a space&#39;s documents — an API&#39;s answer, a runtime&#39;s route — or
+        <code>offlineData.schema</code> and <code>offlineData.style</code> from two elements, to draw it with no
+        backend; the key is then not read.
+      </p>
     </div>
   );
 };

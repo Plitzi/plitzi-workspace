@@ -4,6 +4,7 @@ import path from 'node:path';
 import { getMimeType, getCacheControl } from './mimeTypes';
 import { CompressedFileCache } from '../helpers/cache/CompressedFileCache';
 
+import type { StaticCachePolicy } from './mimeTypes';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
 
 // The SDK bundle, its vendor and stylesheet compress to well under a megabyte each; this leaves room for a
@@ -17,12 +18,18 @@ const isText = (mimeType: string): boolean => /^text\/|javascript|json|xml|svg/.
 
 const buildEtag = (stat: fs.Stats): string => `"${stat.mtimeMs.toString(36)}-${stat.size.toString(36)}"`;
 
-const serveFile = (req: SSRRequest, res: SSRResponseHelpers, filePath: string, stat: fs.Stats): true => {
+const serveFile = (
+  req: SSRRequest,
+  res: SSRResponseHelpers,
+  filePath: string,
+  stat: fs.Stats,
+  cache: StaticCachePolicy
+): true => {
   const etag = buildEtag(stat);
   const ifNoneMatch = req.headers['if-none-match'];
 
   res.setHeader('ETag', etag);
-  res.setHeader('Cache-Control', getCacheControl(filePath));
+  res.setHeader('Cache-Control', getCacheControl(filePath, cache));
   res.setHeader('Last-Modified', stat.mtime.toUTCString());
 
   if (ifNoneMatch === etag) {
@@ -48,7 +55,12 @@ const serveFile = (req: SSRRequest, res: SSRResponseHelpers, filePath: string, s
   return true;
 };
 
-export const serveStatic = (req: SSRRequest, res: SSRResponseHelpers, rootDir: string): boolean => {
+export const serveStatic = (
+  req: SSRRequest,
+  res: SSRResponseHelpers,
+  rootDir: string,
+  cache: StaticCachePolicy = 'versioned'
+): boolean => {
   const relative = req.path.replace(/^\/+/, '');
   const filePath = path.resolve(rootDir, relative);
   const resolvedRoot = path.resolve(rootDir);
@@ -69,8 +81,8 @@ export const serveStatic = (req: SSRRequest, res: SSRResponseHelpers, rootDir: s
     if (!fs.existsSync(indexPath)) {
       return false;
     }
-    return serveFile(req, res, indexPath, fs.statSync(indexPath));
+    return serveFile(req, res, indexPath, fs.statSync(indexPath), cache);
   }
 
-  return serveFile(req, res, filePath, stat);
+  return serveFile(req, res, filePath, stat, cache);
 };

@@ -4,9 +4,9 @@ import { serveStatic } from '../../staticFiles';
 import type { Stage } from '../types';
 import type { SSRRequest } from '@plitzi/sdk-shared';
 
-// The consumer's own public directory.
+// The consumer's own public directory: files kept by name, which a project may rewrite while it runs.
 export const publicDirStage: Stage = ctx =>
-  ctx.config.publicDir ? serveStatic(ctx.req, ctx.res, ctx.config.publicDir) : false;
+  ctx.config.publicDir ? serveStatic(ctx.req, ctx.res, ctx.config.publicDir, 'revalidate') : false;
 
 // Reserve /.well-known so it never falls through to SSR; nothing here serves it yet.
 export const wellKnownStage: Stage = ctx => {

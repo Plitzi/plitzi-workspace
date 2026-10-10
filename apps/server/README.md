@@ -210,7 +210,12 @@ a plugin with no `declaration.ts`, no `.env.example` — is printed while develo
 What it wires from the project:
 
 - **The port.** `PORT`, or 8080 — while developing, the next free one from there (`freePort`). `HOST`, loopback by
-  default (`0.0.0.0` in a container). `PUBLIC_URL` is where people reach it, behind a proxy.
+  default (`0.0.0.0` in a container).
+- **Where people reach it** — the runtime's `publicUrl`: `PUBLIC_URL` behind a proxy; with `HOST` open to the network,
+  this machine's address there (what a tablet on the Wi-Fi opens, and an OAuth provider sends it back to); this
+  machine's loopback otherwise — `https` whenever `serverOptions.tls` gives it a certificate. Serving TLS itself, its
+  own requests to that address (a runtime calling its own MCP) connect to its listener here and take its certificate —
+  exactly that one — however local it is (`reachOwnServer`).
 - **Its plugins.** Every folder of `src/plugins` under its name in camelCase, built from its `index.ts` (or
   `index.tsx`, `pluginEntry`) and rendered
   on the server (`action: 'compile'`), with its server half (`functions/`); every plugin of `vendor/plugins`, run as it
@@ -221,7 +226,8 @@ What it wires from the project:
 - **Its files.** `public/` served as it is, `src/data/` read and never served (`dataDir`), the `kv` in `state/kv.json`
   (`createFileKv`), `PLITZI_SIGNING_SECRET` what `ctx.sign` signs with.
 - **Where it is.** `/health` answers with the space's permanent URL (or the cloud `name`), and `tmp/dev-server.json`
-  records the name, the port and the URL for `plitzi page check`, `shot` and `visual`. A signal closes it (`closeOnSignals`).
+  records the name, the port, the URL this machine reaches it at (`https` with a certificate), its network addresses
+  and its `publicUrl` — for `plitzi page check`, `shot`, `verify` and `visual`. A signal closes it (`closeOnSignals`).
 
 While developing — `NODE_ENV` other than `production` — `devMode` and `devReload` are on, and:
 
@@ -496,7 +502,7 @@ createServer({
 });
 ```
 
-Static responses include `ETag`, `Last-Modified`, and `Cache-Control` headers. Subsequent requests with `If-None-Match` receive `304 Not Modified` when the file has not changed. JS, CSS, and font files are served with `Cache-Control: immutable`; all other assets use a 1-hour max-age.
+Static responses include `ETag`, `Last-Modified`, and `Cache-Control` headers. Subsequent requests with `If-None-Match` receive `304 Not Modified` when the file has not changed. Under a versioned URL — the SDK bundle, the plugins, `static` mounts, fonts — JS, CSS and font files are served `immutable` and everything else with a 1-hour max-age. `publicDir` is the project's files by name, which it may rewrite while it runs: `no-cache`, asked about every time and answered `304` while unchanged.
 
 ### Images
 

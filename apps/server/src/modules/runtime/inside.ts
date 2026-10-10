@@ -1,4 +1,6 @@
+import { X509Certificate } from 'node:crypto';
 import net from 'node:net';
+import tls from 'node:tls';
 
 import type { Dispatcher } from 'undici';
 
@@ -67,5 +69,61 @@ export const reachSpaceInside = async ({ publicUrl, insideUrl }: { publicUrl: st
         handler
       )
   );
+  setGlobalDispatcher(agent);
+};
+
+export type OwnServer = {
+  /** Where people reach this server — the address its code writes and fetches. */
+  publicUrl: string;
+  /** Where this machine reaches it: the address and port it listens on. */
+  listener: { host: string; port: number };
+  /** The certificate it serves, PEM: the one a connection to it has to present to be taken as this server. */
+  cert: string | Buffer;
+};
+
+/**
+ * A self-hosted server serving TLS itself, reached from its own process — the runtime calling its own MCP, a function
+ * calling a route of its own space: every request to its public address connects to its listener on this machine.
+ *
+ * Its certificate is usually a local one (mkcert, for a tablet on the Wi-Fi), which the browsers on that network were
+ * told to trust and Node was not, so these requests failed whatever the address said. They are taken when the peer
+ * presents exactly this server's certificate — its fingerprint, not a chain — and refused otherwise; nothing else the
+ * process reaches is verified any less.
+ */
+export const reachOwnServer = async ({ publicUrl, listener, cert }: OwnServer) => {
+  const outside = new URL(publicUrl);
+  const outsidePort = outside.port || (outside.protocol === 'https:' ? '443' : '80');
+  const own = new X509Certificate(cert).fingerprint256;
+  const { Agent, buildConnector, setGlobalDispatcher } = await import('undici');
+  const connect = buildConnector({});
+  const agent = new Agent({
+    connect: (options, callback) => {
+      if (options.hostname !== outside.hostname || (options.port || outsidePort) !== outsidePort) {
+        connect(options, callback);
+
+        return;
+      }
+
+      const socket = tls.connect({
+        host: listener.host,
+        port: listener.port,
+        // An address is not a name a certificate is chosen by: SNI carries host names only.
+        ...(net.isIP(outside.hostname) ? {} : { servername: outside.hostname }),
+        ALPNProtocols: ['http/1.1'],
+        rejectUnauthorized: false
+      });
+      socket.once('secureConnect', () => {
+        if (socket.getPeerX509Certificate()?.fingerprint256 !== own) {
+          socket.destroy();
+          callback(new Error(`${outside.host} answered with a certificate that is not this server's`), null);
+
+          return;
+        }
+
+        callback(null, socket);
+      });
+      socket.once('error', error => callback(error, null));
+    }
+  });
   setGlobalDispatcher(agent);
 };

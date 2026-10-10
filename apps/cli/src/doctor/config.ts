@@ -8,7 +8,8 @@ import { projectModule } from './projectModules';
 import { editTsConfig, freshSecret, ignoreLines, unignore } from './repairs';
 import { sayer } from './types';
 import { projectSettings } from '../commands/projectSettings';
-import { CLI_DIR, MAIN_FILE, PROJECT_STATE, PROJECT_TMP } from '../scaffold/paths';
+import { CLI_DIR, MAIN_FILE, PROJECT_NOTES, PROJECT_STATE, PROJECT_TMP, TSCONFIG_BASE } from '../scaffold/paths';
+import { projectNotes, tsconfig, tsconfigBase } from '../scaffold/project';
 
 import type { Check, DoctorContext, Finding, Repair } from './types';
 
@@ -111,10 +112,55 @@ const NODE_OPTIONS: readonly { option: string; why: string }[] = [
   { option: 'erasableSyntaxOnly', why: 'an `enum` or a parameter property passes the typecheck and fails at start' }
 ];
 
+/** The options `TSCONFIG_BASE` sets, as the CLI writes it for this project. */
+const baseOptions = (answers: DoctorContext['answers']): Record<string, unknown> => {
+  const base: unknown = JSON.parse(tsconfigBase(answers));
+
+  return isRecord(base) && isRecord(base.compilerOptions) ? base.compilerOptions : {};
+};
+
+/**
+ * A `tsconfig.json` from before the CLI kept its options apart, made to extend them: what it sets the same as the base
+ * goes, and only what is the project's own is left in it.
+ */
+const extendBase = (root: string, answers: DoctorContext['answers']) =>
+  editTsConfig(
+    root,
+    'tsconfig.json',
+    `makes tsconfig.json extend ${TSCONFIG_BASE}, keeping the options it changes`,
+    json => {
+      const base = baseOptions(answers);
+      const own = isRecord(json.compilerOptions)
+        ? Object.entries(json.compilerOptions).filter(
+            ([key, value]) => JSON.stringify(value) !== JSON.stringify(base[key])
+          )
+        : [];
+      json.extends = `./${TSCONFIG_BASE}`;
+      if (own.length > 0) {
+        json.compilerOptions = Object.fromEntries(own);
+      } else {
+        Reflect.deleteProperty(json, 'compilerOptions');
+      }
+    }
+  );
+
 const tsconfigChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> => {
   const config = await readTsConfig(root, 'tsconfig.json');
   if (!config) {
-    return [];
+    return [
+      say.error(
+        'tsconfig-missing',
+        'There is no tsconfig.json: nothing type-checks the project, and the lint reads none of it.',
+        {
+          file: 'tsconfig.json',
+          fix: `Write one that extends ./${TSCONFIG_BASE} and includes the project's folders.`,
+          repair: {
+            says: 'writes tsconfig.json',
+            run: () => fs.writeFile(path.join(root, 'tsconfig.json'), tsconfig(answers))
+          }
+        }
+      )
+    ];
   }
 
   if ('problem' in config) {
@@ -151,6 +197,20 @@ const tsconfigChecks = async ({ root, answers }: DoctorContext): Promise<Finding
         fix: `Add "${CLI_DIR}" to "include".`,
         ...(await repairOf(included(CLI_DIR)))
       })
+    );
+  }
+
+  if (!config.extends) {
+    findings.push(
+      say.warning(
+        'tsconfig-stands-alone',
+        `tsconfig.json does not extend ./${TSCONFIG_BASE}: the compiler options the CLI keeps up never reach it.`,
+        {
+          file: 'tsconfig.json',
+          fix: `Set "extends": "./${TSCONFIG_BASE}" and keep in "compilerOptions" only what is the project's own.`,
+          ...(await repairOf(extendBase(root, answers)))
+        }
+      )
     );
   }
 
@@ -396,8 +456,31 @@ const envChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> =
   return findings;
 };
 
+/** The project's notes, which `CLAUDE.md` imports and `AGENTS.md` sends every agent to: one a project from before them lacks. */
+const notesChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]> => {
+  if ((await readOptional(path.join(root, PROJECT_NOTES))) !== undefined) {
+    return [];
+  }
+
+  return [
+    say.warning(
+      'notes-missing',
+      `There is no ${PROJECT_NOTES}: the agents are sent to it for what this project has to know, and find nothing.`,
+      {
+        file: PROJECT_NOTES,
+        fix: `Write ${PROJECT_NOTES}: how the project is built, what must not be undone.`,
+        repair: {
+          says: `writes ${PROJECT_NOTES}`,
+          run: () => fs.writeFile(path.join(root, PROJECT_NOTES), projectNotes(answers))
+        }
+      }
+    )
+  ];
+};
+
 export const checkConfig: Check = async context => [
   ...(await tsconfigChecks(context)),
+  ...(await notesChecks(context)),
   ...(await gitignoreChecks(context)),
   ...(await gitChecks(context)),
   ...(await envChecks(context))

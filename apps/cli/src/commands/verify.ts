@@ -58,6 +58,8 @@ export const stepsOf = (scripts: Record<string, string>): Step[] => [
   ...(scripts['lint:space'] ? [{ name: 'lint:space', command: scripts['lint:space'] }] : []),
   ...(scripts.typecheck ? [{ name: 'typecheck', command: scripts.typecheck }] : []),
   ...(scripts.lint ? [{ name: 'lint', command: scripts.lint }] : []),
+  // The project's own tests — a plugin's rules, a runtime's routes — which no other step reads.
+  ...(scripts.test ? [{ name: 'test', command: scripts.test }] : []),
   // `format` writes; whether there is anything to write is asked of the same formatter without it.
   ...(Object.hasOwn(scripts, 'format') && scripts.format.startsWith('prettier')
     ? [{ name: 'format', command: 'prettier --check .', fix: 'the format script writes them' }]

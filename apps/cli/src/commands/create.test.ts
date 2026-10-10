@@ -148,7 +148,7 @@ describe('the scaffold', () => {
     expect(files['vite.config.ts']).toContain("require.resolve('@plitzi/plitzi-sdk/plitzi-sdk-devtools.css')");
     expect(files['vite.config.ts']).toContain("apply: 'serve'");
     // Without it the entry does not typecheck: CSS side-effect imports and `import.meta.env` are its declarations.
-    expect(files['tsconfig.json']).toContain('vite/client');
+    expect(files['plitzi/tsconfig.base.json']).toContain('vite/client');
   });
 
   /**
@@ -356,7 +356,9 @@ describe('the scaffold', () => {
         devDependencies: Record<string, string>;
         engines: Record<string, string>;
       };
-      const { compilerOptions } = JSON.parse(files['tsconfig.json']) as { compilerOptions: Record<string, unknown> };
+      const { compilerOptions } = JSON.parse(files['plitzi/tsconfig.base.json']) as {
+        compilerOptions: Record<string, unknown>;
+      };
 
       // A server project's with `.env` read, as its server has it when it authors the same space on a save.
       expect(scripts.author).toBe(
@@ -416,7 +418,10 @@ describe('the scaffold', () => {
     expect(local['AGENTS.md']).toContain('.claude/skills/plitzi-authoring/SKILL.md');
     expect(local['AGENTS.md']).toMatch(/`npm run author` \| author the space/);
     expect(local['AGENTS.md']).toMatch(/`npm run lint:space` \| how the space's source is written/);
-    expect(local['CLAUDE.md']).toBe('@AGENTS.md\n');
+    expect(local['CLAUDE.md']).toBe('@AGENTS.md\n@NOTES.md\n');
+    // The project's own notes, which AGENTS.md sends every agent to and upgrade never touches.
+    expect(local['AGENTS.md']).toContain('`NOTES.md`');
+    expect(local['NOTES.md']).toContain('own notes');
     // A space that lives in Plitzi has no `author` script to run, and no source to lint.
     expect(cloud['AGENTS.md']).not.toContain('run author');
     expect(cloud['AGENTS.md']).not.toContain('lint:space');
@@ -536,6 +541,7 @@ describe('plitzi create', () => {
         '.prettierrc',
         'AGENTS.md',
         'CLAUDE.md',
+        'NOTES.md',
         'README.md',
         'eslint.config.mjs',
         'package.json',

@@ -1,8 +1,9 @@
 import { describeTarget, expect, test } from '../../fixtures';
 import { el, HARNESS_ORIGIN, openHarness, renderSpace } from '../../helpers/harness';
-import { THEMED_BACKGROUND, THEMED_IDS, themedSpace } from '../../spaces';
+import { nestedSpace, THEMED_BACKGROUND, THEMED_IDS, themedSpace } from '../../spaces';
 
 import type { Page } from '@playwright/test';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
 /** Light and dark, through the two ways the SDK can be mounted.
  *
@@ -23,6 +24,23 @@ const themeCookie = async (page: Page): Promise<string | undefined> =>
   (await page.context().cookies(HARNESS_ORIGIN)).find(cookie => cookie.name === 'theme')?.value;
 
 const sdkRoot = (page: Page) => page.locator('.plitzi-sdk');
+
+/** The themed space with a title of its own, so a spec can tell whose head the document shows. */
+const titledThemedSpace = (title: string): OfflineDataRaw => {
+  const { schema, style } = themedSpace();
+  const page = schema.flat[THEMED_IDS.page];
+
+  return {
+    schema: {
+      ...schema,
+      flat: {
+        ...schema.flat,
+        [page.id]: { ...page, attributes: { ...page.attributes, seoEnabled: true, seoPageTitle: title } }
+      }
+    },
+    style
+  };
+};
 
 describeTarget('harness', () => {
   test.describe('on a machine set to light', () => {
@@ -61,6 +79,44 @@ describeTarget('harness', () => {
         .toBe(THEMED_BACKGROUND.dark);
       await expect(page.locator('html')).not.toHaveClass(/\b(dark|light)\b/);
       expect(await themeCookie(page), 'the page cookie is not the embedded space’s to write').toBe(cookieBefore);
+    });
+
+    /** plitzi-ui's own provider used to take `dark` off `<html>` as an embedded space mounted, and nothing put it
+     *  back: the page around the space turned light. */
+    test('an embedded space leaves the class the document already wears', async ({ page }) => {
+      await openHarness(page);
+      await page.evaluate(() => document.documentElement.classList.add('dark'));
+      await renderSpace(page, themedSpace(), { themeScope: 'container' });
+
+      await expect(el(page, space, THEMED_IDS.page)).toBeVisible();
+      await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+    });
+
+    test('a space drawn inside another repaints itself and leaves the page around it alone', async ({ page }) => {
+      await openHarness(page);
+      const cookieBefore = await themeCookie(page);
+      const titleBefore = await page.title();
+      await renderSpace(page, nestedSpace(titledThemedSpace('Inner page')));
+      const innerRoot = page.locator('.plitzi-component__plitzi-sdk > .plitzi-sdk');
+      await expect(el(page, space, THEMED_IDS.page)).toBeVisible();
+
+      await el(page, space, THEMED_IDS.toggle).click();
+
+      await expect(innerRoot).toHaveClass(/\bdark\b/);
+      await expect.poll(() => pageBackground(page)).toBe(THEMED_BACKGROUND.dark);
+      await expect(page.locator('html')).not.toHaveClass(/\b(dark|light)\b/);
+      expect(await themeCookie(page), 'the page cookie is not the inner space’s to write').toBe(cookieBefore);
+      expect(await page.title(), 'the head is the outer page’s').toBe(titleBefore);
+    });
+
+    test('a space drawn inside another starts in the theme the page around it is in', async ({ page }) => {
+      await openHarness(page);
+      await page.context().addCookies([{ name: 'theme', value: 'dark', url: HARNESS_ORIGIN }]);
+      await renderSpace(page, nestedSpace(titledThemedSpace('Inner page')));
+
+      await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+      await expect(page.locator('.plitzi-component__plitzi-sdk > .plitzi-sdk')).toHaveClass(/\bdark\b/);
+      await expect.poll(() => pageBackground(page)).toBe(THEMED_BACKGROUND.dark);
     });
 
     /** In development the desktop shares `localhost` with every app on another port, and any of them may have left a

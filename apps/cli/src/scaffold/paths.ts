@@ -6,7 +6,7 @@
  * it — where it came from (`space.json`), the functions' working copy (`functions.json`), what `create` wrote
  * (`scaffold.json`). Committed.
  */
-import { PROJECT_TMP } from '@plitzi/sdk-shared/project/paths';
+import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project/paths';
 
 export {
   AUTHOR_FILE,
@@ -37,6 +37,15 @@ export {
  * CLI's all the same: `plitzi upgrade` keeps it current, and what a project changes goes in `src/config/serverOptions.ts`.
  */
 export const MAIN_FILE = 'src/main.ts';
+
+/**
+ * The project's own notes for agents — how it is built, what must not be undone — which `CLAUDE.md` and `AGENTS.md`,
+ * both the CLI's, point at. The project's: `plitzi upgrade` never touches it.
+ */
+export const PROJECT_NOTES = 'NOTES.md';
+
+/** The compiler options the CLI keeps up, which the project's own `tsconfig.json` extends. */
+export const TSCONFIG_BASE = `${CLI_DIR}/tsconfig.base.json`;
 
 /** The space's server actions, a folder like the space: `index.ts` lists them for the server, one action a file. */
 export const ACTIONS_DIR = 'src/actions';

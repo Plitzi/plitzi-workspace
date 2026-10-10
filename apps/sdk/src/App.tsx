@@ -10,7 +10,7 @@ import { inputTheme } from '@plitzi/plitzi-ui/Input';
 import Provider from '@plitzi/plitzi-ui/Provider';
 import { textTheme } from '@plitzi/plitzi-ui/Text';
 import clsx from 'clsx';
-import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, useState, Fragment } from 'react';
+import { useEffect, Children, isValidElement, useMemo, useCallback, useRef, useState, Fragment, use } from 'react';
 import { BrowserRouter, MemoryRouter, StaticRouter } from 'react-router-dom';
 
 import AppMain from '@modules/App/AppMain';
@@ -27,6 +27,7 @@ import { createStoreDevToolsLogger, type SdkState } from '@plitzi/sdk-shared';
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
 import { documentCookies } from '@plitzi/sdk-shared/helpers/cookies';
+import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers/enclosingSpace';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
 import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
@@ -88,6 +89,9 @@ export type AppProps = {
    * a theme of its own (the desktop window, a component mounted in a host): it wears the class on its own root and
    * keeps a theme store of its own, so toggling it never reaches the application around it, and two spaces in one
    * document do not answer for each other.
+   *
+   * Left out, it is `container` for a space drawn inside another (the `plitziSdk` element, a plugin rendering one) and
+   * `document` otherwise.
    */
   themeScope?: ThemeScope;
   /** The theme the host already settled — from the cookie a server read before it rendered the document. */
@@ -132,13 +136,16 @@ const App = ({
   renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
   routing = 'browser',
   debugMode: debugModeProp = false,
-  themeScope = 'document',
+  themeScope: themeScopeProp,
   theme,
   state,
   forcedFlags,
   ...sdkProps
 }: AppProps) => {
   const webId = useMemo(() => getKeyDecoded(webKey, true), [webKey]);
+  // A space drawn inside another is never the document's: its theme, its cookie and its head are the outer page's.
+  const enclosed = use(EnclosingSpaceContext);
+  const themeScope = themeScopeProp ?? (enclosed ? 'container' : 'document');
   // Initialize `runtime.state` once at the root from the host-provided initial state; persist/interactions own it
   // afterwards. Captured at mount (stable value → no re-sync that would reset the sibling `runtime.sources`).
   const initialState = useRef(state).current;
@@ -147,9 +154,9 @@ const App = ({
   const storeValue = useMemo<Partial<SdkState>>(
     () => ({
       runtime: { sources: {}, state: initialState ?? {} },
-      render: DEFAULT_RENDER_SETTINGS
+      render: { ...DEFAULT_RENDER_SETTINGS, ownsHead: !enclosed, enclosed }
     }),
-    [initialState]
+    [initialState, enclosed]
   );
   /**
    * Two different things, and only one of them is trusted. The `debugMode` prop is the page's authorization —
@@ -292,53 +299,57 @@ const App = ({
         };
 
   return (
-    <StoreProvider
-      value={storeValue}
-      middlewares={[
-        loggerMw(createStoreDevToolsLogger<SdkState>('sdk')),
-        runtimeStatePersist<SdkState>(webId),
-        ...(debugMode
-          ? [
-              tracingMiddleware<SdkState>(),
-              // None of these is document state: time-travelling `rsc` would replay a stale server response as if
-              // it were an edit, the theme mirror would make Undo flip the lights, and the flags are what decided
-              // them plus what they resolved to.
-              historyMw<SdkState>({
-                shouldRecord: p =>
-                  !p?.startsWith('runtime.elements') &&
-                  !p?.startsWith('rsc') &&
-                  !p?.startsWith('theme') &&
-                  !p?.startsWith('flags')
-              })
-            ]
-          : [])
-      ]}
-    >
-      <SpaceThemeProvider scope={themeScope} theme={theme}>
-        <Provider components={components}>
-          <ThemedRoot
-            scoped={themeScope === 'container'}
-            className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
-          >
-            <HelmetProvider>
-              <ReactRouter {...(reactRouterProps as { location: string })}>
-                <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
-                  <AppMain
-                    server={finalServer}
-                    webKey={webKey}
-                    renderMode={renderMode}
-                    debugMode={debugMode}
-                    webId={webId}
-                    forcedFlags={qaFlags}
-                    {...sdkProps}
-                  />
-                </ComponentProvider>
-              </ReactRouter>
-            </HelmetProvider>
-          </ThemedRoot>
-        </Provider>
-      </SpaceThemeProvider>
-    </StoreProvider>
+    <EnclosingSpaceContext value>
+      <StoreProvider
+        value={storeValue}
+        middlewares={[
+          loggerMw(createStoreDevToolsLogger<SdkState>('sdk')),
+          runtimeStatePersist<SdkState>(webId),
+          ...(debugMode
+            ? [
+                tracingMiddleware<SdkState>(),
+                // None of these is document state: time-travelling `rsc` would replay a stale server response as if
+                // it were an edit, the theme mirror would make Undo flip the lights, and the flags are what decided
+                // them plus what they resolved to.
+                historyMw<SdkState>({
+                  shouldRecord: p =>
+                    !p?.startsWith('runtime.elements') &&
+                    !p?.startsWith('rsc') &&
+                    !p?.startsWith('theme') &&
+                    !p?.startsWith('flags')
+                })
+              ]
+            : [])
+        ]}
+      >
+        <SpaceThemeProvider scope={themeScope} theme={theme}>
+          {/* plitzi-ui's provider stamps `dark` on `<html>` by default — and takes it off, being `light` — so it would
+            repaint the page around an embedded space. The theme is `SpaceThemeProvider`'s alone. */}
+          <Provider components={components} applyColorModeClass={false}>
+            <ThemedRoot
+              scoped={themeScope === 'container'}
+              className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
+            >
+              <HelmetProvider>
+                <ReactRouter {...(reactRouterProps as { location: string })}>
+                  <ComponentProvider localCustomComponents={localCustomComponents} localComponents={sdkComponents}>
+                    <AppMain
+                      server={finalServer}
+                      webKey={webKey}
+                      renderMode={renderMode}
+                      debugMode={debugMode}
+                      webId={webId}
+                      forcedFlags={qaFlags}
+                      {...sdkProps}
+                    />
+                  </ComponentProvider>
+                </ReactRouter>
+              </HelmetProvider>
+            </ThemedRoot>
+          </Provider>
+        </SpaceThemeProvider>
+      </StoreProvider>
+    </EnclosingSpaceContext>
   );
 };
 

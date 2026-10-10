@@ -326,6 +326,10 @@
       "types": "./dist/helpers/cookies.d.ts",
       "import": "./dist/helpers/cookies.mjs"
     },
+    "./helpers/enclosingSpace": {
+      "types": "./dist/helpers/enclosingSpace.d.ts",
+      "import": "./dist/helpers/enclosingSpace.mjs"
+    },
     "./helpers/eventTarget": {
       "types": "./dist/helpers/eventTarget.d.ts",
       "import": "./dist/helpers/eventTarget.mjs"

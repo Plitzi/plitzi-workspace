@@ -11,6 +11,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
 import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
 import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers/enclosingSpace';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
 import { MOTION_SEEN_CSS } from '@plitzi/sdk-shared/schema/motion';
 import { useBuilderStore, useRenderOverride } from '@plitzi/sdk-shared/store';
@@ -131,29 +132,31 @@ const BuilderAreaPreview = ({ id = '', className = '', previewMode = false }: Bu
       assets={assets}
       style={{ colorScheme: resolvedTheme }}
     >
-      <PlitziProvider value={plitziContextValue}>
-        {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding
+      <EnclosingSpaceContext value>
+        <PlitziProvider value={plitziContextValue}>
+          {/* This surface IS the preview, whatever the builder's own toggle says: a scope carrying the surrounding
             settings with that one flag flipped beats threading it as a prop through every provider under here.
             `live`, because a nexus scope inherits nothing by default: without it this one held `render` and nothing
             else, and every element under it failed to find itself in `schema.flat`. */}
-        <StoreProvider value={previewRender} inherit="live">
-          <GlobalSources>
-            <InteractionsSourcesProvider>
-              <div
-                className={clsx('builder-iframe', {
-                  'builder--display-component-border display-component-border--black':
-                    displayBorderComponents === 'black',
-                  'builder--display-component-border display-component-border--white':
-                    displayBorderComponents === 'white'
-                })}
-                style={{ width: '100%', display: 'flex', height: '100%' }}
-              >
-                {Plugin}
-              </div>
-            </InteractionsSourcesProvider>
-          </GlobalSources>
-        </StoreProvider>
-      </PlitziProvider>
+          <StoreProvider value={previewRender} inherit="live">
+            <GlobalSources>
+              <InteractionsSourcesProvider>
+                <div
+                  className={clsx('builder-iframe', {
+                    'builder--display-component-border display-component-border--black':
+                      displayBorderComponents === 'black',
+                    'builder--display-component-border display-component-border--white':
+                      displayBorderComponents === 'white'
+                  })}
+                  style={{ width: '100%', display: 'flex', height: '100%' }}
+                >
+                  {Plugin}
+                </div>
+              </InteractionsSourcesProvider>
+            </GlobalSources>
+          </StoreProvider>
+        </PlitziProvider>
+      </EnclosingSpaceContext>
     </ContainerFrame>
   );
 };

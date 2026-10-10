@@ -13,7 +13,9 @@ import {
   KV_FILE,
   MAIN_FILE,
   PROJECT_STATE,
-  PROJECT_TMP
+  PROJECT_NOTES,
+  PROJECT_TMP,
+  TSCONFIG_BASE
 } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
@@ -227,7 +229,11 @@ export const tsconfigBuild = (): string =>
     2
   )}\n`;
 
-export const tsconfig = ({ mode }: CreateAnswers): string =>
+/**
+ * The compiler options the CLI keeps up, in its own folder: the project's `tsconfig.json` extends them and says what
+ * is read — so a folder of the project's own (`scripts/`, `tools/`) is added there without touching a file of the CLI's.
+ */
+export const tsconfigBase = ({ mode }: CreateAnswers): string =>
   `${JSON.stringify(
     {
       compilerOptions: {
@@ -251,12 +257,21 @@ export const tsconfig = ({ mode }: CreateAnswers): string =>
         types: mode === 'client' ? ['node', 'vite/client'] : ['node'],
         lib: ['ES2023', 'DOM', 'DOM.Iterable'],
         jsx: 'react-jsx'
-      },
-      include: [CLI_DIR, 'src', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])]
+      }
     },
     null,
     2
   )}\n`;
+
+/**
+ * The project's own: the CLI's options, and what the typecheck and the lint read — add a folder of yours here. Written
+ * as the project's formatter writes it, since it is the project's to format.
+ */
+export const tsconfig = ({ mode }: CreateAnswers): string => {
+  const include = [CLI_DIR, 'src', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])];
+
+  return `{\n  "extends": "./${TSCONFIG_BASE}",\n  "include": [${include.map(entry => JSON.stringify(entry)).join(', ')}]\n}\n`;
+};
 
 /**
  * Yarn's four lines are Yarn's own recommendation, and they are not decoration: with the `node-modules` linker it
@@ -370,6 +385,16 @@ put together before it touches one, and the CLI's, so it knows what \`plitzi\` c
 uploading. Claude Code reads them automatically; \`AGENTS.md\` points any other agent at them.
 `;
 
+/** The project's notes as a project starts with them: what they are for, and nothing yet. */
+export const projectNotes = (answers: CreateAnswers): string => `# ${answers.name} — the project's own notes
+
+What every session working here has to know and the code does not say: how something is built, what must not be undone,
+how a task here is done. Kept short and true — a note that stopped being true is deleted.
+
+\`AGENTS.md\` and \`CLAUDE.md\` are the CLI's and \`plitzi upgrade\` replaces them; this file is the project's, and nothing
+the CLI does touches it.
+`;
+
 /**
  * What any agent opening the project reads first, whichever agent it is.
  *
@@ -441,6 +466,7 @@ ${commands.join('\n')}
 ## This project
 
 - **Yours is \`src/\` — but \`${MAIN_FILE}\`, the entry point — and \`${CLI_DIR}/\` is the CLI's**: \`plitzi upgrade\` replaces them, so never edit them. \`${CLI_DIR}/README.md\` says what each folder of \`src/\` is.
+- **This project's own notes are ${code(PROJECT_NOTES)}** — read them before you start, and write there what the next session has to know: how something here is built, what must not be undone, how a task here is done. This file and ${code('CLAUDE.md')} are the CLI's and replaced by ${code('plitzi upgrade')}; ${code(PROJECT_NOTES)} never is.
 - **Port.** ${port}
 - **Settings are ${code('.env')}**, never committed; ${code('.env.example')} names them, committed — a new one goes in both. ${settingsNote}
 ${dataNote}
@@ -471,7 +497,7 @@ What you leave behind is the next reader's problem — the user's, or the next a
 - **Scratch goes in ${code(`${PROJECT_TMP}/`)}, or nowhere.** A one-off script, a dump, a picture to look at — never at the root or beside the source, where it reads as part of the project.
 - **One of everything.** A look used twice is a class; a value used twice is a token; a block used twice is a component, and rows of data are one list. Change it where it is defined, and rename everywhere when you rename.
 - **Files a reader can find.** One part per file, named after what it is, in the folder of its kind — the shape ${code('src/space/')} already has. Do not start a parallel layout of your own.
-- **Leave it passing.** ${run('verify')} runs it all and prints only what fails: ${local ? `${run('author')} with zero warnings, ${run('lint:space')} clean, ` : ''}${run('typecheck')}, ${run('lint')} and the format clean, and every page whole (${run('check')}, with the server up) — those for signed-in visitors too, once ${code('.env')} names an account to check them as: ${code('PLITZI_CHECK_USER')} and ${code('PLITZI_CHECK_PASSWORD')}.
+- **Leave it passing.** ${run('verify')} runs it all and prints only what fails: ${local ? `${run('author')} with zero warnings, ${run('lint:space')} clean, ` : ''}${run('typecheck')}, ${run('lint')} and the format clean, the project's own tests when it has a ${code('test')} script, and every page whole (${run('check')}, with the server up) — those for signed-in visitors too, once ${code('.env')} names an account to check them as: ${code('PLITZI_CHECK_USER')} and ${code('PLITZI_CHECK_PASSWORD')}.
 
 ## The rules that go wrong most
 
@@ -561,12 +587,14 @@ export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   ...managerFiles(answers.packageManager, answers.managerVersion),
   'package.json': packageJson(answers),
   'tsconfig.json': tsconfig(answers),
+  [TSCONFIG_BASE]: tsconfigBase(answers),
   ...(answers.mode === 'server' ? { 'tsconfig.build.json': tsconfigBuild() } : {}),
   '.gitignore': gitignore(answers),
   'README.md': readme(answers),
   'AGENTS.md': agentsFile(answers),
   // Claude Code reads CLAUDE.md, other agents AGENTS.md: one imports the other, so there is one text to keep true.
-  'CLAUDE.md': '@AGENTS.md\n',
+  'CLAUDE.md': `@AGENTS.md\n@${PROJECT_NOTES}\n`,
+  [PROJECT_NOTES]: projectNotes(answers),
   '.env': envFile(answers),
   '.env.example': envExample(answers)
 });

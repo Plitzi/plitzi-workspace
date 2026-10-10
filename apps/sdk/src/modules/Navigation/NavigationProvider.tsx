@@ -103,8 +103,13 @@ const NavigationProvider = ({ children, currentPageId: currentPageIdProp }: Navi
     pathMatch?: PathMatch;
     pageId?: string;
   }>(() => {
+    // A widget names the element it draws. One that names none is a space drawn whole — a `plitziSdk` element, a
+    // space inside a plugin — and with no address of its own it shows the page its home address would.
     if (renderMode === 'widget') {
-      return { action: { type: 'normal', path: '' }, pageId: currentPageIdProp };
+      return {
+        action: { type: 'normal', path: '' },
+        pageId: currentPageIdProp || matchRoutePath(paths, '/', authenticated).pageId
+      };
     }
 
     return matchRoutePath(paths, location.pathname, authenticated);

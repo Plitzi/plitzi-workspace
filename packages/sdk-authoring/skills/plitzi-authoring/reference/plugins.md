@@ -78,6 +78,10 @@ const stop = state.subscribe(next => save(next));      // called after every cha
 `clearState` empties it, `subscribe` listens. Bindings on `state.*` re-render at once. With the space's `keepState`
 on ([kept state](kept-state.md)), what a plugin writes there — its layout, a choice — is back after a reload too.
 
+It is also how two plugins share anything. Each plugin is built into a bundle of its own, so a module of the project
+that both import is two copies: a `Map` or a listener in it is not shared, and what one plugin puts there the other
+never sees. One writes the key to `state`; the other reads `state` and `subscribe`s.
+
 ## Laying out the space's elements
 
 A plugin that arranges elements — a dock, tabs, a masonry — HOLDS them: they are its children in the space

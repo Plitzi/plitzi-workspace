@@ -11,8 +11,8 @@ import type { CreateAnswers, ProjectFiles } from './types';
  * rather than as an exception, and nobody writes the first test for a project that already looks fine.
  */
 
-const RECORDED = `/** What \`npm start\` wrote down when it took a port: the port, and the name its \`/health\` answers with. */
-const recorded = (): { port?: number; name?: string } => {
+const RECORDED = `/** What \`npm start\` wrote down when it took a port: the port, where it answers and the name its \`/health\` answers with. */
+const recorded = (): { port?: number; url?: string; name?: string } => {
   try {
     const value: unknown = JSON.parse(readFileSync('${DEV_SERVER_FILE}', 'utf8'));
     if (typeof value !== 'object' || value === null) {
@@ -21,6 +21,7 @@ const recorded = (): { port?: number; name?: string } => {
 
     return {
       ...('port' in value && typeof value.port === 'number' ? { port: value.port } : {}),
+      ...('url' in value && typeof value.url === 'string' ? { url: value.url } : {}),
       ...('name' in value && typeof value.name === 'string' ? { name: value.name } : {})
     };
   } catch {
@@ -36,16 +37,21 @@ ${RECORDED}
 
 // \`PORT\` when set; otherwise the port \`npm start\` took; otherwise the default.
 const PORT = Number(process.env.PORT ?? recorded().port ?? ${mode === 'server' ? '8080' : '5173'});
+// Where \`npm start\` said it answers — \`https\` when the server has a certificate — on that port.
+const ORIGIN = new URL(recorded().url ?? 'http://127.0.0.1');
+ORIGIN.port = String(PORT);
 
 export default defineConfig({
   testDir: './visual',
   outputDir: './${VISUAL_OUTPUT}',
-  use: { baseURL: \`http://127.0.0.1:\${PORT}\` },
+  // A local certificate (mkcert) is one this machine's browsers were told to trust, not Playwright's.
+  use: { baseURL: ORIGIN.origin, ignoreHTTPSErrors: true },
   // Playwright starts the project itself, so \`${runCommand(packageManager, 'visual')}\` is one command from a
   // cold checkout.
   webServer: {
     command: '${runCommand(packageManager, 'start')}',
-    url: \`http://127.0.0.1:\${PORT}\`,
+    url: ORIGIN.origin,
+    ignoreHTTPSErrors: true,
     env: { PORT: String(PORT) },
     reuseExistingServer: true,
     timeout: 120_000

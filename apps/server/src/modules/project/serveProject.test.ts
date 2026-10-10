@@ -254,7 +254,9 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     expect(JSON.parse(await fs.readFile(path.join(root, 'tmp/dev-server.json'), 'utf-8'))).toEqual({
       name: 'shop',
       port: Number(process.env.PORT),
-      url: running.url
+      url: running.url,
+      network: [],
+      publicUrl: running.url
     });
   });
 

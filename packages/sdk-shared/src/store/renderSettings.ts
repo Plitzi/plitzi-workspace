@@ -16,7 +16,8 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
   hydrated: false,
   overQuota: false,
   testAttributes: true,
-  ownsHead: true
+  ownsHead: true,
+  enclosed: false
 };
 
 /** Reads `render` from the nearest store, filled in. Returns every key defined, so call sites destructure without
@@ -26,7 +27,18 @@ export const DEFAULT_RENDER_SETTINGS: Required<RenderSettings> = {
  *  they are written — so a subtree that overrides one flag must restate the rest ({@link useRenderOverride}). */
 const useRenderSettings = (): Required<RenderSettings> => {
   const [
-    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, testAttributes, ownsHead]
+    [
+      previewMode,
+      debugMode,
+      renderMode,
+      environment,
+      isHydrating,
+      hydrated,
+      overQuota,
+      testAttributes,
+      ownsHead,
+      enclosed
+    ]
   ] = useCommonStore([
     'render.previewMode',
     'render.debugMode',
@@ -36,7 +48,8 @@ const useRenderSettings = (): Required<RenderSettings> => {
     'render.hydrated',
     'render.overQuota',
     'render.testAttributes',
-    'render.ownsHead'
+    'render.ownsHead',
+    'render.enclosed'
   ]);
 
   return useMemo(
@@ -49,9 +62,21 @@ const useRenderSettings = (): Required<RenderSettings> => {
       hydrated: hydrated ?? DEFAULT_RENDER_SETTINGS.hydrated,
       overQuota: overQuota ?? DEFAULT_RENDER_SETTINGS.overQuota,
       testAttributes: testAttributes ?? DEFAULT_RENDER_SETTINGS.testAttributes,
-      ownsHead: ownsHead ?? DEFAULT_RENDER_SETTINGS.ownsHead
+      ownsHead: ownsHead ?? DEFAULT_RENDER_SETTINGS.ownsHead,
+      enclosed: enclosed ?? DEFAULT_RENDER_SETTINGS.enclosed
     }),
-    [previewMode, debugMode, renderMode, environment, isHydrating, hydrated, overQuota, testAttributes, ownsHead]
+    [
+      previewMode,
+      debugMode,
+      renderMode,
+      environment,
+      isHydrating,
+      hydrated,
+      overQuota,
+      testAttributes,
+      ownsHead,
+      enclosed
+    ]
   );
 };
 

@@ -163,6 +163,7 @@ A deployment of the platform runs the runtimes with an orchestrator, in its api 
 |---|---|
 | `startSpaceRuntime({ runtime, secret, env, publicUrl, insideUrl? })` | The host: starts a runtime and serves it — its tasks over the functions runners' protocol (`createRemoteRunner` reaches it), its endpoints as HTTP, both behind `secret` |
 | `await reachSpaceInside({ publicUrl, insideUrl })` | What `insideUrl` does: every `fetch` and `WebSocket` the process opens to the space's host connects to `insideUrl` instead — plain HTTP, the host and `X-Forwarded-Proto` kept. The space's code keeps writing its public address; the request stops going out through the edge to come back. It loads `undici` only when called — importing the package replaces the process's dispatcher, which the page server that loads this entry must keep |
+| `await reachOwnServer({ publicUrl, listener, cert })` | The self-hosted counterpart, for a server serving TLS itself (`serveProject` calls it): requests to its own public address connect to its `listener` on this machine, and are taken only when it presents `cert` — exactly — however local the certificate is |
 | `createRuntimeProxyStage({ lookup })` | A page-server stage: a space's declared endpoints forwarded to its runtime, streamed both ways |
 | `SpaceFunctions.runner` | A space's functions answered by its runtime instead of the sandbox: `lookups.getFunctions` hands one per space |
 | `packRuntime` / `inspectRuntime` / `loadRuntime` | A runtime packed, read without running it, and loaded where the host resolves its packages |

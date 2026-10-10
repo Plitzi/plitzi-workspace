@@ -24,7 +24,9 @@ What a project gives you, so you use it rather than rebuild it:
 | `typecheck`, `lint`, `format` | before calling a change done |
 
 **Which port.** `start` takes 8080, or the next free one — printed, and written to `tmp/dev-server.json` for `check`,
-`shot` and `visual`. `PORT` chooses one (a taken one is then an error). `/health` answers with the space's name.
+`shot`, `verify` and `visual`, with the scheme it answers on (`https` once `serverOptions.tls` has a certificate; the
+local one is accepted on this machine only). `PORT` chooses one (a taken one is then an error). `/health` answers with
+the space's name.
 
 Data with no backend, server mode: `src/data/*.json`, never served — a provider with `runtime: 'server'` and `query:
 '/data/x.json'` reads it on the server. Client mode: `public/data/`, fetched — public. Learn a file's fields with

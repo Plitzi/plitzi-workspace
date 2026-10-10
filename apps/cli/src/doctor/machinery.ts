@@ -1,7 +1,7 @@
 import { sayer } from './types';
 import { compareVersions, versionOf } from './versions';
 import { machineryPlan } from '../commands/upgrade';
-import { AUTHOR_FILE, MAIN_FILE } from '../scaffold/paths';
+import { AUTHOR_FILE, MAIN_FILE, TSCONFIG_BASE } from '../scaffold/paths';
 import { CLI_VERSION } from '../scaffold/project';
 
 import type { Check, Finding } from './types';
@@ -18,7 +18,7 @@ const say = sayer('machinery');
 const ESSENTIAL: ReadonlySet<string> = new Set([
   MAIN_FILE,
   AUTHOR_FILE,
-  'tsconfig.json',
+  TSCONFIG_BASE,
   'tsconfig.build.json',
   'vite.config.ts',
   'index.html',

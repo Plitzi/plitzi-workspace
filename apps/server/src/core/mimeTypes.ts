@@ -27,7 +27,22 @@ export const getMimeType = (filePath: string): string => {
   return MIME_TYPES[ext] ?? 'application/octet-stream';
 };
 
-export const getCacheControl = (filePath: string): string => {
+/**
+ * How long a browser may keep a file without asking again.
+ *
+ * `versioned` is for a directory whose URLs change with their content — the SDK bundle and the plugins, addressed
+ * with `?v=` — where a script or a stylesheet never changes under its URL and is kept for a year. `revalidate` is for
+ * files a project keeps by name and may rewrite while it runs (`public/`): kept, but asked about every time, which
+ * the `ETag` answers with an empty `304` when nothing changed.
+ */
+export type StaticCachePolicy = 'versioned' | 'revalidate';
+
+export const getCacheControl = (filePath: string, policy: StaticCachePolicy = 'versioned'): string => {
+  if (policy === 'revalidate') {
+    return 'no-cache';
+  }
+
   const ext = filePath.slice(filePath.lastIndexOf('.')).toLowerCase();
+
   return IMMUTABLE_EXTS.has(ext) ? 'public, max-age=31536000, immutable' : 'public, max-age=3600';
 };

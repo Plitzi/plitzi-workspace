@@ -23,6 +23,7 @@ import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import IframeMode from './renderModes/IframeMode';
 import RawMode from './renderModes/RawMode';
 import ShadowMode from './renderModes/ShadowMode';
+import { scopeSpaceCss } from './scopeSpaceCss';
 import SdkPlugin from './SdkPlugin';
 import FontFaces from '../Fonts/FontFaces';
 
@@ -51,7 +52,7 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
   // Resolved here, not read from `runtime.sources.variables`: that is published below this, while the page renders,
   // and the server would write this sheet without the variables that the browser hydrates it with.
   const variables = useResolvedVariables();
-  const { renderMode, previewMode, debugMode, environment, isHydrating } = useRenderSettings();
+  const { renderMode, previewMode, debugMode, environment, isHydrating, enclosed } = useRenderSettings();
   useRscSync(server?.ssr);
   useActionsSync(server?.ssr);
   useRealtimeSync(server?.ssr);
@@ -77,8 +78,8 @@ const Sdk = ({ externalStyle = '', sdkStylePath = './plitzi-sdk.css', server }: 
 
     // The order said again before the block, for a page that loads no `plitzi-sdk.css` to say it first: a plugin's
     // stylesheet arriving later would otherwise land in a layer of its own above the space's.
-    return `@layer ${PLUGIN_CSS_LAYER}, ${RUNTIME_CSS_LAYER};@layer ${RUNTIME_CSS_LAYER}{${cssParsed}}`;
-  }, [variables, styleCache, schemaSettings.customCss, externalStyle]);
+    return `@layer ${PLUGIN_CSS_LAYER}, ${RUNTIME_CSS_LAYER};@layer ${RUNTIME_CSS_LAYER}{${enclosed ? scopeSpaceCss(cssParsed) : cssParsed}}`;
+  }, [variables, styleCache, schemaSettings.customCss, externalStyle, enclosed]);
 
   // The canvas renders into an iframe, whose head only the rail can reach.
   const iframeAssets = useMemo(() => ({ ...assets, ...fontLinkAssets(fontHead) }), [assets, fontHead]);

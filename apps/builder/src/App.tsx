@@ -393,7 +393,8 @@ const App = (props: AppProps) => {
     >
       {/* Its own cookie: the builder and the space it edits share an origin, and the editor's theme is not the page's. */}
       <ThemeProvider defaultTheme="dark" cookieName="builder-theme">
-        <Provider components={components}>
+        {/* The class is `ThemeProvider`'s: plitzi-ui's provider would otherwise take `dark` off `<html>` as it mounts. */}
+        <Provider components={components} applyColorModeClass={false}>
           <ContainerRoot className={clsx('plitzi-builder flex items-stretch', className)}>
             {!hasBrowserRouter && <BrowserRouter basename={server.basePath ?? ''}>{childrenParsed}</BrowserRouter>}
             {hasBrowserRouter && childrenParsed}
