@@ -74,7 +74,7 @@ export interface ElementDeclarationData {
   /**
    * Whether the element shows only some of the children put inside it, chosen as it runs — a dashboard showing the
    * panels of the layout saved for this device, a wizard its current step. Read by the page checks, which then owe none
-   * of them on screen; they still check every one that is drawn.
+   * of them on screen; what it draws is still read by the checks of the whole page — images, overflow, legibility.
    */
   choosesChildren?: boolean;
   /**

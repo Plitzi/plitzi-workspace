@@ -49,7 +49,8 @@
   `offlineData`, as the runtime always did; authoring refused it as an attribute nothing reads.
 - **`choosesChildren`** (`@plitzi/sdk-shared`, `@plitzi/sdk-authoring`): a plugin that shows only some of the elements
   put inside it — a dashboard's panels, a wizard's step — says so in its declaration, and the page checks owe none of
-  them on screen (they still check every one it draws). `verify` was red on every such page.
+  them on screen; what it draws is still read by the checks of the whole page (images, sideways scroll, legibility).
+  `verify` was red on every such page.
 
 ## MCP
 
