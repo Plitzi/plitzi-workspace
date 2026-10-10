@@ -16,6 +16,17 @@ const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 // Under `tmp/`, where a project keeps everything it writes for itself: never committed, rebuilt when missing.
 const DEFAULT_CACHE_DIR = 'tmp/.sdk-plugins';
 
+/** How long a rebuild of vanished bundles waits, once none is pending, for another of the same render to be noticed. */
+const RESTORE_SETTLE_MS = 100;
+
+type RestoreEpisode = {
+  started: number;
+  pending: Set<string>;
+  rebuilt: number;
+  failed: string[];
+  closing?: ReturnType<typeof setTimeout>;
+};
+
 /** `digest`: the content of `inputs` when the bundle was built — see {@link PluginManager.contentChanged}. */
 type Meta = { compiledAt: number; version?: string; inputs?: string[]; digest?: string };
 
@@ -67,6 +78,8 @@ export class PluginManager {
   private readonly devMode: boolean = false;
   /** Who is told what each built plugin was built from — a dev server's watcher (`watchPluginSources`). */
   private readonly sourceListeners = new Set<(key: string, inputs: readonly string[]) => void>();
+  /** The bundles being built again because they vanished from disk under this server — see `restore`. */
+  private restoring?: RestoreEpisode;
 
   constructor(plugins: Record<string, PluginSource>, cacheDir?: string, ttlMs?: number, devMode: boolean = false) {
     assertPluginSources(plugins);
@@ -381,6 +394,7 @@ export class PluginManager {
     }
 
     const cached = this.mem.get(key);
+    let missing = false;
     if (cached && !this.isExpired(cached.compiledAt)) {
       const jsOk = await this.fileExists(path.join(this.pluginDir(key), 'index.js'));
       if (jsOk) {
@@ -400,9 +414,10 @@ export class PluginManager {
         this.mem.delete(key);
         await fs.rm(this.pluginDir(key), { recursive: true, force: true });
       } else {
-        // File was deleted from disk — drop memory cache and rebuild
-        serverLog.warn('SSR', `Plugin "${key}" cache invalidated: output file missing, rebuilding…`);
+        // Its bundle was removed from disk under this server (`tmp/` deleted by hand): built again, said as one episode.
+        serverLog.info('SSR', `Plugin "${key}" output missing, rebuilding…`);
         this.mem.delete(key);
+        missing = true;
       }
     }
 
@@ -442,8 +457,58 @@ export class PluginManager {
 
     const promise = this.build(key, source).finally(() => this.inflight.delete(key));
     this.inflight.set(key, promise);
+    if (missing) {
+      this.restore(key, promise);
+    }
 
     return promise;
+  }
+
+  /**
+   * Bundles that vanished from disk under a running server are built again as one episode: said once when the first
+   * is noticed and once when the last is built — how many, how long, which failed — at the level it was noticed at.
+   * Said per plugin, it was a warning for each and a "ready" for each at a level a project's terminal does not show,
+   * so the rebuild never said it had finished.
+   */
+  private restore(key: string, build: Promise<PluginEntry | null>): void {
+    if (!this.restoring) {
+      this.restoring = { started: Date.now(), pending: new Set(), rebuilt: 0, failed: [] };
+      const where = path.relative(process.cwd(), this.outputDir) || this.outputDir;
+      serverLog.warn('SSR', `Plugin bundles missing from ${where}: building them again…`);
+    }
+
+    const episode = this.restoring;
+    clearTimeout(episode.closing);
+    episode.pending.add(key);
+    void build.then(entry => {
+      episode.pending.delete(key);
+      if (entry) {
+        episode.rebuilt += 1;
+      } else {
+        episode.failed.push(key);
+      }
+
+      if (episode.pending.size > 0) {
+        return;
+      }
+
+      // A render asks for its plugins one after another: the next may notice its own bundle missing a moment after
+      // this one is built, and belongs to the same episode.
+      episode.closing = setTimeout(() => {
+        if (this.restoring !== episode || episode.pending.size > 0) {
+          return;
+        }
+
+        this.restoring = undefined;
+        const seconds = ((Date.now() - episode.started) / 1000).toFixed(1);
+        const failed =
+          episode.failed.length > 0
+            ? ` — ${String(episode.failed.length)} failed (${episode.failed.join(', ')}), said above`
+            : '';
+        serverLog.warn('SSR', `Plugin bundles built again: ${String(episode.rebuilt)} in ${seconds}s${failed}`);
+      }, RESTORE_SETTLE_MS);
+      episode.closing.unref();
+    });
   }
 
   private async build(name: string, source: PluginSource): Promise<PluginEntry | null> {

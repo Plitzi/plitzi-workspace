@@ -2,9 +2,12 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PluginManager } from './manager';
+import { configureServerLog } from '../helpers/serverLog';
+
+import type { ServerLogEvent } from '@plitzi/sdk-shared';
 
 /**
  * What a dev server does when the component behind a plugin is edited.
@@ -275,5 +278,45 @@ describe('PluginManager sources a render names', () => {
     await manager.invalidate('widget', '1.0.0');
 
     await expect(fs.access(path.join(cache, key))).rejects.toThrow();
+  });
+});
+
+/**
+ * A project's terminal shows warnings and errors: a rebuild of bundles removed under the running server (`tmp/`
+ * deleted by hand) said a warning per plugin and its "ready" at a level that terminal does not show, so it never said
+ * it had finished.
+ */
+describe('PluginManager — bundles removed while it runs', () => {
+  afterEach(() => {
+    configureServerLog({ level: 'info' });
+  });
+
+  it('builds them again as one episode, said when noticed and when the last is built', async () => {
+    const { dir, entry, cache } = await workspace();
+    const other = path.join(dir, 'src', 'other.ts');
+    await fs.writeFile(other, 'export const other = 1;\n');
+    const manager = new PluginManager(
+      {
+        widget: { js: entry, action: 'compile', version: '1.0.0' },
+        other: { js: other, action: 'compile', version: '1.0.0' }
+      },
+      cache,
+      60_000,
+      true
+    );
+    await manager.prepareAll();
+    const said: ServerLogEvent[] = [];
+    configureServerLog({ level: 'warn', logger: event => said.push(event) });
+
+    await fs.rm(cache, { recursive: true, force: true });
+    await manager.getEntries(['widget', 'other']);
+
+    expect(await bundle(cache, 'widget')).toContain('first');
+    await vi.waitFor(() => {
+      expect(said.map(event => ('message' in event ? event.message : ''))).toEqual([
+        expect.stringMatching(/^Plugin bundles missing from .*: building them again…$/),
+        expect.stringMatching(/^Plugin bundles built again: 2 in \d+\.\ds$/)
+      ]);
+    });
   });
 });

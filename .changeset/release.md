@@ -93,6 +93,9 @@
   HTTP/2, which sends no `Host` — only `:authority` — and the cookies named for the origin's port (the dev tools'
   `plitzi_debug_<port>`, forced flags, painted state) were looked for without it. Shift+F12 hid the dev tools in the
   browser, the server rendered them back, and the page failed to hydrate. Every one is read off `requestAuthority`.
+- **A rebuild of plugins says it finished** (`@plitzi/sdk-server`): bundles removed under a running server (`tmp/`
+  deleted) were each a warning, "rebuilding…", and their "ready" at a level a project's terminal does not show. It is
+  one episode now: said when noticed, and again when the last is built — how many, how long, which failed.
 - **`tmp/dev-server.json` records the scheme** (`@plitzi/sdk-server`): `url` is `https` with a certificate, and the
   file adds the network addresses and the `publicUrl`.
 - **`public/` is asked about every time** (`@plitzi/sdk-server`): it was cached for an hour — a `.js` or `.css` in it
