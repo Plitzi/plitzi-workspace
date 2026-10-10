@@ -1,5 +1,6 @@
 import { isDocumentNavigation, renewForNavigation } from '../../auth/renewal';
 import { readRenewalGuard, readSessionHint, readSessionToken, writeRenewalGuard } from '../../auth/session';
+import { requestAuthority } from '../../requestParser';
 
 import type { Auth } from '../../auth/createAuth';
 import type { BaseContext, Stage } from '../types';
@@ -15,7 +16,7 @@ const nowInSeconds = (): number => Math.floor(Date.now() / 1000);
  * read off the authority rather than taken whole, so a forged `Host` cannot put anything but digits after the name.
  */
 const pageUrl = (req: SSRRequest): string => {
-  const authority = req.headers[':authority'] ?? req.headers.host ?? '';
+  const authority = requestAuthority(req);
   const port = /:(\d{1,5})$/u.exec(authority)?.[1];
 
   return `${req.protocol}://${req.hostname}${port ? `:${port}` : ''}${req.path}${req.search}`;

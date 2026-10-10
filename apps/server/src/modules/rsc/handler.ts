@@ -1,6 +1,7 @@
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
 
 import { readDraftToken } from '../../core/previewToken';
+import { requestAuthority } from '../../core/requestParser';
 import { buildRscCacheKey, DEFAULT_TTL_MS } from '../../helpers/cache';
 import { resolveDebugAuthorization } from '../../helpers/debugAuthorization';
 import { requestFlagOverrides } from '../../helpers/flagOverrides';
@@ -172,7 +173,7 @@ export const handleRsc = async (
    * A tester forcing flags from the dev tools sees data for features nobody else has on — and must never be handed a
    * slice resolved without them. Their refreshes go around the cache both ways, like a draft's.
    */
-  const forcingFlags = Object.keys(forcedFlagsFromCookies(req.headers.cookie, req.headers.host)).length > 0;
+  const forcingFlags = Object.keys(forcedFlagsFromCookies(req.headers.cookie, requestAuthority(req))).length > 0;
   const uncached = previewing || forcingFlags;
 
   const ttlMs = config.rsc?.cacheTtlMs ?? DEFAULT_TTL_MS.rsc;

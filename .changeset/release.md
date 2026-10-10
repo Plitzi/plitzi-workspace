@@ -89,6 +89,10 @@
   cookie profile — `SameSite=Lax`, no `Secure`, no `Domain`. They got `SameSite=None; Secure`, which a browser drops
   over http: nobody could sign in from a tablet. A deployment's own `.local` sub-domains (`app.example.local`) keep the
   strict profile.
+- **Hiding the dev tools on a server over HTTPS hydrates** (`@plitzi/sdk-server`): a server with a certificate speaks
+  HTTP/2, which sends no `Host` — only `:authority` — and the cookies named for the origin's port (the dev tools'
+  `plitzi_debug_<port>`, forced flags, painted state) were looked for without it. Shift+F12 hid the dev tools in the
+  browser, the server rendered them back, and the page failed to hydrate. Every one is read off `requestAuthority`.
 - **`tmp/dev-server.json` records the scheme** (`@plitzi/sdk-server`): `url` is `https` with a certificate, and the
   file adds the network addresses and the `publicUrl`.
 - **`public/` is asked about every time** (`@plitzi/sdk-server`): it was cached for an hour — a `.js` or `.css` in it

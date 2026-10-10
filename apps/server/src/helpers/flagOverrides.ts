@@ -1,5 +1,7 @@
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
 
+import { requestAuthority } from '../core/requestParser';
+
 import type { Environment, FlagOverrides, SSRServerConfig } from '@plitzi/sdk-shared';
 
 /** The deployment's own layer for one space: `config.flags`, asked per space when it is a function. */
@@ -14,10 +16,10 @@ export const serverFlagsFor = (
  * mean reading the space.
  */
 export const forcedFlagsFor = async (
-  req: { headers: { cookie?: string; host?: string } },
+  req: { headers: { cookie?: string; host?: string; ':authority'?: string } },
   authorized: boolean | (() => Promise<boolean>)
 ): Promise<Record<string, boolean> | undefined> => {
-  const forced = forcedFlagsFromCookies(req.headers.cookie, req.headers.host);
+  const forced = forcedFlagsFromCookies(req.headers.cookie, requestAuthority(req));
   if (Object.keys(forced).length === 0) {
     return undefined;
   }
@@ -30,7 +32,7 @@ export const forcedFlagsFor = async (
 /** Both layers this server answers for, for one request. */
 export const requestFlagOverrides = async (
   config: Pick<SSRServerConfig, 'flags'>,
-  req: { headers: { cookie?: string; host?: string } },
+  req: { headers: { cookie?: string; host?: string; ':authority'?: string } },
   space: { spaceId: number; environment: Environment },
   authorized: boolean | (() => Promise<boolean>)
 ): Promise<FlagOverrides> => {

@@ -20,6 +20,7 @@ import { publishSpaceDocument } from './spaceDocument';
 import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { imagesPathOf } from '../../core/http/stages/images';
 import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
+import { requestAuthority } from '../../core/requestParser';
 import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
 import { buildServerInfo } from '../../helpers/buildServerInfo';
@@ -250,7 +251,7 @@ export const prepareRender = async (
   const debugRendered = resolveDebugMode(
     debugAuthorized,
     // Named for this origin, port included — the browser writes it under the same name. See `debugCookieName`.
-    readCookie(req.headers.cookie, debugCookieName(req.headers.host))
+    readCookie(req.headers.cookie, debugCookieName(requestAuthority(req)))
   );
 
   /**
@@ -297,7 +298,7 @@ export const prepareRender = async (
    * would hydrate other markup. Only the keys the space declares, and only with `keepState` on.
    */
   const paintedState = schema?.settings.keepState
-    ? paintedStateFor(req.headers.cookie, ssrPaintedCookieName(req.headers.host), paintedKeys(schema.settings))
+    ? paintedStateFor(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req)), paintedKeys(schema.settings))
     : undefined;
 
   /**

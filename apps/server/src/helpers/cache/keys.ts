@@ -2,6 +2,7 @@ import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { flagsCookieName } from '@plitzi/sdk-shared/flags';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';
 
+import { requestAuthority } from '../../core/requestParser';
 import { ssrPaintedCookieName } from '../paintedCookie';
 import { readCookie } from '../readCookie';
 
@@ -64,7 +65,7 @@ export const buildHtmlCacheKey = (
   spaceId: number | string | null,
   environment: string,
   revision: number,
-  req: CacheKeyRequest & { headers: { cookie?: string; host?: string } }
+  req: CacheKeyRequest & { headers: { cookie?: string; host?: string; ':authority'?: string } }
 ): string => {
   const fields: HtmlCacheKeyFields = {
     accessToken,
@@ -73,9 +74,9 @@ export const buildHtmlCacheKey = (
     revision: String(revision),
     flags: flagsVersionOf(req),
     theme: themeFromCookies(req.headers.cookie) ?? '',
-    painted: readCookie(req.headers.cookie, ssrPaintedCookieName(req.headers.host)) ?? '',
-    debugHidden: readCookie(req.headers.cookie, debugCookieName(req.headers.host)) === 'false' ? 'debug-off' : '',
-    forcedFlags: readCookie(req.headers.cookie, flagsCookieName(req.headers.host)) ?? '',
+    painted: readCookie(req.headers.cookie, ssrPaintedCookieName(requestAuthority(req))) ?? '',
+    debugHidden: readCookie(req.headers.cookie, debugCookieName(requestAuthority(req))) === 'false' ? 'debug-off' : '',
+    forcedFlags: readCookie(req.headers.cookie, flagsCookieName(requestAuthority(req))) ?? '',
     hostname: req.hostname,
     path: req.path,
     search: req.search

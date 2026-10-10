@@ -6,6 +6,7 @@ import { randomId } from './pkce';
 import { dropPending, getClient, getPending, putCode, putPending } from './records';
 import { isLoopbackRedirectUri } from './register';
 import { redirectToSignIn, redirectWithCode, redirectWithError, sendErrorPage, sendHtml } from './respond';
+import { requestAuthority } from '../requestParser';
 
 import type { OAuthParams } from './params';
 import type {
@@ -93,7 +94,7 @@ const renderConsent = (res: SSRResponseHelpers, view: OAuthConsentView): void =>
  * discovery document publishes the endpoint by.
  */
 const authorizeEndpoint = (config: OAuthConfig, req: SSRRequest): URL =>
-  new URL(`${(config.issuer ?? `https://${req.headers.host ?? ''}`).replace(/\/+$/u, '')}${AUTHORIZE_PATH}`);
+  new URL(`${(config.issuer ?? `https://${requestAuthority(req)}`).replace(/\/+$/u, '')}${AUTHORIZE_PATH}`);
 
 /** The same endpoint, as the path the grant screen's form posts to — this server's own origin, whatever it is. */
 const authorizeAction = (config: OAuthConfig): string =>

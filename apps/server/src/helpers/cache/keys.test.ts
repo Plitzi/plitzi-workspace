@@ -46,6 +46,19 @@ describe('buildHtmlCacheKey', () => {
     expect(onPort('plitzi_debug_4013=false')).not.toBe(onPort('plitzi_debug=false'));
   });
 
+  // HTTP/2 sends no Host header: the port is in `:authority`, and the cookie named for it must still be read.
+  it('reads the dev tools cookie named for the port of a request made over HTTP/2', () => {
+    const overHttp2 = (cookie: string) =>
+      buildHtmlCacheKey(undefined, 1, 'production', 3, {
+        hostname: 'site.test',
+        path: '/',
+        search: '',
+        headers: { cookie, ':authority': 'site.test:4013' }
+      });
+
+    expect(overHttp2('plitzi_debug_4013=false')).not.toBe(overHttp2('plitzi_debug_4013=true'));
+  });
+
   it('is not split by a dev tools cookie that does not hide anything', () => {
     expect(html('plitzi_debug=true')).toBe(html());
   });

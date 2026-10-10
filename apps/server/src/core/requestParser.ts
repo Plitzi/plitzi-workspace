@@ -43,10 +43,18 @@ export const parseRequest = (raw: IncomingMessage): SSRRequest => {
 // URLs and HTML attributes it ends up in.
 const AUTHORITY_RE = /^[a-zA-Z0-9.-]{1,253}(?::\d{1,5})?$/u;
 
+/**
+ * The host the request was addressed to, port included (`localhost:8080`): HTTP/2's `:authority` — an HTTP/2
+ * request has no `Host` header at all — else `Host`. What names this origin's cookies (`debugCookieName` and the
+ * rest carry the port), so a server reached over HTTP/2 must read it here, never `req.headers.host`.
+ */
+export const requestAuthority = (req: Pick<SSRRequest, 'headers'>): string =>
+  req.headers[':authority'] ?? req.headers['host'] ?? '';
+
 /** The public origin the request was addressed to (proxy-aware via x-forwarded-proto, port included), or an empty
  *  string when the request carries no usable authority. */
 export const requestOrigin = (req: SSRRequest): string => {
-  const authority = req.headers[':authority'] ?? req.headers['host'] ?? '';
+  const authority = requestAuthority(req);
 
   return AUTHORITY_RE.test(authority) ? `${req.protocol}://${authority}` : '';
 };
