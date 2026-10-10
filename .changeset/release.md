@@ -41,6 +41,16 @@
   space that IS the page is, so a card of three lines drawn in a panel took the window's height.
 - **`<PlitziSdk.Plugin component>` takes a component with its own props** (`@plitzi/plitzi-sdk`), as `render()`'s
   plugins do: typed `ComponentPluginFC`, it refused any component that read its attributes.
+- **An edited page keeps its address in step** (`@plitzi/plitzi-sdk`): the routes are built from the pages' own
+  elements, and those were read again only when the list of pages changed — an edit to one page (its slug, its flag)
+  leaves that list the same, and the routes kept its old address until something else rebuilt them.
+- **Packages declare only what they use** (`@plitzi/sdk-dev-tools`, `@plitzi/sdk-shared`): `@plitzi/sdk-plugins`, which
+  the dev tools no longer import, and `terser`, which no build here runs, are no longer dependencies.
+- **An edited page keeps its route up to date** (`@plitzi/plitzi-sdk`): the routes are built from the pages' own
+  elements, which were read again only when the list of pages changed — an edit to one page (its slug, its flag) left
+  the list the same and the route at the old address. They follow every edit to a page now, and stay the same object
+  while no page changes.
+- **`@plitzi/sdk-dev-tools` no longer depends on `@plitzi/sdk-plugins`**, which nothing in it imports.
 - **A dropdown's menu opens inside a card that lifts or clips** (`@plitzi/sdk-elements`, `@plitzi/sdk-shared`): drawn
   inside the dropdown, an ancestor with a `transform` — a card lifting on hover — made itself the containing block of
   the menu's `position: fixed`, and one with `overflow: hidden` cut it off: the menu opened and nobody saw it. The open

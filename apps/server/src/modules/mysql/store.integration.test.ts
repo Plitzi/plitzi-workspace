@@ -61,7 +61,13 @@ const allTables = async (pool: Pool): Promise<string[]> => {
   return rows.map(row => row.name);
 };
 
-describe.skipIf(!available)('the MySQL store, against a real database', () => {
+/**
+ * Each test installs or drops the whole schema — a few dozen DDL statements against a real server. Held to the default
+ * 5 s, one timed out when the machine was busy (the rest of the suite running beside it) with nothing wrong.
+ */
+const SCHEMA_TEST_TIMEOUT = 30_000;
+
+describe.skipIf(!available)('the MySQL store, against a real database', { timeout: SCHEMA_TEST_TIMEOUT }, () => {
   let store: MysqlStore;
 
   beforeAll(async () => {
@@ -79,14 +85,14 @@ describe.skipIf(!available)('the MySQL store, against a real database', () => {
     await execute(store.pool, 'DROP TABLE IF EXISTS `itest_role`');
     // The unprefixed `role` one test creates and a later one drops: a run stopped between the two left it behind.
     await execute(store.pool, 'DROP TABLE IF EXISTS `role`');
-  });
+  }, SCHEMA_TEST_TIMEOUT);
 
   afterAll(async () => {
     await dropSchema(store.pool, resolveTables(PREFIX), { prefix: PREFIX, force: true });
     await execute(store.pool, 'DROP TABLE IF EXISTS `unrelated_role`');
     await execute(store.pool, 'DROP TABLE IF EXISTS `role`');
     await store.close();
-  });
+  }, SCHEMA_TEST_TIMEOUT);
 
   describe('migrating', () => {
     it('creates every table it needs and reports the version', async () => {

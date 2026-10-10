@@ -59,7 +59,6 @@
     "@types/ejs": "^3.1.5",
     "@vitejs/plugin-react": "^6.1.1",
     "eslint": "^9.39.5",
-    "eslint-plugin-import": "^2.32.0",
     "postcss": "^8.5.28",
     "postcss-scss": "^4.0.9",
     "prettier": "^3.9.9",

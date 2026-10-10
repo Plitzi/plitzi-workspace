@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
@@ -23,32 +22,24 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
   const { existsPopup, addPopup } = usePopup();
   const { multiPagesMode, builderElementPermissions, mode, hasMultiPages } = builderContextValue;
   const { displayMode, previewMode, mobilePreview, debugMode } = use(AppContext);
-  if (pages.length === 0 && mode === 'normal') {
-    return (
-      <div className="relative flex min-w-0 grow basis-0 flex-col items-center overflow-auto">
-        <div
-          className="absolute top-[50%] h-100 w-100 translate-y-[-50%] bg-contain bg-no-repeat opacity-20"
-          style={{ backgroundImage: 'url(https://cdn.plitzi.com/resources/img/favicon.svg)' }}
-        />
-        <div>Please add your first page</div>
-      </div>
-    );
-  }
+  // Every hook before the empty state: the first page added, or the last removed, must not change how many ran.
+  const empty = pages.length === 0 && mode === 'normal';
 
   useEffect(() => {
-    if (!existsPopup('element-tools')) {
-      addPopup('element-tools', <BuilderElementTools />, {
-        icon: <i className="fas fa-tools text-base" />,
-        title: 'Tools',
-        resizeHandles: ['se'],
-        width: 350,
-        allowLeftSide: false,
-        allowRightSide: true,
-        placement: 'right'
-      });
+    if (empty || existsPopup('element-tools')) {
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    addPopup('element-tools', <BuilderElementTools />, {
+      icon: <i className="fas fa-tools text-base" />,
+      title: 'Tools',
+      resizeHandles: ['se'],
+      width: 350,
+      allowLeftSide: false,
+      allowRightSide: true,
+      placement: 'right'
+    });
+  }, [empty, existsPopup, addPopup]);
 
   const contextsMemo = useMemo<Record<string, BuilderContextValue>>(
     () =>
@@ -61,6 +52,18 @@ const Builder = ({ pages = [], customCss = '', externalStyle = '' }: BuilderProp
       ),
     [pages, builderElementPermissions, builderContextValue]
   );
+
+  if (empty) {
+    return (
+      <div className="relative flex min-w-0 grow basis-0 flex-col items-center overflow-auto">
+        <div
+          className="absolute top-[50%] h-100 w-100 translate-y-[-50%] bg-contain bg-no-repeat opacity-20"
+          style={{ backgroundImage: 'url(https://cdn.plitzi.com/resources/img/favicon.svg)' }}
+        />
+        <div>Please add your first page</div>
+      </div>
+    );
+  }
 
   return (
     <div

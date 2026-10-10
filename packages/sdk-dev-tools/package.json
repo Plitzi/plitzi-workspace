@@ -1223,7 +1223,6 @@
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",
     "@plitzi/plitzi-ui": "^1.6.33",
-    "@plitzi/sdk-plugins": "workspace:*",
     "@plitzi/sdk-schema": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*",
     "@uiw/react-json-view": "^2.0.0-alpha.43",
