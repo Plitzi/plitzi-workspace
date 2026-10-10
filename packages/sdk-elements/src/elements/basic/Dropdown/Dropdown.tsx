@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
+import { spaceRootOf } from '@plitzi/sdk-shared/helpers/spaceRoot';
 import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
 
 import DropdownContext from './DropdownContext';
@@ -28,7 +30,7 @@ export type DropdownProps = {
 };
 
 const Dropdown = ({
-  ref,
+  ref: refProp,
   children,
   className = '',
   popupPlacement = 'bottom',
@@ -48,6 +50,9 @@ const Dropdown = ({
     settings: { previewMode },
     utils: { getWindow }
   } = usePlitzi();
+  // Its own when nothing hands it one (rendered without `withElement`): the trigger and the space's root are found from it.
+  const ownRef = useRef<HTMLDivElement | null>(null);
+  const ref = refProp ?? ownRef;
   const popupRef = useRef<HTMLDivElement | null>(null);
   const backgroundContainerRef = useRef<HTMLDivElement>(null);
   const windowInstance = useMemo(() => getWindow(), [getWindow]);
@@ -88,7 +93,24 @@ const Dropdown = ({
     onChange: handleOpenChange
   });
 
+  /**
+   * Where the open popup and its backdrop are drawn: the space's root, from the first time the menu opens. Drawn
+   * inside the dropdown, an ancestor with a `transform` — a card lifting on hover — became their containing block, so
+   * `position: fixed` was measured from the card rather than the window, and one with `overflow: hidden` cut them off:
+   * the menu opened and nobody saw it. Moved once and kept there, so the popup stays one node for the rest of the visit
+   * and the focus a keyboard put in it can be given back. Not on the server, where nothing is open, nor in the builder,
+   * where the dropdown is an element edited in place.
+   */
+  const [spaceRoot, setSpaceRoot] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (openPopup && previewMode && !spaceRoot) {
+      setSpaceRoot(spaceRootOf(ref.current));
+    }
+  }, [openPopup, previewMode, spaceRoot, ref]);
+  const layer = previewMode ? spaceRoot : null;
+
   const noteClick = useDropdownTrigger({
+    rootRef: ref,
     popupRef,
     open: openPopup,
     positioned: Boolean(parameters),
@@ -104,8 +126,15 @@ const Dropdown = ({
   );
 
   const dropdownContext = useMemo(
-    () => ({ popupRef, openPopup, parameters, onClick: handleClickPopup }),
-    [handleClickPopup, openPopup, parameters]
+    () => ({ popupRef, openPopup, parameters, onClick: handleClickPopup, layer }),
+    [handleClickPopup, openPopup, parameters, layer]
+  );
+  const background = openPopup && backgroundDisabled && previewMode && (
+    <div
+      ref={backgroundContainerRef}
+      className={clsx('plitzi-component__dropdown__background-container', styleSelectors.backgroundContainer)}
+      onClick={handleClickBackgroundContainer}
+    />
   );
 
   return (
@@ -115,13 +144,7 @@ const Dropdown = ({
       onClick={handleClickTrigger}
     >
       <DropdownContext value={dropdownContext}>{children}</DropdownContext>
-      {openPopup && backgroundDisabled && previewMode && (
-        <div
-          ref={backgroundContainerRef}
-          className={clsx('plitzi-component__dropdown__background-container', styleSelectors.backgroundContainer)}
-          onClick={handleClickBackgroundContainer}
-        />
-      )}
+      {background && layer ? createPortal(background, layer) : background}
     </RootElement>
   );
 };

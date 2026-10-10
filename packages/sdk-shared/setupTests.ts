@@ -9,13 +9,14 @@ import createFetchMock from 'vitest-fetch-mock';
 const fetchMocker = createFetchMock(vi);
 fetchMocker.enableMocks();
 
+// A class, as the browser's is: what calls it calls it with `new`, which an arrow function refuses.
 vi.stubGlobal(
   'ResizeObserver',
-  vi.fn(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn()
-  }))
+  class {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+  }
 );
 
 // Only where there is a window: a file that opts into `@vitest-environment node` (one running a bundler) has none.

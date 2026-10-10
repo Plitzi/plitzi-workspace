@@ -4,16 +4,16 @@ import type { MouseEvent, RefObject } from 'react';
 
 const CONTROLS = 'button, a[href], input, select, textarea, [role="button"]';
 
-/** The control a person opens the menu with: the first one in the dropdown that is not inside its popup. */
-const triggerOf = (popup: HTMLElement | null): HTMLElement | undefined => {
-  const root = popup?.closest<HTMLElement>('.plitzi-component__dropdown');
-
-  return root
-    ? [...root.querySelectorAll<HTMLElement>(CONTROLS)].find(control => !popup?.contains(control))
-    : undefined;
-};
+/**
+ * The control a person opens the menu with: the first one in the dropdown that is not inside its popup. Looked for
+ * from the dropdown, not from the popup — the open popup is drawn at the space's root, outside it.
+ */
+const triggerOf = (root: HTMLElement | null | undefined, popup: HTMLElement | null): HTMLElement | undefined =>
+  root ? [...root.querySelectorAll<HTMLElement>(CONTROLS)].find(control => !popup?.contains(control)) : undefined;
 
 export type UseDropdownTriggerProps = {
+  /** The dropdown's own element, where its trigger is. */
+  rootRef?: RefObject<HTMLElement | null>;
   popupRef: RefObject<HTMLElement | null>;
   open: boolean;
   /** Where the popup is drawn; until it is known the popup is hidden, and nothing in it can take the focus. */
@@ -38,6 +38,7 @@ export type UseDropdownTriggerProps = {
  * @returns what the dropdown's own click handler calls first, to learn whether a keyboard pressed the trigger.
  */
 const useDropdownTrigger = ({
+  rootRef,
   popupRef,
   open,
   positioned,
@@ -52,7 +53,7 @@ const useDropdownTrigger = ({
   }, []);
 
   useEffect(() => {
-    const trigger = enabled ? triggerOf(popupRef.current) : undefined;
+    const trigger = enabled ? triggerOf(rootRef?.current, popupRef.current) : undefined;
     if (!trigger) {
       return;
     }
@@ -70,7 +71,7 @@ const useDropdownTrigger = ({
     }
 
     if (closed && popup.contains(popup.ownerDocument.activeElement)) {
-      triggerOf(popup)?.focus({ preventScroll: true });
+      triggerOf(rootRef?.current, popup)?.focus({ preventScroll: true });
 
       return;
     }
@@ -79,7 +80,7 @@ const useDropdownTrigger = ({
       fromKeyboard.current = false;
       popup.querySelector<HTMLElement>(CONTROLS)?.focus({ preventScroll: true });
     }
-  }, [enabled, open, positioned, popupRef]);
+  }, [enabled, open, positioned, popupRef, rootRef]);
 
   return noteClick;
 };

@@ -71,3 +71,34 @@ describe('Dropdown — the control that opens it', () => {
     expect(document.activeElement).toBe(trigger);
   });
 });
+
+/**
+ * A card that lifts on hover (`transform`) and cuts what overflows: drawn inside it, the open menu was positioned from
+ * the card instead of the window and cut off by it — it opened, and nobody saw it.
+ */
+describe('Dropdown — the open menu, drawn above the page', () => {
+  it('is drawn at the root of the space, outside the card it was opened from, and closes there', () => {
+    const { container } = render(
+      <div className="plitzi-sdk">
+        <div data-testid="card" style={{ transform: 'translateY(-2px)', overflow: 'hidden' }}>
+          <Menu />
+        </div>
+      </div>
+    );
+    const root = container.querySelector('.plitzi-sdk');
+    const card = screen.getByTestId('card');
+    const trigger = screen.getByRole('button', { name: 'Account' });
+
+    fireEvent.click(trigger);
+    const menu = screen
+      .getByRole('button', { name: 'Profile', hidden: true })
+      .closest('.plitzi-component__dropdown-popup');
+
+    expect(menu?.parentElement).toBe(root);
+    expect(card.contains(menu ?? null)).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Profile', hidden: true }));
+
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  });
+});

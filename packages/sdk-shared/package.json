@@ -394,6 +394,10 @@
       "types": "./dist/helpers/sharedContext.d.ts",
       "import": "./dist/helpers/sharedContext.mjs"
     },
+    "./helpers/spaceRoot": {
+      "types": "./dist/helpers/spaceRoot.d.ts",
+      "import": "./dist/helpers/spaceRoot.mjs"
+    },
     "./helpers/stripTypename": {
       "types": "./dist/helpers/stripTypename.d.ts",
       "import": "./dist/helpers/stripTypename.mjs"

@@ -41,6 +41,11 @@
   space that IS the page is, so a card of three lines drawn in a panel took the window's height.
 - **`<PlitziSdk.Plugin component>` takes a component with its own props** (`@plitzi/plitzi-sdk`), as `render()`'s
   plugins do: typed `ComponentPluginFC`, it refused any component that read its attributes.
+- **A dropdown's menu opens inside a card that lifts or clips** (`@plitzi/sdk-elements`, `@plitzi/sdk-shared`): drawn
+  inside the dropdown, an ancestor with a `transform` — a card lifting on hover — made itself the containing block of
+  the menu's `position: fixed`, and one with `overflow: hidden` cut it off: the menu opened and nobody saw it. The open
+  menu and its backdrop are drawn at the space's root (`spaceRootOf`, `@plitzi/sdk-shared/helpers/spaceRoot`); a
+  style written for the popup by an ancestor's selector no longer reaches it — its own classes do.
 - **A copy button says when it could not copy** (`@plitzi/sdk-elements`, `@plitzi/sdk-shared`,
   `@plitzi/sdk-interactions`, `@plitzi/sdk-variables`, `@plitzi/sdk-dev-tools`): a page not served over https has no
   clipboard — a phone opening a development server by its address — and a code block's "Copy" threw there. It reads

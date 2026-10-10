@@ -28,6 +28,7 @@ import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
 import { documentCookies } from '@plitzi/sdk-shared/helpers/cookies';
 import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers/enclosingSpace';
+import { SPACE_ROOT_CLASS } from '@plitzi/sdk-shared/helpers/spaceRoot';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state/runtimeStatePersist';
 import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
@@ -333,7 +334,7 @@ const App = ({
           <Provider components={components} applyColorModeClass={false}>
             <ThemedRoot
               scoped={themeScope === 'container'}
-              className={clsx('plitzi-sdk flex', className, { 'sdk-debug-mode': debugMode })}
+              className={clsx(SPACE_ROOT_CLASS, 'flex', className, { 'sdk-debug-mode': debugMode })}
             >
               <HelmetProvider>
                 <ReactRouter {...(reactRouterProps as { location: string })}>
