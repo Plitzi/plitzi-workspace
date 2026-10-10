@@ -56,3 +56,10 @@ export const SERVER_OPTIONS_FILE = 'src/config/serverOptions.ts';
 
 /** What Playwright leaves of a run: traces, failures' pictures. */
 export const VISUAL_OUTPUT = `${PROJECT_TMP}/visual`;
+
+/**
+ * The certificate `plitzi cert` makes for this machine as its network reaches it, and its key — `TLS_CERT` and `TLS_KEY`
+ * in `.env`. In `tmp/`: made again on each machine, and a key never committed.
+ */
+export const TLS_CERT_FILE = `${PROJECT_TMP}/tls/cert.pem`;
+export const TLS_KEY_FILE = `${PROJECT_TMP}/tls/key.pem`;

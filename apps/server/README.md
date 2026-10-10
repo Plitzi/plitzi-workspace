@@ -210,10 +210,16 @@ a plugin with no `declaration.ts`, no `.env.example` — is printed while develo
 What it wires from the project:
 
 - **The port.** `PORT`, or 8080 — while developing, the next free one from there (`freePort`). `HOST`, loopback by
-  default (`0.0.0.0` in a container).
+  default (`0.0.0.0` in a container, or for a phone on the Wi-Fi — it prints every address to open, and while it
+  listens on loopback alone, how to open it).
+- **HTTPS.** `TLS_CERT` and `TLS_KEY` in `.env`, the paths of a PEM certificate and its key — what `plitzi cert` makes
+  for this machine and its network addresses — unless `serverOptions.tls` gives one itself. Over plain http a phone's
+  browser gives a page no microphone, camera or clipboard. A network address the certificate does not name (the
+  router handed the machine a new one) is said at boot; this machine's mDNS name (`studio.local`), when the
+  certificate names it, is printed among the addresses, and outlives them.
 - **Where people reach it** — the runtime's `publicUrl`: `PUBLIC_URL` behind a proxy; with `HOST` open to the network,
   this machine's address there (what a tablet on the Wi-Fi opens, and an OAuth provider sends it back to); this
-  machine's loopback otherwise — `https` whenever `serverOptions.tls` gives it a certificate. Serving TLS itself, its
+  machine's loopback otherwise — `https` whenever it serves a certificate. Serving TLS itself, its
   own requests to that address (a runtime calling its own MCP) connect to its listener here and take its certificate —
   exactly that one — however local it is (`reachOwnServer`).
 - **Its plugins.** Every folder of `src/plugins` under its name in camelCase, built from its `index.ts` (or
@@ -1168,7 +1174,7 @@ and every refusal names a machine-readable `reason`, so a client can tell "renew
 
 | Config | Effect |
 |---|---|
-| `cookie` | Name, domain, `SameSite`, `Secure`, the refresh path, the hint suffix. Defaults derive from the request host |
+| `cookie` | Name, domain, `SameSite`, `Secure`, the refresh path, the hint suffix. Defaults derive from the request host: this machine — loopback, a `.localhost` name, a private network address, its mDNS name (`studio.local`), as a phone on the Wi-Fi opens it over http — gets `SameSite=Lax` with no `Secure` and no `Domain`; any other host `SameSite=None; Secure`, shared across its sub-domains |
 | `api.password` | What a password has to be. `minLength` defaults to 8 (NIST SP 800-63B's floor); `validate` is where a breach-list lookup or a strength estimator goes. Applied wherever one is set — signing up, resetting, changing |
 | `api.rateLimit` | May this attempt proceed? **Defaults to an in-memory sliding window**, so no deployment is unthrottled by omission; supply one to put a single counter behind a whole fleet. Called before the password is checked, so a throttled attempt costs no hash |
 | `api.adminPermission` | The global capability the `/auth/admin/*` routes require. Default `userManage` |
@@ -1187,7 +1193,7 @@ write, `04-mysql` over one you do not.
 
 ### Cross-site request forgery
 
-**On by default.** The session cookie defaults to `SameSite=None` off localhost — a space is embedded in an iframe
+**On by default.** The session cookie defaults to `SameSite=None` off this machine and its network — a space is embedded in an iframe
 on somebody else's domain — so the browser attaches it to requests another site caused. That is the attack, and
 `Lax` is what would otherwise prevent it.
 

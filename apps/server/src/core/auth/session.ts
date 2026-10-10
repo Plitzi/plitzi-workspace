@@ -1,4 +1,4 @@
-import { isIP } from 'node:net';
+import { BlockList, isIP } from 'node:net';
 
 import type { SSRAuthCookie, SSRRequest, SSRSession } from '@plitzi/sdk-shared';
 
@@ -31,6 +31,35 @@ const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1'];
 export const isLocalHost = (hostname: string): boolean =>
   LOCAL_HOSTS.includes(hostname) || hostname.endsWith('.localhost');
 
+/**
+ * The addresses a home or office network hands out — RFC 1918, link-local, the shared range a mesh VPN (Tailscale)
+ * gives each device, IPv6 unique- and link-local — which a phone on the same Wi-Fi opens a development server on.
+ */
+const PRIVATE_NETWORK = new BlockList();
+PRIVATE_NETWORK.addSubnet('10.0.0.0', 8);
+PRIVATE_NETWORK.addSubnet('172.16.0.0', 12);
+PRIVATE_NETWORK.addSubnet('192.168.0.0', 16);
+PRIVATE_NETWORK.addSubnet('169.254.0.0', 16);
+PRIVATE_NETWORK.addSubnet('100.64.0.0', 10);
+PRIVATE_NETWORK.addSubnet('fc00::', 7, 'ipv6');
+PRIVATE_NETWORK.addSubnet('fe80::', 10, 'ipv6');
+
+/**
+ * Whether the host is this machine as another device on its network reaches it: a private address, or the name
+ * mDNS gives it (`studio.local` — one label before `.local`, so a deployment's own `app.example.local` sub-domains,
+ * which share cookies across siblings over https, are not taken for one). Such a server is opened over plain http
+ * from a tablet, and gets the local cookie profile: a Secure cookie written over http is dropped.
+ */
+export const isPrivateNetworkHost = (hostname: string): boolean => {
+  const address = hostname.replace(/^\[(.*)\]$/, '$1');
+  const family = isIP(address);
+  if (family === 0) {
+    return /^[^.]+\.local$/.test(hostname);
+  }
+
+  return PRIVATE_NETWORK.check(address, family === 4 ? 'ipv4' : 'ipv6');
+};
+
 // An address has no registrable domain: there is nothing to share the cookie across, and the labels an IP splits
 // into are not a domain any browser would match a Domain against.
 const isIpAddress = (hostname: string): boolean => isIP(hostname) !== 0;
@@ -41,7 +70,7 @@ const isIpAddress = (hostname: string): boolean => isIP(hostname) !== 0;
  * Domain on a single-label host, and one written for an address would never be sent back to it.
  */
 export const registrableDomain = (hostname: string): string | undefined => {
-  if (isLocalHost(hostname) || isIpAddress(hostname)) {
+  if (isLocalHost(hostname) || isIpAddress(hostname) || isPrivateNetworkHost(hostname)) {
     return undefined;
   }
 
@@ -61,11 +90,12 @@ const resolve = <T>(value: T | ((hostname: string) => T) | undefined, hostname: 
 /**
  * Everything about how a session cookie is written, derived from the request host unless the deployment says
  * otherwise. The defaults are the ones a server on a real domain needs: a cookie shared across sub-domains, and
- * SameSite=None + Secure so it survives the app and the API being different hosts. A local server gets the
- * opposite, because Secure + SameSite=None over plain http is dropped by every browser.
+ * SameSite=None + Secure so it survives the app and the API being different hosts. A local server — this machine, or
+ * this machine as its network reaches it — gets the opposite, because Secure + SameSite=None over plain http is
+ * dropped by every browser.
  */
 export const sessionCookieParams = (hostname: string, config: SSRAuthCookie = {}): SessionCookieParams => {
-  const local = isLocalHost(hostname);
+  const local = isLocalHost(hostname) || isPrivateNetworkHost(hostname);
 
   return {
     name: resolve(config.name, hostname, 'plitzi_session'),

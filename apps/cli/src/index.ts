@@ -5,6 +5,7 @@ import { login, logout, space, whoami } from './commands/account';
 import addPlugin from './commands/addPlugin';
 import addRuntime from './commands/addRuntime';
 import { move, remove } from './commands/arrange';
+import { cert } from './commands/cert';
 import { check } from './commands/check';
 import create from './commands/create';
 import createPlugin from './commands/createPlugin';
@@ -45,6 +46,7 @@ import type { AccountOptions, WhoamiOptions } from './commands/account';
 import type { AddPluginOptions } from './commands/addPlugin';
 import type { AddRuntimeOptions } from './commands/addRuntime';
 import type { MoveOptions, RemoveOptions } from './commands/arrange';
+import type { CertOptions } from './commands/cert';
 import type { CheckOptions } from './commands/check';
 import type { CreateOptions } from './commands/create';
 import type { CreatePluginOptions } from './commands/createPlugin';
@@ -524,6 +526,15 @@ program
   .option('--strict', 'Warnings fail too (exit 1): for a CI that keeps the project up to its CLI')
   .option('--json', 'One object, for a tool or an agent')
   .action((options: DoctorOptions) => doctor(options));
+
+program
+  .command('cert')
+  .description(
+    'HTTPS while developing, for a phone or a tablet on your Wi-Fi: a certificate for this machine and its network addresses (mkcert), named in .env'
+  )
+  .option('--name <names...>', 'Other names this machine answers by, in the certificate too: studio.tailnet.ts.net')
+  .option('--json', 'One object, for a tool or an agent')
+  .action((options: CertOptions) => cert(options));
 
 program
   .command('feedback')

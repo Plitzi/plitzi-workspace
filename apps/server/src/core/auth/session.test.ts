@@ -61,6 +61,26 @@ describe('session cookie defaults', () => {
     expect(params).toMatchObject({ domain: undefined, secure: false, sameSite: 'lax' });
   });
 
+  // A tablet on the same Wi-Fi opens a development server by its network address, over plain http: the strict profile
+  // would be dropped there, and nobody could sign in from it.
+  it.each([
+    '192.168.1.5',
+    '10.0.0.7',
+    '172.20.1.2',
+    '169.254.3.4',
+    '100.101.102.103',
+    '[fe80::1]',
+    'fd12::4',
+    'studio.local'
+  ])('gives %s, this machine on its network, the local profile', hostname => {
+    expect(sessionCookieParams(hostname)).toMatchObject({ domain: undefined, secure: false, sameSite: 'lax' });
+  });
+
+  // A public address, and a deployment's own `.local` sub-domains — siblings sharing a session over https — keep it.
+  it.each(['203.0.113.9', '172.32.0.1', 'app.example.local'])('keeps the strict profile for %s', hostname => {
+    expect(sessionCookieParams(hostname)).toMatchObject({ secure: true, sameSite: 'none' });
+  });
+
   it('lets a deployment name its cookie per host, which is the part only it knows', () => {
     const params = sessionCookieParams('api-dev.plitzi.com', {
       name: hostname => (hostname.includes('-dev.') ? 'plitzi_auth_dev' : 'plitzi_auth')
@@ -307,7 +327,7 @@ describe('a plitzi deployment', () => {
     ['app.plitzi-stg.com', 'plitzi_auth_stg', '.plitzi-stg.com', true, 'none'],
     ['app.plitzi-dev.com', 'plitzi_auth_dev', '.plitzi-dev.com', true, 'none'],
     ['website.plitzi.app', 'plitzi_auth', '.plitzi.app', true, 'none'],
-    ['192.168.1.5', 'plitzi_auth', undefined, true, 'none']
+    ['192.168.1.5', 'plitzi_auth', undefined, false, 'lax']
   ];
 
   it.each(deployments)('derives cookies for %s', (host, name, domain, secure, sameSite) => {

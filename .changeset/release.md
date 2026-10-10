@@ -41,12 +41,17 @@
   space that IS the page is, so a card of three lines drawn in a panel took the window's height.
 - **`<PlitziSdk.Plugin component>` takes a component with its own props** (`@plitzi/plitzi-sdk`), as `render()`'s
   plugins do: typed `ComponentPluginFC`, it refused any component that read its attributes.
+- **A copy button says when it could not copy** (`@plitzi/sdk-elements`, `@plitzi/sdk-shared`,
+  `@plitzi/sdk-interactions`, `@plitzi/sdk-variables`, `@plitzi/sdk-dev-tools`): a page not served over https has no
+  clipboard — a phone opening a development server by its address — and a code block's "Copy" threw there. It reads
+  "Not copied", and says why. `clipboardWriter` and `copyText` (`@plitzi/sdk-shared/helpers/clipboard`) are the one
+  check, the `copyToClipboard` step's too.
 
 ## Authoring
 
 - **`plitziSdk` is authored like any element** (`@plitzi/sdk-authoring`, `@plitzi/sdk-elements`): its declaration moved
   to `@plitzi/sdk-elements` beside the others, so it has a factory — `plitziSdk({ id, bind: { offlineData: 'view.data'
-  } })` —, its attributes typed, and `plitzi explain` knows it.
+} })` —, its attributes typed, and `plitzi explain` knows it.
 - **A binding may write part of an attribute** (`@plitzi/sdk-authoring`): `offlineData.schema` writes into
   `offlineData`, as the runtime always did; authoring refused it as an attribute nothing reads.
 - **`choosesChildren`** (`@plitzi/sdk-shared`, `@plitzi/sdk-authoring`): a plugin that shows only some of the elements
@@ -74,6 +79,16 @@
   platform's `reachSpaceInside`) installs reached every other host with an undici connector that offers HTTP/2, and an
   answer that came back over h2 reached Node's `fetch` without its `content-encoding` — every API that compresses read
   as Brotli bytes. Other hosts are reached over HTTP/1.1 now, as Node's own `fetch` reaches them.
+- **A project's server serves HTTPS from `.env`** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`): `TLS_CERT` and
+  `TLS_KEY`, the certificate's and the key's paths — what `plitzi cert` writes — with no code of the project's;
+  `serverOptions.tls` still wins. A network address the certificate does not name is said at boot, the machine's
+  `.local` name is printed among the addresses when it is named, and a server on loopback alone says how to open it to
+  the network.
+- **A session survives a phone on the Wi-Fi** (`@plitzi/sdk-server`): a private network address (`192.168.…`, `10.…`,
+  Tailscale's `100.64/10`, IPv6 unique- and link-local) and a machine's mDNS name (`studio.local`) get the local
+  cookie profile — `SameSite=Lax`, no `Secure`, no `Domain`. They got `SameSite=None; Secure`, which a browser drops
+  over http: nobody could sign in from a tablet. A deployment's own `.local` sub-domains (`app.example.local`) keep the
+  strict profile.
 - **`tmp/dev-server.json` records the scheme** (`@plitzi/sdk-server`): `url` is `https` with a certificate, and the
   file adds the network addresses and the `publicUrl`.
 - **`public/` is asked about every time** (`@plitzi/sdk-server`): it was cached for an hour — a `.js` or `.css` in it
@@ -102,6 +117,13 @@
   `upgrade` replaces them, so what a project's own sessions had to know had nowhere to live. `CLAUDE.md` imports
   `NOTES.md`, `AGENTS.md` sends every agent to it, and nothing the CLI does touches it; `doctor --fix` writes one for
   a project that has none.
+
+- **`plitzi cert`** (`@plitzi/cli`): HTTPS while developing, for a phone or a tablet on the Wi-Fi — over http its
+  browser gives a page no microphone, camera or clipboard. A certificate from mkcert's local authority for this machine,
+  its network addresses and its `.local` name, in `tmp/tls/`, named in `.env`; what to install on the phone, said.
+- **A browser project opens to the network** (`@plitzi/cli`): its `vite.config.ts` reads `HOST`, `TLS_CERT` and
+  `TLS_KEY` from `.env`, as a server project does, and writes `tmp/dev-server.json` — the port Vite took and the scheme
+  — so `page check`, `page shot` and `visual` find it on another port or over HTTPS. `plitzi upgrade` brings it.
 
 ## Docs
 

@@ -1,21 +1,24 @@
 import { useCallback, useState } from 'react';
 
+import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers/clipboard';
+
 import type { MatchedRule } from '../../../../qa/inspect/rules';
 
 export type QaRuleItemProps = { rule: MatchedRule };
 
-/** How long "Copied" stays after a rule is copied. */
+/** How long "Copied" — or "Not copied" — stays after a rule is copied. */
 const COPIED_MS = 1200;
+
+const LABELS = { idle: 'Copy', copied: 'Copied', refused: 'Not copied' } as const;
 
 /** A rule that reaches the element, as written: its selector, its media query, its declarations — and a copy of it. */
 const QaRuleItem = ({ rule: { selector, declarations, media } }: QaRuleItemProps) => {
-  const [copied, setCopied] = useState(false);
-  const label = copied ? 'Copied' : 'Copy';
+  const [copy, setCopy] = useState<keyof typeof LABELS>('idle');
 
   const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(`${selector} { ${declarations} }`).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), COPIED_MS);
+    void copyText(`${selector} { ${declarations} }`).then(copied => {
+      setCopy(copied ? 'copied' : 'refused');
+      setTimeout(() => setCopy('idle'), COPIED_MS);
     });
   }, [selector, declarations]);
 
@@ -32,8 +35,9 @@ const QaRuleItem = ({ rule: { selector, declarations, media } }: QaRuleItemProps
           type="button"
           className="ml-auto shrink-0 rounded px-1 text-[10px] text-zinc-400 opacity-0 group-hover:opacity-100 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           onClick={handleCopy}
+          title={copy === 'refused' ? NOT_COPIED_REASON : undefined}
         >
-          {label}
+          {LABELS[copy]}
         </button>
       </div>
       <div className="mt-0.5 font-mono text-[11px] leading-relaxed break-words text-zinc-600 dark:text-zinc-400">

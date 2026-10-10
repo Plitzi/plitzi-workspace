@@ -88,6 +88,18 @@ describe('MarkdownDocument', () => {
       expect(getByRole('button', { name: 'Copied' })).toBeTruthy();
     });
 
+    // A page not served over https — a phone opening a development server by its address — has no clipboard.
+    it('says it did not copy where the page has no clipboard, and why', async () => {
+      Object.assign(navigator, { clipboard: undefined });
+      const { getByRole, findByRole } = render(<MarkdownDocument>{'```ts\nconst a = 1;\n```'}</MarkdownDocument>);
+
+      fireEvent.click(getByRole('button', { name: 'Copy' }));
+
+      expect((await findByRole('button', { name: 'Not copied' })).getAttribute('title')).toContain(
+        'not served over https'
+      );
+    });
+
     it('without a language is still one, named as text', () => {
       const { container } = render(<MarkdownDocument>{'```\nplain\n```'}</MarkdownDocument>);
 

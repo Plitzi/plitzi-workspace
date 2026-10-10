@@ -322,6 +322,10 @@
       "types": "./dist/helpers/canonicalJson.d.ts",
       "import": "./dist/helpers/canonicalJson.mjs"
     },
+    "./helpers/clipboard": {
+      "types": "./dist/helpers/clipboard.d.ts",
+      "import": "./dist/helpers/clipboard.mjs"
+    },
     "./helpers/cookies": {
       "types": "./dist/helpers/cookies.d.ts",
       "import": "./dist/helpers/cookies.mjs"
@@ -1118,6 +1122,10 @@
     "./project/layout": {
       "types": "./dist/project/layout.d.ts",
       "import": "./dist/project/layout.mjs"
+    },
+    "./project/network": {
+      "types": "./dist/project/network.d.ts",
+      "import": "./dist/project/network.mjs"
     },
     "./project/paths": {
       "types": "./dist/project/paths.d.ts",

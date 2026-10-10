@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useState } from 'react';
 
+import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers/clipboard';
+
 import type { MarkdownClassNames } from '../../helpers/markdownParts';
 import type { ReactNode } from 'react';
 
@@ -14,25 +16,27 @@ export type CodeBlockProps = {
   children?: ReactNode;
 };
 
-/** How long "Copied" stays before the button reads "Copy" again. */
+/** How long "Copied" — or "Not copied" — stays before the button reads "Copy" again. */
 const COPIED_MS = 2000;
+
+const LABELS = { idle: 'Copy', copied: 'Copied', refused: 'Not copied' } as const;
 
 /** A fenced block with what it is written in and a way to take it: a header over the code itself. */
 const CodeBlock = ({ language, code, classNames, children }: CodeBlockProps) => {
-  const [copied, setCopied] = useState(false);
+  const [copy, setCopy] = useState<keyof typeof LABELS>('idle');
 
   useEffect(() => {
-    if (!copied) {
+    if (copy === 'idle') {
       return undefined;
     }
 
-    const timer = setTimeout(() => setCopied(false), COPIED_MS);
+    const timer = setTimeout(() => setCopy('idle'), COPIED_MS);
 
     return () => clearTimeout(timer);
-  }, [copied]);
+  }, [copy]);
 
   const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(code).then(() => setCopied(true));
+    void copyText(code).then(copied => setCopy(copied ? 'copied' : 'refused'));
   }, [code]);
 
   return (
@@ -44,8 +48,9 @@ const CodeBlock = ({ language, code, classNames, children }: CodeBlockProps) => 
           className={clsx('markdown-code-copy', classNames.codeBlockCopy)}
           onClick={handleCopy}
           aria-live="polite"
+          title={copy === 'refused' ? NOT_COPIED_REASON : undefined}
         >
-          {copied ? 'Copied' : 'Copy'}
+          {LABELS[copy]}
         </button>
       </div>
       {children}

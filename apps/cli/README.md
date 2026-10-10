@@ -499,6 +499,32 @@ It loads the plugins' declarations and the project's own `@plitzi/sdk-server` to
 never starts the server or the runtime. A check that cannot finish is said as an error
 of its area, never a crash.
 
+## `cert`
+
+```bash
+plitzi cert                              # HTTPS for a phone or a tablet on your Wi-Fi
+plitzi cert --name studio.tailnet.ts.net # a name of the machine's own too
+plitzi cert --json                       # one object: { cert, key, names, authority, open, urls }
+```
+
+A project opens to its network with `HOST=0.0.0.0` in `.env` — the server, or Vite, prints every address to open. Over
+plain http, though, a phone's browser gives the page no microphone, camera, clipboard, geolocation or service worker:
+it is not a secure context. `cert` makes a certificate for this machine — loopback, every network address it has, its
+mDNS name (`studio.local`) and the names `--name` adds — in `tmp/tls/`, and sets `TLS_CERT` and `TLS_KEY` in `.env`,
+which the server and Vite serve HTTPS from with no code of the project's.
+
+It is signed by [mkcert](https://github.com/FiloSottile/mkcert)'s local authority, which `cert` asks you to install when
+it is missing (`brew install mkcert`, `apt install mkcert`, `choco install mkcert`). At a terminal it runs
+`mkcert -install` — it may ask for your password — so this machine's browsers trust it; with nobody there (an agent,
+`--json`) it leaves that step to you. The phone trusts it once you install the authority there: `rootCA.pem`, in
+`mkcert -CAROOT` — that file only, never `rootCA-key.pem` beside it — sent by AirDrop or mail and trusted fully in
+Settings › General › About › Certificate Trust Settings on an iPhone; installed as a CA certificate under Settings ›
+Security on Android.
+
+A certificate names the addresses it was made for: when the router hands the machine a new one, the server says so at
+boot, and `cert` makes one again — or open the `.local` name, which stays. A space read from Plitzi by a browser project
+answers the address the phone opens once it is among the space's allowed domains.
+
 ## `feedback`
 
 ```bash
@@ -804,4 +830,5 @@ deployment started some other way says `devMode: false` in `src/config/serverOpt
 project's is Vite's: only `VITE_*` reaches the page, and ships in it.
 `create` gives each one a signing key there, made for it: `PLITZI_SIGNING_SECRET`, what `ctx.sign` and `ctx.verify`
 sign with — at least 32 characters (`doctor --fix` writes one where it is missing). `PORT` is left commented out: 8080,
-or the next free port while developing.
+or the next free port while developing; so are `HOST`, loopback until it opens the project to the network, and
+`TLS_CERT` and `TLS_KEY`, which `cert` sets.

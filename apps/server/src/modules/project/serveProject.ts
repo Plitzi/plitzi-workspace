@@ -1,8 +1,11 @@
+import { X509Certificate } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { networkInterfaces } from 'node:os';
+import { isIP } from 'node:net';
+import { hostname, networkInterfaces } from 'node:os';
 import path from 'node:path';
 
 import { assertProjectLayout, layoutFindingText } from '@plitzi/sdk-shared/project/layout';
+import { localNetworkName, networkAddresses } from '@plitzi/sdk-shared/project/network';
 import {
   DATA_DIR,
   DEV_SERVER_FILE,
@@ -154,21 +157,65 @@ const ANY_ADDRESS = new Set(['0.0.0.0', '::']);
 const urlHost = (address: string): string => (address.includes(':') ? `[${address}]` : address);
 
 /** Where this machine reaches a server listening on `host`: its loopback, unless it listens on one address only. */
-const localAddress = (host: string): string => (host === '::1' ? host : LOOPBACK.has(host) || ANY_ADDRESS.has(host) ? '127.0.0.1' : host);
+const localAddress = (host: string): string =>
+  host === '::1' ? host : LOOPBACK.has(host) || ANY_ADDRESS.has(host) ? '127.0.0.1' : host;
 
 /** Where another device reaches a server listening on `host`: this machine's own network addresses, when it is open. */
-const networkUrls = (host: string, port: number, scheme: string): string[] => {
+const addressesFor = (host: string): string[] => {
   if (LOOPBACK.has(host)) {
     return [];
   }
 
-  const addresses = ANY_ADDRESS.has(host)
-    ? Object.values(networkInterfaces())
-        .flat()
-        .flatMap(entry => (entry && entry.family === 'IPv4' && !entry.internal ? [entry.address] : []))
-    : [host];
+  return ANY_ADDRESS.has(host) ? networkAddresses(networkInterfaces()) : [host];
+};
 
-  return addresses.map(address => `${scheme}://${urlHost(address)}:${String(port)}`);
+type ProjectTls = NonNullable<ProjectServerOptions['tls']>;
+
+/**
+ * HTTPS with no code of the project's: `TLS_CERT` and `TLS_KEY` in `.env`, the PEM certificate and its key — what
+ * `plitzi cert` makes, for a tablet on the Wi-Fi, whose browser gives a page served over http no microphone, camera,
+ * clipboard or service worker. Relative to the project's root.
+ */
+const tlsFromEnv = (root: string): ProjectTls | undefined => {
+  const { TLS_CERT: cert, TLS_KEY: key } = process.env;
+  if (!cert && !key) {
+    return undefined;
+  }
+
+  if (!cert || !key) {
+    throw new Error('Set both TLS_CERT and TLS_KEY in .env — the certificate and its key — or neither.');
+  }
+
+  const read = (name: string, file: string): Buffer => {
+    try {
+      return readFileSync(path.resolve(root, file));
+    } catch {
+      throw new Error(`${name} in .env is "${file}", which cannot be read — \`plitzi cert\` makes the pair.`);
+    }
+  };
+
+  return { cert: read('TLS_CERT', cert), key: read('TLS_KEY', key) };
+};
+
+/**
+ * What another device opens this server by, its certificate considered: every network address, and this machine's
+ * mDNS name when the certificate names it. The addresses the certificate does not name are said apart — a device that
+ * opens one is refused the page, which happens when the router hands this machine a new address.
+ */
+const reachedBy = (addresses: string[], tls: ProjectTls | undefined): { names: string[]; unnamed: string[] } => {
+  if (!tls) {
+    return { names: addresses, unnamed: [] };
+  }
+
+  const certificate = new X509Certificate(tls.cert);
+  const name = localNetworkName(hostname());
+
+  return {
+    names: [...addresses, ...(certificate.checkHost(name) ? [name] : [])],
+    unnamed: addresses.filter(
+      address => (isIP(address) ? certificate.checkIP(address) : certificate.checkHost(address)) === undefined
+    )
+  };
 };
 
 const actionLookups = (
@@ -241,22 +288,20 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   const host = process.env.HOST ?? '127.0.0.1';
   // `PORT` set: that port, and an error if it is taken. Not set, while developing: 8080 or the next free one.
   const port = process.env.PORT ? Number(process.env.PORT) : developing ? await freePort(8080, host) : 8080;
+  const tls = serverOptions.tls ?? tlsFromEnv(root);
   // The scheme it answers on: with a certificate it serves HTTPS only, and every address it gives says so.
-  const scheme = serverOptions.tls ? 'https' : 'http';
+  const scheme = tls ? 'https' : 'http';
   const localUrl = `${scheme}://${urlHost(localAddress(host))}:${String(port)}`;
-  const network = networkUrls(host, port, scheme);
+  const reached = reachedBy(addressesFor(host), tls);
+  const network = reached.names.map(address => `${scheme}://${urlHost(address)}:${String(port)}`);
   /**
    * Where people reach this server: `PUBLIC_URL` behind a proxy; open to the network, the address another device uses
    * — what an OAuth provider sends a tablet back to; this machine's otherwise.
    */
   const publicUrl = (process.env.PUBLIC_URL ?? network.at(0) ?? localUrl).replace(/\/+$/, '');
   // Its own requests to that address — a runtime calling its own MCP — reach it here, whatever certificate it serves.
-  if (serverOptions.tls && process.env.PUBLIC_URL === undefined) {
-    await reachOwnServer({
-      publicUrl,
-      listener: { host: localAddress(host), port },
-      cert: serverOptions.tls.cert
-    });
+  if (tls && process.env.PUBLIC_URL === undefined) {
+    await reachOwnServer({ publicUrl, listener: { host: localAddress(host), port }, cert: tls.cert });
   }
 
   const { space, failure, name } = await spaceToServe(options, developing, root);
@@ -315,6 +360,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       logLevel: process.argv.includes('--verbose') ? 'info' : 'warn',
       logger: consoleLogger,
       ...serverOptions,
+      ...(tls ? { tls } : {}),
       port,
       devMode: serverOptions.devMode ?? developing,
       devReload: serverOptions.devReload ?? serverOptions.devMode ?? developing,
@@ -349,6 +395,14 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     if (network.length > 0) {
       console.log(
         `also on ${network.map(address => `${address}/`).join(', ')} — anyone on this network can open it (HOST=${host})`
+      );
+    } else if (developing && LOOPBACK.has(host)) {
+      console.log('only this machine opens it: HOST=0.0.0.0 in .env opens it to your network (a phone on the Wi-Fi)');
+    }
+
+    if (reached.unnamed.length > 0) {
+      console.warn(
+        `[tls] the certificate does not name ${reached.unnamed.join(', ')}: a device that opens it there is refused — \`plitzi cert\` makes one for this machine as it is now`
       );
     }
   }
@@ -395,7 +449,8 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
  * space authored. A refusal of any of the three is printed as it is — the message is the whole report, every problem
  * and its fix, and a stack would only point inside the SDK — and the process exits with 1. What it serves:
  *
- * - the port: `PORT`, or 8080 — the next free one from there while developing; `HOST`, loopback by default;
+ * - the port: `PORT`, or 8080 — the next free one from there while developing; `HOST`, loopback by default; HTTPS
+ *   with `TLS_CERT` and `TLS_KEY` (`plitzi cert`), unless the project's options give `tls` themselves;
  * - its plugins: every folder of `src/plugins` built from its source and server-rendered, every one of `vendor/plugins`
  *   as it was built, each with its server half;
  * - its code: `src/functions/`, and the space's runtime (`src/runtime/` — compiled under `dist/` when the server runs

@@ -1,4 +1,4 @@
-import { CLI_DIR, MAIN_FILE } from './paths';
+import { CLI_DIR, DEV_SERVER_FILE, MAIN_FILE, PROJECT_TMP } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -24,10 +24,10 @@ const indexHtml = ({ name }: CreateAnswers): string => `<!doctype html>
 </html>
 `;
 
-const viteConfig = (): string => `import { createReadStream } from 'node:fs';
+const viteConfig = (): string => `import { createReadStream, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
 import type { Plugin } from 'vite';
 
@@ -56,15 +56,51 @@ const devToolsStylesheet = (): Plugin => ({
 });
 
 /**
+ * Writes where Vite serves the page — the port it took, 5173 or the next free one, and the scheme — to
+ * \`${DEV_SERVER_FILE}\`, where \`check\`, \`shot\` and \`visual\` look for it.
+ */
+const recordServer = (): Plugin => ({
+  name: 'plitzi-record-server',
+  apply: 'serve',
+  configureServer(server) {
+    server.httpServer?.once('listening', () => {
+      const address = server.httpServer?.address();
+      if (!address || typeof address === 'string') {
+        return;
+      }
+
+      const scheme = server.config.server.https ? 'https' : 'http';
+      mkdirSync('${PROJECT_TMP}', { recursive: true });
+      writeFileSync(
+        '${DEV_SERVER_FILE}',
+        \`\${JSON.stringify({ port: address.port, url: \`\${scheme}://127.0.0.1:\${String(address.port)}\` }, null, 2)}\\n\`
+      );
+    });
+  }
+});
+
+/**
  * Otherwise nothing Plitzi-specific: the SDK is an ordinary dependency, so this is a plain Vite app.
  *
- * The host is pinned because Vite binds \`localhost\` — which on most machines is IPv6 — while everything that
- * waits for a dev server to come up asks for 127.0.0.1. The two resolve differently, so the visual suite sat
- * there watching an address nothing was listening on until it gave up.
+ * \`.env\` says where it listens, as a server project's does. \`HOST\` left out, 127.0.0.1: Vite binds \`localhost\` —
+ * which on most machines is IPv6 — while everything that waits for a dev server to come up asks for 127.0.0.1, and the
+ * visual suite sat there watching an address nothing was listening on. \`HOST=0.0.0.0\` opens it to the network (a
+ * phone on the Wi-Fi); \`TLS_CERT\` and \`TLS_KEY\` (\`plitzi cert\`) serve it over HTTPS, which that phone's browser
+ * asks of a page before it gives it the microphone, the camera or the clipboard.
  */
-export default defineConfig({
-  plugins: [devToolsStylesheet()],
-  server: { host: '127.0.0.1', port: 5173 }
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
+    plugins: [devToolsStylesheet(), recordServer()],
+    server: {
+      host: env.HOST || '127.0.0.1',
+      port: 5173,
+      ...(env.TLS_CERT && env.TLS_KEY
+        ? { https: { cert: readFileSync(env.TLS_CERT), key: readFileSync(env.TLS_KEY) } }
+        : {})
+    }
+  };
 });
 `;
 

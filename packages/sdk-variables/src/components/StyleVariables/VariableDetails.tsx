@@ -1,6 +1,8 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback } from 'react';
 
+import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers/clipboard';
+
 import type { SchemaVariable } from '@plitzi/sdk-shared';
 
 export type VariableDetailsProps = {
@@ -12,12 +14,13 @@ const VariableDetails = ({ name }: VariableDetailsProps) => {
   const { addToast } = useToast();
 
   const handleClickCopy = useCallback(() => {
-    void navigator.clipboard.writeText(`var(--${name})`);
-    addToast('Variable copied into the clipboard', {
-      appeareance: 'success',
-      autoDismiss: true,
-      placement: 'top-right'
-    });
+    void copyText(`var(--${name})`).then(copied =>
+      addToast(copied ? 'Variable copied into the clipboard' : NOT_COPIED_REASON, {
+        appeareance: copied ? 'success' : 'error',
+        autoDismiss: true,
+        placement: 'top-right'
+      })
+    );
   }, [addToast, name]);
 
   return (

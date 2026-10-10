@@ -5,6 +5,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { projectFormatter } from '../commands/projectFormatter';
+import { withSetting } from '../commands/projectSettings';
 
 import type { Repair } from './types';
 
@@ -81,15 +82,7 @@ export const freshSecret = (root: string, name: string): Repair => ({
   says: `writes a new ${name} to .env`,
   run: async () => {
     const file = path.join(root, '.env');
-    const text = (await readText(file)) ?? '';
-    const line = `${name}=${randomBytes(32).toString('hex')}`;
-    const pattern = new RegExp(`^${name}=.*$`, 'm');
-    await fs.writeFile(
-      file,
-      pattern.test(text)
-        ? text.replace(pattern, line)
-        : `${text}${text === '' || text.endsWith('\n') ? '' : '\n'}${line}\n`
-    );
+    await fs.writeFile(file, withSetting((await readText(file)) ?? '', name, randomBytes(32).toString('hex')));
   }
 });
 

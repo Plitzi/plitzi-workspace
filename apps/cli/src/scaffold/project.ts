@@ -15,6 +15,8 @@ import {
   PROJECT_STATE,
   PROJECT_NOTES,
   PROJECT_TMP,
+  TLS_CERT_FILE,
+  TLS_KEY_FILE,
   TSCONFIG_BASE
 } from './paths';
 
@@ -288,8 +290,8 @@ export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one; \`HOST=0.0.0.0\` opens it to your network — a tablet on the same Wi-Fi — and prints the address to open there). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space reloads it' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\`, which sets \`NODE_ENV=production\` itself: the compiled server, with no TypeScript in the process.`
-    : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement.`;
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one; \`HOST=0.0.0.0\` opens it to your network — a tablet on the same Wi-Fi — and prints the address to open there; \`plitzi cert\` serves it over HTTPS, which that tablet's browser asks of a page before it gives it the microphone, the camera or the clipboard). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space reloads it' : ''}. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\`, which sets \`NODE_ENV=production\` itself: the compiled server, with no TypeScript in the process.`
+    : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement. \`HOST=0.0.0.0\` in \`.env\` opens it to your network — a tablet on the same Wi-Fi — and \`plitzi cert\` serves it over HTTPS, which that tablet's browser asks of a page before it gives it the microphone, the camera or the clipboard.`;
 
 const spaceSection = (answers: CreateAnswers): string => {
   if (answers.source === 'cloud') {
@@ -425,10 +427,12 @@ export const agentsFile = (answers: CreateAnswers): string => {
   const refusers = [answers.mode === 'server' ? 'The server' : '', local ? run('author') : '']
     .filter(Boolean)
     .join(' and ');
+  // A phone on the Wi-Fi: what opens the page to it, and what its browser asks before a page has the microphone.
+  const network = `${code('HOST=0.0.0.0')} in ${code('.env')} opens it to the network; ${code('plitzi cert')} serves it over HTTPS — over http, a phone's browser gives the page no microphone, camera or clipboard.`;
   const port =
     answers.mode === 'server'
-      ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code(DEV_SERVER_FILE)}, where ${code('check')}, ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one.`
-      : `${run('start')} runs Vite on 5173.`;
+      ? `${run('start')} serves on 8080, or on the next free port when something else holds it — printed, and written to ${code(DEV_SERVER_FILE)}, where ${code('check')}, ${code('shot')} and ${code('visual')} read it. ${code('PORT')} chooses one. ${network}`
+      : `${run('start')} runs Vite on 5173, or the next free port — written to ${code(DEV_SERVER_FILE)}. ${network}`;
   const serverNotes =
     answers.mode === 'server'
       ? `- **The server is yours in ${code('src/config/serverOptions.ts')}**, not in ${code(MAIN_FILE)} — that one is the CLI's, and ${code('plitzi upgrade')} keeps it current: what the server does besides serving the space goes there (what ${code('serveProject')} wires itself is not offered)${local ? `, and the space's server actions are ${code('src/actions/')}` : ''}.\n- **Pictures from other sites** are resized by this server once ${code('src/config/serverOptions.ts')} names their hosts — ${code('images: { domains }')}, a list of hosts like ${code('images.example.com')} — and ${code('sharp')} is installed: an ${code('image')} then offers a ${code('srcset')} (give it ${code('sizes')}, and ${code('width')}/${code('height')} so nothing jumps).\n`
@@ -542,15 +546,17 @@ ${revision ? `PLITZI_REVISION=${String(revision)}` : '# PLITZI_REVISION=12'}
     }${SERVER_SETTINGS}`;
   }
 
-  return source === 'cloud'
-    ? `# The space's public render key. It ships in the page by design; the origin the browser states is what
+  return `${
+    source === 'cloud'
+      ? `# The space's public render key. It ships in the page by design; the origin the browser states is what
 # protects it — add this project's domain to the space's allowed domains.
 VITE_PLITZI_WEB_KEY=${key}
 VITE_PLITZI_ENVIRONMENT=${environment}
 `
-    : `# What the page reads as import.meta.env.VITE_*: Vite hands it only what is named VITE_, and each value ships in the
+      : `# What the page reads as import.meta.env.VITE_*: Vite hands it only what is named VITE_, and each value ships in the
 # page — never a secret.
-`;
+`
+  }${CLIENT_SETTINGS}`;
 };
 
 /**
@@ -561,6 +567,16 @@ export const envExample = (answers: CreateAnswers): string =>
   `# The settings .env holds, with no secret in them: copy this file to .env and fill those in. Committed; .env never is.
 
 ${envFile({ ...answers, key: '' })}`;
+
+/**
+ * HTTPS while developing, in either mode: what `plitzi cert` writes, offered commented until it has.
+ */
+const TLS_SETTINGS = `
+# HTTPS, for that tablet: over http its browser gives a page no microphone, camera or clipboard. \`plitzi cert\` makes a
+# certificate for this machine and its network addresses, and sets these two.
+# TLS_CERT=${TLS_CERT_FILE}
+# TLS_KEY=${TLS_KEY_FILE}
+`;
 
 /**
  * What every server project is given in `.env`: the key its actions sign with — filled by `plitzi create` with one made
@@ -574,10 +590,17 @@ PLITZI_SIGNING_SECRET=
 
 # Left out: this machine only. 0.0.0.0 opens it to the network — a tablet on the same Wi-Fi, and anyone else on it.
 # HOST=0.0.0.0
-
+${TLS_SETTINGS}
 # The secrets the space's actions and functions name — ctx.fetch's credential, a connector's: credential id → its keys.
 # PLITZI_CREDENTIALS={"google":{"clientId":"…","clientSecret":"…"}}
 `;
+
+/** Where Vite listens, as a server project's `.env` says it — Vite's config reads these, not the page. */
+const CLIENT_SETTINGS = `
+# Left out: this machine only. 0.0.0.0 opens it to the network — a tablet on the same Wi-Fi, and anyone else on it.
+# A space read from Plitzi answers that address once it is among the space's allowed domains.
+# HOST=0.0.0.0
+${TLS_SETTINGS}`;
 
 /** A `.env` with the signing key `plitzi create` made for the project in its place. */
 export const withSigningSecret = (env: string, secret: string): string =>

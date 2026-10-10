@@ -19,3 +19,17 @@ export const projectSettings = async (root: string): Promise<ProjectSettings> =>
 
   return { file: text !== undefined, value: name => process.env[name] ?? parsed[name] ?? '' };
 };
+
+/**
+ * `.env`'s text with `name` set to `value`: its line replaced where it is — the commented one `.env.example` offers too,
+ * `# HOST=0.0.0.0` — or added at the end. Every other line as it was, comments included.
+ */
+export const withSetting = (text: string, name: string, value: string): string => {
+  const line = `${name}=${value}`;
+  const pattern = new RegExp(`^(?:#\\s*)?${name}=.*$`, 'm');
+  if (pattern.test(text)) {
+    return text.replace(pattern, line);
+  }
+
+  return `${text}${text === '' || text.endsWith('\n') ? '' : '\n'}${line}\n`;
+};

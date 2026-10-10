@@ -2,6 +2,8 @@ import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback } from 'react';
 
+import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers/clipboard';
+
 import VariableValue from './VariableValue';
 
 import type { SchemaVariable } from '@plitzi/sdk-shared';
@@ -16,12 +18,13 @@ const VariableDetails = ({ name, subValues = [], type = 'text' }: VariableDetail
   const { addToast } = useToast();
 
   const handleClickCopy = useCallback(() => {
-    void navigator.clipboard.writeText(`{{${name}}}`);
-    addToast('Variable copied into the clipboard', {
-      appeareance: 'success',
-      autoDismiss: true,
-      placement: 'top-right'
-    });
+    void copyText(`{{${name}}}`).then(copied =>
+      addToast(copied ? 'Variable copied into the clipboard' : NOT_COPIED_REASON, {
+        appeareance: copied ? 'success' : 'error',
+        autoDismiss: true,
+        placement: 'top-right'
+      })
+    );
   }, [addToast, name]);
 
   return (

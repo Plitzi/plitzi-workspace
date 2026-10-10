@@ -1,4 +1,5 @@
 import { toInteractionCallback } from '@plitzi/sdk-shared/authoring/builder';
+import { clipboardWriter } from '@plitzi/sdk-shared/helpers/clipboard';
 
 import { copyToClipboardSpec } from './copyToClipboardSpec';
 
@@ -10,14 +11,12 @@ const copyToClipboard = toInteractionCallback<{ text: string }>(
   'copyToClipboard',
   copyToClipboardSpec,
   async ({ text }) => {
-    const clipboard: unknown = typeof navigator === 'undefined' ? undefined : Reflect.get(navigator, 'clipboard');
-    const writeText: unknown =
-      typeof clipboard === 'object' && clipboard !== null ? Reflect.get(clipboard, 'writeText') : undefined;
-    if (typeof writeText !== 'function') {
+    const write = clipboardWriter();
+    if (!write) {
       throw new Error('This page has no clipboard to write to: the browser offers none here (a page not on https?)');
     }
 
-    await Reflect.apply(writeText, clipboard, [text]);
+    await write(text);
   }
 );
 

@@ -512,11 +512,19 @@ describe('the scaffold', () => {
     expect(files['AGENTS.md']).toContain('.claude/skills/plitzi-cli/SKILL.md');
   });
 
-  /** Vite binds `localhost`, which is IPv6 here, while everything waiting for a dev server asks 127.0.0.1. */
-  it('pins the dev server to the address its own tests wait on', () => {
+  /**
+   * Vite binds `localhost`, which is IPv6 here, while everything waiting for a dev server asks 127.0.0.1 — unless `.env`
+   * opens it to the network, as a server project's does.
+   */
+  it('pins the dev server to the address its own tests wait on, unless .env says otherwise', () => {
     const files = scaffold(answers({ mode: 'client' }));
 
-    expect(files['vite.config.ts']).toContain("host: '127.0.0.1'");
+    expect(files['vite.config.ts']).toContain("host: env.HOST || '127.0.0.1'");
+    expect(files['vite.config.ts']).toContain(
+      'https: { cert: readFileSync(env.TLS_CERT), key: readFileSync(env.TLS_KEY) }'
+    );
+    expect(files['.env']).toContain('# HOST=0.0.0.0');
+    expect(files['.env']).toContain('# TLS_CERT=tmp/tls/cert.pem');
     expect(files['playwright.config.ts']).toContain('127.0.0.1');
   });
 });

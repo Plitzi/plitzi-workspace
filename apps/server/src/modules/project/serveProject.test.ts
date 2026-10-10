@@ -1,7 +1,7 @@
 /* eslint-disable quotes -- what the server says quotes code, and reads best in the other quotes */
 import { existsSync } from 'node:fs';
 import fs from 'node:fs/promises';
-import os from 'node:os';
+import os, { networkInterfaces } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -64,7 +64,19 @@ const serve = async (options: Parameters<typeof serveProject>[0]): Promise<Serve
 
 const pageOf = async (url: string): Promise<string> => (await fetch(`${url}/`)).text();
 
-const ENV_KEYS = ['PORT', 'HOST', 'NODE_ENV', 'PLITZI_HOST_KEY', 'PLITZI_ENVIRONMENT', 'PLITZI_SERVER_URL'] as const;
+const ENV_KEYS = [
+  'PORT',
+  'HOST',
+  'NODE_ENV',
+  'PLITZI_HOST_KEY',
+  'PLITZI_ENVIRONMENT',
+  'PLITZI_SERVER_URL',
+  'TLS_CERT',
+  'TLS_KEY'
+] as const;
+
+/** A self-signed certificate naming nothing, and its key — the runtime's fixtures. */
+const FIXTURES = path.join(import.meta.dirname, '../runtime/__fixtures__');
 
 let root: string;
 let served: ServedProject | undefined;
@@ -121,6 +133,9 @@ afterEach(async () => {
   await served?.close();
   served = undefined;
   vi.restoreAllMocks();
+  // A server with a certificate installs a dispatcher that reaches it (`reachOwnServer`): the next test gets Node's.
+  const { Agent, setGlobalDispatcher } = await import('undici');
+  setGlobalDispatcher(new Agent());
   for (const key of ENV_KEYS) {
     if (saved[key] === undefined) {
       Reflect.deleteProperty(process.env, key);
@@ -381,6 +396,58 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
 
     const deployed = await serve({ space: () => titled('a'), serverOptions: { workers: false, devMode: false } });
     expect(await reloadStatus(deployed.url)).toBe(404);
+  });
+});
+
+describe('serveProject — on this machine and on its network', { timeout: PROJECT_TEST_TIMEOUT }, () => {
+  it('says how to open it to the network while only this machine reaches it', async () => {
+    const said = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    await serve({ space: () => titled('a') });
+
+    expect(said.mock.calls.flat().join('\n')).toContain('HOST=0.0.0.0 in .env opens it to your network');
+  });
+
+  it('serves HTTPS from the certificate .env names, and records it', async () => {
+    process.env.TLS_CERT = path.join(FIXTURES, 'own.crt');
+    process.env.TLS_KEY = path.join(FIXTURES, 'own.key');
+    const running = await serve({ space: () => titled('over https') });
+
+    expect(running.url).toMatch(/^https:\/\/127\.0\.0\.1:/);
+    expect(await pageOf(running.url)).toContain('<title>over https</title>');
+    expect(JSON.parse(await fs.readFile(path.join(root, 'tmp/dev-server.json'), 'utf-8'))).toMatchObject({
+      url: running.url
+    });
+  });
+
+  it('refuses half a certificate, and one it cannot read', async () => {
+    process.env.TLS_CERT = path.join(FIXTURES, 'own.crt');
+    await expect(serveProject({ space: () => titled('a') })).rejects.toThrow('Set both TLS_CERT and TLS_KEY');
+
+    process.env.TLS_KEY = 'tmp/tls/missing.pem';
+    await expect(serveProject({ space: () => titled('a') })).rejects.toThrow(
+      'TLS_KEY in .env is "tmp/tls/missing.pem", which cannot be read'
+    );
+  });
+
+  it('says which network addresses its certificate does not name, where a device would be refused', async () => {
+    process.env.HOST = '0.0.0.0';
+    process.env.TLS_CERT = path.join(FIXTURES, 'own.crt');
+    process.env.TLS_KEY = path.join(FIXTURES, 'own.key');
+    const warned = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const addresses = Object.values(networkInterfaces())
+      .flat()
+      .flatMap(entry => (entry && entry.family === 'IPv4' && !entry.internal ? [entry.address] : []));
+    served = await serveProject({ space: () => titled('a') });
+
+    const recorded: unknown = JSON.parse(await fs.readFile(path.join(root, 'tmp/dev-server.json'), 'utf-8'));
+    expect(recorded).toMatchObject({
+      network: addresses.map(address => `https://${address}:${String(process.env.PORT)}`)
+    });
+    const tlsWarnings = warned.mock.calls.flat().filter(said => String(said).startsWith('[tls]'));
+    expect(tlsWarnings).toEqual(
+      addresses.length > 0 ? [expect.stringContaining(`does not name ${addresses.join(', ')}`)] : []
+    );
   });
 });
 
