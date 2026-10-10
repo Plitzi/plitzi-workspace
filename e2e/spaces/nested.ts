@@ -2,14 +2,17 @@ import { MINIMAL_IDS, minimalSpace } from './minimal';
 
 import type { Element, OfflineDataRaw } from '@plitzi/sdk-shared';
 
-/** A space drawn inside another one: the `plitziSdk` element, handed the inner space's documents.
+/** A space drawn inside another one, handed the inner space's documents: by the `plitziSdk` element, or by a plugin
+ *  rendering the exported `<PlitziSdk>` in its own tree (`nestedSdk`, the harness's).
  *
- *  Written into the documents by hand — `plitziSdk` runs a whole space, so it is declared where the SDK is and not in
- *  the authoring catalogue. The outer space is `minimalSpace()`, so every name a spec addresses is the inner space's. */
+ *  The outer space is `minimalSpace()`, so every name a spec addresses is the inner space's. */
 
 export const NESTED_IDS = { element: 'nested-sdk' };
 
-export const nestedSpace = (inner: OfflineDataRaw): OfflineDataRaw => {
+/** What draws the inner space: the element, or a plugin. */
+export type NestedThrough = 'plitziSdk' | 'nestedSdk';
+
+export const nestedSpace = (inner: OfflineDataRaw, through: NestedThrough = 'plitziSdk'): OfflineDataRaw => {
   const outer = minimalSpace({ heading: 'Outer space' });
   const page = outer.schema.flat[MINIMAL_IDS.page];
   const element: Element = {
@@ -17,7 +20,7 @@ export const nestedSpace = (inner: OfflineDataRaw): OfflineDataRaw => {
     attributes: { offlineData: { schema: inner.schema, style: inner.style } },
     definition: {
       label: 'Plitzi Sdk',
-      type: 'plitziSdk',
+      type: through,
       rootId: page.id,
       parentId: page.id,
       items: [],

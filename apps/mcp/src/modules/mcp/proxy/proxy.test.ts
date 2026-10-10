@@ -4,7 +4,7 @@ import { grantUrl, readGrant } from './grant';
 import { isPrivateAddress, isPublicHost } from './guard';
 import { proxifyResources, rewriteText } from './rewrite';
 import { connectionId } from './sign';
-import { render } from '../tools/render';
+import { render } from '../tools/renderWidget';
 
 import type { ResourceProxy } from './types';
 import type { Operation } from '../tools/operations';

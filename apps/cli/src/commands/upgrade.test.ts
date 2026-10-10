@@ -503,6 +503,20 @@ describe('plitzi upgrade', () => {
     await expect(fs.readFile(skill('plitzi-cli', 'SKILL.md'), 'utf-8')).resolves.toContain('name: plitzi-cli');
   });
 
+  /** A build of the same version may change only a reference: `SKILL.md` alone said the skill was up to date. */
+  it('brings a skill whose SKILL.md is current but a reference is not', async () => {
+    await run(['skills'], { write: true });
+    const reference = file('.claude/skills/plitzi-authoring/reference/plugins.md');
+    const current = await fs.readFile(reference, 'utf-8');
+    await fs.writeFile(reference, 'What an older build of this version said.');
+
+    const shown = await run(['skills'], { write: true });
+
+    expect(shown.skills).toEqual([expect.objectContaining({ name: 'plitzi-authoring' })]);
+    expect(await fs.readFile(reference, 'utf-8')).toBe(current);
+    expect((await run(['skills'])).skills).toEqual([]);
+  });
+
   it('finds a renamed name where it is written, and renames it — an import only where it is the package’s', async () => {
     await fs.mkdir(file('src/plugins/Ticker'), { recursive: true });
     await fs.mkdir(file('src/space'), { recursive: true });
@@ -533,6 +547,32 @@ describe('plitzi upgrade', () => {
     expect(await read('src/plugins/Ticker/declaration.ts')).toBe('export default { builder: { canSnippet: true } };\n');
     expect(await read('src/space/snippet.ts')).toContain('authorSnippet({})');
     expect(await read('src/space/own.ts')).toBe('export type TemplateSpec = { id: string };\n');
+  });
+
+  it('renames the host context a plugin reads, in its import, its use and the module path that named it', async () => {
+    await fs.mkdir(file('src/plugins/Desk'), { recursive: true });
+    await fs.writeFile(
+      file('src/plugins/Desk/Desk.tsx'),
+      [
+        "import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';",
+        "import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';",
+        '',
+        'export const useHost = (): PlitziServiceContextValue => usePlitziServiceContext();',
+        ''
+      ].join('\n')
+    );
+
+    await run(['renames'], { write: true });
+
+    expect(await read('src/plugins/Desk/Desk.tsx')).toBe(
+      [
+        "import { usePlitzi } from '@plitzi/plitzi-sdk';",
+        "import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';",
+        '',
+        'export const useHost = (): PlitziContextValue => usePlitzi();',
+        ''
+      ].join('\n')
+    );
   });
 
   it('says where a field written before fields became optional takes an empty answer now, and writes nothing', async () => {

@@ -1,6 +1,7 @@
 /* eslint-disable quotes -- the cases are source code, which reads best in the other quotes */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -326,6 +327,10 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
 
     expect(findingOf(await run(), 'tsconfig-stands-alone')?.severity).toBe('warning');
 
+    // A real Prettier where `install` left a stub: the repair writes with the project's own.
+    const prettier = path.join(project, 'node_modules', 'prettier');
+    await fs.rm(prettier, { recursive: true, force: true });
+    await fs.symlink(path.dirname(createRequire(import.meta.url).resolve('prettier/package.json')), prettier, 'dir');
     await run({ fix: true });
 
     expect(JSON.parse(await read('tsconfig.json'))).toEqual({
@@ -333,6 +338,8 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
       include: ['plitzi', 'src', 'scripts'],
       extends: './plitzi/tsconfig.base.json'
     });
+    // Written by the project's own Prettier: what `verify`'s format step then finds nothing in.
+    expect(await read('tsconfig.json')).toContain('"include": ["plitzi", "src", "scripts"],');
     expect(findingOf(await run(), 'tsconfig-stands-alone')).toBeUndefined();
   });
 

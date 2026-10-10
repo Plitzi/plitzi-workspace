@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { render } from '../tools/render';
+import { render } from '../tools/renderWidget';
 
 import type { Operation } from '../tools/operations';
 

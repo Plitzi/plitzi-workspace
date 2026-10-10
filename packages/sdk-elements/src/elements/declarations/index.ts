@@ -10,6 +10,7 @@ import BlockHtmlDeclaration from '../advanced/BlockHtml/declaration';
 import BlockJsxDeclaration from '../advanced/BlockJsx/declaration';
 import CustomDeclaration from '../advanced/Custom/declaration';
 import NodeHtmlDeclaration from '../advanced/NodeHtml/declaration';
+import PlitziSdkDeclaration from '../advanced/PlitziSdk/declaration';
 import ReferenceDeclaration from '../advanced/Reference/declaration';
 import ButtonDeclaration from '../basic/Button/declaration';
 import DropdownDeclaration from '../basic/Dropdown/declaration';
@@ -78,6 +79,7 @@ export const elementDeclarations = {
   Page: PageDeclaration,
   Pagination: PaginationDeclaration,
   Paragraph: ParagraphDeclaration,
+  PlitziSdk: PlitziSdkDeclaration,
   Reference: ReferenceDeclaration,
   RichText: RichTextDeclaration,
   Svg: SvgDeclaration,
@@ -123,6 +125,7 @@ export {
   PageDeclaration,
   PaginationDeclaration,
   ParagraphDeclaration,
+  PlitziSdkDeclaration,
   ReferenceDeclaration,
   RichTextDeclaration,
   SvgDeclaration,

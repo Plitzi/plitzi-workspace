@@ -58,7 +58,8 @@ const renderTypes = (): { note: string; types: Record<string, RenderTypeInfo> } 
   return { note: renderTypesNote, types };
 };
 
-const renderGuideText = `# plitzi_render — authoring guide
+/** How a widget is authored: what an agent reads before its first render, whichever server hands it the tool. */
+export const renderGuideText = `# plitzi_render — authoring guide
 
 \`plitzi_render\` shows the user a live UI widget. You build it as a list of \`operations\` (applied IN ORDER) that
 assemble an element tree under one pre-seeded root page whose ref is **"render"**. It renders fully offline — no

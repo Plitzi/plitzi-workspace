@@ -96,6 +96,8 @@ export const modalContainer = defineElement(elementDeclarations.ModalContainer);
 export const nodeHtml = defineElement(elementDeclarations.NodeHtml);
 export const pagination = defineElement(elementDeclarations.Pagination);
 export const paragraph = defineElement(elementDeclarations.Paragraph);
+/** Another space drawn inside this one, as a widget: `plitziSdk({ id: 'card', bind: { offlineData: 'view.data' } })`. */
+export const plitziSdk = defineElement(elementDeclarations.PlitziSdk);
 export const reference = defineElement(elementDeclarations.Reference);
 export const richText = defineElement(elementDeclarations.RichText);
 export const svg = defineElement(elementDeclarations.Svg);

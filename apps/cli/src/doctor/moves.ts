@@ -3,6 +3,8 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { writeFormatted } from './repairs';
+
 /**
  * Files moved inside a project with everything that names them kept pointing at them: every relative import of the
  * project's code (and every `new URL('…', import.meta.url)`) is read against where its file WAS, and written against
@@ -198,7 +200,7 @@ export const moveFiles = async (root: string, moves: Moves): Promise<Moved> => {
       })
     );
     const indent = /^\{\n([ \t]+)"/.exec(manifestText)?.[1] ?? '  ';
-    await fs.writeFile(manifestFile, `${JSON.stringify({ ...manifest, scripts }, null, indent)}\n`);
+    await writeFormatted(root, 'package.json', `${JSON.stringify({ ...manifest, scripts }, null, indent)}\n`);
   }
 
   return moved;

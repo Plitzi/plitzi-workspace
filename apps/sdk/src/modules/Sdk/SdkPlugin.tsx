@@ -1,9 +1,11 @@
-import type { Asset, ComponentDefinition, ComponentPluginFC } from '@plitzi/sdk-shared';
+import type { PluginComponent } from './deferredPlugins';
+import type { Asset, ComponentDefinition } from '@plitzi/sdk-shared';
 import type { FC } from 'react';
 
 export type SdkPluginProps = {
   renderType: string;
-  component: ComponentPluginFC;
+  /** The component, taking its element's attributes as props — as `render()`'s plugins do (see `RenderPlugins`). */
+  component: PluginComponent;
   // The panel takes the plugin's own attributes as its props, which only the plugin knows.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   settings?: FC<any>;

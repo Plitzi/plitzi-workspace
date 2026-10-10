@@ -1,6 +1,7 @@
 import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo';
 
-import declaration from './declaration';
+import declaration from '@plitzi/sdk-elements/elements/advanced/PlitziSdk/declaration';
+
 import BasePlitziSdk from './PlitziSdk';
 
 // The catalogue icon is a React component, so it is attached here rather than in the data-only declaration.

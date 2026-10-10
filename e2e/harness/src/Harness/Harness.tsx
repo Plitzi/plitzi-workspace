@@ -2,6 +2,8 @@ import { offlineData as sharedSpace } from '@plitzi/example-space/browser';
 import PlitziSdk from '@plitzi/plitzi-sdk';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import NestedSdk from './NestedSdk';
+
 import type { HarnessRenderOptions, HarnessState } from './types';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
@@ -50,7 +52,9 @@ const Harness = () => {
         themeScope={state.options.themeScope}
         debugMode={state.options.debugMode}
         flags={state.options.flags}
-      />
+      >
+        <PlitziSdk.Plugin renderType="nestedSdk" component={NestedSdk} />
+      </PlitziSdk>
     </div>
   );
 };

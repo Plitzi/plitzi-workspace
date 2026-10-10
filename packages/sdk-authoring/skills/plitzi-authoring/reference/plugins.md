@@ -64,23 +64,19 @@ const NebulaRun = ({ shipColor = 'amber', best = 0, className }: NebulaRunProps)
 ## Writing to the space
 
 A plugin that produces something the page shows — a score, a selection — writes it to `runtime.state`, where every
-binding reads it:
+binding reads it — and where two plugins share it, each being a bundle of its own (a module both import is two):
 
 ```ts
 import { getStateManager } from '@plitzi/plitzi-sdk';
 
 const state = getStateManager();
 state.setStateByKey('arcadeBest', Math.max(score, Number(state.state.arcadeBest ?? 0)));
-const stop = state.subscribe(next => save(next));      // called after every change; call `stop()` to leave
+const stop = state.subscribe(next => save(next));      // after every change; `stop()` to leave
 ```
 
 `state` is the current value, `setState` replaces it (or takes an updater), `setStateByKey` writes one key,
-`clearState` empties it, `subscribe` listens. Bindings on `state.*` re-render at once. With the space's `keepState`
-on ([kept state](kept-state.md)), what a plugin writes there — its layout, a choice — is back after a reload too.
-
-It is also how two plugins share anything. Each plugin is built into a bundle of its own, so a module of the project
-that both import is two copies: a `Map` or a listener in it is not shared, and what one plugin puts there the other
-never sees. One writes the key to `state`; the other reads `state` and `subscribe`s.
+`clearState` empties it, `subscribe` listens. Bindings on `state.*` re-render at once. With `keepState` on
+([kept state](kept-state.md)), what a plugin writes there is back after a reload.
 
 ## Laying out the space's elements
 

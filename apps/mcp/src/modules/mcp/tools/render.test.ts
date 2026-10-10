@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { render, renderTool } from './render';
+import { authorSpace, heading, singlePageSpace } from '@plitzi/sdk-authoring';
+
+import { renderTool } from './render';
+import { render } from './renderWidget';
 import { emptySpace } from '../helpers';
 import { validateOperations } from './shared/validator';
 
@@ -298,5 +301,37 @@ describe('plitzi_render interaction wiring', () => {
     expect(result.warnings?.some(w => w.includes('card-head') && w.includes('card') && w.includes('onClick'))).toBe(
       true
     );
+  });
+});
+
+/** A widget drawn in a project's own page, which hands the render the style of its space. */
+describe('render with a base', () => {
+  const host = authorSpace(
+    singlePageSpace([heading('Board', { id: 'title' })], {
+      name: 'board',
+      permanentUrl: 'board',
+      variables: { color: { brand: { light: '#0055ff', dark: '#88aaff', default: '#0055ff' } } }
+    })
+  );
+
+  it('carries the palette of the space that shows it, in both themes', () => {
+    const result = render({ operations: widget }, { base: host.style });
+
+    expect(result.rendered).toBe(true);
+    if (!result.rendered) {
+      return;
+    }
+
+    expect(result.offlineData.style.cache).toContain('--brand: #0055ff');
+    expect(result.offlineData.style.cache).toContain('--brand: #88aaff');
+    // The widget's own class is compiled beside them.
+    expect(result.offlineData.style.cache).toContain('#3b82f6');
+  });
+
+  it('leaves the style it was handed as it was', () => {
+    const before = structuredClone(host.style);
+    render({ operations: widget }, { base: host.style });
+
+    expect(host.style).toEqual(before);
   });
 });

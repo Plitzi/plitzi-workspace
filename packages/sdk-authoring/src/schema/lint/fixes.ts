@@ -1,6 +1,7 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import { boundAttribute } from '../bindings';
 import { closest } from '../suggest';
 import { LintContext } from './context';
 import { isPlainContainer } from './elements';
@@ -267,7 +268,7 @@ const FIXERS: Record<string, Fixer> = {
     }
 
     const reads = (binding: ElementBinding) =>
-      binding.to === 'visibility' || binding.to === 'className' || names.includes(binding.to);
+      binding.to === 'visibility' || binding.to === 'className' || names.includes(boundAttribute(binding.to));
     for (const binding of bindings.attributes.filter(candidate => !reads(candidate))) {
       report(`Removed the binding onto "${binding.to}", which a "${element.definition.type}" never reads.`, {
         on: 'binding',

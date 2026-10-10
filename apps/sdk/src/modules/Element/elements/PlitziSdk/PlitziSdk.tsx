@@ -9,22 +9,12 @@ import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
 import { offlineDocuments } from './offlineDocuments';
 import App from '../../../../App';
 
-import type { Environment, OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { PlitziSdkAttributes } from '@plitzi/sdk-elements/elements/advanced/PlitziSdk/declaration';
 import type { RefObject } from 'react';
 
-export type PlitziSdkProps = {
+export type PlitziSdkProps = PlitziSdkAttributes & {
   ref?: RefObject<HTMLElement>;
   className?: string;
-  /** The space drawn, fetched by its key. */
-  spaceKey?: string;
-  environment?: Environment;
-  /**
-   * The space drawn from its documents instead — `schema` and `style` with its compiled `cache`, what `plitzi_render`
-   * answers — with no backend behind it: UI generated on the fly, a preview. Usually bound: whole, to an
-   * `apiContainer`'s answer or a runtime's route, or `offlineData.schema` and `offlineData.style` from two elements.
-   * With it, `spaceKey` is not read.
-   */
-  offlineData?: OfflineDataRaw;
 };
 
 const PlitziSdk = ({ ref, className, spaceKey, environment = 'main', offlineData }: PlitziSdkProps) => {

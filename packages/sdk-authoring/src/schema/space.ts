@@ -1783,6 +1783,9 @@ class SpaceAuthor {
    * state that names it — shows nothing on a bare visit either, and that is it working: it is conditional the way its
    * children are. Bottom up, so a wrapper of such an element is too. Without it a suite asserting "everything named
    * is visible" failed on the menu at rest, and the only way past was a condition on the parent that said nothing new.
+   *
+   * Not an element that chooses its children: its children are conditional because it decides which to show, and it is
+   * on screen to decide — a dashboard is there whichever panels it draws.
    */
   private markConditionalByChildren(schema: Schema): void {
     const handles = [...Object.values(this.handles), ...Object.values(this.layoutHandles)].flatMap(root =>
@@ -1792,7 +1795,8 @@ class SpaceAuthor {
     for (let changed = true; changed;) {
       changed = false;
       for (const handle of handles) {
-        const items = handle.conditional ? [] : (schema.flat[handle.id].definition.items ?? []);
+        const element = schema.flat[handle.id];
+        const items = handle.conditional || this.choosesChildren(element) ? [] : (element.definition.items ?? []);
         if (items.length > 0 && items.every(child => byId.get(child)?.conditional === true)) {
           handle.conditional = true;
           changed = true;
@@ -1812,6 +1816,11 @@ class SpaceAuthor {
   /** Whether the element's plugin declares it draws nothing. */
   private drawsNothing(element: Element): boolean {
     return this.options.drawsNothingTypes?.includes(this.pluginKeyOf(element)) ?? false;
+  }
+
+  /** Whether the element's plugin declares it shows only some of its children, chosen as it runs. */
+  private choosesChildren(element: Element): boolean {
+    return this.options.choosesChildrenTypes?.includes(this.pluginKeyOf(element)) ?? false;
   }
 
   /** Plugin types already warned about a reserved attribute: said once, at the first element of the type. */
@@ -2064,8 +2073,18 @@ class SpaceAuthor {
     });
 
     const children = spec.row === undefined ? spec.children : this.rowChildren(spec, spec.row, id, where);
+    // Under an element that chooses which of them to show, every one is shown under a condition only it knows.
+    const childrenConditional = conditional || this.choosesChildren(element);
     children?.forEach((child, index) =>
-      this.addElement(child, `${identity}/${index}`, placeOf(child, place, index), ownRootId, id, conditional, tree)
+      this.addElement(
+        child,
+        `${identity}/${index}`,
+        placeOf(child, place, index),
+        ownRootId,
+        id,
+        childrenConditional,
+        tree
+      )
     );
 
     return id;

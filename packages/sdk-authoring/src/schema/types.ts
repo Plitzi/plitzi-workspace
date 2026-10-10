@@ -597,6 +597,8 @@ export interface PluginDeclarationData {
   sourceType?: string;
   /** Behaviour rather than content: it draws nothing on a page, so no check waits for it on screen. */
   drawsNothing?: boolean;
+  /** It shows only some of its children, chosen as it runs: no check waits for any of them on screen. */
+  choosesChildren?: boolean;
   /** The events it fires beyond the ones every element does, by action. */
   triggers?: Readonly<Record<string, { action: string }>>;
   /** The actions it answers to beyond `setState` and `toggleState`, by action. */
@@ -648,6 +650,11 @@ export interface AuthorSpaceOptions {
    * type or `custom:<renderType>`. Their handles are `boxless`, so a page check does not wait for them on screen.
    */
   drawsNothingTypes?: readonly string[];
+  /**
+   * The types that show only some of their children, chosen as they run (a plugin's `choosesChildren`), under the name
+   * a space uses them by. Everything inside them is `conditional`, so a page check owes none of it on screen.
+   */
+  choosesChildrenTypes?: readonly string[];
   /**
    * Plugin type → the attributes it declares under a name authoring keeps for the element itself (`variant`, `class`,
    * `id`…): a factory reads those as the element's, so the plugin is never handed them. Derived from `plugins`.

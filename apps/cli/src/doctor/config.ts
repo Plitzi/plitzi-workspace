@@ -5,7 +5,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { projectModule } from './projectModules';
-import { editTsConfig, freshSecret, ignoreLines, unignore } from './repairs';
+import { editTsConfig, freshSecret, ignoreLines, unignore, writeFormatted } from './repairs';
 import { sayer } from './types';
 import { projectSettings } from '../commands/projectSettings';
 import { CLI_DIR, MAIN_FILE, PROJECT_NOTES, PROJECT_STATE, PROJECT_TMP, TSCONFIG_BASE } from '../scaffold/paths';
@@ -156,7 +156,7 @@ const tsconfigChecks = async ({ root, answers }: DoctorContext): Promise<Finding
           fix: `Write one that extends ./${TSCONFIG_BASE} and includes the project's folders.`,
           repair: {
             says: 'writes tsconfig.json',
-            run: () => fs.writeFile(path.join(root, 'tsconfig.json'), tsconfig(answers))
+            run: () => writeFormatted(root, 'tsconfig.json', tsconfig(answers))
           }
         }
       )
@@ -471,7 +471,7 @@ const notesChecks = async ({ root, answers }: DoctorContext): Promise<Finding[]>
         fix: `Write ${PROJECT_NOTES}: how the project is built, what must not be undone.`,
         repair: {
           says: `writes ${PROJECT_NOTES}`,
-          run: () => fs.writeFile(path.join(root, PROJECT_NOTES), projectNotes(answers))
+          run: () => writeFormatted(root, PROJECT_NOTES, projectNotes(answers))
         }
       }
     )

@@ -43,8 +43,7 @@ import TabContainerItem from './structure/TabContainer/TabContainerItem/Settings
 import type { elementDeclarations } from './declarations';
 import type { FC } from 'react';
 
-// `plitziSdk` is declared where it renders — `apps/sdk`, since it runs a whole space — and only its settings live here.
-type ElementType = (typeof elementDeclarations)[keyof typeof elementDeclarations]['type'] | 'plitziSdk';
+type ElementType = (typeof elementDeclarations)[keyof typeof elementDeclarations]['type'];
 
 // Keyed by the element's type, which is what the builder looks one up by — and every element has one, even with nothing
 // of its own to set: a key that is not a type is a panel never shown, and a type with none reads as a broken element.

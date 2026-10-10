@@ -4,6 +4,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { isCssProperty, isCustomProperty } from '../../style';
+import { boundAttribute } from '../bindings';
 import { BINDING_CATEGORIES, LOAD_STRATEGIES, RUNTIMES, paramIssue } from '../guard';
 import { didYouMean } from '../suggest';
 import { stringsIn, textOf } from './context';
@@ -261,7 +262,8 @@ const checkBindings = (ctx: LintContext, element: Element, where: string): void 
 
     // `className` is never written as an attribute, but every element hands it to its root: bound, it is how a class
     // follows the data.
-    const unread = binding.to !== 'visibility' && binding.to !== 'className' && !names?.includes(binding.to);
+    const unread =
+      binding.to !== 'visibility' && binding.to !== 'className' && !names?.includes(boundAttribute(binding.to));
     if (category === 'attributes' && names && unread) {
       // A style is bound by the property it sets, in its own category — a custom one when the class keeps the palette.
       const styled = binding.to === 'style' || isCssProperty(binding.to) || isCustomProperty(binding.to);

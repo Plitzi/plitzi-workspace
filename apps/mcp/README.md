@@ -133,6 +133,24 @@ hand-build a URI — every write and search response hands back the URI to use n
 The tool functions are exported directly (`apply`, `search`, `read`, `validate`, `tools`), so a consumer can run
 them in-process instead of speaking MCP over HTTP.
 
+### A project's own agent drawing widgets
+
+`plitzi_render` hands its widget to a host that draws `ui://` resources — claude.ai, Desktop. An agent working for a
+project (a voice assistant, a terminal session) draws in the project's own page instead, so the render comes apart:
+
+```ts
+import { render, renderGuideText, renderWidgetShape } from '@plitzi/sdk-mcp/render';
+
+// A tool of the project's own MCP server, its input `renderWidgetShape`, its guide `renderGuideText`.
+const answer = render({ operations }, { base: space.style }); // the project's authored space
+if (answer.rendered) {
+  publish(answer.offlineData); // what a `plitziSdk` element is bound to (`offlineData`)
+}
+```
+
+`base` is the style of the space that shows the widget: its tokens in both themes, its classes and its fonts come
+with it, so the widget looks like the page around it. Left out, the widget starts from nothing, as one in a chat does.
+
 ## Draft preview
 
 The two halves live in different packages, joined by a one-shot token:
@@ -204,6 +222,7 @@ MCP server, [self-hosting/07](../../examples/self-hosting/07-ssr-preview) is the
 |---|---|
 | `@plitzi/sdk-mcp/server` | The dedicated MCP server and its clients. What an MCP deployment wires. |
 | `@plitzi/sdk-mcp` | Everything above plus the pipeline stages, `createPreview` and the tool engine. |
+| `@plitzi/sdk-mcp/render` | `plitzi_render`'s widget render alone — no MCP server, no SSR, no OAuth — for a project's own agent. |
 
 The split is about weight, not taste: ESM re-exports load eagerly, so the barrel pulls the draft-preview path and
 the renderer it reaches into. A `no-restricted-imports` rule and a test in `src/packageBoundary.test.ts` keep this

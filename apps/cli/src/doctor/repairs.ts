@@ -4,6 +4,8 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
+import { projectFormatter } from '../commands/projectFormatter';
+
 import type { Repair } from './types';
 
 /**
@@ -13,6 +15,15 @@ import type { Repair } from './types';
  */
 
 const readText = (file: string): Promise<string | undefined> => fs.readFile(file, 'utf-8').catch(() => undefined);
+
+/**
+ * A file of the project's written as its own Prettier writes it: a repair that left the next `format --check` — the one
+ * `verify` runs — something to say would trade one problem for another.
+ */
+export const writeFormatted = async (root: string, file: string, text: string): Promise<void> => {
+  const format = await projectFormatter(root);
+  await fs.writeFile(path.join(root, file), await format(file, text));
+};
 
 /** `package.json` changed by `edit`, written with the indentation it has — so the diff is the lines that changed. */
 export const editManifest = (
@@ -31,7 +42,7 @@ export const editManifest = (
 
     edit(parsed);
     const indent = /^\{\n([ \t]+)"/.exec(text)?.[1] ?? '  ';
-    await fs.writeFile(file, `${JSON.stringify(parsed, null, indent)}\n`);
+    await writeFormatted(root, 'package.json', `${JSON.stringify(parsed, null, indent)}\n`);
   }
 });
 
@@ -111,7 +122,7 @@ export const editTsConfig = async (
     run: async () => {
       edit(config);
       const indent = /^\{\n([ \t]+)"/.exec(text ?? '')?.[1] ?? '  ';
-      await fs.writeFile(path.join(root, file), `${JSON.stringify(config, null, indent)}\n`);
+      await writeFormatted(root, file, `${JSON.stringify(config, null, indent)}\n`);
     }
   };
 };

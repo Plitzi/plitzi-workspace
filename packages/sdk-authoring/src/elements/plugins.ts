@@ -149,6 +149,12 @@ export const withPluginCatalogs = (options: AuthorSpaceOptions): AuthorSpaceOpti
         .filter(declaration => declaration.drawsNothing === true)
         .flatMap(declaration => [declaration.type, hostedKey(declaration)])
     ],
+    choosesChildrenTypes: [
+      ...(rest.choosesChildrenTypes ?? []),
+      ...plugins
+        .filter(declaration => declaration.choosesChildren === true)
+        .flatMap(declaration => [declaration.type, hostedKey(declaration)])
+    ],
     // A plugin package holds children only when its definition says so — as the built-in elements do.
     leafTypes: [
       ...(rest.leafTypes ?? []),

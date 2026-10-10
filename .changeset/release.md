@@ -34,6 +34,29 @@
   documents as well as a key: `offlineData`, bound whole (an `apiContainer`'s answer, a runtime's route, what
   `plitzi_render` returns) or as `offlineData.schema` and `offlineData.style` from two elements — waiting, without an
   error, for the half that has not answered; one that cannot be drawn is said why, in the console and on the canvas.
+- **`<PlitziSdk>` inside a plugin draws** (`@plitzi/plitzi-sdk`): it mounted a router of its own inside the page's, and
+  React Router refused it — `routing: 'memory'` or not. A space inside another is a widget: `raw` becomes `widget`
+  there, one page and no router (a frame of its own, `iframe` or `shadow`, is left as asked).
+- **`<PlitziSdk.Plugin component>` takes a component with its own props** (`@plitzi/plitzi-sdk`), as `render()`'s
+  plugins do: typed `ComponentPluginFC`, it refused any component that read its attributes.
+
+## Authoring
+
+- **`plitziSdk` is authored like any element** (`@plitzi/sdk-authoring`, `@plitzi/sdk-elements`): its declaration moved
+  to `@plitzi/sdk-elements` beside the others, so it has a factory — `plitziSdk({ id, bind: { offlineData: 'view.data'
+  } })` —, its attributes typed, and `plitzi explain` knows it.
+- **A binding may write part of an attribute** (`@plitzi/sdk-authoring`): `offlineData.schema` writes into
+  `offlineData`, as the runtime always did; authoring refused it as an attribute nothing reads.
+- **`choosesChildren`** (`@plitzi/sdk-shared`, `@plitzi/sdk-authoring`): a plugin that shows only some of the elements
+  put inside it — a dashboard's panels, a wizard's step — says so in its declaration, and the page checks owe none of
+  them on screen (they still check every one it draws). `verify` was red on every such page.
+
+## MCP
+
+- **`@plitzi/sdk-mcp/render`** (`@plitzi/sdk-mcp`): `plitzi_render`'s widget render on its own — no MCP server, no SSR,
+  no OAuth — for a project whose own agent draws in its own pages: `render`, `renderWidgetShape` to declare it as a
+  tool, `renderGuideText` for the agent. `base`, the style of the project's space, brings its tokens, classes and fonts
+  to the widget.
 
 ## Server
 
@@ -62,6 +85,12 @@
   the CLI keeps up and `tsconfig.json` extends — so a folder of the project's own (`scripts/`, `tools/`) goes in its
   `include` without changing a file of the CLI's. `plitzi doctor --fix` makes an older `tsconfig.json` extend it,
   keeping only the options the project changed.
+- **`doctor --fix` and `upgrade` write as the project's Prettier does** (`@plitzi/cli`): a repaired `tsconfig.json` or
+  `package.json` left `verify`'s format step red.
+- **`upgrade` renames `usePlitziServiceContext`** (`@plitzi/cli`): with `PlitziServiceProvider` and
+  `PlitziServiceContextValue`, renamed in 0.38.12 with no alias — import, use and the module path that named it.
+- **`skills update` compares every file** (`@plitzi/cli`): only `SKILL.md` was, so a change in a reference alone was
+  "up to date".
 - **`NOTES.md`, the project's notes for agents** (`@plitzi/cli`): `AGENTS.md` and `CLAUDE.md` are the CLI's and
   `upgrade` replaces them, so what a project's own sessions had to know had nowhere to live. `CLAUDE.md` imports
   `NOTES.md`, `AGENTS.md` sends every agent to it, and nothing the CLI does touches it; `doctor --fix` writes one for
@@ -71,3 +100,4 @@
 
 - **Two plugins share through `state`** (`@plitzi/sdk-authoring` skill): each plugin is a bundle of its own, so a module
   both import is two copies, and what one keeps there the other never sees.
+- **`verify --help`** names the project's tests among its steps.

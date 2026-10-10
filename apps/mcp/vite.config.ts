@@ -86,7 +86,9 @@ export default defineConfig(({ mode }) => {
           index: path.resolve(root, 'src/index.ts'),
           // The MCP role's slim entry: importing the barrel would load the draft-preview path with it, and that
           // one reaches into the SSR render primitives a dedicated MCP process never constructs.
-          server: path.resolve(root, 'src/server.ts')
+          server: path.resolve(root, 'src/server.ts'),
+          // The widget render alone, for a project's own agent: no MCP server, no SSR, no OAuth.
+          render: path.resolve(root, 'src/render.ts')
         },
         formats: ['es']
       },

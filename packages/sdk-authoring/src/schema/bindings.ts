@@ -93,6 +93,12 @@ export const resolveSource = (
   return source;
 };
 
+/**
+ * The attribute a binding writes, from where it lands: `offlineData.schema` writes part of `offlineData` — the runtime
+ * sets the path — so it is `offlineData` an element has to read.
+ */
+export const boundAttribute = (to: string): string => to.split('.', 1)[0];
+
 /** Both binding forms as one list. The map form targets attributes, which is what nearly every binding does. */
 export const toBindingSpecs = (bind: BindingsSpec): BindingSpec[] =>
   Array.isArray(bind) ? bind : Object.entries(bind).map(([to, source]) => ({ to, source }));

@@ -213,3 +213,29 @@ describe('a plugin written with definePlugin', () => {
     expect(schema.flat.seats.attributes).toMatchObject({ start: 3 });
   });
 });
+
+/** A plugin that shows some of its children, chosen as it runs — a dashboard showing the panels of this device's layout. */
+describe('a plugin that chooses its children', () => {
+  const dashboard = {
+    type: 'dashboard',
+    choosesChildren: true,
+    content: { attributes: {}, definition: { label: 'Dashboard', items: [] } }
+  } as const;
+  const panels = defineElement(dashboard);
+
+  it('owes none of them on screen, and still names each', () => {
+    const { handles } = authorSpace(
+      singlePageSpace([
+        panels({
+          id: 'desk',
+          children: [container({ id: 'clock', children: [button({ id: 'snooze', content: 'Snooze' })] })]
+        })
+      ]),
+      { plugins: [dashboard] }
+    );
+
+    expect(handles.element('desk').conditional).toBeUndefined();
+    expect(handles.element('clock').conditional).toBe(true);
+    expect(handles.element('snooze').conditional).toBe(true);
+  });
+});

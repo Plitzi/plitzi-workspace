@@ -171,6 +171,7 @@ const STYLESHEET: Record<string, SlotRules> = {
   page: root('.plitzi-component__page'),
   pagination: root('.plitzi-component__pagination'),
   paragraph: root('.plitzi-component__paragraph'),
+  plitziSdk: root('.plitzi-component__plitzi-sdk'),
   reference: root('.plitzi-component__reference'),
   richText: root('.plitzi-component__rich-text'),
   svg: root('.plitzi-component__svg'),

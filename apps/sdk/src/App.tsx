@@ -133,7 +133,7 @@ const App = ({
   // Server
   server = undefined,
   // Extra
-  renderMode = DEFAULT_RENDER_SETTINGS.renderMode,
+  renderMode: renderModeProp = DEFAULT_RENDER_SETTINGS.renderMode,
   routing = 'browser',
   debugMode: debugModeProp = false,
   themeScope: themeScopeProp,
@@ -146,6 +146,9 @@ const App = ({
   // A space drawn inside another is never the document's: its theme, its cookie and its head are the outer page's.
   const enclosed = use(EnclosingSpaceContext);
   const themeScope = themeScopeProp ?? (enclosed ? 'container' : 'document');
+  // …and it is a widget: one page and no router of its own — the page it is drawn in has one, and React Router refuses
+  // a router inside another, `memory` or not. A frame of its own (`iframe`, `shadow`) is left as asked.
+  const renderMode = enclosed && renderModeProp === 'raw' ? 'widget' : renderModeProp;
   // Initialize `runtime.state` once at the root from the host-provided initial state; persist/interactions own it
   // afterwards. Captured at mount (stable value → no re-sync that would reset the sibling `runtime.sources`).
   const initialState = useRef(state).current;

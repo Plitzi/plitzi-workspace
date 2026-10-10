@@ -394,6 +394,10 @@
       "types": "./dist/elements/advanced/PlitziSdk/Settings.d.ts",
       "import": "./dist/elements/advanced/PlitziSdk/Settings.mjs"
     },
+    "./elements/advanced/PlitziSdk/declaration": {
+      "types": "./dist/elements/advanced/PlitziSdk/declaration.d.ts",
+      "import": "./dist/elements/advanced/PlitziSdk/declaration.mjs"
+    },
     "./elements/advanced/Reference": {
       "types": "./dist/elements/advanced/Reference/index.d.ts",
       "import": "./dist/elements/advanced/Reference/index.mjs"

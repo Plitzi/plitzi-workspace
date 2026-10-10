@@ -72,6 +72,12 @@ export interface ElementDeclarationData {
    */
   drawsNothing?: boolean;
   /**
+   * Whether the element shows only some of the children put inside it, chosen as it runs — a dashboard showing the
+   * panels of the layout saved for this device, a wizard its current step. Read by the page checks, which then owe none
+   * of them on screen; they still check every one that is drawn.
+   */
+  choosesChildren?: boolean;
+  /**
    * The attributes the page server evaluates against a context of its own, never where the element renders: a
    * provider's `notFound`, read against its answer; a page's title and description, read against its server providers.
    * Interpolated in the element's own scope they resolved to nothing — a `|default(…)` to its fallback — before the

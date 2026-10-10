@@ -8,6 +8,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 import { lockfileManager, projectHere, readPackageJson } from './existingProject';
 import { blockingLegacy } from './legacyLayout';
 import { localPackages } from './localPackages';
+import { projectFormatter } from './projectFormatter';
 import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRecord';
 import { readOrigin } from './spaceOrigin';
 import { fail, install, writeFiles } from './terminal';
@@ -86,6 +87,18 @@ const RENAMES: readonly Rename[] = [
     since: '0.38.0',
     what: 'what the builder saves from a subtree is a snippet',
     from: '@plitzi/sdk-authoring'
+  })),
+  // No `from`: the names are the SDK's alone, and a module path that named the hook (`…/hooks/usePlitziServiceContext`)
+  // is renamed with it.
+  ...[
+    ['usePlitziServiceContext', 'usePlitzi'],
+    ['PlitziServiceProvider', 'PlitziProvider'],
+    ['PlitziServiceContextValue', 'PlitziContextValue']
+  ].map(([name, to]) => ({
+    name,
+    to,
+    since: '0.38.12',
+    what: 'what the host rendering a space tells its elements: `usePlitzi()`'
   }))
 ];
 
@@ -479,6 +492,34 @@ export interface SkillPlan {
   now?: string;
 }
 
+/** Every file of a skill as it is in the project, by its path from the root. */
+const skillOnDisk = async (root: string, name: string): Promise<Record<string, string>> => {
+  const folder = path.join('.claude/skills', name);
+  const entries = await fs.readdir(path.join(root, folder), { recursive: true, withFileTypes: true }).catch(() => []);
+  const found: Record<string, string> = {};
+  for (const entry of entries.filter(candidate => candidate.isFile())) {
+    const file = path.relative(root, path.join(entry.parentPath, entry.name));
+    found[file] = (await readText(path.join(root, file))) ?? '';
+  }
+
+  return found;
+};
+
+/**
+ * Whether any file of a skill is not what the installed package has — one added, gone or changed. `SKILL.md` alone
+ * missed a change made only in a reference, which a build of the same version makes.
+ */
+const skillFilesDiffer = async (root: string, name: string, files: Record<string, string>): Promise<boolean> => {
+  const prefix = `.claude/skills/${name}/`;
+  const wanted = Object.entries(files).filter(([file]) => file.startsWith(prefix));
+  const present = await skillOnDisk(root, name);
+
+  return (
+    wanted.length !== Object.keys(present).length ||
+    wanted.some(([file, text]) => present[file.split('/').join(path.sep)] !== text)
+  );
+};
+
 export const planSkills = async (root: string): Promise<{ plans: SkillPlan[]; files: Record<string, string> }> => {
   const files = skillFiles(SKILL_NAMES, root);
   const plans: SkillPlan[] = [];
@@ -491,7 +532,7 @@ export const planSkills = async (root: string): Promise<{ plans: SkillPlan[]; fi
 
     const now = files[skill];
     const was = await readText(path.join(root, skill));
-    if (was !== now) {
+    if (was !== now || (await skillFilesDiffer(root, name, files))) {
       plans.push({
         name,
         ...(was === undefined ? {} : { was: skillVersion(was) ?? 'unversioned' }),
@@ -769,7 +810,12 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
       if (after !== undefined) {
         installed = 'needed';
         if (write) {
-          await fs.writeFile(path.join(root, 'package.json'), after);
+          await fs.writeFile(
+            path.join(root, 'package.json'),
+            await (
+              await projectFormatter(root)
+            )('package.json', after)
+          );
           if (local.length > 0) {
             installed = 'skipped';
           } else if (options.install !== false && !options.json) {

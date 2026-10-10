@@ -2,45 +2,18 @@ import { randomUUID } from 'node:crypto';
 
 import { z } from 'zod';
 
-import { generateCache } from '@plitzi/sdk-style/StyleHelper';
-
-import { compactDocumentOperations, documentOperations } from './operations';
+import { compactDocumentOperations } from './operations';
+import { render, renderWidgetShape } from './renderWidget';
 import { iconFontCss, RENDER_APP_URI } from '../apps';
-import { emptySpace } from '../helpers';
-import { proxifyResources } from '../proxy';
-import { draftBatch } from './shared/draftBatch';
-import { interactionReport } from './shared/interactionReport';
 import { defineTool } from './shared/tool';
 
-import type { Space } from '../helpers';
-import type { ResourceProxy } from '../proxy';
 import type { Operation } from './operations';
+import type { RenderResponse, RenderWidgetInput } from './renderWidget';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
 
-// The id of the throwaway host page every render is authored into. Elements/definitions target it via
-// `pageRef: "render"`; it is the tree root the offline SDK mounts. Kept stable so the tool description can name it.
-const HOST_PAGE_REF = 'render';
-
-// An empty space with a single host page — the seed a render authors into. Built on the shared emptySpace() so the
-// widget renders from this schema + style alone: no real space, no cloud.
-const seedSpace = (): Space => {
-  const space = emptySpace();
-  space.schema.definition.name = 'Widget';
-  space.schema.flat[HOST_PAGE_REF] = {
-    id: HOST_PAGE_REF,
-    attributes: { slug: '', name: 'Render', default: true },
-    definition: { rootId: HOST_PAGE_REF, label: 'Page', type: 'page', items: [], styleSelectors: { base: '' } }
-  };
-  space.schema.pages = [HOST_PAGE_REF];
-
-  return space;
-};
-
-const noWarnings = (warnings: string[]): string[] | undefined => (warnings.length > 0 ? warnings : undefined);
-
 export const renderShape = {
-  operations: documentOperations,
+  ...renderWidgetShape,
   patch: z
     .boolean()
     .optional()
@@ -57,66 +30,7 @@ export const renderShape = {
     .describe('Handle returned by a previous render. Required with patch:true; it names the widget being changed.')
 };
 
-export type RenderInput = { operations: Operation[]; patch?: boolean; renderId?: string };
-
-/** What the render needs from its host beyond the operations. Optional: a host that wires no resource endpoint
- *  still renders a widget — one whose external URLs travel as authored and load only where the surface allows
- *  their origin. */
-export type RenderOptions = { proxy?: ResourceProxy };
-
-export type RenderResponse =
-  | { rendered: false; errors: { path: string; message: string; hint?: string }[]; warnings?: string[] }
-  | {
-      rendered: true;
-      rootRef: string;
-      elementCount: number;
-      offlineData: OfflineDataRaw;
-      /** The batch this render was built from, EXPANDED (repeats already unrolled). The view keeps it so a later
-       *  patch has something to merge into; it is never shown to the model. */
-      operations: Operation[];
-      /** One line per interaction flow the widget actually stored — what got wired to what. Absent when the
-       *  widget has no flows, which is most of them. */
-      interactions?: string[];
-      warnings?: string[];
-    };
-
-// Build a self-contained render payload from agent-authored operations, WITHOUT any space or cloud. The ops are
-// applied to a throwaway seed space (one host page) through the same draftBatch as plitzi_apply, then the style cache is compiled and the result returned as OfflineDataRaw — the SDK's
-// offline render input. The agent authors the widget by targeting `pageRef: "render"`.
-export const render = (input: RenderInput, options: RenderOptions = {}): RenderResponse => {
-  const result = draftBatch(seedSpace(), 'main', input.operations, 'widget');
-  if (!result.ok) {
-    return { rendered: false, errors: result.errors, warnings: noWarnings(result.warnings) };
-  }
-
-  const { ops, draft: space } = result;
-  const behaviour = interactionReport(space);
-  const warnings = [...result.warnings, ...behaviour.warnings];
-
-  // A widget renders inside the host's sandbox, under a CSP built from the origins this server declared BEFORE
-  // any widget existed (it belongs to the ui:// resource, and the protocol has no per-call CSP) — so an external
-  // URL stays blocked however good it is, unless it is loaded from an origin that IS declared. Point everything
-  // the widget loads at this server's endpoint, before the CSS is compiled so the concatenated cache comes out
-  // already rewritten. The agent is not part of this: it authored the real URLs and never sees the rewrite.
-  if (options.proxy) {
-    warnings.push(...proxifyResources(space, options.proxy));
-  }
-
-  // Compile the global style cache from the per-item caches the style ops just wrote — the offline SDK reads
-  // Style.cache, so it must be concatenated here just as persisting a real space would.
-  space.style.cache = generateCache(space.style);
-
-  return {
-    rendered: true,
-    operations: ops,
-    ...(behaviour.flows ? { interactions: behaviour.flows } : {}),
-    rootRef: HOST_PAGE_REF,
-    // Every flat entry except the host page is a real authored element.
-    elementCount: Object.keys(space.schema.flat).length - 1,
-    offlineData: { schema: space.schema, style: space.style },
-    warnings: noWarnings(warnings)
-  };
-};
+export type RenderInput = RenderWidgetInput & { patch?: boolean; renderId?: string };
 
 // Split the render into what the MODEL reads (a tiny summary) and what the HOST renders (the full offlineData). The
 // model authored the operations, so it never needs the assembled payload echoed back — sending it as text would

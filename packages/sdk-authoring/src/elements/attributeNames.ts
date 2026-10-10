@@ -402,6 +402,7 @@ export const elementAttributeNames = {
     'windowSize'
   ],
   paragraph: ['content'],
+  plitziSdk: ['environment', 'offlineData', 'spaceKey'],
   reference: ['referenceId', 'referenceType'],
   richText: ['content', 'format', 'mediaBaseUrl'],
   svg: ['content', 'label'],
