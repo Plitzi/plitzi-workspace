@@ -15,6 +15,7 @@ import LayoutContainer from '../LayoutContainer';
 import declaration from './declaration';
 import PageHead from './PageHead';
 
+import type { DocumentScroll } from './declaration';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { ElementLayout } from '@plitzi/sdk-shared';
 import type { LayoutLink } from '@plitzi/sdk-shared/schema/layoutChain';
@@ -30,6 +31,16 @@ export type PageProps = {
    * is not there: the page server sends it with status 404, rendered as written. Read there only (`serverTemplates`).
    */
   notFound?: string;
+  /**
+   * How the document this page is drawn in moves. Unset, it scrolls as any page does. `noBounce` keeps the scroll and
+   * takes away what a finger pulls past either end — iOS's rubber band, the browser's pull-to-refresh. `locked` holds the
+   * document still: a dashboard, a board, a screen that fills the window and scrolls only inside the panels that say so
+   * (`overflow: auto` on their own) — on a tablet a finger dragged anywhere else otherwise pulled the whole page.
+   *
+   * Written onto the document only when the document is the page's own — never onto the one a widget or a space drawn
+   * inside another space is embedded in, nor the builder's.
+   */
+  documentScroll?: DocumentScroll | '';
   className?: string;
   layout?: string;
   layoutContainer?: string;
@@ -38,6 +49,15 @@ export type PageProps = {
 
 /** One shell of the chain, with what its elements carry: the same object for as long as the chain is the same. */
 type ChainLink = LayoutLink & { plitziElementLayout: ElementLayout };
+
+/**
+ * Each `documentScroll` as the rule it is. Unlayered on purpose: the space's own stylesheet is in a layer, so a
+ * `html, body` rule written there for every page gives way to what one page declares for itself.
+ */
+const DOCUMENT_SCROLL_CSS: Record<DocumentScroll, string> = {
+  locked: 'html,body{height:100%;overflow:hidden;overscroll-behavior:none}',
+  noBounce: 'html,body{overscroll-behavior:none}'
+};
 
 const toLinks = (chain: LayoutLink[]): ChainLink[] =>
   chain.map(link => ({ ...link, plitziElementLayout: { slots: [link.slot], rootId: link.slot, type: 'layout' } }));
@@ -70,6 +90,7 @@ const Page = ({
   seoEnabled = false,
   seoPageTitle = 'Title',
   seoPageDescription = 'Description',
+  documentScroll = '',
   className = '',
   layout = '',
   layoutContainer = '',
@@ -81,7 +102,12 @@ const Page = ({
   } = usePlitzi();
   const { interactionsManager } = use<InteractionsContextValue>(InteractionsContext);
   // Written only into a head that is the page's own — never the builder's, around the canvas this page is drawn in.
-  const { ownsHead } = useRenderSettings();
+  const { ownsHead, renderMode } = useRenderSettings();
+  /**
+   * A widget is drawn inside a page that is not the space's, and a space inside another space (or the builder's canvas)
+   * does not own the head either: rules on `html` there would hold the host's document still.
+   */
+  const ownsDocument = ownsHead && renderMode !== 'widget';
   const [[routeParams, queryParams]] = useSdkStore(['navigation.routeParams', 'navigation.queryParams']);
 
   const layoutChain = useLayoutChain(layout, layoutContainer);
@@ -121,6 +147,8 @@ const Page = ({
       {seoEnabled && previewMode && ownsHead && (
         <PageHead pageId={id} title={seoPageTitle} description={seoPageDescription} />
       )}
+      {/* Rendered with the page, not hoisted: it is in the HTML the server sends, and it leaves with the page. */}
+      {documentScroll && ownsDocument && <style>{DOCUMENT_SCROLL_CSS[documentScroll]}</style>}
       {body}
     </RootElement>
   );

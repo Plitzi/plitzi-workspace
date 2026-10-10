@@ -389,7 +389,7 @@ export const elementAttributeNames = {
     'vocab'
   ],
   notFound: [],
-  page: ['layout', 'layoutContainer', 'notFound', 'seoEnabled', 'seoPageDescription', 'seoPageTitle'],
+  page: ['documentScroll', 'layout', 'layoutContainer', 'notFound', 'seoEnabled', 'seoPageDescription', 'seoPageTitle'],
   pagination: [
     'label',
     'loadMoreLabel',

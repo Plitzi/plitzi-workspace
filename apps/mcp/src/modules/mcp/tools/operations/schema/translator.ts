@@ -1,4 +1,4 @@
-import { flagSpecOf, splitNotificationsCss } from '@plitzi/sdk-authoring';
+import { flagSpecOf, isDocumentScroll, splitNotificationsCss } from '@plitzi/sdk-authoring';
 import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
 
 import {
@@ -154,6 +154,7 @@ export const pageSkeletonToAI = (schema: Schema, pageEl: Element, style?: Style)
     slug,
     default: pageEl.attributes.default === true,
     enabled: pageEl.attributes.enabled !== false,
+    ...(isDocumentScroll(pageEl.attributes.documentScroll) ? { documentScroll: pageEl.attributes.documentScroll } : {}),
     routeParams: slugRouteParams(slug),
     tree: orderedChildren(schema, pageEl).map(child => skeletonNode(schema, child, style))
   };

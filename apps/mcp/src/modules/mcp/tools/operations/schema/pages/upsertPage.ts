@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { flagGateOf } from '@plitzi/sdk-authoring';
+import { DOCUMENT_SCROLLS, flagGateOf } from '@plitzi/sdk-authoring';
 
 import {
   empty,
@@ -62,6 +62,11 @@ export const upsertPageOp = z
         'false disables the page in the published SDK runtime (not routable/accessible to end users); it stays ' +
           'editable here. Defaults to true'
       ),
+    documentScroll: z
+      .enum(DOCUMENT_SCROLLS)
+      .nullable()
+      .optional()
+      .describe('"locked": the document never moves, only overflow:auto panels scroll; "noBounce": no rubber band'),
     flag: elementFlag.nullable().optional()
   })
   .describe('Create a page, or update it when ref already exists (only the fields you pass change).');
@@ -157,6 +162,12 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
       ...(layoutValue !== undefined ? { layout: layoutValue } : {}),
       ...(slotValue !== undefined ? { layoutContainer: slotValue } : {})
     };
+    if (op.documentScroll === null) {
+      Reflect.deleteProperty(existing.attributes, 'documentScroll');
+    } else if (op.documentScroll !== undefined) {
+      existing.attributes.documentScroll = op.documentScroll;
+    }
+
     if (op.flag === null) {
       Reflect.deleteProperty(existing.definition, 'flag');
     } else if (op.flag !== undefined) {
@@ -184,7 +195,8 @@ export const upsertPage = (space: Space, env: Env, op: UpsertPage): OpResult => 
     enabled: op.enabled ?? true,
     folder: folderValue ?? '',
     layout: layoutValue ?? '',
-    layoutContainer: slotValue ?? ''
+    layoutContainer: slotValue ?? '',
+    ...(op.documentScroll ? { documentScroll: op.documentScroll } : {})
   };
   const page: Element = {
     id,

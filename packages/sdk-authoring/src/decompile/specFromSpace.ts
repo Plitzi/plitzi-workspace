@@ -1,3 +1,4 @@
+import { isDocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
 import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/components';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
@@ -179,6 +180,7 @@ const PAGE_ATTRIBUTES = new Set([
   'seoPageTitle',
   'seoPageDescription',
   'notFound',
+  'documentScroll',
   'enabled'
 ]);
 
@@ -1128,6 +1130,14 @@ class SpecReader {
     const seoTitle = typeof attributes.seoPageTitle === 'string' ? attributes.seoPageTitle : '';
     const seoDescription = typeof attributes.seoPageDescription === 'string' ? attributes.seoPageDescription : '';
     const notFound = typeof attributes.notFound === 'string' ? attributes.notFound : '';
+    const documentScroll = isDocumentScroll(attributes.documentScroll) ? attributes.documentScroll : undefined;
+    if (!documentScroll && attributes.documentScroll !== undefined && attributes.documentScroll !== '') {
+      this.correct(
+        'dropped-field',
+        `${where} had \`documentScroll\` ${JSON.stringify(attributes.documentScroll)}, which no page reads; it is authored scrolling as any page does.`,
+        page.id
+      );
+    }
 
     if (BINDING_CATEGORIES.some(category => bindingsOf(page.definition.bindings, category).length > 0)) {
       this.correct('dropped-field', `${where} had bindings of its own, which a page cannot declare.`, page.id);
@@ -1141,6 +1151,7 @@ class SpecReader {
       ...(seoTitle ? { seoTitle } : {}),
       ...(seoDescription ? { seoDescription } : {}),
       ...(notFound ? { notFound } : {}),
+      ...(documentScroll ? { documentScroll } : {}),
       ...(folder ? { folder } : {}),
       ...(layout ? { layout } : {}),
       ...(accessLevel ? { accessLevel } : {}),

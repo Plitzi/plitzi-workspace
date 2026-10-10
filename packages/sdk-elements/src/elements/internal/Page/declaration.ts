@@ -7,9 +7,23 @@ import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare'
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type PageAttributes = AuthorableAttributes<PageProps>;
 
+/**
+ * How the document holding a page moves under a finger or a wheel, when the page says so — see
+ * `PageProps.documentScroll`. Read by the authoring surface to refuse anything else.
+ */
+export const DOCUMENT_SCROLLS = ['locked', 'noBounce'] as const;
+
+export type DocumentScroll = (typeof DOCUMENT_SCROLLS)[number];
+
+export const isDocumentScroll = (value: unknown): value is DocumentScroll =>
+  DOCUMENT_SCROLLS.some(documentScroll => documentScroll === value);
+
 const declaration = elementDeclaration<PageAttributes>()({
   type: 'page',
   serverTemplates: ['seoPageTitle', 'seoPageDescription', 'notFound'],
+  attributeValues: {
+    documentScroll: DOCUMENT_SCROLLS
+  },
   triggers: {
     onPageLoad: {
       action: 'onPageLoad',

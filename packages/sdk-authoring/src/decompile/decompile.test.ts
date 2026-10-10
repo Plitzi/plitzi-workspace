@@ -54,6 +54,7 @@ const rich: SpaceSpec = {
       slug: '',
       isDefault: true,
       seoTitle: 'Home',
+      documentScroll: 'locked',
       layout: { id: 'shell', slot: 'slot' },
       css: { 'min-height': '100vh' },
       body: [

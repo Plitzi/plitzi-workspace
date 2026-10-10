@@ -212,7 +212,8 @@ export const PAGE_SPEC_FIELDS: Readonly<Record<string, keyof PageSpec>> = {
   accessLevel: 'accessLevel',
   seoPageTitle: 'seoTitle',
   seoPageDescription: 'seoDescription',
-  notFound: 'notFound'
+  notFound: 'notFound',
+  documentScroll: 'documentScroll'
 };
 
 const layoutAttributes = (layout: LayoutRef | undefined): Record<string, string> =>
@@ -1514,7 +1515,8 @@ class SpaceAuthor {
         seoEnabled: Boolean(page.seoTitle ?? page.seoDescription),
         ...(page.seoTitle ? { seoPageTitle: page.seoTitle } : {}),
         ...(page.seoDescription ? { seoPageDescription: page.seoDescription } : {}),
-        ...(page.notFound ? { notFound: page.notFound } : {})
+        ...(page.notFound ? { notFound: page.notFound } : {}),
+        ...(page.documentScroll ? { documentScroll: page.documentScroll } : {})
       },
       definition: {
         label: 'Page',

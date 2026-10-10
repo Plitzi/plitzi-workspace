@@ -1,3 +1,4 @@
+import { DOCUMENT_SCROLLS, isDocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
 import { FUNCTION_ROUTES_PREFIX, isFunctionRoutePath } from '@plitzi/sdk-shared/actions';
 import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
 import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/twigWrapper';
@@ -132,11 +133,19 @@ export const lintPages = (ctx: LintContext): void => {
 
     const where = ctx.describe(pageId);
     checkPageTemplates(ctx, pageId, where);
-    const { accessLevel, slug, folder } = page.attributes;
+    const { accessLevel, documentScroll, slug, folder } = page.attributes;
     if (accessLevel !== undefined && accessLevel !== '' && !ACCESS_LEVELS.includes(accessLevel as 'public')) {
       ctx.error(
         'page-access-level',
         `${where}: \`accessLevel\` is ${JSON.stringify(accessLevel)}. It is one of ${ACCESS_LEVELS.map(level => `'${level}'`).join(', ')}.`,
+        pageId
+      );
+    }
+
+    if (documentScroll !== undefined && documentScroll !== '' && !isDocumentScroll(documentScroll)) {
+      ctx.error(
+        'attribute-value',
+        `${where}: \`documentScroll\` is ${JSON.stringify(documentScroll)}${(typeof documentScroll === 'string' && didYouMean(documentScroll, DOCUMENT_SCROLLS)) || '.'} It is one of ${DOCUMENT_SCROLLS.map(value => `'${value}'`).join(', ')} — or left out, for a page that scrolls as any does.`,
         pageId
       );
     }

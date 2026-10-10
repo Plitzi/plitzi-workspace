@@ -16,6 +16,7 @@ import type {
   StyleSpec,
   VariantSpec
 } from '../style';
+import type { DocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
 import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
 import type {
   BindingCategory,
@@ -270,6 +271,14 @@ export interface PageSpec {
    * navigation.routeParams.slug)) }}'`.
    */
   notFound?: string;
+  /**
+   * How the document moves while this page is on it. Left out, it scrolls as any page does. `'noBounce'` keeps the
+   * scroll and takes away what a finger pulls past either end — iOS's rubber band, pull-to-refresh. `'locked'` holds it
+   * still: a screen that fills the window — a dashboard, a board — where only the panels that scroll on their own
+   * (`overflow: 'auto'`) move, and a finger dragged anywhere else no longer pulls the whole page. Never written onto a
+   * document the space is embedded in.
+   */
+  documentScroll?: DocumentScroll;
   /**
    * Who this page is FOR, and the trap is that omitting it is not the same as `public`.
    *

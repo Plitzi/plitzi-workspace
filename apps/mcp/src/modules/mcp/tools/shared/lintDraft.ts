@@ -17,6 +17,7 @@ const touchedRefs = (ops: Operation[]): Set<string> => {
       case 'upsertElement':
         refs.add(op.element.ref);
         break;
+      case 'upsertPage':
       case 'patchElement':
       case 'moveElement':
       case 'upsertBinding':

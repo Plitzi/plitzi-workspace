@@ -174,6 +174,9 @@ export * from './transformers';
 export * from '@plitzi/sdk-shared/authoring';
 // The motion presets, so what the `.d.ts` names is what the package has: `motion: { enter: MOTION_ENTERS[1] }`.
 export { MOTION_ENTERS, MOTION_LOOPS, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema/motion';
+// A page's `documentScroll` values, for what writes a page outside a declaration (the MCP's `upsertPage`).
+export { DOCUMENT_SCROLLS, isDocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
+export type { DocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
 
 /**
  * What a step may name in a document authored here.

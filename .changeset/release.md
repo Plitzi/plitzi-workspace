@@ -74,6 +74,14 @@
   them on screen; what it draws is still read by the checks of the whole page (images, sideways scroll, legibility).
   `verify` was red on every such page.
 
+- **A page says how the document scrolls** (`@plitzi/sdk-elements`, `@plitzi/sdk-authoring`, `@plitzi/sdk-mcp`):
+  `documentScroll: 'locked'` holds the document still while the page is open — a dashboard or a board used with a
+  finger, where the whole page was dragged and bounced back though nothing in it scrolls — and `'noBounce'` keeps the
+  scroll without the rubber band or pull-to-refresh. The page draws the rule itself, so it is in the server's HTML and
+  leaves with the page; never inside a widget, a space drawn in another, or the builder's canvas. A Settings select,
+  `PageSpec.documentScroll`, `upsertPage`'s `documentScroll` (`null` undoes it) and the page read; an unknown value is
+  refused (`attribute-value`). `upsertPage` is now held to the lint of the page it writes, as element writes are.
+
 ## MCP
 
 - **`@plitzi/sdk-mcp/render`** (`@plitzi/sdk-mcp`): `plitzi_render`'s widget render on its own — no MCP server, no SSR,

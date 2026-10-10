@@ -60,6 +60,14 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('page-access-level');
     });
 
+    it('attribute-value on a page', () => {
+      const documents = withChange(({ schema }) => {
+        schema.flat[homeId(schema)].attributes.documentScroll = 'fixed';
+      });
+
+      expect(errorsOf(documents)).toContain('attribute-value');
+    });
+
     it('page-route-taken', () => {
       const documents = withChange(({ schema }) => {
         schema.flat[schema.pages[1]].attributes.slug = '';

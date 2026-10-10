@@ -17,6 +17,7 @@ describe('PAGE_SPEC_FIELDS', () => {
       seoTitle: 'About — Example',
       seoDescription: 'Who we are.',
       notFound: '{{ navigation.routeParams.slug == "gone" }}',
+      documentScroll: 'locked',
       body: []
     };
     const { schema } = authorSpace({

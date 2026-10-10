@@ -1,4 +1,4 @@
-import type { NotificationsSpec } from '@plitzi/sdk-authoring';
+import type { DocumentScroll, NotificationsSpec } from '@plitzi/sdk-authoring';
 import type { CssProps } from '@plitzi/sdk-authoring';
 import type { ElementRuntime, Environment, WhileRunning } from '@plitzi/sdk-shared';
 
@@ -110,6 +110,8 @@ export interface AIPageSkeleton {
   /** Whether the page is served by the published SDK runtime. A disabled page (`false`) is not routable/accessible
    *  to end users, but stays fully editable here. Defaults to true. */
   enabled: boolean;
+  /** How the document moves while the page is on it (`upsertPage`'s `documentScroll`). Absent, it scrolls as any page. */
+  documentScroll?: DocumentScroll;
   /** Route params bound by the slug (e.g. ":spaceId" → ["spaceId"]). Valid as {{name}} references on this page,
    *  alongside the space-level plitzi://schema-variables. */
   routeParams: string[];

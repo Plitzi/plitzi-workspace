@@ -70,6 +70,7 @@ export const PAGE_SPEC_KEYS = [
   'seoTitle',
   'seoDescription',
   'notFound',
+  'documentScroll',
   'accessLevel',
   'unauthorizedRedirect',
   'folder',

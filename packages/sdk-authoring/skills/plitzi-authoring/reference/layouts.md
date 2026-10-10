@@ -145,6 +145,16 @@ Every page is now its content and nothing else, and every page is guaranteed the
   by name — `"{{ not (apiContainer_feed.products|find('slug', navigation.routeParams.slug)) }}"`. The page renders as
   written: show its "not found" part with `visible`.
 
+## A screen that fills the window
+
+A dashboard or a board — one screen whose panels scroll on their own — says so on its page: `documentScroll:
+'locked'` holds the document still, so a finger dragged on a tablet no longer pulls the whole page and bounces it
+back. Give the shell the window's height (`height: '100dvh'`) and `overflow: 'auto'` to each part that scrolls; what
+does not fit is cut off, with nothing a visitor can scroll to reach it. `'noBounce'` keeps a page scrolling without
+the rubber band or pull-to-refresh. Either is written onto the document only while that page is on it, and only when
+the document is the space's own — never the site a widget sits on, nor a space drawn inside another. Not an
+`html, body` rule in `customCss`, which holds every page and the site the space is a widget on.
+
 ## Styles follow the same rule
 
 - A role used on several pages is ONE class (`panelCard`, `pageTitle`), declared in the module that owns the area and

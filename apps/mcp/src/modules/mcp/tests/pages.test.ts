@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildSpace, capturing, checkBatch } from './helpers';
 import { readResource } from '../resources';
 import { apply } from '../tools';
+import { upsertPageOp } from '../tools/operations/schema/pages/upsertPage';
 
 import type { Space } from '../helpers';
 import type { AIFolder, AIPageSkeleton, AIPageSummary } from '../types';
@@ -191,6 +192,54 @@ describe('MCP page enable/disable (attributes.enabled)', () => {
     const home = readResource(cap.saved(), 'main', 'plitzi://schema/main/pages/home')?.data as AIPageSkeleton;
     expect(home.label).toBe('Renamed');
     expect(home.enabled).toBe(false);
+  });
+});
+
+describe('MCP page documentScroll', () => {
+  const skeleton = (space: Space, ref: string) =>
+    readResource(space, 'main', `plitzi://schema/main/pages/${ref}`)?.data as AIPageSkeleton;
+
+  it('holds a page still, reads it back, and lets it scroll again with null', async () => {
+    const cap = capturing(buildSpace());
+    await apply(
+      { operations: [{ type: 'upsertPage', ref: 'desk', documentScroll: 'locked' }] },
+      buildSpace(),
+      cap.persisters
+    );
+    expect(skeleton(cap.saved(), 'desk').documentScroll).toBe('locked');
+
+    await apply({ operations: [{ type: 'upsertPage', ref: 'desk', label: 'Desk' }] }, cap.saved(), cap.persisters);
+    expect(skeleton(cap.saved(), 'desk').documentScroll).toBe('locked');
+
+    await apply(
+      { operations: [{ type: 'upsertPage', ref: 'desk', documentScroll: null }] },
+      cap.saved(),
+      cap.persisters
+    );
+    expect(skeleton(cap.saved(), 'desk').documentScroll).toBeUndefined();
+    expect(cap.saved().schema.flat.desk.attributes).not.toHaveProperty('documentScroll');
+  });
+
+  it('refuses a value no page reads', () => {
+    expect(upsertPageOp.safeParse({ type: 'upsertPage', ref: 'home', documentScroll: 'fixed' }).success).toBe(false);
+  });
+
+  /** A page write is held to the lint of the page it leaves, as an element write is: two pages at one address. */
+  it('refuses a page written onto an address another page answers', () => {
+    const home = checkBatch({ operations: [{ type: 'upsertPage', ref: 'home', slug: 'about' }] }, buildSpace());
+    expect(home.valid).toBe(true);
+
+    const res = checkBatch(
+      {
+        operations: [
+          { type: 'upsertPage', ref: 'about', slug: 'about' },
+          { type: 'upsertPage', ref: 'home', slug: 'about' }
+        ]
+      },
+      buildSpace()
+    );
+    expect(res.valid).toBe(false);
+    expect(res.errors.some(error => error.message.includes('page-route-taken'))).toBe(true);
   });
 });
 

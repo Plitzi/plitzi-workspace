@@ -185,4 +185,54 @@ describe('Page Tests', () => {
     expect(document.title).toBe('Builder');
     expect(document.head.querySelector('meta[name="description"]')).toBeNull();
   });
+
+  describe('documentScroll', () => {
+    const drawn = (props: { documentScroll?: 'locked' | 'noBounce' }, renderSettings: Record<string, unknown> = {}) =>
+      render(
+        <StoreProvider value={{ navigation, render: renderSettings }}>
+          <ElementContext value={skipHocEntry()}>
+            <Page {...props} />
+          </ElementContext>
+        </StoreProvider>
+      );
+
+    /** A tablet's finger on a dashboard pulled the whole document, which bounced back though nothing in it scrolls. */
+    it('holds a document of its own still while the page is on it, and lets it go with the page', () => {
+      const { unmount } = drawn({ documentScroll: 'locked' });
+
+      expect(getComputedStyle(document.documentElement).overflow).toBe('hidden');
+      expect(getComputedStyle(document.body).overflow).toBe('hidden');
+
+      unmount();
+
+      expect(getComputedStyle(document.documentElement).overflow).not.toBe('hidden');
+    });
+
+    it('keeps the scroll and takes away the bounce with noBounce', () => {
+      const { container } = drawn({ documentScroll: 'noBounce' });
+
+      expect(container.querySelector('style')?.textContent).toBe('html,body{overscroll-behavior:none}');
+      expect(getComputedStyle(document.documentElement).overflow).not.toBe('hidden');
+    });
+
+    it('writes nothing for a page that says nothing', () => {
+      const { container } = drawn({});
+
+      expect(container.querySelector('style')).toBeNull();
+    });
+
+    /**
+     * Rules on `html` are the whole document's: a space drawn inside another space, the builder's canvas or a widget on
+     * somebody else's site would hold the host's page still.
+     */
+    it.each([
+      ['inside a document that is not its own', { ownsHead: false }],
+      ['as a widget', { renderMode: 'widget' }]
+    ])('leaves the document alone %s', (_, renderSettings) => {
+      const { container } = drawn({ documentScroll: 'locked' }, renderSettings);
+
+      expect(container.querySelector('style')).toBeNull();
+      expect(getComputedStyle(document.documentElement).overflow).not.toBe('hidden');
+    });
+  });
 });

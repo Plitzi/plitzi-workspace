@@ -13,6 +13,7 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 import useSettingsUpdate from '../../useSettingsUpdate';
 import LayoutPicker from '../LayoutPicker';
 
+import type { DocumentScroll } from './declaration';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { ChangeEvent } from 'react';
 
@@ -30,6 +31,7 @@ type SettingsProps = {
   accessLevel?: 'public' | 'authenticated' | '';
   unauthorizedBehaviour?: '' | 'redirect';
   unauthorizedPageRedirect?: string;
+  documentScroll?: DocumentScroll | '';
   onUpdate?: (key: string, value: string | boolean | number) => void;
 };
 
@@ -47,6 +49,7 @@ const Settings = ({
   accessLevel = '',
   unauthorizedBehaviour = '',
   unauthorizedPageRedirect = '',
+  documentScroll = '',
   onUpdate
 }: SettingsProps) => {
   const [[flat, pages, pageFolders]] = useCommonStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
@@ -207,6 +210,31 @@ const Settings = ({
             </option>
           ))}
         </Select>
+      )}
+      <Select
+        value={documentScroll}
+        label="Document Scroll"
+        onChange={update.text('documentScroll')}
+        placeholder="Scrolls"
+        size="xs"
+      >
+        <option value="noBounce">No bounce</option>
+        <option value="locked">Locked</option>
+      </Select>
+      {documentScroll === 'noBounce' && (
+        <Alert intent="info" solid={false} size="xs">
+          <span className="text-xs">
+            The page scrolls, but a finger pulled past either end no longer bounces it or reloads it
+          </span>
+        </Alert>
+      )}
+      {documentScroll === 'locked' && (
+        <Alert intent="info" solid={false} size="xs">
+          <span className="text-xs">
+            The page holds still: only the parts set to scroll on their own (overflow auto) move. For a screen that
+            fills the window — a dashboard, a board
+          </span>
+        </Alert>
       )}
       <Checkbox label=" SEO Enabled" checked={seoEnabled} onChange={handleChangeSeoEnabled} size="xs" />
       {seoEnabled && (

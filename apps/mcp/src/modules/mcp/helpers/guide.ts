@@ -1040,6 +1040,10 @@ Pages can be grouped into **folders** (the sidebar tree). A folder is \`{ ref, n
   a page read reports its current \`enabled\`). Disabling only affects the **published SDK runtime** — the page stops
   being routable/accessible to end users. It stays fully **editable here**: you can still read it and apply any op to
   a disabled page. This does not delete it — \`deletePage\` does.
+- **A page that fills the window** (a dashboard, a board) takes \`upsertPage\`'s \`documentScroll: "locked"\`: the
+  document holds still and only parts with \`overflow: auto\` scroll, so a finger on a tablet no longer drags and
+  bounces the page. \`"noBounce"\` keeps the scroll without the rubber band; \`null\` undoes either. Never an
+  \`html, body\` rule in \`customCss\`: that holds every page, and the site the space is a widget on.
 
 ## Settings
 Space-level configuration lives in \`plitzi://settings/{env}\` and is edited with a single **\`patchSettings\`** op
