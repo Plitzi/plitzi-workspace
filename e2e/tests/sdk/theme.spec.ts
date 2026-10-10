@@ -116,7 +116,9 @@ describeTarget('harness', () => {
         expect(await page.title(), 'the head is the outer page’s').toBe(titleBefore);
       });
 
-      test(`a space drawn inside another by ${through} starts in the theme the page around it is in`, async ({ page }) => {
+      test(`a space drawn inside another by ${through} starts in the theme the page around it is in`, async ({
+        page
+      }) => {
         await openHarness(page);
         await page.context().addCookies([{ name: 'theme', value: 'dark', url: HARNESS_ORIGIN }]);
         await renderSpace(page, nestedSpace(titledThemedSpace('Inner page'), through));

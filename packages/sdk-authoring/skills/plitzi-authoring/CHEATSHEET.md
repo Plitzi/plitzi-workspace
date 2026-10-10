@@ -20,7 +20,6 @@ const space: SpaceSpec = {
 };                                             // slug '' is home; 'products/:slug' takes a param
 pageFamily({ folder, layout, seoTitle, body: entry => [...] }, ENTRIES)   // pages of one shape, from data; ids scoped per page
 pageFolders: [{ id: 'docs', name: 'Docs' }]                               // on the space: a `folder` is declared here, /docs/…
-documentScroll: 'locked'                                                  // on a page filling the window: the document holds still
 const { schema, style, warnings, suggestions } = authorSpace(space, { plugins: [declaration] });
 ```
 

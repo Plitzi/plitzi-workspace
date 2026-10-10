@@ -9,8 +9,4 @@
 export { HOST_PAGE_REF as RENDER_ROOT_REF, render, renderWidgetShape } from './modules/mcp/tools/renderWidget';
 export { renderGuideText } from './modules/mcp/resources/renderGuide';
 
-export type {
-  RenderOptions,
-  RenderResponse,
-  RenderWidgetInput
-} from './modules/mcp/tools/renderWidget';
+export type { RenderOptions, RenderResponse, RenderWidgetInput } from './modules/mcp/tools/renderWidget';
