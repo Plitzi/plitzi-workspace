@@ -15,14 +15,14 @@
     // Shown on the builder's canvas only: documents bound to the element that cannot be drawn, or not all there yet.
     > .plitzi-sdk__waiting {
       padding: 8px;
-      font-size: 12px;
       opacity: 0.7;
+      font-size: 12px;
     }
 
     > .plitzi-sdk__problem {
       padding: 8px;
-      font-size: 12px;
       color: #b91c1c;
+      font-size: 12px;
 
       :where(.dark) & {
         color: #f87171;
