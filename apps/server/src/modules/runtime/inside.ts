@@ -27,6 +27,13 @@ const withHeader = (
 };
 
 /**
+ * How every OTHER host is reached once one of these dispatchers is the process's: as Node's own `fetch` reaches it,
+ * over HTTP/1.1. An undici connector offers HTTP/2 by default, and an answer that came back over h2 reached Node's
+ * `fetch` without its `content-encoding` — so nothing decoded it, and every API that compresses read as Brotli bytes.
+ */
+const elsewhere = (undici: typeof import('undici')) => undici.buildConnector({ allowH2: false });
+
+/**
  * The space's own public address, reached from inside the network this runtime runs in: every request this process
  * makes to the space's host — `fetch` and `WebSocket` alike, which share Node's dispatcher — connects to `insideUrl`
  * instead, over plain HTTP, the space's host and the public protocol kept (`X-Forwarded-Proto`). It is the path a
@@ -44,10 +51,11 @@ export const reachSpaceInside = async ({ publicUrl, insideUrl }: { publicUrl: st
     throw new Error(`A space is reached from inside over plain HTTP, not ${inside.protocol} (${insideUrl})`);
   }
 
-  const { Agent, buildConnector, setGlobalDispatcher } = await import('undici');
+  const undici = await import('undici');
+  const { Agent, setGlobalDispatcher } = undici;
   const port = Number(inside.port || 80);
   const protocol = outside.protocol.replace(':', '');
-  const connect = buildConnector({});
+  const connect = elsewhere(undici);
   const agent = new Agent({
     connect: (options, callback) => {
       if (options.hostname !== outside.hostname) {
@@ -94,8 +102,9 @@ export const reachOwnServer = async ({ publicUrl, listener, cert }: OwnServer) =
   const outside = new URL(publicUrl);
   const outsidePort = outside.port || (outside.protocol === 'https:' ? '443' : '80');
   const own = new X509Certificate(cert).fingerprint256;
-  const { Agent, buildConnector, setGlobalDispatcher } = await import('undici');
-  const connect = buildConnector({});
+  const undici = await import('undici');
+  const { Agent, setGlobalDispatcher } = undici;
+  const connect = elsewhere(undici);
   const agent = new Agent({
     connect: (options, callback) => {
       if (options.hostname !== outside.hostname || (options.port || outsidePort) !== outsidePort) {

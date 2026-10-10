@@ -37,6 +37,8 @@
 - **`<PlitziSdk>` inside a plugin draws** (`@plitzi/plitzi-sdk`): it mounted a router of its own inside the page's, and
   React Router refused it — `routing: 'memory'` or not. A space inside another is a widget: `raw` becomes `widget`
   there, one page and no router (a frame of its own, `iframe` or `shadow`, is left as asked).
+- **A space inside another is as tall as what it holds** (`@plitzi/plitzi-sdk`): its root was `min-h-screen`, as a
+  space that IS the page is, so a card of three lines drawn in a panel took the window's height.
 - **`<PlitziSdk.Plugin component>` takes a component with its own props** (`@plitzi/plitzi-sdk`), as `render()`'s
   plugins do: typed `ComponentPluginFC`, it refused any component that read its attributes.
 
@@ -68,6 +70,10 @@
 - **A server serving TLS reaches itself** (`@plitzi/sdk-server`): with a local certificate (mkcert) Node trusts nothing
   the browsers were told to, so a runtime calling its own MCP failed. Its requests to its own address now connect to its
   listener and are taken when it presents exactly its certificate (`reachOwnServer`, exported from `/runtime`).
+- **A runtime reads compressed answers again** (`@plitzi/sdk-server`): the dispatcher `reachOwnServer` (and the
+  platform's `reachSpaceInside`) installs reached every other host with an undici connector that offers HTTP/2, and an
+  answer that came back over h2 reached Node's `fetch` without its `content-encoding` — every API that compresses read
+  as Brotli bytes. Other hosts are reached over HTTP/1.1 now, as Node's own `fetch` reaches them.
 - **`tmp/dev-server.json` records the scheme** (`@plitzi/sdk-server`): `url` is `https` with a certificate, and the
   file adds the network addresses and the `publicUrl`.
 - **`public/` is asked about every time** (`@plitzi/sdk-server`): it was cached for an hour — a `.js` or `.css` in it

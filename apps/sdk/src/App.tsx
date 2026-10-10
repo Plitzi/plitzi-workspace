@@ -126,7 +126,7 @@ const components = {
 };
 
 const App = ({
-  className = 'min-h-screen',
+  className: classNameProp,
   children,
   // Space
   webKey = '',
@@ -149,6 +149,8 @@ const App = ({
   // …and it is a widget: one page and no router of its own — the page it is drawn in has one, and React Router refuses
   // a router inside another, `memory` or not. A frame of its own (`iframe`, `shadow`) is left as asked.
   const renderMode = enclosed && renderModeProp === 'raw' ? 'widget' : renderModeProp;
+  // At least the window tall, as the page it is — or as tall as what it holds, inside the box it was given.
+  const className = classNameProp ?? (enclosed ? undefined : 'min-h-screen');
   // Initialize `runtime.state` once at the root from the host-provided initial state; persist/interactions own it
   // afterwards. Captured at mount (stable value → no re-sync that would reset the sibling `runtime.sources`).
   const initialState = useRef(state).current;
