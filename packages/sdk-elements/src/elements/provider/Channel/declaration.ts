@@ -71,7 +71,8 @@ const declaration = elementDeclaration<ChannelAttributes>()({
         'The topic must match a channel the space declares in its settings (`channels`), e.g. `board:{{ id }}` ' +
         'under `board:{id}`. A topic of a private channel (`grant: true`) opens only with `grant`, bound to the grant ' +
         'the action that let this visitor in returned (its `realtime.grant` step). ITS DESCENDANTS bind to its source `channel_<id>`: `connected`, `members` (with the ' +
-        'state each announced), `messages` (the last `keep`) and `last`. It fires `onMessage`; `onJoin` when ' +
+        'state each announced), `messages` (the last `keep`), `last` and — on a `retain: true` channel — `retained`, the latest ' +
+        'data the server said of each type, there as the page joins (`retained.lists`). It fires `onMessage`; `onJoin` when ' +
         'somebody who came after this page has announced who they are, and `onLeave` when somebody goes — each with ' +
         '`from`, `user` and the `state` they announced; and answers `publish({ type, data, echo })` and `setPresence({ data })`; `presence` is the state this ' +
         'page announces (a name, a colour). Closed in the builder and anywhere without a server.',

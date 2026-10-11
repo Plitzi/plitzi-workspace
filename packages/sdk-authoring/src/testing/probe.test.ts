@@ -383,3 +383,29 @@ describe('probePage / cut off at the screen’s edge', () => {
     expect(found).toEqual([{ id: 'nav-create', pixels: 50 }]);
   });
 });
+
+/** What an element that chooses its children drew is owed; what it did not draw is not checked at all. */
+describe('probePage / shown with a chosen child', () => {
+  const chosen = (id: string, shownWith: string) => ({
+    ...input([]),
+    expected: [{ id, selector: `[data-plitzi-el="${id}"]`, shownWith: `[data-plitzi-el="${shownWith}"]` }]
+  });
+
+  it('leaves out what is inside a child it did not draw', () => {
+    sized(100, 20);
+    document.body.innerHTML = '<div data-plitzi-el="desk"></div>';
+
+    expect(probePage(chosen('snooze', 'clock'))).toMatchObject({ notDrawn: ['snooze'], missing: [], hidden: [] });
+  });
+
+  it('owes what is inside a child it drew', () => {
+    sized(100, 20);
+    document.body.innerHTML =
+      '<div data-plitzi-el="desk"><section data-plitzi-el="clock"><button data-plitzi-el="snooze" data-empty="1"></button></section></div>';
+
+    const findings = probePage(chosen('snooze', 'clock'));
+
+    expect(findings.notDrawn).toEqual([]);
+    expect(findings.hidden.map(({ id }) => id)).toEqual(['snooze']);
+  });
+});

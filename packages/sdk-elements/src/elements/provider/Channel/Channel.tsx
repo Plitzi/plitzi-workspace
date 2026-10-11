@@ -140,9 +140,10 @@ const Channel = ({
       me: channel.me ?? '',
       members: channel.members,
       messages,
-      last: messages.at(-1) ?? null
+      last: messages.at(-1) ?? null,
+      retained: channel.retained
     }),
-    [channel.connected, channel.me, channel.members, messages]
+    [channel.connected, channel.me, channel.members, channel.retained, messages]
   );
   const sourceFields = useCallback(() => pathFields(publishedData), [publishedData]);
   useRegisterSource({ id, source: sourceName, name: label ? label : `Channel - ${id}`, fields: sourceFields });

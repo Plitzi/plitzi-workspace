@@ -33,6 +33,16 @@ channels: { 'order:{id}': { access: { mode: 'session' }, grant: true } }
 channel({ id: 'order', topic: 'order:{{ id }}', bind: { grant: 'state.follow.grant' }, children: [...] })
 ```
 
+State every screen shows and the server keeps — a dashboard's lists, a board's settings — goes on a channel declared
+`retain: true` (and `publish: 'server'`): the server keeps the latest message of each type, sends it as it is said and
+again to every page that joins, which reads it as `desk.retained.lists` (a plugin, `useChannel('desk').retained`).
+Publishing `null` forgets the type; a topic keeps at most 64 types and 512 KB. No read of its own, no copy in `state`:
+
+```ts
+channels: { desk: { access: { mode: 'session' }, publish: 'server', retain: true } }
+// a flow: { task: 'realtime.publish', params: { topic: 'desk', type: 'lists', data: '{{ saved.lists }}' } }
+```
+
 Two people writing the same thing at once: `kv.setIf` writes only if the value is still the one the flow read (empty
 `expected` = only if nothing is there yet — claim a seat, a username), `list.put`/`list.range` keep an ordered list
 (latest first, a leaderboard), and `flow.rateLimit` first in a public action that writes.

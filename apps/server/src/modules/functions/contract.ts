@@ -98,8 +98,11 @@ export type FunctionContext = {
  * One step a server action can take, written by the space. The shape of the platform's own tasks — addressed as
  * `<namespace>.<action>`, drawn in the builder from `params` — run with a {@link FunctionContext} rather than the
  * platform's full one.
+ *
+ * `R` is what `run` answers: `taskAction(task, …)` hands it, with `T`, to a page that runs the action
+ * (`useServerAction`), so `FunctionTask<{ id: string }, Habit>` is typed at both ends.
  */
-export type FunctionTask<T extends Record<string, unknown> = Record<string, unknown>> = {
+export type FunctionTask<T extends Record<string, unknown> = Record<string, unknown>, R = unknown> = {
   namespace: string;
   action: string;
   title: string;
@@ -110,7 +113,7 @@ export type FunctionTask<T extends Record<string, unknown> = Record<string, unkn
    * what the server allows. Over the functions' own `limits`, for this task.
    */
   limits?: FunctionTimeLimits;
-  run: (params: T, ctx: FunctionContext) => unknown;
+  run: (params: T, ctx: FunctionContext) => R | Promise<R>;
 };
 
 /** What a route's handler gets besides the request: the context, and the `:params` its key named, by name. */

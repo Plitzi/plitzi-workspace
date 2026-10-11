@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import { actionName, validateActionDocument } from '@plitzi/sdk-shared/actions';
 
 import { defineAction, taskAction } from './index';
 
 import type { ActionSpec } from './index';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
+import type { ActionEntry, CallInputOf, CallOutputOf, ElementInteraction } from '@plitzi/sdk-shared';
 
 const minimal = (over: Partial<ActionSpec> = {}): ActionSpec => ({
   id: 'quote',
@@ -293,5 +293,43 @@ describe('taskAction', () => {
     expect(derived.document.nodes.answer.params).toEqual({ values: '{{ result.saved }}' });
     expect(Object.values(derived.document.nodes).filter(node => node.type === 'trigger')).toHaveLength(2);
     expect(narrowed.document.nodes.result.params).toEqual({ title: '{{input.title}}' });
+  });
+});
+
+/** What a page runs an action with is typed by the action: `useServerAction<typeof action>` reads these. */
+describe('the types of an action a page calls', () => {
+  it('takes the fields its call way in declares, the required ones required', () => {
+    const save = defineAction({
+      id: 'save-habit',
+      name: 'Save a habit',
+      trigger: [
+        { type: 'call', access: 'session', input: { id: { type: 'text', required: true }, days: { type: 'number' } } },
+        { type: 'schedule', cron: '0 * * * *' }
+      ],
+      steps: [{ id: 'saved', task: 'habits.save', params: { id: '{{ input.id }}' } }]
+    });
+
+    expect(save.id).toBe('save-habit');
+    expectTypeOf<CallInputOf<typeof save>>().toEqualTypeOf<{ id: string } & { days?: number }>();
+  });
+
+  it('takes the params of the task it runs, and answers what the task returns', () => {
+    const task = {
+      namespace: 'habits',
+      action: 'done',
+      title: 'Done',
+      params: { id: { type: 'text', required: true } },
+      run: (params: { id: string }) => Promise.resolve({ streak: params.id.length })
+    };
+    const done = taskAction(task, { trigger: { type: 'call', access: 'session' } });
+
+    expect(done.id).toBe('habits-done');
+    expectTypeOf<CallInputOf<typeof done>>().toEqualTypeOf<{ id: string }>();
+    expectTypeOf<CallOutputOf<typeof done>>().toEqualTypeOf<{ streak: number }>();
+  });
+
+  it('says nothing it does not know', () => {
+    expectTypeOf<CallInputOf<ActionEntry>>().toEqualTypeOf<Record<string, unknown>>();
+    expectTypeOf<CallOutputOf<ActionEntry>>().toEqualTypeOf<unknown>();
   });
 });

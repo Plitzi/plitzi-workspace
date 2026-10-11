@@ -55,8 +55,14 @@ const NebulaRun = ({ shipColor = 'amber', best = 0, className }: NebulaRunProps)
 
 - **Render `RootElement`**, not a `div`: it carries the element's id, classes and `data-plitzi-el`, so the CSS
   authored on the element applies, the builder can select it and a test can find it.
-- **Render the same thing on the server and on the first client pass.** A clock, a random number or anything read from
-  `window` belongs in an effect; a hydration mismatch discards the whole tree, not the plugin.
+- **Render the same thing on the server and on the first client pass** — a plugin is drawn on the server first. A
+  clock, a random number or anything read from `window` belongs in an effect; a hydration mismatch discards the whole
+  tree, not the plugin. A preference per device (a tab, muted) is never read from `localStorage` while rendering: write
+  it to `runtime.state` with `keepState` — and `paintedState` when it changes the first paint ([kept state](kept-state.md))
+  — and take it as a bound prop.
+- **`@plitzi/plitzi-ui` is not the page's.** The build keeps out only React and the SDK: a plugin importing it carries
+  its own copy, whose contexts (its toasts) are not the page's and whose look is not the space's. Draw controls with the
+  space's tokens; tabs over the space's elements are a plugin that lays them out (below).
 - **Borrow colours.** `currentColor` and the space's `var(--…)` tokens follow the theme; a hard-coded colour is
   invisible in one of them. A canvas reads them with `getComputedStyle(element).getPropertyValue('--accent')` and
   again when `theme.resolved` changes (bind it as a prop).
@@ -94,35 +100,11 @@ Never write `style` onto an element the plugin does not render: nothing promises
 stacking context, the plugin's. `useDisplayMode()` names the breakpoint showing (`desktop`, `tablet`, `mobile`) at the
 space's widths; `useElementSize(ref)`, its own box (`undefined` until measured).
 
-## Its own server code
+## What it says, and to whom
 
-`plitzi plugin add board --server` writes `functions/index.ts` in its folder (the CLI skill). Its routes answer
-under `/fn/plugins/board/`; the component names them, with nothing for the space to wire:
-
-```tsx
-const route = usePluginRoute('board'); // from '@plitzi/plitzi-sdk'
-const url = route('/layout'); // undefined where no server runs code (the canvas)
-```
-
-Its `ctx.kv` is the plugin's own; the space's credentials, channels and data are not.
-
-## Talking to other pages
-
-A plugin that moves at the speed of a cursor reads a realtime channel through `useChannel` rather than through flows —
-messages arrive through a callback and re-render nothing:
-
-```tsx
-import { useChannel } from '@plitzi/plitzi-sdk';
-
-const room = useChannel(roomTopic, { onMessage: message => move(message.from, message.data) });
-room.publish('pointer', { x, y });   // throttle it: ~20 a second, the latest position each time
-room.publish('react', { emoji }, { echo: true }); // and heard here too
-room.members;                        // who is here, with the state each announced
-```
-
-Take the topic as a prop (`bindTemplate('roomTopic', 'board.id', 'room:{{ source }}')`) so the space names its
-channels, and trust a message you act on only when `message.from === 'server'`. The page has one connection and is one
-member per topic, however many elements and plugins listen.
+The person (`useNotify`), another element (an event and the space's flow — never a `window` event), the server
+(`useServerAction`, typed by the action), state every screen shares (a channel that retains), other pages
+(`useChannel`) and its own server code: [plugin-reach](plugin-reach.md).
 
 ## Feature flags
 

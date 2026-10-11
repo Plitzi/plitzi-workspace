@@ -62,7 +62,7 @@ export const channelProblems = (pattern: string, declaration: unknown): string[]
     return [...problems, 'a channel is an object: `{ access: { mode: "public" } }`'];
   }
 
-  const { access, publish, presence, grant, maxMessageBytes, messagesPerSecond } = declaration;
+  const { access, publish, presence, grant, retain, maxMessageBytes, messagesPerSecond } = declaration;
   const mode = isRecord(access) ? access.mode : undefined;
   if (typeof mode !== 'string' || !ACCESS_MODES.has(mode)) {
     problems.push('`access` is { mode: "public" }, { mode: "session" } or { mode: "role", permissions: […] }');
@@ -87,6 +87,14 @@ export const channelProblems = (pattern: string, declaration: unknown): string[]
 
   if (grant !== undefined && typeof grant !== 'boolean') {
     problems.push('`grant` is true (a page needs a grant from `realtime.grant` to open a topic) or false');
+  }
+
+  if (retain !== undefined && typeof retain !== 'boolean') {
+    problems.push('`retain` is true (the server keeps the latest message of each type for pages that join) or false');
+  } else if (retain === true && publish !== 'server') {
+    problems.push(
+      '`retain: true` keeps what the server says, so only the server may speak: add `publish: "server"` — a page changes it through an action'
+    );
   }
 
   for (const [name, value] of [

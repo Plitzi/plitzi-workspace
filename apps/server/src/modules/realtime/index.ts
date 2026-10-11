@@ -4,6 +4,7 @@ import { createChannelResolver } from './declarations';
 import { createRealtimeGrants } from './grants';
 import { createRealtimeHub } from './hub';
 import { createMemoryPubSub } from './memoryPubSub';
+import { createRealtimeRetained } from './retained';
 import { fleetStore } from '../../core/server/fleet/link';
 import { createMemoryKv, KV_METHODS } from '../actions/runtime/memoryKv';
 
@@ -73,13 +74,14 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
     return existing;
   }
 
-  const hub = createRealtimeHub(config.realtime?.pubsub ?? createMemoryPubSub());
+  // Where the actions keep their `kv`, so a grant one replica issues opens the topic on another — and what a
+  // `retain: true` channel keeps reaches a page joining on another; the fleet's shared copy, or this process's own,
+  // where the deployment gave none — the same fallbacks the actions take.
+  const kv = config.action?.kv ?? fleetStore<ActionKvAdapter>('realtime.kv', KV_METHODS) ?? createMemoryKv();
+  const retained = createRealtimeRetained(kv);
+  const hub = createRealtimeHub(config.realtime?.pubsub ?? createMemoryPubSub(), retained);
   const resolveChannels = createChannelResolver(getOfflineData);
-  // Where the actions keep their `kv`, so a grant one replica issues opens the topic on another; the fleet's shared
-  // copy, or this process's own, where the deployment gave none — the same fallbacks the actions take.
-  const grants = createRealtimeGrants(
-    config.action?.kv ?? fleetStore<ActionKvAdapter>('realtime.grants', KV_METHODS) ?? createMemoryKv()
-  );
+  const grants = createRealtimeGrants(kv);
   const module: RealtimeModule = {
     hub,
     path: config.realtime?.path ?? '/_realtime',
@@ -89,8 +91,8 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
     grants,
     close: () => hub.closeAll(),
     publish: async (space, topic, type, data) => {
-      const channels = await resolveChannels(space.spaceId, space.environment);
-      if (!matchChannel(topic, channels)) {
+      const match = matchChannel(topic, await resolveChannels(space.spaceId, space.environment));
+      if (!match) {
         throw new Error(`No channel of this space matches "${topic}": declare it in the space's \`channels\``);
       }
 
@@ -98,7 +100,21 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
         throw new Error('A message type is 1-64 of A-Z a-z 0-9 _ . : -');
       }
 
-      await hub.publish(space, { topic, type, data, from: 'server', at: Date.now() });
+      const retain = match.declaration.retain === true;
+      const message = {
+        topic,
+        type,
+        data,
+        from: 'server',
+        at: Date.now(),
+        ...(retain ? { retained: true as const } : {})
+      };
+      // Kept before it is said: a page that joins after hearing nothing still finds it, and one refused is never sent.
+      if (retain) {
+        await retained.keep(space, message);
+      }
+
+      await hub.publish(space, message);
     },
     grant: async (space, topic, ttlSeconds) => {
       const match = matchChannel(topic, await resolveChannels(space.spaceId, space.environment));

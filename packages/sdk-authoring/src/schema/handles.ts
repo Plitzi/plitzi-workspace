@@ -46,6 +46,12 @@ export interface ElementHandle {
    */
   conditional?: true;
   /**
+   * For an element an element that chooses its children (`choosesChildren`) may draw — one of those children, or what
+   * is inside one under no condition of its own: that child, by id. It is `conditional`, since a bare visit owes none
+   * of it; once the child is drawn, it and everything it holds are owed like the rest of the page.
+   */
+  shownWith?: string;
+  /**
    * Whether this element sits inside a list's row, so it renders once per row — several times, or not at all while the
    * list is empty. Its selector matches every copy: address one with the driver's `.first()` / `.nth()`.
    *

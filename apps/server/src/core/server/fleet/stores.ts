@@ -34,7 +34,7 @@ export const fleetKv = (make: () => ActionKvAdapter): ActionKvAdapter => {
  */
 export const FLEET_STORES: Readonly<Record<FleetStoreName, HostedStore>> = {
   'actions.kv': hostable(() => deploymentKv ?? createMemoryKv(), KV_METHODS),
-  'realtime.grants': hostable(createMemoryKv, KV_METHODS),
+  'realtime.kv': hostable(createMemoryKv, KV_METHODS),
   'actions.jobs': hostable(() => createMemoryJobQueue(), JOB_QUEUE_METHODS),
   'ssr.drafts': hostable(createMemoryDraftStore, DRAFT_STORE_METHODS),
   'auth.rateLimit': hostable(() => ({ check: createMemoryRateLimit() }), RATE_LIMIT_METHODS)

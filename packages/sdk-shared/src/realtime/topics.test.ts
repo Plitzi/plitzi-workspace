@@ -47,6 +47,15 @@ describe('channelProblems', () => {
     );
     expect(channelProblems('lobby', { access: { mode: 'role', permissions: ['boardEdit'] } })).toEqual([]);
     expect(channelProblems('order:{id}', { access: { mode: 'public' }, grant: true })).toEqual([]);
+    expect(channelProblems('desk', { access: { mode: 'session' }, publish: 'server', retain: true })).toEqual([]);
+  });
+
+  /** Kept is what the server said: a page that could publish there would rewrite every screen's state unchecked. */
+  it('keeps only what the server alone says', () => {
+    expect(channelProblems('desk', { access: { mode: 'session' }, retain: true })).toEqual([
+      '`retain: true` keeps what the server says, so only the server may speak: add `publish: "server"` — a page changes it through an action'
+    ]);
+    expect(channelProblems('desk', { access: { mode: 'session' }, publish: 'server', retain: 'yes' })).toHaveLength(1);
   });
 
   it('names each thing that is wrong, and how to write it', () => {

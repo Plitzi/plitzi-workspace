@@ -14,7 +14,8 @@ import {
   momentChanges,
   notShownInPage,
   pageFor,
-  renderedRowsInPage
+  renderedRowsInPage,
+  serverErrors
 } from './check';
 
 const marked = (id: string): string => `[data-plitzi-el="${id}"]`;
@@ -233,5 +234,26 @@ describe('the page an address is answered by', () => {
   it('is the deepest folder’s "not found" page, then the space’s', () => {
     expect(pageFor(handles, '/docs/nope')).toBe('docsLost');
     expect(pageFor(handles, '/nope/at/all')).toBe('lost');
+  });
+});
+
+/** A service of somebody else's failing for a second is looked at again; a request that is wrong fails the same way. */
+describe('what a page check looks at again', () => {
+  it('is what the server failed, never what it refused', () => {
+    expect(
+      serverErrors({
+        path: '/',
+        width: 1440,
+        ok: false,
+        checked: 1,
+        problems: [],
+        issues: [],
+        hiddenAtWidth: [],
+        consoleErrors: [],
+        failedRequests: ['500 /fn/aiko/weather', '404 /missing.png', '503 /fn/aiko/news'],
+        devTools: false,
+        lists: {}
+      })
+    ).toEqual(['500 /fn/aiko/weather', '503 /fn/aiko/news']);
   });
 });

@@ -1,7 +1,9 @@
 import { JOIN_TYPE, LEAVE_TYPE, REVOKED_TYPE } from '@plitzi/sdk-shared/realtime';
 
 import { warnRealtime } from './failure';
+import { isMessage } from './message';
 
+import type { RealtimeRetained } from './retained';
 import type { ChannelDeclaration, PubSubAdapter, RealtimeMessage, RealtimeSender } from '@plitzi/sdk-shared';
 
 /** The space a connection belongs to: its topics are that space's and no other's. */
@@ -46,19 +48,6 @@ const revokedGrant = (data: unknown): string | undefined =>
     ? data.grant
     : undefined;
 
-/** A message as the adapter carried it — written by this module, but read from a transport that is not. */
-const isMessage = (value: unknown): value is RealtimeMessage =>
-  typeof value === 'object' &&
-  value !== null &&
-  'topic' in value &&
-  typeof value.topic === 'string' &&
-  'type' in value &&
-  typeof value.type === 'string' &&
-  'from' in value &&
-  typeof value.from === 'string' &&
-  'at' in value &&
-  typeof value.at === 'number';
-
 const parse = (raw: string): RealtimeMessage | undefined => {
   try {
     const value: unknown = JSON.parse(raw);
@@ -77,7 +66,7 @@ export type RealtimeHub = ReturnType<typeof createRealtimeHub>;
  * A hundred pages on one board are a hundred connections here and a single subscription to the adapter: a message
  * arrives once and is written to each of them. The last one to leave a topic unsubscribes it.
  */
-export const createRealtimeHub = (pubsub: PubSubAdapter) => {
+export const createRealtimeHub = (pubsub: PubSubAdapter, retained: RealtimeRetained) => {
   const byToken = new Map<string, RealtimeConnection>();
   const local = new Map<string, { connections: Set<RealtimeConnection>; release: Promise<() => Promise<void>> }>();
 
@@ -181,11 +170,19 @@ export const createRealtimeHub = (pubsub: PubSubAdapter) => {
         at: Date.now()
       }),
 
-    /** Subscribes a new connection to its topics, and tells the members of each presence channel it arrived. */
+    /**
+     * Subscribes a new connection to its topics, hands it what each `retain: true` one keeps, and tells the members of
+     * each presence channel it arrived. What is kept is read AFTER joining, so nothing said in between is missed; a
+     * message heard live and then kept arrives twice, and the page keeps the newer of a type by its `at`.
+     */
     connect: async (connection: RealtimeConnection): Promise<void> => {
       byToken.set(connection.token, connection);
       for (const [topic, declaration] of connection.topics) {
         await join(connection, topic);
+        if (declaration.retain === true) {
+          (await retained.of(connection.space, topic)).forEach(message => connection.send('message', message));
+        }
+
         if (declaration.presence && !connection.observer) {
           await publish(connection.space, from(connection, topic, JOIN_TYPE, null));
         }

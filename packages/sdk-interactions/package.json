@@ -54,6 +54,10 @@
       "types": "./dist/sources/ActionsSource/ActionInteractions.d.ts",
       "import": "./dist/sources/ActionsSource/ActionInteractions.mjs"
     },
+    "./sources/ActionsSource/ServerActionContext": {
+      "types": "./dist/sources/ActionsSource/ServerActionContext.d.ts",
+      "import": "./dist/sources/ActionsSource/ServerActionContext.mjs"
+    },
     "./sources/ActionsSource/callbacks": {
       "types": "./dist/sources/ActionsSource/callbacks.d.ts",
       "import": "./dist/sources/ActionsSource/callbacks.mjs"

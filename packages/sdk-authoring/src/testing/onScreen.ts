@@ -13,18 +13,9 @@ export interface OnScreenOptions {
   ignore?: string[];
 }
 
-/**
- * What a page shows the moment it is opened, by handle: its own elements and those of every layout it renders inside,
- * outermost shell first.
- *
- * Left out, because a bare visit cannot see them and asserting them would only fail: an element shown under a
- * condition (`conditional`), one rendered once per list row (`repeated` — several copies, or none while the list is
- * empty), and a provider with no tag (`boxless`), which has no box to be visible. The roots themselves are left out
- * too: a page and a layout are frames, and what a reader sees is what is in them.
- */
-export const onScreen = (handles: SpaceHandles, page: string, options: OnScreenOptions = {}): ElementHandle[] => {
+/** The handles of a page and of every layout it renders inside, outermost shell first. */
+const rootsOf = (handles: SpaceHandles, page: string): ElementHandle[] => {
   const pageHandle = handles.page(page);
-  const ignored = new Set((options.ignore ?? []).map(id => handles.element(id).id));
   const roots: Record<string, ElementHandle>[] = [pageHandle.elements];
   const seen = new Set<string>();
   for (let layoutId = pageHandle.layout; layoutId !== undefined && !seen.has(layoutId);) {
@@ -39,12 +30,34 @@ export const onScreen = (handles: SpaceHandles, page: string, options: OnScreenO
     layoutId = layout.layout;
   }
 
+  return roots.flatMap(elements => Object.values(elements));
+};
+
+/** The handles a page check may owe at all: named (or every one, with `all`), drawn once, with a box, not ignored. */
+const owable = (handles: SpaceHandles, page: string, options: OnScreenOptions): ElementHandle[] => {
+  const ignored = new Set((options.ignore ?? []).map(id => handles.element(id).id));
   const all = options.elements === 'all';
 
-  return roots
-    .flatMap(elements => Object.values(elements))
-    .filter(
-      handle =>
-        (all || handle.named) && !handle.conditional && !handle.repeated && !handle.boxless && !ignored.has(handle.id)
-    );
+  return rootsOf(handles, page).filter(
+    handle => (all || handle.named) && !handle.repeated && !handle.boxless && !ignored.has(handle.id)
+  );
 };
+
+/**
+ * What a page shows the moment it is opened, by handle: its own elements and those of every layout it renders inside,
+ * outermost shell first.
+ *
+ * Left out, because a bare visit cannot see them and asserting them would only fail: an element shown under a
+ * condition (`conditional`), one rendered once per list row (`repeated` — several copies, or none while the list is
+ * empty), and a provider with no tag (`boxless`), which has no box to be visible. The roots themselves are left out
+ * too: a page and a layout are frames, and what a reader sees is what is in them.
+ */
+export const onScreen = (handles: SpaceHandles, page: string, options: OnScreenOptions = {}): ElementHandle[] =>
+  owable(handles, page, options).filter(handle => !handle.conditional);
+
+/**
+ * What a page owes only if an element that chooses its children draws them (`shownWith`): left out of `onScreen`,
+ * since a bare visit may show none, and owed like the rest once the child they come with is on screen.
+ */
+export const onScreenIfChosen = (handles: SpaceHandles, page: string, options: OnScreenOptions = {}): ElementHandle[] =>
+  owable(handles, page, options).filter(handle => handle.shownWith !== undefined);

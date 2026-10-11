@@ -20,6 +20,48 @@ export type ActionField = {
   label?: string;
 };
 
+/** What a caller sends for a field of a type: text for `text`, `date` and `file`, anything parseable for `json`. */
+type ActionFieldValue<T extends ActionFieldType> = T extends 'number'
+  ? number
+  : T extends 'boolean'
+    ? boolean
+    : T extends 'json'
+      ? unknown
+      : string;
+
+/** The input a caller hands an action, from the fields it declares: those `required: true` must be there. */
+export type ActionInputOf<Fields extends Readonly<Record<string, ActionField>>> = {
+  -readonly [K in keyof Fields as Fields[K]['required'] extends true ? K : never]: ActionFieldValue<Fields[K]['type']>;
+} & {
+  -readonly [K in keyof Fields as Fields[K]['required'] extends true ? never : K]?: ActionFieldValue<
+    Fields[K]['type']
+  >;
+};
+
+declare const CALL_TYPES: unique symbol;
+
+/**
+ * An action whose `call` way in is known to the types — what it takes and what it answers: what `defineAction` and
+ * `taskAction` answer, so a page that runs it (`useServerAction<typeof saveHabit>('save-habit')`) is held to the input
+ * it declares and handed the output typed. Nothing of it exists at run time — the action is the same document.
+ */
+export type TypedActionEntry<Input, Output = unknown> = ActionEntry & {
+  readonly [CALL_TYPES]?: { input: Input; output: Output };
+};
+
+/** The input an action's `call` way in takes, from its type — any object, for an action whose type does not say. */
+export type CallInputOf<Action> = Action extends { readonly [CALL_TYPES]?: { input: infer Input } }
+  ? // A plain `ActionEntry` matches too — its slot is absent, and inferred as `unknown`.
+    unknown extends Input
+    ? Record<string, unknown>
+    : Input
+  : Record<string, unknown>;
+
+/** What an action answers, from its type — `unknown` for one whose type does not say. */
+export type CallOutputOf<Action> = Action extends { readonly [CALL_TYPES]?: { output: infer Output } }
+  ? Output
+  : unknown;
+
 /**
  * Who may start a run through ONE way in. Resolved against the auth kernel — never re-implemented here.
  *

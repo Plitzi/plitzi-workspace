@@ -7,6 +7,7 @@ import { handleRealtimePublish, handleRealtimeSubscribe } from './handlers';
 import { createRealtimeHub } from './hub';
 import { realtimeModuleFor } from './index';
 import { createMemoryPubSub } from './memoryPubSub';
+import { createRealtimeRetained } from './retained';
 import { createMemoryKv } from '../actions/runtime/memoryKv';
 
 import type { RealtimeGrants } from './grants';
@@ -26,7 +27,8 @@ const CHANNELS: ChannelDeclarations = {
   'board:{id}': { access: { mode: 'public' }, presence: true, maxMessageBytes: 64, messagesPerSecond: 2 },
   'members:{id}': { access: { mode: 'session' } },
   'scores:{id}': { access: { mode: 'public' }, publish: 'server' },
-  'room:{id}': { access: { mode: 'public' }, grant: true, presence: true }
+  'room:{id}': { access: { mode: 'public' }, grant: true, presence: true },
+  'desk:{id}': { access: { mode: 'public' }, publish: 'server', retain: true }
 };
 
 /** The grants every page of these tests is checked against, as a server keeps them. */
@@ -162,7 +164,7 @@ describe('createMemoryPubSub', () => {
 
 describe('realtime channels', () => {
   it('opens the declared topics a visitor may, and reports the rest', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const page = await connect(hub, 'board:1,members:1,chat:1');
 
     expect(page.ready?.topics).toEqual(['board:1']);
@@ -174,7 +176,7 @@ describe('realtime channels', () => {
   });
 
   it('closes every connection it holds when the server shuts down', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const alice = await connect(hub, 'board:1');
     const bob = await connect(hub, 'board:1');
 
@@ -188,7 +190,7 @@ describe('realtime channels', () => {
   });
 
   it('refuses a connection none of whose topics may be opened', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const page = await connect(hub, 'chat:1');
 
     expect(page.sent.status).toBe(403);
@@ -196,7 +198,7 @@ describe('realtime channels', () => {
   });
 
   it('stamps what a page publishes with who sent it, and delivers it to everyone on the topic', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const alice = await connect(hub, 'board:1');
     const bob = await connect(hub, 'board:1');
     const elsewhere = await connect(hub, 'board:2');
@@ -218,7 +220,7 @@ describe('realtime channels', () => {
 
   /** The sender asked to hear it too: every page reads the mark, the sender knows it for its own by `from`. */
   it('carries a publish’s echo, and never a presence’s', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const alice = await connect(hub, 'board:1');
 
     await publish(hub, { token: alice.ready?.token, topic: 'board:1', type: 'react', data: null, echo: true });
@@ -230,7 +232,7 @@ describe('realtime channels', () => {
   });
 
   it('refuses a publish that is not the connection’s, too big, too fast, or on a server channel', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const page = await connect(hub, 'board:1,scores:1');
     const token = page.ready?.token;
 
@@ -248,10 +250,10 @@ describe('realtime channels', () => {
   // Redis timing out under load: the stream still opens, and a publish is told to send it again, as a WebSocket's ack is.
   it('answers a publish the pub/sub could not deliver with a 503', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const hub = createRealtimeHub({
-      ...createMemoryPubSub(),
-      publish: () => Promise.reject(new Error('Command timed out'))
-    });
+    const hub = createRealtimeHub(
+      { ...createMemoryPubSub(), publish: () => Promise.reject(new Error('Command timed out')) },
+      createRealtimeRetained(createMemoryKv())
+    );
     const page = await connect(hub, 'board:1');
     const { res, sent } = buildRes();
     await handleRealtimePublish({
@@ -267,7 +269,7 @@ describe('realtime channels', () => {
   });
 
   it('tells a presence channel who arrived, and who left once they had announced themselves', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const alice = await connect(hub, 'board:1');
     const bob = await connect(hub, 'board:1');
 
@@ -293,7 +295,7 @@ describe('realtime channels', () => {
 
   /** `page check` on a live site: it hears the room, and nobody in the room hears it. */
   it('lets a page that watches hear its topics, and never arrive or speak on them', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const alice = await connect(hub, 'board:1');
     const check = await connect(hub, 'board:1', undefined, undefined, GRANTS, { cookie: 'plitzi-observer=1' });
 
@@ -310,7 +312,7 @@ describe('realtime channels', () => {
   });
 
   it('keeps one adapter subscription per topic, however many pages share it', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const pages = await Promise.all([connect(hub, 'board:1'), connect(hub, 'board:1'), connect(hub, 'board:2')]);
 
     expect(hub.topicCount).toBe(2);
@@ -354,7 +356,7 @@ describe('realtimeModuleFor', () => {
 
 describe('granted channels', () => {
   it('refuses a topic of a `grant: true` channel to a page that brings no grant, however well it knows the name', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const page = await connect(hub, 'room:alpha,board:1');
 
     expect(page.ready?.topics).toEqual(['board:1']);
@@ -363,7 +365,7 @@ describe('granted channels', () => {
   });
 
   it('opens it with a grant issued for that topic, and for no other', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const grant = await GRANTS.issue(SPACE, 'room:alpha');
     const invited = await connect(hub, 'room:alpha', undefined, grant);
     const elsewhere = await connect(hub, 'room:beta', undefined, grant);
@@ -480,7 +482,7 @@ describe('granted channels', () => {
   });
 
   it('lets go of the topic a page on it with a revoked grant, and the others hear it leave', async () => {
-    const hub = createRealtimeHub(createMemoryPubSub());
+    const hub = createRealtimeHub(createMemoryPubSub(), createRealtimeRetained(createMemoryKv()));
     const ana = await GRANTS.issue(SPACE, 'room:rev3');
     const bob = await GRANTS.issue(SPACE, 'room:rev3');
     const anaPage = await connect(hub, 'room:rev3', undefined, ana);
@@ -520,5 +522,64 @@ describe('granted channels', () => {
 
     expect(await realtime.grants.opens(SPACE, 'room:rev4', grant)).toBe(false);
     await expect(realtime.revoke(SPACE, 'board:1')).rejects.toThrow('no grants to revoke');
+  });
+});
+
+/** State every screen shares, said once by the server: a page that opens later finds it, without a read of its own. */
+describe('a channel that keeps what the server says', () => {
+  const moduleFor = () => {
+    const realtime = realtimeModuleFor({
+      adapters: {
+        getOfflineData: () =>
+          Promise.resolve({ schema: { settings: { channels: CHANNELS } }, style: {} } as unknown as OfflineDataRaw)
+      }
+    });
+    if (!realtime) {
+      throw new Error('expected a realtime module');
+    }
+
+    return realtime;
+  };
+
+  it('hands a page that joins the latest of each type, and forgets one said as null', async () => {
+    const realtime = moduleFor();
+    await realtime.publish(SPACE, 'desk:1', 'lists', ['milk']);
+    await realtime.publish(SPACE, 'desk:1', 'lists', ['milk', 'eggs']);
+    await realtime.publish(SPACE, 'desk:1', 'habits', 3);
+    const page = await connect(realtime.hub, 'desk:1');
+
+    expect(page.heard().map(({ type, data, retained }) => [type, data, retained])).toEqual([
+      ['lists', ['milk', 'eggs'], true],
+      ['habits', 3, true]
+    ]);
+
+    await realtime.publish(SPACE, 'desk:1', 'habits', null);
+    const later = await connect(realtime.hub, 'desk:1');
+
+    expect(later.heard().map(({ type }) => type)).toEqual(['lists']);
+    // Said live too, marked kept: the page already there forgets it as well.
+    expect(page.heard().at(-1)).toMatchObject({ type: 'habits', data: null, retained: true });
+    await page.close();
+    await later.close();
+  });
+
+  it('keeps nothing on a channel that does not retain', async () => {
+    const realtime = moduleFor();
+    await realtime.publish(SPACE, 'scores:1', 'total', 10);
+    const page = await connect(realtime.hub, 'scores:1');
+
+    expect(page.heard()).toEqual([]);
+    await page.close();
+  });
+
+  it('refuses what would take a topic past what it keeps, and says none of it', async () => {
+    const realtime = moduleFor();
+    const page = await connect(realtime.hub, 'desk:9');
+
+    await expect(realtime.publish(SPACE, 'desk:9', 'log', 'x'.repeat(600 * 1024))).rejects.toThrow(
+      'keeps at most 512 KB'
+    );
+    expect(page.heard()).toEqual([]);
+    await page.close();
   });
 });

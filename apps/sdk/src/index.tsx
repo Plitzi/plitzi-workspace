@@ -43,9 +43,11 @@ import useElementSize from '@plitzi/sdk-shared/style/useElementSize';
 
 import App from './App';
 import { getEnvironmentServer } from './config';
+import useServerAction from './modules/Actions/useServerAction';
 import { track } from './modules/Analytics';
 import { deferredPlugin } from './modules/Sdk/deferredPlugins';
 import { createHotPlugins } from './modules/Sdk/hotPlugins';
+import useNotify from './modules/Space/useNotify';
 
 // SDK Style
 import './assets/plitzi-sdk.scss';
@@ -53,7 +55,9 @@ if (import.meta.env.PROD) {
   void import('./assets/plitzi-sdk-devtools.scss');
 }
 
+import type { ServerActionOptions, ServerActionResult } from './modules/Actions/useServerAction';
 import type { DeferredPlugin, PluginComponent } from './modules/Sdk/deferredPlugins';
+import type { Notify } from './modules/Space/useNotify';
 import type { CanvasHandle, CanvasOptions, CanvasSize, Frame } from '@plitzi/sdk-elements/canvas';
 import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
 import type { ElementChild } from '@plitzi/sdk-elements/Element/helpers/elementChildren';
@@ -82,6 +86,7 @@ import type {
 } from '@plitzi/sdk-shared';
 import type { RealtimeMessage } from '@plitzi/sdk-shared';
 import type { PluginDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import type { NotificationOptions } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
 import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
 import type { ReactNode } from 'react';
 
@@ -426,6 +431,10 @@ export {
   useElementVisible,
   // Fires one of a plugin's declared events, typed by its declaration — on a live page, never on the builder's canvas.
   usePluginTrigger,
+  // Shows one of the page's notifications from a plugin — what only it knows, with no flow of the space's to wire.
+  useNotify,
+  // Runs one of the space's server actions from a plugin, awaited and typed by the action's declaration.
+  useServerAction,
   // A plugin that lays out the space's elements put inside it — a dock, tabs, a masonry: each child with its id, to
   // wrap in a box of its own rather than restyling an element that is not its own.
   elementChildren,
@@ -471,6 +480,10 @@ export type {
   InteractionCallbackParamValues,
   PluginDeclaration,
   PluginTriggerPayload,
+  Notify,
+  NotificationOptions,
+  ServerActionOptions,
+  ServerActionResult,
   ChannelHandle,
   ElementChild,
   RealtimeMember,

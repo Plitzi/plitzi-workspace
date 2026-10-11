@@ -14,8 +14,10 @@ import {
 } from '@plitzi/sdk-shared/store';
 
 import { actionsCallbacks } from './callbacks';
+import { ServerActionContext } from './ServerActionContext';
 import InteractionsContext from '../../InteractionsContext';
 
+import type { ServerActionAnswer, RunServerAction } from './ServerActionContext';
 import type {
   ActionCallMode,
   ActionRunStep,
@@ -141,7 +143,7 @@ const parseInput = (input: string | Record<string, unknown>): Record<string, unk
  * have to discover that one of them arrives as a result and the other as a thrown error. The message is where the
  * two are told apart, because that is a question for whoever is debugging, not for the flow.
  */
-const unreachable = { status: 'failed', reason: 'failed', runId: '', output: {} };
+const unreachable: ServerActionAnswer = { status: 'failed', reason: 'failed', runId: '', output: {} };
 
 /**
  * A request that ended without an answer, told apart by WHO ended it.
@@ -237,7 +239,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
   );
 
   const handleRunAction = useCallback(
-    async (params: RunParams, context?: InteractionCallbackContext) => {
+    async (params: RunParams, context?: InteractionCallbackContext): Promise<ServerActionAnswer> => {
       const { actionId, mode = 'await', idempotencyKey } = params;
       if (!endpoint) {
         // Said once, plainly: the step is not broken, this render simply has no server tier to run it on. A silent
@@ -710,7 +712,14 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
 
   useInteractions({ id: 'actions', callbacks: interactionCallbacks });
 
-  return children;
+  // What a plugin runs an action with (`useServerAction`): this step, awaited — the same records, refusals and session.
+  const runServerAction = useCallback<RunServerAction>(
+    ({ actionId, input, idempotencyKey = '', invalidateQueries }) =>
+      handleRunAction({ actionId, input, mode: 'await', idempotencyKey, invalidateQueries }),
+    [handleRunAction]
+  );
+
+  return <ServerActionContext value={runServerAction}>{children}</ServerActionContext>;
 };
 
 export default ActionInteractions;

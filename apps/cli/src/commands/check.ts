@@ -179,7 +179,16 @@ export interface CheckReport {
    * server provider said its answer is nothing (`notFound`).
    */
   notFound?: true;
+  /**
+   * What the server failed to answer the first time the page was looked at — a service of somebody else's having a bad
+   * second — when it was looked at once more: this report is that second look.
+   */
+  retriedAfter?: string[];
 }
+
+/** The requests a server failed (`5xx`): what can pass by itself, unlike a `4xx`, which fails the same way again. */
+export const serverErrors = (report: CheckReport): string[] =>
+  report.failedRequests.filter(request => /^5\d\d /.test(request));
 
 /** What a page is, as far as a click can change it: where it is, how far each part is scrolled, what shows. */
 export interface PageMoment {
@@ -1160,6 +1169,7 @@ export const reportText = (report: CheckReport, asked: DevToolsInput): string =>
   const head = `${report.path} at ${String(report.width)} px${report.scheme ? `, ${report.scheme}` : ''}`;
   const held = [
     ...(report.notFound ? ['  · sent with status 404: the page for an address that shows nothing'] : []),
+    ...(report.retriedAfter ? [`  · looked at again after the server failed: ${report.retriedAfter.join(', ')}`] : []),
     ...listsText(report.lists),
     ...browserOnlyText(report),
     ...heldText(report, asked),
@@ -1278,18 +1288,23 @@ export const checkRoutes = async (
     const reports: CheckReport[] = [];
     for (const route of routes) {
       for (const width of options.widths) {
-        const report = await checkAt(
-          browser,
-          where.origin,
-          route,
-          width,
-          { ...(options.scheme ? { scheme: options.scheme } : {}), presence: options.presence === true },
-          authored,
-          options.asked,
-          options.ssr,
-          options.account,
-          options.click
-        );
+        const look = () =>
+          checkAt(
+            browser,
+            where.origin,
+            route,
+            width,
+            { ...(options.scheme ? { scheme: options.scheme } : {}), presence: options.presence === true },
+            authored,
+            options.asked,
+            options.ssr,
+            options.account,
+            options.click
+          );
+        const first = await look();
+        const failed = serverErrors(first);
+        // Once, and said: a page red for a second of somebody else's outage is not one red for anything of its own.
+        const report = failed.length > 0 ? { ...(await look()), retriedAfter: failed } : first;
         reports.push({ ...report, ...(options.scheme ? { scheme: options.scheme } : {}) });
       }
     }

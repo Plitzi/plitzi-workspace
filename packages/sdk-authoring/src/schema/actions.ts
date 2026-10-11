@@ -8,9 +8,11 @@ import type {
   ActionAccess,
   ActionEntry,
   ActionField,
+  ActionInputOf,
   ActionLimits,
   ActionTriggerParams,
-  ElementInteraction
+  ElementInteraction,
+  TypedActionEntry
 } from '@plitzi/sdk-shared';
 
 /**
@@ -242,7 +244,21 @@ const withDoors = (
   return Object.fromEntries([head, ...extra, ...rest].map(node => [node.id, node]));
 };
 
-export const defineAction = (spec: ActionSpec): ActionEntry => {
+/** The fields an action's `call` way in declares — the one a page runs — or none, for an action with no such way. */
+type CallFieldsOf<Spec extends ActionSpec> =
+  Extract<Spec['trigger'] extends readonly (infer Trigger)[] ? Trigger : Spec['trigger'], { type: 'call' }> extends {
+    input?: infer Fields;
+  }
+    ? Fields
+    : undefined;
+
+/** What a page hands an action: its `call` way in's fields, typed. */
+export type ActionCallInput<Spec extends ActionSpec> =
+  CallFieldsOf<Spec> extends Readonly<Record<string, ActionField>>
+    ? ActionInputOf<CallFieldsOf<Spec>>
+    : Record<string, unknown>;
+
+export const defineAction = <const Spec extends ActionSpec>(spec: Spec): TypedActionEntry<ActionCallInput<Spec>> => {
   const triggers = Array.isArray(spec.trigger) ? spec.trigger : [spec.trigger];
   if (triggers.length === 0) {
     throw new AuthoringError(
@@ -378,18 +394,26 @@ const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$
  *
  * An action of more than one step, or one whose input is not the task's params, is a `defineAction`.
  */
-export const taskAction = (
-  task: ActionTask,
+/** What a task takes, from its `run` — any object, for a task described without one. */
+type TaskInput<Task> = Task extends { run: (params: infer Params, ...rest: never[]) => unknown }
+  ? Params
+  : Record<string, unknown>;
+
+/** What a task answers, from its `run` — awaited: a page receives the value, never the promise. */
+type TaskOutput<Task> = Task extends { run: (...args: never[]) => infer Result } ? Awaited<Result> : unknown;
+
+export const taskAction = <Task extends ActionTask>(
+  task: Task,
   { trigger, id, name, description, output, limits }: TaskActionOptions
-): ActionEntry => {
+): TypedActionEntry<TaskInput<Task>, TaskOutput<Task>> => {
   const input = inputOf(task.params);
   const triggers = (Array.isArray(trigger) ? trigger : [trigger]).map((each): ActionTriggerSpec => ({
     ...each,
     input: each.input ?? input
   }));
   const about = description ?? task.description;
-
-  return defineAction({
+  // The same document `defineAction` writes; only the types it is known by are the task's.
+  const entry: ActionEntry = defineAction({
     id: id ?? `${task.namespace}-${kebab(task.action)}`,
     name: name ?? task.title,
     ...(about ? { description: about } : {}),
@@ -398,4 +422,6 @@ export const taskAction = (
     ...(output ? { output } : {}),
     ...(limits ? { limits } : {})
   });
+
+  return entry;
 };

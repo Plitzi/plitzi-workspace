@@ -14,7 +14,9 @@ plitzi plugin add ticker --prop interval:number=5000 --prop paused:boolean --tri
 
 **Say its shape and it is written in it**: `--prop name:type=default` (string, number, boolean; `list`/`json` for data
 a binding fills) per attribute — typed, bindable, with a control in its panel; `--trigger onTick:count` per event and
-what a flow reads, fired with `usePluginTrigger(declaration)` — `fire('onTick', { count })`, typed; `--callback reset` per action a flow calls; `--headless`
+what a flow reads, fired with `usePluginTrigger(declaration)` — `fire('onTick', { count })`, typed, and read by
+naming the step: `[named('tick', on('onTick')), …({ value: '{{ tick.count }}' })]`; `--callback reset` per action a
+flow calls; `--headless`
 for one with nothing to see. Without them it writes a counter showing the three ways an element talks to a space.
 
 Each is a folder (`src/plugins/SeatPicker/` in a project `create` wrote):

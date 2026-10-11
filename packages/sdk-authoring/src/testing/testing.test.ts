@@ -49,6 +49,7 @@ const clean: ProbeFindings = {
   marked: true,
   missing: [],
   hidden: [],
+  notDrawn: [],
   byWidth: [],
   brokenImages: [],
   overflow: null,
@@ -178,6 +179,12 @@ describe('testing/inspectPage', () => {
     expect((await pending).problems).toEqual([]);
     expect(fake.calls).toBe(2);
     vi.useRealTimers();
+  });
+
+  it('counts as checked only what an element that chooses its children drew', async () => {
+    const report = await inspectPage(driver([{ ...clean, notDrawn: ['title'] }]), handles);
+
+    expect(report.checked).toBe(5);
   });
 
   it('reports what is still wrong when the time is up', async () => {

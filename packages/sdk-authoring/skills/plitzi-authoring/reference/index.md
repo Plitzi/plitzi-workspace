@@ -22,8 +22,9 @@ Read one only when the task names its subject.
 | [authoring-errors.md](authoring-errors.md) | What `authorSpace` refuses or warns about, and what to write instead |
 | [templates.md](templates.md) | Any `{{ … }}` or `{% … %}`: where it runs, naming sources, filters, tests, dates |
 | [flows.md](flows.md) | Clicks, submits, page loads, every few seconds, server actions, modals, state |
-| [realtime.md](realtime.md) | Pages that see each other: channels, presence, cursors, a shared board, who may hear a topic |
-| [plugins.md](plugins.md) | A component of your own: props, binding them, writing state, channels, registering, behaving in the builder |
+| [realtime.md](realtime.md) | Pages that see each other: channels, presence, cursors, a shared board, state every screen shares, who may hear a topic |
+| [plugins.md](plugins.md) | A component of your own: props, binding them, writing state, registering, behaving in the builder |
+| [plugin-reach.md](plugin-reach.md) | What a plugin says and to whom: a notification, another element, a server action, shared state, other pages |
 | [drawing.md](drawing.md) | A plugin that draws or animates: a canvas sized to the device, WebGL, a loop that stops when unseen |
 | [structure.md](structure.md) | A space bigger than one screen: files, helpers, naming, keeping it short |
 | [testing.md](testing.md) | Any test: `inspectPage`, handles, fixtures, catching a flash from the first frame, shortcuts, counting renders |

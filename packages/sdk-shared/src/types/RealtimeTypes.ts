@@ -23,6 +23,13 @@ export type ChannelDeclaration = {
    * a locked board.
    */
   grant?: boolean;
+  /**
+   * Whether the server keeps the latest message of each type on a topic, and hands them to every page that joins: state
+   * all the screens share — a dashboard's lists, a board's settings — said once by the server (`ctx.publish`, a flow's
+   * `realtime.publish`) and there for a page that opens later, as `<channel>.retained.<type>`. Kept until the next of
+   * its type; `null` forgets it. Only on a channel the server alone publishes on (`publish: 'server'`).
+   */
+  retain?: boolean;
   /** The largest `data` a page may send, as JSON bytes. 4 KB when absent. */
   maxMessageBytes?: number;
   /** How many messages one connection may send a second. 30 when absent. */
@@ -56,6 +63,11 @@ export type RealtimeMessage = RealtimeSender & {
    * knows it for its own by `from` — its channel's `me`. Without it, a page never hears what it sent.
    */
   echo?: true;
+  /**
+   * Kept by the server: on a `retain: true` channel, the latest message of its type — sent as it is said, and again to
+   * every page that joins. The newest of a type is the one that holds; `null` data forgets it.
+   */
+  retained?: true;
 };
 
 /** What a page asks of a publish beyond the message itself. */

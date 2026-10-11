@@ -4,8 +4,11 @@
  * Plain data both ways, because it crosses into the page as a serialized argument and comes back the same way.
  */
 export interface ProbeInput {
-  /** `list`: a list, whose box is only its rows — none drawn is a list with nothing in it, not one hidden. */
-  expected: { id: string; selector: string; list?: true }[];
+  /**
+   * `list`: a list, whose box is only its rows — none drawn is a list with nothing in it, not one hidden. `shownWith`:
+   * the selector of the element an element that chooses its children drew it with — owed only while that one shows.
+   */
+  expected: { id: string; selector: string; list?: true; shownWith?: string }[];
   images: boolean;
   overflow: boolean;
   legibility: boolean;
@@ -16,6 +19,8 @@ export interface ProbeFindings {
   marked: boolean;
   missing: string[];
   hidden: { id: string; reason: string }[];
+  /** Owed only with an element that chooses its children drawing it, and not drawn: not checked, and not a problem. */
+  notDrawn: string[];
   /** Owed, and hidden at this width by a breakpoint on purpose — checked at the width it shows at, not a problem. */
   byWidth: string[];
   /** Each with the element it is in, by id, when one of the space's holds it. */
@@ -155,9 +160,12 @@ export function probePage(input: ProbeInput): ProbeFindings {
   const missing: string[] = [];
   const hidden: { id: string; reason: string }[] = [];
   const byWidth: string[] = [];
-  for (const { id, selector, list } of input.expected) {
+  const notDrawn: string[] = [];
+  for (const { id, selector, list, shownWith } of input.expected) {
     const nodes = [...document.querySelectorAll(selector)];
-    if (nodes.length === 0) {
+    if (shownWith !== undefined && ![...document.querySelectorAll(shownWith)].some(isVisible)) {
+      notDrawn.push(id);
+    } else if (nodes.length === 0) {
       missing.push(id);
     } else if (!nodes.some(isVisible)) {
       const hider = hiderOf(nodes[0]);
@@ -557,6 +565,7 @@ export function probePage(input: ProbeInput): ProbeFindings {
     marked: document.querySelector('[data-plitzi-el]') !== null,
     missing,
     hidden,
+    notDrawn,
     byWidth,
     brokenImages,
     overflow,

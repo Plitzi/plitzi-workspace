@@ -606,7 +606,10 @@ export interface PluginDeclarationData {
   sourceType?: string;
   /** Behaviour rather than content: it draws nothing on a page, so no check waits for it on screen. */
   drawsNothing?: boolean;
-  /** It shows only some of its children, chosen as it runs: no check waits for any of them on screen. */
+  /**
+   * It shows only some of its children, chosen as it runs: no check waits for any of them on screen, and the ones it
+   * draws are checked like the rest of the page.
+   */
   choosesChildren?: boolean;
   /** The events it fires beyond the ones every element does, by action. */
   triggers?: Readonly<Record<string, { action: string }>>;
@@ -661,7 +664,8 @@ export interface AuthorSpaceOptions {
   drawsNothingTypes?: readonly string[];
   /**
    * The types that show only some of their children, chosen as they run (a plugin's `choosesChildren`), under the name
-   * a space uses them by. Everything inside them is `conditional`, so a page check owes none of it on screen.
+   * a space uses them by. Everything inside them is `conditional`, so a page check owes none of it on screen — until it
+   * is drawn: then its handle's `shownWith` makes it owed like the rest of the page.
    */
   choosesChildrenTypes?: readonly string[];
   /**

@@ -23,13 +23,6 @@ import type { ScrollStepBehavior, ScrollStepPosition } from '@plitzi/sdk-shared/
 
 export type ElementTriggerName = keyof typeof interactionBasicTriggers;
 
-/**
- * `on('onClick')`, and the same for every other trigger.
- *
- * The basic set every element registers is named and autocompletes; any other string is accepted because a TYPE
- * may publish triggers of its own — a form's `onSubmit`, a provider's page change — and refusing those would make
- * the builders useless for exactly the flows that matter most.
- */
 // Asked rather than indexed: the argument may name no built-in trigger at all — a plugin type is free to publish
 // its own — and each record's type says every key is there.
 const builtinTrigger = (trigger: string): InteractionCallback | undefined => {
@@ -40,6 +33,16 @@ const builtinTrigger = (trigger: string): InteractionCallback | undefined => {
   return Object.hasOwn(typeTriggerDefinitions, trigger) ? typeTriggerDefinitions[trigger] : undefined;
 };
 
+/**
+ * `on('onClick')`, and the same for every other trigger — a plugin's too (`on('onPick')`). What the event carries is
+ * read through the step's id, so name it: `[named('picked', on('onPick')), setState({ key: 'seat', type: 'text', value:
+ * '{{ picked.seat }}' })]`.
+ *
+ * The basic set every element registers is named and autocompletes; any other string is accepted because a TYPE
+ * may publish triggers of its own — a form's `onSubmit`, a provider's page change — and refusing those would make
+ * the builders useless for exactly the flows that matter most. A plugin's, typed by its declaration:
+ * `declaredTrigger(declaration, 'onPick')`.
+ */
 export const on = (trigger: ElementTriggerName | (string & {}), params: Record<string, unknown> = {}): StepSpec => {
   const declared = builtinTrigger(trigger);
 

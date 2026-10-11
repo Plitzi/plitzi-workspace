@@ -33,9 +33,31 @@ export type ChannelHandle = {
   /** This page's name on the channel — the `from` of what it sends. */
   me: string | undefined;
   members: RealtimeMember[];
+  /**
+   * What a `retain: true` channel keeps, by type: the latest data the server said of each — there as the page joins,
+   * and changed as it is said again. Empty on any other channel.
+   */
+  retained: Record<string, unknown>;
   /** Heard by every other page on the topic — and by this one too with `{ echo: true }`, once the server took it. */
   publish: (type: string, data: unknown, options?: RealtimePublishOptions) => Promise<boolean>;
   setPresence: (state: unknown) => void;
+};
+
+/**
+ * What is kept with `message` taken in: the newer of a type holds — a message heard live and then handed again as the
+ * page joined arrives twice, in either order — and `null` forgets the type.
+ */
+const keptWith = (
+  kept: Record<string, RealtimeMessage>,
+  message: RealtimeMessage
+): Record<string, RealtimeMessage> => {
+  if (Object.hasOwn(kept, message.type) && kept[message.type].at > message.at) {
+    return kept;
+  }
+
+  const others = Object.fromEntries(Object.entries(kept).filter(([type]) => type !== message.type));
+
+  return message.data === null ? others : { ...others, [message.type]: message };
 };
 
 /**
@@ -43,7 +65,8 @@ export type ChannelHandle = {
  * the speed of a cursor reads directly.
  *
  * Messages arrive through `onMessage` rather than as state, so a canvas redrawing sixty cursors a second does not
- * re-render the component sixty times a second. Closed — no connection, no members — where the page has no server to
+ * re-render the component sixty times a second — all but what a `retain: true` channel keeps, which is state
+ * (`retained`): a page that joins hears each kept message as if it had just been said. Closed — no connection, no members — where the page has no server to
  * connect to (the builder, an embed), and on the server.
  */
 const useChannel = (
@@ -65,6 +88,7 @@ const useChannel = (
   );
   const [connected, setConnected] = useState(false);
   const [members, setMembers] = useState<RealtimeMember[]>([]);
+  const [kept, setKept] = useState<Record<string, RealtimeMessage>>({});
   const tracker = useRef<PresenceTracker | undefined>(undefined);
   const listeners = useRef({ onMessage, onJoin, onLeave });
   useEffect(() => {
@@ -94,6 +118,10 @@ const useChannel = (
           setConnected(false);
         }
 
+        if (message.retained === true && message.from === 'server') {
+          setKept(previous => keptWith(previous, message));
+        }
+
         listeners.current.onMessage?.(message);
       },
       onArrive: member => listeners.current.onJoin?.(member),
@@ -109,6 +137,7 @@ const useChannel = (
       current.stop();
       tracker.current = undefined;
       setMembers([]);
+      setKept({});
       setConnected(false);
     };
   }, [client, topic]);
@@ -127,8 +156,12 @@ const useChannel = (
     [client, topic]
   );
   const setPresence = useCallback((state: unknown) => tracker.current?.set(state), []);
+  const retained = useMemo(
+    () => Object.fromEntries(Object.entries(kept).map(([type, message]) => [type, message.data])),
+    [kept]
+  );
 
-  return { connected, me: connected ? client?.me : undefined, members, publish, setPresence };
+  return { connected, me: connected ? client?.me : undefined, members, retained, publish, setPresence };
 };
 
 export default useChannel;

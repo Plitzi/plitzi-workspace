@@ -1,4 +1,4 @@
-import { onScreen } from './onScreen';
+import { onScreen, onScreenIfChosen } from './onScreen';
 import { probePage } from './probe';
 
 import type { OnScreenOptions } from './onScreen';
@@ -49,7 +49,10 @@ export interface PageIssue {
 export interface PageReport {
   /** The page that was inspected, by id. */
   page: string;
-  /** How many elements were owed and checked. */
+  /**
+   * How many elements were owed and checked — what an element that chooses its children drew counted in, and what it
+   * did not draw left out.
+   */
   checked: number;
   /**
    * Everything wrong, one sentence each, naming the element and the reason — empty when the page is whole.
@@ -151,18 +154,23 @@ const pause = (milliseconds: number): Promise<void> => new Promise(resolve => se
 /** Checks that need no space: what any rendered page owes, whoever wrote it. */
 export type DocumentChecks = Pick<InspectOptions, 'skip' | 'timeout'>;
 
+/** An element owed, as the probe is asked about it. */
+type Expected = { handle: ElementHandle; shownWith?: string };
+
 const inspect = async (
   driver: PageEvaluator,
   page: string,
-  expected: ElementHandle[],
+  owed: Expected[],
   options: DocumentChecks
 ): Promise<PageReport> => {
   const skip = new Set(options.skip ?? []);
+  const expected = owed.map(({ handle }) => handle);
   const input: ProbeInput = {
-    expected: expected.map(handle => ({
+    expected: owed.map(({ handle, shownWith }) => ({
       id: handle.id,
       selector: handle.selector,
-      ...(handle.type === 'list' ? { list: true as const } : {})
+      ...(handle.type === 'list' ? { list: true as const } : {}),
+      ...(shownWith === undefined ? {} : { shownWith })
     })),
     images: !skip.has('images'),
     overflow: !skip.has('overflow'),
@@ -175,7 +183,7 @@ const inspect = async (
     if (issues.length === 0 || Date.now() >= deadline) {
       return {
         page,
-        checked: expected.length,
+        checked: expected.length - findings.notDrawn.length,
         problems: issues.map(issue => issue.message),
         issues,
         hiddenAtWidth: findings.byWidth
@@ -205,8 +213,14 @@ export const inspectPage = async (
   options: InspectOptions = {}
 ): Promise<PageReport> => {
   const page = handles.page(options.page ?? defaultPage(handles)).id;
+  const owed: Expected[] = [
+    ...onScreen(handles, page, options).map(handle => ({ handle })),
+    ...onScreenIfChosen(handles, page, options).flatMap(handle =>
+      handle.shownWith === undefined ? [] : [{ handle, shownWith: handles.element(handle.shownWith).selector }]
+    )
+  ];
 
-  return inspect(driver, page, onScreen(handles, page, options), options);
+  return inspect(driver, page, owed, options);
 };
 
 /**

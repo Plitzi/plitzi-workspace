@@ -12,7 +12,7 @@ export { failedFlowText, readDevTools, readDevToolsInPage } from './devTools';
 export type { DevToolsDriver, DevToolsFlow, DevToolsFlowStep, DevToolsInput, DevToolsReport } from './devTools';
 export { inspectDocument, inspectPage } from './inspect';
 export type { DocumentChecks, InspectOptions, PageEvaluator, PageIssue, PageIssueCode, PageReport } from './inspect';
-export { onScreen } from './onScreen';
+export { onScreen, onScreenIfChosen } from './onScreen';
 export { loadImages, unrollPage } from './images';
 export type { LoadedImages } from './images';
 export { alignPictures, comparePictures, diffPictures, pageRegions, profilePictures } from './pictures';

@@ -14,6 +14,7 @@ import {
   specFromSpace
 } from '..';
 import { definePlugin } from '../plugin';
+import { onScreenIfChosen } from '../testing';
 
 import type { StepSpec } from '../schema';
 
@@ -237,5 +238,47 @@ describe('a plugin that chooses its children', () => {
     expect(handles.element('desk').conditional).toBeUndefined();
     expect(handles.element('clock').conditional).toBe(true);
     expect(handles.element('snooze').conditional).toBe(true);
+  });
+
+  /** Owed none at rest, but a panel it draws is checked like the page: an image broken in it, a button hidden in it. */
+  it('owes what it draws, by the child it is drawn with', () => {
+    const { handles } = authorSpace(
+      singlePageSpace([
+        panels({
+          id: 'desk',
+          children: [
+            container({ id: 'clock', children: [button({ id: 'snooze', content: 'Snooze' })] }),
+            container({ id: 'agenda', visible: 'state.signedIn', children: [button({ id: 'add', content: 'Add' })] }),
+            container({ id: 'notes', children: [button({ id: 'pin', content: 'Pin', visible: 'state.pinned' })] })
+          ]
+        })
+      ]),
+      { plugins: [dashboard] }
+    );
+
+    expect(handles.element('clock').shownWith).toBe('clock');
+    expect(handles.element('snooze').shownWith).toBe('clock');
+    expect(handles.element('notes').shownWith).toBe('notes');
+    // A condition of its own is still the condition's to decide, drawn or not.
+    expect(handles.element('agenda').shownWith).toBeUndefined();
+    expect(handles.element('add').shownWith).toBeUndefined();
+    expect(handles.element('pin').shownWith).toBeUndefined();
+    expect(onScreenIfChosen(handles, '').map(handle => handle.id)).toEqual(['clock', 'snooze', 'notes']);
+  });
+
+  it('chooses nothing a condition above it already holds', () => {
+    const { handles } = authorSpace(
+      singlePageSpace([
+        container({
+          id: 'drawer',
+          visible: 'state.open',
+          children: [panels({ id: 'desk', children: [container({ id: 'clock' })] })]
+        })
+      ]),
+      { plugins: [dashboard] }
+    );
+
+    expect(handles.element('clock').conditional).toBe(true);
+    expect(handles.element('clock').shownWith).toBeUndefined();
   });
 });

@@ -161,6 +161,37 @@ const REPEATING_TYPES = new Set(['list', 'carouselTrack']);
 type AuthorTree = { map: FlatMap; sources: SourceIndex; globals: readonly string[] };
 
 /**
+ * What the elements above one put it under: nothing (`shown`), a condition, or the choice of an element that chooses
+ * its children — `chosen` for one of those children, `shownWith` for what is inside one under no condition of its own.
+ */
+type Above = 'shown' | 'condition' | 'chosen' | { shownWith: string };
+
+/**
+ * What an element puts its children under. An element that chooses them makes each `chosen` — unless a condition above
+ * it already holds them, which no choice of its own can lift.
+ */
+const aboveChildren = (conditional: boolean, shownWith: string | undefined, chooses: boolean): Above => {
+  if (chooses && (!conditional || shownWith !== undefined)) {
+    return 'chosen';
+  }
+
+  if (shownWith !== undefined) {
+    return { shownWith };
+  }
+
+  return conditional ? 'condition' : 'shown';
+};
+
+/** The chosen element `id` is drawn with: itself when it is one, the one it is inside otherwise. */
+const shownWithOf = (above: Above, id: string): string | undefined => {
+  if (above === 'chosen') {
+    return id;
+  }
+
+  return typeof above === 'object' ? above.shownWith : undefined;
+};
+
+/**
  * How a person finds an element in what they wrote: its own name when it has one, otherwise the steps from the nearest
  * one that does — `"store-footer" › container[1] › text[0]` rather than a path of indices from the page down.
  */
@@ -1572,7 +1603,7 @@ class SpaceAuthor {
       placeOf(component.root, `Component "${component.id}"`),
       '',
       '',
-      false,
+      'shown',
       tree
     );
     const ids = Object.keys(tree.map.flat);
@@ -1899,11 +1930,11 @@ class SpaceAuthor {
     place: string,
     rootId: string,
     parentId: string,
-    insideCondition = false,
+    above: Above = 'shown',
     tree = this.pagesTree
   ): string {
     try {
-      return this.writeElement(spec, path, place, rootId, parentId, insideCondition, tree);
+      return this.writeElement(spec, path, place, rootId, parentId, above, tree);
     } catch (error) {
       this.skipped += 1;
       this.refusals.push({ place, at: writtenAt(spec), ...refusalOf(error) });
@@ -1982,7 +2013,7 @@ class SpaceAuthor {
     place: string,
     rootId: string,
     parentId: string,
-    insideCondition: boolean,
+    above: Above,
     tree: AuthorTree
   ): string {
     this.assertElementShape(spec, place);
@@ -2004,7 +2035,9 @@ class SpaceAuthor {
     const isRoot = parentId === '';
     const ownRootId = isRoot ? id : rootId;
     const bindings = withVisibility({ bind: this.boundFrom(spec, where), visible: spec.visible });
-    const conditional = insideCondition || spec.visible !== undefined || hasVisibilityBinding(bindings);
+    const ownCondition = spec.visible !== undefined || hasVisibilityBinding(bindings);
+    const conditional = above !== 'shown' || ownCondition;
+    const shownWith = ownCondition ? undefined : shownWithOf(above, id);
     const ancestors = this.ancestorsOf(parentId, tree.map.flat);
     bindings?.forEach(binding => assertBindingShape(binding, where));
     const sourceIndex = this.options.sourceTypes ? tree.sources : undefined;
@@ -2068,6 +2101,7 @@ class SpaceAuthor {
           : selectorFor(id),
       named: spec.id !== undefined,
       ...(conditional ? { conditional: true } : {}),
+      ...(shownWith === undefined ? {} : { shownWith }),
       ...([...ancestors].some(ancestor => REPEATING_TYPES.has(tree.map.flat[ancestor].definition.type))
         ? { repeated: true }
         : {}),
@@ -2076,7 +2110,7 @@ class SpaceAuthor {
 
     const children = spec.row === undefined ? spec.children : this.rowChildren(spec, spec.row, id, where);
     // Under an element that chooses which of them to show, every one is shown under a condition only it knows.
-    const childrenConditional = conditional || this.choosesChildren(element);
+    const childrenAbove = aboveChildren(conditional, shownWith, this.choosesChildren(element));
     children?.forEach((child, index) =>
       this.addElement(
         child,
@@ -2084,7 +2118,7 @@ class SpaceAuthor {
         placeOf(child, place, index),
         ownRootId,
         id,
-        childrenConditional,
+        childrenAbove,
         tree
       )
     );
