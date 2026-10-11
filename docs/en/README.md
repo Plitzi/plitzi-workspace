@@ -20,7 +20,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [A space as a project](./projects-from-spaces.md) | Taking a space on Plitzi out as a self-hosted project of its own (`plitzi create --from`), keeping it in step (`plitzi space pull`), and putting it back (`plitzi space push`) |
 | [Space runtimes](./runtimes.md) | A space's own server code as a process of its own beside the platform: Node and its packages, open connections, endpoints that stream |
 | [Feature flags](./feature-flags.md) | Switching parts of a space on or off: the model, who decides each flag (space, server, SDK, tester), gating elements and pages, server actions, and publishing flags alone |
-| [Realtime channels](./realtime.md) | Pages that see each other: declaring channels, the `channel` element and `useChannel`, publishing from a server action, and the pub/sub adapter a deployment picks |
+| [Realtime channels](./realtime.md) | Pages that see each other: declaring channels, the `channel` element and `useChannel`, publishing from a server action, state every screen shares (`retain`), and the pub/sub adapter a deployment picks |
 | [Accessibility and browser agents](./accessibility.md) | Pages screen readers and browser agents (Claude in Chrome) can use: what the elements do, what an author says, the linter's rules, canvases, and checking a page |
 | [AI agents (MCP)](./mcp.md) | Connecting Claude or any MCP client to a space: what an agent can do, how it works a space, and what the server guarantees |
 | [Change history](./history.md) | Every save of a space's schema and style — who, from where, what exactly — read in the builder's timeline or over MCP |

@@ -14,7 +14,7 @@ import {
 } from '@plitzi/sdk-shared/store';
 
 import { actionsCallbacks } from './callbacks';
-import { ServerActionContext } from './ServerActionContext';
+import { endedStatusOf, ServerActionContext } from './ServerActionContext';
 import InteractionsContext from '../../InteractionsContext';
 
 import type { ServerActionAnswer, RunServerAction } from './ServerActionContext';
@@ -599,7 +599,7 @@ const ActionInteractions = ({ children }: ActionInteractionsProps) => {
       // `error` is there only when a step refused with a reason written for the caller — the server keeps every
       // other failure's message to itself — so a flow can say `{{ step.error }}` and fall back when it is empty.
       return {
-        status: payload.status ?? 'completed',
+        status: endedStatusOf(payload.status),
         runId: payload.runId ?? '',
         output: payload.output ?? {},
         ...(payload.error ? { error: payload.error } : {})

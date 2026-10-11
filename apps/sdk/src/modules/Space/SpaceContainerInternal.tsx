@@ -3,7 +3,11 @@ import { useCallback, use, useMemo } from 'react';
 
 import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
 import { toInteractionCallback } from '@plitzi/sdk-shared/authoring/builder';
-import { NOTIFICATION_DEFAULTS, spaceCallbacks } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
+import {
+  NOTIFICATION_DEFAULTS,
+  readNotificationOptions,
+  spaceCallbacks
+} from '@plitzi/sdk-shared/authoring/spaceCallbacks';
 import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
 
 import { NotifyContext } from './useNotify';
@@ -11,7 +15,7 @@ import { NotifyContext } from './useNotify';
 import type { Notify } from './useNotify';
 import type { ToastTypeOptions } from '@plitzi/plitzi-ui/Toast';
 import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
-import type { NotificationAppearance, NotificationOptions } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
+import type { NotificationAppearance } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
 import type { ReactNode } from 'react';
 
 /** A space's appearance as the toast library names it: `danger` is its `error` — its icon, and its colour. */
@@ -33,8 +37,16 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
   // follow the toggle.
   const { resolvedTheme } = useTheme(SPACE_THEME_AREA);
 
-  const notify = useCallback<Notify>(
-    (content, options = {}) => {
+  // Wider than `Notify`: a flow's values arrive as written, and are read here like a plugin's.
+  const notify = useCallback(
+    (content: string, given: Readonly<Record<string, unknown>> = {}) => {
+      const { options, ignored } = readNotificationOptions(given);
+      if (ignored.length > 0) {
+        console.warn(
+          `[plitzi] notification "${content}": ${ignored.join(', ')} not one it takes — shown with the default instead`
+        );
+      }
+
       const { placement, appearance, autoDismiss, autoDismissTimeout } = { ...NOTIFICATION_DEFAULTS, ...options };
       addToast(<div className="whitespace-break-spaces">{content}</div>, {
         // plitzi-ui's toast spells its option `appeareance`; a space's step spells it correctly.
@@ -49,7 +61,7 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
   );
 
   const handleAddNotification = useCallback(
-    (params: InteractionCallbackParamValues<Required<NotificationOptions> & { content: unknown }>) => {
+    (params: InteractionCallbackParamValues<Record<string, unknown> & { content: unknown }>) => {
       const { content, ...options } = params;
       notify(typeof content === 'string' ? content : JSON.stringify(content), options);
     },
@@ -85,7 +97,7 @@ const SpaceContainerInternal = ({ children }: SpaceContainerInternalProps) => {
           />
         </Helmet>
       )} */}
-      <NotifyContext value={notify}>{children}</NotifyContext>
+      <NotifyContext value={notify satisfies Notify}>{children}</NotifyContext>
     </>
   );
 };

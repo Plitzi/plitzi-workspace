@@ -16,14 +16,17 @@ import type { ChannelDeclaration, Schema } from '@plitzi/sdk-shared';
 const userProvider = z.string();
 const storage = z.enum(['localStorage', 'sessionStorage', '']);
 
-// The shape only: what each field MEANS — a role that names no permission, a pattern the server cannot read — is
-// `channelProblems`'s, the same check authoring and the linter make. `maxMessageBytes` and `messagesPerSecond` are
-// left out, as the font manifest leaves out its tuning: their defaults fit what an agent builds, and every field
-// here is carried by four tools.
+// The shape only: what each field MEANS — a role that names no permission, a pattern the server cannot read, `retain`
+// without `publish: "server"` — is `channelProblems`'s, the same check authoring and the linter make. Every field a
+// channel takes is here: one an agent cannot write is one it meets in a space and cannot explain.
 const channel = z.object({
   access: z.object({ mode: z.enum(['public', 'session', 'role']), permissions: z.array(z.string()).optional() }),
   publish: z.enum(['clients', 'server']).optional(),
-  presence: z.boolean().optional()
+  presence: z.boolean().optional(),
+  grant: z.boolean().optional().describe('A page needs a grant from realtime.grant to open a topic'),
+  retain: z.boolean().optional().describe('The server keeps the latest message of each type for pages that join'),
+  maxMessageBytes: z.number().int().positive().optional(),
+  messagesPerSecond: z.number().int().positive().optional()
 });
 
 // A record, not an object of its fields: the op union is in four tools' listings, and the fields are named once in

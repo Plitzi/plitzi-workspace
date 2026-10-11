@@ -96,7 +96,9 @@ import { elementChildren } from '@plitzi/plitzi-sdk';
 {elementChildren(children).map(({ id, node }) => <section key={id} style={placed[id]}>{node}</section>)}
 ```
 
-Never write `style` onto an element the plugin does not render: nothing promises to keep it. Its boxes share one
+One that shows only some of them — a dashboard's panels, a wizard's step — says `choosesChildren: true` in its
+declaration: the page checks then owe none at rest, and check the ones it draws. Never write `style` onto an element
+the plugin does not render: nothing promises to keep it. Its boxes share one
 stacking context, the plugin's. `useDisplayMode()` names the breakpoint showing (`desktop`, `tablet`, `mobile`) at the
 space's widths; `useElementSize(ref)`, its own box (`undefined` until measured).
 

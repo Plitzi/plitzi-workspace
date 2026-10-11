@@ -22,7 +22,9 @@ const publish: ActionTask<{ topic: string; type: string; data: unknown }> = {
   namespace: 'realtime',
   action: 'publish',
   title: 'Publish On Channel',
-  description: 'Sends a message to every page subscribed to a topic of one of the space’s channels.',
+  description:
+    'Sends a message to every page subscribed to a topic of one of the space’s channels. On a `retain: true` channel ' +
+    'it is also kept, the latest of its type, for every page that joins later; `null` data forgets it.',
   params: {
     topic: { type: 'text', canBind: true, defaultValue: '', label: 'Topic (board:{{ input.board }})' },
     type: { type: 'text', canBind: true, defaultValue: '', label: 'Type' },

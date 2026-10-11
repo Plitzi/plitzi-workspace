@@ -44,7 +44,9 @@ the list `inspectPage` holds a page to.
 Three flags say what a bare visit cannot promise, and `onScreen` leaves out:
 
 - `conditional` — on screen only under a condition of its own or of an ancestor, or with every child conditional (a
-  list of flyouts at rest);
+  list of flyouts at rest). Under a plugin that chooses its children (`choosesChildren`), each child — and what is
+  inside it under no condition of its own — also carries `shownWith`, the child it comes with: once that child is
+  drawn it is owed like the rest (`onScreenIfChosen` lists them, and `inspectPage` checks them);
 - `repeated` — inside a list row, so rendered once per row: several copies, or none while the list is empty. Address
   one with `.first()` / `.nth(i)`, in a test that knows the data;
 - `boxless` — a provider with no tag, which renders its children and no element of its own; or a plugin whose

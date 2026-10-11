@@ -205,10 +205,13 @@ plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; fr
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
 another project. They wait for the page to settle — loaded, then half a second with nothing asked for — counting no
 stream that stays open, so a page with a realtime `channel` is checked like any other (`openPage` of
-`@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `page check` reports every element the space owes the page that is missing or hidden (with why), broken
+`@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `page check` reports every element the space owes the page that is missing or hidden (with why) — and, under a plugin
+that chooses its children (`choosesChildren`), each it draws and what is named inside it — broken
 images, sideways scroll, a link or words cut off at the screen's edge (an ancestor hiding them, nothing scrolling to
 them), words that cannot be told from what is behind them (under 2:1 — the space's elements and what a plugin draws
-inside one; `aria-hidden` words are a decoration), console errors, refused requests and failed flows — and the
+inside one; `aria-hidden` words are a decoration), console errors, refused requests and failed flows — a page whose
+requests the server failed (`5xx`) is looked at once more, and the report is that second look, naming what failed the
+first time (`--json`: `retriedAfter`); a `4xx` is not retried — and the
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
 the page is not showing, which is not mounted — a provider that failed, and each list's rows, drawn and in its source
 (`feed 4 of 8 rows`, `hits not rendered (16 in its source)`; `--json`: `lists: { id: { rendered, source } }`). A page's state in a few hundred tokens, where a screenshot costs thousands.

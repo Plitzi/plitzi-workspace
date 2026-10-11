@@ -26,6 +26,40 @@ export type NotificationOptions = {
   autoDismissTimeout?: number;
 };
 
+/**
+ * What a notification was handed, kept to what it takes — a flow's values arrive as written, and a plugin may be plain
+ * JavaScript — with each field set aside named, so the caller says so rather than showing the default in silence.
+ */
+export const readNotificationOptions = (
+  given: Readonly<Record<string, unknown>>
+): { options: NotificationOptions; ignored: string[] } => {
+  const placement = NOTIFICATION_PLACEMENTS.find(known => known === given.placement);
+  const appearance = NOTIFICATION_APPEARANCES.find(known => known === given.appearance);
+  const { autoDismiss, autoDismissTimeout } = given;
+  const timeout =
+    typeof autoDismissTimeout === 'number' && Number.isFinite(autoDismissTimeout) && autoDismissTimeout > 0
+      ? autoDismissTimeout
+      : undefined;
+  const kept = {
+    placement: placement !== undefined,
+    appearance: appearance !== undefined,
+    autoDismiss: typeof autoDismiss === 'boolean',
+    autoDismissTimeout: timeout !== undefined
+  };
+
+  return {
+    options: {
+      ...(placement === undefined ? {} : { placement }),
+      ...(appearance === undefined ? {} : { appearance }),
+      ...(typeof autoDismiss === 'boolean' ? { autoDismiss } : {}),
+      ...(timeout === undefined ? {} : { autoDismissTimeout: timeout })
+    },
+    ignored: Object.entries(kept)
+      .filter(([name, ok]) => !ok && given[name] !== undefined)
+      .map(([name]) => name)
+  };
+};
+
 /** The defaults of a notification, the step's and the hook's alike. */
 export const NOTIFICATION_DEFAULTS = {
   placement: 'top-right',

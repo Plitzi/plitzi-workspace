@@ -18,6 +18,7 @@ when it shipped, and is in the history (`git log -- docs/rfc`). The whole of it 
 | Data that changes every minute or so                     | A provider's `refreshSeconds`       |
 | One caller watching one long run                         | A server action in `mode: 'stream'` |
 | Every page on something to see what any of them did, now | **A channel**                       |
+| State every screen shows, there when a page opens        | **A channel that retains**          |
 
 A channel is two roads, and a space usually needs both:
 
@@ -91,6 +92,35 @@ is on the topic with a revoked grant, on any replica, is let go of it at once: t
 `connected: false`. Getting back in takes a new grant from the action that decides who may. `ctx.revoke(topic, grant)`
 from a deployment's own task.
 
+### State every screen shares: `retain: true`
+
+What the server keeps and every screen shows — a dashboard's lists, a board's settings — is a
+channel declared **`retain: true`**, on which only the server speaks (`publish: 'server'`, which `channelProblems`
+requires: a page that could publish there would rewrite every screen's state unchecked). The server keeps the latest
+message of each **type** on a topic and hands them to every page that joins, so a page needs no read of its own and
+the project no copy in `state`:
+
+```ts
+channels: { desk: { access: { mode: 'session' }, publish: 'server', retain: true } }
+
+await ctx.publish('desk', 'lists', lists); // kept, and said to every page on it
+await ctx.publish('desk', 'lists', null); // forgotten
+
+channel({ id: 'desk', topic: 'desk', children: [lists({ id: 'lists', bind: { lists: 'desk.retained.lists' } })] });
+```
+
+How it holds (`apps/server/src/modules/realtime/retained.ts`):
+
+- **Kept where the grants are**: the store the server's actions use for `kv` (`realtime-retained:<space>:<env>:<topic>`,
+  one JSON value per topic), so every replica hands a joining page the same. Written by compare-and-swap, so two types
+  said at once are both kept; kept before it is said, so a publish refused — over **64 types** or **512 KB** a topic —
+  sends nothing.
+- **Handed after joining**: `hub.connect` subscribes the connection to the topic first and reads what is kept after,
+  so nothing said in between is lost. A message heard live and then handed again arrives twice, in either order; the
+  page keeps the newer of a type by its `at`.
+- **Marked**: every message on such a channel, live or handed on joining, carries `retained: true`. It reaches the
+  page's `onMessage` like any other — a flow that keeps state from messages starts from what is kept.
+
 ---
 
 ## 3. On a page: the `channel` element
@@ -101,7 +131,7 @@ to its source.
 |                       |                                                                                                                                                                                                   |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Attributes            | `topic` — usually a template: `room:{{ id }}` (a route param) · `grant` — for a private channel, what the action that let this visitor in answered · `presence` — the state this page announces (an object from a binding, or JSON) · `keep` — how many messages its source holds (20) |
-| Source `channel_<id>` | `connected`, `me` (this page's name on the channel), `members` (`from`, `user`, `state`, `me`), `messages` (the last `keep`), `last`                                                              |
+| Source `channel_<id>` | `connected`, `me` (this page's name on the channel), `members` (`from`, `user`, `state`, `me`), `messages` (the last `keep`), `last`, `retained` (on a `retain: true` channel: the latest data of each type) |
 | Triggers              | `onMessage` (`type`, `data`, `from`, `user`, `at`), `onJoin`, `onLeave` (`from`, `user`, `state`) |
 | Callbacks             | `publish({ type, data })`, `setPresence({ data })`                                                                                                                                                |
 
@@ -161,6 +191,7 @@ const room = useChannel(roomTopic, { grant, onMessage: message => drawCursor(mes
 room.publish('pointer', { x, y }); // Promise<boolean>: false when refused or offline
 room.members; // who is here, with what they announced
 room.connected; // for a "reconnecting…" state, or to re-read after a drop
+room.retained; // on a `retain: true` channel: the latest data of each type, as state — it re-renders
 ```
 
 A page has **one connection**, whatever listens: every element and plugin share it, and topics mounted together open
@@ -255,6 +286,8 @@ type RealtimeMessage = {
   from: string; // the connection, as the server named it — or 'server'
   user?: { id: number; name: string }; // when the connection carries a session
   at: number; // server time, ms
+  echo?: true; // the sender asked to hear it too
+  retained?: true; // on a `retain: true` channel: kept, and handed again to every page that joins
 };
 ```
 
@@ -262,8 +295,9 @@ type RealtimeMessage = {
 somebody new arrives (`$join`) and every 20 seconds; the server says `$leave` when a connection closes; a member heard
 from in none of those ways for 65 seconds is gone.
 
-**Delivery is at most once**, and nothing is replayed. A page that was disconnected re-reads what it shows — the
-whiteboard's canvas fires `onResync` when its channel comes back, and the page reloads the board.
+**Delivery is at most once**, and nothing is replayed but what a `retain: true` channel keeps — handed again on every
+(re)connection. A page that was disconnected re-reads anything else it shows — the whiteboard's canvas fires `onResync`
+when its channel comes back, and the page reloads the board.
 
 ---
 

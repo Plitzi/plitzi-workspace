@@ -1,11 +1,23 @@
 import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
 
 /**
- * What a run of a server action answers whoever started it — a flow's `runServerAction` step, or a plugin's
- * `useServerAction`. `status` is `completed` or `failed` when it was awaited; `skipped` where no server runs actions.
+ * Where a run stands as its caller hears it: how an awaited one ended (`completed`, `failed`, `aborted`, or `skipped`
+ * where no server runs actions), or that a detached one was `accepted` and a streamed one is `streaming`.
  */
+export type ServerActionStatus = 'completed' | 'failed' | 'skipped' | 'aborted' | 'accepted' | 'streaming';
+
+const ENDED: readonly ServerActionStatus[] = ['completed', 'failed', 'skipped', 'aborted'];
+
+/**
+ * How the server said an awaited run ended — read from its JSON, so a word it never uses is a run that did not
+ * complete, never one that did.
+ */
+export const endedStatusOf = (status: string | undefined): ServerActionStatus =>
+  status === undefined ? 'completed' : (ENDED.find(ended => ended === status) ?? 'failed');
+
+/** What a run of a server action answers whoever started it — a flow's `runServerAction` step, or a plugin's `useServerAction`. */
 export type ServerActionAnswer = {
-  status: string;
+  status: ServerActionStatus;
   runId: string;
   output: Record<string, unknown>;
   /** The server's word for a run it refused or that failed: `forbidden`, `invalid_input`, `duplicate`… */

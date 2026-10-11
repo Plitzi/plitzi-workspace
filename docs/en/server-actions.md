@@ -110,6 +110,12 @@ case (`blog-update-post`), its name and description the task's, and its output t
 given instead; anything more — a second step, an output that leaves fields out, an input that is not the params — is a
 `defineAction`.
 
+**Both are typed for whoever calls them.** `defineAction` keeps the literal fields of its `call` way in, and
+`taskAction` reads the task's `run` — what it takes and, awaited, what it returns (`FunctionTask<T, R>` says both for a
+task declared by its type). `CallInputOf<typeof action>` / `CallOutputOf<typeof action>` (`@plitzi/sdk-shared`) are
+what a plugin's `useServerAction` reads (below). Nothing of it exists at run time: the type rides a phantom field of
+the entry (`TypedActionEntry`), and the document is the same.
+
 `limits` tightens the deployment's ceilings for this action alone (`limits: { timeoutMs: 2000 }`), and widens none.
 
 **Reading one back.** An action saved in the builder reads back into the declaration that writes it:
@@ -304,6 +310,24 @@ its next step boundary — and, once the server has named the run, sends the `DE
 a run that outlives its request.
 
 `actionId` is a parameter, so one element can launch several actions and each trigger filters with its own `when`.
+
+### From a plugin's code: `useServerAction`
+
+A plugin runs an action awaited, typed by its declaration, through the **same** step — the run `ActionInteractions`
+makes for a flow, handed to code through `ServerActionContext` (`@plitzi/sdk-interactions`):
+
+```tsx
+import { useServerAction } from '@plitzi/plitzi-sdk';
+import type { habitDone } from '../../space/actions';
+
+const done = useServerAction<typeof habitDone>('habits-done');
+const result = await done({ id }); // { ok: true, runId, output } | { ok: false, runId, reason, error? }
+```
+
+So it has the step's access, refusals, session handling (a `401` reports the session dead), dev-tools entry and
+`invalidateQueries` (`all` unless the call says `none`). Where nothing runs actions — the builder's canvas, an offline
+render — it answers `{ ok: false, reason: 'skipped' }` and says so in the console. One operation is one action: a
+route with a `switch` over an `op` field checks nothing before the code runs, and types nothing for the page.
 
 A **Cancel Server Action** step stops a run by its id. Every mode gives you one to bind: `await` and `stream`
 return it from the step (a streaming run reports it as soon as the stream opens, which is what makes it

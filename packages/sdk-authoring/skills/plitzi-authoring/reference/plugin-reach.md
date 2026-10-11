@@ -66,7 +66,8 @@ await ctx.publish('desk', 'lists', null);   // forgotten
 channel({ id: 'desk', topic: 'desk', children: [lists({ id: 'lists', bind: { lists: 'desk.retained.lists' } })] })
 ```
 
-`useChannel('desk').retained.lists` is the same value in a plugin, re-rendering when it changes. A page changes it by
+`useChannel('desk').retained.lists` is the same value in a plugin, re-rendering when it changes; what the page is
+handed on joining reaches `onMessage` too, as if just said. A page changes it by
 asking the server (an action), which keeps it and says it. A topic keeps at most 64 types and 512 KB.
 
 ## To other pages, at the speed of a cursor: `useChannel`

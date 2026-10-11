@@ -860,7 +860,7 @@ Pages that see each other — cursors, presence, a shared board, a game. Three p
    \`publish: "server"\` is for what must be validated and saved first; \`"clients"\` (the default) for what pages send
    directly — add \`presence: true\` for who-is-here.
 2. **Subscribe** with a \`channel\` element whose \`topic\` a pattern matches (\`board:{{ id }}\`, a route param).
-   Its descendants bind \`channel_<id>\`: \`connected\`, \`members\`, \`messages\`, \`last\`; flows use its \`onMessage\`,
+   Its descendants bind \`channel_<id>\`: \`connected\`, \`members\`, \`messages\`, \`last\`, \`retained\`; flows use its \`onMessage\`,
    \`onJoin\`, \`onLeave\` triggers (\`from\`, \`user\` and the \`state\` the member announced — \`onJoin\` only for who
    came after this page) and its \`publish\` / \`setPresence\` callbacks.
 3. **Announce from the server**: an action whose last step is the \`realtime.publish\` task — validate, save, then say so.
@@ -871,6 +871,11 @@ A topic no pattern matches is refused by the server and reported by the linter (
 decides the visitor may be there ends with \`realtime.grant { topic }\` and answers its \`grant\`; the \`channel\`
 element binds \`grant\` to it. Without one the topic is refused however well its name is known (\`channel-grant\`).
 \`realtime.revoke { topic, grant }\` takes one back — or all, naming none — and lets go whoever is on it with it.
+
+**State every screen shares** (a dashboard's lists, a board's settings): declare the pattern \`retain: true\` with
+\`publish: "server"\`. The server keeps the latest message of each type it says (\`realtime.publish\`) and hands them to
+every page that joins — and to its \`onMessage\` flows, as if just said; the page binds \`desk.retained.lists\`, with no
+read of its own and no copy in \`state\`. \`data: null\` forgets a type; a topic keeps at most 64 types and 512 KB.
 
 **Two writers at once**: read-change-write with \`kv.setIf\` (written only if the value is still the one read — empty
 \`expected\` = only if nothing is there yet), ordered lists with \`list.put\` / \`list.range\`, and put

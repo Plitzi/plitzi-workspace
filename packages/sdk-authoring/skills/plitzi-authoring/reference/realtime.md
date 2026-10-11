@@ -35,7 +35,8 @@ channel({ id: 'order', topic: 'order:{{ id }}', bind: { grant: 'state.follow.gra
 
 State every screen shows and the server keeps — a dashboard's lists, a board's settings — goes on a channel declared
 `retain: true` (and `publish: 'server'`): the server keeps the latest message of each type, sends it as it is said and
-again to every page that joins, which reads it as `desk.retained.lists` (a plugin, `useChannel('desk').retained`).
+again to every page that joins — and to its `onMessage` flows, as if just said — which reads it as
+`desk.retained.lists` (a plugin, `useChannel('desk').retained`).
 Publishing `null` forgets the type; a topic keeps at most 64 types and 512 KB. No read of its own, no copy in `state`:
 
 ```ts

@@ -39,6 +39,8 @@
   `NOTIFICATION_APPEARANCES`, `NOTIFICATION_DEFAULTS`) is one list in `@plitzi/sdk-shared`, read by both.
 - **`appearance: 'danger'` looks like one** (`@plitzi/plitzi-sdk`): it reached the toast library as a type it does not
   know, so a danger notification showed neither the error icon nor the colour `notifications.danger` sets.
+  A value a notification does not take — from a flow, or a plugin in plain JavaScript — is set aside by name and said
+  in the console, rather than shown as the default in silence (`readNotificationOptions`, `@plitzi/sdk-shared`).
 - **`useServerAction`** (`@plitzi/plitzi-sdk`, `@plitzi/sdk-authoring`, `@plitzi/sdk-interactions`,
   `@plitzi/sdk-server`): a plugin runs one of the space's server actions, awaited —
   `useServerAction<typeof habitDone>('habits-done')({ id })` answers `{ ok, output }` or `{ ok: false, reason, error }`
@@ -46,6 +48,8 @@
   `defineAction` keeps the literal types of its `call` way in, so the input is typed by the fields it declares (the
   required ones required); `taskAction` types both ends from the task's `run`, and `FunctionTask<T, R>` takes what
   `run` answers. `CallInputOf` / `CallOutputOf` read them. One operation is one action, never a `case` in one route.
+  What a run answers is typed (`ServerActionStatus`): a status the server never uses reads as a run that did not
+  complete, never as one that did.
 - **A plugin is drawn on the server first** (docs): a preference per device belongs in kept state (`keepState`,
   `paintedState`) as a bound prop, never read from `localStorage` while rendering — React discards the whole tree on the
   mismatch, and only in the browser of whoever saved something. `@plitzi/plitzi-ui` is not the page's: a plugin
@@ -64,6 +68,9 @@
   a publish past that is refused before anything is sent. State every screen shares is one publish and one binding —
   no kv key, initial read or copy in `state` of the project's own. The fleet store `realtime.grants` is now
   `realtime.kv`.
+- **The MCP writes every field a channel takes** (`@plitzi/sdk-mcp`): `patchSettings`'s channel had no `grant` — which
+  the guide taught — nor `retain` or the limits, so an agent could not declare a private channel at all. All are there
+  now, and the guide says what `retain` is for and that `channel_<id>.retained` holds it.
 
 ## Authoring
 
