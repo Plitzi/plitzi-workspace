@@ -33,9 +33,7 @@ type ActionFieldValue<T extends ActionFieldType> = T extends 'number'
 export type ActionInputOf<Fields extends Readonly<Record<string, ActionField>>> = {
   -readonly [K in keyof Fields as Fields[K]['required'] extends true ? K : never]: ActionFieldValue<Fields[K]['type']>;
 } & {
-  -readonly [K in keyof Fields as Fields[K]['required'] extends true ? never : K]?: ActionFieldValue<
-    Fields[K]['type']
-  >;
+  -readonly [K in keyof Fields as Fields[K]['required'] extends true ? never : K]?: ActionFieldValue<Fields[K]['type']>;
 };
 
 declare const CALL_TYPES: unique symbol;
