@@ -161,8 +161,8 @@ Code and comments are written in **English**; team discussion may be in Spanish.
 English, and RFCs are always English.
 
 The rules that matter — formatting, imports, TypeScript strictness, component layout — are in
-[claude.md](../../claude.md) at the repository root, summarised in [Development](./development.md). Each
-repository carries its own `CLAUDE.md`; read it before your first commit there, because the conventions are not
+[AGENTS.md](../../AGENTS.md) at the repository root, summarised in [Development](./development.md). Each
+repository carries its own `AGENTS.md`; read it before your first commit there, because the conventions are not
 identical (the server has its own spacing and typing rules).
 
 Before opening a PR: `yarn typecheck`, `yarn lint`, and tests for changed behaviour.

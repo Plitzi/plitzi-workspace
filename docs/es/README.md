@@ -31,7 +31,7 @@ Algunos paquetes mantienen su propio README junto al código (en inglés):
 | Español | English |
 |---------|---------|
 | [README.es.md](../../README.es.md) | [README.md](../../README.md) |
-| — | [claude.md](../../claude.md) |
+| — | [AGENTS.md](../../AGENTS.md) |
 | — | [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md) |
 | [CONTRIBUTOR_TOS.es.md](../../CONTRIBUTOR_TOS.es.md) | [CONTRIBUTOR_TOS.md](../../CONTRIBUTOR_TOS.md) |
 | [COMMERCIAL_LICENSE.es.md](../../COMMERCIAL_LICENSE.es.md) | [COMMERCIAL_LICENSE.md](../../COMMERCIAL_LICENSE.md) |

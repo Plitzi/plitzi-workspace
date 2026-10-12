@@ -103,7 +103,7 @@ code have one source. (Whether a step is stored as a patch or as the files it to
 
 ### 5.2 Lessons own no facts
 
-A lesson says *do this, check this* and links to the reference for the why. The rule of the workspace's `CLAUDE.md`
+A lesson says *do this, check this* and links to the reference for the why. The rule of the workspace's `AGENTS.md`
 (§ *Documentation — one owner per fact*) gains the Academy as a surface that owns nothing: when a rule changes it
 changes in its one owner, and the lesson stays right. Nothing in a lesson enumerates a catalogue (elements, steps,
 codes): that is `explain`'s and the reference's, already generated from the code.
@@ -188,7 +188,7 @@ does not change.
 3. **Track 1**, reviewed when complete, with the first fresh-reader pass.
 4. **Tracks 2 and 3**, each reviewed when complete; their projects become templates.
 5. **Wiring.** The website's main nav and landing; a *Learn this in the Academy* line on each reference page; the
-   CLI's message after `create` pointing to lesson 1-1; the release checklist's line (§5.5); the workspace `CLAUDE.md`
+   CLI's message after `create` pointing to lesson 1-1; the release checklist's line (§5.5); the workspace `AGENTS.md`
    surface table (§6).
 
 ## 9. Open questions

@@ -27,7 +27,7 @@ plitzi-workspace/
 ├── docs/
 │   ├── en/            # English documentation
 │   └── es/            # Spanish documentation
-├── claude.md
+├── AGENTS.md / claude.md
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTOR_TOS.md / CONTRIBUTOR_TOS.es.md
 ├── COMMERCIAL_LICENSE.md / COMMERCIAL_LICENSE.es.md
@@ -58,4 +58,4 @@ Packages under `packages/sdk-*` are workspace libraries imported by apps and by 
 | MCP / AI surface | `apps/mcp/README.md` |
 | Backend: API, auth, database | [Plitzi/plitzi-sdk-server](https://github.com/plitzi/plitzi-sdk-server) (separate repository) |
 | Store API (Nexus) | [Plitzi/nexus](https://github.com/Plitzi/nexus) (separate repository) |
-| Code conventions | `claude.md` |
+| Code conventions | `AGENTS.md` |

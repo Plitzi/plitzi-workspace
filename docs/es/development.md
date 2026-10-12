@@ -45,7 +45,7 @@ yarn build:prod
 
 ## Estilo de código (resumen)
 
-Las reglas completas están en [claude.md](../../claude.md) (inglés) en la raíz del repositorio. Puntos clave:
+Las reglas completas están en [AGENTS.md](../../AGENTS.md) (inglés) en la raíz del repositorio. Puntos clave:
 
 - **Prettier**: 120 columnas, 2 espacios, punto y coma, comillas simples, sin comas finales.
 - **ESLint**: TypeScript estricto, `prefer-const`, `curly`, imports ordenados con línea en blanco entre grupos.

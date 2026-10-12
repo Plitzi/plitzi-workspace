@@ -55,7 +55,7 @@ Plitzi is an open-source **web application builder** designed to empower develop
 │  └─ es/               # Spanish documentation
 ├─ LICENSE              # AGPL-3.0 License
 ├─ README.md / README.es.md
-├─ claude.md
+├─ AGENTS.md / claude.md
 ├─ CODE_OF_CONDUCT.md
 ├─ CONTRIBUTOR_TOS.md / CONTRIBUTOR_TOS.es.md
 └─ COMMERCIAL_LICENSE.md / COMMERCIAL_LICENSE.es.md

@@ -66,7 +66,7 @@ Two places a change has to reach that are easy to miss:
 
 ## Code style (summary)
 
-Full rules live in [claude.md](../../claude.md) at the repository root. Highlights:
+Full rules live in [AGENTS.md](../../AGENTS.md) at the repository root. Highlights:
 
 - **Prettier**: 120 columns, 2 spaces, semicolons, single quotes, no trailing commas.
 - **ESLint**: strict TypeScript, `prefer-const`, `curly`, ordered imports with blank lines between groups.

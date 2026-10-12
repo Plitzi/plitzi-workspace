@@ -45,7 +45,7 @@ Some packages maintain their own README next to the source:
 | English | Español |
 |---------|---------|
 | [README.md](../../README.md) | [README.es.md](../../README.es.md) |
-| [claude.md](../../claude.md) | — |
+| [AGENTS.md](../../AGENTS.md) | — |
 | [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md) | — |
 | [CONTRIBUTOR_TOS.md](../../CONTRIBUTOR_TOS.md) | [CONTRIBUTOR_TOS.es.md](../../CONTRIBUTOR_TOS.es.md) |
 | [COMMERCIAL_LICENSE.md](../../COMMERCIAL_LICENSE.md) | [COMMERCIAL_LICENSE.es.md](../../COMMERCIAL_LICENSE.es.md) |

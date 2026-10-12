@@ -162,8 +162,8 @@ El código y los comentarios se escriben en **inglés**; la conversación del eq
 documentación es en inglés por defecto, y los RFC siempre en inglés.
 
 Las reglas que importan — formato, imports, estrictez de TypeScript, estructura de componentes — están en
-[claude.md](../../claude.md) en la raíz del repositorio, resumidas en [Desarrollo](./development.md). Cada
-repositorio lleva su propio `CLAUDE.md`: léelo antes de tu primer commit allí, porque las convenciones no son
+[AGENTS.md](../../AGENTS.md) en la raíz del repositorio, resumidas en [Desarrollo](./development.md). Cada
+repositorio lleva su propio `AGENTS.md`: léelo antes de tu primer commit allí, porque las convenciones no son
 idénticas (el servidor tiene sus propias reglas de espaciado y tipado).
 
 Antes de abrir un PR: `yarn typecheck`, `yarn lint` y tests para el comportamiento que cambies.
