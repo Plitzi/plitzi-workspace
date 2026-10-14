@@ -207,6 +207,11 @@ export const createAuth = (config: AuthConfig) => {
     /** The naming this was built with, so a page server takes it from here instead of being told a second time. */
     cookieConfig: config.cookie,
     /**
+     * The sites this deployment's own pages are served from (`identity.platformOrigins`): a page server counts their
+     * writes as its own (`crossSiteWrites`), as the sign-in check here does.
+     */
+    platformOrigins: config.identity?.platformOrigins ?? [],
+    /**
      * Cross-site request forgery: issuing tokens, writing the readable cookie, and the check. `undefined` when the
      * deployment turned it off. The `/auth` routes below already enforce it.
      */

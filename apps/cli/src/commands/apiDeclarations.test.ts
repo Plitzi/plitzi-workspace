@@ -1,3 +1,4 @@
+/* eslint-disable quotes -- the cases are declaration files, which read best in the other quotes */
 import fs from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';
@@ -5,7 +6,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { apiDeclaration } from './apiDeclarations';
+import { apiDeclarations } from './apiDeclarations';
 
 /** A project whose installed `@plitzi/sdk-authoring` publishes these declarations, typed by the CLI's TypeScript. */
 let root = '';
@@ -34,6 +35,35 @@ beforeEach(async () => {
   await fs.writeFile(path.join(installed, 'package.json'), JSON.stringify({ types: 'dist/index.d.ts' }));
   await fs.mkdir(path.join(installed, 'dist'));
   await fs.writeFile(path.join(installed, 'dist', 'index.d.ts'), DECLARATIONS);
+  const server = path.join(root, 'node_modules', '@plitzi', 'sdk-server');
+  await fs.mkdir(path.join(server, 'dist', 'core'), { recursive: true });
+  await fs.writeFile(
+    path.join(server, 'package.json'),
+    JSON.stringify({
+      exports: {
+        '.': { types: './dist/index.d.ts', import: './dist/index.js' },
+        './handlers': { types: './dist/handlers.d.ts', import: './dist/handlers.js' },
+        './package.json': './package.json'
+      }
+    })
+  );
+  await fs.writeFile(path.join(server, 'dist', 'index.d.ts'), "export { createServer } from './core/createServer';\n");
+  await fs.writeFile(path.join(server, 'dist', 'handlers.d.ts'), "export * from './core/guard';\n");
+  await fs.writeFile(
+    path.join(server, 'dist', 'core', 'createServer.d.ts'),
+    '/** The server this package makes: pages and RSC. */\nexport declare const createServer: (config: object) => void;\n'
+  );
+  await fs.writeFile(
+    path.join(server, 'dist', 'core', 'guard.d.ts'),
+    '/** Refuses a write another site caused. */\nexport declare function originGuard(): void;\n'
+  );
+  const mcp = path.join(root, 'node_modules', '@plitzi', 'sdk-mcp');
+  await fs.mkdir(path.join(mcp, 'dist'), { recursive: true });
+  await fs.writeFile(path.join(mcp, 'package.json'), JSON.stringify({ types: 'dist/index.d.ts' }));
+  await fs.writeFile(
+    path.join(mcp, 'dist', 'index.d.ts'),
+    '/** The lean MCP server. */\nexport declare const createServer: () => void;\n'
+  );
   await fs.writeFile(path.join(root, 'package.json'), '{}');
   const typescript = path.dirname(createRequire(import.meta.url).resolve('typescript/package.json'));
   await fs.symlink(typescript, path.join(root, 'node_modules', 'typescript'));
@@ -43,25 +73,53 @@ afterEach(async () => {
   await fs.rm(root, { recursive: true, force: true });
 });
 
-describe('an export of @plitzi/sdk-authoring, explained from its published types', () => {
+describe('an export of a @plitzi package, explained from its published types', () => {
   it('answers its signature and the first paragraph of its doc', () => {
-    expect(apiDeclaration(root, 'pageFamily')).toEqual({
-      kind: 'api',
-      name: 'pageFamily',
-      summary: 'Pages of one shape, each from its entry.',
-      written: 'const pageFamily: (family: PageFamily, entries: readonly unknown[]) => PageSpec[];'
-    });
+    expect(apiDeclarations(root, 'pageFamily')).toEqual([
+      {
+        kind: 'api',
+        name: 'pageFamily',
+        from: '@plitzi/sdk-authoring',
+        summary: 'Pages of one shape, each from its entry.',
+        written: 'const pageFamily: (family: PageFamily, entries: readonly unknown[]) => PageSpec[];'
+      }
+    ]);
   });
 
   it('answers a name the bundle declared under another by the name it is imported by', () => {
-    expect(apiDeclaration(root, 'Element')).toMatchObject({
+    expect(apiDeclarations(root, 'Element')[0]).toMatchObject({
       summary: 'An element, keyed by the one name it answers to.',
       written: 'type Element = {\n    id: string;\n};'
     });
   });
 
   it('answers one with no doc by its declaration alone, and nothing for a name it does not export', () => {
-    expect(apiDeclaration(root, 'Undocumented')).toMatchObject({ summary: '' });
-    expect(apiDeclaration(root, 'nothingHere')).toBeUndefined();
+    expect(apiDeclarations(root, 'Undocumented')[0]).toMatchObject({ summary: '' });
+    expect(apiDeclarations(root, 'nothingHere')).toEqual([]);
+  });
+
+  it('answers an export of another package, through its re-exports, saying where it is imported from', () => {
+    expect(apiDeclarations(root, 'originGuard')).toEqual([
+      expect.objectContaining({ from: '@plitzi/sdk-server/handlers', summary: 'Refuses a write another site caused.' })
+    ]);
+  });
+
+  it('answers every package that exports the name, never only the first', () => {
+    expect(apiDeclarations(root, 'createServer')).toEqual([
+      {
+        kind: 'api',
+        name: 'createServer',
+        from: '@plitzi/sdk-mcp',
+        summary: 'The lean MCP server.',
+        written: 'const createServer: () => void;'
+      },
+      {
+        kind: 'api',
+        name: 'createServer',
+        from: '@plitzi/sdk-server',
+        summary: 'The server this package makes: pages and RSC.',
+        written: 'const createServer: (config: object) => void;'
+      }
+    ]);
   });
 });

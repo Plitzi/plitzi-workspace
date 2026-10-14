@@ -36,7 +36,12 @@ export type ActionInputOf<Fields extends Readonly<Record<string, ActionField>>> 
   -readonly [K in keyof Fields as Fields[K]['required'] extends true ? never : K]?: ActionFieldValue<Fields[K]['type']>;
 };
 
-declare const CALL_TYPES: unique symbol;
+/**
+ * The key a typed action's input and output ride under, in its type only — nothing holds it at run time. Exported so a
+ * package that emits declarations can name the type of an action it exports (`export const actions = [defineAction(…)]`):
+ * a symbol it cannot import is one its `.d.ts` cannot write (TS4023).
+ */
+export declare const CALL_TYPES: unique symbol;
 
 /**
  * An action whose `call` way in is known to the types — what it takes and what it answers: what `defineAction` and

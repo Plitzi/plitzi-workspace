@@ -9,6 +9,7 @@ import {
   openPage,
   readDevTools
 } from '@plitzi/sdk-authoring';
+import { authorIsolated } from '@plitzi/sdk-authoring/node';
 import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
 
 import { projectHere } from './existingProject';
@@ -62,6 +63,16 @@ export interface CheckOptions {
   as?: string;
   /** Taking part in the page's channels — arriving, announcing itself, sending — as a visitor does. */
   presence?: boolean;
+  /**
+   * Where the project is served, when not by `npm start` here: a second server of it, staging, a deploy. Its pages are
+   * still checked against what the project authors.
+   */
+  url?: string;
+  /**
+   * A space module to hold the pages to instead of the project's — what that other server serves, an agent's page —
+   * authored in a process of its own.
+   */
+  space?: string;
 }
 
 /** The account `verify` signs in as for the pages that send a visitor to sign in: the project's, in `.env`. */
@@ -276,7 +287,21 @@ const projectSpace = async (root: string): Promise<Authored | { problem: string 
   }
 };
 
-/** The page a path is, `:slug` and `{{slug}}` matching any segment. */
+/**
+ * A space module that is not the project's — what another server serves, an agent's page — authored in a process of its
+ * own (`authorIsolated`), since whoever wrote it is not necessarily who runs the check.
+ */
+const moduleSpace = async (file: string): Promise<Authored | { problem: string }> => {
+  const result = await authorIsolated(file);
+  if (!result.ok) {
+    return { problem: `--space ${file} does not author: ${result.message}` };
+  }
+
+  const { handles, schema, style } = result.space;
+
+  return { handles, schema, schemes: SCHEMES.filter(scheme => style.theme.schemes.includes(scheme)) };
+};
+
 /**
  * That no page answers a path, with every path the space's pages answer — a parameter written as it is matched
  * (`/p/:slug`), so the one meant is read off the list rather than guessed from letters.
@@ -298,9 +323,12 @@ const isSplat = (path: string): boolean => path.endsWith('/*');
 /** Where `verify` looks at a page for an address nothing answers: an address under its folder no page has. */
 const NOT_FOUND_PROBE = 'plitzi-check-not-found';
 
-/** The page an address is answered by — as the router picks: every page with a path of its own first, then the "not found" pages, the deepest folder's before the space's. */
+/**
+ * The page an address is answered by — as the router picks: every page with a path of its own first, then the "not
+ * found" pages, the deepest folder's before the space's. By its path alone: a query (`/?v=2`) or a hash names no page.
+ */
 export const pageFor = (handles: SpaceHandles, pathname: string): string | undefined => {
-  const wanted = pathname.replace(/\/$/, '').split('/');
+  const wanted = (pathname.split(/[?#]/)[0] ?? '').replace(/\/$/, '').split('/');
   const answers = (path: string): boolean => {
     const splat = isSplat(path);
     const segments = (splat ? path.slice(0, -2) : path.replace(/\/$/, '')).split('/');
@@ -1235,7 +1263,9 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.scheme ? { scheme: options.scheme } : {}),
     presence: options.presence === true,
     ...(account ? { account } : {}),
-    ...(options.click ? { click: { element: options.click, fill: options.fill ?? [] } } : {})
+    ...(options.click ? { click: { element: options.click, fill: options.fill ?? [] } } : {}),
+    ...(options.url ? { url: options.url } : {}),
+    ...(options.space ? { space: options.space } : {})
   });
   if ('problem' in reports) {
     fail(reports.problem);
@@ -1266,15 +1296,23 @@ export const checkRoutes = async (
     presence?: boolean;
     account?: Account;
     click?: ClickAsk;
+    /** Where the project is served, when not by `npm start` here (`--url`). */
+    url?: string;
+    /** A space module to check the pages against instead of the project's (`--space`). */
+    space?: string;
   }
 ): Promise<CheckReport[] | { problem: string }> => {
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
-  const where = await projectOrigin(project.root, plitzi);
+  const where = await projectOrigin(project.root, plitzi, options.url);
   if ('problem' in where) {
     return where;
   }
 
-  const authored = plitzi?.source === 'local' ? await projectSpace(project.root) : undefined;
+  const authored = options.space
+    ? await moduleSpace(options.space)
+    : plitzi?.source === 'local'
+      ? await projectSpace(project.root)
+      : undefined;
   if (authored && 'problem' in authored) {
     return authored;
   }

@@ -380,7 +380,8 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
         ...(actions ? { lookups: actionLookups(actions, connectors, credentialsFromEnv()) } : {})
       }
     },
-    { preAuth: [spaceFailure.stage, ...(runtime ? [runtime.stage] : [])] }
+    // The runtime's endpoints where the platform forwards a space's: after the auth chain and the cross-site guard.
+    { preAuth: [spaceFailure.stage], data: runtime ? [runtime.stage] : [] }
   );
 
   // Said once the port answers: a tool that waits for "pages on" — or reads `tmp/dev-server.json` — asks right away.

@@ -1,3 +1,4 @@
+import { refusedCrossSite } from './crossSiteWrites';
 import { exchangeStage } from './exchangeRoute';
 import { signInStage } from './signInRoute';
 import { clearSessionCookies, writeSessionCookies } from '../../auth/session';
@@ -38,6 +39,11 @@ export const loginStage: Stage = async ctx => {
   const loginPath = config.loginPath === false ? null : (config.loginPath ?? '/auth/login');
   if (!loginPath || req.method !== 'POST' || req.path !== loginPath) {
     return false;
+  }
+
+  // Login CSRF: another site signing the visitor into an account it controls, so what they do next is recorded there.
+  if (refusedCrossSite(ctx)) {
+    return true;
   }
 
   req.body = await readRawBody(raw);
@@ -81,6 +87,10 @@ export const logoutStage: Stage = async ctx => {
   const logoutPath = config.logoutPath === false ? null : (config.logoutPath ?? '/auth/logout');
   if (!logoutPath || req.method !== 'POST' || req.path !== logoutPath) {
     return false;
+  }
+
+  if (refusedCrossSite(ctx)) {
+    return true;
   }
 
   req.body = await readRawBody(raw);

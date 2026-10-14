@@ -227,6 +227,11 @@ describe('the page an address is answered by', () => {
     expect(pageFor(handles, '/docs/intro')).toBe('docs');
   });
 
+  it('is the page of the path alone: a query or a hash names none', () => {
+    expect(pageFor(handles, '/?__pt=weather')).toBe('home');
+    expect(pageFor(handles, '/p/hello?ref=mail#comments')).toBe('post');
+  });
+
   it('is a page answering a subtree by its own `*`, never the "not found" page', () => {
     expect(pageFor(handles, '/spaces/7/update/pages/home')).toBe('editor');
   });

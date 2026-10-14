@@ -387,8 +387,15 @@ export type SSRAdapters = {
    *  dedicated MCP server renders nothing, reads schema and style through its own adapters, and had to hand this
    *  one over anyway for the type to be satisfied — an adapter it never called. */
   getOfflineData?: (spaceId: number, environment: string, revision?: number) => Promise<OfflineDataRaw | undefined>;
-  /** Which space, environment and revision a request resolves to. Optional here for the same reason as
-   *  `getOfflineData`: MCP resolves its space from the request token (`getGrant`), never from the host. */
+  /**
+   * Which space, environment and revision a request resolves to. Optional here for the same reason as
+   * `getOfflineData`: MCP resolves its space from the request token (`getGrant`), never from the host.
+   *
+   * Asked on EVERY request, not only a page's: what the page fetches after it — `/_plitzi/space/<hash>.json`, `/_action`,
+   * `/fn/…`, `/_realtime` — is resolved again, and carries nothing of the page's address but its host (and the
+   * visitor's credentials). So a space is chosen by the host — a domain, a sub-domain (`wildcardSubdomain`) — or by a
+   * credential (`authoringPreview`): one chosen by the page's path or query is lost on the requests that follow it.
+   */
   getSpaceDeployment?: (req: SSRRequest) => Promise<SSRSpaceDeployment>;
   /** Resolve the grant the MCP request operates under, from the verified `Authorization` bearer. The consumer
    *  owns the JWT secret and the authorization model, so it decides here; the MCP service stays stateless.
@@ -1088,6 +1095,19 @@ export type SSRServerConfig = {
   };
   /** Realtime channels the spaces declare — see {@link SSRRealtimeConfig}. On, in memory, when absent. */
   realtime?: SSRRealtimeConfig;
+  /**
+   * The writes a page on another site may cause here. None, by default: a browser's POST, PUT, PATCH or DELETE that it
+   * says another site caused (`Sec-Fetch-Site: cross-site`, or a foreign `Origin`) is refused 403 `reason: 'foreign'` —
+   * a session cookie or none, because a server holding credentials of its own, or a tool nobody signs in to, acts for
+   * whoever reaches it. A request with `Authorization`, and one that is not a browser's (a webhook, a script), are never
+   * asked. With `auth`, the deployment's `identity.platformOrigins` count as its own too.
+   */
+  crossSiteWrites?: {
+    /** Origins whose pages may write here, exactly as a browser sends them — `https://app.example.com`. */
+    origins?: string[];
+    /** Paths any site may post to: a form other sites embed by design. */
+    paths?: (path: string) => boolean;
+  };
   /** Connector manifest and credential lookups — see {@link ConnectorLookupsConfig}. They serve the RSC read path
    *  and the `/_action` write endpoint alike; without them neither can reach a connector. */
   connectors?: ConnectorLookupsConfig;

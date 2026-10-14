@@ -163,6 +163,10 @@ export const createServer = (
       exchangePath: false,
       ...config,
       authCookie: config.authCookie ?? auth.cookieConfig,
+      crossSiteWrites: {
+        ...config.crossSiteWrites,
+        origins: [...(config.crossSiteWrites?.origins ?? []), ...auth.platformOrigins]
+      },
       pageAuth: config.pageAuth ?? auth.pageAuth,
       adapters: { ...auth.ssrAdapters, ...supplied }
     })

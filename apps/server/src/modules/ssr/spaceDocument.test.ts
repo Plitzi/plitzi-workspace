@@ -76,4 +76,22 @@ describe('modules/ssr/spaceDocument', () => {
   it('answers no other address under its own', async () => {
     expect((await fetch(`${base}/_plitzi/space/a/b.json`)).status).toBe(404);
   });
+
+  it('says why a space it resolves to has no data: the space was chosen by what the request carries', async () => {
+    const port = await unusedPort();
+    const lost = createServer({
+      port,
+      devMode: true,
+      adapters: { ...createJsonAdapters({ offlineData }), getOfflineData: () => Promise.resolve(undefined) }
+    });
+    await lost.listen(port, '127.0.0.1');
+    try {
+      const res = await fetch(`http://127.0.0.1:${String(port)}/_plitzi/space/abc.json`);
+
+      expect(res.status).toBe(404);
+      expect(((await res.json()) as { error: string }).error).toContain('never the page’s path or query');
+    } finally {
+      await lost.close();
+    }
+  });
 });

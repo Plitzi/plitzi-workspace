@@ -193,6 +193,8 @@ plitzi page check / --ssr                       # and what the server's HTML lac
 plitzi page check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
 plitzi page check / --click news-send --fill news-email=ana@example.com   # a form sent as a visitor fills it
 plitzi page check /studio --as maya             # a page for signed-in visitors, signed in through /auth first
+plitzi page check / --url https://staging.example.com   # the project served elsewhere: a second server, staging, a deploy
+plitzi page check "/?__pt=weather" --url https://localhost:8091 --space tmp/pages/weather.ts   # a page not the project's
 plitzi page shot /about --width 390 --scheme dark
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 --sheet   # an interaction, on one sheet
@@ -203,7 +205,9 @@ plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; fr
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
-another project. They wait for the page to settle — loaded, then half a second with nothing asked for — counting no
+another project. `--url` points them at the project served anywhere else — a second server of it, staging, a deploy —
+and `page check --space <module>` holds the pages to that space instead of the project's: what that other server
+serves, a page an agent wrote (authored in a process of its own, `authorIsolated` of `@plitzi/sdk-authoring/node`). They wait for the page to settle — loaded, then half a second with nothing asked for — counting no
 stream that stays open, so a page with a realtime `channel` is checked like any other (`openPage` of
 `@plitzi/sdk-authoring`, which the generated `npm run visual` uses too). `page check` reports every element the space owes the page that is missing or hidden (with why) — and, under a plugin
 that chooses its children (`choosesChildren`), each it draws and what is named inside it — broken
@@ -426,7 +430,7 @@ plitzi explain class-and-css    # a problem's code: what was wrong, what to writ
 plitzi explain content-attribute # a suggestion's code: what is written the long way, and the short one
 plitzi explain bindTemplate     # a helper: how it is written, what it is for, an example
 plitzi explain motion           # the arrivals, triggers and loops the SDK plays
-plitzi explain pageFamily       # any other export of @plitzi/sdk-authoring: its signature and its doc's first line
+plitzi explain pageFamily       # any other export of a @plitzi package installed — createServer is sdk-server's and sdk-mcp's
 plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers
 ```
 

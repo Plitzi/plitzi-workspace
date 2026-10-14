@@ -103,6 +103,10 @@ const DRY_RUN_OPTION = [
   'Say what it would do — files, installs, what it sends — and do none of it'
 ] as const;
 
+/** Where `check` and `shot` find the project's pages when `npm start` here is not where they are. */
+const URL_OPTION =
+  'Where the project is served, when not by npm start here — a second server of it, staging, a deploy: https://host:port';
+
 const API_OPTION = [
   '--api <url>',
   'The platform’s API. Defaults to PLITZI_API_URL, else the one signed in to, else https://api.plitzi.com.'
@@ -346,6 +350,11 @@ pageGroup
     '--presence',
     'Take part in the page’s realtime channels as a visitor does — arrive, announce, send. Otherwise it only watches them'
   )
+  .option('--url <origin>', URL_OPTION)
+  .option(
+    '--space <module>',
+    'Hold the pages to this space module instead of the project’s — what --url serves, an agent’s page — authored in a process of its own'
+  )
   .option('--json', 'One object per page and width, for a tool or an agent')
   .action((paths: string[], options: CheckOptions) => check(paths, options));
 
@@ -431,6 +440,7 @@ pageGroup
     '--presence',
     'Take part in the page’s realtime channels as a visitor does — arrive, announce, send. Otherwise it only watches them'
   )
+  .option('--url <origin>', URL_OPTION)
   .option('--json', 'One object, for a tool or an agent')
   .action((path: string | undefined, options: ShotOptions) => shot(path, options));
 

@@ -152,53 +152,57 @@ const originHost = (origin: string): string | undefined => {
   }
 };
 
+/**
+ * Did this request come from a site this deployment does not recognise — `allowed` naming the origins it does?
+ *
+ * This is what protects signing in, where there is no session to bind a token to and no cookie to look for, and
+ * every write a page server answers, cookie or none (`crossSiteWritesStage`). It rests on two headers a page CANNOT
+ * set — the browser attaches both, and script may not override either:
+ *
+ * - **`Sec-Fetch-Site`** is the browser's own account of where the request came from, and is believed first.
+ *   Anything but `cross-site` (`same-origin`, `same-site`, or `none` for a typed URL) is this deployment's own.
+ *   The browser works that out with the real public suffix list, which is why it is worth more than anything
+ *   derivable here.
+ * - **`Origin`** is the fallback, for a browser too old to send the above — Safari only did from 16.4. Matched
+ *   **exactly**, against this host or an origin the deployment named.
+ *
+ * That exactness is deliberate and was a bug once: this compared *registrable domains*, last-two-labels, the
+ * same helper that scopes the session cookie. It has no public suffix list, so on a deployment at `acme.co.uk`
+ * every other `.co.uk` in the world counted as the same site and could sign a visitor in. Guessing where a
+ * domain boundary falls is not something to do in a security decision — a sibling sub-domain that needs to be
+ * trusted is one line in `allowedOrigins`, which `createAuth` already fills from `identity.platformOrigins`.
+ *
+ * **Neither header means this is not a browser**, and a client that is not a browser cannot be made to forge
+ * anything: there is no victim's session sitting in it. That is what keeps every API client, mobile app and
+ * script signing in with nothing extra to send.
+ */
+export const crossSiteRequest = (carrier: CsrfCarrier, allowed: (origin: string) => boolean = () => false): boolean => {
+  const site = header(carrier, 'sec-fetch-site');
+  const origin = header(carrier, 'origin');
+  const vouched = origin !== undefined && allowed(origin);
+
+  if (site !== undefined) {
+    // The browser has answered the question. `same-origin`, `same-site` and `none` (a typed URL, a bookmark)
+    // are all this deployment's own; a `cross-site` one is foreign unless its origin was explicitly allowed.
+    return site === 'cross-site' && !vouched;
+  }
+
+  if (!origin) {
+    return false;
+  }
+
+  // An opaque origin — a sandboxed iframe, a `data:` document — has no host at all, and nothing can vouch for it.
+  return originHost(origin) !== carrier.hostname && !vouched;
+};
+
 export const createCsrf = (config: CsrfConfig) => {
   const { secret, cookie, allowedOrigins = [] } = config;
 
   const permitted = (origin: string): boolean =>
     typeof allowedOrigins === 'function' ? allowedOrigins(origin) : allowedOrigins.includes(origin);
 
-  /**
-   * Did this request come from a site this deployment does not recognise?
-   *
-   * This is what protects signing in, where there is no session to bind a token to and no cookie to look for. It
-   * rests on two headers a page CANNOT set — the browser attaches both, and script may not override either:
-   *
-   * - **`Sec-Fetch-Site`** is the browser's own account of where the request came from, and is believed first.
-   *   Anything but `cross-site` (`same-origin`, `same-site`, or `none` for a typed URL) is this deployment's own.
-   *   The browser works that out with the real public suffix list, which is why it is worth more than anything
-   *   derivable here.
-   * - **`Origin`** is the fallback, for a browser too old to send the above — Safari only did from 16.4. Matched
-   *   **exactly**, against this host or an origin the deployment named.
-   *
-   * That exactness is deliberate and was a bug once: this compared *registrable domains*, last-two-labels, the
-   * same helper that scopes the session cookie. It has no public suffix list, so on a deployment at `acme.co.uk`
-   * every other `.co.uk` in the world counted as the same site and could sign a visitor in. Guessing where a
-   * domain boundary falls is not something to do in a security decision — a sibling sub-domain that needs to be
-   * trusted is one line in `allowedOrigins`, which `createAuth` already fills from `identity.platformOrigins`.
-   *
-   * **Neither header means this is not a browser**, and a client that is not a browser cannot be made to forge
-   * anything: there is no victim's session sitting in it. That is what keeps every API client, mobile app and
-   * script signing in with nothing extra to send.
-   */
-  const foreign = (carrier: CsrfCarrier, alsoAllowed: readonly string[] = []): boolean => {
-    const site = header(carrier, 'sec-fetch-site');
-    const origin = header(carrier, 'origin');
-    const allowed = origin !== undefined && (permitted(origin) || alsoAllowed.includes(origin));
-
-    if (site !== undefined) {
-      // The browser has answered the question. `same-origin`, `same-site` and `none` (a typed URL, a bookmark)
-      // are all this deployment's own; a `cross-site` one is foreign unless its origin was explicitly allowed.
-      return site === 'cross-site' && !allowed;
-    }
-
-    if (!origin) {
-      return false;
-    }
-
-    // An opaque origin — a sandboxed iframe, a `data:` document — has no host at all, and nothing can vouch for it.
-    return originHost(origin) !== carrier.hostname && !allowed;
-  };
+  const foreign = (carrier: CsrfCarrier, alsoAllowed: readonly string[] = []): boolean =>
+    crossSiteRequest(carrier, origin => permitted(origin) || alsoAllowed.includes(origin));
 
   const nameFor = (hostname: string): string => `${sessionCookieParams(hostname, cookie).name}_csrf`;
 

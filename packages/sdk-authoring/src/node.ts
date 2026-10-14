@@ -358,3 +358,5 @@ export const authorProjectSpace = async (): Promise<AuthoredSpace> => {
 };
 
 export { compactSvg } from './svg/compactSvg';
+export { authorIsolated } from './isolated';
+export type { IsolatedAuthoring, IsolatedOptions } from './isolated';

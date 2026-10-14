@@ -5,6 +5,7 @@ import { rscStage } from './rsc';
 import { spaceDocumentStage } from './spaceDocument';
 import { notFoundStage, ssrStage } from './ssr';
 import { authRoutesStages } from '../http/stages/authRoutes';
+import { crossSiteWritesStage } from '../http/stages/crossSiteWrites';
 import { fontAssetsStage } from '../http/stages/fontAssets';
 import { healthStage } from '../http/stages/health';
 import { imagesStage } from '../http/stages/images';
@@ -35,6 +36,9 @@ export const buildPagePipeline = (
   ];
 
   stages.push(...(extensions.preAuth ?? []));
+
+  // Every stage from here on writes for whoever reaches it, cookie or none: a write another site caused stops here.
+  stages.push(crossSiteWritesStage);
 
   stages.push(createMiddlewaresStage());
 

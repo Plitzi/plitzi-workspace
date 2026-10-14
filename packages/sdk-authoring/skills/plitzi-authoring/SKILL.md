@@ -36,7 +36,7 @@ A space on Plitzi — edited in the builder — is edited through the Plitzi MCP
    when the text is not enough.
 4. **Before saying done:** `npm run lint:space` clean, and the [review checklist](reference/review-checklist.md).
 
-What a name means — an element, a step, a trigger, a code, any export (`pageFamily`, `SpaceSpec`): `npx plitzi explain
+What a name means — an element, a step, a trigger, a code, any `@plitzi` export (`pageFamily`, `createServer`): `npx plitzi explain
 <name>`, in a few lines. Never read the `.d.ts`.
 
 ## Five rules authoring cannot check for you

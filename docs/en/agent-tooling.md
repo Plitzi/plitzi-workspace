@@ -21,7 +21,7 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 | Check | `npm run check` (`plitzi page check`) | Whether a page of the running server is whole, in text: elements on screen, overflow, contrast, console, refused requests, failed flows, bindings reading a path their provider's answer lacks, failed providers, rows per list; `--ssr` names what the server's HTML lacks that the hydrated page has |
 | Inspect | `plitzi page check --state --element <id>` | What the page holds: its state, every source by name and shape, one element's own state and bindings |
 | Look | `plitzi page shot` | A picture (in `tmp/shots/`) — `--compare <url>` against another site: each section where it is there, and the texts both have with what each does differently, measured; `--frames` for what moves; a full page has its lazy pictures loaded and its arrivals shown as they end |
-| Explain | `plitzi explain <name>` | What an element, a step, a problem code or a helper (`bindTemplate`, `motion`…) means, from the catalogues the checks read |
+| Explain | `plitzi explain <name>` | What an element, a step, a problem code or a helper (`bindTemplate`, `motion`…) means, from the catalogues the checks read; any other export of a `@plitzi` package installed, from its published types |
 | Start from | `plitzi page import <url>` | A page the user already has, measured as tokens, an outline and lists to write from |
 
 Text first, pictures second. A screenshot costs thousands of tokens and still has to be looked at; `page check` says what is

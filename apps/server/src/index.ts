@@ -24,6 +24,7 @@ export {
 // `@plitzi/sdk-mcp` — applying unsaved operations is the tool engine's job, not the renderer's.
 export { createLocalFontStore, hostedPathsOf } from './core/fontStore';
 export { createMemoryDraftStore, takeDraftOverride } from './modules/ssr/preview';
+export { createAuthoringHost } from './modules/authoringHost';
 export { createMemoryPubSub } from './modules/realtime/memoryPubSub';
 export { createRedisPubSub } from './modules/realtime/redisPubSub';
 export { PREVIEW_TOKEN_PARAM } from './core/previewToken';
@@ -72,5 +73,6 @@ export type { FontStore, StoredFont } from './core/fontStore';
 export type { PubSubAdapter, SSRRealtimeConfig } from '@plitzi/sdk-shared';
 export type { RedisPubSubClients } from './modules/realtime/redisPubSub';
 export type { ResolvedServices, ServerConfig } from './core/createServer';
+export type { AuthoringHost, AuthoringHostConfig } from './modules/authoringHost';
 export type { Closable, CloseOnSignalsOptions } from './core/server/closeOnSignals';
 export type { BaseContext, PipelineExtensions, SSRContext, Stage } from './core/http/types';

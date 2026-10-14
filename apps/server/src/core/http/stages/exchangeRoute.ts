@@ -1,3 +1,4 @@
+import { refusedCrossSite } from './crossSiteWrites';
 import { writeSessionCookies } from '../../auth/session';
 import { readRawBody } from '../../requestParser';
 
@@ -39,6 +40,11 @@ export const exchangeStage: Stage = async ctx => {
   const exchangePath = config.exchangePath === false ? null : (config.exchangePath ?? '/auth/exchange');
   if (!exchangePath || req.method !== 'POST' || req.path !== exchangePath) {
     return false;
+  }
+
+  // Another site handing over a credential of ITS choosing would sign the visitor into that account.
+  if (refusedCrossSite(ctx)) {
+    return true;
   }
 
   if (!config.adapters.exchangeCredential) {

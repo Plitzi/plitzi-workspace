@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { EXPLAIN_KINDS, explain, explainKindOf, explainList, explanationText } from '@plitzi/sdk-authoring';
 import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project/layout';
 
-import { apiDeclaration, apiText } from './apiDeclarations';
+import { apiDeclarations, apiText } from './apiDeclarations';
 import { findProject } from './existingProject';
 import { pluginText, projectPlugins } from './projectPlugins';
 import { fail } from './terminal';
@@ -14,7 +14,8 @@ import type { Explanation } from '@plitzi/sdk-authoring';
 /**
  * `plitzi explain <name>`: what a name means when authoring a space — an element, a step, a trigger, a problem's code,
  * a transformer, a helper (`bindTemplate`, `scope`, `motion`…) — in a few lines, from the catalogues the checks
- * themselves read; any other export of `@plitzi/sdk-authoring` (`pageFamily`, `SpaceSpec`) by its published declaration. A code is any check's: authoring's, `plitzi space lint`'s own rules (`LINT_RULES`) and the project's
+ * themselves read; any other export of a `@plitzi` package (`pageFamily`, `SpaceSpec`, `createServer`) by its published
+ * declaration. A code is any check's: authoring's, `plitzi space lint`'s own rules (`LINT_RULES`) and the project's
  * layout (`PROJECT_LAYOUT_CODES`, what the server, `npm run author` and `plitzi doctor` hold a project to). `--list
  * steps` names every one of a kind; `--json` answers in one object, for a tool or an agent.
  */
@@ -115,10 +116,10 @@ export const explainCommand = async (name: string | undefined, options: ExplainO
 
   const explanations = explainName(name);
   if (explanations.length === 0) {
-    // Not a name the catalogues hold: an export of the authoring package, read from the types the project installed.
-    const api = apiDeclaration(process.cwd(), name);
-    if (api) {
-      console.log(options.json ? JSON.stringify([api]) : apiText(api));
+    // Not a name the catalogues hold: an export of a @plitzi package, read from the types the project installed.
+    const api = apiDeclarations(process.cwd(), name);
+    if (api.length > 0) {
+      console.log(options.json ? JSON.stringify(api) : api.map(apiText).join('\n\n'));
 
       return;
     }
@@ -136,7 +137,7 @@ export const explainCommand = async (name: string | undefined, options: ExplainO
 
     fail(
       [
-        `"${name}" is no element, step, trigger, code, transformer, helper or export of @plitzi/sdk-authoring. See what there is: --list ${kinds}.`,
+        `"${name}" is no element, step, trigger, code, transformer or helper, nor an export of a @plitzi package installed here. See what there is: --list ${kinds}.`,
         `A name of the project's own code is read where it is written: \`grep -rn "${name}" src/\`.`
       ].join('\n')
     );

@@ -54,4 +54,28 @@ describe('projectOrigin', () => {
     });
     expect(fetched).not.toHaveBeenCalled();
   });
+
+  it('is the address given with --url, whatever npm start recorded, and asks nothing of it', async () => {
+    const fetched = answering({ Server: 'blog' });
+    vi.stubGlobal('fetch', fetched);
+
+    expect(
+      await projectOrigin(await projectAt({ port: 8081, name: 'shop' }), undefined, 'https://localhost:8091/')
+    ).toEqual({ origin: 'https://localhost:8091' });
+    expect(fetched).not.toHaveBeenCalled();
+  });
+
+  it('refuses a --url that is not where a server answers, naming what it takes', async () => {
+    const root = await projectAt();
+
+    expect(await projectOrigin(root, undefined, 'localhost:8091')).toEqual({
+      problem: '--url takes an http or https address, not localhost:'
+    });
+    expect(await projectOrigin(root, undefined, 'nonsense')).toEqual({
+      problem: '--url takes where the server answers — https://staging.example.com — not "nonsense".'
+    });
+    expect(await projectOrigin(root, undefined, 'https://localhost:8091/p?v=1')).toEqual({
+      problem: '--url is only where the server answers; the page is the path: /p?v=1 --url https://localhost:8091'
+    });
+  });
 });

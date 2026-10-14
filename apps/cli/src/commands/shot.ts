@@ -61,6 +61,8 @@ export interface ShotOptions {
   /** The space's theme. Left out, the space's own default — and the file is named by the one painted. */
   scheme?: Scheme;
   out?: string;
+  /** Where the project is served, when not by `npm start` here: a second server of it, staging, a deploy. */
+  url?: string;
   compare?: string;
   frames?: number;
   every?: number;
@@ -656,7 +658,11 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  const where = await projectOrigin(project.root, project.plitzi?.kind === 'project' ? project.plitzi : undefined);
+  const where = await projectOrigin(
+    project.root,
+    project.plitzi?.kind === 'project' ? project.plitzi : undefined,
+    options.url
+  );
   if ('problem' in where) {
     fail(where.problem);
 

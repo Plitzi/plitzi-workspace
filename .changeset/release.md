@@ -18,7 +18,27 @@
 '@plitzi/sdk-variables': patch
 ---
 
+## Security
+
+- **A write another site caused is refused, cookie or none** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`): the page
+  server guarded nothing it answers past `/auth` — a server action (`/_action`), a realtime publish, a space's `/fn/`
+  route, its runtime's endpoints, the deployment's own `data` stages, the adapter-only `loginPath`, `logoutPath` and
+  `exchangePath`. A plain `text/plain` POST from any page open in the same browser ran them, with the visitor's session
+  cookie when there was one (`SameSite=None` off this machine) and, in a project nobody signs in to, as whoever holds
+  the server's own credentials. Every unsafe request a browser says another site caused (`Sec-Fetch-Site: cross-site`,
+  or a foreign `Origin`) is now refused `403 reason: 'foreign'`, saying how to allow it: `crossSiteWrites.origins`
+  (with `auth`, `identity.platformOrigins` too) and `crossSiteWrites.paths` for a form other sites post to by design.
+  `Authorization`, and callers that are not browsers — webhooks, scripts — pass as before. One rule for this and the
+  sign-in check (`crossSiteRequest`, `csrf.ts`). A self-hosted runtime's endpoints now sit where the platform forwards a
+  space's — after the auth chain and this guard (`data`, was `preAuth`).
+
 ## Testing
+
+- **`page check` and `page shot` anywhere the project is served** (`@plitzi/cli`): `--url <origin>` for a second server
+  of it, staging or a deploy, instead of `npm start`'s port; `page check --space <module>` holds the pages to that space
+  instead of the project's — an agent's page — authored with `authorIsolated`.
+- **A route with a query is checked as its page** (`@plitzi/cli`): `page check "/?v=2"` matched the query as part of
+  the path, found no page, and checked the space's "not found" page in its place.
 
 - **What an element that chooses its children draws is checked** (`@plitzi/sdk-authoring`, `@plitzi/cli`): with
   `choosesChildren`, the page checks owed none of its children — and checked none of them either: a dashboard drawing
@@ -50,6 +70,9 @@
   `run` answers. `CallInputOf` / `CallOutputOf` read them. One operation is one action, never a `case` in one route.
   What a run answers is typed (`ServerActionStatus`): a status the server never uses reads as a run that did not
   complete, never as one that did.
+  The key those types ride under (`CALL_TYPES`) is exported, by `@plitzi/sdk-shared` and `@plitzi/sdk-authoring` with
+  `TypedActionEntry`, `CallInputOf` and `CallOutputOf`: a package that emits declarations could not write the type of an
+  action it exports (`TS4023` on every `export const actions = [defineAction(…)]`).
 - **A plugin is drawn on the server first** (docs): a preference per device belongs in kept state (`keepState`,
   `paintedState`) as a bound prop, never read from `localStorage` while rendering — React discards the whole tree on the
   mismatch, and only in the browser of whoever saved something. `@plitzi/plitzi-ui` is not the page's: a plugin
@@ -73,6 +96,25 @@
   now, and the guide says what `retain` is for and that `channel_<id>.retained` holds it.
 
 ## Authoring
+
+- **`plitzi explain` knows every `@plitzi` package installed** (`@plitzi/cli`): a name that was not
+  `@plitzi/sdk-authoring`'s (`createServer`, `createJsonAdapters`, `useChannel`) was answered as the project's own code,
+  to `grep` in `src/`. It is read from the published types of every one installed, through their re-exports and entry
+  points (`@plitzi/sdk-server/handlers`), and a name two packages export — `createServer` is sdk-server's and sdk-mcp's
+  — is answered with both.
+
+- **A space module somebody else wrote, authored where it reaches nothing** (`@plitzi/sdk-authoring`):
+  `authorIsolated(file, { timeoutMs })` of `@plitzi/sdk-authoring/node` runs `authorSpace` on it in a process Node's
+  permission model holds to reading the module's folder and its packages — no file written, no process started, no
+  variable of the caller's environment — kills one that runs too long, and validates what it answers again, so a forged
+  answer gains nothing. A refusal comes back as `authorSpace` says it, with the problems as data.
+- **Pages an agent writes, served** (`@plitzi/sdk-server`): `createAuthoringHost({ dir, frameAncestors })` serves each
+  space it is handed at an address of its own (`put(space, { id }) → /?__pt=<id>`) as a draft of its one space, kept in
+  `dir` across restarts; `drop(id)` forgets one, and anything else answers `404` saying where the pages are.
+- **A space is chosen by host or credential** (`@plitzi/sdk-server`, docs): `getSpaceDeployment` is asked on every
+  request, and what a page fetches after it carries nothing of its address but the host — a space chosen by the page's
+  query or path lost everything it asked for, and `/_plitzi/space/<hash>.json` answered a bare `404`. The contract and
+  the README say so (the README offered "by path prefix"), and that `404` says why.
 
 - **`plitzi explain on` says how to read what a trigger carries** (`@plitzi/sdk-authoring`): its doc sat above a
   helper, so `explain` printed only the signature. It now leads with `[named('picked', on('onPick')), …('{{ picked.seat

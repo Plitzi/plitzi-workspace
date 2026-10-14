@@ -87,7 +87,13 @@ export const handleSpaceDocument = async (
       : await config.adapters.getOfflineData(spaceId, environment, revision);
     if (!offlineData) {
       res.setStatus(404);
-      res.end();
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.send(
+        JSON.stringify({
+          error: `This request resolves to space ${String(spaceId)} (${environment}), which has no data: getSpaceDeployment chose it from what this request carries — its host and credentials, never the page’s path or query`,
+          reason: 'not_found'
+        })
+      );
 
       return;
     }

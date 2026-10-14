@@ -80,6 +80,9 @@ export type {
   ActionLimits,
   BindingCategory,
   BindingTransformer,
+  CALL_TYPES,
+  CallInputOf,
+  CallOutputOf,
   ChannelDeclaration,
   ChannelDeclarations,
   ColorScheme,
@@ -142,6 +145,7 @@ export type {
   SystemFont,
   TagType,
   Theme,
+  TypedActionEntry,
   WhileRunning
 } from '@plitzi/sdk-shared';
 export type {

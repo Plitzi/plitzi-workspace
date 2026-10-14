@@ -189,15 +189,45 @@ const readHealth = (origin: string): Promise<unknown> => {
 };
 
 /**
- * Where the project's server answers: where `npm start` said it does — scheme included, `https` for a project serving
- * a certificate — on `PORT` when that is set, else the mode's default; and, when `npm start` named itself, that what
- * answers there is this project. Something else on the port answers too, with a page and a `200`, and a picture of the
+ * An address given for the project's server (`--url`): the project served somewhere other than `npm start`'s port — a
+ * second server of it, a staging deploy, the published site. Only where it answers: which page is the path argument's.
+ */
+export const givenOrigin = (url: string): { origin: string } | { problem: string } => {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return { problem: `--url takes where the server answers — https://staging.example.com — not "${url}".` };
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return { problem: `--url takes an http or https address, not ${parsed.protocol}` };
+  }
+
+  if (parsed.pathname !== '/' || parsed.search || parsed.hash) {
+    return {
+      problem: `--url is only where the server answers; the page is the path: ${parsed.pathname}${parsed.search} --url ${parsed.origin}`
+    };
+  }
+
+  return { origin: parsed.origin };
+};
+
+/**
+ * Where the project's server answers: `--url` when it was given (see {@link givenOrigin}); else where `npm start` said it
+ * does — scheme included, `https` for a project serving a certificate — on `PORT` when that is set, else the mode's
+ * default; and, when `npm start` named itself, that what answers there is this project. Something else on the port answers too, with a page and a `200`, and a picture of the
  * wrong server looks like one of the right one.
  */
 export const projectOrigin = async (
   root: string,
-  project: PlitziProject | undefined
+  project: PlitziProject | undefined,
+  url?: string
 ): Promise<{ origin: string } | { problem: string }> => {
+  if (url !== undefined) {
+    return givenOrigin(url);
+  }
+
   const server = await recorded(root);
   const where = new URL(server.url ?? 'http://127.0.0.1');
   where.port = String(process.env.PORT ?? server.port ?? (project?.mode === 'client' ? 5173 : 8080));

@@ -39,7 +39,10 @@ export const runtimeEndpointsStage = (endpoints: Record<string, SpaceRuntimeEndp
 export type ServedRuntime = {
   /** Its tasks and routes, for `functions.native`. */
   native: FunctionsDefinition[];
-  /** Its endpoints, for `preAuth` — they gate themselves, as the platform's forwarding does. */
+  /**
+   * Its endpoints, for `data` — where the platform forwards a space's: behind the auth chain and the cross-site guard,
+   * gating who may call them themselves.
+   */
   stage: Stage<SSRContext>;
   close: () => Promise<void>;
 };

@@ -24,7 +24,7 @@ npx plitzi element remove ent-trust                     # an element taken out, 
 npx plitzi element move ent-faq --before ent-pricing    # an element put elsewhere among its siblings
 npx plitzi verify                               # left passing? author, lints, types, tests, format, pages
 npx plitzi page check -- /about --width 1440,390     # whether a page is whole, in text
-npx plitzi explain navigate                     # what a name means: element, step, code, any export
+npx plitzi explain navigate                     # what a name means: element, step, code, any @plitzi export
 npx plitzi doctor                               # whether the project is whole; --fix the simple parts
 npx plitzi cert                                 # HTTPS for a phone on the Wi-Fi (with HOST=0.0.0.0)
 npx plitzi upgrade                              # the project up to this CLI (--write)

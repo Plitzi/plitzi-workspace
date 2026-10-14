@@ -366,8 +366,13 @@ createServer({ adapters: { ...spaces.adapters, getOfflineData } });
 **Resolvers are an ordered list**, and the order is the policy. Each returns a resolution, a refusal, or nothing —
 and the difference between the last two is the point: a refusal ENDS the chain, so a request that tried to act for
 a space and failed is never quietly served as an anonymous visitor of whatever else that host resolves to. Three
-are built in and a fourth is `(req) => …` of your own, which is how a deployment that identifies tenants by header,
-by path prefix or by a table nobody else has still gets everything below.
+are built in and a fourth is `(req) => …` of your own, which is how a deployment that identifies tenants by a header
+its proxy sets or by a table nobody else has still gets everything below.
+
+**A space is chosen by host or credential, never by the page's path or query.** `getSpaceDeployment` is asked on every
+request, and what a page fetches after it — `/_plitzi/space/<hash>.json`, `/_action`, `/fn/…`, `/_realtime` — carries
+nothing of the page's address but its host: a space chosen by `?space=` or `/s/<id>/` renders its first page and then
+loses everything it asks for. Many spaces on one server are a sub-domain each (`wildcardSubdomain`).
 
 | Built in | What it is |
 |---|---|
@@ -390,6 +395,39 @@ What it decides for you:
 a single-process deployment. `invalidate.resolution(host)` and `invalidate.domains(spaceId)` drop what a change made
 untrue, which matters the moment an owner edits a domain list: until then the old framing policy stands, and a TTL
 is not a security boundary.
+
+## Pages an agent writes (`createAuthoringHost`)
+
+A product where an agent designs the screen — a dashboard's panel, a page a visitor asks for — authors a space module
+per page and needs it served with the quality of a project's, without trusting what the module does. Two pieces:
+
+```ts
+import { authorIsolated } from '@plitzi/sdk-authoring/node';
+import { createAuthoringHost } from '@plitzi/sdk-server';
+
+const host = createAuthoringHost({ dir: 'state/pages', port: 8091, tls, frameAncestors: ['https://localhost:8080'] });
+await host.server.listen(8091, '0.0.0.0');
+
+const result = await authorIsolated('tmp/pages/weather.ts');   // its own process: reads the module and its packages, nothing else
+if (result.ok) {
+  const { path } = host.put(result.space, { id: 'weather' });   // `/?__pt=weather`, kept in state/pages/weather.json
+} else {
+  reply(result.message);                                         // a refusal reads as authorSpace's: every problem, located
+}
+```
+
+- **`authorIsolated`** authors the module in a process Node's permission model holds to reading the module's folder and
+  the packages it imports: no file written, no process or worker started, no variable of the caller's environment. A
+  module that runs too long is killed (`timeoutMs`), and what it answers is validated again in the caller, so one that
+  forges its answer gains nothing. Before Node 25 the permission model leaves the network open: serve the result on an
+  origin of its own, never the app's.
+- **`createAuthoringHost`** serves each page as a draft of its one space, at the address `put` answers — the way a page
+  server tells many spaces apart on one host (a space is chosen by host or credential, never by path). The page
+  arrives with its whole space, navigation is the browser's, and a reload that lost the address finds it in the draft's
+  cookie. So a page here is data and its look: no server provider, action, function or channel of its own. Anything
+  but a page it holds answers `404`, saying where they are.
+- **Checked like a project's page:** `plitzi page check "/?__pt=weather" --url https://localhost:8091 --space
+  tmp/pages/weather.ts` — the CLI's whole check (elements on screen, hydration, console, contrast) against that module.
 
 ## JSON adapters (offline mode)
 
@@ -1250,6 +1288,30 @@ needs the secret, and a token minted for one session is refused for another. A r
 There is nothing to configure: the secret, the cookie scope and the origins all come from what you already told
 `createAuth`. Turn it off entirely with `csrf: false`. Outside this package, `createCsrfMiddleware` from
 `@plitzi/sdk-server/handlers` applies the same check to your own routes.
+
+#### The page server's own writes
+
+Everything a page server answers past its self-gating flows — server actions (`/_action`), realtime publishes, a
+space's `/fn/` routes, its runtime's endpoints, your own `data` stages, and the adapter-only `loginPath`, `logoutPath`
+and `exchangePath` — refuses a write that a browser says **another site caused**, with `403` and `reason: 'foreign'`.
+**Whether or not a session cookie came with it**: a server holding credentials of its own (a token for somebody's
+calendar, an API key) or a tool nobody signs in to acts for whoever reaches it, and a plain `text/plain` POST from any
+page open in the same browser reaches it without a preflight.
+
+The same two headers decide, under the same rules: what passes is a safe method, anything with `Authorization`, a
+caller that is not a browser (a webhook, `curl`), a page of this site (`same-origin`, `same-site`), and what you name:
+
+```ts
+createServer({
+  adapters,
+  crossSiteWrites: {
+    // Exactly as a browser sends them. With `auth`, `identity.platformOrigins` are added for you.
+    origins: ['https://app.example.com'],
+    // A form other sites post to by design.
+    paths: path => path === '/fn/newsletter'
+  }
+});
+```
 
 ### `SSRUser`
 
