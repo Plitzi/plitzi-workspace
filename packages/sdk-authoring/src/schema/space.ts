@@ -2112,15 +2112,7 @@ class SpaceAuthor {
     // Under an element that chooses which of them to show, every one is shown under a condition only it knows.
     const childrenAbove = aboveChildren(conditional, shownWith, this.choosesChildren(element));
     children?.forEach((child, index) =>
-      this.addElement(
-        child,
-        `${identity}/${index}`,
-        placeOf(child, place, index),
-        ownRootId,
-        id,
-        childrenAbove,
-        tree
-      )
+      this.addElement(child, `${identity}/${index}`, placeOf(child, place, index), ownRootId, id, childrenAbove, tree)
     );
 
     return id;

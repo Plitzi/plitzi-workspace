@@ -44,7 +44,9 @@ const useServerAction = <Action = unknown, Output = CallOutputOf<Action>>(
   return useCallback(
     async (input, options = {}) => {
       if (!run) {
-        console.warn(`[plitzi] useServerAction: nothing on this page runs server actions, so "${actionId}" was skipped`);
+        console.warn(
+          `[plitzi] useServerAction: nothing on this page runs server actions, so "${actionId}" was skipped`
+        );
 
         return { ok: false, runId: '', reason: 'skipped' };
       }

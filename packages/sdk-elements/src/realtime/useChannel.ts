@@ -47,10 +47,7 @@ export type ChannelHandle = {
  * What is kept with `message` taken in: the newer of a type holds — a message heard live and then handed again as the
  * page joined arrives twice, in either order — and `null` forgets the type.
  */
-const keptWith = (
-  kept: Record<string, RealtimeMessage>,
-  message: RealtimeMessage
-): Record<string, RealtimeMessage> => {
+const keptWith = (kept: Record<string, RealtimeMessage>, message: RealtimeMessage): Record<string, RealtimeMessage> => {
   if (Object.hasOwn(kept, message.type) && kept[message.type].at > message.at) {
     return kept;
   }
