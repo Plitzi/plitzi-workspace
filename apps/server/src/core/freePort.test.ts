@@ -59,3 +59,25 @@ describe('freePort', () => {
     );
   });
 });
+
+describe('unusedPort', () => {
+  // Every outgoing connection and every `listen(0)` takes a port of the system's ephemeral range: one handed out there
+  // can be taken by a test beside it before this one listens.
+  it('is a port the system never hands out by itself, that nobody holds', async () => {
+    const port = await unusedPort();
+
+    expect(port).toBeGreaterThanOrEqual(10_000);
+    expect(port).toBeLessThan(32_768);
+    expect(await occupy(port, '127.0.0.1')).toBe(true);
+  });
+
+  it('passes over a port somebody listens on', async () => {
+    const taken = new Set<number>();
+    for (let index = 0; index < 20; index += 1) {
+      const port = await unusedPort();
+      expect(taken.has(port)).toBe(false);
+      await occupy(port, '127.0.0.1');
+      taken.add(port);
+    }
+  });
+});

@@ -1,7 +1,7 @@
 import { connect, createServer } from 'node:net';
 
 /** Whether something already answers at `port` — the one test that sees a listener on every address, not just `host`. */
-const answers = (port: number, host: string): Promise<boolean> =>
+export const portAnswers = (port: number, host: string): Promise<boolean> =>
   new Promise(resolve => {
     const socket = connect({ port, host });
     socket.once('connect', () => {
@@ -12,7 +12,7 @@ const answers = (port: number, host: string): Promise<boolean> =>
   });
 
 /** Whether this process could listen at `port` on `host`. */
-const bindable = (port: number, host: string): Promise<boolean> =>
+export const portBindable = (port: number, host: string): Promise<boolean> =>
   new Promise(resolve => {
     const probe = createServer();
     probe.once('error', () => resolve(false));
@@ -31,7 +31,7 @@ const bindable = (port: number, host: string): Promise<boolean> =>
  */
 export const freePort = async (preferred: number, host = '127.0.0.1', attempts = 20): Promise<number> => {
   for (let port = preferred; port < preferred + attempts; port += 1) {
-    if (!(await answers(port, host)) && (await bindable(port, host))) {
+    if (!(await portAnswers(port, host)) && (await portBindable(port, host))) {
       return port;
     }
   }

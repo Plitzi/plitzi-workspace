@@ -64,6 +64,13 @@
   now the problem (`src/space/hero.ts:139: Expected "}" but found ";"`), the project's root matched as given and as it
   is on disk (`/var/…` and `/private/var/…` on macOS).
 
+## Testing
+
+- **`unusedPort` is chosen where the system never hands one out** (`@plitzi/sdk-server`): it answered a port the system
+  had just handed out (`listen(0)`), from the ephemeral range every outgoing connection takes its local port from — so
+  another worker's request could take it before the test listened, and CI failed `runtime.test.ts` with `EADDRINUSE`
+  (the page server then ends the process). It is a free port below that range now, at random, checked first.
+
 ## Docs
 
 - **A self-hosted runtime's endpoints go in `data`**, as 0.38.15 moved them: `docs/en/runtimes.md`, the

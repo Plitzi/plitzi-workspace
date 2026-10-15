@@ -469,6 +469,9 @@ desktop) are never versioned. See `docs/en/releases.md`.
 - Tests that go through the outbound fetch guard mock DNS (`vi.mock('node:dns/promises', …)`); CI has slow/no DNS.
 - Multi-worker (fleet) tests start every worker and wait until all listen (`startServing(n)`); loops that ask workers
   are bounded by time, never by a request count. Fix the helpers, not one test.
+- A test listens on `await unusedPort()` (`@plitzi/sdk-server`): a free port BELOW the ephemeral range. Never a fixed
+  number nor `listen(0)`'s — another worker's outgoing connection takes ports from that range, and the listen then
+  fails `EADDRINUSE` (a server without `onListenError` ends the process).
 - A sleep is safe only where lateness helps (TTL past expiry); where an upper bound must hold, wait on the event.
 - Whole-app renders (desktop) take `{ timeout: 10_000 }`.
 - `e2e/mock/graphql.ts` answers `true` to unknown operations: a new query the builder reads on boot needs a handler.
