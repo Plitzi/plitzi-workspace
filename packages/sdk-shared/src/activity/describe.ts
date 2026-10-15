@@ -26,8 +26,16 @@ const headline = (summary: string): string => {
  */
 export const activityLine = (activity: SpaceActivity): string => {
   switch (activity.kind) {
-    case 'change':
-      return `${byWhom(activity.author.name)} ${ORIGIN_WORDS[activity.origin] ?? activity.origin}, ${activity.document} #${String(activity.seq)}: ${headline(activity.summary)}`;
+    case 'change': {
+      // An agent is named by its application, for the member it writes for — as the builder shows it. A builder
+      // change's `client` is a tab's id, which names nobody.
+      const who =
+        activity.origin === 'mcp' && activity.client
+          ? `${activity.client} for ${byWhom(activity.author.name)}`
+          : byWhom(activity.author.name);
+
+      return `${who} ${ORIGIN_WORDS[activity.origin] ?? activity.origin}, ${activity.document} #${String(activity.seq)}: ${headline(activity.summary)}`;
+    }
     case 'publish':
       return activity.message;
     case 'action': {

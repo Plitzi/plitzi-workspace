@@ -18,6 +18,25 @@ describe('activityLine', () => {
     ).toBe('ana in the builder, schema #41: Changed the content of text “hero” (+1 more)');
   });
 
+  it('names an agent by its application, for the member it writes for — never a builder tab by its id', () => {
+    const change = {
+      kind: 'change' as const,
+      at: 0,
+      seq: 3,
+      document: 'schema' as const,
+      author: { userId: 3, name: 'ana' },
+      summary: 'Changed content of heading “hero”',
+      touched: ['hero']
+    };
+
+    expect(activityLine({ ...change, origin: 'mcp', client: 'Claude' })).toBe(
+      'Claude for ana over the MCP, schema #3: Changed content of heading “hero”'
+    );
+    expect(activityLine({ ...change, origin: 'builder', client: 'd31cac71' })).toBe(
+      'ana in the builder, schema #3: Changed content of heading “hero”'
+    );
+  });
+
   it('names nobody as somebody, and a change with no summary as a change', () => {
     expect(
       activityLine({

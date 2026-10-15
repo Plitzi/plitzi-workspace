@@ -52,7 +52,8 @@
     `client` for an agent, which was never set. A collaborator may be an agent (`SubscriptionCollaborator.agent`): the
     builder draws it as a robot, names it `Claude · for ana` (`collaboratorTitle`) in the header, on the canvas and in
     its notices. The deployment announces it — Plitzi's joins it on a write, selects what it changed, and lets it go
-    after a minute of nothing.
+    after a minute of nothing. `activityLine` names it the same way (`Claude for ana over the MCP, …`), so
+    `plitzi space activity` says which application wrote.
   - A tool may declare `documents: false` (`ToolSpec`): the host loads none of the space for it, and passes the call's
     abort signal through `ToolContext.activity`.
 
