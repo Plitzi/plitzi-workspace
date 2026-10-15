@@ -7,6 +7,7 @@ import type { Env, Persisters } from '../../types';
 import type { McpUiToolMeta } from '@modelcontextprotocol/ext-apps';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ActionRunReport } from '@plitzi/sdk-shared';
+import type { SpaceActivityPage, SpaceActivityQuery } from '@plitzi/sdk-shared/activity';
 import type { ZodObject, ZodRawShape } from 'zod';
 
 /** Everything a tool needs at call time: the loaded space, the target environment, and the persisters (only the
@@ -27,6 +28,8 @@ export interface ToolContext {
   /** Runs one task of the space's functions in the sandbox, for the person behind the connection — when the host
    *  wired it. Only plitzi_try_function uses it. */
   tryFunction?: (task: string, params: Record<string, unknown>) => Promise<ActionRunReport>;
+  /** What happened on the space after a cursor, waited for — when the host wired it. Only plitzi_activity uses it. */
+  activity?: (query: SpaceActivityQuery) => Promise<SpaceActivityPage>;
 }
 
 /** Build the MCP CallToolResult for an image-returning tool: a text meta block followed by one image block per
@@ -58,6 +61,9 @@ export interface ToolSpec<Shape extends ZodRawShape> {
   /** The tool operates on no space (plitzi_render authors a throwaway one), so the host must NOT resolve a spaceId
    *  or load a space for it — that keeps it callable with no auth, on the public surface. */
   spaceless?: boolean;
+  /** The tool reads none of the space's documents (plitzi_activity): the host resolves the space but loads nothing of
+   *  it, and the context's `space` is the empty placeholder. A call that waits must not read the whole space first. */
+  documents?: false;
   /** MCP Apps: link this tool to an interactive UI resource (a `ui://` HTML page the host renders in a sandboxed
    *  iframe, receiving the tool result). Registered as the tool's `_meta.ui` — see registerAppTool. */
   ui?: McpUiToolMeta;
@@ -80,6 +86,7 @@ export interface ToolDef {
   carriesOperations?: boolean;
   compactInputShape?: ZodRawShape;
   spaceless?: boolean;
+  documents?: false;
   ui?: McpUiToolMeta;
   execute: (args: unknown, ctx: ToolContext) => unknown;
   /** Present when the tool degrades to a space-less connection (see ToolSpec.runPublic); its absence is what tells
@@ -103,6 +110,7 @@ export const defineTool = <Shape extends ZodRawShape>(spec: ToolSpec<Shape>): To
     carriesOperations: spec.carriesOperations,
     compactInputShape: spec.compactInputShape,
     spaceless: spec.spaceless,
+    documents: spec.documents,
     ui: spec.ui,
     execute: (args, ctx) => spec.run(parse(args), ctx),
     ...(runPublic ? { executePublic: (args: unknown, env: Env) => runPublic(parse(args), env) } : {})

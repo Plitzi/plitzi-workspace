@@ -132,7 +132,9 @@ the space, with every rule a function's call meets.
 
 ## 5. Self-hosted: the same module
 
-A server of your own loads the module with `serveRuntime` — its functions natively, its endpoints as a stage:
+A server of your own loads the module with `serveRuntime` — its functions natively, its endpoints as a stage in the
+`data` slot: where the platform forwards a space's, behind the auth chain and the cross-site guard, each endpoint
+gating who may call it itself:
 
 ```ts
 import { createServer } from '@plitzi/sdk-server';
@@ -143,7 +145,7 @@ import runtime from './runtime';
 const served = await serveRuntime(runtime, { env: process.env, publicUrl: 'https://boards.example.com' });
 const server = createServer(
   { /* … */ functions: { native: served.native }, action: { /* … */ } },
-  { preAuth: [served.stage] }
+  { data: [served.stage] }
 );
 ```
 

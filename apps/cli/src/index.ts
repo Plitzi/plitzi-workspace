@@ -2,6 +2,7 @@ import { Option, program } from 'commander';
 
 import { SCHEMES } from './browser';
 import { login, logout, space, whoami } from './commands/account';
+import { activity } from './commands/activity';
 import addPlugin from './commands/addPlugin';
 import addRuntime from './commands/addRuntime';
 import { move, remove } from './commands/arrange';
@@ -33,6 +34,7 @@ import { elements } from './commands/spaceReading';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
 import { verify } from './commands/verify';
+import { watchPass, watchSpace } from './commands/watch';
 import { where, WHERE_READINGS } from './commands/where';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
@@ -43,6 +45,7 @@ import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
 
 import type { AccountOptions, WhoamiOptions } from './commands/account';
+import type { ActivityOptions } from './commands/activity';
 import type { AddPluginOptions } from './commands/addPlugin';
 import type { AddRuntimeOptions } from './commands/addRuntime';
 import type { MoveOptions, RemoveOptions } from './commands/arrange';
@@ -66,6 +69,7 @@ import type { ShotOptions } from './commands/shot';
 import type { UpgradeOptions } from './commands/upgrade';
 import type { UploadPluginOptions } from './commands/uploadPlugin';
 import type { VerifyOptions } from './commands/verify';
+import type { WatchOptions } from './commands/watch';
 import type { WhereOptions } from './commands/where';
 import type { DoctorOptions } from './doctor';
 import type { FeedbackOptions } from './feedback';
@@ -569,6 +573,30 @@ spaceGroup
   .addOption(new Option('--max-warnings <n>', 'More warnings than this fail (exit 1)').argParser(count))
   .option('--json', 'One object: { scope, notChecked, findings }, for a tool or an agent')
   .action((options: LintOptions) => lint(options));
+
+spaceGroup
+  .command('watch')
+  .description(
+    'The space read again on every save, and only what changed said: what the save did to it element by element, the problems it brought and fixed — or why it stopped authoring'
+  )
+  .option('--json', 'One event a line — ready, pass, refused — for an agent to run in the background')
+  .action((options: WatchOptions) => watchSpace(options));
+
+// What `space watch` reads each pass with, in a fresh process: not a command for a person.
+spaceGroup.command('watch-pass', { hidden: true }).action(() => watchPass());
+
+spaceGroup
+  .command('activity')
+  .description(
+    'What happened on the space: the draft changed (a person in the builder, an agent, the autofix), a version went out, an action failed — your own pushes left out'
+  )
+  .option('-f, --follow', 'Stay, and say each as it happens: what an agent runs in the background to hear of them')
+  .option('--after <cursor>', 'From where a previous read left off — the cursor it gave — not from the latest')
+  .option('--mine', 'Keep your own pushes too')
+  .addOption(new Option('--limit <n>', 'At most this many a page').argParser(positiveInteger))
+  .option('--json', 'One page as one object — with --follow, one a line as it arrives — for a tool or an agent')
+  .option(...API_OPTION)
+  .action((options: ActivityOptions) => activity(options));
 
 const skills = program.command('skills').description('The Plitzi skills an agent reads in .claude/skills/');
 

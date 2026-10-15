@@ -793,7 +793,10 @@ has this lease lapsed, may this retry be claimed — is made against it, never a
 cluster spread across time zones and machines whose clocks drift; absolute instants minted by a caller do not.
 `enqueue` must be idempotent by id and answer whether it created the job — that alone is what makes a fire happen
 exactly once with several replicas producing — and `claim` must be atomic and must also reclaim jobs whose lease
-has lapsed.
+has lapsed. `cancelPending({ spaceId, key, olderThan? })` is what a `later` job with a `key` stands on: it drops the
+space's jobs waiting under that key and answers how many — with `olderThan`, only those enqueued before that job (earlier,
+or the same instant with a smaller id), so of two set at once the newer is left on every replica — and never a running
+one, which is usually the run that set the next.
 
 Schedules are rows derived from the action documents. Call `reconcile(spaceId)` whenever a space's actions change
 — the deployment is the only thing that knows when that is — and the periodic pass over `listScheduledSpaces`

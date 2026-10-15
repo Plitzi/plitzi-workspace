@@ -21,6 +21,7 @@ import type { SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
 import type { FontHead, Style } from './StyleTypes';
+import type { ActivityReader, SpaceActivityPage, SpaceActivityQuery } from '../activity/types';
 import type { FlagOverrides } from '../flags/resolveFlags';
 import type { SpaceChange } from '../history/types';
 import type { IncomingHttpHeaders } from 'node:http';
@@ -475,6 +476,15 @@ export type SSRAdapters = {
   /** The space's change history, read-only: what every writer saved, and for whom. When omitted, the MCP offers no
    *  history resource. */
   getChanges?: (spaceId: number, environment: Environment, query: SSRChangeQuery) => Promise<SSRChangePage>;
+  /** What happened on the space after a cursor — the draft changed, a version went out, an action failed — waiting up
+   *  to `query.wait` seconds when nothing has yet. `reader` is who asks, so their own writes can be left out; `signal`
+   *  ends the wait when the client goes. When omitted, the MCP offers no `plitzi_activity`. */
+  getActivity?: (
+    spaceId: number,
+    query: SpaceActivityQuery,
+    reader: ActivityReader,
+    signal?: AbortSignal
+  ) => Promise<SpaceActivityPage>;
   /** Who this request carries, if anyone. The adapter reads the credential and resolves it; the cookie it arrived
    *  in was written by the server, from {@link SSRAuthCookie}. */
   getUser?: (req: SSRRequest) => Promise<SSRUser | undefined>;

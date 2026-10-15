@@ -3,6 +3,7 @@ import { createServer } from 'node:http';
 import { gunzipSync } from 'node:zlib';
 
 import type { Environment } from '@plitzi/sdk-shared';
+import type { SpaceActivityPage } from '@plitzi/sdk-shared/activity';
 import type { SpaceExport, SpaceImport } from '@plitzi/sdk-shared/source';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -75,6 +76,11 @@ export interface FakePlatform {
     /** Every push it took, as it arrived. */
     imports: SpaceImport[];
   };
+  /**
+   * Space 3's activity: the pages it answers, one a request, in order — then nothing new, at the cursor asked from — and
+   * the query each request asked with. A cursor `made-up` is refused, as the platform refuses one it did not give out.
+   */
+  activity: { pages: SpaceActivityPage[]; asked: string[] };
   close: () => Promise<void>;
 }
 
@@ -294,6 +300,20 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
         }
 
         res.writeHead(204).end();
+      } else if (url.pathname === '/spaces/3/activity' && req.method === 'GET') {
+        platform.activity.asked.push(url.search);
+        const after = url.searchParams.get('after') ?? 'c0';
+        if (after === 'made-up') {
+          json(res, 400, {
+            error: 'The cursor is not one this server gave out: read the activity again without `after` to get one.'
+          });
+        } else {
+          json(
+            res,
+            200,
+            platform.activity.pages.shift() ?? { activity: [], cursor: after, more: false, waitedMs: 0, skippedMine: 0 }
+          );
+        }
       } else if (url.pathname === '/spaces/3/functions/try' && req.method === 'POST') {
         const sent = JSON.parse(body.toString()) as { task: string; params: unknown };
         platform.tried.push(sent);
@@ -389,6 +409,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     assets: {},
     tried: [],
     runtime: { pushed: [], variables: new Map() },
+    activity: { pages: [], asked: [] },
     pizarra: {
       pages: { 'index.ts': 'export const pizarra = {};\n' },
       dependencies: {},

@@ -1,3 +1,4 @@
+import { activityTool } from './activity';
 import { applyTool } from './apply';
 import { describeOperationTool } from './describeOperation';
 import { addPageTool, bindAttributeTool, placeComponentTool, setAttributesTool, setClassesTool } from './intents';
@@ -29,7 +30,8 @@ export const tools: ToolDef[] = [
   readTool,
   renderTool,
   lookTool,
-  tryFunctionTool
+  tryFunctionTool,
+  activityTool
 ];
 
 export type { ToolContext, ToolDef } from './shared/tool';

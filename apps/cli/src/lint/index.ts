@@ -269,9 +269,19 @@ export const reportText = (report: LintReport): string => {
   return lines.join('\n');
 };
 
-/** The project to lint, or why there is none — said. */
-const projectToLint = async (): Promise<{ root: string; name: string; mode: 'server' | 'client' } | undefined> => {
-  const project = await projectHere('whose space to lint');
+/** A project whose space is written in it: what `lint` and `space watch` read. */
+export interface SpaceProject {
+  root: string;
+  name: string;
+  mode: 'server' | 'client';
+}
+
+/** The project whose space `command` reads, or why there is none — said, `doing` naming what it is for. */
+export const spaceProject = async (
+  command = 'plitzi space lint',
+  doing = 'whose space to lint'
+): Promise<SpaceProject | undefined> => {
+  const project = await projectHere(doing);
   if (!project) {
     return undefined;
   }
@@ -287,7 +297,7 @@ const projectToLint = async (): Promise<{ root: string; name: string; mode: 'ser
 
   if (project.plitzi?.kind !== 'project' || project.plitzi.source !== 'local') {
     fail(
-      `plitzi space lint reads a space written in the project — ${SPACE_ENTRY}, as \`plitzi create --source local\` writes it. A space kept on Plitzi is read in the builder or over the MCP.`
+      `${command} reads a space written in the project — ${SPACE_ENTRY}, as \`plitzi create --source local\` writes it. A space kept on Plitzi is read in the builder or over the MCP, and followed with \`plitzi space activity\`.`
     );
 
     return undefined;
@@ -299,13 +309,14 @@ const projectToLint = async (): Promise<{ root: string; name: string; mode: 'ser
   return { root, name, mode: project.plitzi.mode };
 };
 
-export const lint = async (options: LintOptions): Promise<void> => {
-  const project = await projectToLint();
-  if (!project) {
-    return;
-  }
-
-  const { root, name, mode } = project;
+/**
+ * Every finding about the space's source — the source rules', and what authoring suggests about the space it authors to
+ * — and how many files it was read from. One reading for `lint` and the passes of `space watch`.
+ */
+export const spaceFindings = async ({
+  root,
+  mode
+}: SpaceProject): Promise<{ findings: LintFinding[]; files: number }> => {
   const ts = loadTypeScript(root);
   const source = ts
     ? await lintSpaceSource(ts, {
@@ -337,7 +348,19 @@ export const lint = async (options: LintOptions): Promise<void> => {
         ]
       : await authoringFindings(root))
   ];
-  const report = reportOf({ root, name, entry: SPACE_ENTRY, files: source.files }, findings, {
+
+  return { findings, files: source.files };
+};
+
+export const lint = async (options: LintOptions): Promise<void> => {
+  const project = await spaceProject();
+  if (!project) {
+    return;
+  }
+
+  const { root, name } = project;
+  const { findings, files } = await spaceFindings(project);
+  const report = reportOf({ root, name, entry: SPACE_ENTRY, files }, findings, {
     strict: Boolean(options.strict),
     maxWarnings: options.maxWarnings
   });

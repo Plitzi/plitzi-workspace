@@ -16,4 +16,5 @@ export * from './theme';
 export * from './server';
 export * from './state';
 export * from './history';
+export * from './activity';
 export * from './flags';

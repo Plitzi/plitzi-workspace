@@ -44,6 +44,7 @@ export const serverInstructions =
   'Build pages people can use without sight: screen readers and browser agents (Claude in Chrome) work a page ' +
   'through its accessibility tree, so every control needs words and clicks go on buttons and links — see ' +
   'Accessibility in plitzi://guide, and plitzi_look (its accessibility outline, the default view) to check. ' +
+  'On a space people edit too, plitzi_activity says — and waits for — what they changed since you last looked. ' +
   'Separately, to SHOW the user a small self-contained widget (offline, no space or backend) instead of editing ' +
   'the space — a card, hero, pricing table, a visual answer — use plitzi_render; read plitzi://render/guide for it.';
 
@@ -311,6 +312,12 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   the way to SEE overflow and misalignment (desktop, mobile or \`both\`); \`"both"\` image and outline. A change not
   saved yet is seen with \`plitzi_apply\`'s \`dryRun\` and \`look\`, the same views. It needs the SSR render service
   (\`PREVIEW_UNAVAILABLE\` without it); without a browser, an image or an outline falls back to the HTML, said.
+- \`plitzi_activity { after, wait }\` — what happened on the space since you last looked: the draft changed (a person
+  in the builder, another agent, the autofix — \`seq\` is its place in \`plitzi://changes/{env}\`), a version went
+  out, a server action failed or was refused. The first call, without \`after\`, answers the latest and a \`cursor\`;
+  pass it back as \`after\` and the call waits up to \`wait\` seconds (45, at most 50) until something happens. Your own
+  writes are left out and counted (\`skippedMine\`; \`mine: true\` keeps them). On a space people edit too, call it
+  before a write that rests on what you read earlier. A site's token reads no activity (\`MEMBER_GRANT_REQUIRED\`).
 - \`plitzi_render\` — a different job: show the user a self-contained widget built offline. It never touches the space.
 
 ## Suggestions — the same page with fewer elements

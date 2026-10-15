@@ -4,7 +4,8 @@ description: >-
   Use the Plitzi command line (@plitzi/cli, `plitzi …` or `npx @plitzi/cli …`) instead of hand-writing what it
   generates: scaffold a project that renders a space, add plugins to it or build a plugin package, pack, upload and
   install one, edit a space's functions, take a space on Plitzi out as a self-hosted project and back (`create --from`,
-  `space pull`, `space push`), check a project (`doctor`) or how its space's source is written (`space lint`), and
+  `space pull`, `space push`), check a project (`doctor`) or how its space's source is written (`space lint`), follow
+  what each save does (`space watch`) and what others do on the space (`space activity`), and
   write a report to Plitzi of what broke, misled or cost time (`feedback`). Use whenever the task is to start a Plitzi
   project, create or change a plugin, pack, upload or install one, pull/push/try a space's functions, move a space to a
   server of its own and back, work out which space the CLI is connected to — or when the person asks for a report,
@@ -23,6 +24,8 @@ npx plitzi element edit hero-cta --set content="Hi"     # an attribute written t
 npx plitzi element remove ent-trust                     # an element taken out, with what only it used
 npx plitzi element move ent-faq --before ent-pricing    # an element put elsewhere among its siblings
 npx plitzi verify                               # left passing? author, lints, types, tests, format, pages
+npx plitzi space watch --json                   # in the background: what each save did to the space, a line each
+npx plitzi space activity --follow --json       # what others do on the space: edits, versions out, actions failing
 npx plitzi page check -- /about --width 1440,390     # whether a page is whole, in text
 npx plitzi explain navigate                     # what a name means: element, step, code, any @plitzi export
 npx plitzi doctor                               # whether the project is whole; --fix the simple parts
@@ -36,6 +39,9 @@ npx plitzi feedback                             # a report to Plitzi, for the pe
 - **Which check.** All of it before you finish: `verify` — only what fails is printed. The space alone: `npm run
   author`; a page: `page check`. The project around them: `doctor`, before `space push`. Pages for signed-in visitors
   are checked as the account `.env` names (`PLITZI_CHECK_USER`, `PLITZI_CHECK_PASSWORD`); `verify` says when none is.
+- **Be told, don't ask again.** While you edit `src/space/`, run `space watch --json` in the background: each save
+  answers with what it changed, the problems it brought and fixed, or why the space stopped authoring. On a space
+  people edit too, `space activity --follow --json` says their edits and the actions that fail as they happen.
 - **`create` never decides for the person.** With nobody at the terminal it writes nothing and prints each choice as a
   question: ask the user, then run again with their answers as flags. Never guess them.
 - **Signing in happens in the browser** (`login`, `space use`, a first `plugin upload`): tell the person a tab is waiting.

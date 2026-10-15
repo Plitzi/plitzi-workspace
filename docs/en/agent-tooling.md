@@ -15,6 +15,7 @@ How to write a space is the `plitzi-authoring` skill (`packages/sdk-authoring/sk
 | --- | --- | --- |
 | Write | `npm run author` | Whether the space authors: one line when it does, every problem at once (file, line, what to change) when not — and, under the warnings, the suggestions: a shorter way to the same page, with the elements it saves |
 | Lint | `npm run lint:space` (`plitzi space lint`) | How the space's source is written, eslint's way, at file:line: files too long, pages in one file, rows of data written in code, colours that are not tokens, CSS copied, a row singled out in a `map`, minted ids, files nothing imports — beside authoring's suggestions at the line that wrote them. `--max-warnings 0` for CI |
+| Watch | `npx plitzi space watch --json`, in the background | Every save answered with what it did: the space's changes element by element, the findings and warnings it brought and fixed — or that the space stopped authoring and why. `author` and `lint` without asking, one line an event |
 | Upgrade | `npx plitzi upgrade [files\|packages\|skills\|renames]` | The project brought up to the CLI it has: the CLI's files (replaced where nobody changed them, a diff where somebody did), `package.json` merged, the skills, every renamed name at its line; `--write` makes it |
 | Project | `npx plitzi doctor` | Whether the project the CLI set up is whole, after moving or rewiring files and before a push: where each part lives, packages, the CLI's files and scripts, configs, what Node runs, plugin folders, data files, functions — each problem with its file and fix. Never the space: that is `author`'s. `--fix` repairs the simple ones |
 | Repair | `npx plitzi space fix` | The problems — and the suggestions — with a single reading, as a diff of the author's own source; `--write` applies and re-checks |
@@ -104,6 +105,26 @@ Linux it is deployed to, so names are read as they are written, never looked up)
 `space lint` does not repeat them — one line that there are some, pointing at `doctor`. While `start:dev` runs, a plugin
 folder added broken is said in the terminal and the server goes on: a project half-written is the normal state while
 writing it.
+
+### `space watch`: told, in deltas
+
+An agent's loop was edit, `author`, `lint`, read both reports whole, find what moved — a few thousand tokens a save to
+learn that one attribute changed. `space watch` answers each save with that difference alone, as `--json` lines an
+agent's harness turns into one notification each (Claude Code's `Monitor`; any harness can read the lines of a
+process it started). Its shape follows from that:
+
+- **Each pass is a process of its own** (`plitzi space watch-pass`, hidden): the modules of `src/space/` are imported,
+  and Node answers a second import of a file with the copy it loaded first. The pass reads the space as `author` does,
+  and `space lint`'s findings through the same `spaceFindings` — one reading, two commands.
+- **Deltas, never the report again.** A finding is the same one when only its line moved (`code`, file and message are
+  its identity), so an edit above it is not "one fixed, one new". The space's changes are `spaceEffects`, the reading
+  `element edit` checks its own edits with. After a refusal the next good pass is read against the last pass that
+  authored, so fixing a typo is not "every element added".
+- **Not pages.** The project's server restarts on the same save, and nothing says when it serves the new space; a
+  check run then would read the old one or none. `page check` stays the command for a page.
+
+The space on Plitzi has the same need from the other side — a person editing in the builder while an agent works — and
+the same kind of answer: [activity](./activity.md), a cursor and a wait.
 
 ## Left open
 

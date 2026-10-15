@@ -54,6 +54,26 @@
       "types": "./dist/actions/validateDocument.d.ts",
       "import": "./dist/actions/validateDocument.mjs"
     },
+    "./activity": {
+      "types": "./dist/activity/index.d.ts",
+      "import": "./dist/activity/index.mjs"
+    },
+    "./activity/describe": {
+      "types": "./dist/activity/describe.d.ts",
+      "import": "./dist/activity/describe.mjs"
+    },
+    "./activity/guard": {
+      "types": "./dist/activity/guard.d.ts",
+      "import": "./dist/activity/guard.mjs"
+    },
+    "./activity/index": {
+      "types": "./dist/activity/index.d.ts",
+      "import": "./dist/activity/index.mjs"
+    },
+    "./activity/types": {
+      "types": "./dist/activity/types.d.ts",
+      "import": "./dist/activity/types.mjs"
+    },
     "./auth": {
       "types": "./dist/auth/index.d.ts",
       "import": "./dist/auth/index.mjs"

@@ -102,6 +102,7 @@ calls as a small one:
 | `plitzi_look` | See a saved page: its accessibility outline (default), its HTML, or an image |
 | `plitzi_render` | Show the user an offline widget; never touches the space |
 | `plitzi_try_function` | Run one task of the space's [functions](./functions.md) against the draft, in the sandbox: its value, logs and error |
+| `plitzi_activity` | What happened on the space since a cursor — edits by people and other agents, versions out, actions failing — waited for; see [activity](./activity.md) |
 
 Every tool that only reads is marked `readOnlyHint` (from its `access`), so a host can run it without asking and ask
 before the ones that change something — `plitzi_apply`, the intent tools and `plitzi_try_function`.

@@ -511,6 +511,8 @@ export const noSpaceErrorCode = 'NO_SPACE_ATTACHED';
 
 export const readOnlyGrantErrorCode = 'READ_ONLY_GRANT';
 
+export const memberGrantErrorCode = 'MEMBER_GRANT_REQUIRED';
+
 // What an agent hears when it asks for something living in a space on a connection that carries none. A connection
 // without a space is not advertised the space tools at all (see createMcpServer), so this is the answer to the
 // residual cases: a host replaying a tool list it cached, a token that expired mid-session, and the URIs
@@ -545,5 +547,21 @@ export class ReadOnlyGrantError extends Error {
   constructor() {
     super(readOnlyGrantMessage);
     this.name = 'ReadOnlyGrantError';
+  }
+}
+
+// What an agent hears when it asks what happens on a space through a site's credential. The render token every
+// published page embeds reads the pages, as any visitor does; who edits the space and which of its actions fail is
+// what its members see, and a credential anybody can lift from a page must not tell it.
+export const memberGrantMessage =
+  'What happens on this space — who edits it, what goes out, which actions fail — is for an agent a member of the ' +
+  'space connected. This connection carries a site’s credential (render or host), which reads its pages only. To ' +
+  'follow the space, the user must connect the integration as a member of it.';
+
+/** Raised when a member's reading runs under a site's credential. A STATE of the connection, like the two above. */
+export class MemberGrantError extends Error {
+  constructor() {
+    super(memberGrantMessage);
+    this.name = 'MemberGrantError';
   }
 }

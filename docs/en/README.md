@@ -23,6 +23,7 @@ Guides for working with the `plitzi-workspace` monorepo.
 | [Realtime channels](./realtime.md) | Pages that see each other: declaring channels, the `channel` element and `useChannel`, publishing from a server action, state every screen shares (`retain`), and the pub/sub adapter a deployment picks |
 | [Accessibility and browser agents](./accessibility.md) | Pages screen readers and browser agents (Claude in Chrome) can use: what the elements do, what an author says, the linter's rules, canvases, and checking a page |
 | [AI agents (MCP)](./mcp.md) | Connecting Claude or any MCP client to a space: what an agent can do, how it works a space, and what the server guarantees |
+| [Space activity](./activity.md) | What happened on a space after a cursor — edits, versions out, actions failing — read off the records the platform keeps and waited for: what `plitzi_activity` and `plitzi space activity --follow` follow a space by |
 | [Change history](./history.md) | Every save of a space's schema and style — who, from where, what exactly — read in the builder's timeline or over MCP |
 | [Fonts](./fonts.md) | What a space loads type from: the manifest, the four sources, hosting faces yourself, and what a deployment configures |
 | [Motion](./motion.md) | Good practices for animation: what moves cheaply, what stutters while a page loads, and how to keep decoration out of the way |

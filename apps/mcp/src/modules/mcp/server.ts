@@ -9,6 +9,8 @@ import {
   emptySpace,
   emptySpaceMessage,
   isCallToolResult,
+  memberGrantErrorCode,
+  MemberGrantError,
   noSpaceErrorCode,
   NoSpaceError,
   readOnlyGrantErrorCode,
@@ -136,7 +138,8 @@ export const createMcpServer = async ({
     deleteAction,
     saveFunctions,
     tryFunction,
-    saveData
+    saveData,
+    getActivity
   } = adapters;
   // A stateless server builds itself per request, and a request is one tool call: everything it writes is one batch.
   const write: SSRWriteContext = { userId: grant?.userId, batch: randomUUID() };
@@ -176,18 +179,37 @@ export const createMcpServer = async ({
   // settings are the deployment's, not the connection's, and only change what the page hands the view.
   registerApps(server, { streaming: renderStreaming, proxyEndpoint: proxy?.endpoint });
 
+  // Who edits a space and which of its actions fail is its members' to see: never a site's credential, which anybody
+  // viewing the site can lift from its page.
+  const requireMemberSpaceId = (): number => {
+    const id = requireSpaceId();
+    if (grant?.scope !== 'agent') {
+      throw new MemberGrantError();
+    }
+
+    return id;
+  };
+
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
-  // tool's descriptor, so a new tool is picked up here with no per-tool wiring.
-  const toolContext = async (tool: string): Promise<ToolContext> => ({
-    space: await getSpace(),
+  // tool's descriptor, so a new tool is picked up here with no per-tool wiring. `signal` ends with the call: a wait
+  // the client gave up on is not waited out.
+  const toolContext = async (tool: ToolDef, signal: AbortSignal): Promise<ToolContext> => ({
+    space: tool.documents === false ? emptySpace() : await getSpace(),
     env: MCP_ENV,
     persisters,
     spaceId: requireSpaceId(),
     preview,
     screenshot,
-    proxy: proxyForTool(proxy, tool),
+    proxy: proxyForTool(proxy, tool.name),
     ...(tryFunction
       ? { tryFunction: (task, params) => tryFunction(requireWritableSpaceId(), task, params, write) }
+      : {}),
+    // The agent's own writes are recorded as the MCP's, for the member it acts for (see `SSRWriteContext`).
+    ...(getActivity
+      ? {
+          activity: query =>
+            getActivity(requireMemberSpaceId(), query, { userId: grant?.userId, origin: 'mcp' }, signal)
+        }
       : {})
   });
 
@@ -204,13 +226,13 @@ export const createMcpServer = async ({
 
   // What a tool does on THIS connection: its own behavior when a space is attached; its public one (or nothing at
   // all, so it is never advertised) when none is.
-  const behaviorOf = (tool: ToolDef): ((args: unknown) => unknown) | undefined => {
+  const behaviorOf = (tool: ToolDef): ((args: unknown, signal: AbortSignal) => unknown) | undefined => {
     if (tool.spaceless) {
       return args => tool.execute(args, spacelessContext(tool.name));
     }
 
     if (hasSpace) {
-      return async args => tool.execute(args, await toolContext(tool.name));
+      return async (args, signal) => tool.execute(args, await toolContext(tool, signal));
     }
 
     return tool.executePublic ? args => tool.executePublic?.(args, MCP_ENV) : undefined;
@@ -227,10 +249,10 @@ export const createMcpServer = async ({
   const operationsCarried = listed.some(({ tool }) => tool.carriesOperations);
 
   for (const { tool, behavior } of listed) {
-    const run = async (args: unknown) => {
+    const run = async (args: unknown, { signal }: { signal: AbortSignal }) => {
       const start = performance.now();
       try {
-        const result = await behavior(args);
+        const result = await behavior(args, signal);
         log.toolCall(tool.name, args, performance.now() - start);
 
         return isCallToolResult(result) ? result : asText(result);
@@ -246,6 +268,10 @@ export const createMcpServer = async ({
         // Same reasoning: a read-only bearer is a state of the connection, not a broken server.
         if (error instanceof ReadOnlyGrantError) {
           return asText({ error: readOnlyGrantErrorCode, message: error.message });
+        }
+
+        if (error instanceof MemberGrantError) {
+          return asText({ error: memberGrantErrorCode, message: error.message });
         }
 
         throw error;

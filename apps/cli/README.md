@@ -13,7 +13,8 @@ npx @plitzi/cli plugin upload                  # that zip, on the space you work
 ## What every command does the same way
 
 - **The answer goes to stdout; everything else to stderr** — errors, and the prompts on the way (sign in, open this
-  address). So `--json`, where a command has it, prints one object on one line and nothing more.
+  address). So `--json`, where a command has it, prints one object on one line and nothing more — or, for one that
+  stays (`space watch`, `space activity --follow`), one object a line as each happens.
 - **It exits 1 when it did not do what it was asked**, with why in red; a check that found something wrong exits 1 too.
 - **A value that is not one is refused**, saying what the flag takes — a width out of range, a scheme that is not
   `light` or `dark`, a count of 0 — never quietly turned into the default.
@@ -390,6 +391,53 @@ lint's own codes:
 It is not whether the space authors — what it refuses and warns of is `npm run author`'s — nor a page as it renders
 (`page check`), nor the project around the space (`doctor`); every report says so (`notChecked`). Exit code 1 while anything
 is an error; with `--strict` a warning too, with `--max-warnings <n>` more than n of them.
+
+## `space watch`
+
+```bash
+plitzi space watch          # the space read again on every save, and only what changed said
+plitzi space watch --json   # one event a line: ready, pass, refused — for an agent to run in the background
+```
+
+The space read again every time a file of `src/space/`, `src/plugins/`, `src/data/` or `public/data/` is saved — each
+pass in a process of its own, as `npm run author` reads it — and only what changed said:
+
+| Event | When | What it carries |
+|---|---|---|
+| `ready` | once, when it starts | whether the space authors (or why not), how many elements, every warning and finding, the folders watched |
+| `pass` | a save after which the space authors | the files saved, what the save did to the space element by element (`hero.content: "Hi" → "Hello"`, `cta (button) added`), the findings and warnings it brought and fixed, how many are left — and `unchanged: true` when the save changed nothing |
+| `refused` | a save after which the space does not author | why, as `npm run author` says it (`[id-taken] … src/space/pages/home.ts:64`), and the findings it brought and fixed |
+| `error` | a pass that could not run | why |
+
+The findings are `space lint`'s, authoring's suggestions among them; a finding that only moved down its file is the
+same one, not one fixed and one new. After a refusal, the save that fixes it is said against the space before it broke.
+Saves 300 ms apart are one pass, and a save made while a pass reads waits for the next. With `--json` an agent runs it
+in the background and is told what each edit did, instead of running `author` and `lint` after every one.
+
+Not a page as it renders — the project's server restarts on the same save, and `page check` is what looks at one — nor
+the project around the space (`doctor`).
+
+## `space activity`
+
+```bash
+plitzi space activity                  # what happened on the space lately, a line each
+plitzi space activity --follow         # stay, and say each as it happens
+plitzi space activity --follow --json  # one page a line as it arrives: { activity, cursor, more, waitedMs, skippedMine }
+plitzi space activity --after <cursor> # from where a previous read left off
+```
+
+What happened on the space the CLI works in (`space use`): its draft changed — by a person in the builder, an agent
+over the MCP, the autofix — a version went out (published, its flags published, deployed), or a server action failed
+or was refused. Each is a line: who, through what, and what it did, as the builder's history says it. Your own pushes
+are left out and counted (`--mine` keeps them); a person's edits in the builder are never yours to leave out, even
+signed in as the same account.
+
+With `--follow` it stays: each request waits up to 50 seconds for something to happen, asks again when it is answered,
+and asks again after a few seconds when the platform does not answer. A cursor the platform did not give out ends it,
+saying so. `--limit <n>` caps a page (100 at most).
+
+It is the platform's `GET /spaces/:spaceId/activity?after=&wait=&limit=&mine=`, under `spaceView` — what the MCP's
+`plitzi_activity` reads too.
 
 ## `page import`
 

@@ -72,6 +72,7 @@ The server is stateless: it resolves the space per request and reads and writes 
 | `saveSchema(spaceId, env, schema)` | for writes | Persist a mutated schema. Without it, `plitzi_apply` reports `persisted: false` and leads its warnings with what was NOT saved. |
 | `saveStyle(spaceId, env, style)` | for writes | Persist a mutated style document. |
 | `getChanges(spaceId, env, query)` | no | The space's change history, for the `plitzi://changes` resources. Writes arrive with an `SSRWriteContext` (`userId`, one `batch` per tool call) so a consumer can record them. |
+| `getActivity(spaceId, query, reader, signal)` | no | What happened on the space after a cursor — the draft changed, a version went out, an action failed (`SpaceActivityPage`, `@plitzi/sdk-shared/activity`) — waiting up to `query.wait` seconds; `reader` is the member the agent acts for with `origin: 'mcp'`, whose own writes are left out unless `mine`, and `signal` ends the wait with the call. Without it there is no `plitzi_activity`. Only an `agent` grant reaches it. |
 | `getOfflineData(spaceId, env, rev)` | for preview | Read side of draft-preview. Only the preview endpoint calls it. |
 | `getComponentCatalog(spaceId, env)` | no | The element types the space's plugins add, for the catalog resources. |
 | `getConnectors` / `saveConnector` / `deleteConnector` | for connectors | The space's connector manifests, read and written by the connector operations. |
@@ -123,6 +124,7 @@ createServer({ adapters }, { screenshot: { serviceUrl, renderBaseUrl }, proxy: {
 | `plitzi_look` | read | See a saved page: its accessibility outline (default), its HTML, or a PNG (desktop, mobile or both) |
 | `plitzi_render` | read | Render a self-contained UI widget, offline, with no space |
 | `plitzi_try_function` | write | Run one task of the space's functions against the draft, in the sandbox: its value, logs and error |
+| `plitzi_activity` | read | What happened on the space since a cursor — edits by people and other agents, versions out, actions failing — waited for up to 50 s; the agent's own writes left out and counted |
 
 The server advertises each tool's access as its `readOnlyHint` annotation, so a host can run a read without asking
 and ask before a write.

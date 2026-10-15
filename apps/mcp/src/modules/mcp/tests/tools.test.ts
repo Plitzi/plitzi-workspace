@@ -13,6 +13,7 @@ describe('MCP tool registry (defineTool descriptors)', () => {
 
   it('registers every tool with name, modes metadata and an execute', () => {
     expect(tools.map(t => t.name).sort()).toEqual([
+      'plitzi_activity',
       'plitzi_add_page',
       'plitzi_apply',
       'plitzi_bind_attribute',

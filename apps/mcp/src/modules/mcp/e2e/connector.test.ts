@@ -111,7 +111,11 @@ const widgetOperations = [
 //
 // Raised to 77k: the room had gone (~76.0k) when upsertPage took `documentScroll` — a page that holds the document
 // still, or keeps it from bouncing, for a dashboard used with a finger. Measured at 76.2k with ~0.8k of room.
-const TOOLS_BUDGET_BYTES = 77_000;
+//
+// Raised to 78k for plitzi_activity: an agent follows the space — a person's edit, a version out, an action failing —
+// instead of reading it again and again. Its descriptions were cut to the bone first. Measured at 77.2k with ~0.8k of
+// room.
+const TOOLS_BUDGET_BYTES = 78_000;
 
 // Close to the real size (~1.67 MB) on purpose: the page travels inline on every read, so growth must be
 // deliberate. What is left is mostly the SDK runtime and its stylesheet.

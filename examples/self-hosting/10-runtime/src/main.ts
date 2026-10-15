@@ -35,7 +35,8 @@ const server = createServer(
       onReject: createRejectLogger(consoleLogger)
     }
   },
-  { preAuth: [runtime.stage] }
+  // Where the platform forwards a space's endpoints: behind the auth chain and the cross-site guard.
+  { data: [runtime.stage] }
 );
 
 await server.listen(PORT, HOST);

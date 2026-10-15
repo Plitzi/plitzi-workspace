@@ -434,6 +434,9 @@ After finishing any set of code changes, always run:
   `authorSpace`, the MCP, the builder's Space Issues and the publish gate. One test per code (a meta-test enforces it).
 - **Four checks, never confused**: `author` (the document), `lint` (how the source is written), `check` (a rendered
   page), `doctor` (the CLI project, never the space). Each report states its scope and names the others.
+- **An MCP tool answers in one JSON reply** (`enableJsonResponse`, stateless): it cannot send progress, so a call that
+  waits stays under what clients and gateways hold a request for (`ACTIVITY_WAIT_MAX_SECONDS`, 50 s), and a tool that
+  reads none of the space declares `documents: false` so the host loads nothing for it.
 - **The MCP shows the agent everything it can write.** A new capability goes into the op schema + guide even if the
   token budget test fails (raise it and say so; trim redundancy, never what is missing). `tests/guide.test.ts` fails
   when an op, resource or global source is missing from the guide.
