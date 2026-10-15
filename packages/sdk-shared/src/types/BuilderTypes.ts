@@ -17,4 +17,10 @@ export type SubscriptionCollaborator = {
   // What this collaborator has hovered/selected right now, kept with the connection so someone joining (or
   // reloading) later still sees it — the live event only ever reaches whoever was already connected.
   elementState?: SubscriptionCollaboratorElementState;
+  /**
+   * Present when the collaborator is an agent writing over the MCP — `user.firstName` is then the application
+   * (`Claude`) and `for` the member it acts for. It has no cursor: what it changed last is what it has selected, and it
+   * leaves once it has written nothing for a while.
+   */
+  agent?: { for: string };
 };

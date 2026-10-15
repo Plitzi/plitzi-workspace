@@ -5,23 +5,34 @@ export type CollaboratorAvatarProps = {
   color?: string;
   firstName: string;
   surName: string;
+  /** An agent writing over the MCP: drawn as one, not as a person's initials. */
+  agent?: boolean;
+  title?: string;
 };
 
-/** The collaborator's initials in their presence color, as shown in the app header. */
-const CollaboratorAvatar = ({ ref, color = '#000', firstName = '', surName = '' }: CollaboratorAvatarProps) => {
+/** The collaborator's initials in their presence color, as shown in the app header — or, for an agent, a robot. */
+const CollaboratorAvatar = ({
+  ref,
+  color = '#000',
+  firstName = '',
+  surName = '',
+  agent = false,
+  title
+}: CollaboratorAvatarProps) => {
   return (
     <div
       ref={ref}
       className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 text-[11px] font-bold text-white select-none"
       style={{ borderColor: color }}
-      title={`${firstName} ${surName}`}
+      title={title ?? `${firstName} ${surName}`}
     >
       <div
         className="m-0.5 flex h-[calc(100%-4px)] w-full items-center justify-center rounded-full bg-blue-400 uppercase"
         style={{ backgroundColor: color }}
       >
-        {firstName && firstName[0]}
-        {surName && surName[0]}
+        {agent && <i className="fa-solid fa-robot" />}
+        {!agent && firstName && firstName[0]}
+        {!agent && surName && surName[0]}
       </div>
     </div>
   );

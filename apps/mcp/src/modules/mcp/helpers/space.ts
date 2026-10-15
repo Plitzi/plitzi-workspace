@@ -511,14 +511,13 @@ export const noSpaceErrorCode = 'NO_SPACE_ATTACHED';
 
 export const readOnlyGrantErrorCode = 'READ_ONLY_GRANT';
 
-export const memberGrantErrorCode = 'MEMBER_GRANT_REQUIRED';
-
 // What an agent hears when it asks for something living in a space on a connection that carries none. A connection
 // without a space is not advertised the space tools at all (see createMcpServer), so this is the answer to the
 // residual cases: a host replaying a tool list it cached, a token that expired mid-session, and the URIs
 // plitzi_read is handed. It says what to do instead rather than only what went wrong.
 export const unauthorizedSpaceMessage =
-  'This connection has no space attached (a guest or widgets-only grant, or a token that carries no space), so ' +
+  'This connection has no space attached (a guest or widgets-only grant, a site’s own credential — its render ' +
+  'token or host key, which reads its pages and nothing of the space behind them — or a token that carries no space), so ' +
   'NOTHING in a space can be read or edited — every other space tool will fail the same way, do not retry them. ' +
   'Use plitzi_render instead: it builds a self-contained widget offline, with no space, backend or account (read ' +
   'plitzi://render/guide). To edit a real space, the user must reconnect the integration and grant access to one.';
@@ -533,12 +532,12 @@ export class NoSpaceError extends Error {
   }
 }
 
-// What an agent hears when it tries to change a space through a bearer that may only read it. The common cause is
-// the credential every published site embeds: it names a space, so reads work and the agent has no reason to
-// expect the write to fail. Says which credential is needed instead of only that permission was denied.
+// What an agent hears when it tries to change a space through a member's grant that may only read it — one who lost
+// the right to edit since consenting: reads still work, so the agent has no reason to expect the write to fail. Says
+// what is needed instead of only that permission was denied.
 export const readOnlyGrantMessage =
-  'This connection may READ this space but not change it: its token is a read-only (render) credential, or the ' +
-  'member who authorized it no longer has permission to edit this space. Every write tool will fail the same way, ' +
+  'This connection may READ this space but not change it: the member who authorized it no longer has permission ' +
+  'to edit this space. Every write tool will fail the same way, ' +
   'do not retry them — reads still work. To edit, the user must reconnect the integration and grant edit access.';
 
 /** Raised when a write runs under a grant that carries no write authority. Like NoSpaceError this is a STATE of
@@ -547,21 +546,5 @@ export class ReadOnlyGrantError extends Error {
   constructor() {
     super(readOnlyGrantMessage);
     this.name = 'ReadOnlyGrantError';
-  }
-}
-
-// What an agent hears when it asks what happens on a space through a site's credential. The render token every
-// published page embeds reads the pages, as any visitor does; who edits the space and which of its actions fail is
-// what its members see, and a credential anybody can lift from a page must not tell it.
-export const memberGrantMessage =
-  'What happens on this space — who edits it, what goes out, which actions fail — is for an agent a member of the ' +
-  'space connected. This connection carries a site’s credential (render or host), which reads its pages only. To ' +
-  'follow the space, the user must connect the integration as a member of it.';
-
-/** Raised when a member's reading runs under a site's credential. A STATE of the connection, like the two above. */
-export class MemberGrantError extends Error {
-  constructor() {
-    super(memberGrantMessage);
-    this.name = 'MemberGrantError';
   }
 }

@@ -132,6 +132,14 @@ service for an image or an outline); where they are missing, it says so instead 
 - **The agent is told what is public.** Every document of a space and every file on its public buckets reaches anyone
   who opens it, so the guide sends a secret to a credential and data for some visitors only to a server-rendered
   provider or an action that checks who asks — never into a page, a variable or a public file.
+- **A space is reached through a member's consent alone.** Only an `agent` grant attaches one. A site's own credential
+  — the `render` token every published page embeds, a self-hosting `host` key — names a space too, but its draft, its
+  history, its functions' source and its private data are not a site's to read: such a connection has no space, and
+  offers `plitzi_render` and the public guides only.
+- **The people in the builder see the agent work.** An agent's write joins it to the builders open on the draft as a
+  collaborator — its application by name (`Claude · for ana`, `SSRGrant.client`), a robot in the header, what it
+  changed last outlined on the canvas — and it leaves once it has written nothing for a minute. The deployment shows it
+  (Plitzi's `services/mcp/agentPresence`); the agent hears the people back through `plitzi_activity`.
 - **Names are ids.** The agent names every element it creates, and that name is the element's id and its wiring key.
   Renaming one repoints every binding and interaction that referred to it.
 

@@ -24,7 +24,7 @@ A record holds:
 | `document` | `schema` or `style` |
 | `author` | The person it was made for (`userId`, and their name as it is now) — none for a seed or a script |
 | `origin` | `builder`, `mcp` (an agent), `autofix`, `api` (a GraphQL client that is not a person) or `system` |
-| `client` | The builder tab it came from |
+| `client` | The builder tab it came from, or the application an agent wrote through (`Claude`) |
 | `batch` | Shared by everything one request saved: one builder request, one `plitzi_apply`, one autofix run |
 | `entries` | Each entity changed: `{ kind, id, op, before?, after? }` |
 | `summary` | What it did, one line per thing (`describeChange`), e.g. `Added text “hero” to page “test”` |
@@ -47,8 +47,9 @@ The save does not know who asked; the request does. Attribution travels in an `A
 
 - **GraphQL** — `attributeChanges` (`services/history/attribution.ts`) around every request: the signed-in person as
   `builder`, a client with no person as `api`, the tab from `plitzi-instance-id`.
-- **MCP** — `saveSchema`/`saveStyle` receive an `SSRWriteContext` (`userId`, `batch`) from `@plitzi/sdk-mcp`, one
-  batch per tool call, recorded as `mcp`.
+- **MCP** — `saveSchema`/`saveStyle` receive an `SSRWriteContext` (`userId`, `batch`, `client`) from `@plitzi/sdk-mcp`,
+  one batch per tool call, recorded as `mcp` under the application the member connected (its agent grant's
+  `client`, what it registered as).
 - **Autofix** — `SpaceFixIssues` runs its fixes as `autofix`, for whoever asked.
 
 A save with no context is recorded as `system` rather than dropped. Recording never fails a save: the save has already

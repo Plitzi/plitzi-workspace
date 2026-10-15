@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 
 import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
+import { collaboratorTitle } from '@pmodules/Collaboration/CollaborationHelper';
 
 import type { SubscriptionCollaborator } from '@plitzi/sdk-shared';
 import type { BuilderSubscriptionsContextValue } from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -47,12 +48,9 @@ const useCollaborators = ({
     }
 
     registerCallback(RTEvent.COLLABORATOR_CONNECTED, (payload: SubscriptionCollaborator) => {
-      const {
-        user: { firstName, surName }
-      } = payload;
       addToast(
         <div>
-          Collaborator <b>{`${firstName} ${surName}`}</b> Joined into the WorkSpace
+          <b>{collaboratorTitle(payload)}</b> {payload.agent ? 'is editing this space' : 'joined'}
         </div>,
         { appeareance: 'info', autoDismiss: true, placement: 'top-right' }
       );
@@ -63,12 +61,9 @@ const useCollaborators = ({
     });
 
     registerCallback(RTEvent.COLLABORATOR_DISCONNECTED, (payload: SubscriptionCollaborator) => {
-      const {
-        user: { firstName, surName }
-      } = payload;
       addToast(
         <div>
-          Collaborator <b>{`${firstName} ${surName}`}</b> Left the WorkSpace
+          <b>{collaboratorTitle(payload)}</b> {payload.agent ? 'stopped editing' : 'left'}
         </div>,
         { appeareance: 'info', autoDismiss: true, placement: 'top-right' }
       );

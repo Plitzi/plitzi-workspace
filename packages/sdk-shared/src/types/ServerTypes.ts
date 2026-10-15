@@ -256,6 +256,8 @@ export type SSRGrant = {
   spaceId: number;
   scope: SpaceScope;
   userId?: number;
+  /** For an `agent` grant, the application the member connected (`Claude`): what its writes are recorded and shown as. */
+  client?: string;
   canWrite: boolean;
 };
 
@@ -266,8 +268,9 @@ export type SSRChangePage = { changes: SpaceChange[]; nextBefore: number | null 
 export type SSRChangeQuery = { before?: number; entityId?: string; limit: number };
 
 /** Who a write is made for and which request made it, for a consumer that records its changes. Every document one
- *  request writes shares its `batch`: one `plitzi_apply`, read back as one change. */
-export type SSRWriteContext = { userId?: number; batch: string };
+ *  request writes shares its `batch`: one `plitzi_apply`, read back as one change. `client` is the application that
+ *  wrote it for them (`SSRGrant.client`). */
+export type SSRWriteContext = { userId?: number; batch: string; client?: string };
 
 /**
  * A session, as the thing that issued it describes it. Deliberately free of transport: whoever mints one says what

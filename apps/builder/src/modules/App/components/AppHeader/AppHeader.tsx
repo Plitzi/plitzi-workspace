@@ -8,6 +8,7 @@ import { useState, useCallback, useMemo, memo } from 'react';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useTheme from '@plitzi/sdk-shared/theme/useTheme';
 import BuilderSearchButton from '@pmodules/Builder/components/BuilderSearch/components/BuilderSearchButton';
+import { collaboratorTitle } from '@pmodules/Collaboration/CollaborationHelper';
 import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';
 import ExportSpace from '@pmodules/Export';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
@@ -181,13 +182,24 @@ const AppHeader = () => {
       </div>
       <div className="flex h-full items-center gap-6">
         <div className="flex items-center gap-1">
-          {collaborators.map((collaborator, i) => {
+          {collaborators.map(collaborator => {
             const {
               color,
+              instanceId,
+              agent,
               user: { firstName, surName }
             } = collaborator;
 
-            return <CollaboratorAvatar key={i} color={color} firstName={firstName} surName={surName} />;
+            return (
+              <CollaboratorAvatar
+                key={instanceId}
+                color={color}
+                firstName={firstName}
+                surName={surName}
+                agent={agent !== undefined}
+                title={collaboratorTitle(collaborator)}
+              />
+            );
           })}
         </div>
         <PreviewModeButtons />

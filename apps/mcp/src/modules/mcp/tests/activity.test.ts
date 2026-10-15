@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { describe, expect, it, vi } from 'vitest';
 
-import { emptySpace, memberGrantErrorCode } from '../helpers';
+import { emptySpace } from '../helpers';
 import { createMcpServer } from '../server';
 
 import type { SSRAdapters, SSRGrant } from '@plitzi/sdk-shared';
@@ -97,13 +97,11 @@ describe('plitzi_activity', () => {
     expect(getSchema).not.toHaveBeenCalled();
   });
 
-  it('refuses a site’s credential, which anybody viewing the site can lift from its page', async () => {
+  it('is not offered to a site’s credential, which reaches no space', async () => {
     const { asked, adapters } = following();
     const client = await connect({ spaceId: 9, scope: 'render', canWrite: false }, adapters);
 
-    expect(textOf(await client.callTool({ name: 'plitzi_activity', arguments: {} }))).toMatchObject({
-      error: memberGrantErrorCode
-    });
+    expect((await client.listTools()).tools.map(tool => tool.name)).not.toContain('plitzi_activity');
     expect(asked).toHaveLength(0);
   });
 

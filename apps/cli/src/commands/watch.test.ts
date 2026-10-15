@@ -51,6 +51,9 @@ const authoring = (
 
 const FILES = ['src/space/pages/home.ts'];
 
+const UNPARSED_SPACE = `export const space = { name: 'x' ;
+`;
+
 const REFUSED_SPACE = `import { heading } from '@plitzi/sdk-authoring';
 
 const home = { name: 'Home', slug: '', isDefault: true, body: [heading('Hi', { id: 'title' }), heading('Ho', { id: 'title' })] };
@@ -161,6 +164,16 @@ describe('the pass each save is read with', () => {
     expect(read.authors).toBe(true);
     expect(read.authors && read.readings.length).toBeGreaterThan(0);
     expect(watchedFolders(root)).toContain('src/space');
+  }, 60_000);
+
+  it('says a file that does not parse at its line, as the problem', async () => {
+    const root = await project();
+    await fs.writeFile(path.join(root, 'src/space/index.ts'), UNPARSED_SPACE);
+
+    const read = await pass();
+
+    expect(read.authors).toBe(false);
+    expect(read.authors ? '' : read.problem).toMatch(/src\/space\/index\.ts:1: /);
   }, 60_000);
 
   it('says why a space does not author, with its findings still read', async () => {

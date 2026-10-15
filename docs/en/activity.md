@@ -66,8 +66,9 @@ and a wait is not woken by it.
 ## Who may read it
 
 Who edits a space and which of its actions fail is its members' to know. Over the API it is `spaceView` on a space the
-caller belongs to. Over MCP it takes an `agent` grant — a member's consent: a site's `render` token is in every
-published page, and a `host` key is a server rendering the space, so both are refused (`MEMBER_GRANT_REQUIRED`).
+caller belongs to. Over MCP it is what reaches the space at all, an `agent` grant — a member's consent: a site's
+`render` token is in every published page and a `host` key is a server rendering the space, so the MCP attaches no
+space to either.
 
 ## Where it lives
 

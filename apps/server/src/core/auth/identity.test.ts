@@ -148,6 +148,17 @@ describe('resolving a space grant', () => {
     expect(result.ok && result.grant.userId).toBe(7);
   });
 
+  it('names the application an agent grant was given to, which writes for the member', async () => {
+    const token = tokens.generateSpaceToken(42, [], 'agent');
+    const identity = build({
+      findSpaceToken: () => Promise.resolve(stored({ scope: 'agent', userId: 7, client: 'Claude' }))
+    });
+
+    const result = await identity.resolveGrantFromToken(token, '', { skipOrigin: true, host: 'anywhere.com' });
+
+    expect(result.ok && result.grant.client).toBe('Claude');
+  });
+
   it('refuses a token whose stored scope was narrowed after it was signed', async () => {
     const token = tokens.generateSpaceToken(42, ['*'], 'agent');
     const identity = build({ findSpaceToken: () => Promise.resolve(stored({ scope: 'render' })) });

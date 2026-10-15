@@ -17,6 +17,7 @@ import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
 import AppContext from '@pmodules/App/AppContext';
 import BuilderContextMenu from '@pmodules/Builder/components/BuilderContextMenu';
 import { canvasIconsAssets } from '@pmodules/Builder/helpers/canvasIcons';
+import { collaboratorTitle } from '@pmodules/Collaboration/CollaborationHelper';
 import CollaboratorArea from '@pmodules/Collaboration/components/CollaboratorArea';
 import { fontsBaseUrl } from '@pmodules/Fonts/fontsBaseUrl';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -272,7 +273,7 @@ const BuilderArea = ({
                         refIframe={ref}
                         baseElementId={baseElementId}
                         color={collaborator.color}
-                        title={`${collaborator.user.firstName} ${collaborator.user.surName}`}
+                        title={collaboratorTitle(collaborator)}
                         displayMode={displayMode}
                         zoom={zoom}
                       />

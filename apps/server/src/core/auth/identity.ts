@@ -28,6 +28,8 @@ export interface Grant {
   spaceId: number;
   scope: SpaceScope;
   userId?: number;
+  /** For an `agent` grant, the application the member connected, as it registered (`Claude`): who writes for them. */
+  client?: string;
   origins: string[];
 }
 
@@ -44,6 +46,8 @@ export interface StoredSpaceToken {
   spaceId: number;
   scope: SpaceScope;
   userId?: number;
+  /** For an `agent` grant, the application the member connected (`Claude`). */
+  client?: string;
 }
 
 /**
@@ -189,7 +193,13 @@ export const createIdentity = ({
       return { ok: false, reason: 'scope-mismatch' };
     }
 
-    const grant: Grant = { spaceId, scope, userId: stored.userId, origins };
+    const grant: Grant = {
+      spaceId,
+      scope,
+      userId: stored.userId,
+      ...(stored.client === undefined ? {} : { client: stored.client }),
+      origins
+    };
 
     // A render token ships in the clear inside every published page, so the one thing that keeps a copied one from
     // working is WHERE it is presented. Unlike `Origin` — a header any client sets freely — the host is where the

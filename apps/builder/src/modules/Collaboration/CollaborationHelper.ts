@@ -1,7 +1,11 @@
 import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
 import { processContainer } from '@pmodules/Builder/components/BuilderOverlay/BuilderOverlayHelper';
 
-import type { SubscriptionCollaboratorElement, SubscriptionCollaboratorElementState } from '@plitzi/sdk-shared';
+import type {
+  SubscriptionCollaborator,
+  SubscriptionCollaboratorElement,
+  SubscriptionCollaboratorElementState
+} from '@plitzi/sdk-shared';
 
 /**
  * The coordinate protocol between collaborators, both ends of it in one place.
@@ -199,3 +203,13 @@ const resolveElementState = (elementState: SubscriptionCollaboratorElementState 
 });
 
 export { collaboratorAnchorSelector, readCursorAnchor, resolveCursorPosition, resolveElementState };
+
+/**
+ * What a collaborator is called on the canvas, in the header and in the notices: a person by their name, an agent by
+ * its application and whom it works for (`Claude · for ana`).
+ */
+export const collaboratorTitle = ({ user, agent }: Pick<SubscriptionCollaborator, 'user' | 'agent'>): string => {
+  const name = `${user.firstName} ${user.surName}`.trim();
+
+  return agent ? `${name} · for ${agent.for || 'a member'}` : name;
+};

@@ -9,8 +9,6 @@ import {
   emptySpace,
   emptySpaceMessage,
   isCallToolResult,
-  memberGrantErrorCode,
-  MemberGrantError,
   noSpaceErrorCode,
   NoSpaceError,
   readOnlyGrantErrorCode,
@@ -74,7 +72,10 @@ export const createMcpServer = async ({
   // What this connection reaches, resolved once for the whole request. A token that cannot be verified is not an
   // error here — it is simply a connection with no space, which is a supported way to use this server.
   const grant = await getGrant().catch(() => undefined);
-  const spaceId = grant?.spaceId;
+  // A space is reached through a member's consent alone. A site's credential — the `render` token every published page
+  // embeds, a self-hosting `host` key — names a space too, but what is here is its draft, its functions' source, its
+  // private data and who edits it: none of that is a site's to read. It is a connection with no space.
+  const spaceId = grant?.scope === 'agent' ? grant.spaceId : undefined;
   const hasSpace = spaceId !== undefined;
   const requireSpaceId = (): number => {
     if (spaceId === undefined) {
@@ -84,9 +85,9 @@ export const createMcpServer = async ({
     return spaceId;
   };
 
-  // Reading a space and changing it are different privileges, and the difference is not one this server may
-  // infer: the credential a published site embeds names a space perfectly well, so every read succeeds under it.
-  // The consumer decides (`grant.canWrite`); this only refuses.
+  // Reading a space and changing it are different privileges, and the difference is not one this server may infer: a
+  // member who consented may have lost the right to edit since. The consumer decides (`grant.canWrite`); this only
+  // refuses.
   const requireWritableSpaceId = (): number => {
     const id = requireSpaceId();
     if (!grant?.canWrite) {
@@ -142,7 +143,11 @@ export const createMcpServer = async ({
     getActivity
   } = adapters;
   // A stateless server builds itself per request, and a request is one tool call: everything it writes is one batch.
-  const write: SSRWriteContext = { userId: grant?.userId, batch: randomUUID() };
+  const write: SSRWriteContext = {
+    userId: grant?.userId,
+    batch: randomUUID(),
+    ...(grant?.client === undefined ? {} : { client: grant.client })
+  };
   const persisters: Persisters = {
     schema: saveSchema ? schema => saveSchema(requireWritableSpaceId(), MCP_ENV, schema, write) : undefined,
     style: saveStyle ? style => saveStyle(requireWritableSpaceId(), MCP_ENV, style, write) : undefined,
@@ -179,17 +184,6 @@ export const createMcpServer = async ({
   // settings are the deployment's, not the connection's, and only change what the page hands the view.
   registerApps(server, { streaming: renderStreaming, proxyEndpoint: proxy?.endpoint });
 
-  // Who edits a space and which of its actions fail is its members' to see: never a site's credential, which anybody
-  // viewing the site can lift from its page.
-  const requireMemberSpaceId = (): number => {
-    const id = requireSpaceId();
-    if (grant?.scope !== 'agent') {
-      throw new MemberGrantError();
-    }
-
-    return id;
-  };
-
   // Register every tool straight from the shared registry: identity + input schema + behavior come from each
   // tool's descriptor, so a new tool is picked up here with no per-tool wiring. `signal` ends with the call: a wait
   // the client gave up on is not waited out.
@@ -207,8 +201,7 @@ export const createMcpServer = async ({
     // The agent's own writes are recorded as the MCP's, for the member it acts for (see `SSRWriteContext`).
     ...(getActivity
       ? {
-          activity: query =>
-            getActivity(requireMemberSpaceId(), query, { userId: grant?.userId, origin: 'mcp' }, signal)
+          activity: query => getActivity(requireSpaceId(), query, { userId: grant?.userId, origin: 'mcp' }, signal)
         }
       : {})
   });
@@ -268,10 +261,6 @@ export const createMcpServer = async ({
         // Same reasoning: a read-only bearer is a state of the connection, not a broken server.
         if (error instanceof ReadOnlyGrantError) {
           return asText({ error: readOnlyGrantErrorCode, message: error.message });
-        }
-
-        if (error instanceof MemberGrantError) {
-          return asText({ error: memberGrantErrorCode, message: error.message });
         }
 
         throw error;

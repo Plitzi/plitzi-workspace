@@ -66,7 +66,7 @@ The server is stateless: it resolves the space per request and reads and writes 
 
 | Adapter | Required | Purpose |
 |---|---|---|
-| `getGrant(req)` | yes | The space this request operates on **and whether the caller may change it** (`{ spaceId, scope, userId?, canWrite }`), decoded from the verified `Authorization` bearer. You own the JWT secret and the authorization model, so both are decided on your side. Return `undefined` for a missing or invalid token. |
+| `getGrant(req)` | yes | The space this request operates on **and whether the caller may change it** (`{ spaceId, scope, userId?, client?, canWrite }` — `client`, the application an agent grant was given to, rides every write as `SSRWriteContext.client`), decoded from the verified `Authorization` bearer. You own the JWT secret and the authorization model, so both are decided on your side. Return `undefined` for a missing or invalid token. |
 | `getSchema(spaceId, env)` | yes | The element schema the tools read and mutate. |
 | `getStyle(spaceId, env)` | yes | The full style document, including `platform`/`mode`. |
 | `saveSchema(spaceId, env, schema)` | for writes | Persist a mutated schema. Without it, `plitzi_apply` reports `persisted: false` and leads its warnings with what was NOT saved. |
@@ -91,7 +91,9 @@ the page server too; a dedicated MCP that keeps its weight down writes those fou
 
 Without a `getGrant` that resolves, the server still answers its public surface — the handshake, the tool list,
 the guide, the CSS-property catalog — and asks for a space only when a tool or resource needs one. A grant that
-resolves with `canWrite: false` reads everything and is refused at every write tool.
+resolves with `canWrite: false` reads the space and is refused at every write tool. Only an `agent` grant attaches a
+space: a site's credential (`scope: 'render'` or `'host'`) names one too, but the draft, its functions' source, its
+private data and who edits it are not a site's to read — it is answered as a connection with no space.
 
 ## Options
 

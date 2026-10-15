@@ -15,7 +15,7 @@
  * await authorProjectSpace();                                       // …and its own space, `src/space/index.ts`
  * ```
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -277,14 +277,45 @@ export class ProjectModuleError extends Error {
 
 Object.defineProperty(ProjectModuleError, 'name', { value: 'ProjectModuleError' });
 
+/**
+ * A line of an error's message that is itself the problem, at its place: what a bundler's transform says under its
+ * summary — `Transform failed with 1 error:` then `/work/shop/src/space/hero.ts:139:12: ERROR: Expected ","` (esbuild,
+ * so tsx and vitest).
+ */
+const LOCATED_LINE = /^(\/[^\s:()]+\.(?:tsx?|m?js|json)):(\d+)(?::\d+)?:\s*(?:ERROR:\s*)?(.+)$/;
+
+/** A path as it is on disk, links resolved — or as given, for one that is not there. */
+const realOf = (file: string): string => {
+  try {
+    return realpathSync(file);
+  } catch {
+    return file;
+  }
+};
+
 /** Where in the project's own files an error points first, and what it says: a module that did not load, located. */
 export const moduleProblem = (error: unknown, root: string): string => {
+  // The root as given and as it is on disk: a temporary folder on macOS is `/var/…` to one and `/private/var/…` to the
+  // other, and an error names whichever its loader read.
+  const roots = [root, realOf(root)];
+  const ownFile = (file: string): boolean =>
+    [file, realOf(file)].some(each => roots.some(at => each.startsWith(at))) && !file.includes('/node_modules/');
+  if (error instanceof Error) {
+    const located = error.message
+      .split('\n')
+      .map(line => LOCATED_LINE.exec(line.trim()))
+      .find(match => match !== null && ownFile(match[1]));
+    if (located) {
+      return `${path.relative(process.cwd(), located[1])}:${located[2]}: ${located[3]}`;
+    }
+  }
+
   const message = error instanceof Error ? error.message.split('\n')[0] : String(error);
   const stack = error instanceof Error ? (error.stack ?? '') : '';
   const frame = stack
     .split('\n')
     .map(line => /(?:file:\/\/)?(\/[^\s:()]+\.(?:tsx?|m?js|json)):(\d+)/.exec(line))
-    .find(match => match !== null && match[1].startsWith(root) && !match[1].includes('/node_modules/'));
+    .find(match => match !== null && ownFile(match[1]));
   const at = frame ? `${path.relative(process.cwd(), frame[1])}:${frame[2]}` : undefined;
 
   return at ? `${at}: ${message}` : message;

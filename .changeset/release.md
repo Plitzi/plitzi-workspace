@@ -18,6 +18,16 @@
 '@plitzi/sdk-variables': patch
 ---
 
+## Security
+
+- **A site's credential reads nothing of the space over MCP** (`@plitzi/sdk-mcp`): the `render` token every published
+  page embeds — and a self-hosting `host` key — resolved to a grant naming the space, and the MCP served every read
+  under it: the unpublished draft, the change history with who made each change and every value before and after, the
+  functions' source, the space's private data, its action documents and connectors. Only an `agent` grant attaches a
+  space now; any other is a connection with no space (`plitzi_render` and the public guides), told so in the words
+  `NO_SPACE_ATTACHED` already uses. A deployment whose `getGrant` answered other scopes for reading must issue agent
+  grants for them.
+
 ## Agents
 
 - **`plitzi space watch`** (`@plitzi/cli`): the space read again on every save of `src/space/`, `src/plugins/`,
@@ -32,13 +42,27 @@
   `@plitzi/sdk-shared/activity` (`SpaceActivity`, `SpaceActivityPage`, `activityLine`, `isSpaceActivityPage`, the
   limits); the reader's own writes left out and counted (`skippedMine`), `mine` keeps them.
   - **`plitzi_activity { after, wait, limit, mine }`** (`@plitzi/sdk-mcp`), on the new `getActivity` adapter
-    (`SSRAdapters`). Only an `agent` grant reads it: a site's `render` token or a `host` key is answered
-    `MEMBER_GRANT_REQUIRED`. The listing budget is 78k (was 77k) for it.
+    (`SSRAdapters`). The listing budget is 78k (was 77k) for it.
   - **`plitzi space activity [--follow] [--after <cursor>] [--mine] [--limit <n>] [--json]`** (`@plitzi/cli`), over
     the platform's `GET /spaces/:spaceId/activity`; `--follow` stays, one page a line with `--json`, and asks again
     when the platform does not answer.
+  - **The people in the builder see the agent work** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`, `@plitzi/sdk-mcp`,
+    `@plitzi/plitzi-builder`): an agent grant carries the application the member connected (`Grant.client`,
+    `StoredSpaceToken.client`, `SSRGrant.client`), and every MCP write `SSRWriteContext.client` — the history's
+    `client` for an agent, which was never set. A collaborator may be an agent (`SubscriptionCollaborator.agent`): the
+    builder draws it as a robot, names it `Claude · for ana` (`collaboratorTitle`) in the header, on the canvas and in
+    its notices. The deployment announces it — Plitzi's joins it on a write, selects what it changed, and lets it go
+    after a minute of nothing.
   - A tool may declare `documents: false` (`ToolSpec`): the host loads none of the space for it, and passes the call's
     abort signal through `ToolContext.activity`.
+
+## Authoring
+
+- **A file that does not parse is said at its line under any loader** (`@plitzi/sdk-authoring`): `moduleProblem` read
+  the first line of the error, and an esbuild transform (tsx, vitest) puts only `Transform failed with 1 error:` there
+  — the file, line and what is wrong are on the next. A line of the message that points at a file of the project is
+  now the problem (`src/space/hero.ts:139: Expected "}" but found ";"`), the project's root matched as given and as it
+  is on disk (`/var/…` and `/private/var/…` on macOS).
 
 ## Docs
 

@@ -15,6 +15,23 @@ describe('a project that does not load', () => {
     expect(moduleProblem(error, '/work/shop')).toMatch(/src\/space\/hero\.ts:139: Expected a comma, got class$/);
   });
 
+  it('is the located line under a transform’s summary, not the summary', () => {
+    const error = new Error(
+      'Transform failed with 1 error:\n/work/shop/src/space/hero.ts:139:12: ERROR: Expected "}" but found ";"'
+    );
+    error.name = 'TransformError';
+
+    expect(moduleProblem(error, '/work/shop')).toMatch(/src\/space\/hero\.ts:139: Expected "}" but found ";"$/);
+  });
+
+  it('never takes a line about a package for the project’s', () => {
+    const error = new Error(
+      'Transform failed with 1 error:\n/work/shop/node_modules/lib/index.ts:3:1: ERROR: Unexpected'
+    );
+
+    expect(moduleProblem(error, '/work/shop')).toBe('Transform failed with 1 error:');
+  });
+
   it('says only what it says when no file of the project is in it', () => {
     expect(moduleProblem(new Error('out of memory'), '/work/shop')).toBe('out of memory');
   });

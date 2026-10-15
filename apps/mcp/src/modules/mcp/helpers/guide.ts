@@ -317,7 +317,7 @@ When you do hold several refs to open (e.g. from a skeleton), read them together
   out, a server action failed or was refused. The first call, without \`after\`, answers the latest and a \`cursor\`;
   pass it back as \`after\` and the call waits up to \`wait\` seconds (45, at most 50) until something happens. Your own
   writes are left out and counted (\`skippedMine\`; \`mine: true\` keeps them). On a space people edit too, call it
-  before a write that rests on what you read earlier. A site's token reads no activity (\`MEMBER_GRANT_REQUIRED\`).
+  before a write that rests on what you read earlier.
 - \`plitzi_render\` — a different job: show the user a self-contained widget built offline. It never touches the space.
 
 ## Suggestions — the same page with fewer elements
