@@ -7,7 +7,7 @@ import { PlitziContext } from '@plitzi/sdk-shared/hooks';
 import { createShaderProgram, ShaderError, useCanvas2d } from './index';
 
 import type { Frame } from './index';
-import type { PlitziContextValue } from '@plitzi/sdk-shared';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 
 /** A 2D context with only what the hook and these draws touch. */
 const fake2d = () => ({ setTransform: vi.fn(), clearRect: vi.fn() });

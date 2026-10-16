@@ -4,7 +4,7 @@ import useSWR from 'swr';
 
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
-import type { BuilderQueriesMap } from '@plitzi/sdk-shared';
+import type { BuilderQueriesMap } from '@plitzi/sdk-shared/network';
 import type { KeyedMutator, SWRConfiguration } from 'swr';
 
 function useGraphQL<K extends keyof BuilderQueriesMap>(

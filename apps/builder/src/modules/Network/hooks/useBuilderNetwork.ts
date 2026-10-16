@@ -2,8 +2,12 @@ import { use } from 'react';
 
 import { NetworkContext } from '@plitzi/sdk-shared/network';
 
-import type { BuilderMutationsMap, BuilderQueriesMap } from '@plitzi/sdk-shared';
-import type { BuilderNetworkContextValue, SpaceEventMap } from '@plitzi/sdk-shared/network';
+import type {
+  BuilderMutationsMap,
+  BuilderQueriesMap,
+  BuilderNetworkContextValue,
+  SpaceEventMap
+} from '@plitzi/sdk-shared/network';
 
 export type BuilderNetwork = BuilderNetworkContextValue<BuilderQueriesMap, BuilderMutationsMap, SpaceEventMap>;
 

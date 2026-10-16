@@ -63,12 +63,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
-import { createStoreDevToolsLogger, ThemeProvider, type BuilderState } from '@plitzi/sdk-shared';
+import { type BuilderState } from '@plitzi/sdk-shared';
 import { createAuthFailureLink, createStripTypenameLink } from '@plitzi/sdk-shared/apollo';
+import { createStoreDevToolsLogger } from '@plitzi/sdk-shared/devTools';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state';
 import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
+import { ThemeProvider } from '@plitzi/sdk-shared/theme';
 import AppMain from '@pmodules/App/AppMain';
 import customFetch from '@pmodules/Network/helpers/customFetch';
 

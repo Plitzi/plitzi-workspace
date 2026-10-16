@@ -2,7 +2,8 @@ import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
 
 import { requestAuthority } from '../core/requestParser';
 
-import type { Environment, FlagOverrides, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { Environment, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { FlagOverrides } from '@plitzi/sdk-shared/flags';
 
 /** The deployment's own layer for one space: `config.flags`, asked per space when it is a function. */
 export const serverFlagsFor = (

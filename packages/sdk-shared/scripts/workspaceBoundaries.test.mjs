@@ -167,4 +167,89 @@ describe('workspace boundaries', () => {
 
     expect(unresolved).toEqual([]);
   });
+
+  it('keeps the root of sdk-shared to the document types, so importing a type loads no runtime', () => {
+    const root = fs.readFileSync(path.join(WORKSPACE, 'packages/sdk-shared/src/index.ts'), 'utf-8');
+    const reexports = [...root.matchAll(/^export\b[^;]*;/gm)].map(([statement]) => statement);
+
+    expect(reexports).toEqual(["export * from './types';"]);
+  });
+
+  it('has no cycle of value imports inside a library package', () => {
+    /**
+     * Known and harmless: the style editor's panels render each other (a selector opens a manager, which shows an
+     * inspector, which lists selectors). They meet only while rendering, never while their modules load.
+     */
+    const allowed = new Set(['sdk-style:components/Selector/Selector.tsx']);
+    const fileOf = base =>
+      ['', '.ts', '.tsx', '/index.ts', '/index.tsx']
+        .map(suffix => base + suffix)
+        .find(file => fs.existsSync(file) && fs.statSync(file).isFile());
+    const cycles = packages
+      .filter(({ dir }) => path.basename(path.dirname(dir)) === 'packages')
+      .flatMap(({ dir }) => {
+        const src = path.join(dir, 'src');
+        const files = sourceFiles(src).filter(file => !TEST_FILE.test(path.relative(dir, file)));
+        const edges = new Map(
+          files.map(file => {
+            const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf-8'), ts.ScriptTarget.Latest, true);
+            const targets = source.statements.flatMap(statement => {
+              const declaration = ts.isImportDeclaration(statement) || ts.isExportDeclaration(statement);
+              const specifier = declaration ? statement.moduleSpecifier?.text : undefined;
+              const typeOnly = ts.isImportDeclaration(statement)
+                ? statement.importClause?.isTypeOnly ||
+                  (statement.importClause?.namedBindings &&
+                    ts.isNamedImports(statement.importClause.namedBindings) &&
+                    !statement.importClause.name &&
+                    statement.importClause.namedBindings.elements.every(element => element.isTypeOnly))
+                : ts.isExportDeclaration(statement) && statement.isTypeOnly;
+              const target =
+                specifier?.startsWith('.') && !typeOnly
+                  ? fileOf(path.resolve(path.dirname(file), specifier))
+                  : undefined;
+
+              return target ? [target] : [];
+            });
+
+            return [file, targets];
+          })
+        );
+        // Tarjan: every strongly connected group of more than one file is a cycle.
+        const found = [];
+        const order = new Map();
+        const low = new Map();
+        const stack = [];
+        let next = 0;
+        const visit = file => {
+          order.set(file, next);
+          low.set(file, next++);
+          stack.push(file);
+          for (const target of edges.get(file) ?? []) {
+            if (!order.has(target)) {
+              visit(target);
+              low.set(file, Math.min(low.get(file), low.get(target)));
+            } else if (stack.includes(target)) {
+              low.set(file, Math.min(low.get(file), order.get(target)));
+            }
+          }
+
+          if (low.get(file) === order.get(file)) {
+            const group = [];
+            let member;
+            do {
+              member = stack.pop();
+              group.push(path.relative(src, member));
+            } while (member !== file);
+            if (group.length > 1) {
+              found.push(group.sort().map(member => `${path.basename(dir)}:${member}`));
+            }
+          }
+        };
+        files.forEach(file => order.has(file) || visit(file));
+
+        return found.filter(group => !group.some(member => allowed.has(member))).map(group => group.join(' ↔ '));
+      });
+
+    expect(cycles).toEqual([]);
+  });
 });

@@ -10,15 +10,13 @@ import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { createGraphqlClient, GraphqlRequestError } from './graphqlClient';
 
+import type { OfflineDataRaw, Server, ComponentPluginWithHOC } from '@plitzi/sdk-shared';
 import type {
-  OfflineDataRaw,
-  Server,
   SdkQueriesMap,
   SdkMutationsMap,
   NetworkInternalContextValue,
-  ComponentPluginWithHOC
-} from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network';
+  NetworkContextValue
+} from '@plitzi/sdk-shared/network';
 import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {

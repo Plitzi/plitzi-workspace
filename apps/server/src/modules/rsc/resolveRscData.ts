@@ -5,7 +5,8 @@ import { matchRscPage } from './matchRscPage';
 import { onAbort } from '../../helpers/onAbort';
 import { serverLog } from '../../helpers/serverLog';
 
-import type { Element, Environment, FlagOverrides, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
+import type { Element, Environment, Schema, SSRRequest, SSRRscData, SSRUser } from '@plitzi/sdk-shared';
+import type { FlagOverrides } from '@plitzi/sdk-shared/flags';
 
 /** Everything an element resolver needs to turn one `runtime: 'server'` element into its data slice. */
 export type RscResolveContext = {

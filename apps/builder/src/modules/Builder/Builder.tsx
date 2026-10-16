@@ -9,7 +9,7 @@ import BuilderPlugin from './BuilderPlugin';
 import BuilderArea from './components/BuilderArea';
 import BuilderElementTools from './components/BuilderElementTools/BuilderElementTools';
 
-import type { BuilderContextValue } from '@plitzi/sdk-shared';
+import type { BuilderContextValue } from '@plitzi/sdk-shared/builder';
 
 export type BuilderProps = {
   pages?: string[];

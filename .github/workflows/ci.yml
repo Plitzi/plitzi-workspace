@@ -53,6 +53,10 @@ jobs:
       - name: Yarn Build
         run: yarn build:prod && yarn build-vendor:dev && yarn build-vendor:prod
 
+      # Every folder barrel is public (`"./*"`), and rollup drops re-exports it thinks nobody uses without a word.
+      - name: Barrels built whole
+        run: yarn check:dist-exports
+
       # The packages `yarn test` runs, asked of turbo with that same command, so the matrix and a local run cannot
       # disagree. A package without a `test` script is listed by turbo as `<NONEXISTENT>`, and left out.
       - name: Packages with tests

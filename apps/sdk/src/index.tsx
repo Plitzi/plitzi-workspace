@@ -77,12 +77,12 @@ import type {
   Server,
   RuntimeStateInstance,
   Theme,
-  ThemeScope,
-  PlitziContextValue,
   RealtimeMessage
 } from '@plitzi/sdk-shared';
 import type { PluginDeclaration, NotificationOptions } from '@plitzi/sdk-shared/authoring';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
+import type { ThemeScope } from '@plitzi/sdk-shared/theme';
 import type { ReactNode } from 'react';
 
 let stateManager: RuntimeStateInstance;

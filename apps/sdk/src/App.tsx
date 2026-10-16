@@ -23,8 +23,8 @@ import SdkPlugin from '@modules/Sdk/SdkPlugin';
 import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
-import { createStoreDevToolsLogger, type SdkState } from '@plitzi/sdk-shared';
-import { debugCookieName } from '@plitzi/sdk-shared/devTools';
+import { type SdkState } from '@plitzi/sdk-shared';
+import { createStoreDevToolsLogger, debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { forcedFlagsFromCookies } from '@plitzi/sdk-shared/flags';
 import { documentCookies, EnclosingSpaceContext, SPACE_ROOT_CLASS, getKeyDecoded } from '@plitzi/sdk-shared/helpers';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state';
@@ -38,7 +38,6 @@ import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
   AnalyticsConfig,
   Theme,
-  ThemeScope,
   ComponentPlugin,
   ComponentPluginFC,
   Environment,
@@ -47,6 +46,7 @@ import type {
   Server,
   RuntimeStateInstance
 } from '@plitzi/sdk-shared';
+import type { ThemeScope } from '@plitzi/sdk-shared/theme';
 import type { ReactNode } from 'react';
 
 export type AppProps = {

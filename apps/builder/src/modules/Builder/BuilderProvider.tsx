@@ -18,7 +18,6 @@ import { isInRoot } from './helpers/elementChain';
 
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
-  BuilderContextValue,
   Element,
   EventBridgeEvent,
   PluginBuilder,
@@ -27,6 +26,7 @@ import type {
   DropPosition,
   Snippet
 } from '@plitzi/sdk-shared';
+import type { BuilderContextValue } from '@plitzi/sdk-shared/builder';
 
 export type BuilderProviderProps = {
   children: React.ReactNode;

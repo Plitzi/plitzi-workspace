@@ -8,7 +8,8 @@ import { PlitziContext } from '@plitzi/sdk-shared/hooks';
 import Text from '../elements/basic/Text/Text';
 import List from '../elements/structure/List/List';
 
-import type { ComponentContextValue, Element, PlitziContextValue } from '@plitzi/sdk-shared';
+import type { ComponentContextValue, Element } from '@plitzi/sdk-shared';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { ReactNode } from 'react';
 
 vi.mock('@plitzi/sdk-event-bridge', async importOriginal => ({

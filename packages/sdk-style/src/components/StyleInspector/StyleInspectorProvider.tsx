@@ -3,10 +3,9 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo } from 'react';
 
-import { baseDefaultValue } from '@plitzi/sdk-shared';
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
-import { styleTargetRules } from '@plitzi/sdk-shared/style';
+import { baseDefaultValue, styleTargetRules } from '@plitzi/sdk-shared/style';
 
 import useStyleBinding from './hooks/useStyleBinding';
 import StyleInspectorContext from './StyleInspectorContext';

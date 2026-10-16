@@ -8,7 +8,7 @@ import IssueGroup from './components/IssueGroup';
 import SuggestionGroup from './components/SuggestionGroup';
 import { MUTED } from './helpers';
 
-import type { TSpaceIssues } from '@plitzi/sdk-shared';
+import type { TSpaceIssues } from '@plitzi/sdk-shared/network';
 
 export type SpaceIssuesProps = {
   issues: TSpaceIssues;

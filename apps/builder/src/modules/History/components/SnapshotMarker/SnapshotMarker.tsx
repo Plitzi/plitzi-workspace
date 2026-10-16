@@ -1,6 +1,6 @@
 import { formatTime, snapshotLabel } from '../../helpers';
 
-import type { TSnapshotMarker } from '@plitzi/sdk-shared';
+import type { TSnapshotMarker } from '@plitzi/sdk-shared/network';
 
 export type SnapshotMarkerProps = { snapshot: TSnapshotMarker };
 

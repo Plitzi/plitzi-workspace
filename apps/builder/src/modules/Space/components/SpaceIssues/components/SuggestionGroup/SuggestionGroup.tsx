@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { MUTED } from '../../helpers';
 import SuggestionItem from '../SuggestionItem';
 
-import type { TSpaceSuggestion } from '@plitzi/sdk-shared';
+import type { TSpaceSuggestion } from '@plitzi/sdk-shared/network';
 
 export type SuggestionGroupProps = {
   suggestions: TSpaceSuggestion[];

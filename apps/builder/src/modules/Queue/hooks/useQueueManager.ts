@@ -8,8 +8,8 @@ import { StyleActions } from '@plitzi/sdk-style';
 import { worthRetrying, writeFailed } from '../helpers';
 
 import type { QueuedChange } from '../QueueContext';
-import type { BuilderMutationsMap, BuilderQueriesMap, Element, Schema } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network';
+import type { Element, Schema } from '@plitzi/sdk-shared';
+import type { BuilderMutationsMap, BuilderQueriesMap, NetworkContextValue } from '@plitzi/sdk-shared/network';
 
 export type UseQueueManagerProps = {
   delay?: number;

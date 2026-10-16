@@ -4,7 +4,7 @@ import { MUTED } from '../../helpers';
 import IssueItem from '../IssueItem';
 
 import type { IssueSeverity } from '../../helpers';
-import type { TSpaceIssue } from '@plitzi/sdk-shared';
+import type { TSpaceIssue } from '@plitzi/sdk-shared/network';
 
 export type IssueGroupProps = {
   title: string;

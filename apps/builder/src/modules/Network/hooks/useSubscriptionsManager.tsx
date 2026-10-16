@@ -6,7 +6,7 @@ import { validateSpaceEvent } from '@plitzi/sdk-shared/network';
 import { SpaceEventSubscription } from '@plitzi/sdk-shared/network/graphql/builder';
 
 import type { ApolloClient } from '@apollo/client/core';
-import type { SpaceEventMap, SpaceEventName, TSpaceEventSubscription } from '@plitzi/sdk-shared';
+import type { SpaceEventMap, SpaceEventName, TSpaceEventSubscription } from '@plitzi/sdk-shared/network';
 import type { ReactNode } from 'react';
 
 export type UseSubscriptionsManagerProps = {

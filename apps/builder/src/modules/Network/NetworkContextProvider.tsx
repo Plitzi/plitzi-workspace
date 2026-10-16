@@ -12,16 +12,14 @@ import { EMPTY_SCHEMA, schemaFromWire } from '@plitzi/sdk-shared/schema';
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
+import type { Server, ComponentDefinition, Environment } from '@plitzi/sdk-shared';
 import type {
-  Server,
-  ComponentDefinition,
   BuilderNetworkContextValue,
-  Environment,
   BuilderQueriesMap,
   BuilderMutationsMap,
   SpaceEventMap,
   NetworkInternalContextValue
-} from '@plitzi/sdk-shared';
+} from '@plitzi/sdk-shared/network';
 import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {

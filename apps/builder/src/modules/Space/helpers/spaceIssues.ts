@@ -1,6 +1,6 @@
 import { CombinedGraphQLErrors } from '@apollo/client/core';
 
-import type { TSpaceIssue, TSpaceIssues } from '@plitzi/sdk-shared';
+import type { TSpaceIssue, TSpaceIssues } from '@plitzi/sdk-shared/network';
 
 /** What the server answers a publish of a space that would ship broken with, carrying the issues it found. */
 export const SPACE_INVALID = 'SPACE_INVALID';

@@ -1,6 +1,6 @@
 import { set } from '@plitzi/plitzi-ui/helpers';
 
-import { styleConstants } from '@plitzi/sdk-shared';
+import { styleConstants } from '@plitzi/sdk-shared/style';
 
 import type { StyleCategory, StyleItem } from '@plitzi/sdk-shared';
 

@@ -2,7 +2,7 @@ import clsx from 'clsx';
 
 import { detailOf, formatValue, MUTED } from '../../helpers';
 
-import type { ChangeEntry as Entry } from '@plitzi/sdk-shared';
+import type { ChangeEntry as Entry } from '@plitzi/sdk-shared/history';
 
 export type ChangeEntryProps = { entry: Entry };
 

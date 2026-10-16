@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import useFixSpaceIssues from './useFixSpaceIssues';
 import SpaceIssues from '../components/SpaceIssues';
 
-import type { TSpaceIssues } from '@plitzi/sdk-shared';
+import type { TSpaceIssues } from '@plitzi/sdk-shared/network';
 
 /**
  * Opens the list of what is wrong with the space. The same list whether someone asked for it or a publish was refused

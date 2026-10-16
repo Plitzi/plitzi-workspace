@@ -23,6 +23,7 @@
     "build:dev-gzip": "turbo build:dev-gzip",
     "build:dev-analyze": "turbo build:dev-analyze --parallel --concurrency=20",
     "build:prod": "turbo build:prod",
+    "check:dist-exports": "node packages/sdk-shared/scripts/checkDistExports.mjs",
     "build:prod-watch": "turbo build:prod-watch --parallel --concurrency=20",
     "build:prod-measure": "turbo build:prod-measure --parallel --concurrency=20",
     "build:prod-gzip": "turbo build:prod-gzip",

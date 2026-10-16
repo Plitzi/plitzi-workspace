@@ -1,8 +1,8 @@
 import { omit, throttle } from '@plitzi/plitzi-ui/helpers';
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { RTEvent } from '@plitzi/sdk-shared';
 import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
+import { RTEvent } from '@plitzi/sdk-shared/websockets';
 import BuilderOverlay from '@pmodules/Builder/components/BuilderOverlay';
 import { resolveCursorPosition, resolveElementState } from '@pmodules/Collaboration/CollaborationHelper';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
@@ -11,10 +11,10 @@ import CollaboratorCursor from './CollaboratorCursor';
 
 import type {
   DisplayMode,
-  RTMessageManagedServer,
   SubscriptionCollaboratorElementState,
   SubscriptionCollaboratorPointer
 } from '@plitzi/sdk-shared';
+import type { RTMessageManagedServer } from '@plitzi/sdk-shared/websockets';
 import type { RefObject } from 'react';
 
 export type CollaboratorAreaProps = {

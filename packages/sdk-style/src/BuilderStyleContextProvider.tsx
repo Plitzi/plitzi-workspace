@@ -16,12 +16,8 @@ import type {
   ReducerMiddlewareCallback
 } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import type {
-  BuilderMutationsMap,
-  BuilderNetworkContextValue,
-  BuilderQueriesMap,
   DisplayMode,
   SnippetStyle,
-  SpaceEventMap,
   SpaceFont,
   Style,
   StyleCategory,
@@ -31,6 +27,12 @@ import type {
   StyleVariableValue,
   TagType
 } from '@plitzi/sdk-shared';
+import type {
+  BuilderMutationsMap,
+  BuilderNetworkContextValue,
+  BuilderQueriesMap,
+  SpaceEventMap
+} from '@plitzi/sdk-shared/network';
 
 /**
  * A middleware and what it is shown. The filter belongs to the caller, not here: a save queue must never see another

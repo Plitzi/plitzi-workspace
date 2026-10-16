@@ -32,3 +32,7 @@
   and `@plitzi/sdk-elements/elements/declarations`, which now also carries the declarations' attribute types and the
   constants they are checked with. `RuleGroup` is exported by `@plitzi/sdk-shared` with the document types that use it.
   `plitzi upgrade` names every such import in a project, with the folder to import it from instead.
+- **`@plitzi/sdk-shared`'s root exports the document types, and only them** (`@plitzi/sdk-shared`): what the package
+  does is imported from its folder — `formatDate` from `@plitzi/sdk-shared/helpers`, `ThemeProvider` from
+  `@plitzi/sdk-shared/theme`, a GraphQL operation's types from `@plitzi/sdk-shared/network/graphql` — so a module that
+  imports a type from the root no longer loads every area of the package.

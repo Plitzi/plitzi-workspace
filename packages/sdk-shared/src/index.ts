@@ -1,20 +1,6 @@
+/**
+ * The document every package reads and writes — a space, its elements, styles, flows and the contracts around them —
+ * as types, and nothing else. What the package does is imported from the folder that does it
+ * (`@plitzi/sdk-shared/helpers`, `@plitzi/sdk-shared/theme`…), so importing a type never loads the runtime.
+ */
 export * from './types';
-export * from './auth';
-export * from './helpers';
-export * from './hooks';
-export * from './builder';
-export * from './style';
-export * from './schema';
-export * from './elements';
-export * from './dataSource';
-export * from './connectors';
-export * from './network';
-export * from './network/graphql';
-export * from './websockets';
-export * from './devTools';
-export * from './theme';
-export * from './server';
-export * from './state';
-export * from './history';
-export * from './activity';
-export * from './flags';

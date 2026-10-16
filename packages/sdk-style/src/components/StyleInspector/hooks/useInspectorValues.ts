@@ -1,8 +1,8 @@
 import { get, pick } from '@plitzi/plitzi-ui/helpers';
 import { use, useMemo } from 'react';
 
-import { baseDefaultValue } from '@plitzi/sdk-shared';
 import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema';
+import { baseDefaultValue } from '@plitzi/sdk-shared/style';
 
 import { resolveTokens } from '../cssValues';
 import StyleInspectorContext from '../StyleInspectorContext';
