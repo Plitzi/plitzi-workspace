@@ -1,12 +1,12 @@
-import { conditionOfAtRule } from '@plitzi/sdk-shared/style';
 import {
+  conditionOfAtRule,
   CONTENT_PSEUDOS,
   GENERATED_PSEUDOS,
   isContentValue,
   isStylePseudo,
-  pseudoHonours
+  pseudoHonours,
+  stateSuffix
 } from '@plitzi/sdk-shared/style';
-import { stateSuffix } from '@plitzi/sdk-shared/style';
 
 import { css, STYLE_STATES } from '../style';
 import { splitTopLevel, stylesheetSegments } from '../style/stylesheet';

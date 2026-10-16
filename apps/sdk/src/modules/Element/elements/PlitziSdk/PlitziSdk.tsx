@@ -1,8 +1,7 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import { withElement } from '@plitzi/sdk-elements';
-import { RootElement } from '@plitzi/sdk-elements';
+import { withElement, RootElement } from '@plitzi/sdk-elements';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { NetworkContext } from '@plitzi/sdk-shared/network';
 

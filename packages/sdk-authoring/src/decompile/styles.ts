@@ -1,5 +1,4 @@
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
-import { isStylePseudo } from '@plitzi/sdk-shared/style';
+import { EMPTY_STYLE_SCHEMA, isStylePseudo } from '@plitzi/sdk-shared/style';
 import { generateCache } from '@plitzi/sdk-style';
 import { processSelector } from '@plitzi/sdk-style/helpers';
 

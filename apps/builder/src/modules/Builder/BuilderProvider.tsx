@@ -3,9 +3,7 @@ import useStateMemo from '@plitzi/plitzi-ui/hooks/useStateMemo';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, useEffect } from 'react';
 
-import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
-import { EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge';
-import { useEventBridge } from '@plitzi/sdk-event-bridge';
+import { EventBridgeContext, EventBridgeTypesPerModule, useEventBridge } from '@plitzi/sdk-event-bridge';
 import { FlatMap } from '@plitzi/sdk-schema';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';

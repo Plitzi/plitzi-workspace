@@ -1,7 +1,6 @@
 import { set, pick, cloneDeep, get } from '@plitzi/plitzi-ui/helpers';
 
-import { documentIds } from '@plitzi/sdk-schema';
-import { randomElementId } from '@plitzi/sdk-schema';
+import { documentIds, randomElementId } from '@plitzi/sdk-schema';
 
 import type { ComponentDefinition, Element, Schema } from '@plitzi/sdk-shared';
 

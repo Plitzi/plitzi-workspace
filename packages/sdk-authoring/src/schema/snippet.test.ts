@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { descendants } from '@plitzi/sdk-schema';
-import { fitSnippet } from '@plitzi/sdk-schema';
-import { FlatMap } from '@plitzi/sdk-schema';
-import { SchemaReducer } from '@plitzi/sdk-schema';
+import { descendants, fitSnippet, FlatMap, SchemaReducer } from '@plitzi/sdk-schema';
 import { mergeSnippetStyle } from '@plitzi/sdk-shared/style';
 
 import { elementSourceTypes } from '../elements';

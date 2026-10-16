@@ -1,5 +1,4 @@
-import { serverTemplatesByType } from '@plitzi/sdk-elements/elements/declarations';
-import { isSvgMarkup } from '@plitzi/sdk-elements/elements/declarations';
+import { serverTemplatesByType, isSvgMarkup } from '@plitzi/sdk-elements/elements/declarations';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax, hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
 

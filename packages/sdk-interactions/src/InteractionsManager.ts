@@ -3,8 +3,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 
 import EventBridge from '@plitzi/sdk-event-bridge';
-import { INTERVAL_TRIGGER, intervalOf } from '@plitzi/sdk-shared/helpers';
-import { KEY_TRIGGER } from '@plitzi/sdk-shared/helpers';
+import { INTERVAL_TRIGGER, intervalOf, KEY_TRIGGER } from '@plitzi/sdk-shared/helpers';
 
 import { flowTrigger } from './InteractionsHelper';
 

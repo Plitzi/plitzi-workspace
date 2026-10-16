@@ -575,6 +575,31 @@ describe('plitzi upgrade', () => {
     );
   });
 
+  it('says which folder an import of one file of a package comes from now, and writes nothing', async () => {
+    const installed = file('node_modules/@plitzi/sdk-shared');
+    await fs.mkdir(path.join(installed, 'dist', 'helpers'), { recursive: true });
+    await fs.writeFile(
+      path.join(installed, 'package.json'),
+      JSON.stringify({ name: '@plitzi/sdk-shared', exports: { '.': {}, './*': {} } })
+    );
+    await fs.writeFile(path.join(installed, 'dist', 'helpers', 'index.d.ts'), 'export {};\n');
+    const source = [
+      "import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';",
+      "import { canonicalJson } from '@plitzi/sdk-shared/helpers';",
+      "import { usePlitzi } from '@plitzi/plitzi-sdk';"
+    ].join('\n');
+    await fs.mkdir(file('src/plugins/Desk'), { recursive: true });
+    await fs.writeFile(file('src/plugins/Desk/helpers.ts'), `${source}\n`);
+
+    const shown = await run(['renames'], { write: true });
+
+    expect(shown.changes).toEqual([
+      expect.objectContaining({ file: path.join('src', 'plugins', 'Desk', 'helpers.ts'), line: 1, since: '0.38.17' })
+    ]);
+    expect(JSON.stringify(shown.changes)).toContain('`@plitzi/sdk-shared/helpers`');
+    expect(await read('src/plugins/Desk/helpers.ts')).toBe(`${source}\n`);
+  });
+
   it('says where a field written before fields became optional takes an empty answer now, and writes nothing', async () => {
     const form = [
       "formControl({ name: 'answer', label: 'Answer (required)', requiredMessage: 'Write something' })",

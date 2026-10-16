@@ -1,8 +1,11 @@
-import { propNameProblem, RESERVED_PROP_NAMES } from '@plitzi/sdk-schema';
-import { isValidElementId } from '@plitzi/sdk-schema';
-import { parentChain } from '@plitzi/sdk-schema';
-import { FlatMap } from '@plitzi/sdk-schema';
-import { rendersNoTag } from '@plitzi/sdk-schema';
+import {
+  propNameProblem,
+  RESERVED_PROP_NAMES,
+  isValidElementId,
+  parentChain,
+  FlatMap,
+  rendersNoTag
+} from '@plitzi/sdk-schema';
 import { checkVisitorRoles } from '@plitzi/sdk-shared/auth';
 import { BUILTIN_PARAM_TYPES, invalidParams } from '@plitzi/sdk-shared/authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
@@ -10,9 +13,7 @@ import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
 import { anchorOf } from '@plitzi/sdk-shared/schema';
-import { parseSpaceFont } from '@plitzi/sdk-shared/style';
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
-import { isParentAncestor } from '@plitzi/sdk-shared/style';
+import { parseSpaceFont, EMPTY_STYLE_SCHEMA, isParentAncestor } from '@plitzi/sdk-shared/style';
 import { generateCache } from '@plitzi/sdk-style';
 import { processSelector } from '@plitzi/sdk-style/helpers';
 

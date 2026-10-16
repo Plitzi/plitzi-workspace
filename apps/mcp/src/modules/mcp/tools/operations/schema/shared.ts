@@ -2,8 +2,7 @@ import { z } from 'zod';
 
 import { isSuggestionCode } from '@plitzi/sdk-authoring';
 import { FLAG_GATE_PATTERN } from '@plitzi/sdk-shared/flags';
-import { ANCHOR_PATTERN } from '@plitzi/sdk-shared/schema';
-import { motionProblems } from '@plitzi/sdk-shared/schema';
+import { ANCHOR_PATTERN, motionProblems } from '@plitzi/sdk-shared/schema';
 import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types';
 
 import { closedObject } from '../closed';

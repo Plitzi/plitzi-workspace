@@ -10,8 +10,7 @@ import { use, useCallback, useEffect, useEffectEvent, useMemo, useState } from '
 
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
-import { canonicalCondition } from '@plitzi/sdk-shared/style';
-import { isParentAncestor } from '@plitzi/sdk-shared/style';
+import { canonicalCondition, isParentAncestor } from '@plitzi/sdk-shared/style';
 
 import Selector from '../Selector';
 import AncestorRules from './components/AncestorRules';

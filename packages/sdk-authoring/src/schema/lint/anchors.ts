@@ -1,8 +1,6 @@
 import { rendersNoTag } from '@plitzi/sdk-schema';
 import { getPageFullPath } from '@plitzi/sdk-shared/navigation';
-import { anchorOf, isAnchor } from '@plitzi/sdk-shared/schema';
-import { resolveLayoutChain } from '@plitzi/sdk-shared/schema';
-import { markdownHeadings } from '@plitzi/sdk-shared/schema';
+import { anchorOf, isAnchor, resolveLayoutChain, markdownHeadings } from '@plitzi/sdk-shared/schema';
 
 import type { LintContext } from './context';
 import type { Element } from '@plitzi/sdk-shared';

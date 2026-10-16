@@ -9,8 +9,7 @@ import { closest } from '@plitzi/sdk-authoring';
 import { PLUGIN_FUNCTIONS_SOURCE, readFunctionsSource } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { pluginAssetLoaders, pluginImportQueries } from '@plitzi/sdk-shared/plugins/bundle';
-import { elementEntry } from '@plitzi/sdk-shared/project';
-import { PLUGIN_DECLARATION_FILE, PLUGIN_ENTRIES } from '@plitzi/sdk-shared/project';
+import { elementEntry, PLUGIN_DECLARATION_FILE, PLUGIN_ENTRIES } from '@plitzi/sdk-shared/project';
 import { inPluginLayer } from '@plitzi/sdk-shared/style';
 
 import { packSource } from './source';

@@ -3,11 +3,9 @@ import { useEffect, useMemo, useState, useCallback, use } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
-import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network';
 import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
-import { schemaFromWire } from '@plitzi/sdk-shared/schema';
+import { EMPTY_SCHEMA, schemaFromWire } from '@plitzi/sdk-shared/schema';
 import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { createGraphqlClient, GraphqlRequestError } from './graphqlClient';

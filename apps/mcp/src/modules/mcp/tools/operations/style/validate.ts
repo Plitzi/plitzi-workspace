@@ -1,5 +1,6 @@
-import { canonicalCondition, STYLE_MOTION_CONDITIONS } from '@plitzi/sdk-shared/style';
 import {
+  canonicalCondition,
+  STYLE_MOTION_CONDITIONS,
   CONTENT_PSEUDOS,
   GENERATED_PSEUDOS,
   isContentValue,

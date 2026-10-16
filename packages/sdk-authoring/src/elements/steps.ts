@@ -1,7 +1,5 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
-import { intervalOf, MIN_INTERVAL_MS } from '@plitzi/sdk-shared/helpers';
-import { parseKeys } from '@plitzi/sdk-shared/helpers';
-import { SCROLL_TRIGGER } from '@plitzi/sdk-shared/helpers';
+import { intervalOf, MIN_INTERVAL_MS, parseKeys, SCROLL_TRIGGER } from '@plitzi/sdk-shared/helpers';
 
 import { typeTriggerDefinitions } from './catalog';
 import { AuthoringError } from '../schema/codes';

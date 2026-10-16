@@ -3,10 +3,8 @@ import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
 import { AuthContext } from '@plitzi/sdk-auth';
 import { evaluateComputed } from '@plitzi/sdk-shared/dataSource';
-import { useRegisterSource } from '@plitzi/sdk-shared/dataSource/hooks';
-import { useResolvedVariables } from '@plitzi/sdk-shared/dataSource/hooks';
-import { flagValues, undeclaredFlagOverrides } from '@plitzi/sdk-shared/flags';
-import { useFlagResolution } from '@plitzi/sdk-shared/flags';
+import { useRegisterSource, useResolvedVariables } from '@plitzi/sdk-shared/dataSource/hooks';
+import { flagValues, undeclaredFlagOverrides, useFlagResolution } from '@plitzi/sdk-shared/flags';
 import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
 import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { useCommonStore, useCommonStoreSync } from '@plitzi/sdk-shared/store';

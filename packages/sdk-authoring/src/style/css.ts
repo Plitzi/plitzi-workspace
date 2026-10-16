@@ -1,14 +1,16 @@
-import { canonicalCondition, STYLE_MOTION_CONDITIONS } from '@plitzi/sdk-shared/style';
 import {
+  canonicalCondition,
+  STYLE_MOTION_CONDITIONS,
   CONTENT_PSEUDOS,
   GENERATED_PSEUDOS,
   isContentValue,
   isStylePseudo,
   PSEUDO_PROPERTIES,
   pseudoHonours,
-  STYLE_PSEUDOS
+  STYLE_PSEUDOS,
+  isParentAncestor,
+  STYLE_STATES as SHARED_STYLE_STATES
 } from '@plitzi/sdk-shared/style';
-import { isParentAncestor, STYLE_STATES as SHARED_STYLE_STATES } from '@plitzi/sdk-shared/style';
 
 import { cssNumberValue, cssPropertyName, isCssProperty, isCustomProperty, suggestCssProperty } from './properties';
 import { expandShorthandTraced } from './shorthand';

@@ -6,8 +6,7 @@ import { StoreContext } from '@plitzi/nexus/react';
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { liveSources } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools';
-import { isRecord } from '@plitzi/sdk-shared/helpers';
-import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { isRecord, emptyObject } from '@plitzi/sdk-shared/helpers';
 
 import useElementInteractions from './useElementInteractions';
 import useInternalClassName from './useInternalClassName';

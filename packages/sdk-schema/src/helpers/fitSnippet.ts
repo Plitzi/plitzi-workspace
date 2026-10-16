@@ -1,5 +1,4 @@
-import { isDisplayMode } from '@plitzi/sdk-shared/style';
-import { sameSelector, selectorsOf } from '@plitzi/sdk-shared/style';
+import { isDisplayMode, sameSelector, selectorsOf } from '@plitzi/sdk-shared/style';
 import { processSelector } from '@plitzi/sdk-style/helpers';
 
 import { documentIds } from './components';

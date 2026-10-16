@@ -1,7 +1,5 @@
 import { flagGateOf } from '@plitzi/sdk-authoring';
-import { documentIds } from '@plitzi/sdk-schema';
-import { elementIdConflict, isValidElementId } from '@plitzi/sdk-schema';
-import { FlatMap } from '@plitzi/sdk-schema';
+import { documentIds, elementIdConflict, isValidElementId, FlatMap } from '@plitzi/sdk-schema';
 import { isMotion } from '@plitzi/sdk-shared/schema';
 
 import { fail, findRootByRef, indexAddElement, resolveRef } from '../../../helpers';

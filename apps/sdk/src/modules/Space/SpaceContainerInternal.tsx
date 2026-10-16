@@ -2,8 +2,12 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useMemo } from 'react';
 
 import { InteractionsContext } from '@plitzi/sdk-interactions';
-import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
-import { NOTIFICATION_DEFAULTS, readNotificationOptions, spaceCallbacks } from '@plitzi/sdk-shared/authoring';
+import {
+  toInteractionCallback,
+  NOTIFICATION_DEFAULTS,
+  readNotificationOptions,
+  spaceCallbacks
+} from '@plitzi/sdk-shared/authoring';
 import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
 
 import { NotifyContext } from './useNotify';

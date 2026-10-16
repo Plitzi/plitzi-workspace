@@ -3,14 +3,16 @@
 import { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 
-import { withElement } from '@plitzi/sdk-elements';
-import { useElement } from '@plitzi/sdk-elements';
-import { useRscData } from '@plitzi/sdk-elements';
-import { JsxManager } from '@plitzi/sdk-elements';
-import { PluginManager } from '@plitzi/sdk-elements';
-import { PluginRemote } from '@plitzi/sdk-elements';
-import { ReplicaProvider } from '@plitzi/sdk-elements';
-import { RootElement } from '@plitzi/sdk-elements';
+import {
+  withElement,
+  useElement,
+  useRscData,
+  JsxManager,
+  PluginManager,
+  PluginRemote,
+  ReplicaProvider,
+  RootElement
+} from '@plitzi/sdk-elements';
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers';

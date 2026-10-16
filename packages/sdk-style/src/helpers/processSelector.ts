@@ -1,6 +1,11 @@
-import { conditionAtRule } from '@plitzi/sdk-shared/style';
-import { pseudoSuffix } from '@plitzi/sdk-shared/style';
-import { inCascadeOrder, isParentAncestor, isStartingState, stateSuffix } from '@plitzi/sdk-shared/style';
+import {
+  conditionAtRule,
+  pseudoSuffix,
+  inCascadeOrder,
+  isParentAncestor,
+  isStartingState,
+  stateSuffix
+} from '@plitzi/sdk-shared/style';
 
 import processSelectorAttributes from './processSelectorAttributes';
 import processSelectorName from './processSelectorName';

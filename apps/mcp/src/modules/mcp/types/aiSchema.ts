@@ -1,5 +1,4 @@
-import type { DocumentScroll, NotificationsSpec } from '@plitzi/sdk-authoring';
-import type { CssProps } from '@plitzi/sdk-authoring';
+import type { DocumentScroll, NotificationsSpec, CssProps } from '@plitzi/sdk-authoring';
 import type { ElementRuntime, Environment, WhileRunning } from '@plitzi/sdk-shared';
 
 export type Env = Environment;

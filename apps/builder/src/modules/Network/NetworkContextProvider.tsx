@@ -5,11 +5,9 @@ import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { NetworkContext } from '@plitzi/sdk-shared/network';
-import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
+import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network';
 import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
-import { schemaFromWire } from '@plitzi/sdk-shared/schema';
+import { EMPTY_SCHEMA, schemaFromWire } from '@plitzi/sdk-shared/schema';
 
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 

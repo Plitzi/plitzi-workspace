@@ -22,8 +22,8 @@ import styleUrl from '../../assets/plitzi-sdk.scss?url';
 
 import type { StoreApi } from '@plitzi/nexus';
 import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
-import type { HostActions } from '@plitzi/sdk-shared';
 import type {
+  HostActions,
   AnalyticsConfig,
   Environment,
   Server,

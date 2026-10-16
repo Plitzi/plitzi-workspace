@@ -1,5 +1,4 @@
-import { canonicalJson } from '@plitzi/sdk-shared/helpers';
-import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { canonicalJson, isRecord } from '@plitzi/sdk-shared/helpers';
 
 import type { Space } from '../../helpers';
 import type { Element } from '@plitzi/sdk-shared';

@@ -4,12 +4,10 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { useStoreById } from '@plitzi/nexus/react';
 import { AuthContext } from '@plitzi/sdk-auth';
-import { useNavigation } from '@plitzi/sdk-navigation';
-import { getPaths, matchRoutePath, getRouteParams, notFoundPageFor } from '@plitzi/sdk-navigation';
+import { useNavigation, getPaths, matchRoutePath, getRouteParams, notFoundPageFor } from '@plitzi/sdk-navigation';
 import { resolveVariables } from '@plitzi/sdk-shared/dataSource';
 import { pConsole } from '@plitzi/sdk-shared/devTools';
-import { flagValues, passesFlagGate, resolveFlags } from '@plitzi/sdk-shared/flags';
-import { flagUserFrom } from '@plitzi/sdk-shared/flags';
+import { flagValues, passesFlagGate, resolveFlags, flagUserFrom } from '@plitzi/sdk-shared/flags';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { isAbsoluteUrl, navigationTarget } from '@plitzi/sdk-shared/navigation';

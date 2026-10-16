@@ -167,7 +167,7 @@ runtime, and its files into `public/` — a draft, or any published snapshot (`-
 A project `npx @plitzi/cli create --mode server` writes runs this server through `serveProject`, from
 `@plitzi/sdk-server/project` — its own entry, so a server that is not such a project never loads it. The project's
 `src/main.ts` hands it what is the project's, and `serveProject` wires everything else from where the project keeps it
-(the layout is `@plitzi/sdk-shared/project/paths`'s):
+(the layout is `@plitzi/sdk-shared/project`'s):
 
 ```ts
 import { serveProject } from '@plitzi/sdk-server/project';
@@ -182,19 +182,19 @@ await serveProject({ space: authorProjectSpace, actions, connectors, serverOptio
 
 `space` is called once the project's root and layout are checked: `authorProjectSpace` reads `src/space/index.ts`'s
 `space` — `dist/space/index.js` when the server runs what `build` emitted (`projectModule` of
-`@plitzi/sdk-shared/project/root`, the rule the runtime is found by too) — and authors it with `projectAuthoring()`. A
+`@plitzi/sdk-shared/project`, the rule the runtime is found by too) — and authors it with `projectAuthoring()`. A
 module that exports no `space` is refused saying what to export (`ProjectSpaceError`), and a space that does not author
 with every problem (`SpaceRefusedError`): each printed as the report it is, and the process exits with 1.
 
 The project is the working directory — where every script of its `package.json` runs it, and where a deployment runs
 `node dist/main.js` — never worked out from where a file is: `serveProject` and `authorProjectSpace` refuse to start
-anywhere else, naming what is missing (`package.json`, `src/`; `projectRoot` of `@plitzi/sdk-shared/project/root`, one
+anywhere else, naming what is missing (`package.json`, `src/`; `projectRoot` of `@plitzi/sdk-shared/project`, one
 check for both). Its settings are in `process.env` before any module loads: the scripts start Node with
 `--env-file-if-exists=.env`, and no file of the project reads `.env`. `start:dev`, which Node watches, preloads it
 instead — `node --import @plitzi/sdk-server/env --watch-path=… src/main.ts` — since Node, handed an env file under
 `--watch-path`, watches the folder it is in and restarts on every write there: the server's own `tmp/`, from boot.
 
-Both hold the project to its layout before anything else (`assertProjectLayout` of `@plitzi/sdk-shared/project/layout`,
+Both hold the project to its layout before anything else (`assertProjectLayout` of `@plitzi/sdk-shared/project`,
 what `plitzi doctor` says too): a part where the server would read nothing — a plugin folder with no `index.ts` (or
 `index.tsx`), code in `src/plugin/`, `.env` in `src/`, a built plugin with no manifest — stops the boot with every error
 at once (`ProjectLayoutError`, each with its fix; `findings` holds them as data), and what works and should not stay —

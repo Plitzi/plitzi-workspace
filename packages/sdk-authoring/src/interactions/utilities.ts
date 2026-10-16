@@ -1,5 +1,4 @@
-import { copyToClipboardSpec } from '@plitzi/sdk-interactions/declarations';
-import { webHookSpec } from '@plitzi/sdk-interactions/declarations';
+import { copyToClipboardSpec, webHookSpec } from '@plitzi/sdk-interactions/declarations';
 import { reconcileParams } from '@plitzi/sdk-shared/authoring';
 
 import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring';

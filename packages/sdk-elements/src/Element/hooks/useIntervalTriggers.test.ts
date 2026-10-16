@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import useIntervalTriggers from './useIntervalTriggers';
 
-import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
+import type { InteractionsManagerApi, ElementInteraction } from '@plitzi/sdk-shared';
 
 const trigger = (id: string, interval: number | string, enabled = true): ElementInteraction => ({
   id,

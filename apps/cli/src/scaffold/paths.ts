@@ -1,6 +1,6 @@
 /**
  * Where a project the CLI writes keeps each part of it. What the server and the authoring read too is
- * `@plitzi/sdk-shared/project/paths`'s, said there once; what follows is the CLI's alone.
+ * `@plitzi/sdk-shared/project`'s, said there once; what follows is the CLI's alone.
  *
  * `.plitzi/` is the other half of what is not the source: what the CLI records about the project and that travels with
  * it — where it came from (`space.json`), the functions' working copy (`functions.json`), what `create` wrote

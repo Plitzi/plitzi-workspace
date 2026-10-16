@@ -42,4 +42,3 @@ export {
   updateActionRun,
   useActionRuns
 } from './actionRuns';
-export { default as renderSettings } from './renderSettings';

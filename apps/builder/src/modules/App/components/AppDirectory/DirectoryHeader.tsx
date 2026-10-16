@@ -4,8 +4,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
 
 import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
-import { documentIds } from '@plitzi/sdk-schema';
-import { slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema';
+import { documentIds, slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import LayoutForm from '@pmodules/App/models/LayoutForm';

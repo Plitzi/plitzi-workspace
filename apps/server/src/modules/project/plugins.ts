@@ -8,9 +8,11 @@ import {
   layoutFindingText,
   pluginEntry,
   pluginTypeOf,
-  readVendorPlugin
+  readVendorPlugin,
+  PLUGIN_FUNCTIONS_DIR,
+  PLUGINS_DIR,
+  VENDOR_PLUGINS_DIR
 } from '@plitzi/sdk-shared/project';
-import { PLUGIN_FUNCTIONS_DIR, PLUGINS_DIR, VENDOR_PLUGINS_DIR } from '@plitzi/sdk-shared/project';
 
 import { loadFunctions, loadFunctionsSource } from '../functions/load';
 

@@ -1,5 +1,4 @@
-import { canonicalCondition } from '@plitzi/sdk-shared/style';
-import { isStylePseudo } from '@plitzi/sdk-shared/style';
+import { canonicalCondition, isStylePseudo } from '@plitzi/sdk-shared/style';
 import { processSelector } from '@plitzi/sdk-style/helpers';
 
 import { styleInputProblem } from './validate';

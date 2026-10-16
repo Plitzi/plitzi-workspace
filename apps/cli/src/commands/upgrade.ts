@@ -214,6 +214,64 @@ const optionalFieldsIn = (file: string, text: string): ChangeFound[] =>
         ];
   });
 
+/** From this version a library package is imported by its root and its folders, never by a file. */
+const FOLDER_IMPORTS_SINCE = '0.38.17';
+
+/** Whether the installed package exports its folders (`"./*"`) — the shape that has no entry for a single file. */
+const exportsFolders = async (root: string, name: string): Promise<boolean> => {
+  const manifest = await readText(path.join(root, 'node_modules', name, 'package.json'));
+  if (manifest === undefined) {
+    return false;
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(manifest);
+  } catch {
+    // A manifest that does not parse is the install's problem to say, not this check's: nothing is claimed of it.
+    return false;
+  }
+
+  return isRecord(parsed) && isRecord(parsed.exports) && './*' in parsed.exports;
+};
+
+/**
+ * An import of one FILE of a library package — `@plitzi/sdk-shared/helpers/isRecord` — which its installed version no
+ * longer answers: it is imported from the folder (`@plitzi/sdk-shared/helpers`), a default export by the name
+ * the folder gives it.
+ * Said, never written: which name a folder gives a file's default is the package's to say, not a guess's. Checked
+ * against what is installed, so a package still on its old shape says nothing.
+ */
+const folderImportsIn = async (
+  root: string,
+  file: string,
+  text: string,
+  folders: Map<string, Promise<boolean>>
+): Promise<ChangeFound[]> => {
+  const found: ChangeFound[] = [];
+  for (const match of text.matchAll(/['"](@plitzi\/[a-z0-9-]+)\/([A-Za-z0-9_./-]+)['"]/g)) {
+    const [, name, subpath] = match;
+    if (!folders.has(name)) {
+      folders.set(name, exportsFolders(root, name));
+    }
+
+    const isFolder = await readText(path.join(root, 'node_modules', name, 'dist', subpath, 'index.d.ts'));
+    if (!(await folders.get(name)) || isFolder !== undefined) {
+      continue;
+    }
+
+    const folder = path.posix.dirname(subpath);
+    found.push({
+      file,
+      line: text.slice(0, match.index).split('\n').length,
+      since: FOLDER_IMPORTS_SINCE,
+      what: `import it from \`${folder === '.' ? name : `${name}/${folder}`}\` — a package is imported by its root and its folders, a default export by the name the folder gives it`
+    });
+  }
+
+  return found;
+};
+
 // --- packages ------------------------------------------------------------------------------------------------------
 
 type Section = 'dependencies' | 'devDependencies';
@@ -848,10 +906,17 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     const changes: ChangeFound[] = [];
     // A project the CLI last upgraded at or after the change was told then; one without a record cannot say, and is.
     const before = record === undefined || isBelow(record.cli, OPTIONAL_FIELDS_SINCE);
+    const folders = new Map<string, Promise<boolean>>();
     for (const file of await sourceFiles(root)) {
       const text = await readText(path.join(root, file));
       if (before && text !== undefined) {
         changes.push(...optionalFieldsIn(file, text));
+      }
+
+      // Not by the record: an import of a file the installed package no longer answers fails to build, whenever the
+      // project was last upgraded.
+      if (text !== undefined) {
+        changes.push(...(await folderImportsIn(root, file, text, folders)));
       }
 
       const inFile = text === undefined ? [] : renamesIn(file, text);

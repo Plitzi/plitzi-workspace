@@ -1,11 +1,12 @@
-import { actionsCallbacks } from '@plitzi/sdk-interactions/declarations';
-import { authCallbacks } from '@plitzi/sdk-interactions/declarations';
-import { hostCallbacks } from '@plitzi/sdk-interactions/declarations';
-import { navigationCallbacks } from '@plitzi/sdk-interactions/declarations';
-import { queriesCallbacks } from '@plitzi/sdk-interactions/declarations';
-import { stateCallbacks } from '@plitzi/sdk-interactions/declarations';
-import { reconcileParams } from '@plitzi/sdk-shared/authoring';
-import { spaceCallbacks } from '@plitzi/sdk-shared/authoring';
+import {
+  actionsCallbacks,
+  authCallbacks,
+  hostCallbacks,
+  navigationCallbacks,
+  queriesCallbacks,
+  stateCallbacks
+} from '@plitzi/sdk-interactions/declarations';
+import { reconcileParams, spaceCallbacks } from '@plitzi/sdk-shared/authoring';
 
 import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring';
 

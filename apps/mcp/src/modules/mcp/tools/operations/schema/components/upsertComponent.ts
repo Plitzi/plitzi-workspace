@@ -1,8 +1,14 @@
 import { z } from 'zod';
 
-import { addComponent, componentNamed, propNameProblem, treeOf, updateComponent } from '@plitzi/sdk-schema';
-import { isValidElementId } from '@plitzi/sdk-schema';
-import { descendants } from '@plitzi/sdk-schema';
+import {
+  addComponent,
+  componentNamed,
+  propNameProblem,
+  treeOf,
+  updateComponent,
+  isValidElementId,
+  descendants
+} from '@plitzi/sdk-schema';
 
 import { componentsUri, empty, fail, invalidateIndex, pageUri } from '../../../../helpers';
 import { ID_REF_HINT, guardNewRef } from '../write';

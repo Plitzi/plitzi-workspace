@@ -24,7 +24,7 @@ const testConditions = process.env.VITEST ? [SOURCE_CONDITION, ...defaultServerC
  * and what ships is one file with an empty dependency tree.
  *
  * `bundleTypes` is the half that makes that true of the TYPES as well: emitted per-file, the declaration re-exports
- * by specifier (`export * from '@plitzi/sdk-elements/authoring'`) and a consumer needs all five packages installed
+ * by specifier (`export * from '@plitzi/sdk-elements/elements/declarations'`) and a consumer needs all five packages installed
  * to typecheck against a package that depends on none of them.
  *
  * No aliases onto the packages' sources, deliberately: they would be resolved into the emitted declaration as

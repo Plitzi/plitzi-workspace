@@ -1,6 +1,5 @@
 import { reconcileParams } from '@plitzi/sdk-shared/authoring';
-import { INTERVAL_TRIGGER, intervalOf, MIN_INTERVAL_MS } from '@plitzi/sdk-shared/helpers';
-import { KEY_TRIGGER, parseKeys } from '@plitzi/sdk-shared/helpers';
+import { INTERVAL_TRIGGER, intervalOf, MIN_INTERVAL_MS, KEY_TRIGGER, parseKeys } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types';
 

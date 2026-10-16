@@ -4,9 +4,11 @@ import { isIP } from 'node:net';
 import { hostname, networkInterfaces } from 'node:os';
 import path from 'node:path';
 
-import { assertProjectLayout, layoutFindingText } from '@plitzi/sdk-shared/project';
-import { localNetworkName, networkAddresses } from '@plitzi/sdk-shared/project';
 import {
+  assertProjectLayout,
+  layoutFindingText,
+  localNetworkName,
+  networkAddresses,
   DATA_DIR,
   DEV_SERVER_FILE,
   FUNCTIONS_DIR,
@@ -14,9 +16,10 @@ import {
   PROJECT_TMP,
   PUBLIC_DIR,
   RUNTIME_BUNDLE,
-  RUNTIME_ENTRY
+  RUNTIME_ENTRY,
+  projectModule,
+  projectRoot
 } from '@plitzi/sdk-shared/project';
-import { projectModule, projectRoot } from '@plitzi/sdk-shared/project';
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 

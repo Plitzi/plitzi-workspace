@@ -95,7 +95,7 @@ track); one written without them is refused (`part-missing`).
 **Where each part lives is checked once, and said by three.** Nobody reads `plitzi/README.md` before writing a plugin
 folder: they make `src/plugin/Card/`, put the component in `Card.tsx` and no `index.ts`, drop `.env` into `src/`. Each
 of those used to be silent — the server registered a folder it could not build and failed later in esbuild's words, or
-read no folder at all — so the project half-worked. `checkProjectLayout` (`@plitzi/sdk-shared/project/layout`, pure file
+read no folder at all — so the project half-worked. `checkProjectLayout` (`@plitzi/sdk-shared/project`, pure file
 system, no import of the project) is the one place that knows where the CLI puts everything; the server runs it at
 boot, `projectAuthoring()` before authoring, and `doctor` in its `layout` area, so the three say the same sentence and
 nothing reads what the others refuse. Every error is listed at once, never the first; each names the file, what is

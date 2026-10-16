@@ -1,5 +1,4 @@
-import { componentNamed, isInstance } from '@plitzi/sdk-schema';
-import { parentChain, renderContext } from '@plitzi/sdk-schema';
+import { componentNamed, isInstance, parentChain, renderContext } from '@plitzi/sdk-schema';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 
 import type { RefusalCode, WarningCode } from '../codes';

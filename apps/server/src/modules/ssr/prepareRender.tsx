@@ -1,8 +1,13 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
 import { pluginDeclarationOf, pluginTypesOf } from '@plitzi/sdk-shared/plugins';
-import { pageElementTypes } from '@plitzi/sdk-shared/schema';
-import { collectServerElements, notFoundProvider, pageNotFound, pageServerContext } from '@plitzi/sdk-shared/schema';
+import {
+  pageElementTypes,
+  collectServerElements,
+  notFoundProvider,
+  pageNotFound,
+  pageServerContext
+} from '@plitzi/sdk-shared/schema';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
 import { themeFromCookies } from '@plitzi/sdk-shared/theme';

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
-import { descendants } from '@plitzi/sdk-schema';
-import { FlatMap } from '@plitzi/sdk-schema';
+import { descendants, FlatMap } from '@plitzi/sdk-schema';
 
 import { empty, fail, findRootByRef, indexRemoveElements, resolveRef } from '../../../../helpers';
 import { pageUri } from '../write';

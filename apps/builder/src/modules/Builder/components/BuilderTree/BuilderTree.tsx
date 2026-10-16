@@ -4,8 +4,7 @@ import Tree from '@plitzi/plitzi-ui/Tree';
 import clsx from 'clsx';
 import { useCallback, use, useMemo, useState } from 'react';
 
-import { elementIdConflict, slugifyElementId } from '@plitzi/sdk-schema';
-import { FlatMap } from '@plitzi/sdk-schema';
+import { elementIdConflict, slugifyElementId, FlatMap } from '@plitzi/sdk-schema';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';

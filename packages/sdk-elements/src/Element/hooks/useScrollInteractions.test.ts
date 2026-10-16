@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import useScrollInteractions from './useScrollInteractions';
 
-import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
-import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
+import type { InteractionsManagerApi, ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
 
 const onScroll: ElementInteraction = {
   id: 'scrolled',

@@ -1,5 +1,4 @@
-import { validateSchema } from '@plitzi/sdk-schema';
-import { styleWithoutTag } from '@plitzi/sdk-schema';
+import { validateSchema, styleWithoutTag } from '@plitzi/sdk-schema';
 
 import { lintSpace } from './lint';
 import { isCssProperty, isCustomProperty, suggestCssProperty } from '../style';

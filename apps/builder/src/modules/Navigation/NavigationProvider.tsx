@@ -3,8 +3,7 @@ import { useMemo, use, useCallback, useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import { AuthContext } from '@plitzi/sdk-auth';
-import { useNavigation } from '@plitzi/sdk-navigation';
-import { getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation';
+import { useNavigation, getPaths, matchRoutePath, getRouteParams } from '@plitzi/sdk-navigation';
 import { useBuilderStore, useRenderSettings, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 

@@ -3,10 +3,7 @@ import { use, useMemo, useRef, useCallback } from 'react';
 
 import { useResolvedVariables } from '@plitzi/sdk-shared/dataSource/hooks';
 import { PluginsContext } from '@plitzi/sdk-shared/plugins';
-import { useActionsSync } from '@plitzi/sdk-shared/server';
-import { useImagesSync } from '@plitzi/sdk-shared/server';
-import { useRealtimeSync } from '@plitzi/sdk-shared/server';
-import { useRscSync } from '@plitzi/sdk-shared/server';
+import { useActionsSync, useImagesSync, useRealtimeSync, useRscSync } from '@plitzi/sdk-shared/server';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 import {
   fontLinkAssets,

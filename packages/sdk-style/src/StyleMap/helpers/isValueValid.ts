@@ -1,6 +1,5 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
-import { canonicalCondition } from '@plitzi/sdk-shared/style';
-import { isStylePseudo } from '@plitzi/sdk-shared/style';
+import { canonicalCondition, isStylePseudo } from '@plitzi/sdk-shared/style';
 
 import type {
   StyleAttributes,
