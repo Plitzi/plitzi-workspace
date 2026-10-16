@@ -14,13 +14,13 @@
   "dependencies": {
     "@plitzi/example-space": "workspace:*",
     "@plitzi/sdk-server": "workspace:*",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.63.0",
+    "@playwright/test": "^1.64.1",
     "@plitzi/sdk-authoring": "workspace:*",
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.5",
     "typescript": "^6.0.3"
   },
   "engines": {

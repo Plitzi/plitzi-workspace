@@ -26,21 +26,17 @@
       "cache": false
     },
     "lint": {
-      "dependsOn": ["^lint"],
       "cache": true,
       "outputs": []
     },
     "lint-style": {
-      "dependsOn": ["^lint-style"],
       "cache": true,
       "outputs": []
     },
     "lint-style:fix": {
-      "dependsOn": ["^lint-style:fix"],
       "cache": false
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
       "cache": true,
       "outputs": []
     },

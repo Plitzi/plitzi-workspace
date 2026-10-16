@@ -42,7 +42,7 @@
     "clsx": "^2.1.1",
     "immer": "^11.1.21",
     "react-markdown": "^10.1.0",
-    "react-syntax-highlighter": "^16.1.1",
+    "react-syntax-highlighter": "^16.1.2",
     "remark-gfm": "^4.0.1"
   },
   "peerDependencies": {
@@ -52,9 +52,9 @@
   "devDependencies": {
     "@types/react-syntax-highlighter": "^15.5.13",
     "eslint": "^9.39.5",
-    "react": "^19.3.0",
+    "react": "^19.3.1",
     "typescript": "^6.0.3",
-    "vite": "^8.3.2",
-    "vitest": "^5.0.3"
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
   }
 }
