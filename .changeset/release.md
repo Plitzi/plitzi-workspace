@@ -30,8 +30,8 @@
   `@plitzi/sdk-shared/plugins/bundle` (Node only), `@plitzi/sdk-interactions/declarations` (the global callbacks and
   utility specs, without React), and `@plitzi/sdk-elements/elements/declarations`, which now also carries the
   declarations' attribute types and the constants they are checked with. `RuleGroup` is exported by `@plitzi/sdk-shared`
-  with the document types that use it. `plitzi upgrade` names every such import in a project, with the folder to import
-  it from instead.
+  with the document types that use it. `plitzi upgrade migrations` names every such import in a project, with the folder to
+  import it from instead.
 - **`@plitzi/sdk-shared`'s root exports the document types, and only them** (`@plitzi/sdk-shared`): what the package
   does is imported from its folder — `formatDate` from `@plitzi/sdk-shared/helpers`, `ThemeProvider` from
   `@plitzi/sdk-shared/theme`, a GraphQL operation's types from `@plitzi/sdk-shared/network/graphql` — so a module that
@@ -45,3 +45,13 @@
   from `@plitzi/sdk-style/builder`; the variables' lists and forms from `@plitzi/sdk-variables/builder`; the elements'
   settings panels (`defaultElementsSettings`) from `@plitzi/sdk-elements/builder`. Each package's root keeps what a page
   and a server use — `generateCache` no longer loads the inspector, on a server 227 modules down to 21.
+
+## CLI
+
+- **`plitzi upgrade`'s `renames` part is now `migrations`** (`@plitzi/cli`): what a version changed that a project's
+  own source must follow, one file per change in the CLI's `src/migrations/changes/` with the version it shipped in —
+  rewritten with `--write` when it has one right answer, said otherwise. The `--json` report carries `migrations` (each
+  with its `migration`, `since`, `file`, `line`, `what` and whether it was `written`) in place of `renames` and
+  `changes`. The changes of 0.38.0 (`canTemplate` → `canSnippet`, the `*Template` authoring names), 0.38.9 (a
+  `formControl` without `required` is optional) and 0.38.12 (`usePlitziServiceContext` → `usePlitzi`) are no longer
+  looked for: a project still on one of those versions makes them by hand.

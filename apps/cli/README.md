@@ -609,10 +609,9 @@ plitzi upgrade --write --take plitzi/author.ts
 A project brought up to the CLI it has now, part by part: `files` (the machinery — `author.ts`, `main.ts`, the
 Playwright and lint configs, `AGENTS.md`), `packages` (`package.json` merged, `@plitzi/*` raised to this version, then
 the install), `skills` (`.claude/skills/plitzi-*`, whole, so a reference a skill no longer has goes with it) and
-`renames` (a name a version renamed, at its file and line — and, for a project last upgraded before a change it may
-count on, where that change lands: a `formControl` with no `required`, optional since 0.38.9; and, whenever it was
-last upgraded, an import of one file of a package its install now imports by folder, with the folder to name instead,
-since 0.38.17; said, never written). A
+`migrations` (what a version changed that the project's own source may have to follow, at its file and line, with the
+version it shipped in — rewritten with `--write` where the change has one right answer, a rename, and said otherwise:
+since 0.38.17, an import of one file of a package its install now imports by folder, with the folder to name instead). A
 `.gitkeep` is written only in a folder with nothing else in it. A file nobody changed since the CLI wrote it is replaced;
 one the project made its own is a diff, left unless `--take` names it (`all` for every one). The generated
 `.prettierignore` names them, so the project's `format` never turns one into a file `upgrade` believes was changed. A file of the project's own

@@ -13,6 +13,7 @@ import { digestOf, readScaffoldRecord, writeScaffoldRecord } from './scaffoldRec
 import { readOrigin } from './spaceOrigin';
 import { fail, install, writeFiles } from './terminal';
 import { unifiedDiff } from '../fix/diff';
+import { MIGRATIONS, runMigrations } from '../migrations';
 import { detectManagerVersion, installCommand, machineryFiles, seedFiles } from '../scaffold';
 import { RETIRED_MACHINERY } from '../scaffold/machinery';
 import { CLI_VERSION, packageJson } from '../scaffold/project';
@@ -20,6 +21,7 @@ import { SKILL_NAMES, skillFiles, skillVersion } from '../scaffold/skills';
 
 import type { PlitziProject } from './existingProject';
 import type { LocalPackage } from './localPackages';
+import type { MigrationFinding } from '../migrations';
 import type { SpaceOrigin } from './spaceOrigin';
 import type { CreateAnswers } from '../scaffold';
 
@@ -36,9 +38,9 @@ import type { CreateAnswers } from '../scaffold';
  *   the registry has it (`localPackages`: a tarball, a link, an override) is neither raised nor replaced: the install
  *   is left to the author, said with the command that would take the registry's.
  * - `skills`: `.claude/skills/plitzi-*` from the packages installed, each replaced whole.
- * - `renames`: a name a version renamed, still written in the source (`canTemplate`), at its file and line — and with
- *   `--write`, renamed. With it, what a version changed that the source may count on — a `formControl` written
- *   before fields became optional — at its file and line, for a project last upgraded before: said, never written.
+ * - `migrations`: what a version changed that the project's own source may have to follow (`MIGRATIONS`, one file each
+ *   in `src/migrations/`), at its file and line — with `--write`, rewritten where the change has one right answer, a
+ *   rename; said otherwise.
  *
  * Shown by default; `--write` makes it. What the space is — its pages, plugins, data — is the project's, never named.
  *
@@ -47,7 +49,7 @@ import type { CreateAnswers } from '../scaffold';
  *   plitzi upgrade --write --take plitzi/author.ts
  */
 
-export const UPGRADE_PARTS = ['files', 'packages', 'skills', 'renames'] as const;
+export const UPGRADE_PARTS = ['files', 'packages', 'skills', 'migrations'] as const;
 
 export type UpgradePart = (typeof UPGRADE_PARTS)[number];
 
@@ -62,215 +64,6 @@ export interface UpgradeOptions {
    */
   install?: boolean;
 }
-
-// --- renames -------------------------------------------------------------------------------------------------------
-
-/**
- * A name a version renamed with no alias, still to be found in a project's own source.
- *
- * `from` an import names it only in a file that imports it from that package — `TemplateSpec` may be a project's own
- * type; a key (`canTemplate`) is renamed wherever it is written, being a name nothing else uses.
- */
-interface Rename {
-  name: string;
-  to: string;
-  since: string;
-  what: string;
-  from?: string;
-}
-
-const RENAMES: readonly Rename[] = [
-  { name: 'canTemplate', to: 'canSnippet', since: '0.38.0', what: 'a plugin’s builder config key' },
-  ...['authorTemplate', 'validateTemplate', 'TemplateSpec', 'AuthoredTemplate'].map(name => ({
-    name,
-    to: name.replace('Template', 'Snippet'),
-    since: '0.38.0',
-    what: 'what the builder saves from a subtree is a snippet',
-    from: '@plitzi/sdk-authoring'
-  })),
-  // No `from`: the names are the SDK's alone, and a module path that named the hook (`…/hooks/usePlitziServiceContext`)
-  // is renamed with it.
-  ...[
-    ['usePlitziServiceContext', 'usePlitzi'],
-    ['PlitziServiceProvider', 'PlitziProvider'],
-    ['PlitziServiceContextValue', 'PlitziContextValue']
-  ].map(([name, to]) => ({
-    name,
-    to,
-    since: '0.38.12',
-    what: 'what the host rendering a space tells its elements: `usePlitzi()`'
-  }))
-];
-
-interface RenameFound {
-  file: string;
-  line: number;
-  name: string;
-  to: string;
-  since: string;
-  what: string;
-}
-
-/** The project's own source: TypeScript and JavaScript under `src/` and `visual/`, never what was installed or built. */
-const sourceFiles = async (root: string): Promise<string[]> => {
-  const found: string[] = [];
-  const walk = async (dir: string): Promise<void> => {
-    let entries;
-    try {
-      entries = await fs.readdir(path.join(root, dir), { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      const relative = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        await walk(relative);
-      } else if (/\.(ts|tsx|mts|js|jsx|mjs)$/.test(entry.name)) {
-        found.push(relative);
-      }
-    }
-  };
-  await walk('src');
-  await walk('visual');
-
-  return found;
-};
-
-const wordOf = (name: string): RegExp => new RegExp(`\\b${name}\\b`, 'g');
-
-const importsFrom = (text: string, name: string, from: string): boolean =>
-  new RegExp(`import\\s+(type\\s+)?\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['"]${from}['"]`).test(text);
-
-const renamesIn = (file: string, text: string): RenameFound[] =>
-  RENAMES.filter(rename => !rename.from || importsFrom(text, rename.name, rename.from)).flatMap(rename =>
-    text
-      .split('\n')
-      .flatMap((line, index) =>
-        wordOf(rename.name).test(line)
-          ? [{ file, line: index + 1, name: rename.name, to: rename.to, since: rename.since, what: rename.what }]
-          : []
-      )
-  );
-
-// --- changes -------------------------------------------------------------------------------------------------------
-
-/** Before this version a `formControl` was required unless it said `required: false`; from it, optional unless `true`. */
-const OPTIONAL_FIELDS_SINCE = '0.38.9';
-
-interface ChangeFound {
-  file: string;
-  line: number;
-  since: string;
-  what: string;
-}
-
-/** The text of the call whose `(` is at `open`, up to its `)` — strings skipped, so a `)` inside one closes nothing. */
-const callArguments = (text: string, open: number): string => {
-  let depth = 0;
-  let quote: string | undefined;
-  for (let at = open; at < text.length; at++) {
-    const char = text[at];
-    if (quote && char === '\\') {
-      at++;
-      continue;
-    }
-
-    if (quote) {
-      quote = char === quote ? undefined : quote;
-      continue;
-    }
-
-    if (/['"`]/.test(char)) {
-      quote = char;
-    } else if (char === '(') {
-      depth++;
-    } else if (char === ')' && --depth === 0) {
-      return text.slice(open + 1, at);
-    }
-  }
-
-  return text.slice(open + 1);
-};
-
-/**
- * A `formControl(…)` that writes no `required`: one that, written before fields became optional, was required, and now
- * takes an empty answer. Said, never written — whether a field must be answered is the space's to say. Found as written
- * in the call: one built by a helper of the project's own is the helper's to look at.
- */
-const optionalFieldsIn = (file: string, text: string): ChangeFound[] =>
-  [...text.matchAll(/\bformControl\(/g)].flatMap(match => {
-    const open = match.index + match[0].length - 1;
-
-    return /\brequired\s*:/.test(callArguments(text, open))
-      ? []
-      : [
-          {
-            file,
-            line: text.slice(0, match.index).split('\n').length,
-            since: OPTIONAL_FIELDS_SINCE,
-            what: 'a formControl with no `required` is optional now — write `required: true` if it must be answered'
-          }
-        ];
-  });
-
-/** From this version a library package is imported by its root and its folders, never by a file. */
-const FOLDER_IMPORTS_SINCE = '0.38.17';
-
-/** Whether the installed package exports its folders (`"./*"`) — the shape that has no entry for a single file. */
-const exportsFolders = async (root: string, name: string): Promise<boolean> => {
-  const manifest = await readText(path.join(root, 'node_modules', name, 'package.json'));
-  if (manifest === undefined) {
-    return false;
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(manifest);
-  } catch {
-    // A manifest that does not parse is the install's problem to say, not this check's: nothing is claimed of it.
-    return false;
-  }
-
-  return isRecord(parsed) && isRecord(parsed.exports) && './*' in parsed.exports;
-};
-
-/**
- * An import of one FILE of a library package — `@plitzi/sdk-shared/helpers/isRecord` — which its installed version no
- * longer answers: it is imported from the folder (`@plitzi/sdk-shared/helpers`), a default export by the name
- * the folder gives it.
- * Said, never written: which name a folder gives a file's default is the package's to say, not a guess's. Checked
- * against what is installed, so a package still on its old shape says nothing.
- */
-const folderImportsIn = async (
-  root: string,
-  file: string,
-  text: string,
-  folders: Map<string, Promise<boolean>>
-): Promise<ChangeFound[]> => {
-  const found: ChangeFound[] = [];
-  for (const match of text.matchAll(/['"](@plitzi\/[a-z0-9-]+)\/([A-Za-z0-9_./-]+)['"]/g)) {
-    const [, name, subpath] = match;
-    if (!folders.has(name)) {
-      folders.set(name, exportsFolders(root, name));
-    }
-
-    const isFolder = await readText(path.join(root, 'node_modules', name, 'dist', subpath, 'index.d.ts'));
-    if (!(await folders.get(name)) || isFolder !== undefined) {
-      continue;
-    }
-
-    const folder = path.posix.dirname(subpath);
-    found.push({
-      file,
-      line: text.slice(0, match.index).split('\n').length,
-      since: FOLDER_IMPORTS_SINCE,
-      what: `import it from \`${folder === '.' ? name : `${name}/${folder}`}\` — a package is imported by its root and its folders, a default export by the name the folder gives it`
-    });
-  }
-
-  return found;
-};
 
 // --- packages ------------------------------------------------------------------------------------------------------
 
@@ -649,9 +442,7 @@ interface UpgradeReport {
     local: LocalPackage[];
   };
   skills?: SkillPlan[];
-  renames?: RenameFound[];
-  /** What a version changed that the source may count on, where it is written — for a project last upgraded before. */
-  changes?: ChangeFound[];
+  migrations?: MigrationFinding[];
 }
 
 const statusLine: Record<FileStatus, (file: string) => string> = {
@@ -736,22 +527,13 @@ const reportText = (report: UpgradeReport, install: string): string => {
     );
   }
 
-  if (report.renames) {
-    lines.push(report.renames.length === 0 ? chalk.green('renames: none written') : 'renames:');
+  if (report.migrations) {
+    lines.push(report.migrations.length === 0 ? chalk.green('migrations: nothing to change') : 'migrations:');
     lines.push(
-      ...report.renames.map(found =>
+      ...report.migrations.map(found =>
         chalk.yellow(
-          `  ${report.write ? '~' : '!'} ${found.file}:${String(found.line)} ${found.name} → ${found.to} (${found.since}: ${found.what})`
+          `  ${found.written ? '~' : '!'} ${found.file}:${String(found.line)} (${found.since}) ${found.what}${found.written ? '' : ' — yours to change'}`
         )
-      )
-    );
-  }
-
-  if (report.changes && report.changes.length > 0) {
-    lines.push('changes the source may count on (look, then decide — never written):');
-    lines.push(
-      ...report.changes.map(found =>
-        chalk.yellow(`  ! ${found.file}:${String(found.line)} (${found.since}) ${found.what}`)
       )
     );
   }
@@ -787,7 +569,7 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   const plitzi = project.plitzi?.kind === 'project' ? project.plitzi : undefined;
   if (!plitzi && (wanted.has('files') || wanted.has('packages'))) {
     fail(
-      'Its files and package.json are those of a project `plitzi create` wrote, and this is not one: `plitzi upgrade skills renames` brings up the rest.'
+      'Its files and package.json are those of a project `plitzi create` wrote, and this is not one: `plitzi upgrade skills migrations` brings up the rest.'
     );
 
     return;
@@ -901,38 +683,8 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
     report.skills = plans;
   }
 
-  if (wanted.has('renames')) {
-    const found: RenameFound[] = [];
-    const changes: ChangeFound[] = [];
-    // A project the CLI last upgraded at or after the change was told then; one without a record cannot say, and is.
-    const before = record === undefined || isBelow(record.cli, OPTIONAL_FIELDS_SINCE);
-    const folders = new Map<string, Promise<boolean>>();
-    for (const file of await sourceFiles(root)) {
-      const text = await readText(path.join(root, file));
-      if (before && text !== undefined) {
-        changes.push(...optionalFieldsIn(file, text));
-      }
-
-      // Not by the record: an import of a file the installed package no longer answers fails to build, whenever the
-      // project was last upgraded.
-      if (text !== undefined) {
-        changes.push(...(await folderImportsIn(root, file, text, folders)));
-      }
-
-      const inFile = text === undefined ? [] : renamesIn(file, text);
-      if (write && text !== undefined && inFile.length > 0) {
-        const renamed = [...new Set(inFile.map(entry => entry.name))].reduce(
-          (result, name) => result.replace(wordOf(name), RENAMES.find(rename => rename.name === name)?.to ?? name),
-          text
-        );
-        await fs.writeFile(path.join(root, file), renamed);
-      }
-
-      found.push(...inFile);
-    }
-
-    report.renames = found;
-    report.changes = changes;
+  if (wanted.has('migrations')) {
+    report.migrations = await runMigrations({ root, lastUpgraded: record?.cli }, MIGRATIONS, { write });
   }
 
   console.log(options.json ? JSON.stringify(report) : reportText(report, installCommand(manager)));

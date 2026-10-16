@@ -517,64 +517,6 @@ describe('plitzi upgrade', () => {
     expect((await run(['skills'])).skills).toEqual([]);
   });
 
-  it('finds a renamed name where it is written, and renames it — an import only where it is the package’s', async () => {
-    await fs.mkdir(file('src/plugins/Ticker'), { recursive: true });
-    await fs.mkdir(file('src/space'), { recursive: true });
-    await fs.writeFile(
-      file('src/plugins/Ticker/declaration.ts'),
-      'export default { builder: { canTemplate: true } };\n'
-    );
-    await fs.writeFile(
-      file('src/space/snippet.ts'),
-      "import { authorTemplate } from '@plitzi/sdk-authoring';\n\nexport const hero = authorTemplate({});\n"
-    );
-    // A name of the project's own, which only happens to be spelled like the old export.
-    await fs.writeFile(file('src/space/own.ts'), 'export type TemplateSpec = { id: string };\n');
-
-    const shown = await run(['renames']);
-    expect(shown.renames).toEqual([
-      expect.objectContaining({
-        file: path.join('src', 'plugins', 'Ticker', 'declaration.ts'),
-        line: 1,
-        name: 'canTemplate'
-      }),
-      expect.objectContaining({ file: path.join('src', 'space', 'snippet.ts'), line: 1, name: 'authorTemplate' }),
-      expect.objectContaining({ file: path.join('src', 'space', 'snippet.ts'), line: 3, name: 'authorTemplate' })
-    ]);
-
-    await run(['renames'], { write: true });
-
-    expect(await read('src/plugins/Ticker/declaration.ts')).toBe('export default { builder: { canSnippet: true } };\n');
-    expect(await read('src/space/snippet.ts')).toContain('authorSnippet({})');
-    expect(await read('src/space/own.ts')).toBe('export type TemplateSpec = { id: string };\n');
-  });
-
-  it('renames the host context a plugin reads, in its import, its use and the module path that named it', async () => {
-    await fs.mkdir(file('src/plugins/Desk'), { recursive: true });
-    await fs.writeFile(
-      file('src/plugins/Desk/Desk.tsx'),
-      [
-        "import { usePlitziServiceContext } from '@plitzi/plitzi-sdk';",
-        "import type { PlitziServiceContextValue } from '@plitzi/sdk-shared/hooks/usePlitziServiceContext';",
-        '',
-        'export const useHost = (): PlitziServiceContextValue => usePlitziServiceContext();',
-        ''
-      ].join('\n')
-    );
-
-    await run(['renames'], { write: true });
-
-    expect(await read('src/plugins/Desk/Desk.tsx')).toBe(
-      [
-        "import { usePlitzi } from '@plitzi/plitzi-sdk';",
-        "import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';",
-        '',
-        'export const useHost = (): PlitziContextValue => usePlitzi();',
-        ''
-      ].join('\n')
-    );
-  });
-
   it('says which folder an import of one file of a package comes from now, and writes nothing', async () => {
     const installed = file('node_modules/@plitzi/sdk-shared');
     await fs.mkdir(path.join(installed, 'dist', 'helpers'), { recursive: true });
@@ -591,34 +533,19 @@ describe('plitzi upgrade', () => {
     await fs.mkdir(file('src/plugins/Desk'), { recursive: true });
     await fs.writeFile(file('src/plugins/Desk/helpers.ts'), `${source}\n`);
 
-    const shown = await run(['renames'], { write: true });
+    const shown = await run(['migrations'], { write: true });
 
-    expect(shown.changes).toEqual([
-      expect.objectContaining({ file: path.join('src', 'plugins', 'Desk', 'helpers.ts'), line: 1, since: '0.38.17' })
+    expect(shown.migrations).toEqual([
+      expect.objectContaining({
+        migration: 'folderImports',
+        file: path.join('src', 'plugins', 'Desk', 'helpers.ts'),
+        line: 1,
+        since: '0.38.17',
+        written: false
+      })
     ]);
-    expect(JSON.stringify(shown.changes)).toContain('`@plitzi/sdk-shared/helpers`');
+    expect(JSON.stringify(shown.migrations)).toContain('`@plitzi/sdk-shared/helpers`');
     expect(await read('src/plugins/Desk/helpers.ts')).toBe(`${source}\n`);
-  });
-
-  it('says where a field written before fields became optional takes an empty answer now, and writes nothing', async () => {
-    const form = [
-      "formControl({ name: 'answer', label: 'Answer (required)', requiredMessage: 'Write something' })",
-      "formControl({ name: 'title', required: true })",
-      "formControl({ name: 'q', required: false })"
-    ].join('\n');
-    await fs.writeFile(file('src/space/form.ts'), `${form}\n`);
-    await writeScaffoldRecord(root, '0.38.8', { files: {} });
-
-    const shown = await run(['renames']);
-    expect(shown.changes).toEqual([
-      expect.objectContaining({ file: path.join('src', 'space', 'form.ts'), line: 1, since: '0.38.9' })
-    ]);
-    await run(['renames'], { write: true });
-    expect(await read('src/space/form.ts')).toBe(`${form}\n`);
-
-    // Upgraded since: said then, not again.
-    await writeScaffoldRecord(root, '0.38.9', { files: {} });
-    expect((await run(['renames'])).changes).toEqual([]);
   });
 
   it('adds no .gitkeep to a folder that has files of its own', async () => {
@@ -651,7 +578,7 @@ describe('plitzi upgrade', () => {
     const said = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     await upgrade(['skils'], {});
 
-    expect(String(said.mock.calls.at(0)?.[0])).toContain('files, packages, skills, renames');
+    expect(String(said.mock.calls.at(0)?.[0])).toContain('files, packages, skills, migrations');
     process.exitCode = undefined;
   });
 });

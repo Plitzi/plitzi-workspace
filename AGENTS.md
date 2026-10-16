@@ -479,6 +479,9 @@ single pending `.changeset/release.md` under the right `## <area>` heading — n
 it does not exist, create it with every public package in the front matter. Private workspaces (examples, e2e,
 desktop) are never versioned. See `docs/en/releases.md`.
 
+A release that changes something a project's own source counts on — a name, an import, a default — ships its migration
+in `apps/cli/src/migrations/changes/`, one file each (`docs/en/releases.md` § A change a project's source has to follow).
+
 ## Testing gotchas
 
 - Tests that go through the outbound fetch guard mock DNS (`vi.mock('node:dns/promises', …)`); CI has slow/no DNS.
