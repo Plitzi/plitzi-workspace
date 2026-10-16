@@ -1,6 +1,6 @@
 import { use, useCallback } from 'react';
 
-import { ServerActionContext } from '@plitzi/sdk-interactions/sources/ActionsSource/ServerActionContext';
+import { ServerActionContext } from '@plitzi/sdk-interactions/sources/ActionsSource';
 
 import type { CallInputOf, CallOutputOf } from '@plitzi/sdk-shared';
 

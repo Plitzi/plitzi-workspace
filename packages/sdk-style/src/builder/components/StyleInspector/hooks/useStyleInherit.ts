@@ -1,0 +1,76 @@
+import { use, useMemo } from 'react';
+
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { useBuilderStore } from '@plitzi/sdk-shared/store';
+
+import calculateInheriting from '../../../../helpers/calculateInheriting';
+
+import type { Element, StylePseudo, StyleState } from '@plitzi/sdk-shared';
+
+export type UseStyleInheritProps = {
+  element?: Element;
+  componentType?: string;
+  componentSubType?: string;
+  selector?: string;
+  styleSelector?: string;
+  styleState?: StyleState;
+  styleVariant?: string;
+  styleAncestor?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
+};
+
+const useStyleInherit = ({
+  element,
+  componentType,
+  componentSubType,
+  selector,
+  styleSelector = 'base',
+  styleState,
+  styleVariant,
+  styleAncestor,
+  stylePseudo,
+  styleCondition
+}: UseStyleInheritProps) => {
+  const [[flat, platform]] = useBuilderStore(['schema.flat', 'style.platform']);
+  const { componentDefinitions } = use(ComponentContext);
+  const inheritData = useMemo(() => {
+    const selectorsToSkip: string[] = [];
+    const selectorsToInclude: string[] = [];
+    const selectors = (element?.definition.styleSelectors[styleSelector] ?? '').split(' ');
+    if (selector && selectors.length > 1) {
+      selectorsToSkip.push(selector);
+    }
+
+    return calculateInheriting(element, componentType, flat, platform, componentDefinitions.current, {
+      componentSubType,
+      styleSelector,
+      styleState,
+      styleVariant,
+      styleAncestor,
+      stylePseudo,
+      styleCondition,
+      includeSelf: selectors.length > 1,
+      skipSelectors: selectorsToSkip,
+      addSelectors: selectorsToInclude
+    });
+  }, [
+    element,
+    styleSelector,
+    selector,
+    componentType,
+    flat,
+    platform,
+    componentDefinitions,
+    componentSubType,
+    styleState,
+    styleVariant,
+    styleAncestor,
+    stylePseudo,
+    styleCondition
+  ]);
+
+  return inheritData;
+};
+
+export default useStyleInherit;

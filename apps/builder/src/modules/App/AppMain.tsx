@@ -2,9 +2,9 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { PopupProvider } from '@plitzi/plitzi-ui/Popup';
 import { useCallback, useState, useMemo } from 'react';
 
-import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
-import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
+import { DevToolsContainer } from '@plitzi/sdk-dev-tools';
+import { GlobalSources } from '@plitzi/sdk-elements/dataSource';
+import { InteractionsSourcesProvider } from '@plitzi/sdk-interactions';
 import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 
 import AppContainer from './AppContainer';

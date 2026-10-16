@@ -1,10 +1,9 @@
 import { useEffect, useMemo } from 'react';
 
-import { INTERVAL_TRIGGER, intervalOf } from '@plitzi/sdk-shared/helpers/interval';
+import { INTERVAL_TRIGGER, intervalOf } from '@plitzi/sdk-shared/helpers';
 
-import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
-import type { ElementInteraction } from '@plitzi/sdk-shared';
-import type { IntervalTriggerPayload } from '@plitzi/sdk-shared/helpers/interval';
+import type { InteractionsManagerApi, ElementInteraction } from '@plitzi/sdk-shared';
+import type { IntervalTriggerPayload } from '@plitzi/sdk-shared/helpers';
 
 export type UseIntervalTriggersProps = {
   id: string;

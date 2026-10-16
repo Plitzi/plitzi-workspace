@@ -5,10 +5,10 @@ import {
   componentNamed,
   propNameProblem,
   treeOf,
-  updateComponent
-} from '@plitzi/sdk-schema/helpers/components';
-import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
-import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+  updateComponent,
+  isValidElementId,
+  descendants
+} from '@plitzi/sdk-schema';
 
 import { componentsUri, empty, fail, invalidateIndex, pageUri } from '../../../../helpers';
 import { ID_REF_HINT, guardNewRef } from '../write';

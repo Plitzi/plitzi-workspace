@@ -7,140 +7,14 @@
   ],
   "exports": {
     ".": {
+      "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./VariablesContext": {
-      "types": "./dist/VariablesContext.d.ts",
-      "import": "./dist/VariablesContext.mjs"
-    },
-    "./VariablesHelper": {
-      "types": "./dist/VariablesHelper.d.ts",
-      "import": "./dist/VariablesHelper.mjs"
-    },
-    "./components": {
-      "types": "./dist/components/index.d.ts",
-      "import": "./dist/components/index.mjs"
-    },
-    "./components/SchemaVariables": {
-      "types": "./dist/components/SchemaVariables/index.d.ts",
-      "import": "./dist/components/SchemaVariables/index.mjs"
-    },
-    "./components/SchemaVariables/SchemaVariable": {
-      "types": "./dist/components/SchemaVariables/SchemaVariable.d.ts",
-      "import": "./dist/components/SchemaVariables/SchemaVariable.mjs"
-    },
-    "./components/SchemaVariables/SchemaVariables": {
-      "types": "./dist/components/SchemaVariables/SchemaVariables.d.ts",
-      "import": "./dist/components/SchemaVariables/SchemaVariables.mjs"
-    },
-    "./components/SchemaVariables/VariableDetails": {
-      "types": "./dist/components/SchemaVariables/VariableDetails.d.ts",
-      "import": "./dist/components/SchemaVariables/VariableDetails.mjs"
-    },
-    "./components/SchemaVariables/VariableValue": {
-      "types": "./dist/components/SchemaVariables/VariableValue.d.ts",
-      "import": "./dist/components/SchemaVariables/VariableValue.mjs"
-    },
-    "./components/SchemaVariables/index": {
-      "types": "./dist/components/SchemaVariables/index.d.ts",
-      "import": "./dist/components/SchemaVariables/index.mjs"
-    },
-    "./components/StyleVariables": {
-      "types": "./dist/components/StyleVariables/index.d.ts",
-      "import": "./dist/components/StyleVariables/index.mjs"
-    },
-    "./components/StyleVariables/StyleVariable": {
-      "types": "./dist/components/StyleVariables/StyleVariable.d.ts",
-      "import": "./dist/components/StyleVariables/StyleVariable.mjs"
-    },
-    "./components/StyleVariables/StyleVariables": {
-      "types": "./dist/components/StyleVariables/StyleVariables.d.ts",
-      "import": "./dist/components/StyleVariables/StyleVariables.mjs"
-    },
-    "./components/StyleVariables/VariableDetails": {
-      "types": "./dist/components/StyleVariables/VariableDetails.d.ts",
-      "import": "./dist/components/StyleVariables/VariableDetails.mjs"
-    },
-    "./components/StyleVariables/VariableGroup": {
-      "types": "./dist/components/StyleVariables/VariableGroup.d.ts",
-      "import": "./dist/components/StyleVariables/VariableGroup.mjs"
-    },
-    "./components/StyleVariables/VariableList": {
-      "types": "./dist/components/StyleVariables/VariableList.d.ts",
-      "import": "./dist/components/StyleVariables/VariableList.mjs"
-    },
-    "./components/StyleVariables/VariableValue": {
-      "types": "./dist/components/StyleVariables/VariableValue.d.ts",
-      "import": "./dist/components/StyleVariables/VariableValue.mjs"
-    },
-    "./components/StyleVariables/index": {
-      "types": "./dist/components/StyleVariables/index.d.ts",
-      "import": "./dist/components/StyleVariables/index.mjs"
-    },
-    "./components/VariableActions": {
-      "types": "./dist/components/VariableActions/index.d.ts",
-      "import": "./dist/components/VariableActions/index.mjs"
-    },
-    "./components/VariableActions/VariableActions": {
-      "types": "./dist/components/VariableActions/VariableActions.d.ts",
-      "import": "./dist/components/VariableActions/VariableActions.mjs"
-    },
-    "./components/VariableActions/index": {
-      "types": "./dist/components/VariableActions/index.d.ts",
-      "import": "./dist/components/VariableActions/index.mjs"
-    },
-    "./components/index": {
-      "types": "./dist/components/index.d.ts",
-      "import": "./dist/components/index.mjs"
-    },
-    "./index": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
-    },
-    "./models": {
-      "types": "./dist/models/index.d.ts",
-      "import": "./dist/models/index.mjs"
-    },
-    "./models/SchemaVariableForm": {
-      "types": "./dist/models/SchemaVariableForm/index.d.ts",
-      "import": "./dist/models/SchemaVariableForm/index.mjs"
-    },
-    "./models/SchemaVariableForm/SchemaVariableForm": {
-      "types": "./dist/models/SchemaVariableForm/SchemaVariableForm.d.ts",
-      "import": "./dist/models/SchemaVariableForm/SchemaVariableForm.mjs"
-    },
-    "./models/SchemaVariableForm/VariableSubValue": {
-      "types": "./dist/models/SchemaVariableForm/VariableSubValue.d.ts",
-      "import": "./dist/models/SchemaVariableForm/VariableSubValue.mjs"
-    },
-    "./models/SchemaVariableForm/VariableSubValueActions": {
-      "types": "./dist/models/SchemaVariableForm/VariableSubValueActions.d.ts",
-      "import": "./dist/models/SchemaVariableForm/VariableSubValueActions.mjs"
-    },
-    "./models/SchemaVariableForm/VariableValue": {
-      "types": "./dist/models/SchemaVariableForm/VariableValue.d.ts",
-      "import": "./dist/models/SchemaVariableForm/VariableValue.mjs"
-    },
-    "./models/SchemaVariableForm/index": {
-      "types": "./dist/models/SchemaVariableForm/index.d.ts",
-      "import": "./dist/models/SchemaVariableForm/index.mjs"
-    },
-    "./models/StyleVariableForm": {
-      "types": "./dist/models/StyleVariableForm/index.d.ts",
-      "import": "./dist/models/StyleVariableForm/index.mjs"
-    },
-    "./models/StyleVariableForm/StyleVariableForm": {
-      "types": "./dist/models/StyleVariableForm/StyleVariableForm.d.ts",
-      "import": "./dist/models/StyleVariableForm/StyleVariableForm.mjs"
-    },
-    "./models/StyleVariableForm/index": {
-      "types": "./dist/models/StyleVariableForm/index.d.ts",
-      "import": "./dist/models/StyleVariableForm/index.mjs"
-    },
-    "./models/index": {
-      "types": "./dist/models/index.d.ts",
-      "import": "./dist/models/index.mjs"
+    "./*": {
+      "@plitzi/source": "./src/*/index.ts",
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs"
     }
   },
   "type": "module",
@@ -148,9 +22,9 @@
   "scripts": {
     "lint": "eslint ./src",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev": "vite build --mode development --minify false",
     "build:dev-watch": "vite build --mode development --watch --minify false",
-    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:prod": "vite build",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -1,6 +1,6 @@
 import ts from 'typescript';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { FUNCTIONS_ROOT } from './paths';
 

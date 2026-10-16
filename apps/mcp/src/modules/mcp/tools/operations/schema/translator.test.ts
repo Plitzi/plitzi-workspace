@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import { elementDetailToAI, pageStylesToAI } from './translator';
 

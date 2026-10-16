@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 
 import { REFERENCE_ERROR_CODES, isIntegrityError, validateSchema } from './schemaValidator';
 

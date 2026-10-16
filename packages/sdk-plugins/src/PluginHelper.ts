@@ -1,6 +1,6 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 
-import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
+import { fetchManifest } from '@plitzi/sdk-shared/helpers';
 
 import manifestAssetToAsset from './helpers/manifestAssetToAsset';
 

@@ -1,9 +1,9 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { Fragment, isValidElement, use, useMemo, useRef, useSyncExternalStore } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { passesFlagGate } from '@plitzi/sdk-shared/flags';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';

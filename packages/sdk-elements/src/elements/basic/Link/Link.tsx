@@ -2,9 +2,9 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
+import { getPageFullPath } from '@plitzi/sdk-navigation';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import { ariaCurrent } from './ariaCurrent';

@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { IMAGE_WIDTHS, isImageWidth } from '@plitzi/sdk-shared/helpers/images';
+import { IMAGE_WIDTHS, isImageWidth } from '@plitzi/sdk-shared/helpers';
 
 import { isAllowedImageHost } from './allowlist';
 import { writeFileAtomic } from '../../helpers/atomicFile';

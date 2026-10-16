@@ -3,7 +3,7 @@ import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
-import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { isValidElementId } from '@plitzi/sdk-schema';
 
 import type { PageFolder } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';

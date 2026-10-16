@@ -1,4 +1,4 @@
-import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
+import { sharedContext } from '@plitzi/sdk-shared/helpers';
 
 /**
  * Where a run stands as its caller hears it: how an awaited one ended (`completed`, `failed`, `aborted`, or `skipped`

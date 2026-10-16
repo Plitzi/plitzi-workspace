@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-import type { FlagResolution } from '@plitzi/sdk-shared';
+import type { FlagResolution } from '@plitzi/sdk-shared/flags';
 
 export type FlagSourceProps = { resolution?: FlagResolution };
 

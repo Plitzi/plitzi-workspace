@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ProjectLayoutError } from '@plitzi/sdk-shared/project/layout';
+import { ProjectLayoutError } from '@plitzi/sdk-shared/project';
 
 import { authorSpace } from '.';
 import {

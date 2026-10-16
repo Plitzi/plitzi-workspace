@@ -55,7 +55,7 @@ type SpaceComponent = {
 
 ## The operations, in one place
 
-`@plitzi/sdk-schema/helpers/components` is the only implementation; the builder's reducer, the server's `Space`
+`@plitzi/sdk-schema` is the only implementation; the builder's reducer, the server's `Space`
 model and the MCP all call it.
 
 | Function | What it does |

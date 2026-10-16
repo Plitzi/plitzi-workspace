@@ -12,12 +12,8 @@ import type { SourceName } from './source';
 import type { SuggestionCode } from '../schema/codes';
 import type { ClassList, CssSpec, ElementClassList, StatesSpec } from '../style';
 import type { ElementLoadStrategy, ElementRuntime } from '@plitzi/sdk-shared';
-import type {
-  AttributesOf,
-  ElementAttributesBrand,
-  ElementDeclarationData
-} from '@plitzi/sdk-shared/authoring/declare';
-import type { ElementMotion } from '@plitzi/sdk-shared/schema/motion';
+import type { AttributesOf, ElementAttributesBrand, ElementDeclarationData } from '@plitzi/sdk-shared/authoring';
+import type { ElementMotion } from '@plitzi/sdk-shared/schema';
 
 /**
  * Authoring an element.

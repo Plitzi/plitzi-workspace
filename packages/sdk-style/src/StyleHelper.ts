@@ -1,6 +1,6 @@
-import { makeId } from '@plitzi/sdk-shared/helpers/utils';
+import { makeId } from '@plitzi/sdk-shared/helpers';
 import { DISPLAY_MODES, DISPLAY_MODE_MIN_WIDTH, displayModeWidthRem, isDisplayMode } from '@plitzi/sdk-shared/style';
-import { styleVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import { styleVariablesToCss } from '@plitzi/sdk-variables';
 
 import type { DisplayMode, Style, TagType, StyleVariables } from '@plitzi/sdk-shared';
 

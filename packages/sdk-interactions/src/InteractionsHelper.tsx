@@ -1,7 +1,7 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 
-import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
 import { MAX_PARAM_PASSES, resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { coerceDeclaredParams } from './helpers/coerceDeclaredParams';

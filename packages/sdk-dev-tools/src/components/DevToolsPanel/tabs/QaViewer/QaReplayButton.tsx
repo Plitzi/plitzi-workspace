@@ -1,6 +1,6 @@
 import { use, useCallback } from 'react';
 
-import { isMotionAnimation } from '@plitzi/sdk-shared/schema/motion';
+import { isMotionAnimation } from '@plitzi/sdk-shared/schema';
 
 import QaContext from '../../../../qa/QaContext';
 

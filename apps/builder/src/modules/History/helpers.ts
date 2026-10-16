@@ -1,7 +1,7 @@
 import { describeChange, fieldChanges, uniqueLines } from '@plitzi/sdk-shared/history';
 
-import type { ChangeEntry, ChangeKind, ChangeOrigin, TSnapshotMarker, TSpaceChanges } from '@plitzi/sdk-shared';
-import type { ChangeAction } from '@plitzi/sdk-shared/history';
+import type { ChangeEntry, ChangeKind, ChangeOrigin, ChangeAction } from '@plitzi/sdk-shared/history';
+import type { TSnapshotMarker, TSpaceChanges } from '@plitzi/sdk-shared/network';
 
 export type ChangeRecord = TSpaceChanges['changes'][number];
 

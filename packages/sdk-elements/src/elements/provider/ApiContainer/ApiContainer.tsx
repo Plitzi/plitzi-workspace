@@ -5,13 +5,12 @@ import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
-import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useServerQuery } from '@plitzi/sdk-shared/queries';
-import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
+import { currentRscLocation } from '@plitzi/sdk-shared/server';
 import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';
@@ -27,6 +26,7 @@ import useProviderPagination from './hooks/useProviderPagination';
 import useProviderWrite from './hooks/useProviderWrite';
 import pathFields from '../../../dataSource/pathFields';
 import sourceStore from '../../../dataSource/sourceStore';
+import useRegisterSource from '../../../dataSource/useRegisterSource';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import useRscData from '../../../Element/hooks/useRscData';

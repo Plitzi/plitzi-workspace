@@ -3,7 +3,8 @@ import { useCallback } from 'react';
 
 import FlagSource from './FlagSource';
 
-import type { FlagResolution, SchemaFlag } from '@plitzi/sdk-shared';
+import type { SchemaFlag } from '@plitzi/sdk-shared';
+import type { FlagResolution } from '@plitzi/sdk-shared/flags';
 
 export type FlagsListItemProps = {
   name: string;

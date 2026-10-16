@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { use, useCallback, useLayoutEffect, useState, useSyncExternalStore } from 'react';
 
-import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
+import { sharedContext } from '@plitzi/sdk-shared/helpers';
 
 import type { ReactNode } from 'react';
 

@@ -1,6 +1,6 @@
 import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import BuilderBreadcrumbItem from './BuilderBreadcrumbItem';

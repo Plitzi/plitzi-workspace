@@ -1,4 +1,4 @@
-import type { BuiltinParam, ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
+import type { BuiltinParam, ParamSpec } from '@plitzi/sdk-shared/authoring';
 
 // Built-in data-binding transformers, beside the implementations they describe (`../dataSource/utility`). A transformer
 // post-processes the value a binding pulls from its source before it reaches the element field:

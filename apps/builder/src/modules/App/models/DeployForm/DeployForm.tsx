@@ -5,7 +5,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import { useCallback, useMemo } from 'react';
 import { z } from 'zod';
 
-import { formatFromNow } from '@plitzi/sdk-shared';
+import { formatFromNow } from '@plitzi/sdk-shared/helpers';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
 import InputEnvironment from './InputEnvironment';

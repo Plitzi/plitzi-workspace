@@ -3,7 +3,7 @@ import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
 import { useMemo } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
-import { ThemeProvider } from '@plitzi/sdk-shared';
+import { ThemeProvider } from '@plitzi/sdk-shared/theme';
 
 import AppContext from './AppContext';
 import { getEnvironmentServer, resolveEnvironment } from './config/environments';

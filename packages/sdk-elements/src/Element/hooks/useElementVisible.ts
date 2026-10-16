@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 /** Whether a node is drawn: neither it nor anything around it is `display: none` — what hiding an element does. */
 const isDrawn = (node: Element): boolean =>

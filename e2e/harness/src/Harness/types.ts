@@ -1,4 +1,5 @@
-import type { OfflineDataRaw, ThemeScope } from '@plitzi/sdk-shared';
+import type { OfflineDataRaw } from '@plitzi/sdk-shared';
+import type { ThemeScope } from '@plitzi/sdk-shared/theme';
 
 /** How the SDK is mounted, beyond which space it shows. Every field left out is the SDK's own default. */
 export type HarnessRenderOptions = {

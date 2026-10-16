@@ -2,14 +2,12 @@ import { z } from 'zod';
 
 import { isSuggestionCode } from '@plitzi/sdk-authoring';
 import { FLAG_GATE_PATTERN } from '@plitzi/sdk-shared/flags';
-import { ANCHOR_PATTERN } from '@plitzi/sdk-shared/schema/anchor';
-import { motionProblems } from '@plitzi/sdk-shared/schema/motion';
-import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
+import { ANCHOR_PATTERN, motionProblems } from '@plitzi/sdk-shared/schema';
+import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types';
 
 import { closedObject } from '../closed';
 
-import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { ElementRuntime } from '@plitzi/sdk-shared';
+import type { ElementRuntime, RuleGroup } from '@plitzi/sdk-shared';
 
 // Shared zod fragments for the element-schema operations (one file per op imports what it needs from here).
 

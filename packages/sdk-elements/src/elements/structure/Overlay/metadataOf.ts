@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 /**
  * What `openModal('modal', …)` — or `openDialog` — hands the container, as its data: an object is its fields, a JSON

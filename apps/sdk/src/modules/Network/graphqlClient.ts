@@ -1,5 +1,5 @@
-import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth/failureChannel';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 /** Where a request stopped: never reached the server, refused by it, or answered with errors in place of data. */
 export type GraphqlFailure = 'network' | 'http' | 'graphql';

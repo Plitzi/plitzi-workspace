@@ -1,5 +1,5 @@
-import { toInteractionCallback } from '@plitzi/sdk-shared/authoring/builder';
-import { clipboardWriter } from '@plitzi/sdk-shared/helpers/clipboard';
+import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
+import { clipboardWriter } from '@plitzi/sdk-shared/helpers';
 
 import { copyToClipboardSpec } from './copyToClipboardSpec';
 

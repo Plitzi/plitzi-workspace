@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
 
 import type { EventBridgeEvent, EventBridgeModule } from '@plitzi/sdk-shared';
 

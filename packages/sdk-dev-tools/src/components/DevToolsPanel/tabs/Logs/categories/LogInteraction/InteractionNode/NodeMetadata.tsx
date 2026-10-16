@@ -1,7 +1,7 @@
 import { getValuesRequired } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo } from 'react';
 
-import syntaxHighlight from '@plitzi/sdk-shared/helpers/syntaxHighlight';
+import { syntaxHighlight } from '@plitzi/sdk-shared/helpers';
 
 import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
 

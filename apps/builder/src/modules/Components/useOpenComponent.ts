@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { componentNamed } from '@plitzi/sdk-schema/helpers/components';
+import { componentNamed } from '@plitzi/sdk-schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import type { SpaceComponent } from '@plitzi/sdk-shared';

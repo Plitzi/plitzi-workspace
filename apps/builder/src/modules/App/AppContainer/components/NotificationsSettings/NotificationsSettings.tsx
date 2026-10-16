@@ -2,18 +2,18 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import {
   NOTIFICATIONS_FIELDS,
   notificationsProblem,
   splitNotificationsCss,
   withNotificationsCss
-} from '@plitzi/sdk-shared/style/notifications';
+} from '@plitzi/sdk-shared/style';
 
 import ViewSection from '../../../components/ViewSection';
 
-import type { NotificationsSpec } from '@plitzi/sdk-shared/style/notifications';
+import type { NotificationsSpec } from '@plitzi/sdk-shared/style';
 
 type Field = keyof NotificationsSpec;
 

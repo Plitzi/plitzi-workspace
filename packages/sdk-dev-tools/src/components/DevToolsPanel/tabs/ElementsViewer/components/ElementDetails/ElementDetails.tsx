@@ -1,7 +1,7 @@
 import ContainerTabs from '@plitzi/plitzi-ui/ContainerTabs';
 import { useMemo } from 'react';
 
-import { treeOf } from '@plitzi/sdk-schema/helpers/components';
+import { treeOf } from '@plitzi/sdk-schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import DetailsAttributes from '../DetailsAttributes';

@@ -7,7 +7,7 @@ import Text from '@plitzi/plitzi-ui/Text';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useMemo } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';
 
 import DirectoryItem from './DirectoryItem';

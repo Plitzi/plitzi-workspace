@@ -1,6 +1,5 @@
-import { canonicalCondition } from '@plitzi/sdk-shared/style/styleConditions';
-import { isStylePseudo } from '@plitzi/sdk-shared/style/stylePseudos';
-import processSelector from '@plitzi/sdk-style/helpers/processSelector';
+import { canonicalCondition, isStylePseudo } from '@plitzi/sdk-shared/style';
+import { processSelector } from '@plitzi/sdk-style/helpers';
 
 import { styleInputProblem } from './validate';
 import { expandShorthand, expandShorthandPatch } from '../../../catalogs';

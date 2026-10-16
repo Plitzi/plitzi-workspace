@@ -1,5 +1,5 @@
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 

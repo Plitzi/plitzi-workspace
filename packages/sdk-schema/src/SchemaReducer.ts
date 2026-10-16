@@ -14,7 +14,6 @@ import FlatMap from './helpers/FlatMap';
 import type {
   Element,
   PageFolder,
-  ReducerActionOrigin,
   Schema,
   SnippetStyle,
   SchemaFlag,
@@ -23,6 +22,7 @@ import type {
   SpaceComponent,
   SpaceComponentDeclaration
 } from '@plitzi/sdk-shared';
+import type { ReducerActionOrigin } from '@plitzi/sdk-shared/helpers';
 
 /** Variables a snippet brought with it, minus the ones this space already declares under the same name. */
 const appendVariables = (draft: Schema, variables: SchemaVariable[]): void => {

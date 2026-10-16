@@ -3,8 +3,8 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { componentNamed } from '@plitzi/sdk-schema/helpers/components';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { componentNamed } from '@plitzi/sdk-schema';
 import { useBuilderStore, useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 
 import SlotRow from './SlotRow';

@@ -1,10 +1,8 @@
 import useRscData from './Element/hooks/useRscData';
 import JsxManager from './Element/JsxManager';
 import * as elements from './elements';
-import * as elementSettings from './elements/settings';
 
 export * from './elements';
-export * from './elements/settings';
 
 export const defaultElements = {
   dropdown: elements.Dropdown,
@@ -43,7 +41,21 @@ export const defaultElements = {
   channel: elements.Channel
 };
 
-export { useRscData, elements, elementSettings, JsxManager };
+export { useRscData, elements, JsxManager };
 export { default as useChannel } from './realtime/useChannel';
 export { default as useFlag } from './dataSource/useFlag';
 export type { ChannelHandle, UseChannelOptions } from './realtime/useChannel';
+export { default as withElement } from './Element/hocs/withElement';
+export type { WithElementProps } from './Element/hocs/withElement';
+export { default as useElement } from './Element/hooks/useElement';
+export { default as PluginManager } from './Element/PluginManager';
+export { default as PluginRemote } from './Element/PluginRemote';
+export { default as ReplicaProvider } from './Element/ReplicaProvider';
+export { default as RootElement } from './Element/RootElement';
+export { default as elementChildren } from './Element/helpers/elementChildren';
+export { default as useElementVisible } from './Element/hooks/useElementVisible';
+export { default as usePluginTrigger } from './Element/hooks/usePluginTrigger';
+export type { ElementContextValue } from './Element/ElementContext';
+export type { ElementChild } from './Element/helpers/elementChildren';
+export type { PluginTriggerPayload } from './Element/hooks/usePluginTrigger';
+export { default as ElementContext } from './Element/ElementContext';

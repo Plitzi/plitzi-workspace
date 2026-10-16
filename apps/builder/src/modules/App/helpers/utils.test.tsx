@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from 'vitest';
 import { getPopups, isFullViewId } from './utils';
 
 // The panels' own modules are not what is under test: only which entries the sidebar has, and how each opens.
-vi.mock('@plitzi/sdk-style/StyleAdvanceEditor', () => ({ default: () => null }));
+vi.mock('@plitzi/sdk-style', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-style')>()),
+  StyleAdvanceEditor: () => null
+}));
 vi.mock('@pmodules/Builder/components/BuilderTree', () => ({ default: () => null }));
 vi.mock('@pmodules/Elements', () => ({ default: () => null }));
 vi.mock('@pmodules/Flags', () => ({ default: () => null }));

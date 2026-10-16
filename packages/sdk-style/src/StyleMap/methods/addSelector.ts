@@ -1,6 +1,6 @@
 import { set } from '@plitzi/plitzi-ui/helpers';
 
-import { styleTargetProblem } from '@plitzi/sdk-shared/style/styleTarget';
+import { styleTargetProblem } from '@plitzi/sdk-shared/style';
 
 import processSelector from '../../helpers/processSelector';
 import getStyleItem from '../helpers/getStyleItem';

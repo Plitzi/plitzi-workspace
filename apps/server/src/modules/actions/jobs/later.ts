@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { findTriggerNode } from '../runtime/triggers';
 

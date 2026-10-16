@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectModule } from './projectModules';
 import { editTsConfig, freshSecret, ignoreLines, unignore, writeFormatted } from './repairs';

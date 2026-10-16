@@ -3,7 +3,7 @@ import { Icon } from '@plitzi/plitzi-ui/components';
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
-import { formatDate } from '@plitzi/sdk-shared';
+import { formatDate } from '@plitzi/sdk-shared/helpers';
 
 import type { SpaceCredentialProvider } from '@plitzi/sdk-shared';
 import type { MouseEvent } from 'react';

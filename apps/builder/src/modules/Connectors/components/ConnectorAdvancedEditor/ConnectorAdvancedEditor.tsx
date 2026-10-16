@@ -2,7 +2,7 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import { useMemo } from 'react';
 
 import { connectorTokens } from '@plitzi/sdk-shared/connectors';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 

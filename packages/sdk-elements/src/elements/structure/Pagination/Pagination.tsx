@@ -2,9 +2,9 @@
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 
 import buildPageWindow from './buildPageWindow';

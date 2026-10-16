@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { flagGateOf } from '@plitzi/sdk-authoring';
-import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
-import { isMotion } from '@plitzi/sdk-shared/schema/motion';
+import { repointIds } from '@plitzi/sdk-schema';
+import { isMotion } from '@plitzi/sdk-shared/schema';
 
 import { empty, fail, findRootByRef, invalidateIndex, resolveRef } from '../../../../helpers';
 import {

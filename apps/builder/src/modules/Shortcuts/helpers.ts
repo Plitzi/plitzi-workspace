@@ -1,4 +1,4 @@
-import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+import { elementOf } from '@plitzi/sdk-shared/helpers';
 import { deleteKey } from '@pmodules/Keyboard';
 
 /** One key of a shortcut as its keycap reads — `command` puts the platform's modifier (⌘ / Ctrl) in front of it. */

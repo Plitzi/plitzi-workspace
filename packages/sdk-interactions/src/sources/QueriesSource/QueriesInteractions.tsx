@@ -1,6 +1,6 @@
 import { use, useCallback, useMemo } from 'react';
 
-import { toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
+import { toInteractionCallbacks } from '@plitzi/sdk-shared/authoring';
 import { invalidateQueries, parseIds } from '@plitzi/sdk-shared/queries';
 
 import { queriesCallbacks } from './callbacks';

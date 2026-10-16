@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
+import { FlatMap } from '@plitzi/sdk-schema';
 
 import { empty, fail, findRootByRef, indexInvalidateDetails, resolveRef } from '../../../../helpers';
 import { position } from '../shared';

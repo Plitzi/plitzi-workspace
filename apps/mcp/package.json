@@ -11,16 +11,19 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./server": {
+      "@plitzi/source": "./src/server.ts",
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js",
       "default": "./dist/server.js"
     },
     "./render": {
+      "@plitzi/source": "./src/render.ts",
       "types": "./dist/render.d.ts",
       "import": "./dist/render.js",
       "default": "./dist/render.js"

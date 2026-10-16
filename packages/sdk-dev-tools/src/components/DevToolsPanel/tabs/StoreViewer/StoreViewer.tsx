@@ -4,9 +4,9 @@ import * as vscode from '@uiw/react-json-view/vscode';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
-import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { DevToolsContext } from '@plitzi/sdk-shared/devTools';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import mapFunctionValues from './helpers/mapFunctionValues';
 import renderFreshnessKey from './helpers/renderFreshnessKey';

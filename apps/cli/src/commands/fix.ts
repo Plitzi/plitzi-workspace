@@ -5,7 +5,7 @@ import { promisify } from 'node:util';
 
 import chalk from 'chalk';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { findProject } from './existingProject';
 import { projectFormatter } from './projectFormatter';

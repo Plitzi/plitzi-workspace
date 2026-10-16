@@ -1,5 +1,5 @@
-import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
-import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 
 import {
   elementAncestorTypes,
@@ -25,7 +25,7 @@ import { AUTHORING_HELPERS, MOTION_ENTRY } from './helpers';
 
 import type { AuthoringCodeEntry } from '../schema/codes';
 import type { InteractionCallback, InteractionCallbackParam } from '@plitzi/sdk-shared';
-import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
 
 /**
  * What a name means in the authoring surface — an element type, a step, a trigger, a problem's code, a transformer —

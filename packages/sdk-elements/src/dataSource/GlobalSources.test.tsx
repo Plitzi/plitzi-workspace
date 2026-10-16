@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
-import AuthContext from '@plitzi/sdk-auth/AuthContext';
+import { AuthContext } from '@plitzi/sdk-auth';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
-import { setThemeMode } from '@plitzi/sdk-shared/theme/themeStore';
+import { setThemeMode } from '@plitzi/sdk-shared/theme';
 
 import GlobalSources from './GlobalSources';
 import useElementDataSource from '../Element/hooks/useElementDataSource';

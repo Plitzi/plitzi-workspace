@@ -1,5 +1,5 @@
 import { hasConditions, isFlagName } from '@plitzi/sdk-shared/flags';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { didYouMean } from '../suggest';
 

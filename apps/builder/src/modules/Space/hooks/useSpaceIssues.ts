@@ -3,7 +3,7 @@ import { use, useCallback, useEffect, useRef } from 'react';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
-import type { TSpaceIssues } from '@plitzi/sdk-shared';
+import type { TSpaceIssues } from '@plitzi/sdk-shared/network';
 
 /** The document being edited: a published snapshot was read when it was published, and cannot change. */
 const VARIABLES = { environment: 'main' };

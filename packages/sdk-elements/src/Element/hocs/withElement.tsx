@@ -2,8 +2,8 @@
 import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import { Profiler, use, useEffect, useId, useMemo, useRef } from 'react';
 
-import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { useEventBridge } from '@plitzi/sdk-event-bridge';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { diffProps, tracingCollector } from '@plitzi/sdk-shared/store/tracing';
 

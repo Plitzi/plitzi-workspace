@@ -1,7 +1,7 @@
 import { use, useCallback } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import useElement from './useElement';
 

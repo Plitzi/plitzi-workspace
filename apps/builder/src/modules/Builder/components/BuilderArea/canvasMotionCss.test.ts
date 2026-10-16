@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { MOTION_PLAY_CSS, MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
+import { MOTION_PLAY_CSS, MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
 import { canvasMotionCss, PREVIEW_CANVAS_CSS } from './canvasMotionCss';
 

@@ -4,7 +4,8 @@ import useSWRInfinite from 'swr/infinite';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
-import type { ChangeOrigin, TSpaceChanges } from '@plitzi/sdk-shared';
+import type { ChangeOrigin } from '@plitzi/sdk-shared/history';
+import type { TSpaceChanges } from '@plitzi/sdk-shared/network';
 
 export type ChangeFilters = { origin?: ChangeOrigin; entityId?: string; since?: number };
 

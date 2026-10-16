@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defaultClientConditions, defineConfig } from 'vite';
 
 const require = createRequire(import.meta.url);
 const PACKAGE = require('./package.json') as { version: string };
@@ -14,17 +14,17 @@ const baseUrl = new URL('.', import.meta.url);
 const resolve = (...segments: string[]) => path.resolve(baseUrl.pathname, ...segments);
 
 /**
- * The shared packages come from source; `@plitzi/plitzi-sdk` deliberately does not.
- *
- * The SDK's own source resolves through aliases of its own (`@modules/*`), which only its build knows about, so
- * pointing at `apps/sdk/src` from here fails on the SDK's very first import. The builder consumes it the same
- * way, through its published `exports` — which is also what resolves the stylesheet subpath.
- *
- * React is pinned to the workspace copy all the same: two Reacts in one window is a tree whose hooks throw on the
- * first render, and the SDK leaves it to the host precisely so there is only ever one.
+ * Outside production the workspace packages are read from their sources — `@plitzi/source`, which leads every one of
+ * their `exports` — as the builder and the SDK read them; `@plitzi/plitzi-sdk` has no such entry and is read from its
+ * build, deliberately: its source resolves through aliases of its own (`@modules/*`) only its build knows about.
  */
-const packages = {
-  '@plitzi/sdk-shared': resolve('../../packages/sdk-shared/src'),
+const SOURCE_CONDITION = '@plitzi/source';
+
+/**
+ * React is pinned to the workspace copy: two Reacts in one window is a tree whose hooks throw on the first render, and
+ * the SDK leaves it to the host precisely so there is only ever one.
+ */
+const reactAliases = {
   react: resolve('../../node_modules/react'),
   'react-dom': resolve('../../node_modules/react-dom')
 };
@@ -39,13 +39,27 @@ export default defineConfig(({ mode }) => ({
   },
   resolve: {
     alias: {
-      ...packages,
+      ...reactAliases,
       '@pmodules': resolve('src/modules'),
       '@pcomponents': resolve('src/components')
     },
+    conditions: mode === 'production' ? undefined : [SOURCE_CONDITION, ...defaultClientConditions],
     // `@plitzi/nexus` and `@plitzi/plitzi-ui` may be linked through portals, each carrying its own node_modules. React and
     // CodeMirror check identity (a hook's dispatcher, an extension's `instanceof`), so a second copy breaks them: one each.
-    dedupe: ['react', 'react-dom', '@codemirror/autocomplete', '@codemirror/commands', '@codemirror/language', '@codemirror/lint', '@codemirror/search', '@codemirror/state', '@codemirror/view', '@lezer/common', '@lezer/highlight', '@lezer/lr']
+    dedupe: [
+      'react',
+      'react-dom',
+      '@codemirror/autocomplete',
+      '@codemirror/commands',
+      '@codemirror/language',
+      '@codemirror/lint',
+      '@codemirror/search',
+      '@codemirror/state',
+      '@codemirror/view',
+      '@lezer/common',
+      '@lezer/highlight',
+      '@lezer/lr'
+    ]
   },
   server: {
     port: 5180,

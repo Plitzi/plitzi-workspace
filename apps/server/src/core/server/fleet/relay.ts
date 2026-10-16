@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { broadcast, onBroadcast } from './link';
 import { serverLog } from '../../../helpers/serverLog';

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
-import type { TQuotaPlane, TSpaceQuota } from '@plitzi/sdk-shared';
+import type { TQuotaPlane, TSpaceQuota } from '@plitzi/sdk-shared/network';
 
 /** A quota figure as it is shown: whole units, grouped. */
 export const format = (value: number): string => Math.round(value).toLocaleString();

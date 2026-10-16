@@ -1,7 +1,7 @@
 import { set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
-import { mergeSnippetStyle } from '@plitzi/sdk-shared/style/snippetStyle';
+import { mergeSnippetStyle } from '@plitzi/sdk-shared/style';
 
 import { generateCache } from './StyleHelper';
 import StyleMap from './StyleMap';
@@ -9,7 +9,6 @@ import StyleMap from './StyleMap';
 import type {
   DisplayMode,
   SnippetStyle,
-  ReducerActionOrigin,
   SpaceFont,
   Style,
   StyleCategory,
@@ -19,6 +18,7 @@ import type {
   StyleVariableValue,
   TagType
 } from '@plitzi/sdk-shared';
+import type { ReducerActionOrigin } from '@plitzi/sdk-shared/helpers';
 
 export const StyleActions = {
   STYLE_UPDATE: 'STYLE_UPDATE',

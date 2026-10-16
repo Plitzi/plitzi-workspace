@@ -1,6 +1,5 @@
-import { isDisplayMode } from '@plitzi/sdk-shared/style/displayModes';
-import { sameSelector, selectorsOf } from '@plitzi/sdk-shared/style/snippetStyle';
-import processSelector from '@plitzi/sdk-style/helpers/processSelector';
+import { isDisplayMode, sameSelector, selectorsOf } from '@plitzi/sdk-shared/style';
+import { processSelector } from '@plitzi/sdk-style/helpers';
 
 import { documentIds } from './components';
 import { remapCollidingIds } from './elementId';

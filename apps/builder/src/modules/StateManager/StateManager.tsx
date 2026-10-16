@@ -5,9 +5,9 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 export type StateManagerProps = {
   className?: string;

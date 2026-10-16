@@ -1,5 +1,5 @@
-import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/components';
-import { resolveLayoutChain } from '@plitzi/sdk-shared/schema/layoutChain';
+import { componentNamed, isInstance } from '@plitzi/sdk-schema';
+import { resolveLayoutChain } from '@plitzi/sdk-shared/schema';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';
 

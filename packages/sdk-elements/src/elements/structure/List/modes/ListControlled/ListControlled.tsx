@@ -3,14 +3,14 @@ import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
-import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import ListControlledItem from './ListControlledItem';
 import { rowKeys } from './rowKeys';
 import sourceStore from '../../../../../dataSource/sourceStore';
+import useRegisterSource from '../../../../../dataSource/useRegisterSource';
 import useElement from '../../../../../Element/hooks/useElement';
 import RootElement from '../../../../../Element/RootElement';
 import declaration from '../../declaration';

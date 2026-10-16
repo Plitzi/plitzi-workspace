@@ -1,5 +1,5 @@
-import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions/functions';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { pluginTaskProblem } from './scope';
 import { taskName, taskNameProblem } from '../actions/tasks/registry';

@@ -1,12 +1,12 @@
 /**
  * Where a project the CLI writes keeps each part of it. What the server and the authoring read too is
- * `@plitzi/sdk-shared/project/paths`'s, said there once; what follows is the CLI's alone.
+ * `@plitzi/sdk-shared/project`'s, said there once; what follows is the CLI's alone.
  *
  * `.plitzi/` is the other half of what is not the source: what the CLI records about the project and that travels with
  * it — where it came from (`space.json`), the functions' working copy (`functions.json`), what `create` wrote
  * (`scaffold.json`). Committed.
  */
-import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project/paths';
+import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 export {
   AUTHOR_FILE,
@@ -30,7 +30,7 @@ export {
   SPACE_DIR,
   SPACE_ENTRY,
   VENDOR_PLUGINS_DIR
-} from '@plitzi/sdk-shared/project/paths';
+} from '@plitzi/sdk-shared/project';
 
 /**
  * The project's entry point — the page server, or the Vite app — in `src/`, where an entry point is looked for. The

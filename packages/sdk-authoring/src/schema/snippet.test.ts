@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
-import fitSnippet from '@plitzi/sdk-schema/helpers/fitSnippet';
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
-import SchemaReducer from '@plitzi/sdk-schema/SchemaReducer';
-import { mergeSnippetStyle } from '@plitzi/sdk-shared/style/snippetStyle';
+import { descendants, fitSnippet, FlatMap, SchemaReducer } from '@plitzi/sdk-schema';
+import { mergeSnippetStyle } from '@plitzi/sdk-shared/style';
 
 import { elementSourceTypes } from '../elements';
 import { authorSpace, authorSnippet, validateSpace, validateSnippet } from './index';

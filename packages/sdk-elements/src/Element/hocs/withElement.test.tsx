@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
+import { useEventBridge } from '@plitzi/sdk-event-bridge';
 
 import withElement from './withElement';
 import ElementParentContext from '../ElementParentContext';
@@ -25,10 +25,14 @@ const definition: Element['definition'] = {
 // `withElement` reads `schema.flat.<id>` to resolve the element and inject its resolved props.
 const element: Element = { id: 'el1', attributes: {}, definition };
 
-vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: vi.fn() }));
+vi.mock('@plitzi/sdk-event-bridge', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-event-bridge')>()),
+  useEventBridge: vi.fn()
+}));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
 }));
 
 // Mutable so a test can hide the element through its own state without re-mocking the module.

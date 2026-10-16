@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { inPluginLayer } from '@plitzi/sdk-shared/style/cssLayers';
+import { inPluginLayer } from '@plitzi/sdk-shared/style';
 
 import { copyFileAtomic, writeFileAtomic } from '../helpers/atomicFile';
 

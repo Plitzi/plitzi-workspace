@@ -1,7 +1,7 @@
 import { cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { describe, it, expect } from 'vitest';
 
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import { positionalElementId } from './elementId';
 import FlatMap from './FlatMap';

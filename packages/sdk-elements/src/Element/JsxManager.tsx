@@ -1,7 +1,7 @@
 import { memo, use, useMemo } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
 
 import { getRemoteSettings } from './helpers/pluginSelector';
 import PluginRemote from './PluginRemote';

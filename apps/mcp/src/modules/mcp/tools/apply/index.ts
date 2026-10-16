@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+import { generateCache } from '@plitzi/sdk-style';
 
 import { changedResources, conflictMessage, detectConflicts, resolvedElements } from './writeResult';
 import { dataFileUri, dataUri, functionFileUri, functionsUri } from '../../helpers';

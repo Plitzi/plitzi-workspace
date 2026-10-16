@@ -1,4 +1,4 @@
-import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring';
 
 /**
  * The copy-to-clipboard step, as the editor and anything authoring one offline read it: the words to copy — a template

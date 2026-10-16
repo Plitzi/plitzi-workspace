@@ -16,6 +16,10 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    /* A workspace package's `exports` lead with `@plitzi/source`, its sources: the editor, the typecheck and the typed
+       lint read the packages a package depends on as they are now, not as their last build left `dist`. The
+       declaration build turns it off (`vite.config.ts`), so what is emitted and published is unchanged. */
+    "customConditions": ["@plitzi/source"],
     "types": ["node", "vite/client"],
     "allowImportingTsExtensions": true,
     "isolatedModules": true,

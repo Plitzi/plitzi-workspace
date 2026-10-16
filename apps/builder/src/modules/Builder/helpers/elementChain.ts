@@ -1,4 +1,4 @@
-import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
+import { parentChain } from '@plitzi/sdk-schema';
 
 import type { Element } from '@plitzi/sdk-shared';
 

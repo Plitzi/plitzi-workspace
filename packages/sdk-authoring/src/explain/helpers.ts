@@ -1,5 +1,5 @@
 /* eslint-disable quotes -- the entries quote code, which reads best in the other quotes */
-import { MOTION_ENTERS, MOTION_LOOPS, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema/motion';
+import { MOTION_ENTERS, MOTION_LOOPS, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema';
 
 /**
  * The authoring functions that are not an element, a step or a trigger — what wires an element to its data, its state

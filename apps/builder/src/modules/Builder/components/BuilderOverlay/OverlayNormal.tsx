@@ -4,9 +4,9 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, use, useEffect, useMemo, useRef, useState } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { makeSelector } from '@plitzi/sdk-style/StyleHelper';
+import { makeSelector } from '@plitzi/sdk-style';
 
 import OverlayButtonContainer from './OverlayButtonContainer';
 import OverlayButtonResize from './OverlayButtonResize';

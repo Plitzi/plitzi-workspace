@@ -2,7 +2,7 @@ import { describe, expectTypeOf, it } from 'vitest';
 
 import type { elementAttributeNames } from './attributeNames';
 import type { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
-import type { AttributesOf } from '@plitzi/sdk-shared/authoring/declare';
+import type { AttributesOf } from '@plitzi/sdk-shared/authoring';
 
 type Declared = {
   [Name in keyof typeof elementDeclarations as (typeof elementDeclarations)[Name]['type']]: AttributesOf<

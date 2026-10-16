@@ -4,7 +4,7 @@ import { MUTED, SUGGESTION_TEXT } from '../../helpers';
 import ElementChip from '../ElementChip';
 import IssueFix from '../IssueFix';
 
-import type { TSpaceSuggestion } from '@plitzi/sdk-shared';
+import type { TSpaceSuggestion } from '@plitzi/sdk-shared/network';
 
 /** Past this, the rest of the elements it is about are counted rather than listed. */
 const SHOWN_ELEMENTS = 4;

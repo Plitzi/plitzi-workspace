@@ -1,5 +1,5 @@
 {
-  "extends": "../../../packages/sdk-shared/tsconfig.app.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "verbatimModuleSyntax": true,
     "erasableSyntaxOnly": true,

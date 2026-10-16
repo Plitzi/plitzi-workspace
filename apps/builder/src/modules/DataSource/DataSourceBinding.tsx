@@ -7,10 +7,10 @@ import clsx from 'clsx';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useState, Fragment } from 'react';
 
-import getSourcesByElementId from '@plitzi/sdk-elements/dataSource/getSourcesByElementId';
-import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { getSourcesByElementId } from '@plitzi/sdk-elements/dataSource';
+import { positionalElementId } from '@plitzi/sdk-schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style/styleConstants';
+import { StyleBindingsAllowed } from '@plitzi/sdk-shared/style';
 
 import BindingSelected from './BindingSelected';
 import BindingForm from './models/BindingForm';

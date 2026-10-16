@@ -1,8 +1,8 @@
-import { DOCUMENT_SCROLLS, isDocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
+import { DOCUMENT_SCROLLS, isDocumentScroll } from '@plitzi/sdk-elements/elements/declarations';
 import { FUNCTION_ROUTES_PREFIX, isFunctionRoutePath } from '@plitzi/sdk-shared/actions';
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
+import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { collectServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+import { collectServerElements } from '@plitzi/sdk-shared/schema';
 
 import { ACCESS_LEVELS } from '../guard';
 import { didYouMean } from '../suggest';

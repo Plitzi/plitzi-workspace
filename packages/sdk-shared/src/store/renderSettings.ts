@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useCommonStore } from './index';
+import { useCommonStore } from './storeHooks';
 
 import type { RenderSettings } from '../types';
 

@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import type { RTCallback, RTEvent, RTMessageManagedClient } from '@plitzi/sdk-shared';
+import type { RTCallback, RTEvent, RTMessageManagedClient } from '@plitzi/sdk-shared/websockets';
 
 export type BuilderSubscriptionsContextValue = {
   includeSubscriptions: boolean;

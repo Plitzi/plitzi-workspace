@@ -1,4 +1,4 @@
-import { toInteractionCallback } from '@plitzi/sdk-shared/authoring/builder';
+import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
 import { invalidateAfterWrite, queryCache, requestKey } from '@plitzi/sdk-shared/queries';
 
 import { webHookSpec } from './webHookSpec';

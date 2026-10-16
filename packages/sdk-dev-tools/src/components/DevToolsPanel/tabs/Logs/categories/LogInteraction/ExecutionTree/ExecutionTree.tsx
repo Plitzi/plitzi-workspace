@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
-import { getDurationMs } from '@plitzi/sdk-shared';
+import { getDurationMs } from '@plitzi/sdk-shared/helpers';
 
 import ExecutionTreeNode from './ExecutionTreeNode';
 

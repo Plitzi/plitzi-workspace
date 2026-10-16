@@ -3,9 +3,9 @@ import { use, useContext, useLayoutEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { StoreContext } from '@plitzi/nexus/react';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
-import ThemeScopeContext from '@plitzi/sdk-shared/theme/ThemeScope';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { ThemeScopeContext } from '@plitzi/sdk-shared/theme';
 
 import type { ReactNode } from 'react';
 import type { Root } from 'react-dom/client';

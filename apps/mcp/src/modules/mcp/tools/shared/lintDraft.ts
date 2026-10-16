@@ -1,6 +1,5 @@
 import { authoringCodeEntry, elementSourceTypes, fixSpace, lintSpace } from '@plitzi/sdk-authoring';
-import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
-import { styleWithoutTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
+import { validateSchema, styleWithoutTag } from '@plitzi/sdk-schema';
 
 import { findElementByRef, findPageByRef } from '../../helpers';
 

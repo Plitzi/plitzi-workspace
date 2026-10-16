@@ -11,7 +11,7 @@ import SnapshotMarker from './components/SnapshotMarker';
 import { groupChanges, MUTED, ORIGIN_FILTERS, originFilterLabel, placeSnapshots, rowKey } from './helpers';
 import useSpaceChanges from './hooks/useSpaceChanges';
 
-import type { ChangeOrigin } from '@plitzi/sdk-shared';
+import type { ChangeOrigin } from '@plitzi/sdk-shared/history';
 import type { ChangeEvent } from 'react';
 
 export type HistoryProps = {

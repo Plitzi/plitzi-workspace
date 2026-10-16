@@ -1,5 +1,5 @@
 /* eslint-disable quotes -- this file writes TypeScript: prettier keeps the quotes inside its strings, eslint wants them single */
-import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { isValidElementId } from '@plitzi/sdk-schema';
 
 import type { ImportProbe, ImportNode } from './probe';
 import type { DisplayMode, GoogleFont } from '@plitzi/sdk-shared';

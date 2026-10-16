@@ -1,9 +1,9 @@
 import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
 import { use, useMemo, useRef } from 'react';
 
-import useNavigation from '@plitzi/sdk-navigation/hooks/useNavigation';
+import { useNavigation } from '@plitzi/sdk-navigation';
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { NetworkContext } from '@plitzi/sdk-shared/network';
 import { useCommonStore, useRenderSettings } from '@plitzi/sdk-shared/store';
 
 import AuthContext from './AuthContext';

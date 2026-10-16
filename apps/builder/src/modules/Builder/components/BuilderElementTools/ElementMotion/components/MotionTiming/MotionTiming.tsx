@@ -2,13 +2,13 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { useCallback, useId } from 'react';
 
-import { MOTION_DEFAULT_DURATION, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema/motion';
+import { MOTION_DEFAULT_DURATION, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema';
 
 import MotionTriggerOption from './components/MotionTriggerOption';
 import { DEFAULT_STAGGER, TRIGGER_COPY } from '../../helpers';
 
 import type { Draft } from '../../helpers';
-import type { MotionTrigger } from '@plitzi/sdk-shared/schema/motion';
+import type { MotionTrigger } from '@plitzi/sdk-shared/schema';
 import type { ChangeEvent } from 'react';
 
 export type MotionTimingProps = {

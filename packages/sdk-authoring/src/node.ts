@@ -19,19 +19,21 @@ import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { assertProjectLayout } from '@plitzi/sdk-shared/project/layout';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import {
+  assertProjectLayout,
   DATA_DIR,
   PLUGIN_DECLARATION_FILE,
   PLUGIN_MANIFEST_FILE,
   PLUGINS_DIR,
   PUBLIC_DIR,
   SPACE_ENTRY,
-  VENDOR_PLUGINS_DIR
-} from '@plitzi/sdk-shared/project/paths';
-import { checkProjectRoot, projectModule, projectRoot } from '@plitzi/sdk-shared/project/root';
-import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
+  VENDOR_PLUGINS_DIR,
+  checkProjectRoot,
+  projectModule,
+  projectRoot
+} from '@plitzi/sdk-shared/project';
+import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server';
 
 import { authorSpace } from './index';
 import { compactSvg } from './svg/compactSvg';
@@ -221,9 +223,9 @@ export type ProjectAuthoring = {
  *
  * A folder the project does not have is nothing to check against. The project is the working directory — its scripts
  * run there, `npm start` and `npm run author` alike — and a process started anywhere else is refused, saying what is
- * missing (`projectRoot` of `@plitzi/sdk-shared/project/root`, the check its server makes too). So is a project laid out
+ * missing (`projectRoot` of `@plitzi/sdk-shared/project`, the check its server makes too). So is a project laid out
  * where nothing reads it — a plugin folder with no `index.ts`, code in `src/plugin/`, `.env` in `src/` — every error at
- * once (`assertProjectLayout` of `@plitzi/sdk-shared/project/layout`, what its server and `plitzi doctor` say too).
+ * once (`assertProjectLayout` of `@plitzi/sdk-shared/project`, what its server and `plitzi doctor` say too).
  *
  * ```ts
  * authorSpace(space, await projectAuthoring());

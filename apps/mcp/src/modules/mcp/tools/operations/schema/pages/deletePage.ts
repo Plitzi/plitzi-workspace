@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+import { descendants } from '@plitzi/sdk-schema';
 
 import { empty, fail, findPageByRef, indexRemovePage } from '../../../../helpers';
 import { pageUri, pagesUri } from '../write';

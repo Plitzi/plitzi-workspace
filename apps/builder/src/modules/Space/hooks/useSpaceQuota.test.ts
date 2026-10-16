@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { readingsFor, refillsPeriodically } from './useSpaceQuota';
 
-import type { TQuotaPlane, TSpaceQuota } from '@plitzi/sdk-shared';
+import type { TQuotaPlane, TSpaceQuota } from '@plitzi/sdk-shared/network';
 
 const plane = (over: Partial<TQuotaPlane> = {}): TQuotaPlane => ({
   views: 0,

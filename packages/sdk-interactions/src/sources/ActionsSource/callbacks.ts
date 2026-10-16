@@ -1,6 +1,6 @@
 import { writeInvalidationParams } from '../QueriesSource/writeParams';
 
-import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring';
 
 /**
  * Running a server action from a flow, and cancelling one.

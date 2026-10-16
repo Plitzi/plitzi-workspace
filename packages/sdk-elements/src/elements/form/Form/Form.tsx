@@ -5,13 +5,13 @@ import { produce } from 'immer';
 import { useCallback, useMemo, useState, use, useEffect, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
-import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import declaration from './declaration';
+import useRegisterSource from '../../../dataSource/useRegisterSource';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';

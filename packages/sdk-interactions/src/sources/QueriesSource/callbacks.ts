@@ -1,4 +1,4 @@
-import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring';
 
 /**
  * The step that tells the page's cached requests the data behind them changed.

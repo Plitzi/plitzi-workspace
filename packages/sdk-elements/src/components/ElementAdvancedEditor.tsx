@@ -5,10 +5,10 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { useNetwork } from '@plitzi/sdk-shared/hooks';
+import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 export type ElementAdvancedEditorProps = {
   className?: string;

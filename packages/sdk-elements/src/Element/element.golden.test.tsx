@@ -2,36 +2,44 @@ import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { PlitziContext } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { PlitziContext } from '@plitzi/sdk-shared/hooks';
 
 import Text from '../elements/basic/Text/Text';
 import List from '../elements/structure/List/List';
 
-import type { ComponentContextValue, Element, PlitziContextValue } from '@plitzi/sdk-shared';
+import type { ComponentContextValue, Element } from '@plitzi/sdk-shared';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { ReactNode } from 'react';
 
-vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: () => undefined }));
+vi.mock('@plitzi/sdk-event-bridge', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-event-bridge')>()),
+  useEventBridge: () => undefined
+}));
 
 // PluginRemote pulls the remote loader → Component registry → package index, a circular chain that breaks module
 // init order under vitest. Local elements never use it, so stub it to keep the pipeline graph acyclic for the test.
 vi.mock('./PluginRemote', () => ({ default: () => null }));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
   return {
-    default: createContext({
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({
       interactionsManager: { interactionTrigger: () => undefined },
       useInteractions: () => ({})
     })
   };
 });
 
-vi.mock('@plitzi/sdk-shared/plugins/PluginsContext', async () => {
+vi.mock('@plitzi/sdk-shared/plugins', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({ plugins: {} }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-shared/plugins')>()),
+    PluginsContext: createContext({ plugins: {} })
+  };
 });
 
 const serviceValue = {

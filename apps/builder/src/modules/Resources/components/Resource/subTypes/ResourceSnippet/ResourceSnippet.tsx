@@ -1,8 +1,8 @@
 import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 
-import fetchManifest from '@plitzi/sdk-shared/helpers/fetchManifest';
-import { isSnippet } from '@plitzi/sdk-shared/schema/snippet';
+import { fetchManifest } from '@plitzi/sdk-shared/helpers';
+import { isSnippet } from '@plitzi/sdk-shared/schema';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';
 
 import SnippetContent from './SnippetContent';

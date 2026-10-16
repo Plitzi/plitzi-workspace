@@ -1,4 +1,4 @@
-import { resolveLayoutChain } from '@plitzi/sdk-shared/schema/layoutChain';
+import { resolveLayoutChain } from '@plitzi/sdk-shared/schema';
 
 import { followPath, isWrongPath, pathSteps, stoppedAt } from '../schema/dataPath';
 

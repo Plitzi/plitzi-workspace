@@ -1,8 +1,8 @@
 /** Static declaration for Image: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring';
 
 import type { ImageProps } from './Image';
-import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
+import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type ImageAttributes = AuthorableAttributes<ImageProps>;

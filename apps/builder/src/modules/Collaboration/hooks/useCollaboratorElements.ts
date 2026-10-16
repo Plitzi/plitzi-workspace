@@ -1,6 +1,6 @@
 import { use, useEffect } from 'react';
 
-import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
+import { RTEvent } from '@plitzi/sdk-shared/websockets';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 
 export type UseCollaboratorElementsProps = {

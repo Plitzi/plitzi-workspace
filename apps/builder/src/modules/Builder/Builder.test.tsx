@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import AppContext from '@pmodules/App/AppContext';
 
 import Builder from './Builder';
 
-import type { BuilderContextValue } from '@plitzi/sdk-shared';
+import type { BuilderContextValue } from '@plitzi/sdk-shared/builder';
 import type { ComponentProps } from 'react';
 
 const addPopup = vi.fn();

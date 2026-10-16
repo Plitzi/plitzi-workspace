@@ -1,5 +1,5 @@
-import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
-import { motionProblems } from '@plitzi/sdk-shared/schema/motion';
+import { rendersNoTag } from '@plitzi/sdk-schema';
+import { motionProblems } from '@plitzi/sdk-shared/schema';
 
 import type { LintContext } from './context';
 

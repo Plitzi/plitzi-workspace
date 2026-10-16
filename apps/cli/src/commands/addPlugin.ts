@@ -4,7 +4,7 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { filesWouldWrite, sayDryRun } from './dryRun';
 import { findProject, readPackageJson } from './existingProject';

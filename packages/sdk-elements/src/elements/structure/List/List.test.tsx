@@ -19,10 +19,11 @@ vi.mock('./modes/ListControlled/ListControlledItem', () => ({
   }
 }));
 
-vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ default: () => undefined }));
+vi.mock('../../../dataSource/useRegisterSource', () => ({ default: () => undefined }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({
     settings: { previewMode: true }
   })
 }));

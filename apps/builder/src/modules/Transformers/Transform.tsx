@@ -8,12 +8,12 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use, useMemo, useRef, useState } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
-import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { nodeOf } from '@plitzi/sdk-shared/helpers';
+import { useNetwork } from '@plitzi/sdk-shared/hooks';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import TransformActions from './TransformActions';

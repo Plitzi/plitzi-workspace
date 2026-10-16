@@ -1,6 +1,6 @@
 import { useCallback, use, useMemo, useState } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 
 import WorkflowAddNode from './WorkflowAddNode';
 import WorkflowContext from './WorkflowContext';

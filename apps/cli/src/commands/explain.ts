@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { EXPLAIN_KINDS, explain, explainKindOf, explainList, explanationText } from '@plitzi/sdk-authoring';
-import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project/layout';
+import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
 
 import { apiDeclarations, apiText } from './apiDeclarations';
 import { findProject } from './existingProject';

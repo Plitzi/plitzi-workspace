@@ -3,7 +3,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { use, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore, useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { chainOf } from '../helpers/elementChain';

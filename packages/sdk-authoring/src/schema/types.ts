@@ -16,8 +16,8 @@ import type {
   StyleSpec,
   VariantSpec
 } from '../style';
-import type { DocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
-import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { DocumentScroll } from '@plitzi/sdk-elements/elements/declarations';
+import type { SchemaValidationError } from '@plitzi/sdk-schema';
 import type {
   BindingCategory,
   ChannelDeclarations,
@@ -34,8 +34,8 @@ import type {
   StyleVariables,
   Snippet
 } from '@plitzi/sdk-shared';
-import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
-import type { ElementMotion } from '@plitzi/sdk-shared/schema/motion';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
+import type { ElementMotion } from '@plitzi/sdk-shared/schema';
 
 /**
  * What an author declares, as opposed to what a document stores.

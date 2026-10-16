@@ -1,7 +1,7 @@
 import { throttle } from '@plitzi/plitzi-ui/helpers';
 import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
+import { RTEvent } from '@plitzi/sdk-shared/websockets';
 import { collaboratorAnchorSelector, readCursorAnchor } from '@pmodules/Collaboration/CollaborationHelper';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 

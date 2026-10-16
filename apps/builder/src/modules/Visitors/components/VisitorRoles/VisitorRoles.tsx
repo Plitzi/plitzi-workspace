@@ -3,11 +3,11 @@ import Button from '@plitzi/plitzi-ui/Button';
 import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useState } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { checkVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { checkVisitorRoles } from '@plitzi/sdk-shared/auth';
 import ViewSection from '@pmodules/App/components/ViewSection';
 
-import type { VisitorRoles as TVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
+import type { VisitorRoles as TVisitorRoles } from '@plitzi/sdk-shared/auth';
 
 export type VisitorRolesProps = {
   /** The roles the space declares (`settings.visitorRoles`), as the builder's document holds them. */

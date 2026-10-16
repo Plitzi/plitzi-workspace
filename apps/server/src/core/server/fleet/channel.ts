@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 /**
  * What the workers of one server say to their primary, and it to them — with nothing here that knows about
  * `node:cluster`, so the rules can be held by tests in one process.

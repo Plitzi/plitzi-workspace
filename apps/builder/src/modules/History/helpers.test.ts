@@ -11,7 +11,7 @@ import {
 } from './helpers';
 
 import type { ChangeRecord } from './helpers';
-import type { TSnapshotMarker } from '@plitzi/sdk-shared';
+import type { TSnapshotMarker } from '@plitzi/sdk-shared/network';
 
 const change = (seq: number, at: number, overrides: Partial<ChangeRecord> = {}): ChangeRecord => ({
   seq,

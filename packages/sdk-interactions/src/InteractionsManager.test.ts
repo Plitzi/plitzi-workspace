@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
 
 import InteractionsManager from './InteractionsManager';
 

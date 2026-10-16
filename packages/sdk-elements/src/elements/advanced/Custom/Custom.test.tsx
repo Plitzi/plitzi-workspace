@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
 import { Custom } from './Custom';
 import ElementContext from '../../../Element/ElementContext';
@@ -25,17 +25,19 @@ vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({
     settings: { previewMode: true }
   })
 }));
 
-vi.mock('@plitzi/sdk-shared/plugins/PluginsContext', async () => {
+vi.mock('@plitzi/sdk-shared/plugins', async importOriginal => {
   const { createContext } = await import('react');
 
   return {
-    default: createContext({
+    ...(await importOriginal<typeof import('@plitzi/sdk-shared/plugins')>()),
+    PluginsContext: createContext({
       plugins: installed as unknown as Record<string, ComponentDefinition>,
       registerCustomAssets: () => undefined,
       unregisterCustomAssets: () => undefined

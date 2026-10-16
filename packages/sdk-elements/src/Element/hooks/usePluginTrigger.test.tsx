@@ -10,16 +10,20 @@ const { interactionTrigger, service } = vi.hoisted(() => ({
 
 vi.mock('./useElement', () => ({ default: () => ({ id: 'seats' }) }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({
     settings: { previewMode: service.previewMode }
   })
 }));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({ interactionsManager: { interactionTrigger } }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({ interactionsManager: { interactionTrigger } })
+  };
 });
 
 const declaration = {

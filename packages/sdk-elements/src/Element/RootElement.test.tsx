@@ -18,7 +18,10 @@ type ServiceContext = {
 
 let serviceContext: ServiceContext;
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => serviceContext }));
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => serviceContext
+}));
 
 const interactionsManager = { interactionTrigger: vi.fn() };
 const useInteractions = vi.fn();
@@ -30,10 +33,13 @@ const { interactions } = vi.hoisted(() => {
   return { interactions: held };
 });
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext(interactions) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext(interactions)
+  };
 });
 
 const fullContext = (overrides: Partial<ElementContextValue> = {}): ElementContextValue => ({

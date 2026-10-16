@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
+import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server';
 
 import { filesUnder } from './filesUnder';
 import { DATA_DIR, PUBLIC_DIR } from '../scaffold/paths';

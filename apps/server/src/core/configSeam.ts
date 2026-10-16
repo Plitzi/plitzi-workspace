@@ -1,6 +1,6 @@
 import { isActionDocument, validateActionDocument } from '@plitzi/sdk-shared/actions';
 import { isConnectorManifestDraft, validateConnectorManifest } from '@plitzi/sdk-shared/connectors';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { serverLog } from '../helpers/serverLog';
 

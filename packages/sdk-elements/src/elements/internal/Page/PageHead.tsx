@@ -1,8 +1,8 @@
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { useMemo } from 'react';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { collectServerElements, pageServerContext, pageSeoText } from '@plitzi/sdk-shared/schema/serverElements';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { collectServerElements, pageServerContext, pageSeoText } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 export type PageHeadProps = {

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { PROJECT_TMP } from '@plitzi/sdk-shared/project/paths';
+import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 import { feedbackBrief } from './brief';
 import { feedbackFacts } from './facts';

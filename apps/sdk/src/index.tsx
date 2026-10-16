@@ -8,6 +8,20 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import sdkComponents from '@modules/Element';
 import Sdk from '@modules/Sdk';
 import {
+  elementChildren,
+  withElement,
+  useElement,
+  useElementVisible,
+  usePluginTrigger,
+  useRscData,
+  JsxManager,
+  PluginManager,
+  PluginRemote,
+  ReplicaProvider,
+  RootElement,
+  useChannel
+} from '@plitzi/sdk-elements';
+import {
   createShaderProgram,
   ShaderError,
   useAnimationFrame,
@@ -16,30 +30,15 @@ import {
   useWebGL,
   useWebGL2
 } from '@plitzi/sdk-elements/canvas';
-import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import useFlag from '@plitzi/sdk-elements/dataSource/useFlag';
-import elementChildren from '@plitzi/sdk-elements/Element/helpers/elementChildren';
-import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
-import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
-import useElementVisible from '@plitzi/sdk-elements/Element/hooks/useElementVisible';
-import usePluginTrigger from '@plitzi/sdk-elements/Element/hooks/usePluginTrigger';
-import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
-import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
-import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
-import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
-import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
-import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import useChannel from '@plitzi/sdk-elements/realtime/useChannel';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
-import usePlitzi, { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
-import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
-import usePluginRoute from '@plitzi/sdk-shared/server/usePluginRoute';
+import { ComponentProvider } from '@plitzi/sdk-elements/Component';
+import { useFlag } from '@plitzi/sdk-elements/dataSource';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { disableReactDevTools } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi, PlitziProvider } from '@plitzi/sdk-shared/hooks';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { useRscRefresh, usePluginRoute } from '@plitzi/sdk-shared/server';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
-import { styleCacheFromDocument } from '@plitzi/sdk-shared/style';
-import useDisplayMode from '@plitzi/sdk-shared/style/useDisplayMode';
-import useElementSize from '@plitzi/sdk-shared/style/useElementSize';
+import { styleCacheFromDocument, useDisplayMode, useElementSize } from '@plitzi/sdk-shared/style';
 
 import App from './App';
 import { getEnvironmentServer } from './config';
@@ -58,11 +57,8 @@ if (import.meta.env.PROD) {
 import type { ServerActionOptions, ServerActionResult } from './modules/Actions/useServerAction';
 import type { DeferredPlugin, PluginComponent } from './modules/Sdk/deferredPlugins';
 import type { Notify } from './modules/Space/useNotify';
+import type { ElementContextValue, ElementChild, PluginTriggerPayload, ChannelHandle } from '@plitzi/sdk-elements';
 import type { CanvasHandle, CanvasOptions, CanvasSize, Frame } from '@plitzi/sdk-elements/canvas';
-import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
-import type { ElementChild } from '@plitzi/sdk-elements/Element/helpers/elementChildren';
-import type { PluginTriggerPayload } from '@plitzi/sdk-elements/Element/hooks/usePluginTrigger';
-import type { ChannelHandle } from '@plitzi/sdk-elements/realtime/useChannel';
 import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
 import type {
   ActionRunSummary,
@@ -81,13 +77,12 @@ import type {
   Server,
   RuntimeStateInstance,
   Theme,
-  ThemeScope,
-  PlitziContextValue
+  RealtimeMessage
 } from '@plitzi/sdk-shared';
-import type { RealtimeMessage } from '@plitzi/sdk-shared';
-import type { PluginDeclaration } from '@plitzi/sdk-shared/authoring/declare';
-import type { NotificationOptions } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
+import type { PluginDeclaration, NotificationOptions } from '@plitzi/sdk-shared/authoring';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { RealtimeMember } from '@plitzi/sdk-shared/realtime';
+import type { ThemeScope } from '@plitzi/sdk-shared/theme';
 import type { ReactNode } from 'react';
 
 let stateManager: RuntimeStateInstance;

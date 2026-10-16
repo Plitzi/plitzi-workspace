@@ -8,3 +8,8 @@ export * from './serverElements';
 export * from './snippet';
 
 export { SchemaContext };
+export * from './motion';
+export * from './motionReveal';
+export * from './wire';
+export * from './pageElements';
+export * from './markdownHeadings';

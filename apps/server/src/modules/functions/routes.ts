@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions/functions';
+import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions';
 
 import { answerCall, readCall, responseOf, wireRequestOf, wireResponseFrom } from './capabilities';
 import { functionLimitsFor } from './config';

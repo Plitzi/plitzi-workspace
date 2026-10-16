@@ -5,8 +5,8 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { useCallback, use } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 import { REUSE } from '@pmodules/Builder/helpers/reuse';
 import useDragElement from '@pmodules/Elements/hooks/useDragElement';

@@ -2,7 +2,7 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import { useCallback, useMemo } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 
 import type { Field, RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 

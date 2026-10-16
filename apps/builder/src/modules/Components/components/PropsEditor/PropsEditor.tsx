@@ -1,7 +1,7 @@
 import Button from '@plitzi/plitzi-ui/Button';
 import { useCallback } from 'react';
 
-import { propNameProblem } from '@plitzi/sdk-schema/helpers/components';
+import { propNameProblem } from '@plitzi/sdk-schema';
 
 import PropRow from './PropRow';
 import FormSection from '../FormSection';

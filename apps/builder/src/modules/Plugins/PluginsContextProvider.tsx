@@ -1,10 +1,10 @@
 import { get, set, omit, isEmpty, cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useMemo, useRef, useState, useReducer } from 'react';
 
-import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
+import { getStyle, pluginParseDefinition } from '@plitzi/sdk-plugins';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import PluginsReducer from './PluginsReducer';

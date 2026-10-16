@@ -3,15 +3,13 @@ import useStateMemo from '@plitzi/plitzi-ui/hooks/useStateMemo';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, useEffect } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { EventBridgeTypesPerModule } from '@plitzi/sdk-event-bridge/EventBridgeHelper';
-import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { isInViewport } from '@plitzi/sdk-shared/helpers/utils';
+import { EventBridgeContext, EventBridgeTypesPerModule, useEventBridge } from '@plitzi/sdk-event-bridge';
+import { FlatMap } from '@plitzi/sdk-schema';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { isInViewport } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
-import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+import { generateCache } from '@plitzi/sdk-style';
 import useCollaboratorElements from '@pmodules/Collaboration/hooks/useCollaboratorElements';
 import { getInitialItems, makeIdMinter } from '@pmodules/Elements/ElementHelper';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
@@ -20,7 +18,6 @@ import { isInRoot } from './helpers/elementChain';
 
 import type { EventBridgeCallback } from '@plitzi/sdk-event-bridge';
 import type {
-  BuilderContextValue,
   Element,
   EventBridgeEvent,
   PluginBuilder,
@@ -29,6 +26,7 @@ import type {
   DropPosition,
   Snippet
 } from '@plitzi/sdk-shared';
+import type { BuilderContextValue } from '@plitzi/sdk-shared/builder';
 
 export type BuilderProviderProps = {
   children: React.ReactNode;

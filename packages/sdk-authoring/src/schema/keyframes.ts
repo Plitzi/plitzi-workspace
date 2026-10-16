@@ -3,16 +3,16 @@ import {
   isKeyframesName,
   SDK_KEYFRAMES_PREFIX,
   withKeyframesCss as withKeyframesRule
-} from '@plitzi/sdk-shared/style/keyframes';
+} from '@plitzi/sdk-shared/style';
 
 import { AuthoringError } from './codes';
 import { css } from '../style/css';
 
 import type { CssProps } from '../style/types';
-import type { KeyframesFrames, SpaceKeyframes } from '@plitzi/sdk-shared/style/keyframes';
+import type { KeyframesFrames, SpaceKeyframes } from '@plitzi/sdk-shared/style';
 
-export { splitKeyframesCss } from '@plitzi/sdk-shared/style/keyframes';
-export type { SpaceKeyframes } from '@plitzi/sdk-shared/style/keyframes';
+export { splitKeyframesCss } from '@plitzi/sdk-shared/style';
+export type { SpaceKeyframes } from '@plitzi/sdk-shared/style';
 
 /**
  * A space's keyframes as an author writes them: by name, each frame keyed by its offset — `from`, `to`, `'50%'`,

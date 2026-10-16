@@ -1,14 +1,12 @@
-import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
-import { intervalOf, MIN_INTERVAL_MS } from '@plitzi/sdk-shared/helpers/interval';
-import { parseKeys } from '@plitzi/sdk-shared/helpers/keys';
-import { SCROLL_TRIGGER } from '@plitzi/sdk-shared/helpers/scroll';
+import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
+import { intervalOf, MIN_INTERVAL_MS, parseKeys, SCROLL_TRIGGER } from '@plitzi/sdk-shared/helpers';
 
 import { typeTriggerDefinitions } from './catalog';
 import { AuthoringError } from '../schema/codes';
 
 import type { StepSpec } from '../schema';
 import type { InteractionCallback } from '@plitzi/sdk-shared';
-import type { ScrollStepBehavior, ScrollStepPosition } from '@plitzi/sdk-shared/helpers/scroll';
+import type { ScrollStepBehavior, ScrollStepPosition } from '@plitzi/sdk-shared/helpers';
 
 /**
  * How a flow starts, and how an element changes itself.

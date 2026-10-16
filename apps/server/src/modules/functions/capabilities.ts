@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import type { FunctionContext, FunctionFetchInit } from './contract';
 import type { FunctionCall, WireBody, WireRequest, WireResponse } from './protocol';

@@ -2,7 +2,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, useEffect } from 'react';
 
 import { useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
-import { RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
+import { RTEvent } from '@plitzi/sdk-shared/websockets';
 import { collaboratorTitle } from '@pmodules/Collaboration/CollaborationHelper';
 
 import type { SubscriptionCollaborator } from '@plitzi/sdk-shared';

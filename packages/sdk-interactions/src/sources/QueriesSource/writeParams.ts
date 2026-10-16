@@ -1,4 +1,4 @@
-import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
 import type { WriteInvalidation } from '@plitzi/sdk-shared/queries';
 
 const LABELS: Record<WriteInvalidation, string> = {

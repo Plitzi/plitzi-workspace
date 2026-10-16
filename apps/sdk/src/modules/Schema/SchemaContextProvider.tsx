@@ -1,9 +1,9 @@
 import { pick } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, use } from 'react';
 
-import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
-import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { useStableValue } from '@plitzi/sdk-shared/hooks';
+import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { useSdkStoreSync } from '@plitzi/sdk-shared/store';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';

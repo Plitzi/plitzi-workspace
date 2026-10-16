@@ -5,7 +5,7 @@ import ElementChip from '../ElementChip';
 import IssueFix from '../IssueFix';
 
 import type { IssueSeverity } from '../../helpers';
-import type { TSpaceIssue } from '@plitzi/sdk-shared';
+import type { TSpaceIssue } from '@plitzi/sdk-shared/network';
 
 export type IssueItemProps = {
   issue: TSpaceIssue;

@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { PROJECT_TMP } from '@plitzi/sdk-shared/project/paths';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 /**
  * The same command refused again in the same project — an agent going round in circles, which a model is not trusted

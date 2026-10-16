@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { IMAGE_PATH } from '@plitzi/sdk-shared/helpers/images';
+import { IMAGE_PATH } from '@plitzi/sdk-shared/helpers';
 
 import { serverLog } from '../../../helpers/serverLog';
 import { createImageProxy } from '../../../modules/images/imageProxy';

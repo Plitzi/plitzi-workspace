@@ -1,4 +1,4 @@
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
 
 import type { SourceField } from '@plitzi/sdk-shared';
 

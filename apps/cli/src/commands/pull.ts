@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { apiFor } from './account';
 import { download, fetchExport, functionsOnDisk, notFetched, versionLabel } from './createFrom';

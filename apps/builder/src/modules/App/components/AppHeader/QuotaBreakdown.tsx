@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import { elementsByRoot } from '@plitzi/sdk-schema/helpers/elementTree';
+import { elementsByRoot } from '@plitzi/sdk-schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { format, refillsPeriodically } from '@pmodules/Space/hooks/useSpaceQuota';
 import useSpaceUsage from '@pmodules/Space/hooks/useSpaceUsage';

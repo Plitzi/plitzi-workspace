@@ -1,7 +1,7 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useRef } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
 import { defaultElements } from '..';
 import { processLocalCustomPlugins, processLocalPlugins, getPlugins } from './ComponentHelper';

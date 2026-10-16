@@ -3,8 +3,17 @@
 
 import { fileURLToPath } from 'node:url';
 
-import { defineConfig } from 'vite';
+import { defaultServerConditions, defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
+
+/**
+ * The workspace packages are read from their sources under test — `@plitzi/source`, which leads every one of their
+ * `exports`, the condition the shared `tsconfig.app.json` gives the editor and the typecheck — so a test runs the code
+ * of the packages it depends on as it is now, with no build first.
+ */
+const SOURCE_CONDITION = '@plitzi/source';
+/** Only the tests: the build bundles the packages' builds, as everyone else resolves them. */
+const testConditions = process.env.VITEST ? [SOURCE_CONDITION, ...defaultServerConditions] : undefined;
 
 /**
  * A package that installs nothing.
@@ -15,7 +24,7 @@ import dts from 'vite-plugin-dts';
  * and what ships is one file with an empty dependency tree.
  *
  * `bundleTypes` is the half that makes that true of the TYPES as well: emitted per-file, the declaration re-exports
- * by specifier (`export * from '@plitzi/sdk-elements/authoring'`) and a consumer needs all five packages installed
+ * by specifier (`export * from '@plitzi/sdk-elements/elements/declarations'`) and a consumer needs all five packages installed
  * to typecheck against a package that depends on none of them.
  *
  * No aliases onto the packages' sources, deliberately: they would be resolved into the emitted declaration as
@@ -34,7 +43,7 @@ export default defineConfig({
       // empty dependency tree is a lie the moment anyone typechecks against it. `plitzi-ui` is named on its own
       // because the glob alone does not reach it — its types arrive through a subpath (`/QueryBuilder`).
       bundleTypes: { bundledPackages: ['@plitzi/*', '@plitzi/plitzi-ui'] },
-      tsconfigPath: './tsconfig.app.json'
+      tsconfigPath: './tsconfig.build.json'
     })
   ],
   build: {
@@ -55,7 +64,9 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     reporters: ['default'],
-    // The skill's recipes import the package by name, as a project does; in its own tests that name is its source.
+    // The skill's recipes and the copies a test writes import the package by name, as a project does; in its own tests
+    // that name is its source. An alias and not the condition: a copy is written outside the workspace, where there is
+    // no `node_modules` to find the package in.
     alias: [
       { find: /^@plitzi\/sdk-authoring$/, replacement: fileURLToPath(new URL('./src/index.ts', import.meta.url)) },
       {
@@ -63,5 +74,7 @@ export default defineConfig({
         replacement: fileURLToPath(new URL('./src/plugin.ts', import.meta.url))
       }
     ]
-  }
+  },
+  resolve: { conditions: testConditions },
+  ssr: { resolve: { conditions: testConditions } }
 });

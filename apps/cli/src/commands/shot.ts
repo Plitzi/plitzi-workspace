@@ -13,7 +13,7 @@ import {
   pageTexts,
   unrollPage
 } from '@plitzi/sdk-authoring';
-import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
+import { MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
 import { checkAccount, CHECK_PASSWORD_ENV, sentElsewhere, signInAs } from './check';
 import { projectHere } from './existingProject';

@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 /** An element as it is asked about — by the panel, by `window.__plitzi.element()` and through it `plitzi page check`. */
 export type ElementReport = {

@@ -1,4 +1,4 @@
-import { componentNamed, instancesOf } from '@plitzi/sdk-schema/helpers/components';
+import { componentNamed, instancesOf } from '@plitzi/sdk-schema';
 
 import type { Space } from './space';
 import type { AIComponentSummary } from '../types';

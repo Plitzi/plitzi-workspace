@@ -10,7 +10,7 @@ import RuntimeCodeNote from './components/RuntimeCodeNote';
 import RuntimeEnvironments from './components/RuntimeEnvironments';
 import RuntimeVariables from './components/RuntimeVariables';
 
-import type { BuilderQueriesMap } from '@plitzi/sdk-shared';
+import type { BuilderQueriesMap } from '@plitzi/sdk-shared/network';
 
 /** How often the panel asks again while a runtime is on its way somewhere. */
 const WATCH_MS = 2000;

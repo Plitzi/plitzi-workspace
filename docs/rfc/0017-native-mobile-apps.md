@@ -319,7 +319,7 @@ Before D1, a probe answered whether the published packages run on a mobile JS ru
 - Expo SDK **57.0.24**, React Native **0.86.3**, React **19.2.3**; `@plitzi/*` **0.37.2**, `@plitzi/nexus` **1.3.0**,
   `@plitzi/plitzi-ui` **1.6.22**, installed from npm with npm (not Yarn) in a folder outside the workspace globs.
 - The app imported `StoreProvider` (`@plitzi/nexus/react`), `InteractionsContextProvider`
-  (`@plitzi/sdk-interactions/InteractionsContextProvider`), `StateInteractions`
+  (`@plitzi/sdk-interactions`), `StateInteractions`
   (`@plitzi/sdk-interactions/sources/StateSource`) and `processTwig` (`@plitzi/sdk-shared/helpers/twigWrapper`).
 - `expo export --platform android` **bundled successfully: 1,637 modules, 3.2 MB Hermes bytecode, ~5.6 s**, with zero
   changes to any package. The packages are ESM-only (`.mjs`, `import` condition) and Metro resolved them.

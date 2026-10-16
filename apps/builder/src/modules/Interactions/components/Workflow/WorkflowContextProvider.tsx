@@ -4,7 +4,7 @@ import { get, set, omit, capitalize } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { positionalElementId } from '@plitzi/sdk-schema';
 
 import WorkflowContext from './WorkflowContext';
 

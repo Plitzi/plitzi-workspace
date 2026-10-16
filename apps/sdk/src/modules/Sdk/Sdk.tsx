@@ -1,12 +1,9 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
-import useResolvedVariables from '@plitzi/sdk-shared/dataSource/hooks/useResolvedVariables';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
-import useActionsSync from '@plitzi/sdk-shared/server/actions/useActionsSync';
-import useImagesSync from '@plitzi/sdk-shared/server/actions/useImagesSync';
-import useRealtimeSync from '@plitzi/sdk-shared/server/actions/useRealtimeSync';
-import useRscSync from '@plitzi/sdk-shared/server/rsc/useRscSync';
+import { useResolvedVariables } from '@plitzi/sdk-elements/dataSource';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { useActionsSync, useImagesSync, useRealtimeSync, useRscSync } from '@plitzi/sdk-shared/server';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 import {
   fontLinkAssets,
@@ -16,9 +13,9 @@ import {
   PLUGIN_CSS_LAYER,
   RUNTIME_CSS_LAYER
 } from '@plitzi/sdk-shared/style';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
-import processCssTokens from '@plitzi/sdk-style/helpers/processCssTokens';
-import { schemaVariablesToCss } from '@plitzi/sdk-variables/VariablesHelper';
+import { useTheme } from '@plitzi/sdk-shared/theme';
+import { processCssTokens } from '@plitzi/sdk-style/helpers';
+import { schemaVariablesToCss } from '@plitzi/sdk-variables';
 
 import IframeMode from './renderModes/IframeMode';
 import RawMode from './renderModes/RawMode';

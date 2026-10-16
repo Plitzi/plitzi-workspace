@@ -3,27 +3,23 @@ import { useApolloClient } from '@apollo/client/react';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useEffect, useMemo, useState } from 'react';
 
-import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { pluginParseDefinition } from '@plitzi/sdk-plugins';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { NetworkContext, NetworkInternalContext } from '@plitzi/sdk-shared/network';
 import { BuilderQueries, BuilderMutations } from '@plitzi/sdk-shared/network/graphql/builder';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
+import { EMPTY_SCHEMA, schemaFromWire } from '@plitzi/sdk-shared/schema';
 
 import useSubscriptionsManager from './hooks/useSubscriptionsManager';
 
 import type { ApolloClient, FetchPolicy } from '@apollo/client/core';
+import type { Server, ComponentDefinition, Environment } from '@plitzi/sdk-shared';
 import type {
-  Server,
-  ComponentDefinition,
   BuilderNetworkContextValue,
-  Environment,
   BuilderQueriesMap,
   BuilderMutationsMap,
   SpaceEventMap,
   NetworkInternalContextValue
-} from '@plitzi/sdk-shared';
+} from '@plitzi/sdk-shared/network';
 import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {

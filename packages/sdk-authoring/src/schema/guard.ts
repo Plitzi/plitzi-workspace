@@ -1,6 +1,6 @@
-import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
-import { invalidParams, missingRequiredParams, reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isValidElementId } from '@plitzi/sdk-schema';
+import { invalidParams, missingRequiredParams, reconcileParams } from '@plitzi/sdk-shared/authoring';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { AuthoringError } from './codes';
 import { didYouMean } from './suggest';
@@ -16,7 +16,7 @@ import type {
   SpaceSpec,
   StepSpec
 } from './types';
-import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
 
 /**
  * The shape checks that stand between a declaration and the document.

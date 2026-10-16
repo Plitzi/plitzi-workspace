@@ -7,83 +7,14 @@
   ],
   "exports": {
     ".": {
+      "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./AuthContext": {
-      "types": "./dist/AuthContext.d.ts",
-      "import": "./dist/AuthContext.mjs"
-    },
-    "./AuthContextProvider": {
-      "types": "./dist/AuthContextProvider.d.ts",
-      "import": "./dist/AuthContextProvider.mjs"
-    },
-    "./AuthManager": {
-      "types": "./dist/AuthManager.d.ts",
-      "import": "./dist/AuthManager.mjs"
-    },
-    "./AuthProvider": {
-      "types": "./dist/AuthProvider.d.ts",
-      "import": "./dist/AuthProvider.mjs"
-    },
-    "./helpers/SessionStore": {
-      "types": "./dist/helpers/SessionStore.d.ts",
-      "import": "./dist/helpers/SessionStore.mjs"
-    },
-    "./helpers/publishedSession": {
-      "types": "./dist/helpers/publishedSession.d.ts",
-      "import": "./dist/helpers/publishedSession.mjs"
-    },
-    "./helpers/resolveAuthSettings": {
-      "types": "./dist/helpers/resolveAuthSettings.d.ts",
-      "import": "./dist/helpers/resolveAuthSettings.mjs"
-    },
-    "./helpers/sessionHint": {
-      "types": "./dist/helpers/sessionHint.d.ts",
-      "import": "./dist/helpers/sessionHint.mjs"
-    },
-    "./helpers/tokenClaims": {
-      "types": "./dist/helpers/tokenClaims.d.ts",
-      "import": "./dist/helpers/tokenClaims.mjs"
-    },
-    "./hooks/useAuth": {
-      "types": "./dist/hooks/useAuth/index.d.ts",
-      "import": "./dist/hooks/useAuth/index.mjs"
-    },
-    "./hooks/useAuth/index": {
-      "types": "./dist/hooks/useAuth/index.d.ts",
-      "import": "./dist/hooks/useAuth/index.mjs"
-    },
-    "./hooks/useAuth/useAuth": {
-      "types": "./dist/hooks/useAuth/useAuth.d.ts",
-      "import": "./dist/hooks/useAuth/useAuth.mjs"
-    },
-    "./hooks/useSessionQueryReset": {
-      "types": "./dist/hooks/useSessionQueryReset/index.d.ts",
-      "import": "./dist/hooks/useSessionQueryReset/index.mjs"
-    },
-    "./hooks/useSessionQueryReset/index": {
-      "types": "./dist/hooks/useSessionQueryReset/index.d.ts",
-      "import": "./dist/hooks/useSessionQueryReset/index.mjs"
-    },
-    "./hooks/useSessionQueryReset/useSessionQueryReset": {
-      "types": "./dist/hooks/useSessionQueryReset/useSessionQueryReset.d.ts",
-      "import": "./dist/hooks/useSessionQueryReset/useSessionQueryReset.mjs"
-    },
-    "./index": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
-    },
-    "./providers/BasicAuthProvider": {
-      "types": "./dist/providers/BasicAuthProvider.d.ts",
-      "import": "./dist/providers/BasicAuthProvider.mjs"
-    },
-    "./providers/ServerAuthProvider": {
-      "types": "./dist/providers/ServerAuthProvider.d.ts",
-      "import": "./dist/providers/ServerAuthProvider.mjs"
-    },
-    "./types": {
-      "types": "./dist/types.d.ts"
+    "./*": {
+      "@plitzi/source": "./src/*/index.ts",
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs"
     }
   },
   "type": "module",
@@ -94,9 +25,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev": "vite build --mode development --minify false",
     "build:dev-watch": "vite build --mode development --watch --minify false",
-    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:prod": "vite build"
   },
   "dependencies": {
     "@plitzi/nexus": "^1.4.0",

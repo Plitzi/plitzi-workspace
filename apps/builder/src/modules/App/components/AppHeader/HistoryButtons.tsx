@@ -2,7 +2,7 @@ import IconGroup from '@plitzi/plitzi-ui/IconGroup';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import History from '@pmodules/History';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 

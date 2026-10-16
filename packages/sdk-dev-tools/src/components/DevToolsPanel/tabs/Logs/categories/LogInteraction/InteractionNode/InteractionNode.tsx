@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { getDurationMs } from '@plitzi/sdk-shared';
+import { getDurationMs } from '@plitzi/sdk-shared/helpers';
 
 import NodeHeader from './NodeHeader';
 import NodeMetadata from './NodeMetadata';

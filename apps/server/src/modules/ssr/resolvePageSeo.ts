@@ -1,4 +1,4 @@
-import { pageSeoText } from '@plitzi/sdk-shared/schema/serverElements';
+import { pageSeoText } from '@plitzi/sdk-shared/schema';
 
 import type { Element, Schema } from '@plitzi/sdk-shared';
 

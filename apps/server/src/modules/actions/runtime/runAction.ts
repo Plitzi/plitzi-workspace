@@ -1,5 +1,5 @@
 import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
-import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
+import { evaluateRuleGroup } from '@plitzi/sdk-shared/helpers';
 import { resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { createEmailSender } from './email';
@@ -37,7 +37,7 @@ import type {
   InteractionNode,
   InteractionNodeStatus
 } from '@plitzi/sdk-shared';
-import type { RuleValue } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
+import type { RuleValue } from '@plitzi/sdk-shared/helpers';
 
 /** How often a run asks the shared store whether it has been cancelled. Once a second is far finer than the
  *  boundaries a flow actually has, and it keeps a long run to sixty reads a minute. */

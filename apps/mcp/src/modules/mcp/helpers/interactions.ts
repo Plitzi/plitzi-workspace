@@ -1,8 +1,13 @@
 import { applyBuiltinCallback, applyElementCallback, applyUtility } from '../catalogs';
 
 import type { AIBinding, AIBindings, AIInteractionFlow, AIInteractionNode, AIInteractionNodeType } from '../types';
-import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { ElementBinding, ElementDefinition, ElementInteraction, WhileRunning } from '@plitzi/sdk-shared';
+import type {
+  ElementBinding,
+  ElementDefinition,
+  ElementInteraction,
+  RuleGroup,
+  WhileRunning
+} from '@plitzi/sdk-shared';
 
 /** The node shape agents supply on write: same as AIInteractionNode but `id` is optional (generated when
  *  omitted). Kept structural so the tool-layer zod type assigns to it without importing the tool layer here. */

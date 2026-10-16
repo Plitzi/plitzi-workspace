@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useCallback } from 'react';
 
-import type { MotionTrigger } from '@plitzi/sdk-shared/schema/motion';
+import type { MotionTrigger } from '@plitzi/sdk-shared/schema';
 
 export type MotionTriggerOptionProps = {
   trigger: MotionTrigger;

@@ -1,5 +1,4 @@
-import { instancesOf } from '@plitzi/sdk-schema/helpers/components';
-import { slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { instancesOf, slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema';
 import { makeIdMinter } from '@pmodules/Elements/ElementHelper';
 
 import type { ComponentDefinition, Schema, SpaceComponent } from '@plitzi/sdk-shared';

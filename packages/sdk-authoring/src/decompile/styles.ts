@@ -1,7 +1,6 @@
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
-import { isStylePseudo } from '@plitzi/sdk-shared/style/stylePseudos';
-import processSelector from '@plitzi/sdk-style/helpers/processSelector';
-import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+import { EMPTY_STYLE_SCHEMA, isStylePseudo } from '@plitzi/sdk-shared/style';
+import { generateCache } from '@plitzi/sdk-style';
+import { processSelector } from '@plitzi/sdk-style/helpers';
 
 import { BREAKPOINTS, css, expandShorthand, STYLE_STATES } from '../style';
 

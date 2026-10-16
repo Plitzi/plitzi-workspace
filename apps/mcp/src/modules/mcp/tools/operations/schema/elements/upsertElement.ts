@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { flagGateOf } from '@plitzi/sdk-authoring';
-import { isMotion } from '@plitzi/sdk-shared/schema/motion';
+import { isMotion } from '@plitzi/sdk-shared/schema';
 
 import { empty, fail, findRootByRef, resolveRef } from '../../../../helpers';
 import { elementInput, position } from '../shared';

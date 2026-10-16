@@ -1,8 +1,8 @@
 import { use, useMemo } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
-import { motionAttributes } from '@plitzi/sdk-shared/schema/motion';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
+import { motionAttributes } from '@plitzi/sdk-shared/schema';
 
 import parseStyle from './helpers/parseStyle';
 import renderStaticTag from './helpers/renderStaticTag';

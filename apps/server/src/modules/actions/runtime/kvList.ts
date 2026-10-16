@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 /** One entry of a list: what it is called, where it sorts, and what it carries. */
 export type KvListEntry = { id: string; score: number; value: unknown };
 

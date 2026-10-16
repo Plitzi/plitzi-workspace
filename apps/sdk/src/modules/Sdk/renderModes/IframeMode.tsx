@@ -2,14 +2,14 @@ import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { memo, useMemo } from 'react';
 
 import { Page } from '@plitzi/sdk-elements/elements';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import OverQuotaNotice from '../components/OverQuotaNotice';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
-import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { RefObject } from 'react';
 
 export type IframeModeProps = {

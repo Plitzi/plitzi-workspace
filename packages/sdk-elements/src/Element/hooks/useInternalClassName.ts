@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style/styleStates';
+import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 
 import { isVisible } from '../helpers/isVisible';
 

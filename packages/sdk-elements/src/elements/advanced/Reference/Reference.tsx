@@ -4,10 +4,10 @@ import clsx from 'clsx';
 import { useId, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
-import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
+import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
-import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style/styleStates';
+import { HIDDEN_CLASS } from '@plitzi/sdk-shared/style';
 
 import { isVisible } from '../../../Element/helpers/isVisible';
 import withElement from '../../../Element/hocs/withElement';

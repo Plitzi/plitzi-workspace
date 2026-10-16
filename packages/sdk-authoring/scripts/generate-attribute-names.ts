@@ -20,7 +20,7 @@ const probePath = join(root, 'src', 'elements', '__attributeNamesProbe.ts');
 const outPath = join(root, 'src', 'elements', 'attributeNames.ts');
 
 const probe = `import type { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
-import type { AttributesOf } from '@plitzi/sdk-shared/authoring/declare';
+import type { AttributesOf } from '@plitzi/sdk-shared/authoring';
 
 export type Probe = {
   [Name in keyof typeof elementDeclarations as (typeof elementDeclarations)[Name]['type']]: AttributesOf<

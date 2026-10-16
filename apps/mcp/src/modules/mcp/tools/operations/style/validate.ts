@@ -1,5 +1,6 @@
-import { canonicalCondition, STYLE_MOTION_CONDITIONS } from '@plitzi/sdk-shared/style/styleConditions';
 import {
+  canonicalCondition,
+  STYLE_MOTION_CONDITIONS,
   CONTENT_PSEUDOS,
   GENERATED_PSEUDOS,
   isContentValue,
@@ -7,7 +8,7 @@ import {
   PSEUDO_PROPERTIES,
   pseudoHonours,
   STYLE_PSEUDOS
-} from '@plitzi/sdk-shared/style/stylePseudos';
+} from '@plitzi/sdk-shared/style';
 
 import { expandShorthand } from '../../../catalogs';
 import { fail } from '../../../helpers';

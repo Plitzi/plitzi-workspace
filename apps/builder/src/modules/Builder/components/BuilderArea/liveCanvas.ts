@@ -1,4 +1,4 @@
-import { revealOnView } from '@plitzi/sdk-shared/schema/motionReveal';
+import { revealOnView } from '@plitzi/sdk-shared/schema';
 
 export type LiveCanvasOptions = {
   /**

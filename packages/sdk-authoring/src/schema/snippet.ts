@@ -1,4 +1,4 @@
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 
 import { GLOBAL_SOURCES } from './bindings';
 import { slugify } from './ids';
@@ -7,7 +7,7 @@ import { validateSpace } from './validate';
 
 import type { AuthorSpaceOptions, AuthoredSnippet, SnippetSpec } from './types';
 import type { SpaceValidationOptions } from './validate';
-import type { SchemaValidationError, SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SchemaValidationError, SchemaValidationResult } from '@plitzi/sdk-schema';
 import type { Element, Schema, Style, Snippet } from '@plitzi/sdk-shared';
 
 /**

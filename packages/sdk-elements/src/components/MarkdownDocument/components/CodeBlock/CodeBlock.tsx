@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useState } from 'react';
 
-import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers/clipboard';
+import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers';
 
 import type { MarkdownClassNames } from '../../helpers/markdownParts';
 import type { ReactNode } from 'react';

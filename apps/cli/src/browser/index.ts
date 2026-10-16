@@ -4,10 +4,10 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { HIDE_DEV_TOOLS_CSS } from '@plitzi/sdk-shared/devTools/chrome';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime/topics';
-import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme/themeCookie';
+import { HIDE_DEV_TOOLS_CSS } from '@plitzi/sdk-shared/devTools';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { OBSERVER_COOKIE_NAME } from '@plitzi/sdk-shared/realtime';
+import { THEME_COOKIE_NAME } from '@plitzi/sdk-shared/theme';
 
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 

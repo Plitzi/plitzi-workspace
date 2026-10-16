@@ -6,7 +6,7 @@ import QueueStatusContext from '@pmodules/Queue/QueueStatusContext';
 
 import useSpaceIssues from './useSpaceIssues';
 
-import type { TSpaceIssues } from '@plitzi/sdk-shared';
+import type { TSpaceIssues } from '@plitzi/sdk-shared/network';
 import type { ReactNode } from 'react';
 
 vi.mock('@pmodules/Network/hooks/useGraphQL', () => ({ default: vi.fn() }));

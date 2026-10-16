@@ -3,7 +3,7 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import Form, { useForm } from '@plitzi/plitzi-ui/Form';
 import { useCallback, useMemo, useState } from 'react';
 
-import { propNameProblem } from '@plitzi/sdk-schema/helpers/components';
+import { propNameProblem } from '@plitzi/sdk-schema';
 
 import PropsEditor from '../PropsEditor';
 import { componentFormSchema, entriesOf } from './helpers';

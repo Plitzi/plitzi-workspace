@@ -38,8 +38,25 @@ yarn build:prod
 
 ## After changing a package
 
-Apps, examples and the e2e suite consume the workspace packages as **built output** (`dist/`), so a change in
-`src/` is invisible to them until its package — and every package that bundles it — is rebuilt:
+**Checking needs no build.** Every library package's `exports` leads with the condition `@plitzi/source`, which
+points at its `src/`; the shared `tsconfig.app.json` turns it on (`customConditions`) for the editor, `yarn typecheck`
+and the typed lint, and every Vitest config turns it on for the tests. So a package is tested, typechecked and debugged
+against the code of the packages it depends on as it is now — a stale `dist` cannot mislead it, and a breakpoint lands
+in the source. The dev server and development builds of the builder and the SDK resolve the same way. The declaration
+builds turn it off, so what is emitted and published does not change.
+
+**A package is imported by its root and its folders, never by a file.** A library package's `exports` is `"."` and
+`"./*"` — the latter a folder's `index.ts` — so `import { isRecord } from '@plitzi/sdk-shared/helpers'`, not
+`…/helpers/isRecord`. What another package needs from a folder goes in that folder's `index.ts`; a file whose barrel
+would bring React, Node or an optional peer to a consumer that wants none of it becomes a folder of its own instead
+(`@plitzi/sdk-shared/project`, `@plitzi/sdk-shared/plugins/bundle`, `@plitzi/sdk-interactions/declarations`). A type that
+appears in a public signature has to leave through a barrel as well, or the consumer's typecheck fails with `TS2883`.
+`packages/sdk-shared/scripts/workspaceBoundaries.test.mjs` holds the shape, the declared dependencies and the acyclic
+package graph.
+
+**Running needs one.** The SDK's production bundle, the servers' `dist`, the examples, the e2e suite and anything
+outside the workspace (`plitzi-sdk-server` included, portals or not) consume the packages as **built output**
+(`dist/`), so a change in `src/` reaches them only once its package — and every package that bundles it — is rebuilt:
 
 ```bash
 yarn turbo build:dev --filter=...@plitzi/sdk-elements   # the package AND everything that depends on it

@@ -1,8 +1,8 @@
 import { use } from 'react';
 
-import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
+import { sharedContext } from '@plitzi/sdk-shared/helpers';
 
-import type { NotificationOptions } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
+import type { NotificationOptions } from '@plitzi/sdk-shared/authoring';
 
 /** Shows a notification on the page, as the space's `addNotification` step does. */
 export type Notify = (content: string, options?: NotificationOptions) => void;

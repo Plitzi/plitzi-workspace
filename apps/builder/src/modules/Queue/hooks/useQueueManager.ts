@@ -1,15 +1,15 @@
 import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useEffect, useState } from 'react';
 
-import { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
-import { delay as delayFunction } from '@plitzi/sdk-shared/helpers/utils';
-import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
+import { SchemaActions } from '@plitzi/sdk-schema';
+import { delay as delayFunction } from '@plitzi/sdk-shared/helpers';
+import { StyleActions } from '@plitzi/sdk-style';
 
 import { worthRetrying, writeFailed } from '../helpers';
 
 import type { QueuedChange } from '../QueueContext';
-import type { BuilderMutationsMap, BuilderQueriesMap, Element, Schema } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { Element, Schema } from '@plitzi/sdk-shared';
+import type { BuilderMutationsMap, BuilderQueriesMap, NetworkContextValue } from '@plitzi/sdk-shared/network';
 
 export type UseQueueManagerProps = {
   delay?: number;

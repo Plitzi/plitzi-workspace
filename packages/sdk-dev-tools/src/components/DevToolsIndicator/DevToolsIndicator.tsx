@@ -1,8 +1,7 @@
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
-import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools/chrome';
-import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
+import { DEV_TOOLS_ATTRIBUTE, DevToolsContext } from '@plitzi/sdk-shared/devTools';
 
 import type { LogType } from '@plitzi/sdk-shared';
 

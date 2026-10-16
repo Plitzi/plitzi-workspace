@@ -1,7 +1,7 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import useSpaceIssues from './useSpaceIssues';

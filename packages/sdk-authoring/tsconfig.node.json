@@ -1,6 +1,5 @@
 {
   "extends": "../sdk-shared/tsconfig.node.json",
-  "references": [{ "path": "../sdk-shared" }],
   "compilerOptions": {
     "rootDir": "./",
     "outDir": "./dist"

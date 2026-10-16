@@ -1,5 +1,5 @@
-import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
-import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types/SchemaTypes';
+import { isValidElementId } from '@plitzi/sdk-schema';
+import { WHILE_RUNNING_MODES } from '@plitzi/sdk-shared/types';
 
 import { AuthoringError } from './codes';
 

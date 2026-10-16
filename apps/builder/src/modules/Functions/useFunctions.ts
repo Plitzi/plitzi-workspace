@@ -3,7 +3,8 @@ import { useCallback, useMemo } from 'react';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 
-import type { ActionRunReport, BuilderMutationsMap, FunctionsDraft, FunctionsSaveResult } from '@plitzi/sdk-shared';
+import type { ActionRunReport, FunctionsDraft, FunctionsSaveResult } from '@plitzi/sdk-shared';
+import type { BuilderMutationsMap } from '@plitzi/sdk-shared/network';
 
 /** What saving answered, read from the one shape GraphQL carries it in — the three answers the platform gives. */
 const saveResultOf = (

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
 import { Custom } from './Custom';
 

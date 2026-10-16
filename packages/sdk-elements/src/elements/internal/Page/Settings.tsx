@@ -7,7 +7,7 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
-import { getPageFullPath } from '@plitzi/sdk-navigation/NavigationHelper';
+import { getPageFullPath } from '@plitzi/sdk-navigation';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useSettingsUpdate from '../../useSettingsUpdate';

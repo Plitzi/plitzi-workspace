@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 
 import chalk from 'chalk';
 
-import { localNetworkName, networkAddresses } from '@plitzi/sdk-shared/project/network';
+import { localNetworkName, networkAddresses } from '@plitzi/sdk-shared/project';
 
 import { projectHere } from './existingProject';
 import { projectSettings, withSetting } from './projectSettings';

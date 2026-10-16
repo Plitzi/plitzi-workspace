@@ -5,9 +5,9 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useState } from 'react';
 
-import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useNetwork } from '@plitzi/sdk-shared/hooks';
+import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import ElementAdvancedEditor from '../../../components/ElementAdvancedEditor';
 

@@ -1,6 +1,6 @@
 // Package
 
-import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
+import { sharedContext } from '@plitzi/sdk-shared/helpers';
 
 import type { InteractionsContextValue as InteractionsContextValueShared } from '@plitzi/sdk-shared';
 

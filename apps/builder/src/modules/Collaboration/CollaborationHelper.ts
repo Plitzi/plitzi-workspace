@@ -1,4 +1,4 @@
-import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+import { elementOf } from '@plitzi/sdk-shared/helpers';
 import { processContainer } from '@pmodules/Builder/components/BuilderOverlay/BuilderOverlayHelper';
 
 import type {

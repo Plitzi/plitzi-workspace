@@ -1,4 +1,4 @@
-import useRenderSettings from '@plitzi/sdk-shared/store/renderSettings';
+import { useRenderSettings } from '@plitzi/sdk-shared/store';
 
 /**
  * What a site says while it is over its plan's quota.

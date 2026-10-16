@@ -5,6 +5,9 @@ import type { BuiltinParam } from '../authoring/paramSpec';
 import type { ElementMotion } from '../schema/motion';
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 
+/** The `when` guard a binding, a flag rule and a sub-value are written with: part of the document, so exported with it. */
+export type { RuleGroup };
+
 // RSC
 export type ElementRuntime = 'server' | 'client' | 'shared';
 

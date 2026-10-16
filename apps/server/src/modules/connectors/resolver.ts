@@ -1,4 +1,4 @@
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
+import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 
 import { fetchConnectorRecords } from './engine';
 import { collectBoundPaths, projectSlice } from './projection';

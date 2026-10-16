@@ -7,25 +7,18 @@ import { transform } from 'esbuild';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ajusta esto a tu root
+// The app this loader runs from (`apps/server`).
 const root = path.resolve(process.cwd());
 
+/**
+ * The workspace's library packages resolve to their sources through their own `exports` (`@plitzi/source`, the
+ * condition every test and typecheck of the workspace uses). The apps have no such entry — their sources resolve
+ * through aliases of their own (`@modules/*`) — so they are pointed at here.
+ */
+const SOURCE_CONDITION = '@plitzi/source';
 const packages = {
-  '@plitzi/sdk-auth': path.join(root, '../../packages/sdk-auth/src'),
-  '@plitzi/sdk-dev-tools': path.join(root, '../../packages/sdk-dev-tools/src'),
-  '@plitzi/sdk-elements': path.join(root, '../../packages/sdk-elements/src'),
-  '@plitzi/sdk-event-bridge': path.join(root, '../../packages/sdk-event-bridge/src'),
-  '@plitzi/sdk-interactions': path.join(root, '../../packages/sdk-interactions/src'),
-  '@plitzi/sdk-navigation': path.join(root, '../../packages/sdk-navigation/src'),
-  '@plitzi/sdk-plugins': path.join(root, '../../packages/sdk-plugins/src'),
-  '@plitzi/sdk-schema': path.join(root, '../../packages/sdk-schema/src'),
-  '@plitzi/sdk-shared': path.join(root, '../../packages/sdk-shared/src'),
-  '@plitzi/sdk-style': path.join(root, '../../packages/sdk-style/src'),
-  '@plitzi/sdk-variables': path.join(root, '../../packages/sdk-variables/src'),
   '@plitzi/plitzi-sdk': path.join(root, '../sdk/src'),
   '@plitzi/plitzi-builder': path.join(root, '../builder/src'),
-  // '@plitzi/plitzi-ui': path.join(root, '../../../plitzi-ui/src')
-  // alias
   '@modules': path.join(root, '../sdk/src/modules')
 };
 
@@ -142,6 +135,17 @@ export async function resolve(specifier, context, defaultResolve) {
 
         return { url: pathToFileURL(resolvedPath).href, shortCircuit: true };
       }
+    }
+  }
+
+  if (specifierPath.startsWith('@plitzi/')) {
+    try {
+      const resolved = await defaultResolve(specifier, { ...context, conditions: [SOURCE_CONDITION, ...context.conditions] });
+      if (resolved.url.includes('/src/')) {
+        return { ...resolved, shortCircuit: true };
+      }
+    } catch {
+      // Not a workspace package with sources: left to the resolution below.
     }
   }
 

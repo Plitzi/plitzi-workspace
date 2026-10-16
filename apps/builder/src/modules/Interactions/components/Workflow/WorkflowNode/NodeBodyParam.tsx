@@ -8,9 +8,9 @@ import TextArea from '@plitzi/plitzi-ui/TextArea';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 import { templateProblem } from '@pmodules/Schema/helpers/templateProblem';
 
 import ParamBinding from './ParamBinding';

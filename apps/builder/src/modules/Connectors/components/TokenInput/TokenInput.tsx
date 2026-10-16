@@ -3,10 +3,10 @@ import Label from '@plitzi/plitzi-ui/Label';
 import { useMemo } from 'react';
 
 import { getConnectorTokens } from '@plitzi/sdk-shared/connectors';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
-import type { ConnectorTokenScope } from '@plitzi/sdk-shared';
+import type { ConnectorTokenScope } from '@plitzi/sdk-shared/connectors';
 
 export type TokenInputProps = {
   label: string;

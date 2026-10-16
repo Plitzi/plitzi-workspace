@@ -8,22 +8,22 @@ import PluginsContextProvider from '@modules/Plugins/PluginsContextProvider';
 import SchemaContextProvider from '@modules/Schema/SchemaContextProvider';
 import Sdk from '@modules/Sdk';
 import { StoreContext } from '@plitzi/nexus/react';
-import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
-import DevToolsContainer from '@plitzi/sdk-dev-tools/DevToolsContainer';
-import GlobalSources from '@plitzi/sdk-elements/dataSource/GlobalSources';
-import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
-import InteractionsSourcesProvider from '@plitzi/sdk-interactions/InteractionsSourcesProvider';
-import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
+import { AuthContextProvider } from '@plitzi/sdk-auth';
+import { DevToolsContainer } from '@plitzi/sdk-dev-tools';
+import { GlobalSources } from '@plitzi/sdk-elements/dataSource';
+import { EventBridgeContextProvider } from '@plitzi/sdk-event-bridge';
+import { InteractionsSourcesProvider } from '@plitzi/sdk-interactions';
+import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { DEFAULT_RENDER_SETTINGS, useSdkStoreSync } from '@plitzi/sdk-shared/store';
-import SdkStyleContextProvider from '@plitzi/sdk-style/SdkStyleContextProvider';
+import { SdkStyleContextProvider } from '@plitzi/sdk-style';
 
 import devtoolsCssUrl from '../../assets/plitzi-sdk-devtools.scss?url';
 import styleUrl from '../../assets/plitzi-sdk.scss?url';
 
 import type { StoreApi } from '@plitzi/nexus';
 import type { EventBridgeContextValue } from '@plitzi/sdk-event-bridge';
-import type { HostActions } from '@plitzi/sdk-shared';
 import type {
+  HostActions,
   AnalyticsConfig,
   Environment,
   Server,

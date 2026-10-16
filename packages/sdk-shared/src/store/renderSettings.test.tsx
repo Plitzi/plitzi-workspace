@@ -3,8 +3,8 @@ import { describe, it, expect } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 
-import { useCommonStore } from './index';
 import useRenderSettings, { DEFAULT_RENDER_SETTINGS, useRenderOverride } from './renderSettings';
+import { useCommonStore } from './storeHooks';
 
 import type { RenderSettings } from '../types';
 import type { ReactNode } from 'react';

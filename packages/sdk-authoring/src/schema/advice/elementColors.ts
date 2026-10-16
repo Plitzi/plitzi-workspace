@@ -1,5 +1,5 @@
 /* eslint-disable quotes -- the messages quote code, which reads best in the other quotes */
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import type { Suggestion } from './types';
 import type { Style } from '@plitzi/sdk-shared';

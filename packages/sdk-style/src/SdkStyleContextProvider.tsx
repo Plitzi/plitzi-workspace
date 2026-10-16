@@ -1,8 +1,8 @@
 import { use, useMemo } from 'react';
 
-import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
+import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
 import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import StyleContext from './StyleContext';
 

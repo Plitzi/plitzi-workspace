@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-import { findLayoutCycle } from '@plitzi/sdk-shared/schema/layoutChain';
+import { findLayoutCycle } from '@plitzi/sdk-shared/schema';
 
 import { isInstance, propNameProblem } from './components';
 import { isValidElementId } from './elementId';

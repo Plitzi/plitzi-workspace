@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { componentNamed, instancesOf, removeComponent } from '@plitzi/sdk-schema/helpers/components';
+import { componentNamed, instancesOf, removeComponent } from '@plitzi/sdk-schema';
 
 import { componentsUri, empty, fail } from '../../../../helpers';
 

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { formatDate } from '@plitzi/sdk-shared';
+import { formatDate } from '@plitzi/sdk-shared/helpers';
 
 import LogStatus from '../../LogStatus';
 

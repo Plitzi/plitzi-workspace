@@ -1,29 +1,34 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import ElementContext from '@plitzi/sdk-elements/Element/ElementContext';
+import { ElementContext } from '@plitzi/sdk-elements';
 
 import { PlitziSdk } from './PlitziSdk';
 
-import type { ElementContextValue } from '@plitzi/sdk-elements/Element/ElementContext';
+import type { ElementContextValue } from '@plitzi/sdk-elements';
 
 vi.mock('@modules/Element', () => ({ default: {} }));
 
-vi.mock('@plitzi/sdk-elements/Element/hocs/withElement', () => ({
-  default: (element: unknown) => element
+vi.mock('@plitzi/sdk-elements', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-elements')>()),
+  withElement: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({
     settings: { previewMode: true },
     root: { baseElementId: 'root' }
   })
 }));
 
-vi.mock('@plitzi/sdk-shared/network/NetworkContext', async () => {
+vi.mock('@plitzi/sdk-shared/network', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({}) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-shared/network')>()),
+    NetworkContext: createContext({})
+  };
 });
 
 describe('PlitziSdk', () => {

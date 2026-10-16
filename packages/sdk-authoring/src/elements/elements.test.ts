@@ -9,7 +9,7 @@ import { elementsFromManifest } from './plugins';
 
 import type { AuthoringProps } from './element';
 import type { PluginManifest } from '@plitzi/sdk-shared';
-import type { AttributesOf } from '@plitzi/sdk-shared/authoring/declare';
+import type { AttributesOf } from '@plitzi/sdk-shared/authoring';
 
 /**
  * The catalogue is the map: an element that declares itself is authorable, and these are the guarantees that

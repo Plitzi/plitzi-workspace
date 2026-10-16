@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 /** What the host has streamed of the tool call so far, reduced to the little a placeholder can honestly show.
  *
  *  The wait a user sees is almost entirely the model TYPING this batch — the server render takes milliseconds —

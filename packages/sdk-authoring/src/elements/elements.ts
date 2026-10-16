@@ -6,7 +6,7 @@ import { isSourcePath, sourceRow } from './source';
 import type { ElementProps, ListRow, RowWriter } from './element';
 import type { SourceName, SourcePath, SourceRow } from './source';
 import type { ElementSpec } from '../schema';
-import type { AttributesOf } from '@plitzi/sdk-shared/authoring/declare';
+import type { AttributesOf } from '@plitzi/sdk-shared/authoring';
 
 /**
  * A factory per element, named after it.

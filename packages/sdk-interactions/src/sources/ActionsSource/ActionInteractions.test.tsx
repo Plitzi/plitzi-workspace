@@ -41,7 +41,10 @@ const warning = vi.hoisted(() => vi.fn());
 const info = vi.hoisted(() => vi.fn());
 const success = vi.hoisted(() => vi.fn());
 
-vi.mock('@plitzi/sdk-shared/devTools/utils/PlitziConsole', () => ({ pConsole: { warning, info, success } }));
+vi.mock('@plitzi/sdk-shared/devTools', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/devTools')>()),
+  pConsole: { warning, info, success }
+}));
 
 const invalidateAfterWrite = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 

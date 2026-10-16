@@ -6,7 +6,8 @@ import FlagPreviewToggle from './FlagPreviewToggle';
 import FlagForm from '../FlagForm';
 
 import type { Field } from '@plitzi/plitzi-ui/QueryBuilder';
-import type { FlagResolution, SchemaFlag } from '@plitzi/sdk-shared';
+import type { SchemaFlag } from '@plitzi/sdk-shared';
+import type { FlagResolution } from '@plitzi/sdk-shared/flags';
 
 export type FlagItemProps = {
   name: string;

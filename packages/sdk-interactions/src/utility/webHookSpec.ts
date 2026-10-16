@@ -1,6 +1,6 @@
 import { writeInvalidationParams } from '../sources/QueriesSource/writeParams';
 
-import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring';
 
 const isRead = (params: Record<string, unknown>) => {
   const method = typeof params.method === 'string' ? params.method.toLowerCase() : 'get';

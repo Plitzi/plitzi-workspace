@@ -1,4 +1,4 @@
-import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { isValidElementId } from '@plitzi/sdk-schema';
 
 import type { ValidationCtx } from './context';
 

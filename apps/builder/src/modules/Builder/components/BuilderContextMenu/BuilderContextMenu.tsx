@@ -3,8 +3,8 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import { memo, useCallback, use, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { elementOf } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import useSaveAsComponent from '@pmodules/Components/useSaveAsComponent';
 import { deleteKey, withModifier } from '@pmodules/Keyboard';

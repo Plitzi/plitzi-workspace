@@ -4,7 +4,7 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, useEffect } from 'react';
 
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import { boxOf, maskFrameOf } from './mask';
 import withElement from '../../../Element/hocs/withElement';

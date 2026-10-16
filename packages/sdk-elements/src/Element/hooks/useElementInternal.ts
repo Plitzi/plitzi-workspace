@@ -1,9 +1,9 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
+import { getBindingsDetails } from '@plitzi/sdk-shared/dataSource';
 import { processTwig, hasValidToken, templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElementDataSource from './useElementDataSource';

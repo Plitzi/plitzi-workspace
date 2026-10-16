@@ -10,7 +10,7 @@ import {
   readDevTools
 } from '@plitzi/sdk-authoring';
 import { authorIsolated } from '@plitzi/sdk-authoring/node';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { projectHere } from './existingProject';
 import { projectSettings } from './projectSettings';

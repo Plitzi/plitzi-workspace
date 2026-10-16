@@ -4,8 +4,8 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import { createServer } from './createServer';
 import { unusedPort } from './unusedPort';

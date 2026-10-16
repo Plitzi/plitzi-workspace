@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { elementEntry, pluginTypeOf } from '@plitzi/sdk-shared/project/layout';
+import { elementEntry, pluginTypeOf } from '@plitzi/sdk-shared/project';
 
 import { connectToSpace } from './account';
 import { askChecks } from './askChecks';

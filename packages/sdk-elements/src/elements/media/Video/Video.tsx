@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import withElement from '../../../Element/hocs/withElement';
 import RootElement from '../../../Element/RootElement';

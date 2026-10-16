@@ -17,16 +17,19 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./node": {
+      "@plitzi/source": "./src/node.ts",
       "types": "./dist/node.d.ts",
       "import": "./dist/node.js",
       "default": "./dist/node.js"
     },
     "./plugin": {
+      "@plitzi/source": "./src/plugin.ts",
       "types": "./dist/plugin.d.ts",
       "import": "./dist/plugin.js",
       "default": "./dist/plugin.js"

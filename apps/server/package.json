@@ -11,76 +11,91 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
+      "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./auth": {
+      "@plitzi/source": "./src/auth.ts",
       "types": "./dist/auth.d.ts",
       "import": "./dist/auth.js",
       "default": "./dist/auth.js"
     },
     "./oauth": {
+      "@plitzi/source": "./src/oauth.ts",
       "types": "./dist/oauth.d.ts",
       "import": "./dist/oauth.js",
       "default": "./dist/oauth.js"
     },
     "./kernel": {
+      "@plitzi/source": "./src/kernel.ts",
       "types": "./dist/kernel.d.ts",
       "import": "./dist/kernel.js",
       "default": "./dist/kernel.js"
     },
     "./mysql": {
+      "@plitzi/source": "./src/mysql.ts",
       "types": "./dist/mysql.d.ts",
       "import": "./dist/mysql.js",
       "default": "./dist/mysql.js"
     },
     "./mongo": {
+      "@plitzi/source": "./src/mongo.ts",
       "types": "./dist/mongo.d.ts",
       "import": "./dist/mongo.js",
       "default": "./dist/mongo.js"
     },
     "./sqlite": {
+      "@plitzi/source": "./src/sqlite.ts",
       "types": "./dist/sqlite.d.ts",
       "import": "./dist/sqlite.js",
       "default": "./dist/sqlite.js"
     },
     "./handlers": {
+      "@plitzi/source": "./src/handlers.ts",
       "types": "./dist/handlers.d.ts",
       "import": "./dist/handlers.js",
       "default": "./dist/handlers.js"
     },
     "./ssr": {
+      "@plitzi/source": "./src/ssr.ts",
       "types": "./dist/ssr.d.ts",
       "import": "./dist/ssr.js",
       "default": "./dist/ssr.js"
     },
     "./actions": {
+      "@plitzi/source": "./src/actions.ts",
       "types": "./dist/actions.d.ts",
       "import": "./dist/actions.js",
       "default": "./dist/actions.js"
     },
     "./functions": {
+      "@plitzi/source": "./src/functions.ts",
       "types": "./dist/functions.d.ts",
       "import": "./dist/functions.js",
       "default": "./dist/functions.js"
     },
     "./functions-runner": {
+      "@plitzi/source": "./src/functionsRunner.ts",
       "types": "./dist/functionsRunner.d.ts",
       "import": "./dist/functionsRunner.js",
       "default": "./dist/functionsRunner.js"
     },
     "./runtime": {
+      "@plitzi/source": "./src/runtime.ts",
       "types": "./dist/runtime.d.ts",
       "import": "./dist/runtime.js",
       "default": "./dist/runtime.js"
     },
     "./project": {
+      "@plitzi/source": "./src/project.ts",
       "types": "./dist/project.d.ts",
       "import": "./dist/project.js",
       "default": "./dist/project.js"
     },
     "./env": {
+      "@plitzi/source": "./src/env.ts",
       "types": "./dist/env.d.ts",
       "import": "./dist/env.js",
       "default": "./dist/env.js"

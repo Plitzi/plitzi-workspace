@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 /** A value written or bound as text, as the type of the default it stands for — or as it is when it says nothing else. */
 const asTypeOf = (fallback: unknown, value: unknown): unknown => {

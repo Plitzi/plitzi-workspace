@@ -1,4 +1,4 @@
-import { STYLE_STATES } from '@plitzi/sdk-shared/style/styleStates';
+import { STYLE_STATES } from '@plitzi/sdk-shared/style';
 
 import { shorthandLonghands } from '../../style/shorthand';
 import { shorthandOf } from '../../style/shorthandOrigins';

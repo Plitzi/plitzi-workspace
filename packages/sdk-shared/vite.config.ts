@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defaultClientConditions, defaultServerConditions, defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
 /**
@@ -28,6 +28,15 @@ const skipUnchangedDts = (filePath: string, content: string) => {
 
 const importedPackages = new Set();
 
+/**
+ * Under test, a workspace package is read from its sources (`@plitzi/source` in its `exports`), not from `dist`: a test
+ * then runs against the code of the packages it depends on as it is now, with no build first and no stale one to
+ * mislead it. Builds never resolve it, so what is bundled and published is unchanged.
+ */
+const SOURCE_CONDITION = '@plitzi/source';
+const testConditions = (defaults: readonly string[]) =>
+  process.env.VITEST ? [SOURCE_CONDITION, ...defaults] : undefined;
+
 type Options = {
   root?: string;
   pattern?: RegExp;
@@ -39,9 +48,9 @@ type Options = {
  *
  * `preserveModules` writes one file per module either way, so this changes no path — what it changes is the export
  * list. A module rollup considers internal is re-exported only for the bindings its in-package importers happen to
- * use, while `generate-exports.mjs` publishes it as a public subpath all the same and `vite-plugin-dts` writes the
- * FULL declaration beside it. The result type-checks against exports the runtime file does not have, and the
- * consumer finds out on import: "does not provide an export named ...".
+ * use, while a folder barrel is public all the same (`"./*"`) and `vite-plugin-dts` writes the FULL declaration
+ * beside it. The result type-checks against exports the runtime file does not have, and the consumer finds out on
+ * import: "does not provide an export named ...".
  */
 const SOURCE_MODULE = /\.(ts|tsx|js|mjs)$/;
 /** Matched against the path under `src`, so a whole test-only folder is excluded, not just suffixed file names. */
@@ -91,6 +100,9 @@ export default defineConfig(({ mode, command }) => {
         entryRoot: 'src',
         exclude: ['**/*.test.(ts|tsx)', '**/*.stories.(ts|tsx)', 'vite.config.ts', 'setupTests.ts'],
         tsconfigPath: './tsconfig.app.json',
+        // The declarations are written against the other packages' declarations, as a consumer reads them: through
+        // their sources they would be compiled under this package's settings and their paths written into its types.
+        compilerOptions: { customConditions: [] },
         beforeWriteFile: skipUnchangedDts
       }),
       {
@@ -119,6 +131,7 @@ export default defineConfig(({ mode, command }) => {
       }
     ],
     resolve: {
+      conditions: testConditions(defaultClientConditions),
       alias: {
         //     '@icons': resolve(__dirname, './src/icons'),
         //     '@components': path.resolve(__dirname, './src/components'),
@@ -142,6 +155,9 @@ export default defineConfig(({ mode, command }) => {
         '@lezer/highlight',
         '@lezer/lr'
       ]
+    },
+    ssr: {
+      resolve: { conditions: testConditions(defaultServerConditions) }
     },
     build: {
       // outDir: 'dist/src',

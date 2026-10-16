@@ -1,4 +1,4 @@
-import { MOTION_PLAY_CSS, MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema/motion';
+import { MOTION_PLAY_CSS, MOTION_STILL_CSS } from '@plitzi/sdk-shared/schema';
 
 /**
  * In preview, what the SDK's root does on a published page (`overflow-x: clip` on `.plitzi-sdk`): an arrival from the
