@@ -168,7 +168,7 @@ packages/
   sdk-navigation/
   sdk-plugins/
   sdk-schema/
-  sdk-style/        # Includes the builder's StyleInspector
+  sdk-style/        # The style engine; the builder's StyleInspector under `src/builder/` (`@plitzi/sdk-style/builder`)
   sdk-variables/
 ```
 
@@ -417,12 +417,18 @@ After finishing any set of code changes, always run:
 - **A library package exports its root and its folder barrels, nothing else.** `exports` is `"."` + `"./*"`, each
   leading with `@plitzi/source` (`src/index.ts`, `src/*/index.ts`) before `dist`. Another package reaches a module only
   through its folder's `index.ts`: add the file there (`export *`), or give it a folder of its own when that barrel
-  would drag React, Node or an optional peer where it is not wanted (`plugins/bundle`, `apollo`,
+  would drag React, Node or an optional peer where it is not wanted (`plugins/bundle`, `project`,
   `elements/declarations`). A type in a public signature leaves through a barrel too, or consumers get `TS2883`.
   `scripts/workspaceBoundaries.test.mjs` (sdk-shared) holds the shape, the declared deps, the acyclic package graph,
   no value-import cycle inside a package (a TDZ waiting to happen) and sdk-shared's root as types only; after a
   build, `yarn check:dist-exports` proves every barrel in `dist` exports what its source does (rollup drops re-exports
   silently; CI runs it after `build:prod`).
+- **What only the builder shows lives in a package's `src/builder/`**, imported from `@plitzi/<package>/builder`
+  (`sdk-style`: the inspector; `sdk-variables`: the lists and forms; `sdk-elements`: the settings panels). The root is
+  what a page and a server load — on Node nothing is tree-shaken, so a panel exported there runs at every boot.
+- **`apps/server` leans one way**: `hosts/` (a whole server for one use: a project's page server, the authoring host)
+  build on `core/`'s composition root (`createServer`), which assembles `modules/`, which use `core/`'s primitives.
+  `src/layers.test.ts` holds it.
 - **The workspace checks against sources, never `dist`.** The editor, typecheck, typed lint, every Vitest config and
   the builder/SDK dev server resolve `@plitzi/source`; declaration builds turn it off. The examples are a customer's
   projects and read the published shape (`examples/tsconfig.base.json`). A new test config must resolve it too.

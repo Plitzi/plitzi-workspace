@@ -1,10 +1,8 @@
 import useRscData from './Element/hooks/useRscData';
 import JsxManager from './Element/JsxManager';
 import * as elements from './elements';
-import * as elementSettings from './elements/settings';
 
 export * from './elements';
-export * from './elements/settings';
 
 export const defaultElements = {
   dropdown: elements.Dropdown,
@@ -43,7 +41,7 @@ export const defaultElements = {
   channel: elements.Channel
 };
 
-export { useRscData, elements, elementSettings, JsxManager };
+export { useRscData, elements, JsxManager };
 export { default as useChannel } from './realtime/useChannel';
 export { default as useFlag } from './dataSource/useFlag';
 export type { ChannelHandle, UseChannelOptions } from './realtime/useChannel';

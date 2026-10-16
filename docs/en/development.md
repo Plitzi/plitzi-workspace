@@ -49,7 +49,7 @@ builds turn it off, so what is emitted and published does not change.
 `"./*"` — the latter a folder's `index.ts` — so `import { isRecord } from '@plitzi/sdk-shared/helpers'`, not
 `…/helpers/isRecord`. What another package needs from a folder goes in that folder's `index.ts`; a file whose barrel
 would bring React, Node or an optional peer to a consumer that wants none of it becomes a folder of its own instead
-(`@plitzi/sdk-shared/project`, `@plitzi/sdk-shared/apollo`, `@plitzi/sdk-interactions/declarations`). A type that
+(`@plitzi/sdk-shared/project`, `@plitzi/sdk-shared/plugins/bundle`, `@plitzi/sdk-interactions/declarations`). A type that
 appears in a public signature has to leave through a barrel as well, or the consumer's typecheck fails with `TS2883`.
 `packages/sdk-shared/scripts/workspaceBoundaries.test.mjs` holds the shape, the declared dependencies and the acyclic
 package graph.

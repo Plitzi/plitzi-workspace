@@ -6,7 +6,6 @@ import { use, useCallback, useMemo, useState } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
-import { useRegisterSource } from '@plitzi/sdk-shared/dataSource/hooks';
 import { isTrue } from '@plitzi/sdk-shared/dataSource/utility';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { JOIN_TYPE, LEAVE_TYPE, PRESENCE_TYPE } from '@plitzi/sdk-shared/realtime';
@@ -14,6 +13,7 @@ import { JOIN_TYPE, LEAVE_TYPE, PRESENCE_TYPE } from '@plitzi/sdk-shared/realtim
 import declaration from './declaration';
 import pathFields from '../../../dataSource/pathFields';
 import sourceStore from '../../../dataSource/sourceStore';
+import useRegisterSource from '../../../dataSource/useRegisterSource';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';

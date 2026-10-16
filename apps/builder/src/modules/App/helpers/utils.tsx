@@ -2,7 +2,7 @@ import StateManagerIcon from '@plitzi/plitzi-ui/icons/StateManager';
 import Variable from '@plitzi/plitzi-ui/icons/Variable';
 import Sidebar from '@plitzi/plitzi-ui/Sidebar';
 
-import { StyleAdvanceEditor } from '@plitzi/sdk-style';
+import { StyleAdvanceEditor } from '@plitzi/sdk-style/builder';
 import BuilderTree from '@pmodules/Builder/components/BuilderTree';
 import Elements from '@pmodules/Elements';
 import Flags from '@pmodules/Flags';

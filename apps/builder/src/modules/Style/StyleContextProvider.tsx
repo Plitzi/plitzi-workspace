@@ -2,11 +2,11 @@ import { use, useMemo } from 'react';
 
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
 import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
-import { BuilderStyleContextProvider } from '@plitzi/sdk-style';
+import { BuilderStyleContextProvider } from '@plitzi/sdk-style/builder';
 import QueueContext from '@pmodules/Queue/QueueContext';
 import UndoableContext from '@pmodules/Undoable/UndoableContext';
 
-import type { BuilderStyleMiddleware } from '@plitzi/sdk-style';
+import type { BuilderStyleMiddleware } from '@plitzi/sdk-style/builder';
 
 export type StyleContextProviderProps = {
   children: React.ReactNode;

@@ -19,10 +19,7 @@ import type { ReactNode } from 'react';
 // about. The form and its controls are rendered bare, each inside the context the HOC would have given it.
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/dataSource/hooks', async importOriginal => ({
-  ...(await importOriginal<typeof import('@plitzi/sdk-shared/dataSource/hooks')>()),
-  useRegisterSource: () => undefined
-}));
+vi.mock('../../../dataSource/useRegisterSource', () => ({ default: () => undefined }));
 
 const { interactionTrigger } = vi.hoisted(() => ({ interactionTrigger: vi.fn() }));
 

@@ -5,7 +5,7 @@ import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { defaultElementsSettings } from '@plitzi/sdk-elements/elements';
+import { defaultElementsSettings } from '@plitzi/sdk-elements/builder';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { emptyObject } from '@plitzi/sdk-shared/helpers';

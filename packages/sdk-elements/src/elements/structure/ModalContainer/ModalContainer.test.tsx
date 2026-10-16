@@ -9,10 +9,7 @@ import { DialogContainer } from '../DialogContainer/DialogContainer';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/dataSource/hooks', async importOriginal => ({
-  ...(await importOriginal<typeof import('@plitzi/sdk-shared/dataSource/hooks')>()),
-  useRegisterSource: () => undefined
-}));
+vi.mock('../../../dataSource/useRegisterSource', () => ({ default: () => undefined }));
 
 const { interactionTrigger } = vi.hoisted(() => ({ interactionTrigger: vi.fn() }));
 

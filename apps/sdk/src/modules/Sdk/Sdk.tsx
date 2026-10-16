@@ -1,7 +1,7 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useMemo, useRef, useCallback } from 'react';
 
-import { useResolvedVariables } from '@plitzi/sdk-shared/dataSource/hooks';
+import { useResolvedVariables } from '@plitzi/sdk-elements/dataSource';
 import { PluginsContext } from '@plitzi/sdk-shared/plugins';
 import { useActionsSync, useImagesSync, useRealtimeSync, useRscSync } from '@plitzi/sdk-shared/server';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';

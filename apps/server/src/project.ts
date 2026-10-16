@@ -4,11 +4,11 @@
  * comes from where the project keeps each part (`@plitzi/sdk-shared/project`). A fix to it arrives with the
  * package, never as a file to upgrade.
  */
-export { serveProject } from './modules/project/serveProject';
+export { serveProject } from './hosts/project/serveProject';
 export type {
   ProjectServerOptions,
   ProjectSpace,
   ServedProject,
   ServeProjectOptions
-} from './modules/project/serveProject';
-export type { AuthoredDocuments } from './modules/project/watchSpace';
+} from './hosts/project/serveProject';
+export type { AuthoredDocuments } from './hosts/project/watchSpace';

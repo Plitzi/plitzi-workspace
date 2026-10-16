@@ -1,0 +1,175 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
+
+import { get, omit } from '@plitzi/plitzi-ui/helpers';
+import { useCallback, useMemo } from 'react';
+
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { useCommonStore } from '@plitzi/sdk-shared/store';
+import { baseDefaultValue, styleTargetRules } from '@plitzi/sdk-shared/style';
+
+import useStyleBinding from './hooks/useStyleBinding';
+import StyleInspectorContext from './StyleInspectorContext';
+
+import type { SetValues } from './StyleInspectorContext';
+import type { InheritData } from '../../../helpers';
+import type {
+  DisplayMode,
+  Element,
+  StyleCategory,
+  StyleItem,
+  StyleObject,
+  StylePseudo,
+  StyleState,
+  StyleValue
+} from '@plitzi/sdk-shared';
+import type { ReactNode } from 'react';
+
+export type StyleInspectorProviderProps = {
+  children: ReactNode;
+  componentType?: string;
+  selector?: StyleItem;
+  styleSelector?: string;
+  styleState?: StyleState;
+  styleVariant?: string;
+  styleAncestor?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
+  element?: Element;
+  inheritData: InheritData;
+  displayMode: DisplayMode;
+  onChange?: (path?: StyleCategory, values?: StyleObject | StyleValue) => void;
+};
+
+const StyleInspectorProvider = ({
+  children,
+  componentType,
+  selector,
+  styleSelector = 'base',
+  styleState,
+  styleVariant,
+  styleAncestor,
+  stylePseudo,
+  styleCondition,
+  element,
+  inheritData,
+  displayMode,
+  onChange
+}: StyleInspectorProviderProps) => {
+  const bindingData = useStyleBinding({ element });
+  const [schemaVariables = emptyObject] = useCommonStore('runtime.sources.variables');
+
+  const getValues = useCallback(
+    (): Partial<Record<StyleCategory, StyleValue>> =>
+      styleTargetRules(selector?.attributes[styleSelector], {
+        styleState,
+        styleVariant,
+        styleAncestor,
+        stylePseudo,
+        styleCondition
+      }) ?? {},
+    [selector, styleSelector, styleState, styleVariant, styleAncestor, stylePseudo, styleCondition]
+  );
+
+  const setValue = useCallback(
+    (styleKey?: StyleCategory, values?: StyleObject | StyleValue): void => {
+      if (
+        (styleKey && typeof values !== 'string' && typeof values !== 'number' && typeof values !== 'undefined') ||
+        (!styleKey && typeof values !== 'object' && typeof values !== 'undefined') ||
+        (styleKey && get(bindingData, styleKey))
+      ) {
+        return;
+      }
+
+      if (!styleKey && values && typeof values === 'object') {
+        values = omit(values, Object.keys(bindingData));
+      }
+
+      if (!styleKey && selector && typeof values === 'object') {
+        const newValues = { ...getValues(), ...values };
+        (Object.keys(newValues) as StyleCategory[]).forEach(k => {
+          if (newValues[k] === undefined) {
+            delete newValues[k];
+          }
+        });
+
+        values = newValues;
+      }
+
+      onChange?.(styleKey, values);
+    },
+    [bindingData, getValues, onChange, selector]
+  ) as SetValues;
+
+  const getDefaultValue = useCallback(
+    (key?: StyleCategory[] | StyleCategory): StyleValue | Record<StyleCategory, StyleValue> => {
+      if (Array.isArray(key)) {
+        return key.reduce<Record<string, StyleValue>>(
+          (acum, key) => ({ ...acum, [key]: get(baseDefaultValue, key) }),
+          {}
+        );
+      }
+
+      if (!key) {
+        return baseDefaultValue;
+      }
+
+      return get(baseDefaultValue, key);
+    },
+    []
+  );
+
+  const resetValue = useCallback(
+    (keys: StyleCategory | StyleCategory[]) => {
+      if (Array.isArray(keys)) {
+        const value = keys.reduce((acum, key) => ({ ...acum, [key]: undefined }), {});
+        setValue(undefined, value);
+      } else {
+        setValue(keys);
+      }
+    },
+    [setValue]
+  );
+
+  const inspectorContextValue = useMemo(
+    () => ({
+      componentType,
+      selector,
+      styleSelector,
+      styleState,
+      styleVariant,
+      styleAncestor,
+      stylePseudo,
+      styleCondition,
+      displayMode,
+      variables: schemaVariables,
+      inheritData: inheritData.style,
+      bindingData: bindingData,
+      getValues,
+      setValue,
+      resetValue,
+      getDefaultValue
+    }),
+    [
+      componentType,
+      selector,
+      styleSelector,
+      styleState,
+      styleVariant,
+      styleAncestor,
+      stylePseudo,
+      styleCondition,
+      displayMode,
+      schemaVariables,
+      inheritData.style,
+      bindingData,
+      getValues,
+      setValue,
+      resetValue,
+      getDefaultValue
+    ]
+  );
+
+  return <StyleInspectorContext value={inspectorContextValue}>{children}</StyleInspectorContext>;
+};
+
+export default StyleInspectorProvider;

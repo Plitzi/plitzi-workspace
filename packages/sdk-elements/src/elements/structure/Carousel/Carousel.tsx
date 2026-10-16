@@ -5,7 +5,6 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
-import { useRegisterSource } from '@plitzi/sdk-shared/dataSource/hooks';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import CarouselContext from './CarouselContext';
@@ -14,6 +13,7 @@ import declaration from './declaration';
 import useAutoplay from './useAutoplay';
 import pathFields from '../../../dataSource/pathFields';
 import sourceStore from '../../../dataSource/sourceStore';
+import useRegisterSource from '../../../dataSource/useRegisterSource';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';

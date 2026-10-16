@@ -1,0 +1,43 @@
+import { createContext } from 'react';
+
+import type { InheritData } from '../../../helpers';
+import type {
+  DisplayMode,
+  StyleCategory,
+  StyleItem,
+  StyleObject,
+  StylePseudo,
+  StyleState,
+  StyleValue
+} from '@plitzi/sdk-shared';
+
+export type SetValues = {
+  (path?: undefined, values?: StyleObject): void;
+  (path: StyleCategory, values?: StyleValue): void;
+};
+
+export type StyleInspectorContextValue = {
+  componentType?: string;
+  selector?: StyleItem;
+  styleSelector: string;
+  styleState?: StyleState;
+  styleAncestor?: string;
+  styleVariant?: string;
+  stylePseudo?: StylePseudo;
+  styleCondition?: string;
+  displayMode: DisplayMode;
+  variables: Record<string, unknown>;
+  inheritData: InheritData['style'];
+  bindingData: Partial<Record<StyleCategory, StyleValue>>;
+  getValues: () => Partial<Record<StyleCategory, StyleValue>>;
+  setValue: SetValues;
+  resetValue: (keys: StyleCategory | StyleCategory[]) => void;
+  getDefaultValue: (key?: StyleCategory[] | StyleCategory) => StyleValue | Record<StyleCategory, StyleValue>;
+};
+
+const styleInspectorContextDefaultValue = {} as StyleInspectorContextValue;
+
+const StyleInspectorContext = createContext(styleInspectorContextDefaultValue);
+StyleInspectorContext.displayName = 'StyleInspectorContext';
+
+export default StyleInspectorContext;

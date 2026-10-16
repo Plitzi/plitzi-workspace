@@ -8,7 +8,7 @@ import { elementIdConflict } from '@plitzi/sdk-schema';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
-import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
+import { StyleInspector } from '@plitzi/sdk-style/builder';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';
 import Interactions from '@pmodules/Interactions/Interactions';
 

@@ -180,7 +180,7 @@ describe('workspace boundaries', () => {
      * Known and harmless: the style editor's panels render each other (a selector opens a manager, which shows an
      * inspector, which lists selectors). They meet only while rendering, never while their modules load.
      */
-    const allowed = new Set(['sdk-style:components/Selector/Selector.tsx']);
+    const allowed = new Set(['sdk-style:builder/components/Selector/Selector.tsx']);
     const fileOf = base =>
       ['', '.ts', '.tsx', '/index.ts', '/index.tsx']
         .map(suffix => base + suffix)

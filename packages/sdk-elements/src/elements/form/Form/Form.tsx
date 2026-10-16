@@ -7,11 +7,11 @@ import { useCallback, useMemo, useState, use, useEffect, useRef } from 'react';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
-import { useRegisterSource } from '@plitzi/sdk-shared/dataSource/hooks';
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import declaration from './declaration';
+import useRegisterSource from '../../../dataSource/useRegisterSource';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';

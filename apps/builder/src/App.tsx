@@ -64,7 +64,6 @@ import { historyMiddleware as historyMw, loggerMiddleware as loggerMw } from '@p
 import { StoreProvider } from '@plitzi/nexus/react';
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { type BuilderState } from '@plitzi/sdk-shared';
-import { createAuthFailureLink, createStripTypenameLink } from '@plitzi/sdk-shared/apollo';
 import { createStoreDevToolsLogger } from '@plitzi/sdk-shared/devTools';
 import { getKeyDecoded } from '@plitzi/sdk-shared/helpers';
 import { runtimeStatePersist } from '@plitzi/sdk-shared/state';
@@ -72,7 +71,9 @@ import { DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
 import { tracingMiddleware } from '@plitzi/sdk-shared/store/tracing';
 import { ThemeProvider } from '@plitzi/sdk-shared/theme';
 import AppMain from '@pmodules/App/AppMain';
+import { createAuthFailureLink } from '@pmodules/Network/helpers/authFailureLink';
 import customFetch from '@pmodules/Network/helpers/customFetch';
+import { createStripTypenameLink } from '@pmodules/Network/helpers/stripTypename';
 
 import { getEnvironmentServer } from './config';
 import packageSettings from '../package.json';

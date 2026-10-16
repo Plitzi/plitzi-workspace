@@ -8,8 +8,7 @@ import { use, useCallback, useMemo, useState } from 'react';
 import { isStyleVariableCategory } from '@plitzi/sdk-shared';
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
-import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
+import { SchemaVariables, StyleVariables } from '@plitzi/sdk-variables/builder';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 
 import UrlParams from './components/UrlParams';

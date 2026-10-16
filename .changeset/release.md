@@ -27,12 +27,21 @@
   export by the name its folder gives it — almost always its file's (`import usePlitzi from '…/hooks/usePlitzi'` →
   `import { usePlitzi } from '@plitzi/sdk-shared/hooks'`). A file-level specifier now fails with `ERR_MODULE_NOT_FOUND`.
   New entries where a folder barrel would have brought more than was asked for: `@plitzi/sdk-shared/project` and
-  `@plitzi/sdk-shared/plugins/bundle` (Node only), `@plitzi/sdk-shared/apollo` (the Apollo links; `@apollo/client` stays
-  an optional peer), `@plitzi/sdk-interactions/declarations` (the global callbacks and utility specs, without React),
-  and `@plitzi/sdk-elements/elements/declarations`, which now also carries the declarations' attribute types and the
-  constants they are checked with. `RuleGroup` is exported by `@plitzi/sdk-shared` with the document types that use it.
-  `plitzi upgrade` names every such import in a project, with the folder to import it from instead.
+  `@plitzi/sdk-shared/plugins/bundle` (Node only), `@plitzi/sdk-interactions/declarations` (the global callbacks and
+  utility specs, without React), and `@plitzi/sdk-elements/elements/declarations`, which now also carries the
+  declarations' attribute types and the constants they are checked with. `RuleGroup` is exported by `@plitzi/sdk-shared`
+  with the document types that use it. `plitzi upgrade` names every such import in a project, with the folder to import
+  it from instead.
 - **`@plitzi/sdk-shared`'s root exports the document types, and only them** (`@plitzi/sdk-shared`): what the package
   does is imported from its folder — `formatDate` from `@plitzi/sdk-shared/helpers`, `ThemeProvider` from
   `@plitzi/sdk-shared/theme`, a GraphQL operation's types from `@plitzi/sdk-shared/network/graphql` — so a module that
   imports a type from the root no longer loads every area of the package.
+- **What one package alone used lives in that package** (`@plitzi/sdk-shared`, `@plitzi/sdk-elements`): the data
+  source hooks moved from `@plitzi/sdk-shared/dataSource/hooks` to `@plitzi/sdk-elements/dataSource`
+  (`useRegisterSource`, `useResolvedVariables`), and the Apollo links the builder's client is built with into the
+  builder.
+- **The builder's panels are an entry of their own** (`@plitzi/sdk-style`, `@plitzi/sdk-variables`,
+  `@plitzi/sdk-elements`): the style inspector, the advanced style editor and `BuilderStyleContextProvider` are imported
+  from `@plitzi/sdk-style/builder`; the variables' lists and forms from `@plitzi/sdk-variables/builder`; the elements'
+  settings panels (`defaultElementsSettings`) from `@plitzi/sdk-elements/builder`. Each package's root keeps what a page
+  and a server use — `generateCache` no longer loads the inspector, on a server 227 modules down to 21.

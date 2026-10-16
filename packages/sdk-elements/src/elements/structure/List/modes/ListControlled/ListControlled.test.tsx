@@ -24,10 +24,7 @@ vi.mock('../../../../../Element/hooks/useElement', () => ({
   default: () => ({ id: 'my-list', definition: { label: 'List' } })
 }));
 
-vi.mock('@plitzi/sdk-shared/dataSource/hooks', async importOriginal => ({
-  ...(await importOriginal<typeof import('@plitzi/sdk-shared/dataSource/hooks')>()),
-  useRegisterSource: () => undefined
-}));
+vi.mock('../../../../../dataSource/useRegisterSource', () => ({ default: () => undefined }));
 
 vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
   ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
