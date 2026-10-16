@@ -2,7 +2,7 @@
 
 import { memo, useCallback, use, useEffect, useMemo, useState } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import type { EventBridgeEvent } from '@plitzi/sdk-shared';

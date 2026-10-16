@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import chalk from 'chalk';
 
 import { authorSpace, refusalOf } from '@plitzi/sdk-authoring';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { loadProjectSpace } from './projectSpace';
 import { effectLines, isReadings, readingOf, spaceEffects } from './spaceReading';

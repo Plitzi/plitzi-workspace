@@ -8,7 +8,7 @@ import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import ejs from 'ejs';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { defineConfig } from 'vite';
+import { defaultClientConditions, defineConfig } from 'vite';
 import viteCompression from 'vite-plugin-compression';
 import dts from 'vite-plugin-dts';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
@@ -26,19 +26,12 @@ const PACKAGE = require('./package.json') as {
 
 const baseUrl = new URL('.', import.meta.url);
 
-const packages = {
-  '@plitzi/sdk-auth': path.resolve(baseUrl.pathname, '../../packages/sdk-auth/src'),
-  '@plitzi/sdk-dev-tools': path.resolve(baseUrl.pathname, '../../packages/sdk-dev-tools/src'),
-  '@plitzi/sdk-elements': path.resolve(baseUrl.pathname, '../../packages/sdk-elements/src'),
-  '@plitzi/sdk-event-bridge': path.resolve(baseUrl.pathname, '../../packages/sdk-event-bridge/src'),
-  '@plitzi/sdk-interactions': path.resolve(baseUrl.pathname, '../../packages/sdk-interactions/src'),
-  '@plitzi/sdk-navigation': path.resolve(baseUrl.pathname, '../../packages/sdk-navigation/src'),
-  '@plitzi/sdk-plugins': path.resolve(baseUrl.pathname, '../../packages/sdk-plugins/src'),
-  '@plitzi/sdk-schema': path.resolve(baseUrl.pathname, '../../packages/sdk-schema/src'),
-  '@plitzi/sdk-shared': path.resolve(baseUrl.pathname, '../../packages/sdk-shared/src'),
-  '@plitzi/sdk-style': path.resolve(baseUrl.pathname, '../../packages/sdk-style/src'),
-  '@plitzi/sdk-variables': path.resolve(baseUrl.pathname, '../../packages/sdk-variables/src')
-};
+/**
+ * Outside production the workspace packages are read from their sources — `@plitzi/source`, which leads every one of
+ * their `exports` — so the dev server, a development build and the tests run the packages as they are now, not their
+ * last `dist`. The same condition the shared `tsconfig.app.json` gives the editor and the typecheck.
+ */
+const SOURCE_CONDITION = '@plitzi/source';
 
 // const importedPackages = new Set();
 
@@ -363,8 +356,8 @@ export default defineConfig(({ mode, command }) => {
         // A development build points the packages at their sources; the types it writes must not. Left to the
         // plugin, every import of one became a path into `packages/*/src`, and whatever typechecked against this
         // build compiled those sources under its own settings — the examples' `erasableSyntaxOnly` refusing their
-        // enums — while a production build said nothing.
-        aliasesExclude: Object.keys(packages),
+        // enums — while a production build said nothing. So the declarations resolve the packages as a consumer does.
+        compilerOptions: { customConditions: [] },
         beforeWriteFile: skipUnchangedDts
       }),
       // {
@@ -434,9 +427,9 @@ export default defineConfig(({ mode, command }) => {
         'decode-named-character-reference': path.resolve(
           import.meta.dirname,
           '../../node_modules/decode-named-character-reference/index.js'
-        ),
-        ...(devMode ? packages : {})
+        )
       },
+      conditions: devMode ? [SOURCE_CONDITION, ...defaultClientConditions] : undefined,
       extensions: ['.js', '.mjs', '.ts', '.tsx'],
       // `@plitzi/nexus` and `@plitzi/plitzi-ui` may be linked through portals, each carrying its own node_modules. React and
       // CodeMirror check identity (a hook's dispatcher, an extension's `instanceof`), so a second copy breaks them: one each.

@@ -3,7 +3,7 @@ import { AuthoringError } from '../schema/codes';
 import { named, whenFailed } from '../schema/flows';
 
 import type { StepSpec } from '../schema/types';
-import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring';
 
 /**
  * The steps a flow is made of, as functions.

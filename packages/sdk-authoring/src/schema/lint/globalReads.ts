@@ -1,10 +1,10 @@
-import { GLOBAL_SOURCE_FIELDS } from '@plitzi/sdk-shared/dataSource/globalSources';
+import { GLOBAL_SOURCE_FIELDS } from '@plitzi/sdk-shared/dataSource';
 import { templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { didYouMean } from '../suggest';
 
 import type { LintContext } from './context';
-import type { ShapedGlobalSource } from '@plitzi/sdk-shared/dataSource/globalSources';
+import type { ShapedGlobalSource } from '@plitzi/sdk-shared/dataSource';
 
 const isShaped = (source: string): source is ShapedGlobalSource => Object.hasOwn(GLOBAL_SOURCE_FIELDS, source);
 

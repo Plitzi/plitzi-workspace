@@ -1,5 +1,5 @@
-import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
-import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 
 import { defineElement } from './element';
 import { ELEMENT_SPEC_KEYS } from '../schema/guard';

@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { defaultAttributes } from '../elements';
 import { BREAKPOINTS, expandShorthand } from '../style';

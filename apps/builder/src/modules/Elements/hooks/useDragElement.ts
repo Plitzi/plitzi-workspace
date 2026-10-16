@@ -2,9 +2,9 @@ import { set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 import { useCallback, use } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { descendants } from '@plitzi/sdk-schema';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
 import type { ComponentDefinition, Snippet } from '@plitzi/sdk-shared';
 import type { DragEvent } from 'react';

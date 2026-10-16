@@ -8,10 +8,10 @@ import { clsx } from 'clsx';
 import { produce } from 'immer';
 import { use, useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
-import { canonicalCondition } from '@plitzi/sdk-shared/style/styleConditions';
-import { isParentAncestor } from '@plitzi/sdk-shared/style/styleStates';
+import { canonicalCondition } from '@plitzi/sdk-shared/style';
+import { isParentAncestor } from '@plitzi/sdk-shared/style';
 
 import Selector from '../Selector';
 import AncestorRules from './components/AncestorRules';

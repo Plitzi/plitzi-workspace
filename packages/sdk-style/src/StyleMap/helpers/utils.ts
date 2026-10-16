@@ -2,8 +2,8 @@
 
 import { omit } from '@plitzi/plitzi-ui/helpers';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { isStyleRules, setAtKeys, styleTargetKeys, valueAtKeys } from '@plitzi/sdk-shared/style/styleTarget';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { isStyleRules, setAtKeys, styleTargetKeys, valueAtKeys } from '@plitzi/sdk-shared/style';
 
 import { isStyleObject } from './isValueValid';
 

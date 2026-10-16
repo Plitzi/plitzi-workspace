@@ -2,7 +2,7 @@ import Switch from '@plitzi/plitzi-ui/Switch';
 import clsx from 'clsx';
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+import { nodeOf } from '@plitzi/sdk-shared/helpers';
 
 import { CLIP_OPTIONS, isGradient, LAYER_TYPE_LABELS, LAYER_TYPES, layerSummary } from './helpers';
 import CategoryOption from '../../../../components/CategoryOption';

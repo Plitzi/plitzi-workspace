@@ -9,18 +9,28 @@ import { DialogContainer } from '../DialogContainer/DialogContainer';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ default: () => undefined }));
+vi.mock('@plitzi/sdk-shared/dataSource/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/dataSource/hooks')>()),
+  useRegisterSource: () => undefined
+}));
 
 const { interactionTrigger } = vi.hoisted(() => ({ interactionTrigger: vi.fn() }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
 }));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({ interactionsManager: { interactionTrigger }, useInteractions: () => undefined }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({
+      interactionsManager: { interactionTrigger },
+      useInteractions: () => undefined
+    })
+  };
 });
 
 /** A page with a button that opens the overlay, the way a flow would: the overlay's own visibility, in its state. */

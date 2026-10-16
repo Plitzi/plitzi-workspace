@@ -1,7 +1,7 @@
 import Input from '@plitzi/plitzi-ui/Input';
 import { useCallback, useState } from 'react';
 
-import { isAnchor } from '@plitzi/sdk-shared/schema/anchor';
+import { isAnchor } from '@plitzi/sdk-shared/schema';
 
 export type ElementAnchorProps = {
   anchor?: string;

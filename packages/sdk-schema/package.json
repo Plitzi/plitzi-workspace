@@ -7,44 +7,14 @@
   ],
   "exports": {
     ".": {
+      "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./SchemaReducer": {
-      "types": "./dist/SchemaReducer.d.ts",
-      "import": "./dist/SchemaReducer.mjs"
-    },
-    "./helpers/FlatMap": {
-      "types": "./dist/helpers/FlatMap.d.ts",
-      "import": "./dist/helpers/FlatMap.mjs"
-    },
-    "./helpers/components": {
-      "types": "./dist/helpers/components.d.ts",
-      "import": "./dist/helpers/components.mjs"
-    },
-    "./helpers/elementId": {
-      "types": "./dist/helpers/elementId.d.ts",
-      "import": "./dist/helpers/elementId.mjs"
-    },
-    "./helpers/elementTree": {
-      "types": "./dist/helpers/elementTree.d.ts",
-      "import": "./dist/helpers/elementTree.mjs"
-    },
-    "./helpers/fitSnippet": {
-      "types": "./dist/helpers/fitSnippet.d.ts",
-      "import": "./dist/helpers/fitSnippet.mjs"
-    },
-    "./helpers/schemaValidator": {
-      "types": "./dist/helpers/schemaValidator.d.ts",
-      "import": "./dist/helpers/schemaValidator.mjs"
-    },
-    "./helpers/styleWithoutTag": {
-      "types": "./dist/helpers/styleWithoutTag.d.ts",
-      "import": "./dist/helpers/styleWithoutTag.mjs"
-    },
-    "./index": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+    "./*": {
+      "@plitzi/source": "./src/*/index.ts",
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs"
     }
   },
   "type": "module",
@@ -55,9 +25,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev": "vite build --mode development --minify false",
     "build:dev-watch": "vite build --mode development --watch --minify false",
-    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:prod": "vite build"
   },
   "dependencies": {
     "@plitzi/plitzi-ui": "^1.6.33",

@@ -4,7 +4,7 @@ import path from 'node:path';
 import chalk from 'chalk';
 
 import { closest } from '@plitzi/sdk-authoring';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { fail } from './terminal';
 

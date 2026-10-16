@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 
-import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
-import calculateInheriting from '@plitzi/sdk-style/helpers/calculateInheriting';
+import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
+import { calculateInheriting } from '@plitzi/sdk-style/helpers';
 
 import { elementIdConflict, elementIdsFree, randomElementId, repointIds, takenIds, uniqueElementId } from './elementId';
 import { descendants, parentChain } from './elementTree';

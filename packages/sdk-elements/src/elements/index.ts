@@ -110,3 +110,4 @@ export {
   ApiContainer,
   Channel
 };
+export { defaultElementsSettings } from './settings';

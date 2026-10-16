@@ -2,8 +2,8 @@
 
 import { lazy, Suspense, use, useEffect, useMemo, useState } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 
 import loadComponent from './helpers/loadComponent';
 

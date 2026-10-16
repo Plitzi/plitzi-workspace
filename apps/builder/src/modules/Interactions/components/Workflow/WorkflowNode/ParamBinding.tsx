@@ -4,7 +4,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, use, useMemo, useState } from 'react';
 
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
 
 import WorkflowContext from '../WorkflowContext';
 

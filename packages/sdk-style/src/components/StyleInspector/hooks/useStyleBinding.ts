@@ -1,7 +1,7 @@
 import { get, set } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import type { Element, StyleCategory, StyleValue } from '@plitzi/sdk-shared';

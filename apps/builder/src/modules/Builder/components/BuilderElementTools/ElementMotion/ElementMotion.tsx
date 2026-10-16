@@ -1,7 +1,7 @@
 import { use, useCallback, useMemo, useState } from 'react';
 
-import useReducedMotion from '@plitzi/sdk-elements/canvas/useReducedMotion';
-import { isMotion, motionProblems } from '@plitzi/sdk-shared/schema/motion';
+import { useReducedMotion } from '@plitzi/sdk-elements/canvas';
+import { isMotion, motionProblems } from '@plitzi/sdk-shared/schema';
 import AppContext from '@pmodules/App/AppContext';
 
 import MotionPresets from './components/MotionPresets';
@@ -11,7 +11,7 @@ import MotionTiming from './components/MotionTiming';
 import { ARRIVES_NONE, describeMotion, draftOf, ENTER_COPY, LOOP_COPY, LOOP_NONE, motionOf } from './helpers';
 
 import type { Draft } from './helpers';
-import type { ElementMotion as Motion } from '@plitzi/sdk-shared/schema/motion';
+import type { ElementMotion as Motion } from '@plitzi/sdk-shared/schema';
 
 export type ElementMotionProps = {
   motion?: Motion;

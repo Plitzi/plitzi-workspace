@@ -7,184 +7,14 @@
   ],
   "exports": {
     ".": {
+      "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./InteractionsContext": {
-      "types": "./dist/InteractionsContext.d.ts",
-      "import": "./dist/InteractionsContext.mjs"
-    },
-    "./InteractionsContextProvider": {
-      "types": "./dist/InteractionsContextProvider.d.ts",
-      "import": "./dist/InteractionsContextProvider.mjs"
-    },
-    "./InteractionsHelper": {
-      "types": "./dist/InteractionsHelper.d.ts",
-      "import": "./dist/InteractionsHelper.mjs"
-    },
-    "./InteractionsManager": {
-      "types": "./dist/InteractionsManager.d.ts",
-      "import": "./dist/InteractionsManager.mjs"
-    },
-    "./InteractionsSourcesProvider": {
-      "types": "./dist/InteractionsSourcesProvider.d.ts",
-      "import": "./dist/InteractionsSourcesProvider.mjs"
-    },
-    "./helpers/coerceDeclaredParams": {
-      "types": "./dist/helpers/coerceDeclaredParams.d.ts",
-      "import": "./dist/helpers/coerceDeclaredParams.mjs"
-    },
-    "./hooks/useInteractions": {
-      "types": "./dist/hooks/useInteractions.d.ts",
-      "import": "./dist/hooks/useInteractions.mjs"
-    },
-    "./index": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
-    },
-    "./sources": {
-      "types": "./dist/sources/index.d.ts",
-      "import": "./dist/sources/index.mjs"
-    },
-    "./sources/ActionsSource": {
-      "types": "./dist/sources/ActionsSource/index.d.ts",
-      "import": "./dist/sources/ActionsSource/index.mjs"
-    },
-    "./sources/ActionsSource/ActionInteractions": {
-      "types": "./dist/sources/ActionsSource/ActionInteractions.d.ts",
-      "import": "./dist/sources/ActionsSource/ActionInteractions.mjs"
-    },
-    "./sources/ActionsSource/ServerActionContext": {
-      "types": "./dist/sources/ActionsSource/ServerActionContext.d.ts",
-      "import": "./dist/sources/ActionsSource/ServerActionContext.mjs"
-    },
-    "./sources/ActionsSource/callbacks": {
-      "types": "./dist/sources/ActionsSource/callbacks.d.ts",
-      "import": "./dist/sources/ActionsSource/callbacks.mjs"
-    },
-    "./sources/ActionsSource/index": {
-      "types": "./dist/sources/ActionsSource/index.d.ts",
-      "import": "./dist/sources/ActionsSource/index.mjs"
-    },
-    "./sources/AuthSource": {
-      "types": "./dist/sources/AuthSource/index.d.ts",
-      "import": "./dist/sources/AuthSource/index.mjs"
-    },
-    "./sources/AuthSource/AuthInteractions": {
-      "types": "./dist/sources/AuthSource/AuthInteractions.d.ts",
-      "import": "./dist/sources/AuthSource/AuthInteractions.mjs"
-    },
-    "./sources/AuthSource/callbacks": {
-      "types": "./dist/sources/AuthSource/callbacks.d.ts",
-      "import": "./dist/sources/AuthSource/callbacks.mjs"
-    },
-    "./sources/AuthSource/index": {
-      "types": "./dist/sources/AuthSource/index.d.ts",
-      "import": "./dist/sources/AuthSource/index.mjs"
-    },
-    "./sources/HostSource": {
-      "types": "./dist/sources/HostSource/index.d.ts",
-      "import": "./dist/sources/HostSource/index.mjs"
-    },
-    "./sources/HostSource/HostInteractions": {
-      "types": "./dist/sources/HostSource/HostInteractions.d.ts",
-      "import": "./dist/sources/HostSource/HostInteractions.mjs"
-    },
-    "./sources/HostSource/callbacks": {
-      "types": "./dist/sources/HostSource/callbacks.d.ts",
-      "import": "./dist/sources/HostSource/callbacks.mjs"
-    },
-    "./sources/HostSource/index": {
-      "types": "./dist/sources/HostSource/index.d.ts",
-      "import": "./dist/sources/HostSource/index.mjs"
-    },
-    "./sources/NavigationSource": {
-      "types": "./dist/sources/NavigationSource/index.d.ts",
-      "import": "./dist/sources/NavigationSource/index.mjs"
-    },
-    "./sources/NavigationSource/NavigationInteractions": {
-      "types": "./dist/sources/NavigationSource/NavigationInteractions.d.ts",
-      "import": "./dist/sources/NavigationSource/NavigationInteractions.mjs"
-    },
-    "./sources/NavigationSource/callbacks": {
-      "types": "./dist/sources/NavigationSource/callbacks.d.ts",
-      "import": "./dist/sources/NavigationSource/callbacks.mjs"
-    },
-    "./sources/NavigationSource/index": {
-      "types": "./dist/sources/NavigationSource/index.d.ts",
-      "import": "./dist/sources/NavigationSource/index.mjs"
-    },
-    "./sources/QueriesSource": {
-      "types": "./dist/sources/QueriesSource/index.d.ts",
-      "import": "./dist/sources/QueriesSource/index.mjs"
-    },
-    "./sources/QueriesSource/QueriesInteractions": {
-      "types": "./dist/sources/QueriesSource/QueriesInteractions.d.ts",
-      "import": "./dist/sources/QueriesSource/QueriesInteractions.mjs"
-    },
-    "./sources/QueriesSource/callbacks": {
-      "types": "./dist/sources/QueriesSource/callbacks.d.ts",
-      "import": "./dist/sources/QueriesSource/callbacks.mjs"
-    },
-    "./sources/QueriesSource/index": {
-      "types": "./dist/sources/QueriesSource/index.d.ts",
-      "import": "./dist/sources/QueriesSource/index.mjs"
-    },
-    "./sources/QueriesSource/writeParams": {
-      "types": "./dist/sources/QueriesSource/writeParams.d.ts",
-      "import": "./dist/sources/QueriesSource/writeParams.mjs"
-    },
-    "./sources/StateSource": {
-      "types": "./dist/sources/StateSource/index.d.ts",
-      "import": "./dist/sources/StateSource/index.mjs"
-    },
-    "./sources/StateSource/StateInteractions": {
-      "types": "./dist/sources/StateSource/StateInteractions.d.ts",
-      "import": "./dist/sources/StateSource/StateInteractions.mjs"
-    },
-    "./sources/StateSource/callbacks": {
-      "types": "./dist/sources/StateSource/callbacks.d.ts",
-      "import": "./dist/sources/StateSource/callbacks.mjs"
-    },
-    "./sources/StateSource/index": {
-      "types": "./dist/sources/StateSource/index.d.ts",
-      "import": "./dist/sources/StateSource/index.mjs"
-    },
-    "./sources/index": {
-      "types": "./dist/sources/index.d.ts",
-      "import": "./dist/sources/index.mjs"
-    },
-    "./utility": {
-      "types": "./dist/utility/index.d.ts",
-      "import": "./dist/utility/index.mjs"
-    },
-    "./utility/copyToClipboard": {
-      "types": "./dist/utility/copyToClipboard.d.ts",
-      "import": "./dist/utility/copyToClipboard.mjs"
-    },
-    "./utility/copyToClipboardSpec": {
-      "types": "./dist/utility/copyToClipboardSpec.d.ts",
-      "import": "./dist/utility/copyToClipboardSpec.mjs"
-    },
-    "./utility/delayTime": {
-      "types": "./dist/utility/delayTime.d.ts",
-      "import": "./dist/utility/delayTime.mjs"
-    },
-    "./utility/index": {
-      "types": "./dist/utility/index.d.ts",
-      "import": "./dist/utility/index.mjs"
-    },
-    "./utility/twigTemplate": {
-      "types": "./dist/utility/twigTemplate.d.ts",
-      "import": "./dist/utility/twigTemplate.mjs"
-    },
-    "./utility/webHook": {
-      "types": "./dist/utility/webHook.d.ts",
-      "import": "./dist/utility/webHook.mjs"
-    },
-    "./utility/webHookSpec": {
-      "types": "./dist/utility/webHookSpec.d.ts",
-      "import": "./dist/utility/webHookSpec.mjs"
+    "./*": {
+      "@plitzi/source": "./src/*/index.ts",
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs"
     }
   },
   "scripts": {
@@ -192,9 +22,9 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev": "vite build --mode development --minify false",
     "build:dev-watch": "vite build --mode development --watch --minify false",
-    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:prod": "vite build"
   },
   "type": "module",
   "sideEffects": false,

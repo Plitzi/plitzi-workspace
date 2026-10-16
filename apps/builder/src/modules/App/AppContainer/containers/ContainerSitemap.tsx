@@ -2,7 +2,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { use, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import SitemapDiagram from '@pmodules/App/components/SitemapDiagram';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';

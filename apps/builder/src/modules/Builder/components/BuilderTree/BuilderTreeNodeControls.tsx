@@ -5,9 +5,9 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import getBindingsDetails from '@plitzi/sdk-shared/dataSource/getBindingsDetails';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { getBindingsDetails } from '@plitzi/sdk-shared/dataSource';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import BuilderElementTools from '../BuilderElementTools';

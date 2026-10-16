@@ -1,4 +1,4 @@
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 
 /**
  * What a server provider renders from in the builder, which has no `/_rsc` to ask: its mock data, in the shape the

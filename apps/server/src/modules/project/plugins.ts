@@ -2,15 +2,15 @@ import { existsSync, readdirSync, readFileSync, watch } from 'node:fs';
 import path from 'node:path';
 
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import {
   checkPluginFolder,
   layoutFindingText,
   pluginEntry,
   pluginTypeOf,
   readVendorPlugin
-} from '@plitzi/sdk-shared/project/layout';
-import { PLUGIN_FUNCTIONS_DIR, PLUGINS_DIR, VENDOR_PLUGINS_DIR } from '@plitzi/sdk-shared/project/paths';
+} from '@plitzi/sdk-shared/project';
+import { PLUGIN_FUNCTIONS_DIR, PLUGINS_DIR, VENDOR_PLUGINS_DIR } from '@plitzi/sdk-shared/project';
 
 import { loadFunctions, loadFunctionsSource } from '../functions/load';
 

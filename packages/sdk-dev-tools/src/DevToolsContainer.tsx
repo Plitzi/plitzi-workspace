@@ -4,8 +4,8 @@ import clsx from 'clsx';
 import { lazy, Suspense, useCallback, useRef, useState } from 'react';
 
 import { DevStoreScopeContext } from '@plitzi/nexus/react';
-import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools/chrome';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import useAgentInspector from './agentInspector/useAgentInspector';
 import DevToolsContextProvider from './DevToolsContextProvider';

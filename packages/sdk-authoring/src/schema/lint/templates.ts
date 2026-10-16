@@ -1,5 +1,5 @@
 import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema';
 
 import { checkActionOutputReads } from './actionOutput';
 import { checkShapedReads, globalFieldsRead, reportUnknownComputed, reportUnknownFlag } from './globalReads';

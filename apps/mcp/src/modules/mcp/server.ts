@@ -27,6 +27,10 @@ import type { PreviewClient, ScreenshotClient } from './types';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { SSRAdapters, Environment, ServerLogger, SSRGrant, SSRWriteContext } from '@plitzi/sdk-shared';
 
+/** The package's version, written in by the build's `define`. Declared beside its one use rather than as a global, so
+ *  this file still compiles where another package's typecheck reads it from source. */
+declare const VERSION: string;
+
 /** The MCP service is stateless: every request resolves its own `spaceId` (from the request JWT) and reads the
  *  space fresh through the adapters — schema and style are two documents, read/written independently. The spaceId
  *  is resolved once per request, up front, because it decides what this connection IS: with a space, the full

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 import { flagsCookieName } from '@plitzi/sdk-shared/flags';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 
 import FlagsViewer from './FlagsViewer';
 

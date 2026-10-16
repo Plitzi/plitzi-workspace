@@ -4,9 +4,9 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { use, useMemo, useCallback, useRef } from 'react';
 
-import { elementIdConflict } from '@plitzi/sdk-schema/helpers/elementId';
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { elementIdConflict } from '@plitzi/sdk-schema';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import StyleInspector from '@plitzi/sdk-style/components/StyleInspector';
 import DataSourceBinding from '@pmodules/DataSource/DataSourceBinding';

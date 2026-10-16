@@ -2,8 +2,8 @@ import { render, cleanup } from '@testing-library/react';
 import { vi, afterEach, test } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { PlitziContext } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { PlitziContext } from '@plitzi/sdk-shared/hooks';
 
 import Text from '../elements/basic/Text/Text';
 import Container from '../elements/structure/Container/Container';
@@ -11,24 +11,31 @@ import Container from '../elements/structure/Container/Container';
 import type { ComponentContextValue, Element, PlitziContextValue } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-vi.mock('@plitzi/sdk-event-bridge/hooks/useEventBridge', () => ({ default: () => undefined }));
+vi.mock('@plitzi/sdk-event-bridge', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-event-bridge')>()),
+  useEventBridge: () => undefined
+}));
 vi.mock('./PluginRemote', () => ({ default: () => null }));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
   return {
-    default: createContext({
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({
       interactionsManager: { interactionTrigger: () => undefined },
       useInteractions: () => ({})
     })
   };
 });
 
-vi.mock('@plitzi/sdk-shared/plugins/PluginsContext', async () => {
+vi.mock('@plitzi/sdk-shared/plugins', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({ plugins: {} }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-shared/plugins')>()),
+    PluginsContext: createContext({ plugins: {} })
+  };
 });
 
 const serviceValue = {

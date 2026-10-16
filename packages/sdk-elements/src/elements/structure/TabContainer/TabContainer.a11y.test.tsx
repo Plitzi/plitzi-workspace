@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style/styleStates';
+import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style';
 
 import { TabContainer } from './TabContainer';
 import { TabContainerBody } from './TabContainerBody/TabContainerBody';
@@ -15,8 +15,9 @@ import type { ReactNode } from 'react';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
 }));
 
 const ref = { current: document.createElement('div') };

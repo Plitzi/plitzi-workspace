@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import RTCodec, { isRTEventCloseCode, RTEvent, RTEventCloseCode } from '@plitzi/sdk-shared/websockets/RTCodec';
+import { RTCodec, isRTEventCloseCode, RTEvent, RTEventCloseCode } from '@plitzi/sdk-shared/websockets';
 
-import type { RTMessageManagedClient } from '@plitzi/sdk-shared/websockets/RTCodec';
+import type { RTMessageManagedClient } from '@plitzi/sdk-shared/websockets';
 
 export type UseWebsocketProps<T> = {
   isBinary?: boolean;

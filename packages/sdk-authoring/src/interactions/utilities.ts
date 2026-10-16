@@ -1,8 +1,8 @@
-import { copyToClipboardSpec } from '@plitzi/sdk-interactions/utility/copyToClipboardSpec';
-import { webHookSpec } from '@plitzi/sdk-interactions/utility/webHookSpec';
-import { reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
+import { copyToClipboardSpec } from '@plitzi/sdk-interactions/declarations';
+import { webHookSpec } from '@plitzi/sdk-interactions/declarations';
+import { reconcileParams } from '@plitzi/sdk-shared/authoring';
 
-import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinActionSpec } from '@plitzi/sdk-shared/authoring';
 
 // Built-in `utility`-type actions, beside the implementations they describe (`../utility`). A utility is NOT
 // provided by any element or source module — the runtime resolves it as `utility[action]`, so its node

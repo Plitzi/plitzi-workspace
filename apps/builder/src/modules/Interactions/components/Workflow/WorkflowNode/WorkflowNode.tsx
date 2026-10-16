@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { useCallback, use, useEffect, useMemo, memo } from 'react';
 
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
 
 import NodeBody from './NodeBody';
 import NodeFooter from './NodeFooter';

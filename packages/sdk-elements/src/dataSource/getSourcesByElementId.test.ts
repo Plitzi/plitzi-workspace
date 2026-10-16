@@ -6,7 +6,8 @@ import type { Schema, Source } from '@plitzi/sdk-shared';
 
 // The walk is exercised where it lives (sdk-schema `elementTree`); here it's stubbed so the source-visibility
 // filtering is tested in isolation. `child` sees `parent`; anything else sees no ancestors.
-vi.mock('@plitzi/sdk-schema/helpers/elementTree', () => ({
+vi.mock('@plitzi/sdk-schema', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-schema')>()),
   renderContext: (_flat: unknown, id: string) => (id === 'child' ? ['parent'] : [])
 }));
 

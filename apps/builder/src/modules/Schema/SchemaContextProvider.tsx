@@ -5,16 +5,16 @@ import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMidd
 import useValueMemo from '@plitzi/plitzi-ui/hooks/useValueMemo';
 import { useMemo, useCallback, use, useEffect } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import { flatMapOf } from '@plitzi/sdk-schema/helpers/components';
-import fitSnippet from '@plitzi/sdk-schema/helpers/fitSnippet';
-import SchemaReducer, { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { useEventBridge } from '@plitzi/sdk-event-bridge';
+import { flatMapOf } from '@plitzi/sdk-schema';
+import { fitSnippet } from '@plitzi/sdk-schema';
+import { SchemaReducer, SchemaActions } from '@plitzi/sdk-schema';
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
-import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
-import { schemaFromWire } from '@plitzi/sdk-shared/network/spaceEvents';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
+import { schemaFromWire } from '@plitzi/sdk-shared/network';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
+import { SchemaContext } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import QueueContext from '@pmodules/Queue/QueueContext';

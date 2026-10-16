@@ -2,8 +2,8 @@ import { spawn } from 'node:child_process';
 import { watch } from 'node:fs';
 import path from 'node:path';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { AUTHOR_FILE, SOURCE_DIR } from '@plitzi/sdk-shared/project/paths';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { AUTHOR_FILE, SOURCE_DIR } from '@plitzi/sdk-shared/project';
 
 import type { Schema, Style } from '@plitzi/sdk-shared';
 import type { ChildProcess } from 'node:child_process';

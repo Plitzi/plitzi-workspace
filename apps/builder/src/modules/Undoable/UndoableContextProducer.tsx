@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useReducer, useRef } from 'react';
 
-import { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
+import { SchemaActions } from '@plitzi/sdk-schema';
 import { isUserEdit } from '@plitzi/sdk-shared/helpers';
-import { StyleActions } from '@plitzi/sdk-style/StyleReducer';
+import { StyleActions } from '@plitzi/sdk-style';
 
 import UndoableContext from './UndoableContext';
 import UndoableReducer, { initialState } from './UndoableReducer';

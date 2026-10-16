@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useMemo } from 'react';
 
-import { resolveLayoutChain } from '@plitzi/sdk-shared/schema/layoutChain';
+import { resolveLayoutChain } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 export type LayoutPickerProps = {

@@ -19,8 +19,8 @@ import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { assertProjectLayout } from '@plitzi/sdk-shared/project/layout';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { assertProjectLayout } from '@plitzi/sdk-shared/project';
 import {
   DATA_DIR,
   PLUGIN_DECLARATION_FILE,
@@ -29,9 +29,9 @@ import {
   PUBLIC_DIR,
   SPACE_ENTRY,
   VENDOR_PLUGINS_DIR
-} from '@plitzi/sdk-shared/project/paths';
-import { checkProjectRoot, projectModule, projectRoot } from '@plitzi/sdk-shared/project/root';
-import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
+} from '@plitzi/sdk-shared/project';
+import { checkProjectRoot, projectModule, projectRoot } from '@plitzi/sdk-shared/project';
+import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server';
 
 import { authorSpace } from './index';
 import { compactSvg } from './svg/compactSvg';

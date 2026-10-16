@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { checkProjectLayout } from '@plitzi/sdk-shared/project/layout';
+import { checkProjectLayout } from '@plitzi/sdk-shared/project';
 
 import { collisions, moveFiles } from './moves';
 import { sayer } from './types';
@@ -11,7 +11,7 @@ import { digestOf, readScaffoldRecord, writeScaffoldRecord } from '../commands/s
 import type { Moved, Moves } from './moves';
 import type { Check, DoctorContext, Finding, Repair } from './types';
 import type { LegacyPlace } from '../commands/legacyLayout';
-import type { LayoutAutofix, LayoutFinding } from '@plitzi/sdk-shared/project/layout';
+import type { LayoutAutofix, LayoutFinding } from '@plitzi/sdk-shared/project';
 
 /**
  * The project laid out as this CLI lays it out: what an older one left elsewhere, said where it goes now — a part the

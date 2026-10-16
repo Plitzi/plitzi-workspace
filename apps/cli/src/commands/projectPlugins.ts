@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { pluginFolders } from '@plitzi/sdk-authoring/node';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { PLUGIN_DECLARATION_FILE, PLUGINS_DIR, SPACE_DIR } from '../scaffold/paths';
 

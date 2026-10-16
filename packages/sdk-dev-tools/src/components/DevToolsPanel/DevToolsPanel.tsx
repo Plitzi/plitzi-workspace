@@ -3,7 +3,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import clsx from 'clsx';
 import { useCallback, useMemo, useState, useRef } from 'react';
 
-import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools/chrome';
+import { DEV_TOOLS_ATTRIBUTE } from '@plitzi/sdk-shared/devTools';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import DevToolsBody from './DevToolsBody';

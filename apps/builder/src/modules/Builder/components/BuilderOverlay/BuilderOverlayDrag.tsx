@@ -2,8 +2,8 @@ import { debounce } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { memo, use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { elementOf } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import type { DropPosition, Element as PlitziElement } from '@plitzi/sdk-shared';

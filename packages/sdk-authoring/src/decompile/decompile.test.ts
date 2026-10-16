@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { repointIds } from '@plitzi/sdk-schema/helpers/elementId';
-import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style/styleStates';
+import { repointIds } from '@plitzi/sdk-schema';
+import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style';
 
 import { apiContainer, button, container, heading, link, text } from '../elements';
 import { authorSpace } from '../index';

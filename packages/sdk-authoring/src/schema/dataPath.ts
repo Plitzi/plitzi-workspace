@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 /**
  * Following a binding's path into a value — a provider's answer, a sample of it — the one way the linter (against a

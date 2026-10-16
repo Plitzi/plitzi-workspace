@@ -1,4 +1,4 @@
-import type { RootElements } from '@plitzi/sdk-schema/helpers/elementTree';
+import type { RootElements } from '@plitzi/sdk-schema';
 
 export type PluginInUseProps = { usage: RootElements[] };
 

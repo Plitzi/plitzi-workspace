@@ -12,17 +12,19 @@ vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({
     settings: { previewMode: true }
   })
 }));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
   return {
-    default: createContext({
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({
       useInteractions: () => ({}),
       interactionsManager: { interactionTrigger: () => {} }
     })

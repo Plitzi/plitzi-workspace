@@ -3,8 +3,8 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use, useMemo } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStore, useBuilderStoreGetter, useBuilderStoreSetter } from '@plitzi/sdk-shared/store';
 
 import ComponentForm, { COMPONENT_MODAL } from './components/ComponentForm';

@@ -1,15 +1,15 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
-import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { withElement } from '@plitzi/sdk-elements';
+import { RootElement } from '@plitzi/sdk-elements';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
+import { NetworkContext } from '@plitzi/sdk-shared/network';
 
 import { offlineDocuments } from './offlineDocuments';
 import App from '../../../../App';
 
-import type { PlitziSdkAttributes } from '@plitzi/sdk-elements/elements/advanced/PlitziSdk/declaration';
+import type { PlitziSdkAttributes } from '@plitzi/sdk-elements/elements/declarations';
 import type { RefObject } from 'react';
 
 export type PlitziSdkProps = PlitziSdkAttributes & {

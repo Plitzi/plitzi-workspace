@@ -2,7 +2,7 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback } from 'react';
 
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import ExportLocked from './components/ExportLocked';
 import ExportToolbar from './components/ExportToolbar';

@@ -1,4 +1,4 @@
-import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server/rsc/projectData';
+import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server';
 
 import { textOf } from './context';
 import { followPath, isWrongPath, pathSteps, stoppedAt } from '../dataPath';

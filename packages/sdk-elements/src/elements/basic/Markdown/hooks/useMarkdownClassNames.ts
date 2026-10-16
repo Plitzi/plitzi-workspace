@@ -1,4 +1,4 @@
-import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
+import { useStableValue } from '@plitzi/sdk-shared/hooks';
 
 import { MARKDOWN_PARTS } from '../../../../components/MarkdownDocument';
 

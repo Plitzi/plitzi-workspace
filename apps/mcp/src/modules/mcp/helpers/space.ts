@@ -1,4 +1,4 @@
-import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+import { descendants } from '@plitzi/sdk-schema';
 
 import type { AIElementDetail } from '../types';
 import type {

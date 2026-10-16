@@ -3,7 +3,7 @@ import { createElement } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
 import useInternalItems from './useInternalItems';
 import LayoutBody from '../LayoutBody';
@@ -11,10 +11,13 @@ import LayoutBody from '../LayoutBody';
 import type { ComponentContextValue, Element } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';
 
-vi.mock('@plitzi/sdk-shared/plugins/PluginsContext', async () => {
+vi.mock('@plitzi/sdk-shared/plugins', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({ plugins: {} }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-shared/plugins')>()),
+    PluginsContext: createContext({ plugins: {} })
+  };
 });
 
 vi.mock('../helpers/pluginSelector', async importOriginal => {

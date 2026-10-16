@@ -3,8 +3,8 @@ import clsx from 'clsx';
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { spaceRootOf } from '@plitzi/sdk-shared/helpers/spaceRoot';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { spaceRootOf } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import DropdownContext from './DropdownContext';
 import useDropdown from './useDropdown';

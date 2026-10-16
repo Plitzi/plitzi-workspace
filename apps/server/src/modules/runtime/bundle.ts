@@ -6,7 +6,7 @@ import { gunzipSync, gzipSync } from 'node:zlib';
 
 import esbuild from 'esbuild';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import type { SpaceRuntime } from './contract';
 

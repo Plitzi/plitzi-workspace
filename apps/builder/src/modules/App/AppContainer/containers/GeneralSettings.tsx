@@ -4,7 +4,7 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, use, useState } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import ViewPage from '../../components/ViewPage';

@@ -3,7 +3,7 @@ import Heading from '@plitzi/plitzi-ui/Heading';
 import QueryBuilder from '@plitzi/plitzi-ui/QueryBuilder';
 import { useMemo } from 'react';
 
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
 
 import VariableValue from './VariableValue';
 

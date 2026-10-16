@@ -28,3 +28,4 @@ const utilities = {
 export const utilityOptions = Object.values(utilities).map(({ title, action }) => ({ label: title, value: action }));
 
 export default utilities;
+export * from './truthiness';

@@ -4,8 +4,8 @@ import { isIP } from 'node:net';
 import { hostname, networkInterfaces } from 'node:os';
 import path from 'node:path';
 
-import { assertProjectLayout, layoutFindingText } from '@plitzi/sdk-shared/project/layout';
-import { localNetworkName, networkAddresses } from '@plitzi/sdk-shared/project/network';
+import { assertProjectLayout, layoutFindingText } from '@plitzi/sdk-shared/project';
+import { localNetworkName, networkAddresses } from '@plitzi/sdk-shared/project';
 import {
   DATA_DIR,
   DEV_SERVER_FILE,
@@ -15,10 +15,10 @@ import {
   PUBLIC_DIR,
   RUNTIME_BUNDLE,
   RUNTIME_ENTRY
-} from '@plitzi/sdk-shared/project/paths';
-import { projectModule, projectRoot } from '@plitzi/sdk-shared/project/root';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+} from '@plitzi/sdk-shared/project';
+import { projectModule, projectRoot } from '@plitzi/sdk-shared/project';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import { projectPlugins, watchProjectPlugins } from './plugins';
 import { createSpaceFailure } from './spaceFailure';

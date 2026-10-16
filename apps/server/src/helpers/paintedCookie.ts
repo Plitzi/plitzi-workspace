@@ -1,5 +1,5 @@
-import { getKeyDecoded } from '@plitzi/sdk-shared/helpers/utils';
-import { paintedStateCookieName } from '@plitzi/sdk-shared/state/paintedState';
+import { getKeyDecoded } from '@plitzi/sdk-shared/helpers';
+import { paintedStateCookieName } from '@plitzi/sdk-shared/state';
 
 /**
  * The name the painted state of a server-rendered page is kept under, for this request's host.

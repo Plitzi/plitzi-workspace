@@ -3,7 +3,7 @@ import { PopupProvider, PopupSidePanel } from '@plitzi/plitzi-ui/Popup';
 import { use, useMemo, useCallback } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import BuilderProvider from '@pmodules/Builder/BuilderProvider';
 import BuilderSearch from '@pmodules/Builder/components/BuilderSearch';

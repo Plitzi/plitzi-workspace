@@ -5,7 +5,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { withForcedFlag } from '@plitzi/sdk-shared/flags';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';

@@ -1,4 +1,4 @@
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 
 /**
  * What an element that publishes a source hands its `StoreProvider`: the data under the source's name, where what is

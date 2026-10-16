@@ -3,8 +3,8 @@ import clsx from 'clsx';
 import { use, useCallback, useEffect } from 'react';
 
 import { createStoreHook } from '@plitzi/nexus/react';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import Label from './components/Label';
 import { VISUALLY_HIDDEN } from './components/visuallyHidden';

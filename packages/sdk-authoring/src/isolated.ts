@@ -3,7 +3,7 @@ import { existsSync, readdirSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { validateSpace } from './index';
 import { buildHandles } from './schema/handles';

@@ -4,7 +4,7 @@ import path from 'node:path';
 import esbuild from 'esbuild';
 
 import { pluginAssetLoaders, pluginImportQueries } from '@plitzi/sdk-shared/plugins/bundle';
-import { inPluginLayer } from '@plitzi/sdk-shared/style/cssLayers';
+import { inPluginLayer } from '@plitzi/sdk-shared/style';
 
 import { writeFileAtomic } from '../helpers/atomicFile';
 

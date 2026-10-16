@@ -1,8 +1,8 @@
 import clsx from 'clsx';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
 
 import PluginDetails from './PluginDetails';
 import List from '../../../List';

@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { use } from 'react';
 
-import DevToolsContext from '@plitzi/sdk-shared/devTools/DevToolsContext';
+import { DevToolsContext } from '@plitzi/sdk-shared/devTools';
 
 import ActionsViewer from './tabs/ActionsViewer';
 import CacheViewer from './tabs/CacheViewer';

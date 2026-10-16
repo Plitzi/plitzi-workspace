@@ -1,10 +1,10 @@
 import { useCallback, useContext, useRef, useSyncExternalStore } from 'react';
 
 import { StoreContext } from '@plitzi/nexus/react';
-import { resolveLayoutChain } from '@plitzi/sdk-shared/schema/layoutChain';
+import { resolveLayoutChain } from '@plitzi/sdk-shared/schema';
 
 import type { Element } from '@plitzi/sdk-shared';
-import type { LayoutLink } from '@plitzi/sdk-shared/schema/layoutChain';
+import type { LayoutLink } from '@plitzi/sdk-shared/schema';
 
 const EMPTY: LayoutLink[] = [];
 

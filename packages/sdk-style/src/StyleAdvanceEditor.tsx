@@ -4,12 +4,12 @@ import ContainerFloating from '@plitzi/plitzi-ui/ContainerFloating';
 import { get, debounce } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useState, use } from 'react';
 
-import useNetwork from '@plitzi/sdk-shared/hooks/useNetwork';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import SchemaContext from '@plitzi/sdk-shared/schema/SchemaContext';
+import { useNetwork } from '@plitzi/sdk-shared/hooks';
+import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { SchemaContext } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
-import { splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-shared/style/notifications';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-shared/style';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';
 

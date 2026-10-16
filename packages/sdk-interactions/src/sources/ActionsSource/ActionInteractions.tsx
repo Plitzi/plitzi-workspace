@@ -1,8 +1,8 @@
 import { useCallback, use, useMemo } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
-import { toBuilderParams, toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
-import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { toBuilderParams, toInteractionCallbacks } from '@plitzi/sdk-shared/authoring';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
 import { invalidateAfterWrite } from '@plitzi/sdk-shared/queries';
 import {
   recordActionProgress,

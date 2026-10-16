@@ -1,13 +1,13 @@
-import { actionsCallbacks } from '@plitzi/sdk-interactions/sources/ActionsSource/callbacks';
-import { authCallbacks } from '@plitzi/sdk-interactions/sources/AuthSource/callbacks';
-import { hostCallbacks } from '@plitzi/sdk-interactions/sources/HostSource/callbacks';
-import { navigationCallbacks } from '@plitzi/sdk-interactions/sources/NavigationSource/callbacks';
-import { queriesCallbacks } from '@plitzi/sdk-interactions/sources/QueriesSource/callbacks';
-import { stateCallbacks } from '@plitzi/sdk-interactions/sources/StateSource/callbacks';
-import { reconcileParams } from '@plitzi/sdk-shared/authoring/paramSpec';
-import { spaceCallbacks } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
+import { actionsCallbacks } from '@plitzi/sdk-interactions/declarations';
+import { authCallbacks } from '@plitzi/sdk-interactions/declarations';
+import { hostCallbacks } from '@plitzi/sdk-interactions/declarations';
+import { navigationCallbacks } from '@plitzi/sdk-interactions/declarations';
+import { queriesCallbacks } from '@plitzi/sdk-interactions/declarations';
+import { stateCallbacks } from '@plitzi/sdk-interactions/declarations';
+import { reconcileParams } from '@plitzi/sdk-shared/authoring';
+import { spaceCallbacks } from '@plitzi/sdk-shared/authoring';
 
-import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring';
 
 /**
  * Every built-in `globalCallback`, gathered from the sources that implement them.

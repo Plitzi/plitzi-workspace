@@ -2,7 +2,7 @@
  * A widget built from an agent's operations, with no space and no backend: the engine behind `plitzi_render`, apart
  * from the MCP tool — so a project's own agent can draw the same widgets in its own pages (`@plitzi/sdk-mcp/render`).
  */
-import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+import { generateCache } from '@plitzi/sdk-style';
 
 import { documentOperations } from './operations';
 import { emptySpace } from '../helpers';

@@ -1,4 +1,4 @@
-import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 
 import {
   elementAncestorTypes,
@@ -45,7 +45,7 @@ import type {
   WrittenClass,
   WrittenElement
 } from './schema';
-import type { SchemaValidationResult } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SchemaValidationResult } from '@plitzi/sdk-schema';
 
 /**
  * Authoring a space, or a snippet, in code — and the only place any of it lives.
@@ -148,11 +148,7 @@ export type {
   TypedActionEntry,
   WhileRunning
 } from '@plitzi/sdk-shared';
-export type {
-  SchemaValidationError,
-  SchemaValidationOptions,
-  SchemaValidationResult
-} from '@plitzi/sdk-schema/helpers/schemaValidator';
+export type { SchemaValidationError, SchemaValidationOptions, SchemaValidationResult } from '@plitzi/sdk-schema';
 
 export * from './decompile';
 export * from './explain';
@@ -177,10 +173,10 @@ export * from './transformers';
  */
 export * from '@plitzi/sdk-shared/authoring';
 // The motion presets, so what the `.d.ts` names is what the package has: `motion: { enter: MOTION_ENTERS[1] }`.
-export { MOTION_ENTERS, MOTION_LOOPS, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema/motion';
+export { MOTION_ENTERS, MOTION_LOOPS, MOTION_TRIGGERS } from '@plitzi/sdk-shared/schema';
 // A page's `documentScroll` values, for what writes a page outside a declaration (the MCP's `upsertPage`).
-export { DOCUMENT_SCROLLS, isDocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
-export type { DocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
+export { DOCUMENT_SCROLLS, isDocumentScroll } from '@plitzi/sdk-elements/elements/declarations';
+export type { DocumentScroll } from '@plitzi/sdk-elements/elements/declarations';
 
 /**
  * What a step may name in a document authored here.

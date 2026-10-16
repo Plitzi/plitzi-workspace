@@ -6,7 +6,7 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
 import { isStyleVariableCategory } from '@plitzi/sdk-shared';
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import SchemaVariables from '@plitzi/sdk-variables/components/SchemaVariables';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';

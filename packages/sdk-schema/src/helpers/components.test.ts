@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 
 import {
   addComponent,

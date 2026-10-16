@@ -1,13 +1,13 @@
 import { cloneDeep } from '@plitzi/plitzi-ui/helpers';
 import { useEffect, useMemo, useState, useCallback, use } from 'react';
 
-import { pluginParseDefinition } from '@plitzi/sdk-plugins/PluginHelper';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { pluginParseDefinition } from '@plitzi/sdk-plugins';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { NetworkContext } from '@plitzi/sdk-shared/network';
+import { NetworkInternalContext } from '@plitzi/sdk-shared/network';
 import { SdkQueries, SdkMutations } from '@plitzi/sdk-shared/network/graphql/sdk';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
-import NetworkInternalContext from '@plitzi/sdk-shared/network/NetworkInternalContext';
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
-import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
+import { schemaFromWire } from '@plitzi/sdk-shared/schema';
 import { useRenderSettings, useSdkStoreSetter } from '@plitzi/sdk-shared/store';
 
 import { createGraphqlClient, GraphqlRequestError } from './graphqlClient';
@@ -20,7 +20,7 @@ import type {
   NetworkInternalContextValue,
   ComponentPluginWithHOC
 } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network';
 import type { ReactNode } from 'react';
 
 export type NetworkContextProviderProps = {

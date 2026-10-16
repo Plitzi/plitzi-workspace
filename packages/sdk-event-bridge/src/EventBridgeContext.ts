@@ -1,4 +1,4 @@
-import { sharedContext } from '@plitzi/sdk-shared/helpers/sharedContext';
+import { sharedContext } from '@plitzi/sdk-shared/helpers';
 
 import type EventBridge from './EventBridge';
 import type { EventBridgeContextValue as EventBridgeContextValueShared } from '@plitzi/sdk-shared';

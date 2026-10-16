@@ -17,8 +17,9 @@ vi.mock('@plitzi/sdk-shared/store', async importOriginal => ({
   useCommonStore: (path: string) => [path === 'images.endpoint' ? published.endpoint : undefined]
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({
     settings: { previewMode: true }
   })
 }));

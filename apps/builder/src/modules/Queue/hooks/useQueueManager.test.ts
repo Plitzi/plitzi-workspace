@@ -2,7 +2,7 @@ import { CombinedGraphQLErrors } from '@apollo/client/core';
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { SchemaActions } from '@plitzi/sdk-schema/SchemaReducer';
+import { SchemaActions } from '@plitzi/sdk-schema';
 
 import useQueueManager from './useQueueManager';
 

@@ -1,4 +1,4 @@
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
 
 import type { Field } from '@plitzi/plitzi-ui/QueryBuilder';
 import type { QueryParams, RouteParams } from '@plitzi/sdk-shared';

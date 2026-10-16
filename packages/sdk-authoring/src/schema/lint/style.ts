@@ -1,4 +1,4 @@
-import { animationNamesIn, keyframesNamesIn, SDK_KEYFRAMES_PREFIX } from '@plitzi/sdk-shared/style/keyframes';
+import { animationNamesIn, keyframesNamesIn, SDK_KEYFRAMES_PREFIX } from '@plitzi/sdk-shared/style';
 
 import { didYouMean } from '../suggest';
 

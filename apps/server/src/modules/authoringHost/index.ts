@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { createServer } from '../../core/createServer';
 import { PREVIEW_TOKEN_PARAM, readDraftToken } from '../../core/previewToken';

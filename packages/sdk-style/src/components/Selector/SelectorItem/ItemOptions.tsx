@@ -3,7 +3,7 @@ import Icon from '@plitzi/plitzi-ui/Icon';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback } from 'react';
 
-import { makeId } from '@plitzi/sdk-shared/helpers/utils';
+import { makeId } from '@plitzi/sdk-shared/helpers';
 
 import { ITEM_CLASS } from './helpers';
 

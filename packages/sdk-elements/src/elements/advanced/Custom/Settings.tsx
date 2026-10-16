@@ -5,7 +5,7 @@ import Input from '@plitzi/plitzi-ui/Input';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import useSettingsUpdate from '../../useSettingsUpdate';
 

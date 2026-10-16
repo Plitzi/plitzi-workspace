@@ -1,8 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
 
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
-import { uniqueAnchor } from '@plitzi/sdk-shared/schema/anchor';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
+import { uniqueAnchor } from '@plitzi/sdk-shared/schema';
 
 import useMarkdownClassNames from './hooks/useMarkdownClassNames';
 import MarkdownDocument from '../../../components/MarkdownDocument';

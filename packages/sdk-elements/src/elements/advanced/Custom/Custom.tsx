@@ -2,8 +2,8 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
 
 import { getRemoteSettings } from '../../../Element/helpers/pluginSelector';
 import withElement from '../../../Element/hocs/withElement';

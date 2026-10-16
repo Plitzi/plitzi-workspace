@@ -17,3 +17,7 @@ export * from './styleStates';
 export * from './styleTarget';
 
 export { styleConstants };
+export * from './notifications';
+export { default as useDisplayMode } from './useDisplayMode';
+export { default as useElementSize } from './useElementSize';
+export * from './keyframes';

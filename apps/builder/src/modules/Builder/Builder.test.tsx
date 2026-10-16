@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import AppContext from '@pmodules/App/AppContext';
 
 import Builder from './Builder';

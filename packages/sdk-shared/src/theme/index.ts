@@ -7,5 +7,6 @@ export * from './themeCookie';
 export * from './themeStore';
 export * from './useTheme';
 export { default as themeStore } from './themeStore';
+export { default as ThemeScopeContext } from './ThemeScope';
 
 export { ThemeProvider, useTheme };

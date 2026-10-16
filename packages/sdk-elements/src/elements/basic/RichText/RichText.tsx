@@ -2,7 +2,7 @@
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import { classHtmlParts } from './classHtmlParts';
 import { rebaseHtmlMedia, sanitizeHtml } from './sanitizeHtml';

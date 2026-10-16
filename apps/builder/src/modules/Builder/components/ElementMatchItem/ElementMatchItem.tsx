@@ -2,7 +2,7 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { use, useCallback, useEffect, useRef } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
 import type { ElementMatch } from '../../helpers/searchElements';
 

@@ -1,5 +1,5 @@
-import { conditionLabel, STYLE_MOTION_CONDITIONS } from '@plitzi/sdk-shared/style/styleConditions';
-import { STYLE_PSEUDO_LABELS, STYLE_PSEUDOS } from '@plitzi/sdk-shared/style/stylePseudos';
+import { conditionLabel, STYLE_MOTION_CONDITIONS } from '@plitzi/sdk-shared/style';
+import { STYLE_PSEUDO_LABELS, STYLE_PSEUDOS } from '@plitzi/sdk-shared/style';
 import {
   inCascadeOrder,
   isKnownState,
@@ -7,7 +7,7 @@ import {
   PARENT_ANCESTOR,
   STYLE_STATE_LABELS,
   STYLE_STATES
-} from '@plitzi/sdk-shared/style/styleStates';
+} from '@plitzi/sdk-shared/style';
 
 import type { Option } from '@plitzi/plitzi-ui/Select2';
 import type {

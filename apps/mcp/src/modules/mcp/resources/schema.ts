@@ -1,4 +1,4 @@
-import { treeOf } from '@plitzi/sdk-schema/helpers/components';
+import { treeOf } from '@plitzi/sdk-schema';
 
 import {
   afterPrefix,

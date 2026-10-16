@@ -1,4 +1,4 @@
-import { invalidParams } from '@plitzi/sdk-shared/authoring/paramSpec';
+import { invalidParams } from '@plitzi/sdk-shared/authoring';
 
 import { didYouMean } from '../suggest';
 

@@ -1,4 +1,4 @@
-import { NAMEABLE_CONTAINER_TAGS } from '@plitzi/sdk-elements/elements/structure/Container/declaration';
+import { NAMEABLE_CONTAINER_TAGS } from '@plitzi/sdk-elements/elements/declarations';
 
 import { textOf } from './context';
 import { elementAttributeNames } from '../../elements/attributeNames';

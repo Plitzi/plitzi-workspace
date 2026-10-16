@@ -2,9 +2,9 @@ import { createContext } from 'react';
 
 import type { UndoableReducerActions } from './UndoableReducer';
 import type { ReducerMiddlewareCallback } from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
-import type { SchemaReducerActions } from '@plitzi/sdk-schema/SchemaReducer';
+import type { SchemaReducerActions } from '@plitzi/sdk-schema';
 import type { Schema, Style } from '@plitzi/sdk-shared';
-import type { StyleReducerActions } from '@plitzi/sdk-style/StyleReducer';
+import type { StyleReducerActions } from '@plitzi/sdk-style';
 import type { ActionDispatch } from 'react';
 
 export type UndoableItem<TState, TDispatchAction> = {

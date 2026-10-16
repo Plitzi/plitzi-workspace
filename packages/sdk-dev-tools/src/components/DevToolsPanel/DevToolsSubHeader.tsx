@@ -2,7 +2,7 @@ import { throttle } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { elementOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+import { elementOf } from '@plitzi/sdk-shared/helpers';
 
 import DevToolsButton from './DevToolsButton';
 import useHighlightElement from '../../highlight';

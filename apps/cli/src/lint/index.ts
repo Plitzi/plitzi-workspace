@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import chalk from 'chalk';
 
-import { checkProjectLayout } from '@plitzi/sdk-shared/project/layout';
+import { checkProjectLayout } from '@plitzi/sdk-shared/project';
 
 import { finding } from './catalog';
 import { withoutDisabled } from './directives';

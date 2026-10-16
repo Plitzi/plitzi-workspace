@@ -11,7 +11,7 @@ import {
   MOTION_ENTERS,
   MOTION_LOOP_FRAMES,
   MOTION_LOOPS
-} from '@plitzi/sdk-shared/schema/motion';
+} from '@plitzi/sdk-shared/schema';
 
 const css = compileString('@use "motion"; @include motion.styles;', {
   loadPaths: [path.dirname(fileURLToPath(import.meta.url))]

@@ -1,4 +1,4 @@
-import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring';
 
 /** What this source's actions are, for the editor that fills them in and for anything authoring one offline. */
 export const stateCallbacks: Record<string, BuiltinGlobalCallback> = {

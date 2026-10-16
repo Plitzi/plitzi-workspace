@@ -1,19 +1,19 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, use, useEffect, useMemo, useRef } from 'react';
 
-import AuthContext from '@plitzi/sdk-auth/AuthContext';
+import { AuthContext } from '@plitzi/sdk-auth';
 import { evaluateComputed } from '@plitzi/sdk-shared/dataSource';
-import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import useResolvedVariables from '@plitzi/sdk-shared/dataSource/hooks/useResolvedVariables';
+import { useRegisterSource } from '@plitzi/sdk-shared/dataSource/hooks';
+import { useResolvedVariables } from '@plitzi/sdk-shared/dataSource/hooks';
 import { flagValues, undeclaredFlagOverrides } from '@plitzi/sdk-shared/flags';
-import useFlagResolution from '@plitzi/sdk-shared/flags/useFlagResolution';
-import { getPathsFromObject } from '@plitzi/sdk-shared/helpers/utils';
-import useStableValue from '@plitzi/sdk-shared/hooks/useStableValue';
+import { useFlagResolution } from '@plitzi/sdk-shared/flags';
+import { getPathsFromObject } from '@plitzi/sdk-shared/helpers';
+import { useStableValue } from '@plitzi/sdk-shared/hooks';
 import { useCommonStore, useCommonStoreSync } from '@plitzi/sdk-shared/store';
-import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
 
 import type { AuthContextValue, SourceField } from '@plitzi/sdk-shared';
-import type { ShapedGlobalValue } from '@plitzi/sdk-shared/dataSource/globalSources';
+import type { ShapedGlobalValue } from '@plitzi/sdk-shared/dataSource';
 import type { ReactNode } from 'react';
 
 export type GlobalSourcesProps = {

@@ -1,8 +1,8 @@
 /** Static declaration for Heading: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring';
 
 import type { HeadingProps } from './Heading';
-import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
+import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type HeadingAttributes = AuthorableAttributes<HeadingProps>;

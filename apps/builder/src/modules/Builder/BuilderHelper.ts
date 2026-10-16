@@ -2,9 +2,9 @@
 import { get, set, pick } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
-import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
-import generateStyleSelector from '@plitzi/sdk-style/helpers/generateStyleSelector';
-import { generateCache, makeSelector } from '@plitzi/sdk-style/StyleHelper';
+import { positionalElementId } from '@plitzi/sdk-schema';
+import { generateCache, makeSelector } from '@plitzi/sdk-style';
+import { generateStyleSelector } from '@plitzi/sdk-style/helpers';
 
 import type {
   BuilderContextValue,
@@ -14,7 +14,7 @@ import type {
   SchemaVariable,
   Style
 } from '@plitzi/sdk-shared';
-import type { NetworkContextValue } from '@plitzi/sdk-shared/network/NetworkContext';
+import type { NetworkContextValue } from '@plitzi/sdk-shared/network';
 
 const getImageSize = async (file: File): Promise<{ height: number; width: number }> =>
   new Promise((resolve, reject) => {

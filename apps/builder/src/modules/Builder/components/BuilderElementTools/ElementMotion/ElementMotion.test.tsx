@@ -5,7 +5,7 @@ import AppContext from '@pmodules/App/AppContext';
 
 import ElementMotion from './ElementMotion';
 
-import type { ElementMotion as Motion } from '@plitzi/sdk-shared/schema/motion';
+import type { ElementMotion as Motion } from '@plitzi/sdk-shared/schema';
 import type { AppContextValue } from '@pmodules/App/AppContext';
 
 const mount = (props: { motion?: Motion; canHoldItems?: boolean; isPage?: boolean } = {}) => {

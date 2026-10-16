@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { EXPLAIN_KINDS, explainList } from '@plitzi/sdk-authoring';
-import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project/layout';
+import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
 
 import { explainCommand } from './explain';
 import { LINT_RULES } from '../lint/catalog';

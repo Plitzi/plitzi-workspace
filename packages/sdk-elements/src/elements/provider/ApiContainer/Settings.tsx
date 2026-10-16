@@ -7,10 +7,10 @@ import Select from '@plitzi/plitzi-ui/Select';
 import Switch from '@plitzi/plitzi-ui/Switch';
 import { useCallback, useMemo, useState } from 'react';
 
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 import { useBuilderStore, useCommonStore } from '@plitzi/sdk-shared/store';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import useSettingsUpdate from '../../useSettingsUpdate';
 import FiltersInput from './components/FiltersInput';

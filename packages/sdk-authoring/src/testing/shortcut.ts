@@ -1,4 +1,4 @@
-import { parseKeys } from '@plitzi/sdk-shared/helpers/keys';
+import { parseKeys } from '@plitzi/sdk-shared/helpers';
 
 /**
  * A shortcut pressed the way the page will read it.

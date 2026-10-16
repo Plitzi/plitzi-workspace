@@ -59,6 +59,8 @@ export default defineConfig(({ mode }) => {
         include: ['src', 'package.json'],
         entryRoot: 'src',
         tsconfigPath: './tsconfig.app.json',
+        // The declarations are written against the other packages' declarations, as a consumer reads them.
+        compilerOptions: { customConditions: [] },
         beforeWriteFile: skipUnchangedDts
       }),
       copyAssets()

@@ -1,5 +1,5 @@
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
-import { collectServerElements } from '@plitzi/sdk-shared/schema/serverElements';
+import { collectServerElements } from '@plitzi/sdk-shared/schema';
 
 import { matchRscPage } from './matchRscPage';
 import { onAbort } from '../../helpers/onAbort';

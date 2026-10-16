@@ -4,7 +4,7 @@
  * Here with every other declaration, so authoring and the builder's catalogue know the element; its component runs a
  * whole space, and lives with the SDK that does (`apps/sdk`).
  */
-import { elementDeclaration } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration } from '@plitzi/sdk-shared/authoring';
 
 import type { Environment, OfflineDataRaw } from '@plitzi/sdk-shared';
 

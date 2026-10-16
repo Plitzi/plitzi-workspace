@@ -3,11 +3,11 @@ import clsx from 'clsx';
 import { use, useCallback, useContext, useEffect, useEffectEvent, useMemo, useRef } from 'react';
 
 import { StoreContext } from '@plitzi/nexus/react';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
 import { liveSources } from '@plitzi/sdk-shared/dataSource';
-import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 
 import useElementInteractions from './useElementInteractions';
 import useInternalClassName from './useInternalClassName';

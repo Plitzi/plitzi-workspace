@@ -3,10 +3,10 @@ import Flex from '@plitzi/plitzi-ui/Flex';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, use } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
-import { documentIds } from '@plitzi/sdk-schema/helpers/components';
-import { slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema/helpers/elementId';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
+import { documentIds } from '@plitzi/sdk-schema';
+import { slugifyElementId, uniqueElementId } from '@plitzi/sdk-schema';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import LayoutForm from '@pmodules/App/models/LayoutForm';
 import PageFolderForm from '@pmodules/App/models/PageFolderForm';

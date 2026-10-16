@@ -1,7 +1,7 @@
 import { unusedDeclarations } from '@plitzi/sdk-authoring';
-import { isInstance } from '@plitzi/sdk-schema/helpers/components';
-import { GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource/globalSources';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isInstance } from '@plitzi/sdk-schema';
+import { GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasValidToken, templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { rootName } from '@pmodules/Builder/helpers/searchElements';
 import { componentLabel } from '@pmodules/Components/helpers';

@@ -2,7 +2,7 @@ import { QueryBuilderFormatter } from '@plitzi/plitzi-ui/QueryBuilder';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback } from 'react';
 
-import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers/clipboard';
+import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers';
 
 import VariableValue from './VariableValue';
 

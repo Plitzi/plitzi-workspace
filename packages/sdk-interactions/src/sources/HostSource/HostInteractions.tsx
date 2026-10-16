@@ -1,6 +1,6 @@
 import { use, useCallback, useMemo } from 'react';
 
-import { toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
+import { toInteractionCallbacks } from '@plitzi/sdk-shared/authoring';
 
 import { hostCallbacks } from './callbacks';
 import InteractionsContext from '../../InteractionsContext';

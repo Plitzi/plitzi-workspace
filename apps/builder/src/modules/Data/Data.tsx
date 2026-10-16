@@ -2,7 +2,7 @@ import Alert from '@plitzi/plitzi-ui/Alert';
 import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 import { isSaveKey, saveState } from '@pmodules/FileTree';
 
 import DataEditor from './components/DataEditor';

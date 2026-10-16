@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useState, use, useMemo } from 'react';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import ManagerSelector from './ManagerSelector';

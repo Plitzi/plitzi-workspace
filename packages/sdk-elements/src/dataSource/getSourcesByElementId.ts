@@ -1,4 +1,4 @@
-import { renderContext } from '@plitzi/sdk-schema/helpers/elementTree';
+import { renderContext } from '@plitzi/sdk-schema';
 
 import type { Schema, Source } from '@plitzi/sdk-shared';
 

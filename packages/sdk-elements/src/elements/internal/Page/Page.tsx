@@ -2,8 +2,8 @@
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
 
 import withElement from '../../../Element/hocs/withElement';
@@ -18,7 +18,7 @@ import PageHead from './PageHead';
 import type { DocumentScroll } from './declaration';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { ElementLayout } from '@plitzi/sdk-shared';
-import type { LayoutLink } from '@plitzi/sdk-shared/schema/layoutChain';
+import type { LayoutLink } from '@plitzi/sdk-shared/schema';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {

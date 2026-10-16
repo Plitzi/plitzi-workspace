@@ -1,6 +1,6 @@
 import { closest } from '@plitzi/sdk-authoring';
-import { treeOf } from '@plitzi/sdk-schema/helpers/components';
-import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { treeOf } from '@plitzi/sdk-schema';
+import { isValidElementId } from '@plitzi/sdk-schema';
 
 import {
   batchDeclaredElements,

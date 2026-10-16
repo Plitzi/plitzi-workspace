@@ -1,4 +1,4 @@
-import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring';
 
 /**
  * Navigation's one action.

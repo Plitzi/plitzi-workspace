@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 
 import chalk from 'chalk';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { connectToSpace } from './account';
 import { sayDryRun } from './dryRun';

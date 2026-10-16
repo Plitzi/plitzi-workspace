@@ -1,6 +1,6 @@
 import { lookup } from 'node:dns/promises';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { apiFor, signedIn } from './account';
 import { authorizedRequest } from '../account/session';

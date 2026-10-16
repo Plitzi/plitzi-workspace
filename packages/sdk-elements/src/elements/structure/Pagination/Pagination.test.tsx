@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style/styleStates';
+import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style';
 
 import { Pagination } from './Pagination';
 
@@ -9,12 +9,18 @@ import type { ReactNode } from 'react';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => ({ settings: { previewMode: true } }) }));
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({ settings: { previewMode: true } })
+}));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({ interactionsManager: { interactionTrigger: vi.fn() } }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({ interactionsManager: { interactionTrigger: vi.fn() } })
+  };
 });
 
 vi.mock('@plitzi/sdk-shared/store', () => ({ useSdkStore: () => [vi.fn()] }));

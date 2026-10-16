@@ -36,15 +36,25 @@ vi.mock('../../../Element/hooks/useElement', () => ({
   default: () => ({ id: 'hero', definition: { label: 'Hero' } })
 }));
 
-vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ default: () => undefined }));
+vi.mock('@plitzi/sdk-shared/dataSource/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/dataSource/hooks')>()),
+  useRegisterSource: () => undefined
+}));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => ({ settings: { previewMode: preview.on } }) }));
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({ settings: { previewMode: preview.on } })
+}));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
+
   const manager = { createChildManager: () => manager, removeChildManager: () => undefined, interactionTrigger };
 
-  return { default: createContext({ interactionsManager: manager }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({ interactionsManager: manager })
+  };
 });
 
 // jsdom has no layout, and so no `ResizeObserver`: the marquee measures nothing here, which is all these tests need.

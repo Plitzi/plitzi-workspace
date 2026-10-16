@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 /**
  * A run as the benchmark reads it, whichever harness made it: the turns the model took (each with what it read and

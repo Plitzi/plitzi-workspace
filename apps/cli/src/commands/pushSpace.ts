@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 import chalk from 'chalk';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { SPACE_IMPORT_FORMAT } from '@plitzi/sdk-shared/source';
 
 import { filesUnder } from './filesUnder';

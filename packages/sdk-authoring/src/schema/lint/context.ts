@@ -1,10 +1,10 @@
-import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/components';
-import { parentChain, renderContext } from '@plitzi/sdk-schema/helpers/elementTree';
+import { componentNamed, isInstance } from '@plitzi/sdk-schema';
+import { parentChain, renderContext } from '@plitzi/sdk-schema';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 
 import type { RefusalCode, WarningCode } from '../codes';
 import type { AuthorSpaceOptions } from '../types';
-import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SchemaValidationError } from '@plitzi/sdk-schema';
 import type { Element, Schema, SpaceComponent, Style } from '@plitzi/sdk-shared';
 
 /**

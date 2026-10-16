@@ -2,8 +2,8 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { authorSpace, refusalOf } from '@plitzi/sdk-authoring';
-import { canonicalJson } from '@plitzi/sdk-shared/helpers/canonicalJson';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { canonicalJson } from '@plitzi/sdk-shared/helpers';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { findProject } from './existingProject';
 import { loadProjectSpace } from './projectSpace';

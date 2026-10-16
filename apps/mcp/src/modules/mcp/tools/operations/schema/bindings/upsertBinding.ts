@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { positionalElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { positionalElementId } from '@plitzi/sdk-schema';
 
 import { empty } from '../../../../helpers';
 import { bindingCategory, bindingInput } from '../shared';

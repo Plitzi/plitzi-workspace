@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import esbuild from 'esbuild';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { failureOf } from './plugins';
 import { sayer } from './types';

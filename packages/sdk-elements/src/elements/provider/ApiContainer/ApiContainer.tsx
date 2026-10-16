@@ -5,13 +5,13 @@ import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
-import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
+import { useRegisterSource } from '@plitzi/sdk-shared/dataSource/hooks';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useServerQuery } from '@plitzi/sdk-shared/queries';
-import { currentRscLocation } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
+import { currentRscLocation } from '@plitzi/sdk-shared/server';
 import { useCommonStore, useSdkStore } from '@plitzi/sdk-shared/store';
 
 import declaration from './declaration';

@@ -2,7 +2,7 @@ import CodeMirror from '@plitzi/plitzi-ui/CodeMirror';
 import clsx from 'clsx';
 import { useCallback, useMemo } from 'react';
 
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import { processSelectors } from '../../../../helpers';
 import { RAW_STYLE_KEYS } from '../../categoryKeys';

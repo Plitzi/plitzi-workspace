@@ -1,20 +1,20 @@
-import { propNameProblem, RESERVED_PROP_NAMES } from '@plitzi/sdk-schema/helpers/components';
-import { isValidElementId } from '@plitzi/sdk-schema/helpers/elementId';
-import { parentChain } from '@plitzi/sdk-schema/helpers/elementTree';
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
-import { rendersNoTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
-import { checkVisitorRoles } from '@plitzi/sdk-shared/auth/visitorRoles';
-import { BUILTIN_PARAM_TYPES, invalidParams } from '@plitzi/sdk-shared/authoring/paramSpec';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { propNameProblem, RESERVED_PROP_NAMES } from '@plitzi/sdk-schema';
+import { isValidElementId } from '@plitzi/sdk-schema';
+import { parentChain } from '@plitzi/sdk-schema';
+import { FlatMap } from '@plitzi/sdk-schema';
+import { rendersNoTag } from '@plitzi/sdk-schema';
+import { checkVisitorRoles } from '@plitzi/sdk-shared/auth';
+import { BUILTIN_PARAM_TYPES, invalidParams } from '@plitzi/sdk-shared/authoring';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { getSlugParams } from '@plitzi/sdk-shared/navigation';
 import { channelProblems } from '@plitzi/sdk-shared/realtime';
-import { anchorOf } from '@plitzi/sdk-shared/schema/anchor';
-import { parseSpaceFont } from '@plitzi/sdk-shared/style/fontValidation';
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
-import { isParentAncestor } from '@plitzi/sdk-shared/style/styleStates';
-import processSelector from '@plitzi/sdk-style/helpers/processSelector';
-import { generateCache } from '@plitzi/sdk-style/StyleHelper';
+import { anchorOf } from '@plitzi/sdk-shared/schema';
+import { parseSpaceFont } from '@plitzi/sdk-shared/style';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
+import { isParentAncestor } from '@plitzi/sdk-shared/style';
+import { generateCache } from '@plitzi/sdk-style';
+import { processSelector } from '@plitzi/sdk-style/helpers';
 
 import {
   BREAKPOINTS,
@@ -97,7 +97,7 @@ import type {
   StyleDeclaration,
   StyleSpec
 } from '../style';
-import type { SchemaValidationError } from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SchemaValidationError } from '@plitzi/sdk-schema';
 import type {
   DropPosition,
   Element,

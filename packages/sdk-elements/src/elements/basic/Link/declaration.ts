@@ -1,8 +1,8 @@
 /** Static declaration for Link: type, default attributes and builder metadata. Data only, no React. */
-import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring/declare';
+import { elementDeclaration, valuesOf } from '@plitzi/sdk-shared/authoring';
 
 import type { LinkProps } from './Link';
-import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring/declare';
+import type { AuthorableAttributes } from '@plitzi/sdk-shared/authoring';
 
 /** What this element can be authored with — its component's own props, minus what the runtime supplies. */
 export type LinkAttributes = AuthorableAttributes<LinkProps>;

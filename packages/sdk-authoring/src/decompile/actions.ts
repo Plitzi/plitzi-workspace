@@ -1,5 +1,5 @@
 import { FAILURE_HANDLER_TASK } from '@plitzi/sdk-shared/actions';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { camel, literal, withSuffix } from './literal';
 import { defineAction } from '../schema/actions';

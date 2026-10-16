@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { useState, useCallback, useMemo, memo } from 'react';
 
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 import BuilderSearchButton from '@pmodules/Builder/components/BuilderSearch/components/BuilderSearchButton';
 import { collaboratorTitle } from '@pmodules/Collaboration/CollaborationHelper';
 import CollaboratorAvatar from '@pmodules/Collaboration/components/CollaboratorAvatar';

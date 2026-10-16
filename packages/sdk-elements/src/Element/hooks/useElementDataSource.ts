@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { templatePaths } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import type { ElementBinding } from '@plitzi/sdk-shared';
-import type { RuleGroup } from '@plitzi/sdk-shared/helpers/ruleEvaluator';
+import type { RuleGroup } from '@plitzi/sdk-shared/helpers';
 
 export type UseElementDataSourceProps = {
   bindings?: Record<string, ElementBinding[]>;

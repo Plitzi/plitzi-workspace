@@ -1,16 +1,12 @@
-import { validateSchema } from '@plitzi/sdk-schema/helpers/schemaValidator';
-import { styleWithoutTag } from '@plitzi/sdk-schema/helpers/styleWithoutTag';
+import { validateSchema } from '@plitzi/sdk-schema';
+import { styleWithoutTag } from '@plitzi/sdk-schema';
 
 import { lintSpace } from './lint';
 import { isCssProperty, isCustomProperty, suggestCssProperty } from '../style';
 
 import type { LintCatalogs } from './lint';
 import type { AllowedBreak } from './types';
-import type {
-  SchemaValidationError,
-  SchemaValidationOptions,
-  SchemaValidationResult
-} from '@plitzi/sdk-schema/helpers/schemaValidator';
+import type { SchemaValidationError, SchemaValidationOptions, SchemaValidationResult } from '@plitzi/sdk-schema';
 import type { Schema, Style, StyleBlock } from '@plitzi/sdk-shared';
 
 /**

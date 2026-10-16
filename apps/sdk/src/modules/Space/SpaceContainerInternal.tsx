@@ -1,21 +1,17 @@
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use, useMemo } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import { toInteractionCallback } from '@plitzi/sdk-shared/authoring/builder';
-import {
-  NOTIFICATION_DEFAULTS,
-  readNotificationOptions,
-  spaceCallbacks
-} from '@plitzi/sdk-shared/authoring/spaceCallbacks';
-import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { toInteractionCallback } from '@plitzi/sdk-shared/authoring';
+import { NOTIFICATION_DEFAULTS, readNotificationOptions, spaceCallbacks } from '@plitzi/sdk-shared/authoring';
+import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
 
 import { NotifyContext } from './useNotify';
 
 import type { Notify } from './useNotify';
 import type { ToastTypeOptions } from '@plitzi/plitzi-ui/Toast';
 import type { InteractionCallback, InteractionCallbackParamValues } from '@plitzi/sdk-shared';
-import type { NotificationAppearance } from '@plitzi/sdk-shared/authoring/spaceCallbacks';
+import type { NotificationAppearance } from '@plitzi/sdk-shared/authoring';
 import type { ReactNode } from 'react';
 
 /** A space's appearance as the toast library names it: `danger` is its `error` — its icon, and its colour. */

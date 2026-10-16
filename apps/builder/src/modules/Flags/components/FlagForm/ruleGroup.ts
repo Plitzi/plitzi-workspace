@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import type { RuleGroup } from '@plitzi/plitzi-ui/QueryBuilder';
 

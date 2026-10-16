@@ -3,10 +3,10 @@ import { useToast } from '@plitzi/plitzi-ui/Toast';
 import clsx from 'clsx';
 import { use, useRef, useCallback, useEffect, useImperativeHandle } from 'react';
 
-import FlatMap from '@plitzi/sdk-schema/helpers/FlatMap';
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { elementOf, nodeOf } from '@plitzi/sdk-shared/helpers/eventTarget';
+import { FlatMap } from '@plitzi/sdk-schema';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { elementOf, nodeOf } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore, useBuilderStoreGetter } from '@plitzi/sdk-shared/store';
 import AppContext from '@pmodules/App/AppContext';
 import useCollaboratorCursor from '@pmodules/Collaboration/hooks/useCollaboratorCursor';

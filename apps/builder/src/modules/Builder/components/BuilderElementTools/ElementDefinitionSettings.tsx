@@ -6,7 +6,7 @@ import KVInput from '@plitzi/plitzi-ui/KVInput';
 import Select from '@plitzi/plitzi-ui/Select';
 import { useCallback, useMemo, useState } from 'react';
 
-import { slugifyElementId } from '@plitzi/sdk-schema/helpers/elementId';
+import { slugifyElementId } from '@plitzi/sdk-schema';
 
 import ElementAnchor from './ElementAnchor';
 import ElementFlagGate from './ElementFlagGate';

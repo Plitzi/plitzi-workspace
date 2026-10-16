@@ -1,6 +1,6 @@
 import { ThemeProvider } from '@plitzi/sdk-shared';
 import { useRenderSettings, useSdkStore } from '@plitzi/sdk-shared/store';
-import useTheme, { SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme, SPACE_THEME_AREA } from '@plitzi/sdk-shared/theme';
 
 import type { ThemeScope } from '@plitzi/sdk-shared';
 import type { Theme } from '@plitzi/sdk-shared/types';

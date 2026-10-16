@@ -1,6 +1,6 @@
 import { use, useEffect, useMemo } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
 
 import type { ReactNode } from 'react';
 

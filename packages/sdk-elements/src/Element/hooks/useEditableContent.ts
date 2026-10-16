@@ -1,7 +1,7 @@
 import { use, useCallback, useMemo } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import useElement from './useElement';
 

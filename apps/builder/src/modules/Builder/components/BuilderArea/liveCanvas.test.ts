@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { MOTION_SEEN_ATTRIBUTE } from '@plitzi/sdk-shared/schema/motion';
+import { MOTION_SEEN_ATTRIBUTE } from '@plitzi/sdk-shared/schema';
 
 import { liveCanvas } from './liveCanvas';
 

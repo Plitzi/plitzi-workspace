@@ -2,7 +2,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { useCallback, use } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 
 import { REUSE } from '../helpers/reuse';
 import SnippetForm from '../Models/SnippetForm';

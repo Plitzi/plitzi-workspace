@@ -5,9 +5,9 @@ import {
   MOTION_ENTERS,
   MOTION_LOOP_FRAMES,
   MOTION_LOOPS
-} from '@plitzi/sdk-shared/schema/motion';
+} from '@plitzi/sdk-shared/schema';
 
-import type { ElementMotion, MotionEnter, MotionLoop, MotionTrigger } from '@plitzi/sdk-shared/schema/motion';
+import type { ElementMotion, MotionEnter, MotionLoop, MotionTrigger } from '@plitzi/sdk-shared/schema';
 
 export type Timing = 'duration' | 'delay' | 'stagger';
 

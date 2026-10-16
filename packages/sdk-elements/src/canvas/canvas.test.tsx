@@ -2,7 +2,7 @@
 import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PlitziContext } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { PlitziContext } from '@plitzi/sdk-shared/hooks';
 
 import { createShaderProgram, ShaderError, useCanvas2d } from './index';
 

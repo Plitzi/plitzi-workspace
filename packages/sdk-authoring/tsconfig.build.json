@@ -1,0 +1,9 @@
+{
+  // The declaration roll-up's view: the other packages through their declarations, as a consumer reads them. API
+  // Extractor reads this file itself — the plugin's `compilerOptions` never reach it — and following
+  // `@plitzi/source` into their sources is where it gives up ("Unable to follow symbol").
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "customConditions": []
+  }
+}

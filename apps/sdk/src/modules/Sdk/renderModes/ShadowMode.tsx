@@ -2,13 +2,13 @@ import ContainerShadow from '@plitzi/plitzi-ui/ContainerShadow';
 import { memo, useMemo } from 'react';
 
 import { Page } from '@plitzi/sdk-elements/elements';
-import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 
 import SpaceContainer from '../../Space/SpaceContainer';
 import OverQuotaNotice from '../components/OverQuotaNotice';
 
 import type { Asset } from '@plitzi/plitzi-ui/ContainerFrame';
-import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 
 export type ShadowModeProps = {
   pageId?: string;

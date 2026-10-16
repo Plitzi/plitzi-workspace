@@ -1,7 +1,7 @@
 import { ToastProvider } from '@plitzi/plitzi-ui/Toast';
 import { use } from 'react';
 
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { NetworkContext } from '@plitzi/sdk-shared/network';
 
 import SpaceContainerInternal from './SpaceContainerInternal';
 

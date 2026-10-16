@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { build } from 'esbuild';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { filesWouldWrite, sayDryRun } from './dryRun';
 import { projectHere } from './existingProject';

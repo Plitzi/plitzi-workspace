@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers/clipboard';
+import { copyText, NOT_COPIED_REASON } from '@plitzi/sdk-shared/helpers';
 
 import type { MatchedRule } from '../../../../qa/inspect/rules';
 

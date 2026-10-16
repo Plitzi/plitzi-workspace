@@ -1,5 +1,5 @@
 import { flagSpecOf, isDocumentScroll, splitNotificationsCss } from '@plitzi/sdk-authoring';
-import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+import { descendants } from '@plitzi/sdk-schema';
 
 import {
   bindingsToAI,

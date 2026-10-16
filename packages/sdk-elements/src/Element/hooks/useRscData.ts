@@ -1,8 +1,8 @@
 import { useCallback, useRef } from 'react';
 
 import { useStoreById } from '@plitzi/nexus/react';
-import { cancelRsc, currentRscLocation, rscDataPath } from '@plitzi/sdk-shared/server/rsc/refreshRsc';
-import useRscRefresh from '@plitzi/sdk-shared/server/rsc/useRscRefresh';
+import { cancelRsc, currentRscLocation, rscDataPath } from '@plitzi/sdk-shared/server';
+import { useRscRefresh } from '@plitzi/sdk-shared/server';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useElement from './useElement';

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import useReducedMotion from './useReducedMotion';
 

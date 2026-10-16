@@ -4,7 +4,7 @@ import readline from 'node:readline/promises';
 
 import chalk from 'chalk';
 
-import { elementEntry } from '@plitzi/sdk-shared/project/layout';
+import { elementEntry } from '@plitzi/sdk-shared/project';
 
 import { sayDryRun } from './dryRun';
 import { findProject, readPackageJson } from './existingProject';

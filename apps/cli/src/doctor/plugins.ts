@@ -4,8 +4,8 @@ import { pathToFileURL } from 'node:url';
 
 import esbuild from 'esbuild';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { pluginEntry, pluginTypeOf } from '@plitzi/sdk-shared/project/layout';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { pluginEntry, pluginTypeOf } from '@plitzi/sdk-shared/project';
 
 import { sayer } from './types';
 import { PLUGIN_DECLARATION_FILE, PLUGINS_DIR } from '../scaffold/paths';

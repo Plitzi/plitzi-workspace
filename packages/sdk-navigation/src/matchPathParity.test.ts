@@ -1,9 +1,9 @@
 import { matchPath as routerMatchPath } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
-import { matchPath } from '@plitzi/sdk-shared/navigation/matchPath';
+import { matchPath } from '@plitzi/sdk-shared/navigation';
 
-import type { PathPattern } from '@plitzi/sdk-shared/navigation/matchPath';
+import type { PathPattern } from '@plitzi/sdk-shared/navigation';
 
 // The SDK routes in the browser and the server resolves the same URL for SSR/RSC. Both must agree, so the
 // dependency-free matcher in sdk-shared is pinned here against react-router's, which is what the client router

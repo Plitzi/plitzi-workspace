@@ -1,0 +1,9 @@
+{
+  // An example is a project of a customer's: it reads the packages as they are published — through their
+  // declarations — not through the workspace's sources (`@plitzi/source`), which its own settings
+  // (`erasableSyntaxOnly`, `verbatimModuleSyntax`) were never meant to compile.
+  "extends": "../packages/sdk-shared/tsconfig.app.json",
+  "compilerOptions": {
+    "customConditions": []
+  }
+}

@@ -1,7 +1,7 @@
 import { render, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style/styleStates';
+import { CURRENT_SELECTOR } from '@plitzi/sdk-shared/style';
 
 import { ThemeToggle } from './ThemeToggle';
 
@@ -22,8 +22,9 @@ const { toggleTheme, setTheme, interactionTrigger, currentTheme } = vi.hoisted((
   currentTheme: { value: 'dark' }
 }));
 
-vi.mock('@plitzi/sdk-shared/theme/useTheme', () => ({
-  default: () => ({
+vi.mock('@plitzi/sdk-shared/theme', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/theme')>()),
+  useTheme: () => ({
     theme: currentTheme.value,
     resolvedTheme: currentTheme.value === 'system' ? 'light' : currentTheme.value,
     setTheme,
@@ -35,12 +36,18 @@ vi.mock('@plitzi/sdk-shared/theme/useTheme', () => ({
 // note about. A component test wants the component, so the HOC is the identity here.
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({ default: () => ({ settings: { previewMode: true } }) }));
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({ settings: { previewMode: true } })
+}));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({ interactionsManager: { interactionTrigger } }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({ interactionsManager: { interactionTrigger } })
+  };
 });
 
 vi.mock('../../../Element/hooks/useElement', () => ({

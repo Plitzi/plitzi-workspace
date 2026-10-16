@@ -1,4 +1,4 @@
-import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring/builder';
+import type { BuiltinGlobalCallback } from '@plitzi/sdk-shared/authoring';
 
 /**
  * The one way a rendered space can ask the application AROUND it to do something.

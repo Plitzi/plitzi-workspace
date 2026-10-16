@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 
 import SchemaContextProvider from './SchemaContextProvider';
 

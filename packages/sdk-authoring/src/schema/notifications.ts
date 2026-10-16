@@ -2,15 +2,15 @@ import {
   notificationsCss as notificationsRule,
   notificationsProblem,
   withNotificationsCss as withNotificationsRule
-} from '@plitzi/sdk-shared/style/notifications';
+} from '@plitzi/sdk-shared/style';
 
 import { AuthoringError } from './codes';
 import { didYouMean } from './suggest';
 
-import type { NotificationsSpec } from '@plitzi/sdk-shared/style/notifications';
+import type { NotificationsSpec } from '@plitzi/sdk-shared/style';
 
-export { NOTIFICATIONS_FIELDS, splitNotificationsCss } from '@plitzi/sdk-shared/style/notifications';
-export type { NotificationsSpec } from '@plitzi/sdk-shared/style/notifications';
+export { NOTIFICATIONS_FIELDS, splitNotificationsCss } from '@plitzi/sdk-shared/style';
+export type { NotificationsSpec } from '@plitzi/sdk-shared/style';
 
 /** Refuses what would not style anything — the check every writer of `notifications` is held to. */
 const checked = (spec: NotificationsSpec | undefined): NotificationsSpec | undefined => {

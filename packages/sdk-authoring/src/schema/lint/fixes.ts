@@ -1,4 +1,4 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import { boundAttribute } from '../bindings';
@@ -9,7 +9,7 @@ import { STATE_PATH_PARAMS } from './flows';
 
 import type { LintCatalogs } from './context';
 import type { Element, ElementBinding, ElementInteraction, Schema, Style } from '@plitzi/sdk-shared';
-import type { ParamSpec } from '@plitzi/sdk-shared/authoring/paramSpec';
+import type { ParamSpec } from '@plitzi/sdk-shared/authoring';
 
 /**
  * A change a fix made, in the words the author wrote it with: an attribute, one of the element's own fields

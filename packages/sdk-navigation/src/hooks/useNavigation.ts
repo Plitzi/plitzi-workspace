@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo } from 'react';
 
-import { ParamsFromURL } from '@plitzi/sdk-shared/helpers/utils';
+import { ParamsFromURL } from '@plitzi/sdk-shared/helpers';
 
 import type { QueryParams, Server } from '@plitzi/sdk-shared';
 

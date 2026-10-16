@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 
-import { isFieldEditing, KEY_TRIGGER, keyPressCombo, parseKeys } from '@plitzi/sdk-shared/helpers/keys';
+import { isFieldEditing, KEY_TRIGGER, keyPressCombo, parseKeys } from '@plitzi/sdk-shared/helpers';
 
 import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
 import type { ElementInteraction } from '@plitzi/sdk-shared';
-import type { KeyTriggerPayload } from '@plitzi/sdk-shared/helpers/keys';
+import type { KeyTriggerPayload } from '@plitzi/sdk-shared/helpers';
 
 /** Where a key press is somebody typing, not a shortcut. */
 const EDITABLE = 'input, textarea, select, [contenteditable=""], [contenteditable="true"]';

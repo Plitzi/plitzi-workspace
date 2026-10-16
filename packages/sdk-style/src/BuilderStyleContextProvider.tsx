@@ -1,10 +1,10 @@
 import useReducerWithMiddleware from '@plitzi/plitzi-ui/hooks/useReducerWithMiddleware';
 import React, { useCallback, use, useEffect, useMemo } from 'react';
 
-import useEventBridge from '@plitzi/sdk-event-bridge/hooks/useEventBridge';
-import NetworkContext from '@plitzi/sdk-shared/network/NetworkContext';
+import { useEventBridge } from '@plitzi/sdk-event-bridge';
+import { NetworkContext } from '@plitzi/sdk-shared/network';
 import { useCommonStoreSync } from '@plitzi/sdk-shared/store';
-import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style/styleConstants';
+import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
 import StyleContext from './StyleContext';
 import { makeSelector } from './StyleHelper';

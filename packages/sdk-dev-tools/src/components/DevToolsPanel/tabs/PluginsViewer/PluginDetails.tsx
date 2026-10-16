@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import syntaxHighlight from '@plitzi/sdk-shared/helpers/syntaxHighlight';
+import { syntaxHighlight } from '@plitzi/sdk-shared/helpers';
 
 import type { ComponentOrigin } from '@plitzi/sdk-shared';
 

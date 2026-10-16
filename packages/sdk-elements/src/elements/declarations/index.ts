@@ -147,3 +147,20 @@ export const serverTemplatesByType: Readonly<Record<string, readonly string[]>> 
     'serverTemplates' in declaration ? [[declaration.type, declaration.serverTemplates]] : []
   )
 );
+
+// What the declarations are checked with, from beside the elements that own them — as readable outside a browser.
+export { interactionBasicTriggers } from '../../Element/helpers/elementConstants';
+export { DOCUMENT_SCROLLS, isDocumentScroll } from '../internal/Page/declaration';
+export type { DocumentScroll } from '../internal/Page/declaration';
+export { NAMEABLE_CONTAINER_TAGS } from '../structure/Container/declaration';
+export { HTML_TAG_PARTS } from '../basic/RichText/classHtmlParts';
+export { isSvgMarkup } from '../media/Svg/sanitizeSvg';
+// The types the declarations' attributes are written in: what an author's spec of an element is typed against.
+export type { BlockJsxAttributes } from '../advanced/BlockJsx/declaration';
+export type { CustomAttributes } from '../advanced/Custom/declaration';
+export type { PlitziSdkAttributes } from '../advanced/PlitziSdk/declaration';
+export type { FormControlAttributes } from '../form/FormControl/declaration';
+export type { CarouselMode, CarouselTransition } from '../structure/Carousel/CarouselContext';
+export type { PaginationPageInfo } from '../structure/Pagination/Pagination';
+export type { ProviderPagination } from '../provider/ApiContainer/hooks/useProviderPagination';
+export type { IconPlacement } from '../../Element/ElementWords';

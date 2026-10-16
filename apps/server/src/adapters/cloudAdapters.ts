@@ -1,5 +1,5 @@
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
-import { schemaFromWire } from '@plitzi/sdk-shared/schema/wire';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { schemaFromWire } from '@plitzi/sdk-shared/schema';
 
 import { serverLog } from '../helpers/serverLog';
 

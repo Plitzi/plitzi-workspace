@@ -7,7 +7,7 @@ import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
 import { useCallback, useMemo } from 'react';
 
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 import { templateProblem } from '@pmodules/Schema/helpers/templateProblem';
 
 import type { AutoComplete } from '@plitzi/plitzi-ui/CodeMirror';

@@ -5,7 +5,7 @@ import Text from '@plitzi/plitzi-ui/Text';
 import { useCallback, use, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import BuilderAreaPreview from '@pmodules/Builder/components/BuilderAreaPreview/BuilderAreaPreview';
 
 import ItemActions from './ItemActions';

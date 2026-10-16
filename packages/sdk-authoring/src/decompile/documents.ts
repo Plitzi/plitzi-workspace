@@ -1,10 +1,5 @@
-import {
-  isValidElementId,
-  positionalElementId,
-  repointIds,
-  uniqueElementId
-} from '@plitzi/sdk-schema/helpers/elementId';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isValidElementId, positionalElementId, repointIds, uniqueElementId } from '@plitzi/sdk-schema';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import type { Schema } from '@plitzi/sdk-shared';
 

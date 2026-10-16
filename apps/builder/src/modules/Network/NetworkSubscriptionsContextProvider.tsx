@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useRef } from 'react';
 
-import { isRTEvent, RTEvent } from '@plitzi/sdk-shared/websockets/RTCodec';
+import { isRTEvent, RTEvent } from '@plitzi/sdk-shared/websockets';
 import useCollaborators from '@pmodules/Collaboration/hooks/useCollaborators';
 import BuilderSubscriptionsContext from '@pmodules/Network/contexts/BuilderSubscriptionsContext';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useWebsocket from '@pmodules/Network/hooks/useWebsocket';
 
-import type { RTCallback, RTMessageManagedServer } from '@plitzi/sdk-shared/websockets/RTCodec';
+import type { RTCallback, RTMessageManagedServer } from '@plitzi/sdk-shared/websockets';
 import type { ReactNode } from 'react';
 
 export type NetworkSubscriptionsContextProviderProps = {

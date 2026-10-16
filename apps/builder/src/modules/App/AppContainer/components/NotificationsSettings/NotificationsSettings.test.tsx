@@ -1,10 +1,10 @@
 import { fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import EventBridge from '@plitzi/sdk-event-bridge/EventBridge';
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridge } from '@plitzi/sdk-event-bridge';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import { withNotificationsCss } from '@plitzi/sdk-shared/style/notifications';
+import { withNotificationsCss } from '@plitzi/sdk-shared/style';
 
 import NotificationsSettings from './NotificationsSettings';
 

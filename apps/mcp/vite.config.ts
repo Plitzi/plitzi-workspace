@@ -68,6 +68,8 @@ export default defineConfig(({ mode }) => {
         // An MCP App's view/ ships as source and nothing imports it: declarations for it would be dead weight.
         exclude: [`src/modules/mcp/apps/**/${VIEW_DIR}/**`],
         tsconfigPath: './tsconfig.app.json',
+        // The declarations are written against the other packages' declarations, as a consumer reads them.
+        compilerOptions: { customConditions: [] },
         beforeWriteFile: skipUnchangedDts
       }),
       copyAssets()

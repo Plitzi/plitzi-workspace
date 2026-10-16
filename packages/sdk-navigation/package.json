@@ -7,20 +7,14 @@
   ],
   "exports": {
     ".": {
+      "@plitzi/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs"
     },
-    "./NavigationHelper": {
-      "types": "./dist/NavigationHelper.d.ts",
-      "import": "./dist/NavigationHelper.mjs"
-    },
-    "./hooks/useNavigation": {
-      "types": "./dist/hooks/useNavigation.d.ts",
-      "import": "./dist/hooks/useNavigation.mjs"
-    },
-    "./index": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
+    "./*": {
+      "@plitzi/source": "./src/*/index.ts",
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs"
     }
   },
   "scripts": {
@@ -30,9 +24,9 @@
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "build:dev": "vite build --mode development --minify false && node ../sdk-shared/scripts/generate-exports.mjs",
+    "build:dev": "vite build --mode development --minify false",
     "build:dev-watch": "vite build --mode development --watch --minify false",
-    "build:prod": "vite build && node ../sdk-shared/scripts/generate-exports.mjs"
+    "build:prod": "vite build"
   },
   "type": "module",
   "sideEffects": false,

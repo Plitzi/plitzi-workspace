@@ -3,7 +3,7 @@ import useStorage from '@plitzi/plitzi-ui/hooks/useStorage';
 import { produce } from 'immer';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 
 import { makeSelector } from '../../StyleHelper';
 import Background from './categories/Background';

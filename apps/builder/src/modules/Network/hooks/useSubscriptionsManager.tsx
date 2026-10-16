@@ -1,9 +1,9 @@
 import { gql } from '@apollo/client/core';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 
-import { pConsole } from '@plitzi/sdk-shared/devTools/utils/PlitziConsole';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
+import { validateSpaceEvent } from '@plitzi/sdk-shared/network';
 import { SpaceEventSubscription } from '@plitzi/sdk-shared/network/graphql/builder';
-import { validateSpaceEvent } from '@plitzi/sdk-shared/network/spaceEvents';
 
 import type { ApolloClient } from '@apollo/client/core';
 import type { SpaceEventMap, SpaceEventName, TSpaceEventSubscription } from '@plitzi/sdk-shared';

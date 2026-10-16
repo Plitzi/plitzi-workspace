@@ -1,6 +1,6 @@
-import { isDocumentScroll } from '@plitzi/sdk-elements/elements/internal/Page/declaration';
-import { componentNamed, isInstance } from '@plitzi/sdk-schema/helpers/components';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isDocumentScroll } from '@plitzi/sdk-elements/elements/declarations';
+import { componentNamed, isInstance } from '@plitzi/sdk-schema';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import {
   defaultAttributes,

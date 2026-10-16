@@ -1,6 +1,6 @@
-import { GLOBAL_SOURCES as RUNTIME_GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource/globalSources';
-import { templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper/templateRoots';
-import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { GLOBAL_SOURCES as RUNTIME_GLOBAL_SOURCES } from '@plitzi/sdk-shared/dataSource';
+import { templateRootNames } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { COMPONENT_PROPS_SOURCE } from '@plitzi/sdk-shared/schema';
 
 import { AuthoringError } from './codes';
 import { didYouMean } from './suggest';

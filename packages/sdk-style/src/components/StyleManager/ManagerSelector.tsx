@@ -6,8 +6,8 @@ import Modal from '@plitzi/plitzi-ui/Modal';
 import { produce } from 'immer';
 import { useCallback, use, useMemo, useState, memo } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import StyleSelectorTag from './StyleSelectorTag';

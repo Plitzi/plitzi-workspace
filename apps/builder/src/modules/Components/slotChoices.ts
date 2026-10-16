@@ -1,4 +1,4 @@
-import { descendants } from '@plitzi/sdk-schema/helpers/elementTree';
+import { descendants } from '@plitzi/sdk-schema';
 
 import type { ComponentDefinition, Element, Schema } from '@plitzi/sdk-shared';
 

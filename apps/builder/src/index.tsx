@@ -3,18 +3,18 @@
 import { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 
-import ComponentProvider from '@plitzi/sdk-elements/Component/ComponentProvider';
-import withElement from '@plitzi/sdk-elements/Element/hocs/withElement';
-import useElement from '@plitzi/sdk-elements/Element/hooks/useElement';
-import useRscData from '@plitzi/sdk-elements/Element/hooks/useRscData';
-import JsxManager from '@plitzi/sdk-elements/Element/JsxManager';
-import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
-import PluginRemote from '@plitzi/sdk-elements/Element/PluginRemote';
-import ReplicaProvider from '@plitzi/sdk-elements/Element/ReplicaProvider';
-import RootElement from '@plitzi/sdk-elements/Element/RootElement';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { disableReactDevTools } from '@plitzi/sdk-shared/helpers/security';
-import usePlitzi, { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { withElement } from '@plitzi/sdk-elements';
+import { useElement } from '@plitzi/sdk-elements';
+import { useRscData } from '@plitzi/sdk-elements';
+import { JsxManager } from '@plitzi/sdk-elements';
+import { PluginManager } from '@plitzi/sdk-elements';
+import { PluginRemote } from '@plitzi/sdk-elements';
+import { ReplicaProvider } from '@plitzi/sdk-elements';
+import { RootElement } from '@plitzi/sdk-elements';
+import { ComponentProvider } from '@plitzi/sdk-elements/Component';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { disableReactDevTools } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi, PlitziProvider } from '@plitzi/sdk-shared/hooks';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import Builder from '@pmodules/Builder';
 

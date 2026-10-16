@@ -2,7 +2,7 @@ import { usePopup } from '@plitzi/plitzi-ui/Popup';
 import clsx from 'clsx';
 import { use, useEffect, useMemo } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import AppContext from '@pmodules/App/AppContext';
 
 import BuilderPlugin from './BuilderPlugin';

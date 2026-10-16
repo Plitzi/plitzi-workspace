@@ -5,19 +5,19 @@ import ErrorBoundary from '@plitzi/plitzi-ui/ErrorBoundary';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 
-import { defaultElementsSettings } from '@plitzi/sdk-elements/elements/settings';
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
-import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
-import PluginsContext from '@plitzi/sdk-shared/plugins/PluginsContext';
+import { defaultElementsSettings } from '@plitzi/sdk-elements/elements';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 import AppContext from '@pmodules/App/AppContext';
 import InstanceTools from '@pmodules/Components/components/InstanceTools';
 
 import type { ComponentPlugin, ElementRuntime } from '@plitzi/sdk-shared';
-import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 import type { FC } from 'react';
 
 export type ElementSettingsProps = {

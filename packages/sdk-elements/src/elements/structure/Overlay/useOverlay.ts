@@ -1,9 +1,9 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import getSourceName from '@plitzi/sdk-shared/dataSource/helpers/getSourceName';
-import useRegisterSource from '@plitzi/sdk-shared/dataSource/hooks/useRegisterSource';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
+import { useRegisterSource } from '@plitzi/sdk-shared/dataSource/hooks';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
 import { metadataOf } from './metadataOf';
 import pathFields from '../../../dataSource/pathFields';

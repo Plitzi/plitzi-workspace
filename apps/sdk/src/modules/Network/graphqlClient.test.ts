@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { onAuthFailure } from '@plitzi/sdk-shared/auth/failureChannel';
+import { onAuthFailure } from '@plitzi/sdk-shared/auth';
 
 import { createGraphqlClient, GraphqlRequestError } from './graphqlClient';
 

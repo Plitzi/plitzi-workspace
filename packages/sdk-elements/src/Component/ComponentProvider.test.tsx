@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import { use } from 'react';
 import { describe, it, expect } from 'vitest';
 
-import ComponentContext from '@plitzi/sdk-shared/elements/ComponentContext';
+import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
 import ComponentProvider from './ComponentProvider';
 

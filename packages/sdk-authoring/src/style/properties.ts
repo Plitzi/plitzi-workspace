@@ -1,4 +1,4 @@
-import styleConstants from '@plitzi/sdk-shared/style/styleConstants';
+import { styleConstants } from '@plitzi/sdk-shared/style';
 
 /** Every kebab-case CSS property Plitzi's style engine understands. Values written to a definition must use these
  *  exact keys — camelCase or unknown keys are rejected. */

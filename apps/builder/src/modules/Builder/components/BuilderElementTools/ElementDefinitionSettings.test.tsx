@@ -1,7 +1,7 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { elementIdConflict } from '@plitzi/sdk-schema/helpers/elementId';
+import { elementIdConflict } from '@plitzi/sdk-schema';
 
 import ElementDefinitionSettings from './ElementDefinitionSettings';
 

@@ -1,4 +1,4 @@
-import formControl from '@plitzi/sdk-elements/elements/form/FormControl/declaration';
+import { FormControlDeclaration as formControl } from '@plitzi/sdk-elements/elements/declarations';
 
 import { textOf } from './context';
 import { didYouMean } from '../suggest';

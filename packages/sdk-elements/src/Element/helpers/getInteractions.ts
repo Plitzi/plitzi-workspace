@@ -1,5 +1,5 @@
-import { toBuilderParams, toInteractionCallback } from '@plitzi/sdk-shared/authoring/builder';
-import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+import { toBuilderParams, toInteractionCallback } from '@plitzi/sdk-shared/authoring';
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 
 import type {
   Element,

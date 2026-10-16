@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { StoreProvider, createStoreHook } from '@plitzi/nexus/react';
-import { isRecord } from '@plitzi/sdk-shared/helpers/isRecord';
+import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { Form } from './Form';
 import ElementContext from '../../../Element/ElementContext';
@@ -19,18 +19,28 @@ import type { ReactNode } from 'react';
 // about. The form and its controls are rendered bare, each inside the context the HOC would have given it.
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));
 
-vi.mock('@plitzi/sdk-shared/dataSource/hooks/useRegisterSource', () => ({ default: () => undefined }));
+vi.mock('@plitzi/sdk-shared/dataSource/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/dataSource/hooks')>()),
+  useRegisterSource: () => undefined
+}));
 
 const { interactionTrigger } = vi.hoisted(() => ({ interactionTrigger: vi.fn() }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({ settings: { previewMode: true }, root: { baseElementId: 'root' } })
 }));
 
-vi.mock('@plitzi/sdk-interactions/InteractionsContext', async () => {
+vi.mock('@plitzi/sdk-interactions', async importOriginal => {
   const { createContext } = await import('react');
 
-  return { default: createContext({ interactionsManager: { interactionTrigger }, useInteractions: () => undefined }) };
+  return {
+    ...(await importOriginal<typeof import('@plitzi/sdk-interactions')>()),
+    InteractionsContext: createContext({
+      interactionsManager: { interactionTrigger },
+      useInteractions: () => undefined
+    })
+  };
 });
 
 // One object for the life of the module: a store handed a new value on every render resets itself on every render.

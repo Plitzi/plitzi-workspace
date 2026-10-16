@@ -2,9 +2,9 @@
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useRef, use, useSyncExternalStore } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
-import useTheme from '@plitzi/sdk-shared/theme/useTheme';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
+import { useTheme } from '@plitzi/sdk-shared/theme';
 
 import declaration from './declaration';
 import withElement from '../../../Element/hocs/withElement';

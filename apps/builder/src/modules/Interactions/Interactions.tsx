@@ -2,9 +2,9 @@ import { get } from '@plitzi/plitzi-ui/helpers';
 import clsx from 'clsx';
 import { useCallback, use, useMemo, useEffect, useState } from 'react';
 
-import InteractionsContext from '@plitzi/sdk-interactions/InteractionsContext';
-import utility from '@plitzi/sdk-interactions/utility/index';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
+import { InteractionsContext } from '@plitzi/sdk-interactions';
+import utility from '@plitzi/sdk-interactions/utility';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 
 import Workflow from './components/Workflow';

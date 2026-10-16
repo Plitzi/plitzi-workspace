@@ -20,8 +20,9 @@ vi.mock('@plitzi/plitzi-ui/Toast', async importOriginal => ({
   ...(await importOriginal<typeof import('@plitzi/plitzi-ui/Toast')>()),
   useToast: () => ({ addToast: toast })
 }));
-vi.mock('@plitzi/sdk-shared/builder/contexts/BuilderContext', () => ({
-  default: createContext({ elementAsSnippet: save })
+vi.mock('@plitzi/sdk-shared/builder/contexts', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/builder/contexts')>()),
+  BuilderContext: createContext({ elementAsSnippet: save })
 }));
 
 const card: Element = {

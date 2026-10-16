@@ -1,7 +1,7 @@
 import { set } from '@plitzi/plitzi-ui/helpers';
 import { produce } from 'immer';
 
-import { mergeSnippetStyle } from '@plitzi/sdk-shared/style/snippetStyle';
+import { mergeSnippetStyle } from '@plitzi/sdk-shared/style';
 
 import { generateCache } from './StyleHelper';
 import StyleMap from './StyleMap';

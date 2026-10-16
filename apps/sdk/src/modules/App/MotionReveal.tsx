@@ -1,7 +1,7 @@
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { use, useEffect } from 'react';
 
-import { revealOnView } from '@plitzi/sdk-shared/schema/motionReveal';
+import { revealOnView } from '@plitzi/sdk-shared/schema';
 
 /**
  * Plays the space's arrivals that wait to be seen (`motion: { on: 'view' }`) as each first comes into view — every one

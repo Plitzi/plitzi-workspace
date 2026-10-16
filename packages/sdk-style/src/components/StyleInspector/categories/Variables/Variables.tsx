@@ -2,7 +2,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback } from 'react';
 
-import BuilderContext from '@plitzi/sdk-shared/builder/contexts/BuilderContext';
+import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import StyleVariables from '@plitzi/sdk-variables/components/StyleVariables';
 
 import { VARIABLES_KEYS } from '../../categoryKeys';

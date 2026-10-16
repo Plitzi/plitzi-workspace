@@ -87,8 +87,8 @@ the four `AGENTS.md` in the same change. The person you work with is Carlos (the
 - Temporary scripts live outside the repo (scratch dir; import packages by absolute path). If something must be
   created in the repo, delete it in the same command and check `git status` at the end.
 - **Confirm before deleting** anything not on the agreed list, even if it looks dead. A published package's export is
-  never deleted just because no repo of ours imports it (barrels `export *`, `generate-exports.mjs` publishes every
-  module). Grep a file's name as text, not only as an import — some code is referenced by path.
+  never deleted just because no repo of ours imports it (barrels `export *`, and `"./*"` publishes every folder
+  barrel). Grep a file's name as text, not only as an import — some code is referenced by path.
 - Commit, push, publish or release only when asked. Carlos publishes the packages himself.
 - Kill a server by port with `lsof -ti tcp:PORT -sTCP:LISTEN | xargs kill` — never without `-sTCP:LISTEN` (it kills
   every client of the port, other agents' sessions included).
@@ -140,7 +140,7 @@ yarn test                   # vitest run
 yarn test:coverage          # vitest + coverage
 yarn lint                   # eslint ./src
 yarn typecheck              # tsc -p tsconfig.app.json --noEmit (tests included)
-yarn build:dev / build:prod # vite build (+ generate-exports.mjs)
+yarn build:dev / build:prod # vite build
 ```
 
 ## Project Structure
@@ -414,12 +414,18 @@ After finishing any set of code changes, always run:
 
 ## Platform rules that go wrong most
 
-- **Packages build their own `exports`.** `scripts/generate-exports.mjs` runs only in `build:dev`/`build:prod` (not
-  `build:dev-watch`): a new module is not importable by subpath (`TS2307`) until built. A subpath added to `exports`
-  must also be in `files` (check with `npm pack --dry-run`) — 0.38.12 shipped broken that way.
+- **A library package exports its root and its folder barrels, nothing else.** `exports` is `"."` + `"./*"`, each
+  leading with `@plitzi/source` (`src/index.ts`, `src/*/index.ts`) before `dist`. Another package reaches a module only
+  through its folder's `index.ts`: add the file there (`export *`), or give it a folder of its own when that barrel
+  would drag React, Node or an optional peer where it is not wanted (`plugins/bundle`, `apollo`,
+  `elements/declarations`). A type in a public signature leaves through a barrel too, or consumers get `TS2883`.
+  `scripts/workspaceBoundaries.test.mjs` (sdk-shared) holds the shape, the declared deps and the acyclic graph.
+- **The workspace checks against sources, never `dist`.** The editor, typecheck, typed lint, every Vitest config and
+  the builder/SDK dev server resolve `@plitzi/source`; declaration builds turn it off. The examples are a customer's
+  projects and read the published shape (`examples/tsconfig.base.json`). A new test config must resolve it too.
 - **A package imports only what it declares.** Portals hide undeclared dependencies (0.37.3 broke consumers without
   `@apollo/client`); nothing with an optional peer in a root barrel.
-- **Runtime contexts use `sharedContext(name, default)`** (`@plitzi/sdk-shared/helpers/sharedContext`), never
+- **Runtime contexts use `sharedContext(name, default)`** (`@plitzi/sdk-shared/helpers`), never
   `createContext`: the builder bundles its own runtime while remote plugins import `@plitzi/plitzi-sdk` through the
   import map, and only a shared registry lets both see the same context.
 - **Plugins must behave in the builder**: inert outside preview (`settings.previewMode`), and never the global

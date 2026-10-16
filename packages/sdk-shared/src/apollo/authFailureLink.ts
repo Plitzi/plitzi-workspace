@@ -1,7 +1,7 @@
 import { ServerError } from '@apollo/client';
 import { ErrorLink } from '@apollo/client/link/error';
 
-import { authFailureFromResponse, reportAuthFailure } from './failureChannel';
+import { authFailureFromResponse, reportAuthFailure } from '../auth/failureChannel';
 
 const parseBody = (bodyText: string): unknown => {
   try {

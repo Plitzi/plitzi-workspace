@@ -294,4 +294,6 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   StyleUpdateSettings: StyleUpdateSettingsMutation
 };
 
+export type { TSpaceFix } from './Space/SpaceFixIssuesMutation';
+
 export default BuilderMutations;

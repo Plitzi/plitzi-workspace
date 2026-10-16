@@ -6,7 +6,7 @@
  * it — where it came from (`space.json`), the functions' working copy (`functions.json`), what `create` wrote
  * (`scaffold.json`). Committed.
  */
-import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project/paths';
+import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 export {
   AUTHOR_FILE,
@@ -30,7 +30,7 @@ export {
   SPACE_DIR,
   SPACE_ENTRY,
   VENDOR_PLUGINS_DIR
-} from '@plitzi/sdk-shared/project/paths';
+} from '@plitzi/sdk-shared/project';
 
 /**
  * The project's entry point — the page server, or the Vite app — in `src/`, where an entry point is looked for. The

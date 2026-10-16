@@ -1,4 +1,4 @@
-import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions/functions';
+import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions';
 
 /**
  * Whose code a function is when it is not the space's: a plugin's server half, which a plugin brings with it and a space

@@ -1,9 +1,9 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, memo } from 'react';
 
-import PluginManager from '@plitzi/sdk-elements/Element/PluginManager';
+import { PluginManager } from '@plitzi/sdk-elements';
 import { Page } from '@plitzi/sdk-elements/elements';
-import { PlitziProvider } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
 import { useSdkStore } from '@plitzi/sdk-shared/store';
 import { RUNTIME_STYLE_ID } from '@plitzi/sdk-shared/style';
 
@@ -11,7 +11,7 @@ import SpaceContainer from '../../Space/SpaceContainer';
 import OverQuotaNotice from '../components/OverQuotaNotice';
 
 import type { RenderMode } from '@plitzi/sdk-shared';
-import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks/usePlitzi';
+import type { PlitziContextValue } from '@plitzi/sdk-shared/hooks';
 
 export type RawModeProps = {
   renderMode?: RenderMode;

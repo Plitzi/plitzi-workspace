@@ -1,6 +1,6 @@
 import PlitziLogo from '@plitzi/plitzi-ui/icons/PlitziLogo';
 
-import declaration from '@plitzi/sdk-elements/elements/advanced/PlitziSdk/declaration';
+import { PlitziSdkDeclaration as declaration } from '@plitzi/sdk-elements/elements/declarations';
 
 import BasePlitziSdk from './PlitziSdk';
 

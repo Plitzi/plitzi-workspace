@@ -1,6 +1,6 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 
-import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema/schemaConstants';
+import { VARIABLE_REGEX } from '@plitzi/sdk-shared/schema';
 
 import type { StyleCategory, StyleValue } from '@plitzi/sdk-shared';
 

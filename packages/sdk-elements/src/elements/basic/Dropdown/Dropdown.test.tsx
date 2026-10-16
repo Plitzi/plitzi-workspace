@@ -9,8 +9,9 @@ vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element
 }));
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({
     settings: { previewMode: true },
     root: { baseElementId: '' },
     utils: { getWindow: () => undefined }

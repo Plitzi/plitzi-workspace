@@ -5,8 +5,9 @@ import useElementVisible from './useElementVisible';
 
 const root = document.createElement('div');
 
-vi.mock('@plitzi/sdk-shared/hooks/usePlitzi', () => ({
-  default: () => ({ utils: { rootRef: { current: root } } })
+vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
+  ...(await importOriginal<typeof import('@plitzi/sdk-shared/hooks')>()),
+  usePlitzi: () => ({ utils: { rootRef: { current: root } } })
 }));
 
 /** jsdom draws nothing and has no `checkVisibility`: a node is drawn unless it, or something around it, is hidden. */

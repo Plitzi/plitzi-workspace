@@ -1,7 +1,7 @@
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import { useCallback, use } from 'react';
 
-import EventBridgeContext from '@plitzi/sdk-event-bridge/EventBridgeContext';
+import { EventBridgeContext } from '@plitzi/sdk-event-bridge';
 
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
 import type { Element } from '@plitzi/sdk-shared';

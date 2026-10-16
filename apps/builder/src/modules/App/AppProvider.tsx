@@ -1,7 +1,7 @@
 import { ModalProvider } from '@plitzi/plitzi-ui/Modal';
 
-import AuthContextProvider from '@plitzi/sdk-auth/AuthContextProvider';
-import EventBridgeContextProvider from '@plitzi/sdk-event-bridge/EventBridgeContextProvider';
+import { AuthContextProvider } from '@plitzi/sdk-auth';
+import { EventBridgeContextProvider } from '@plitzi/sdk-event-bridge';
 import ActionsContextProvider from '@pmodules/Actions/ActionsContextProvider';
 import ConnectorsContextProvider from '@pmodules/Connectors/ConnectorsContextProvider';
 import NavigationProvider from '@pmodules/Navigation/NavigationProvider';

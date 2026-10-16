@@ -1,8 +1,8 @@
 import { useCallback, useId, useMemo } from 'react';
 
 import { authFailureFromResponse, reportAuthFailure } from '@plitzi/sdk-shared/auth';
+import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { hasValidToken } from '@plitzi/sdk-shared/helpers/twigWrapper';
-import { emptyObject } from '@plitzi/sdk-shared/helpers/utils';
 import { requestKey, useQuery } from '@plitzi/sdk-shared/queries';
 
 export type ApiResponse = { status: number; data: unknown };

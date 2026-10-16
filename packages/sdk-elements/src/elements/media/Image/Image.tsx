@@ -2,8 +2,8 @@
 import clsx from 'clsx';
 import { useCallback, useState } from 'react';
 
-import { imageSrcSet, imageUrl, isResizableImage } from '@plitzi/sdk-shared/helpers/images';
-import usePlitzi from '@plitzi/sdk-shared/hooks/usePlitzi';
+import { imageSrcSet, imageUrl, isResizableImage } from '@plitzi/sdk-shared/helpers';
+import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import { getFallbackSVGBase64 } from './ImageHelper';

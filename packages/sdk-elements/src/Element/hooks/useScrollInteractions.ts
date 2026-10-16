@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 
-import { toInteractionCallbacks } from '@plitzi/sdk-shared/authoring/builder';
-import { SCROLL_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+import { toInteractionCallbacks } from '@plitzi/sdk-shared/authoring';
+import { SCROLL_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 import {
   SCROLL_BEHAVIORS,
   SCROLL_POSITIONS,
@@ -9,11 +9,11 @@ import {
   scrollDistance,
   scrollPosition,
   scrollState
-} from '@plitzi/sdk-shared/helpers/scroll';
+} from '@plitzi/sdk-shared/helpers';
 
 import type { InteractionsManagerApi } from '@plitzi/sdk-shared';
 import type { ElementInteraction, InteractionCallback } from '@plitzi/sdk-shared';
-import type { ScrollStepBehavior, ScrollStepPosition, ScrollTriggerPayload } from '@plitzi/sdk-shared/helpers/scroll';
+import type { ScrollStepBehavior, ScrollStepPosition, ScrollTriggerPayload } from '@plitzi/sdk-shared/helpers';
 import type { RefObject } from 'react';
 
 export type UseScrollInteractionsProps = {

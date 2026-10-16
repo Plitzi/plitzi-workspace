@@ -1,6 +1,6 @@
-import { interactionBasicTriggers } from '@plitzi/sdk-elements/Element/helpers/elementConstants';
+import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
 import { elementDeclarations } from '@plitzi/sdk-elements/elements/declarations';
-import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring/elementCallbacks';
+import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 

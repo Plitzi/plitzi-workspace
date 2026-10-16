@@ -1,6 +1,5 @@
 {
   "extends": "../sdk-shared/tsconfig.app.json",
-  "references": [{ "path": "../sdk-shared" }],
   "compilerOptions": {
     "rootDir": "./",
     "outDir": "./dist"
