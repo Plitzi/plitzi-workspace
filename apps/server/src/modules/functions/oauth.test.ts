@@ -123,7 +123,8 @@ const CONNECTIONS: Record<string, FunctionOAuthConnection> = {
     credential: 'calendar-app',
     scopes: ['read', 'offline'],
     authorizeParams: { prompt: 'consent' }
-  }
+  },
+  player: { issuer: ISSUER, credential: 'calendar-app', exposeToken: true }
 };
 
 describe('ctx.oauth', () => {
@@ -258,6 +259,39 @@ describe('ctx.oauth', () => {
     expect(await oauth().status('calendar')).toEqual({ connected: false });
     expect(await oauth().disconnect('calendar')).toBe(false);
     await expect(oauth().fetch('calendar', API)).rejects.toThrow('Not connected to "calendar"');
+  });
+
+  /** An SDK in the page asks for the token itself: only a connection that says so hands it out, never the refresh. */
+  it('hands the access token of a connection that exposes it, renewed, and keeps the rest on the server', async () => {
+    const { url } = await oauth().connect('player', { returnTo: '/' });
+    const consent = new URL(url);
+    await oauthCallback(
+      run,
+      new URLSearchParams({ state: consent.searchParams.get('state') ?? '', code: upstream.issue(consent) })
+    );
+
+    const given = await oauth().token('player');
+    expect(given).toEqual({
+      token: 'access-1',
+      type: 'bearer',
+      scopes: ['read'],
+      expiresAt: expect.any(Number) as unknown
+    });
+    expect(JSON.stringify(given)).not.toContain('refresh');
+
+    const realNow = Date.now();
+    vi.spyOn(Date, 'now').mockReturnValue(realNow + 3_600_000);
+    try {
+      expect((await oauth().token('player')).token).toBe('access-2');
+    } finally {
+      vi.restoreAllMocks();
+    }
+
+    await connected();
+    await expect(oauth().token('calendar')).rejects.toThrow(
+      'OAuth connection "calendar" keeps its token on the server: declare exposeToken: true'
+    );
+    await expect(oauth().token('player', { owner: 'space' })).rejects.toThrow('Not connected to "player"');
   });
 
   it('refuses what it cannot do safely, saying what to write instead', async () => {

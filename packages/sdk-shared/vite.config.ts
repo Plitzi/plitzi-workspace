@@ -98,7 +98,7 @@ export default defineConfig(({ mode, command }) => {
       react(),
       dts({
         entryRoot: 'src',
-        exclude: ['**/*.test.(ts|tsx)', '**/*.stories.(ts|tsx)', 'vite.config.ts', 'setupTests.ts'],
+        exclude: ['**/*.(test|bench).(ts|tsx)', '**/*.stories.(ts|tsx)', 'vite.config.ts', 'setupTests.ts'],
         tsconfigPath: './tsconfig.app.json',
         // The declarations are written against the other packages' declarations, as a consumer reads them: through
         // their sources they would be compiled under this package's settings and their paths written into its types.

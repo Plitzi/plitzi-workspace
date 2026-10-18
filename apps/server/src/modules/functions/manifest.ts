@@ -159,6 +159,10 @@ const oauthOf = (
       problems.push(`${where}: clientAuth is "body" or "basic"`);
     }
 
+    if (spec.exposeToken !== undefined && typeof spec.exposeToken !== 'boolean') {
+      problems.push(`${where}: exposeToken is true or false`);
+    }
+
     if (problems.length > said || !credential) {
       continue;
     }
@@ -168,7 +172,8 @@ const oauthOf = (
       credential,
       ...(scopes.length ? { scopes: scopes.filter((each): each is string => typeof each === 'string') } : {}),
       ...(Object.keys(authorizeParams).length ? { authorizeParams } : {}),
-      ...(spec.clientAuth === 'basic' || spec.clientAuth === 'body' ? { clientAuth: spec.clientAuth } : {})
+      ...(spec.clientAuth === 'basic' || spec.clientAuth === 'body' ? { clientAuth: spec.clientAuth } : {}),
+      ...(spec.exposeToken === true ? { exposeToken: true } : {})
     };
   }
 

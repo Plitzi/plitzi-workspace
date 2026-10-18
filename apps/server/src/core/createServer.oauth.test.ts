@@ -64,7 +64,10 @@ const provider = (input: string | URL | Request, init?: RequestInit): Promise<Re
 const SPACE_SOURCE = {
   'index.ts': `export default {
   allow: { hosts: ['api.example.test'] },
-  oauth: { calendar: { issuer: '${ISSUER}', credential: 'calendar-app', scopes: ['read'] } },
+  oauth: {
+    calendar: { issuer: '${ISSUER}', credential: 'calendar-app', scopes: ['read'] },
+    player: { issuer: '${ISSUER}', credential: 'calendar-app', exposeToken: true }
+  },
   routes: {
     'GET /connect': async (request, ctx) => {
       const { url } = await ctx.oauth.connect('calendar', { returnTo: '/done', owner: 'space' });
@@ -74,7 +77,19 @@ const SPACE_SOURCE = {
       const answer = await ctx.oauth.fetch('calendar', 'https://api.example.test/me', { owner: 'space' });
       return Response.json({ status: answer.status, body: await answer.json(), connection: await ctx.oauth.status('calendar', { owner: 'space' }) });
     },
-    'GET /peek': async (request, ctx) => Response.json({ kept: await ctx.kv.get('plitzi:oauth:token:calendar:space') })
+    'GET /peek': async (request, ctx) => Response.json({ kept: await ctx.kv.get('plitzi:oauth:token:calendar:space') }),
+    'GET /connect-player': async (request, ctx) => {
+      const { url } = await ctx.oauth.connect('player', { returnTo: '/', owner: 'space' });
+      return new Response(null, { status: 302, headers: { location: url } });
+    },
+    'GET /token': async (request, ctx) => {
+      const name = new URL(request.url).searchParams.get('of');
+      try {
+        return Response.json(await ctx.oauth.token(name, { owner: 'space' }));
+      } catch (error) {
+        return Response.json({ refused: error.message }, { status: 403 });
+      }
+    }
   }
 };`
 };
@@ -140,6 +155,26 @@ describe('ctx.oauth through the server', () => {
     const { kept } = (await (await realFetch(`${BASE}/fn/peek`)).json()) as { kept: unknown };
     expect(typeof kept).toBe('string');
     expect(String(kept)).not.toContain('the-access');
+  });
+
+  it('hands the code the access token of a connection that exposes it, and of no other', async () => {
+    const consent = new URL(
+      (await realFetch(`${BASE}/fn/connect-player`, { redirect: 'manual' })).headers.get('location') ?? ''
+    );
+    codes.set('code-2', consent.searchParams.get('code_challenge') ?? '');
+    await realFetch(
+      `${BASE}/fn/oauth/callback?${new URLSearchParams({ state: consent.searchParams.get('state') ?? '', code: 'code-2' }).toString()}`,
+      { redirect: 'manual' }
+    );
+
+    expect(await (await realFetch(`${BASE}/fn/token?of=player`)).json()).toEqual({
+      token: 'the-access',
+      type: 'Bearer',
+      expiresAt: expect.any(Number) as unknown
+    });
+    expect(await (await realFetch(`${BASE}/fn/token?of=calendar`)).json()).toEqual({
+      refused: expect.stringContaining('keeps its token on the server') as unknown
+    });
   });
 
   it('answers a visit back with no consent under way, sending the visitor nowhere', async () => {

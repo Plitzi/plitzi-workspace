@@ -6,7 +6,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { fetchOutbound } from '../../helpers/outboundGuard';
 import { ActionRefusal } from '../actions/runtime/errors';
 
-import type { FunctionOAuth, FunctionOAuthOwner, FunctionOAuthStatus } from './contract';
+import type { FunctionOAuth, FunctionOAuthOwner, FunctionOAuthStatus, FunctionOAuthToken } from './contract';
 import type { ActionTaskContext } from '../actions/types';
 import type { FunctionOAuthConnection } from '@plitzi/sdk-shared';
 
@@ -18,7 +18,8 @@ import type { FunctionOAuthConnection } from '@plitzi/sdk-shared';
  * exchanges the code with the app's id and secret (a credential of the space's, resolved here) and keeps the tokens
  * sealed under the connection and its owner; `fetch` writes the access token into a request, renewing it first when it
  * is about to lapse and once more on a 401. Sealed with the space's own key, which no signature of `ctx.sign` reaches:
- * the code reads only ciphertext, even with `ctx.kv`.
+ * the code reads only ciphertext, even with `ctx.kv`. The one way out is `token`, for a connection that declares
+ * `exposeToken`: the access token, for an SDK in the page — the refresh token never leaves.
  */
 
 /** Where the provider sends the visitor back, under `/fn` — the one address to register with every provider. */
@@ -390,6 +391,26 @@ export const oauthFor = (
       await run.kv.delete(tokenKey(connection, owner));
 
       return true;
+    },
+
+    token: async (connection, options): Promise<FunctionOAuthToken> => {
+      if (!specOf(connection).exposeToken) {
+        throw new Error(
+          `OAuth connection "${connection}" keeps its token on the server: declare exposeToken: true on it for the code to read it, or reach its API with ctx.oauth.fetch`
+        );
+      }
+
+      const tokens = await tokensOf(connection, ownerOf(run, connection, options));
+      if (!tokens) {
+        throw new ActionRefusal(`Not connected to "${connection}": ctx.oauth.connect first`);
+      }
+
+      return {
+        token: tokens.access,
+        type: tokens.type,
+        ...(tokens.expiresAt ? { expiresAt: tokens.expiresAt } : {}),
+        ...(tokens.scopes ? { scopes: tokens.scopes } : {})
+      };
     }
   };
 };
@@ -398,7 +419,7 @@ export const oauthFor = (
 export const noOAuth = (why: string): FunctionOAuth => {
   const refused = () => Promise.reject(new Error(why));
 
-  return { connect: refused, status: refused, fetch: refused, disconnect: refused };
+  return { connect: refused, status: refused, fetch: refused, disconnect: refused, token: refused };
 };
 
 /**

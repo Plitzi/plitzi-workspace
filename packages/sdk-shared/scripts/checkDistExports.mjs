@@ -11,6 +11,9 @@ import ts from 'typescript';
  * Rollup re-exports from a module it does not consider an entry only the bindings the package itself uses, and drops
  * the rest without a word: the declarations still list them, so a consumer typechecks and then fails at run time with
  * "does not provide an export named …". Run after a build (`yarn check:dist-exports`; CI runs it after `build:prod`).
+ *
+ * And what no published build may hold: the declarations of a test or a benchmark. Each app writes its own with its own
+ * `dts({ exclude })`, and the one that forgot the tests shipped a `.test.d.ts` beside each of its modules.
  */
 
 const WORKSPACE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -136,9 +139,40 @@ for (const name of fs.readdirSync(path.join(WORKSPACE, 'packages')).filter(name 
   }
 }
 
+const TEST_DECLARATION = /\.(test|bench|spec)\.d\.ts$/;
+const filesUnder = dir =>
+  fs
+    .readdirSync(dir, { withFileTypes: true })
+    .flatMap(entry => (entry.isDirectory() ? filesUnder(path.join(dir, entry.name)) : [path.join(dir, entry.name)]));
+
+const shipped = [];
+for (const group of ['packages', 'apps']) {
+  for (const name of fs.readdirSync(path.join(WORKSPACE, group))) {
+    const manifest = path.join(WORKSPACE, group, name, 'package.json');
+    const dist = path.join(WORKSPACE, group, name, 'dist');
+    if (!fs.existsSync(manifest) || !fs.existsSync(dist) || JSON.parse(fs.readFileSync(manifest, 'utf-8')).private) {
+      continue;
+    }
+
+    const tests = filesUnder(dist).filter(file => TEST_DECLARATION.test(file));
+    if (tests.length > 0) {
+      shipped.push(`${group}/${name}: ${tests.length} (${path.relative(dist, tests[0])}…)`);
+    }
+  }
+}
+
 if (problems.length > 0) {
   console.error(`${problems.length} barrel(s) built without what their source exports:\n  ${problems.join('\n  ')}`);
   process.exitCode = 1;
 } else {
   console.log(`✅ ${checked} barrels: every value their source exports is in dist`);
+}
+
+if (shipped.length > 0) {
+  console.error(
+    `A build holds the declarations of its tests — add '**/*.(test|bench).(ts|tsx)' to its dts({ exclude }):\n  ${shipped.join('\n  ')}`
+  );
+  process.exitCode = 1;
+} else {
+  console.log('✅ no build holds the declarations of a test');
 }

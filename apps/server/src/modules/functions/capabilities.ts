@@ -219,6 +219,7 @@ const oauthCallOf = (call: Record<string, unknown>): FunctionCall => {
       return { op: 'oauth', method: 'connect', connection, returnTo: stringArg(call.returnTo, 'returnTo'), ...own };
     case 'status':
     case 'disconnect':
+    case 'token':
       return { op: 'oauth', method: call.method, connection, ...own };
     case 'fetch': {
       // A credential is not the OAuth fetch's to name: the connection is what it spends.
@@ -357,6 +358,8 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
           return ctx.oauth.status(call.connection, call.owner === undefined ? {} : { owner: call.owner });
         case 'disconnect':
           return ctx.oauth.disconnect(call.connection, call.owner === undefined ? {} : { owner: call.owner });
+        case 'token':
+          return ctx.oauth.token(call.connection, call.owner === undefined ? {} : { owner: call.owner });
         case 'fetch':
           return wireResponseOf(
             await ctx.oauth.fetch(call.connection, call.url, {

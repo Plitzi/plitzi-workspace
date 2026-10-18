@@ -37,7 +37,7 @@ export default defineConfig({
       entryRoot: 'src',
       outDir: 'dist',
       include: ['src'],
-      exclude: ['**/*.test.ts'],
+      exclude: ['**/*.(test|bench).(ts|tsx)'],
       // `bundleTypes` is api-extractor, and `bundledPackages` is what makes it follow an `export *` into another
       // package instead of leaving the specifier in place. Without it the entry rolls up to five re-exports and the
       // empty dependency tree is a lie the moment anyone typechecks against it. `plitzi-ui` is named on its own

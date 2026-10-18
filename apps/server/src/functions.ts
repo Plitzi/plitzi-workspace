@@ -11,6 +11,7 @@ export type {
   FunctionOAuth,
   FunctionOAuthOwner,
   FunctionOAuthStatus,
+  FunctionOAuthToken,
   FunctionRoute,
   FunctionRouteContext,
   FunctionsDefinition,

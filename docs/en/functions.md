@@ -90,7 +90,7 @@ Everything a function does besides computing goes through `ctx` — the same obj
 | `ctx.sign(value)`, `ctx.verify(value, signature)` | HMAC-SHA-256 with a key of the space's own that the platform keeps: a link, an invitation, a key handed to a page. The code never holds the key, and what one space or environment signed no other verifies |
 | `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare |
 | `ctx.publish`, `ctx.grant`, `ctx.revoke` | The space's realtime channels, as the server — see [Realtime channels](./realtime.md) |
-| `ctx.oauth` | OAuth 2.0 on behalf of a visitor (or the space) through the connections it declared: `connect`, `status`, `fetch` with the token written in, `disconnect`. The code never holds a token — see [OAuth connections](#oauth-connections) |
+| `ctx.oauth` | OAuth 2.0 on behalf of a visitor (or the space) through the connections it declared: `connect`, `status`, `fetch` with the token written in, `disconnect`; `token` only for a connection declaring `exposeToken`. Otherwise the code never holds a token — see [OAuth connections](#oauth-connections) |
 | `ctx.data(file)` | One file of the space's data — a project's `src/data/<file>`, `ctx.data('products.json')` — parsed, as of the version the run belongs to; read-only. What a page must not carry is read here and answered only as far as it is shown. The platform's `getData` answers it, or a self-hosted server's `dataDir`. Functions never import it: a path out of `functions/` is refused at build, naming `ctx.data` |
 | `ctx.user` | Who asked — `id`, `username`, `email`, `verified`, `roles`, `permissions` — never their session |
 | `ctx.callerId` | `user:<id>` or `ip:<address>`: what a limit per person keys on |
@@ -267,6 +267,11 @@ export default defineFunctions({
   signature of `ctx.sign` reaches. `ctx.oauth.fetch` writes it into the request, renews it a minute before it lapses,
   and renews it once more on a 401. It goes only to `allow.hosts`, through the same outbound guard as `ctx.fetch`.
   `status` says whether there is a connection, its scopes and when it lapses, never the token.
+- **An SDK in the page that asks for the token itself** (Spotify's Web Playback, Google's Picker) can't go through the
+  server. Its connection declares `exposeToken: true`, and `ctx.oauth.token(name)` answers the access token
+  (`{ token, type, expiresAt, scopes }`), renewed first when it is about to lapse, for a route of the code to hand the
+  page. The refresh token never leaves. Whoever gets the access token holds it until it lapses, so answer it only to
+  the connection's owner. A connection without `exposeToken` refuses `token`, saying so.
 - **The app's secret** is a credential, as for `ctx.fetch` (`clientId`, `clientSecret`). The code names it, the
   platform resolves it, and a plugin's functions reach none of the space's connections.
 - **Needs `signingSecret`** on the server: without a key to seal with, no token is kept, and the call says so.

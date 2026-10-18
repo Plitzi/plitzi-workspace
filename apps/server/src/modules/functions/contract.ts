@@ -45,6 +45,9 @@ export type FunctionOAuthOwner = { owner?: string };
 /** What `ctx.oauth.status` says of a connection — never its token. */
 export type FunctionOAuthStatus = { connected: boolean; scopes?: string[]; expiresAt?: number };
 
+/** The access token `ctx.oauth.token` hands out — never the refresh token, which stays with the platform. */
+export type FunctionOAuthToken = { token: string; type: string; expiresAt?: number; scopes?: string[] };
+
 /**
  * OAuth 2.0 on behalf of whoever the space serves, through the connections it declared (`oauth` in its functions): the
  * consent, the code exchanged, the token kept sealed and renewed by the platform. The code never holds a token, as it
@@ -69,6 +72,12 @@ export type FunctionOAuth = {
   ) => Promise<Response>;
   /** Forgets the connection — revoked at the provider when it says where — and answers whether there was one. */
   disconnect: (connection: string, options?: FunctionOAuthOwner) => Promise<boolean>;
+  /**
+   * The access token itself, renewed first when it is about to lapse — only of a connection that declares
+   * `exposeToken: true`, for a provider's SDK in the page that asks for it (`getOAuthToken`). Whoever the code hands it
+   * to holds it until it lapses: answer it only to whom the connection is (its owner), from a route that checks so.
+   */
+  token: (connection: string, options?: FunctionOAuthOwner) => Promise<FunctionOAuthToken>;
 };
 
 /**

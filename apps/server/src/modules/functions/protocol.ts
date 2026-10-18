@@ -77,7 +77,7 @@ export type FunctionCall =
   | { op: 'verify'; value: string; signature: string }
   | { op: 'data'; file: string }
   | { op: 'oauth'; method: 'connect'; connection: string; returnTo: string; owner?: string }
-  | { op: 'oauth'; method: 'status' | 'disconnect'; connection: string; owner?: string }
+  | { op: 'oauth'; method: 'status' | 'disconnect' | 'token'; connection: string; owner?: string }
   | {
       op: 'oauth';
       method: 'fetch';

@@ -154,7 +154,13 @@ export default defineConfig(({ mode, command }) => {
         entryRoot: 'src',
         outDir: 'dist',
         rollupTypes: false,
-        exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx', 'vite.config.ts', 'setupTests.ts'],
+        exclude: [
+          '**/*.(test|bench).(ts|tsx)',
+          '**/*.stories.ts',
+          '**/*.stories.tsx',
+          'vite.config.ts',
+          'setupTests.ts'
+        ],
         tsconfigPath: './tsconfig.app.json',
         // A development build points the packages at their sources; the types it writes must not. Left to the
         // plugin, every import of one became a path into `packages/*/src`, and whatever typechecked against this

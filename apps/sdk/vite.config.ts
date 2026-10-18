@@ -345,7 +345,7 @@ export default defineConfig(({ mode, command }) => {
         outDir: 'dist',
         rollupTypes: false,
         exclude: [
-          '**/*.test.tsx',
+          '**/*.(test|bench).(ts|tsx)',
           '**/*.stories.ts',
           '**/*.stories.tsx',
           'vite.config.ts',

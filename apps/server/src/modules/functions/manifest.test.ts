@@ -134,7 +134,8 @@ describe('the OAuth connections a bundle declared', () => {
         authorizeUrl: 'https://music.example.com/authorize',
         tokenUrl: 'https://music.example.com/api/token',
         credential: 'music-app',
-        clientAuth: 'basic'
+        clientAuth: 'basic',
+        exposeToken: true
       }
     });
 
@@ -150,7 +151,8 @@ describe('the OAuth connections a bundle declared', () => {
         authorizeUrl: 'https://music.example.com/authorize',
         tokenUrl: 'https://music.example.com/api/token',
         credential: 'music-app',
-        clientAuth: 'basic'
+        clientAuth: 'basic',
+        exposeToken: true
       }
     });
   });
@@ -165,6 +167,7 @@ describe('the OAuth connections a bundle declared', () => {
         credential: 'x',
         authorizeParams: { redirect_uri: 'https://evil' }
       },
+      loose: { issuer: 'https://id.example.com', credential: 'x', exposeToken: 'yes' },
       good: { issuer: 'https://id.example.com', credential: 'x' }
     });
 
@@ -174,7 +177,8 @@ describe('the OAuth connections a bundle declared', () => {
       'OAuth connection "plain": issuer is an https URL',
       'OAuth connection "plain": an issuer (OpenID), or its authorizeUrl and tokenUrl',
       'OAuth connection "nameless" names no credential: the space\'s credential with the app\'s clientId and clientSecret',
-      'OAuth connection "overriding": authorizeParams.redirect_uri is the platform\'s to write'
+      'OAuth connection "overriding": authorizeParams.redirect_uri is the platform\'s to write',
+      'OAuth connection "loose": exposeToken is true or false'
     ]);
     expect(Object.keys(manifest.oauth ?? {})).toEqual(['good']);
   });

@@ -46,6 +46,12 @@ export type FunctionOAuthConnection = {
   authorizeParams?: Record<string, string>;
   /** How the app proves who it is to `tokenUrl`: in the body (the default) or as HTTP Basic. */
   clientAuth?: 'body' | 'basic';
+  /**
+   * The code may read the access token (`ctx.oauth.token`), for a provider's SDK that runs in the page and asks for it
+   * itself — Spotify's Web Playback, Google's Picker. Off by default: the token then leaves the server, as far as the
+   * code hands it. The refresh token never does.
+   */
+  exposeToken?: boolean;
 };
 
 export type FunctionsManifest = {

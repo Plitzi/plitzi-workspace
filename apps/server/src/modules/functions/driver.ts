@@ -146,6 +146,8 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
           call({ op: 'oauth', method: 'status', connection, owner: options.owner }),
         disconnect: (connection: string, options: Record<string, unknown> = {}) =>
           call({ op: 'oauth', method: 'disconnect', connection, owner: options.owner }),
+        token: (connection: string, options: Record<string, unknown> = {}) =>
+          call({ op: 'oauth', method: 'token', connection, owner: options.owner }),
         fetch: async (connection: string, url: string | URL, init: Record<string, unknown> = {}) => {
           const { owner, ...rest } = init;
           const answer = await call({ op: 'oauth', method: 'fetch', connection, url: String(url), init: rest, owner });
