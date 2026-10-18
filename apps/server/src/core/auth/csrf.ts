@@ -184,7 +184,9 @@ const isOwnOrigin = (origin: string, carrier: CsrfCarrier): boolean => {
   }
 
   return false;
-};/**
+};
+
+/**
  * Did a page of another ORIGIN cause this request — `allowed` naming the origins this deployment counts as its own?
  *
  * This is what protects signing in, where there is no session to bind a token to and no cookie to look for, and
