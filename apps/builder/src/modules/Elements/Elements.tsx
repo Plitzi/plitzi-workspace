@@ -3,7 +3,7 @@ import Input from '@plitzi/plitzi-ui/Input';
 import { use, useCallback, useState } from 'react';
 
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { REUSE } from '@pmodules/Builder/helpers/reuse';
 import Components from '@pmodules/Components';

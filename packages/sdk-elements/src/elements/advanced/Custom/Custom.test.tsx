@@ -32,11 +32,11 @@ vi.mock('@plitzi/sdk-shared/hooks', async importOriginal => ({
   })
 }));
 
-vi.mock('@plitzi/sdk-shared/plugins', async importOriginal => {
+vi.mock('@plitzi/sdk-shared/plugins/react', async importOriginal => {
   const { createContext } = await import('react');
 
   return {
-    ...(await importOriginal<typeof import('@plitzi/sdk-shared/plugins')>()),
+    ...(await importOriginal<typeof import('@plitzi/sdk-shared/plugins/react')>()),
     PluginsContext: createContext({
       plugins: installed as unknown as Record<string, ComponentDefinition>,
       registerCustomAssets: () => undefined,

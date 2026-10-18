@@ -46,14 +46,25 @@
 
 ## Packages
 
-- **Two server reads no longer bring the browser's hooks along** (`@plitzi/sdk-shared`, `@plitzi/sdk-server`): importing
-  `@plitzi/sdk-server` loaded 139 modules of `@plitzi/sdk-shared`, 15 of them only because two constants sat in folders
-  of client hooks. `PROJECT_DATA_PREFIX` moved from `@plitzi/sdk-shared/server` to `@plitzi/sdk-shared/project/paths` —
-  the project's layout names, now an entry of their own a browser imports too (`@plitzi/sdk-shared/project` stays Node
-  only and re-exports them); `plitzi upgrade migrations --write` rewrites the import (`movedExports`). The theme cookie's
-  helpers (`themeFromCookies`, `THEME_COOKIE_NAME`…) are also `@plitzi/sdk-shared/theme/cookie`, still exported by
-  `@plitzi/sdk-shared/theme`. `yarn check:server-footprint` (in CI after the build) holds what the server's root loads
-  of each `@plitzi` package to an exact budget.
+- **`@plitzi/sdk-server` starts in half the time** (`@plitzi/sdk-shared`, `@plitzi/sdk-server`): importing it took
+  ~310 ms, ~200 of them `date-fns` — 108 modules nothing on the server uses, brought by `@plitzi/sdk-shared/helpers` —
+  and loaded the browser's hooks and contexts of every folder of `@plitzi/sdk-shared` it read, `@plitzi/nexus/react`
+  with them. Now ~150 ms (`@plitzi/sdk-shared` 139 → 113 modules, `@plitzi/nexus` 53 → 31). What moved, each
+  rewritten by `plitzi upgrade migrations --write` (`movedExports`):
+  - the dates — `formatDate`, `formatDateUTC`, `formatFromNow`, `formatUTCToLocal`, `getDurationMs`, `isDate`,
+    `isValidFormat`, `parseDate`, `toUnixSeconds`, `SupportedLocale` — from `@plitzi/sdk-shared/helpers` to
+    `@plitzi/sdk-shared/dates`;
+  - React's bindings to an entry of their own beside each area, as `@plitzi/nexus/react` is: `useDisplayMode`,
+    `useElementSize` → `@plitzi/sdk-shared/style/react`; `SchemaContext` → `schema/react`; `PluginsContext` →
+    `plugins/react`; `DevToolsContext` → `devTools/react`; `useFlagResolution` → `flags/react` (`flagUserFrom` stays
+    in `flags`);
+  - `PROJECT_DATA_PREFIX` from `@plitzi/sdk-shared/server` to `@plitzi/sdk-shared/project/paths` — the project's
+    layout names, an entry a browser imports too (`@plitzi/sdk-shared/project` stays Node only and re-exports them).
+    The theme cookie's helpers (`themeFromCookies`…) are also `@plitzi/sdk-shared/theme/cookie`, still exported by
+    `@plitzi/sdk-shared/theme`.
+
+  `yarn check:server-footprint` (in CI after the build) holds what the server's root loads, package by package — Plitzi's
+  and every other — to a budget: a heavy library or a folder of hooks coming back fails with what came in.
 
 ## CLI
 

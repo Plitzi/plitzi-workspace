@@ -3,7 +3,7 @@ import { Fragment, isValidElement, use, useMemo, useRef, useSyncExternalStore } 
 
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { passesFlagGate } from '@plitzi/sdk-shared/flags';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import pluginSelector, { getRemoteSettings } from '../helpers/pluginSelector';

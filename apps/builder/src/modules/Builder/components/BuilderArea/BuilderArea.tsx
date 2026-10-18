@@ -7,7 +7,7 @@ import { memo, useCallback, use, useEffect, useMemo, useRef, useState } from 're
 import { BuilderContext } from '@plitzi/sdk-shared/builder/contexts';
 import { EnclosingSpaceContext } from '@plitzi/sdk-shared/helpers';
 import { PlitziProvider } from '@plitzi/sdk-shared/hooks';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import { isMotionAnimation } from '@plitzi/sdk-shared/schema';
 import { useBuilderStore } from '@plitzi/sdk-shared/store';
 import { fontLinkAssets, fontsToHead, fontUrlResolver, layoutGridCss } from '@plitzi/sdk-shared/style';

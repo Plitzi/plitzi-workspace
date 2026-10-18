@@ -1,7 +1,7 @@
 import { memo, use } from 'react';
 
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 
 import pluginSelector from './helpers/pluginSelector';
 

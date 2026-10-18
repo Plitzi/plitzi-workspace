@@ -2,8 +2,8 @@ import ContainerCollapsable from '@plitzi/plitzi-ui/ContainerCollapsable';
 import clsx from 'clsx';
 import { useMemo } from 'react';
 
+import { getDurationMs } from '@plitzi/sdk-shared/dates';
 import { isInteractionFlow } from '@plitzi/sdk-shared/devTools';
-import { getDurationMs } from '@plitzi/sdk-shared/helpers';
 
 import LogInteractionBody from './LogInteractionBody';
 import LogInteractionHeader from './LogInteractionHeader';

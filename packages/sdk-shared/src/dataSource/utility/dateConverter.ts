@@ -1,6 +1,6 @@
-import { parseDate, formatDate, formatDateUTC, formatFromNow } from '../../helpers';
+import { parseDate, formatDate, formatDateUTC, formatFromNow } from '../../dates';
 
-import type { SupportedLocale } from '../../helpers';
+import type { SupportedLocale } from '../../dates';
 import type { DataSourceUtility, DataSourceUtilityParamsValue } from '../../types';
 
 const callback = (

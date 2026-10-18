@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import PlitziConsole from './PlitziConsole';
-import { formatDate } from '../../helpers';
+import { formatDate } from '../../dates';
 
 afterEach(() => {
   vi.unstubAllGlobals();

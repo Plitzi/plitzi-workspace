@@ -1,7 +1,8 @@
 import { omit } from '@plitzi/plitzi-ui/helpers';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 
-import { DevToolsContext, pConsole } from '@plitzi/sdk-shared/devTools';
+import { pConsole } from '@plitzi/sdk-shared/devTools';
+import { DevToolsContext } from '@plitzi/sdk-shared/devTools/react';
 
 import type { Log, ProviderCallback } from '@plitzi/sdk-shared';
 import type { ReactNode } from 'react';

@@ -35,10 +35,11 @@ import { useFlag } from '@plitzi/sdk-elements/dataSource';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { disableReactDevTools } from '@plitzi/sdk-shared/helpers';
 import { usePlitzi, PlitziProvider } from '@plitzi/sdk-shared/hooks';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import { useRscRefresh, usePluginRoute } from '@plitzi/sdk-shared/server';
 import { useSdkStore, recordRenderActionRuns, DEFAULT_RENDER_SETTINGS } from '@plitzi/sdk-shared/store';
-import { styleCacheFromDocument, useDisplayMode, useElementSize } from '@plitzi/sdk-shared/style';
+import { styleCacheFromDocument } from '@plitzi/sdk-shared/style';
+import { useDisplayMode, useElementSize } from '@plitzi/sdk-shared/style/react';
 
 import App from './App';
 import { getEnvironmentServer } from './config';

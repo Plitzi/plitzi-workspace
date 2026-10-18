@@ -1,6 +1,6 @@
-import { sharedContext } from '../helpers/sharedContext';
+import { sharedContext } from '../../helpers/sharedContext';
 
-import type { PluginsContextValue } from '../types';
+import type { PluginsContextValue } from '../../types';
 
 const pluginsContextDefaultValue = { assets: {} } as PluginsContextValue;
 

@@ -1,7 +1,7 @@
 import { get } from '@plitzi/plitzi-ui/helpers';
 import { useCallback, useMemo, useState } from 'react';
 
-import { formatDate } from '@plitzi/sdk-shared/helpers';
+import { formatDate } from '@plitzi/sdk-shared/dates';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useHighlightElement from '../../../../../../highlight';

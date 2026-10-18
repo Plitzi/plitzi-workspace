@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react';
 
-import { displayModeWidthRem } from './breakpoints';
+import { displayModeWidthRem } from '../breakpoints';
 
-import type { DisplayMode } from '../types';
+import type { DisplayMode } from '../../types';
 
 /**
  * The queries the space's own rules are compiled under (`sdk-style`'s `generateCache`): a phone's up to and including

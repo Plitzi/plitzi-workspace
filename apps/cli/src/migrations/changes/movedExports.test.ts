@@ -39,6 +39,7 @@ describe('movedExports', () => {
         "import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server';",
         "import { refreshRsc, PROJECT_DATA_PREFIX as PREFIX } from '@plitzi/sdk-shared/server';",
         "import { refreshRsc as again } from '@plitzi/sdk-shared/server';",
+        "import { formatDate, isRecord, type SupportedLocale } from '@plitzi/sdk-shared/helpers';",
         ''
       ].join('\n')
     );
@@ -46,7 +47,8 @@ describe('movedExports', () => {
     const said = await run(false);
     expect(said.map(found => [found.line, found.writable, found.written])).toEqual([
       [1, true, false],
-      [2, true, false]
+      [2, true, false],
+      [4, true, false]
     ]);
     expect(said[0].what).toBe('PROJECT_DATA_PREFIX is imported from `@plitzi/sdk-shared/project/paths` now');
 
@@ -57,6 +59,8 @@ describe('movedExports', () => {
         "import { refreshRsc } from '@plitzi/sdk-shared/server';",
         "import { PROJECT_DATA_PREFIX as PREFIX } from '@plitzi/sdk-shared/project/paths';",
         "import { refreshRsc as again } from '@plitzi/sdk-shared/server';",
+        "import { isRecord } from '@plitzi/sdk-shared/helpers';",
+        "import { formatDate, type SupportedLocale } from '@plitzi/sdk-shared/dates';",
         ''
       ].join('\n')
     );

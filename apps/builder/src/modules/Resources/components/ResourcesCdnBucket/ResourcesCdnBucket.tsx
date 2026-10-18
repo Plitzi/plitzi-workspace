@@ -4,7 +4,7 @@ import Modal, { useModal } from '@plitzi/plitzi-ui/Modal';
 import { useToast } from '@plitzi/plitzi-ui/Toast';
 import { use, useCallback, useMemo, useState } from 'react';
 
-import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
 

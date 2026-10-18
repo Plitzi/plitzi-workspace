@@ -7,9 +7,36 @@ import type TypeScript from 'typescript';
 type Move = { name: string; from: string; to: string };
 
 /** Oldest first; each is `since` this migration's version. */
+const DATES = [
+  'formatDate',
+  'formatDateUTC',
+  'formatFromNow',
+  'formatUTCToLocal',
+  'getDurationMs',
+  'isDate',
+  'isValidFormat',
+  'parseDate',
+  'SupportedLocale',
+  'toUnixSeconds'
+] as const;
+
 const MOVES: readonly Move[] = [
   // A constant the server and the browser's linter read, no longer in a folder of the browser's hooks.
-  { name: 'PROJECT_DATA_PREFIX', from: '@plitzi/sdk-shared/server', to: '@plitzi/sdk-shared/project/paths' }
+  { name: 'PROJECT_DATA_PREFIX', from: '@plitzi/sdk-shared/server', to: '@plitzi/sdk-shared/project/paths' },
+  // Dates load date-fns — a hundred modules — which every import of `helpers` paid for, a server's included.
+  ...DATES.map(name => ({ name, from: '@plitzi/sdk-shared/helpers', to: '@plitzi/sdk-shared/dates' })),
+  // React's hooks and contexts, apart from the areas a server imports: `<area>/react`, as `@plitzi/nexus/react` is.
+  ...(
+    [
+      ['style', ['useDisplayMode', 'useElementSize', 'ElementSize']],
+      ['schema', ['SchemaContext']],
+      ['plugins', ['PluginsContext']],
+      ['devTools', ['DevToolsContext', 'DevToolsContextValue']],
+      ['flags', ['useFlagResolution']]
+    ] as const
+  ).flatMap(([area, names]) =>
+    names.map(name => ({ name, from: `@plitzi/sdk-shared/${area}`, to: `@plitzi/sdk-shared/${area}/react` }))
+  )
 ];
 
 const movedFrom = (from: string, name: string): Move | undefined =>

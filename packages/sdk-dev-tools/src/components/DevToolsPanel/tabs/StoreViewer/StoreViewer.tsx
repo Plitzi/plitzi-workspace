@@ -4,7 +4,7 @@ import * as vscode from '@uiw/react-json-view/vscode';
 import clsx from 'clsx';
 import { use, useCallback, useMemo } from 'react';
 
-import { DevToolsContext } from '@plitzi/sdk-shared/devTools';
+import { DevToolsContext } from '@plitzi/sdk-shared/devTools/react';
 import { emptyObject } from '@plitzi/sdk-shared/helpers';
 import { useTheme } from '@plitzi/sdk-shared/theme';
 

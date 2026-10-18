@@ -6,7 +6,7 @@ import { useCallback, useMemo, useState, use } from 'react';
 
 import { useNetwork } from '@plitzi/sdk-shared/hooks';
 import { NetworkContext } from '@plitzi/sdk-shared/network';
-import { SchemaContext } from '@plitzi/sdk-shared/schema';
+import { SchemaContext } from '@plitzi/sdk-shared/schema/react';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 import { splitNotificationsCss, withNotificationsCss } from '@plitzi/sdk-shared/style';
 import { useTheme } from '@plitzi/sdk-shared/theme';

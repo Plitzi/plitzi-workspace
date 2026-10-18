@@ -1,6 +1,6 @@
-import { sharedContext } from '../helpers/sharedContext';
+import { sharedContext } from '../../helpers/sharedContext';
 
-import type { Log, ProviderCallback } from '../types';
+import type { Log, ProviderCallback } from '../../types';
 import type { Dispatch, SetStateAction } from 'react';
 
 export type DevToolsContextValue = {

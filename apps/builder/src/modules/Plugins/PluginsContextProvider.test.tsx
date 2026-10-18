@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ComponentProvider } from '@plitzi/sdk-elements/Component';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
 import { NetworkContext } from '@plitzi/sdk-shared/network';
-import { PluginsContext } from '@plitzi/sdk-shared/plugins';
+import { PluginsContext } from '@plitzi/sdk-shared/plugins/react';
 import Elements from '@pmodules/Elements/Elements';
 
 import PluginsContextProvider from './PluginsContextProvider';

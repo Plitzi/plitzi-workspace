@@ -2,7 +2,7 @@ import { evaluateRuleGroup } from '../helpers/ruleEvaluator';
 
 import type { VariableScope } from '../dataSource/resolveVariables';
 import type { RuleGroup } from '../helpers/ruleEvaluator';
-import type { Schema, SchemaFlag, SSRUser } from '../types';
+import type { AuthContextValue, Schema, SchemaFlag, SSRUser } from '../types';
 
 /**
  * Who decided a flag, weakest first: the space's own declaration, then the server rendering it, then the SDK
@@ -19,6 +19,17 @@ export type FlagOverrides = Partial<Record<FlagOverrideLayer, Record<string, boo
 
 /** The visitor, as a flag's rule sees them: never a token, never anything the rules have no business matching on. */
 export type FlagUser = { authenticated: boolean; email?: string; username?: string; roles?: string[] };
+
+/** The visitor as a flag's rule sees them, from what auth knows. */
+export const flagUserFrom = ({ authenticated, user }: Partial<Pick<AuthContextValue, 'authenticated' | 'user'>>) => {
+  const details = user?.details;
+  const flagUser: FlagUser = { authenticated: authenticated === true };
+  if (!details) {
+    return flagUser;
+  }
+
+  return { ...flagUser, email: details.email, username: details.username, roles: details.roles };
+};
 
 /** The visitor a server resolved, as a flag's rule sees them — the same fields the browser's rules see. */
 export const flagUserFromSSR = (user: Pick<SSRUser, 'email' | 'username' | 'roles'> | undefined): FlagUser =>

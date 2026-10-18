@@ -4,22 +4,33 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 /**
- * What importing `@plitzi/sdk-server` loads of Plitzi's own packages, module by module, held to a budget — run against
- * the build (`yarn check:server-footprint`; CI runs it after `build:prod`).
+ * What importing `@plitzi/sdk-server` loads, module by module and package by package — Plitzi's own and every other —
+ * held to a budget, run against the build (`yarn check:server-footprint`; CI runs it after `build:prod`).
  *
  * Every server built on this package pays it at start: the dev server, production, `createAuthoringHost`, each
  * `authorIsolated` child. A package imported by its folders loads that folder's whole barrel, so one import from a
- * folder that also holds the browser's hooks brings them along, and nothing else would say so. The budget is exact: a
- * module more fails and names what came in; a module fewer fails too, asking for the budget to be lowered, so what was
- * won stays won.
+ * folder that also holds the browser's hooks, or a helper that pulls a heavy library, brings it along and nothing else
+ * would say so — date-fns, through `@plitzi/sdk-shared/helpers`, was half of the server's start once.
+ *
+ * A module more fails and names what came in, as does a package the budget does not list. A module fewer of a
+ * `@plitzi` package fails too, asking for the budget to be lowered, so what was won stays won; of another package it
+ * is only said, since upgrading it is what changes it.
  */
 
 const BUDGET = {
   '@plitzi/sdk-server': 196,
-  '@plitzi/sdk-shared': 124,
-  '@plitzi/nexus': 53,
-  '@plitzi/plitzi-ui': 28,
-  '@plitzi/plitzi-sdk': 1
+  '@plitzi/sdk-shared': 113,
+  '@plitzi/nexus': 31,
+  '@plitzi/plitzi-ui': 26,
+  '@plitzi/plitzi-sdk': 1,
+  'react-dom': 7,
+  react: 6,
+  'date-fns': 5,
+  ejs: 2,
+  scheduler: 2,
+  'class-variance-authority': 1,
+  clsx: 1,
+  esbuild: 1
 };
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -52,7 +63,7 @@ registerHooks({
     if (url.startsWith('file:')) {
       const file = fileURLToPath(url);
       const owner = ownerOf(file);
-      if (owner?.name.startsWith('@plitzi/')) {
+      if (owner) {
         loaded.set(owner.name, [...(loaded.get(owner.name) ?? []), path.relative(owner.dir, file)]);
       }
     }
@@ -65,21 +76,27 @@ process.chdir(path.join(here, '..'));
 await import('@plitzi/sdk-server');
 
 const problems = [];
+const notes = [];
+const where = 'BUDGET in apps/server/scripts/checkFootprint.mjs';
 for (const name of new Set([...Object.keys(BUDGET), ...loaded.keys()])) {
   const files = loaded.get(name) ?? [];
   const budget = BUDGET[name] ?? 0;
   if (files.length > budget) {
     problems.push(
       `${name}: ${String(files.length)} modules, over its budget of ${String(budget)}. If each is one the server uses, ` +
-        `raise BUDGET in apps/server/scripts/checkFootprint.mjs; if a folder barrel brought the browser's code along, ` +
-        `import what the server uses from an entry without it. Loaded:\n  ${files.sort().join('\n  ')}`
+        `raise ${where}; if a folder barrel brought the browser's code or a heavy library along, import what the ` +
+        `server uses from an entry without it. Loaded:\n  ${files.sort().join('\n  ')}`
     );
   } else if (files.length < budget) {
-    problems.push(
-      `${name}: ${String(files.length)} modules, under its budget of ${String(budget)} — lower BUDGET in ` +
-        'apps/server/scripts/checkFootprint.mjs to it, so they cannot come back unnoticed.'
+    (name.startsWith('@plitzi/') ? problems : notes).push(
+      `${name}: ${String(files.length)} modules, under its budget of ${String(budget)} — lower ${where} to it, so ` +
+        'they cannot come back unnoticed.'
     );
   }
+}
+
+for (const note of notes) {
+  console.warn(note);
 }
 
 if (problems.length > 0) {

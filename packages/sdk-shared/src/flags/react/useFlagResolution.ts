@@ -1,22 +1,11 @@
 import { useMemo } from 'react';
 
-import useStableValue from '../hooks/useStableValue';
-import { useCommonStore, useRenderSettings } from '../store';
-import { resolveFlags } from './resolveFlags';
+import useStableValue from '../../hooks/useStableValue';
+import { useCommonStore, useRenderSettings } from '../../store';
+import { flagUserFrom, resolveFlags } from '../resolveFlags';
 
-import type { AuthContextValue } from '../types';
-import type { FlagResolution, FlagUser } from './resolveFlags';
-
-/** The visitor as a flag's rule sees them, from what auth knows. */
-export const flagUserFrom = ({ authenticated, user }: Partial<Pick<AuthContextValue, 'authenticated' | 'user'>>) => {
-  const details = user?.details;
-  const flagUser: FlagUser = { authenticated: authenticated === true };
-  if (!details) {
-    return flagUser;
-  }
-
-  return { ...flagUser, email: details.email, username: details.username, roles: details.roles };
-};
+import type { AuthContextValue } from '../../types';
+import type { FlagResolution } from '../resolveFlags';
 
 /**
  * Every declared flag, resolved for where this render is and who is looking.
