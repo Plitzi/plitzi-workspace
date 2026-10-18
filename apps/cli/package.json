@@ -8,6 +8,9 @@
     "skills"
   ],
   "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
   "bin": {
     "plitzi": "./dist/index.js"
   },

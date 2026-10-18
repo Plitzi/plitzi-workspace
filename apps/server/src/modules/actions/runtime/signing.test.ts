@@ -32,4 +32,18 @@ describe('createSigning', () => {
   it('refuses a secret too short to sign with', () => {
     expect(() => createSigning('short')).toThrow('at least 32 characters');
   });
+
+  it('seals what only this space and environment open, and nothing changed since', () => {
+    const signing = createSigning(SECRET);
+    const space = signing({ spaceId: 3, environment: 'main' });
+    const sealed = space.seal('{"access":"token"}');
+
+    expect(sealed).not.toContain('token');
+    expect(space.open(sealed)).toBe('{"access":"token"}');
+    expect(space.seal('same')).not.toBe(space.seal('same'));
+    expect(signing({ spaceId: 4, environment: 'main' }).open(sealed)).toBeUndefined();
+    expect(signing({ spaceId: 3, environment: 'preview' }).open(sealed)).toBeUndefined();
+    expect(space.open(`${sealed.slice(0, -2)}AA`)).toBeUndefined();
+    expect(space.open('short')).toBeUndefined();
+  });
 });

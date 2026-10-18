@@ -1,5 +1,6 @@
 import { processTwigParam } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
+import { noOAuth, oauthFor } from './oauth';
 import { pluginKvPrefix, pluginSigned } from './scope';
 import { fetchOutbound } from '../../helpers/outboundGuard';
 import { prefixKv } from '../actions/runtime/namespaceKv';
@@ -8,7 +9,7 @@ import { countRate, refusedOver } from '../actions/runtime/rateLimit';
 import type { FunctionContext, FunctionFetch, FunctionUser } from './contract';
 import type { FunctionScope } from './scope';
 import type { ActionTaskContext } from '../actions/types';
-import type { SSRUser } from '@plitzi/sdk-shared';
+import type { FunctionOAuthConnection, SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * Whether `hostname` is one the space declared: exactly, or under a `*.` wildcard (`*.example.com` is every subdomain of
@@ -124,7 +125,8 @@ const noData = (file: string) =>
 export const functionContextFor = (
   ctx: ActionTaskContext,
   hosts: readonly string[],
-  scope?: FunctionScope
+  scope?: FunctionScope,
+  oauth: Readonly<Record<string, FunctionOAuthConnection>> = {}
 ): FunctionContext => {
   const shared = {
     spaceId: ctx.spaceId,
@@ -151,7 +153,12 @@ export const functionContextFor = (
       revoke: ctx.revoke ?? unavailable('revoke'),
       later: ctx.later ?? noJobs,
       cancelLater: ctx.cancelLater ?? noJobs,
-      data: ctx.data
+      data: ctx.data,
+      oauth: oauthFor(ctx, oauth, url => {
+        if (!hostAllowed(url.hostname, hosts)) {
+          throw new Error(`"${url.hostname}" is not among the hosts this space's functions may reach (allow.hosts)`);
+        }
+      })
     };
   }
 
@@ -176,6 +183,8 @@ export const functionContextFor = (
     revoke: noChannel,
     later: noLater,
     cancelLater: noLater,
-    data: noData
+    data: noData,
+    // The space's OAuth connections act for its visitors with its app: a plugin was trusted to draw, not to act for them.
+    oauth: noOAuth('The functions of a plugin make none of the OAuth connections of its space')
   };
 };

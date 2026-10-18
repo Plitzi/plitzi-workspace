@@ -227,7 +227,7 @@ const App = ({
   }, [debugModeProp, debugPreference, debugCookie]);
 
   /**
-   * The render tracing, readable by a test while it is on: `inspectRenders` (`@plitzi/sdk-authoring/testing`) marks,
+   * The render tracing, readable by a test while it is on: `inspectRenders` (`@plitzi/sdk-authoring`) marks,
    * lets the test act, and asks which elements rendered and what changed for each. Only under `debugMode`, where the
    * elements are profiled at all — and taken away with it, so a published page carries no such global.
    */

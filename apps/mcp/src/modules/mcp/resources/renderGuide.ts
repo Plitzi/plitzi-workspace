@@ -1,3 +1,5 @@
+import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+
 import { STYLE_STATES } from '@plitzi/sdk-shared/style';
 
 import { envelope, jsonContents } from './envelope';
@@ -498,12 +500,87 @@ The tool returns \`rendered: false\` with \`errors: [{ path, message, hint }]\`.
 retry — you never lose the rest of the batch.
 `;
 
+/** Each section of the guide by a name of its own, matched by how its heading starts. */
+const RENDER_GUIDE_TOPIC_HEADINGS = {
+  'one-call': 'Build the whole widget in ONE upsertElement',
+  repeat: 'Repeating rows',
+  classes: 'Style with reusable classes',
+  layout: 'Fit the panel',
+  theme: 'Match the host theme',
+  types: 'Element types',
+  svg: 'Draw with inline SVG',
+  small: 'Keep the call small',
+  example: 'Full worked example',
+  data: 'Data & interactivity',
+  fails: 'When it fails'
+} as const;
+
+export type RenderGuideTopic = keyof typeof RENDER_GUIDE_TOPIC_HEADINGS;
+
+const [renderGuideIntro, ...renderGuideSections] = renderGuideText.split(/\n(?=## )/);
+
+/**
+ * The guide's sections, each readable alone (`plitzi://render/guide/<topic>`) — cut from the one text, so the whole guide
+ * and its parts cannot say different things. A heading no topic names fails here, at load, not in an agent's reading.
+ */
+export const renderGuideTopics: Readonly<Record<RenderGuideTopic, string>> = (() => {
+  const topics: Partial<Record<RenderGuideTopic, string>> = {};
+  for (const section of renderGuideSections) {
+    const heading = section.slice('## '.length, section.indexOf('\n'));
+    const entry = Object.entries(RENDER_GUIDE_TOPIC_HEADINGS).find(([, start]) => heading.startsWith(start));
+    if (!entry) {
+      throw new Error(`[render guide] the section "${heading}" has no topic: name it in RENDER_GUIDE_TOPIC_HEADINGS`);
+    }
+
+    // `Object.entries` widens the key to string; it is one of the record's own keys.
+    topics[entry[0] as RenderGuideTopic] = section.trim();
+  }
+
+  const missing = Object.keys(RENDER_GUIDE_TOPIC_HEADINGS).filter(topic => !(topic in topics));
+  if (missing.length > 0) {
+    throw new Error(`[render guide] no section for the topic(s) ${missing.join(', ')}`);
+  }
+
+  // Every key was checked present just above.
+  return topics as Record<RenderGuideTopic, string>;
+})();
+
+/** Where a topic is read: a resource of its own, and through `plitzi_read`. */
+export const renderGuideTopicUri = (topic: RenderGuideTopic): string => `${RENDER_GUIDE_URI}/${topic}`;
+
+/** What the core carries whole: enough to render a correct, themed widget in one call and recover from a refusal. */
+const CORE_TOPICS: readonly RenderGuideTopic[] = ['one-call', 'theme', 'types', 'small', 'fails'];
+
+/**
+ * The guide for a host that counts its tokens — a voice assistant, a small model: the model of a render, the sections a
+ * first widget cannot do without, and every other section by name and address, to read when the widget needs it.
+ * `renderGuideText` stays the whole guide, and is what a host with room should hand over.
+ */
+export const renderGuideCore = [
+  renderGuideIntro.trim(),
+  ...CORE_TOPICS.map(topic => renderGuideTopics[topic]),
+  [
+    '## More, when the widget needs it',
+    'Each is a section of the full guide (`plitzi://render/guide`), read on its own with `plitzi_read`:',
+    '',
+    ...Object.entries(RENDER_GUIDE_TOPIC_HEADINGS)
+      .filter(([topic]) => !CORE_TOPICS.some(core => core === topic))
+      .map(([topic, heading]) => `- \`${RENDER_GUIDE_URI}/${topic}\` — ${heading}`)
+  ].join('\n')
+].join('\n\n');
+
 /** The same two documents through the READ path (the router, hence plitzi_read), not only as MCP resources: an
  *  agent that reaches for the batch-read tool — the reflex the guide itself teaches — must not be told its own
  *  authoring guide does not exist. Space-independent, like the core singletons. */
 export const readRenderResource = (uri: string): ResourceEnvelope<unknown> | undefined => {
   if (uri === RENDER_GUIDE_URI) {
     return envelope(renderGuideText);
+  }
+
+  const topic = uri.startsWith(`${RENDER_GUIDE_URI}/`) ? uri.slice(RENDER_GUIDE_URI.length + 1) : undefined;
+  if (topic !== undefined && Object.hasOwn(renderGuideTopics, topic)) {
+    // Checked as one of the record's own keys just above.
+    return envelope(renderGuideTopics[topic as RenderGuideTopic]);
   }
 
   if (uri === RENDER_TYPES_URI) {
@@ -529,6 +606,27 @@ export const registerRenderResources = (server: McpServer, log: McpLog): void =>
       log.resourceRead(RENDER_GUIDE_URI, performance.now() - start);
 
       return contents;
+    }
+  );
+
+  // Each section alone, for a host that handed its agent `renderGuideCore` and lets it read the rest when it needs it.
+  server.registerResource(
+    'Render guide section',
+    new ResourceTemplate(`${RENDER_GUIDE_URI}/{topic}`, { list: undefined }),
+    {
+      description: `One section of the render guide: ${Object.keys(RENDER_GUIDE_TOPIC_HEADINGS).join(', ')}.`,
+      mimeType: 'text/markdown'
+    },
+    (uri: URL) => {
+      const start = performance.now();
+      const topic = uri.href.slice(RENDER_GUIDE_URI.length + 1);
+      const text = Object.hasOwn(renderGuideTopics, topic)
+        ? // Checked as one of the record's own keys just above.
+          renderGuideTopics[topic as RenderGuideTopic]
+        : `No section "${topic}" in the render guide: ${Object.keys(RENDER_GUIDE_TOPIC_HEADINGS).join(', ')}.`;
+      log.resourceRead(uri.href, performance.now() - start);
+
+      return { contents: [{ uri: uri.href, mimeType: 'text/markdown', text }] };
     }
   );
 

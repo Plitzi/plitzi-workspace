@@ -57,6 +57,11 @@ jobs:
       - name: Barrels built whole
         run: yarn check:dist-exports
 
+      # A path a package does not export, written anywhere — code, its built declarations, a JSDoc, a skill, the docs —
+      # is one somebody imports from and gets ERR_MODULE_NOT_FOUND.
+      - name: Only exported paths
+        run: yarn check:specifiers
+
       # What importing @plitzi/sdk-server loads of Plitzi's packages, held to a budget: every server pays it at start.
       - name: Server footprint
         run: yarn check:server-footprint

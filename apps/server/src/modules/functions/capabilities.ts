@@ -209,6 +209,28 @@ const fetchInitOf = (value: unknown): FunctionFetchInit => {
 const optionalString = (value: unknown, what: string): string | undefined =>
   value === undefined || value === null ? undefined : stringArg(value, what);
 
+/** A call to `ctx.oauth`, read into the one method it names: what each method takes, and an owner only as a string. */
+const oauthCallOf = (call: Record<string, unknown>): FunctionCall => {
+  const connection = stringArg(call.connection, 'An OAuth connection');
+  const owner = optionalString(call.owner, 'An OAuth owner');
+  const own = owner === undefined ? {} : { owner };
+  switch (call.method) {
+    case 'connect':
+      return { op: 'oauth', method: 'connect', connection, returnTo: stringArg(call.returnTo, 'returnTo'), ...own };
+    case 'status':
+    case 'disconnect':
+      return { op: 'oauth', method: call.method, connection, ...own };
+    case 'fetch': {
+      // A credential is not the OAuth fetch's to name: the connection is what it spends.
+      const { credential: _credential, ...init } = fetchInitOf(call.init ?? {});
+
+      return { op: 'oauth', method: 'fetch', connection, url: stringArg(call.url, 'A URL'), init, ...own };
+    }
+    default:
+      throw new CallError('Not an OAuth method the platform answers');
+  }
+};
+
 /** What a run set for later is checked against where it is queued (`laterFor`); here only that it is what it claims. */
 const laterOf = (value: unknown): LaterRequest => {
   const request = recordArg(value, 'A run set for later');
@@ -285,6 +307,8 @@ export const readCall = (value: unknown): FunctionCall => {
       };
     case 'data':
       return { op: 'data', file: stringArg(call.file, 'A file') };
+    case 'oauth':
+      return oauthCallOf(call);
     case 'log':
       return { op: 'log', values: Array.isArray(call.values) ? call.values : [] };
     case 'emit':
@@ -322,6 +346,27 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
       return ctx.verify(call.value, call.signature);
     case 'data':
       return ctx.data(call.file);
+    case 'oauth':
+      switch (call.method) {
+        case 'connect':
+          return ctx.oauth.connect(call.connection, {
+            returnTo: call.returnTo,
+            ...(call.owner === undefined ? {} : { owner: call.owner })
+          });
+        case 'status':
+          return ctx.oauth.status(call.connection, call.owner === undefined ? {} : { owner: call.owner });
+        case 'disconnect':
+          return ctx.oauth.disconnect(call.connection, call.owner === undefined ? {} : { owner: call.owner });
+        case 'fetch':
+          return wireResponseOf(
+            await ctx.oauth.fetch(call.connection, call.url, {
+              ...call.init,
+              ...(call.owner === undefined ? {} : { owner: call.owner })
+            })
+          );
+      }
+
+      break;
     case 'log':
       ctx.log(...call.values);
 

@@ -1,3 +1,5 @@
+import { DECIDED } from './decided';
+
 import type { FeedbackFacts } from './facts';
 
 /**
@@ -46,6 +48,10 @@ export const feedbackBrief = (facts: FeedbackFacts, file: string, previous: read
     }.`,
     doctorLine(facts),
     ...previousLines(previous),
+    '',
+    'Decided — Plitzi was told these and keeps them as they are. Never report one as a new finding; an earlier one goes in',
+    '`changed` as `decided`. Report it again only with something new, and say what is new:',
+    ...DECIDED.map(({ subject, decided, instead }) => `- ${subject}: ${decided}. Instead: ${instead}.`),
     '',
     'What to report — from this conversation and this project, never guessed:',
     '- What broke, misled or cost time with Plitzi: the CLI, authoring and its checks, the SDK, the server, the',

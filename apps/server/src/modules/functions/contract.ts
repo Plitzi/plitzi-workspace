@@ -1,7 +1,12 @@
 import type { LaterAnswer, LaterRequest } from '../actions/jobs/later';
 import type { RateCount, RateLimit } from '../actions/runtime/rateLimit';
 import type { ActionKvStore } from '../actions/types';
-import type { Environment, FunctionTimeLimits, InteractionCallbackParam } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  FunctionOAuthConnection,
+  FunctionTimeLimits,
+  InteractionCallbackParam
+} from '@plitzi/sdk-shared';
 
 /**
  * Who started the run, as a space's own code may know them: everything a function decides by — who, their roles and
@@ -30,6 +35,41 @@ export type FunctionFetchInit = {
 
 /** What a function's `fetch` answers: a web `Response`, whichever runner it is in. */
 export type FunctionFetch = (url: string | URL, init?: FunctionFetchInit) => Promise<Response>;
+
+/**
+ * Whose an OAuth connection is: a signed-in visitor's own by default (`user:<id>`); `space` for one the whole space
+ * shares; or a key the code keeps for whom it serves — a profile, a team (`profile:ana`). Letters, digits and `:._@-`.
+ */
+export type FunctionOAuthOwner = { owner?: string };
+
+/** What `ctx.oauth.status` says of a connection — never its token. */
+export type FunctionOAuthStatus = { connected: boolean; scopes?: string[]; expiresAt?: number };
+
+/**
+ * OAuth 2.0 on behalf of whoever the space serves, through the connections it declared (`oauth` in its functions): the
+ * consent, the code exchanged, the token kept sealed and renewed by the platform. The code never holds a token, as it
+ * never holds a credential — it names the connection.
+ */
+export type FunctionOAuth = {
+  /**
+   * Where to send the visitor to consent (authorization code, PKCE). They come back to `/fn/oauth/callback` — the
+   * address to register with the provider, on the space's host — and from there to `returnTo`, a path of the space,
+   * with `?oauth=<connection>&oauth_result=connected` or `&oauth_error=<what>`.
+   */
+  connect: (connection: string, options: { returnTo: string } & FunctionOAuthOwner) => Promise<{ url: string }>;
+  status: (connection: string, options?: FunctionOAuthOwner) => Promise<FunctionOAuthStatus>;
+  /**
+   * A request to the provider's API with the token written in (`Authorization: Bearer`), renewed when it is about to
+   * lapse and once more if the answer is 401. Only to the hosts the space declared (`allow.hosts`).
+   */
+  fetch: (
+    connection: string,
+    url: string | URL,
+    init?: Omit<FunctionFetchInit, 'credential'> & FunctionOAuthOwner
+  ) => Promise<Response>;
+  /** Forgets the connection — revoked at the provider when it says where — and answers whether there was one. */
+  disconnect: (connection: string, options?: FunctionOAuthOwner) => Promise<boolean>;
+};
 
 /**
  * Everything a space's code can do besides computing — one object, the same wherever it runs. In a self-hosted server
@@ -88,6 +128,8 @@ export type FunctionContext = {
   data: (file: string) => Promise<unknown>;
   /** A line for whoever reads the run: the builder's Try, and the deployment's logs. */
   log: (...values: unknown[]) => void;
+  /** OAuth 2.0 through the space's declared connections — see {@link FunctionOAuth}. */
+  oauth: FunctionOAuth;
   /** Progress for a caller that asked for a stream — a no-op when nobody did. */
   emit: (chunk: unknown) => void;
   /** Aborted when the run is: cancelled, or out of time. Hand it to what can stop early. */
@@ -135,6 +177,11 @@ export type FunctionsDefinition = {
   routes?: Record<string, FunctionRoute>;
   /** More CPU or time than an invocation gets by default, for every task and route — a task may ask for its own. */
   limits?: FunctionTimeLimits;
+  /**
+   * The OAuth connections its code makes (`ctx.oauth`), by the name it calls them — any provider, as data: its `issuer`
+   * (OpenID) or its endpoints, the credential with the app's id and secret, the scopes.
+   */
+  oauth?: Record<string, FunctionOAuthConnection>;
 };
 
 /**

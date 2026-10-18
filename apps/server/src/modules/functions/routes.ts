@@ -6,6 +6,7 @@ import { answerCall, readCall, responseOf, wireRequestOf, wireResponseFrom } fro
 import { functionLimitsFor } from './config';
 import { functionContextFor } from './context';
 import { parseRouteKey, reservedRouteProblem } from './manifest';
+import { OAUTH_CALLBACK_PATH, oauthCallback } from './oauth';
 import { FunctionFailure } from './protocol';
 import { pluginOfPath } from './scope';
 import { serverLog } from '../../helpers/serverLog';
@@ -17,7 +18,7 @@ import type { RouteKey } from './manifest';
 import type { FunctionUsage, SpaceFunctions } from './protocol';
 import type { FunctionScope } from './scope';
 import type { TaskContextSource } from '../actions/runtime/runAction';
-import type { Environment, SpaceRevision, SSRUser } from '@plitzi/sdk-shared';
+import type { Environment, FunctionOAuthConnection, SpaceRevision, SSRUser } from '@plitzi/sdk-shared';
 
 /** Who is asking a route, as the transport knows them. */
 export type RouteVisit = {
@@ -27,6 +28,8 @@ export type RouteVisit = {
   user?: SSRUser;
   /** `user:<id>` or `ip:<address>`, as for an action call. */
   callerId: string;
+  /** The public origin the request reached (`https://shop.example.com`), as the server resolved it. */
+  origin?: string;
   signal: AbortSignal;
 };
 
@@ -127,14 +130,20 @@ export type RouteSources = {
   taskContext: TaskContextSource;
 };
 
-type NativeRoute = { key: string; handler: FunctionRoute; hosts: readonly string[] };
+type NativeRoute = {
+  key: string;
+  handler: FunctionRoute;
+  hosts: readonly string[];
+  oauth?: Readonly<Record<string, FunctionOAuthConnection>>;
+};
 
 /** A definition's routes, as a table this process answers from. */
 const routesOf = (definition: FunctionsDefinition): NativeRoute[] =>
   Object.entries(definition.routes ?? {}).map(([key, handler]) => ({
     key,
     handler,
-    hosts: definition.allow?.hosts ?? []
+    hosts: definition.allow?.hosts ?? [],
+    ...(definition.oauth ? { oauth: definition.oauth } : {})
   }));
 
 /**
@@ -156,26 +165,31 @@ export const createRoutes = ({
     throw new Error(`[Functions] ${reservedRouteProblem(reserved.key)}`);
   }
 
-  const contextOf = (
-    visit: RouteVisit,
-    key: string,
-    hosts: readonly string[],
-    scope?: FunctionScope
-  ): FunctionContext => {
-    const runId = randomUUID();
-    const ctx = taskContext(
+  /** The run's own context for a request of this visit: the space's kv, its credentials, its key. */
+  const runOf = (visit: RouteVisit, key: string) =>
+    taskContext(
       {
-        runId,
+        runId: randomUUID(),
         spaceId: visit.spaceId,
         environment: visit.environment,
         trigger: 'call',
         callerId: visit.callerId,
         ...(visit.user ? { user: visit.user } : {}),
-        ...(visit.at ? { at: visit.at } : {})
+        ...(visit.at ? { at: visit.at } : {}),
+        ...(visit.origin ? { origin: visit.origin } : {})
       },
       visit.signal,
       [`route:${key}`]
     );
+
+  const contextOf = (
+    visit: RouteVisit,
+    key: string,
+    hosts: readonly string[],
+    scope?: FunctionScope,
+    oauth?: Readonly<Record<string, FunctionOAuthConnection>>
+  ): FunctionContext => {
+    const ctx = runOf(visit, key);
 
     return {
       ...functionContextFor(
@@ -186,7 +200,8 @@ export const createRoutes = ({
           }
         },
         hosts,
-        scope
+        scope,
+        oauth
       ),
       trigger: 'route'
     };
@@ -218,7 +233,7 @@ export const createRoutes = ({
         try {
           return withoutCookies(
             await handler(withoutCredentials(request), {
-              ...contextOf(visit, match.key, route.hosts, scope),
+              ...contextOf(visit, match.key, route.hosts, scope, route.oauth),
               params: match.params
             })
           );
@@ -254,7 +269,7 @@ export const createRoutes = ({
           return Response.json({ error: refusal }, { status: 429 });
         }
 
-        const fnCtx = contextOf(visit, match.key, functions.manifest.hosts, scope);
+        const fnCtx = contextOf(visit, match.key, functions.manifest.hosts, scope, functions.manifest.oauth);
         let ok = false;
         let spent: FunctionUsage | undefined;
         try {
@@ -314,6 +329,21 @@ export const createRoutes = ({
   return {
     /** The route that answers `method path` (the path after `/fn`), for this visit — or none. */
     routeFor: async (visit: RouteVisit, method: string, path: string): Promise<RouteHandler | undefined> => {
+      // The visitor back from an OAuth provider: the platform's, whatever the space's code declared.
+      if (method === 'GET' && path === OAUTH_CALLBACK_PATH) {
+        return {
+          key: `GET ${OAUTH_CALLBACK_PATH}`,
+          handle: async request => {
+            const run = runOf(visit, `GET ${OAUTH_CALLBACK_PATH}`);
+            try {
+              return await oauthCallback(run, new URL(request.url).searchParams);
+            } catch (error) {
+              return failed(visit, `GET ${OAUTH_CALLBACK_PATH}`, error);
+            }
+          }
+        };
+      }
+
       const addressed = pluginOfPath(path);
       if (addressed) {
         return pluginRoute(visit, method, addressed);

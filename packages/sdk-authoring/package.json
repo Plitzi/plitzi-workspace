@@ -42,6 +42,9 @@
     "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
   "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
   "sideEffects": false,
   "scripts": {
     "lint": "eslint ./src ./skills ./templates",

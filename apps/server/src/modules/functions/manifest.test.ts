@@ -116,3 +116,75 @@ describe('what a task asks for beyond the default', () => {
     expect(functionLimitsFor({}, { cpuMs: 300 }, { cpuMs: 1000 })).toMatchObject({ cpuMs: 300 });
   });
 });
+
+describe('the OAuth connections a bundle declared', () => {
+  const read = (oauth: unknown, scope?: { plugin: string }) =>
+    readManifest({ hosts: [], tasks: [], routes: [], oauth }, RESERVED, CEILINGS, scope);
+
+  /** Any provider, as data: an OpenID issuer, or the endpoints of one that publishes none. */
+  it('keeps each connection a provider is reached by, its issuer or its endpoints', () => {
+    const { manifest, problems } = read({
+      calendar: {
+        issuer: 'https://accounts.example.com',
+        credential: 'cal',
+        scopes: ['read'],
+        authorizeParams: { prompt: 'consent' }
+      },
+      music: {
+        authorizeUrl: 'https://music.example.com/authorize',
+        tokenUrl: 'https://music.example.com/api/token',
+        credential: 'music-app',
+        clientAuth: 'basic'
+      }
+    });
+
+    expect(problems).toEqual([]);
+    expect(manifest.oauth).toEqual({
+      calendar: {
+        issuer: 'https://accounts.example.com',
+        credential: 'cal',
+        scopes: ['read'],
+        authorizeParams: { prompt: 'consent' }
+      },
+      music: {
+        authorizeUrl: 'https://music.example.com/authorize',
+        tokenUrl: 'https://music.example.com/api/token',
+        credential: 'music-app',
+        clientAuth: 'basic'
+      }
+    });
+  });
+
+  it('says what is wrong with each, and leaves that one out', () => {
+    const { manifest, problems } = read({
+      'no endpoint': { credential: 'x' },
+      plain: { issuer: 'http://insecure.example.com', credential: 'x' },
+      nameless: { issuer: 'https://id.example.com' },
+      overriding: {
+        issuer: 'https://id.example.com',
+        credential: 'x',
+        authorizeParams: { redirect_uri: 'https://evil' }
+      },
+      good: { issuer: 'https://id.example.com', credential: 'x' }
+    });
+
+    expect(problems).toEqual([
+      'OAuth connection "no endpoint": a name is a letter, then letters, digits and "-", up to 64',
+      'OAuth connection "no endpoint": an issuer (OpenID), or its authorizeUrl and tokenUrl',
+      'OAuth connection "plain": issuer is an https URL',
+      'OAuth connection "plain": an issuer (OpenID), or its authorizeUrl and tokenUrl',
+      'OAuth connection "nameless" names no credential: the space\'s credential with the app\'s clientId and clientSecret',
+      'OAuth connection "overriding": authorizeParams.redirect_uri is the platform\'s to write'
+    ]);
+    expect(Object.keys(manifest.oauth ?? {})).toEqual(['good']);
+  });
+
+  it('refuses them in a plugin, and a route where the platform answers the visitor back', () => {
+    expect(read({ x: { issuer: 'https://id.example.com', credential: 'x' } }, { plugin: 'board' }).problems).toEqual([
+      'The functions of a plugin declare no OAuth connections: only its space does (oauth)'
+    ]);
+    expect(readManifest({ routes: ['GET /oauth/callback'] }, RESERVED, CEILINGS).problems).toEqual([
+      'Route "GET /oauth/callback" is /oauth/callback, where the platform answers the visitor back from an OAuth provider'
+    ]);
+  });
+});

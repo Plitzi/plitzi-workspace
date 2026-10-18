@@ -6,7 +6,12 @@ import { taskName, taskNameProblem } from '../actions/tasks/registry';
 
 import type { FunctionLimits } from './protocol';
 import type { FunctionScope } from './scope';
-import type { FunctionsManifest, FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type {
+  FunctionOAuthConnection,
+  FunctionsManifest,
+  FunctionTaskManifest,
+  FunctionTimeLimits
+} from '@plitzi/sdk-shared';
 
 type TaskParam = FunctionTaskManifest['params'][string];
 
@@ -43,6 +48,132 @@ export const parseRouteKey = (key: string): RouteKey | undefined => {
 };
 
 const HOST = /^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/;
+
+/** Where the platform answers the visitor back from an OAuth provider: no route of a space's may be it. */
+const OAUTH_CALLBACK_SEGMENTS = ['oauth', 'callback'];
+
+const CONNECTION_NAME = /^[A-Za-z][A-Za-z0-9-]{0,63}$/;
+
+/** What the platform writes into the consent URL itself: `authorizeParams` may add to it, never change it. */
+const OWN_AUTHORIZE_PARAMS = new Set([
+  'response_type',
+  'client_id',
+  'redirect_uri',
+  'state',
+  'code_challenge',
+  'code_challenge_method',
+  'scope'
+]);
+
+const httpsUrl = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  try {
+    return new URL(value).protocol === 'https:' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * The OAuth connections a definition declared, rebuilt field by field: each a provider's issuer or its endpoints (https),
+ * the credential with the app's id and secret, the scopes. What is wrong is said by connection, and that one left out.
+ */
+const oauthOf = (
+  value: unknown,
+  problems: string[],
+  scope?: FunctionScope
+): Record<string, FunctionOAuthConnection> | undefined => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (scope) {
+    problems.push('The functions of a plugin declare no OAuth connections: only its space does (oauth)');
+
+    return undefined;
+  }
+
+  if (!isRecord(value)) {
+    problems.push('oauth is an object of connections, by the name the code calls them');
+
+    return undefined;
+  }
+
+  const connections: Record<string, FunctionOAuthConnection> = {};
+  for (const [name, entry] of Object.entries(value)) {
+    const where = `OAuth connection "${name}"`;
+    const said = problems.length;
+    if (!CONNECTION_NAME.test(name)) {
+      problems.push(`${where}: a name is a letter, then letters, digits and "-", up to 64`);
+    }
+
+    const spec = isRecord(entry) ? entry : {};
+    const credential = stringOf(spec.credential);
+    if (!credential) {
+      problems.push(`${where} names no credential: the space's credential with the app's clientId and clientSecret`);
+    }
+
+    const urls: Partial<Record<'issuer' | 'authorizeUrl' | 'tokenUrl' | 'revokeUrl', string>> = {};
+    for (const field of ['issuer', 'authorizeUrl', 'tokenUrl', 'revokeUrl'] as const) {
+      if (spec[field] === undefined) {
+        continue;
+      }
+
+      const url = httpsUrl(spec[field]);
+      if (url) {
+        urls[field] = url;
+      } else {
+        problems.push(`${where}: ${field} is an https URL`);
+      }
+    }
+
+    if (!urls.issuer && !(urls.authorizeUrl && urls.tokenUrl)) {
+      problems.push(`${where}: an issuer (OpenID), or its authorizeUrl and tokenUrl`);
+    }
+
+    const scopes = Array.isArray(spec.scopes) ? spec.scopes : [];
+    if (spec.scopes !== undefined && (!Array.isArray(spec.scopes) || !scopes.every(each => typeof each === 'string'))) {
+      problems.push(`${where}: scopes are strings`);
+    }
+
+    const params = isRecord(spec.authorizeParams) ? spec.authorizeParams : {};
+    if (spec.authorizeParams !== undefined && !isRecord(spec.authorizeParams)) {
+      problems.push(`${where}: authorizeParams is an object of strings`);
+    }
+
+    const authorizeParams: Record<string, string> = {};
+    for (const [key, param] of Object.entries(params)) {
+      if (OWN_AUTHORIZE_PARAMS.has(key)) {
+        problems.push(`${where}: authorizeParams.${key} is the platform's to write`);
+      } else if (typeof param === 'string') {
+        authorizeParams[key] = param;
+      } else {
+        problems.push(`${where}: authorizeParams.${key} is a string`);
+      }
+    }
+
+    if (spec.clientAuth !== undefined && spec.clientAuth !== 'body' && spec.clientAuth !== 'basic') {
+      problems.push(`${where}: clientAuth is "body" or "basic"`);
+    }
+
+    if (problems.length > said || !credential) {
+      continue;
+    }
+
+    connections[name] = {
+      ...urls,
+      credential,
+      ...(scopes.length ? { scopes: scopes.filter((each): each is string => typeof each === 'string') } : {}),
+      ...(Object.keys(authorizeParams).length ? { authorizeParams } : {}),
+      ...(spec.clientAuth === 'basic' || spec.clientAuth === 'body' ? { clientAuth: spec.clientAuth } : {})
+    };
+  }
+
+  return Object.keys(connections).length ? connections : undefined;
+};
 
 const stringOf = (value: unknown): string | undefined => (typeof value === 'string' ? value : undefined);
 
@@ -261,6 +392,14 @@ export const readManifest = (
       return;
     }
 
+    if (key.segments.join('/') === OAUTH_CALLBACK_SEGMENTS.join('/')) {
+      problems.push(
+        `Route "${route}" is /oauth/callback, where the platform answers the visitor back from an OAuth provider`
+      );
+
+      return;
+    }
+
     // `/a/:x` and `/a/:y` answer the same requests, so they are the same route whatever the params are called.
     const shape = `${key.method} /${key.segments.map(segment => (segment.startsWith(':') ? ':' : segment)).join('/')}`;
     if (routed.has(shape)) {
@@ -271,6 +410,10 @@ export const readManifest = (
   });
 
   const limits = limitsOf(raw.limits, 'The functions', ceilings, problems);
+  const oauth = oauthOf(raw.oauth, problems, scope);
 
-  return { manifest: { hosts, tasks, routes, ...(limits ? { limits } : {}) }, problems };
+  return {
+    manifest: { hosts, tasks, routes, ...(limits ? { limits } : {}), ...(oauth ? { oauth } : {}) },
+    problems
+  };
 };

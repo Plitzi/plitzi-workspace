@@ -16,9 +16,16 @@ describeTarget('harness', () => {
 
       const viewport = page.viewportSize()?.height ?? 0;
       const height = await inner.evaluate(node => node.getBoundingClientRect().height);
+      // Its page too: `min-height: 100%` of a box that is as tall as what it holds is what it holds.
+      const pageHeight = await inner
+        .locator('.plitzi-component__page')
+        .first()
+        .evaluate(node => node.getBoundingClientRect().height);
 
       expect(height).toBeGreaterThan(0);
       expect(height).toBeLessThan(viewport / 2);
+      expect(pageHeight).toBeGreaterThan(0);
+      expect(pageHeight).toBeLessThanOrEqual(height);
     });
   }
 });

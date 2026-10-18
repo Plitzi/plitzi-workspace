@@ -82,7 +82,7 @@ const declaredType = async (file: string): Promise<{ type: string } | { problem:
   }
 };
 
-/** The package an import names: `@plitzi/sdk-elements/x` → `@plitzi/sdk-elements`, `d3/geo` → `d3`. */
+/** The package an import names: `@plitzi/sdk-elements/canvas` → `@plitzi/sdk-elements`, `d3/geo` → `d3`. */
 const packageOf = (specifier: string): string =>
   specifier
     .split('/')

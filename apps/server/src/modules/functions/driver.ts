@@ -45,7 +45,8 @@ export const describeFunctions = (definition: unknown): Record<string, unknown> 
         : {}
     ),
     routes: isRecord(found.routes) ? Object.keys(found.routes) : [],
-    limits: found.limits
+    limits: found.limits,
+    oauth: found.oauth
   };
 };
 
@@ -138,6 +139,20 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       sign: (value: string) => call({ op: 'sign', value }),
       verify: (value: string, signature: string) => call({ op: 'verify', value, signature }),
       data: (file: string) => call({ op: 'data', file }),
+      oauth: {
+        connect: (connection: string, options: Record<string, unknown> = {}) =>
+          call({ op: 'oauth', method: 'connect', connection, returnTo: options.returnTo, owner: options.owner }),
+        status: (connection: string, options: Record<string, unknown> = {}) =>
+          call({ op: 'oauth', method: 'status', connection, owner: options.owner }),
+        disconnect: (connection: string, options: Record<string, unknown> = {}) =>
+          call({ op: 'oauth', method: 'disconnect', connection, owner: options.owner }),
+        fetch: async (connection: string, url: string | URL, init: Record<string, unknown> = {}) => {
+          const { owner, ...rest } = init;
+          const answer = await call({ op: 'oauth', method: 'fetch', connection, url: String(url), init: rest, owner });
+
+          return responseOf(isRecord(answer) ? answer : {});
+        }
+      },
       log,
       emit: (chunk: unknown) => {
         call({ op: 'emit', chunk }).catch(() => undefined);

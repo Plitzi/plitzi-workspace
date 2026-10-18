@@ -238,6 +238,15 @@ export type ActionTaskContext = {
   /** Signs with the space's own key (`ActionsConfig.signingSecret`) — `undefined` when the deployment gave none. */
   sign?: SpaceSigning['sign'];
   verify?: SpaceSigning['verify'];
+  /** Encrypts what the platform keeps for the space and its code must not read — `undefined` with no signingSecret. */
+  seal?: SpaceSigning['seal'];
+  open?: SpaceSigning['open'];
+  /**
+   * The public origin of the request that started the run (`https://shop.example.com`), as the server resolved it —
+   * what an address back to the space is made of (an OAuth `redirect_uri`). `undefined` for a run no request started:
+   * a schedule, a job.
+   */
+  origin?: string;
   /**
    * One file of the space's data (`products.json`), parsed, as of the run's revision — read-only, and refused when
    * the deployment keeps no data (`lookups.getData`, or `dataDir`). One lookup per run, whichever step reads it.
@@ -439,6 +448,8 @@ export type ActionRunRequest = {
   user?: SSRUser;
   /** Who is asking. Stated by whatever started the run — see {@link ActionTaskContext.callerId}. */
   callerId: string;
+  /** The public origin of the request that started it — see {@link ActionTaskContext.origin}. */
+  origin?: string;
   runId: string;
   /** Chain of run ids that caused this one; a run naming its own action is refused before its first node. */
   lineage?: string[];

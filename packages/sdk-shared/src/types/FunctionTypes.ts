@@ -24,6 +24,30 @@ export type FunctionTaskManifest = {
 };
 
 /** What a space's functions declare, read from the bundle when it is saved: its tasks, routes and reachable hosts. */
+/**
+ * One OAuth 2.0 connection a space's code makes on its visitors' (or its own) behalf, declared as data: any provider,
+ * none of them known to the platform by name. `issuer` for one that publishes OpenID metadata — its endpoints are read
+ * from `<issuer>/.well-known/openid-configuration` — or the endpoints themselves for one that does not.
+ */
+export type FunctionOAuthConnection = {
+  /** An OpenID provider's issuer (`https://accounts.google.com`): the endpoints are discovered from it. */
+  issuer?: string;
+  /** Where the visitor is sent to consent, when there is no `issuer` (or to override what it publishes). */
+  authorizeUrl?: string;
+  /** Where the code is exchanged and the token refreshed, when there is no `issuer` (or to override it). */
+  tokenUrl?: string;
+  /** Where a token is revoked on `disconnect`, when the provider has one. */
+  revokeUrl?: string;
+  /** The space's credential holding the app's `clientId` and `clientSecret`: the code names it, never holds it. */
+  credential: string;
+  /** What is asked for, as the provider spells it. */
+  scopes?: string[];
+  /** More of the consent URL, as the provider needs it: `{ access_type: 'offline', prompt: 'consent' }`. */
+  authorizeParams?: Record<string, string>;
+  /** How the app proves who it is to `tokenUrl`: in the body (the default) or as HTTP Basic. */
+  clientAuth?: 'body' | 'basic';
+};
+
 export type FunctionsManifest = {
   hosts: string[];
   tasks: FunctionTaskManifest[];
@@ -31,6 +55,8 @@ export type FunctionsManifest = {
   routes: string[];
   /** What every task and route asks for beyond the default, unless a task asks for its own. */
   limits?: FunctionTimeLimits;
+  /** The OAuth connections its code makes (`ctx.oauth`), by the name the code calls them. */
+  oauth?: Record<string, FunctionOAuthConnection>;
 };
 
 /** One reason functions were not saved, where it is — what an editor underlines. */

@@ -335,7 +335,7 @@ const commitsSince = (commitId: number): CommitEntry[] => {
 
 /**
  * What the SDK publishes as `window.plitziTracing` while its render tracing is on (`debugMode`): the commits since a
- * mark, for a test to ask which elements an interaction rendered — `inspectRenders` in `@plitzi/sdk-authoring/testing`.
+ * mark, for a test to ask which elements an interaction rendered — `inspectRenders` of `@plitzi/sdk-authoring`.
  */
 export type TracingReader = {
   lastCommitId: () => number;

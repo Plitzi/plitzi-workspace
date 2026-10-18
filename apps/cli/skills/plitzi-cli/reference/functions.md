@@ -26,6 +26,11 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 - **What must happen in N seconds whether or not a page is open** — a turn that runs out, a bot's move — is
   `ctx.later({ action, in, input, key })` on an action with a `later` trigger (`flow.later` from a flow): never a page's
   timer asking the server back. The same `key` replaces what still waits; `ctx.cancelLater(key)` drops it.
+- **An API on behalf of a visitor** (their calendar, their music) is an OAuth connection declared as data in
+  `defineFunctions({ oauth: { calendar: { issuer, credential, scopes } } })` — any provider, `issuer` for OpenID or its
+  `authorizeUrl`/`tokenUrl` — then `ctx.oauth.connect(name, { returnTo })` to consent and `ctx.oauth.fetch(name, url)`
+  to call it. Never a token in `kv` by hand: the platform keeps it sealed and renews it; register
+  `/fn/oauth/callback` with the provider.
 - **The live site runs what the space was last published with.** A push changes the draft; publishing is the person's.
 
 ## A space's runtime (`runtime`)

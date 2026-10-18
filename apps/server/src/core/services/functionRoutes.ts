@@ -25,6 +25,7 @@ export const functionRoutesStage: Stage<SSRContext> = async ctx => {
       at: { environment, revision },
       ...(req.ctx.user ? { user: req.ctx.user } : {}),
       callerId: req.ctx.user ? `user:${String(req.ctx.user.id)}` : `ip:${clientIp(ctx.raw, req)}`,
+      ...(requestOrigin(req) ? { origin: requestOrigin(req) } : {}),
       signal: ctx.signal
     },
     req.method,

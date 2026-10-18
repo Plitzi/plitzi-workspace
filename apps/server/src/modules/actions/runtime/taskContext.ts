@@ -112,7 +112,7 @@ export type TaskContextDeps = {
 /** Who and what the context is for — a run's request, or anything shaped like one (a function's route). */
 export type TaskContextRequest = Pick<
   ActionRunRequest,
-  'runId' | 'spaceId' | 'environment' | 'trigger' | 'user' | 'callerId' | 'at' | 'emit'
+  'runId' | 'spaceId' | 'environment' | 'trigger' | 'user' | 'callerId' | 'at' | 'emit' | 'origin'
 >;
 
 /**
@@ -133,6 +133,7 @@ export const taskContextFor = (
 
   return scope => ({
     runId: request.runId,
+    ...(request.origin ? { origin: request.origin } : {}),
     spaceId: request.spaceId,
     environment: request.environment,
     trigger: request.trigger,

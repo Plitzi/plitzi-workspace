@@ -34,6 +34,9 @@
     "url": "https://github.com/plitzi/plitzi-workspace.git"
   },
   "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
   "sideEffects": false,
   "dependencies": {
     "@modelcontextprotocol/ext-apps": "^1.7.5",

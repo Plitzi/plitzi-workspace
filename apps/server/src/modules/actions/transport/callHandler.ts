@@ -1,6 +1,7 @@
 import { triggerAccess } from '@plitzi/sdk-shared/actions';
 
 import { openStream, wantsStream } from './stream';
+import { requestOrigin } from '../../../core/requestParser';
 import { resolveDebugAuthorization } from '../../../helpers/debugAuthorization';
 import { forcedFlagsFor } from '../../../helpers/flagOverrides';
 import { onAbort } from '../../../helpers/onAbort';
@@ -158,6 +159,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
   }
 
   const limits = module.limitsFor(entry.document);
+  const origin = requestOrigin(req);
   const input = body.input ?? {};
   const begin = {
     spaceId,
@@ -254,6 +256,7 @@ export const handleActionCall = async (deps: ActionCallDeps): Promise<void> => {
       trigger: 'call',
       user: req.ctx.user,
       callerId,
+      ...(origin ? { origin } : {}),
       runId: run.runId,
       lineage,
       at: { environment, revision },

@@ -144,6 +144,21 @@ describe('what a sign-in has to present', () => {
     expect(behindProxy('https://app.acme.test:8443')).toBe(true);
   });
 
+  /**
+   * With no proxy in front, the request's own authority names the host: a forwarded one the client sent itself must not
+   * turn another port into this server's.
+   */
+  it('takes no forwarded authority over the request’s own', () => {
+    const spoofed = (headers: Record<string, string>) =>
+      signIn({
+        hostname: 'localhost',
+        headers: { ...headers, 'x-forwarded-host': 'localhost:8091', origin: 'https://localhost:8091' }
+      });
+
+    expect(spoofed({ host: 'localhost:8080' })).toBe(true);
+    expect(spoofed({ ':authority': 'localhost:8080' })).toBe(true);
+  });
+
   it('lets the deployment name origins that are also its own', () => {
     const withApp = createCsrf({
       secret: 'test-secret',

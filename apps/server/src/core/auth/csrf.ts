@@ -143,12 +143,17 @@ const readCookieHeader = (carrier: CsrfCarrier, name: string): string | undefine
 };
 
 /**
- * Whether `origin` is the request's own: its host AND port, as the request was addressed — HTTP/2's `:authority`, which
- * carries no `Host` header at all; `Host` otherwise; and `X-Forwarded-Host` before both, which a proxy in front writes
- * when it addresses this server by another name (a page cannot set it: no form or fetch of another origin sends it).
- * The one whose host is the hostname the request is answered as is compared, port included. None of them is: nothing
- * says which port the request reached, so the origin is not taken as its own — comparing the name alone made every port
- * and every scheme of this host count.
+ * Whether `origin` is the request's own: its host AND port, as the request was addressed.
+ *
+ * The authority is the one that names the hostname the request is answered as, compared port included:
+ *
+ * - **the request's own** first — HTTP/2's `:authority` (which carries no `Host` header at all), or `Host`;
+ * - **`X-Forwarded-Host`** only when that does not: a host that took its hostname from the header trusts the proxy in
+ *   front of it (Express's `trust proxy`), and that proxy wrote it. Read before the request's own, a client could send
+ *   one naming this host on another port, and that port would count as this server's.
+ *
+ * None naming it: nothing says which port the request reached, so the origin is not taken as its own — comparing the
+ * name alone made every port and every scheme of this host count.
  */
 const isOwnOrigin = (origin: string, carrier: CsrfCarrier): boolean => {
   let url: URL;
@@ -160,7 +165,7 @@ const isOwnOrigin = (origin: string, carrier: CsrfCarrier): boolean => {
   }
 
   const forwarded = header(carrier, 'x-forwarded-host')?.split(',')[0]?.trim();
-  for (const authority of [forwarded, header(carrier, ':authority'), header(carrier, 'host')]) {
+  for (const authority of [header(carrier, ':authority'), header(carrier, 'host'), forwarded]) {
     if (!authority) {
       continue;
     }
@@ -179,8 +184,7 @@ const isOwnOrigin = (origin: string, carrier: CsrfCarrier): boolean => {
   }
 
   return false;
-};
-/**
+};/**
  * Did a page of another ORIGIN cause this request — `allowed` naming the origins this deployment counts as its own?
  *
  * This is what protects signing in, where there is no session to bind a token to and no cookie to look for, and

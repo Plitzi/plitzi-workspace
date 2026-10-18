@@ -77,6 +77,7 @@ export const reportTemplate = (facts: FeedbackFacts, previous: readonly string[]
   .v-fixed { background: var(--good-soft); color: var(--good); }
   .v-partial { background: var(--mid-soft); color: var(--mid); }
   .v-open { background: var(--high-soft); color: var(--high); }
+  .v-decided { background: var(--code-bg); color: var(--muted); }
   .priorities { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
   .priorities li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
   .priorities a { font-family: var(--mono); font-size: 13px; text-decoration: none; }
@@ -158,7 +159,7 @@ const REPORT = {
     built: 'What was built',
     changed: 'What changed since the last report',
     changedHead: ['Finding', 'Status now', 'How I saw it'],
-    status: { fixed: 'fixed', partial: 'partly', open: 'still open' },
+    status: { fixed: 'fixed', partial: 'partly', open: 'still open', decided: 'decided' },
     priorities: 'Where I would start',
     findings: 'Findings',
     severity: 'Severity',
@@ -184,7 +185,7 @@ const REPORT = {
   lede: '',
   // Each: { figure: '12 pages · 2 layouts', text: 'What they are' }.
   built: [],
-  // Each, for a finding of an earlier report: { point: 'PZ-32 · what it was', url: '', status: 'fixed' | 'partial' | 'open', how: '' }.
+  // Each, for a finding of an earlier report: { point: 'PZ-32 · what it was', url: '', status: 'fixed' | 'partial' | 'open' | 'decided', how: '' }.
   changed: [],
   // The few to start with: { ids: ['PZ-60'], text: 'Why first' }.
   priorities: [],

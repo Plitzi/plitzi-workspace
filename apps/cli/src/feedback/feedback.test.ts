@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { feedback } from '.';
+import { DECIDED } from './decided';
 import { reportTemplate } from './template';
 
 import type { FeedbackAnswer } from '.';
@@ -45,6 +46,20 @@ describe('plitzi feedback', () => {
     expect(answer.brief).toContain('fill the REPORT object');
     expect(answer.brief).toContain('publish the file as a private artifact');
     expect(answer.brief).toContain('No earlier report: number the findings from PZ-1.');
+  });
+
+  /** What Plitzi decided not to change reaches the agent, so it is not carried as open from report to report. */
+  it('tells the agent what Plitzi decided, and the page has a status for it', async () => {
+    await fs.writeFile(path.join(folder, 'package.json'), JSON.stringify({ name: 'shop' }));
+    const answer = await answered({});
+
+    for (const { subject, instead } of DECIDED) {
+      expect(answer.brief).toContain(subject);
+      expect(answer.brief).toContain(instead);
+    }
+
+    expect(answer.brief).toContain('`changed` as `decided`');
+    expect(await fs.readFile(answer.file, 'utf-8')).toContain(String.raw`decided: 'decided'`);
   });
 
   it('never writes over an earlier report of the same day', async () => {

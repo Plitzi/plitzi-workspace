@@ -8,6 +8,9 @@ export type {
   FunctionContext,
   FunctionFetch,
   FunctionFetchInit,
+  FunctionOAuth,
+  FunctionOAuthOwner,
+  FunctionOAuthStatus,
   FunctionRoute,
   FunctionRouteContext,
   FunctionsDefinition,
@@ -21,7 +24,12 @@ export { DEFAULT_FUNCTION_CEILINGS, DEFAULT_FUNCTION_LIMITS } from './modules/fu
  * when it was saved (`prepareFunctions` on the actions module is the one way to make one).
  */
 export type { FunctionsSource } from './modules/functions/build';
-export type { FunctionsManifest, FunctionTaskManifest, FunctionsProblem } from '@plitzi/sdk-shared';
+export type {
+  FunctionOAuthConnection,
+  FunctionsManifest,
+  FunctionTaskManifest,
+  FunctionsProblem
+} from '@plitzi/sdk-shared';
 export type {
   FunctionInvocation,
   FunctionInvokeRequest,

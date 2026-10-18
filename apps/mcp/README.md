@@ -155,6 +155,12 @@ if (answer.rendered) {
 `base` is the style of the space that shows the widget: its tokens in both themes, its classes and its fonts come
 with it, so the widget looks like the page around it. Left out, the widget starts from nothing, as one in a chat does.
 
+The guide is long (~30k characters) because it teaches everything a widget can do. An agent that counts its tokens — a
+voice assistant, a small model — is handed `renderGuideCore` instead (a third of it: the model of a render, the
+element types, the host's theme, what to do on a refusal) and reads the rest when a widget needs it: each section is
+`renderGuideTopics[topic]`, addressed `renderGuideTopicUri(topic)` (`plitzi://render/guide/repeat`, `…/data`…), which
+the core names. On this package's own server those addresses are resources, read with `plitzi_read`.
+
 ## Draft preview
 
 The two halves live in different packages, joined by a one-shot token:

@@ -16,7 +16,7 @@ export const nativeTasks = (
   definitions.flatMap(definition =>
     (definition.tasks ?? []).map(task => {
       const contextFor = (ctx: ActionTaskContext): FunctionContext =>
-        functionContextFor(ctx, definition.allow?.hosts ?? [], scope);
+        functionContextFor(ctx, definition.allow?.hosts ?? [], scope, definition.oauth);
       // A catalog is heterogeneous by nature — each task declares its own params, and `FunctionTask<never>` is how a
       // list of them is typed — so the one call into it is widened here, where the params were already resolved
       // against the task's own declaration.

@@ -76,6 +76,16 @@ export type FunctionCall =
   | { op: 'sign'; value: string }
   | { op: 'verify'; value: string; signature: string }
   | { op: 'data'; file: string }
+  | { op: 'oauth'; method: 'connect'; connection: string; returnTo: string; owner?: string }
+  | { op: 'oauth'; method: 'status' | 'disconnect'; connection: string; owner?: string }
+  | {
+      op: 'oauth';
+      method: 'fetch';
+      connection: string;
+      url: string;
+      init: Omit<FunctionFetchInit, 'credential'>;
+      owner?: string;
+    }
   /** Each value as the guest could send it: JSON, with what JSON cannot say already said as text. */
   | { op: 'log'; values: unknown[] }
   | { op: 'emit'; chunk: unknown };
