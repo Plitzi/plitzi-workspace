@@ -247,11 +247,38 @@ const usageOf = (value: unknown): { usage: FunctionUsage } | Record<string, neve
 };
 
 /** What the runner sent the platform, or nothing when it is not one of the protocol's messages. */
+/** Headers as the wire carries them: name and value pairs, the rest left out. */
+const headersOf = (value: unknown): [string, string][] =>
+  Array.isArray(value)
+    ? value.flatMap((pair: unknown) =>
+        Array.isArray(pair) && typeof pair[0] === 'string' && typeof pair[1] === 'string'
+          ? [[pair[0], pair[1]] satisfies [string, string]]
+          : []
+      )
+    : [];
+
 export const readResponseMessage = (data: string): RunnerResponseMessage | undefined => {
   const message = parse(data);
   switch (message?.type) {
     case 'needBundle':
       return { type: 'needBundle' };
+    case 'head':
+      return typeof message.status === 'number'
+        ? {
+            type: 'head',
+            status: message.status,
+            statusText: typeof message.statusText === 'string' ? message.statusText : '',
+            headers: headersOf(message.headers)
+          }
+        : undefined;
+    case 'chunk': {
+      const chunk = isRecord(message.chunk) ? message.chunk : undefined;
+      if (typeof chunk?.base64 === 'string') {
+        return { type: 'chunk', chunk: { base64: chunk.base64 } };
+      }
+
+      return typeof chunk?.text === 'string' ? { type: 'chunk', chunk: { text: chunk.text } } : undefined;
+    }
     case 'call':
       return typeof message.id === 'number' ? { type: 'call', id: message.id, call: message.call } : undefined;
     case 'done':

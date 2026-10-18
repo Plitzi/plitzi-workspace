@@ -44,6 +44,27 @@ export type WireRequest = { method: string; url: string; headers: WireHeaders; b
 
 export type WireResponse = { status: number; statusText: string; headers: WireHeaders; body: WireBody | null };
 
+/**
+ * A route's answer as it is written rather than once it is done — what a space's runtime answers, so a route there
+ * streams as an endpoint does, with the platform's `ctx` all the same: its head at once, its body as the code writes it.
+ * Never JSON: it lives in the process that holds the run, its body fed by the runner's `chunk` messages.
+ */
+export type StreamedRouteAnswer = {
+  streamed: true;
+  status: number;
+  statusText: string;
+  headers: WireHeaders;
+  body: ReadableStream<Uint8Array>;
+};
+
+export const isStreamedRouteAnswer = (value: unknown): value is StreamedRouteAnswer =>
+  typeof value === 'object' &&
+  value !== null &&
+  'streamed' in value &&
+  value.streamed === true &&
+  'body' in value &&
+  value.body instanceof ReadableStream;
+
 /** Who and what an invocation is for: the facts a {@link FunctionContext} carries, sent with it rather than asked for. */
 export type FunctionInvocationContext = Pick<
   FunctionContext,
@@ -188,6 +209,9 @@ export type RunnerRequestMessage =
 
 export type RunnerResponseMessage =
   | { type: 'needBundle' }
+  /** A route answering as it writes: its head, then each `chunk` of its body, then `done`. */
+  | { type: 'head'; status: number; statusText: string; headers: WireHeaders }
+  | { type: 'chunk'; chunk: WireBody }
   /** As the code sent it: the platform reads it, trusting no runner to have. */
   | { type: 'call'; id: number; call: unknown }
   | { type: 'done'; value: unknown; usage?: FunctionUsage }

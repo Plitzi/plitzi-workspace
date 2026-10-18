@@ -9,7 +9,7 @@ import { ActionRefusal } from '../actions/runtime/errors';
 import type { FunctionJob } from './contract';
 import type { FunctionJobLimits } from './jobs';
 import type { RouteVisit } from './routes';
-import type { ActionJob, ActionJobStatus, FunctionJobView, SSRUser } from '@plitzi/sdk-shared';
+import type { Job, JobStatus, FunctionJobView, SSRUser } from '@plitzi/sdk-shared';
 
 /**
  * Jobs of a server's own functions, the whole way through the module a deployment gets: started by a route, run by the
@@ -125,14 +125,14 @@ const world = (limits: Partial<FunctionJobLimits> = {}) => {
       })
     );
 
-    return answer.json();
+    return answer.response.json();
   };
   const start = async (name: string, input: Record<string, unknown> = {}, key?: string) =>
     (await call('POST', `/start/${name}`, { input, ...(key ? { key } : {}) })) as FunctionJobView & {
       refused?: string;
     };
   /** The job, once it is in `status` — the worker polled (and beating) meanwhile, as a replica's loop does. */
-  const until = async (id: string, status: ActionJobStatus): Promise<ActionJob> => {
+  const until = async (id: string, status: JobStatus): Promise<Job> => {
     for (let round = 0; round < 200; round += 1) {
       const job = await queue.getJob([SPACE], id);
       if (job?.status === status) {
@@ -160,7 +160,7 @@ describe('a job of the functions', () => {
     expect(job).toMatchObject({
       result: { counted: 3 },
       state: { at: 3 },
-      function: { user: { id: 3 }, watch: { mode: 'role', permissions: ['jobs.read'] } }
+      target: { kind: 'function', name: 'count', user: { id: 3 }, watch: { mode: 'role', permissions: ['jobs.read'] } }
     });
     expect(heard.map(view => view.status)).toEqual(expect.arrayContaining(['pending', 'running', 'succeeded']));
     expect(heard.some(view => view.progress === 1 && view.step === '3 of 3')).toBe(true);

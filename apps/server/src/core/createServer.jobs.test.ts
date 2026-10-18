@@ -10,7 +10,7 @@ import { functionsInHand } from '../modules/functions/space';
 import { offlineDataOf } from '../modules/ssr/testing/offlineData';
 
 import type { SpaceFunctions } from '../modules/functions/protocol';
-import type { ActionJob, FunctionJobView, SSRServer } from '@plitzi/sdk-shared';
+import type { Job, FunctionJobView, SSRServer } from '@plitzi/sdk-shared';
 
 /**
  * A space's job the whole way, through the server a deployment gets: its code in the sandbox declares it, a route starts
@@ -105,7 +105,7 @@ const start = async (name: string, input: Record<string, unknown> = {}): Promise
     })
   ).json()) as FunctionJobView;
 
-const until = async (id: string, done: (job: ActionJob) => boolean): Promise<ActionJob> => {
+const until = async (id: string, done: (job: Job) => boolean): Promise<Job> => {
   for (let round = 0; round < 300; round += 1) {
     const job = await queue.getJob([1], id);
     if (job && done(job)) {

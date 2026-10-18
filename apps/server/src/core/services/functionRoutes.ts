@@ -1,5 +1,6 @@
 import { FUNCTION_ROUTES_PREFIX } from '@plitzi/sdk-shared/actions';
 
+import { writeWebResponse } from '../http/webExchange';
 import { clientIp, readRawBytes, requestOrigin } from '../requestParser';
 
 import type { SSRContext, Stage } from '../http/types';
@@ -43,7 +44,7 @@ export const functionRoutesStage: Stage<SSRContext> = async ctx => {
     }
   });
   const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
-  const response = await route.handle(
+  const { response, streamed } = await route.handle(
     new Request(`${requestOrigin(req) || `${req.protocol}://${req.hostname}`}${req.url}`, {
       method: req.method,
       headers,
@@ -51,15 +52,22 @@ export const functionRoutesStage: Stage<SSRContext> = async ctx => {
     })
   );
 
+  // Always fresh: an answer computed per request is not one a cache in front of the page server may keep.
+  if (!response.headers.has('cache-control')) {
+    response.headers.set('Cache-Control', 'no-store');
+  }
+
+  // Written as it comes — a runtime's stream, the deployment's own code — and ended when the visitor leaves.
+  if (streamed) {
+    await writeWebResponse(ctx.rawRes, response, ctx.signal);
+
+    return true;
+  }
+
   ctx.res.setStatus(response.status);
   response.headers.forEach((value, name) => {
     ctx.res.setHeader(name, value);
   });
-  // Always fresh: an answer computed per request is not one a cache in front of the page server may keep.
-  if (!response.headers.has('cache-control')) {
-    ctx.res.setHeader('Cache-Control', 'no-store');
-  }
-
   ctx.res.send(Buffer.from(await response.arrayBuffer()));
 
   return true;

@@ -5,10 +5,10 @@ import { publishJobView } from '../realtime/jobs';
 import { createRealtimeRetained } from '../realtime/retained';
 
 import type { ActionKvAdapter } from '../actions/types';
-import type { ActionJobQueue, PubSubAdapter } from '@plitzi/sdk-shared';
+import type { JobQueue, PubSubAdapter } from '@plitzi/sdk-shared';
 
 export type JobControlOptions = {
-  queue: ActionJobQueue;
+  queue: JobQueue;
   /**
    * The page server's realtime — the pub/sub its replicas listen on and the `kv` its retained messages are kept in — so
    * whoever watches a job hears what an operator did to it. Absent, the queue changes and nobody is told until the job
@@ -17,7 +17,7 @@ export type JobControlOptions = {
   realtime?: { pubsub: PubSubAdapter; kv: ActionKvAdapter };
 };
 
-export type JobControl = Pick<ActionJobQueue, 'pause' | 'resume' | 'cancel' | 'requeue'>;
+export type JobControl = Pick<JobQueue, 'pause' | 'resume' | 'cancel' | 'requeue'>;
 
 /**
  * An operator's hold on the jobs, from a process that serves no pages — a deployment's API behind its Queue panel: the
@@ -35,7 +35,7 @@ export const createJobControl = ({ queue, realtime }: JobControlOptions): JobCon
 
     try {
       const job = await queue.getJob(spaceIds, jobId);
-      if (job?.function) {
+      if (job?.target.kind === 'function') {
         await publishJobView(
           hub,
           said.retained,
@@ -65,7 +65,7 @@ export const createJobControl = ({ queue, realtime }: JobControlOptions): JobCon
     pause: told((spaceIds, jobId) => queue.pause(spaceIds, jobId)),
     resume: told((spaceIds, jobId) => queue.resume(spaceIds, jobId)),
     cancel: told((spaceIds, jobId) => queue.cancel(spaceIds, jobId)),
-    requeue: told((spaceIds, jobId, options?: Parameters<ActionJobQueue['requeue']>[2]) =>
+    requeue: told((spaceIds, jobId, options?: Parameters<JobQueue['requeue']>[2]) =>
       queue.requeue(spaceIds, jobId, options)
     )
   };

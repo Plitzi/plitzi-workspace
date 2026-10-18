@@ -14,7 +14,7 @@ import { createMemoryKv, KV_METHODS } from '../../../modules/actions/runtime/mem
 
 import type { FleetMessage, FleetPeer, HostedStore } from './channel';
 import type { ActionKvAdapter } from '../../../modules/actions/types';
-import type { ActionJobQueue } from '@plitzi/sdk-shared';
+import type { JobQueue } from '@plitzi/sdk-shared';
 
 /**
  * A fleet in one process: a hub and its workers, each message cloned the way the channel clones it (structured
@@ -88,7 +88,7 @@ describe('the fleet channel', () => {
 
   it('brings dates back as dates', async () => {
     const fleet = simulatedFleet({ jobs: hostable(() => createMemoryJobQueue(), JOB_QUEUE_METHODS) });
-    const queue = fleet.worker(1).client.remote<ActionJobQueue>('jobs#0', JOB_QUEUE_METHODS);
+    const queue = fleet.worker(1).client.remote<JobQueue>('jobs#0', JOB_QUEUE_METHODS);
 
     expect(await queue.now()).toBeInstanceOf(Date);
   });
@@ -242,7 +242,7 @@ describeJobQueue('memory, over the fleet channel', () => {
   const fleet = simulatedFleet({ jobs: hostable(() => createMemoryJobQueue(), JOB_QUEUE_METHODS) });
 
   return Promise.resolve({
-    queue: fleet.worker(1).client.remote<ActionJobQueue>('jobs#0', JOB_QUEUE_METHODS),
+    queue: fleet.worker(1).client.remote<JobQueue>('jobs#0', JOB_QUEUE_METHODS),
     clear: () => Promise.resolve()
   });
 });

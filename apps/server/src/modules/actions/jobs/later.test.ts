@@ -69,8 +69,7 @@ describe('later', () => {
 
     expect(at).toBe(NOON + 45_000);
     expect(await queue.getJob([1], id)).toMatchObject({
-      actionId: 'timeout',
-      trigger: 'later',
+      target: { kind: 'action', name: 'timeout', trigger: 'later' },
       input: { room: 'ABCD' },
       dueAt: NOON + 45_000,
       runAt: NOON + 45_000,

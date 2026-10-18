@@ -4,7 +4,13 @@ import { readResponseMessage } from './messages';
 import { frameText } from '../../../helpers/wsFrame';
 import { FUNCTIONS_PROTOCOL, FunctionFailure } from '../protocol';
 
-import type { FunctionAnswer, FunctionRunner, FunctionUsage, RunnerRequestMessage } from '../protocol';
+import type {
+  FunctionAnswer,
+  FunctionRunner,
+  FunctionUsage,
+  RunnerRequestMessage,
+  StreamedRouteAnswer
+} from '../protocol';
 
 export type RemoteRunnerOptions = {
   /** The runner service, `ws://functions-runner:8790`. */
@@ -53,6 +59,16 @@ export const createRemoteRunner = ({
         handshakeTimeout: connectTimeoutMs
       });
       let settled = false;
+      /** A route answering as it writes: the body handed out at its head, fed until `done`. */
+      let body: ReadableStreamDefaultController<Uint8Array> | undefined;
+      let bodyEnded = false;
+      const endBody = (end: (controller: ReadableStreamDefaultController<Uint8Array>) => void): void => {
+        if (body && !bodyEnded) {
+          bodyEnded = true;
+          end(body);
+          socket.close(1000);
+        }
+      };
       const send = (message: RunnerRequestMessage): void => {
         if (socket.readyState === WebSocket.OPEN) {
           socket.send(JSON.stringify(message));
@@ -126,9 +142,55 @@ export const createRemoteRunner = ({
             );
 
             return;
+          case 'head': {
+            if (settled) {
+              return;
+            }
+
+            // Answered: past this the deadline is not the runner's to keep — the visitor reads, or leaves, as long as
+            // the code writes. Settled without closing the socket, which carries the body.
+            settled = true;
+            clearTimeout(deadline);
+            const stream = new ReadableStream<Uint8Array>({
+              start: controller => {
+                body = controller;
+              },
+              cancel: () => {
+                bodyEnded = true;
+                send({ type: 'abort' });
+                socket.close(1000);
+              }
+            });
+            resolve({
+              streamed: true,
+              status: message.status,
+              statusText: message.statusText,
+              headers: message.headers,
+              body: stream
+            } satisfies StreamedRouteAnswer);
+
+            return;
+          }
+          case 'chunk':
+            if (body && !bodyEnded) {
+              body.enqueue(
+                'base64' in message.chunk
+                  ? new Uint8Array(Buffer.from(message.chunk.base64, 'base64'))
+                  : new TextEncoder().encode(message.chunk.text)
+              );
+            }
+
+            return;
           case 'done':
             if (message.usage) {
               onUsage?.(message.usage);
+            }
+
+            if (body) {
+              signal?.removeEventListener('abort', onAbort);
+              endBody(controller => controller.close());
+
+              return;
             }
 
             settle(() => resolve(message.value));
@@ -139,11 +201,24 @@ export const createRemoteRunner = ({
               onUsage?.(message.usage);
             }
 
+            if (body) {
+              signal?.removeEventListener('abort', onAbort);
+              endBody(controller => controller.error(new FunctionFailure(message.reason, message.error)));
+
+              return;
+            }
+
             settle(() => reject(new FunctionFailure(message.reason, message.error)));
         }
       });
-      socket.on('error', error => settle(() => reject(unreachable(error.message))));
-      socket.on('close', code => settle(() => reject(unreachable(`closed with ${String(code)}`))));
+      socket.on('error', error => {
+        endBody(controller => controller.error(unreachable(error.message)));
+        settle(() => reject(unreachable(error.message)));
+      });
+      socket.on('close', code => {
+        endBody(controller => controller.error(unreachable(`closed with ${String(code)}`)));
+        settle(() => reject(unreachable(`closed with ${String(code)}`)));
+      });
     });
 
   return {

@@ -5,7 +5,7 @@ import { createScheduler } from './scheduler';
 import { schedulesFor } from './schedules';
 import { serverLog } from '../../../helpers/serverLog';
 
-import type { ActionEntry, ActionJobQueue, ElementInteraction } from '@plitzi/sdk-shared';
+import type { ActionEntry, JobQueue, ElementInteraction } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
   id,
@@ -57,7 +57,7 @@ const cluster = (entries: ActionEntry[]) => {
     at: (iso: string) => {
       now = Date.parse(iso);
     },
-    replica: (over: ActionJobQueue = queue) => createScheduler({ queue: over, lookups })
+    replica: (over: JobQueue = queue) => createScheduler({ queue: over, lookups })
   };
 };
 
@@ -103,7 +103,7 @@ describe('createScheduler', () => {
     world.at('2026-03-01T00:30:00Z');
 
     // The crash: the job is written, the schedule never moves.
-    const dying: ActionJobQueue = { ...world.queue, advanceSchedule: () => Promise.reject(new Error('pod killed')) };
+    const dying: JobQueue = { ...world.queue, advanceSchedule: () => Promise.reject(new Error('pod killed')) };
     await expect(world.replica(dying).sweep()).rejects.toThrow('pod killed');
 
     const survivor = await world.replica().sweep();
@@ -207,7 +207,7 @@ describe('createScheduler', () => {
     const error = vi.spyOn(serverLog, 'error').mockImplementation(() => {});
     const memory = createMemoryJobQueue();
     const dueSchedules = vi
-      .fn<ActionJobQueue['dueSchedules']>()
+      .fn<JobQueue['dueSchedules']>()
       .mockRejectedValueOnce(new Error('interrupted due to server monitor timeout'))
       .mockImplementation(limit => memory.dueSchedules(limit));
     const scheduler = createScheduler({

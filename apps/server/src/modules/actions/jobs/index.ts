@@ -8,10 +8,10 @@ import type { JobWorker } from './worker';
 import type { FunctionJobsService } from '../../functions/jobs';
 import type { ActionsModule } from '../index';
 import type { ActionJobsConfig, ActionLookups } from '../types';
-import type { ActionJobQueue } from '@plitzi/sdk-shared';
+import type { JobQueue } from '@plitzi/sdk-shared';
 
 export type ActionJobs = {
-  queue: ActionJobQueue;
+  queue: JobQueue;
   scheduler: Scheduler;
   worker: JobWorker;
   start: () => void;
@@ -37,7 +37,7 @@ export const createActionJobs = (
   lookups: ActionLookups,
   functionJobs?: FunctionJobsService
 ): ActionJobs => {
-  const queue = config.queue ?? fleetStore<ActionJobQueue>('actions.jobs', JOB_QUEUE_METHODS) ?? createMemoryJobQueue();
+  const queue = config.queue ?? fleetStore<JobQueue>('actions.jobs', JOB_QUEUE_METHODS) ?? createMemoryJobQueue();
   const { produce = true, workers = 4 } = config;
 
   const scheduler = createScheduler({

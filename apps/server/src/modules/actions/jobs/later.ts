@@ -5,7 +5,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { findTriggerNode } from '../runtime/triggers';
 
 import type { ActionLookups } from '../types';
-import type { ActionJobQueue, Environment, SpaceRevision } from '@plitzi/sdk-shared';
+import type { JobQueue, Environment, SpaceRevision } from '@plitzi/sdk-shared';
 
 /** A month: past it, a run set for later is a schedule, and a cron says it better. */
 export const MAX_LATER_SECONDS = 30 * 24 * 60 * 60;
@@ -32,7 +32,7 @@ export type LaterAnswer = { id: string; at: number };
 
 export type LaterDeps = {
   /** Read when asked: the queue is made after the runner, and a server may run none. */
-  queue: () => ActionJobQueue | undefined;
+  queue: () => JobQueue | undefined;
   lookups: Pick<ActionLookups, 'getAction'>;
   maxAttempts: number;
 };
@@ -45,7 +45,7 @@ export type LaterScope = { spaceId: number; environment: Environment; at?: Space
  * in the queue an operator reads. Every refusal says why, before anything is queued.
  */
 export const laterFor = ({ queue, lookups, maxAttempts }: LaterDeps, { spaceId, environment, at }: LaterScope) => {
-  const queueOrThrow = (): ActionJobQueue => {
+  const queueOrThrow = (): JobQueue => {
     const found = queue();
     if (!found) {
       throw new Error(
@@ -100,9 +100,8 @@ export const laterFor = ({ queue, lookups, maxAttempts }: LaterDeps, { spaceId, 
       await jobs.enqueue({
         id,
         spaceId,
-        actionId: entry.id,
         environment,
-        trigger: 'later',
+        target: { kind: 'action', name: entry.id, trigger: 'later' },
         input,
         dueAt,
         maxAttempts,

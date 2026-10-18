@@ -21,8 +21,9 @@ import type {
 import type { FunctionCall, FunctionLimits, FunctionUsage, SpaceFunctions } from './protocol';
 import type { TaskContextSource } from '../actions/runtime/runAction';
 import type {
-  ActionJob,
-  ActionJobQueue,
+  FunctionJobTarget,
+  Job,
+  JobQueue,
   Environment,
   FunctionJobManifest,
   FunctionJobView,
@@ -110,14 +111,14 @@ export type FunctionJobsService = {
   /** `ctx.jobs` for one run of a space's code, over the jobs that code declares. */
   forRun: (run: JobRunScope, declared: Readonly<Record<string, FunctionJobManifest>>) => FunctionJobs;
   /** Runs one slice of `job`, `signal` aborting with why (`pause`, `cancel`, `shutdown`) when its worker is told to. */
-  slice: (job: ActionJob, signal: AbortSignal, workerId: string) => Promise<JobSliceOutcome>;
+  slice: (job: Job, signal: AbortSignal, workerId: string) => Promise<JobSliceOutcome>;
   /** Says how the job is now to whoever watches it (`$job:<id>`). Never fails: a watcher missing a beat is not a fault. */
   announce: (spaceId: number, jobId: string) => Promise<void>;
 };
 
 export type FunctionJobsDeps = {
   /** Read when asked: the queue is made after the runner, and a server may run none. */
-  queue: () => ActionJobQueue | undefined;
+  queue: () => JobQueue | undefined;
   config: FunctionsConfig;
   getFunctions?: (spaceId: number, at?: SpaceRevision) => Promise<SpaceFunctions | undefined>;
   /** Read when a slice runs: the runner that makes it is made after this. */
@@ -143,13 +144,13 @@ export const jobsManifestOf = (definition: FunctionsDefinition): Record<string, 
  * A job as whoever may watch it sees it: never its input or what it saved, and of a failure only the code's own refusal
  * — anything else it threw can carry what a visitor must not read, and stays in the Queue for an operator.
  */
-export const jobViewOf = (job: ActionJob): FunctionJobView => {
+export const jobViewOf = (job: Job): FunctionJobView => {
   const last = job.history.at(-1);
   const failed = job.status === 'failed' || job.status === 'dead';
 
   return {
     id: job.id,
-    name: job.actionId,
+    name: job.target.name,
     status: job.status,
     ...(job.progress ? { progress: job.progress.fraction } : {}),
     ...(job.progress?.step ? { step: job.progress.step } : {}),
@@ -168,7 +169,7 @@ export const createFunctionJobs = ({
   publish,
   maxAttempts
 }: FunctionJobsDeps): FunctionJobsService => {
-  const queueOrThrow = (): ActionJobQueue => {
+  const queueOrThrow = (): JobQueue => {
     const found = queue();
     if (!found) {
       throw new Error(
@@ -191,7 +192,7 @@ export const createFunctionJobs = ({
 
     try {
       const job = await queue()?.getJob([spaceId], jobId);
-      if (job?.function) {
+      if (job?.target.kind === 'function') {
         await publish({ spaceId, environment: job.environment }, jobId, jobViewOf(job));
       }
     } catch (error) {
@@ -200,16 +201,16 @@ export const createFunctionJobs = ({
   };
 
   /** A job of this space's functions by id — a run of an action under the same id is not one `ctx.jobs` reaches. */
-  const ownJob = async (spaceId: number, id: string): Promise<ActionJob | undefined> => {
+  const ownJob = async (spaceId: number, id: string): Promise<Job | undefined> => {
     const job = typeof id === 'string' && id !== '' ? await queueOrThrow().getJob([spaceId], id) : undefined;
 
-    return job?.function ? job : undefined;
+    return job?.target.kind === 'function' ? job : undefined;
   };
 
   const forRun = (run: JobRunScope, declared: Readonly<Record<string, FunctionJobManifest>>): FunctionJobs => {
     const { spaceId } = run;
     /** A stop or a resume, said to the job's watchers when it changed something. */
-    const changed = async (id: string, change: (jobs: ActionJobQueue) => Promise<boolean>): Promise<boolean> => {
+    const changed = async (id: string, change: (jobs: JobQueue) => Promise<boolean>): Promise<boolean> => {
       const jobs = queueOrThrow();
       if (!(await ownJob(spaceId, id)) || !(await change(jobs))) {
         return false;
@@ -267,17 +268,17 @@ export const createFunctionJobs = ({
         const created = await jobs.enqueue({
           id,
           spaceId,
-          actionId: name,
           environment: run.environment,
-          trigger: 'job',
-          input,
-          dueAt: (await jobs.now()).getTime(),
-          maxAttempts,
-          function: {
+          target: {
+            kind: 'function',
+            name,
             ...(run.user ? { user: run.user } : {}),
             ...(declaration.watch ? { watch: declaration.watch } : {}),
             ...(run.at ? { at: run.at } : {})
           },
+          input,
+          dueAt: (await jobs.now()).getTime(),
+          maxAttempts,
           ...(key === undefined ? {} : { key })
         });
         if (!created) {
@@ -315,27 +316,38 @@ export const createFunctionJobs = ({
     | { native: true; definition: FunctionsDefinition }
     | { native: false; functions: SpaceFunctions; declaration: FunctionJobManifest };
 
-  const find = async (job: ActionJob): Promise<Found | undefined> => {
-    const definition = (config.native ?? []).find(each => Object.hasOwn(each.jobs ?? {}, job.actionId));
+  const find = async (spaceId: number, target: FunctionJobTarget): Promise<Found | undefined> => {
+    const definition = (config.native ?? []).find(each => Object.hasOwn(each.jobs ?? {}, target.name));
     if (definition) {
       return { native: true, definition };
     }
 
-    const functions = await getFunctions?.(job.spaceId, job.function?.at);
-    const declaration = functions?.manifest.jobs?.[job.actionId];
+    const functions = await getFunctions?.(spaceId, target.at);
+    const declaration = functions?.manifest.jobs?.[target.name];
 
     return functions && declaration ? { native: false, functions, declaration } : undefined;
   };
 
-  const slice = async (job: ActionJob, signal: AbortSignal, workerId: string): Promise<JobSliceOutcome> => {
+  const slice = async (job: Job, signal: AbortSignal, workerId: string): Promise<JobSliceOutcome> => {
     const jobs = queueOrThrow();
     const startedAt = Date.now();
     const spent = () => Date.now() - startedAt;
-    const found = await find(job);
+    const { target } = job;
+    if (target.kind !== 'function') {
+      return {
+        kind: 'failed',
+        error: 'A run of an action is not a job of functions',
+        final: true,
+        refused: false,
+        spentMs: 0
+      };
+    }
+
+    const found = await find(job.spaceId, target);
     if (!found) {
       return {
         kind: 'failed',
-        error: `This space's functions declare no job "${job.actionId}" any more`,
+        error: `This space's functions declare no job "${target.name}" any more`,
         final: true,
         refused: false,
         spentMs: 0
@@ -368,7 +380,7 @@ export const createFunctionJobs = ({
       return { kind: 'wait', delayMs: BUSY_WAIT_MS, why: `waiting: ${refusal}` };
     }
 
-    const declared = found.native ? jobsManifestOf(found.definition)[job.actionId] : found.declaration;
+    const declared = found.native ? jobsManifestOf(found.definition)[target.name] : found.declaration;
     const maxMs = Math.min(limits.maxSeconds, declared.maxSeconds ?? limits.maxSeconds) * 1000;
     const remainingMs = maxMs - (job.activeMs ?? 0);
     if (remainingMs <= 0) {
@@ -457,7 +469,7 @@ export const createFunctionJobs = ({
       );
     };
 
-    const user = job.function?.user;
+    const user = target.user;
     const ctx = taskContext()(
       {
         runId: randomUUID(),
@@ -466,13 +478,13 @@ export const createFunctionJobs = ({
         trigger: 'call',
         callerId: user ? `user:${String(user.id)}` : 'job',
         ...(user ? { user } : {}),
-        ...(job.function?.at ? { at: job.function.at } : {})
+        ...(target.at ? { at: target.at } : {})
       },
       stopper.signal,
-      [`job:${job.actionId}`]
+      [`job:${target.name}`]
     );
     const log = (line: string): void => {
-      serverLog.info('Functions', `job ${job.actionId} ${job.id} of space ${String(job.spaceId)}: ${line}`);
+      serverLog.info('Functions', `job ${target.name} ${job.id} of space ${String(job.spaceId)}: ${line}`);
     };
     const contextOf = (hosts: readonly string[], definition: Pick<FunctionsDefinition, 'oauth'>, manifest = {}) => ({
       ...functionContextFor({ ...ctx, log }, hosts, undefined, definition.oauth, manifest),
@@ -518,15 +530,15 @@ export const createFunctionJobs = ({
     try {
       if (found.native) {
         const { definition } = found;
-        const declaredJob = definition.jobs?.[job.actionId];
+        const declaredJob = definition.jobs?.[target.name];
         if (!declaredJob) {
-          throw new Error(`This server's functions declare no job "${job.actionId}"`);
+          throw new Error(`This server's functions declare no job "${target.name}"`);
         }
 
         const fnCtx: FunctionContext = contextOf(definition.allow?.hosts ?? [], definition, jobsManifestOf(definition));
         const handle: FunctionJobHandle<unknown> = {
           id: job.id,
-          name: job.actionId,
+          name: target.name,
           state: job.state,
           attempt: job.attempts,
           save,
@@ -580,7 +592,7 @@ export const createFunctionJobs = ({
           bundle: functions.bundle,
           invocation: {
             kind: 'job',
-            name: job.actionId,
+            name: target.name,
             input: job.input,
             job: slicePart,
             context: {
@@ -605,7 +617,7 @@ export const createFunctionJobs = ({
         return outcomeOf({ value });
       } finally {
         if (usage) {
-          config.onUsage?.({ spaceId: job.spaceId, task: `job ${job.actionId}`, ok, usage });
+          config.onUsage?.({ spaceId: job.spaceId, task: `job ${target.name}`, ok, usage });
         }
       }
     } catch (error) {

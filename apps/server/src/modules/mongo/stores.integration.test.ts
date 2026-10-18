@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb';
-import { afterAll } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { createMongoJobQueue } from './jobQueue';
 import { createMongoKv } from './kv';
@@ -46,3 +46,52 @@ describeKv(
   () => Promise.resolve({ kv: createMongoKv({ db, collection: 'itest_kv' }), clear: emptied('itest_kv') }),
   available
 );
+
+describe.skipIf(!available)('mongo — a queue a release before left', () => {
+  /** What 0.38.20 wrote: a run of an action, named by `actionId` and `trigger`, and indexed by them. */
+  it('gives the jobs written before targets theirs, once, and drops the index they were found by', async () => {
+    const jobs = db.collection('itest_legacy_jobs');
+    await jobs.deleteMany({});
+    await jobs.insertOne({
+      _id: 'schedule:7:digest:1' as never,
+      spaceId: 7,
+      actionId: 'digest',
+      trigger: 'schedule',
+      environment: 'main',
+      input: {},
+      dueAt: 1,
+      maxAttempts: 3,
+      status: 'succeeded',
+      runAt: 1,
+      attempts: 1,
+      createdAt: 1,
+      updatedAt: 1,
+      history: []
+    });
+    await jobs.createIndex({ spaceId: 1, actionId: 1, updatedAt: -1 });
+
+    const queue = createMongoJobQueue({
+      db: () => db,
+      collections: { jobs: 'itest_legacy_jobs', schedules: 'itest_legacy_schedules' }
+    });
+    const job = await queue.getJob([7], 'schedule:7:digest:1');
+
+    expect(job?.target).toEqual({ kind: 'action', name: 'digest', trigger: 'schedule' });
+    expect(job).not.toHaveProperty('actionId');
+    expect(await jobs.indexExists('spaceId_1_actionId_1_updatedAt_-1')).toBe(false);
+    expect((await queue.listJobs({ spaceIds: [7], name: 'digest', limit: 5, offset: 0 })).total).toBe(1);
+  });
+
+  it('starts on a database that has no queue yet', async () => {
+    await db
+      .collection('itest_fresh_jobs')
+      .drop()
+      .catch(() => undefined);
+    const queue = createMongoJobQueue({
+      db: () => db,
+      collections: { jobs: 'itest_fresh_jobs', schedules: 'itest_fresh_schedules' }
+    });
+
+    expect(await queue.listJobs({ spaceIds: [7], limit: 5, offset: 0 })).toEqual({ jobs: [], total: 0 });
+  });
+});

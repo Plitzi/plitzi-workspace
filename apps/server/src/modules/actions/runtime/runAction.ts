@@ -32,7 +32,7 @@ import type {
   ResolvedActionLimits
 } from '../types';
 import type {
-  ActionJobQueue,
+  JobQueue,
   ActionRunStep,
   ElementInteraction,
   InteractionNode,
@@ -358,7 +358,7 @@ export const createActionRunner = (
   registryFor: (request: ActionRunRequest) => ActionTaskRegistry | Promise<ActionTaskRegistry>,
   baseFetch: typeof fetch = fetch,
   /** The queue runs set for later go into, read when asked: it is made after the runner, and a server may run none. */
-  jobsQueue: () => ActionJobQueue | undefined = () => undefined,
+  jobsQueue: () => JobQueue | undefined = () => undefined,
   /** The space's jobs, for a function's `ctx.jobs` — made beside the runner, and reading back its `taskContext`. */
   functionJobs?: FunctionJobsService
 ): ActionRunner & { taskContext: TaskContextSource } => {

@@ -35,13 +35,24 @@
   than the code's own refusal. Limits per space (its plan) through `functions.jobs.limitsFor` —
   `DEFAULT_FUNCTION_JOB_LIMITS` otherwise: 10 running across the account's spaces (`pool`, the oldest first), 1,000
   waiting, 6 h, slices of 5 min / 30 s CPU / 10,000 calls, 1 MB of state.
-- **The job queue** (`ActionJobQueue`, the memory, Mongo and MySQL helpers): a job of a space's functions
-  (`function`: who started it, its `watch`, the revision its code is), `paused` with `pause`/`resume`, `write` for what
-  a running job saves and reports, `state`/`progress`/`result`/`activeMs` on the job, `heartbeat` answering
-  `{ jobId, stop: 'cancel' | 'pause' }[]`, a settlement's explicit `refund`, `requeue(…, { input, fresh })`, and a
-  `kind` filter on `listJobs`. MySQL tables made before are brought up to the new columns by `ensureJobTables` (or
-  `mysqlJobSchemaUpgrades` for a deployment's own migrations). Breaking for a deployment with a queue of its own: the
-  contract tests (`describeJobQueue`) say what it must now do.
+- **The queue's types are the queue's** (`@plitzi/sdk-shared`, `@plitzi/sdk-server`): `ActionJobQueue`, `ActionJob`,
+  `ActionJobInput`, `ActionJobStatus`, `ActionJobAttempt`, `ActionJobSettlement`, `ActionJobQuery` are `JobQueue`, `Job`,
+  `JobInput`, `JobStatus`, `JobAttempt`, `JobSettlement`, `JobQuery` (`ACTION_JOB_STATUSES` → `JOB_STATUSES`,
+  `isJobStatus`, `TERMINAL_JOB_STATUSES`) — the queue holds a schedule's fires, the runs set for later and the jobs of
+  the spaces' functions. **What a job runs is its `target`**: `{ kind: 'action', name, trigger }` or
+  `{ kind: 'function', name, user, watch, at }`, in place of `actionId`, `trigger` and `function`; `listJobs` filters
+  by `kind` and `name`. Also on the queue: `paused` with `pause`/`resume`, `write` for what a running job saves and
+  reports, `state`/`progress`/`result`/`activeMs`, `heartbeat` answering `{ jobId, stop: 'cancel' | 'pause' }[]`, a
+  settlement's explicit `refund`, `requeue(…, { input, fresh })`. The helpers bring a store a release before left up
+  to it by themselves: MySQL's `ensureJobTables` gives each job its target from `action_id`/`trigger_type` and drops
+  them (`mysqlJobSchemaUpgrades` lists the statements for a deployment's own migrations); Mongo's queue does the same
+  to the documents on first use and drops the `spaceId_1_actionId_1_updatedAt_-1` index. A deployment with a queue of
+  its own: the contract tests (`describeJobQueue`) say what it must now do.
+- **A runtime's routes stream** (`@plitzi/sdk-server`): a route under `/fn/` answered by a space's runtime is passed on
+  as it is written — its head at once, its body as the code writes it, with the platform's `ctx` — over the functions
+  protocol's new `head`/`chunk` messages, with no time limit once it answered; the deployment's own routes stream too.
+  A runtime's `endpoints` are for addresses outside `/fn/` (an MCP server at `/mcp`); anything that can live under
+  `/fn/` is a route. A sandbox's routes are answered whole, as before.
 - **`createJobControl({ queue, realtime: { pubsub, kv } })`** (`@plitzi/sdk-server/actions`): an operator's
   `pause`/`resume`/`cancel`/`requeue` from a process that serves no pages — a Queue panel's API — each said on
   `$job:<id>` through the page server's own pub/sub and retained store, so a watcher hears what an operator did.

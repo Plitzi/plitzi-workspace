@@ -7,7 +7,7 @@ import { ActionRunError } from '../runtime/errors';
 import type { FunctionJobsService } from '../../functions/jobs';
 import type { ActionsModule } from '../index';
 import type { ActionLookups, ActionRunResult } from '../types';
-import type { ActionJob, ActionJobQueue, ActionJobSettlement } from '@plitzi/sdk-shared';
+import type { Job, JobQueue, JobSettlement } from '@plitzi/sdk-shared';
 
 /**
  * Refusals that mean "not now" rather than "not ever".
@@ -42,7 +42,7 @@ const failureOf = (result: ActionRunResult): string => {
 const GIVE_UP = new Set(['not_found', 'disabled', 'forbidden', 'recursion']);
 
 export type JobWorkerOptions = {
-  queue: ActionJobQueue;
+  queue: JobQueue;
   lookups: ActionLookups;
   module: ActionsModule;
   /** What runs a job of a space's functions (`function` on the job), slice by slice. Absent, such a job waits. */
@@ -138,7 +138,7 @@ export const createJobWorker = ({
     return step + Math.floor(Math.random() * Math.min(step, 30_000));
   };
 
-  const settle = async (settlement: ActionJobSettlement): Promise<void> => {
+  const settle = async (settlement: JobSettlement): Promise<void> => {
     try {
       await queue.settle(settlement);
     } catch (error) {
@@ -149,11 +149,11 @@ export const createJobWorker = ({
   };
 
   /** Back to the queue with nothing held against it — see {@link TRY_AGAIN}. */
-  const release = (job: ActionJob, delayMs: number, error: string) =>
+  const release = (job: Job, delayMs: number, error: string) =>
     settle({ jobId: job.id, workerId, status: 'pending', delayMs, error });
 
   const fail = (
-    job: ActionJob,
+    job: Job,
     runId: string | undefined,
     error: string,
     { spentMs, refused = false }: { spentMs?: number; refused?: boolean } = {}
@@ -176,7 +176,7 @@ export const createJobWorker = ({
    * One slice of a job of a space's functions, settled by how it ended: done, set aside, cancelled, handed back to go on
    * in the next slice — or failed, to be tried again from what it saved.
    */
-  const executeSlice = async (job: ActionJob, jobs: FunctionJobsService): Promise<void> => {
+  const executeSlice = async (job: Job, jobs: FunctionJobsService): Promise<void> => {
     const controller = new AbortController();
     active.set(job.id, controller);
     slicing.add(job.id);
@@ -255,8 +255,9 @@ export const createJobWorker = ({
     }
   };
 
-  const execute = async (job: ActionJob): Promise<void> => {
-    if (job.function) {
+  const execute = async (job: Job): Promise<void> => {
+    const { target } = job;
+    if (target.kind === 'function') {
       if (functionJobs) {
         await executeSlice(job, functionJobs);
       } else {
@@ -266,20 +267,8 @@ export const createJobWorker = ({
       return;
     }
 
-    const { trigger } = job;
-    if (trigger === 'job') {
-      await settle({
-        jobId: job.id,
-        workerId,
-        status: 'dead',
-        error: 'a job started by code, with nothing to say which code',
-        attempt: { status: 'failed', workerId, error: 'no function job' }
-      });
-
-      return;
-    }
-
-    const entry = await lookups.getAction(job.spaceId, job.actionId);
+    const { name: actionId, trigger } = target;
+    const entry = await lookups.getAction(job.spaceId, actionId);
     if (!entry) {
       await settle({
         jobId: job.id,
@@ -296,7 +285,7 @@ export const createJobWorker = ({
     try {
       run = await module.guards.begin({
         spaceId: job.spaceId,
-        actionId: job.actionId,
+        actionId,
         callerId: trigger,
         input: job.input,
         // The JOB is the unit of work, so the job's own id is its single-flight key. That is what stops a worker

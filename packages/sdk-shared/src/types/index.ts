@@ -13,6 +13,7 @@ export * from './ConnectorTypes';
 export * from './ActionTypes';
 export * from './DataTypes';
 export * from './FunctionTypes';
+export * from './JobTypes';
 export * from './RealtimeTypes';
 export * from './ComponentTypes';
 export * from './StateTypes';

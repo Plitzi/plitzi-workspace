@@ -1,7 +1,6 @@
 import type {
   ActionEmailConfig,
   ActionEntry,
-  ActionJobQueue,
   ActionLimits,
   ActionRejectReason,
   ActionRunSummary,
@@ -17,6 +16,7 @@ import type { PluginDeclaration } from './ComponentTypes';
 import type { ConnectorEntry } from './ConnectorTypes';
 import type { DataDraft, DataSaveResult } from './DataTypes';
 import type { FunctionsDraft, FunctionsSaveResult } from './FunctionTypes';
+import type { JobQueue } from './JobTypes';
 import type { SSRRealtimeConfig } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
 import type { AnalyticsConfig, OfflineDataRaw } from './SdkTypes';
@@ -768,8 +768,8 @@ export type SSRActionConfig = {
  * replicas in different countries agree about what has run without agreeing about what time it is.
  */
 export type SSRActionJobsConfig = {
-  /** Shaped as `ActionJobQueue`. Omitted → this process's memory. */
-  queue?: ActionJobQueue;
+  /** Shaped as `JobQueue`. Omitted → this process's memory. */
+  queue?: JobQueue;
   /** Jobs this replica runs at once. Default 4; `0` produces without consuming. */
   workers?: number;
   /** Whether this replica sweeps due schedules into the queue. Default true. */

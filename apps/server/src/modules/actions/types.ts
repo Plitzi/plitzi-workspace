@@ -8,8 +8,8 @@ import type { KvListEntry, KvListPut, KvListPutOptions, KvListRange } from './ru
 import type { SpaceSigning } from './runtime/signing';
 import type {
   ActionEmailConfig,
-  ActionJob,
-  ActionJobQueue,
+  Job,
+  JobQueue,
   ActionEntry,
   ActionLimits,
   ActionRejectRecord,
@@ -278,7 +278,7 @@ export type ActionRealtime = {
   /** Says a job of the space's functions as it is now, on its own topic (`$job:<id>`), kept for a page that joins. */
   publishJob?: (space: { spaceId: number; environment: string }, jobId: string, view: FunctionJobView) => Promise<void>;
   /** Hands the realtime the way to a job, for the door of its topic: who started it, and who its `watch` lets in. */
-  watchJobs?: (lookup: (spaceId: number, jobId: string) => Promise<ActionJob | undefined>) => void;
+  watchJobs?: (lookup: (spaceId: number, jobId: string) => Promise<Job | undefined>) => void;
 };
 
 /**
@@ -391,14 +391,14 @@ export type ActionsConfig = {
  *
  * Supplying nothing still schedules — over an in-process queue, which is correct for one replica and silently
  * wrong for two, since each gets its own copy of every schedule. A deployment with more than one supplies a
- * {@link ActionJobQueue} over a store they share.
+ * {@link JobQueue} over a store they share.
  */
 export type ActionJobsConfig = {
   /**
    * Where jobs and schedules live. Omitted → this process's memory: nothing survives a restart, and a second
    * replica produces the same fires all over again.
    */
-  queue?: ActionJobQueue;
+  queue?: JobQueue;
   /**
    * How many jobs this replica runs at once. Default 4; `0` makes it a producer that never consumes.
    *

@@ -6,7 +6,7 @@ import { tasksOf } from '../../functions/testing/tasksOf';
 import { createActionsModule } from '../index';
 
 import type { FunctionTask } from '../../functions/contract';
-import type { ActionEntry, ActionJobInput, ElementInteraction } from '@plitzi/sdk-shared';
+import type { ActionEntry, JobInput, ElementInteraction } from '@plitzi/sdk-shared';
 
 const node = (id: string, overrides: Partial<ElementInteraction> = {}): ElementInteraction => ({
   id,
@@ -36,12 +36,11 @@ const entry = (id = 'digest'): ActionEntry => ({
 
 const MIDNIGHT = Date.parse('2026-03-01T00:00:00Z');
 
-const jobInput = (over: Partial<ActionJobInput> = {}): ActionJobInput => ({
+const jobInput = (over: Partial<JobInput> = {}): JobInput => ({
   id: `schedule:1:digest:${MIDNIGHT}`,
   spaceId: 1,
-  actionId: 'digest',
   environment: 'main',
-  trigger: 'schedule',
+  target: { kind: 'action', name: 'digest', trigger: 'schedule' },
   input: {},
   dueAt: MIDNIGHT,
   maxAttempts: 3,
@@ -69,7 +68,7 @@ const world = (run: FunctionTask['run'], entries = [entry()]) => {
     },
     worker: (over: Parameters<typeof createJobWorker>[0] extends infer T ? Partial<T> : never = {}) =>
       createJobWorker({ queue, lookups, module, pollMs: 5, leaseMs: 1_000, onError: () => {}, ...over }),
-    job: async (over: Partial<ActionJobInput> = {}) => {
+    job: async (over: Partial<JobInput> = {}) => {
       await queue.enqueue(jobInput(over));
     },
     read: async (id = jobInput().id) => {

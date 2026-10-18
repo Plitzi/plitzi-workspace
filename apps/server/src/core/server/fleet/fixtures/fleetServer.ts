@@ -106,9 +106,8 @@ const fleetRoute = async (path: string, query: Record<string, string>, res: SSRR
         await queue?.enqueue({
           id: key,
           spaceId: 1,
-          actionId: 'digest',
           environment: 'main',
-          trigger: 'schedule',
+          target: { kind: 'action', name: 'digest', trigger: 'schedule' },
           dueAt: Date.now(),
           maxAttempts: 1,
           input: {}

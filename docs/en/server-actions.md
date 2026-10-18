@@ -671,14 +671,18 @@ dashboard, a support script, a terminal at 3am:
 ```
 GET  /spaces/:spaceId/actions/runs?actionId=&status=&limit=&offset=
 GET  /spaces/:spaceId/actions/runs/:runId
-GET  /spaces/:spaceId/actions/jobs?actionId=&status=&limit=&offset=
+GET  /spaces/:spaceId/actions/jobs?name=&status=&limit=&offset=
 GET  /spaces/:spaceId/actions/jobs/:jobId
 GET  /spaces/:spaceId/actions/schedules
 POST /spaces/:spaceId/actions/jobs/:jobId/retry
 POST /spaces/:spaceId/actions/jobs/:jobId/cancel
+POST /spaces/:spaceId/actions/jobs/:jobId/pause
+POST /spaces/:spaceId/actions/jobs/:jobId/resume
 ```
 
-The reads need a session with `spaceView` on the space; the two that act need `spaceUpdate`. They answer runs and refusals in one shape (`status: 'refused'`
+A job says what it runs in `target`: `{ kind: 'action', name, trigger }` — a schedule's fire, a run set for later — or
+`{ kind: 'function', name }`, a job of the space's functions; `name=` filters by either. The reads need a session with
+`spaceView` on the space; the four that act need `spaceUpdate`, and pause and resume are for a job of the functions. They answer runs and refusals in one shape (`status: 'refused'`
 carries the `reason` that turned a delivery away), and never the trace: step results are the space's own data, and
 a history is which steps ran and how each ended. A `runId` is what a caller already holds — it comes back on the
 answer, on the `X-Plitzi-Run-Id` header, and on the trigger that fires when a detached run lands.

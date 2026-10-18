@@ -6,7 +6,7 @@ import { serverLog } from '../../../helpers/serverLog';
 
 import type { FailureStreak } from './failureStreak';
 import type { ActionLookups } from '../types';
-import type { ActionJobQueue, ActionSchedule, Environment } from '@plitzi/sdk-shared';
+import type { JobQueue, ActionSchedule, Environment } from '@plitzi/sdk-shared';
 
 const MINUTE_MS = 60_000;
 
@@ -15,7 +15,7 @@ const MINUTE_MS = 60_000;
 const PARK_MS = 4 * 366 * 24 * 60 * MINUTE_MS;
 
 export type SchedulerOptions = {
-  queue: ActionJobQueue;
+  queue: JobQueue;
   lookups: ActionLookups;
   /** Which environment scheduled runs execute in. Defaults to `main`, the document the builder edits. */
   environment?: Environment;
@@ -96,9 +96,8 @@ export const createScheduler = ({
     const created = await queue.enqueue({
       id,
       spaceId,
-      actionId,
       environment: schedule.environment,
-      trigger: 'schedule',
+      target: { kind: 'action', name: actionId, trigger: 'schedule' },
       input: {},
       dueAt: fireAt,
       maxAttempts: schedule.maxAttempts

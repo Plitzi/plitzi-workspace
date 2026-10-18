@@ -43,9 +43,10 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
     `CREATE TABLE IF NOT EXISTS ${t.jobs} (
       id VARCHAR(191) NOT NULL,
       space_id BIGINT NOT NULL,
-      action_id VARCHAR(191) NOT NULL,
+      target_kind VARCHAR(16) NOT NULL,
+      target_name VARCHAR(191) NOT NULL,
+      target MEDIUMTEXT NOT NULL,
       environment VARCHAR(64) NOT NULL,
-      trigger_type VARCHAR(64) NOT NULL,
       input MEDIUMTEXT NOT NULL,
       due_at BIGINT NOT NULL,
       max_attempts INT NOT NULL,
@@ -63,7 +64,6 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
       error TEXT NULL,
       history MEDIUMTEXT NOT NULL,
       expires_at BIGINT NULL,
-      function_job MEDIUMTEXT NULL,
       state MEDIUMTEXT NULL,
       progress TEXT NULL,
       result MEDIUMTEXT NULL,
@@ -73,6 +73,7 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
       KEY action_jobs_pending (status, run_at),
       KEY action_jobs_lease (status, lease_until),
       KEY action_jobs_space (space_id, updated_at),
+      KEY action_jobs_target (space_id, target_name, updated_at),
       KEY action_jobs_key (space_id, job_key, status),
       KEY action_jobs_expires (expires_at)
     ) ${CHARSET}`,
@@ -139,15 +140,26 @@ const UPGRADES: readonly SchemaUpgrade[] = [
       ADD KEY action_jobs_key (space_id, job_key, status)`
     ]
   },
-  // The jobs of a space's functions: who started one and who may watch it, what it saved, how far it is, what it
-  // answered, a pause asked of it, and how long it has run.
+  // What a job runs became a target — an action, or a job of the space's functions — beside what a job of the functions
+  // keeps: what it saved, how far it is, what it answered, a pause asked of it, how long it has run. The rows already
+  // there are the actions' they always were: each is given its target from its action and trigger.
   {
-    needed: async (db, prefix) => !(await columnsOf(db, `${prefix}action_jobs`)).has('function_job'),
-    statements: prefix => [
-      `ALTER TABLE ${jobTables(prefix).jobs} ADD COLUMN function_job MEDIUMTEXT NULL, ADD COLUMN state MEDIUMTEXT NULL,
-      ADD COLUMN progress TEXT NULL, ADD COLUMN result MEDIUMTEXT NULL,
-      ADD COLUMN pause_requested TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN active_ms BIGINT NOT NULL DEFAULT 0`
-    ]
+    needed: async (db, prefix) => !(await columnsOf(db, `${prefix}action_jobs`)).has('target_kind'),
+    statements: prefix => {
+      const { jobs } = jobTables(prefix);
+
+      return [
+        `ALTER TABLE ${jobs} ADD COLUMN target_kind VARCHAR(16) NULL AFTER space_id,
+        ADD COLUMN target_name VARCHAR(191) NULL AFTER target_kind, ADD COLUMN target MEDIUMTEXT NULL AFTER target_name,
+        ADD COLUMN state MEDIUMTEXT NULL, ADD COLUMN progress TEXT NULL, ADD COLUMN result MEDIUMTEXT NULL,
+        ADD COLUMN pause_requested TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN active_ms BIGINT NOT NULL DEFAULT 0`,
+        `UPDATE ${jobs} SET target_kind = 'action', target_name = action_id,
+        target = JSON_OBJECT('kind', 'action', 'name', action_id, 'trigger', trigger_type)`,
+        `ALTER TABLE ${jobs} MODIFY target_kind VARCHAR(16) NOT NULL, MODIFY target_name VARCHAR(191) NOT NULL,
+        MODIFY target MEDIUMTEXT NOT NULL, DROP COLUMN action_id, DROP COLUMN trigger_type,
+        ADD KEY action_jobs_target (space_id, target_name, updated_at)`
+      ];
+    }
   }
 ];
 

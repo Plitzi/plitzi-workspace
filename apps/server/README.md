@@ -1512,7 +1512,7 @@ SIGTERM until something kills the process.
 `@plitzi/sdk-server/mysql` has the same pair over a `mysql2` pool (`createMysqlJobQueue`, `createMysqlKv`). With no
 database at all, `kv` survives a restart in a file: `createFileKv` (`@plitzi/sdk-server/actions`, one process, JSON) or
 `createSqliteKv` (`@plitzi/sdk-server/sqlite`, any number of processes on the file). Anything
-else is the `ActionJobQueue` contract written against your store — see
+else is the `JobQueue` contract written against your store — see
 [server actions § self-hosted](https://github.com/plitzi/plitzi-workspace/blob/main/docs/en/server-actions.md#13-for-a-self-hosted-deployment).
 
 ## Running it locally

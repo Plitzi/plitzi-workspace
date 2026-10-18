@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { ActionKvAdapter } from '../../types';
-import type { ActionJobInput, ActionJobQueue, ActionScheduleInput } from '@plitzi/sdk-shared';
+import type { JobInput, JobQueue, ActionScheduleInput } from '@plitzi/sdk-shared';
 
 /**
- * What every {@link ActionJobQueue} must do, written once and run against each one this package ships.
+ * What every {@link JobQueue} must do, written once and run against each one this package ships.
  *
  * The memory queue, the Mongo helper and the MySQL helper are three implementations of one contract, and the contract
  * is where a scheduling bug lives: a claim that is not atomic runs a job twice, a heartbeat that does not renew hands a
@@ -16,7 +16,7 @@ import type { ActionJobInput, ActionJobQueue, ActionScheduleInput } from '@plitz
  */
 
 export type QueueSubject = {
-  queue: ActionJobQueue;
+  queue: JobQueue;
   /** Empties whatever the queue keeps, between tests. */
   clear: () => Promise<void>;
 };
@@ -28,17 +28,16 @@ const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>, enabled = true): void => {
   describe.skipIf(!enabled)(`${name} — the job queue contract`, () => {
-    let queue: ActionJobQueue;
+    let queue: JobQueue;
     let clear: () => Promise<void>;
 
     const nowMs = async () => (await queue.now()).getTime();
 
-    const job = async (over: Partial<ActionJobInput> = {}): Promise<ActionJobInput> => ({
+    const job = async (over: Partial<JobInput> = {}): Promise<JobInput> => ({
       id: 'job-1',
       spaceId: SPACE,
-      actionId: 'digest',
       environment: 'main',
-      trigger: 'schedule',
+      target: { kind: 'action', name: 'digest', trigger: 'schedule' },
       input: { to: 'ops@example.test' },
       dueAt: (await nowMs()) - 1_000,
       maxAttempts: 3,
@@ -235,7 +234,7 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
     it('lists jobs by space, action and status, newest first, and counts them all', async () => {
       await queue.enqueue(await job({ id: 'a' }));
       await wait(5);
-      await queue.enqueue(await job({ id: 'b', actionId: 'report' }));
+      await queue.enqueue(await job({ id: 'b', target: { kind: 'action', name: 'report', trigger: 'schedule' } }));
       await wait(5);
       await queue.enqueue(await job({ id: 'c' }));
       await queue.enqueue(await job({ id: 'elsewhere', spaceId: OTHER_SPACE }));
@@ -244,7 +243,7 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
       expect(all.total).toBe(3);
       expect(all.jobs.map(entry => entry.id)).toEqual(['c', 'b']);
 
-      const reports = await queue.listJobs({ spaceIds: [SPACE], actionId: 'report', limit: 10, offset: 0 });
+      const reports = await queue.listJobs({ spaceIds: [SPACE], name: 'report', limit: 10, offset: 0 });
       expect(reports.jobs.map(entry => entry.id)).toEqual(['b']);
 
       const running = await queue.listJobs({ spaceIds: [SPACE], status: 'running', limit: 10, offset: 0 });
@@ -362,12 +361,12 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
     });
 
     /** A job of the space's functions: started by someone, with what its code saves and reports kept on it. */
-    const functionJob = (over: Partial<ActionJobInput> = {}) =>
+    const functionJob = (over: Partial<JobInput> = {}) =>
       job({
         id: 'train-1',
-        actionId: 'train',
-        trigger: 'job',
-        function: {
+        target: {
+          kind: 'function',
+          name: 'train',
           user: { id: 3, username: 'ana', email: 'ana@example.test', verified: true, permissions: [], roles: [] },
           watch: { mode: 'role', permissions: ['models.read'] }
         },
@@ -386,8 +385,12 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
         await queue.write({ jobId: 'train-1', workerId: 'pod-a', progress: { fraction: 0.3, step: 'epoch 3' } })
       ).toBe(true);
       expect(await queue.getJob([SPACE], 'train-1')).toMatchObject({
-        trigger: 'job',
-        function: { user: { id: 3 }, watch: { mode: 'role', permissions: ['models.read'] } },
+        target: {
+          kind: 'function',
+          name: 'train',
+          user: { id: 3 },
+          watch: { mode: 'role', permissions: ['models.read'] }
+        },
         state: { epoch: 2 },
         progress: { fraction: 0.3, step: 'epoch 3', at: expect.any(Number) as unknown }
       });
@@ -507,8 +510,17 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
     /** A turn's timer set again: the one still waiting goes, the newest stays — on every replica, whoever came first. */
     it('drops what waits under a key — all of it, or what came before one job — and leaves what runs', async () => {
       const later = async (id: string, key: string) =>
-        queue.enqueue(await job({ id, key, trigger: 'later', dueAt: (await nowMs()) + 60_000 }));
-      await queue.enqueue(await job({ id: 'turn-running', key: 'turn:A', trigger: 'later' }));
+        queue.enqueue(
+          await job({
+            id,
+            key,
+            target: { kind: 'action', name: 'digest', trigger: 'later' },
+            dueAt: (await nowMs()) + 60_000
+          })
+        );
+      await queue.enqueue(
+        await job({ id: 'turn-running', key: 'turn:A', target: { kind: 'action', name: 'digest', trigger: 'later' } })
+      );
       await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
       await later('turn-1', 'turn:A');
       await wait(5);

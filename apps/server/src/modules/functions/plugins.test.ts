@@ -197,9 +197,9 @@ describe('a plugin’s server half, shipped by the server', () => {
     };
 
     const route = await module.routeFor(visit, 'GET', '/plugins/board/layout');
-    const response = await route?.handle(new Request('https://space.example/fn/plugins/board/layout'));
+    const answer = await route?.handle(new Request('https://space.example/fn/plugins/board/layout'));
 
-    expect(await response?.json()).toEqual({ columns: 3 });
+    expect(await answer?.response.json()).toEqual({ columns: 3 });
     expect(await module.routeFor(visit, 'GET', '/layout')).toBeUndefined();
     expect(await module.routeFor(visit, 'GET', '/plugins/cards/layout')).toBeUndefined();
   });

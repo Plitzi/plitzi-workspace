@@ -3,14 +3,14 @@ import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
 import { createStoreClock } from '../actions/jobs/storeClock';
 
 import type {
-  ActionJob,
-  ActionJobInput,
-  ActionJobQuery,
-  ActionJobQueue,
-  ActionJobSettlement,
-  ActionJobStatus,
-  ActionJobStop,
-  ActionJobWrite,
+  Job,
+  JobInput,
+  JobQuery,
+  JobQueue,
+  JobSettlement,
+  JobStatus,
+  JobStop,
+  JobWrite,
   ActionSchedule,
   ActionScheduleInput
 } from '@plitzi/sdk-shared';
@@ -19,10 +19,16 @@ import type { Collection, Db, Document } from 'mongodb';
 /** Mongo's code for a unique index that refused a second document with the same key. */
 const DUPLICATE_KEY = 11000;
 
+/** Mongo's code for a collection that does not exist yet. */
+const NAMESPACE_NOT_FOUND = 26;
+
 /** Spread into a plain array: the queries take a mutable list. */
-const TERMINAL: ActionJobStatus[] = [...TERMINAL_JOB_STATUSES];
+const TERMINAL: JobStatus[] = [...TERMINAL_JOB_STATUSES];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** The index jobs were looked up by their action with, before they had a target. */
+const LEGACY_ACTION_INDEX = 'spaceId_1_actionId_1_updatedAt_-1';
 
 /** The database, or how to reach it — a getter for a deployment whose client is replaced when it reconnects. */
 export type MongoDbSource = Db | (() => Db);
@@ -37,12 +43,12 @@ export type MongoJobQueueOptions = {
   retentionDays?: number;
 };
 
-export type MongoJobQueue = ActionJobQueue & {
+export type MongoJobQueue = JobQueue & {
   /** Takes the store's clock again on the next call — after a failover to another primary. */
   resyncClock: () => void;
 };
 
-type JobDocument = Omit<ActionJob, 'id'> & {
+type JobDocument = Omit<Job, 'id'> & {
   _id: string;
   /** Set only once a job is finished, so a job still waiting or running is never expired out from under anybody. */
   expiresAt?: Date | null;
@@ -62,7 +68,7 @@ const withoutNulls = <T extends Document>(document: T): T =>
   // `Object.fromEntries` forgets the shape it was given; the keys are the same ones, fewer of them.
   Object.fromEntries(Object.entries(document).filter(([, value]) => value !== null)) as T;
 
-const toJob = ({ _id, expiresAt: _expiresAt, ...rest }: JobDocument): ActionJob => withoutNulls({ ...rest, id: _id });
+const toJob = ({ _id, expiresAt: _expiresAt, ...rest }: JobDocument): Job => withoutNulls({ ...rest, id: _id });
 
 const toSchedule = ({ _id: _unused, ...rest }: ScheduleDocument): ActionSchedule => withoutNulls(rest);
 
@@ -84,7 +90,7 @@ const lostAttempt = (at: number): Document => ({
 });
 
 /**
- * An {@link ActionJobQueue} over two collections of a Mongo database the deployment owns.
+ * An {@link JobQueue} over two collections of a Mongo database the deployment owns.
  *
  * The helper for a deployment that already runs Mongo: it holds no connection of its own and creates nothing but the
  * indexes its queries need, on first use. Every replica pointed at the same database shares the jobs and the
@@ -120,6 +126,19 @@ export const createMongoJobQueue = ({
 
   let ready: Promise<void> | undefined;
 
+  /** Whether the index jobs were found by before targets is there — on a collection not made yet, nothing is. */
+  const legacyIndexIsThere = async (): Promise<boolean> => {
+    try {
+      return await jobsOf().indexExists(LEGACY_ACTION_INDEX);
+    } catch (error) {
+      if ((error as { code?: number }).code === NAMESPACE_NOT_FOUND) {
+        return false;
+      }
+
+      throw error;
+    }
+  };
+
   /**
    * The indexes the queue cannot work without, built once on first use.
    *
@@ -128,11 +147,21 @@ export const createMongoJobQueue = ({
    * index each and merged already sorted.
    */
   const build = async (): Promise<void> => {
+    // A job written before jobs had a target is a run of an action, as every job then was: given its target once, and
+    // the index on the field it replaced taken away (it is not there on a queue made since — nothing to drop).
+    await jobsOf().updateMany({ target: { $exists: false } }, [
+      { $set: { target: { kind: 'action', name: '$actionId', trigger: '$trigger' } } },
+      { $unset: ['actionId', 'trigger'] }
+    ]);
+    if (await legacyIndexIsThere()) {
+      await jobsOf().dropIndex(LEGACY_ACTION_INDEX);
+    }
+
     await Promise.all([
       jobsOf().createIndex({ status: 1, runAt: 1 }),
       jobsOf().createIndex({ status: 1, leaseUntil: 1 }),
       jobsOf().createIndex({ spaceId: 1, updatedAt: -1 }),
-      jobsOf().createIndex({ spaceId: 1, actionId: 1, updatedAt: -1 }),
+      jobsOf().createIndex({ spaceId: 1, 'target.name': 1, updatedAt: -1 }),
       // Only runs set for later carry a key: the index holds those and nothing else.
       jobsOf().createIndex({ spaceId: 1, key: 1, status: 1 }, { partialFilterExpression: { key: { $exists: true } } }),
       jobsOf().createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
@@ -158,7 +187,7 @@ export const createMongoJobQueue = ({
 
     now: async () => new Date(await clock.now()),
 
-    enqueue: async (job: ActionJobInput) => {
+    enqueue: async (job: JobInput) => {
       const { jobs } = await collections();
       const at = await clock.now();
       // `id` becomes the document's `_id`; stored twice it could disagree with itself.
@@ -192,7 +221,7 @@ export const createMongoJobQueue = ({
     claim: async ({ workerId, leaseMs, limit }) => {
       const { jobs } = await collections();
       const at = await clock.now();
-      const taken: ActionJob[] = [];
+      const taken: Job[] = [];
 
       // One document at a time, because `findOneAndUpdate` is the atomic unit: a multi-document update could hand
       // the same job to two workers between the read and the write.
@@ -252,11 +281,11 @@ export const createMongoJobQueue = ({
       // A cancel wins over a pause asked of the same job: set aside, it would only wait to be dropped.
       return stopping.map(job => ({
         jobId: job._id,
-        stop: (job.cancelRequested === true ? 'cancel' : 'pause') satisfies ActionJobStop
+        stop: (job.cancelRequested === true ? 'cancel' : 'pause') satisfies JobStop
       }));
     },
 
-    write: async ({ jobId, workerId, state, progress }: ActionJobWrite) => {
+    write: async ({ jobId, workerId, state, progress }: JobWrite) => {
       const { jobs } = await collections();
       const at = await clock.now();
       const written = await jobs.updateOne(
@@ -284,7 +313,7 @@ export const createMongoJobQueue = ({
       result,
       spentMs,
       refund = status === 'pending' && !attempt
-    }: ActionJobSettlement) => {
+    }: JobSettlement) => {
       const { jobs } = await collections();
       const at = await clock.now();
       const entry: Document = {
@@ -411,13 +440,13 @@ export const createMongoJobQueue = ({
       });
     },
 
-    listJobs: async ({ spaceIds, actionId, status, kind, limit, offset }: ActionJobQuery) => {
+    listJobs: async ({ spaceIds, name, status, kind, limit, offset }: JobQuery) => {
       const { jobs } = await collections();
       const filter = {
         spaceId: { $in: spaceIds },
-        ...(actionId ? { actionId } : {}),
+        ...(name ? { 'target.name': name } : {}),
         ...(status ? { status } : {}),
-        ...(kind ? { function: { $exists: kind === 'function' } } : {})
+        ...(kind ? { 'target.kind': kind } : {})
       };
 
       const [found, total] = await Promise.all([
@@ -498,7 +527,7 @@ export const createMongoJobQueue = ({
       const { jobs } = await collections();
       const at = await clock.now();
       // Only a job of the space's functions saves where it is: a flow set aside would only start again from nothing.
-      const own = { _id: jobId, spaceId: { $in: spaceIds }, function: { $exists: true } };
+      const own = { _id: jobId, spaceId: { $in: spaceIds }, 'target.kind': 'function' };
       const waiting = await jobs.updateOne(
         { ...own, status: 'pending' },
         { $set: { status: 'paused', updatedAt: at } }

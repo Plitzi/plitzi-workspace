@@ -23,13 +23,11 @@ describe('an operator’s hold on the jobs', () => {
     await queue.enqueue({
       id: 'job:1:a',
       spaceId: 1,
-      actionId: 'train',
       environment: 'main',
-      trigger: 'job',
+      target: { kind: 'function', name: 'train' },
       input: {},
       dueAt: Date.now(),
-      maxAttempts: 3,
-      function: {}
+      maxAttempts: 3
     });
     const control = createJobControl({ queue, realtime: { pubsub, kv } });
 
@@ -50,13 +48,11 @@ describe('an operator’s hold on the jobs', () => {
     await queue.enqueue({
       id: 'job:1:b',
       spaceId: 1,
-      actionId: 'train',
       environment: 'main',
-      trigger: 'job',
+      target: { kind: 'function', name: 'train' },
       input: {},
       dueAt: Date.now(),
-      maxAttempts: 3,
-      function: {}
+      maxAttempts: 3
     });
 
     expect(await createJobControl({ queue }).cancel([1], 'job:1:b')).toBe(true);

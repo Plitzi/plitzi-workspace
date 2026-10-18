@@ -2,14 +2,14 @@ import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
 
 import type { StoreMethods } from '../../../core/server/fleet/channel';
 import type {
-  ActionJob,
-  ActionJobAttempt,
-  ActionJobInput,
-  ActionJobQuery,
-  ActionJobQueue,
-  ActionJobSettlement,
-  ActionJobStop,
-  ActionJobWrite,
+  Job,
+  JobAttempt,
+  JobInput,
+  JobQuery,
+  JobQueue,
+  JobSettlement,
+  JobStop,
+  JobWrite,
   ActionSchedule
 } from '@plitzi/sdk-shared';
 
@@ -32,7 +32,7 @@ export type MemoryJobQueueOptions = {
 };
 
 /** Every method of the queue, for the copy a server's workers share (see `fleet/stores.ts`). */
-export const JOB_QUEUE_METHODS: StoreMethods<ActionJobQueue> = {
+export const JOB_QUEUE_METHODS: StoreMethods<JobQueue> = {
   now: true,
   enqueue: true,
   claim: true,
@@ -57,7 +57,7 @@ export const JOB_QUEUE_METHODS: StoreMethods<ActionJobQueue> = {
  *
  * Correct for a deployment that runs ONE replica, which is most self-hosted ones, and honest about the rest — a
  * second replica running on this gets its own schedules and its own jobs, so a nightly digest goes out twice. The
- * cure is any store the replicas share, behind the same {@link ActionJobQueue} seam.
+ * cure is any store the replicas share, behind the same {@link JobQueue} seam.
  *
  * It keeps the contract exactly, rather than approximately: enqueue is idempotent by id, a claim reaps lapsed
  * leases, and every instant is read here rather than accepted from a caller. A test that passes against this one
@@ -66,8 +66,8 @@ export const JOB_QUEUE_METHODS: StoreMethods<ActionJobQueue> = {
 export const createMemoryJobQueue = ({
   retainFinished = 500,
   clock = Date.now
-}: MemoryJobQueueOptions = {}): ActionJobQueue => {
-  const jobs = new Map<string, ActionJob>();
+}: MemoryJobQueueOptions = {}): JobQueue => {
+  const jobs = new Map<string, Job>();
   const schedules = new Map<string, ActionSchedule>();
 
   const key = (spaceId: number, actionId: string) => `${spaceId}:${actionId}`;
@@ -83,7 +83,7 @@ export const createMemoryJobQueue = ({
     }
   };
 
-  const owned = (spaceIds: number[], jobId: string): ActionJob | undefined => {
+  const owned = (spaceIds: number[], jobId: string): Job | undefined => {
     const job = jobs.get(jobId);
 
     return job && spaceIds.includes(job.spaceId) ? job : undefined;
@@ -91,14 +91,14 @@ export const createMemoryJobQueue = ({
 
   /** Numbered by the history itself, not by `attempts`: an operator who repeats a finished job starts its attempt
    *  count again, and the record of what has already been tried must not start again with it. */
-  const appendAttempt = (job: ActionJob, attempt: Omit<ActionJobAttempt, 'attempt'>) => {
+  const appendAttempt = (job: Job, attempt: Omit<JobAttempt, 'attempt'>) => {
     job.history = [...job.history, { ...attempt, attempt: job.history.length + 1 }];
   };
 
   return {
     now: () => Promise.resolve(new Date(now())),
 
-    enqueue: (job: ActionJobInput) => {
+    enqueue: (job: JobInput) => {
       if (jobs.has(job.id)) {
         return Promise.resolve(false);
       }
@@ -120,7 +120,7 @@ export const createMemoryJobQueue = ({
 
     claim: ({ workerId, leaseMs, limit }) => {
       const at = now();
-      const taken: ActionJob[] = [];
+      const taken: Job[] = [];
       const candidates = [...jobs.values()]
         .filter(
           job =>
@@ -154,7 +154,7 @@ export const createMemoryJobQueue = ({
 
     heartbeat: ({ jobIds, workerId, leaseMs }) => {
       const at = now();
-      const stops: { jobId: string; stop: ActionJobStop }[] = [];
+      const stops: { jobId: string; stop: JobStop }[] = [];
       for (const id of jobIds) {
         const job = jobs.get(id);
         if (!job || job.workerId !== workerId || job.status !== 'running') {
@@ -173,7 +173,7 @@ export const createMemoryJobQueue = ({
       return Promise.resolve(stops);
     },
 
-    write: ({ jobId, workerId, state, progress }: ActionJobWrite) => {
+    write: ({ jobId, workerId, state, progress }: JobWrite) => {
       const job = jobs.get(jobId);
       if (!job || job.workerId !== workerId || job.status !== 'running') {
         return Promise.resolve(false);
@@ -204,7 +204,7 @@ export const createMemoryJobQueue = ({
       result,
       spentMs,
       refund = status === 'pending' && !attempt
-    }: ActionJobSettlement) => {
+    }: JobSettlement) => {
       const job = jobs.get(jobId);
       // A settlement from a worker that no longer holds the job is a report from the past: its lease lapsed, the
       // job was reclaimed, and whoever holds it now owns the outcome. Dropping it is what stops a slow replica
@@ -317,14 +317,14 @@ export const createMemoryJobQueue = ({
       return Promise.resolve();
     },
 
-    listJobs: ({ spaceIds, actionId, status, kind, limit, offset }: ActionJobQuery) => {
+    listJobs: ({ spaceIds, name, status, kind, limit, offset }: JobQuery) => {
       const matching = [...jobs.values()]
         .filter(
           job =>
             spaceIds.includes(job.spaceId) &&
-            (actionId === undefined || job.actionId === actionId) &&
+            (name === undefined || job.target.name === name) &&
             (status === undefined || job.status === status) &&
-            (kind === undefined || (kind === 'function') === (job.function !== undefined))
+            (kind === undefined || job.target.kind === kind)
         )
         .sort((a, b) => b.updatedAt - a.updatedAt);
 
@@ -393,7 +393,11 @@ export const createMemoryJobQueue = ({
     pause: (spaceIds, jobId) => {
       const job = owned(spaceIds, jobId);
       // Only a job of the space's functions saves where it is: a flow set aside would only start again from nothing.
-      if (!job?.function || (job.status !== 'pending' && job.status !== 'running') || job.pauseRequested) {
+      if (
+        job?.target.kind !== 'function' ||
+        (job.status !== 'pending' && job.status !== 'running') ||
+        job.pauseRequested
+      ) {
         return Promise.resolve(false);
       }
 
@@ -423,7 +427,7 @@ export const createMemoryJobQueue = ({
 
     cancelPending: ({ spaceId, key, olderThan }) => {
       const newest = olderThan === undefined ? undefined : jobs.get(olderThan);
-      const isOlder = (job: ActionJob): boolean =>
+      const isOlder = (job: Job): boolean =>
         newest === undefined ||
         job.createdAt < newest.createdAt ||
         (job.createdAt === newest.createdAt && job.id < newest.id);

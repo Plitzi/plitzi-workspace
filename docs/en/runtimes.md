@@ -49,8 +49,8 @@ It answers what the runtime serves:
 
 | | |
 |---|---|
-| `functions` | A `defineFunctions(…)` definition: tasks and `/fn/` routes, exactly as [functions](./functions.md) are written. Their `ctx` is the platform's — the space's `kv`, its channels, `ctx.sign`, `ctx.rateLimit` — over the same protocol the sandbox uses |
-| `endpoints` | Paths the runtime answers itself, each a web handler `(request: Request) => Response`, streaming if it likes. A path answers everything beneath it (`/mcp` answers `/mcp/…`) |
+| `functions` | A `defineFunctions(…)` definition: tasks, `/fn/` routes and jobs, exactly as [functions](./functions.md) are written. Their `ctx` is the platform's — the space's `kv`, its channels, `ctx.sign`, `ctx.rateLimit` — over the same protocol the sandbox uses. A route's answer **streams** here: its head goes out at once and its body as the code writes it — Server-Sent Events, a long download, a model's tokens — with no time limit once it answered |
+| `endpoints` | Paths **outside `/fn/`** the runtime answers itself, each a web handler `(request: Request) => Response`, streaming if it likes, with no `ctx` — for an address that must be the space's own, such as an MCP server at `/mcp`. A path answers everything beneath it (`/mcp` answers `/mcp/…`). Anything that can live under `/fn/` is a route |
 | `close` | Called when it is stopped |
 
 An endpoint never receives the visitor's `Cookie` or `Authorization`, nor a platform credential in the query

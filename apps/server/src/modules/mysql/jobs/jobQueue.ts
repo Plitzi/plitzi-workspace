@@ -5,25 +5,24 @@ import { createStoreClock } from '../../actions/jobs/storeClock';
 import { execute, selectOne, selectRows } from '../query';
 
 import type {
-  ActionJob,
-  ActionJobAttempt,
-  ActionJobInput,
-  ActionJobQuery,
-  ActionJobQueue,
-  ActionFunctionJob,
-  ActionJobProgress,
-  ActionJobSettlement,
-  ActionJobStatus,
-  ActionJobStop,
-  ActionJobWrite,
+  Job,
+  JobAttempt,
+  JobInput,
+  JobQuery,
+  JobQueue,
+  JobProgress,
+  JobSettlement,
+  JobStatus,
+  JobStop,
+  JobWrite,
   ActionSchedule,
-  ActionTriggerType,
-  Environment
+  Environment,
+  JobTarget
 } from '@plitzi/sdk-shared';
 import type { Pool, PoolConnection } from 'mysql2/promise';
 
 /** Spread into a plain array: the queries take a mutable list. */
-const TERMINAL: ActionJobStatus[] = [...TERMINAL_JOB_STATUSES];
+const TERMINAL: JobStatus[] = [...TERMINAL_JOB_STATUSES];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -44,7 +43,7 @@ export type MysqlJobQueueOptions = {
   retentionDays?: number;
 };
 
-export type MysqlJobQueue = ActionJobQueue & {
+export type MysqlJobQueue = JobQueue & {
   /** Takes the store's clock again on the next call — after a failover to another primary. */
   resyncClock: () => void;
 };
@@ -54,9 +53,10 @@ type Numeric = number | string;
 type JobRow = {
   id: string;
   space_id: Numeric;
-  action_id: string;
+  target_kind: string;
+  target_name: string;
+  target: string;
   environment: string;
-  trigger_type: string;
   input: string;
   due_at: Numeric;
   max_attempts: Numeric;
@@ -73,7 +73,6 @@ type JobRow = {
   updated_at: Numeric;
   error: string | null;
   history: string;
-  function_job: string | null;
   state: string | null;
   progress: string | null;
   result: string | null;
@@ -102,18 +101,18 @@ type ScheduleRow = {
  * (`bigNumberStrings`), so every numeric column goes through `Number`. The text columns hold only what this queue
  * wrote into them — a status, an environment, a trigger — which is why they can be read back as those types.
  */
-const toJob = (row: JobRow): ActionJob => ({
+const toJob = (row: JobRow): Job => ({
   id: row.id,
   spaceId: Number(row.space_id),
-  actionId: row.action_id,
+  // Written by this queue alone, from the job's own target: read back as what it was.
+  target: JSON.parse(row.target) as JobTarget,
   environment: row.environment as Environment,
-  trigger: row.trigger_type as ActionTriggerType | 'job',
   input: JSON.parse(row.input) as Record<string, unknown>,
   dueAt: Number(row.due_at),
   maxAttempts: Number(row.max_attempts),
   ...(row.missed === null ? {} : { missed: Number(row.missed) }),
   ...(row.job_key === null ? {} : { key: row.job_key }),
-  status: row.status as ActionJobStatus,
+  status: row.status as JobStatus,
   runAt: Number(row.run_at),
   attempts: Number(row.attempts),
   ...(row.lease_until === null ? {} : { leaseUntil: Number(row.lease_until) }),
@@ -123,10 +122,9 @@ const toJob = (row: JobRow): ActionJob => ({
   createdAt: Number(row.created_at),
   updatedAt: Number(row.updated_at),
   ...(row.error === null ? {} : { error: row.error }),
-  history: JSON.parse(row.history) as ActionJobAttempt[],
-  ...(row.function_job === null ? {} : { function: JSON.parse(row.function_job) as ActionFunctionJob }),
+  history: JSON.parse(row.history) as JobAttempt[],
   ...(row.state === null ? {} : { state: JSON.parse(row.state) as unknown }),
-  ...(row.progress === null ? {} : { progress: JSON.parse(row.progress) as ActionJobProgress }),
+  ...(row.progress === null ? {} : { progress: JSON.parse(row.progress) as JobProgress }),
   ...(row.result === null ? {} : { result: JSON.parse(row.result) as unknown }),
   ...(Number(row.pause_requested) === 1 ? { pauseRequested: true } : {}),
   ...(Number(row.active_ms) > 0 ? { activeMs: Number(row.active_ms) } : {})
@@ -185,7 +183,7 @@ const transaction = async <T>(pool: Pool, work: (connection: PoolConnection) => 
 const DUPLICATE_ENTRY = 'ER_DUP_ENTRY';
 
 /**
- * An {@link ActionJobQueue} over tables in a MySQL database the deployment owns. Tested on MySQL 8; nothing in it
+ * An {@link JobQueue} over tables in a MySQL database the deployment owns. Tested on MySQL 8; nothing in it
  * needs more than 5.7.
  *
  * The helper for a deployment that already runs MySQL: it borrows connections from the pool it is handed, and creates
@@ -243,27 +241,27 @@ export const createMysqlJobQueue = ({
 
     now: async () => new Date(await clock.now()),
 
-    enqueue: async (job: ActionJobInput) => {
+    enqueue: async (job: JobInput) => {
       const conn = await db();
       const at = await clock.now();
       try {
         await execute(
           conn,
-          `INSERT INTO ${t.jobs} (id, space_id, action_id, environment, trigger_type, input, due_at, max_attempts,
-            missed, job_key, function_job, status, run_at, attempts, created_at, updated_at, history)
+          `INSERT INTO ${t.jobs} (id, space_id, target_kind, target_name, target, environment, input, due_at,
+            max_attempts, missed, job_key, status, run_at, attempts, created_at, updated_at, history)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, '[]')`,
           [
             job.id,
             job.spaceId,
-            job.actionId,
+            job.target.kind,
+            job.target.name,
+            JSON.stringify(job.target),
             job.environment,
-            job.trigger,
             JSON.stringify(job.input),
             job.dueAt,
             job.maxAttempts,
             job.missed ?? null,
             job.key ?? null,
-            jsonOrNull(job.function),
             // The fire's own instant, so a job produced late is still claimable at once rather than waiting again.
             job.dueAt,
             at,
@@ -285,7 +283,7 @@ export const createMysqlJobQueue = ({
     claim: async ({ workerId, leaseMs, limit }) => {
       const conn = await db();
       const at = await clock.now();
-      const taken: ActionJob[] = [];
+      const taken: Job[] = [];
 
       /**
        * Read, then take each job with ONE single-row update that only lands if the row is still the version that was
@@ -311,7 +309,7 @@ export const createMysqlJobQueue = ({
         for (const row of rows) {
           const job = toJob(row);
           // A lapsed lease is a worker that died: its attempt is written for it, so a replica that keeps dying shows.
-          const history: ActionJobAttempt[] =
+          const history: JobAttempt[] =
             job.status === 'running'
               ? [
                   ...job.history,
@@ -387,11 +385,11 @@ export const createMysqlJobQueue = ({
       // A cancel wins over a pause asked of the same job: set aside, it would only wait to be dropped.
       return stopping.map(row => ({
         jobId: row.id,
-        stop: (Number(row.cancel_requested) === 1 ? 'cancel' : 'pause') satisfies ActionJobStop
+        stop: (Number(row.cancel_requested) === 1 ? 'cancel' : 'pause') satisfies JobStop
       }));
     },
 
-    write: async ({ jobId, workerId, state, progress }: ActionJobWrite) => {
+    write: async ({ jobId, workerId, state, progress }: JobWrite) => {
       const conn = await db();
       const at = await clock.now();
       const sets = [
@@ -425,7 +423,7 @@ export const createMysqlJobQueue = ({
       result,
       spentMs,
       refund = status === 'pending' && !attempt
-    }: ActionJobSettlement) => {
+    }: JobSettlement) => {
       await db();
       const at = await clock.now();
 
@@ -555,7 +553,7 @@ export const createMysqlJobQueue = ({
       });
     },
 
-    listJobs: async ({ spaceIds, actionId, status, kind, limit, offset }: ActionJobQuery) => {
+    listJobs: async ({ spaceIds, name, status, kind, limit, offset }: JobQuery) => {
       if (!inSpaces(spaceIds)) {
         return { jobs: [], total: 0 };
       }
@@ -563,11 +561,16 @@ export const createMysqlJobQueue = ({
       const conn = await db();
       const where = [
         'space_id IN (?)',
-        ...(actionId ? ['action_id = ?'] : []),
+        ...(name ? ['target_name = ?'] : []),
         ...(status ? ['status = ?'] : []),
-        ...(kind ? [`function_job IS ${kind === 'function' ? 'NOT ' : ''}NULL`] : [])
+        ...(kind ? ['target_kind = ?'] : [])
       ].join(' AND ');
-      const params: unknown[] = [spaceIds, ...(actionId ? [actionId] : []), ...(status ? [status] : [])];
+      const params: unknown[] = [
+        spaceIds,
+        ...(name ? [name] : []),
+        ...(status ? [status] : []),
+        ...(kind ? [kind] : [])
+      ];
 
       const [rows, count] = await Promise.all([
         selectRows<JobRow>(
@@ -666,7 +669,7 @@ export const createMysqlJobQueue = ({
       const waiting = await execute(
         conn,
         `UPDATE ${t.jobs} SET status = 'paused', updated_at = ?
-        WHERE id = ? AND space_id IN (?) AND function_job IS NOT NULL AND status = 'pending'`,
+        WHERE id = ? AND space_id IN (?) AND target_kind = 'function' AND status = 'pending'`,
         [at, jobId, spaceIds]
       );
       if (waiting.affectedRows === 1) {
@@ -676,7 +679,7 @@ export const createMysqlJobQueue = ({
       const flagged = await execute(
         conn,
         `UPDATE ${t.jobs} SET pause_requested = 1, updated_at = ?
-        WHERE id = ? AND space_id IN (?) AND function_job IS NOT NULL AND status = 'running' AND pause_requested = 0`,
+        WHERE id = ? AND space_id IN (?) AND target_kind = 'function' AND status = 'running' AND pause_requested = 0`,
         [at, jobId, spaceIds]
       );
 

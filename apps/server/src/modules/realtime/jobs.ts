@@ -3,10 +3,10 @@ import { JOB_TYPE, jobTopic } from '@plitzi/sdk-shared/realtime';
 
 import type { RealtimeHub, RealtimeSpace } from './hub';
 import type { RealtimeRetained } from './retained';
-import type { ActionJob, ChannelDeclaration, FunctionJobView, SSRUser } from '@plitzi/sdk-shared';
+import type { Job, ChannelDeclaration, FunctionJobView, SSRUser } from '@plitzi/sdk-shared';
 
 /** How the realtime reaches a job, once the actions module hands it the way (`watchJobs`). */
-export type JobLookup = (spaceId: number, jobId: string) => Promise<ActionJob | undefined>;
+export type JobLookup = (spaceId: number, jobId: string) => Promise<Job | undefined>;
 
 /** A job's topic, as a channel: the server alone says how the job goes, and a page that joins hears the latest. */
 export const JOB_CHANNEL: ChannelDeclaration = { access: { mode: 'session' }, publish: 'server', retain: true };
@@ -26,19 +26,20 @@ export const jobRefusal = async (
   user: SSRUser | undefined
 ): Promise<'undeclared' | 'unauthenticated' | 'forbidden' | undefined> => {
   const job = lookup ? await lookup(spaceId, jobId) : undefined;
-  if (!job?.function) {
+  const target = job?.target;
+  if (target?.kind !== 'function') {
     return 'undeclared';
   }
 
-  if (user && job.function.user?.id === user.id) {
+  if (user && target.user?.id === user.id) {
     return undefined;
   }
 
-  if (!job.function.watch) {
+  if (!target.watch) {
     return user ? 'forbidden' : 'unauthenticated';
   }
 
-  return accessRefusal(job.function.watch, user);
+  return accessRefusal(target.watch, user);
 };
 
 /**

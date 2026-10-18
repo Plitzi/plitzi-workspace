@@ -8,7 +8,7 @@ import { functionContextFor } from './context';
 import { jobsManifestOf } from './jobs';
 import { parseRouteKey, reservedRouteProblem } from './manifest';
 import { OAUTH_CALLBACK_PATH, oauthCallback } from './oauth';
-import { FunctionFailure } from './protocol';
+import { FunctionFailure, isStreamedRouteAnswer } from './protocol';
 import { pluginOfPath } from './scope';
 import { serverLog } from '../../helpers/serverLog';
 import { isActionRefusal } from '../actions/runtime/errors';
@@ -40,7 +40,15 @@ export type RouteVisit = {
   signal: AbortSignal;
 };
 
-export type RouteHandler = { key: string; handle: (request: Request) => Promise<Response> };
+/**
+ * What a route answered, and whether it is written as it comes: a runtime's route and the deployment's own code may
+ * stream, and are passed on as they are written; a sandbox's is whole, and sent as one.
+ */
+export type RouteAnswer = { response: Response; streamed: boolean };
+
+export type RouteHandler = { key: string; handle: (request: Request) => Promise<RouteAnswer> };
+
+const whole = (response: Response): RouteAnswer => ({ response, streamed: false });
 
 /** A route key's params from a path it answers, or nothing when it does not answer it. */
 const matchKey = (key: RouteKey, method: string, path: string): Record<string, string> | undefined => {
@@ -242,14 +250,18 @@ export const createRoutes = ({
       key: match.key,
       handle: async request => {
         try {
-          return withoutCookies(
-            await handler(withoutCredentials(request), {
-              ...contextOf(visit, match.key, route.hosts, scope, route.oauth, route.jobs),
-              params: match.params
-            })
-          );
+          // The deployment's own code, in this process: whatever its Response holds is passed on as it is written.
+          return {
+            response: withoutCookies(
+              await handler(withoutCredentials(request), {
+                ...contextOf(visit, match.key, route.hosts, scope, route.oauth, route.jobs),
+                params: match.params
+              })
+            ),
+            streamed: true
+          };
         } catch (error) {
-          return failed(visit, match.key, error);
+          return whole(failed(visit, match.key, error));
         }
       }
     };
@@ -277,7 +289,7 @@ export const createRoutes = ({
       handle: async request => {
         const refusal = await config.admit?.(visit.spaceId);
         if (refusal) {
-          return Response.json({ error: refusal }, { status: 429 });
+          return whole(Response.json({ error: refusal }, { status: 429 }));
         }
 
         const fnCtx = contextOf(
@@ -290,6 +302,11 @@ export const createRoutes = ({
         );
         let ok = false;
         let spent: FunctionUsage | undefined;
+        // A route that streams has spent what it spent once its body ends, long after it answered.
+        let streaming = false;
+        const meter = (usage: FunctionUsage, done: boolean): void => {
+          config.onUsage?.({ spaceId: visit.spaceId, task: usageName, ok: done, usage });
+        };
         try {
           const value = await runner.invoke({
             bundle: functions.bundle,
@@ -311,17 +328,31 @@ export const createRoutes = ({
             answer: call => answerCall(fnCtx, readCall(call)),
             signal: visit.signal,
             onUsage: usage => {
-              spent = usage;
+              if (streaming) {
+                meter(usage, true);
+              } else {
+                spent = usage;
+              }
             }
           });
           ok = true;
+          if (isStreamedRouteAnswer(value)) {
+            streaming = true;
 
-          return withoutCookies(responseOf(wireResponseFrom(value)));
+            return {
+              response: withoutCookies(
+                new Response(value.body, { status: value.status, statusText: value.statusText, headers: value.headers })
+              ),
+              streamed: true
+            };
+          }
+
+          return whole(withoutCookies(responseOf(wireResponseFrom(value))));
         } catch (error) {
-          return failed(visit, match.key, error);
+          return whole(failed(visit, match.key, error));
         } finally {
           if (spent) {
-            config.onUsage?.({ spaceId: visit.spaceId, task: usageName, ok, usage: spent });
+            meter(spent, ok);
           }
         }
       }
@@ -354,9 +385,9 @@ export const createRoutes = ({
           handle: async request => {
             const run = runOf(visit, `GET ${OAUTH_CALLBACK_PATH}`);
             try {
-              return await oauthCallback(run, new URL(request.url).searchParams);
+              return whole(await oauthCallback(run, new URL(request.url).searchParams));
             } catch (error) {
-              return failed(visit, `GET ${OAUTH_CALLBACK_PATH}`, error);
+              return whole(failed(visit, `GET ${OAUTH_CALLBACK_PATH}`, error));
             }
           }
         };

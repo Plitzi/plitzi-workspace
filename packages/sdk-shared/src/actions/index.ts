@@ -1,5 +1,5 @@
 export { accessRefusal } from './access';
-export { ACTION_JOB_STATUSES, TERMINAL_JOB_STATUSES, isActionJobStatus, isTerminalJobStatus } from './jobs';
+export { JOB_STATUSES, TERMINAL_JOB_STATUSES, isJobStatus, isTerminalJobStatus } from './jobs';
 export { cronFiresBetween, cronMatches, cronNextFire, isKnownTimeZone, parseCron, zonedClock } from './cron';
 export { FAILURE_HANDLER_TASK } from './failureHandler';
 export {

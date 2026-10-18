@@ -5,7 +5,7 @@ import { createFunctionsDriver, describeFunctions } from '../functions/driver';
 import { FunctionFailure } from '../functions/protocol';
 
 import type { FunctionsDefinition } from '../functions/contract';
-import type { FunctionRunner } from '../functions/protocol';
+import type { FunctionRunner, StreamedRouteAnswer } from '../functions/protocol';
 
 /** A refusal, however it was made: the platform's class, or a bundle's own copy of it — known by its name. */
 
@@ -13,7 +13,7 @@ import type { FunctionRunner } from '../functions/protocol';
  * A runtime's functions as a runner: the same protocol as the sandbox's, answered by code loaded in this process. The
  * driver is the sandbox's own (`createFunctionsDriver`), so a task behaves the same in both — its `ctx` is calls to the
  * platform, `ctx.kv.change` the same loop, a refusal the same answer. What it does not share is the isolate: there are
- * no limits here but the platform's clock, since this process is the space's alone.
+ * no limits here but the platform's clock, since this process is the space's alone — and a route's answer streams.
  *
  * The bundle a request names is not asked for: the code is the one this runtime was started with.
  */
@@ -25,7 +25,25 @@ export const createRuntimeRunner = (definition: FunctionsDefinition = {}): Funct
       signal,
       responseOf: wire => responseOf(wireResponseFrom(wire)),
       requestOf: requestFromWire,
-      wireOfResponse: async response => (response instanceof Response ? wireResponseOf(response) : undefined),
+      // A route here answers as it writes — the head at once, its body as the code writes it — so it streams as an
+      // endpoint does, with the platform's `ctx`. One with no body is answered whole: there is nothing to wait for.
+      wireOfResponse: async response => {
+        if (!(response instanceof Response)) {
+          return undefined;
+        }
+
+        if (!response.body) {
+          return wireResponseOf(response);
+        }
+
+        return {
+          streamed: true,
+          status: response.status,
+          statusText: response.statusText,
+          headers: [...response.headers],
+          body: response.body
+        } satisfies StreamedRouteAnswer;
+      },
       changeKv,
       refusal: message => new ActionRefusal(message)
     });

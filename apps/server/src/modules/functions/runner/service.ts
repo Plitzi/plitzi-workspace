@@ -7,10 +7,16 @@ import { readRequestMessage } from './messages';
 import { watchConnections } from '../../../core/server/drain';
 import { serverLog } from '../../../helpers/serverLog';
 import { frameText } from '../../../helpers/wsFrame';
-import { FUNCTIONS_PROTOCOL, FunctionFailure } from '../protocol';
+import { FUNCTIONS_PROTOCOL, FunctionFailure, isStreamedRouteAnswer } from '../protocol';
 import { createIsolateRunner } from '../sandbox/isolate';
 
-import type { FunctionAnswer, FunctionRunner, FunctionUsage, RunnerResponseMessage } from '../protocol';
+import type {
+  FunctionAnswer,
+  FunctionRunner,
+  FunctionUsage,
+  RunnerResponseMessage,
+  StreamedRouteAnswer
+} from '../protocol';
 import type { IsolateRunnerOptions } from '../sandbox/isolate';
 import type { AddressInfo } from 'node:net';
 import type { WebSocket } from 'ws';
@@ -68,9 +74,49 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner): void => {
     socket.close(1000);
   };
   let usage: FunctionUsage | undefined;
+  /** A route answering as it writes: its head now, each part of its body as it comes, and `done` once it ends. */
+  const stream = async (answer: StreamedRouteAnswer): Promise<void> => {
+    send({ type: 'head', status: answer.status, statusText: answer.statusText, headers: answer.headers });
+    const reader = answer.body.getReader();
+    // The platform gone or the run aborted: the code's stream is cancelled, which its own `cancel` hears.
+    const stop = (): void => {
+      reader.cancel().catch(() => undefined);
+    };
+    controller.signal.addEventListener('abort', stop, { once: true });
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        send({ type: 'chunk', chunk: { base64: Buffer.from(value).toString('base64') } });
+      }
+    } finally {
+      controller.signal.removeEventListener('abort', stop);
+    }
+  };
   const settle = (work: Promise<unknown>): void => {
     work.then(
-      value => finish({ type: 'done', value, ...(usage ? { usage } : {}) }),
+      async value => {
+        if (!isStreamedRouteAnswer(value)) {
+          finish({ type: 'done', value, ...(usage ? { usage } : {}) });
+
+          return;
+        }
+
+        try {
+          await stream(value);
+          finish({ type: 'done', value: null, ...(usage ? { usage } : {}) });
+        } catch (error) {
+          finish({
+            type: 'failed',
+            reason: 'error',
+            error: `The route's answer broke off: ${error instanceof Error ? error.message : String(error)}`,
+            ...(usage ? { usage } : {})
+          });
+        }
+      },
       (error: unknown) =>
         finish({
           type: 'failed',

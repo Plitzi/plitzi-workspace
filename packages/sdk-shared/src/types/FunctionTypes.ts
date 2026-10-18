@@ -1,5 +1,6 @@
-import type { ActionAccess, ActionJobStatus } from './ActionTypes';
+import type { ActionAccess } from './ActionTypes';
 import type { InteractionCallbackParam } from './InteractionTypes';
+import type { JobStatus } from './JobTypes';
 
 /**
  * A space's own functions, as everything outside the runner sees them: the builder, the CLI, the MCP and the
@@ -43,7 +44,7 @@ export type FunctionJobView = {
   id: string;
   /** The job's name, as the functions declare it. */
   name: string;
-  status: ActionJobStatus;
+  status: JobStatus;
   /** From 0 to 1, as its code last reported. */
   progress?: number;
   /** What it is doing, in its code's words. */

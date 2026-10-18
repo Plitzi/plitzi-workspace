@@ -18,7 +18,7 @@ import { fileURLToPath } from 'url';
  */
 
 const BUDGET = {
-  '@plitzi/sdk-server': 199,
+  '@plitzi/sdk-server': 200,
   '@plitzi/sdk-shared': 114,
   '@plitzi/nexus': 31,
   '@plitzi/plitzi-ui': 19,

@@ -54,6 +54,24 @@ const runtime = defineRuntime({
           }
         }
       ],
+      routes: {
+        // A stream written over time, with the platform's ctx: what an endpoint did, as a route under /fn/.
+        'GET /ticks': async (_request, ctx) => {
+          const opened = await ctx.kv.increment('ticks-opened', 1);
+
+          return new Response(
+            new ReadableStream<Uint8Array>({
+              start: async controller => {
+                controller.enqueue(new TextEncoder().encode(`tick 1 of ${String(opened)}\n`));
+                await new Promise(resolve => setTimeout(resolve, 150));
+                controller.enqueue(new TextEncoder().encode('tick 2\n'));
+                controller.close();
+              }
+            }),
+            { headers: { 'content-type': 'text/plain', 'set-cookie': 'session=stolen' } }
+          );
+        }
+      },
       jobs: {
         // Long by design: it runs until it is told why to stop, and says it saw why in what it saves.
         train: {
@@ -236,13 +254,11 @@ describe('a space runtime', () => {
     await queue.enqueue({
       id: 'job:3:train',
       spaceId: 3,
-      actionId: 'train',
       environment: 'main',
-      trigger: 'job',
+      target: { kind: 'function', name: 'train' },
       input: {},
       dueAt: at,
-      maxAttempts: 3,
-      function: {}
+      maxAttempts: 3
     });
     await worker.poll();
     await new Promise(resolve => setTimeout(resolve, 120));
@@ -271,6 +287,55 @@ describe('a space runtime', () => {
     expect(done.result).toEqual({ epochs: 20 });
     expect(done.state).toMatchObject({ epoch: 20, resumed: true });
     expect(done.attempts).toBe(1);
+  });
+
+  it('streams a route under /fn/ as it is written, with the platform’s ctx, and none of its cookies', async () => {
+    const functions: SpaceFunctions = {
+      bundle: { id: 'runtime:3:main', load: () => Promise.reject(new Error('a runtime holds its own code')) },
+      manifest: readManifest(description.functions, new Set(), DEFAULT_FUNCTION_CEILINGS).manifest,
+      runner: createRemoteRunner({ url: `ws://127.0.0.1:${String(RUNTIME_PORT)}`, secret: SECRET })
+    };
+    const port = await unusedPort();
+    const platform = createServer({
+      port,
+      adapters: createJsonAdapters({ offlineData: offlineDataOf() }),
+      action: {
+        lookups: { getAction: () => Promise.resolve(undefined), getFunctions: () => Promise.resolve(functions) },
+        jobs: false
+      }
+    });
+    await platform.listen(port, '127.0.0.1');
+    try {
+      const answer = await fetch(`http://127.0.0.1:${String(port)}/fn/ticks`);
+      expect(answer.status).toBe(200);
+      expect(answer.headers.get('set-cookie')).toBeNull();
+      expect(answer.headers.get('cache-control')).toBe('no-store');
+
+      const reader = answer.body?.getReader();
+      if (!reader) {
+        throw new Error('The route answered no body');
+      }
+
+      const decoder = new TextDecoder();
+      const first = await reader.read();
+      const firstAt = Date.now();
+      let rest = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        rest += decoder.decode(value);
+      }
+
+      // The first tick was here before the second was written: passed on as it came, not once it ended.
+      expect(decoder.decode(first.value)).toBe('tick 1 of 1\n');
+      expect(Date.now() - firstAt).toBeGreaterThanOrEqual(100);
+      expect(rest).toBe('tick 2\n');
+    } finally {
+      await platform.close();
+    }
   });
 
   it('answers its endpoints on the space’s host, streamed, without the visitor’s session', async () => {
