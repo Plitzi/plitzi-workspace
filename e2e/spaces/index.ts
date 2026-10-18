@@ -5,6 +5,7 @@ import { actionSpace } from './actions';
 import { flowReadsSpace } from './flowReads';
 import { keptStateSpace } from './keptState';
 import { keysSpace } from './keys';
+import { liveSpace } from './livePages';
 import { minimalSpace } from './minimal';
 import { nestedSpace } from './nested';
 import { plainSpace } from './plain';
@@ -23,6 +24,7 @@ export * from './flowReads';
 export * from './fromSpace';
 export * from './keptState';
 export * from './keys';
+export * from './livePages';
 export * from './minimal';
 export * from './nested';
 export * from './plain';
@@ -50,6 +52,7 @@ export * from './unaskedQueries';
  *  | `keysSpace()` | Two keyboard shortcuts on one element and a field — for what a press on the page and in a field fires |
  *  | `rendersSpace()` | A counter, labels that read nothing, and labels reading a computed list — for counting what an interaction renders |
  *  | `keptStateSpace()` | Kept state with one transient key — for what comes back after a reload and what starts fresh |
+ *  | `liveSpace(version)` | A page that says its version, beside state a button writes — for an open page handed the next version |
  *  | `themedSpace()` | A page painted only from a light/dark palette, and a theme toggle — for asserting the colours a theme puts in force |
  *  | `nestedSpace(inner)` | `minimalSpace()` with the `plitziSdk` element drawing `inner` from its documents — for what a space inside another may touch |
  *
@@ -102,6 +105,7 @@ export {
   flowReadsSpace,
   keptStateSpace,
   keysSpace,
+  liveSpace,
   minimalSpace,
   nestedSpace,
   plainSpace,

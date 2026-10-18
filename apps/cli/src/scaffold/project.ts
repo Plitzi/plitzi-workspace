@@ -146,8 +146,8 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
            *
            * The server compiles the project's plugins into `tmp/.sdk-plugins/` and then IMPORTS what it built, so a
            * bare `--watch` sees its own output land, restarts, compiles again, and never stops. Neither the space nor
-           * the plugins are among them: the server re-authors a local space on save and the open pages load again
-           * (`reloadPages`), and the server builds a plugin again on save and the open pages swap it where it is drawn
+           * the plugins are among them: the server re-authors a local space on save and the open pages swap it in place
+           * (`updatePages`), and the server builds a plugin again on save and the open pages swap it where it is drawn
            * — so only the server's own code restarts it: its entry, options and actions, and `src/functions/`.
            */
           'start:dev': watchedNodeWithEnv(`${watchPaths(answers)} ${MAIN_FILE}`),
@@ -296,7 +296,7 @@ export const gitignore = ({ mode, packageManager }: CreateAnswers): string =>
 
 const startLine = ({ mode, packageManager, source }: CreateAnswers): string =>
   mode === 'server'
-    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one; \`HOST=0.0.0.0\` opens it to your network — a tablet on the same Wi-Fi — and prints the address to open there; \`plitzi cert\` serves it over HTTPS, which that tablet's browser asks of a page before it gives it the microphone, the camera or the clipboard). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space reloads it' : ''}; \`${runCommand(packageManager, 'start:dev-inspect')}\` is the same with Node's inspector open on 127.0.0.1:9229, for a debugger to attach to the server. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\`, which sets \`NODE_ENV=production\` itself: the compiled server, with no TypeScript in the process.`
+    ? `\`${runCommand(packageManager, 'start')}\` serves pages on http://127.0.0.1:8080 — or, when something else holds 8080, the next free port, which it prints and writes to \`${DEV_SERVER_FILE}\` (set \`PORT\` to choose one; \`HOST=0.0.0.0\` opens it to your network — a tablet on the same Wi-Fi — and prints the address to open there; \`plitzi cert\` serves it over HTTPS, which that tablet's browser asks of a page before it gives it the microphone, the camera or the clipboard). \`${runCommand(packageManager, 'start:dev')}\` restarts on a save to the server's code; a save to a plugin swaps it in the open page${source === 'local' ? ', and a save to the space swaps it in the open page, what you were doing there kept' : ''}; \`${runCommand(packageManager, 'start:dev-inspect')}\` is the same with Node's inspector open on 127.0.0.1:9229, for a debugger to attach to the server. In production, \`${runCommand(packageManager, 'build')}\` once and run \`${runCommand(packageManager, 'start:prod')}\`, which sets \`NODE_ENV=production\` itself: the compiled server, with no TypeScript in the process.`
     : `\`${runCommand(packageManager, 'start')}\` runs Vite on http://127.0.0.1:5173, with hot module replacement. \`HOST=0.0.0.0\` in \`.env\` opens it to your network — a tablet on the same Wi-Fi — and \`plitzi cert\` serves it over HTTPS, which that tablet's browser asks of a page before it gives it the microphone, the camera or the clipboard.`;
 
 const spaceSection = (answers: CreateAnswers): string => {

@@ -40,7 +40,7 @@ export interface CsrfConfig {
   /** Naming and scope for the cookie, so it lands beside the session one. */
   cookie?: SSRAuthCookie;
   /**
-   * Origins that count as this deployment's own, beyond the request's own site.
+   * Origins that count as this deployment's own, beyond the request's own origin.
    *
    * What it decides is which cross-site page may hand out a session — see `foreign` below. `createAuth` fills it
    * from `identity.platformOrigins`, so a deployment that already declared its hosts has said this too, and this
@@ -76,7 +76,7 @@ export const csrfFailureMessage: Record<CsrfFailure, string> = {
   malformed: 'CSRF token malformed',
   expired: 'CSRF token expired',
   mismatch: 'CSRF token does not match this session',
-  foreign: 'A request from another site may not act with this session'
+  foreign: 'A request from another origin may not act with this session'
 };
 
 export type CsrfResult = { ok: true } | { ok: false; reason: CsrfFailure };
@@ -142,35 +142,59 @@ const readCookieHeader = (carrier: CsrfCarrier, name: string): string | undefine
   return undefined;
 };
 
-/** The host out of an `Origin`, which is a serialized origin (`https://acme.test:8443`) and never a bare host. */
-const originHost = (origin: string): string | undefined => {
+/**
+ * Whether `origin` is the request's own: its host and port, as the `Host` header names them. When a proxy rewrote
+ * `Host` (it no longer names the hostname the request is answered as), the hostname alone is what is left to compare.
+ */
+const isOwnOrigin = (origin: string, carrier: CsrfCarrier): boolean => {
+  let url: URL;
   try {
-    return new URL(origin).hostname;
+    url = new URL(origin);
   } catch {
-    // `null` — a sandboxed iframe, a `data:` document. Not a host, and deliberately not one anything may allow.
-    return undefined;
+    // `null` — a sandboxed iframe, a `data:` document. Not an origin, and deliberately not one anything may allow.
+    return false;
   }
+
+  const host = header(carrier, 'host');
+  if (host === undefined) {
+    return url.hostname === carrier.hostname;
+  }
+
+  let own: URL;
+  try {
+    // Read with the origin's scheme, so a default port written out (`acme.test:443`) is the one the origin omits.
+    own = new URL(`${url.protocol}//${host}`);
+  } catch {
+    return false;
+  }
+
+  return own.hostname === carrier.hostname ? url.host === own.host : url.hostname === carrier.hostname;
 };
 
 /**
- * Did this request come from a site this deployment does not recognise — `allowed` naming the origins it does?
+ * Did a page of another ORIGIN cause this request — `allowed` naming the origins this deployment counts as its own?
  *
  * This is what protects signing in, where there is no session to bind a token to and no cookie to look for, and
  * every write a page server answers, cookie or none (`crossSiteWritesStage`). It rests on two headers a page CANNOT
  * set — the browser attaches both, and script may not override either:
  *
  * - **`Sec-Fetch-Site`** is the browser's own account of where the request came from, and is believed first.
- *   Anything but `cross-site` (`same-origin`, `same-site`, or `none` for a typed URL) is this deployment's own.
- *   The browser works that out with the real public suffix list, which is why it is worth more than anything
- *   derivable here.
+ *   `same-origin`, and `none` (a typed URL, a bookmark), are this server's own; `same-site` and `cross-site` are a
+ *   page of another origin, foreign unless its origin was named.
  * - **`Origin`** is the fallback, for a browser too old to send the above — Safari only did from 16.4. Matched
- *   **exactly**, against this host or an origin the deployment named.
+ *   **exactly** — host and port; one port does not serve two schemes — against this host or an origin the deployment
+ *   named.
  *
- * That exactness is deliberate and was a bug once: this compared *registrable domains*, last-two-labels, the
- * same helper that scopes the session cookie. It has no public suffix list, so on a deployment at `acme.co.uk`
- * every other `.co.uk` in the world counted as the same site and could sign a visitor in. Guessing where a
- * domain boundary falls is not something to do in a security decision — a sibling sub-domain that needs to be
- * trusted is one line in `allowedOrigins`, which `createAuth` already fills from `identity.platformOrigins`.
+ * **`same-site` is not trusted, and was once.** A site is a registrable domain, with no port in it: another port of
+ * this host, or a sibling sub-domain, is the same site. Both are where somebody else's code is served by design —
+ * `createAuthoringHost` on a port of its own, every space of a platform on a sub-domain of one domain (two spaces at
+ * `*.plitzi.app` are one site until that domain is on the public suffix list) — and trusting the site let any of them
+ * write here as if they were this server's own pages. A sibling that IS this deployment's own is named, as it always
+ * had to be in production, where the app and its spaces are on different sites: `createAuth` fills the list from
+ * `identity.platformOrigins`, a page server from `crossSiteWrites.origins`.
+ *
+ * Nor is a domain boundary guessed: this once compared *registrable domains*, last-two-labels, and with no public
+ * suffix list every other `.co.uk` counted as the same site as a deployment at `acme.co.uk`.
  *
  * **Neither header means this is not a browser**, and a client that is not a browser cannot be made to forge
  * anything: there is no victim's session sitting in it. That is what keeps every API client, mobile app and
@@ -182,17 +206,15 @@ export const crossSiteRequest = (carrier: CsrfCarrier, allowed: (origin: string)
   const vouched = origin !== undefined && allowed(origin);
 
   if (site !== undefined) {
-    // The browser has answered the question. `same-origin`, `same-site` and `none` (a typed URL, a bookmark)
-    // are all this deployment's own; a `cross-site` one is foreign unless its origin was explicitly allowed.
-    return site === 'cross-site' && !vouched;
+    // The browser has answered the question; anything but its own origin, or no page at all, is another's.
+    return site !== 'same-origin' && site !== 'none' && !vouched;
   }
 
   if (!origin) {
     return false;
   }
 
-  // An opaque origin — a sandboxed iframe, a `data:` document — has no host at all, and nothing can vouch for it.
-  return originHost(origin) !== carrier.hostname && !vouched;
+  return !isOwnOrigin(origin, carrier) && !vouched;
 };
 
 export const createCsrf = (config: CsrfConfig) => {

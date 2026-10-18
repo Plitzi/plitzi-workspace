@@ -1,4 +1,4 @@
-import { DEV_RELOAD_PATH } from '../../core/http/stages/devReload';
+import { LIVE_PAGES_PATH } from '../../core/http/stages/livePages';
 import { escapeHtml } from '../../helpers/escapeHtml';
 
 import type { Stage } from '../../core/http/types';
@@ -35,7 +35,7 @@ const pageOf = (message: string): string => `<!doctype html>
 <script>
   (() => {
     let boot;
-    const events = new EventSource(${JSON.stringify(DEV_RELOAD_PATH)});
+    const events = new EventSource(${JSON.stringify(LIVE_PAGES_PATH)});
     events.addEventListener('reload', () => location.reload());
     events.addEventListener('hello', event => {
       const next = JSON.parse(event.data).boot;

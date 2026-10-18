@@ -153,7 +153,7 @@ export const projectPlugins = async (root: string): Promise<ProjectPlugins> => {
 
 /**
  * A plugin edited while developing is built again by the server, and the open pages swap it where it is drawn — the
- * rest of the page, its state included, stays as it was (`devReload`). Its server half (`functions/`) is loaded again
+ * rest of the page, its state included, stays as it was (`livePages`). Its server half (`functions/`) is loaded again
  * here, in place. A plugin ADDED — a new folder with an `index.ts`, what `plitzi plugin add` writes — is registered
  * here, and the pages load again to render it; one removed is turned off. A folder the server cannot build, or whose
  * server half has no entry, is said in the terminal as the layout check says it at boot — once, until it changes — and

@@ -79,6 +79,7 @@ const install = async (): Promise<void> => {
     } else if (name === '@plitzi/sdk-server') {
       await installed(name, version, {
         './actions': 'export const MIN_SIGNING_SECRET_LENGTH = 32;\n',
+        './project': 'export const serveProject = () => undefined;\n',
         './functions-runner':
           'export const buildFunctions = async source => {\n' +
           "  const at = Object.keys(source).find(file => source[file].includes('node:'));\n" +
@@ -152,6 +153,24 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(report, 'undeclared-dependency')).toMatchObject({ file: 'src/space/index.ts' });
     expect(report.ok).toBe(false);
     expect(process.exitCode).toBe(1);
+  });
+
+  /** What an upgrade of a package takes away: a path its `exports` no longer names — a file of a folder, since 0.38.17. */
+  it('says an import of a path the installed package does not export, and how a @plitzi one is written', async () => {
+    await write(
+      'src/space/index.ts',
+      `import { MIN_SIGNING_SECRET_LENGTH } from '@plitzi/sdk-server/actions/constants';\nvoid MIN_SIGNING_SECRET_LENGTH;\n${await read('src/space/index.ts')}`
+    );
+
+    const report = await run();
+
+    expect(findingOf(report, 'import-not-exported')).toMatchObject({
+      severity: 'error',
+      file: 'src/space/index.ts',
+      message: expect.stringContaining('@plitzi/sdk-server/actions/constants') as unknown,
+      fix: expect.stringContaining('plitzi upgrade migrations --write') as unknown
+    });
+    expect(report.findings.filter(finding => finding.code === 'import-not-exported')).toHaveLength(1);
   });
 
   it('says what an entry the server loads by name does not export', async () => {

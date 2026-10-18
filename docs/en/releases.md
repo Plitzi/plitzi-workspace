@@ -26,13 +26,13 @@ A release that renames a name, moves an import or flips a default that a project
      package no longer answers), `until-upgraded` when a project upgraded past `since` was already told (a default that
      flipped);
    - `start(project)` — what it reads once (what is installed), returning the finder run on each source file, which
-     answers the lines and what to write instead;
-   - `rewrite` — only for a change with one right answer, a rename, written with `--write`. Without it the place is
-     said and never written: the author decides.
+     answers the places — a line and what to write instead — and, for a place with one right answer (a rename, an
+     import whose new home names the same export), its `edit`, written with `--write`. A place without one is said and
+     never written: the author decides.
 2. Listed in `MIGRATIONS` (`index.ts`), oldest first — each runs on what the ones before it wrote. `index.test.ts`
    holds the list to `changes/` and the order.
-3. A test beside it in `changes/`, from `template.test.ts`: what it finds, what it leaves alone and, with a
-   `rewrite`, what `--write` makes of the file. And the change named in `.changeset/release.md`.
+3. A test beside it in `changes/`, from `template.test.ts`: what it finds, what it leaves alone and, for places with
+   an `edit`, what `--write` makes of the file. And the change named in `.changeset/release.md`.
 
 A migration stays while a project may still be on a version before it. Removing one is a decision, said in the
 changeset with what a project still on that version changes by hand.

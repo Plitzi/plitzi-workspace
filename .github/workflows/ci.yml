@@ -57,6 +57,10 @@ jobs:
       - name: Barrels built whole
         run: yarn check:dist-exports
 
+      # What importing @plitzi/sdk-server loads of Plitzi's packages, held to a budget: every server pays it at start.
+      - name: Server footprint
+        run: yarn check:server-footprint
+
       # The packages `yarn test` runs, asked of turbo with that same command, so the matrix and a local run cannot
       # disagree. A package without a `test` script is listed by turbo as `<NONEXISTENT>`, and left out.
       - name: Packages with tests

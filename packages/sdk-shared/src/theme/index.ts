@@ -3,7 +3,7 @@ import useTheme from './useTheme';
 
 export * from './ThemeProvider';
 export * from './ThemeScope';
-export * from './themeCookie';
+export * from './cookie';
 export * from './themeStore';
 export * from './useTheme';
 export { default as themeStore } from './themeStore';

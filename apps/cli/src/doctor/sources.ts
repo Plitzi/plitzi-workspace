@@ -62,6 +62,23 @@ const meant = async (target: string): Promise<string | undefined> => {
   return undefined;
 };
 
+/** Where `name` is installed, looked for the way Node looks: in `node_modules` from `dir` up. */
+const installedAt = async (dir: string, name: string): Promise<string | undefined> => {
+  for (let at = dir; ; at = path.dirname(at)) {
+    const candidate = path.join(at, 'node_modules', name);
+    if (await exists(path.join(candidate, 'package.json'))) {
+      return candidate;
+    }
+
+    if (path.dirname(at) === at) {
+      return undefined;
+    }
+  }
+};
+
+/** Marks the resolve this check asks esbuild for itself, which its own `onResolve` then leaves to esbuild. */
+const CHECKING = { checkingExports: true };
+
 type Graph = {
   /** What the files run in production: the server and what it reads — where a dev-only package is not installed. */
   production: boolean;
@@ -81,7 +98,7 @@ const walk = async ({ root, manifest }: DoctorContext, { production, entries }: 
     name: 'plitzi-doctor-node',
     setup: build => {
       build.onResolve({ filter: /.*/ }, async args => {
-        if (args.kind === 'entry-point') {
+        if (args.kind === 'entry-point' || args.pluginData === CHECKING) {
           return undefined;
         }
 
@@ -152,6 +169,30 @@ const walk = async ({ root, manifest }: DoctorContext, { production, entries }: 
               { file: importer, fix: `Move ${name} to "dependencies".` }
             )
           );
+        }
+
+        // A path inside a package is answered only if its `exports` names it — what an upgrade of the package can take
+        // away. Not asked of a package that is not installed: that is the install's to say.
+        if (args.path !== name && (await installedAt(args.resolveDir, name)) !== undefined) {
+          const resolved = await build.resolve(args.path, {
+            kind: args.kind,
+            resolveDir: args.resolveDir,
+            pluginData: CHECKING
+          });
+          if (resolved.errors.length > 0) {
+            findings.push(
+              say.error(
+                'import-not-exported',
+                `${importer} imports ${args.path}, which ${name} as installed does not answer: Node refuses it at start.`,
+                {
+                  file: importer,
+                  fix: name.startsWith('@plitzi/')
+                    ? 'A @plitzi package is imported by its root and its folders, never by a file: `plitzi upgrade migrations --write` writes the import from its folder.'
+                    : `Import a path the "exports" of ${name}'s package.json names.`
+                }
+              )
+            );
+          }
         }
 
         return { path: args.path, external: true };

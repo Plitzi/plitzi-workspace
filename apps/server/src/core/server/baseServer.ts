@@ -7,7 +7,7 @@ import { fleetRole, resolveWorkers } from './fleet/role';
 
 import type { Handler } from '../transports';
 import type { Fleet } from './fleet/supervisor';
-import type { CacheManager, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { CacheManager, OfflineDataRaw, PluginRegistry, SSRServer, SSRServerConfig } from '@plitzi/sdk-shared';
 
 /**
  * What went wrong taking the port, and what to do about it.
@@ -58,8 +58,10 @@ export interface HttpServerParts {
   /** What the primary does once, before it starts the workers — work each of them would otherwise repeat, or race
    *  the others to do. */
   beforeFork?: () => Promise<void>;
-  /** The open pages told to load again (`SSRServer.reloadPages`) — a page server in `devMode`; nothing elsewhere. */
+  /** The open pages told to load again (`SSRServer.reloadPages`) — a page server with `livePages`; nothing elsewhere. */
   reloadPages?: () => void;
+  /** The open pages handed new documents (`SSRServer.updatePages`) — a page server with `livePages`; none elsewhere. */
+  updatePages?: (documents: OfflineDataRaw, options?: { draft?: string }) => number;
   /** A plugin's server half replaced while the server runs (`SSRServer.functions`) — a page server that runs actions. */
   setPluginFunctions?: (plugin: string, definition: unknown) => void;
 }
@@ -102,6 +104,7 @@ export const createHttpServer = (
     cache,
     plugins,
     reloadPages: parts.reloadPages ?? (() => undefined),
+    updatePages: parts.updatePages ?? (() => 0),
     functions: {
       setPlugin:
         parts.setPluginFunctions ??

@@ -235,16 +235,18 @@ What it wires from the project:
   records the name, the port, the URL this machine reaches it at (`https` with a certificate), its network addresses
   and its `publicUrl` — for `plitzi page check`, `shot`, `verify` and `visual`. A signal closes it (`closeOnSignals`).
 
-While developing — `NODE_ENV` other than `production` — `devMode` and `devReload` are on, and:
+While developing — `NODE_ENV` other than `production` — `devMode` and `livePages` are on, and:
 
 - **A save to the space is authored again** by the project's `plitzi/author.ts`, in a process of its own (an import is
   never read twice in one process), run with `--ipc`: it hands the documents back over the IPC channel, the server
-  swaps them in memory and every open page loads again (`reloadPages`). What the script refuses it prints, and the page
-  keeps the last space that authored. A save to the server's own code — `main.ts`, `src/config/`,
+  swaps them in memory and hands them to every open page, which swaps the space where it stands — its state, scroll and
+  focus kept (`updatePages`); a page with elements the server draws loads again instead. What the script refuses it
+  prints, and the page keeps the last space that authored. A save to the server's own code — `main.ts`, `src/config/`,
   `src/actions/`, `src/connectors/`, `src/functions/`, `src/runtime/` — is `start:dev`'s to restart on; of a plugin,
   only its `declaration.ts` is the space's.
 - **A plugin folder added** is registered and the open pages load again; one removed is turned off; a plugin's
-  `functions/` changed is loaded again in place. A plugin's component changed is the server's own `devReload`. A folder
+  `functions/` changed is loaded again in place. A plugin's component changed is swapped where it is drawn (`livePages`
+  with `devMode`). A folder
   it cannot build — no entry yet, a name that is no type — or a `functions/` with no `index.ts` is said in the
   terminal as the layout check says it (`[plugins] …`, once until it changes), and the server goes on; the folder is
   registered once it is whole.
@@ -263,7 +265,7 @@ what `serveProject` wires itself (see [Projects](#projects)).
 | `httpVersion` | `1 \| 2 \| 3` | `2` with `tls`, else `1` | HTTP protocol version. Falls back to the nearest available lower version. |
 | `tls` | `{ key, cert, minVersion? }` | — | TLS key and certificate. Required for versions 2 and 3; optional for version 1. |
 | `devMode` | `boolean` | `false` | Enables development mode: appends `?dev` to esm.sh CDN URLs for React, and activates per-request timing metrics (see [Dev metrics](#dev-metrics)). Off, the process must run with `NODE_ENV=production` or React renders with its development build; the server says so once, at `error`. |
-| `devReload` | `boolean` | `false` | Every page this server renders listens for `server.reloadPages()` and loads again — for a project that re-authors its space on save (what `serveProject` does while developing) — and loads again too when it reconnects to a server that restarted (a new process), so a change to the server's code reaches the open page. With `devMode` too, a plugin whose source changes is built again and swapped where it is drawn on every open page — the rest of the page, its state included, stays as it was; a plugin whose declaration changed loads the page again. Not turned on by `devMode`: each open page holds a connection for it. |
+| `livePages` | `boolean` | `false` | Every page this server renders listens for what changes under it: new documents for the space it shows, swapped where it stands with its state, scroll and focus kept (`server.updatePages(documents, { draft? })` — a draft's pages hear their own alone), or everything loaded again (`server.reloadPages()`); and it loads again when it reconnects to a server that restarted (a new process), so a change to the server's code reaches the open page. What `serveProject` uses while developing, and `createAuthoringHost` always. With `devMode` too, a plugin whose source changes is built again and swapped where it is drawn on every open page; a plugin whose declaration changed loads the page again. Not turned on by `devMode`: each open page holds a connection for it. |
 | `assetVersion` | `string` | — | Cache-buster appended as `?v=<assetVersion>` to all default SDK asset URLs. Compute from file mtime or package version at startup. |
 | `cacheTtlMs` | `number` | `300000` | TTL in milliseconds for the SSR render cache. Set to `0` to disable. |
 | `flags` | `Record<string, boolean> \| ({ spaceId, environment }) => Record<string, boolean>` | — | This deployment's say over the spaces' feature flags: above what a space declares, below the SDK's `flags` prop and a tester's dev tools, and only for flags the space declares. A function answers per space. Server actions and RSC resolve with it too. See `docs/en/feature-flags.md` in the workspace. |
@@ -405,8 +407,9 @@ per page and needs it served with the quality of a project's, without trusting w
 import { authorIsolated } from '@plitzi/sdk-authoring/node';
 import { createAuthoringHost } from '@plitzi/sdk-server';
 
+// The app is at https://localhost:8080; the pages at https://127.0.0.1:8091 — another HOST, not only another port.
 const host = createAuthoringHost({ dir: 'state/pages', port: 8091, tls, frameAncestors: ['https://localhost:8080'] });
-await host.server.listen(8091, '0.0.0.0');
+await host.server.listen(8091, '127.0.0.1');
 
 const result = await authorIsolated('tmp/pages/weather.ts');   // its own process: reads the module and its packages, nothing else
 if (result.ok) {
@@ -419,14 +422,22 @@ if (result.ok) {
 - **`authorIsolated`** authors the module in a process Node's permission model holds to reading the module's folder and
   the packages it imports: no file written, no process or worker started, no variable of the caller's environment. A
   module that runs too long is killed (`timeoutMs`), and what it answers is validated again in the caller, so one that
-  forges its answer gains nothing. Before Node 25 the permission model leaves the network open: serve the result on an
-  origin of its own, never the app's.
+  forges its answer gains nothing. Before Node 25 the permission model leaves the network open: serve the result on a
+  host of its own, never the app's.
 - **`createAuthoringHost`** serves each page as a draft of its one space, at the address `put` answers — the way a page
   server tells many spaces apart on one host (a space is chosen by host or credential, never by path). The page
   arrives with its whole space, navigation is the browser's, and a reload that lost the address finds it in the draft's
   cookie. So a page here is data and its look: no server provider, action, function or channel of its own. Anything
   but a page it holds answers `404`, saying where they are.
-- **Checked like a project's page:** `plitzi page check "/?__pt=weather" --url https://localhost:8091 --space
+- **Seen to grow:** `put` again under an id and the pages open at it take the new version where they stand — scroll,
+  focus and what the person was doing kept, no reload (`livePages`, on for the host) — and `updated` says how many did.
+  An agent that improves a page in steps shows each one as it is ready.
+- **On a host of its own, never another port of the app's.** A cookie belongs to a host whatever its port, so a page
+  at `localhost:8091` reads the app's readable cookies at `localhost:8080` and its requests carry the app's session;
+  and another port, or a sibling sub-domain, is the same SITE, which the app's page server refuses writes from (it
+  trusts its own origin and the ones it names, never the site). Locally, `127.0.0.1` beside `localhost`; in production,
+  a domain of its own (`pages-example.net` beside `example.com`), as user content is served everywhere.
+- **Checked like a project's page:** `plitzi page check "/?__pt=weather" --url https://127.0.0.1:8091 --space
   tmp/pages/weather.ts` — the CLI's whole check (elements on screen, hydration, console, contrast) against that module.
 
 ## JSON adapters (offline mode)
@@ -1251,9 +1262,12 @@ After that it depends on what the flow does, because there are two different att
 | **`/auth/exchange`** | Its own grant | It acts for a space and is already refused unless the origin is one that space declared — narrower than any list here. A space is embedded on somebody else's domain by design |
 | **`/auth/refresh`, `/auth/logout`** | Nothing | Both authenticate with the refresh credential and must work when the access token has lapsed. Forging either gains an attacker nothing: renewing somebody's session hands the new credential to their own browser |
 
-**"A site this deployment recognises"** is decided by two headers a page cannot set: `Sec-Fetch-Site` — the
-browser's own account of where the request came from — and, where that is absent, `Origin`, matched exactly against
-this host or `identity.platformOrigins`, the hosts you already declared. **Neither header present means the caller
+**"A site this deployment recognises"** is an ORIGIN — host and port, not just the site — decided by two headers a page cannot
+set: `Sec-Fetch-Site` — the browser's own account of where the request came from, where only `same-origin` (or `none`,
+a typed URL) is this server's own — and, where that is absent, `Origin`, matched exactly against this host or
+`identity.platformOrigins`, the hosts you already declared. **`same-site` is not trusted**: another port of this host,
+or a sibling sub-domain, is the same site, and is exactly where somebody else's code is served by design — an
+authoring host, every space of a platform on sub-domains of one domain. A sibling that is yours is named. **Neither header present means the caller
 is not a browser**, and a client that is not a browser has no victim's session in it to forge with — which is what
 lets every API client, mobile app and script sign in with nothing extra to send.
 
@@ -1293,13 +1307,14 @@ There is nothing to configure: the secret, the cookie scope and the origins all 
 
 Everything a page server answers past its self-gating flows — server actions (`/_action`), realtime publishes, a
 space's `/fn/` routes, its runtime's endpoints, your own `data` stages, and the adapter-only `loginPath`, `logoutPath`
-and `exchangePath` — refuses a write that a browser says **another site caused**, with `403` and `reason: 'foreign'`.
+and `exchangePath` — refuses a write that a browser says **a page of another origin caused**, with `403` and `reason: 'foreign'`.
 **Whether or not a session cookie came with it**: a server holding credentials of its own (a token for somebody's
 calendar, an API key) or a tool nobody signs in to acts for whoever reaches it, and a plain `text/plain` POST from any
 page open in the same browser reaches it without a preflight.
 
 The same two headers decide, under the same rules: what passes is a safe method, anything with `Authorization`, a
-caller that is not a browser (a webhook, `curl`), a page of this site (`same-origin`, `same-site`), and what you name:
+caller that is not a browser (a webhook, `curl`), a page of this origin (`same-origin`, never merely `same-site`),
+and what you name:
 
 ```ts
 createServer({

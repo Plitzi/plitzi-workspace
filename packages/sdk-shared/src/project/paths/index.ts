@@ -1,5 +1,6 @@
 /**
- * The layout of a project `@plitzi/cli` writes, relative to its root: the one place the CLI that writes and checks it,
+ * The layout of a project `@plitzi/cli` writes, relative to its root — names alone, nothing of Node, so a browser imports
+ * them too (`@plitzi/sdk-shared/project/paths`; the folder above it is Node only): the one place the CLI that writes and checks it,
  * the server that serves it (`@plitzi/sdk-server/project`) and the authoring that checks its space
  * (`@plitzi/sdk-authoring/node`'s `projectAuthoring`) read it from.
  *
@@ -72,6 +73,13 @@ export const PUBLIC_DIR = 'public';
  * `/data/<file>` on the server. A project with no server keeps it in `public/data/`, where the browser fetches it.
  */
 export const DATA_DIR = 'src/data';
+
+/**
+ * Where a project's own data answers: a provider whose `query` is `/data/<file>` reads `<file>` from the folder the
+ * server keeps it in (`dataDir`), which is never served — so only a provider resolved on the server reads it. The
+ * server's resolver and the authoring check that refuses a browser read hold the same prefix.
+ */
+export const PROJECT_DATA_PREFIX = '/data/';
 
 /** The project's own server code — the tasks and `/fn/` routes `defineFunctions` declares — built at boot. */
 export const FUNCTIONS_DIR = 'src/functions';

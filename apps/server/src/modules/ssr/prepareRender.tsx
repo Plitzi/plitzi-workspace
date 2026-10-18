@@ -10,7 +10,7 @@ import {
 } from '@plitzi/sdk-shared/schema';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
-import { themeFromCookies } from '@plitzi/sdk-shared/theme';
+import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 
 import { loadPluginComponents } from './loadPluginComponents';
 import { registerExternalPlugins } from './registerExternalPlugins';
@@ -19,7 +19,7 @@ import { resolvePageSeo } from './resolvePageSeo';
 import { publishSpaceDocument } from './spaceDocument';
 import { SPACE_TOKEN_PARAM } from '../../core/auth/credentials';
 import { imagesPathOf } from '../../core/http/stages/images';
-import { PREVIEW_TOKEN_PARAM } from '../../core/previewToken';
+import { PREVIEW_TOKEN_PARAM, readDraftToken } from '../../core/previewToken';
 import { requestAuthority } from '../../core/requestParser';
 import { sdkAssetVersion } from '../../core/sdkAssets';
 import { resolveActionEndpoint, resolveRscEndpoint } from '../../core/services/resolve';
@@ -474,8 +474,12 @@ export const prepareRender = async (
       // The authorization, not what was drawn: see `debugAuthorized` above.
       debugMode: debugAuthorized,
       ssrOnly: config.ssrOnly === true,
-      // The page reloads itself when the server says the space changed (`reloadPages`): only when asked for.
-      devReload: config.devReload === true,
+      // The page listens for what changes under it (`updatePages`, `reloadPages`): only when asked for — a draft for its
+      // own changes alone, by the token it was resolved from.
+      livePages: config.livePages === true,
+      // A plugin swapped where it is drawn when the server builds it again, which only a server developing does.
+      hotPlugins: config.livePages === true && config.devMode === true,
+      ...(config.livePages === true && offlineDataOverride !== undefined ? { liveDraft: readDraftToken(req) } : {}),
       offlineData: offlineDataStr
     },
     // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page.

@@ -14,7 +14,7 @@ import { compileTemplate } from '../../modules/ssr/template';
 import { PluginManager } from '../../plugins/manager';
 import { watchPluginSources } from '../../plugins/watch';
 import { makeHandler } from '../http/dispatcher';
-import { createDevReload } from '../http/stages/devReload';
+import { createLivePages } from '../http/stages/livePages';
 import { buildPagePipeline } from '../services/registry';
 
 import type { BuildContext } from '../http/dispatcher';
@@ -82,25 +82,25 @@ export const createPageServer = (
   const actions = actionsModuleFor(config);
   const realtime = realtimeModuleFor(config);
 
-  const devReload = config.devReload ? createDevReload() : undefined;
+  const livePages = config.livePages ? createLivePages() : undefined;
   /**
    * A plugin whose source changed is built again and handed to the open pages, which swap it where it is drawn — the
-   * rest of the page, its state included, stays as it was. Only while developing with `devReload` on: nobody edits a
+   * rest of the page, its state included, stays as it was. Only while developing (`devMode`) with `livePages` on: nobody edits a
    * deployment's plugins under it, and a page that does not listen has nothing to swap.
    */
   const stopWatchingPlugins =
-    devReload && config.devMode
+    livePages && config.devMode
       ? watchPluginSources(pluginManager, key => {
           invalidatePluginComponentCache();
           void pluginManager.rebuild(key).then(entry => {
             if (entry?.js) {
-              devReload.plugin(entry);
+              livePages.plugin(entry);
             }
           });
         })
       : undefined;
-  // First: a page listening for a reload asks before anything else is looked at, and holds its connection open.
-  const stages = [...(devReload ? [devReload.stage] : []), ...buildPagePipeline(services, extensions)];
+  // First: a page listening for what changes under it asks before anything else is looked at, and holds its connection.
+  const stages = [...(livePages ? [livePages.stage] : []), ...buildPagePipeline(services, extensions)];
   const makeHandlerForPort = (port: number) => {
     const buildContext: BuildContext<SSRContext> = (raw, rawRes, req, res) => ({
       raw,
@@ -144,9 +144,9 @@ export const createPageServer = (
     onClosing: () => {
       realtime?.close();
       stopWatchingPlugins?.();
-      devReload?.close();
+      livePages?.close();
     },
-    ...(devReload ? { reloadPages: devReload.reload } : {}),
+    ...(livePages ? { reloadPages: livePages.reload, updatePages: livePages.update } : {}),
     ...(actions
       ? {
           setPluginFunctions: (plugin: string, definition: unknown) => {

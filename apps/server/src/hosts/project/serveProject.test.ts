@@ -7,7 +7,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { serveProject } from './serveProject';
-import { DEV_RELOAD_PATH } from '../../core/http/stages/devReload';
+import { LIVE_PAGES_PATH } from '../../core/http/stages/livePages';
 import { unusedPort } from '../../core/unusedPort';
 import { offlineDataOf, oneEmptyPage } from '../../modules/ssr/testing/offlineData';
 
@@ -94,15 +94,15 @@ const write = async (file: string, text: string): Promise<void> => {
   await fs.writeFile(path.join(root, file), text);
 };
 
-/** What the dev-reload stream says from here on, as it says it. */
+/** What the live-pages stream says from here on, as it says it: each `heard` answers all it said so far. */
 const listen = async (url: string) => {
-  const stream = await fetch(`${url}/__plitzi/reload`);
+  const stream = await fetch(`${url}/__plitzi/live`);
   const reader = stream.body?.getReader();
   const decoder = new TextDecoder();
   let said = '';
 
   return {
-    heard: async (event: string): Promise<void> => {
+    heard: async (event: string): Promise<string> => {
       await vi.waitFor(
         async () => {
           const chunk = await reader?.read();
@@ -111,6 +111,8 @@ const listen = async (url: string) => {
         },
         { timeout: 15_000 }
       );
+
+      return said;
     },
     stop: () => reader?.cancel()
   };
@@ -248,7 +250,7 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     await reload.heard('hello');
     await write('next.json', JSON.stringify(titled('authored after the fix')));
     await write('src/space/index.ts', 'export const space = { fixed: true };\n');
-    await reload.heard('reload');
+    expect(await reload.heard('space')).toContain('authored after the fix');
     await reload.stop();
 
     expect(await pageOf(running.url)).toContain('<title>authored after the fix</title>');
@@ -282,14 +284,16 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     });
   });
 
-  it('authors it again on a save and serves the new documents from memory, every open page told to load again', async () => {
+  it('authors it again on a save and serves the new documents from memory, every open page handed them', async () => {
     const running = await serve({ space: () => titled('authored at boot') });
     const reload = await listen(running.url);
     await reload.heard('hello');
 
     await write('next.json', JSON.stringify(titled('authored again')));
     await write('src/space/index.ts', 'export const space = { saved: true };\n');
-    await reload.heard('reload');
+    const said = await reload.heard('space');
+    expect(said).toContain('authored again');
+    expect(said).not.toContain('event: reload');
     await reload.stop();
 
     expect(await pageOf(running.url)).toContain('<title>authored again</title>');
@@ -391,7 +395,7 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     /** The status the reload stream answers with — a stream left open, so read and dropped. */
     const reloadStatus = async (url: string): Promise<number> => {
       const stop = new AbortController();
-      const answer = await fetch(`${url}${DEV_RELOAD_PATH}`, { signal: stop.signal });
+      const answer = await fetch(`${url}${LIVE_PAGES_PATH}`, { signal: stop.signal });
       stop.abort();
 
       return answer.status;

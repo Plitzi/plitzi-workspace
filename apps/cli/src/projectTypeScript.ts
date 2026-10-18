@@ -10,7 +10,7 @@ import type TypeScript from 'typescript';
 export const loadTypeScript = (root: string): typeof TypeScript | undefined => {
   try {
     // What `require` hands back is the TypeScript module — the type is the one the project's own `import` would see.
-    return createRequire(path.join(root, 'package.json'))('typescript') as typeof TypeScript;
+    return createRequire(path.resolve(root, 'package.json'))('typescript') as typeof TypeScript;
   } catch {
     return undefined;
   }

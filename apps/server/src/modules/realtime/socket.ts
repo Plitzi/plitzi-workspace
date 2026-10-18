@@ -93,7 +93,7 @@ export const handleRealtimeSocket = async ({
   allowedOrigins
 }: SocketDeps): Promise<void> => {
   if (!originAllowed(raw, req, allowedOrigins)) {
-    answer(res, { status: 403, error: 'A page on another site may not open this', reason: 'foreign' });
+    answer(res, { status: 403, error: 'A page of another origin may not open this', reason: 'foreign' });
 
     return;
   }

@@ -205,11 +205,19 @@
 
         __plitziParams.offlineData = await response.json();
       }
-      <% if (locals.devReload) { %>
-      const __plitziApp = render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true, { hotPlugins: true });
+      <% if (locals.livePages) { %>
+      const __plitziApp = render('plitzi', __plitziParams, __plitziPlugins, <%= locals.debugMode ? true : false %>, true, { hotPlugins: <%= locals.hotPlugins ? true : false %> });
+      // New documents for the space this page shows: swapped where it stands, its state kept. A page that cannot take
+      // them in place (one with elements the server draws) loads again.
+      window.__plitziLiveEvents?.addEventListener('space', event => {
+        const { documents } = JSON.parse(event.data);
+        if (!__plitziApp?.replaceSpace(documents)) {
+          location.reload();
+        }
+      });
       // A plugin the server built again: its new bundle swapped in where it is drawn and its stylesheet pointed at the
       // new one — the rest of the page stays as it is. One that cannot be swapped in place loads the page again.
-      window.__plitziDevEvents?.addEventListener('plugin', async event => {
+      window.__plitziLiveEvents?.addEventListener('plugin', async event => {
         const { key, js, css } = JSON.parse(event.data);
         const sheet = css && [...document.querySelectorAll('link[data-plitzi-plugin]')].find(link => link.dataset.plitziPlugin === key);
         if (sheet) {
@@ -230,14 +238,15 @@
       <% } %>
     </script>
     <% } %>
-    <% if (locals.devReload) { %>
-    <%# Development only: the server says the space changed (re-authored, `reloadPages`), and the page loads again — and
-        so does a page that reconnects to a server that restarted (a different `boot`): its code changed under it. %>
+    <% if (locals.livePages) { %>
+    <%# Only with `livePages`: the server says what changed under the page — everything (`reloadPages`), and the page
+        loads again, as does a page that reconnects to a server that restarted (a different `boot`): its code changed
+        under it. A draft listens for its own changes alone, by its token. %>
     <script>
       (() => {
-        const events = new EventSource('/__plitzi/reload');
-        // The page's module script listens here too, for a plugin built again (`plugin`).
-        window.__plitziDevEvents = events;
+        const events = new EventSource(<%- JSON.stringify(locals.liveDraft ? `/__plitzi/live?__pt=${encodeURIComponent(locals.liveDraft)}` : '/__plitzi/live').replace(/</g, '\\u003c') %>);
+        // The page's module script listens here too, for its space (`space`) and a plugin built again (`plugin`).
+        window.__plitziLiveEvents = events;
         let boot;
         events.addEventListener('hello', event => {
           const next = JSON.parse(event.data).boot;

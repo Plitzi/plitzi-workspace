@@ -55,7 +55,7 @@ type SetByProject = 'port' | 'health' | 'adapters' | 'plugins' | 'publicDir' | '
  * What a project's server does besides serving its space — its `src/config/serverOptions.ts`: what `createServer`
  * takes, but for what `serveProject` wires from the project's layout, and an action's `lookups`, which are the
  * project's `src/actions/`. `logLevel` and `logger` are the project's to change; `action.kv` too. So are `devMode` and
- * `devReload`, which follow `NODE_ENV` when left out — on unless it is `production`. A deployment started without it (a
+ * `livePages`, which follow `NODE_ENV` when left out — on unless it is `production`. A deployment started without it (a
  * container's `CMD`, a process manager with no environment) says `devMode: false` here, and a public action answers
  * with its output alone, never the trace of every step.
  */
@@ -367,7 +367,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       ...(tls ? { tls } : {}),
       port,
       devMode: serverOptions.devMode ?? developing,
-      devReload: serverOptions.devReload ?? serverOptions.devMode ?? developing,
+      livePages: serverOptions.livePages ?? serverOptions.devMode ?? developing,
       health: { name },
       adapters,
       plugins: plugins.sources,
@@ -419,7 +419,8 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
               watchSpace(root, authored => {
                 held.documents = authored;
                 spaceFailure.clear();
-                server.reloadPages();
+                // The open pages swap the new space where they stand, their state kept; one that cannot loads again.
+                server.updatePages(authored);
               })
             ]
           : []),

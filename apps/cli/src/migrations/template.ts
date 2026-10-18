@@ -8,8 +8,8 @@ import type { Migration, MigrationPlace } from './types';
  * `docs/en/releases.md` § A change a project's source has to follow.
  *
  * This one is the commonest kind: an export a package renamed with no alias — `oldName` of `@plitzi/sdk-example`, now
- * `newName`. A rename has one right answer, so it has a `rewrite`; a change the author must decide (a default that
- * flipped) leaves `rewrite` out, and is said at its line and never written — `changes/folderImports.ts` is one.
+ * `newName`. A rename has one right answer, so each place carries its `edit`; a change the author must decide (a default
+ * that flipped) leaves `edit` out, and is said at its line and never written — `changes/folderImports.ts` does both.
  */
 
 const PACKAGE = '@plitzi/sdk-example';
@@ -20,8 +20,6 @@ const TO = 'newName';
 const importsIt = (text: string): boolean =>
   new RegExp(`import\\s+(type\\s+)?\\{[^}]*\\b${FROM}\\b[^}]*\\}\\s*from\\s*['"]${PACKAGE}['"]`).test(text);
 
-// Two: a `g` regex keeps `lastIndex` between `.test` calls, and would skip a line after a match.
-const word = new RegExp(`\\b${FROM}\\b`);
 const everyWord = new RegExp(`\\b${FROM}\\b`, 'g');
 
 export const template: Migration = {
@@ -37,13 +35,12 @@ export const template: Migration = {
         return Promise.resolve([]);
       }
 
-      const places: MigrationPlace[] = text
-        .split('\n')
-        .flatMap((line, index) =>
-          word.test(line) ? [{ line: index + 1, what: `${FROM} of ${PACKAGE} is ${TO} — renamed with no alias` }] : []
-        );
+      const places: MigrationPlace[] = [...text.matchAll(everyWord)].map(match => ({
+        line: text.slice(0, match.index).split('\n').length,
+        what: `${FROM} of ${PACKAGE} is ${TO} — renamed with no alias`,
+        edit: { start: match.index, end: match.index + FROM.length, text: TO }
+      }));
 
       return Promise.resolve(places);
-    },
-  rewrite: ({ text }) => text.replace(everyWord, TO)
+    }
 };

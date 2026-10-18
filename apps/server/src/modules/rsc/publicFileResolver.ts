@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server';
+import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/project/paths';
 
 import type { RscElementResolver } from './resolveRscData';
 import type { SpaceRevision } from '@plitzi/sdk-shared';

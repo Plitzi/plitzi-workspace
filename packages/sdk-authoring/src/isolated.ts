@@ -18,7 +18,7 @@ import type { AuthoredSpace } from './schema/types';
  * native addon, no environment variable of this one. What it answers is checked again here (`validateSpace`), so a
  * module that forges its own answer gains nothing by it.
  *
- * Network access is not one Node's permission model takes away before Node 25: serve what it authors on an origin of
+ * Network access is not one Node's permission model takes away before Node 25: serve what it authors on a host of
  * its own (`createAuthoringHost` of `@plitzi/sdk-server`), never the app's, and do not run it where the network it
  * reaches is one to keep it from.
  *

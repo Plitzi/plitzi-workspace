@@ -1,6 +1,6 @@
 import { debugCookieName } from '@plitzi/sdk-shared/devTools';
 import { flagsCookieName } from '@plitzi/sdk-shared/flags';
-import { themeFromCookies } from '@plitzi/sdk-shared/theme';
+import { themeFromCookies } from '@plitzi/sdk-shared/theme/cookie';
 
 import { requestAuthority } from '../../core/requestParser';
 import { ssrPaintedCookieName } from '../paintedCookie';

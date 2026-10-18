@@ -39,8 +39,8 @@ import type { CreateAnswers } from '../scaffold';
  *   is left to the author, said with the command that would take the registry's.
  * - `skills`: `.claude/skills/plitzi-*` from the packages installed, each replaced whole.
  * - `migrations`: what a version changed that the project's own source may have to follow (`MIGRATIONS`, one file each
- *   in `src/migrations/`), at its file and line — with `--write`, rewritten where the change has one right answer, a
- *   rename; said otherwise.
+ *   in `src/migrations/`), at its file and line — with `--write`, rewritten where the change has one right answer (a
+ *   rename, an import whose folder names the same export); said otherwise, with why.
  *
  * Shown by default; `--write` makes it. What the space is — its pages, plugins, data — is the project's, never named.
  *
@@ -532,7 +532,7 @@ const reportText = (report: UpgradeReport, install: string): string => {
     lines.push(
       ...report.migrations.map(found =>
         chalk.yellow(
-          `  ${found.written ? '~' : '!'} ${found.file}:${String(found.line)} (${found.since}) ${found.what}${found.written ? '' : ' — yours to change'}`
+          `  ${found.written ? '~' : '!'} ${found.file}:${String(found.line)} (${found.since}) ${found.what}${found.written ? '' : found.writable ? ' — `--write` writes it' : ' — yours to change'}`
         )
       )
     );

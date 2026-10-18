@@ -90,7 +90,10 @@ export const categories: Category[] = [
         name: 'actions',
         what: 'Flows run on the server: inside the render, from a click, and out through the space’s own SMTP server'
       },
-      { name: 'preview', what: 'Draft renders that are never saved, and the one-shot token' },
+      {
+        name: 'preview',
+        what: 'Draft renders that are never saved, the one-shot token, and a page taking its next version live'
+      },
       { name: 'auth', what: 'A visitor becoming a member and back: guest/member pages, sessions, bindings' },
       { name: 'workers', what: 'One port served by several processes: the load spread, every page the same' },
       {

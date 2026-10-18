@@ -19,7 +19,7 @@ const BASE = `http://127.0.0.1:${PORT}`;
 let server: SSRServer | undefined;
 
 const start = async (
-  options: { devMode: boolean; devReload?: boolean },
+  options: { devMode: boolean; livePages?: boolean },
   plugins?: { dir: string; names: string[]; sources: Record<string, string> }
 ): Promise<SSRServer> => {
   const started = createServer({
@@ -57,8 +57,8 @@ afterEach(async () => {
 
 describe('reloadPages', () => {
   it('tells every page listening to load again', async () => {
-    const running = await start({ devMode: true, devReload: true });
-    const stream = await fetch(`${BASE}/__plitzi/reload`);
+    const running = await start({ devMode: true, livePages: true });
+    const stream = await fetch(`${BASE}/__plitzi/live`);
     expect(stream.headers.get('content-type')).toContain('text/event-stream');
     const reader = stream.body?.getReader();
     const decoder = new TextDecoder();
@@ -77,7 +77,7 @@ describe('reloadPages', () => {
   it('greets every page with the boot of the process answering it, a new one after a restart', async () => {
     const boots: string[] = [];
     const greeting = async (): Promise<void> => {
-      const stream = await fetch(`${BASE}/__plitzi/reload`);
+      const stream = await fetch(`${BASE}/__plitzi/live`);
       const reader = stream.body?.getReader();
       const decoder = new TextDecoder();
       let said = '';
@@ -91,11 +91,11 @@ describe('reloadPages', () => {
       await reader?.cancel();
     };
 
-    await start({ devMode: true, devReload: true });
+    await start({ devMode: true, livePages: true });
     await greeting();
     await greeting();
     await server?.close();
-    await start({ devMode: true, devReload: true });
+    await start({ devMode: true, livePages: true });
     await greeting();
 
     expect(boots[0]).toBe(boots[1]);
@@ -103,16 +103,16 @@ describe('reloadPages', () => {
   });
 
   it('is a page the template listens on only when asked for — a development server alone does not', async () => {
-    await start({ devMode: true, devReload: true });
+    await start({ devMode: true, livePages: true });
     const page = await (await fetch(`${BASE}/`)).text();
     expect(page).toContain('new EventSource(');
-    expect(page).toContain('/__plitzi/reload');
+    expect(page).toContain('/__plitzi/live');
     await server?.close();
 
     // Every open page would hold a connection for it: a server that never reloads pages must not hand that out.
     await start({ devMode: true });
-    expect(await (await fetch(`${BASE}/`)).text()).not.toContain('/__plitzi/reload');
-    expect((await fetch(`${BASE}/__plitzi/reload`)).headers.get('content-type')).not.toContain('text/event-stream');
+    expect(await (await fetch(`${BASE}/`)).text()).not.toContain('/__plitzi/live');
+    expect((await fetch(`${BASE}/__plitzi/live`)).headers.get('content-type')).not.toContain('text/event-stream');
   });
 });
 
@@ -138,11 +138,11 @@ describe('a plugin edited while the server runs', () => {
     try {
       const source = path.join(dir, 'Card.tsx');
       await fs.writeFile(source, 'export default () => <p>first</p>;\n');
-      await start({ devMode: true, devReload: true }, { dir, names: ['card'], sources: { card: source } });
+      await start({ devMode: true, livePages: true }, { dir, names: ['card'], sources: { card: source } });
 
       const page = await (await fetch(`${BASE}/`)).text();
       expect(page).toContain('hotPlugins: true');
-      const stream = await fetch(`${BASE}/__plitzi/reload`);
+      const stream = await fetch(`${BASE}/__plitzi/live`);
       const reader = stream.body?.getReader();
       await heard(reader, 'hello');
 

@@ -89,9 +89,21 @@ describe('core/http/stages/crossSiteWrites', () => {
     expect((await send('/x/op', { origin: 'null' })).status).toBe(403);
   });
 
-  it('passes this site’s own pages, scripts and webhooks, and anything carrying Authorization', async () => {
+  /**
+   * The same site is not this server: another port of its host, or a sibling sub-domain, is where somebody else's pages
+   * are served by design — an authoring host beside the app, every space of a platform on one domain.
+   */
+  it('refuses a page of the same site on another origin, as the browser says and by Origin alone', async () => {
+    const otherPort = `http://127.0.0.1:${String(PORT + 1)}`;
+
+    expect((await send('/x/op', { 'sec-fetch-site': 'same-site', origin: otherPort })).status).toBe(403);
+    expect((await send('/x/op', { 'sec-fetch-site': 'same-site', origin: 'http://other.127.0.0.1' })).status).toBe(403);
+    expect((await send('/x/op', { origin: otherPort })).status).toBe(403);
+  });
+
+  it('passes this origin’s own pages, scripts and webhooks, and anything carrying Authorization', async () => {
     expect((await send('/x/op', { 'sec-fetch-site': 'same-origin', origin: base })).status).toBe(200);
-    expect((await send('/x/op', { 'sec-fetch-site': 'same-site', origin: 'https://other.127.0.0.1' })).status).toBe(
+    expect((await send('/x/op', { 'sec-fetch-site': 'same-site', origin: 'https://app.example.test' })).status).toBe(
       200
     );
     expect((await send('/x/op', { origin: base })).status).toBe(200);

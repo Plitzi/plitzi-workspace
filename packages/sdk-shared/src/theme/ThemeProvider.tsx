@@ -2,7 +2,7 @@ import { use, useEffect, useId, useRef, useState } from 'react';
 
 import { StoreContext, useIsomorphicLayoutEffect } from '@plitzi/nexus/react';
 
-import { applyThemeClass, readThemeCookie, THEME_COOKIE_NAME, writeThemeCookie } from './themeCookie';
+import { applyThemeClass, readThemeCookie, THEME_COOKIE_NAME, writeThemeCookie } from './cookie';
 import ThemeScopeContext, { ThemeStartContext, useThemeState } from './ThemeScope';
 import defaultThemeStore, { createThemeStore, resolveScheme, setMachineScheme, setThemeMode } from './themeStore';
 import { useCommonStoreSync } from '../store';

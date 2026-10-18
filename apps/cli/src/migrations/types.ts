@@ -12,10 +12,22 @@ export interface MigrationProject {
   lastUpgraded: string | undefined;
 }
 
+/** What `--write` puts in place of a stretch of the file: offsets into the text the finder read. */
+export interface MigrationEdit {
+  start: number;
+  end: number;
+  text: string;
+}
+
 /** A place a migration names in one file: what is written there, and what to write instead. */
 export interface MigrationPlace {
   line: number;
   what: string;
+  /**
+   * The change, when this place has one right answer — a rename, an import whose new home names the same export. Left
+   * out, the place is said and never written: the author decides.
+   */
+  edit?: MigrationEdit;
 }
 
 /**
@@ -39,17 +51,13 @@ export interface Migration {
    * file returned.
    */
   start: (project: MigrationProject) => (source: SourceFile) => Promise<MigrationPlace[]>;
-  /**
-   * The file as it is to be written — only for a change with one right answer, a rename. Without it, what is found is
-   * said and never written: the author decides.
-   */
-  rewrite?: (source: SourceFile) => string;
 }
 
-/** What a run reports: a place one migration found, and whether `--write` wrote the change. */
-export interface MigrationFinding extends MigrationPlace {
+/** What a run reports: a place one migration found, whether it has one right answer, and whether `--write` wrote it. */
+export interface MigrationFinding extends Omit<MigrationPlace, 'edit'> {
   migration: string;
   since: string;
   file: string;
+  writable: boolean;
   written: boolean;
 }

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterAll, afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createAuthoringHost } from '.';
 import { unusedPort } from '../../core/unusedPort';
@@ -31,6 +31,38 @@ const start = async (): Promise<{ host: AuthoringHost; base: string }> => {
   return { host, base: `http://127.0.0.1:${String(port)}` };
 };
 
+/** What a live-pages stream says, as it says it. */
+const listen = async (url: string) => {
+  const reader = (await fetch(url)).body?.getReader();
+  const decoder = new TextDecoder();
+  let said = '';
+  const more = async (): Promise<void> => {
+    const chunk = await reader?.read();
+    said += decoder.decode(chunk?.value);
+  };
+
+  return {
+    heard: async (event: string): Promise<string> => {
+      await vi.waitFor(
+        async () => {
+          await more();
+          expect(said).toContain(`event: ${event}`);
+        },
+        { timeout: 5_000 }
+      );
+
+      return said;
+    },
+    /** What it said by the time anything else would have reached it: a read that waits, bounded. */
+    said: async (): Promise<string> => {
+      await Promise.race([more(), new Promise(resolve => setTimeout(resolve, 300))]);
+
+      return said;
+    },
+    stop: () => reader?.cancel()
+  };
+};
+
 afterEach(async () => {
   await Promise.all(started.splice(0).map(host => host.server.close()));
 });
@@ -45,7 +77,7 @@ describe('createAuthoringHost', () => {
     const weather = host.put(offlineDataOf(titled('Weather')), { id: 'weather' });
     const agenda = host.put(offlineDataOf(titled('Agenda')));
 
-    expect(weather).toEqual({ id: 'weather', path: '/?__pt=weather' });
+    expect(weather).toEqual({ id: 'weather', path: '/?__pt=weather', updated: 0 });
     expect(agenda.id).toMatch(/^[\w-]{22}$/);
 
     const res = await fetch(`${base}${weather.path}`);
@@ -54,6 +86,26 @@ describe('createAuthoringHost', () => {
     expect(await res.text()).toContain('Weather');
     expect(await (await fetch(`${base}${agenda.path}`)).text()).toContain('Agenda');
     expect(host.ids().sort()).toEqual([agenda.id, 'weather'].sort());
+  });
+
+  /** What makes a page an agent keeps improving seen to grow: the open page is handed the new version, not reloaded. */
+  it('hands the new version to the pages open at an id put again, and to them alone', async () => {
+    const { host, base } = await start();
+    host.put(offlineDataOf(titled('Draft one')), { id: 'weather' });
+    host.put(offlineDataOf(titled('Agenda')), { id: 'agenda' });
+    const page = await fetch(`${base}/?__pt=weather`);
+    expect(await page.text()).toContain('/__plitzi/live?__pt=weather');
+
+    const weather = await listen(`${base}/__plitzi/live?__pt=weather`);
+    const agenda = await listen(`${base}/__plitzi/live?__pt=agenda`);
+    await weather.heard('hello');
+    await agenda.heard('hello');
+
+    expect(host.put(offlineDataOf(titled('Draft two')), { id: 'weather' }).updated).toBe(1);
+    expect(await weather.heard('space')).toContain('Draft two');
+    expect(host.put(offlineDataOf(titled('New')), { id: 'fresh' }).updated).toBe(0);
+    expect(await agenda.said()).not.toContain('event: space');
+    await Promise.all([weather.stop(), agenda.stop()]);
   });
 
   it('answers nothing but its pages, and says where they are', async () => {

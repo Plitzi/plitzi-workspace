@@ -9,7 +9,7 @@ const SETTLE_MS = 80;
 
 /**
  * Calls `onChange(key)` when a file a built plugin was built from changes: what a development server rebuilds and
- * hands to the open pages (`devReload`), without restarting the process that serves them.
+ * hands to the open pages (`livePages`), without restarting the process that serves them.
  *
  * The FOLDERS are watched, not the files. An editor that saves through a temporary file renames it over the old one,
  * and a watcher on the old file hears nothing after the first save. Which files matter comes from the build itself

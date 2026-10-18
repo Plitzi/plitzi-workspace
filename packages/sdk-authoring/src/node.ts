@@ -26,6 +26,7 @@ import {
   PLUGIN_DECLARATION_FILE,
   PLUGIN_MANIFEST_FILE,
   PLUGINS_DIR,
+  PROJECT_DATA_PREFIX,
   PUBLIC_DIR,
   SPACE_ENTRY,
   VENDOR_PLUGINS_DIR,
@@ -33,7 +34,6 @@ import {
   projectModule,
   projectRoot
 } from '@plitzi/sdk-shared/project';
-import { PROJECT_DATA_PREFIX } from '@plitzi/sdk-shared/server';
 
 import { authorSpace } from './index';
 import { compactSvg } from './svg/compactSvg';

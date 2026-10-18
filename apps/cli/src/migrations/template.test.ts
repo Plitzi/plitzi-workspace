@@ -10,7 +10,7 @@ import { template } from './template';
 
 /**
  * THE TEMPLATE FOR A MIGRATION'S TEST, copied beside the migration in `changes/` (`runMigrations` from `../run`): what
- * it finds, what it leaves alone, and — for one with a `rewrite` — what `--write` makes of the file, through
+ * it finds, what it leaves alone, and — for places with an `edit` — what `--write` makes of the file, through
  * `runMigrations` as `plitzi upgrade migrations` runs it.
  */
 describe('template', () => {

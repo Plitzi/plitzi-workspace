@@ -1,6 +1,6 @@
-import { cookieFromHeader } from '../helpers/cookies';
+import { cookieFromHeader } from '../../helpers/cookies';
 
-import type { Theme } from '../types';
+import type { Theme } from '../../types';
 
 /** The name the choice is kept under, and the one a server reads it back with. */
 export const THEME_COOKIE_NAME = 'theme';

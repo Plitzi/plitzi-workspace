@@ -82,8 +82,14 @@ describe('what a sign-in has to present', () => {
     });
     expect(withSibling.required(carrier({ headers: { origin: 'https://app.acme.test' } }), 'signIn')).toBe(false);
 
-    // A browser that says so is still believed: it decided with the real public suffix list.
-    expect(signIn({ headers: { origin: 'https://app.acme.test', 'sec-fetch-site': 'same-site' } })).toBe(false);
+    // Nor is the browser's `same-site` taken for it: a sibling sub-domain is where somebody else's pages may be.
+    expect(signIn({ headers: { origin: 'https://app.acme.test', 'sec-fetch-site': 'same-site' } })).toBe(true);
+    expect(
+      withSibling.required(
+        carrier({ headers: { origin: 'https://app.acme.test', 'sec-fetch-site': 'same-site' } }),
+        'signIn'
+      )
+    ).toBe(false);
   });
 
   /** The attack: a page on another site posting credentials it controls, so the visitor is signed into them. */
@@ -95,7 +101,23 @@ describe('what a sign-in has to present', () => {
   /** `Sec-Fetch-Site` is the browser's own account and cannot be set by script, so it is believed over `Origin`. */
   it('believes the browser over a header a page could have chosen', () => {
     expect(signIn({ headers: { 'sec-fetch-site': 'cross-site', origin: 'https://acme.test' } })).toBe(true);
-    expect(signIn({ headers: { 'sec-fetch-site': 'same-site', origin: 'https://evil.test' } })).toBe(false);
+    expect(signIn({ headers: { 'sec-fetch-site': 'same-origin', origin: 'https://evil.test' } })).toBe(false);
+  });
+
+  /** A port is part of an origin: another one on this host is another server, which may serve anybody's pages. */
+  it('tells this origin from another port of its host', () => {
+    const at = (origin: string, host?: string) =>
+      signIn({ hostname: 'localhost', headers: { origin, ...(host ? { host } : {}) } });
+
+    expect(at('https://localhost:8080', 'localhost:8080')).toBe(false);
+    expect(at('https://localhost:8091', 'localhost:8080')).toBe(true);
+    expect(at('https://localhost', 'localhost:443')).toBe(false);
+    expect(at('http://localhost:8080', 'localhost:8080')).toBe(false);
+    expect(
+      signIn({ hostname: 'localhost', headers: { origin: 'https://localhost:8091', 'sec-fetch-site': 'same-site' } })
+    ).toBe(true);
+    // A proxy that rewrote `Host` leaves the hostname to compare.
+    expect(at('https://localhost:8091', 'internal:4000')).toBe(false);
   });
 
   it('lets the deployment name origins that are also its own', () => {

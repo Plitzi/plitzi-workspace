@@ -57,8 +57,10 @@ describe('the origin guard', () => {
     expect(run({ ...COOKIE, origin: 'https://evil.test' }).passed).toBe(false);
   });
 
-  it('lets the deployment’s own pages through, same-site or named', () => {
-    expect(run({ ...COOKIE, 'sec-fetch-site': 'same-site', origin: 'https://auth.acme.test' }).passed).toBe(true);
+  it('lets the deployment’s own pages through, this origin or named — never merely the same site', () => {
+    expect(run({ ...COOKIE, 'sec-fetch-site': 'same-origin', origin: 'https://api.acme.test' }).passed).toBe(true);
+    expect(run({ ...COOKIE, 'sec-fetch-site': 'same-site', origin: 'https://dashboard.acme.test' }).passed).toBe(true);
+    expect(run({ ...COOKIE, 'sec-fetch-site': 'same-site', origin: 'https://auth.acme.test' }).passed).toBe(false);
     expect(run({ ...COOKIE, 'sec-fetch-site': 'cross-site', origin: 'https://dashboard.acme.test' }).passed).toBe(true);
   });
 

@@ -19,14 +19,19 @@ import type { DraftStore, OfflineDataRaw, SSRServer, SSRSpaceDeployment } from '
  * Each page is a space kept as a draft of the host's one space (`?__pt=<id>`), which is how a page server tells many
  * apart on one host: the page arrives with its whole space in it, every page after it is the browser's, and a reload
  * that lost the address finds it again in the draft's cookie. So a page here is drawn in the browser alone — no server
- * provider, action, function or channel of its own: it is data and its look.
+ * provider, action, function or channel of its own: it is data and its look. `put` again under the same id and the
+ * pages open at it take the new version where they stand (`livePages`), so a page an agent keeps improving is seen to
+ * grow rather than reload.
  *
  * Author them where they cannot reach anything (`authorIsolated` of `@plitzi/sdk-authoring/node`) and serve them here,
- * on an origin of their own — never the app's, whose cookies a page somebody else wrote would then run beside.
+ * on a HOST of their own — never the app's, nor another port of it: a cookie belongs to a host whatever its port, so a
+ * page somebody else wrote would run beside the app's cookies. Locally `127.0.0.1` beside the app's `localhost`; in
+ * production a domain of its own, since a sibling sub-domain shares the app's site and its domain-wide cookies.
  *
  * ```ts
+ * // The app at https://localhost:8080.
  * const host = createAuthoringHost({ dir: 'tmp/pages', port: 8091, frameAncestors: ['https://localhost:8080'] });
- * await host.server.listen(8091, '0.0.0.0');
+ * await host.server.listen(8091, '127.0.0.1');   // its pages at https://127.0.0.1:8091
  *
  * const result = await authorIsolated('tmp/pages/weather.ts');
  * if (result.ok) {
@@ -45,10 +50,12 @@ export type AuthoringHostConfig = Omit<ServerConfig, 'adapters' | 'auth' | 'draf
 export type AuthoringHost = {
   server: SSRServer;
   /**
-   * Keeps a space under `id` — a new one when left out, which nobody can guess — replacing what it held, and answers
-   * the address its pages are at: its home is `path`, any other page that path with the page's own in front of `?`.
+   * Keeps a space under `id` — a new one when left out, which nobody can guess — and answers the address its pages are
+   * at: its home is `path`, any other page that path with the page's own in front of `?`. Replacing what `id` held, the
+   * pages open at it swap the new space where they stand — scroll, focus and what the person was doing kept — and
+   * `updated` says how many did.
    */
-  put: (documents: AuthoredDocuments, options?: { id?: string }) => { id: string; path: string };
+  put: (documents: AuthoredDocuments, options?: { id?: string }) => { id: string; path: string; updated: number };
   /** Forgets a page: its address answers 404 from then on. Whether there was one. */
   drop: (id: string) => boolean;
   /** The ids it serves. */
@@ -134,6 +141,8 @@ export const createAuthoringHost = ({ dir, frameAncestors, ...config }: Authorin
   };
 
   const server = createServer({
+    // Its pages listen for their own changes: `put` over an id they show swaps it where they stand.
+    livePages: true,
     ...config,
     preview: { sessionTtlMs: SESSION_TTL_MS, ...config.preview },
     draftStore,
@@ -169,9 +178,11 @@ export const createAuthoringHost = ({ dir, frameAncestors, ...config }: Authorin
         throw new Error(`A page id is letters, digits, "-" and "_", up to 64 of them — not "${id}"`);
       }
 
+      const replacing = pages.has(id);
       keep(id, documents);
+      const updated = replacing ? server.updatePages(documents, { draft: id }) : 0;
 
-      return { id, path: `/?${PREVIEW_TOKEN_PARAM}=${id}` };
+      return { id, path: `/?${PREVIEW_TOKEN_PARAM}=${id}`, updated };
     },
     drop,
     ids: () => [...pages.keys()]

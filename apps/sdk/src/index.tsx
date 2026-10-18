@@ -115,6 +115,10 @@ const withDerivedAnalytics = (params: PlitziSdkProps): PlitziSdkProps => {
   };
 };
 
+/** Whether the documents hold anything the server draws, which a space swapped in the browser would show without. */
+const drawsOnServer = (documents: OfflineDataRaw | undefined): boolean =>
+  Object.values(documents?.schema.flat ?? {}).some(element => element.definition.runtime === 'server');
+
 /**
  * Puts back the stylesheet a server-rendered page left out of its payload (see `styleCacheTravelsInDocument`), read
  * from the runtime `<style>` the server rendered under `root` — before hydration, so the first render in the browser
@@ -216,7 +220,20 @@ export function render(
     recordRenderActionRuns(actionRuns);
   }
 
+  /** The space the page draws, and how the mounted page is handed another (`replaceSpace`). */
+  let drawn = renderParams.offlineData;
+  let swapSpace: ((documents: OfflineDataRaw) => void) | undefined;
+
   const Widget = ({ isHydrating = false }: { isHydrating?: boolean }) => {
+    const [offlineData, setOfflineData] = useState(renderParams.offlineData);
+    useEffect(() => {
+      swapSpace = setOfflineData;
+
+      return () => {
+        swapSpace = undefined;
+      };
+    }, []);
+
     // A plugin the server did not render has no markup in the document being hydrated, so mounting it on the first
     // pass is a mismatch — and React answers a mismatch by discarding the whole tree it happened in, not just the
     // offending node. Holding it back for one commit costs a frame and keeps the rest of the page hydrated.
@@ -239,6 +256,7 @@ export function render(
     return (
       <App
         {...renderParams}
+        offlineData={offlineData}
         debugMode={debugAuthorized}
         isHydrating={isHydrating}
         onInitStateManager={handleInitStateManager}
@@ -282,7 +300,23 @@ export function render(
      * Swaps a plugin where it is drawn, with `hotPlugins` on: `false` when it cannot be swapped in place — not
      * registered by this page, or its declaration changed — and the page should load again.
      */
-    replacePlugin: (key: string, component: PluginComponent): boolean => hot?.replace(key, component) ?? false
+    replacePlugin: (key: string, component: PluginComponent): boolean => hot?.replace(key, component) ?? false,
+    /**
+     * Swaps the space the page draws for `documents` where it stands — its state, scroll and focus kept: what a server
+     * whose space changed hands an open page (`updatePages`). `false` when it cannot be swapped in place — a page that
+     * reads its space from the network, one not mounted, or one whose space has elements the server draws, which only a
+     * new request draws again — and the page should load again.
+     */
+    replaceSpace: (documents: OfflineDataRaw): boolean => {
+      if (!swapSpace || !renderParams.offlineMode || drawsOnServer(drawn) || drawsOnServer(documents)) {
+        return false;
+      }
+
+      drawn = documents;
+      swapSpace(documents);
+
+      return true;
+    }
   };
 }
 

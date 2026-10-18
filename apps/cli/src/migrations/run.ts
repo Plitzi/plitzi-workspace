@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { compareVersions, versionOf } from '../doctor/versions';
 
-import type { Migration, MigrationFinding, MigrationProject } from './types';
+import type { Migration, MigrationEdit, MigrationFinding, MigrationProject } from './types';
 
 /** The project's own source: TypeScript and JavaScript under `src/` and `visual/`, never what was installed or built. */
 const sourceFiles = async (root: string): Promise<string[]> => {
@@ -42,9 +42,21 @@ const isDue = (migration: Migration, { lastUpgraded }: MigrationProject): boolea
   return !last || !since || compareVersions(last, since) < 0;
 };
 
+/** `text` with `edits` made, from the last back so each offset still means what the finder read. */
+const applyEdits = (text: string, edits: readonly MigrationEdit[], migration: string, file: string): string => {
+  const ordered = [...edits].sort((a, b) => b.start - a.start);
+  for (const [index, edit] of ordered.entries()) {
+    if (edit.start > edit.end || (index > 0 && edit.end > ordered[index - 1].start)) {
+      throw new Error(`Migration ${migration} asked for overlapping edits in ${file}: that file was left as it was`);
+    }
+  }
+
+  return ordered.reduce((written, edit) => written.slice(0, edit.start) + edit.text + written.slice(edit.end), text);
+};
+
 /**
  * Every place the migrations due in the project find in its source, in their order — each reading what the ones before
- * it wrote. With `write`, a migration that has `rewrite` writes the file; any other only says where.
+ * it wrote. With `write`, each place with one right answer (its `edit`) is written; any other is only said.
  */
 export const runMigrations = async (
   project: MigrationProject,
@@ -64,13 +76,25 @@ export const runMigrations = async (
     let text = original;
     for (const { migration, find } of due) {
       const places = await find({ file, text });
-      const written = write && migration.rewrite !== undefined && places.length > 0;
-      findings.push(
-        ...places.map(place => ({ ...place, migration: migration.id, since: migration.since, file, written }))
-      );
-      if (written && migration.rewrite) {
-        text = migration.rewrite({ file, text });
+      if (write) {
+        text = applyEdits(
+          text,
+          places.flatMap(place => (place.edit ? [place.edit] : [])),
+          migration.id,
+          file
+        );
       }
+
+      findings.push(
+        ...places.map(({ edit, ...place }) => ({
+          ...place,
+          migration: migration.id,
+          since: migration.since,
+          file,
+          writable: edit !== undefined,
+          written: write && edit !== undefined
+        }))
+      );
     }
 
     if (text !== original) {

@@ -178,8 +178,12 @@ export type SSRTemplateProps = {
   reactCompilerRuntime?: string;
   /** When true the client-side <script> block is omitted — useful for inspecting raw SSR HTML. */
   ssrOnly?: boolean;
-  /** The page listens for the server saying the space changed, and loads again — with `devReload` on (`reloadPages`). */
-  devReload?: boolean;
+  /** The page listens for what the server tells it changed — with `livePages` on (`updatePages`, `reloadPages`). */
+  livePages?: boolean;
+  /** The draft the page shows (`?__pt=<id>`), named in its listening address so it hears its own changes alone. */
+  liveDraft?: string;
+  /** The page's plugins can be swapped where they are drawn — a server developing (`devMode`) with `livePages` on. */
+  hotPlugins?: boolean;
   debugMode?: boolean;
   /**
    * The theme class this document wears on `<html>` — `dark`, `light`, or nothing at all.
@@ -1024,11 +1028,13 @@ export type SSRServerConfig = {
   static?: Record<string, string>;
   devMode?: boolean;
   /**
-   * Every page this server renders listens for `reloadPages` and loads again — the edit loop of a project that authors
-   * its space in code and re-authors it on save. Off unless asked for, `devMode` included: each open page holds a
-   * connection to the server for it, which a server that never calls `reloadPages` would only pay for.
+   * Every page this server renders listens for what changes under it: new documents for the space it shows, swapped
+   * where it stands (`updatePages`), or everything loaded again (`reloadPages`) — the edit loop of a project that
+   * authors its space in code, a page an agent keeps rewriting (`createAuthoringHost`). Off unless asked for, `devMode`
+   * included: each open page holds a connection to the server for it, which a server whose space never changes under
+   * it would only pay for.
    */
-  devReload?: boolean;
+  livePages?: boolean;
   /** Authorizes debugging on the pages this server renders. An SSR page loads the very same SDK, so this is the
    *  server-side face of the SDK's `debugMode` prop: the page decides, and the visitor's 'plitzi_debug' cookie can
    *  only narrow it. Left unset, `devMode` authorizes it — a development server debugs without being told to — and
@@ -1109,8 +1115,9 @@ export type SSRServerConfig = {
   /** Realtime channels the spaces declare — see {@link SSRRealtimeConfig}. On, in memory, when absent. */
   realtime?: SSRRealtimeConfig;
   /**
-   * The writes a page on another site may cause here. None, by default: a browser's POST, PUT, PATCH or DELETE that it
-   * says another site caused (`Sec-Fetch-Site: cross-site`, or a foreign `Origin`) is refused 403 `reason: 'foreign'` —
+   * The writes a page of another origin may cause here. None, by default: a browser's POST, PUT, PATCH or DELETE that it
+   * says a page of another origin caused (`Sec-Fetch-Site` `cross-site` or `same-site` — another port of this host, a
+   * sibling sub-domain — or a foreign `Origin`) is refused 403 `reason: 'foreign'` —
    * a session cookie or none, because a server holding credentials of its own, or a tool nobody signs in to, acts for
    * whoever reaches it. A request with `Authorization`, and one that is not a browser's (a webhook, a script), are never
    * asked. With `auth`, the deployment's `identity.platformOrigins` count as its own too.
@@ -1118,7 +1125,7 @@ export type SSRServerConfig = {
   crossSiteWrites?: {
     /** Origins whose pages may write here, exactly as a browser sends them — `https://app.example.com`. */
     origins?: string[];
-    /** Paths any site may post to: a form other sites embed by design. */
+    /** Paths any origin may post to: a form other sites embed by design. */
     paths?: (path: string) => boolean;
   };
   /** Connector manifest and credential lookups — see {@link ConnectorLookupsConfig}. They serve the RSC read path
@@ -1288,10 +1295,17 @@ export type SSRServer = {
   readonly cache: CacheManager | null;
   readonly plugins: PluginRegistry;
   /**
-   * With `devReload` on, every page open on this server loads again — what a project that authors its space in code
-   * calls once it serves the new documents (`serveProject`), instead of restarting the server. Nothing otherwise.
+   * With `livePages` on, every page open on this server loads again — what a change the pages cannot be handed as
+   * documents calls (the server's own code, its plugins' declarations). Nothing otherwise.
    */
   reloadPages: () => void;
+  /**
+   * With `livePages` on, every page open on this server showing its own space — or, with `draft`, that draft — swaps it
+   * for `documents` where it stands, its state, scroll and focus kept; a page that cannot (one with elements the server
+   * draws) loads again. What a project that authors its space in code calls once it serves the new documents
+   * (`serveProject`), instead of restarting the server. How many pages were told; none without `livePages`.
+   */
+  updatePages: (documents: OfflineDataRaw, options?: { draft?: string }) => number;
   /**
    * The server halves of the plugins this server ships (`functions.plugins`), replaced while it runs: what a development
    * server does when a plugin's `functions/` change. `definition` is what `loadFunctions` loads; none takes it away.

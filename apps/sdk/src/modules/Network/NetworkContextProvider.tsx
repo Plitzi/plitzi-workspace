@@ -1,5 +1,5 @@
 import { cloneDeep } from '@plitzi/plitzi-ui/helpers';
-import { useEffect, useMemo, useState, useCallback, use } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback, use } from 'react';
 
 import { pluginParseDefinition } from '@plitzi/sdk-plugins';
 import { ComponentContext } from '@plitzi/sdk-shared/elements';
@@ -17,7 +17,7 @@ import type {
   NetworkInternalContextValue,
   NetworkContextValue
 } from '@plitzi/sdk-shared/network';
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 export type NetworkContextProviderProps = {
   children: ReactNode;
@@ -47,6 +47,18 @@ const initFailureMessage = (error: string | Error): string => {
 
   return error.message;
 };
+
+/** The plugins `data` names that no component on the page registered, read from their definitions. */
+const parseOfflinePlugins = async (
+  data: OfflineDataRaw,
+  registered: RefObject<Record<string, ComponentPluginWithHOC>>
+): Promise<NetworkInternalContextValue['plugins']> =>
+  data.plugins && data.plugins.length > 0
+    ? // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, settings, subPlugins
+      pluginParseDefinition(
+        data.plugins.filter(plugin => !(registered.current[plugin.type] as undefined | ComponentPluginWithHOC))
+      )
+    : {};
 
 const NetworkContextProvider = ({
   children,
@@ -172,18 +184,41 @@ const NetworkContextProvider = ({
     setLoading(false);
   };
 
-  const initOfflineData = async () => {
-    let plugins = {};
-    if (offlineData?.plugins && offlineData.plugins.length > 0) {
-      // @todo: this one is not compact anymore, so we need to take the props that the sdk only requires assets, settings, subPlugins
-      plugins = await pluginParseDefinition(
-        offlineData.plugins.filter(plugin => !(components.current[plugin.type] as undefined | ComponentPluginWithHOC))
-      );
-    }
-
+  const initOfflineData = async (data: OfflineDataRaw) => {
+    const plugins = await parseOfflinePlugins(data, components);
     setInternalData(state => ({ ...state, plugins }));
     setLoading(false);
   };
+
+  /**
+   * New documents for the page already drawn (`replaceSpace` of what `render` returns): the space swapped where it
+   * stands. The stores read schema and style from here, so the page follows, and its state, scroll and focus stay. The
+   * latest wins: documents still reading their plugins when newer ones arrive are dropped.
+   */
+  const shown = useRef(offlineData);
+  const replacing = useRef(0);
+  useEffect(() => {
+    if (!offlineDataAvailable || offlineDataType !== 'json' || shown.current === offlineData) {
+      return;
+    }
+
+    shown.current = offlineData;
+    replacing.current += 1;
+    const turn = replacing.current;
+    parseOfflinePlugins(offlineData, components).then(
+      plugins => {
+        if (turn === replacing.current) {
+          setInternalData({ ...offlineData, plugins });
+        }
+      },
+      (error: unknown) => {
+        console.error(
+          '[plitzi] The new space could not be drawn — its plugins did not load: the page stays as it was',
+          error
+        );
+      }
+    );
+  }, [offlineData, offlineDataAvailable, offlineDataType, components]);
 
   useEffect(() => {
     if (!offlineMode || !offlineData) {
@@ -196,7 +231,7 @@ const NetworkContextProvider = ({
       });
       void initQuery();
     } else if (offlineDataAvailable) {
-      void initOfflineData();
+      void initOfflineData(offlineData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [offlineDataAvailable, offlineMode && offlineDataType, webKey, environment, debugMode]);

@@ -17,11 +17,12 @@ const rename = (id: string, since: string, from: string, to: string, scope: Migr
     () =>
     ({ text }) =>
       Promise.resolve(
-        text
-          .split('\n')
-          .flatMap((line, index) => (line.includes(from) ? [{ line: index + 1, what: `${from} is ${to} now` }] : []))
-      ),
-  rewrite: ({ text }) => text.split(from).join(to)
+        [...text.matchAll(new RegExp(from, 'g'))].map(match => ({
+          line: text.slice(0, match.index).split('\n').length,
+          what: `${from} is ${to} now`,
+          edit: { start: match.index, end: match.index + from.length, text: to }
+        }))
+      )
 });
 
 /** A change only said: the author decides. */
@@ -49,7 +50,7 @@ describe('runMigrations', () => {
     await fs.rm(root, { recursive: true, force: true });
   });
 
-  it('says where without writing, and writes only a rewrite when asked — each reading what the one before wrote', async () => {
+  it('says where without writing, and writes only an edit when asked — each reading what the one before wrote', async () => {
     const migrations = [
       rename('first', '0.1.0', 'oldName', 'midName', 'always'),
       rename('second', '0.2.0', 'midName', 'newName', 'always'),
@@ -70,6 +71,45 @@ describe('runMigrations', () => {
       ['said', false]
     ]);
     expect(await read('src/page.ts')).toBe('newName(legacy);\n');
+  });
+
+  it('writes the places that have one right answer and says the rest, in the same file', async () => {
+    const partly: Migration = {
+      id: 'partly',
+      since: '0.1.0',
+      scope: 'always',
+      start: () => () =>
+        Promise.resolve([
+          { line: 1, what: 'renamed', edit: { start: 0, end: 7, text: 'newName' } },
+          { line: 1, what: 'yours to decide' }
+        ])
+    };
+
+    const found = await runMigrations({ root, lastUpgraded: undefined }, [partly], { write: true });
+    expect(found.map(each => [each.what, each.writable, each.written])).toEqual([
+      ['renamed', true, true],
+      ['yours to decide', false, false]
+    ]);
+    expect(found[0]).not.toHaveProperty('edit');
+    expect(await read('src/page.ts')).toBe('newName(legacy);\n');
+  });
+
+  it('refuses a migration whose edits overlap, leaving the file as it was', async () => {
+    const overlapping: Migration = {
+      id: 'overlapping',
+      since: '0.1.0',
+      scope: 'always',
+      start: () => () =>
+        Promise.resolve([
+          { line: 1, what: 'a', edit: { start: 0, end: 5, text: 'x' } },
+          { line: 1, what: 'b', edit: { start: 3, end: 8, text: 'y' } }
+        ])
+    };
+
+    await expect(runMigrations({ root, lastUpgraded: undefined }, [overlapping], { write: true })).rejects.toThrow(
+      /overlapping edits in src\/page\.ts/
+    );
+    expect(await read('src/page.ts')).toBe('oldName(legacy);\n');
   });
 
   it('looks for an until-upgraded change only in a project last upgraded before it, or with no record', async () => {
