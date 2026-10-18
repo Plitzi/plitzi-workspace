@@ -1,6 +1,6 @@
 {
   "name": "@plitzi/sdk-elements",
-  "version": "0.38.17",
+  "version": "0.38.18",
   "license": "AGPL-3.0",
   "files": [
     "dist"
