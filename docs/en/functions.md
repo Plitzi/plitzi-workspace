@@ -13,11 +13,12 @@ answers why it did not start.
 - [3. Where you write it](#3-where-you-write-it)
 - [4. Trying it, and what ships](#4-trying-it-and-what-ships)
 - [5. Routes under `/fn/`](#5-routes-under-fn)
-- [6. Limits](#6-limits)
-- [7. Security: why one space cannot reach another](#7-security-why-one-space-cannot-reach-another)
-- [8. For a deployment](#8-for-a-deployment)
-- [9. What still needs a server of your own](#9-what-still-needs-a-server-of-your-own)
-- [10. A plugin's server half](#10-a-plugins-server-half)
+- [6. Jobs: work longer than a request](#6-jobs-work-longer-than-a-request)
+- [7. Limits](#7-limits)
+- [8. Security: why one space cannot reach another](#8-security-why-one-space-cannot-reach-another)
+- [9. For a deployment](#9-for-a-deployment)
+- [10. What still needs a server of your own](#10-what-still-needs-a-server-of-your-own)
+- [11. A plugin's server half](#11-a-plugins-server-half)
 
 ## 1. What you write
 
@@ -63,7 +64,7 @@ export default defineFunctions({
   `AbortController`/`AbortSignal`, `setTimeout`, `structuredClone`, `atob`/`btoa`, `crypto.randomUUID`,
   `crypto.getRandomValues` and `crypto.subtle` — digests, HMAC (what verifying a webhook needs) and PBKDF2
   (`deriveBits`, or `deriveKey` to an HMAC key: what keeping a password needs). A body is text or bytes: there are no
-  streams, `Blob` or `FormData`. That is what lets the same bundle run on any runner (§8).
+  streams, `Blob` or `FormData`. That is what lets the same bundle run on any runner (§9).
 - **A derivation is the run's CPU.** The runner does PBKDF2 outside the isolate, so what it takes is added to the
   run's CPU time and counts against its limit and the plan's budget; one derivation is at most 1,000,000 iterations
   and 1024 bits. Pick the iterations that fit the budget on the machine the runner is on: the cost is linear in them,
@@ -358,7 +359,7 @@ Per invocation — a task step or a route request:
 
 Past one, the invocation stops and says which ("Stopped after 100 ms of CPU"). On top of them, an **account's
 functions share a CPU budget per minute** (30 s by default): past it the next invocation is refused until the minute
-turns, so one space's loop slows its own account and nobody else. Each deployment sets both (§8).
+turns, so one space's loop slows its own account and nobody else. Each deployment sets both (§9).
 
 **Asking for more time.** A task that needs more — it reshapes a big feed, it waits on a slow API — says so with
 `limits`, in milliseconds; `defineFunctions({ limits })` asks it for every task and route at once, and a task's own
@@ -454,7 +455,7 @@ it — or a self-hosted `@plitzi/sdk-server`'s:
   loop;
 - native dependencies, a filesystem, or more CPU than a plan's limit;
 - code a deployment wants on its own machines, for any reason — self-hosting stays first-class, and the same
-  `defineFunctions` file loads natively there (§8).
+  `defineFunctions` file loads natively there (§9).
 
 ## 11. A plugin's server half
 
@@ -489,7 +490,7 @@ export default defineFunctions({
   signs with `ctx.sign` verifies only as its own — it cannot mint a value the space's code would accept — and it names
   none of the space's credentials and reaches none of its realtime channels or its data (`ctx.data` is refused: the
   data is what the space's pages must not carry, and the plugin's `fetch` could carry it anywhere). `ctx.fetch` reaches the hosts its own
-  `allow.hosts` declares; `ctx.user`, the limits (§6) and the plan's budget are the space's, as for its own code.
+  `allow.hosts` declares; `ctx.user`, the limits (§7) and the plan's budget are the space's, as for its own code.
 
 **Where it runs.**
 
