@@ -30,6 +30,7 @@ import SpaceInstallTemplateFunctionsMutation from './Space/functions/SpaceInstal
 import SpaceRemoveFunctionsMutation from './Space/functions/SpaceRemoveFunctionsMutation';
 import SpaceSaveFunctionsMutation from './Space/functions/SpaceSaveFunctionsMutation';
 import SpaceTryFunctionMutation from './Space/functions/SpaceTryFunctionMutation';
+import SpaceControlJobMutation from './Space/jobs/SpaceControlJobMutation';
 import SpaceAddPageMutation from './Space/pages/SpaceAddPageMutation';
 import SpaceHomePageMutation from './Space/pages/SpaceHomePageMutation';
 import SpaceRemovePageMutation from './Space/pages/SpaceRemovePageMutation';
@@ -108,6 +109,7 @@ import type { TSpaceInstallTemplateFunctionsMutation } from './Space/functions/S
 import type { TSpaceRemoveFunctionsMutation } from './Space/functions/SpaceRemoveFunctionsMutation';
 import type { TSpaceSaveFunctionsMutation } from './Space/functions/SpaceSaveFunctionsMutation';
 import type { TSpaceTryFunctionMutation } from './Space/functions/SpaceTryFunctionMutation';
+import type { TSpaceControlJobMutation } from './Space/jobs/SpaceControlJobMutation';
 import type { TSpaceAddPageMutation } from './Space/pages/SpaceAddPageMutation';
 import type { TSpaceHomePageMutation } from './Space/pages/SpaceHomePageMutation';
 import type { TSpaceRemovePageMutation } from './Space/pages/SpaceRemovePageMutation';
@@ -171,6 +173,7 @@ export type BuilderMutationsMap = {
   SpaceRemoveFunctions: TSpaceRemoveFunctionsMutation;
   SpaceInstallTemplateFunctions: TSpaceInstallTemplateFunctionsMutation;
   SpaceTryFunction: TSpaceTryFunctionMutation;
+  SpaceControlJob: TSpaceControlJobMutation;
   SpaceAddConnector: TSpaceAddConnectorMutation;
   SpaceUpdateConnector: TSpaceUpdateConnectorMutation;
   SpaceRemoveConnector: TSpaceRemoveConnectorMutation;
@@ -257,6 +260,7 @@ const BuilderMutations: Record<keyof BuilderMutationsMap, string> = {
   SpaceRemoveFunctions: SpaceRemoveFunctionsMutation,
   SpaceInstallTemplateFunctions: SpaceInstallTemplateFunctionsMutation,
   SpaceTryFunction: SpaceTryFunctionMutation,
+  SpaceControlJob: SpaceControlJobMutation,
   SpaceAddConnector: SpaceAddConnectorMutation,
   SpaceUpdateConnector: SpaceUpdateConnectorMutation,
   SpaceRemoveConnector: SpaceRemoveConnectorMutation,

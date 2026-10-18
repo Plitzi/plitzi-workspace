@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import InspectorSection from './components/InspectorSection';
+import InspectorSection from '../InspectorSection';
 import TaskTest from './components/TaskTest';
 import TimeLimit from './components/TimeLimit';
 import { cpuOf, taskNameOf } from '../../helpers';

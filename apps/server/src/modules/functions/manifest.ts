@@ -1,4 +1,4 @@
-import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions';
+import { PLUGIN_ROUTES_SEGMENT, actionAccessOf } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { pluginTaskProblem } from './scope';
@@ -7,7 +7,6 @@ import { taskName, taskNameProblem } from '../actions/tasks/registry';
 import type { FunctionLimits } from './protocol';
 import type { FunctionScope } from './scope';
 import type {
-  ActionAccess,
   FunctionJobManifest,
   FunctionOAuthConnection,
   FunctionsManifest,
@@ -79,33 +78,6 @@ const httpsUrl = (value: unknown): string | undefined => {
   }
 };
 
-/**
- * The OAuth connections a definition declared, rebuilt field by field: each a provider's issuer or its endpoints (https),
- * the credential with the app's id and secret, the scopes. What is wrong is said by connection, and that one left out.
- */
-/** A channel's access, as a job's `watch` declares it: who may watch it besides whoever started it. */
-const accessOf = (value: unknown): ActionAccess | undefined => {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  if (value.mode === 'public' || value.mode === 'session') {
-    return { mode: value.mode };
-  }
-
-  const permissions = value.permissions;
-  if (
-    value.mode === 'role' &&
-    Array.isArray(permissions) &&
-    permissions.length > 0 &&
-    permissions.every(permission => typeof permission === 'string' && permission !== '')
-  ) {
-    return { mode: 'role', permissions: permissions.filter((each): each is string => typeof each === 'string') };
-  }
-
-  return undefined;
-};
-
 /** The jobs a bundle declares (`jobs`), by name: who may watch each, and how long it may run. */
 const jobsOf = (
   value: unknown,
@@ -137,7 +109,7 @@ const jobsOf = (
     }
 
     const spec = isRecord(entry) ? entry : {};
-    const watch = spec.watch === undefined ? undefined : accessOf(spec.watch);
+    const watch = spec.watch === undefined ? undefined : actionAccessOf(spec.watch);
     if (spec.watch !== undefined && !watch) {
       problems.push(
         `${where}: watch is a channel's access — { mode: 'public' }, { mode: 'session' } or { mode: 'role', permissions: ['…'] }`
@@ -165,6 +137,10 @@ const jobsOf = (
   return Object.keys(jobs).length ? jobs : undefined;
 };
 
+/**
+ * The OAuth connections a definition declared, rebuilt field by field: each a provider's issuer or its endpoints (https),
+ * the credential with the app's id and secret, the scopes. What is wrong is said by connection, and that one left out.
+ */
 const oauthOf = (
   value: unknown,
   problems: string[],

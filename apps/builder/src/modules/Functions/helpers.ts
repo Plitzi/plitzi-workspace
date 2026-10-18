@@ -1,8 +1,16 @@
-import { DEFAULT_FUNCTION_TIME_LIMITS } from '@plitzi/sdk-shared/actions';
+import { DEFAULT_FUNCTION_TIME_LIMITS, isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
 
-import type { SourceFunctions, SourcePlace, SourceRoute } from './editor/source';
+import type { SourceFunctions, SourceJob, SourcePlace, SourceRoute } from './editor/source';
 import type { Text } from '@codemirror/state';
-import type { FunctionsManifest, FunctionsProblem, FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type {
+  ActionAccess,
+  FunctionsManifest,
+  FunctionsProblem,
+  FunctionTaskManifest,
+  FunctionTimeLimits,
+  JobControlAction,
+  SpaceJob
+} from '@plitzi/sdk-shared';
 
 /** What a space's functions start as: one file and one task already written, to change rather than to learn from blank. */
 export const STARTER_FILES: Record<string, string> = {
@@ -185,6 +193,88 @@ export const limitsBlockedBy = (ready: boolean, task: ListedTask): string => {
   return task.at ? '' : 'Built by a call: set its limits: { cpuMs } in the code.';
 };
 
-/** The task written around an offset of a file — the one the cursor is in — or none. */
-export const taskAt = (tasks: readonly ListedTask[], file: string, offset: number): ListedTask | undefined =>
-  tasks.find(task => task.at?.file === file && task.at.start <= offset && offset <= task.at.end);
+/** The task or job written around an offset of a file — the one the cursor is in — or none. */
+export const writtenAt = <T extends { at?: SourcePlace }>(entries: readonly T[], file: string, offset: number) =>
+  entries.find(entry => entry.at?.file === file && entry.at.start <= offset && offset <= entry.at.end);
+
+/** A job as the panel lists it: what the source declares right now, where, and whether a save has it yet. */
+export type ListedJob = Omit<SourceJob, 'at'> & {
+  at?: SourcePlace;
+  /** In the saved draft too: what the code can start. One only written so far is started once it is saved. */
+  saved: boolean;
+};
+
+/** The jobs to list: the source's as written — so the list follows the code — or, until it has been read, the last save's. */
+export const listedJobs = (source: SourceFunctions | undefined, manifest: FunctionsManifest | null): ListedJob[] => {
+  const saved = manifest?.jobs ?? {};
+  if (!source?.defined) {
+    return Object.entries(saved).map(([name, job]) => ({ name, ...job, saved: true }));
+  }
+
+  return source.jobs.map(job => ({ ...job, saved: Object.hasOwn(saved, job.name) }));
+};
+
+/** How many entries of the source cannot be listed without running it, in one of the sidebar's sections. */
+export const unreadableIn = (source: SourceFunctions | undefined, of: 'tasks' | 'jobs'): number =>
+  source?.unreadable.filter(entry => entry.of === of).length ?? 0;
+
+/** A length of time as the panel says it: `45 s`, `20 min`, `1 h 30 min`. */
+export const durationLabel = (seconds: number): string => {
+  if (seconds < 60) {
+    return `${String(Math.round(seconds))} s`;
+  }
+
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) {
+    return `${String(minutes)} min`;
+  }
+
+  const rest = minutes % 60;
+
+  return `${String(Math.floor(minutes / 60))} h${rest ? ` ${String(rest)} min` : ''}`;
+};
+
+/** Who may watch a job besides whoever started it, as a sentence. */
+export const watchLabel = (watch: ActionAccess | undefined): string => {
+  if (!watch) {
+    return 'Only whoever started it';
+  }
+
+  if (watch.mode === 'public') {
+    return 'Anyone, signed in or not';
+  }
+
+  if (watch.mode === 'session') {
+    return 'Anyone signed in to the space';
+  }
+
+  return `Whoever holds ${watch.permissions.join(', ')}`;
+};
+
+/**
+ * What can be done to a job as it is now — the Queue's own rules: set aside a job of the functions waiting or running,
+ * put back one set aside, stop one not finished, run a finished one again.
+ */
+export const jobControlsOf = (job: SpaceJob): JobControlAction[] => {
+  const controls: JobControlAction[] = [];
+  if (job.kind === 'function' && (job.status === 'pending' || job.status === 'running') && !job.pauseRequested) {
+    controls.push('pause');
+  }
+
+  if (job.status === 'paused') {
+    controls.push('resume');
+  }
+
+  if (!isTerminalJobStatus(job.status) && !job.cancelRequested) {
+    controls.push('cancel');
+  }
+
+  if (isTerminalJobStatus(job.status)) {
+    controls.push('retry');
+  }
+
+  return controls;
+};
+
+/** Whether a job may still move by itself: what the panel keeps reading while it shows one. */
+export const isJobMoving = (job: SpaceJob): boolean => job.status === 'pending' || job.status === 'running';

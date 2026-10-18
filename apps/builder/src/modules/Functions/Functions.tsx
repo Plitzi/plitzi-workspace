@@ -14,16 +14,19 @@ import FunctionsOffer from './components/FunctionsOffer';
 import FunctionsProblems from './components/FunctionsProblems';
 import FunctionsSidebar from './components/FunctionsSidebar';
 import FunctionsWelcome from './components/FunctionsWelcome';
+import JobInspector from './components/JobInspector';
 import useFunctionsTypeScript from './editor/useFunctionsTypeScript';
 import {
   limitsBlockedBy,
   listedHosts,
+  listedJobs,
   listedRoutes,
   listedTasks,
   STARTER_FILES,
-  taskAt,
   taskNameOf,
-  withCpu
+  unreadableIn,
+  withCpu,
+  writtenAt
 } from './helpers';
 import useFunctions from './useFunctions';
 
@@ -34,7 +37,7 @@ import type { ActionRunReport, FunctionsProblem, FunctionsRefusal, FunctionsSave
 const EMPTY_FILES: Record<string, string> = {};
 
 /**
- * The space's own server code: its tasks and routes as the code declares them — listed as it is typed — its files,
+ * The space's own server code: its tasks, routes and jobs as the code declares them — listed as it is typed — its files,
  * edited with TypeScript that knows the contract, and the selected task's time limit and test run beside them. Saved as
  * the draft, built and checked on the platform; the live site runs what the space was last published with. A
  * project's `plitzi functions pull` edits the same files.
@@ -48,8 +51,9 @@ const Functions = () => {
   const manifest = draft?.manifest ?? null;
   const [files, setFiles] = useState<Record<string, string>>(EMPTY_FILES);
   const [selectedFile, setSelectedFile] = useState('index.ts');
-  // The task the inspector shows — the first one declared until another is picked.
+  // The task the inspector shows — the first one declared until another is picked — or the job picked instead.
   const [picked, setPicked] = useState('');
+  const [pickedJob, setPickedJob] = useState('');
   const [target, setTarget] = useState<EditorTarget | undefined>(undefined);
   // A task just written for us: brought into view once the code is read with it.
   const [awaited, setAwaited] = useState('');
@@ -62,9 +66,11 @@ const Functions = () => {
   const { source } = typescript;
   const tasks = useMemo(() => listedTasks(source, manifest), [source, manifest]);
   const routes = useMemo(() => listedRoutes(source, manifest), [source, manifest]);
+  const jobs = useMemo(() => listedJobs(source, manifest), [source, manifest]);
   const hosts = useMemo(() => listedHosts(source, manifest), [source, manifest]);
   const sharedLimits = source?.defined ? source.limits : manifest?.limits;
-  const selectedTask = tasks.find(task => taskNameOf(task) === picked) ?? tasks.at(0);
+  const selectedJob = pickedJob ? jobs.find(job => job.name === pickedJob) : undefined;
+  const selectedTask = selectedJob ? undefined : (tasks.find(task => taskNameOf(task) === picked) ?? tasks.at(0));
 
   // The saved files are the starting point every time they change underneath — a save of ours, or one from elsewhere.
   useEffect(() => {
@@ -110,6 +116,7 @@ const Functions = () => {
   const handleSelectTask = useCallback(
     (name: string) => {
       setPicked(name);
+      setPickedJob('');
       const place = tasks.find(task => taskNameOf(task) === name)?.at;
       if (place) {
         jumpTo(place);
@@ -118,21 +125,30 @@ const Functions = () => {
     [jumpTo, tasks]
   );
 
-  // The code leads: a cursor put inside a task shows that task, without moving the code under it.
+  // The code leads: a cursor put inside a task or a job shows it, without moving the code under it.
   const handleCursor = useCallback(
     (file: string, offset: number) => {
-      const task = taskAt(tasks, file, offset);
+      const task = writtenAt(tasks, file, offset);
       if (task) {
         setPicked(taskNameOf(task));
+        setPickedJob('');
+
+        return;
+      }
+
+      const job = writtenAt(jobs, file, offset);
+      if (job) {
+        setPickedJob(job.name);
       }
     },
-    [tasks]
+    [jobs, tasks]
   );
 
   const handleCreateTask = useCallback(
     async (task: NewTask) => {
       if (applyEdit(await typescript.addTask(task))) {
         setPicked(taskNameOf(task));
+        setPickedJob('');
         setAwaited(taskNameOf(task));
       }
     },
@@ -147,6 +163,17 @@ const Functions = () => {
       }
     },
     [jumpTo, routes]
+  );
+
+  const handleSelectJob = useCallback(
+    (name: string) => {
+      setPickedJob(name);
+      const place = jobs.find(job => job.name === name)?.at;
+      if (place) {
+        jumpTo(place);
+      }
+    },
+    [jobs, jumpTo]
   );
 
   const handleSelectProblem = useCallback(
@@ -337,15 +364,19 @@ const Functions = () => {
             tasks={tasks}
             sharedLimits={sharedLimits}
             selectedTask={selectedTask ? taskNameOf(selectedTask) : ''}
-            unreadable={source?.unreadable.length ?? 0}
+            unreadableTasks={unreadableIn(source, 'tasks')}
             canCreateTask={typescript.ready && source?.defined === true}
             routes={routes}
+            jobs={jobs}
+            selectedJob={selectedJob?.name ?? ''}
+            unreadableJobs={unreadableIn(source, 'jobs')}
             files={names}
             selectedFile={selectedFile}
             modified={modified}
             onSelectTask={handleSelectTask}
             onCreateTask={handleCreateTask}
             onSelectRoute={handleSelectRoute}
+            onSelectJob={handleSelectJob}
             onSelectFile={setSelectedFile}
             onAddFile={handleAddFile}
             onRemoveFile={handleRemoveFile}
@@ -375,7 +406,8 @@ const Functions = () => {
               onRun={handleRun}
             />
           )}
-          {!selectedTask && <FunctionsGuide hasTasks={tasks.length > 0} />}
+          {selectedJob && <JobInspector job={selectedJob} />}
+          {!selectedTask && !selectedJob && <FunctionsGuide hasTasks={tasks.length > 0} />}
         </div>
       )}
     </div>

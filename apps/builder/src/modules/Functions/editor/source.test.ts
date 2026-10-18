@@ -92,6 +92,37 @@ describe('what the source declares, read as it is written', () => {
   });
 });
 
+describe('the jobs the source declares', () => {
+  it('reads each by name, with how long it may run and who may watch it, and says which it cannot read', () => {
+    const index = `import { defineFunctions } from '@plitzi/sdk-server/functions';
+
+const WATCH = { mode: 'role', permissions: ['spaceView'] } as const;
+const more = {};
+
+export default defineFunctions({
+  jobs: {
+    train: { maxSeconds: 3600, watch: WATCH, run: async () => 1 },
+    'export-all': { run: async () => 2 },
+    ...more
+  }
+});
+`;
+    const read = describeSource(environmentWith({ 'index.ts': index }));
+
+    expect(read.jobs).toMatchObject([
+      {
+        name: 'train',
+        maxSeconds: 3600,
+        watch: { mode: 'role', permissions: ['spaceView'] },
+        at: { file: 'index.ts', line: 8 }
+      },
+      { name: 'export-all', at: { file: 'index.ts', line: 9 } }
+    ]);
+    expect(read.jobs[1]).not.toHaveProperty('maxSeconds');
+    expect(read.unreadable).toMatchObject([{ what: '...more', of: 'jobs' }]);
+  });
+});
+
 describe('a task asking for its time', () => {
   it('is written a limit before its run, changed in place, and has it taken out to run with the default', () => {
     const env = environmentWith({ 'index.ts': INDEX, 'lib/feed.ts': FEED });

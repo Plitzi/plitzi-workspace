@@ -1,10 +1,11 @@
 import ts from 'typescript';
 
+import { actionAccessOf } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { FUNCTIONS_ROOT } from './paths';
 
-import type { FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type { FunctionJobManifest, FunctionTaskManifest, FunctionTimeLimits } from '@plitzi/sdk-shared';
 import type { VirtualTypeScriptEnvironment } from '@typescript/vfs';
 
 /**
@@ -25,16 +26,20 @@ export type SourceTask = Pick<FunctionTaskManifest, 'namespace' | 'action' | 'ti
 
 export type SourceRoute = { key: string; at: SourcePlace };
 
+/** A job as it is written: its name, how long it may run and who may watch it, when those are written as literals. */
+export type SourceJob = FunctionJobManifest & { name: string; at: SourcePlace };
+
 export type SourceFunctions = {
   /** `index.ts` exports `defineFunctions(…)` — without it there is nothing declared to read. */
   defined: boolean;
   tasks: SourceTask[];
   routes: SourceRoute[];
+  jobs: SourceJob[];
   hosts: string[];
   /** What every task and route asks for, unless one asks for its own. */
   limits?: FunctionTimeLimits;
   /** Entries that are there but cannot be read without running the code: what to look at, and where. */
-  unreadable: { what: string; at: SourcePlace }[];
+  unreadable: { what: string; of: 'tasks' | 'jobs'; at: SourcePlace }[];
 };
 
 const ENTRY = `${FUNCTIONS_ROOT}index.ts`;
@@ -231,7 +236,7 @@ const programOf = (env: VirtualTypeScriptEnvironment): { program: ts.Program; ch
   return program ? { program, checker: program.getTypeChecker() } : undefined;
 };
 
-const NONE: SourceFunctions = { defined: false, tasks: [], routes: [], hosts: [], unreadable: [] };
+const NONE: SourceFunctions = { defined: false, tasks: [], routes: [], jobs: [], hosts: [], unreadable: [] };
 
 export const describeSource = (env: VirtualTypeScriptEnvironment): SourceFunctions => {
   const found = programOf(env);
@@ -248,7 +253,7 @@ export const describeSource = (env: VirtualTypeScriptEnvironment): SourceFunctio
   ).flatMap((element): SourceTask[] => {
     const task = resolved(element, checker);
     if (!ts.isObjectLiteralExpression(task)) {
-      unreadable.push({ what: element.getText(), at: placeOf(element) });
+      unreadable.push({ what: element.getText(), of: 'tasks', at: placeOf(element) });
 
       return [];
     }
@@ -282,13 +287,38 @@ export const describeSource = (env: VirtualTypeScriptEnvironment): SourceFunctio
         return key === undefined ? [] : [{ key, at: placeOf(property) }];
       })
     : [];
+  const jobsObject = resolved(propertyOf(definition, 'jobs') ?? ts.factory.createObjectLiteralExpression(), checker);
+  const jobs = ts.isObjectLiteralExpression(jobsObject)
+    ? jobsObject.properties.flatMap((property): SourceJob[] => {
+        const name = propertyName(property);
+        const spec = ts.isPropertyAssignment(property) ? resolved(property.initializer, checker) : undefined;
+        if (name === undefined || !spec || !ts.isObjectLiteralExpression(spec)) {
+          unreadable.push({ what: property.getText(), of: 'jobs', at: placeOf(property) });
+
+          return [];
+        }
+
+        const maxSeconds = literalValue(propertyOf(spec, 'maxSeconds') ?? ts.factory.createNull(), checker);
+        const watchNode = propertyOf(spec, 'watch');
+        const watch = watchNode ? actionAccessOf(literalValue(watchNode, checker)) : undefined;
+
+        return [
+          {
+            name,
+            ...(typeof maxSeconds === 'number' ? { maxSeconds } : {}),
+            ...(watch ? { watch } : {}),
+            at: placeOf(property)
+          }
+        ];
+      })
+    : [];
   const allow = propertyOf(definition, 'allow');
   const allowed = allow ? literalValue(allow, checker) : undefined;
   const listed = isRecord(allowed) ? allowed.hosts : undefined;
   const hosts = Array.isArray(listed) ? listed.filter((host): host is string => typeof host === 'string') : [];
   const limits = limitsOf(definition, checker);
 
-  return { defined: true, tasks, routes, hosts, ...(limits ? { limits } : {}), unreadable };
+  return { defined: true, tasks, routes, jobs, hosts, ...(limits ? { limits } : {}), unreadable };
 };
 
 /** A file of the space's, written again: what a panel puts back in its files. */

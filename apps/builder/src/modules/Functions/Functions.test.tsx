@@ -7,7 +7,13 @@ import Functions from './Functions';
 import { STARTER_FILES } from './helpers';
 
 import type { NewTask, SourceEdit, SourceFunctions, SourcePlace } from './editor/source';
-import type { FunctionsDraft, FunctionsSaveResult, FunctionTimeLimits } from '@plitzi/sdk-shared';
+import type {
+  FunctionsDraft,
+  FunctionsSaveResult,
+  FunctionTimeLimits,
+  JobControlAction,
+  SpaceJob
+} from '@plitzi/sdk-shared';
 import type { AppContextValue } from '@pmodules/App/AppContext';
 
 const save = vi.fn<(files: Record<string, string>) => Promise<FunctionsSaveResult>>();
@@ -18,6 +24,21 @@ let draft: FunctionsDraft | undefined;
 
 vi.mock('./useFunctions', () => ({
   default: () => ({ draft, error: '', isLoading: false, save, install, remove, tryTask })
+}));
+
+// The space's runs of the job the inspector shows, and the controls it sends — the queue's answers are `SpaceJobs`'.
+const queue = vi.hoisted(() => ({
+  jobs: [] as SpaceJob[],
+  asked: [] as string[],
+  control: vi.fn<(jobId: string, action: JobControlAction) => Promise<string | undefined>>()
+}));
+
+vi.mock('./useJobs', () => ({
+  default: (name: string) => {
+    queue.asked.push(name);
+
+    return { jobs: queue.jobs, total: queue.jobs.length, error: '', isLoading: false, control: queue.control };
+  }
 }));
 
 // What the person answers a confirmation with.
@@ -62,6 +83,9 @@ beforeEach(() => {
   typescript.source = undefined;
   typescript.addTask.mockReset();
   typescript.setTaskLimits.mockReset();
+  queue.jobs = [];
+  queue.asked = [];
+  queue.control.mockReset();
 });
 
 const filesList = () => within(screen.getByRole('region', { name: 'Files' }));
@@ -187,12 +211,13 @@ describe('the Functions panel', () => {
       offer: null
     };
     typescript.ready = true;
-    typescript.source = { defined: true, tasks: [], routes: [], hosts: [], unreadable: [] };
+    typescript.source = { defined: true, tasks: [], routes: [], jobs: [], hosts: [], unreadable: [] };
     typescript.addTask.mockImplementation(task => {
       typescript.source = {
         defined: true,
         tasks: [{ ...task, params: {}, at: { file: 'index.ts', line: 1, start: 0, end: 10 } }],
         routes: [],
+        jobs: [],
         hosts: [],
         unreadable: []
       };
@@ -233,6 +258,7 @@ describe('the Functions panel', () => {
         { namespace: 'feed', action: 'read', title: 'Read', params: {}, limits: { cpuMs: 300, wallMs: 20000 }, at }
       ],
       routes: [],
+      jobs: [],
       hosts: [],
       unreadable: []
     };
@@ -310,5 +336,88 @@ describe('the Functions panel', () => {
     await waitFor(() => {
       expect(screen.getByText(error)).toBeDefined();
     });
+  });
+
+  it('lists the jobs the code declares, and shows the runs of one live with the controls each takes', async () => {
+    draft = {
+      files: { 'index.ts': 'export default defineFunctions({ jobs: { train: {} } });' },
+      version: 'v1',
+      manifest: { hosts: [], tasks: [], routes: [], jobs: { train: { maxSeconds: 5400 } } },
+      offer: null
+    };
+    queue.jobs = [
+      {
+        id: 'job:1',
+        environment: 'main',
+        kind: 'function',
+        name: 'train',
+        startedBy: 'ada',
+        status: 'running',
+        progress: 0.4,
+        step: 'epoch 4 of 10',
+        attempts: 1,
+        maxAttempts: 3,
+        dueAt: 1,
+        createdAt: 1,
+        updatedAt: 1
+      },
+      {
+        id: 'job:0',
+        environment: 'main',
+        kind: 'function',
+        name: 'train',
+        status: 'failed',
+        error: 'Out of memory',
+        attempts: 3,
+        maxAttempts: 3,
+        dueAt: 1,
+        createdAt: 1,
+        updatedAt: 1
+      }
+    ];
+    queue.control.mockResolvedValue(
+      'This job is running, already being set aside: only one waiting or running can be paused'
+    );
+    renderPanel();
+
+    const jobs = within(screen.getByRole('region', { name: 'Jobs' }));
+    expect(jobs.getByText('1 h 30 min')).toBeDefined();
+    fireEvent.click(jobs.getByText('train'));
+
+    expect(screen.getByText('Up to 1 h 30 min')).toBeDefined();
+    expect(screen.getByText('Only whoever started it')).toBeDefined();
+    expect(queue.asked.at(-1)).toBe('train');
+    expect(screen.getByText('40% · epoch 4 of 10')).toBeDefined();
+    expect(screen.getByText('Out of memory')).toBeDefined();
+    expect(screen.getByText('Run again')).toBeDefined();
+
+    fireEvent.click(screen.getByText('Pause'));
+    await waitFor(() => expect(queue.control).toHaveBeenCalledWith('job:1', 'pause'));
+    expect(
+      await screen.findByText('This job is running, already being set aside: only one waiting or running can be paused')
+    ).toBeDefined();
+  });
+
+  it('reads no runs of a job only written so far, and says to save it', () => {
+    draft = {
+      files: { 'index.ts': 'export default defineFunctions({});' },
+      version: 'v1',
+      manifest: { hosts: [], tasks: [], routes: [] },
+      offer: null
+    };
+    typescript.source = {
+      defined: true,
+      tasks: [],
+      routes: [],
+      jobs: [{ name: 'export-all', at: { file: 'index.ts', line: 1, start: 0, end: 10 } }],
+      hosts: [],
+      unreadable: []
+    };
+    renderPanel();
+
+    fireEvent.click(within(screen.getByRole('region', { name: 'Jobs' })).getByText('export-all'));
+
+    expect(queue.asked.at(-1)).toBe('');
+    expect(screen.getByText('Save the code, and the code can start it.')).toBeDefined();
   });
 });

@@ -57,6 +57,14 @@
   `pause`/`resume`/`cancel`/`requeue` from a process that serves no pages — a Queue panel's API — each said on
   `$job:<id>` through the page server's own pub/sub and retained store, so a watcher hears what an operator did.
 - **A run's user carries no session** (`RunUser`): what a step, a function and a job see of who asked.
+- **The builder shows the jobs** (`@plitzi/plitzi-builder`, `@plitzi/sdk-shared`): **Server → Functions** lists the
+  jobs the code declares as it is typed (how long each may run; one spread in or built by a call is counted, not
+  guessed), and the inspector of one says how it is started and who may watch it, with the space's runs of it — live
+  while one moves, progress and step as its code reported them — and **Pause**, **Resume**, **Cancel** and **Run
+  again**. Through two new builder operations, `SpaceJobs(kind, name, status, page, pageSize)` — a `SpaceJob` each:
+  what it runs, where it is and how far, never its input, state or result — and `SpaceControlJob(jobId, control)`
+  (`JobControlAction`). Beside them in `@plitzi/sdk-shared/actions`: `JOB_KINDS`/`isJobKind`, and `actionAccessOf`, the
+  one reading of a channel's access, which the functions' manifest now reads a job's `watch` with too.
 
 - **`ctx.oauth.token` for an SDK in the page** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`): Spotify's Web Playback,
   Google's Picker and their kind ask the page for the access token themselves, and `ctx.oauth` kept every token on the

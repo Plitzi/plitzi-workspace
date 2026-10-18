@@ -535,14 +535,16 @@ an action with no later trigger, a switched-off one, a time out of range, a serv
 ### Watching the queue
 
 Runs are history; the queue is the work. In the Plitzi dashboard, **Automations → Queue** shows what is scheduled and
-when it next fires, how many fires were missed, and every job with its status, its attempts and its last error.
-Two buttons act on a row: **Run again** — allowed on any finished job, including one that went fine, because
-re-sending last night's digest is the ordinary reason to open the screen — and **Cancel**, which drops a waiting
-job and stops a running one at its next step.
+when it next fires, how many fires were missed, and every job with its status, its attempts and its last error —
+the runs of actions and the [jobs of the functions](functions.md#6-jobs-work-longer-than-a-request) alike, filtered to
+either (**Actions** / **Jobs**) and by status. The buttons on a row: **Run again** — allowed on any finished job,
+including one that went fine, because re-sending last night's digest is the ordinary reason to open the screen —
+**Cancel**, which drops a waiting job and stops a running one at its next step, and **Pause** / **Resume** for a job
+of the functions. The builder shows a job's runs where it is written, in **Server → Functions**.
 
-Over HTTP the same thing is `GET /workspaces/:id/actions/queue`, with `POST …/actions/jobs/:jobId/retry` and
-`…/cancel`; per space, `GET /spaces/:id/actions/jobs` and `…/schedules`. All of them are the workspace's
-administrators' alone.
+Over HTTP the same thing is `GET /workspaces/:id/actions/queue` (`?kind=action|function&status=`), with
+`POST …/actions/jobs/:jobId/retry`, `…/cancel`, `…/pause` and `…/resume`; per space, `GET /spaces/:id/actions/jobs`
+and `…/schedules`. The workspace's routes are its administrators' alone.
 
 ---
 
@@ -671,7 +673,7 @@ dashboard, a support script, a terminal at 3am:
 ```
 GET  /spaces/:spaceId/actions/runs?actionId=&status=&limit=&offset=
 GET  /spaces/:spaceId/actions/runs/:runId
-GET  /spaces/:spaceId/actions/jobs?name=&status=&limit=&offset=
+GET  /spaces/:spaceId/actions/jobs?kind=&name=&status=&limit=&offset=
 GET  /spaces/:spaceId/actions/jobs/:jobId
 GET  /spaces/:spaceId/actions/schedules
 POST /spaces/:spaceId/actions/jobs/:jobId/retry
@@ -681,7 +683,8 @@ POST /spaces/:spaceId/actions/jobs/:jobId/resume
 ```
 
 A job says what it runs in `target`: `{ kind: 'action', name, trigger }` — a schedule's fire, a run set for later — or
-`{ kind: 'function', name }`, a job of the space's functions; `name=` filters by either. The reads need a session with
+`{ kind: 'function', name }`, a job of the space's functions; `kind=` lists one of them, `name=` filters by either.
+The builder reads the same rows as `SpaceJobs` and acts on them with `SpaceControlJob`. The reads need a session with
 `spaceView` on the space; the four that act need `spaceUpdate`, and pause and resume are for a job of the functions. They answer runs and refusals in one shape (`status: 'refused'`
 carries the `reason` that turned a delivery away), and never the trace: step results are the space's own data, and
 a history is which steps ran and how each ended. A `runId` is what a caller already holds — it comes back on the

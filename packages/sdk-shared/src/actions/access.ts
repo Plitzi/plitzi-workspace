@@ -1,3 +1,5 @@
+import { isRecord } from '../helpers/isRecord';
+
 import type { ActionAccess } from '../types/ActionTypes';
 
 /** Who is asking, as far as access is concerned: whether they are signed in, and what they may do. */
@@ -29,6 +31,32 @@ export const accessRefusal = (
     const held = new Set(caller.permissions);
 
     return access.permissions.every(permission => held.has(permission)) ? undefined : 'forbidden';
+  }
+
+  return undefined;
+};
+
+/**
+ * A value as access, when it is one — `{ mode: 'public' }`, `{ mode: 'session' }`, `{ mode: 'role', permissions }` with
+ * at least one permission — rebuilt field by field, or `undefined`: what a job's `watch` is read with wherever it is.
+ */
+export const actionAccessOf = (value: unknown): ActionAccess | undefined => {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  if (value.mode === 'public' || value.mode === 'session') {
+    return { mode: value.mode };
+  }
+
+  const permissions = value.permissions;
+  if (
+    value.mode === 'role' &&
+    Array.isArray(permissions) &&
+    permissions.length > 0 &&
+    permissions.every(permission => typeof permission === 'string' && permission !== '')
+  ) {
+    return { mode: 'role', permissions: permissions.filter((each): each is string => typeof each === 'string') };
   }
 
   return undefined;

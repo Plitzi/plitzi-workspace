@@ -3,13 +3,14 @@ import { useCallback, useMemo, useState } from 'react';
 import { FUNCTION_ROUTES_PREFIX } from '@plitzi/sdk-shared/actions';
 import { FileItem, FolderItem, NewFile, SidebarSection, fileRows } from '@pmodules/FileTree';
 
+import JobItem from './components/JobItem';
 import NewTask from './components/NewTask';
 import RouteItem from './components/RouteItem';
 import TaskItem from './components/TaskItem';
 import { cpuOf, newFileName, routeParts, taskNameOf, usualNamespace } from '../../helpers';
 
 import type { NewTask as NewTaskSpec } from '../../editor/source';
-import type { ListedRoute, ListedTask } from '../../helpers';
+import type { ListedJob, ListedRoute, ListedTask } from '../../helpers';
 import type { FunctionTimeLimits } from '@plitzi/sdk-shared';
 
 export type FunctionsSidebarProps = {
@@ -18,10 +19,14 @@ export type FunctionsSidebarProps = {
   sharedLimits?: FunctionTimeLimits;
   selectedTask: string;
   /** Tasks the code builds by calling something: there, but only a save can say what they are. */
-  unreadable: number;
+  unreadableTasks: number;
   /** Whether a new task can be written for you: the code has been read, and it calls `defineFunctions`. */
   canCreateTask: boolean;
   routes: ListedRoute[];
+  jobs: ListedJob[];
+  selectedJob: string;
+  /** Jobs the code builds by calling something, or spreads in: listed once saved. */
+  unreadableJobs: number;
   files: string[];
   selectedFile: string;
   /** The files whose text differs from what was last saved. */
@@ -29,6 +34,7 @@ export type FunctionsSidebarProps = {
   onSelectTask: (task: string) => void;
   onCreateTask: (task: NewTaskSpec) => void;
   onSelectRoute: (route: string) => void;
+  onSelectJob: (job: string) => void;
   onSelectFile: (file: string) => void;
   onAddFile: (file: string) => void;
   onRemoveFile: (file: string) => void;
@@ -36,21 +42,25 @@ export type FunctionsSidebarProps = {
 
 /**
  * What the functions are, as the code declares them right now: the tasks a step can run — a click from the code and
- * the inspector — the routes they answer at, and the files they are written in.
+ * the inspector — the routes they answer at, the jobs they start, and the files they are written in.
  */
 const FunctionsSidebar = ({
   tasks,
   sharedLimits,
   selectedTask,
-  unreadable,
+  unreadableTasks,
   canCreateTask,
   routes,
+  jobs,
+  selectedJob,
+  unreadableJobs,
   files,
   selectedFile,
   modified,
   onSelectTask,
   onCreateTask,
   onSelectRoute,
+  onSelectJob,
   onSelectFile,
   onAddFile,
   onRemoveFile
@@ -112,9 +122,9 @@ const FunctionsSidebar = ({
             />
           ))}
         </div>
-        {unreadable > 0 && (
+        {unreadableTasks > 0 && (
           <span className="px-1 text-[11px] text-gray-500 dark:text-zinc-400">
-            {`+ ${String(unreadable)} built by a call — listed once saved`}
+            {`+ ${String(unreadableTasks)} built by a call — listed once saved`}
           </span>
         )}
       </SidebarSection>
@@ -134,6 +144,30 @@ const FunctionsSidebar = ({
             />
           ))}
         </div>
+      </SidebarSection>
+      <SidebarSection title="Jobs" count={jobs.length}>
+        {jobs.length === 0 && unreadableJobs === 0 && (
+          <span className="px-1 text-xs text-gray-500 dark:text-zinc-400">
+            None. A job is long work the code starts, with progress a page can show.
+          </span>
+        )}
+        <div className="flex flex-col gap-0.5">
+          {jobs.map(job => (
+            <JobItem
+              key={job.name}
+              name={job.name}
+              maxSeconds={job.maxSeconds}
+              selected={job.name === selectedJob}
+              unsaved={!job.saved}
+              onSelect={onSelectJob}
+            />
+          ))}
+        </div>
+        {unreadableJobs > 0 && (
+          <span className="px-1 text-[11px] text-gray-500 dark:text-zinc-400">
+            {`+ ${String(unreadableJobs)} built by a call — listed once saved`}
+          </span>
+        )}
       </SidebarSection>
       <SidebarSection title="Files" count={files.length} actionTitle="New file" onAction={handleStartFile}>
         {isAddingFile && (

@@ -135,6 +135,37 @@ export type Job = JobInput & {
   activeMs?: number;
 };
 
+/** What a panel may do to a job: set it aside, put it back, stop it, or run a finished one again. */
+export type JobControlAction = 'pause' | 'resume' | 'cancel' | 'retry';
+
+/**
+ * A job as the space's editors read it in the builder — what it runs, where it is and how far — without what it was
+ * given, saved or answered (its code's own, up to megabytes) and with who started it said by name alone. What a job
+ * does not have is absent where the server writes it and `null` once GraphQL has carried it: both are allowed.
+ */
+export type SpaceJob = Pick<
+  Job,
+  'id' | 'environment' | 'status' | 'attempts' | 'maxAttempts' | 'dueAt' | 'createdAt' | 'updatedAt'
+> & {
+  kind: JobTarget['kind'];
+  /** The action's identifier, or the job's name as the functions declare it. */
+  name: string;
+  /** For a run of an action: the trigger it runs through — `schedule`, `later`. */
+  trigger?: ActionTriggerType | null;
+  /** For a job of the functions: who started it, by username or email. */
+  startedBy?: string | null;
+  /** From 0 to 1, as its code last reported. */
+  progress?: number | null;
+  /** What it is doing, in its code's words. */
+  step?: string | null;
+  error?: string | null;
+  activeMs?: number | null;
+  pauseRequested?: boolean | null;
+  cancelRequested?: boolean | null;
+  key?: string | null;
+  missed?: number | null;
+};
+
 /**
  * How a worker reports what became of a claim.
  *

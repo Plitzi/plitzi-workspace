@@ -150,7 +150,7 @@ One source — the space's `functions/` files — and three editors of it. They 
 refused when the space's copy changed since the editor read it.
 
 **In the builder** — **Server → Functions**, built around the code: the tasks, routes and files on the left, the editor
-in the middle (TypeScript that knows `ctx`: completion, hover, errors as you type), the selected task on the right.
+in the middle (TypeScript that knows `ctx`: completion, hover, errors as you type), the selected task or job on the right.
 
 - The list follows `defineFunctions` **as it is typed**, imported tasks included; a task written and not saved says so.
   Clicking a task or route opens its file at its line, and moving the cursor into a task selects it.
@@ -158,6 +158,9 @@ in the middle (TypeScript that knows `ctx`: completion, hover, errors as you typ
 - A slider sets a task's CPU per run, 100 ms to 1 s (`limits: { cpuMs }` written into the task; **Use default** takes it
   out). `DEFAULT_FUNCTION_TIME_LIMITS` in `@plitzi/sdk-shared/actions` is the default both the panel and the server use.
 - **Test** fills a task's params the way its step does; with unsaved changes it reads **Save & run**.
+- **Jobs** are listed beside the tasks and routes, with how long each may run. Selecting one shows how it is started,
+  who may watch it, and the space's runs of it — live while one moves, its progress and step as its code reported
+  them, with **Pause**, **Resume**, **Cancel** and **Run again**, as the dashboard's Queue has them.
 - The header says Saved, Unsaved (in how many files) or how many problems the last save found. **Save** (⌘S) builds and
   checks on the platform — a problem opens its file at its line — and **Discard** puts every file back to what was last
   saved.
