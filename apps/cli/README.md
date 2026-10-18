@@ -1,6 +1,7 @@
 # @plitzi/cli
 
-The command line for Plitzi.
+The command line for Plitzi. To learn Plitzi from the start, or look something up, the docs are at
+[docs.plitzi.com](https://docs.plitzi.com): the guides, the reference and the Academy.
 
 ```bash
 npx @plitzi/cli create my-site                 # a project that renders a space

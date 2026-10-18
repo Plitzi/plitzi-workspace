@@ -1,5 +1,5 @@
 import { flagUserFromSSR, flagValues, resolveFlags } from '@plitzi/sdk-shared/flags';
-import { collectServerElements } from '@plitzi/sdk-shared/schema';
+import { collectServerElements, pageAccessOf, pageAccessRefusal } from '@plitzi/sdk-shared/schema';
 
 import { matchRscPage } from './matchRscPage';
 import { onAbort } from '../../helpers/onAbort';
@@ -126,6 +126,11 @@ export const resolveRscData = async ({
   }
 
   const { pageId, routeParams } = match;
+  // The data of a page this visitor may not see is theirs no more than its content is.
+  if (pageAccessRefusal(pageAccessOf(schema.flat[pageId].attributes), user) !== undefined) {
+    return { serverData: {} };
+  }
+
   // Against the page just matched, as the browser resolves them for it: an element a flag switched off is not drawn,
   // and its data must not travel in the payload regardless.
   const flags = flagValues(

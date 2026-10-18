@@ -14,11 +14,12 @@ import RootElement from '../../../Element/RootElement';
 import LayoutContainer from '../LayoutContainer';
 import declaration from './declaration';
 import PageHead from './PageHead';
+import PageWithheld from './PageWithheld';
 
 import type { DocumentScroll } from './declaration';
 import type { InteractionsContextValue } from '@plitzi/sdk-interactions';
 import type { ElementLayout } from '@plitzi/sdk-shared';
-import type { LayoutLink } from '@plitzi/sdk-shared/schema';
+import type { LayoutLink, PageAccess, PageWithheld as WithheldReason } from '@plitzi/sdk-shared/schema';
 import type { ReactNode, RefObject } from 'react';
 
 export type PageProps = {
@@ -41,6 +42,16 @@ export type PageProps = {
    * inside another space is embedded in, nor the builder's.
    */
   documentScroll?: DocumentScroll | '';
+  /**
+   * The permissions a visitor must hold to see this page — read by the server, which withholds the page from anybody
+   * without them. Nothing for the page itself to do with.
+   */
+  access?: PageAccess;
+  /**
+   * Set by the server on a page it withheld from this visitor (`access` they do not meet): the content was not sent,
+   * and the page says why instead. Never authored.
+   */
+  withheld?: WithheldReason;
   className?: string;
   layout?: string;
   layoutContainer?: string;
@@ -91,6 +102,7 @@ const Page = ({
   seoPageTitle = 'Title',
   seoPageDescription = 'Description',
   documentScroll = '',
+  withheld,
   className = '',
   layout = '',
   layoutContainer = '',
@@ -112,7 +124,10 @@ const Page = ({
 
   const layoutChain = useLayoutChain(layout, layoutContainer);
   const links = useMemo(() => toLinks(layoutChain), [layoutChain]);
-  const body = useMemo(() => wrapInLayouts(links, id, children), [links, id, children]);
+  const body = useMemo(
+    () => wrapInLayouts(links, id, withheld ? <PageWithheld reason={withheld} /> : children),
+    [links, id, children, withheld]
+  );
 
   /**
    * Announced once the commit that mounted this page has finished, not in the middle of it.

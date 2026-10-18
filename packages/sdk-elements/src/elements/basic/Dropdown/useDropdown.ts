@@ -89,14 +89,19 @@ const useDropdown = ({
     [disabled, loading, popupRef, toggle]
   );
 
+  /**
+   * A choice made in the menu closes it — and is left to do what it does. It is heard on the way DOWN (the popup's
+   * capture phase): a link stops its click from bubbling so a card around it does not fire too, and heard on the way up
+   * a menu of links never closed. Nor is the click cancelled or stopped here: an external link must still go, a submit
+   * button still submit.
+   */
   const handleClickPopup = useCallback(
-    (e: React.MouseEvent) => {
+    // The event is not read: a click anywhere in the popup is a choice made.
+    () => {
       if (disabled || loading || !closeOnClickPopup) {
         return;
       }
 
-      e.stopPropagation();
-      e.preventDefault();
       toggle();
     },
     [closeOnClickPopup, disabled, loading, toggle]

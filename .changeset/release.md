@@ -73,6 +73,14 @@
   connection's owner. The refresh token never leaves; a connection without `exposeToken` refuses `token`, naming the
   field. Through the sandbox's protocol and natively alike.
 
+- **A page for some permissions, kept by the server** (`@plitzi/sdk-shared`, `@plitzi/sdk-server`,
+  `@plitzi/sdk-authoring`, `@plitzi/sdk-elements`, `@plitzi/plitzi-builder`): a page says
+  `access: { permissions: [...] }`, and a visitor without every one is answered 401 (or the page's sign-in redirect) or
+  403 with a refusal drawn in the page's layout. Its content is withheld from everything that visitor is sent — the
+  render, the hydration payload, the space document (and a document built for somebody with access is not handed to
+  somebody without it by its name) and the page's server data. The builder's page settings take the permissions;
+  authoring refuses an `access` the server could not keep (`page-access`).
+
 ## Packaging
 
 - **No package ships the declarations of its tests** (`@plitzi/sdk-server`, `@plitzi/sdk-mcp`, `@plitzi/plitzi-sdk`,
@@ -83,3 +91,23 @@
   package that holds one.
 - **`@plitzi/plitzi-builder` depends on `graphql` ^16** (was ^17): Apollo Server — the builder's API — supports only
   16, so a host installing the builder beside it got two copies. The builder uses nothing of 17's.
+
+## Elements
+
+- **A dropdown closes when a link in it is chosen** (`@plitzi/sdk-elements`): a link stops its click from bubbling,
+  and the popup listened for clicks on the way up — so no menu of links ever closed, and a click that did reach it was
+  cancelled, which would have kept an external link from going anywhere. The popup now hears the click as it goes down
+  and lets it through.
+
+## CLI
+
+- **`create` points at the Academy** (`@plitzi/cli`): its last lines name the docs' Academy,
+  `https://docs.plitzi.com/academy`, for whoever is new to Plitzi — and the README the docs themselves.
+
+## Builder
+
+- **Settings → Realtime: a space's channels, declared by hand** (`@plitzi/plitzi-builder`): `settings.channels` was
+  written only in code or by an agent over MCP, so a space made in the builder could not open a channel. The section
+  lists the channels with who may join (anyone, signed-in visitors, visitors with permissions), who may speak (pages, or
+  only the server's `Publish On Channel`), presence, a grant, keeping the last message and the two limits — saved only
+  when `channelProblems` passes, with what is wrong said under the channel otherwise.

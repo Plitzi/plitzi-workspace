@@ -95,6 +95,11 @@ export const AUTHORING_CODES = {
     means: 'an `accessLevel` that is not one the router reads',
     fix: 'one of the values the message lists'
   },
+  'page-access': {
+    kind: 'refused',
+    means: 'a page `access` the server cannot keep: no permissions, or one that is not a name',
+    fix: "`access: { permissions: ['…'] }` with at least one permission name, or no `access` for a page anybody may see"
+  },
   'page-target-unknown': {
     kind: 'refused',
     means: 'a link or `navigate` to a page id that does not exist',

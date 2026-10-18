@@ -289,6 +289,13 @@ export interface PageSpec {
    */
   accessLevel?: 'public' | 'authenticated';
   /**
+   * The permissions a visitor must hold, all of them, to see this page — for a platform space the account's, for any
+   * other the visitor roles the space declares and gives them. Kept by the server: a visitor without them is answered
+   * 401 or 403 and the page's refusal, and its content is never sent to them. Signed out, they are sent to
+   * `unauthorizedRedirect` when the page names one (a sign-in).
+   */
+  access?: { permissions: string[] };
+  /**
    * Where a visitor this page is not for is sent — a page's id or slug (`login`; `''` is the home page), its path, or a
    * full URL for somewhere off this space. Resolved to the page's id, and refused when it names no page.
    *

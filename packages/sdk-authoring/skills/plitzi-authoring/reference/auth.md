@@ -63,6 +63,12 @@ A page's `accessLevel`: `'authenticated'` (signed in), `'public'` (signed OUT on
 twin on the same slug. `unauthorizedRedirect` names where a visitor the page is not for goes — a page's id or slug
 (`''` is the home page), or a URL; without it they are answered 403.
 
+A page for some permissions says so: `access: { permissions: ['postPublish'] }` — every one held, by a signed-in visitor
+(the permissions of their visitor roles; on Plitzi's own spaces, their account's). The server keeps it: anybody else is
+answered 401 or 403 and the page's refusal, and its content is never sent to them — not in the page, not in the space
+the browser fetches. Signed out, they go to `unauthorizedRedirect` when the page names one. Hiding a part of a page on
+`auth.details.permissions` is not this: the part was still sent.
+
 ## What a visitor may do
 
 `settings.visitorRoles` — `{ author: ['postPublish'] }` — is what each role gives. A visitor holds exactly the

@@ -284,3 +284,37 @@ describe('an address no page answers', () => {
     expect(notFoundPageFor(getPaths(pages, folders), '/analytics/audience')).toBeUndefined();
   });
 });
+
+/**
+ * A page the server withheld (its `access` not met) routes like any page — it draws its refusal in place — except for a
+ * signed-out visitor where the page says where signing in is: they are sent there, as for a signed-in-only page.
+ */
+describe('a page the server withheld', () => {
+  const withheld: Record<string, Element> = {
+    home: page('home', { slug: '', default: true }),
+    staff: page('staff', {
+      slug: 'staff',
+      withheld: 'unauthenticated',
+      unauthorizedBehaviour: 'redirect',
+      unauthorizedPageRedirect: '{{authUrl}}/'
+    }),
+    plans: page('plans', {
+      slug: 'plans',
+      withheld: 'forbidden',
+      unauthorizedBehaviour: 'redirect',
+      unauthorizedPageRedirect: '{{authUrl}}/'
+    }),
+    quiet: page('quiet', { slug: 'quiet', withheld: 'unauthenticated' })
+  };
+  const match = (pathName: string, authenticated: boolean) =>
+    matchRoutePath(getPaths(withheld, [], authenticated), pathName, authenticated);
+
+  it('sends a signed-out visitor to sign in, when the page says where', () => {
+    expect(match('/staff', false).action).toEqual({ type: 'redirect', path: '{{authUrl}}/' });
+  });
+
+  it('draws its refusal in place for a visitor signed in without the access, and where no sign-in is named', () => {
+    expect(match('/plans', true)).toMatchObject({ action: { type: 'normal' }, pageId: 'plans' });
+    expect(match('/quiet', false)).toMatchObject({ action: { type: 'normal' }, pageId: 'quiet' });
+  });
+});

@@ -39,6 +39,11 @@ changeset with what a project still on that version changes by hand.
 
 ## Publish a release
 
+0. Bring `plitzi-sdk-server`'s seeds up to date against the unreleased code: portal the packages there and run its
+   `yarn typecheck` and `yarn test`. The public docs' guides and the Academy's lessons are seeds — their code
+   typechecked, their spaces authored — so a change that breaks or outdates one fails in this step, before anything is
+   published.
+
 1. Create a changeset — or add to the pending `.changeset/release.md`:
 
    ```bash

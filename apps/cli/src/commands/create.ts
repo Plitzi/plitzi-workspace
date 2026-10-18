@@ -39,6 +39,9 @@ import type { DryRunOptions } from './dryRun';
 import type { Question } from './terminal';
 import type { CreateAnswers, PackageManager, ProjectFiles } from '../scaffold';
 
+/** Where a person learns Plitzi from the start, in the public docs. */
+const ACADEMY_URL = 'https://docs.plitzi.com/academy';
+
 /**
  * A project that renders a Plitzi space, ready to run.
  *
@@ -346,6 +349,8 @@ const create = async (directory: string | undefined, options: CreateOptions): Pr
   if (source === 'cloud') {
     console.log(chalk.dim('.env holds the key and is already git-ignored.'));
   }
+
+  console.log(chalk.dim(`New to Plitzi? The Academy goes from your first page to your own server: ${ACADEMY_URL}`));
 
   if (exported) {
     const { version } = exported;

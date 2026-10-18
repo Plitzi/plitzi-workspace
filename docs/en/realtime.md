@@ -55,7 +55,9 @@ schema as `settings.channels`.
 
 An agent declares them over MCP with `patchSettings { channels: { … } }`, merged pattern by pattern (`null` removes
 one). Every writer is held to the same check — `channelProblems` in `@plitzi/sdk-shared/realtime` — which authoring
-refuses on, `lintSpace` reports (`channel-declaration`) and the MCP answers with.
+refuses on, `lintSpace` reports (`channel-declaration`) and the MCP answers with. In the builder they are
+**Settings → Realtime** (`apps/builder/src/modules/Channels`), which saves only when that check passes and says what it
+found under the channel otherwise.
 
 ### Private channels: `grant: true`
 

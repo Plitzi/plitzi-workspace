@@ -1,4 +1,5 @@
 import { matchPath } from './matchPath';
+import { pageWithheldOf } from '../schema/pageAccess';
 
 import type { PathMatch } from './matchPath';
 import type { Element, PageFolder } from '../types';
@@ -233,7 +234,15 @@ const getPaths = (
           isRaw: `/${pageId}` === subPath,
           unauthorizedBehaviour,
           unauthorizedPageRedirect,
-          hasAccess: isPageAuthored(accessLevel as NavigationAccessLevel, authenticated, previewMode),
+          // A page the server withheld from a signed-out visitor sends them where it says signing in is — the same
+          // way a page for signed-in visitors does — rather than drawing its refusal in place.
+          hasAccess:
+            isPageAuthored(accessLevel as NavigationAccessLevel, authenticated, previewMode) &&
+            !(
+              pageWithheldOf(pages[pageId].attributes) === 'unauthenticated' &&
+              unauthorizedBehaviour === 'redirect' &&
+              Boolean(unauthorizedPageRedirect)
+            ),
           ...(notFound ? { notFound: true } : {})
         } as Path;
       });

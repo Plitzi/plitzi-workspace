@@ -40,3 +40,13 @@ export const withNotFound = (result: SSRRenderResult, notFound: boolean): void =
     result.status = 404;
   }
 };
+
+/**
+ * A page withheld from this visitor answers 401 signed out and 403 signed in without the access — unless the render
+ * decided something of its own first: the redirect to signing in a page declares, say.
+ */
+export const withRefusal = (result: SSRRenderResult, refused: 'unauthenticated' | 'forbidden' | undefined): void => {
+  if (refused && result.redirect === undefined && result.status === undefined) {
+    result.status = refused === 'unauthenticated' ? 401 : 403;
+  }
+};

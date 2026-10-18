@@ -72,6 +72,7 @@ export const PAGE_SPEC_KEYS = [
   'notFound',
   'documentScroll',
   'accessLevel',
+  'access',
   'unauthorizedRedirect',
   'folder',
   'layout',

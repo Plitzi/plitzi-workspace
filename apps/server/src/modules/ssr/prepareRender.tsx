@@ -6,7 +6,9 @@ import {
   collectServerElements,
   notFoundProvider,
   pageNotFound,
-  pageServerContext
+  pageServerContext,
+  pageWithheldOf,
+  withholdPages
 } from '@plitzi/sdk-shared/schema';
 import { paintedKeys, paintedStateFor } from '@plitzi/sdk-shared/state';
 import { fontsToHead, fontUrlResolver } from '@plitzi/sdk-shared/style';
@@ -51,6 +53,7 @@ import type {
   Style,
   Theme
 } from '@plitzi/sdk-shared';
+import type { PageWithheld } from '@plitzi/sdk-shared/schema';
 import type { FC } from 'react';
 
 /** Last resort only: used for a page that declares no SEO title and a deployment that supplies none either. */
@@ -91,6 +94,8 @@ export type RenderPrep = {
   cacheable: boolean;
   /** A server provider of the page said its address shows nothing (`notFound`): sent with status 404. */
   notFound: boolean;
+  /** The page asked for was withheld from this visitor (`access`): sent with 401 or 403, its refusal drawn. */
+  refused?: PageWithheld;
 };
 
 export const prepareRender = async (
@@ -129,7 +134,17 @@ export const prepareRender = async (
     return m('schema', () => config.adapters.getOfflineData(spaceId, environment, revision));
   });
 
-  const offlineData = await loadOfflineData();
+  const rawOfflineData = await loadOfflineData();
+  /**
+   * The space as this visitor may be sent it: a page whose `access` they do not meet is emptied before anything reads
+   * it — the render, the payload, the document the browser fetches — so its content never leaves this server for them.
+   * The shared cache below keeps the whole space; only what is sent is cut.
+   */
+  const withholding = rawOfflineData ? withholdPages(rawOfflineData.schema, req.ctx.user) : undefined;
+  const offlineData =
+    rawOfflineData && withholding && withholding.withheld.length > 0
+      ? { ...rawOfflineData, schema: withholding.schema }
+      : rawOfflineData;
 
   // The adapter is asked only when this page has somewhere to put the answer. A space is normally a mix — one page
   // backed by a CMS, the next one static — and resolving is what costs: the providers of THIS page's server
@@ -141,6 +156,7 @@ export const prepareRender = async (
   // Which page this URL addresses is now needed whatever the RSC settings say — the document's own title and
   // description come from it — so the match runs first and the RSC gates below read its answer.
   const pageMatch = schema !== undefined ? matchRscPage(schema, req.path, req.ctx.user) : undefined;
+  const refused = pageMatch ? pageWithheldOf(schema?.flat[pageMatch.pageId]?.attributes) : undefined;
   // Only the explicit `false` is treated as an opt-out here. Whether an ABSENT flag means on or off is the adapter's
   // to decide and the two shipped ones disagree — `resolveRscData` reads it as on, `connectorRscData` as off — so
   // this gate skips on the one answer both of them agree about.
@@ -223,8 +239,8 @@ export const prepareRender = async (
     imagePath: imagesPathOf(config)
   });
 
-  if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && offlineData !== undefined) {
-    offlineDataCache?.set(offlineCacheKey, JSON.stringify(offlineData));
+  if (offlineDataOverride === undefined && !cachedOfflineStr && offlineCacheKey && rawOfflineData !== undefined) {
+    offlineDataCache?.set(offlineCacheKey, JSON.stringify(rawOfflineData));
   }
 
   // Falls back to the bundle's own mtime, so the cache-buster is right without anybody supplying one.
@@ -320,7 +336,7 @@ export const prepareRender = async (
     offlineDataOverride === undefined &&
     config.templateFn === undefined &&
     config.ssrOnly !== true
-      ? publishSpaceDocument(spaceId, environment, spaceDocument(offlineData))
+      ? publishSpaceDocument(spaceId, environment, spaceDocument(offlineData), withholding?.kept ?? [])
       : undefined;
   /**
    * A page that named its space with a token in its address (`?access-token=`, how a host serving many spaces is asked
@@ -484,6 +500,7 @@ export const prepareRender = async (
     },
     // Neither a render carrying this request's runs nor one drawn with a tester's forced flags is anybody else's page.
     cacheable: actionRuns === undefined && forcedFlags === undefined,
-    notFound
+    notFound,
+    ...(refused ? { refused } : {})
   };
 };

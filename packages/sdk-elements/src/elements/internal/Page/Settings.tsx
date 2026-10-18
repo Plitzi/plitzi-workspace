@@ -5,9 +5,10 @@ import Input from '@plitzi/plitzi-ui/Input';
 import Select from '@plitzi/plitzi-ui/Select';
 import Select2 from '@plitzi/plitzi-ui/Select2';
 import TextArea from '@plitzi/plitzi-ui/TextArea';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { getPageFullPath } from '@plitzi/sdk-navigation';
+import { pageAccessOf } from '@plitzi/sdk-shared/schema';
 import { useCommonStore } from '@plitzi/sdk-shared/store';
 
 import useSettingsUpdate from '../../useSettingsUpdate';
@@ -15,6 +16,7 @@ import LayoutPicker from '../LayoutPicker';
 
 import type { DocumentScroll } from './declaration';
 import type { Option, OptionGroup } from '@plitzi/plitzi-ui/Select2';
+import type { PageAccess } from '@plitzi/sdk-shared/schema';
 import type { ChangeEvent } from 'react';
 
 type SettingsProps = {
@@ -32,7 +34,8 @@ type SettingsProps = {
   unauthorizedBehaviour?: '' | 'redirect';
   unauthorizedPageRedirect?: string;
   documentScroll?: DocumentScroll | '';
-  onUpdate?: (key: string, value: string | boolean | number) => void;
+  access?: PageAccess | '';
+  onUpdate?: (key: string, value: string | boolean | number | PageAccess) => void;
 };
 
 const Settings = ({
@@ -50,8 +53,13 @@ const Settings = ({
   unauthorizedBehaviour = '',
   unauthorizedPageRedirect = '',
   documentScroll = '',
+  access = '',
   onUpdate
 }: SettingsProps) => {
+  const permissions = pageAccessOf({ access })?.permissions.join(', ') ?? '';
+  // What is being typed: kept here until the field is left, so a comma typed before the next name is not tidied away.
+  const [permissionsDraft, setPermissionsDraft] = useState(permissions);
+  useEffect(() => setPermissionsDraft(permissions), [permissions]);
   const [[flat, pages, pageFolders]] = useCommonStore(['schema.flat', 'schema.pages', 'schema.pageFolders']);
 
   const pagesParsed = useMemo(
@@ -106,6 +114,15 @@ const Settings = ({
     },
     [onUpdate]
   );
+
+  // Written as a list a person types — `adminManage, billing` — and kept as the names, or no `access` once it is empty.
+  const handleBlurPermissions = useCallback(() => {
+    const names = permissionsDraft
+      .split(',')
+      .map(name => name.trim())
+      .filter(Boolean);
+    onUpdate?.('access', names.length > 0 ? { permissions: names } : '');
+  }, [onUpdate, permissionsDraft]);
 
   const handleChangeSeoEnabled = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => onUpdate?.('seoEnabled', e.target.checked),
@@ -185,7 +202,23 @@ const Settings = ({
           <span className="text-xs">Only Guest can access this page</span>
         </Alert>
       )}
-      {accessLevel !== '' && (
+      <Input
+        label="Required permissions"
+        value={permissionsDraft}
+        onChange={setPermissionsDraft}
+        onBlur={handleBlurPermissions}
+        placeholder="None — anybody this page is for"
+        size="xs"
+      />
+      {permissions !== '' && (
+        <Alert intent="info" solid={false} size="xs">
+          <span className="text-xs">
+            Only visitors holding every one of these see this page. Anybody else is answered 401 or 403, and the server
+            never sends them its content
+          </span>
+        </Alert>
+      )}
+      {(accessLevel !== '' || permissions !== '') && (
         <Select
           label="Unauthorized Behaviour"
           value={unauthorizedBehaviour}

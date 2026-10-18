@@ -482,6 +482,9 @@ desktop) are never versioned. See `docs/en/releases.md`.
 A release that changes something a project's own source counts on — a name, an import, a default — ships its migration
 in `apps/cli/src/migrations/changes/`, one file each (`docs/en/releases.md` § A change a project's source has to follow).
 
+Before publishing, `plitzi-sdk-server`'s seeds are run against the unreleased packages (portaled): the docs' guides and
+Academy lessons are seeds, and fail there first (`docs/en/releases.md` § Publish a release).
+
 ## Testing gotchas
 
 - Tests that go through the outbound fetch guard mock DNS (`vi.mock('node:dns/promises', …)`); CI has slow/no DNS.
@@ -513,7 +516,9 @@ generated from it.
 | MCP guide | an agent editing a live space through JSON ops | the ops and their JSON shapes | `apps/mcp/src/modules/mcp/helpers/guide.ts` |
 | `docs/en` | a contributor | why it is built the way it is, internals | `docs/en/*.md`; `docs/es` translates 8 of them — change both |
 | Package READMEs | someone configuring a package | its configuration (`createServer` options…) | `apps/server/README.md` and the rest |
-| Website docs | a public user of Plitzi | the product, explained | `plitzi-sdk-server/prisma/seeds/spaces/platform/website/pages/docs-*.ts` |
+| Docs reference (`docs.plitzi.com/reference`) | a public user of Plitzi | the product, explained | `plitzi-sdk-server/prisma/seeds/spaces/platform/docs/pages/docs-*.ts` |
+| Docs guides and architecture (`docs.plitzi.com`) | a person getting Plitzi running, or deciding on it | nothing: the order, the picture, the checks — each fact a link to its owner | `…/platform/docs/pages/docs-guide-*.ts`, `docs-architecture.ts` |
+| Academy (`docs.plitzi.com/academy`) | a person learning Plitzi | nothing: the order to learn in, and a tested project (`academy/cafe-lumen/`) | `…/platform/docs/shell/levels.ts`, `pages/academy-*.ts` |
 
 Rules:
 

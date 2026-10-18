@@ -118,6 +118,12 @@ const checkPageTemplates = (ctx: LintContext, pageId: string, where: string): vo
   }
 };
 
+/** A page `access`'s permissions as written — whatever they hold — or nothing when it has no list. */
+const permissionsOf = (access: unknown): unknown[] | undefined =>
+  typeof access === 'object' && access !== null && 'permissions' in access && Array.isArray(access.permissions)
+    ? access.permissions
+    : undefined;
+
 /**
  * Pages: who each is for, and that no two answer the same visitors at one address — the router takes one and the
  * other can never be reached. Two pages on one path is a supported shape only when they differ by `accessLevel`: a
@@ -138,6 +144,20 @@ export const lintPages = (ctx: LintContext): void => {
       ctx.error(
         'page-access-level',
         `${where}: \`accessLevel\` is ${JSON.stringify(accessLevel)}. It is one of ${ACCESS_LEVELS.map(level => `'${level}'`).join(', ')}.`,
+        pageId
+      );
+    }
+
+    // Kept by the server, which reads only a list of names: anything else would be a page anybody may see, silently.
+    const { access } = page.attributes;
+    const listed = permissionsOf(access);
+    if (
+      access !== undefined &&
+      (!listed || listed.length === 0 || listed.some(name => typeof name !== 'string' || !name))
+    ) {
+      ctx.error(
+        'page-access',
+        `${where}: \`access\` is ${JSON.stringify(access)}. It is \`{ permissions: ['…'] }\`, every one a permission name and at least one — or left out, for a page anybody may see.`,
         pageId
       );
     }

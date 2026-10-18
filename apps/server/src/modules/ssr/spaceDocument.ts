@@ -1,3 +1,5 @@
+import { mayReceive, withholdPages } from '@plitzi/sdk-shared/schema';
+
 import { buildOfflineDataCacheKey } from '../../helpers/cache';
 import { spaceDocument } from '../../helpers/hydrationPayload';
 
@@ -10,6 +12,7 @@ import type {
   SSRRequest,
   SSRResponseHelpers
 } from '@plitzi/sdk-shared';
+import type { PageAccess } from '@plitzi/sdk-shared/schema';
 
 /**
  * The whole space as a resource of its own, beside the page rather than inside it.
@@ -30,16 +33,28 @@ const DOCUMENT_PATH = /^\/_plitzi\/space\/([\w-]{1,64})\.json$/;
  * again. Bounded: a document is megabytes, and only the latest of each space is ever asked for twice.
  */
 const RECENT = 8;
-const recent = new Map<string, string>();
+/**
+ * A document, and the accesses of the protected pages it holds whole: it is handed only to a visitor who meets every
+ * one. A document is named by its content, so one built for somebody with more access than the asker — a link to it
+ * passed on — would otherwise reach them by its name alone.
+ */
+type RecentDocument = { json: string; kept: PageAccess[] };
+
+const recent = new Map<string, RecentDocument>();
 
 const recentKey = (spaceId: number, environment: Environment, hash: string): string =>
   `${String(spaceId)}|${environment}|${hash}`;
 
 /** Where the page fetches `document` from — and the promise that this process can answer it. */
-export const publishSpaceDocument = (spaceId: number, environment: Environment, document: SpaceDocument): string => {
+export const publishSpaceDocument = (
+  spaceId: number,
+  environment: Environment,
+  document: SpaceDocument,
+  kept: PageAccess[] = []
+): string => {
   const key = recentKey(spaceId, environment, document.hash);
   recent.delete(key);
-  recent.set(key, document.json);
+  recent.set(key, { json: document.json, kept });
   for (const oldest of recent.keys()) {
     if (recent.size <= RECENT) {
       break;
@@ -76,7 +91,8 @@ export const handleSpaceDocument = async (
     return;
   }
 
-  let json = recent.get(recentKey(spaceId, environment, hash));
+  const known = recent.get(recentKey(spaceId, environment, hash));
+  let json = known && mayReceive(known.kept, req.ctx.user) ? known.json : undefined;
   let current = json !== undefined;
   if (json === undefined) {
     const cacheKey =
@@ -98,8 +114,10 @@ export const handleSpaceDocument = async (
       return;
     }
 
-    const document = spaceDocument(offlineData);
-    publishSpaceDocument(spaceId, environment, document);
+    // As this visitor may be sent it: the pages they may not see, emptied — whatever the document asked for held.
+    const { schema, withheld, kept } = withholdPages(offlineData.schema, req.ctx.user);
+    const document = spaceDocument(withheld.length > 0 ? { ...offlineData, schema } : offlineData);
+    publishSpaceDocument(spaceId, environment, document, kept);
     json = document.json;
     current = document.hash === hash;
   }

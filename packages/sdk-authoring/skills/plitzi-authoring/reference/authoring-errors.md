@@ -105,6 +105,7 @@ The space is not written until these are fixed.
 | `not-found-not-a-template` | `notFound`, a provider's or a page's, that is not one `{{ expression }}` — never `true`, so never a 404 | `notFound: '{{ source.found == false }}'` |
 | `notifications-shape` | `notifications` with a field it does not have, or a value that is not one CSS value | the field it suggests, or one it lists; one CSS value, like 'var(--card)', '12px' or '500' |
 | `outside-ancestor` | an element that reads the state of an element it is not inside | nest it in the element the message names |
+| `page-access` | a page `access` the server cannot keep: no permissions, or one that is not a name | `access: { permissions: ['…'] }` with at least one permission name, or no `access` for a page anybody may see |
 | `page-access-level` | an `accessLevel` that is not one the router reads | one of the values the message lists |
 | `page-route-reserved` | a page under `/fn`, where the space's functions answer | another slug |
 | `page-route-taken` | two pages at one address for the same visitors | another slug — or `accessLevel` `'public'` on one and `'authenticated'` on the other |

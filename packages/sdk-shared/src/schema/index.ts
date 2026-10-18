@@ -9,3 +9,4 @@ export * from './motionReveal';
 export * from './wire';
 export * from './pageElements';
 export * from './markdownHeadings';
+export * from './pageAccess';

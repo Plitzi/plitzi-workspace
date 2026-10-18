@@ -26,7 +26,8 @@ const DropdownPopup = ({ ref, className = '', children }: DropdownPopupProps) =>
         'popup-container--no-visible': !openPopup || !parameters
       })}
       style={parameters}
-      onClick={onClick}
+      // Heard as the click goes down, before a link inside stops it — see `useDropdown`'s popup handler.
+      onClickCapture={onClick}
     >
       {children}
     </RootElement>
