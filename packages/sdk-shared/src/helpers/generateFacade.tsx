@@ -1,4 +1,4 @@
-import { omit } from '@plitzi/plitzi-ui/helpers';
+import { omit } from '@plitzi/plitzi-ui/helpers/lodash';
 
 import { isRecord } from './isRecord';
 

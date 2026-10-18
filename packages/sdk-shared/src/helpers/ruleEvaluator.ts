@@ -1,6 +1,6 @@
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/helpers';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 
-import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
+import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 
 /**
  * Evaluates a `when` rule group against a value bag.
@@ -8,8 +8,8 @@ import type { RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
  * A rule group has to be evaluated on both sides — the browser for an interaction, the server for an action — and
  * the only implementation lives in `plitzi-ui`. This wrapper exists for two reasons beyond naming:
  *
- * - the `@plitzi/plitzi-ui/QueryBuilder` BARREL pulls the React components with it, which is the boot weight the
- *   MCP already paid for once. `/QueryBuilder/helpers` carries the evaluator and nothing that renders;
+ * - the `@plitzi/plitzi-ui/QueryBuilder` BARREL pulls the React components with it, and `/QueryBuilder/helpers` the
+ *   SQL and MongoDB formatters; `/QueryBuilder/evaluator` is the evaluator alone, which is all a server loads;
  * - it keeps `plitzi-ui` out of the server's dependency list. `sdk-shared` already depends on it, so the chain is
  *   declared in exactly one place.
  */
@@ -19,4 +19,4 @@ export const evaluateRuleGroup = (group: RuleGroup, values: Record<string, RuleV
   // applies, rather than inventing a different reading of a nested result on the server.
   Boolean(QueryBuilderEvaluator(group, values));
 
-export type { Rule, RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder';
+export type { Rule, RuleGroup, RuleValue } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';

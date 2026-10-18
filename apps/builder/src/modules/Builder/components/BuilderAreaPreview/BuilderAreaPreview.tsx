@@ -3,7 +3,7 @@
 import ContainerFrame from '@plitzi/plitzi-ui/ContainerFrame';
 import { ContainerRootContext } from '@plitzi/plitzi-ui/ContainerRoot';
 import { get } from '@plitzi/plitzi-ui/helpers';
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 import clsx from 'clsx';
 import { useCallback, use, useMemo } from 'react';
 

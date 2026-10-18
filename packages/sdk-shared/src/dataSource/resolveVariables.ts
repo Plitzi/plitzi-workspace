@@ -1,4 +1,4 @@
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 
 import type { SchemaVariable, SchemaVariableValue } from '../types';
 

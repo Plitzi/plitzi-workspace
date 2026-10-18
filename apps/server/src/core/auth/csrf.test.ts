@@ -55,7 +55,7 @@ describe('what a sign-in has to present', () => {
   it('asks nothing of a page on this deployment, cookie or no cookie', () => {
     expect(signIn()).toBe(false);
     expect(signIn({ headers: { cookie: 'sess=stale' } })).toBe(false);
-    expect(signIn({ headers: { origin: 'https://acme.test' } })).toBe(false);
+    expect(signIn({ headers: { host: 'acme.test', origin: 'https://acme.test' } })).toBe(false);
     expect(signIn({ headers: { 'sec-fetch-site': 'same-origin' } })).toBe(false);
   });
 
@@ -116,8 +116,32 @@ describe('what a sign-in has to present', () => {
     expect(
       signIn({ hostname: 'localhost', headers: { origin: 'https://localhost:8091', 'sec-fetch-site': 'same-site' } })
     ).toBe(true);
-    // A proxy that rewrote `Host` leaves the hostname to compare.
-    expect(at('https://localhost:8091', 'internal:4000')).toBe(false);
+    // Nothing says which port the request reached: not taken as its own.
+    expect(at('https://localhost:8091', 'internal:4000')).toBe(true);
+    expect(at('https://localhost:8080')).toBe(true);
+  });
+
+  /** HTTP/2 carries no `Host`: the authority is `:authority`, and the port in it counts just as much. */
+  it('tells the ports apart over HTTP/2 too', () => {
+    const overHttp2 = (origin: string) =>
+      signIn({ hostname: 'localhost', headers: { ':authority': 'localhost:8080', origin } });
+
+    expect(overHttp2('https://localhost:8080')).toBe(false);
+    expect(overHttp2('https://localhost:8091')).toBe(true);
+    expect(overHttp2('https://localhost:9999')).toBe(true);
+    expect(overHttp2('http://localhost:8091')).toBe(true);
+  });
+
+  /** A proxy in front that addresses this server by another name says the public one in `X-Forwarded-Host`. */
+  it('reads the authority a proxy forwarded, port included', () => {
+    const behindProxy = (origin: string) =>
+      signIn({
+        hostname: 'app.acme.test',
+        headers: { host: 'internal:4000', 'x-forwarded-host': 'app.acme.test', origin }
+      });
+
+    expect(behindProxy('https://app.acme.test')).toBe(false);
+    expect(behindProxy('https://app.acme.test:8443')).toBe(true);
   });
 
   it('lets the deployment name origins that are also its own', () => {

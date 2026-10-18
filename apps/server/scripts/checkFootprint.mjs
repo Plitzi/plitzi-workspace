@@ -21,15 +21,13 @@ const BUDGET = {
   '@plitzi/sdk-server': 196,
   '@plitzi/sdk-shared': 113,
   '@plitzi/nexus': 31,
-  '@plitzi/plitzi-ui': 26,
+  '@plitzi/plitzi-ui': 19,
   '@plitzi/plitzi-sdk': 1,
   'react-dom': 7,
   react: 6,
   'date-fns': 5,
   ejs: 2,
   scheduler: 2,
-  'class-variance-authority': 1,
-  clsx: 1,
   esbuild: 1
 };
 

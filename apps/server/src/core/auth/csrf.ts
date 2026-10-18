@@ -143,8 +143,12 @@ const readCookieHeader = (carrier: CsrfCarrier, name: string): string | undefine
 };
 
 /**
- * Whether `origin` is the request's own: its host and port, as the `Host` header names them. When a proxy rewrote
- * `Host` (it no longer names the hostname the request is answered as), the hostname alone is what is left to compare.
+ * Whether `origin` is the request's own: its host AND port, as the request was addressed — HTTP/2's `:authority`, which
+ * carries no `Host` header at all; `Host` otherwise; and `X-Forwarded-Host` before both, which a proxy in front writes
+ * when it addresses this server by another name (a page cannot set it: no form or fetch of another origin sends it).
+ * The one whose host is the hostname the request is answered as is compared, port included. None of them is: nothing
+ * says which port the request reached, so the origin is not taken as its own — comparing the name alone made every port
+ * and every scheme of this host count.
  */
 const isOwnOrigin = (origin: string, carrier: CsrfCarrier): boolean => {
   let url: URL;
@@ -155,22 +159,27 @@ const isOwnOrigin = (origin: string, carrier: CsrfCarrier): boolean => {
     return false;
   }
 
-  const host = header(carrier, 'host');
-  if (host === undefined) {
-    return url.hostname === carrier.hostname;
+  const forwarded = header(carrier, 'x-forwarded-host')?.split(',')[0]?.trim();
+  for (const authority of [forwarded, header(carrier, ':authority'), header(carrier, 'host')]) {
+    if (!authority) {
+      continue;
+    }
+
+    let own: URL;
+    try {
+      // Read with the origin's scheme, so a default port written out (`acme.test:443`) is the one the origin omits.
+      own = new URL(`${url.protocol}//${authority}`);
+    } catch {
+      continue;
+    }
+
+    if (own.hostname === carrier.hostname) {
+      return url.host === own.host;
+    }
   }
 
-  let own: URL;
-  try {
-    // Read with the origin's scheme, so a default port written out (`acme.test:443`) is the one the origin omits.
-    own = new URL(`${url.protocol}//${host}`);
-  } catch {
-    return false;
-  }
-
-  return own.hostname === carrier.hostname ? url.host === own.host : url.hostname === carrier.hostname;
+  return false;
 };
-
 /**
  * Did a page of another ORIGIN cause this request — `allowed` naming the origins this deployment counts as its own?
  *
@@ -182,8 +191,8 @@ const isOwnOrigin = (origin: string, carrier: CsrfCarrier): boolean => {
  *   `same-origin`, and `none` (a typed URL, a bookmark), are this server's own; `same-site` and `cross-site` are a
  *   page of another origin, foreign unless its origin was named.
  * - **`Origin`** is the fallback, for a browser too old to send the above — Safari only did from 16.4. Matched
- *   **exactly** — host and port; one port does not serve two schemes — against this host or an origin the deployment
- *   named.
+ *   **exactly** — host and port, over HTTP/1.1 and HTTP/2 alike; one port does not serve two schemes — against the
+ *   authority the request was addressed to, or an origin the deployment named.
  *
  * **`same-site` is not trusted, and was once.** A site is a registrable domain, with no port in it: another port of
  * this host, or a sibling sub-domain, is the same site. Both are where somebody else's code is served by design —

@@ -36,7 +36,7 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
-    "@plitzi/plitzi-ui": "^1.6.33",
+    "@plitzi/plitzi-ui": "^1.6.34",
     "@plitzi/sdk-auth": "workspace:*",
     "@plitzi/sdk-event-bridge": "workspace:*",
     "@plitzi/sdk-shared": "workspace:*"

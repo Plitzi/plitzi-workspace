@@ -39,7 +39,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "eslint": "^9.39.5",
     "eslint-plugin-import": "^2.32.0",
-    "mailparser": "^3.9.40",
+    "mailparser": "^3.9.41",
     "smtp-server": "^3.19.23",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",

@@ -1,4 +1,4 @@
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 import { use, useMemo, useRef } from 'react';
 
 import { useNavigation } from '@plitzi/sdk-navigation';

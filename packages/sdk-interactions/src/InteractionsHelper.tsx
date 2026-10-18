@@ -1,5 +1,5 @@
 import { get, omit } from '@plitzi/plitzi-ui/helpers';
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 
 import { pConsole } from '@plitzi/sdk-shared/devTools';
 import { MAX_PARAM_PASSES, resolveStepParam } from '@plitzi/sdk-shared/helpers/twigWrapper';

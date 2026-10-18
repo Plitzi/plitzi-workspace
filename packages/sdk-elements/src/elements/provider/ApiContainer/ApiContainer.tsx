@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 
-import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder';
+import { QueryBuilderEvaluator } from '@plitzi/plitzi-ui/QueryBuilder/evaluator';
 import clsx from 'clsx';
 import { use, useCallback, useEffect, useMemo, useRef } from 'react';
 
