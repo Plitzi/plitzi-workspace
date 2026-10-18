@@ -50,8 +50,23 @@ export type FunctionInvocationContext = Pick<
   'spaceId' | 'environment' | 'runId' | 'trigger' | 'callerId' | 'user'
 >;
 
+/** The slice of a job an invocation runs: which job, what it saved so far, and which attempt this is. */
+export type FunctionJobSlice = { id: string; state?: unknown; attempt: number };
+
 export type FunctionInvocation =
   | { kind: 'task'; name: string; params: Record<string, unknown>; context: FunctionInvocationContext }
+  | {
+      kind: 'job';
+      name: string;
+      input: Record<string, unknown>;
+      job: FunctionJobSlice;
+      context: FunctionInvocationContext;
+      /**
+       * How long the code gets to save and return once the slice is asked to end (`signal` aborting with why: the
+       * `FunctionJobStop`), before the runner cuts it.
+       */
+      graceMs: number;
+    }
   | {
       kind: 'route';
       key: string;
@@ -86,6 +101,12 @@ export type FunctionCall =
       init: Omit<FunctionFetchInit, 'credential'>;
       owner?: string;
     }
+  /** `ctx.jobs`: the space's jobs, started and stopped by its code. */
+  | { op: 'jobs'; method: 'start'; name: string; input: Record<string, unknown>; key?: string }
+  | { op: 'jobs'; method: 'get' | 'pause' | 'resume' | 'cancel'; id: string }
+  /** A job's `save` and `report`: what its slice keeps, and how far it is. */
+  | { op: 'job'; method: 'save'; state: unknown }
+  | { op: 'job'; method: 'report'; fraction: number; step?: string }
   /** Each value as the guest could send it: JSON, with what JSON cannot say already said as text. */
   | { op: 'log'; values: unknown[] }
   | { op: 'emit'; chunk: unknown };
@@ -101,8 +122,9 @@ export type FunctionRunner = {
   /** Loads a bundle and answers what it declares — when the space's functions are saved, never on a run. */
   describe: (bundle: FunctionsBundle) => Promise<unknown>;
   /**
-   * Runs one task or route of a bundle. Each call the code makes is handed to `answer`, whose result goes back to it;
-   * `signal` aborting ends the invocation. Resolves with what the code returned, and rejects with a
+   * Runs one task, route or slice of a job of a bundle. Each call the code makes is handed to `answer`, whose result
+   * goes back to it; `signal` aborting ends the invocation — its `reason` handed to the code as the signal's, and a
+   * job's slice given its `graceMs` to save before it is cut. Resolves with what the code returned, and rejects with a
    * {@link FunctionFailure}.
    */
   invoke: (request: FunctionInvokeRequest) => Promise<unknown>;
@@ -161,7 +183,8 @@ export type RunnerRequestMessage =
   | { type: 'invoke'; protocol: number; bundleId: string; invocation: FunctionInvocation; limits: FunctionLimits }
   | { type: 'bundle'; bundle: FunctionsBundle }
   | { type: 'answer'; id: number; answer: FunctionAnswer }
-  | { type: 'abort' };
+  /** The invocation is asked to end — for a job's slice, with why (a `FunctionJobStop`). */
+  | { type: 'abort'; reason?: string };
 
 export type RunnerResponseMessage =
   | { type: 'needBundle' }

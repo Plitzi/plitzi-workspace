@@ -209,6 +209,52 @@ const fetchInitOf = (value: unknown): FunctionFetchInit => {
 const optionalString = (value: unknown, what: string): string | undefined =>
   value === undefined || value === null ? undefined : stringArg(value, what);
 
+/** A call to `ctx.jobs`, read into the one method it names: a name and an object for `start`, an id for the rest. */
+const jobsCallOf = (call: Record<string, unknown>): FunctionCall => {
+  switch (call.method) {
+    case 'start': {
+      const key = optionalString(call.key, 'A key');
+      if (call.input !== undefined && !isRecord(call.input)) {
+        throw new CallError('A job is handed an object as its input');
+      }
+
+      return {
+        op: 'jobs',
+        method: 'start',
+        name: stringArg(call.name, 'A job'),
+        input: isRecord(call.input) ? call.input : {},
+        ...(key === undefined ? {} : { key })
+      };
+    }
+    case 'get':
+    case 'pause':
+    case 'resume':
+    case 'cancel':
+      return { op: 'jobs', method: call.method, id: stringArg(call.id, 'A job id') };
+    default:
+      throw new CallError('Not a jobs method the platform answers');
+  }
+};
+
+/** A job's `save` or `report`, from its slice. */
+const jobCallOf = (call: Record<string, unknown>): FunctionCall => {
+  if (call.method === 'save') {
+    return { op: 'job', method: 'save', state: call.state };
+  }
+
+  if (call.method === 'report') {
+    if (typeof call.fraction !== 'number' || !Number.isFinite(call.fraction)) {
+      throw new CallError('job.report takes how far it is, a number from 0 to 1');
+    }
+
+    const step = optionalString(call.step, 'A step');
+
+    return { op: 'job', method: 'report', fraction: call.fraction, ...(step === undefined ? {} : { step }) };
+  }
+
+  throw new CallError('Not a job method the platform answers');
+};
+
 /** A call to `ctx.oauth`, read into the one method it names: what each method takes, and an owner only as a string. */
 const oauthCallOf = (call: Record<string, unknown>): FunctionCall => {
   const connection = stringArg(call.connection, 'An OAuth connection');
@@ -310,6 +356,10 @@ export const readCall = (value: unknown): FunctionCall => {
       return { op: 'data', file: stringArg(call.file, 'A file') };
     case 'oauth':
       return oauthCallOf(call);
+    case 'jobs':
+      return jobsCallOf(call);
+    case 'job':
+      return jobCallOf(call);
     case 'log':
       return { op: 'log', values: Array.isArray(call.values) ? call.values : [] };
     case 'emit':
@@ -370,6 +420,24 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
       }
 
       break;
+    case 'jobs':
+      switch (call.method) {
+        case 'start':
+          return ctx.jobs.start(call.name, call.input, call.key === undefined ? {} : { key: call.key });
+        case 'get':
+          return (await ctx.jobs.get(call.id)) ?? null;
+        case 'pause':
+          return ctx.jobs.pause(call.id);
+        case 'resume':
+          return ctx.jobs.resume(call.id);
+        case 'cancel':
+          return ctx.jobs.cancel(call.id);
+      }
+
+      break;
+    // A job's slice answers its own `save` and `report`: anywhere else there is no job to keep anything for.
+    case 'job':
+      throw new CallError('job.save and job.report belong to a job, inside its run');
     case 'log':
       ctx.log(...call.values);
 

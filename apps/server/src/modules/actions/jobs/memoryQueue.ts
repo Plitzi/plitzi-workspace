@@ -1,3 +1,5 @@
+import { isTerminalJobStatus } from '@plitzi/sdk-shared/actions';
+
 import type { StoreMethods } from '../../../core/server/fleet/channel';
 import type {
   ActionJob,
@@ -6,6 +8,8 @@ import type {
   ActionJobQuery,
   ActionJobQueue,
   ActionJobSettlement,
+  ActionJobStop,
+  ActionJobWrite,
   ActionSchedule
 } from '@plitzi/sdk-shared';
 
@@ -27,8 +31,6 @@ export type MemoryJobQueueOptions = {
   clock?: () => number;
 };
 
-const TERMINAL = new Set(['succeeded', 'failed', 'dead', 'cancelled']);
-
 /** Every method of the queue, for the copy a server's workers share (see `fleet/stores.ts`). */
 export const JOB_QUEUE_METHODS: StoreMethods<ActionJobQueue> = {
   now: true,
@@ -36,6 +38,7 @@ export const JOB_QUEUE_METHODS: StoreMethods<ActionJobQueue> = {
   claim: true,
   heartbeat: true,
   settle: true,
+  write: true,
   dueSchedules: true,
   advanceSchedule: true,
   putSchedules: true,
@@ -44,6 +47,8 @@ export const JOB_QUEUE_METHODS: StoreMethods<ActionJobQueue> = {
   listSchedules: true,
   requeue: true,
   cancel: true,
+  pause: true,
+  resume: true,
   cancelPending: true
 };
 
@@ -71,7 +76,7 @@ export const createMemoryJobQueue = ({
   /** Oldest finished jobs first, so the bound drops history rather than anything anybody is waiting on. */
   const evict = () => {
     const finished = [...jobs.values()]
-      .filter(job => TERMINAL.has(job.status))
+      .filter(job => isTerminalJobStatus(job.status))
       .sort((a, b) => a.updatedAt - b.updatedAt);
     for (const job of finished.slice(0, finished.length - retainFinished)) {
       jobs.delete(job.id);
@@ -149,7 +154,7 @@ export const createMemoryJobQueue = ({
 
     heartbeat: ({ jobIds, workerId, leaseMs }) => {
       const at = now();
-      const cancelled: string[] = [];
+      const stops: { jobId: string; stop: ActionJobStop }[] = [];
       for (const id of jobIds) {
         const job = jobs.get(id);
         if (!job || job.workerId !== workerId || job.status !== 'running') {
@@ -157,15 +162,49 @@ export const createMemoryJobQueue = ({
         }
 
         job.leaseUntil = at + leaseMs;
+        // A cancel wins over a pause asked of the same job: set aside, it would only wait to be dropped.
         if (job.cancelRequested) {
-          cancelled.push(id);
+          stops.push({ jobId: id, stop: 'cancel' });
+        } else if (job.pauseRequested) {
+          stops.push({ jobId: id, stop: 'pause' });
         }
       }
 
-      return Promise.resolve(cancelled);
+      return Promise.resolve(stops);
     },
 
-    settle: ({ jobId, workerId, status, delayMs, runId, error, attempt }: ActionJobSettlement) => {
+    write: ({ jobId, workerId, state, progress }: ActionJobWrite) => {
+      const job = jobs.get(jobId);
+      if (!job || job.workerId !== workerId || job.status !== 'running') {
+        return Promise.resolve(false);
+      }
+
+      const at = now();
+      if (state !== undefined) {
+        job.state = state;
+      }
+
+      if (progress) {
+        job.progress = { ...progress, at };
+      }
+
+      job.updatedAt = at;
+
+      return Promise.resolve(true);
+    },
+
+    settle: ({
+      jobId,
+      workerId,
+      status,
+      delayMs,
+      runId,
+      error,
+      attempt,
+      result,
+      spentMs,
+      refund = status === 'pending' && !attempt
+    }: ActionJobSettlement) => {
       const job = jobs.get(jobId);
       // A settlement from a worker that no longer holds the job is a report from the past: its lease lapsed, the
       // job was reclaimed, and whoever holds it now owns the outcome. Dropping it is what stops a slow replica
@@ -179,21 +218,41 @@ export const createMemoryJobQueue = ({
         appendAttempt(job, { ...attempt, startedAt: job.updatedAt, endedAt: at });
       }
 
-      job.status = status;
+      // Asked to stop while it was settling: the next slice it was handed back for is what that stop was about.
+      job.status =
+        status === 'pending' && job.cancelRequested
+          ? 'cancelled'
+          : status === 'pending' && job.pauseRequested
+            ? 'paused'
+            : status;
       job.updatedAt = at;
       job.leaseUntil = undefined;
       job.error = error;
+      job.cancelRequested = undefined;
+      job.pauseRequested = undefined;
       if (runId) {
         job.runId = runId;
       }
 
-      if (status === 'pending') {
+      if (result !== undefined) {
+        job.result = result;
+      }
+
+      if (spentMs) {
+        job.activeMs = (job.activeMs ?? 0) + spentMs;
+      }
+
+      if (refund) {
+        // Handed back untouched, or a slice that did not fail: the attempt it took is given back too.
+        job.attempts = Math.max(0, job.attempts - 1);
+      }
+
+      if (job.status === 'pending') {
         job.runAt = at + (delayMs ?? 0);
+      }
+
+      if (job.status === 'pending' || job.status === 'paused') {
         job.workerId = undefined;
-        if (!attempt) {
-          // Handed back untouched: the worker never got to run it, so the attempt it took is given back too.
-          job.attempts = Math.max(0, job.attempts - 1);
-        }
       }
 
       evict();
@@ -258,13 +317,14 @@ export const createMemoryJobQueue = ({
       return Promise.resolve();
     },
 
-    listJobs: ({ spaceIds, actionId, status, limit, offset }: ActionJobQuery) => {
+    listJobs: ({ spaceIds, actionId, status, kind, limit, offset }: ActionJobQuery) => {
       const matching = [...jobs.values()]
         .filter(
           job =>
             spaceIds.includes(job.spaceId) &&
             (actionId === undefined || job.actionId === actionId) &&
-            (status === undefined || job.status === status)
+            (status === undefined || job.status === status) &&
+            (kind === undefined || (kind === 'function') === (job.function !== undefined))
         )
         .sort((a, b) => b.updatedAt - a.updatedAt);
 
@@ -279,9 +339,9 @@ export const createMemoryJobQueue = ({
     listSchedules: spaceIds =>
       Promise.resolve([...schedules.values()].filter(schedule => spaceIds.includes(schedule.spaceId))),
 
-    requeue: (spaceIds, jobId) => {
+    requeue: (spaceIds, jobId, { input, fresh = false } = {}) => {
       const job = owned(spaceIds, jobId);
-      if (!job || !TERMINAL.has(job.status)) {
+      if (!job || !isTerminalJobStatus(job.status)) {
         return Promise.resolve(false);
       }
 
@@ -290,8 +350,20 @@ export const createMemoryJobQueue = ({
       job.attempts = 0;
       job.workerId = undefined;
       job.leaseUntil = undefined;
-      job.cancelRequested = false;
+      job.cancelRequested = undefined;
+      job.pauseRequested = undefined;
       job.error = undefined;
+      job.result = undefined;
+      if (input) {
+        job.input = input;
+      }
+
+      if (fresh) {
+        job.state = undefined;
+        job.progress = undefined;
+        job.activeMs = undefined;
+      }
+
       job.updatedAt = now();
 
       return Promise.resolve(true);
@@ -299,19 +371,51 @@ export const createMemoryJobQueue = ({
 
     cancel: (spaceIds, jobId) => {
       const job = owned(spaceIds, jobId);
-      if (!job || TERMINAL.has(job.status)) {
+      if (!job || isTerminalJobStatus(job.status)) {
         return Promise.resolve(false);
       }
 
       // A waiting job is simply dropped; a running one is FLAGGED, because the only thing that can stop a flow is
       // the worker holding it, and it reads this at its next heartbeat.
-      if (job.status === 'pending') {
+      if (job.status === 'pending' || job.status === 'paused') {
         job.status = 'cancelled';
         job.workerId = undefined;
+        job.pauseRequested = undefined;
       } else {
         job.cancelRequested = true;
       }
 
+      job.updatedAt = now();
+
+      return Promise.resolve(true);
+    },
+
+    pause: (spaceIds, jobId) => {
+      const job = owned(spaceIds, jobId);
+      // Only a job of the space's functions saves where it is: a flow set aside would only start again from nothing.
+      if (!job?.function || (job.status !== 'pending' && job.status !== 'running') || job.pauseRequested) {
+        return Promise.resolve(false);
+      }
+
+      if (job.status === 'pending') {
+        job.status = 'paused';
+      } else {
+        job.pauseRequested = true;
+      }
+
+      job.updatedAt = now();
+
+      return Promise.resolve(true);
+    },
+
+    resume: (spaceIds, jobId) => {
+      const job = owned(spaceIds, jobId);
+      if (job?.status !== 'paused') {
+        return Promise.resolve(false);
+      }
+
+      job.status = 'pending';
+      job.runAt = now();
       job.updatedAt = now();
 
       return Promise.resolve(true);

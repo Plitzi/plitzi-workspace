@@ -68,7 +68,13 @@ export const spaceTasks = (
           throw new Error(refusal);
         }
 
-        const fnCtx = functionContextFor(ctx, functions.manifest.hosts, scope, functions.manifest.oauth);
+        const fnCtx = functionContextFor(
+          ctx,
+          functions.manifest.hosts,
+          scope,
+          functions.manifest.oauth,
+          functions.manifest.jobs
+        );
         let ok = false;
         let spent: FunctionUsage | undefined;
         try {

@@ -6,8 +6,10 @@ import { laterFor } from '../jobs/later';
 import type { createEmailSender } from './email';
 import type { createRedactor } from './scope';
 import type { createSigning } from './signing';
+import type { FunctionJobsService } from '../../functions/jobs';
 import type { LaterDeps } from '../jobs/later';
 import type { ActionKvStore, ActionRunRequest, ActionsConfig, ActionTaskContext, ResolvedActionLimits } from '../types';
+import type { RunUser } from '@plitzi/sdk-shared';
 
 /**
  * Holds an answer to what the run is allowed to carry.
@@ -107,13 +109,18 @@ export type TaskContextDeps = {
   signing?: ReturnType<typeof createSigning>;
   /** What runs set for later go through: the module's queue, read when asked. */
   later: LaterDeps;
+  /** The space's jobs, for a function's `ctx.jobs`. */
+  jobs?: FunctionJobsService;
 };
 
-/** Who and what the context is for — a run's request, or anything shaped like one (a function's route). */
+/**
+ * Who and what the context is for — a run's request, or anything shaped like one (a function's route, a job's slice,
+ * whose user is who started it and holds no session).
+ */
 export type TaskContextRequest = Pick<
   ActionRunRequest,
-  'runId' | 'spaceId' | 'environment' | 'trigger' | 'user' | 'callerId' | 'at' | 'emit' | 'origin'
->;
+  'runId' | 'spaceId' | 'environment' | 'trigger' | 'callerId' | 'at' | 'emit' | 'origin'
+> & { user?: RunUser };
 
 /**
  * What a task runs with — the one place it is made, for a step of a run and for a function answering a route alike:
@@ -122,7 +129,7 @@ export type TaskContextRequest = Pick<
  */
 export const taskContextFor = (
   config: ActionsConfig,
-  { kv, email, redactor, signing, later }: TaskContextDeps,
+  { kv, email, redactor, signing, later, jobs }: TaskContextDeps,
   request: TaskContextRequest,
   signal: AbortSignal,
   runFetch: typeof fetch
@@ -187,6 +194,20 @@ export const taskContextFor = (
           environment: request.environment,
           ...(request.at ? { at: request.at } : {})
         })
+      : {}),
+    ...(jobs
+      ? {
+          jobs: declared =>
+            jobs.forRun(
+              {
+                spaceId: request.spaceId,
+                environment: request.environment,
+                ...(request.at ? { at: request.at } : {}),
+                ...(request.user ? { user: request.user } : {})
+              },
+              declared
+            )
+        }
       : {}),
     ...(realtime
       ? {

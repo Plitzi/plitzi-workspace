@@ -44,6 +44,10 @@ channels: { desk: { access: { mode: 'session' }, publish: 'server', retain: true
 // a flow: { task: 'realtime.publish', params: { topic: 'desk', type: 'lists', data: '{{ saved.lists }}' } }
 ```
 
+A job of the space's functions (`ctx.jobs.start`) says how it goes on `$job:<id>`, a topic no space declares — opened
+for whoever started it and whoever the job's `watch` lets in: `channel({ id: 'training', topic: '$job:{{ state.job }}' })`
+binds `training.retained.job` (`{ status, progress, step, result, error }`).
+
 Two people writing the same thing at once: `kv.setIf` writes only if the value is still the one the flow read (empty
 `expected` = only if nothing is there yet — claim a seat, a username), `list.put`/`list.range` keep an ordered list
 (latest first, a leaderboard), and `flow.rateLimit` first in a public action that writes.

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   REVOKED_TYPE,
   isValidTopic,
+  jobOfTopic,
   matchChannel,
   realtimeClientFor,
   trackPresence
@@ -74,9 +75,14 @@ const useChannel = (
   /**
    * Only a topic the server would let in is opened. One written from data that has not arrived yet — `room:` while the
    * provider loads, or its template still as text — is refused by the server, request and console error included, on
-   * every load: it is waited for instead, and opened once it names one. The same `matchChannel` the server decides by.
+   * every load: it is waited for instead, and opened once it names one. The same `matchChannel` the server decides by —
+   * and a job's topic (`$job:<id>`), which is the platform's, not one a space declares.
    */
-  const topic = asked && (channels ? matchChannel(asked, channels) : isValidTopic(asked)) ? asked : undefined;
+  const topic =
+    asked &&
+    (jobOfTopic(asked) !== undefined || (channels ? matchChannel(asked, channels) : isValidTopic(asked)))
+      ? asked
+      : undefined;
   const [endpoint] = useCommonStore('realtime.endpoint');
   const [transport] = useCommonStore('realtime.transport');
   const client = useMemo(

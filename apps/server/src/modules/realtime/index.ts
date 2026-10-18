@@ -3,6 +3,7 @@ import { matchChannel } from '@plitzi/sdk-shared/realtime';
 import { createChannelResolver } from './declarations';
 import { createRealtimeGrants } from './grants';
 import { createRealtimeHub } from './hub';
+import { publishJobView } from './jobs';
 import { createMemoryPubSub } from './memoryPubSub';
 import { createRealtimeRetained } from './retained';
 import { fleetStore } from '../../core/server/fleet/link';
@@ -11,8 +12,9 @@ import { createMemoryKv, KV_METHODS } from '../actions/runtime/memoryKv';
 import type { ChannelResolver } from './declarations';
 import type { RealtimeGrants } from './grants';
 import type { RealtimeHub } from './hub';
+import type { JobLookup } from './jobs';
 import type { ActionKvAdapter } from '../actions/types';
-import type { RealtimeTransport, SSRServerConfig } from '@plitzi/sdk-shared';
+import type { FunctionJobView, RealtimeTransport, SSRServerConfig } from '@plitzi/sdk-shared';
 
 export { createMemoryPubSub } from './memoryPubSub';
 export { handleRealtimePublish, handleRealtimeSubscribe } from './handlers';
@@ -55,6 +57,12 @@ export type RealtimeModule = {
    * the action that lets it in for a new grant, if it still may.
    */
   revoke: (space: { spaceId: number; environment: string }, topic: string, grant?: string) => Promise<void>;
+  /** Says a job of the space's functions as it is now on its topic (`$job:<id>`), kept for a page that joins later. */
+  publishJob: (space: { spaceId: number; environment: string }, jobId: string, view: FunctionJobView) => Promise<void>;
+  /** Hands the realtime the way to a job, which the actions module holds: what the door of `$job:<id>` reads. */
+  watchJobs: (lookup: JobLookup) => void;
+  /** The way to a job, once the actions module handed it — what a subscription to `$job:<id>` is decided by. */
+  jobs: () => JobLookup | undefined;
 };
 
 const modules = new WeakMap<object, RealtimeModule>();
@@ -82,6 +90,7 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
   const hub = createRealtimeHub(config.realtime?.pubsub ?? createMemoryPubSub(), retained);
   const resolveChannels = createChannelResolver(getOfflineData);
   const grants = createRealtimeGrants(kv);
+  let jobLookup: JobLookup | undefined;
   const module: RealtimeModule = {
     hub,
     path: config.realtime?.path ?? '/_realtime',
@@ -140,7 +149,12 @@ export const realtimeModuleFor = (config: SSRServerConfig): RealtimeModule | und
 
       await grants.revoke(space, topic, grant);
       await hub.revoke(space, topic, grant);
-    }
+    },
+    publishJob: (space, jobId, view) => publishJobView(hub, retained, space, jobId, view),
+    watchJobs: lookup => {
+      jobLookup = lookup;
+    },
+    jobs: () => jobLookup
   };
   modules.set(config, module);
 

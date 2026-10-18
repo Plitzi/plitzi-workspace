@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import useChannel from './useChannel';
+import useJob from './useJob';
 
 import type { ChannelDeclarations, RealtimeMessage } from '@plitzi/sdk-shared';
 import type { PresenceTracker } from '@plitzi/sdk-shared/realtime';
@@ -98,5 +99,41 @@ describe('useChannel / retained', () => {
     act(() => onMessage({ ...kept('lists', ['x'], 1), from: 'page-2' }));
 
     expect(result.current.retained).toEqual({});
+  });
+});
+
+/** A job's topic is the platform's: opened whatever the space declares, and its latest view is the job. */
+describe('useJob', () => {
+  const view = (status: string, progress?: number) => ({
+    topic: '$job:job:1:a',
+    type: 'job',
+    data: { id: 'job:1:a', name: 'train', status, ...(progress === undefined ? {} : { progress }), createdAt: 1, updatedAt: 2 },
+    from: 'server',
+    at: progress ?? 9,
+    retained: true as const
+  });
+
+  it('opens the job’s own topic, and holds the job as it is said', () => {
+    store.channels = undefined;
+    const { result } = renderHook(() => useJob('job:1:a'));
+    expect(openedTopics()).toEqual(['$job:job:1:a']);
+    expect(result.current).toBeUndefined();
+
+    const [, , { onMessage }] = trackPresence.mock.calls[0];
+    act(() => {
+      onMessage(view('running', 0.4));
+    });
+    expect(result.current).toMatchObject({ status: 'running', progress: 0.4 });
+
+    act(() => {
+      onMessage(view('succeeded'));
+    });
+    expect(result.current).toMatchObject({ status: 'succeeded' });
+  });
+
+  it('opens nothing before there is a job to watch', () => {
+    renderHook(() => useJob(undefined));
+
+    expect(openedTopics()).toEqual([]);
   });
 });

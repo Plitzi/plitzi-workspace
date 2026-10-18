@@ -79,6 +79,9 @@ room.publish('react', { emoji }, { echo: true }); // and heard here too
 room.members;                        // who is here, with the state each announced
 ```
 
+A job of the space's functions, live in a plugin: `const job = useJob(jobId)` — `job?.progress`, `job?.status`,
+`job?.result` — for whoever the job lets watch it (its `watch`), `undefined` until it is heard.
+
 Messages arrive through the callback and re-render nothing. Take the topic as a prop
 (`bindTemplate('roomTopic', 'board.id', 'room:{{ source }}')`) so the space names its channels, and trust a message
 you act on only when `message.from === 'server'`. The page has one connection and is one member per topic, however

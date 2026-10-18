@@ -1,3 +1,5 @@
+import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
+
 import { createStoreClock } from '../actions/jobs/storeClock';
 
 import type {
@@ -7,6 +9,8 @@ import type {
   ActionJobQueue,
   ActionJobSettlement,
   ActionJobStatus,
+  ActionJobStop,
+  ActionJobWrite,
   ActionSchedule,
   ActionScheduleInput
 } from '@plitzi/sdk-shared';
@@ -15,7 +19,8 @@ import type { Collection, Db, Document } from 'mongodb';
 /** Mongo's code for a unique index that refused a second document with the same key. */
 const DUPLICATE_KEY = 11000;
 
-const TERMINAL: ActionJobStatus[] = ['succeeded', 'failed', 'dead', 'cancelled'];
+/** Spread into a plain array: the queries take a mutable list. */
+const TERMINAL: ActionJobStatus[] = [...TERMINAL_JOB_STATUSES];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -235,14 +240,51 @@ export const createMongoJobQueue = ({
       );
 
       const stopping = await jobs
-        .find({ _id: { $in: jobIds }, workerId, status: 'running', cancelRequested: true })
-        .project<{ _id: string }>({ _id: 1 })
+        .find({
+          _id: { $in: jobIds },
+          workerId,
+          status: 'running',
+          $or: [{ cancelRequested: true }, { pauseRequested: true }]
+        })
+        .project<{ _id: string; cancelRequested?: boolean }>({ _id: 1, cancelRequested: 1 })
         .toArray();
 
-      return stopping.map(job => job._id);
+      // A cancel wins over a pause asked of the same job: set aside, it would only wait to be dropped.
+      return stopping.map(job => ({
+        jobId: job._id,
+        stop: (job.cancelRequested === true ? 'cancel' : 'pause') satisfies ActionJobStop
+      }));
     },
 
-    settle: async ({ jobId, workerId, status, delayMs, runId, error, attempt }: ActionJobSettlement) => {
+    write: async ({ jobId, workerId, state, progress }: ActionJobWrite) => {
+      const { jobs } = await collections();
+      const at = await clock.now();
+      const written = await jobs.updateOne(
+        { _id: jobId, workerId, status: 'running' },
+        {
+          $set: {
+            updatedAt: at,
+            ...(state === undefined ? {} : { state }),
+            ...(progress ? { progress: { ...progress, at } } : {})
+          }
+        }
+      );
+
+      return written.matchedCount === 1;
+    },
+
+    settle: async ({
+      jobId,
+      workerId,
+      status,
+      delayMs,
+      runId,
+      error,
+      attempt,
+      result,
+      spentMs,
+      refund = status === 'pending' && !attempt
+    }: ActionJobSettlement) => {
       const { jobs } = await collections();
       const at = await clock.now();
       const entry: Document = {
@@ -251,6 +293,17 @@ export const createMongoJobQueue = ({
         endedAt: at,
         ...attempt
       };
+      // Asked to stop while it was settling: the next slice it was handed back for is what that stop was about.
+      const settled =
+        status === 'pending'
+          ? {
+              $cond: [
+                { $eq: ['$cancelRequested', true] },
+                'cancelled',
+                { $cond: [{ $eq: ['$pauseRequested', true] }, 'paused', 'pending'] }
+              ]
+            }
+          : status;
 
       await jobs.updateOne(
         // Scoped to the holder: a settlement from a worker whose lease already lapsed is a report about a job
@@ -260,20 +313,24 @@ export const createMongoJobQueue = ({
           {
             $set: {
               ...(attempt ? { history: { $concatArrays: ['$history', [entry]] } } : {}),
-              status,
+              status: settled,
               updatedAt: at,
               leaseUntil: null,
               error: error ?? null,
+              cancelRequested: null,
+              pauseRequested: null,
               ...(runId ? { runId } : {}),
-              ...(status === 'pending'
-                ? {
-                    runAt: at + (delayMs ?? 0),
-                    workerId: null,
-                    // Handed back untouched: the worker never got to run it, so the attempt it took is given back.
-                    ...(attempt ? {} : { attempts: { $max: [0, { $subtract: ['$attempts', 1] }] } })
-                  }
-                : {}),
-              expiresAt: TERMINAL.includes(status) ? expiryOf(at) : null
+              ...(result === undefined ? {} : { result: { $literal: result } }),
+              ...(spentMs ? { activeMs: { $add: [{ $ifNull: ['$activeMs', 0] }, spentMs] } } : {}),
+              // Handed back untouched, or a slice that did not fail: the attempt it took is given back too.
+              ...(refund ? { attempts: { $max: [0, { $subtract: ['$attempts', 1] }] } } : {})
+            }
+          },
+          {
+            $set: {
+              runAt: { $cond: [{ $eq: ['$status', 'pending'] }, at + (delayMs ?? 0), '$runAt'] },
+              workerId: { $cond: [{ $in: ['$status', ['pending', 'paused']] }, null, '$workerId'] },
+              expiresAt: { $cond: [{ $in: ['$status', TERMINAL] }, expiryOf(at), null] }
             }
           }
         ]
@@ -354,12 +411,13 @@ export const createMongoJobQueue = ({
       });
     },
 
-    listJobs: async ({ spaceIds, actionId, status, limit, offset }: ActionJobQuery) => {
+    listJobs: async ({ spaceIds, actionId, status, kind, limit, offset }: ActionJobQuery) => {
       const { jobs } = await collections();
       const filter = {
         spaceId: { $in: spaceIds },
         ...(actionId ? { actionId } : {}),
-        ...(status ? { status } : {})
+        ...(status ? { status } : {}),
+        ...(kind ? { function: { $exists: kind === 'function' } } : {})
       };
 
       const [found, total] = await Promise.all([
@@ -387,7 +445,7 @@ export const createMongoJobQueue = ({
       return found.map(toSchedule);
     },
 
-    requeue: async (spaceIds, jobId) => {
+    requeue: async (spaceIds, jobId, { input, fresh = false } = {}) => {
       const { jobs } = await collections();
       const at = await clock.now();
       // Any finished job, including one that went fine: an operator repeating last night's digest is asking for it
@@ -395,9 +453,18 @@ export const createMongoJobQueue = ({
       const result = await jobs.updateOne(
         { _id: jobId, spaceId: { $in: spaceIds }, status: { $in: TERMINAL } },
         {
-          $set: { status: 'pending', runAt: at, attempts: 0, updatedAt: at, cancelRequested: false },
+          $set: { status: 'pending', runAt: at, attempts: 0, updatedAt: at, ...(input ? { input } : {}) },
           // The history is NOT cleared: what has already been tried is the reason somebody is looking at this job.
-          $unset: { workerId: '', leaseUntil: '', error: '', expiresAt: '' }
+          $unset: {
+            workerId: '',
+            leaseUntil: '',
+            error: '',
+            expiresAt: '',
+            result: '',
+            cancelRequested: '',
+            pauseRequested: '',
+            ...(fresh ? { state: '', progress: '', activeMs: '' } : {})
+          }
         }
       );
 
@@ -408,8 +475,11 @@ export const createMongoJobQueue = ({
       const { jobs } = await collections();
       const at = await clock.now();
       const dropped = await jobs.updateOne(
-        { _id: jobId, spaceId: { $in: spaceIds }, status: 'pending' },
-        { $set: { status: 'cancelled', updatedAt: at, expiresAt: expiryOf(at) }, $unset: { workerId: '' } }
+        { _id: jobId, spaceId: { $in: spaceIds }, status: { $in: ['pending', 'paused'] } },
+        {
+          $set: { status: 'cancelled', updatedAt: at, expiresAt: expiryOf(at) },
+          $unset: { workerId: '', pauseRequested: '' }
+        }
       );
       if (dropped.matchedCount === 1) {
         return true;
@@ -422,6 +492,38 @@ export const createMongoJobQueue = ({
       );
 
       return flagged.matchedCount === 1;
+    },
+
+    pause: async (spaceIds, jobId) => {
+      const { jobs } = await collections();
+      const at = await clock.now();
+      // Only a job of the space's functions saves where it is: a flow set aside would only start again from nothing.
+      const own = { _id: jobId, spaceId: { $in: spaceIds }, function: { $exists: true } };
+      const waiting = await jobs.updateOne(
+        { ...own, status: 'pending' },
+        { $set: { status: 'paused', updatedAt: at } }
+      );
+      if (waiting.matchedCount === 1) {
+        return true;
+      }
+
+      const flagged = await jobs.updateOne(
+        { ...own, status: 'running', pauseRequested: { $ne: true } },
+        { $set: { pauseRequested: true, updatedAt: at } }
+      );
+
+      return flagged.matchedCount === 1;
+    },
+
+    resume: async (spaceIds, jobId) => {
+      const { jobs } = await collections();
+      const at = await clock.now();
+      const resumed = await jobs.updateOne(
+        { _id: jobId, spaceId: { $in: spaceIds }, status: 'paused' },
+        { $set: { status: 'pending', runAt: at, updatedAt: at } }
+      );
+
+      return resumed.matchedCount === 1;
     },
 
     cancelPending: async ({ spaceId, key, olderThan }) => {

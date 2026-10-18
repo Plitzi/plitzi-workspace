@@ -1,6 +1,7 @@
 import type { Environment } from './CommonTypes';
 import type { InteractionNode, InteractionNodeStatus } from './InteractionTypes';
 import type { ElementInteraction } from './SchemaTypes';
+import type { RunUser, SpaceRevision } from './ServerTypes';
 import type { SmtpSettings } from '../actions/smtp';
 
 /**
@@ -572,11 +573,38 @@ export type ActionStreamFrame =
 /**
  * Where a job is, as the only durable answer to "did it happen".
  *
- * `pending` is waiting to be taken, `running` is held by a worker under a lease, and the other four are terminal —
- * except that an operator may put a `failed`, `dead` or `cancelled` one back to `pending`. `dead` is a job that
- * used up every attempt it was given: it stays, visibly, because the alternative is work that quietly evaporated.
+ * `pending` is waiting to be taken, `running` is held by a worker under a lease, `paused` is a job of a space's functions
+ * set aside with what it saved, until it is resumed — and the other four are terminal, except that an operator may put
+ * a `failed`, `dead` or `cancelled` one back to `pending`. `dead` is a job that used up every attempt it was given: it
+ * stays, visibly, because the alternative is work that quietly evaporated.
  */
-export type ActionJobStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'dead' | 'cancelled';
+export type ActionJobStatus = 'pending' | 'running' | 'paused' | 'succeeded' | 'failed' | 'dead' | 'cancelled';
+
+/** Why a worker is asked to stop a job it holds: an operator or the code cancelled it, or set it aside. */
+export type ActionJobStop = 'cancel' | 'pause';
+
+/**
+ * What makes a job one of a space's functions' (`defineFunctions({ jobs })`) rather than a run of an action: its
+ * `actionId` is then the job's name. Kept as it was when the job started — who started it, and who may watch it.
+ */
+export type ActionFunctionJob = {
+  /** Who started it: `ctx.user` in every slice, and the one who may always watch it. */
+  user?: RunUser;
+  /** Who else may watch it (`$job:<id>`): the job's `watch`, as it was declared when it started. */
+  watch?: ActionAccess;
+  /** The version of the space's code it was started from: every slice runs that code, whatever is published after. */
+  at?: SpaceRevision;
+};
+
+/** How far a job is, as its code last said (`job.report`). */
+export type ActionJobProgress = {
+  /** From 0 to 1. */
+  fraction: number;
+  /** What it is doing, in its own words: `epoch 3 of 10`. */
+  step?: string;
+  /** Epoch ms, by the queue's clock. */
+  at: number;
+};
 
 /**
  * One go at a job, kept forever on the job itself.
@@ -587,7 +615,7 @@ export type ActionJobStatus = 'pending' | 'running' | 'succeeded' | 'failed' | '
  */
 export type ActionJobAttempt = {
   attempt: number;
-  status: 'succeeded' | 'failed' | 'cancelled' | 'lost';
+  status: 'succeeded' | 'failed' | 'cancelled' | 'paused' | 'lost';
   /** Epoch ms, from the QUEUE's clock — never a worker's own. */
   startedAt: number;
   endedAt: number;
@@ -596,6 +624,8 @@ export type ActionJobAttempt = {
   /** The run this attempt became, when it got far enough to be one. Joins to the run history. */
   runId?: string;
   error?: string;
+  /** The error is the code's own refusal (`ActionRefusal`), written for whoever asked — what a job's watcher may read. */
+  refused?: true;
 };
 
 /** What starting a job needs. Everything else is the queue's to fill in. */
@@ -609,10 +639,14 @@ export type ActionJobInput = {
    */
   id: string;
   spaceId: number;
+  /** The action it runs — or, for a job of the space's functions (`function`), the job's name. */
   actionId: string;
   environment: Environment;
-  trigger: ActionTriggerType;
+  /** How it came to be: the trigger of the action it runs, or `job` — started by the space's code (`ctx.jobs.start`). */
+  trigger: ActionTriggerType | 'job';
   input: Record<string, unknown>;
+  /** Present: a job of the space's functions, run slice by slice (see {@link ActionFunctionJob}). */
+  function?: ActionFunctionJob;
   /** The instant this job was due, as the schedule stored it. Epoch ms. */
   dueAt: number;
   maxAttempts: number;
@@ -637,11 +671,20 @@ export type ActionJob = ActionJobInput & {
   runId?: string;
   /** Set by an operator who wants it stopped; the worker holding it reads this and aborts. */
   cancelRequested?: boolean;
+  /** Set to set a running job aside: the worker holding it stops it, and it waits as `paused` until resumed. */
+  pauseRequested?: boolean;
   createdAt: number;
   updatedAt: number;
   /** Why the last attempt ended badly. */
   error?: string;
   history: ActionJobAttempt[];
+  /** What a job of the space's functions last saved (`job.save`): where its next slice starts from. */
+  state?: unknown;
+  progress?: ActionJobProgress;
+  /** What a job of the space's functions answered, once it succeeded. */
+  result?: unknown;
+  /** How long it has run, every slice together, in ms — what its total duration is held to. */
+  activeMs?: number;
 };
 
 /**
@@ -653,19 +696,39 @@ export type ActionJob = ActionJobInput & {
 export type ActionJobSettlement = {
   jobId: string;
   workerId: string;
-  status: Extract<ActionJobStatus, 'succeeded' | 'failed' | 'dead' | 'cancelled' | 'pending'>;
+  status: Extract<ActionJobStatus, 'succeeded' | 'failed' | 'dead' | 'cancelled' | 'pending' | 'paused'>;
   /** For a retry: how long from now before it may be claimed again. */
   delayMs?: number;
   runId?: string;
   error?: string;
   /** The attempt to append to the history. Omitted only when the claim is being handed back untouched. */
   attempt?: Omit<ActionJobAttempt, 'attempt' | 'startedAt' | 'endedAt'>;
+  /** What a job of the space's functions answered, when it succeeded. */
+  result?: unknown;
+  /** How long this slice ran, added to the job's `activeMs`. */
+  spentMs?: number;
+  /**
+   * The attempt the claim took is given back: a slice that ended without failing — set aside, cut by its time, or by a
+   * replica going away — is not one. Absent, it is given back only for a claim handed back untouched (`pending`, no
+   * `attempt`).
+   */
+  refund?: boolean;
+};
+
+/** What a job's code saved while it runs — only by the worker holding it, so a stalled one cannot write over the next. */
+export type ActionJobWrite = {
+  jobId: string;
+  workerId: string;
+  state?: unknown;
+  progress?: Omit<ActionJobProgress, 'at'>;
 };
 
 export type ActionJobQuery = {
   spaceIds: number[];
   actionId?: string;
   status?: ActionJobStatus;
+  /** Only jobs of the spaces' functions (`function`), or only runs of actions. */
+  kind?: 'function' | 'action';
   limit: number;
   offset: number;
 };
@@ -729,9 +792,18 @@ export type ActionJobQueue = {
    * A reclaimed job arrives with its previous holder's attempt already written to the history as `lost`.
    */
   claim: (params: { workerId: string; leaseMs: number; limit: number }) => Promise<ActionJob[]>;
-  /** Extends the lease on jobs this worker still holds, and answers which of them an operator asked to cancel. */
-  heartbeat: (params: { jobIds: string[]; workerId: string; leaseMs: number }) => Promise<string[]>;
+  /**
+   * Extends the lease on jobs this worker still holds, and answers which of them it is asked to stop — cancelled, or
+   * set aside (`pause`).
+   */
+  heartbeat: (params: {
+    jobIds: string[];
+    workerId: string;
+    leaseMs: number;
+  }) => Promise<{ jobId: string; stop: ActionJobStop }[]>;
   settle: (settlement: ActionJobSettlement) => Promise<void>;
+  /** Writes what a running job's code saved or reported. False when this worker no longer holds it. */
+  write: (write: ActionJobWrite) => Promise<boolean>;
   /** Due schedules, oldest fire first. */
   dueSchedules: (limit: number) => Promise<ActionSchedule[]>;
   /**
@@ -752,10 +824,25 @@ export type ActionJobQueue = {
   listJobs: (query: ActionJobQuery) => Promise<{ jobs: ActionJob[]; total: number }>;
   getJob: (spaceIds: number[], jobId: string) => Promise<ActionJob | undefined>;
   listSchedules: (spaceIds: number[]) => Promise<ActionSchedule[]>;
-  /** An operator putting a finished job back in the queue. Answers false when it is not in a state to go back. */
-  requeue: (spaceIds: number[], jobId: string) => Promise<boolean>;
-  /** An operator stopping a job: dropped if it is waiting, aborted at its next step if it is running. */
+  /**
+   * Puts a finished job back in the queue — an operator retrying it, or the code starting a keyed job again. Answers false
+   * when it is not finished. With `input`, it runs with that; with `fresh`, a job of the space's functions starts over
+   * rather than from what it saved.
+   */
+  requeue: (
+    spaceIds: number[],
+    jobId: string,
+    options?: { input?: Record<string, unknown>; fresh?: boolean }
+  ) => Promise<boolean>;
+  /** Stops a job: dropped if it is waiting or set aside, aborted at its next step if it is running. */
   cancel: (spaceIds: number[], jobId: string) => Promise<boolean>;
+  /**
+   * Sets a job of the space's functions aside: one waiting is `paused` at once, one running is flagged for the worker
+   * holding it, which stops it once its code has saved. Answers whether it changed anything.
+   */
+  pause: (spaceIds: number[], jobId: string) => Promise<boolean>;
+  /** Puts a `paused` job back in the queue, to start again from what it saved. */
+  resume: (spaceIds: number[], jobId: string) => Promise<boolean>;
   /**
    * Drops the space's jobs waiting under `key` (`cancelled`), and answers how many. With `olderThan`, only the ones
    * enqueued before that job — created earlier, or at the same instant with a smaller id — so of two set at once the

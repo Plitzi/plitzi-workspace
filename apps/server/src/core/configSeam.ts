@@ -241,7 +241,9 @@ const isFunctionsConfig = (value: unknown): value is NonNullable<ActionsConfig['
   (value.plugins === undefined || (isRecord(value.plugins) && Object.values(value.plugins).every(isRecord))) &&
   (value.runner === undefined ||
     (isRecord(value.runner) && isFunction(value.runner.describe) && isFunction(value.runner.invoke))) &&
-  (value.limits === undefined || isRecord(value.limits));
+  (value.limits === undefined || isRecord(value.limits)) &&
+  (value.jobs === undefined ||
+    (isRecord(value.jobs) && (value.jobs.limitsFor === undefined || isFunction(value.jobs.limitsFor))));
 
 /** The deployment's database drivers, each held to what a `db` task calls — or why one is not, as the server starts. */
 export const dbDriversOf = (drivers: readonly unknown[] | undefined): ActionDbDriver[] | undefined => {
@@ -267,7 +269,7 @@ export const functionsConfigOf = (config: unknown): ActionsConfig['functions'] =
 
   if (!isFunctionsConfig(config)) {
     throw new Error(
-      '`functions` is not what @plitzi/sdk-server/functions configures: `native` definitions, `plugins` by type, a `runner` with `describe` and `invoke`, `limits`.'
+      '`functions` is not what @plitzi/sdk-server/functions configures: `native` definitions, `plugins` by type, a `runner` with `describe` and `invoke`, `limits`, `jobs` with a `limitsFor` function.'
     );
   }
 

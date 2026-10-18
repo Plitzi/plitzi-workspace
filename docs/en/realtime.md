@@ -121,6 +121,15 @@ How it holds (`apps/server/src/modules/realtime/retained.ts`):
 - **Marked**: every message on such a channel, live or handed on joining, carries `retained: true`. It reaches the
   page's `onMessage` like any other — a flow that keeps state from messages starts from what is kept.
 
+### A job's own topic: `$job:<id>`
+
+A job of the space's functions says how it goes on a topic of its own, which no space declares: **`$job:<id>`**, kept
+(`retained`, type `job`) for a page that joins late and forgotten 30 days after it last changed. Its door is the job:
+whoever started it may always open it, anyone else as the job's `watch` says — a channel's access, read against the
+visitor's permissions in the space. A job of another space, or none by that id, is refused as `undeclared`. Open it
+with `useJob(id)`, or a `channel` element with `topic: '$job:{{ id }}'` (`<channel>.retained.job`) — see
+[Functions § Jobs](./functions.md#6-jobs-work-longer-than-a-request).
+
 ---
 
 ## 3. On a page: the `channel` element

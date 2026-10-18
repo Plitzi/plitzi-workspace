@@ -60,7 +60,11 @@ const limitsOf = (value: unknown): FunctionLimits | undefined => {
  * what is checked here is what the runner itself acts on.
  */
 const invocationOf = (value: unknown): FunctionInvocation | undefined => {
-  if (!isRecord(value) || !isRecord(value.context) || (value.kind !== 'task' && value.kind !== 'route')) {
+  if (
+    !isRecord(value) ||
+    !isRecord(value.context) ||
+    (value.kind !== 'task' && value.kind !== 'route' && value.kind !== 'job')
+  ) {
     return undefined;
   }
 
@@ -107,6 +111,27 @@ const invocationOf = (value: unknown): FunctionInvocation | undefined => {
   if (value.kind === 'task') {
     return typeof value.name === 'string' && isRecord(value.params)
       ? { kind: 'task', name: value.name, params: value.params, context: withUser }
+      : undefined;
+  }
+
+  if (value.kind === 'job') {
+    const job = isRecord(value.job) ? value.job : undefined;
+    const graceMs = limitOf(value.graceMs);
+
+    return typeof value.name === 'string' &&
+      isRecord(value.input) &&
+      job &&
+      typeof job.id === 'string' &&
+      typeof job.attempt === 'number' &&
+      graceMs !== undefined
+      ? {
+          kind: 'job',
+          name: value.name,
+          input: value.input,
+          job: { id: job.id, attempt: job.attempt, ...(job.state === undefined ? {} : { state: job.state }) },
+          context: withUser,
+          graceMs
+        }
       : undefined;
   }
 
@@ -190,7 +215,7 @@ export const readRequestMessage = (data: string): RunnerRequestMessage | undefin
       return answer && typeof message.id === 'number' ? { type: 'answer', id: message.id, answer } : undefined;
     }
     case 'abort':
-      return { type: 'abort' };
+      return typeof message.reason === 'string' ? { type: 'abort', reason: message.reason } : { type: 'abort' };
     default:
       return undefined;
   }

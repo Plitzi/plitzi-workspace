@@ -75,7 +75,9 @@ export const createRemoteRunner = ({
         );
         socket.terminate();
       }, deadlineMs);
-      const onAbort = (): void => send({ type: 'abort' });
+      // Why it was asked to end goes with it: a job's slice tells its code whether it was paused, cancelled or timed.
+      const onAbort = (): void =>
+        send(typeof signal?.reason === 'string' ? { type: 'abort', reason: signal.reason } : { type: 'abort' });
       signal?.addEventListener('abort', onAbort, { once: true });
 
       socket.on('open', () => {

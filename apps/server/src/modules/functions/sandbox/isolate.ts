@@ -214,6 +214,8 @@ type Session = {
   limits: FunctionLimits;
   answer: (call: unknown) => Promise<unknown>;
   signal?: AbortSignal;
+  /** How long code that listens to `ctx.signal` gets once it is aborted — a job's slice says, anything else is quick. */
+  graceMs?: number;
   onUsage?: (usage: FunctionUsage) => void;
   /** Given the guest's driver and the definition, answers the guest's JSON. */
   drive: (driver: IsolatedVM.Reference<GuestDriver>, definition: IsolatedVM.Reference<unknown>) => Promise<string>;
@@ -286,7 +288,15 @@ export const createIsolateRunner = ({
     return ivm;
   };
 
-  const session = async ({ bundle, limits, answer, signal, onUsage, drive }: Session): Promise<unknown> => {
+  const session = async ({
+    bundle,
+    limits,
+    answer,
+    signal,
+    graceMs = ABORT_GRACE_MS,
+    onUsage,
+    drive
+  }: Session): Promise<unknown> => {
     const ivm = await ready();
     // Before a slot is taken: fetching code a runner does not keep is waiting on the platform, not running anything.
     const entry = await cached(bundle);
@@ -331,11 +341,13 @@ export const createIsolateRunner = ({
 
     let driver: IsolatedVM.Reference<GuestDriver> | undefined;
     const onAbort = (): void => {
+      // Why it was asked to end, when it was said — a job's slice tells its code whether it was paused or timed.
+      const reason = typeof signal?.reason === 'string' ? signal.reason : 'The run was aborted';
       driver
         ?.get('abort', { reference: true })
-        .then(abort => abort.apply(undefined, ['The run was aborted']))
+        .then(abort => abort.apply(undefined, [reason]))
         .catch(() => undefined);
-      later(ABORT_GRACE_MS, () => stop('aborted'));
+      later(graceMs, () => stop('aborted'));
     };
 
     try {
@@ -486,6 +498,7 @@ export const createIsolateRunner = ({
         limits,
         answer,
         signal,
+        ...(invocation.kind === 'job' ? { graceMs: invocation.graceMs } : {}),
         onUsage,
         drive: async (driver, definition) => {
           const invoke = driver.getSync('invoke', { reference: true });

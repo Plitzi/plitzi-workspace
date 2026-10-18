@@ -26,6 +26,12 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
 - **What must happen in N seconds whether or not a page is open** — a turn that runs out, a bot's move — is
   `ctx.later({ action, in, input, key })` on an action with a `later` trigger (`flow.later` from a flow): never a page's
   timer asking the server back. The same `key` replaces what still waits; `ctx.cancelLater(key)` drops it.
+- **Work longer than a request** (training, an import, a crawl) is a job: `defineFunctions({ jobs: { train: { watch,
+  run: async (input, job, ctx) => … } } })`, started with `ctx.jobs.start('train', input, { key })` from a route or a
+  task. It runs in slices: `job.save(state)` is the one checkpoint (the next slice starts with `job.state`),
+  `job.report(fraction, step)` says how far it is, and on `job.signal` (`job.stopping`: pause, cancel, limit, shutdown)
+  it saves and returns. A slice cut by its time that saved nothing fails. A page watches it with `useJob(id)` or a
+  `channel` on `$job:{{ id }}`; who may is its `watch` (default: whoever started it).
 - **An API on behalf of a visitor** (their calendar, their music) is an OAuth connection declared as data in
   `defineFunctions({ oauth: { calendar: { issuer, credential, scopes } } })` — any provider, `issuer` for OpenID or its
   `authorizeUrl`/`tokenUrl` — then `ctx.oauth.connect(name, { returnTo })` to consent and `ctx.oauth.fetch(name, url)`

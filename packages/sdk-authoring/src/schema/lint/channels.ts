@@ -1,4 +1,4 @@
-import { channelProblems, matchChannel } from '@plitzi/sdk-shared/realtime';
+import { channelProblems, jobOfTopic, matchChannel } from '@plitzi/sdk-shared/realtime';
 
 import type { LintContext } from './context';
 
@@ -42,6 +42,11 @@ export const lintChannels = (ctx: LintContext): void => {
     }
 
     const sample = topic.replace(/\{\{[^}]*\}\}/g, SAMPLE_SEGMENT);
+    // A job's topic is the platform's: the job says who may watch it, and no channel of the space has to.
+    if (jobOfTopic(sample) !== undefined) {
+      continue;
+    }
+
     const match = matchChannel(sample, declared);
     const hasGrant =
       (typeof element.attributes.grant === 'string' && element.attributes.grant.trim() !== '') ||

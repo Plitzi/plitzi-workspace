@@ -1,12 +1,14 @@
 import type { LaterAnswer, LaterRequest } from './jobs/later';
 import type { ActionEmailSender } from './runtime/email';
 import type { FunctionsConfig } from '../functions/config';
+import type { FunctionJobs } from '../functions/contract';
 import type { SpaceFunctions } from '../functions/protocol';
 import type { KvChangeLifetime } from './runtime/kvChange';
 import type { KvListEntry, KvListPut, KvListPutOptions, KvListRange } from './runtime/kvList';
 import type { SpaceSigning } from './runtime/signing';
 import type {
   ActionEmailConfig,
+  ActionJob,
   ActionJobQueue,
   ActionEntry,
   ActionLimits,
@@ -17,9 +19,12 @@ import type {
   ActionTriggerType,
   ConnectorManifest,
   Environment,
+  FunctionJobManifest,
+  FunctionJobView,
   InteractionCallbackParam,
   InteractionNode,
   InteractionNodeStatus,
+  RunUser,
   Schema,
   SpaceRevision,
   SSRServerConfig,
@@ -183,7 +188,8 @@ export type ActionTaskContext = {
   spaceId: number;
   environment: Environment;
   trigger: ActionTriggerType;
-  user?: SSRUser;
+  /** Who is asking, as the session named them — or, for a job's slice, who started it. Never the session itself. */
+  user?: RunUser;
   /**
    * Who is asking, as the transport identified them: `user:<id>` for a session, `ip:<address>` for everyone else,
    * and `render` or `schedule` for the runs no visitor started.
@@ -235,6 +241,11 @@ export type ActionTaskContext = {
   later?: (request: LaterRequest) => Promise<LaterAnswer>;
   /** Drops the runs waiting under `key`, and answers how many. */
   cancelLater?: (key: string) => Promise<number>;
+  /**
+   * The space's jobs, for code over the jobs it declares (`functions/jobs.ts`) — `undefined` when the server runs no
+   * jobs. What a function's `ctx.jobs` goes through.
+   */
+  jobs?: (declared: Readonly<Record<string, FunctionJobManifest>>) => FunctionJobs;
   /** Signs with the space's own key (`ActionsConfig.signingSecret`) — `undefined` when the deployment gave none. */
   sign?: SpaceSigning['sign'];
   verify?: SpaceSigning['verify'];
@@ -264,6 +275,10 @@ export type ActionRealtime = {
   ) => Promise<void>;
   grant: (space: { spaceId: number; environment: string }, topic: string, ttlSeconds?: number) => Promise<string>;
   revoke: (space: { spaceId: number; environment: string }, topic: string, grant?: string) => Promise<void>;
+  /** Says a job of the space's functions as it is now, on its own topic (`$job:<id>`), kept for a page that joins. */
+  publishJob?: (space: { spaceId: number; environment: string }, jobId: string, view: FunctionJobView) => Promise<void>;
+  /** Hands the realtime the way to a job, for the door of its topic: who started it, and who its `watch` lets in. */
+  watchJobs?: (lookup: (spaceId: number, jobId: string) => Promise<ActionJob | undefined>) => void;
 };
 
 /**

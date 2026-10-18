@@ -18,6 +18,7 @@ import { serverLog } from '../../../helpers/serverLog';
 import { DEFAULT_MAX_ATTEMPTS } from '../jobs/schedules';
 
 import type { TaskContextRequest } from './taskContext';
+import type { FunctionJobsService } from '../../functions/jobs';
 import type { LaterDeps } from '../jobs/later';
 import type {
   ActionKvAdapter,
@@ -357,7 +358,9 @@ export const createActionRunner = (
   registryFor: (request: ActionRunRequest) => ActionTaskRegistry | Promise<ActionTaskRegistry>,
   baseFetch: typeof fetch = fetch,
   /** The queue runs set for later go into, read when asked: it is made after the runner, and a server may run none. */
-  jobsQueue: () => ActionJobQueue | undefined = () => undefined
+  jobsQueue: () => ActionJobQueue | undefined = () => undefined,
+  /** The space's jobs, for a function's `ctx.jobs` — made beside the runner, and reading back its `taskContext`. */
+  functionJobs?: FunctionJobsService
 ): ActionRunner & { taskContext: TaskContextSource } => {
   const kv = createKvStore(config.kv ?? createMemoryKv());
   // Over the server's own store rather than a space's: the counter that limits a flow is not a key the flow can reach.
@@ -415,7 +418,13 @@ export const createActionRunner = (
      * reach the outside world after the flow's signal was aborted or its request budget spent.
      */
     const contextFor = (signal: AbortSignal, runFetch: typeof fetch) =>
-      taskContextFor(config, { kv, email: emailSender, redactor, signing, later }, request, signal, runFetch);
+      taskContextFor(
+        config,
+        { kv, email: emailSender, redactor, signing, later, ...(functionJobs ? { jobs: functionJobs } : {}) },
+        request,
+        signal,
+        runFetch
+      );
     /** The request budget ran out: said on the server's log at once, and in the step that hit it. */
     let budgetSpent: string | undefined;
     const buildContext = contextFor(
@@ -770,7 +779,14 @@ export const createActionRunner = (
   const taskContext: TaskContextSource = (contextRequest, signal, lineage) =>
     taskContextFor(
       config,
-      { kv, email: emailSender, redactor: createRedactor(), signing, later },
+      {
+        kv,
+        email: emailSender,
+        redactor: createRedactor(),
+        signing,
+        later,
+        ...(functionJobs ? { jobs: functionJobs } : {})
+      },
       contextRequest,
       signal,
       createRunFetch(baseFetch, signal, resolveLimits(config.limits, undefined), lineage)

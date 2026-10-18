@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { channelLimits, channelProblems, isValidTopic, matchChannel } from './topics';
+import { channelLimits, channelProblems, isValidTopic, jobOfTopic, jobTopic, matchChannel } from './topics';
 
 import type { ChannelDeclarations } from '../types/RealtimeTypes';
 
@@ -73,5 +73,14 @@ describe('channelProblems', () => {
         messagesPerSecond: 0.5
       })
     ).toHaveLength(5);
+  });
+});
+
+describe('a job’s topic', () => {
+  it('names the job, and is no topic a space could declare', () => {
+    expect(jobOfTopic(jobTopic('job:7:abc-1'))).toBe('job:7:abc-1');
+    expect(jobOfTopic('job:7:abc')).toBeUndefined();
+    expect(jobOfTopic('$job:../x')).toBeUndefined();
+    expect(isValidTopic(jobTopic('job:7:abc'))).toBe(false);
   });
 });

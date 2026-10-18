@@ -5,6 +5,7 @@ import { fleetStore } from '../../../core/server/fleet/link';
 
 import type { Scheduler } from './scheduler';
 import type { JobWorker } from './worker';
+import type { FunctionJobsService } from '../../functions/jobs';
 import type { ActionsModule } from '../index';
 import type { ActionJobsConfig, ActionLookups } from '../types';
 import type { ActionJobQueue } from '@plitzi/sdk-shared';
@@ -33,7 +34,8 @@ export type ActionJobs = {
 export const createActionJobs = (
   config: ActionJobsConfig,
   module: ActionsModule,
-  lookups: ActionLookups
+  lookups: ActionLookups,
+  functionJobs?: FunctionJobsService
 ): ActionJobs => {
   const queue = config.queue ?? fleetStore<ActionJobQueue>('actions.jobs', JOB_QUEUE_METHODS) ?? createMemoryJobQueue();
   const { produce = true, workers = 4 } = config;
@@ -53,6 +55,7 @@ export const createActionJobs = (
     queue,
     lookups,
     module,
+    ...(functionJobs ? { functionJobs } : {}),
     workers,
     ...(config.pollMs ? { pollMs: config.pollMs } : {}),
     ...(config.leaseMs ? { leaseMs: config.leaseMs } : {}),

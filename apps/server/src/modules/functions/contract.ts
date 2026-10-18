@@ -2,7 +2,9 @@ import type { LaterAnswer, LaterRequest } from '../actions/jobs/later';
 import type { RateCount, RateLimit } from '../actions/runtime/rateLimit';
 import type { ActionKvStore } from '../actions/types';
 import type {
+  ActionAccess,
   Environment,
+  FunctionJobView,
   FunctionOAuthConnection,
   FunctionTimeLimits,
   InteractionCallbackParam
@@ -81,6 +83,74 @@ export type FunctionOAuth = {
 };
 
 /**
+ * The space's jobs, from its code: what starts one, reads it and stops it. Who may is the code's to decide — these are
+ * called from its routes and tasks, behind its own checks.
+ */
+export type FunctionJobs = {
+  /**
+   * Starts one of the jobs this code declares (`jobs` in `defineFunctions`), with `input`: answered at once, the job
+   * `pending`. With `key`, at most one of that key runs at a time — starting it again while one is under way answers that
+   * one (a button pressed twice), and once it ended starts it over with the new input.
+   */
+  start: (name: string, input?: Record<string, unknown>, options?: { key?: string }) => Promise<FunctionJobView>;
+  /** One of the space's jobs, as whoever may watch it sees it — or nothing, when there is none by that id. */
+  get: (id: string) => Promise<FunctionJobView | undefined>;
+  /** Sets it aside: it stops once its code saved, and waits as `paused`. Answers whether anything changed. */
+  pause: (id: string) => Promise<boolean>;
+  /** Puts a paused job back in the queue, to go on from what it saved. */
+  resume: (id: string) => Promise<boolean>;
+  /** Stops it for good: dropped if it waits, aborted if it runs. */
+  cancel: (id: string) => Promise<boolean>;
+};
+
+/**
+ * Why a slice of a job is asked to end (`job.stopping`): it was set aside (`pause`) or cancelled (`cancel`), its time in
+ * one go is up (`limit`) or the server is going away (`shutdown`). Whichever, what was saved is where it goes on from.
+ */
+export type FunctionJobStop = 'pause' | 'cancel' | 'limit' | 'shutdown';
+
+/**
+ * What a job's `run` is handed besides its input: the job, and how it keeps where it is. A job runs in slices — a pause,
+ * a lost server or its time in one go ending one — and every slice but the first starts from what the one before saved.
+ */
+export type FunctionJobHandle<S = unknown> = {
+  id: string;
+  name: string;
+  /** What it last saved — `undefined` on its first slice, and whenever it never saved. */
+  state: S | undefined;
+  /** Which attempt this is, from 1: a slice after a failure is the next attempt, from the last save. */
+  attempt: number;
+  /**
+   * Keeps `state` durably: the next slice starts with it. JSON, within what the server keeps for one job. A method, not
+   * a property: so a job whose state has a type of its own is still one of `FunctionsDefinition['jobs']`.
+   */
+  save(state: S): Promise<void>;
+  /** How far it is, from 0 to 1, and what it is doing — for whoever watches it. Never fails the job. */
+  report: (fraction: number, step?: string) => void;
+  /** Why this slice is asked to end, once it is (`signal` aborted): save, and return. */
+  readonly stopping: FunctionJobStop | undefined;
+  /** Aborted when the slice is asked to end — the same as `ctx.signal`. Some seconds later it is cut. */
+  signal: AbortSignal;
+};
+
+/** A job of the space's: work longer than a request, run on the server slice by slice until it answers. */
+export type FunctionJob<I extends Record<string, unknown> = Record<string, unknown>, S = unknown, R = unknown> = {
+  /**
+   * Who may watch it (`$job:<id>`, `useJob`) besides whoever started it — a channel's access, read against the visitor's
+   * permissions in the space. Absent, only whoever started it.
+   */
+  watch?: ActionAccess;
+  /** How long it may run, every slice together, in seconds — within what the server allows. */
+  maxSeconds?: number;
+  /**
+   * The work. What it answers is the job's result; an `ActionRefusal` fails it without a retry. A method, not a property:
+   * so a job typed with an input and a state of its own is still one of `FunctionsDefinition['jobs']`, and one written
+   * in place there gets an object for its input and `unknown` for its state.
+   */
+  run(input: I, job: FunctionJobHandle<S>, ctx: FunctionContext): R | Promise<R>;
+};
+
+/**
  * Everything a space's code can do besides computing — one object, the same wherever it runs. In a self-hosted server
  * it is built from the run's own context; in the sandbox each method is a call back to the platform, which scopes it
  * to the space and the run before doing it.
@@ -139,6 +209,8 @@ export type FunctionContext = {
   log: (...values: unknown[]) => void;
   /** OAuth 2.0 through the space's declared connections — see {@link FunctionOAuth}. */
   oauth: FunctionOAuth;
+  /** The space's jobs — see {@link FunctionJobs}. */
+  jobs: FunctionJobs;
   /** Progress for a caller that asked for a stream — a no-op when nobody did. */
   emit: (chunk: unknown) => void;
   /** Aborted when the run is: cancelled, or out of time. Hand it to what can stop early. */
@@ -191,6 +263,8 @@ export type FunctionsDefinition = {
    * (OpenID) or its endpoints, the credential with the app's id and secret, the scopes.
    */
   oauth?: Record<string, FunctionOAuthConnection>;
+  /** Its jobs, by name (`ctx.jobs.start(name, input)`): work that outlives a request, run slice by slice. */
+  jobs?: Record<string, FunctionJob>;
 };
 
 /**

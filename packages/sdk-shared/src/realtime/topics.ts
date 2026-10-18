@@ -10,6 +10,20 @@ const PARAMETER = '[A-Za-z0-9_.-]{1,64}';
 
 export const isValidTopic = (topic: string): boolean => TOPIC.test(topic);
 
+/**
+ * Where a job of the space's functions says how it goes: `$job:<id>`. The platform's, never declared by a space — the
+ * `$` no topic of a space may start with — and opened to whoever the job lets watch it.
+ */
+const JOB_TOPIC = /^\$job:([A-Za-z0-9:_.-]{1,128})$/;
+
+export const jobTopic = (jobId: string): string => `$job:${jobId}`;
+
+/** The job a topic is about, or `undefined` when it is not a job's. */
+export const jobOfTopic = (topic: string): string | undefined => JOB_TOPIC.exec(topic)?.[1];
+
+/** The type every message on a job's topic carries: the job as it is now (`FunctionJobView`). */
+export const JOB_TYPE = 'job';
+
 /** A pattern (`board:{id}`) as the expression every topic of it matches. */
 const patternExpression = (pattern: string): RegExp =>
   new RegExp(

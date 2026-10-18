@@ -63,6 +63,12 @@ export const mysqlJobSchemaStatements = (prefix = ''): string[] => {
       error TEXT NULL,
       history MEDIUMTEXT NOT NULL,
       expires_at BIGINT NULL,
+      function_job MEDIUMTEXT NULL,
+      state MEDIUMTEXT NULL,
+      progress TEXT NULL,
+      result MEDIUMTEXT NULL,
+      pause_requested TINYINT(1) NOT NULL DEFAULT 0,
+      active_ms BIGINT NOT NULL DEFAULT 0,
       PRIMARY KEY (id),
       KEY action_jobs_pending (status, run_at),
       KEY action_jobs_lease (status, lease_until),
@@ -131,6 +137,16 @@ const UPGRADES: readonly SchemaUpgrade[] = [
     statements: prefix => [
       `ALTER TABLE ${jobTables(prefix).jobs} ADD COLUMN job_key VARCHAR(191) NULL AFTER missed,
       ADD KEY action_jobs_key (space_id, job_key, status)`
+    ]
+  },
+  // The jobs of a space's functions: who started one and who may watch it, what it saved, how far it is, what it
+  // answered, a pause asked of it, and how long it has run.
+  {
+    needed: async (db, prefix) => !(await columnsOf(db, `${prefix}action_jobs`)).has('function_job'),
+    statements: prefix => [
+      `ALTER TABLE ${jobTables(prefix).jobs} ADD COLUMN function_job MEDIUMTEXT NULL, ADD COLUMN state MEDIUMTEXT NULL,
+      ADD COLUMN progress TEXT NULL, ADD COLUMN result MEDIUMTEXT NULL,
+      ADD COLUMN pause_requested TINYINT(1) NOT NULL DEFAULT 0, ADD COLUMN active_ms BIGINT NOT NULL DEFAULT 0`
     ]
   }
 ];

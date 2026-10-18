@@ -3,12 +3,15 @@ export { trackPresence } from './presence';
 export {
   JOIN_TYPE,
   LEAVE_TYPE,
+  JOB_TYPE,
   OBSERVER_COOKIE_NAME,
   PRESENCE_TYPE,
   REVOKED_TYPE,
   channelLimits,
   channelProblems,
   isValidTopic,
+  jobOfTopic,
+  jobTopic,
   matchChannel
 } from './topics';
 

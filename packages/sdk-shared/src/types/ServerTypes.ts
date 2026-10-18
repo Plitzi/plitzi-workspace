@@ -318,6 +318,12 @@ export type SSRUser = {
   roles: string[];
 };
 
+/**
+ * Who a run is for, as the session named them — without the session: what a step, a function and a job see of the
+ * person, and what a job keeps of whoever started it, for every slice it runs after their session is gone.
+ */
+export type RunUser = Pick<SSRUser, 'id' | 'username' | 'email' | 'verified' | 'permissions' | 'roles'>;
+
 export type SSRSpaceDeployment = {
   /** Who may put this space in an iframe, as CSP `frame-ancestors` sources (e.g. `'self'`, `https://acme.com`,
    *  or `*`). Resolved per space by the consumer, because only it knows the domains that space declares — a
@@ -1111,6 +1117,8 @@ export type SSRServerConfig = {
     plugins?: Record<string, unknown>;
     runner?: unknown;
     limits?: Record<string, number>;
+    /** What the spaces' jobs may spend, per space (its plan): see `FunctionJobLimits` in `@plitzi/sdk-server/functions`. */
+    jobs?: { limitsFor?: (spaceId: number) => Promise<Record<string, unknown> | undefined> };
   };
   /** Realtime channels the spaces declare — see {@link SSRRealtimeConfig}. On, in memory, when absent. */
   realtime?: SSRRealtimeConfig;

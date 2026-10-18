@@ -6,10 +6,10 @@ import { fetchOutbound } from '../../helpers/outboundGuard';
 import { prefixKv } from '../actions/runtime/namespaceKv';
 import { countRate, refusedOver } from '../actions/runtime/rateLimit';
 
-import type { FunctionContext, FunctionFetch, FunctionUser } from './contract';
+import type { FunctionContext, FunctionFetch, FunctionJobs, FunctionUser } from './contract';
 import type { FunctionScope } from './scope';
 import type { ActionTaskContext } from '../actions/types';
-import type { FunctionOAuthConnection, SSRUser } from '@plitzi/sdk-shared';
+import type { FunctionJobManifest, FunctionOAuthConnection, RunUser } from '@plitzi/sdk-shared';
 
 /**
  * Whether `hostname` is one the space declared: exactly, or under a `*.` wildcard (`*.example.com` is every subdomain of
@@ -25,7 +25,7 @@ export const hostAllowed = (hostname: string, hosts: readonly string[]): boolean
   });
 };
 
-const userOf = ({ id, username, email, verified, permissions, roles }: SSRUser): FunctionUser => ({
+const userOf = ({ id, username, email, verified, permissions, roles }: RunUser): FunctionUser => ({
   id,
   username,
   email,
@@ -109,6 +109,13 @@ const unsigned = () => Promise.reject(new Error('This server signs nothing: its 
 
 const noJobs = () => Promise.reject(new Error('This server runs no jobs: nothing can be set to run later'));
 
+/** `ctx.jobs` where there is none to give: a server with no queue, or a plugin's code — the space's jobs are the space's. */
+const noFunctionJobs = (why: string): FunctionJobs => {
+  const refused = () => Promise.reject(new Error(why));
+
+  return { start: refused, get: refused, pause: refused, resume: refused, cancel: refused };
+};
+
 /**
  * A plugin reads none of its space's data. The space keeps there what its pages must not carry, and a plugin was trusted
  * to draw, not with what the space keeps — the same line as its credentials: handed the data, its `fetch` could send
@@ -126,7 +133,8 @@ export const functionContextFor = (
   ctx: ActionTaskContext,
   hosts: readonly string[],
   scope?: FunctionScope,
-  oauth: Readonly<Record<string, FunctionOAuthConnection>> = {}
+  oauth: Readonly<Record<string, FunctionOAuthConnection>> = {},
+  jobs: Readonly<Record<string, FunctionJobManifest>> = {}
 ): FunctionContext => {
   const shared = {
     spaceId: ctx.spaceId,
@@ -154,6 +162,7 @@ export const functionContextFor = (
       later: ctx.later ?? noJobs,
       cancelLater: ctx.cancelLater ?? noJobs,
       data: ctx.data,
+      jobs: ctx.jobs ? ctx.jobs(jobs) : noFunctionJobs('This server runs no jobs: its actions have no queue'),
       oauth: oauthFor(ctx, oauth, url => {
         if (!hostAllowed(url.hostname, hosts)) {
           throw new Error(`"${url.hostname}" is not among the hosts this space's functions may reach (allow.hosts)`);
@@ -184,6 +193,7 @@ export const functionContextFor = (
     later: noLater,
     cancelLater: noLater,
     data: noData,
+    jobs: noFunctionJobs('The functions of a plugin start none of the jobs of its space'),
     // The space's OAuth connections act for its visitors with its app: a plugin was trusted to draw, not to act for them.
     oauth: noOAuth('The functions of a plugin make none of the OAuth connections of its space')
   };

@@ -20,6 +20,33 @@
 
 ## Server
 
+- **Jobs: work longer than a request** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`, `@plitzi/sdk-elements`,
+  `@plitzi/plitzi-sdk`, `@plitzi/sdk-authoring`) — PZ-136. A space's code declares them in
+  `defineFunctions({ jobs: { train: { watch, maxSeconds, run(input, job, ctx) } } })` and starts them with
+  `ctx.jobs.start(name, input, { key })` (`get`, `pause`, `resume`, `cancel` beside it). They run in the actions' durable
+  queue — leased, taken over when a server dies, retried with backoff — slice by slice, in the sandbox, in a space's
+  runtime and natively alike: `job.save(state)` is the one checkpoint and the next slice starts with `job.state`;
+  `job.report(fraction, step)` says how far it is; on `job.signal` (`job.stopping`: `pause`, `cancel`, `limit`,
+  `shutdown`) the code has 5 s to save and return. A sandbox slice runs at most `sliceMs` and goes on in the next if it
+  saved since it began — one that saved nothing fails, so a job cannot loop forever; a runtime's runs until the job's
+  time is up. A real pause: `paused` keeps what it saved until resumed. Who may watch it is RBAC: whoever started it, and
+  whoever its `watch` (a channel's access) lets in, on `$job:<id>` — the platform's topic, retained — read with
+  `useJob(id)` or a `channel` element on `$job:{{ id }}`; the view never carries its input, its state, or an error other
+  than the code's own refusal. Limits per space (its plan) through `functions.jobs.limitsFor` —
+  `DEFAULT_FUNCTION_JOB_LIMITS` otherwise: 10 running across the account's spaces (`pool`, the oldest first), 1,000
+  waiting, 6 h, slices of 5 min / 30 s CPU / 10,000 calls, 1 MB of state.
+- **The job queue** (`ActionJobQueue`, the memory, Mongo and MySQL helpers): a job of a space's functions
+  (`function`: who started it, its `watch`, the revision its code is), `paused` with `pause`/`resume`, `write` for what
+  a running job saves and reports, `state`/`progress`/`result`/`activeMs` on the job, `heartbeat` answering
+  `{ jobId, stop: 'cancel' | 'pause' }[]`, a settlement's explicit `refund`, `requeue(…, { input, fresh })`, and a
+  `kind` filter on `listJobs`. MySQL tables made before are brought up to the new columns by `ensureJobTables` (or
+  `mysqlJobSchemaUpgrades` for a deployment's own migrations). Breaking for a deployment with a queue of its own: the
+  contract tests (`describeJobQueue`) say what it must now do.
+- **`createJobControl({ queue, realtime: { pubsub, kv } })`** (`@plitzi/sdk-server/actions`): an operator's
+  `pause`/`resume`/`cancel`/`requeue` from a process that serves no pages — a Queue panel's API — each said on
+  `$job:<id>` through the page server's own pub/sub and retained store, so a watcher hears what an operator did.
+- **A run's user carries no session** (`RunUser`): what a step, a function and a job see of who asked.
+
 - **`ctx.oauth.token` for an SDK in the page** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`): Spotify's Web Playback,
   Google's Picker and their kind ask the page for the access token themselves, and `ctx.oauth` kept every token on the
   server. A connection that declares `exposeToken: true` now answers `ctx.oauth.token(name, { owner })` —

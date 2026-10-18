@@ -7,6 +7,8 @@ import { taskName, taskNameProblem } from '../actions/tasks/registry';
 import type { FunctionLimits } from './protocol';
 import type { FunctionScope } from './scope';
 import type {
+  ActionAccess,
+  FunctionJobManifest,
   FunctionOAuthConnection,
   FunctionsManifest,
   FunctionTaskManifest,
@@ -81,6 +83,88 @@ const httpsUrl = (value: unknown): string | undefined => {
  * The OAuth connections a definition declared, rebuilt field by field: each a provider's issuer or its endpoints (https),
  * the credential with the app's id and secret, the scopes. What is wrong is said by connection, and that one left out.
  */
+/** A channel's access, as a job's `watch` declares it: who may watch it besides whoever started it. */
+const accessOf = (value: unknown): ActionAccess | undefined => {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  if (value.mode === 'public' || value.mode === 'session') {
+    return { mode: value.mode };
+  }
+
+  const permissions = value.permissions;
+  if (
+    value.mode === 'role' &&
+    Array.isArray(permissions) &&
+    permissions.length > 0 &&
+    permissions.every(permission => typeof permission === 'string' && permission !== '')
+  ) {
+    return { mode: 'role', permissions: permissions.filter((each): each is string => typeof each === 'string') };
+  }
+
+  return undefined;
+};
+
+/** The jobs a bundle declares (`jobs`), by name: who may watch each, and how long it may run. */
+const jobsOf = (
+  value: unknown,
+  problems: string[],
+  scope?: FunctionScope
+): Record<string, FunctionJobManifest> | undefined => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (scope) {
+    problems.push('The functions of a plugin declare no jobs: only its space does (jobs)');
+
+    return undefined;
+  }
+
+  if (!isRecord(value)) {
+    problems.push('jobs is an object of jobs, by the name the code starts them by');
+
+    return undefined;
+  }
+
+  const jobs: Record<string, FunctionJobManifest> = {};
+  for (const [name, entry] of Object.entries(value)) {
+    const where = `Job "${name}"`;
+    const said = problems.length;
+    if (!CONNECTION_NAME.test(name)) {
+      problems.push(`${where}: a name is a letter, then letters, digits and "-", up to 64`);
+    }
+
+    const spec = isRecord(entry) ? entry : {};
+    const watch = spec.watch === undefined ? undefined : accessOf(spec.watch);
+    if (spec.watch !== undefined && !watch) {
+      problems.push(
+        `${where}: watch is a channel's access — { mode: 'public' }, { mode: 'session' } or { mode: 'role', permissions: ['…'] }`
+      );
+    }
+
+    const maxSeconds = spec.maxSeconds;
+    if (
+      maxSeconds !== undefined &&
+      (typeof maxSeconds !== 'number' || !Number.isInteger(maxSeconds) || maxSeconds < 1)
+    ) {
+      problems.push(`${where}: maxSeconds is a whole number of seconds, from 1`);
+    }
+
+    if (problems.length > said) {
+      continue;
+    }
+
+    jobs[name] = {
+      ...(watch ? { watch } : {}),
+      ...(typeof maxSeconds === 'number' ? { maxSeconds } : {})
+    };
+  }
+
+  return Object.keys(jobs).length ? jobs : undefined;
+};
+
 const oauthOf = (
   value: unknown,
   problems: string[],
@@ -416,9 +500,17 @@ export const readManifest = (
 
   const limits = limitsOf(raw.limits, 'The functions', ceilings, problems);
   const oauth = oauthOf(raw.oauth, problems, scope);
+  const jobs = jobsOf(raw.jobs, problems, scope);
 
   return {
-    manifest: { hosts, tasks, routes, ...(limits ? { limits } : {}), ...(oauth ? { oauth } : {}) },
+    manifest: {
+      hosts,
+      tasks,
+      routes,
+      ...(limits ? { limits } : {}),
+      ...(oauth ? { oauth } : {}),
+      ...(jobs ? { jobs } : {})
+    },
     problems
   };
 };

@@ -8,6 +8,10 @@ export type {
   FunctionContext,
   FunctionFetch,
   FunctionFetchInit,
+  FunctionJob,
+  FunctionJobHandle,
+  FunctionJobs,
+  FunctionJobStop,
   FunctionOAuth,
   FunctionOAuthOwner,
   FunctionOAuthStatus,
@@ -19,6 +23,8 @@ export type {
   FunctionUser
 } from './modules/functions/contract';
 export type { FunctionsConfig, FunctionUsageRecord } from './modules/functions/config';
+export type { FunctionJobLimits } from './modules/functions/jobs';
+export { DEFAULT_FUNCTION_JOB_LIMITS } from './modules/functions/jobs';
 export { DEFAULT_FUNCTION_CEILINGS, DEFAULT_FUNCTION_LIMITS } from './modules/functions/config';
 /**
  * What the platform keeps of a space's functions, and what it hands a runner: the built bundle and what it declared

@@ -1,9 +1,16 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 
 import { accessRefusal } from '@plitzi/sdk-shared/actions';
-import { OBSERVER_COOKIE_NAME, PRESENCE_TYPE, channelLimits, matchChannel } from '@plitzi/sdk-shared/realtime';
+import {
+  OBSERVER_COOKIE_NAME,
+  PRESENCE_TYPE,
+  channelLimits,
+  jobOfTopic,
+  matchChannel
+} from '@plitzi/sdk-shared/realtime';
 
 import { warnRealtime } from './failure';
+import { JOB_CHANNEL, jobRefusal } from './jobs';
 import { readCookies } from '../../core/auth/credentials';
 import { openEventStream } from '../../core/http/sse';
 import { onAbort } from '../../helpers/onAbort';
@@ -11,6 +18,7 @@ import { onAbort } from '../../helpers/onAbort';
 import type { ChannelResolver } from './declarations';
 import type { RealtimeGrants } from './grants';
 import type { RealtimeConnection, RealtimeHub, RealtimeSpace } from './hub';
+import type { JobLookup } from './jobs';
 import type { RawResponse } from '../../helpers/buildResponseHelpers';
 import type {
   ChannelDeclaration,
@@ -93,7 +101,8 @@ export type Admission =
 export const admit = async (
   req: SSRRequest,
   resolveChannels: ChannelResolver,
-  grants: RealtimeGrants
+  grants: RealtimeGrants,
+  jobs?: JobLookup
 ): Promise<Admission> => {
   const { environment = 'main', spaceId, revision } = req.ctx.spaceDeployment ?? {};
   if (typeof spaceId !== 'number') {
@@ -115,6 +124,19 @@ export const admit = async (
   const refused: RealtimeRefusal[] = [];
   const space: RealtimeSpace = { spaceId, environment };
   for (const topic of requested) {
+    // A job's topic is the platform's, opened by the job itself: who started it, and who its `watch` lets in.
+    const jobId = jobOfTopic(topic);
+    if (jobId !== undefined) {
+      const refusal = await jobRefusal(jobs, spaceId, jobId, req.ctx.user);
+      if (refusal) {
+        refused.push({ topic, reason: refusal });
+      } else {
+        accepted.set(topic, JOB_CHANNEL);
+      }
+
+      continue;
+    }
+
     const match = matchChannel(topic, channels);
     const refusal = match ? accessRefusal(match.declaration.access, req.ctx.user) : 'undeclared';
     const grant =
@@ -250,6 +272,8 @@ export type SubscribeDeps = {
   hub: RealtimeHub;
   resolveChannels: ChannelResolver;
   grants: RealtimeGrants;
+  /** The way to the jobs `$job:<id>` is about — absent where the server runs none. */
+  jobs?: JobLookup;
 };
 
 /**
@@ -265,9 +289,10 @@ export const handleRealtimeSubscribe = async ({
   signal,
   hub,
   resolveChannels,
-  grants
+  grants,
+  jobs
 }: SubscribeDeps): Promise<void> => {
-  const admission = await admit(req, resolveChannels, grants);
+  const admission = await admit(req, resolveChannels, grants, jobs);
   if (!admission.ok) {
     answer(res, admission.answer);
 

@@ -12,6 +12,7 @@ import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
 import { unusedPort } from '../../core/unusedPort';
 import { createActionsModule } from '../actions';
+import { createMemoryJobQueue } from '../actions/jobs/memoryQueue';
 import { ActionRefusal } from '../actions/runtime/errors';
 import { createSigning } from '../actions/runtime/signing';
 import { DEFAULT_FUNCTION_CEILINGS } from '../functions/config';
@@ -52,7 +53,28 @@ const runtime = defineRuntime({
             return { opened, key: await ctx.sign('owner:b1'), greeting: env.GREETING ?? '' };
           }
         }
-      ]
+      ],
+      jobs: {
+        // Long by design: it runs until it is told why to stop, and says it saw why in what it saves.
+        train: {
+          run: async (_input, job) => {
+            let epoch = (job.state as { epoch?: number } | undefined)?.epoch ?? 0;
+            while (!job.signal.aborted && epoch < 20) {
+              epoch += 1;
+              await job.save({ epoch, resumed: job.state !== undefined });
+              await new Promise(resolve => setTimeout(resolve, 20));
+            }
+
+            if (job.stopping) {
+              await job.save({ epoch, stopping: job.stopping });
+
+              return null;
+            }
+
+            return { epochs: epoch };
+          }
+        }
+      }
     }),
     endpoints: {
       '/mcp': request =>
@@ -187,6 +209,68 @@ describe('a space runtime', () => {
     expect([opened, greeting, (second.output.value as { opened: number }).opened]).toEqual([1, 'hola', 2]);
     expect(await createSigning(SIGNING_SECRET)({ spaceId: 3, environment: 'main' }).verify('owner:b1', key)).toBe(true);
     expect(third.error).toBe('Too many tries — wait a little');
+  });
+
+  it('runs a job in its own process, held only by the lease, told why to stop, and going on from what it saved', async () => {
+    const functions: SpaceFunctions = {
+      bundle: { id: 'runtime:3:main', load: () => Promise.reject(new Error('a runtime holds its own code')) },
+      manifest: readManifest(description.functions, new Set(), DEFAULT_FUNCTION_CEILINGS).manifest,
+      runner: createRemoteRunner({ url: `ws://127.0.0.1:${String(RUNTIME_PORT)}`, secret: SECRET })
+    };
+    const queue = createMemoryJobQueue();
+    const actions = createActionsModule({
+      lookups: {
+        getAction: () => Promise.resolve(undefined),
+        listActions: () => Promise.resolve([]),
+        getFunctions: () => Promise.resolve(functions)
+      },
+      jobs: { queue, leaseMs: 60_000 }
+    });
+    const worker = actions.jobs?.worker;
+    if (!worker) {
+      throw new Error('The module runs no jobs');
+    }
+
+    // A slice in the sandbox would end after 50 ms; one in a runtime runs on, its lease what holds it.
+    const at = Date.now();
+    await queue.enqueue({
+      id: 'job:3:train',
+      spaceId: 3,
+      actionId: 'train',
+      environment: 'main',
+      trigger: 'job',
+      input: {},
+      dueAt: at,
+      maxAttempts: 3,
+      function: {}
+    });
+    await worker.poll();
+    await new Promise(resolve => setTimeout(resolve, 120));
+    expect(await queue.pause([3], 'job:3:train')).toBe(true);
+    await worker.beat();
+    const settledOf = async (status: string) => {
+      for (let round = 0; round < 100; round += 1) {
+        const job = await queue.getJob([3], 'job:3:train');
+        if (job?.status === status) {
+          return job;
+        }
+
+        await worker.poll();
+        await new Promise(resolve => setTimeout(resolve, 20));
+      }
+
+      throw new Error(`The job never became ${status}`);
+    };
+    const paused = await settledOf('paused');
+    expect(paused.state).toMatchObject({ stopping: 'pause' });
+    const epoch = (paused.state as { epoch: number }).epoch;
+    expect(epoch).toBeGreaterThan(1);
+
+    await queue.resume([3], 'job:3:train');
+    const done = await settledOf('succeeded');
+    expect(done.result).toEqual({ epochs: 20 });
+    expect(done.state).toMatchObject({ epoch: 20, resumed: true });
+    expect(done.attempts).toBe(1);
   });
 
   it('answers its endpoints on the space’s host, streamed, without the visitor’s session', async () => {

@@ -891,7 +891,7 @@ server.functions.setPlugin('board', board);
 `loadFunctionsSource(files)` loads one from its files rather than a folder: what a packed plugin carries as
 `functions.source.json`. The plugins a space uploaded reach a run through `action.lookups.getPluginFunctions`. The
 whole of it — `ctx`, routes, how a packed plugin carries it — is in
-[functions § a plugin's server half](../../docs/en/functions.md#10-a-plugins-server-half).
+[functions § a plugin's server half](../../docs/en/functions.md#11-a-plugins-server-half).
 
 ## React Server Components (RSC)
 

@@ -5,6 +5,7 @@ import { PLUGIN_ROUTES_SEGMENT } from '@plitzi/sdk-shared/actions';
 import { answerCall, readCall, responseOf, wireRequestOf, wireResponseFrom } from './capabilities';
 import { functionLimitsFor } from './config';
 import { functionContextFor } from './context';
+import { jobsManifestOf } from './jobs';
 import { parseRouteKey, reservedRouteProblem } from './manifest';
 import { OAUTH_CALLBACK_PATH, oauthCallback } from './oauth';
 import { FunctionFailure } from './protocol';
@@ -18,7 +19,13 @@ import type { RouteKey } from './manifest';
 import type { FunctionUsage, SpaceFunctions } from './protocol';
 import type { FunctionScope } from './scope';
 import type { TaskContextSource } from '../actions/runtime/runAction';
-import type { Environment, FunctionOAuthConnection, SpaceRevision, SSRUser } from '@plitzi/sdk-shared';
+import type {
+  Environment,
+  FunctionJobManifest,
+  FunctionOAuthConnection,
+  SpaceRevision,
+  SSRUser
+} from '@plitzi/sdk-shared';
 
 /** Who is asking a route, as the transport knows them. */
 export type RouteVisit = {
@@ -135,6 +142,7 @@ type NativeRoute = {
   handler: FunctionRoute;
   hosts: readonly string[];
   oauth?: Readonly<Record<string, FunctionOAuthConnection>>;
+  jobs: Readonly<Record<string, FunctionJobManifest>>;
 };
 
 /** A definition's routes, as a table this process answers from. */
@@ -143,7 +151,8 @@ const routesOf = (definition: FunctionsDefinition): NativeRoute[] =>
     key,
     handler,
     hosts: definition.allow?.hosts ?? [],
-    ...(definition.oauth ? { oauth: definition.oauth } : {})
+    ...(definition.oauth ? { oauth: definition.oauth } : {}),
+    jobs: jobsManifestOf(definition)
   }));
 
 /**
@@ -187,7 +196,8 @@ export const createRoutes = ({
     key: string,
     hosts: readonly string[],
     scope?: FunctionScope,
-    oauth?: Readonly<Record<string, FunctionOAuthConnection>>
+    oauth?: Readonly<Record<string, FunctionOAuthConnection>>,
+    jobs?: Readonly<Record<string, FunctionJobManifest>>
   ): FunctionContext => {
     const ctx = runOf(visit, key);
 
@@ -201,7 +211,8 @@ export const createRoutes = ({
         },
         hosts,
         scope,
-        oauth
+        oauth,
+        jobs
       ),
       trigger: 'route'
     };
@@ -233,7 +244,7 @@ export const createRoutes = ({
         try {
           return withoutCookies(
             await handler(withoutCredentials(request), {
-              ...contextOf(visit, match.key, route.hosts, scope, route.oauth),
+              ...contextOf(visit, match.key, route.hosts, scope, route.oauth, route.jobs),
               params: match.params
             })
           );
@@ -269,7 +280,14 @@ export const createRoutes = ({
           return Response.json({ error: refusal }, { status: 429 });
         }
 
-        const fnCtx = contextOf(visit, match.key, functions.manifest.hosts, scope, functions.manifest.oauth);
+        const fnCtx = contextOf(
+          visit,
+          match.key,
+          functions.manifest.hosts,
+          scope,
+          functions.manifest.oauth,
+          functions.manifest.jobs
+        );
         let ok = false;
         let spent: FunctionUsage | undefined;
         try {

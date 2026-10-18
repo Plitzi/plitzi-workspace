@@ -356,7 +356,152 @@ export const describeJobQueue = (name: string, open: () => Promise<QueueSubject>
       await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
       expect(await queue.cancel([SPACE], 'running')).toBe(true);
       expect(await queue.getJob([SPACE], 'running')).toMatchObject({ status: 'running', cancelRequested: true });
-      expect(await queue.heartbeat({ jobIds: ['running'], workerId: 'pod-a', leaseMs: 60_000 })).toEqual(['running']);
+      expect(await queue.heartbeat({ jobIds: ['running'], workerId: 'pod-a', leaseMs: 60_000 })).toEqual([
+        { jobId: 'running', stop: 'cancel' }
+      ]);
+    });
+
+    /** A job of the space's functions: started by someone, with what its code saves and reports kept on it. */
+    const functionJob = (over: Partial<ActionJobInput> = {}) =>
+      job({
+        id: 'train-1',
+        actionId: 'train',
+        trigger: 'job',
+        function: {
+          user: { id: 3, username: 'ana', email: 'ana@example.test', verified: true, permissions: [], roles: [] },
+          watch: { mode: 'role', permissions: ['models.read'] }
+        },
+        ...over
+      });
+
+    it('keeps who started a job of the functions, and what its code saves while the worker holds it', async () => {
+      await queue.enqueue(await functionJob());
+      await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+
+      expect(
+        await queue.write({ jobId: 'train-1', workerId: 'pod-a', state: { epoch: 2 }, progress: { fraction: 0.2 } })
+      ).toBe(true);
+      expect(await queue.write({ jobId: 'train-1', workerId: 'pod-b', state: { epoch: 9 } })).toBe(false);
+      expect(
+        await queue.write({ jobId: 'train-1', workerId: 'pod-a', progress: { fraction: 0.3, step: 'epoch 3' } })
+      ).toBe(true);
+      expect(await queue.getJob([SPACE], 'train-1')).toMatchObject({
+        trigger: 'job',
+        function: { user: { id: 3 }, watch: { mode: 'role', permissions: ['models.read'] } },
+        state: { epoch: 2 },
+        progress: { fraction: 0.3, step: 'epoch 3', at: expect.any(Number) as unknown }
+      });
+      expect((await queue.listJobs({ spaceIds: [SPACE], kind: 'function', limit: 10, offset: 0 })).total).toBe(1);
+      expect((await queue.listJobs({ spaceIds: [SPACE], kind: 'action', limit: 10, offset: 0 })).total).toBe(0);
+    });
+
+    it('runs a job slice after slice, giving back the attempt, and keeps what it answered and how long it ran', async () => {
+      await queue.enqueue(await functionJob());
+      await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+      await queue.settle({ jobId: 'train-1', workerId: 'pod-a', status: 'pending', spentMs: 1_500 });
+      expect(await queue.getJob([SPACE], 'train-1')).toMatchObject({ status: 'pending', attempts: 0, activeMs: 1_500 });
+
+      await queue.claim({ workerId: 'pod-b', leaseMs: 60_000, limit: 1 });
+      await queue.settle({
+        jobId: 'train-1',
+        workerId: 'pod-b',
+        status: 'succeeded',
+        result: { accuracy: 0.9 },
+        spentMs: 500,
+        attempt: { status: 'succeeded', workerId: 'pod-b' }
+      });
+      expect(await queue.getJob([SPACE], 'train-1')).toMatchObject({
+        status: 'succeeded',
+        result: { accuracy: 0.9 },
+        activeMs: 2_000
+      });
+    });
+
+    it('sets a job aside — at once when it waits, through its worker when it runs — and resumes it', async () => {
+      await queue.enqueue(await functionJob({ id: 'waiting' }));
+      expect(await queue.pause([SPACE], 'waiting')).toBe(true);
+      expect(await queue.getJob([SPACE], 'waiting')).toMatchObject({ status: 'paused' });
+      expect(await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 5 })).toEqual([]);
+      expect(await queue.resume([OTHER_SPACE], 'waiting')).toBe(false);
+      expect(await queue.resume([SPACE], 'waiting')).toBe(true);
+      expect(await queue.resume([SPACE], 'waiting')).toBe(false);
+
+      const [running] = await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+      expect(running.id).toBe('waiting');
+      expect(await queue.pause([SPACE], 'waiting')).toBe(true);
+      expect(await queue.pause([SPACE], 'waiting')).toBe(false);
+      expect(await queue.heartbeat({ jobIds: ['waiting'], workerId: 'pod-a', leaseMs: 60_000 })).toEqual([
+        { jobId: 'waiting', stop: 'pause' }
+      ]);
+      await queue.settle({
+        jobId: 'waiting',
+        workerId: 'pod-a',
+        status: 'paused',
+        refund: true,
+        attempt: { status: 'paused', workerId: 'pod-a' }
+      });
+      const paused = await queue.getJob([SPACE], 'waiting');
+      expect(paused).toMatchObject({ status: 'paused', attempts: 0, history: [{ status: 'paused' }] });
+      expect(paused?.pauseRequested).toBeUndefined();
+      expect(paused?.workerId).toBeUndefined();
+
+      await queue.enqueue(await job({ id: 'flow' }));
+      expect(await queue.pause([SPACE], 'flow')).toBe(false);
+    });
+
+    /** Asked to stop between two heartbeats, as its slice ended: the stop is what its next slice becomes. */
+    it('turns a slice handed back into what was asked of it meanwhile — a pause, or a cancel over a pause', async () => {
+      await queue.enqueue(await functionJob({ id: 'paused-late' }));
+      await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+      await queue.pause([SPACE], 'paused-late');
+      await queue.settle({ jobId: 'paused-late', workerId: 'pod-a', status: 'pending' });
+      expect(await queue.getJob([SPACE], 'paused-late')).toMatchObject({ status: 'paused' });
+
+      await queue.enqueue(await functionJob({ id: 'cancelled-late' }));
+      await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+      await queue.pause([SPACE], 'cancelled-late');
+      await queue.cancel([SPACE], 'cancelled-late');
+      expect(await queue.heartbeat({ jobIds: ['cancelled-late'], workerId: 'pod-a', leaseMs: 60_000 })).toEqual([
+        { jobId: 'cancelled-late', stop: 'cancel' }
+      ]);
+      await queue.settle({ jobId: 'cancelled-late', workerId: 'pod-a', status: 'pending' });
+      expect(await queue.getJob([SPACE], 'cancelled-late')).toMatchObject({ status: 'cancelled' });
+    });
+
+    it('drops a job set aside, and starts a finished one over with new input when asked', async () => {
+      await queue.enqueue(await functionJob({ id: 'aside' }));
+      await queue.pause([SPACE], 'aside');
+      expect(await queue.cancel([SPACE], 'aside')).toBe(true);
+      expect(await queue.getJob([SPACE], 'aside')).toMatchObject({ status: 'cancelled' });
+
+      await queue.enqueue(await functionJob());
+      await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+      await queue.write({ jobId: 'train-1', workerId: 'pod-a', state: { epoch: 4 }, progress: { fraction: 0.4 } });
+      await queue.settle({
+        jobId: 'train-1',
+        workerId: 'pod-a',
+        status: 'failed',
+        spentMs: 100,
+        attempt: { status: 'failed', workerId: 'pod-a' }
+      });
+      expect(await queue.requeue([SPACE], 'train-1')).toBe(true);
+      expect(await queue.getJob([SPACE], 'train-1')).toMatchObject({ status: 'pending', state: { epoch: 4 } });
+
+      await queue.claim({ workerId: 'pod-a', leaseMs: 60_000, limit: 1 });
+      await queue.settle({
+        jobId: 'train-1',
+        workerId: 'pod-a',
+        status: 'succeeded',
+        result: 'done',
+        attempt: { status: 'succeeded', workerId: 'pod-a' }
+      });
+      expect(await queue.requeue([SPACE], 'train-1', { input: { epochs: 3 }, fresh: true })).toBe(true);
+      const again = await queue.getJob([SPACE], 'train-1');
+      expect(again).toMatchObject({ status: 'pending', input: { epochs: 3 } });
+      expect(again?.state).toBeUndefined();
+      expect(again?.progress).toBeUndefined();
+      expect(again?.result).toBeUndefined();
+      expect(again?.activeMs).toBeUndefined();
     });
 
     /** A turn's timer set again: the one still waiting goes, the newest stays — on every replica, whoever came first. */

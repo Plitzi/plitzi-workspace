@@ -105,7 +105,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner): void => {
     }
 
     if (message.type === 'abort') {
-      controller.abort();
+      controller.abort(message.reason);
 
       return;
     }

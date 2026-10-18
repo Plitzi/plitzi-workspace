@@ -727,7 +727,7 @@ routes answer under `/fn/plugins/<type>/` (`usePluginRoute(type)` in the compone
 server-mode project or a plugin package (which gets `@plitzi/sdk-server` for the types); a project that renders in the
 browser alone has nothing to run it, and is refused. `plugin pack` carries it as `functions.source.json`, and the
 platform builds and keeps it privately when the plugin is uploaded — see
-[functions § a plugin's server half](../../docs/en/functions.md#10-a-plugins-server-half).
+[functions § a plugin's server half](../../docs/en/functions.md#11-a-plugins-server-half).
 
 ## `create --plugin`
 

@@ -1,3 +1,4 @@
+import type { ActionAccess, ActionJobStatus } from './ActionTypes';
 import type { InteractionCallbackParam } from './InteractionTypes';
 
 /**
@@ -21,6 +22,39 @@ export type FunctionTaskManifest = {
   params: Record<string, InteractionCallbackParam<Record<string, unknown>>>;
   /** What it asks for beyond the default — over what the functions ask for all of their tasks. */
   limits?: FunctionTimeLimits;
+};
+
+/** One job the functions declare (`defineFunctions({ jobs })`): everything but its code. */
+export type FunctionJobManifest = {
+  /**
+   * Who may watch it besides whoever started it — a channel's access, read against the visitor's permissions in the
+   * space. Absent, only whoever started it does.
+   */
+  watch?: ActionAccess;
+  /** How long it may run, every slice together, in seconds — never past what the server allows. */
+  maxSeconds?: number;
+};
+
+/**
+ * A job as whoever may watch it sees it: what `ctx.jobs.get` answers, what `$job:<id>` says each time it moves, and
+ * what `useJob` holds. Never its input or what it saved: those are its code's.
+ */
+export type FunctionJobView = {
+  id: string;
+  /** The job's name, as the functions declare it. */
+  name: string;
+  status: ActionJobStatus;
+  /** From 0 to 1, as its code last reported. */
+  progress?: number;
+  /** What it is doing, in its code's words. */
+  step?: string;
+  /** What it answered, once it succeeded. */
+  result?: unknown;
+  /** Why it failed — for a refusal, its code's own words; for anything else, that it failed. */
+  error?: string;
+  /** Epoch ms. */
+  createdAt: number;
+  updatedAt: number;
 };
 
 /** What a space's functions declare, read from the bundle when it is saved: its tasks, routes and reachable hosts. */
@@ -63,6 +97,8 @@ export type FunctionsManifest = {
   limits?: FunctionTimeLimits;
   /** The OAuth connections its code makes (`ctx.oauth`), by the name the code calls them. */
   oauth?: Record<string, FunctionOAuthConnection>;
+  /** The jobs it runs (`ctx.jobs.start`), by name. */
+  jobs?: Record<string, FunctionJobManifest>;
 };
 
 /** One reason functions were not saved, where it is — what an editor underlines. */

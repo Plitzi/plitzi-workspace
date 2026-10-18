@@ -27,6 +27,12 @@ export { createActionsModule, spaceKvPatterns } from './modules/actions';
 export { createActionJobs, createJobWorker, createMemoryJobQueue, createScheduler } from './modules/actions/jobs';
 export { DEFAULT_MAX_ATTEMPTS, scheduleFor, scheduleJobId, schedulesFor } from './modules/actions/jobs';
 /**
+ * An operator's hold on the jobs from a process that serves no pages — a Queue panel's API: pause, resume, cancel and
+ * requeue, each said on `$job:<id>` to whoever watches a job of the spaces' functions.
+ */
+export { createJobControl } from './modules/functions/jobControl';
+export type { JobControl, JobControlOptions } from './modules/functions/jobControl';
+/**
  * Cron, straight from `sdk-shared`, where the parser lives because the validator needs it too.
  *
  * Re-exported HERE and nowhere in between: a deployment mounting its own scheduler reaches for one package, and

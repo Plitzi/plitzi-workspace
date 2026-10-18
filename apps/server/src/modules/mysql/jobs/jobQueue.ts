@@ -1,3 +1,5 @@
+import { TERMINAL_JOB_STATUSES } from '@plitzi/sdk-shared/actions';
+
 import { ensureJobTables, jobTables, NOW_MS } from './schema';
 import { createStoreClock } from '../../actions/jobs/storeClock';
 import { execute, selectOne, selectRows } from '../query';
@@ -8,15 +10,20 @@ import type {
   ActionJobInput,
   ActionJobQuery,
   ActionJobQueue,
+  ActionFunctionJob,
+  ActionJobProgress,
   ActionJobSettlement,
   ActionJobStatus,
+  ActionJobStop,
+  ActionJobWrite,
   ActionSchedule,
   ActionTriggerType,
   Environment
 } from '@plitzi/sdk-shared';
 import type { Pool, PoolConnection } from 'mysql2/promise';
 
-const TERMINAL: ActionJobStatus[] = ['succeeded', 'failed', 'dead', 'cancelled'];
+/** Spread into a plain array: the queries take a mutable list. */
+const TERMINAL: ActionJobStatus[] = [...TERMINAL_JOB_STATUSES];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -66,6 +73,12 @@ type JobRow = {
   updated_at: Numeric;
   error: string | null;
   history: string;
+  function_job: string | null;
+  state: string | null;
+  progress: string | null;
+  result: string | null;
+  pause_requested: Numeric;
+  active_ms: Numeric;
 };
 
 type ScheduleRow = {
@@ -94,7 +107,7 @@ const toJob = (row: JobRow): ActionJob => ({
   spaceId: Number(row.space_id),
   actionId: row.action_id,
   environment: row.environment as Environment,
-  trigger: row.trigger_type as ActionTriggerType,
+  trigger: row.trigger_type as ActionTriggerType | 'job',
   input: JSON.parse(row.input) as Record<string, unknown>,
   dueAt: Number(row.due_at),
   maxAttempts: Number(row.max_attempts),
@@ -110,8 +123,17 @@ const toJob = (row: JobRow): ActionJob => ({
   createdAt: Number(row.created_at),
   updatedAt: Number(row.updated_at),
   ...(row.error === null ? {} : { error: row.error }),
-  history: JSON.parse(row.history) as ActionJobAttempt[]
+  history: JSON.parse(row.history) as ActionJobAttempt[],
+  ...(row.function_job === null ? {} : { function: JSON.parse(row.function_job) as ActionFunctionJob }),
+  ...(row.state === null ? {} : { state: JSON.parse(row.state) as unknown }),
+  ...(row.progress === null ? {} : { progress: JSON.parse(row.progress) as ActionJobProgress }),
+  ...(row.result === null ? {} : { result: JSON.parse(row.result) as unknown }),
+  ...(Number(row.pause_requested) === 1 ? { pauseRequested: true } : {}),
+  ...(Number(row.active_ms) > 0 ? { activeMs: Number(row.active_ms) } : {})
 });
+
+/** A value of a JSON column, or SQL's NULL for none. */
+const jsonOrNull = (value: unknown): string | null => (value === undefined ? null : JSON.stringify(value));
 
 const toSchedule = (row: ScheduleRow): ActionSchedule => ({
   spaceId: Number(row.space_id),
@@ -228,8 +250,8 @@ export const createMysqlJobQueue = ({
         await execute(
           conn,
           `INSERT INTO ${t.jobs} (id, space_id, action_id, environment, trigger_type, input, due_at, max_attempts,
-            missed, job_key, status, run_at, attempts, created_at, updated_at, history)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, '[]')`,
+            missed, job_key, function_job, status, run_at, attempts, created_at, updated_at, history)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, 0, ?, ?, '[]')`,
           [
             job.id,
             job.spaceId,
@@ -241,6 +263,7 @@ export const createMysqlJobQueue = ({
             job.maxAttempts,
             job.missed ?? null,
             job.key ?? null,
+            jsonOrNull(job.function),
             // The fire's own instant, so a job produced late is still claimable at once rather than waiting again.
             job.dueAt,
             at,
@@ -354,16 +377,55 @@ export const createMysqlJobQueue = ({
         [at + leaseMs, jobIds, workerId]
       );
 
-      const stopping = await selectRows<{ id: string }>(
+      const stopping = await selectRows<{ id: string; cancel_requested: Numeric }>(
         conn,
-        `SELECT id FROM ${t.jobs} WHERE id IN (?) AND worker_id = ? AND status = 'running' AND cancel_requested = 1`,
+        `SELECT id, cancel_requested FROM ${t.jobs} WHERE id IN (?) AND worker_id = ? AND status = 'running'
+          AND (cancel_requested = 1 OR pause_requested = 1)`,
         [jobIds, workerId]
       );
 
-      return stopping.map(row => row.id);
+      // A cancel wins over a pause asked of the same job: set aside, it would only wait to be dropped.
+      return stopping.map(row => ({
+        jobId: row.id,
+        stop: (Number(row.cancel_requested) === 1 ? 'cancel' : 'pause') satisfies ActionJobStop
+      }));
     },
 
-    settle: async ({ jobId, workerId, status, delayMs, runId, error, attempt }: ActionJobSettlement) => {
+    write: async ({ jobId, workerId, state, progress }: ActionJobWrite) => {
+      const conn = await db();
+      const at = await clock.now();
+      const sets = [
+        'updated_at = ?',
+        ...(state === undefined ? [] : ['state = ?']),
+        ...(progress ? ['progress = ?'] : [])
+      ];
+      const written = await execute(
+        conn,
+        `UPDATE ${t.jobs} SET ${sets.join(', ')} WHERE id = ? AND worker_id = ? AND status = 'running'`,
+        [
+          at,
+          ...(state === undefined ? [] : [JSON.stringify(state)]),
+          ...(progress ? [JSON.stringify({ ...progress, at })] : []),
+          jobId,
+          workerId
+        ]
+      );
+
+      return written.affectedRows === 1;
+    },
+
+    settle: async ({
+      jobId,
+      workerId,
+      status,
+      delayMs,
+      runId,
+      error,
+      attempt,
+      result,
+      spentMs,
+      refund = status === 'pending' && !attempt
+    }: ActionJobSettlement) => {
       await db();
       const at = await clock.now();
 
@@ -383,24 +445,34 @@ export const createMysqlJobQueue = ({
         const history = attempt
           ? [...job.history, { ...attempt, attempt: job.history.length + 1, startedAt: job.updatedAt, endedAt: at }]
           : job.history;
-        const pending = status === 'pending';
-        // Handed back untouched: the worker never got to run it, so the attempt it took is given back.
-        const attempts = pending && !attempt ? Math.max(0, job.attempts - 1) : job.attempts;
+        // Asked to stop while it was settling: the next slice it was handed back for is what that stop was about.
+        const settled =
+          status === 'pending' && job.cancelRequested
+            ? 'cancelled'
+            : status === 'pending' && job.pauseRequested
+              ? 'paused'
+              : status;
+        // Handed back untouched, or a slice that did not fail: the attempt it took is given back too.
+        const attempts = refund ? Math.max(0, job.attempts - 1) : job.attempts;
+        const waiting = settled === 'pending' || settled === 'paused';
 
         await execute(
           connection,
           `UPDATE ${t.jobs} SET status = ?, updated_at = ?, lease_until = NULL, error = ?, run_id = COALESCE(?, run_id),
-            run_at = ?, worker_id = ?, attempts = ?, history = ?, expires_at = ? WHERE id = ?`,
+            run_at = ?, worker_id = ?, attempts = ?, history = ?, expires_at = ?, cancel_requested = 0,
+            pause_requested = 0, result = COALESCE(?, result), active_ms = active_ms + ? WHERE id = ?`,
           [
-            status,
+            settled,
             at,
             error ?? null,
             runId ?? null,
-            pending ? at + (delayMs ?? 0) : job.runAt,
-            pending ? null : workerId,
+            settled === 'pending' ? at + (delayMs ?? 0) : job.runAt,
+            waiting ? null : workerId,
             attempts,
             JSON.stringify(history),
-            TERMINAL.includes(status) ? expiryOf(at) : null,
+            TERMINAL.includes(settled) ? expiryOf(at) : null,
+            jsonOrNull(result),
+            spentMs ?? 0,
             jobId
           ]
         );
@@ -483,15 +555,18 @@ export const createMysqlJobQueue = ({
       });
     },
 
-    listJobs: async ({ spaceIds, actionId, status, limit, offset }: ActionJobQuery) => {
+    listJobs: async ({ spaceIds, actionId, status, kind, limit, offset }: ActionJobQuery) => {
       if (!inSpaces(spaceIds)) {
         return { jobs: [], total: 0 };
       }
 
       const conn = await db();
-      const where = ['space_id IN (?)', ...(actionId ? ['action_id = ?'] : []), ...(status ? ['status = ?'] : [])].join(
-        ' AND '
-      );
+      const where = [
+        'space_id IN (?)',
+        ...(actionId ? ['action_id = ?'] : []),
+        ...(status ? ['status = ?'] : []),
+        ...(kind ? [`function_job IS ${kind === 'function' ? 'NOT ' : ''}NULL`] : [])
+      ].join(' AND ');
       const params: unknown[] = [spaceIds, ...(actionId ? [actionId] : []), ...(status ? [status] : [])];
 
       const [rows, count] = await Promise.all([
@@ -533,7 +608,7 @@ export const createMysqlJobQueue = ({
       return rows.map(toSchedule);
     },
 
-    requeue: async (spaceIds, jobId) => {
+    requeue: async (spaceIds, jobId, { input, fresh = false } = {}) => {
       if (!inSpaces(spaceIds)) {
         return false;
       }
@@ -544,9 +619,10 @@ export const createMysqlJobQueue = ({
       const result = await execute(
         conn,
         `UPDATE ${t.jobs} SET status = 'pending', run_at = ?, attempts = 0, updated_at = ?, cancel_requested = 0,
-          worker_id = NULL, lease_until = NULL, error = NULL, expires_at = NULL
+          pause_requested = 0, worker_id = NULL, lease_until = NULL, error = NULL, expires_at = NULL, result = NULL
+          ${input ? ', input = ?' : ''}${fresh ? ', state = NULL, progress = NULL, active_ms = 0' : ''}
         WHERE id = ? AND space_id IN (?) AND status IN (?)`,
-        [at, at, jobId, spaceIds, TERMINAL]
+        [at, at, ...(input ? [JSON.stringify(input)] : []), jobId, spaceIds, TERMINAL]
       );
 
       return result.affectedRows === 1;
@@ -561,8 +637,8 @@ export const createMysqlJobQueue = ({
       const at = await clock.now();
       const dropped = await execute(
         conn,
-        `UPDATE ${t.jobs} SET status = 'cancelled', updated_at = ?, expires_at = ?, worker_id = NULL
-        WHERE id = ? AND space_id IN (?) AND status = 'pending'`,
+        `UPDATE ${t.jobs} SET status = 'cancelled', updated_at = ?, expires_at = ?, worker_id = NULL, pause_requested = 0
+        WHERE id = ? AND space_id IN (?) AND status IN ('pending', 'paused')`,
         [at, expiryOf(at), jobId, spaceIds]
       );
       if (dropped.affectedRows === 1) {
@@ -577,6 +653,51 @@ export const createMysqlJobQueue = ({
       );
 
       return flagged.affectedRows === 1;
+    },
+
+    pause: async (spaceIds, jobId) => {
+      if (!inSpaces(spaceIds)) {
+        return false;
+      }
+
+      const conn = await db();
+      const at = await clock.now();
+      // Only a job of the space's functions saves where it is: a flow set aside would only start again from nothing.
+      const waiting = await execute(
+        conn,
+        `UPDATE ${t.jobs} SET status = 'paused', updated_at = ?
+        WHERE id = ? AND space_id IN (?) AND function_job IS NOT NULL AND status = 'pending'`,
+        [at, jobId, spaceIds]
+      );
+      if (waiting.affectedRows === 1) {
+        return true;
+      }
+
+      const flagged = await execute(
+        conn,
+        `UPDATE ${t.jobs} SET pause_requested = 1, updated_at = ?
+        WHERE id = ? AND space_id IN (?) AND function_job IS NOT NULL AND status = 'running' AND pause_requested = 0`,
+        [at, jobId, spaceIds]
+      );
+
+      return flagged.affectedRows === 1;
+    },
+
+    resume: async (spaceIds, jobId) => {
+      if (!inSpaces(spaceIds)) {
+        return false;
+      }
+
+      const conn = await db();
+      const at = await clock.now();
+      const resumed = await execute(
+        conn,
+        `UPDATE ${t.jobs} SET status = 'pending', run_at = ?, updated_at = ?
+        WHERE id = ? AND space_id IN (?) AND status = 'paused'`,
+        [at, at, jobId, spaceIds]
+      );
+
+      return resumed.affectedRows === 1;
     },
 
     cancelPending: async ({ spaceId, key, olderThan }) => {

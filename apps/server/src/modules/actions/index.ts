@@ -1,4 +1,5 @@
 import { createActionJobs } from './jobs';
+import { DEFAULT_MAX_ATTEMPTS } from './jobs/schedules';
 import { createRunGuards } from './runtime/guards';
 import { createKvStore } from './runtime/kvStore';
 import { resolveLimits } from './runtime/limits';
@@ -8,6 +9,7 @@ import { createActionRunner } from './runtime/runAction';
 import { createTaskRegistry } from './tasks/registry';
 import { fleetStore } from '../../core/server/fleet/link';
 import { functionCeilings } from '../functions/config';
+import { createFunctionJobs } from '../functions/jobs';
 import { readManifest } from '../functions/manifest';
 import { createRoutes } from '../functions/routes';
 import { createSpaceRegistries, prepareFunctions } from '../functions/space';
@@ -133,7 +135,23 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
       : registryFor(request.spaceId, request.at);
   // Read when a run asks: the queue is made below, from the module this runner is part of.
   let jobsQueue: ActionJobQueue | undefined;
-  const { runAction, taskContext } = createActionRunner(config, registryForRun, config.fetchImpl, () => jobsQueue);
+  const { realtime } = config;
+  const functionJobs = createFunctionJobs({
+    queue: () => jobsQueue,
+    config: config.functions ?? {},
+    ...(config.lookups.getFunctions ? { getFunctions: config.lookups.getFunctions } : {}),
+    // Read when a slice runs: the runner below is what makes it, and it is made with this.
+    taskContext: () => taskContext,
+    ...(realtime?.publishJob ? { publish: realtime.publishJob } : {}),
+    maxAttempts: (config.jobs === false ? undefined : config.jobs?.maxAttempts) ?? DEFAULT_MAX_ATTEMPTS
+  });
+  const { runAction, taskContext } = createActionRunner(
+    config,
+    registryForRun,
+    config.fetchImpl,
+    () => jobsQueue,
+    functionJobs
+  );
   const routes = createRoutes({
     config: config.functions ?? {},
     plugins: () => plugins,
@@ -181,8 +199,11 @@ export const createActionsModule = (given: ActionsConfig): ActionsModule => {
   };
 
   if (config.jobs !== false && config.lookups.listActions) {
-    module.jobs = createActionJobs(config.jobs ?? {}, module, config.lookups);
+    module.jobs = createActionJobs(config.jobs ?? {}, module, config.lookups, functionJobs);
     jobsQueue = module.jobs.queue;
+    // The door `$job:<id>` opens through: who started the job, and who its `watch` lets in.
+    const queue = module.jobs.queue;
+    realtime?.watchJobs?.((spaceId, jobId) => queue.getJob([spaceId], jobId));
   }
 
   return module;

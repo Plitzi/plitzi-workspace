@@ -90,6 +90,7 @@ Everything a function does besides computing goes through `ctx` — the same obj
 | `ctx.sign(value)`, `ctx.verify(value, signature)` | HMAC-SHA-256 with a key of the space's own that the platform keeps: a link, an invitation, a key handed to a page. The code never holds the key, and what one space or environment signed no other verifies |
 | `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare |
 | `ctx.publish`, `ctx.grant`, `ctx.revoke` | The space's realtime channels, as the server — see [Realtime channels](./realtime.md) |
+| `ctx.jobs` | The space's jobs — work longer than a request, run on the server slice by slice: `start`, `get`, `pause`, `resume`, `cancel` — see [Jobs](#6-jobs-work-longer-than-a-request) |
 | `ctx.oauth` | OAuth 2.0 on behalf of a visitor (or the space) through the connections it declared: `connect`, `status`, `fetch` with the token written in, `disconnect`; `token` only for a connection declaring `exposeToken`. Otherwise the code never holds a token — see [OAuth connections](#oauth-connections) |
 | `ctx.data(file)` | One file of the space's data — a project's `src/data/<file>`, `ctx.data('products.json')` — parsed, as of the version the run belongs to; read-only. What a page must not carry is read here and answered only as far as it is shown. The platform's `getData` answers it, or a self-hosted server's `dataDir`. Functions never import it: a path out of `functions/` is refused at build, naming `ctx.data` |
 | `ctx.user` | Who asked — `id`, `username`, `email`, `verified`, `roles`, `permissions` — never their session |
@@ -276,7 +277,74 @@ export default defineFunctions({
   platform resolves it, and a plugin's functions reach none of the space's connections.
 - **Needs `signingSecret`** on the server: without a key to seal with, no token is kept, and the call says so.
 
-## 6. Limits
+## 6. Jobs: work longer than a request
+
+A task step or a route lives as long as one invocation. Work that takes minutes — training a model, importing a
+catalogue, a crawl — is a **job**, declared beside them and run on the server in the queue the schedules use: durable,
+taken over when a server dies, retried, and shown in the Queue.
+
+```ts
+export default defineFunctions({
+  jobs: {
+    train: {
+      // Who may watch it besides whoever started it — a channel's access. Absent: only whoever started it.
+      watch: { mode: 'role', permissions: ['models.read'] },
+      run: async (input, job, ctx) => {
+        let state = job.state ?? { epoch: 0 };
+        for (; state.epoch < input.epochs; state.epoch++) {
+          if (job.signal.aborted) return; // paused, cancelled, out of time: what was saved is where it goes on
+          await trainEpoch(state, ctx);
+          await job.save(state);
+          job.report((state.epoch + 1) / input.epochs, `epoch ${state.epoch + 1}`);
+        }
+
+        return { accuracy: state.accuracy };
+      }
+    }
+  },
+  routes: {
+    'POST /train': async (request, ctx) => Response.json(await ctx.jobs.start('train', await request.json())),
+    'POST /train/:id/pause': async (request, ctx) => Response.json({ paused: await ctx.jobs.pause(ctx.params.id) })
+  }
+});
+```
+
+- **A job runs in slices.** A slice ends when `run` returns (the job is done), throws (an attempt failed: the next
+  starts from the last save, with the queue's backoff), or is asked to stop. `job.save(state)` is the one checkpoint:
+  every slice after the first starts with `job.state` set to the last state saved. Nothing else survives a slice.
+- **Asked to stop**, `job.signal` aborts and `job.stopping` says why: `pause`, `cancel`, `limit` (its time in one go is
+  up) or `shutdown` (the server is going away). The code has 5 s to save and return before the slice is cut. Returning
+  once asked to stop is stopping, not finishing: only a slice that returns on its own is the job's answer.
+- **Its time in one go.** In the sandbox a slice runs at most its plan's slice time (5 min on Pro), then goes on in
+  the next — **if it saved since it began**. A slice cut by its time that saved nothing is a failed attempt, so a job
+  that never checkpoints cannot loop forever. In a runtime, or a self-hosted server's own code, a slice runs until the
+  job's total time is up, held by its lease.
+- **`ctx.jobs`**: `start(name, input, { key })` answers the job `pending`; with a `key`, at most one of it is under way
+  — starting it again answers that one, and once it ended starts it over with the new input. `get(id)`,
+  `pause(id)`, `resume(id)`, `cancel(id)` answer whether they changed anything. Who may call them is the code's to
+  decide: they run in its routes and tasks, behind its own checks. A plugin's functions start none of the space's jobs.
+- **`ctx.user`** in every slice is whoever started it, as they were then. **Its code** is the version it was started
+  from: a publish meanwhile does not change what its slices run.
+- **Watching it.** Every time it moves the platform says it on `$job:<id>`, a topic of its own that no space declares:
+  `{ id, name, status, progress, step, result, error, createdAt, updatedAt }` — never its input or what it saved, and
+  of a failure only its code's own refusal (`ActionRefusal`); anything else it threw reads `The job failed`, and stays
+  in the Queue for an operator. Whoever started it may always watch it; anyone else as its `watch` says. In a page,
+  `useJob(id)` (`@plitzi/plitzi-sdk`) holds it live; in the schema, a `channel` element with `topic: '$job:{{ id }}'`
+  binds it as `<channel>.retained.job`. A page that joins late is handed the latest.
+- **Status:** `pending` → `running` ⇄ `paused` → `succeeded` | `failed` | `cancelled`, and `dead` once its attempts
+  are spent.
+
+What a space's jobs may spend is the deployment's to say, per space — on Plitzi, its plan's:
+`functions.jobs.limitsFor(spaceId)` answers `running` (at once, across `pool`: the spaces of one account), `waiting`,
+`maxSeconds`, `sliceMs`, `sliceCpuMs`, `sliceCalls` and `stateBytes`; each unset one is `DEFAULT_FUNCTION_JOB_LIMITS`'
+(10 at once, 1,000 waiting, 6 hours, slices of 5 minutes with 30 s of CPU and 10,000 calls, 1 MB kept). A job may ask
+for less time with `maxSeconds`, never more.
+
+Left out on purpose: **steps memoized by name** (`job.save` is the one checkpoint, explicit, and enough for a loop — a
+job that wants steps keeps their results in its state); **waiting for an event inside a job** (a job that waits should
+end, and be started again by what it waited for); and **jobs of a plugin's functions** (the space's are the space's).
+
+## 7. Limits
 
 Per invocation — a task step or a route request:
 
@@ -309,7 +377,7 @@ const feed: FunctionTask<{ window: string }> = {
 Up to the server's ceiling — 2 s of CPU and 30 s of time unless it sets other ones — and the space's plan. Asking for
 more is a problem when the functions are saved, never quietly cut down; the builder shows each task's time beside it.
 
-## 7. Security: why one space cannot reach another
+## 8. Security: why one space cannot reach another
 
 - **Nothing is shared at run time.** Every invocation gets an isolate of its own, from a fresh heap; nothing it leaves
   is seen by the next, even of the same space.
@@ -320,7 +388,7 @@ more is a problem when the functions are saved, never quietly cut down; the buil
 - **Editing is a permission**: the same one as editing the space's actions (`spaceManage`), from a person or an agent's
   grant — and every version is in the history with its author.
 
-## 8. For a deployment
+## 9. For a deployment
 
 Everything here is `@plitzi/sdk-server`'s.
 
@@ -376,18 +444,19 @@ connection is closed and the step fails with `wall`.
 The runner is an adapter: the same bundle runs on another one — a Cloudflare Workers for Platforms dispatcher, or a
 Lambda per bundle — that implements `describe` and `invoke` over the same messages.
 
-## 9. What still needs a server of your own
+## 10. What still needs a server of your own
 
-Functions answer a step or a request and are done. What does not fit that is a [runtime](./runtimes.md) of the space's
-own — a process beside the platform, on it — or a self-hosted `@plitzi/sdk-server`'s:
+Functions answer a step or a request and are done — or run a [job](#6-jobs-work-longer-than-a-request) that checkpoints
+as it goes. What does not fit that is a [runtime](./runtimes.md) of the space's own — a process beside the platform, on
+it — or a self-hosted `@plitzi/sdk-server`'s:
 
-- anything that holds a connection or state across requests — an agent session living on one replica, a game loop,
-  a long-running import;
+- anything that holds a connection or state across requests in memory — an agent session living on one replica, a game
+  loop;
 - native dependencies, a filesystem, or more CPU than a plan's limit;
 - code a deployment wants on its own machines, for any reason — self-hosting stays first-class, and the same
   `defineFunctions` file loads natively there (§8).
 
-## 10. A plugin's server half
+## 11. A plugin's server half
 
 A plugin can bring server code of its own — saving what its component arranged, asking an API on its behalf — so the
 use case stays inside the plugin instead of leaking into every space that uses it as functions, actions and flows. It is

@@ -4,6 +4,7 @@ import { createFailureStreak } from './failureStreak';
 import { serverLog } from '../../../helpers/serverLog';
 import { ActionRunError } from '../runtime/errors';
 
+import type { FunctionJobsService } from '../../functions/jobs';
 import type { ActionsModule } from '../index';
 import type { ActionLookups, ActionRunResult } from '../types';
 import type { ActionJob, ActionJobQueue, ActionJobSettlement } from '@plitzi/sdk-shared';
@@ -44,6 +45,8 @@ export type JobWorkerOptions = {
   queue: ActionJobQueue;
   lookups: ActionLookups;
   module: ActionsModule;
+  /** What runs a job of a space's functions (`function` on the job), slice by slice. Absent, such a job waits. */
+  functionJobs?: FunctionJobsService;
   /**
    * How many jobs this replica runs AT ONCE.
    *
@@ -103,6 +106,7 @@ export const createJobWorker = ({
   queue,
   lookups,
   module,
+  functionJobs,
   workers = 4,
   pollMs = 1_000,
   leaseMs = 30_000,
@@ -115,6 +119,8 @@ export const createJobWorker = ({
   const heartbeatFailures = createFailureStreak('Actions', 'job heartbeat');
   const { baseMs = 30_000, maxMs = 15 * 60_000 } = backoff;
   const active = new Map<string, AbortController>();
+  /** Of `active`, the jobs of a space's functions: what a stop asks to save and hand back, rather than waits for. */
+  const slicing = new Set<string>();
   /** Every job this worker started, until it has settled — what `stop()` waits for. */
   const inFlight = new Set<Promise<void>>();
   let timer: NodeJS.Timeout | undefined;
@@ -146,7 +152,12 @@ export const createJobWorker = ({
   const release = (job: ActionJob, delayMs: number, error: string) =>
     settle({ jobId: job.id, workerId, status: 'pending', delayMs, error });
 
-  const fail = (job: ActionJob, runId: string | undefined, error: string) => {
+  const fail = (
+    job: ActionJob,
+    runId: string | undefined,
+    error: string,
+    { spentMs, refused = false }: { spentMs?: number; refused?: boolean } = {}
+  ) => {
     const exhausted = job.attempts >= job.maxAttempts;
 
     return settle({
@@ -155,12 +166,119 @@ export const createJobWorker = ({
       status: exhausted ? 'dead' : 'pending',
       ...(exhausted ? {} : { delayMs: retryDelay(job.attempts) }),
       ...(runId ? { runId } : {}),
+      ...(spentMs ? { spentMs } : {}),
       error,
-      attempt: { status: 'failed', workerId, ...(runId ? { runId } : {}), error }
+      attempt: { status: 'failed', workerId, ...(runId ? { runId } : {}), error, ...(refused ? { refused } : {}) }
     });
   };
 
+  /**
+   * One slice of a job of a space's functions, settled by how it ended: done, set aside, cancelled, handed back to go on
+   * in the next slice — or failed, to be tried again from what it saved.
+   */
+  const executeSlice = async (job: ActionJob, jobs: FunctionJobsService): Promise<void> => {
+    const controller = new AbortController();
+    active.set(job.id, controller);
+    slicing.add(job.id);
+    try {
+      await jobs.announce(job.spaceId, job.id);
+      const outcome = await jobs.slice(job, controller.signal, workerId);
+      const base = { jobId: job.id, workerId };
+      switch (outcome.kind) {
+        case 'wait':
+          await release(job, outcome.delayMs, outcome.why);
+          break;
+        case 'done':
+          await settle({
+            ...base,
+            status: 'succeeded',
+            result: outcome.result,
+            spentMs: outcome.spentMs,
+            attempt: { status: 'succeeded', workerId }
+          });
+          break;
+        case 'failed':
+          if (outcome.final) {
+            await settle({
+              ...base,
+              status: 'failed',
+              spentMs: outcome.spentMs,
+              error: outcome.error,
+              attempt: {
+                status: 'failed',
+                workerId,
+                error: outcome.error,
+                ...(outcome.refused ? { refused: true as const } : {})
+              }
+            });
+          } else {
+            await fail(job, undefined, outcome.error, { spentMs: outcome.spentMs });
+          }
+
+          break;
+        case 'stopped':
+          if (outcome.stop === 'pause') {
+            await settle({
+              ...base,
+              status: 'paused',
+              refund: true,
+              spentMs: outcome.spentMs,
+              attempt: { status: 'paused', workerId }
+            });
+          } else if (outcome.stop === 'cancel') {
+            await settle({
+              ...base,
+              status: 'cancelled',
+              spentMs: outcome.spentMs,
+              attempt: { status: 'cancelled', workerId }
+            });
+          } else if (outcome.stop === 'shutdown' || outcome.saved) {
+            // Its time in one go up, or the replica going: the next slice goes on from what it saved, at once.
+            await settle({ ...base, status: 'pending', delayMs: 0, refund: true, spentMs: outcome.spentMs });
+          } else {
+            await fail(
+              job,
+              undefined,
+              'its slice ran out of time without saving progress — job.save where it is, to go on in the next one',
+              { spentMs: outcome.spentMs }
+            );
+          }
+
+          break;
+      }
+    } catch (error) {
+      await fail(job, undefined, messageOf(error));
+    } finally {
+      active.delete(job.id);
+      slicing.delete(job.id);
+      await jobs.announce(job.spaceId, job.id);
+    }
+  };
+
   const execute = async (job: ActionJob): Promise<void> => {
+    if (job.function) {
+      if (functionJobs) {
+        await executeSlice(job, functionJobs);
+      } else {
+        await release(job, retryDelay(1), 'not started: this replica runs no jobs of the spaces’ functions');
+      }
+
+      return;
+    }
+
+    const { trigger } = job;
+    if (trigger === 'job') {
+      await settle({
+        jobId: job.id,
+        workerId,
+        status: 'dead',
+        error: 'a job started by code, with nothing to say which code',
+        attempt: { status: 'failed', workerId, error: 'no function job' }
+      });
+
+      return;
+    }
+
     const entry = await lookups.getAction(job.spaceId, job.actionId);
     if (!entry) {
       await settle({
@@ -179,7 +297,7 @@ export const createJobWorker = ({
       run = await module.guards.begin({
         spaceId: job.spaceId,
         actionId: job.actionId,
-        callerId: job.trigger,
+        callerId: trigger,
         input: job.input,
         // The JOB is the unit of work, so the job's own id is its single-flight key. That is what stops a worker
         // that merely stalled — lease lapsed, job handed to somebody else — from running the same flow twice
@@ -220,8 +338,8 @@ export const createJobWorker = ({
         input: job.input,
         spaceId: job.spaceId,
         environment: job.environment,
-        trigger: job.trigger,
-        callerId: job.trigger,
+        trigger,
+        callerId: trigger,
         runId: run.runId,
         signal: run.controller.signal
       });
@@ -306,8 +424,9 @@ export const createJobWorker = ({
       return;
     }
 
-    for (const jobId of await queue.heartbeat({ jobIds: held, workerId, leaseMs })) {
-      active.get(jobId)?.abort();
+    // Why it is stopped goes with the abort: a job's slice saves and is set aside on a pause, ends on a cancel.
+    for (const { jobId, stop } of await queue.heartbeat({ jobIds: held, workerId, leaseMs })) {
+      active.get(jobId)?.abort(stop);
     }
   };
 
@@ -356,6 +475,11 @@ export const createJobWorker = ({
 
       if (inFlight.size > 0) {
         serverLog.info('Actions', `waiting for ${inFlight.size} running job(s) to finish before stopping`);
+      }
+
+      // A job's slice may have hours to go: it is asked to save and hand back, and another replica goes on from there.
+      for (const jobId of slicing) {
+        active.get(jobId)?.abort('shutdown');
       }
 
       /**

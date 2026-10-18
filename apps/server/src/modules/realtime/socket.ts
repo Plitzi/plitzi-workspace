@@ -6,6 +6,7 @@ import { frameText } from '../../helpers/wsFrame';
 import type { ChannelResolver } from './declarations';
 import type { RealtimeGrants } from './grants';
 import type { RealtimeHub } from './hub';
+import type { JobLookup } from './jobs';
 import type { UpgradeRequest } from '../../core/http/socketResponse';
 import type { SSRRequest, SSRResponseHelpers } from '@plitzi/sdk-shared';
 import type { IncomingMessage } from 'node:http';
@@ -72,6 +73,8 @@ export type SocketDeps = {
   resolveChannels: ChannelResolver;
   grants: RealtimeGrants;
   allowedOrigins: readonly string[];
+  /** The way to the jobs `$job:<id>` is about — absent where the server runs none. */
+  jobs?: JobLookup;
 };
 
 /**
@@ -90,7 +93,8 @@ export const handleRealtimeSocket = async ({
   hub,
   resolveChannels,
   grants,
-  allowedOrigins
+  allowedOrigins,
+  jobs
 }: SocketDeps): Promise<void> => {
   if (!originAllowed(raw, req, allowedOrigins)) {
     answer(res, { status: 403, error: 'A page of another origin may not open this', reason: 'foreign' });
@@ -98,7 +102,7 @@ export const handleRealtimeSocket = async ({
     return;
   }
 
-  const admission = await admit(req, resolveChannels, grants);
+  const admission = await admit(req, resolveChannels, grants, jobs);
   if (!admission.ok) {
     answer(res, admission.answer);
 

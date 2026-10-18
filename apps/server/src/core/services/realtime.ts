@@ -15,6 +15,8 @@ export const realtimeStage: Stage<SSRContext> = async ctx => {
     return false;
   }
 
+  const jobs = realtime.jobs();
+
   if (ctx.upgrade) {
     ctx.operation = 'realtime:socket';
     await handleRealtimeSocket({
@@ -25,7 +27,8 @@ export const realtimeStage: Stage<SSRContext> = async ctx => {
       hub: realtime.hub,
       resolveChannels: realtime.resolveChannels,
       grants: realtime.grants,
-      allowedOrigins: realtime.allowedOrigins
+      allowedOrigins: realtime.allowedOrigins,
+      ...(jobs ? { jobs } : {})
     });
 
     return true;
@@ -40,7 +43,8 @@ export const realtimeStage: Stage<SSRContext> = async ctx => {
       signal: ctx.signal,
       hub: realtime.hub,
       resolveChannels: realtime.resolveChannels,
-      grants: realtime.grants
+      grants: realtime.grants,
+      ...(jobs ? { jobs } : {})
     });
 
     return true;

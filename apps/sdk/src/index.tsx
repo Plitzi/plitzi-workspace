@@ -19,7 +19,8 @@ import {
   PluginRemote,
   ReplicaProvider,
   RootElement,
-  useChannel
+  useChannel,
+  useJob
 } from '@plitzi/sdk-elements';
 import {
   createShaderProgram,
@@ -483,6 +484,8 @@ export {
   // A realtime channel, for a plugin that moves at the speed of a cursor: the `channel` element's own connection,
   // read without a flow per message.
   useChannel,
+  // One of the space's jobs, live — its status, how far it is, its result — for whoever the job lets watch it.
+  useJob,
   // One of the space's feature flags, for a plugin that ships a feature behind one: whatever every layer decided.
   useFlag,
   // A plugin that draws: a loop that runs only while somebody can see it move, and a canvas sized to the device, with

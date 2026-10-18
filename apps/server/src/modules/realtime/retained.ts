@@ -16,9 +16,10 @@ const ATTEMPTS = 8;
 export type RealtimeRetained = {
   /**
    * Keeps `message` as its topic's latest of its type — or, with `null` data, forgets the type. Refused, before anything
-   * is sent, past {@link MAX_RETAINED_TYPES} types or {@link MAX_RETAINED_BYTES} for the topic.
+   * is sent, past {@link MAX_RETAINED_TYPES} types or {@link MAX_RETAINED_BYTES} for the topic. With `ttlSeconds`, the
+   * topic is forgotten that long after it last changed — a job's, which ends.
    */
-  keep: (space: RealtimeSpace, message: RealtimeMessage) => Promise<void>;
+  keep: (space: RealtimeSpace, message: RealtimeMessage, ttlSeconds?: number) => Promise<void>;
   /** What a topic keeps: the latest message of each type, oldest first. */
   of: (space: RealtimeSpace, topic: string) => Promise<RealtimeMessage[]>;
 };
@@ -51,7 +52,7 @@ export const createRealtimeRetained = (store: ActionKvAdapter): RealtimeRetained
     `realtime-retained:${String(spaceId)}:${environment}:${topic}`;
 
   return {
-    keep: async (space, message) => {
+    keep: async (space, message, ttlSeconds) => {
       const at = key(space, message.topic);
       for (let attempt = 0; attempt < ATTEMPTS; attempt += 1) {
         const raw = await store.get(at);
@@ -71,7 +72,7 @@ export const createRealtimeRetained = (store: ActionKvAdapter): RealtimeRetained
           );
         }
 
-        if (await store.swap(at, raw, written)) {
+        if (await store.swap(at, raw, written, ttlSeconds)) {
           return;
         }
       }

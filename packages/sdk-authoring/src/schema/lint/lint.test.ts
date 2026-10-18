@@ -1122,6 +1122,12 @@ describe('lintSpace', () => {
         };
       });
       expect(errorsOf(bound)).not.toContain('channel-topic');
+
+      // A job's topic is the platform's: no channel of the space has to cover it.
+      const job = withChange(({ schema }) => {
+        addElement(schema, { id: 'training', type: 'channel', attributes: { topic: '$job:{{ id }}' } });
+      });
+      expect(errorsOf(job)).not.toContain('channel-topic');
     });
 
     it('while-running', () => {

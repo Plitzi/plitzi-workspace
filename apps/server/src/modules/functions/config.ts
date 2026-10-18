@@ -1,6 +1,7 @@
 import { DEFAULT_FUNCTION_TIME_LIMITS } from '@plitzi/sdk-shared/actions';
 
 import type { FunctionsDefinition } from './contract';
+import type { FunctionJobLimits } from './jobs';
 import type { FunctionLimits, FunctionRunner, FunctionUsage } from './protocol';
 import type { FunctionTimeLimits } from '@plitzi/sdk-shared';
 
@@ -38,6 +39,14 @@ export type FunctionsConfig = {
   admit?: (spaceId: number) => Promise<string | undefined>;
   /** Told what each invocation spent, however it ended: what `admit` budgets by, and what a deployment meters. */
   onUsage?: (record: FunctionUsageRecord) => void;
+  /** The spaces' jobs (`defineFunctions({ jobs })`): what each may spend. */
+  jobs?: {
+    /**
+     * What one space's jobs may spend — its plan's — each unset one `DEFAULT_FUNCTION_JOB_LIMITS`'. `pool` names the
+     * spaces whose running jobs count together: an account's.
+     */
+    limitsFor?: (spaceId: number) => Promise<Partial<FunctionJobLimits> | undefined>;
+  };
 };
 
 /** What an invocation gets unless its task asks for more CPU or time. */

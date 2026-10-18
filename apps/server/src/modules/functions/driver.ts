@@ -46,7 +46,16 @@ export const describeFunctions = (definition: unknown): Record<string, unknown> 
     ),
     routes: isRecord(found.routes) ? Object.keys(found.routes) : [],
     limits: found.limits,
-    oauth: found.oauth
+    oauth: found.oauth,
+    // What each job declares besides its code: `run` stays in the bundle.
+    jobs: isRecord(found.jobs)
+      ? Object.fromEntries(
+          Object.entries(found.jobs).map(([name, job]) => [
+            name,
+            isRecord(job) ? { watch: job.watch, maxSeconds: job.maxSeconds } : job
+          ])
+        )
+      : found.jobs
   };
 };
 
@@ -139,6 +148,14 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       sign: (value: string) => call({ op: 'sign', value }),
       verify: (value: string, signature: string) => call({ op: 'verify', value, signature }),
       data: (file: string) => call({ op: 'data', file }),
+      jobs: {
+        start: (name: string, input: Record<string, unknown> = {}, options: Record<string, unknown> = {}) =>
+          call({ op: 'jobs', method: 'start', name, input, key: options.key }),
+        get: (id: string) => call({ op: 'jobs', method: 'get', id }).then(found => found ?? undefined),
+        pause: (id: string) => call({ op: 'jobs', method: 'pause', id }),
+        resume: (id: string) => call({ op: 'jobs', method: 'resume', id }),
+        cancel: (id: string) => call({ op: 'jobs', method: 'cancel', id })
+      },
       oauth: {
         connect: (connection: string, options: Record<string, unknown> = {}) =>
           call({ op: 'oauth', method: 'connect', connection, returnTo: options.returnTo, owner: options.owner }),
@@ -163,10 +180,68 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
     };
   };
 
-  /** One invocation: what a task returned (`null` for nothing), or the wire response a route answered. */
+  const STOPS = ['pause', 'cancel', 'limit', 'shutdown'];
+
+  /**
+   * Why the slice is asked to end, once it is: the reason the signal was aborted with — said as itself in a runtime, and
+   * as the message of the `AbortError` the sandbox raises — and a cancel when it said none of them.
+   */
+  const stoppingOf = (): string | undefined => {
+    const current: unknown = signal;
+    if (typeof current !== 'object' || current === null || !('aborted' in current) || current.aborted !== true) {
+      return undefined;
+    }
+
+    const reason: unknown = 'reason' in current ? current.reason : undefined;
+    const said =
+      typeof reason === 'string'
+        ? reason
+        : typeof reason === 'object' && reason !== null && 'message' in reason && typeof reason.message === 'string'
+          ? reason.message
+          : undefined;
+
+    return said !== undefined && STOPS.includes(said) ? said : 'cancel';
+  };
+
+  /** A job's `run` and what it is handed: the slice, how it saves and reports, and why it is asked to end. */
+  const runJob = async (found: Record<string, unknown>, invocation: Record<string, unknown>, ctx: unknown) => {
+    const jobs = isRecord(found.jobs) ? found.jobs : {};
+    const name = String(invocation.name);
+    const job = Object.hasOwn(jobs, name) ? jobs[name] : undefined;
+    if (!isRecord(job) || !isCallable(job.run)) {
+      throw new Error(`This space's functions have no job "${name}"`);
+    }
+
+    const slice = isRecord(invocation.job) ? invocation.job : {};
+    const handle = {
+      id: slice.id,
+      name,
+      state: slice.state,
+      attempt: slice.attempt,
+      save: async (state: unknown) => {
+        await call({ op: 'job', method: 'save', state });
+      },
+      report: (fraction: number, step?: string) => {
+        call({ op: 'job', method: 'report', fraction, step }).catch(() => undefined);
+      },
+      get stopping() {
+        return stoppingOf();
+      },
+      signal
+    };
+    const value: unknown = await job.run(isRecord(invocation.input) ? invocation.input : {}, handle, ctx);
+
+    return value === undefined ? null : value;
+  };
+
+  /** One invocation: what a task or a job's slice returned (`null` for nothing), or the wire response a route answered. */
   const invoke = async (definition: unknown, invocation: Record<string, unknown>): Promise<unknown> => {
     const found = isRecord(definition) ? definition : {};
     const ctx = contextOf(invocation);
+    if (invocation.kind === 'job') {
+      return runJob(found, invocation, ctx);
+    }
+
     if (invocation.kind === 'task') {
       const task = listOf(found.tasks).find(
         entry => isRecord(entry) && `${String(entry.namespace)}.${String(entry.action)}` === invocation.name
