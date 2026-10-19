@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+
 import { PORTS } from './launchConfig';
 
 /** Serves the harness only — the specs themselves never go through Vite. Same dedupe the examples need: the SDK

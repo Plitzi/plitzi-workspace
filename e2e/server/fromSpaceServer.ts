@@ -5,9 +5,9 @@ import path from 'node:path';
 
 import { authorSpace, defineAction, specFromSpace, specToSource } from '@plitzi/sdk-authoring';
 
+import { PORTS } from '../launchConfig';
 import { FUNCTION_FILES, SOURCE_FILES, TALLY_TYPE, tallyDeclaration } from './fromSpace/source';
 import { tallySpec } from '../spaces/fromSpace';
-import { PORTS } from '../launchConfig';
 
 import type { SpaceExport } from '@plitzi/sdk-shared/source';
 

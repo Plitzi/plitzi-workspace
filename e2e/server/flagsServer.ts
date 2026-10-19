@@ -1,7 +1,7 @@
 import { createServer } from '@plitzi/sdk-server';
 
-import { flagsSpace } from '../spaces';
 import { PORTS } from '../launchConfig';
+import { flagsSpace } from '../spaces';
 
 /**
  * The flags space as a published site, its flags decided by every layer a server sees. Two of them run, from this

@@ -1,6 +1,7 @@
 import { createServer } from '@plitzi/sdk-server';
 
 import { MAIL_SINK } from '../helpers/mail';
+import { PORTS } from '../launchConfig';
 import {
   actionSpace,
   FEED_ACTION,
@@ -13,7 +14,6 @@ import {
   UNCONFIGURED_MAIL_ACTION,
   UNREACHABLE_ACTION
 } from '../spaces';
-import { PORTS } from '../launchConfig';
 
 import type { ActionEntry } from '@plitzi/sdk-shared';
 

@@ -3,8 +3,8 @@ import { expectPageWhole } from '../../helpers/harness';
 import { boardJob, callAction } from '../../helpers/schedules';
 import { expectDevToolsAvailable, expectSampleSpaceContent, RSC_IDS, WITHOUT_RSC } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
-import { sampleAuthored } from '../../spaces';
 import { PORTS } from '../../launchConfig';
+import { sampleAuthored } from '../../spaces';
 
 import type { APIRequestContext } from '@playwright/test';
 

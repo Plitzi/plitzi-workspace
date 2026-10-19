@@ -2,8 +2,8 @@ import { consoleLogger, createJsonAdapters, createServer } from '@plitzi/sdk-ser
 import { createAuth } from '@plitzi/sdk-server/auth';
 
 import { accounts, verifyPassword } from './accounts';
-import { authSpace, PROBE_PATH } from '../spaces/auth';
 import { PORTS } from '../launchConfig';
+import { authSpace, PROBE_PATH } from '../spaces/auth';
 
 import type { Stage } from '@plitzi/sdk-server/kernel';
 
