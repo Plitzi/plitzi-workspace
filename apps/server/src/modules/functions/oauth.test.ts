@@ -204,6 +204,20 @@ describe('ctx.oauth', () => {
     expect(upstream.tokenRequests[0].get('redirect_uri')).toBe('https://127.0.0.1:8080/fn/oauth/callback');
   });
 
+  /** What a page shows whoever registers the app: the address `connect` hands the provider, never one worked out again. */
+  it('says the callback address the run’s connect sends providers to', async () => {
+    expect(await oauth().callbackUrl()).toBe('https://shop.example.test/fn/oauth/callback');
+
+    const fixed = oauth({ origin: 'https://localhost:8080', oauthCallbackOrigin: 'https://127.0.0.1:8080' });
+    const consent = new URL((await fixed.connect('calendar', { returnTo: '/' })).url);
+    expect(await fixed.callbackUrl()).toBe(consent.searchParams.get('redirect_uri'));
+    expect(await oauth({ origin: undefined, oauthCallbackOrigin: 'https://127.0.0.1:8080' }).callbackUrl()).toBe(
+      'https://127.0.0.1:8080/fn/oauth/callback'
+    );
+
+    await expect(oauth({ origin: undefined }).callbackUrl()).rejects.toThrow('this run has none');
+  });
+
   it('adds what one consent asks for to the connection’s parameters, never one the platform writes', async () => {
     const consent = new URL(
       (

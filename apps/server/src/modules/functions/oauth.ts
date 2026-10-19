@@ -32,6 +32,17 @@ import type { FunctionOAuthConnection } from '@plitzi/sdk-shared';
 /** Where the provider sends the visitor back, under `/fn` — the one address to register with every provider. */
 export const OAUTH_CALLBACK_PATH = '/oauth/callback';
 
+/** The whole address providers send a visitor back to, on an origin: what is registered with each. */
+export const oauthCallbackUrlOn = (origin: string): string =>
+  `${origin}${FUNCTION_ROUTES_PREFIX}${OAUTH_CALLBACK_PATH}`;
+
+/** This run's: the deployment's fixed origin, or the one the visitor's request came on — none for a run nobody asked. */
+const callbackUrlOf = (run: OAuthRun): string | undefined => {
+  const origin = run.oauthCallbackOrigin ?? run.origin;
+
+  return origin === undefined ? undefined : oauthCallbackUrlOn(origin);
+};
+
 const STATE_SECONDS = 600;
 /** A token this close to lapsing is renewed before it is used. */
 const RENEW_BEFORE_MS = 60_000;
@@ -365,7 +376,7 @@ export const oauthFor = (
       const client = await clientOf(run, connection, spec);
       const verifier = randomBytes(32).toString('base64url');
       const state = randomBytes(24).toString('base64url');
-      const redirectUri = `${run.oauthCallbackOrigin ?? run.origin}${FUNCTION_ROUTES_PREFIX}${OAUTH_CALLBACK_PATH}`;
+      const redirectUri = oauthCallbackUrlOn(run.oauthCallbackOrigin ?? run.origin);
       const pending: Pending = { connection, spec, owner, origin: run.origin, returnTo, verifier, redirectUri };
       await run.kv.set(stateKey(state), sealed(run).seal(JSON.stringify(pending)), STATE_SECONDS);
 
@@ -453,6 +464,19 @@ export const oauthFor = (
       return true;
     },
 
+    callbackUrl: () => {
+      const url = callbackUrlOf(run);
+      if (url === undefined) {
+        return Promise.reject(
+          new Error(
+            'The OAuth callback is on the address a visitor asked from: this run has none, and the server fixed no functions.oauth.callbackOrigin'
+          )
+        );
+      }
+
+      return Promise.resolve(url);
+    },
+
     token: async (connection, options): Promise<FunctionOAuthToken> => {
       if (!specOf(connection).exposeToken) {
         throw new Error(
@@ -479,7 +503,14 @@ export const oauthFor = (
 export const noOAuth = (why: string): FunctionOAuth => {
   const refused = () => Promise.reject(new Error(why));
 
-  return { connect: refused, status: refused, fetch: refused, disconnect: refused, token: refused };
+  return {
+    connect: refused,
+    status: refused,
+    fetch: refused,
+    disconnect: refused,
+    token: refused,
+    callbackUrl: refused
+  };
 };
 
 /**

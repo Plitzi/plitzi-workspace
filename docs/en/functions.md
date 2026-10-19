@@ -92,7 +92,7 @@ Everything a function does besides computing goes through `ctx` — the same obj
 | `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare. `init.signal` cuts the request short (`AbortSignal.timeout(12_000)`), as the run's end does |
 | `ctx.publish`, `ctx.grant`, `ctx.revoke` | The space's realtime channels, as the server — see [Realtime channels](./realtime.md) |
 | `ctx.jobs` | The space's jobs — work longer than a request, run on the server slice by slice: `start`, `get`, `pause`, `resume`, `cancel` — see [Jobs](#6-jobs-work-longer-than-a-request) |
-| `ctx.oauth` | OAuth 2.0 on behalf of a visitor (or the space) through the connections it declared: `connect`, `status`, `fetch` with the token written in, `disconnect`; `token` only for a connection declaring `exposeToken`. Otherwise the code never holds a token — see [OAuth connections](#oauth-connections) |
+| `ctx.oauth` | OAuth 2.0 on behalf of a visitor (or the space) through the connections it declared: `connect`, `status`, `fetch` with the token written in, `disconnect`, `callbackUrl` (the address to register); `token` only for a connection declaring `exposeToken`. Otherwise the code never holds a token — see [OAuth connections](#oauth-connections) |
 | `ctx.data(file)` | One file of the space's data — a project's `src/data/<file>`, `ctx.data('products.json')` — parsed, as of the version the run belongs to; read-only. What a page must not carry is read here and answered only as far as it is shown. The platform's `getData` answers it, or a self-hosted server's `dataDir`. Functions never import it: a path out of `functions/` is refused at build, naming `ctx.data` |
 | `ctx.user` | Who asked — `id`, `username`, `email`, `verified`, `roles`, `permissions` — never their session |
 | `ctx.callerId` | `user:<id>` or `ip:<address>`: what a limit per person keys on |
@@ -281,13 +281,21 @@ export default defineFunctions({
   platform writes (`state`, `redirect_uri`, `scope`, PKCE's) is refused, saying so.
 - **Where they come back, self-hosted.** A server of one space reached on several addresses — a project's on
   `localhost`, its loopback and the network — fixes the one providers send visitors to: `functions.oauth.callbackOrigin`
-  in `createServer`. The project's server (`serveProject`) sets it to this machine's loopback, `127.0.0.1` — the one
-  address every provider takes — or to `PUBLIC_URL` when that is HTTPS; never its address on the network, which the
-  router may change and providers refuse (a private IP, a `.local` name), nor `localhost` (RFC 8252). It says it as it
-  starts — `OAuth providers send visitors back to …/fn/oauth/callback` — and that is the address to register. A sign-in
-  another device starts (a tablet on the Wi-Fi) needs a name of its own that providers accept:
-  `functions: { oauth: { callbackOrigin } }` in `src/config/serverOptions.ts`, which wins over both. From the callback
-  the visitor goes on to `returnTo` on the address they started from.
+  in `createServer`. The project's server (`serveProject`) sets it to `PUBLIC_URL` when that is HTTPS. Otherwise, while
+  developing, to this machine's loopback, `127.0.0.1` — the one address every provider takes; never its address on the
+  network, which the router may change and providers refuse (a private IP, a `.local` name), nor `localhost`
+  (RFC 8252). In production it fixes none: the callback is on the address each visitor's request came on — the
+  site's domain, read from `Host` and `X-Forwarded-Proto`, so a proxy in front must pass the visitor's `Host` and say it was
+  HTTPS (Cloudflare, an AWS load balancer and Caddy do; nginx with `proxy_set_header Host $host` and
+  `proxy_set_header X-Forwarded-Proto $scheme`; CloudFront only with an origin request policy that forwards `Host`) —
+  or set `PUBLIC_URL`. It says which as it starts — `OAuth providers send visitors back to …` — and
+  that is the address to register; a site on several domains registers each. `ctx.oauth.callbackUrl()` answers the same
+  to the code, for a page that shows whoever sets up the app what to register: the address its `connect` hands the
+  provider, never one worked out again. A sign-in another device starts while developing (a tablet on the Wi-Fi) needs
+  a name of its own that providers accept: `functions: { oauth: { callbackOrigin } }` in `src/config/serverOptions.ts`,
+  which wins over all of it. From the callback the visitor goes on to `returnTo` on the address they started from.
+  The consent under way and the tokens live in the space's `kv`: with several replicas it is the shared one, or a
+  callback that reaches another replica finds no consent to finish.
 - **Whose:** a signed-in visitor's own by default (`user:<id>`). `{ owner: 'space' }` makes one the whole space shares,
   and any key of the code's own (`{ owner: 'profile:ana' }`) one per whom the code serves. With nobody signed in and no
   owner named, the call is refused, saying so.

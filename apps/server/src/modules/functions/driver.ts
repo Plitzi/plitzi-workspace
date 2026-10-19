@@ -229,6 +229,7 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
           call({ op: 'oauth', method: 'disconnect', connection, owner: options.owner }),
         token: (connection: string, options: Record<string, unknown> = {}) =>
           call({ op: 'oauth', method: 'token', connection, owner: options.owner }),
+        callbackUrl: () => call({ op: 'oauth', method: 'callbackUrl' }),
         fetch: async (connection: string, url: string | URL, init: Record<string, unknown> = {}) => {
           const { owner, ...rest } = init;
           const answer = await cuttable({ op: 'oauth', method: 'fetch', connection, url: String(url), owner }, rest);

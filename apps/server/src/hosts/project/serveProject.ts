@@ -4,7 +4,6 @@ import { isIP } from 'node:net';
 import { hostname, networkInterfaces } from 'node:os';
 import path from 'node:path';
 
-import { FUNCTION_ROUTES_PREFIX } from '@plitzi/sdk-shared/actions';
 import {
   assertProjectLayout,
   layoutFindingText,
@@ -38,7 +37,7 @@ import { consoleLogger } from '../../helpers/serverLog';
 import { credentialsFromEnv } from '../../modules/actions/runtime/credentials';
 import { createFileKv } from '../../modules/actions/runtime/fileKv';
 import { loadFunctions } from '../../modules/functions/load';
-import { OAUTH_CALLBACK_PATH } from '../../modules/functions/oauth';
+import { oauthCallbackUrlOn } from '../../modules/functions/oauth';
 import { loadRuntime, loadRuntimeModule } from '../../modules/runtime/bundle';
 import { reachOwnServer } from '../../modules/runtime/inside';
 import { serveRuntime } from '../../modules/runtime/stages';
@@ -66,8 +65,9 @@ export type ProjectServerOptions = Partial<Omit<ServerConfig, SetByProject>> & {
   action?: Omit<NonNullable<ServerConfig['action']>, 'lookups'>;
   /**
    * Of the functions, what is the project's to say: `oauth.callbackOrigin`, the one address OAuth providers send a
-   * visitor back to — this machine's loopback unless `PUBLIC_URL` says where people reach it. A name of its own for a
-   * sign-in another device starts (`https://aiko.example.com:8080`, `process.env.OAUTH_CALLBACK_ORIGIN`).
+   * visitor back to — `PUBLIC_URL` when it is HTTPS; else, while developing, this machine's loopback, and in production
+   * the address each visitor's request came on. A name of its own for a sign-in another device starts while developing
+   * (`https://aiko.example.com:8080`, `process.env.OAUTH_CALLBACK_ORIGIN`).
    */
   functions?: Pick<FunctionsConfig, 'oauth'>;
 };
@@ -166,15 +166,23 @@ const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost']);
 const ANY_ADDRESS = new Set(['0.0.0.0', '::']);
 
 /**
- * Where OAuth providers send a visitor back (`ctx.oauth`) when the project does not say: the one address to register,
- * whichever this server was opened on. `PUBLIC_URL`, the address people reach it at, when it is HTTPS; this machine's
- * loopback otherwise — the one address every provider takes. Never its address on the network, which the router may
- * change and providers refuse (a private IP, a `.local` name), nor `localhost`, refused too (RFC 8252).
+ * Where OAuth providers send a visitor back (`ctx.oauth`) when the project does not say: `PUBLIC_URL`, the address
+ * people reach it at, when it is HTTPS. Else, while developing — a server opened on `localhost`, its loopback and the
+ * network — this machine's loopback, the one address every provider takes: never its address on the network, which the
+ * router may change and providers refuse (a private IP, a `.local` name), nor `localhost`, refused too (RFC 8252). In
+ * production none is fixed: behind its proxy, the address each visitor's request came on — the site's own domain.
  */
-const oauthCallbackOrigin = (publicUrl: string | undefined, localUrl: string): string => {
+const oauthCallbackOrigin = (
+  publicUrl: string | undefined,
+  localUrl: string,
+  developing: boolean
+): string | undefined => {
   const reached = publicUrl === undefined ? undefined : new URL(publicUrl);
+  if (reached?.protocol === 'https:') {
+    return reached.origin;
+  }
 
-  return reached?.protocol === 'https:' ? reached.origin : new URL(localUrl).origin;
+  return developing ? new URL(localUrl).origin : undefined;
 };
 
 /** An address as a URL writes it: an IPv6 one in brackets. */
@@ -356,7 +364,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   const functionsDir = path.join(root, FUNCTIONS_DIR);
   const functions = existsSync(functionsDir) ? await loadFunctions(functionsDir) : [];
   const callbackOrigin =
-    serverOptions.functions?.oauth?.callbackOrigin ?? oauthCallbackOrigin(process.env.PUBLIC_URL, localUrl);
+    serverOptions.functions?.oauth?.callbackOrigin ?? oauthCallbackOrigin(process.env.PUBLIC_URL, localUrl, developing);
 
   // The space's runtime, run here: its tasks join the functions, and its endpoints answer before anything else. Its
   // variables are this process's environment. One that came across built only runs as it was built.
@@ -399,7 +407,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       functions: {
         native: [...functions, ...(runtime?.native ?? [])],
         plugins: plugins.functions,
-        oauth: { callbackOrigin }
+        oauth: callbackOrigin === undefined ? {} : { callbackOrigin }
       },
       // What `ctx.sign` and `ctx.verify` sign with: `PLITZI_SIGNING_SECRET`. What the actions and functions keep in
       // `kv` outlives a restart; a deployment with several processes names its own store (`action.kv`).
@@ -434,10 +442,12 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
 
     if ([...functions, ...(runtime?.native ?? [])].some(definition => Object.keys(definition.oauth ?? {}).length > 0)) {
       console.log(
-        `OAuth providers send visitors back to ${callbackOrigin}${FUNCTION_ROUTES_PREFIX}${OAUTH_CALLBACK_PATH} — the address to register with each`
+        callbackOrigin === undefined
+          ? `OAuth providers send visitors back to the address they asked from — register ${oauthCallbackUrlOn('https://<your domain>')} for each domain the site answers on (PUBLIC_URL fixes one)`
+          : `OAuth providers send visitors back to ${oauthCallbackUrlOn(callbackOrigin)} — the address to register with each`
       );
       // Open to the network and coming back to loopback: a sign-in another device starts lands on that device's own.
-      if (network.length > 0 && new URL(callbackOrigin).origin === new URL(localUrl).origin) {
+      if (callbackOrigin !== undefined && network.length > 0 && callbackOrigin === new URL(localUrl).origin) {
         console.log(
           '  a sign-in started on another device (a tablet) comes back to its own loopback: for one, give this server a name providers accept — functions.oauth.callbackOrigin in src/config/serverOptions.ts, or PUBLIC_URL'
         );

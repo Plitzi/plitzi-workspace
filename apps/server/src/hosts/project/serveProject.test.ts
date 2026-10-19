@@ -543,6 +543,21 @@ describe('serveProject — on this machine and on its network', { timeout: PROJE
     expect(lines).toContain('a sign-in started on another device (a tablet) comes back to its own loopback');
   });
 
+  /** Behind its proxy the site's own domain is what each visitor asks from: no loopback of the container's. */
+  it('fixes no OAuth callback in production unless told, and says to register the site’s domain', async () => {
+    process.env.NODE_ENV = 'production';
+    await write(
+      'src/functions/index.ts',
+      "export default { oauth: { calendar: { issuer: 'https://id.example.test', credential: 'calendar-app' } } };\n"
+    );
+    const said = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    await serve({ space: () => titled('a'), serverOptions: { workers: false } });
+
+    const lines = said.mock.calls.flat().join('\n');
+    expect(lines).toContain('OAuth providers send visitors back to the address they asked from');
+    expect(lines).not.toContain('OAuth providers send visitors back to http');
+  });
+
   it('sends OAuth providers back where the project says, over PUBLIC_URL', async () => {
     process.env.PUBLIC_URL = 'https://shop.example.test';
     await write(

@@ -269,6 +269,11 @@ const jobCallOf = (call: Record<string, unknown>): FunctionCall => {
 
 /** A call to `ctx.oauth`, read into the one method it names: what each method takes, and an owner only as a string. */
 const oauthCallOf = (call: Record<string, unknown>): FunctionCall => {
+  // The one method of no connection's: where every one of them comes back.
+  if (call.method === 'callbackUrl') {
+    return { op: 'oauth', method: 'callbackUrl' };
+  }
+
   const connection = stringArg(call.connection, 'An OAuth connection');
   const owner = optionalString(call.owner, 'An OAuth owner');
   const own = owner === undefined ? {} : { owner };
@@ -510,6 +515,8 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
           return ctx.oauth.disconnect(call.connection, call.owner === undefined ? {} : { owner: call.owner });
         case 'token':
           return ctx.oauth.token(call.connection, call.owner === undefined ? {} : { owner: call.owner });
+        case 'callbackUrl':
+          return ctx.oauth.callbackUrl();
         case 'fetch':
           return cuttable(ctx, call.request, async cut =>
             wireResponseOf(

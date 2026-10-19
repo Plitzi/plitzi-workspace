@@ -130,6 +130,7 @@ export type FunctionCall =
       owner?: string;
     }
   | { op: 'oauth'; method: 'status' | 'disconnect' | 'token'; connection: string; owner?: string }
+  | { op: 'oauth'; method: 'callbackUrl' }
   | {
       op: 'oauth';
       method: 'fetch';

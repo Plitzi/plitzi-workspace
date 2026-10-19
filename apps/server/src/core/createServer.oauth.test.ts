@@ -95,6 +95,7 @@ const SPACE_SOURCE = {
       const { url } = await ctx.oauth.connect('player', { returnTo: '/', owner: 'space' });
       return new Response(null, { status: 302, headers: { location: url } });
     },
+    'GET /callback-url': async (request, ctx) => Response.json({ url: await ctx.oauth.callbackUrl() }),
     'GET /connect-another': async (request, ctx) => {
       const { url } = await ctx.oauth.connect('calendar', { returnTo: '/', owner: 'space', authorizeParams: { prompt: 'select_account' } });
       return new Response(null, { status: 302, headers: { location: url } });
@@ -215,6 +216,10 @@ describe('ctx.oauth through the server', () => {
     expect(await (await realFetch(`${BASE}/fn/token?of=calendar`)).json()).toEqual({
       refused: expect.stringContaining('keeps its token on the server') as unknown
     });
+  });
+
+  it('says the callback address from the sandbox, the one connect hands the provider', async () => {
+    expect(await (await realFetch(`${BASE}/fn/callback-url`)).json()).toEqual({ url: `${BASE}/fn/oauth/callback` });
   });
 
   it('asks the provider for what one consent adds, from the sandbox', async () => {

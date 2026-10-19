@@ -94,6 +94,12 @@ export type FunctionOAuth = {
    * to holds it until it lapses: answer it only to whom the connection is (its owner), from a route that checks so.
    */
   token: (connection: string, options?: FunctionOAuthOwner) => Promise<FunctionOAuthToken>;
+  /**
+   * The address providers send a visitor back to (`…/fn/oauth/callback`) — the one this run's `connect` hands them, to
+   * show whoever registers the app with a provider. The space's host the request came on, or the one the deployment
+   * fixed (`functions.oauth.callbackOrigin`); refused in a run no visitor's request started, when none was fixed.
+   */
+  callbackUrl: () => Promise<string>;
 };
 
 /**

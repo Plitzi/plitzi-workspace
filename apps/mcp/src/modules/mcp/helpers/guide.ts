@@ -845,7 +845,8 @@ any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\`
   \`(await ctx.oauth.connect("calendar", { returnTo: "/settings" })).url\` (\`authorizeParams\` adds to that one consent:
   \`{ prompt: "select_account" }\`), and \`ctx.oauth.fetch("calendar", url)\` calls the API with the token written in;
   \`status\`, \`disconnect\` beside them. The platform keeps the token sealed and renews it — never put one in \`kv\`. The
-  user registers \`/fn/oauth/callback\` on the space's host with the provider. Not connected yet is a refusal with
+  user registers \`/fn/oauth/callback\` on the space's host with the provider (\`ctx.oauth.callbackUrl()\` says the
+  exact address, for a page that shows it). Not connected yet is a refusal with
   \`code: "oauth-not-connected"\`. \`token\` hands the access token only to a connection declaring \`exposeToken: true\`.
 - **Stateless:** nothing a function keeps in memory outlives the call — a module-level cache or counter starts empty
   every time, on whichever instance runs it. What must last goes in \`ctx.kv\`. A call gets 100 ms of CPU and 10 s;
