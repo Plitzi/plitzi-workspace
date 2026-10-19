@@ -47,6 +47,17 @@ export type FunctionsConfig = {
      */
     limitsFor?: (spaceId: number) => Promise<Partial<FunctionJobLimits> | undefined>;
   };
+  /** The spaces' OAuth connections (`ctx.oauth`). */
+  oauth?: {
+    /**
+     * The origin every provider sends a visitor back to (`<origin>/fn/oauth/callback`), whichever address they opened
+     * the space on — the one address to register, which a server reached on several (`localhost`, its loopback, its
+     * address on the network) needs. The visitor is then sent on to the address they started from. Only for a server
+     * of one space, such as a project's (`serveProject` sets its `publicUrl`): one of many spaces tells them apart by
+     * host, and answers each callback on the space's own. Left out, the address the visitor started on.
+     */
+    callbackOrigin?: string;
+  };
 };
 
 /** What an invocation gets unless its task asks for more CPU or time. */

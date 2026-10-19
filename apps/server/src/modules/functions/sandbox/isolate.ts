@@ -5,7 +5,7 @@ import { installGuest } from './guest';
 import { guestPrelude } from './prelude';
 import { changeKv } from '../../actions/runtime/kvChange';
 import { createFunctionsDriver, describeFunctions } from '../driver';
-import { FunctionFailure } from '../protocol';
+import { FunctionFailure, failedAnswerOf } from '../protocol';
 
 import type { GuestDriver } from './guest';
 import type {
@@ -372,7 +372,7 @@ export const createIsolateRunner = ({
 
             return JSON.stringify({ ok: true, value: value ?? null });
           } catch (error) {
-            return JSON.stringify({ ok: false, error: messageOf(error) });
+            return JSON.stringify(failedAnswerOf(error));
           }
         })
       );

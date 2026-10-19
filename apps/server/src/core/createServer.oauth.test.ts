@@ -28,6 +28,8 @@ const BASE = `http://127.0.0.1:${String(PORT)}`;
 const ISSUER = 'https://id.example.test';
 
 const codes = new Map<string, string>();
+/** The provider's slow endpoint saw its request cut: the code's signal crossed the sandbox as an `abort`. */
+const cut: string[] = [];
 // The server's own fetch is the global one: the provider's hosts answered here, everything else as it would be.
 const realFetch = globalThis.fetch;
 const json = (body: unknown, status = 200) =>
@@ -50,6 +52,17 @@ const provider = (input: string | URL | Request, init?: RequestInit): Promise<Re
     return Promise.resolve(
       known ? json({ access_token: 'the-access', expires_in: 3600 }) : json({ error: 'invalid_grant' }, 400)
     );
+  }
+
+  if (url.pathname === '/slow') {
+    const signal = init?.signal;
+
+    return new Promise((_resolve, reject) => {
+      signal?.addEventListener('abort', () => {
+        cut.push(url.searchParams.get('by') ?? '');
+        reject(new DOMException('cut', 'AbortError'));
+      });
+    });
   }
 
   if (url.href === 'https://api.example.test/me') {
@@ -81,6 +94,33 @@ const SPACE_SOURCE = {
     'GET /connect-player': async (request, ctx) => {
       const { url } = await ctx.oauth.connect('player', { returnTo: '/', owner: 'space' });
       return new Response(null, { status: 302, headers: { location: url } });
+    },
+    'GET /connect-another': async (request, ctx) => {
+      const { url } = await ctx.oauth.connect('calendar', { returnTo: '/', owner: 'space', authorizeParams: { prompt: 'select_account' } });
+      return new Response(null, { status: 302, headers: { location: url } });
+    },
+    'GET /unlinked': async (request, ctx) => {
+      try {
+        await ctx.oauth.fetch('calendar', 'https://api.example.test/me', { owner: 'nobody' });
+        return Response.json({ reached: true });
+      } catch (error) {
+        return Response.json({ name: error.name, code: error.code });
+      }
+    },
+    'GET /unlinked-uncaught': async (request, ctx) => ctx.oauth.fetch('calendar', 'https://api.example.test/me', { owner: 'nobody' }),
+    'GET /cut': async (request, ctx) => {
+      const by = new URL(request.url).searchParams.get('by');
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 50);
+      const pending = by === 'oauth'
+        ? ctx.oauth.fetch('calendar', 'https://api.example.test/slow?by=oauth', { owner: 'space', signal: controller.signal })
+        : ctx.fetch('https://api.example.test/slow?by=fetch', { signal: controller.signal });
+      try {
+        await pending;
+        return Response.json({ cut: false });
+      } catch (error) {
+        return Response.json({ cut: true, name: error.name });
+      }
     },
     'GET /token': async (request, ctx) => {
       const name = new URL(request.url).searchParams.get('of');
@@ -145,7 +185,7 @@ describe('ctx.oauth through the server', () => {
       { redirect: 'manual' }
     );
     expect(back.status).toBe(303);
-    expect(back.headers.get('location')).toBe('/done?oauth=calendar&oauth_result=connected');
+    expect(back.headers.get('location')).toBe(`${BASE}/done?oauth=calendar&oauth_result=connected`);
 
     expect(await (await realFetch(`${BASE}/fn/me`)).json()).toEqual({
       status: 200,
@@ -174,6 +214,36 @@ describe('ctx.oauth through the server', () => {
     });
     expect(await (await realFetch(`${BASE}/fn/token?of=calendar`)).json()).toEqual({
       refused: expect.stringContaining('keeps its token on the server') as unknown
+    });
+  });
+
+  it('asks the provider for what one consent adds, from the sandbox', async () => {
+    const consent = new URL(
+      (await realFetch(`${BASE}/fn/connect-another`, { redirect: 'manual' })).headers.get('location') ?? ''
+    );
+
+    expect(consent.searchParams.get('prompt')).toBe('select_account');
+  });
+
+  /** A refusal of the platform's crosses the sandbox as one: caught by its code, or answered as a refusal. */
+  it('refuses a connection nobody made as a refusal with its code, inside the code and out of it', async () => {
+    expect(await (await realFetch(`${BASE}/fn/unlinked`)).json()).toEqual({
+      name: 'ActionRefusal',
+      code: 'oauth-not-connected'
+    });
+
+    const uncaught = await realFetch(`${BASE}/fn/unlinked-uncaught`);
+    expect(uncaught.status).toBe(400);
+    expect(await uncaught.json()).toEqual({ error: expect.stringContaining('Not connected to "calendar"') as unknown });
+  });
+
+  it('cuts a request short when the code’s signal aborts, across the sandbox', async () => {
+    for (const by of ['oauth', 'fetch']) {
+      expect(await (await realFetch(`${BASE}/fn/cut?by=${by}`)).json()).toEqual({ cut: true, name: 'AbortError' });
+    }
+
+    await vi.waitFor(() => {
+      expect(cut).toEqual(['oauth', 'fetch']);
     });
   });
 

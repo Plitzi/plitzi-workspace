@@ -135,12 +135,14 @@ export const taskContextFor = (
   runFetch: typeof fetch
 ): ((scope: Record<string, unknown>) => Omit<ActionTaskContext, 'log'>) => {
   const { realtime } = config;
+  const oauthCallbackOrigin = config.functions?.oauth?.callbackOrigin;
   // Made once for the run, not per step: every read of one run sees one version of the data, looked up once.
   const readData = projectDataReader(config.lookups.getData, request.spaceId, request.at);
 
   return scope => ({
     runId: request.runId,
     ...(request.origin ? { origin: request.origin } : {}),
+    ...(oauthCallbackOrigin ? { oauthCallbackOrigin } : {}),
     spaceId: request.spaceId,
     environment: request.environment,
     trigger: request.trigger,

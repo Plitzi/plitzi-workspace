@@ -1119,6 +1119,8 @@ export type SSRServerConfig = {
     limits?: Record<string, number>;
     /** What the spaces' jobs may spend, per space (its plan): see `FunctionJobLimits` in `@plitzi/sdk-server/functions`. */
     jobs?: { limitsFor?: (spaceId: number) => Promise<Record<string, unknown> | undefined> };
+    /** `ctx.oauth`: where providers send a visitor back — see `FunctionsConfig` in `@plitzi/sdk-server/functions`. */
+    oauth?: { callbackOrigin?: string };
   };
   /** Realtime channels the spaces declare — see {@link SSRRealtimeConfig}. On, in memory, when absent. */
   realtime?: SSRRealtimeConfig;

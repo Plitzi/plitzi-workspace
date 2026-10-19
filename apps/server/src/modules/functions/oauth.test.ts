@@ -177,12 +177,54 @@ describe('ctx.oauth', () => {
     const back = await connected();
 
     expect(back.status).toBe(303);
-    expect(back.headers.get('location')).toBe('/settings?tab=apps&oauth=calendar&oauth_result=connected');
+    expect(back.headers.get('location')).toBe(
+      'https://shop.example.test/settings?tab=apps&oauth=calendar&oauth_result=connected'
+    );
     expect(upstream.tokenRequests[0].get('redirect_uri')).toBe('https://shop.example.test/fn/oauth/callback');
     const kept = await run.kv.get('plitzi:oauth:token:calendar:user:3');
     expect(typeof kept).toBe('string');
     expect(String(kept)).not.toContain('access-1');
     expect(await oauth().status('calendar')).toMatchObject({ connected: true, scopes: ['read'] });
+  });
+
+  /**
+   * A server reached on several addresses fixes the one providers send the visitor back to — a project's opened on
+   * `localhost` registers its loopback — and the visitor ends where they started, signed in as they were there.
+   */
+  it('comes back through the callback origin the deployment fixed, and on to the origin the visitor started from', async () => {
+    const started = oauth({ origin: 'https://localhost:8080', oauthCallbackOrigin: 'https://127.0.0.1:8080' });
+    const consent = new URL((await started.connect('calendar', { returnTo: '/settings' })).url);
+    expect(consent.searchParams.get('redirect_uri')).toBe('https://127.0.0.1:8080/fn/oauth/callback');
+
+    const back = await oauthCallback(
+      { ...run, origin: 'https://127.0.0.1:8080' },
+      new URLSearchParams({ state: consent.searchParams.get('state') ?? '', code: upstream.issue(consent) })
+    );
+    expect(back.headers.get('location')).toBe('https://localhost:8080/settings?oauth=calendar&oauth_result=connected');
+    expect(upstream.tokenRequests[0].get('redirect_uri')).toBe('https://127.0.0.1:8080/fn/oauth/callback');
+  });
+
+  it('adds what one consent asks for to the connection’s parameters, never one the platform writes', async () => {
+    const consent = new URL(
+      (
+        await oauth().connect('calendar', {
+          returnTo: '/',
+          authorizeParams: { prompt: 'select_account', login_hint: 'ana@example.test' }
+        })
+      ).url
+    );
+    expect(consent.searchParams.get('prompt')).toBe('select_account');
+    expect(consent.searchParams.get('login_hint')).toBe('ana@example.test');
+    expect(new URL((await oauth().connect('calendar', { returnTo: '/' })).url).searchParams.get('prompt')).toBe(
+      'consent'
+    );
+
+    await expect(oauth().connect('calendar', { returnTo: '/', authorizeParams: { state: 'mine' } })).rejects.toThrow(
+      'authorizeParams.state is the platform'
+    );
+    await expect(
+      oauth().connect('calendar', { returnTo: '/', authorizeParams: { redirect_uri: 'https://evil.test/' } })
+    ).rejects.toThrow('authorizeParams.redirect_uri is the platform');
   });
 
   /** A state is spent by the visit that brings it: a replayed callback finds nothing. */
@@ -204,7 +246,9 @@ describe('ctx.oauth', () => {
     const { url } = await oauth().connect('calendar', { returnTo: '/settings' });
     const state = new URL(url).searchParams.get('state') ?? '';
     const denied = await oauthCallback(run, new URLSearchParams({ state, error: 'access_denied' }));
-    expect(denied.headers.get('location')).toBe('/settings?oauth=calendar&oauth_error=access_denied');
+    expect(denied.headers.get('location')).toBe(
+      'https://shop.example.test/settings?oauth=calendar&oauth_error=access_denied'
+    );
 
     const second = new URL((await oauth().connect('calendar', { returnTo: '/settings' })).url);
     const forged = await oauthCallback(
@@ -224,6 +268,38 @@ describe('ctx.oauth', () => {
     expect(answer.status).toBe(200);
     expect(upstream.tokenRequests.at(-1)?.get('grant_type')).toBe('refresh_token');
     expect(upstream.tokenRequests.at(-1)?.get('refresh_token')).toBe('refresh-1');
+  });
+
+  it('cuts a request short when the code’s signal aborts, as the run’s end does', async () => {
+    await connected();
+    const reached: AbortSignal[] = [];
+    const code = new AbortController();
+    const watched = oauth({
+      fetch: (input, init) => {
+        if (init?.signal) {
+          reached.push(init.signal);
+        }
+
+        return upstream.fetch(input, init);
+      }
+    });
+
+    expect((await watched.fetch('calendar', API, { signal: code.signal })).status).toBe(200);
+    expect(reached.at(-1)?.aborted).toBe(false);
+    code.abort();
+    expect(reached.at(-1)?.aborted).toBe(true);
+  });
+
+  it('refuses with a code to tell apart by, not a sentence to match', async () => {
+    await expect(oauth().fetch('calendar', API)).rejects.toMatchObject({
+      name: 'ActionRefusal',
+      code: 'oauth-not-connected'
+    });
+    await expect(oauth().token('player')).rejects.toMatchObject({ code: 'oauth-not-connected' });
+    await expect(oauth({ user: undefined }).fetch('calendar', API)).rejects.toMatchObject({
+      name: 'ActionRefusal',
+      code: 'oauth-no-owner'
+    });
   });
 
   it('renews a token about to lapse before it is used', async () => {

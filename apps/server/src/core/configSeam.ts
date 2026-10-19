@@ -243,7 +243,19 @@ const isFunctionsConfig = (value: unknown): value is NonNullable<ActionsConfig['
     (isRecord(value.runner) && isFunction(value.runner.describe) && isFunction(value.runner.invoke))) &&
   (value.limits === undefined || isRecord(value.limits)) &&
   (value.jobs === undefined ||
-    (isRecord(value.jobs) && (value.jobs.limitsFor === undefined || isFunction(value.jobs.limitsFor))));
+    (isRecord(value.jobs) && (value.jobs.limitsFor === undefined || isFunction(value.jobs.limitsFor)))) &&
+  (value.oauth === undefined ||
+    (isRecord(value.oauth) &&
+      (value.oauth.callbackOrigin === undefined || typeof value.oauth.callbackOrigin === 'string')));
+
+/** Whether a value is an origin as a browser writes it — `https://example.com`, no path or trailing slash. */
+const isOrigin = (value: string): boolean => {
+  try {
+    return new URL(value).origin === value;
+  } catch {
+    return false;
+  }
+};
 
 /** The deployment's database drivers, each held to what a `db` task calls — or why one is not, as the server starts. */
 export const dbDriversOf = (drivers: readonly unknown[] | undefined): ActionDbDriver[] | undefined => {
@@ -269,7 +281,14 @@ export const functionsConfigOf = (config: unknown): ActionsConfig['functions'] =
 
   if (!isFunctionsConfig(config)) {
     throw new Error(
-      '`functions` is not what @plitzi/sdk-server/functions configures: `native` definitions, `plugins` by type, a `runner` with `describe` and `invoke`, `limits`, `jobs` with a `limitsFor` function.'
+      '`functions` is not what @plitzi/sdk-server/functions configures: `native` definitions, `plugins` by type, a `runner` with `describe` and `invoke`, `limits`, `jobs` with a `limitsFor` function, `oauth` with a `callbackOrigin`.'
+    );
+  }
+
+  const callbackOrigin = config.oauth?.callbackOrigin;
+  if (callbackOrigin !== undefined && !isOrigin(callbackOrigin)) {
+    throw new Error(
+      `\`functions.oauth.callbackOrigin\` is an origin, as a browser writes it — \`https://example.com\`, no path or slash — not "${callbackOrigin}"`
     );
   }
 

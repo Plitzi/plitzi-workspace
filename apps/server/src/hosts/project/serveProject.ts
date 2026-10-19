@@ -4,6 +4,7 @@ import { isIP } from 'node:net';
 import { hostname, networkInterfaces } from 'node:os';
 import path from 'node:path';
 
+import { FUNCTION_ROUTES_PREFIX } from '@plitzi/sdk-shared/actions';
 import {
   assertProjectLayout,
   layoutFindingText,
@@ -37,6 +38,7 @@ import { consoleLogger } from '../../helpers/serverLog';
 import { credentialsFromEnv } from '../../modules/actions/runtime/credentials';
 import { createFileKv } from '../../modules/actions/runtime/fileKv';
 import { loadFunctions } from '../../modules/functions/load';
+import { OAUTH_CALLBACK_PATH } from '../../modules/functions/oauth';
 import { loadRuntime, loadRuntimeModule } from '../../modules/runtime/bundle';
 import { reachOwnServer } from '../../modules/runtime/inside';
 import { serveRuntime } from '../../modules/runtime/stages';
@@ -155,6 +157,19 @@ const cloudAdapters = (pluginNames: string[]): SSRPageAdapters => {
 
 const LOOPBACK = new Set(['127.0.0.1', '::1', 'localhost']);
 const ANY_ADDRESS = new Set(['0.0.0.0', '::']);
+
+/**
+ * Where OAuth providers send a visitor back (`ctx.oauth`), the one address to register whichever this server was
+ * opened on: where people reach it, unless that is plain HTTP past this machine — a provider takes `http` on loopback
+ * alone — and then this machine's loopback, never `localhost`, which providers refuse too (RFC 8252).
+ */
+const oauthCallbackOrigin = (publicUrl: string, localUrl: string): string => {
+  const reached = new URL(publicUrl);
+  // A URL's hostname writes an IPv6 address in brackets.
+  const loopback = reached.hostname === '127.0.0.1' || reached.hostname === '[::1]';
+
+  return reached.protocol === 'https:' || loopback ? reached.origin : new URL(localUrl).origin;
+};
 
 /** An address as a URL writes it: an IPv6 one in brackets. */
 const urlHost = (address: string): string => (address.includes(':') ? `[${address}]` : address);
@@ -334,6 +349,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
     : cloudAdapters(plugins.names);
   const functionsDir = path.join(root, FUNCTIONS_DIR);
   const functions = existsSync(functionsDir) ? await loadFunctions(functionsDir) : [];
+  const callbackOrigin = oauthCallbackOrigin(publicUrl, localUrl);
 
   // The space's runtime, run here: its tasks join the functions, and its endpoints answer before anything else. Its
   // variables are this process's environment. One that came across built only runs as it was built.
@@ -373,7 +389,11 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       plugins: plugins.sources,
       publicDir: path.join(root, PUBLIC_DIR),
       dataDir: path.join(root, DATA_DIR),
-      functions: { native: [...functions, ...(runtime?.native ?? [])], plugins: plugins.functions },
+      functions: {
+        native: [...functions, ...(runtime?.native ?? [])],
+        plugins: plugins.functions,
+        oauth: { callbackOrigin }
+      },
       // What `ctx.sign` and `ctx.verify` sign with: `PLITZI_SIGNING_SECRET`. What the actions and functions keep in
       // `kv` outlives a restart; a deployment with several processes names its own store (`action.kv`).
       action: {
@@ -403,6 +423,12 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
       );
     } else if (developing && LOOPBACK.has(host)) {
       console.log('only this machine opens it: HOST=0.0.0.0 in .env opens it to your network (a phone on the Wi-Fi)');
+    }
+
+    if ([...functions, ...(runtime?.native ?? [])].some(definition => Object.keys(definition.oauth ?? {}).length > 0)) {
+      console.log(
+        `OAuth providers send visitors back to ${callbackOrigin}${FUNCTION_ROUTES_PREFIX}${OAUTH_CALLBACK_PATH} — the address to register with each (PUBLIC_URL changes it)`
+      );
     }
 
     if (reached.unnamed.length > 0) {

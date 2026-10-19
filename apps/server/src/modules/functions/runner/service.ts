@@ -7,7 +7,7 @@ import { readRequestMessage } from './messages';
 import { watchConnections } from '../../../core/server/drain';
 import { serverLog } from '../../../helpers/serverLog';
 import { frameText } from '../../../helpers/wsFrame';
-import { FUNCTIONS_PROTOCOL, FunctionFailure, isStreamedRouteAnswer } from '../protocol';
+import { FUNCTIONS_PROTOCOL, FunctionFailure, errorOfAnswer, isStreamedRouteAnswer } from '../protocol';
 import { createIsolateRunner } from '../sandbox/isolate';
 
 import type {
@@ -130,7 +130,7 @@ const serveConnection = (socket: WebSocket, runner: FunctionRunner): void => {
   const answer = (call: unknown): Promise<unknown> =>
     new Promise((resolve, reject) => {
       const id = nextCall++;
-      pending.set(id, reply => (reply.ok ? resolve(reply.value) : reject(new Error(reply.error))));
+      pending.set(id, reply => (reply.ok ? resolve(reply.value) : reject(errorOfAnswer(reply))));
       send({ type: 'call', id, call });
     });
 

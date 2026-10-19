@@ -1,3 +1,5 @@
+import { ActionRefusal, isActionRefusal, refusalCodeOf } from '../actions/runtime/errors';
+
 import type { FunctionContext, FunctionFetchInit } from './contract';
 import type { LaterRequest } from '../actions/jobs/later';
 import type { RateLimit } from '../actions/runtime/rateLimit';
@@ -96,13 +98,20 @@ export type FunctionInvocation =
       context: FunctionInvocationContext;
     };
 
+/** A request's init as the wire carries it: what the code wrote but its `signal`, which never crosses (`request`). */
+export type WireFetchInit = Omit<FunctionFetchInit, 'signal'>;
+
 /**
  * One call back from the code to the platform: a {@link FunctionContext} method, by name, with its arguments. The
  * platform answers it with the run's own context — scoped to the space and the run before anything is done.
+ *
+ * A request the code may cut short (its init had a `signal`) carries `request`, the code's own number for it, and the
+ * code's `abort` names that number when the signal fires: a signal is the code's object, and does not cross.
  */
 export type FunctionCall =
   | { op: 'kv'; method: string; args: unknown[] }
-  | { op: 'fetch'; url: string; init: FunctionFetchInit }
+  | { op: 'fetch'; url: string; init: WireFetchInit; request?: number }
+  | { op: 'abort'; request: number }
   | { op: 'publish'; topic: string; type: string; data: unknown }
   | { op: 'grant'; topic: string; ttlSeconds?: number }
   | { op: 'revoke'; topic: string; grant?: string }
@@ -112,15 +121,23 @@ export type FunctionCall =
   | { op: 'sign'; value: string }
   | { op: 'verify'; value: string; signature: string }
   | { op: 'data'; file: string }
-  | { op: 'oauth'; method: 'connect'; connection: string; returnTo: string; owner?: string }
+  | {
+      op: 'oauth';
+      method: 'connect';
+      connection: string;
+      returnTo: string;
+      authorizeParams?: Record<string, string>;
+      owner?: string;
+    }
   | { op: 'oauth'; method: 'status' | 'disconnect' | 'token'; connection: string; owner?: string }
   | {
       op: 'oauth';
       method: 'fetch';
       connection: string;
       url: string;
-      init: Omit<FunctionFetchInit, 'credential'>;
+      init: Omit<WireFetchInit, 'credential'>;
       owner?: string;
+      request?: number;
     }
   /** `ctx.jobs`: the space's jobs, started and stopped by its code. */
   | { op: 'jobs'; method: 'start'; name: string; input: Record<string, unknown>; key?: string }
@@ -132,8 +149,27 @@ export type FunctionCall =
   | { op: 'log'; values: unknown[] }
   | { op: 'emit'; chunk: unknown };
 
-/** How a call or an invocation ended: its value, or why not — never a thrown object crossing the boundary. */
-export type FunctionAnswer = { ok: true; value: unknown } | { ok: false; error: string };
+/**
+ * How a call or an invocation ended: its value, or why not — never a thrown object crossing the boundary. A refusal
+ * (`refused`, with its `code`) stays one on the other side: the code that made the call catches what the platform threw.
+ */
+export type FunctionAnswer = { ok: true; value: unknown } | { ok: false; error: string; refused?: true; code?: string };
+
+/** What a call that threw answers across a boundary: its message, and whether — and as what — it was a refusal. */
+export const failedAnswerOf = (error: unknown): Extract<FunctionAnswer, { ok: false }> => {
+  const code = refusalCodeOf(error);
+
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : String(error),
+    ...(isActionRefusal(error) ? { refused: true as const } : {}),
+    ...(code === undefined ? {} : { code })
+  };
+};
+
+/** …and that answer thrown again on the side that made the call: a refusal as a refusal, anything else as an error. */
+export const errorOfAnswer = ({ error, refused, code }: Extract<FunctionAnswer, { ok: false }>): Error =>
+  refused ? new ActionRefusal(error, code === undefined ? {} : { code }) : new Error(error);
 
 /** Why the runner stopped an invocation, when it was not the code's own error. */
 export type FunctionStopReason = 'cpu' | 'wall' | 'memory' | 'output' | 'calls' | 'aborted';

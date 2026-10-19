@@ -834,7 +834,19 @@ any other (\`<namespace>.<action>\`), listed in \`plitzi://actions/{env}/tasks\`
   \`allow.hosts\` names (\`*.example.com\` for subdomains), \`ctx.publish/grant/revoke\` (channels),
   \`ctx.data("products.json")\` (one file of the space's data, parsed — never imported), \`ctx.log\`, \`ctx.user\` (who
   asked, never their session). A secret is NAMED, never read: \`ctx.fetch(url, { credential: "stripe",
-  headers: { authorization: "Bearer {{ credential.apiKey }}" } })\`.
+  headers: { authorization: "Bearer {{ credential.apiKey }}" } })\`. \`signal\` in the init cuts a slow request short
+  (\`AbortSignal.timeout(12000)\`).
+- **Refuse with \`ActionRefusal\`** (from \`@plitzi/sdk-server/functions\`): its message is written for whoever asked and
+  reaches them (\`{{ step.error }}\`, a route's \`400 { error }\`); anything else thrown stays in the run's record.
+  \`new ActionRefusal(message, { code })\` names it for code that catches it — compare \`error.code\`, never the message.
+- **An API on behalf of a visitor** (their calendar, their music) is an OAuth connection declared as data:
+  \`defineFunctions({ oauth: { calendar: { issuer, credential, scopes } } })\` — \`issuer\` for OpenID, or
+  \`authorizeUrl\`/\`tokenUrl\`; the credential holds the app's \`clientId\`/\`clientSecret\`. A route redirects to
+  \`(await ctx.oauth.connect("calendar", { returnTo: "/settings" })).url\` (\`authorizeParams\` adds to that one consent:
+  \`{ prompt: "select_account" }\`), and \`ctx.oauth.fetch("calendar", url)\` calls the API with the token written in;
+  \`status\`, \`disconnect\` beside them. The platform keeps the token sealed and renews it — never put one in \`kv\`. The
+  user registers \`/fn/oauth/callback\` on the space's host with the provider. Not connected yet is a refusal with
+  \`code: "oauth-not-connected"\`. \`token\` hands the access token only to a connection declaring \`exposeToken: true\`.
 - **Stateless:** nothing a function keeps in memory outlives the call — a module-level cache or counter starts empty
   every time, on whichever instance runs it. What must last goes in \`ctx.kv\`. A call gets 100 ms of CPU and 10 s;
   a task that needs more says so — \`limits: { cpuMs: 1000, wallMs: 20000 }\`, or \`defineFunctions({ limits })\` for

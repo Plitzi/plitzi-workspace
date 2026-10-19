@@ -3,10 +3,17 @@ import { createHash, randomBytes } from 'node:crypto';
 import { FUNCTION_ROUTES_PREFIX } from '@plitzi/sdk-shared/actions';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { OWN_AUTHORIZE_PARAMS } from './manifest';
 import { fetchOutbound } from '../../helpers/outboundGuard';
 import { ActionRefusal } from '../actions/runtime/errors';
 
-import type { FunctionOAuth, FunctionOAuthOwner, FunctionOAuthStatus, FunctionOAuthToken } from './contract';
+import type {
+  FunctionOAuth,
+  FunctionOAuthOwner,
+  FunctionOAuthRefusal,
+  FunctionOAuthStatus,
+  FunctionOAuthToken
+} from './contract';
 import type { ActionTaskContext } from '../actions/types';
 import type { FunctionOAuthConnection } from '@plitzi/sdk-shared';
 
@@ -41,11 +48,15 @@ type Endpoints = { authorize: string; token: string; revoke?: string };
 
 type Tokens = { access: string; refresh?: string; type: string; expiresAt?: number; scopes?: string[] };
 
-/** A consent under way, as `connect` left it for the callback: everything the exchange needs, the spec included. */
+/**
+ * A consent under way, as `connect` left it for the callback: everything the exchange needs, the spec included, and
+ * the origin the visitor started from — where they go back to, whichever address the provider sent them to.
+ */
 type Pending = {
   connection: string;
   spec: FunctionOAuthConnection;
   owner: string;
+  origin: string;
   returnTo: string;
   verifier: string;
   redirectUri: string;
@@ -54,8 +65,13 @@ type Pending = {
 /** What the parts of a run `ctx.oauth` uses are: its fetch, its kv, its credentials, its sealing, who and where. */
 export type OAuthRun = Pick<
   ActionTaskContext,
-  'fetch' | 'kv' | 'credential' | 'seal' | 'open' | 'origin' | 'user' | 'signal'
+  'fetch' | 'kv' | 'credential' | 'seal' | 'open' | 'origin' | 'oauthCallbackOrigin' | 'user' | 'signal'
 >;
+
+const refused = (message: string, code: FunctionOAuthRefusal): ActionRefusal => new ActionRefusal(message, { code });
+
+const notConnected = (connection: string): ActionRefusal =>
+  refused(`Not connected to "${connection}": ctx.oauth.connect first`, 'oauth-not-connected');
 
 const discovered = new Map<string, { at: number; endpoints: Endpoints }>();
 
@@ -130,7 +146,8 @@ const tokenRequest = async (
   connection: string,
   spec: FunctionOAuthConnection,
   url: string,
-  grant: Record<string, string>
+  grant: Record<string, string>,
+  signal: AbortSignal = run.signal
 ): Promise<Record<string, unknown>> => {
   const client = await clientOf(run, connection, spec);
   const form = new URLSearchParams(grant);
@@ -153,7 +170,7 @@ const tokenRequest = async (
     method: 'POST',
     headers,
     body: form.toString(),
-    signal: run.signal
+    signal
   });
   const body: unknown = await answer.json().catch(() => undefined);
   const said = isRecord(body) ? body : {};
@@ -210,6 +227,7 @@ const isPending = (value: unknown): value is Pending =>
   typeof value.connection === 'string' &&
   isRecord(value.spec) &&
   typeof value.owner === 'string' &&
+  typeof value.origin === 'string' &&
   typeof value.returnTo === 'string' &&
   typeof value.verifier === 'string' &&
   typeof value.redirectUri === 'string';
@@ -218,8 +236,9 @@ const isPending = (value: unknown): value is Pending =>
 const ownerOf = (run: OAuthRun, connection: string, options?: FunctionOAuthOwner): string => {
   const owner = options?.owner ?? (run.user ? `user:${String(run.user.id)}` : undefined);
   if (!owner) {
-    throw new ActionRefusal(
-      `OAuth connection "${connection}" is somebody's: sign the visitor in, or name its owner ({ owner: 'space' }, a key of your own)`
+    throw refused(
+      `OAuth connection "${connection}" is somebody's: sign the visitor in, or name its owner ({ owner: 'space' }, a key of your own)`,
+      'oauth-no-owner'
     );
   }
 
@@ -239,11 +258,37 @@ const pathOf = (returnTo: string): string => {
   return returnTo;
 };
 
-const withQuery = (path: string, params: Record<string, string>): string => {
-  const url = new URL(path, 'http://space');
+/** `returnTo` on the origin the visitor started from, told how the consent went. */
+const backTo = (origin: string, path: string, params: Record<string, string>): string => {
+  const url = new URL(path, origin);
   Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
 
-  return `${url.pathname}${url.search}${url.hash}`;
+  return url.href;
+};
+
+/** What one consent adds to the connection's `authorizeParams` (`prompt: 'select_account'`): strings, none the platform's. */
+const authorizeParamsOf = (connection: string, params: unknown): Record<string, string> => {
+  if (params === undefined) {
+    return {};
+  }
+
+  if (!isRecord(params)) {
+    throw new Error(`OAuth connection "${connection}": authorizeParams is an object of strings`);
+  }
+
+  return Object.fromEntries(
+    Object.entries(params).map(([key, value]) => {
+      if (OWN_AUTHORIZE_PARAMS.has(key)) {
+        throw new Error(`OAuth connection "${connection}": authorizeParams.${key} is the platform's to write`);
+      }
+
+      if (typeof value !== 'string') {
+        throw new Error(`OAuth connection "${connection}": authorizeParams.${key} is a string`);
+      }
+
+      return [key, value];
+    })
+  );
 };
 
 /**
@@ -271,7 +316,11 @@ export const oauthFor = (
     run.kv.set(tokenKey(connection, owner), sealed(run).seal(JSON.stringify(tokens)));
 
   /** The connection's tokens, renewed first when they are about to lapse (or `force`d, after a 401). */
-  const tokensOf = async (connection: string, owner: string, force = false): Promise<Tokens | undefined> => {
+  const tokensOf = async (
+    connection: string,
+    owner: string,
+    { force = false, signal = run.signal }: { force?: boolean; signal?: AbortSignal } = {}
+  ): Promise<Tokens | undefined> => {
     const tokens = await readSealed(run, tokenKey(connection, owner), isTokens);
     if (!tokens) {
       return undefined;
@@ -285,7 +334,14 @@ export const oauthFor = (
     const spec = specOf(connection);
     const { token } = await endpointsOf(run, connection, spec);
     const renewed = tokensFrom(
-      await tokenRequest(run, connection, spec, token, { grant_type: 'refresh_token', refresh_token: tokens.refresh }),
+      await tokenRequest(
+        run,
+        connection,
+        spec,
+        token,
+        { grant_type: 'refresh_token', refresh_token: tokens.refresh },
+        signal
+      ),
       tokens
     );
     await save(connection, owner, renewed);
@@ -304,17 +360,19 @@ export const oauthFor = (
         );
       }
 
+      const once = authorizeParamsOf(connection, options.authorizeParams);
       const { authorize } = await endpointsOf(run, connection, spec);
       const client = await clientOf(run, connection, spec);
       const verifier = randomBytes(32).toString('base64url');
       const state = randomBytes(24).toString('base64url');
-      const redirectUri = `${run.origin}${FUNCTION_ROUTES_PREFIX}${OAUTH_CALLBACK_PATH}`;
-      const pending: Pending = { connection, spec, owner, returnTo, verifier, redirectUri };
+      const redirectUri = `${run.oauthCallbackOrigin ?? run.origin}${FUNCTION_ROUTES_PREFIX}${OAUTH_CALLBACK_PATH}`;
+      const pending: Pending = { connection, spec, owner, origin: run.origin, returnTo, verifier, redirectUri };
       await run.kv.set(stateKey(state), sealed(run).seal(JSON.stringify(pending)), STATE_SECONDS);
 
       const url = new URL(authorize);
       const params: Record<string, string> = {
         ...spec.authorizeParams,
+        ...once,
         response_type: 'code',
         client_id: client.id,
         redirect_uri: redirectUri,
@@ -346,6 +404,8 @@ export const oauthFor = (
       const owner = ownerOf(run, connection, init);
       const url = new URL(typeof input === 'string' ? input : input.href);
       allowed(url);
+      // The code's own signal cuts this request short — the token's renewal too — and the run's ends it regardless.
+      const signal = init.signal ? AbortSignal.any([run.signal, init.signal]) : run.signal;
       const send = (tokens: Tokens) =>
         fetchOutbound(run.fetch, url, {
           method: init.method ?? 'GET',
@@ -354,11 +414,11 @@ export const oauthFor = (
             authorization: `${/^bearer$/i.test(tokens.type) ? 'Bearer' : tokens.type} ${tokens.access}`
           },
           body: init.body,
-          signal: run.signal
+          signal
         });
-      const tokens = await tokensOf(connection, owner);
+      const tokens = await tokensOf(connection, owner, { signal });
       if (!tokens) {
-        throw new ActionRefusal(`Not connected to "${connection}": ctx.oauth.connect first`);
+        throw notConnected(connection);
       }
 
       const answer = await send(tokens);
@@ -366,7 +426,7 @@ export const oauthFor = (
         return answer;
       }
 
-      const renewed = await tokensOf(connection, owner, true);
+      const renewed = await tokensOf(connection, owner, { force: true, signal });
 
       return renewed ? send(renewed) : answer;
     },
@@ -402,7 +462,7 @@ export const oauthFor = (
 
       const tokens = await tokensOf(connection, ownerOf(run, connection, options));
       if (!tokens) {
-        throw new ActionRefusal(`Not connected to "${connection}": ctx.oauth.connect first`);
+        throw notConnected(connection);
       }
 
       return {
@@ -444,11 +504,11 @@ export const oauthCallback = async (run: OAuthRun, query: URLSearchParams): Prom
   const back = (params: Record<string, string>): Response =>
     new Response(null, {
       status: 303,
-      headers: { location: withQuery(pending.returnTo, { oauth: pending.connection, ...params }) }
+      headers: { location: backTo(pending.origin, pending.returnTo, { oauth: pending.connection, ...params }) }
     });
-  const refused = query.get('error');
-  if (refused) {
-    return back({ oauth_error: refused });
+  const denied = query.get('error');
+  if (denied) {
+    return back({ oauth_error: denied });
   }
 
   const code = query.get('code');

@@ -66,7 +66,8 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost, sh
 
   const isRefusal = (error: unknown): boolean => error instanceof Error && error.name === REFUSAL;
 
-  const refusal = (message: string): Error => Object.assign(new Error(message), { name: REFUSAL });
+  const refusal = (message: string, code?: string): Error =>
+    Object.assign(new Error(message), { name: REFUSAL }, code === undefined ? {} : { code });
 
   // ---- bytes ----------------------------------------------------------------------------------------------------
 
@@ -897,13 +898,17 @@ export const installGuest = (scope: Record<string, unknown>, host: GuestHost, sh
 
   const call = async (message: Record<string, unknown>): Promise<unknown> => {
     const answer: unknown = JSON.parse(await host.call(JSON.stringify(message)));
-    if (!isRecord(answer) || answer.ok !== true) {
-      throw new Error(
-        isRecord(answer) && typeof answer.error === 'string' ? answer.error : 'The platform refused the call'
-      );
+    if (isRecord(answer) && answer.ok === true) {
+      return answer.value;
     }
 
-    return answer.value;
+    const said = isRecord(answer) && typeof answer.error === 'string' ? answer.error : 'The platform refused the call';
+    // A refusal of the platform's (`ctx.oauth` with nobody connected) is the code's to catch as one, by its code.
+    if (isRecord(answer) && answer.refused === true) {
+      throw refusal(said, typeof answer.code === 'string' ? answer.code : undefined);
+    }
+
+    throw new Error(said);
   };
 
   const run = new GuestAbortController();

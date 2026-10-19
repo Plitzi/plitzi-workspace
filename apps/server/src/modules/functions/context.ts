@@ -72,7 +72,7 @@ const functionFetch =
       method: init.method ?? 'GET',
       headers,
       body: init.body === undefined ? undefined : render(init.body),
-      signal: ctx.signal
+      signal: init.signal ? AbortSignal.any([ctx.signal, init.signal]) : ctx.signal
     });
   };
 

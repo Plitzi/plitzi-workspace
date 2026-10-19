@@ -254,10 +254,12 @@ export type ActionTaskContext = {
   open?: SpaceSigning['open'];
   /**
    * The public origin of the request that started the run (`https://shop.example.com`), as the server resolved it —
-   * what an address back to the space is made of (an OAuth `redirect_uri`). `undefined` for a run no request started:
-   * a schedule, a job.
+   * where a visitor is sent back to (after an OAuth consent). `undefined` for a run no request started: a schedule, a
+   * job.
    */
   origin?: string;
+  /** Where OAuth providers send a visitor back, when the deployment fixed it (`functions.oauth.callbackOrigin`). */
+  oauthCallbackOrigin?: string;
   /**
    * One file of the space's data (`products.json`), parsed, as of the run's revision — read-only, and refused when
    * the deployment keeps no data (`lookups.getData`, or `dataDir`). One lookup per run, whichever step reads it.

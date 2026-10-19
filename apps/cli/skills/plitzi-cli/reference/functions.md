@@ -36,8 +36,12 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   `defineFunctions({ oauth: { calendar: { issuer, credential, scopes } } })` — any provider, `issuer` for OpenID or its
   `authorizeUrl`/`tokenUrl` — then `ctx.oauth.connect(name, { returnTo })` to consent and `ctx.oauth.fetch(name, url)`
   to call it. Never a token in `kv` by hand: the platform keeps it sealed and renews it; register
-  `/fn/oauth/callback` with the provider. An SDK in the page that wants the token itself (Spotify's player): its
-  connection declares `exposeToken: true`, and a route answers `ctx.oauth.token(name)` to its owner only.
+  `/fn/oauth/callback` with the provider — on the project's server, the address it prints as it starts
+  (`OAuth providers send visitors back to …`), whichever address the page was opened on. An SDK in the page that wants
+  the token itself (Spotify's player): its connection declares `exposeToken: true`, and a route answers
+  `ctx.oauth.token(name)` to its owner only. "Choose another account" is `connect(name, { returnTo, authorizeParams:
+  { prompt: 'select_account' } })`; not connected yet is a refusal with `code: 'oauth-not-connected'` — check the code,
+  not the message; a slow API is cut with `signal` in the init, as with `ctx.fetch`.
 - **The live site runs what the space was last published with.** A push changes the draft; publishing is the person's.
 
 ## A space's runtime (`runtime`)

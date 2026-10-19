@@ -56,7 +56,7 @@ const OAUTH_CALLBACK_SEGMENTS = ['oauth', 'callback'];
 const CONNECTION_NAME = /^[A-Za-z][A-Za-z0-9-]{0,63}$/;
 
 /** What the platform writes into the consent URL itself: `authorizeParams` may add to it, never change it. */
-const OWN_AUTHORIZE_PARAMS = new Set([
+export const OWN_AUTHORIZE_PARAMS: ReadonlySet<string> = new Set([
   'response_type',
   'client_id',
   'redirect_uri',

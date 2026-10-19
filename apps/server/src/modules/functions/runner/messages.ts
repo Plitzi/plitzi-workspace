@@ -182,7 +182,16 @@ const answerOf = (value: unknown): FunctionAnswer | undefined => {
     return { ok: true, value: value.value };
   }
 
-  return value.ok === false && typeof value.error === 'string' ? { ok: false, error: value.error } : undefined;
+  if (value.ok !== false || typeof value.error !== 'string') {
+    return undefined;
+  }
+
+  return {
+    ok: false,
+    error: value.error,
+    ...(value.refused === true ? { refused: true as const } : {}),
+    ...(typeof value.code === 'string' ? { code: value.code } : {})
+  };
 };
 
 /** What the platform sent the runner, or nothing when it is not one of the protocol's messages. */

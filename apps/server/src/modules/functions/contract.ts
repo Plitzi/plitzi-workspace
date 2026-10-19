@@ -33,6 +33,8 @@ export type FunctionFetchInit = {
   headers?: Record<string, string>;
   body?: string;
   credential?: string;
+  /** Cuts the request short when it aborts (`AbortSignal.timeout(12_000)`); the run's own end cuts it regardless. */
+  signal?: AbortSignal;
 };
 
 /** What a function's `fetch` answers: a web `Response`, whichever runner it is in. */
@@ -43,6 +45,12 @@ export type FunctionFetch = (url: string | URL, init?: FunctionFetchInit) => Pro
  * shares; or a key the code keeps for whom it serves — a profile, a team (`profile:ana`). Letters, digits and `:._@-`.
  */
 export type FunctionOAuthOwner = { owner?: string };
+
+/**
+ * The `code` of a refusal `ctx.oauth` throws (an `ActionRefusal`), to tell it apart by: `oauth-not-connected` — no
+ * account connected for that owner yet, so `connect` first; `oauth-no-owner` — nobody signed in and no `owner` named.
+ */
+export type FunctionOAuthRefusal = 'oauth-not-connected' | 'oauth-no-owner';
 
 /** What `ctx.oauth.status` says of a connection — never its token. */
 export type FunctionOAuthStatus = { connected: boolean; scopes?: string[]; expiresAt?: number };
@@ -59,13 +67,19 @@ export type FunctionOAuth = {
   /**
    * Where to send the visitor to consent (authorization code, PKCE). They come back to `/fn/oauth/callback` — the
    * address to register with the provider, on the space's host — and from there to `returnTo`, a path of the space,
-   * with `?oauth=<connection>&oauth_result=connected` or `&oauth_error=<what>`.
+   * with `?oauth=<connection>&oauth_result=connected` or `&oauth_error=<what>`. `authorizeParams` adds to the
+   * connection's for this consent alone — `{ prompt: 'select_account' }` to choose another account — never one the
+   * platform writes (`state`, `redirect_uri`, `scope`, PKCE's).
    */
-  connect: (connection: string, options: { returnTo: string } & FunctionOAuthOwner) => Promise<{ url: string }>;
+  connect: (
+    connection: string,
+    options: { returnTo: string; authorizeParams?: Record<string, string> } & FunctionOAuthOwner
+  ) => Promise<{ url: string }>;
   status: (connection: string, options?: FunctionOAuthOwner) => Promise<FunctionOAuthStatus>;
   /**
    * A request to the provider's API with the token written in (`Authorization: Bearer`), renewed when it is about to
-   * lapse and once more if the answer is 401. Only to the hosts the space declared (`allow.hosts`).
+   * lapse and once more if the answer is 401. Only to the hosts the space declared (`allow.hosts`). With nobody
+   * connected it refuses, `code: 'oauth-not-connected'` ({@link FunctionOAuthRefusal}).
    */
   fetch: (
     connection: string,

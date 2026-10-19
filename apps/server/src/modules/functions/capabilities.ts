@@ -1,7 +1,7 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import type { FunctionContext, FunctionFetchInit } from './contract';
-import type { FunctionCall, WireBody, WireRequest, WireResponse } from './protocol';
+import type { FunctionContext } from './contract';
+import type { FunctionCall, WireBody, WireFetchInit, WireRequest, WireResponse } from './protocol';
 import type { LaterRequest } from '../actions/jobs/later';
 import type { KvListEntry, KvListPutOptions, KvListRange } from '../actions/runtime/kvList';
 import type { RateLimit } from '../actions/runtime/rateLimit';
@@ -192,7 +192,7 @@ const kvCall = (kv: ActionKvStore, method: string, args: unknown[]): Promise<unk
   }
 };
 
-const fetchInitOf = (value: unknown): FunctionFetchInit => {
+const fetchInitOf = (value: unknown): WireFetchInit => {
   const init = recordArg(value, 'A request');
   const headers = init.headers === undefined ? {} : recordArg(init.headers, 'Headers');
 
@@ -208,6 +208,18 @@ const fetchInitOf = (value: unknown): FunctionFetchInit => {
 
 const optionalString = (value: unknown, what: string): string | undefined =>
   value === undefined || value === null ? undefined : stringArg(value, what);
+
+/** The code's number for a request it may cut short — see {@link FunctionCall}. */
+const requestArg = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    throw new CallError('A request is named by a whole number');
+  }
+
+  return value;
+};
+
+const cutShort = (value: unknown): { request: number } | Record<string, never> =>
+  value === undefined || value === null ? {} : { request: requestArg(value) };
 
 /** A call to `ctx.jobs`, read into the one method it names: a name and an object for `start`, an id for the rest. */
 const jobsCallOf = (call: Record<string, unknown>): FunctionCall => {
@@ -261,8 +273,25 @@ const oauthCallOf = (call: Record<string, unknown>): FunctionCall => {
   const owner = optionalString(call.owner, 'An OAuth owner');
   const own = owner === undefined ? {} : { owner };
   switch (call.method) {
-    case 'connect':
-      return { op: 'oauth', method: 'connect', connection, returnTo: stringArg(call.returnTo, 'returnTo'), ...own };
+    case 'connect': {
+      const params =
+        call.authorizeParams === undefined ? undefined : recordArg(call.authorizeParams, 'authorizeParams');
+
+      return {
+        op: 'oauth',
+        method: 'connect',
+        connection,
+        returnTo: stringArg(call.returnTo, 'returnTo'),
+        ...(params === undefined
+          ? {}
+          : {
+              authorizeParams: Object.fromEntries(
+                Object.entries(params).map(([key, value]) => [key, stringArg(value, `authorizeParams.${key}`)])
+              )
+            }),
+        ...own
+      };
+    }
     case 'status':
     case 'disconnect':
     case 'token':
@@ -271,7 +300,15 @@ const oauthCallOf = (call: Record<string, unknown>): FunctionCall => {
       // A credential is not the OAuth fetch's to name: the connection is what it spends.
       const { credential: _credential, ...init } = fetchInitOf(call.init ?? {});
 
-      return { op: 'oauth', method: 'fetch', connection, url: stringArg(call.url, 'A URL'), init, ...own };
+      return {
+        op: 'oauth',
+        method: 'fetch',
+        connection,
+        url: stringArg(call.url, 'A URL'),
+        init,
+        ...own,
+        ...cutShort(call.request)
+      };
     }
     default:
       throw new CallError('Not an OAuth method the platform answers');
@@ -316,7 +353,14 @@ export const readCall = (value: unknown): FunctionCall => {
         args: Array.isArray(call.args) ? call.args : []
       };
     case 'fetch':
-      return { op: 'fetch', url: stringArg(call.url, 'A URL'), init: fetchInitOf(call.init ?? {}) };
+      return {
+        op: 'fetch',
+        url: stringArg(call.url, 'A URL'),
+        init: fetchInitOf(call.init ?? {}),
+        ...cutShort(call.request)
+      };
+    case 'abort':
+      return { op: 'abort', request: requestArg(call.request) };
     case 'publish':
       return {
         op: 'publish',
@@ -369,6 +413,48 @@ export const readCall = (value: unknown): FunctionCall => {
   }
 };
 
+/** One invocation's requests the code may cut short, by its number for each — and the cuts that came first. */
+type Cuts = { live: Map<number, AbortController>; early: Set<number> };
+
+/** Keyed by the invocation's context: every call of one invocation is answered with the same one. */
+const cutsByRun = new WeakMap<FunctionContext, Cuts>();
+
+const cutsOf = (ctx: FunctionContext): Cuts => {
+  const known = cutsByRun.get(ctx);
+  if (known) {
+    return known;
+  }
+
+  const made: Cuts = { live: new Map(), early: new Set() };
+  cutsByRun.set(ctx, made);
+
+  return made;
+};
+
+/** The work of a request the code numbered, handed the signal its `abort` fires — even one that arrived first. */
+const cuttable = async <T>(
+  ctx: FunctionContext,
+  request: number | undefined,
+  work: (cut: { signal?: AbortSignal }) => Promise<T>
+): Promise<T> => {
+  if (request === undefined) {
+    return work({});
+  }
+
+  const cuts = cutsOf(ctx);
+  const controller = new AbortController();
+  if (cuts.early.delete(request)) {
+    controller.abort();
+  }
+
+  cuts.live.set(request, controller);
+  try {
+    return await work({ signal: controller.signal });
+  } finally {
+    cuts.live.delete(request);
+  }
+};
+
 /**
  * Answers one call from a space's code with the run's own {@link FunctionContext} — the same object a self-hosted
  * server hands its functions, so the sandbox can do exactly what native code can and not one thing more.
@@ -378,7 +464,20 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
     case 'kv':
       return kvCall(ctx.kv, call.method, call.args);
     case 'fetch':
-      return wireResponseOf(await ctx.fetch(call.url, call.init));
+      return cuttable(ctx, call.request, async cut =>
+        wireResponseOf(await ctx.fetch(call.url, { ...call.init, ...cut }))
+      );
+    case 'abort': {
+      const cuts = cutsOf(ctx);
+      const live = cuts.live.get(call.request);
+      if (live) {
+        live.abort();
+      } else {
+        cuts.early.add(call.request);
+      }
+
+      return null;
+    }
     case 'publish':
       return ctx.publish(call.topic, call.type, call.data);
     case 'grant':
@@ -402,6 +501,7 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
         case 'connect':
           return ctx.oauth.connect(call.connection, {
             returnTo: call.returnTo,
+            ...(call.authorizeParams === undefined ? {} : { authorizeParams: call.authorizeParams }),
             ...(call.owner === undefined ? {} : { owner: call.owner })
           });
         case 'status':
@@ -411,11 +511,14 @@ export const answerCall = async (ctx: FunctionContext, call: FunctionCall): Prom
         case 'token':
           return ctx.oauth.token(call.connection, call.owner === undefined ? {} : { owner: call.owner });
         case 'fetch':
-          return wireResponseOf(
-            await ctx.oauth.fetch(call.connection, call.url, {
-              ...call.init,
-              ...(call.owner === undefined ? {} : { owner: call.owner })
-            })
+          return cuttable(ctx, call.request, async cut =>
+            wireResponseOf(
+              await ctx.oauth.fetch(call.connection, call.url, {
+                ...call.init,
+                ...cut,
+                ...(call.owner === undefined ? {} : { owner: call.owner })
+              })
+            )
           );
       }
 

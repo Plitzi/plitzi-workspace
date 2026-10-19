@@ -77,6 +77,63 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
 
   const listOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
+  /** What a request's `signal` is, in whichever environment: an `AbortSignal` of its own, or one written the same. */
+  type CodeSignal = {
+    aborted: boolean;
+    reason: unknown;
+    addEventListener: (type: 'abort', listener: () => void, options: { once: boolean }) => void;
+    removeEventListener: (type: 'abort', listener: () => void) => void;
+  };
+
+  const isSignal = (value: unknown): value is CodeSignal =>
+    isRecord(value) &&
+    typeof value.aborted === 'boolean' &&
+    typeof value.addEventListener === 'function' &&
+    typeof value.removeEventListener === 'function';
+
+  /** Why a request was cut: the signal's reason, as a web `fetch` rejects with it — an `AbortError` when it gave none. */
+  const abortedWith = (signal: CodeSignal): Error =>
+    signal.reason instanceof Error
+      ? signal.reason
+      : Object.assign(new Error('This operation was aborted'), { name: 'AbortError' });
+
+  let requests = 0;
+
+  /**
+   * A request the code may cut short with its init's `signal`: the signal stays here — it does not cross — and the
+   * call is numbered, so that its firing tells the platform which request to cut (`abort`). The code stops waiting at
+   * once, with the signal's reason, as a web `fetch` does.
+   */
+  const cuttable = (message: Record<string, unknown>, init: Record<string, unknown>): Promise<unknown> => {
+    const { signal: given, ...rest } = init;
+    if (given === undefined || given === null) {
+      return call({ ...message, init: rest });
+    }
+
+    if (!isSignal(given)) {
+      return Promise.reject(new TypeError('The signal of a request is an AbortSignal'));
+    }
+
+    if (given.aborted) {
+      return Promise.reject(abortedWith(given));
+    }
+
+    const request = ++requests;
+
+    return new Promise((resolve, reject) => {
+      const cut = () => {
+        call({ op: 'abort', request }).catch(() => undefined);
+        reject(abortedWith(given));
+      };
+      given.addEventListener('abort', cut, { once: true });
+      call({ ...message, init: rest, request })
+        .then(resolve, reject)
+        .finally(() => {
+          given.removeEventListener('abort', cut);
+        });
+    });
+  };
+
   /** A value as the wire can carry it; how a line reads is the platform's (`lineOf`), not the driver's. */
   const wireValue = (value: unknown): unknown => {
     if (value instanceof Error) {
@@ -123,7 +180,7 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       ...facts,
       kv,
       fetch: async (url: string | URL, init: Record<string, unknown> = {}) => {
-        const answer = await call({ op: 'fetch', url: String(url), init });
+        const answer = await cuttable({ op: 'fetch', url: String(url) }, init);
 
         return responseOf(isRecord(answer) ? answer : {});
       },
@@ -158,7 +215,14 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
       },
       oauth: {
         connect: (connection: string, options: Record<string, unknown> = {}) =>
-          call({ op: 'oauth', method: 'connect', connection, returnTo: options.returnTo, owner: options.owner }),
+          call({
+            op: 'oauth',
+            method: 'connect',
+            connection,
+            returnTo: options.returnTo,
+            authorizeParams: options.authorizeParams,
+            owner: options.owner
+          }),
         status: (connection: string, options: Record<string, unknown> = {}) =>
           call({ op: 'oauth', method: 'status', connection, owner: options.owner }),
         disconnect: (connection: string, options: Record<string, unknown> = {}) =>
@@ -167,7 +231,7 @@ export const createFunctionsDriver = (environment: FunctionsDriverEnvironment) =
           call({ op: 'oauth', method: 'token', connection, owner: options.owner }),
         fetch: async (connection: string, url: string | URL, init: Record<string, unknown> = {}) => {
           const { owner, ...rest } = init;
-          const answer = await call({ op: 'oauth', method: 'fetch', connection, url: String(url), init: rest, owner });
+          const answer = await cuttable({ op: 'oauth', method: 'fetch', connection, url: String(url), owner }, rest);
 
           return responseOf(isRecord(answer) ? answer : {});
         }

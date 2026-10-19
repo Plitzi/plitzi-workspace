@@ -89,7 +89,7 @@ Everything a function does besides computing goes through `ctx` — the same obj
 | `ctx.kv` | The space's key/value store: `get`, `set`, `delete`, `increment`, `swap` (compare-and-set), `change` (read, change and write back — again when somebody wrote first) and scored lists (`listPut`, `listRange`, `listRemove`) — the same store the `kv.*` and `list.*` steps use |
 | `ctx.rateLimit(bucket, { most, perSeconds, per, refuse })` | Counts one more and answers `{ allowed, count, remaining }` — per caller, or `per: 'everyone'`. The same count as `flow.rateLimit` on that bucket. With `refuse`, past the limit it refuses the call with those words instead; without, what to answer is the code's |
 | `ctx.sign(value)`, `ctx.verify(value, signature)` | HMAC-SHA-256 with a key of the space's own that the platform keeps: a link, an invitation, a key handed to a page. The code never holds the key, and what one space or environment signed no other verifies |
-| `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare |
+| `ctx.fetch(url, init)` | To the hosts in `allow.hosts` only (`*.example.com` is every subdomain of it, not `example.com` itself), through the platform's outbound guard: private and cluster addresses are refused whatever you declare. `init.signal` cuts the request short (`AbortSignal.timeout(12_000)`), as the run's end does |
 | `ctx.publish`, `ctx.grant`, `ctx.revoke` | The space's realtime channels, as the server — see [Realtime channels](./realtime.md) |
 | `ctx.jobs` | The space's jobs — work longer than a request, run on the server slice by slice: `start`, `get`, `pause`, `resume`, `cancel` — see [Jobs](#6-jobs-work-longer-than-a-request) |
 | `ctx.oauth` | OAuth 2.0 on behalf of a visitor (or the space) through the connections it declared: `connect`, `status`, `fetch` with the token written in, `disconnect`; `token` only for a connection declaring `exposeToken`. Otherwise the code never holds a token — see [OAuth connections](#oauth-connections) |
@@ -113,7 +113,10 @@ The function may run more than once, so it only computes: anything it must do on
 **Refusing is `ActionRefusal`**, from `@plitzi/sdk-server/functions`: throw it with a reason written for whoever
 asked, and the page reads it as the step's error (`{{ step.error }}`) — a route answers it with a `400` and
 `{ "error": … }`. Anything else a function throws stays in the run's record and the caller only learns that it failed:
-an error can carry a query, a URL or a credential's name, and a page is read by anybody.
+an error can carry a query, a URL or a credential's name, and a page is read by anybody. A refusal may carry a `code`
+(`new ActionRefusal(reason, { code: 'board-full' })`) for code that catches it to tell it apart by: the reason is
+written for a person and may change. The platform's own refusals carry one too — `ctx.oauth`'s
+`oauth-not-connected` — and reach the code as refusals, in the sandbox and in a runtime alike.
 
 ```ts
 import { ActionRefusal, defineFunctions } from '@plitzi/sdk-server/functions';
@@ -221,8 +224,9 @@ A route is a web-standard handler — `(request, ctx) => Response` — keyed by 
   is who the session says.
 - **It sets no cookies**: `Set-Cookie` is dropped — the host's cookies are the platform's.
 - An answer is `Cache-Control: no-store` unless the route says otherwise.
-- A route that throws answers `500 {"error":"This route failed"}`; one stopped by a limit `503`. The reason is in the
-  server's log, not in the answer.
+- A route that refuses (`ActionRefusal`, its own or one of the platform's it let through) answers `400 {"error":…}`
+  with the reason. One that throws anything else answers `500 {"error":"This route failed"}`; one stopped by a limit
+  `503`. That reason is in the server's log, not in the answer.
 - `/fn` is never a page: a page (or folder) whose path falls under it is refused (`page-route-reserved`).
 
 ### OAuth connections
@@ -255,6 +259,14 @@ export default defineFunctions({
       const { url } = await ctx.oauth.connect('calendar', { returnTo: '/settings' });
       return Response.redirect(url, 302);
     },
+    // Another account: what this one consent adds to the connection's authorizeParams.
+    'GET /connect/calendar/another': async (request, ctx) => {
+      const { url } = await ctx.oauth.connect('calendar', {
+        returnTo: '/settings',
+        authorizeParams: { prompt: 'select_account' }
+      });
+      return Response.redirect(url, 302);
+    },
     'GET /agenda': async (request, ctx) =>
       ctx.oauth.fetch('calendar', 'https://www.googleapis.com/calendar/v3/users/me/calendarList')
   }
@@ -264,13 +276,25 @@ export default defineFunctions({
 - **The flow** is the authorization code with PKCE. `connect` answers where to send the visitor, and remembers who
   asked for ten minutes. The provider sends them back to **`/fn/oauth/callback`** on the space's host, the one address
   to register with every provider. The platform exchanges the code there and sends the visitor to `returnTo` (a path of
-  the space) with `?oauth=<connection>&oauth_result=connected`, or `&oauth_error=<what>`.
+  the space) with `?oauth=<connection>&oauth_result=connected`, or `&oauth_error=<what>`. `connect`'s
+  `authorizeParams` adds to the connection's for that one consent (`prompt: 'select_account'`, a `login_hint`); one the
+  platform writes (`state`, `redirect_uri`, `scope`, PKCE's) is refused, saying so.
+- **Where they come back, self-hosted.** A server of one space reached on several addresses — a project's on
+  `localhost`, its loopback and the network — fixes the one providers send visitors to: `functions.oauth.callbackOrigin`
+  in `createServer`. The project's server (`serveProject`) sets it to the address people reach it on (`PUBLIC_URL`, or
+  its HTTPS address on the network), or its loopback `127.0.0.1` when that one is plain HTTP — providers take `http`
+  on loopback alone, and refuse `localhost` (RFC 8252) — and says it as it starts:
+  `OAuth providers send visitors back to …/fn/oauth/callback`. That is the address to register. From there the visitor
+  goes on to `returnTo` on the address they started from.
 - **Whose:** a signed-in visitor's own by default (`user:<id>`). `{ owner: 'space' }` makes one the whole space shares,
   and any key of the code's own (`{ owner: 'profile:ana' }`) one per whom the code serves. With nobody signed in and no
   owner named, the call is refused, saying so.
 - **The token is the platform's.** It is kept in the space's `kv`, sealed with a key of the space's own that no
   signature of `ctx.sign` reaches. `ctx.oauth.fetch` writes it into the request, renews it a minute before it lapses,
-  and renews it once more on a 401. It goes only to `allow.hosts`, through the same outbound guard as `ctx.fetch`.
+  and renews it once more on a 401. It goes only to `allow.hosts`, through the same outbound guard as `ctx.fetch`, and
+  `init.signal` cuts it short as it does there. With nobody connected for that owner, `fetch` and `token` refuse with
+  `code: 'oauth-not-connected'`; with nobody signed in and no owner named, `oauth-no-owner` — tell them apart by the
+  code, never the sentence.
   `status` says whether there is a connection, its scopes and when it lapses, never the token.
 - **An SDK in the page that asks for the token itself** (Spotify's Web Playback, Google's Picker) can't go through the
   server. Its connection declares `exposeToken: true`, and `ctx.oauth.token(name)` answers the access token

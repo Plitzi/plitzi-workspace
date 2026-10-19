@@ -2,15 +2,9 @@ import { WebSocket } from 'ws';
 
 import { readResponseMessage } from './messages';
 import { frameText } from '../../../helpers/wsFrame';
-import { FUNCTIONS_PROTOCOL, FunctionFailure } from '../protocol';
+import { FUNCTIONS_PROTOCOL, FunctionFailure, failedAnswerOf } from '../protocol';
 
-import type {
-  FunctionAnswer,
-  FunctionRunner,
-  FunctionUsage,
-  RunnerRequestMessage,
-  StreamedRouteAnswer
-} from '../protocol';
+import type { FunctionRunner, FunctionUsage, RunnerRequestMessage, StreamedRouteAnswer } from '../protocol';
 
 export type RemoteRunnerOptions = {
   /** The runner service, `ws://functions-runner:8790`. */
@@ -130,15 +124,7 @@ export const createRemoteRunner = ({
           case 'call':
             answer(message.call).then(
               value => send({ type: 'answer', id: message.id, answer: { ok: true, value: value ?? null } }),
-              (error: unknown) =>
-                send({
-                  type: 'answer',
-                  id: message.id,
-                  answer: {
-                    ok: false,
-                    error: error instanceof Error ? error.message : String(error)
-                  } satisfies FunctionAnswer
-                })
+              (error: unknown) => send({ type: 'answer', id: message.id, answer: failedAnswerOf(error) })
             );
 
             return;

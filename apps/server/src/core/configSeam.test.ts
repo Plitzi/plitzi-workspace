@@ -109,4 +109,17 @@ describe('the code a deployment hands in', () => {
     expect(functionsConfigOf({ plugins: { board: { routes: {} } } })).toEqual({ plugins: { board: { routes: {} } } });
     expect(() => functionsConfigOf({ plugins: { board: 'index.ts' } })).toThrow('`plugins` by type');
   });
+
+  it('takes the origin OAuth providers send visitors back to, and refuses one that is not an origin', () => {
+    expect(functionsConfigOf({ oauth: { callbackOrigin: 'https://127.0.0.1:8080' } })).toEqual({
+      oauth: { callbackOrigin: 'https://127.0.0.1:8080' }
+    });
+    for (const written of ['https://example.com/', 'https://example.com/fn', 'example.com']) {
+      expect(() => functionsConfigOf({ oauth: { callbackOrigin: written } })).toThrow(
+        '`functions.oauth.callbackOrigin` is an origin'
+      );
+    }
+
+    expect(() => functionsConfigOf({ oauth: { callbackOrigin: 8080 } })).toThrow('`oauth` with a `callbackOrigin`');
+  });
 });
