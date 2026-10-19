@@ -1,5 +1,29 @@
 # @plitzi/sdk-server
 
+## 0.38.22
+
+### Patch Changes
+
+- 19fbc45: ## Server
+
+  - **`ctx.oauth`, after a project moved onto it** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`) — PZ-155..158.
+    `functions.oauth.callbackOrigin` fixes the one address providers send a visitor back to, on a server of one space
+    reached on several: `serveProject` sets it to the address people reach it on, or its loopback `127.0.0.1` when that is
+    plain HTTP (providers refuse `http` past loopback, and `localhost`), and prints it as it starts; the callback then sends
+    the visitor on to `returnTo` on the address they started from — its `location` is absolute now. `connect(name,
+{ returnTo, authorizeParams })` adds to the connection's parameters for one consent (`prompt: 'select_account'`), and
+    refuses one the platform writes. `ctx.fetch` and `ctx.oauth.fetch` take `init.signal`: in the sandbox and a runtime the
+    request is numbered and the code's `abort` cuts it on the platform. `ActionRefusal` takes `{ code }`; `ctx.oauth`
+    refuses with `oauth-not-connected` and `oauth-no-owner`.
+  - **A refusal of the platform's stays one across the sandbox** (`@plitzi/sdk-server`). A call answered with an
+    `ActionRefusal` crossed the isolate, the runner service and a runtime as a plain error: caught, the code could not tell
+    it apart; uncaught, a route answered 500 `This route failed` instead of 400 and the reason. The answer carries
+    `refused` and `code` now, and the code catches the refusal it was thrown.
+
+- Updated dependencies [19fbc45]
+  - @plitzi/plitzi-sdk@0.38.22
+  - @plitzi/sdk-shared@0.38.22
+
 ## 0.38.21
 
 ### Patch Changes
