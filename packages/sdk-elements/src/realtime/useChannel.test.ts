@@ -107,7 +107,14 @@ describe('useJob', () => {
   const view = (status: string, progress?: number) => ({
     topic: '$job:job:1:a',
     type: 'job',
-    data: { id: 'job:1:a', name: 'train', status, ...(progress === undefined ? {} : { progress }), createdAt: 1, updatedAt: 2 },
+    data: {
+      id: 'job:1:a',
+      name: 'train',
+      status,
+      ...(progress === undefined ? {} : { progress }),
+      createdAt: 1,
+      updatedAt: 2
+    },
     from: 'server',
     at: progress ?? 9,
     retained: true as const

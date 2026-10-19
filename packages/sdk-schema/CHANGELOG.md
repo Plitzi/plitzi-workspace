@@ -1,5 +1,122 @@
 # @plitzi/sdk-schema
 
+## 0.38.21
+
+### Patch Changes
+
+- 19fbc45: ## Server
+
+  - **Jobs: work longer than a request** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`, `@plitzi/sdk-elements`,
+    `@plitzi/plitzi-sdk`, `@plitzi/sdk-authoring`) — PZ-136. A space's code declares them in
+    `defineFunctions({ jobs: { train: { watch, maxSeconds, run(input, job, ctx) } } })` and starts them with
+    `ctx.jobs.start(name, input, { key })` (`get`, `pause`, `resume`, `cancel` beside it). They run in the actions' durable
+    queue — leased, taken over when a server dies, retried with backoff — slice by slice, in the sandbox, in a space's
+    runtime and natively alike: `job.save(state)` is the one checkpoint and the next slice starts with `job.state`;
+    `job.report(fraction, step)` says how far it is; on `job.signal` (`job.stopping`: `pause`, `cancel`, `limit`,
+    `shutdown`) the code has 5 s to save and return. A sandbox slice runs at most `sliceMs` and goes on in the next if it
+    saved since it began — one that saved nothing fails, so a job cannot loop forever; a runtime's runs until the job's
+    time is up. A real pause: `paused` keeps what it saved until resumed. Who may watch it is RBAC: whoever started it, and
+    whoever its `watch` (a channel's access) lets in, on `$job:<id>` — the platform's topic, retained — read with
+    `useJob(id)` or a `channel` element on `$job:{{ id }}`; the view never carries its input, its state, or an error other
+    than the code's own refusal. Limits per space (its plan) through `functions.jobs.limitsFor` —
+    `DEFAULT_FUNCTION_JOB_LIMITS` otherwise: 10 running across the account's spaces (`pool`, the oldest first), 1,000
+    waiting, 6 h, slices of 5 min / 30 s CPU / 10,000 calls, 1 MB of state.
+  - **The queue's types are the queue's** (`@plitzi/sdk-shared`, `@plitzi/sdk-server`): `ActionJobQueue`, `ActionJob`,
+    `ActionJobInput`, `ActionJobStatus`, `ActionJobAttempt`, `ActionJobSettlement`, `ActionJobQuery` are `JobQueue`, `Job`,
+    `JobInput`, `JobStatus`, `JobAttempt`, `JobSettlement`, `JobQuery` (`ACTION_JOB_STATUSES` → `JOB_STATUSES`,
+    `isJobStatus`, `TERMINAL_JOB_STATUSES`) — the queue holds a schedule's fires, the runs set for later and the jobs of
+    the spaces' functions. **What a job runs is its `target`**: `{ kind: 'action', name, trigger }` or
+    `{ kind: 'function', name, user, watch, at }`, in place of `actionId`, `trigger` and `function`; `listJobs` filters
+    by `kind` and `name`. Also on the queue: `paused` with `pause`/`resume`, `write` for what a running job saves and
+    reports, `state`/`progress`/`result`/`activeMs`, `heartbeat` answering `{ jobId, stop: 'cancel' | 'pause' }[]`, a
+    settlement's explicit `refund`, `requeue(…, { input, fresh })`. The helpers bring a store a release before left up
+    to it by themselves: MySQL's `ensureJobTables` gives each job its target from `action_id`/`trigger_type` and drops
+    them (`mysqlJobSchemaUpgrades` lists the statements for a deployment's own migrations); Mongo's queue does the same
+    to the documents on first use and drops the `spaceId_1_actionId_1_updatedAt_-1` index. A deployment with a queue of
+    its own: the contract tests (`describeJobQueue`) say what it must now do.
+  - **A runtime's routes stream** (`@plitzi/sdk-server`): a route under `/fn/` answered by a space's runtime is passed on
+    as it is written — its head at once, its body as the code writes it, with the platform's `ctx` — over the functions
+    protocol's new `head`/`chunk` messages, with no time limit once it answered; the deployment's own routes stream too.
+    A runtime's `endpoints` are for addresses outside `/fn/` (an MCP server at `/mcp`); anything that can live under
+    `/fn/` is a route. A sandbox's routes are answered whole, as before.
+  - **`createJobControl({ queue, realtime: { pubsub, kv } })`** (`@plitzi/sdk-server/actions`): an operator's
+    `pause`/`resume`/`cancel`/`requeue` from a process that serves no pages — a Queue panel's API — each said on
+    `$job:<id>` through the page server's own pub/sub and retained store, so a watcher hears what an operator did.
+  - **A run's user carries no session** (`RunUser`): what a step, a function and a job see of who asked.
+  - **The builder shows the jobs** (`@plitzi/plitzi-builder`, `@plitzi/sdk-shared`): **Server → Functions** lists the
+    jobs the code declares as it is typed (how long each may run; one spread in or built by a call is counted, not
+    guessed), and the inspector of one says how it is started and who may watch it, with the space's runs of it — live
+    while one moves, progress and step as its code reported them — and **Pause**, **Resume**, **Cancel** and **Run
+    again**. Through two new builder operations, `SpaceJobs(kind, name, status, page, pageSize)` — a `SpaceJob` each:
+    what it runs, where it is and how far, never its input, state or result — and `SpaceControlJob(jobId, control)`
+    (`JobControlAction`). Beside them in `@plitzi/sdk-shared/actions`: `JOB_KINDS`/`isJobKind`, and `actionAccessOf`, the
+    one reading of a channel's access, which the functions' manifest now reads a job's `watch` with too.
+
+  - **`ctx.oauth.token` for an SDK in the page** (`@plitzi/sdk-server`, `@plitzi/sdk-shared`): Spotify's Web Playback,
+    Google's Picker and their kind ask the page for the access token themselves, and `ctx.oauth` kept every token on the
+    server. A connection that declares `exposeToken: true` now answers `ctx.oauth.token(name, { owner })` —
+    `{ token, type, expiresAt, scopes }`, renewed first when about to lapse — for a route of the code to hand to the
+    connection's owner. The refresh token never leaves; a connection without `exposeToken` refuses `token`, naming the
+    field. Through the sandbox's protocol and natively alike.
+
+  - **A page for some permissions, kept by the server** (`@plitzi/sdk-shared`, `@plitzi/sdk-server`,
+    `@plitzi/sdk-authoring`, `@plitzi/sdk-elements`, `@plitzi/plitzi-builder`): a page says
+    `access: { permissions: [...] }`, and a visitor without every one is answered 401 (or the page's sign-in redirect) or
+    403 with a refusal drawn in the page's layout. Its content is withheld from everything that visitor is sent — the
+    render, the hydration payload, the space document (and a document built for somebody with access is not handed to
+    somebody without it by its name) and the page's server data. The builder's page settings take the permissions;
+    authoring refuses an `access` the server could not keep (`page-access`). A space read back as code — `plitzi create
+--from`, the Export — keeps each page's `access`, so a protected page is never exported open. A page's handle carries
+    its `access` too, and a project's `visual/home.spec.ts` leaves such a page to a test that signs in, as it does a page
+    behind a session (`plitzi upgrade` rewrites an untouched one).
+  - **A project's first plugin is picked up while it runs** (`@plitzi/sdk-server`): `start:dev` registers a plugin folder
+    added under `src/plugins/` and reloads the open pages — but only watched that folder when it existed at boot, so a
+    project with no plugin yet (one taken out of a space that had none) showed nothing of its first `plitzi plugin add`
+    until a restart. With no folder, the server waits for it to appear and takes what it holds then.
+
+  ## Packaging
+  - **No package ships the declarations of its tests** (`@plitzi/sdk-server`, `@plitzi/sdk-mcp`, `@plitzi/plitzi-sdk`,
+    `@plitzi/plitzi-builder`, `@plitzi/sdk-elements`, `@plitzi/sdk-shared`): each app wrote its declarations with its own
+    `dts({ exclude })`, and the ones that left the tests out of it shipped a `.test.d.ts` beside their modules — 148 in
+    sdk-server alone — and the base config let a `.bench.d.ts` through. Every `dts()` now excludes
+    `'**/*.(test|bench).(ts|tsx)'`, and `yarn check:dist-exports` (CI, after `build:prod`) fails a build of any published
+    package that holds one.
+  - **`@plitzi/plitzi-builder` depends on `graphql` ^16** (was ^17): Apollo Server — the builder's API — supports only
+    16, so a host installing the builder beside it got two copies. The builder uses nothing of 17's.
+
+  ## Elements
+  - **A dropdown closes when a link in it is chosen** (`@plitzi/sdk-elements`): a link stops its click from bubbling,
+    and the popup listened for clicks on the way up — so no menu of links ever closed, and a click that did reach it was
+    cancelled, which would have kept an external link from going anywhere. The popup now hears the click as it goes down
+    and lets it through.
+
+  ## CLI
+  - **A refused push says why** (`@plitzi/cli`): `space push functions` and the data push read any 409 as "changed since
+    your pull" — and the platform also answers 409 when the space has no private bucket to keep its code or data in, so
+    a first push to a space with no storage sent its author to pull, which changed nothing. The CLI now names a conflict
+    only when the refusal says `version`, and prints the platform's own words otherwise (where to add the bucket).
+  - **`create` points at the Academy** (`@plitzi/cli`): its last lines name the docs' Academy,
+    `https://docs.plitzi.com/academy`, for whoever is new to Plitzi — and the README the docs themselves.
+
+  ## Builder
+  - **A space served by Plitzi has a server, and the builder says so** (`@plitzi/plitzi-builder`, `@plitzi/sdk-shared`):
+    whether a space can run its actions and resolve its connectors was read off an SSR _credential_, which only a space
+    deployed to a page server of its own has — so every space served at `<space>.plitzi.app` showed "No server-rendered
+    deployment" over Server and counted its actions unavailable, while they ran. The deployments now carry what serves
+    them (`provider`), and a deployment served by SSR — Plitzi's or the space's — counts.
+  - **New Layout saves the layout** (`@plitzi/sdk-schema`): a layout is a root of the pages' tree, added with no anchor,
+    and `flatMapOf` found no tree for an empty anchor — so the server refused every new layout, saying it was "already
+    added". A root now goes into the pages' tree, and the refusal says which of the two it is.
+  - **Settings → Realtime: a space's channels, declared by hand** (`@plitzi/plitzi-builder`): `settings.channels` was
+    written only in code or by an agent over MCP, so a space made in the builder could not open a channel. The section
+    lists the channels with who may join (anyone, signed-in visitors, visitors with permissions), who may speak (pages, or
+    only the server's `Publish On Channel`), presence, a grant, keeping the last message and the two limits — saved only
+    when `channelProblems` passes, with what is wrong said under the channel otherwise.
+
+- Updated dependencies [19fbc45]
+  - @plitzi/sdk-shared@0.38.21
+  - @plitzi/sdk-style@0.38.21
+
 ## 0.38.20
 
 ### Patch Changes

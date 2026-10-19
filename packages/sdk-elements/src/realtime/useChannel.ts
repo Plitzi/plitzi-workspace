@@ -79,8 +79,7 @@ const useChannel = (
    * and a job's topic (`$job:<id>`), which is the platform's, not one a space declares.
    */
   const topic =
-    asked &&
-    (jobOfTopic(asked) !== undefined || (channels ? matchChannel(asked, channels) : isValidTopic(asked)))
+    asked && (jobOfTopic(asked) !== undefined || (channels ? matchChannel(asked, channels) : isValidTopic(asked)))
       ? asked
       : undefined;
   const [endpoint] = useCommonStore('realtime.endpoint');
