@@ -6,9 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { isThisMachine, siteOwnership } from './siteOwnership';
 import { writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 let platform: FakePlatform;
 let home: string;
@@ -52,7 +52,7 @@ describe('siteOwnership', () => {
       await siteOwnership(new URL('https://www.shop.example.com/pricing'), { api: platform.api, account: true })
     ).toEqual({
       ok: true,
-      said: 'shop.example.com, verified for Website'
+      said: 'shop.example.com, verified for Shop'
     });
   });
 

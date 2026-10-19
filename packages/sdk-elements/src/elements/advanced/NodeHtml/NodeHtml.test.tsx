@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 import { NodeHtml } from './NodeHtml';
 import ElementContext from '../../../Element/ElementContext';
-import { skipHocEntry } from '../../../testUtils/elementTestUtils';
+import { skipHocEntry } from '../../../tests/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

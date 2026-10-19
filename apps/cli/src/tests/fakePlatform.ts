@@ -64,10 +64,10 @@ export interface FakePlatform {
   /** Space 3's runtime: every push as it arrived, and its variables — a value the platform keeps and never shows. */
   runtime: { pushed: FakeUpload[]; variables: Map<string, string> };
   /**
-   * Space 3 (Pizarra) as its export gives it: its pages as code, by path, and the packages its code asks for — the
+   * Space 3 (Shop) as its export gives it: its pages as code, by path, and the packages its code asks for — the
    * draft's, and each published environment's by revision.
    */
-  pizarra: {
+  shop: {
     pages: Record<string, string>;
     dependencies: Record<string, string>;
     snapshots: Partial<Record<string, Record<number, { pages: Record<string, string>; description: string }>>>;
@@ -167,7 +167,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
       } else if (url.pathname === '/revoke') {
         platform.revoked.push(form.get('token') ?? '');
         json(res, 200, {});
-      } else if (url.pathname === '/files/pizarra/assets/world.json') {
+      } else if (url.pathname === '/files/shop/assets/prices.json') {
         // A public CDN's file: no session asked for, as a bucket serving a space's files asks none.
         json(res, 200, { land: [] });
       } else if (!signedIn) {
@@ -178,12 +178,12 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
         // `shop.example.com` is a verified domain of space 3; nothing else is anybody's.
         const host = url.searchParams.get('host') ?? '';
         if (host === 'shop.example.com' || host.endsWith('.shop.example.com')) {
-          json(res, 200, { domain: 'shop.example.com', space: { id: 3, name: 'Website' } });
+          json(res, 200, { domain: 'shop.example.com', space: { id: 3, name: 'Shop' } });
         } else {
           json(res, 404, { error: `No space of yours has a verified domain that covers ${host}` });
         }
       } else if (url.pathname === '/spaces/3') {
-        json(res, 200, { space: { id: 3, name: 'Website', permanentUrl: 'website' } });
+        json(res, 200, { space: { id: 3, name: 'Shop', permanentUrl: 'shop' } });
       } else if (url.pathname === '/spaces/3/cdns') {
         json(res, 200, { cdns: platform.cdns });
       } else if (
@@ -197,7 +197,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
           bytes: body.byteLength
         });
         json(res, 201, {
-          resource: { path: 'https://cdn.example.com/website/plugins/ab12_seat-picker/ab12_seat-picker.zip' },
+          resource: { path: 'https://cdn.example.com/shop/plugins/ab12_seat-picker/ab12_seat-picker.zip' },
           plugin: { root: 'seatPicker', version: '1.2.0' },
           installed: 'added'
         });
@@ -252,24 +252,24 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
       ) {
         const at = url.searchParams.get('path') ?? '';
         platform.assets[at] = { contentType: req.headers['content-type'] ?? '', bytes: body.byteLength };
-        json(res, 201, { resource: {}, url: `https://cdn.example.com/pizarra/assets/${at}` });
+        json(res, 201, { resource: {}, url: `https://cdn.example.com/shop/assets/${at}` });
       } else if (url.pathname === '/spaces/3/import' && req.method === 'PUT') {
         const sent = JSON.parse(body.toString()) as SpaceImport;
-        const { pizarra } = platform;
-        if (!sent.force && sent.base !== null && sent.base !== pizarra.draft) {
+        const { shop } = platform;
+        if (!sent.force && sent.base !== null && sent.base !== shop.draft) {
           json(res, 409, { ok: false, refusal: { code: 'DRAFT_MOVED', error: 'The space’s draft changed' } });
-        } else if (!sent.force && sent.base === null && pizarra.worked) {
+        } else if (!sent.force && sent.base === null && shop.worked) {
           json(res, 409, { ok: false, refusal: { code: 'DRAFT_NOT_EMPTY', error: 'The space holds work' } });
         } else if (sent.actions?.some(({ document }) => !document || typeof document !== 'object')) {
           json(res, 422, { ok: false, problems: ['action "broken": the document must be an object'] });
         } else {
-          pizarra.imports.push(sent);
-          pizarra.worked = true;
-          pizarra.draft = `draft-${String(pizarra.imports.length + 1)}`;
-          json(res, 200, { ok: true, changed: true, draft: pizarra.draft });
+          shop.imports.push(sent);
+          shop.worked = true;
+          shop.draft = `draft-${String(shop.imports.length + 1)}`;
+          json(res, 200, { ok: true, changed: true, draft: shop.draft });
         }
-      } else if (url.pathname === '/spaces/pizarra/export' || url.pathname === '/spaces/3/export') {
-        const exported = pizarraExport(url);
+      } else if (url.pathname === '/spaces/shop/export' || url.pathname === '/spaces/3/export') {
+        const exported = shopExport(url);
         json(res, exported.status, exported.body);
       } else if (url.pathname === '/spaces/locked/export') {
         json(res, 403, { error: 'Taking a space out as a project is for whoever may change it' });
@@ -339,8 +339,8 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     server.listen(0, '127.0.0.1', () => done());
   });
 
-  /** What `GET /spaces/:id/export` answers for Pizarra: the draft, or a published environment's snapshot. */
-  const pizarraExport = (url: URL): { status: number; body: SpaceExport | { error: string } } => {
+  /** What `GET /spaces/:id/export` answers for Shop: the draft, or a published environment's snapshot. */
+  const shopExport = (url: URL): { status: number; body: SpaceExport | { error: string } } => {
     const askedEnvironment = url.searchParams.get('environment') ?? 'main';
     const environment = ENVIRONMENTS.find(candidate => candidate === askedEnvironment);
     if (!environment) {
@@ -348,14 +348,14 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     }
 
     const asked = url.searchParams.get('revision');
-    const revisions = platform.pizarra.snapshots[environment] ?? {};
+    const revisions = platform.shop.snapshots[environment] ?? {};
     const revision = asked ? Number(asked) : Math.max(0, ...Object.keys(revisions).map(Number));
     const snapshot = environment === 'main' ? undefined : revisions[revision];
     if (environment !== 'main' && !snapshot) {
       return { status: 404, body: { error: `${environment} has no snapshot to take out` } };
     }
 
-    const pages = snapshot?.pages ?? platform.pizarra.pages;
+    const pages = snapshot?.pages ?? platform.shop.pages;
     const version: SpaceExport['version'] = snapshot
       ? {
           environment,
@@ -368,17 +368,17 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
       status: 200,
       body: {
         format: 1,
-        space: { id: 3, name: 'Pizarra', permanentUrl: 'pizarra' },
+        space: { id: 3, name: 'Shop', permanentUrl: 'shop' },
         version,
-        draft: snapshot ? null : platform.pizarra.draft,
-        authoring: url.searchParams.get('source') === 'cloud' ? null : { exportName: 'pizarra', files: pages },
+        draft: snapshot ? null : platform.shop.draft,
+        authoring: url.searchParams.get('source') === 'cloud' ? null : { exportName: 'shop', files: pages },
         actions: [],
         connectors: [],
         functions: platform.functions,
         data: platform.data,
-        source: { files: {}, dependencies: platform.pizarra.dependencies, runtime: null, plugins: [] },
+        source: { files: {}, dependencies: platform.shop.dependencies, runtime: null, plugins: [] },
         builtOnly: { plugins: [], runtime: null },
-        assets: [{ url: `${platform.api}/files/pizarra/assets/world.json`, path: 'assets/world.json' }],
+        assets: [{ url: `${platform.api}/files/shop/assets/prices.json`, path: 'assets/prices.json' }],
         variables: [],
         credentials: [],
         visitorRoles: [],
@@ -418,8 +418,8 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     tried: [],
     runtime: { pushed: [], variables: new Map() },
     activity: { pages: [], asked: [] },
-    pizarra: {
-      pages: { 'index.ts': 'export const pizarra = {};\n' },
+    shop: {
+      pages: { 'index.ts': 'export const shop = {};\n' },
       dependencies: {},
       snapshots: {},
       draft: 'draft-1',

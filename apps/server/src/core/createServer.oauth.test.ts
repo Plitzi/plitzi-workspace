@@ -8,7 +8,7 @@ import { createJsonAdapters } from '../adapters/jsonAdapters';
 import { createActionsModule } from '../modules/actions';
 import { createIsolateRunner } from '../modules/functions/sandbox/isolate';
 import { functionsInHand } from '../modules/functions/space';
-import { offlineDataOf } from '../modules/ssr/testing/offlineData';
+import { offlineDataOf } from '../modules/ssr/tests/offlineData';
 
 import type { SpaceFunctions } from '../modules/functions/protocol';
 import type { SSRServer } from '@plitzi/sdk-shared';

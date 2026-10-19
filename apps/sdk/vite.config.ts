@@ -24,8 +24,6 @@ const PACKAGE = require('./package.json') as {
   peerDependencies?: Record<string, string>;
 };
 
-const baseUrl = new URL('.', import.meta.url);
-
 /**
  * Outside production the workspace packages are read from their sources — `@plitzi/source`, which leads every one of
  * their `exports` — so the dev server, a development build and the tests run the packages as they are now, not their
@@ -346,6 +344,7 @@ export default defineConfig(({ mode, command }) => {
         rollupTypes: false,
         exclude: [
           '**/*.(test|bench).(ts|tsx)',
+          '**/tests/**',
           '**/*.stories.ts',
           '**/*.stories.tsx',
           'vite.config.ts',
@@ -541,7 +540,7 @@ export default defineConfig(({ mode, command }) => {
         reporter: ['text', 'html'],
         reportsDirectory: 'tests',
         include: ['src'],
-        exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'
+        exclude: ['**/*.test.tsx', '**/tests/**', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'
       },
       server: {
         deps: {

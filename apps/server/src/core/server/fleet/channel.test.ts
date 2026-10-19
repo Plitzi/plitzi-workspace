@@ -9,7 +9,7 @@ import {
   isFleetMessage
 } from './channel';
 import { createMemoryJobQueue, JOB_QUEUE_METHODS } from '../../../modules/actions/jobs/memoryQueue';
-import { describeJobQueue, describeKv } from '../../../modules/actions/jobs/testing/jobQueueContract';
+import { describeJobQueue, describeKv } from '../../../modules/actions/jobs/tests/jobQueueContract';
 import { createMemoryKv, KV_METHODS } from '../../../modules/actions/runtime/memoryKv';
 
 import type { FleetMessage, FleetPeer, HostedStore } from './channel';

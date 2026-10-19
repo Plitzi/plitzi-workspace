@@ -7,10 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readOrigin, writeOrigin } from './spaceOrigin';
 import { writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
 import type { Check } from './askChecks';
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 /**
  * `plitzi space push`: a project put back on its space as the draft — the way back of `plitzi space pull` — never over what the
@@ -30,10 +30,10 @@ let project: string;
 
 /** A page, as authoring code a project runs without installing anything: the declaration as a literal. */
 const space = (title: string): string =>
-  `export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: '${title}', slug: '', isDefault: true, body: [] }] };\n`;
+  `export const shop = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: '${title}', slug: '', isDefault: true, body: [] }] };\n`;
 
 /** The space's index as a person edits it: the page changed, the name the project imports it by kept. */
-const edited = (title: string): string => `${space(title)}export { pizarra as space };\n`;
+const edited = (title: string): string => `${space(title)}export { shop as space };\n`;
 
 const read = (file: string): Promise<string> => fs.readFile(path.join(project, file), 'utf-8');
 
@@ -68,12 +68,12 @@ beforeEach(async () => {
   process.env.XDG_CONFIG_HOME = path.join(home, 'config');
   platform = await fakePlatform();
   platform.valid.add('live');
-  platform.pizarra.pages = { 'index.ts': space('Home') };
+  platform.shop.pages = { 'index.ts': space('Home') };
   platform.functions = { files: { 'index.ts': 'export default {};\n' }, version: 'v1' };
   await writeConnection({
     api: platform.api,
     grant: { clientId: 'c', accessToken: 'live' },
-    space: { id: 3, name: 'Pizarra', permanentUrl: 'pizarra' }
+    space: { id: 3, name: 'Shop', permanentUrl: 'shop' }
   });
   vi.spyOn(console, 'log').mockImplementation(() => undefined);
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -81,7 +81,7 @@ beforeEach(async () => {
   askChecks.mockReset();
 
   project = path.join(home, 'board');
-  await create(project, { source: 'local', packageManager: 'npm', install: false, api: platform.api, from: 'pizarra' });
+  await create(project, { source: 'local', packageManager: 'npm', install: false, api: platform.api, from: 'shop' });
   vi.spyOn(process, 'cwd').mockReturnValue(project);
 });
 
@@ -101,8 +101,8 @@ describe('plitzi space push', () => {
     await push(['space'], {});
 
     expect(process.exitCode).toBeUndefined();
-    expect(platform.pizarra.imports).toHaveLength(1);
-    const [sent] = platform.pizarra.imports;
+    expect(platform.shop.imports).toHaveLength(1);
+    const [sent] = platform.shop.imports;
     expect(sent).toMatchObject({ format: 1, base: 'draft-1', force: false, actions: [] });
     expect('connectors' in sent).toBe(false);
     expect(JSON.stringify(sent.documents.schema)).toContain('Welcome');
@@ -114,24 +114,24 @@ describe('plitzi space push', () => {
    * the addresses they were — and what would not reach Plitzi at all is said before anything is sent.
    */
   it('sends the space’s files back as their CDN addresses, and says what Plitzi would not have', async () => {
-    const world = `${platform.api}/files/pizarra/assets/world.json`;
+    const world = `${platform.api}/files/shop/assets/prices.json`;
     const said: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
     await write(
       'src/space/index.ts',
-      "export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
-        "{ type: 'apiContainer', id: 'world', attributes: { query: '/assets/world.json' } }," +
+      "export const shop = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
+        "{ type: 'apiContainer', id: 'world', attributes: { query: '/assets/prices.json' } }," +
         "{ type: 'apiContainer', id: 'stock', runtime: 'server', attributes: { query: '/data/stock.json' } }," +
         "{ type: 'image', id: 'logo', attributes: { src: '/logo.png' } }" +
-        '] }] };\nexport { pizarra as space };\n'
+        '] }] };\nexport { shop as space };\n'
     );
     await write('public/logo.png', 'png');
 
     await push(['space'], {});
 
-    const sent = JSON.stringify(platform.pizarra.imports.at(-1));
+    const sent = JSON.stringify(platform.shop.imports.at(-1));
     expect(sent).toContain(`"query":"${world}"`);
-    expect(sent).not.toContain('"query":"/assets/world.json"');
+    expect(sent).not.toContain('"query":"/assets/prices.json"');
     expect(said.join('\n')).toContain('stock reads /data/stock.json');
     expect(said.join('\n')).toContain('public/logo.png');
   });
@@ -139,31 +139,31 @@ describe('plitzi space push', () => {
   it('refuses what `npm run author` refuses: a browser provider reading src/data/, which is never served', async () => {
     const said: string[] = [];
     vi.spyOn(console, 'error').mockImplementation((line: unknown) => said.push(String(line)));
-    const imports = platform.pizarra.imports.length;
+    const imports = platform.shop.imports.length;
     await write('src/data/stock.json', '[]');
     await write(
       'src/space/index.ts',
-      "export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
+      "export const shop = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
         "{ type: 'apiContainer', id: 'stock', attributes: { query: '/data/stock.json' } }" +
-        '] }] };\nexport { pizarra as space };\n'
+        '] }] };\nexport { shop as space };\n'
     );
 
     await push(['space'], {});
 
     expect(process.exitCode).toBe(1);
-    expect(platform.pizarra.imports).toHaveLength(imports);
+    expect(platform.shop.imports).toHaveLength(imports);
     expect(said.join('\n')).toContain('server-data-in-browser');
   });
 
   it('sends src/data/ as the space’s data, refused when the space’s moved on, and taken with --force', async () => {
-    await write('src/data/products.json', `{"map":"/assets/world.json"}`);
+    await write('src/data/products.json', `{"map":"/assets/prices.json"}`);
     await write('src/data/shop/stock.json', '[]');
 
     await push(['data'], {});
 
     expect(process.exitCode).toBeUndefined();
     expect(platform.data.files).toEqual({
-      'products.json': `{"map":"${platform.api}/files/pizarra/assets/world.json"}`,
+      'products.json': `{"map":"${platform.api}/files/shop/assets/prices.json"}`,
       'shop/stock.json': '[]'
     });
     expect((await readOrigin(project))?.data).toBe(platform.data.version);
@@ -188,9 +188,9 @@ describe('plitzi space push', () => {
     await write('public/assets/notes.txt', 'text');
     await write(
       'src/space/index.ts',
-      "export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
+      "export const shop = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
         "{ type: 'image', id: 'logo', attributes: { src: '/assets/img/logo.png' } }" +
-        '] }] };\nexport { pizarra as space };\n'
+        '] }] };\nexport { shop as space };\n'
     );
 
     await push(['files', 'space'], {});
@@ -199,12 +199,12 @@ describe('plitzi space push', () => {
     expect(platform.assets).toEqual({ 'img/logo.png': { contentType: 'image/png', bytes: 3 } });
     expect(said.join('\n')).toContain('Not sent');
     expect(said.join('\n')).toContain('public/assets/notes.txt');
-    expect(JSON.stringify(platform.pizarra.imports.at(-1))).toContain(
-      '"src":"https://cdn.example.com/pizarra/assets/img/logo.png"'
+    expect(JSON.stringify(platform.shop.imports.at(-1))).toContain(
+      '"src":"https://cdn.example.com/shop/assets/img/logo.png"'
     );
     // Remembered as taken from the CDN: the next push names it there too, and sends it again only once it changes.
     expect((await readOrigin(project))?.downloads).toMatchObject({
-      'public/assets/img/logo.png': 'https://cdn.example.com/pizarra/assets/img/logo.png'
+      'public/assets/img/logo.png': 'https://cdn.example.com/shop/assets/img/logo.png'
     });
   });
 
@@ -215,10 +215,10 @@ describe('plitzi space push', () => {
     await write('src/data/stock.json', '[]');
     await write(
       'src/space/index.ts',
-      "export const pizarra = { name: 'Pizarra', permanentUrl: 'pizarra', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
+      "export const shop = { name: 'Shop', permanentUrl: 'shop', pages: [{ name: 'Home', slug: '', isDefault: true, body: [" +
         "{ type: 'image', id: 'logo', attributes: { src: '/assets/img/logo.png' } }," +
         "{ type: 'apiContainer', id: 'stock', runtime: 'server', attributes: { query: '/data/stock.json' } }" +
-        '] }] };\nexport { pizarra as space };\n'
+        '] }] };\nexport { shop as space };\n'
     );
 
     await push(['space'], {});
@@ -229,19 +229,19 @@ describe('plitzi space push', () => {
   });
 
   it('refuses a draft edited since the project had it, and replaces it with --force', async () => {
-    platform.pizarra.draft = 'draft-from-the-builder';
+    platform.shop.draft = 'draft-from-the-builder';
 
     await push(['space'], {});
 
     expect(process.exitCode).toBe(1);
-    expect(platform.pizarra.imports).toHaveLength(0);
+    expect(platform.shop.imports).toHaveLength(0);
     expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('changed since this project last had it');
 
     process.exitCode = undefined;
     await push(['space'], { force: true });
 
     expect(process.exitCode).toBeUndefined();
-    expect(platform.pizarra.imports).toMatchObject([{ base: 'draft-1', force: true }]);
+    expect(platform.shop.imports).toMatchObject([{ base: 'draft-1', force: true }]);
   });
 
   it('sends only what changed when nobody is there to choose — and in the order that names come before their names', async () => {
@@ -251,13 +251,13 @@ describe('plitzi space push', () => {
 
     expect(process.exitCode).toBeUndefined();
     expect(platform.functions.version).toBe('v2');
-    expect(platform.pizarra.imports).toHaveLength(0);
+    expect(platform.shop.imports).toHaveLength(0);
 
     await write('src/space/index.ts', edited('Welcome'));
     await push([], {});
 
     expect(platform.functions.version).toBe('v2');
-    expect(platform.pizarra.imports).toHaveLength(1);
+    expect(platform.shop.imports).toHaveLength(1);
   });
 
   it('asks at a terminal, with what changed ticked, and sends what is ticked', async () => {
@@ -269,14 +269,14 @@ describe('plitzi space push', () => {
     await atTerminal(() => push([], {}));
 
     const [question, options] = askChecks.mock.calls[0];
-    expect(question).toContain('Pizarra');
+    expect(question).toContain('Shop');
     expect(options.map(({ label, checked }) => [label.split(' ')[0], checked])).toEqual([
       ['space', false],
       // What it took from the space's CDN, unchanged.
       ['files', false],
       ['functions', true]
     ]);
-    expect(platform.pizarra.imports).toHaveLength(1);
+    expect(platform.shop.imports).toHaveLength(1);
     expect(platform.functions.version).toBe('v1');
   });
 
@@ -285,7 +285,7 @@ describe('plitzi space push', () => {
 
     await atTerminal(() => push([], {}));
 
-    expect(platform.pizarra.imports).toHaveLength(0);
+    expect(platform.shop.imports).toHaveLength(0);
     expect(process.exitCode).toBeUndefined();
   });
 
@@ -312,7 +312,7 @@ describe('plitzi space push', () => {
 
     expect(process.exitCode).toBe(1);
     expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('This project has no runtime to push');
-    expect(platform.pizarra.imports).toHaveLength(0);
+    expect(platform.shop.imports).toHaveLength(0);
   });
 
   it('writes only the draft: a project following a published environment follows the draft first', async () => {
@@ -341,7 +341,7 @@ describe('plitzi space push', () => {
 
     expect(process.exitCode).toBe(1);
     expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('This project is Another’s');
-    expect(platform.pizarra.imports).toHaveLength(0);
+    expect(platform.shop.imports).toHaveLength(0);
   });
 
   it('puts a project that never had the space on it only while the space holds nobody’s work — then pull follows it', async () => {
@@ -350,14 +350,14 @@ describe('plitzi space push', () => {
     await push(['space'], {});
 
     expect(process.exitCode).toBe(1);
-    expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('plitzi create --from pizarra');
+    expect(vi.mocked(console.error).mock.calls.flat().join('\n')).toContain('plitzi create --from shop');
 
     process.exitCode = undefined;
-    platform.pizarra.worked = false;
+    platform.shop.worked = false;
     await push(['space'], {});
 
     expect(process.exitCode).toBeUndefined();
-    expect(platform.pizarra.imports).toMatchObject([{ base: null, force: false }]);
+    expect(platform.shop.imports).toMatchObject([{ base: null, force: false }]);
     expect(await readOrigin(project)).toMatchObject({
       space: { id: 3 },
       draft: 'draft-2',

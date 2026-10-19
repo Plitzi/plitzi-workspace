@@ -67,7 +67,7 @@ export type AppProps = {
    * `browser` is right for a space that IS the page — it is the site, so its pages are the window's URLs. `memory`
    * is for a space EMBEDDED in an application that has a router of its own: the desktop app, a component mounted
    * in a host. Without it the space's own navigation rewrites the host's location — the desktop window went from
-   * `#/spaces/view/day-plan` to `/tasks#/spaces` on the first link followed inside a space, and a reload then
+   * `#/spaces/view/my-space` to `/tasks#/spaces` on the first link followed inside a space, and a reload then
    * landed on the shell's index with the space gone.
    */
   routing?: 'browser' | 'memory';

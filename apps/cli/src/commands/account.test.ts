@@ -6,9 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { whoami } from './account';
 import { writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 let platform: FakePlatform;
 let home: string;
@@ -43,14 +43,14 @@ describe('plitzi whoami', () => {
     await writeConnection({
       api: platform.api,
       grant: { clientId: 'c', accessToken: 'live' },
-      space: { id: 3, name: 'Website', permanentUrl: 'website' }
+      space: { id: 3, name: 'Shop', permanentUrl: 'shop' }
     });
     await whoami({ api: platform.api, json: true });
 
     expect(JSON.parse(said.out)).toEqual({
       api: platform.api,
       user: 'ada@example.com',
-      space: { id: 3, name: 'Website', permanentUrl: 'website' }
+      space: { id: 3, name: 'Shop', permanentUrl: 'shop' }
     });
     expect(said.out).not.toContain('live');
   });

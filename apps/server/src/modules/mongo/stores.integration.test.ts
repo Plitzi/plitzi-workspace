@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 import { createMongoJobQueue } from './jobQueue';
 import { createMongoKv } from './kv';
-import { describeJobQueue, describeKv } from '../actions/jobs/testing/jobQueueContract';
+import { describeJobQueue, describeKv } from '../actions/jobs/tests/jobQueueContract';
 
 /**
  * The Mongo helpers against a real Mongo, through the same contract the in-process stores keep.

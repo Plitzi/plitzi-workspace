@@ -1,5 +1,5 @@
 import { createMemoryJobQueue } from './memoryQueue';
-import { describeJobQueue, describeKv } from './testing/jobQueueContract';
+import { describeJobQueue, describeKv } from './tests/jobQueueContract';
 import { createMemoryKv } from '../runtime/memoryKv';
 
 /** The in-process stores keep the same contract the shared ones do — they are what a test against a worker runs on. */

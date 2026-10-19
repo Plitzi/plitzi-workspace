@@ -56,7 +56,7 @@ export const readParams = (text: string): { params: Record<string, unknown> } | 
   return { error: 'Params are a JSON object, by name: { "name": "Ada" }' };
 };
 
-/** A task's name, as a step addresses it: `seismic.feed`. */
+/** A task's name, as a step addresses it: `orders.sync`. */
 export const taskNameOf = (task: Pick<FunctionTaskManifest, 'namespace' | 'action'>): string =>
   `${task.namespace}.${task.action}`;
 
@@ -123,7 +123,7 @@ export const listedTasks = (source: SourceFunctions | undefined, manifest: Funct
 /** A time as the panel says it: milliseconds under a second, seconds from one. */
 export const timeLabel = (ms: number): string => (ms < 1000 ? `${String(ms)} ms` : `${String(ms / 1000)} s`);
 
-/** What a new task is called as a step: lowercase words joined by dashes — `seismic`, `feed-week`. */
+/** What a new task is called as a step: lowercase words joined by dashes — `orders`, `sync-week`. */
 export const isTaskWord = (value: string): boolean => /^[a-z][a-z0-9-]*$/.test(value);
 
 /** A step's title from its action, until somebody writes one: `feed-week` reads `Feed week`. */

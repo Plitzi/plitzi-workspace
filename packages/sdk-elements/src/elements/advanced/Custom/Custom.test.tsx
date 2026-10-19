@@ -5,7 +5,7 @@ import { ComponentContext } from '@plitzi/sdk-shared/elements';
 
 import { Custom } from './Custom';
 import ElementContext from '../../../Element/ElementContext';
-import { skipHocEntry } from '../../../testUtils/elementTestUtils';
+import { skipHocEntry } from '../../../tests/elementTestUtils';
 
 import type { ComponentContextValue, ComponentDefinition } from '@plitzi/sdk-shared';
 

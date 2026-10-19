@@ -10,9 +10,9 @@ import {
   list,
   text
 } from '../../index';
-import { addElement, authored, onClick, setFlow, step, withChange } from './testUtils/lintFixture';
+import { addElement, authored, onClick, setFlow, step, withChange } from './tests/lintFixture';
 
-import type { Documents } from './testUtils/lintFixture';
+import type { Documents } from './tests/lintFixture';
 
 const codesOf = (documents: Documents): string[] => {
   const { errors, warnings } = lintSpace(documents);

@@ -5,7 +5,7 @@ import { createStore } from '@plitzi/nexus';
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import useRscData from './useRscData';
-import { elementEntry } from '../../testUtils/elementTestUtils';
+import { elementEntry } from '../../tests/elementTestUtils';
 import ElementContext from '../ElementContext';
 
 import type { StoreApi } from '@plitzi/nexus';

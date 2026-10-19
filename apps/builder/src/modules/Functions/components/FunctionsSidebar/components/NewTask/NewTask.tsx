@@ -15,7 +15,7 @@ export type NewTaskProps = {
 };
 
 /**
- * A new task, named where the list is: its namespace and action — what a step calls it, `seismic.feed` — and its title.
+ * A new task, named where the list is: its namespace and action — what a step calls it, `orders.sync` — and its title.
  * Written into `defineFunctions` for you, with a `run` to start from.
  */
 const NewTask = ({ namespace: usual, onCreate, onCancel }: NewTaskProps) => {
@@ -52,7 +52,7 @@ const NewTask = ({ namespace: usual, onCreate, onCancel }: NewTaskProps) => {
           id={`${id}-namespace`}
           size="xs"
           label="Namespace"
-          placeholder="seismic"
+          placeholder="orders"
           value={namespace}
           onChange={setNamespace}
         />
@@ -70,12 +70,12 @@ const NewTask = ({ namespace: usual, onCreate, onCancel }: NewTaskProps) => {
         id={`${id}-title`}
         size="xs"
         label="Title"
-        placeholder={titleFromAction(action) || 'Seismic feed'}
+        placeholder={titleFromAction(action) || 'Orders sync'}
         value={title}
         onChange={setTitle}
       />
       <span className="text-[11px] text-gray-500 dark:text-zinc-400">
-        {valid ? `A step called ${namespace}.${action}` : 'Lowercase words and dashes: seismic, feed-week'}
+        {valid ? `A step called ${namespace}.${action}` : 'Lowercase words and dashes: orders, sync-week'}
       </span>
       <div className="flex justify-end gap-1.5">
         <Button size="xs" intent="secondary" onClick={onCancel}>

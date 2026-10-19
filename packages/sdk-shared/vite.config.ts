@@ -55,11 +55,7 @@ type Options = {
 const SOURCE_MODULE = /\.(ts|tsx|js|mjs)$/;
 /** Matched against the path under `src`, so a whole test-only folder is excluded, not just suffixed file names. */
 const NOT_A_MODULE = new RegExp(
-  [
-    '(^|/)(__tests__|__mocks__|testUtils)(/|$)',
-    '\\.(test|spec|stories[^.]*|bench)\\.(ts|tsx|js|mjs)$',
-    '\\.d\\.ts$'
-  ].join('|')
+  ['(^|/)(tests|__mocks__)(/|$)', '\\.(test|spec|stories[^.]*|bench)\\.(ts|tsx|js|mjs)$', '\\.d\\.ts$'].join('|')
 );
 
 export function getEntries(options: Options = {}) {
@@ -98,7 +94,13 @@ export default defineConfig(({ mode, command }) => {
       react(),
       dts({
         entryRoot: 'src',
-        exclude: ['**/*.(test|bench).(ts|tsx)', '**/*.stories.(ts|tsx)', 'vite.config.ts', 'setupTests.ts'],
+        exclude: [
+          '**/*.(test|bench).(ts|tsx)',
+          '**/tests/**',
+          '**/*.stories.(ts|tsx)',
+          'vite.config.ts',
+          'setupTests.ts'
+        ],
         tsconfigPath: './tsconfig.app.json',
         // The declarations are written against the other packages' declarations, as a consumer reads them: through
         // their sources they would be compiled under this package's settings and their paths written into its types.
@@ -210,7 +212,7 @@ export default defineConfig(({ mode, command }) => {
         reporter: ['text', 'html'],
         reportsDirectory: 'tests',
         include: ['src'],
-        exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'
+        exclude: ['**/*.test.tsx', '**/tests/**', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'
       },
       server: {
         deps: {

@@ -295,7 +295,7 @@ describe('plitzi upgrade', () => {
     await writeOrigin(root, {
       format: 1,
       api: 'https://api.example.com',
-      space: { id: 42, name: 'Pizarra', permanentUrl: 'pizarra' },
+      space: { id: 42, name: 'Shop', permanentUrl: 'shop' },
       source: 'local',
       version: { environment: 'main' },
       files: { 'src/main.ts': digestOf('// the space’s server, with its runtime and plugins from ./plugins/\n') },

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import { createFileKv } from './fileKv';
-import { describeKv } from '../jobs/testing/jobQueueContract';
+import { describeKv } from '../jobs/tests/jobQueueContract';
 
 const folders: string[] = [];
 const fileIn = (name = 'kv.json'): string => {

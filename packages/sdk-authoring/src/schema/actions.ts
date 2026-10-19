@@ -342,7 +342,7 @@ export type TaskActionTrigger = ActionTriggerSpec extends infer Trigger
 
 export interface TaskActionOptions {
   trigger: TaskActionTrigger | TaskActionTrigger[];
-  /** Left out, `<namespace>-<action>` with the action in kebab case: `inkwell.saveDraft` is `inkwell-save-draft`. */
+  /** Left out, `<namespace>-<action>` with the action in kebab case: `orders.saveDraft` is `orders-save-draft`. */
   id?: string;
   /** Left out, the task's `title`. */
   name?: string;

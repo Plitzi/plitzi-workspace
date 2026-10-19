@@ -156,6 +156,7 @@ export default defineConfig(({ mode, command }) => {
         rollupTypes: false,
         exclude: [
           '**/*.(test|bench).(ts|tsx)',
+          '**/tests/**',
           '**/*.stories.ts',
           '**/*.stories.tsx',
           'vite.config.ts',
@@ -328,7 +329,7 @@ export default defineConfig(({ mode, command }) => {
         reporter: ['text', 'html'],
         reportsDirectory: 'tests',
         include: ['src'],
-        exclude: ['**/*.test.tsx', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'
+        exclude: ['**/*.test.tsx', '**/tests/**', '**/*.stories.ts', '**/*.stories.tsx'] // , 'src/index.ts'
       },
       server: {
         deps: {

@@ -6,7 +6,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import { createSqliteKv } from './kv';
-import { describeKv } from '../actions/jobs/testing/jobQueueContract';
+import { describeKv } from '../actions/jobs/tests/jobQueueContract';
 
 const folders: string[] = [];
 const fileIn = (): string => {

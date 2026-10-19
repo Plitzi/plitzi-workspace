@@ -6,9 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readOrigin } from './spaceOrigin';
 import { writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 /** `plitzi create --from`: a space on Plitzi, as a project that serves it alone (docs/en/projects-from-spaces.md). */
 
@@ -42,13 +42,15 @@ describe('plitzi create --from', () => {
   it('writes the space as a project, and serves its files from the project instead of the CDN', async () => {
     const target = path.join(home, 'board');
 
-    await create(target, { ...options, api: platform.api, from: 'pizarra' });
+    await create(target, { ...options, api: platform.api, from: 'shop' });
 
     expect(process.exitCode).toBeUndefined();
     const index = await fs.readFile(path.join(target, 'src/space/index.ts'), 'utf-8');
-    expect(index.startsWith('export const pizarra = {};\n')).toBe(true);
-    expect(index).toContain('export { pizarra as space };');
-    expect(JSON.parse(await fs.readFile(path.join(target, 'public/assets/world.json'), 'utf-8'))).toEqual({ land: [] });
+    expect(index.startsWith('export const shop = {};\n')).toBe(true);
+    expect(index).toContain('export { shop as space };');
+    expect(JSON.parse(await fs.readFile(path.join(target, 'public/assets/prices.json'), 'utf-8'))).toEqual({
+      land: []
+    });
     await expect(fs.access(path.join(target, 'src/plugins/StatCard/index.ts'))).rejects.toThrow();
     expect(await fs.readFile(path.join(target, '.env'), 'utf-8')).toMatch(/PLITZI_SIGNING_SECRET=[0-9a-f]{64}/);
   });
@@ -57,7 +59,7 @@ describe('plitzi create --from', () => {
     const target = path.join(home, 'board');
     platform.data = { files: { 'catalog/products.json': '[{"id":1}]' }, version: 'd4' };
 
-    await create(target, { ...options, api: platform.api, from: 'pizarra' });
+    await create(target, { ...options, api: platform.api, from: 'shop' });
 
     expect(await fs.readFile(path.join(target, 'src/data/catalog/products.json'), 'utf-8')).toBe('[{"id":1}]');
     expect(await readOrigin(target)).toMatchObject({ data: 'd4' });
@@ -73,7 +75,7 @@ describe('plitzi create --from', () => {
   });
 
   it('refuses to make it a browser-only project: a space taken out runs its own server', async () => {
-    await create(path.join(home, 'client'), { ...options, mode: 'client', api: platform.api, from: 'pizarra' });
+    await create(path.join(home, 'client'), { ...options, mode: 'client', api: platform.api, from: 'shop' });
 
     expect(process.exitCode).toBe(1);
   });
@@ -81,7 +83,7 @@ describe('plitzi create --from', () => {
   it('refuses a revision of the draft before asking for anything', async () => {
     const target = path.join(home, 'draft-revision');
 
-    await create(target, { ...options, api: platform.api, from: 'pizarra', revision: '3' });
+    await create(target, { ...options, api: platform.api, from: 'shop', revision: '3' });
 
     expect(process.exitCode).toBe(1);
     await expect(fs.access(target)).rejects.toThrow();

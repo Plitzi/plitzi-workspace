@@ -5,9 +5,9 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 /**
  * `plitzi runtime`: the project's runtime module packed with its own sdk-server and kept as the space's draft runtime,
@@ -47,7 +47,7 @@ beforeEach(async () => {
   await writeConnection({
     api: platform.api,
     grant: { clientId: 'c', accessToken: 'live' },
-    space: { id: 3, name: 'Website', permanentUrl: 'website' }
+    space: { id: 3, name: 'Shop', permanentUrl: 'shop' }
   });
   vi.spyOn(process, 'cwd').mockReturnValue(project);
   said.out = '';
@@ -124,7 +124,7 @@ describe('plitzi runtime', () => {
     const lines = said.out.trim().split('\n');
     expect(lines).toHaveLength(1);
     expect(JSON.parse(lines[0])).toMatchObject({
-      space: { id: 3, name: 'Website' },
+      space: { id: 3, name: 'Shop' },
       variables: ['REDIS_URL'],
       environments: [expect.objectContaining({ environment: 'main', status: 'ready' })]
     });

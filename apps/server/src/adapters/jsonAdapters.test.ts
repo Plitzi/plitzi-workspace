@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createJsonAdapters } from './jsonAdapters';
-import { offlineDataOf, oneEmptyPage } from '../modules/ssr/testing/offlineData';
+import { offlineDataOf, oneEmptyPage } from '../modules/ssr/tests/offlineData';
 
 const spaceWithTitle = (title: string) => ({ schema: { settings: { title } }, style: {} });
 

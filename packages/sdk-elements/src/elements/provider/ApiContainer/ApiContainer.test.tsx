@@ -7,7 +7,7 @@ import { invalidateAfterWrite, invalidateQueries } from '@plitzi/sdk-shared/quer
 
 import { ApiContainer } from './ApiContainer';
 import ElementContext from '../../../Element/ElementContext';
-import { elementEntry } from '../../../testUtils/elementTestUtils';
+import { elementEntry } from '../../../tests/elementTestUtils';
 
 import type { CommonState } from '@plitzi/sdk-shared';
 

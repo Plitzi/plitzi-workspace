@@ -3,7 +3,7 @@ import { request } from 'node:http';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
-import { offlineDataOf } from '../../../modules/ssr/testing/offlineData';
+import { offlineDataOf } from '../../../modules/ssr/tests/offlineData';
 import { createAuth } from '../../auth/createAuth';
 import { createServer } from '../../createServer';
 import { unusedPort } from '../../unusedPort';

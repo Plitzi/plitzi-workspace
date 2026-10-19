@@ -8,10 +8,10 @@ import { gunzipSync } from 'node:zlib';
 import { unzipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 
-import { linkAuthoring } from './linkAuthoring.testUtil';
 import { PackError, packPlugin } from './pack';
 import { writeFiles } from '../commands/terminal';
 import { pluginFunctionsFile, pluginNames, scaffoldElement, scaffoldPlugin } from '../scaffold';
+import { linkAuthoring } from '../tests/linkAuthoring';
 
 /**
  * A plugin is packed for a page that is not this one: the page provides React and the SDK, imports the code from a

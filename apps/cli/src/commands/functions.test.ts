@@ -5,9 +5,9 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 /**
  * `plitzi functions`: `src/functions/` as a working copy of the space's source — pulled, pushed against the version it was
@@ -44,7 +44,7 @@ beforeEach(async () => {
   await writeConnection({
     api: platform.api,
     grant: { clientId: 'c', accessToken: 'live' },
-    space: { id: 3, name: 'Website', permanentUrl: 'website' }
+    space: { id: 3, name: 'Shop', permanentUrl: 'shop' }
   });
   vi.spyOn(process, 'cwd').mockReturnValue(project);
   said.out = '';

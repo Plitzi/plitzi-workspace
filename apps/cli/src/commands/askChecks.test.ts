@@ -37,7 +37,7 @@ describe('checksAfter', () => {
 describe('renderChecks', () => {
   it('draws the question, a box per option with the cursor on one, and the keys', () => {
     const lines = renderChecks(
-      'What goes to Pizarra?',
+      'What goes to Shop?',
       [
         { label: 'space', value: 'space', checked: true, hint: 'changed' },
         { label: 'functions', value: 'functions', checked: false }
@@ -46,7 +46,7 @@ describe('renderChecks', () => {
     ).map(line => stripVTControlCharacters(line));
 
     expect(lines).toEqual([
-      'What goes to Pizarra?',
+      'What goes to Shop?',
       '  [x] space  changed',
       '› [ ] functions',
       '  ↑/↓ move · space ticks · a all · enter takes · esc cancels'

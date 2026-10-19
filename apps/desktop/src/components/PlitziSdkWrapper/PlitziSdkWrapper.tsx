@@ -64,7 +64,7 @@ const PlitziSdkWrapper = ({
        * The space routes in MEMORY, because this window already has a router.
        *
        * A space's pages are its own, not this application's: with the browser router, following a link inside a
-       * space rewrote the window's location — `#/spaces/view/day-plan` became `/tasks#/spaces` — and a reload then
+       * space rewrote the window's location — `#/spaces/view/my-space` became `/tasks#/spaces` — and a reload then
        * opened the shell's index with the space gone. The address bar belongs to the shell here.
        */
       routing="memory"

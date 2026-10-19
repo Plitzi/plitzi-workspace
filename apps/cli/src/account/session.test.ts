@@ -5,10 +5,10 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { configDir, readConnection, resolveApi, writeConnection } from './connection';
-import { fakePlatform } from './fakePlatform';
 import { authorizedRequest, connect, currentConnection, disconnect } from './session';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from './fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 /**
  * The CLI's one connection: made in the browser, kept, renewed on its own, and ended when the platform says so — and
@@ -60,7 +60,7 @@ describe('signing in', () => {
     const connection = await signedIn('space');
 
     expect(platform.scopes).toEqual(['space']);
-    expect(connection.space).toEqual({ id: 3, name: 'Website', permanentUrl: 'website' });
+    expect(connection.space).toEqual({ id: 3, name: 'Shop', permanentUrl: 'shop' });
   });
 
   /** One connection: choosing a space again, or signing in again, replaces it and revokes what it replaced. */

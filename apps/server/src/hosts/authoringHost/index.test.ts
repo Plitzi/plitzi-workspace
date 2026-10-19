@@ -6,7 +6,7 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createAuthoringHost } from '.';
 import { unusedPort } from '../../core/unusedPort';
-import { offlineDataOf, oneEmptyPage } from '../../modules/ssr/testing/offlineData';
+import { offlineDataOf, oneEmptyPage } from '../../modules/ssr/tests/offlineData';
 
 import type { AuthoringHost } from '.';
 import type { Schema } from '@plitzi/sdk-shared';

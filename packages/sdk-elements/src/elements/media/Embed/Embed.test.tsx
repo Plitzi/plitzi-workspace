@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Embed } from './Embed';
 import { embeddableSrc } from './embeddableSrc';
 import ElementContext from '../../../Element/ElementContext';
-import { skipHocEntry } from '../../../testUtils/elementTestUtils';
+import { skipHocEntry } from '../../../tests/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

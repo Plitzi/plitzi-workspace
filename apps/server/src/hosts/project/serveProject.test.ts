@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { serveProject } from './serveProject';
 import { LIVE_PAGES_PATH } from '../../core/http/stages/livePages';
 import { unusedPort } from '../../core/unusedPort';
-import { offlineDataOf, oneEmptyPage } from '../../modules/ssr/testing/offlineData';
+import { offlineDataOf, oneEmptyPage } from '../../modules/ssr/tests/offlineData';
 
 import type { ServedProject } from './serveProject';
 import type { OfflineDataRaw } from '@plitzi/sdk-shared';
@@ -83,7 +83,7 @@ const ENV_KEYS = [
 ] as const;
 
 /** The runtime's fixtures: `own`, a self-signed certificate naming nothing; `network`, one naming `studio.local`. */
-const FIXTURES = path.join(import.meta.dirname, '../../modules/runtime/__fixtures__');
+const FIXTURES = path.join(import.meta.dirname, '../../modules/runtime/tests/fixtures');
 
 let root: string;
 let served: ServedProject | undefined;

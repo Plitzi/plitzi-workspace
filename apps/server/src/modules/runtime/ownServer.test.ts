@@ -11,7 +11,7 @@ import { reachOwnServer } from './inside';
  * address. The fixtures are two self-signed certificates made for this test alone.
  */
 
-const fixture = (name: string): Buffer => readFileSync(path.join(import.meta.dirname, '__fixtures__', name));
+const fixture = (name: string): Buffer => readFileSync(path.join(import.meta.dirname, 'tests', 'fixtures', name));
 
 const own = { key: fixture('own.key'), cert: fixture('own.crt') };
 const other = { key: fixture('other.key'), cert: fixture('other.crt') };

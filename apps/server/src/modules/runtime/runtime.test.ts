@@ -19,7 +19,7 @@ import { DEFAULT_FUNCTION_CEILINGS } from '../functions/config';
 import { defineFunctions } from '../functions/contract';
 import { readManifest } from '../functions/manifest';
 import { createRemoteRunner } from '../functions/runner/remote';
-import { offlineDataOf } from '../ssr/testing/offlineData';
+import { offlineDataOf } from '../ssr/tests/offlineData';
 
 import type { SpaceRuntimeDescription, SpaceRuntimeHost } from './host';
 import type { SpaceFunctions } from '../functions/protocol';

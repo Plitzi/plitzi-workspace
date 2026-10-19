@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { handleActionCall } from './callHandler';
-import { tasksOf } from '../../functions/testing/tasksOf';
+import { tasksOf } from '../../functions/tests/tasksOf';
 import { createActionsModule } from '../index';
 
 import type { FunctionTask } from '../../functions/contract';

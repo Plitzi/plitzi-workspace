@@ -15,7 +15,7 @@ import type { ChildProcess } from 'node:child_process';
  * outside — which process answered, what survives a killed worker, what a stop does to a request in flight.
  */
 
-const FIXTURE = path.join(import.meta.dirname, 'fixtures/fleetServer.ts');
+const FIXTURE = path.join(import.meta.dirname, 'tests/fleetServer.ts');
 const SERVER_ROOT = path.resolve(import.meta.dirname, '../../../..');
 
 type Started = { child: ChildProcess; port: number; output: () => string; exited: Promise<number | null> };

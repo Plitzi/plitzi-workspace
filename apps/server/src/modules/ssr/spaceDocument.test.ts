@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { offlineDataOf } from './testing/offlineData';
+import { offlineDataOf } from './tests/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
 import { unusedPort } from '../../core/unusedPort';

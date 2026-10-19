@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ModalContainer } from './ModalContainer';
 import ElementContext from '../../../Element/ElementContext';
-import { elementEntry } from '../../../testUtils/elementTestUtils';
+import { elementEntry } from '../../../tests/elementTestUtils';
 import { DialogContainer } from '../DialogContainer/DialogContainer';
 
 vi.mock('../../../Element/hocs/withElement', () => ({ default: (element: unknown) => element }));

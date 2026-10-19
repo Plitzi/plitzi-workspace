@@ -8,7 +8,7 @@ import { TabContainerBody } from './TabContainerBody/TabContainerBody';
 import { TabContainerHeader } from './TabContainerHeader/TabContainerHeader';
 import { TabContainerItem } from './TabContainerItem/TabContainerItem';
 import ElementContext from '../../../Element/ElementContext';
-import { elementEntry } from '../../../testUtils/elementTestUtils';
+import { elementEntry } from '../../../tests/elementTestUtils';
 
 import type { TabContainerItemProps } from './TabContainerItem/TabContainerItem';
 import type { ReactNode } from 'react';

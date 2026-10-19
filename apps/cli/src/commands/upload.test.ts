@@ -7,9 +7,9 @@ import { strToU8, zipSync } from 'fflate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readConnection, writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 /**
  * `plitzi plugin upload`: to the connected space and no other, with signing in and choosing the space done in the
@@ -83,7 +83,7 @@ describe('plitzi plugin upload', () => {
         bytes: expect.any(Number) as number
       }
     ]);
-    expect(said.out).toContain('Website loads seatPicker 1.2.0 from now on');
+    expect(said.out).toContain('Shop loads seatPicker 1.2.0 from now on');
     expect(process.exitCode).toBeUndefined();
   });
 
@@ -102,7 +102,7 @@ describe('plitzi plugin upload', () => {
     await writeConnection({
       api: platform.api,
       grant: { clientId: 'c', accessToken: 'live' },
-      space: { id: 3, name: 'Website', permanentUrl: 'website' }
+      space: { id: 3, name: 'Shop', permanentUrl: 'shop' }
     });
 
     await uploadPluginCommand(await pluginZip(), { api: platform.api });

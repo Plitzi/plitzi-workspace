@@ -6,7 +6,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 
 import { Page } from './Page';
 import ElementContext from '../../../Element/ElementContext';
-import { skipHocEntry } from '../../../testUtils/elementTestUtils';
+import { skipHocEntry } from '../../../tests/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

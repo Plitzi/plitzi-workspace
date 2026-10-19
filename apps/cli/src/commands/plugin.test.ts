@@ -9,8 +9,8 @@ import addPlugin from './addPlugin';
 import createPlugin from './createPlugin';
 import { coveredByWorkspace, findProject } from './existingProject';
 import packPluginCommand from './packPlugin';
-import { linkAuthoring } from '../pack/linkAuthoring.testUtil';
 import { scaffold } from '../scaffold';
+import { linkAuthoring } from '../tests/linkAuthoring';
 
 import type { CreateAnswers } from '../scaffold';
 

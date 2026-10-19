@@ -13,7 +13,7 @@ import type { Schema } from '@plitzi/sdk-shared';
  * holds) — and how the space's CDN addresses the project took are written back as they were.
  */
 
-/** `path` as a whole token of the text: never the tail of an address that already holds it (`…/pizarra/assets/a.png`). */
+/** `path` as a whole token of the text: never the tail of an address that already holds it (`…/shop/assets/a.png`). */
 export const tokenOf = (path: string): RegExp =>
   new RegExp(`(?<![\\w.:/-])${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w.-])`, 'g');
 

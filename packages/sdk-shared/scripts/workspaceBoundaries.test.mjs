@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 const WORKSPACE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const SOURCE_CONDITION = '@plitzi/source';
 const NOT_SOURCE = new Set(['node_modules', 'dist', '.turbo', 'coverage']);
-const TEST_FILE = /(\.(test|spec|stories|bench)\.[cm]?[jt]sx?$)|(^|\/)(__tests__|__mocks__|testUtils)\//;
+const TEST_FILE = /(\.(test|spec|stories|bench)\.[cm]?[jt]sx?$)|(^|\/)(tests|__mocks__)\//;
 
 const readJson = file => JSON.parse(fs.readFileSync(file, 'utf-8'));
 

@@ -19,7 +19,8 @@ import ts from 'typescript';
 const WORKSPACE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 /** Bundled into one file per entry, with entries written by hand — not a package of folder barrels. */
 const NOT_BARRELS = new Set(['sdk-authoring']);
-const NOT_SOURCE = new Set(['__tests__', '__mocks__', 'testUtils']);
+/** What only tests use — their helpers, fakes and fixtures — lives in a `tests/` folder (`__mocks__`, Vitest's own). */
+const NOT_SOURCE = new Set(['tests', '__mocks__']);
 
 const barrelsUnder = dir =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -139,7 +140,7 @@ for (const name of fs.readdirSync(path.join(WORKSPACE, 'packages')).filter(name 
   }
 }
 
-const TEST_DECLARATION = /\.(test|bench|spec)\.d\.ts$/;
+const TEST_DECLARATION = /\.(test|bench|spec)\.d\.ts$|(^|\/)(tests|__mocks__)\//;
 const filesUnder = dir =>
   fs
     .readdirSync(dir, { withFileTypes: true })
@@ -154,7 +155,7 @@ for (const group of ['packages', 'apps']) {
       continue;
     }
 
-    const tests = filesUnder(dist).filter(file => TEST_DECLARATION.test(file));
+    const tests = filesUnder(dist).filter(file => TEST_DECLARATION.test(path.relative(dist, file)));
     if (tests.length > 0) {
       shipped.push(`${group}/${name}: ${tests.length} (${path.relative(dist, tests[0])}…)`);
     }
@@ -170,7 +171,7 @@ if (problems.length > 0) {
 
 if (shipped.length > 0) {
   console.error(
-    `A build holds the declarations of its tests — add '**/*.(test|bench).(ts|tsx)' to its dts({ exclude }):\n  ${shipped.join('\n  ')}`
+    `A build holds the declarations of its tests — add '**/*.(test|bench).(ts|tsx)' and '**/tests/**' to its dts({ exclude }):\n  ${shipped.join('\n  ')}`
   );
   process.exitCode = 1;
 } else {

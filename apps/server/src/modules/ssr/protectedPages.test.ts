@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { offlineDataOf, oneEmptyPage } from './testing/offlineData';
+import { offlineDataOf, oneEmptyPage } from './tests/offlineData';
 import { createJsonAdapters } from '../../adapters/jsonAdapters';
 import { createServer } from '../../core/createServer';
 import { unusedPort } from '../../core/unusedPort';
@@ -70,7 +70,10 @@ beforeAll(async () => {
   server = createServer({
     port: PORT,
     devMode: true,
-    adapters: { ...createJsonAdapters({ offlineData: offlineDataOf(schema) }), getUser: req => Promise.resolve(userOf(req)) }
+    adapters: {
+      ...createJsonAdapters({ offlineData: offlineDataOf(schema) }),
+      getUser: req => Promise.resolve(userOf(req))
+    }
   });
   await server.listen(PORT, '127.0.0.1');
 

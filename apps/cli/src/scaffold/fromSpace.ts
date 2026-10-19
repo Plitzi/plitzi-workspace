@@ -62,7 +62,7 @@ const importLine = (names: string, from: string): string => `import ${names} fro
 
 /**
  * The space's `index.ts`, as Plitzi wrote it, exporting it as `space` too — the name the project's server, author
- * script and checks import it by, whatever the space was exported as (`pizarra`).
+ * script and checks import it by, whatever the space was exported as (`shop`).
  */
 const spaceIndex = (source: string, exportName: string): string =>
   exportName === 'space'

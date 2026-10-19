@@ -317,8 +317,10 @@ export type ButtonProps = {
 const Button = ({ label, onClick }: ButtonProps) => { ... };
 ```
 
-**Co-located tests and stories.** `Component.test.tsx` and `Component.stories.tsx` sit next to `Component.tsx`, never
-in a separate `__tests__` folder.
+**Co-located tests and stories.** `Component.test.tsx` and `Component.stories.tsx` sit next to `Component.tsx`. What
+only tests use — a fake platform, fixtures, shared setup — lives in a `tests/` folder, never beside the code: the builds
+leave `tests/` out of `dist`, and `checkDistExports` fails one that ships it. (`testing/` is a package's PUBLIC testing
+API, `@plitzi/sdk-authoring`'s, not a place for test helpers.)
 
 ### Component Rules
 

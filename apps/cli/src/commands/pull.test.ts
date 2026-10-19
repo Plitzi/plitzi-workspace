@@ -8,9 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { pull, verdictOf } from './pull';
 import { readOrigin } from './spaceOrigin';
 import { writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 
 /** `plitzi space pull`: a project made from a space, brought up to date with it without undoing what was done here. */
 
@@ -32,8 +32,8 @@ beforeEach(async () => {
   process.env.XDG_CONFIG_HOME = path.join(home, 'config');
   platform = await fakePlatform();
   platform.valid.add('live');
-  platform.pizarra.pages = {
-    'index.ts': "import { homePage } from './pages/home.ts';\nexport const pizarra = { pages: [homePage] };\n",
+  platform.shop.pages = {
+    'index.ts': "import { homePage } from './pages/home.ts';\nexport const shop = { pages: [homePage] };\n",
     'pages/home.ts': "export const homePage = { name: 'Home' };\n",
     'pages/about.ts': "export const aboutPage = { name: 'About' };\n"
   };
@@ -44,7 +44,7 @@ beforeEach(async () => {
   process.exitCode = undefined;
 
   project = path.join(home, 'board');
-  await create(project, { source: 'local', packageManager: 'npm', install: false, api: platform.api, from: 'pizarra' });
+  await create(project, { source: 'local', packageManager: 'npm', install: false, api: platform.api, from: 'shop' });
   vi.spyOn(process, 'cwd').mockReturnValue(project);
 });
 
@@ -85,20 +85,20 @@ describe('plitzi space pull', () => {
   it('remembers where the project came from and what it was given', async () => {
     const origin = await readOrigin(project);
 
-    expect(origin).toMatchObject({ api: platform.api, space: { id: 3, permanentUrl: 'pizarra' }, source: 'local' });
+    expect(origin).toMatchObject({ api: platform.api, space: { id: 3, permanentUrl: 'shop' }, source: 'local' });
     expect(Object.keys(origin?.files ?? {})).toEqual(
-      expect.arrayContaining(['src/space/pages/home.ts', 'src/actions/index.ts', 'public/assets/world.json'])
+      expect.arrayContaining(['src/space/pages/home.ts', 'src/actions/index.ts', 'public/assets/prices.json'])
     );
     expect(JSON.parse(await read('.plitzi/functions.json'))).toMatchObject({ space: 3, version: 'v1' });
   });
 
   it('brings what changed on the space, and keeps what changed here', async () => {
-    platform.pizarra.pages['pages/home.ts'] = "export const homePage = { name: 'Home, again' };\n";
-    delete platform.pizarra.pages['pages/about.ts'];
-    platform.pizarra.pages['pages/blog.ts'] = "export const blogPage = { name: 'Blog' };\n";
-    platform.pizarra.dependencies = { zod: '^4.0.0' };
+    platform.shop.pages['pages/home.ts'] = "export const homePage = { name: 'Home, again' };\n";
+    delete platform.shop.pages['pages/about.ts'];
+    platform.shop.pages['pages/blog.ts'] = "export const blogPage = { name: 'Blog' };\n";
+    platform.shop.dependencies = { zod: '^4.0.0' };
     platform.functions = { files: { 'index.ts': 'export default { feed: {} };\n' }, version: 'v2' };
-    await write('src/space/index.ts', '// mine\nexport const pizarra = {};\n');
+    await write('src/space/index.ts', '// mine\nexport const shop = {};\n');
 
     await pull({});
 
@@ -114,14 +114,14 @@ describe('plitzi space pull', () => {
 
   it('brings the space’s data to src/data/, with its CDN addresses as the project’s paths', async () => {
     platform.data = {
-      files: { 'products.json': `{"map":"${platform.api}/files/pizarra/assets/world.json"}`, 'shop/stock.json': '[]' },
+      files: { 'products.json': `{"map":"${platform.api}/files/shop/assets/prices.json"}`, 'shop/stock.json': '[]' },
       version: 'd1'
     };
 
     await pull({});
 
     expect(process.exitCode).toBeUndefined();
-    expect(JSON.parse(await read('src/data/products.json'))).toEqual({ map: '/assets/world.json' });
+    expect(JSON.parse(await read('src/data/products.json'))).toEqual({ map: '/assets/prices.json' });
     expect(await read('src/data/shop/stock.json')).toBe('[]');
     expect((await readOrigin(project))?.data).toBe('d1');
   });
@@ -141,8 +141,8 @@ describe('plitzi space pull', () => {
   });
 
   it('says with --dry-run what it would write, remove and keep, and touches nothing', async () => {
-    platform.pizarra.pages['pages/home.ts'] = "export const homePage = { name: 'Home, again' };\n";
-    delete platform.pizarra.pages['pages/about.ts'];
+    platform.shop.pages['pages/home.ts'] = "export const homePage = { name: 'Home, again' };\n";
+    delete platform.shop.pages['pages/about.ts'];
     const said: string[] = [];
     vi.spyOn(console, 'log').mockImplementation((line: unknown) => said.push(String(line)));
     const before = await read('src/space/pages/home.ts');
@@ -156,8 +156,8 @@ describe('plitzi space pull', () => {
   });
 
   it('writes nothing when a file changed here and on the space — and takes the space’s with --force', async () => {
-    platform.pizarra.pages['pages/home.ts'] = "export const homePage = { name: 'Theirs' };\n";
-    platform.pizarra.pages['pages/about.ts'] = "export const aboutPage = { name: 'About, again' };\n";
+    platform.shop.pages['pages/home.ts'] = "export const homePage = { name: 'Theirs' };\n";
+    platform.shop.pages['pages/about.ts'] = "export const aboutPage = { name: 'About, again' };\n";
     await write('src/space/pages/home.ts', "export const homePage = { name: 'Mine' };\n");
 
     await pull({});
@@ -177,7 +177,7 @@ describe('plitzi space pull', () => {
   it('keeps a change here across pulls once it stood, as long as the space leaves the file be', async () => {
     await write('src/space/pages/home.ts', "export const homePage = { name: 'Mine' };\n");
     await pull({});
-    platform.pizarra.pages['pages/about.ts'] = "export const aboutPage = { name: 'About, again' };\n";
+    platform.shop.pages['pages/about.ts'] = "export const aboutPage = { name: 'About, again' };\n";
     await pull({});
 
     expect(process.exitCode).toBeUndefined();
@@ -194,8 +194,8 @@ describe('plitzi space pull', () => {
   });
 
   it('follows the version it was told: a pinned snapshot stays, `latest` and another environment move it', async () => {
-    platform.pizarra.snapshots.production = {
-      1: { description: 'Launch', pages: { 'index.ts': '// production r1\nexport const pizarra = {};\n' } }
+    platform.shop.snapshots.production = {
+      1: { description: 'Launch', pages: { 'index.ts': '// production r1\nexport const shop = {};\n' } }
     };
     const pinned = path.join(home, 'pinned');
     await create(pinned, {
@@ -203,7 +203,7 @@ describe('plitzi space pull', () => {
       packageManager: 'npm',
       install: false,
       api: platform.api,
-      from: 'pizarra',
+      from: 'shop',
       environment: 'production',
       revision: '1'
     });
@@ -213,9 +213,9 @@ describe('plitzi space pull', () => {
     expect(await at('src/space/index.ts')).toContain('production r1');
     expect((await readOrigin(pinned))?.version).toEqual({ environment: 'production', revision: 1 });
 
-    platform.pizarra.snapshots.production[2] = {
+    platform.shop.snapshots.production[2] = {
       description: 'Fixes',
-      pages: { 'index.ts': '// production r2\nexport const pizarra = {};\n' }
+      pages: { 'index.ts': '// production r2\nexport const shop = {};\n' }
     };
     await pull({});
     expect(await at('src/space/index.ts')).toContain('production r1');

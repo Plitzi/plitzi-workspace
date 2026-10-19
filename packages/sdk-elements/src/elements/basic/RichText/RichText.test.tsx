@@ -5,7 +5,7 @@ import declaration from './declaration';
 import { RichText } from './RichText';
 import { MARKDOWN_PARTS } from '../../../components/MarkdownDocument';
 import ElementContext from '../../../Element/ElementContext';
-import { elementEntry } from '../../../testUtils/elementTestUtils';
+import { elementEntry } from '../../../tests/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

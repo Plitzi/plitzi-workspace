@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
       dts({
         include: ['src', 'package.json'],
         entryRoot: 'src',
-        exclude: ['**/*.(test|bench).(ts|tsx)'],
+        exclude: ['**/*.(test|bench).(ts|tsx)', '**/tests/**'],
         tsconfigPath: './tsconfig.app.json',
         // The declarations are written against the other packages' declarations, as a consumer reads them.
         compilerOptions: { customConditions: [] },

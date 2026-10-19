@@ -7,7 +7,7 @@ import declaration from './declaration';
 import { Markdown } from './Markdown';
 import { MARKDOWN_PARTS } from '../../../components/MarkdownDocument';
 import ElementContext from '../../../Element/ElementContext';
-import { elementEntry, skipHocEntry } from '../../../testUtils/elementTestUtils';
+import { elementEntry, skipHocEntry } from '../../../tests/elementTestUtils';
 
 vi.mock('../../../Element/hocs/withElement', () => ({
   default: (element: unknown) => element

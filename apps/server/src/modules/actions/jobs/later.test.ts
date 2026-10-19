@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { laterFor, MAX_LATER_SECONDS } from './later';
 import { createMemoryJobQueue } from './memoryQueue';
 import { createJobWorker } from './worker';
-import { tasksOf } from '../../functions/testing/tasksOf';
+import { tasksOf } from '../../functions/tests/tasksOf';
 import { createActionsModule } from '../index';
 
 import type { FunctionTask } from '../../functions/contract';

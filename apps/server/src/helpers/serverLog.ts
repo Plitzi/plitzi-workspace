@@ -41,7 +41,7 @@ const renderMessage = (event: Extract<ServerLogEvent, { kind: 'message' }>): str
 /** One line for any {@link ServerLogEvent}: an HTTP request reads as an access-log line
  *  (`[SSR] 203.0.113.7 GET /pricing 200 12ms ok`), the MCP events as what happened inside one
  *  (`[MCP] tools/call plitzi_apply {operations:[3]} 41ms ok`), a server action as what its flow did
- *  (`[Action] shipping-quote via call space=1 completed 12ms ok`) and a refused one as what turned it away
+ *  (`[Action] send-invoice via call space=1 completed 12ms ok`) and a refused one as what turned it away
  *  (`[Action] checkout via webhook space=1 REFUSED invalid_signature`). Rendering is a pure format — the dispatcher
  *  already stripped query values, collected no headers, cookies or tokens, summarised tool args by shape and
  *  reduced a run to its steps; the client IP it does carry is personal data, so a sink that persists these lines

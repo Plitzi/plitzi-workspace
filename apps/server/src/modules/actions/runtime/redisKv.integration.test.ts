@@ -2,7 +2,7 @@ import { Redis } from 'ioredis';
 import { afterAll } from 'vitest';
 
 import { createRedisKv } from './redisKv';
-import { describeKv } from '../jobs/testing/jobQueueContract';
+import { describeKv } from '../jobs/tests/jobQueueContract';
 
 /**
  * Skipped — not failed — on a machine with no Redis: `REDIS_TEST_URL` points it at one, and the default is the port the

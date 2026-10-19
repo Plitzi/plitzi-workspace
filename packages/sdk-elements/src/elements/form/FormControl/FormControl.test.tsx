@@ -6,7 +6,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import declaration from './declaration';
 import { FormControl } from './FormControl';
 import ElementContext from '../../../Element/ElementContext';
-import { elementEntry } from '../../../testUtils/elementTestUtils';
+import { elementEntry } from '../../../tests/elementTestUtils';
 
 import type { FormControlProps } from './FormControl';
 

@@ -34,7 +34,7 @@ import {
   step,
   warningsOf,
   withChange
-} from './testUtils/lintFixture';
+} from './tests/lintFixture';
 
 import type { Schema } from '@plitzi/sdk-shared';
 

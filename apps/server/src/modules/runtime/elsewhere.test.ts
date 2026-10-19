@@ -15,7 +15,7 @@ import { reachOwnServer, reachSpaceInside } from './inside';
  * any while it runs.
  */
 
-const fixture = (name: string): Buffer => readFileSync(path.join(import.meta.dirname, '__fixtures__', name));
+const fixture = (name: string): Buffer => readFileSync(path.join(import.meta.dirname, 'tests', 'fixtures', name));
 
 const body = JSON.stringify([{ place: 'Bilbao' }]);
 let server: http2.Http2SecureServer;

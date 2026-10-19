@@ -7,7 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { Form } from './Form';
 import ElementContext from '../../../Element/ElementContext';
-import { elementEntry } from '../../../testUtils/elementTestUtils';
+import { elementEntry } from '../../../tests/elementTestUtils';
 import { FormControl } from '../FormControl/FormControl';
 import withFieldValue from '../FormControl/hocs/withFieldValue';
 

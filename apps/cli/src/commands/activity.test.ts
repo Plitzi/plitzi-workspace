@@ -5,9 +5,9 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { writeConnection } from '../account/connection';
-import { fakePlatform } from '../account/fakePlatform';
+import { fakePlatform } from '../tests/fakePlatform';
 
-import type { FakePlatform } from '../account/fakePlatform';
+import type { FakePlatform } from '../tests/fakePlatform';
 import type { SpaceActivityPage } from '@plitzi/sdk-shared/activity';
 
 /** `plitzi space activity`: what happened on the space, read once or followed — each page validated before it is read. */
@@ -51,7 +51,7 @@ beforeEach(async () => {
   await writeConnection({
     api: platform.api,
     grant: { clientId: 'c', accessToken: 'live' },
-    space: { id: 3, name: 'Website', permanentUrl: 'website' }
+    space: { id: 3, name: 'Shop', permanentUrl: 'shop' }
   });
   said.out = '';
   said.err = '';
@@ -97,7 +97,7 @@ describe('plitzi space activity', () => {
 
     await activity({});
 
-    expect(said.out).toContain('Nothing on Website yet.');
+    expect(said.out).toContain('Nothing on Shop yet.');
   });
 
   it('follows from the cursor it was given, waiting the most a call holds, a page a line', async () => {

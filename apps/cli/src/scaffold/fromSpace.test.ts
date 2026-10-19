@@ -12,8 +12,8 @@ import type { SpaceExport } from '@plitzi/sdk-shared/source';
 
 const encode = (text: string): string => Buffer.from(text).toString('base64');
 
-const WORLD = 'https://cdn.example.com/pizarra/assets/a_world.json';
-const CHART = 'https://cdn.example.com/pizarra/plugins/oldChart/1.0.0';
+const WORLD = 'https://cdn.example.com/shop/assets/a_prices.json';
+const CHART = 'https://cdn.example.com/shop/plugins/oldChart/1.0.0';
 
 const boardCreate = defineAction({
   id: 'board-create',
@@ -31,11 +31,11 @@ handWritten.document.nodes.cleared.title = 'Wipe everything';
 
 const exported = (overrides: Partial<SpaceExport> = {}): SpaceExport => ({
   format: 1,
-  space: { id: 42, name: 'Pizarra', permanentUrl: 'pizarra' },
+  space: { id: 42, name: 'Shop', permanentUrl: 'shop' },
   version: { environment: 'main', revision: 0, snapshot: null },
   draft: 'draft-1',
   authoring: {
-    exportName: 'pizarra',
+    exportName: 'shop',
     files: {
       'index.ts': "import { homePage } from './pages/home.ts';\n",
       'pages/home.ts': `export const homePage = { src: '${WORLD}' };\n`
@@ -70,7 +70,7 @@ const exported = (overrides: Partial<SpaceExport> = {}): SpaceExport => ({
     ],
     runtime: null
   },
-  assets: [{ url: WORLD, path: 'assets/a_world.json' }],
+  assets: [{ url: WORLD, path: 'assets/a_prices.json' }],
   variables: ['REDIS_URL'],
   credentials: [{ identifier: 'smtp-main', name: 'Mail', provider: 'smtp' }],
   visitorRoles: ['editor'],
@@ -110,10 +110,10 @@ describe('a project made from a space', () => {
 
   it('holds the space as code, serving its files from the project instead of Plitzi’s CDN', () => {
     // Exported as `space` too: the name the server, the author script and the checks import it by.
-    expect(project.files['src/space/index.ts']).toContain('export { pizarra as space };');
-    expect(project.files['src/space/pages/home.ts']).toContain("src: '/assets/a_world.json'");
+    expect(project.files['src/space/index.ts']).toContain('export { shop as space };');
+    expect(project.files['src/space/pages/home.ts']).toContain("src: '/assets/a_prices.json'");
     expect(project.downloads).toEqual([
-      { url: WORLD, to: 'public/assets/a_world.json' },
+      { url: WORLD, to: 'public/assets/a_prices.json' },
       { url: `${CHART}/plugin-manifest.json`, to: 'vendor/plugins/oldChart/plugin-manifest.json' }
     ]);
   });
@@ -153,7 +153,7 @@ describe('a project made from a space', () => {
     expect(project.files['src/actions/board-create.ts']).toContain(
       "import { defineAction } from '@plitzi/sdk-authoring';\n\nexport const boardCreateAction = defineAction({ id: 'board-create'"
     );
-    expect(project.files['src/actions/board-create.ts']).toContain("map: '/assets/a_world.json'");
+    expect(project.files['src/actions/board-create.ts']).toContain("map: '/assets/a_prices.json'");
     expect(project.files['src/actions/board-clear.json']).toContain('"id": "board-clear"');
     expect(project.files['src/actions/index.ts']).toContain("import { boardCreateAction } from './board-create.ts';");
     expect(project.files['src/actions/index.ts']).toContain(

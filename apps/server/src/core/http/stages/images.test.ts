@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { imagesPathOf } from './images';
 import { createJsonAdapters } from '../../../adapters/jsonAdapters';
-import { offlineDataOf } from '../../../modules/ssr/testing/offlineData';
+import { offlineDataOf } from '../../../modules/ssr/tests/offlineData';
 import { createServer } from '../../createServer';
 import { unusedPort } from '../../unusedPort';
 

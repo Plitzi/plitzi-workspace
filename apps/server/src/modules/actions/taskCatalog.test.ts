@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createActionsModule } from './index';
 import { describeCatalog, describeTask } from './taskCatalog';
 import { createSpaceRegistries } from '../functions/space';
-import { tasksOf } from '../functions/testing/tasksOf';
+import { tasksOf } from '../functions/tests/tasksOf';
 
 import type { FunctionTask } from '../functions/contract';
 import type { FunctionRunner } from '../functions/protocol';

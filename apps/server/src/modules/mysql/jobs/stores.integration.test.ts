@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { createMysqlJobQueue } from './jobQueue';
 import { createMysqlKv } from './kv';
 import { jobTables } from './schema';
-import { describeJobQueue, describeKv } from '../../actions/jobs/testing/jobQueueContract';
+import { describeJobQueue, describeKv } from '../../actions/jobs/tests/jobQueueContract';
 import { createPool } from '../pool';
 import { execute } from '../query';
 
