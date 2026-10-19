@@ -94,28 +94,61 @@ const write = async (file: string, text: string): Promise<void> => {
   await fs.writeFile(path.join(root, file), text);
 };
 
-/** What the live-pages stream says from here on, as it says it: each `heard` answers all it said so far. */
+/**
+ * What the live-pages stream says from here on, read as it arrives: `has` says at once whether an event came, `heard`
+ * waits for it — each answers all it said so far.
+ */
 const listen = async (url: string) => {
   const stream = await fetch(`${url}/__plitzi/live`);
   const reader = stream.body?.getReader();
   const decoder = new TextDecoder();
   let said = '';
+  const reading = (async () => {
+    for (let chunk = await reader?.read(); chunk && !chunk.done; chunk = await reader?.read()) {
+      said += decoder.decode(chunk.value);
+    }
+  })().catch(() => undefined);
 
   return {
+    has: (event: string): boolean => said.includes(`event: ${event}`),
     heard: async (event: string): Promise<string> => {
-      await vi.waitFor(
-        async () => {
-          const chunk = await reader?.read();
-          said += decoder.decode(chunk?.value);
-          expect(said).toContain(`event: ${event}`);
-        },
-        { timeout: 15_000 }
-      );
+      await vi.waitFor(() => expect(said).toContain(`event: ${event}`), { timeout: 15_000 });
 
       return said;
     },
-    stop: () => reader?.cancel()
+    stop: async () => {
+      await reader?.cancel();
+      await reading;
+    }
   };
+};
+
+/** How long a save is given to be heard before it is made again, and how many times it is. */
+const SAVE_HEARD_MS = 3000;
+const SAVES = 5;
+
+/**
+ * A save the server is watching for, made again until `heard` — what it causes — is seen. macOS starts a watch's
+ * stream a moment after `fs.watch` returns, longer on a busy process right after the last test closed its own, and a
+ * save inside that moment is never reported: the first save after boot went unheard about one run in four, and the
+ * test failed with nothing wrong, while the next save was always heard. A person does not save that soon after starting
+ * the server; a test does. Once the watch has heard one, the saves after it are made once.
+ */
+const saveUntil = async (save: () => Promise<void>, heard: () => boolean | Promise<boolean>): Promise<void> => {
+  for (let attempt = 0; attempt < SAVES; attempt++) {
+    await save();
+    for (const deadline = Date.now() + SAVE_HEARD_MS; Date.now() < deadline;) {
+      if (await heard()) {
+        return;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+
+  throw new Error(
+    `Not heard after ${String(SAVES)} saves ${String(SAVE_HEARD_MS)} ms apart: the watch never reported one`
+  );
 };
 
 beforeEach(async () => {
@@ -249,7 +282,10 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     const reload = await listen(running.url);
     await reload.heard('hello');
     await write('next.json', JSON.stringify(titled('authored after the fix')));
-    await write('src/space/index.ts', 'export const space = { fixed: true };\n');
+    await saveUntil(
+      () => write('src/space/index.ts', 'export const space = { fixed: true };\n'),
+      () => reload.has('space')
+    );
     expect(await reload.heard('space')).toContain('authored after the fix');
     await reload.stop();
 
@@ -290,7 +326,10 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     await reload.heard('hello');
 
     await write('next.json', JSON.stringify(titled('authored again')));
-    await write('src/space/index.ts', 'export const space = { saved: true };\n');
+    await saveUntil(
+      () => write('src/space/index.ts', 'export const space = { saved: true };\n'),
+      () => reload.has('space')
+    );
     const said = await reload.heard('space');
     expect(said).toContain('authored again');
     expect(said).not.toContain('event: reload');
@@ -304,10 +343,11 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
   it('keeps the last space that authored when the script refuses the new one', async () => {
     const running = await serve({ space: () => titled('authored at boot') });
 
-    await write('src/space/index.ts', 'export const space = { broken: true };\n');
-    await vi.waitFor(async () => expect(await fs.readdir(path.join(root, 'runs'))).toHaveLength(1), {
-      timeout: 15_000
-    });
+    const runs = path.join(root, 'runs');
+    await saveUntil(
+      () => write('src/space/index.ts', 'export const space = { broken: true };\n'),
+      () => existsSync(runs)
+    );
     // The run ended with nothing handed over; the page is the one before it.
     await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -330,8 +370,10 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     const reload = await listen(running.url);
     await reload.heard('hello');
 
-    await write('src/plugins/Badge/index.ts', 'export default () => null;\n');
-    await reload.heard('reload');
+    await saveUntil(
+      () => write('src/plugins/Badge/index.ts', 'export default () => null;\n'),
+      () => reload.has('reload')
+    );
     await reload.stop();
 
     expect(await pageOf(running.url)).toContain('badge@1.0.0');
@@ -359,15 +401,14 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     const reload = await listen(running.url);
     await reload.heard('hello');
 
-    await write('src/plugins/Badge/Badge.tsx', 'export default () => null;\n');
-    await vi.waitFor(
-      () =>
-        expect(error).toHaveBeenCalledWith(
-          expect.stringContaining(
-            "[plugins] src/plugins/Badge/ has no index.ts (or index.tsx), so the server cannot build the plugin badge.\n  → Write src/plugins/Badge/index.ts exporting the component by default — export { default } from './Badge.tsx';"
-          )
-        ),
-      { timeout: 5000 }
+    await saveUntil(
+      () => write('src/plugins/Badge/Badge.tsx', 'export default () => null;\n'),
+      () => error.mock.calls.length > 0
+    );
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "[plugins] src/plugins/Badge/ has no index.ts (or index.tsx), so the server cannot build the plugin badge.\n  → Write src/plugins/Badge/index.ts exporting the component by default — export { default } from './Badge.tsx';"
+      )
     );
     expect((await fetch(`${running.url}/`)).status).toBe(200);
     expect(await pageOf(running.url)).not.toContain('badge@');

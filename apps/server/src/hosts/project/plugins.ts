@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, watch } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, unwatchFile, watch, watchFile } from 'node:fs';
 import path from 'node:path';
 
 import { PLUGIN_FUNCTIONS_SOURCE } from '@plitzi/sdk-shared/actions';
@@ -18,6 +18,10 @@ import { loadFunctions, loadFunctionsSource } from '../../modules/functions/load
 
 import type { FunctionsDefinition } from '../../modules/functions/contract';
 import type { PluginSource, SSRServer } from '@plitzi/sdk-shared';
+import type { Stats } from 'node:fs';
+
+/** How often a project with no `src/plugins` looks for it — the time between `plitzi plugin add` and the page. */
+const FOLDER_POLL_MS = 500;
 
 /**
  * A project's plugins, as its server registers them: every folder of `src/plugins` built from its source, and every
@@ -166,24 +170,22 @@ export const watchProjectPlugins = (root: string, server: SSRServer, plugins: Pr
   }
 
   // A project with no plugin yet — one taken out of a space that had none: `plitzi plugin add` makes the folder while
-  // the server runs, and the watch starts then, with what the folder already holds.
-  const parent = path.dirname(dir);
-  if (!existsSync(parent)) {
-    return () => undefined;
-  }
-
+  // the server runs, and the watch starts then, with what the folder already holds. Polled rather than watched: an event
+  // a watch misses — macOS drops what happens while its stream starts — would leave the folder unseen for good; a poll
+  // finds it on its next look.
   let stop: (() => void) | undefined;
-  const waiting = watch(parent, (_event, file) => {
-    if (stop || file !== path.basename(dir) || !existsSync(dir)) {
+  const appeared = (now: Stats): void => {
+    if (stop || !now.isDirectory()) {
       return;
     }
 
-    waiting.close();
+    unwatchFile(dir, appeared);
     stop = watchPluginsFolder(root, dir, server, plugins, true);
-  });
+  };
+  watchFile(dir, { interval: FOLDER_POLL_MS }, appeared);
 
   return () => {
-    waiting.close();
+    unwatchFile(dir, appeared);
     stop?.();
   };
 };
