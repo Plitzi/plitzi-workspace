@@ -1,5 +1,26 @@
 # @plitzi/sdk-mcp
 
+## 0.38.23
+
+### Patch Changes
+
+- 1e93ac7: ## Server
+
+  - **The project's server sends OAuth providers back to its loopback** (`@plitzi/sdk-server`) — PZ-160. 0.38.22 chose
+    `publicUrl`, which without `PUBLIC_URL` is the machine's address on the network: a private IP the router may change and
+    providers refuse, so a project opened to the network could no longer connect a new account. The callback origin is now
+    `127.0.0.1` unless `PUBLIC_URL` is HTTPS, and `serverOptions.functions.oauth.callbackOrigin` names another without
+    touching `PUBLIC_URL`. Open to the network with a loopback callback, the server says that a sign-in another device
+    starts needs a name of its own.
+
+- Updated dependencies [1e93ac7]
+  - @plitzi/plitzi-sdk@0.38.23
+  - @plitzi/sdk-server@0.38.23
+  - @plitzi/sdk-authoring@0.38.23
+  - @plitzi/sdk-schema@0.38.23
+  - @plitzi/sdk-shared@0.38.23
+  - @plitzi/sdk-style@0.38.23
+
 ## 0.38.22
 
 ### Patch Changes

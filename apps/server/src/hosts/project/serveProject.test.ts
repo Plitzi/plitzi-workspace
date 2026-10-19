@@ -79,7 +79,8 @@ const ENV_KEYS = [
   'PLITZI_ENVIRONMENT',
   'PLITZI_SERVER_URL',
   'TLS_CERT',
-  'TLS_KEY'
+  'TLS_KEY',
+  'PUBLIC_URL'
 ] as const;
 
 /** The runtime's fixtures: `own`, a self-signed certificate naming nothing; `network`, one naming `studio.local`. */
@@ -519,6 +520,43 @@ describe('serveProject — on this machine and on its network', { timeout: PROJE
     expect(recorded).toHaveProperty(
       'network',
       expect.arrayContaining([`https://studio.local:${String(process.env.PORT)}`])
+    );
+  });
+
+  /** The one address to register: loopback, never the address on the network, which changes and providers refuse. */
+  it('sends OAuth providers back to its loopback while open to the network, and says how to name another', async () => {
+    process.env.HOST = '0.0.0.0';
+    process.env.TLS_CERT = path.join(FIXTURES, 'network.crt');
+    process.env.TLS_KEY = path.join(FIXTURES, 'network.key');
+    await write(
+      'src/functions/index.ts',
+      "export default { oauth: { calendar: { issuer: 'https://id.example.test', credential: 'calendar-app' } } };\n"
+    );
+    const said = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    served = await serveProject({ space: () => titled('a') });
+
+    const lines = said.mock.calls.flat().join('\n');
+    expect(lines).toContain(
+      `OAuth providers send visitors back to https://127.0.0.1:${String(process.env.PORT)}/fn/oauth/callback`
+    );
+    expect(lines).toContain('a sign-in started on another device (a tablet) comes back to its own loopback');
+  });
+
+  it('sends OAuth providers back where the project says, over PUBLIC_URL', async () => {
+    process.env.PUBLIC_URL = 'https://shop.example.test';
+    await write(
+      'src/functions/index.ts',
+      "export default { oauth: { calendar: { issuer: 'https://id.example.test', credential: 'calendar-app' } } };\n"
+    );
+    const said = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    await serve({
+      space: () => titled('a'),
+      serverOptions: { functions: { oauth: { callbackOrigin: 'https://aiko.example.test:8443' } } }
+    });
+
+    expect(said.mock.calls.flat().join('\n')).toContain(
+      'OAuth providers send visitors back to https://aiko.example.test:8443/fn/oauth/callback'
     );
   });
 

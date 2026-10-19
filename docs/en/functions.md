@@ -281,11 +281,13 @@ export default defineFunctions({
   platform writes (`state`, `redirect_uri`, `scope`, PKCE's) is refused, saying so.
 - **Where they come back, self-hosted.** A server of one space reached on several addresses — a project's on
   `localhost`, its loopback and the network — fixes the one providers send visitors to: `functions.oauth.callbackOrigin`
-  in `createServer`. The project's server (`serveProject`) sets it to the address people reach it on (`PUBLIC_URL`, or
-  its HTTPS address on the network), or its loopback `127.0.0.1` when that one is plain HTTP — providers take `http`
-  on loopback alone, and refuse `localhost` (RFC 8252) — and says it as it starts:
-  `OAuth providers send visitors back to …/fn/oauth/callback`. That is the address to register. From there the visitor
-  goes on to `returnTo` on the address they started from.
+  in `createServer`. The project's server (`serveProject`) sets it to this machine's loopback, `127.0.0.1` — the one
+  address every provider takes — or to `PUBLIC_URL` when that is HTTPS; never its address on the network, which the
+  router may change and providers refuse (a private IP, a `.local` name), nor `localhost` (RFC 8252). It says it as it
+  starts — `OAuth providers send visitors back to …/fn/oauth/callback` — and that is the address to register. A sign-in
+  another device starts (a tablet on the Wi-Fi) needs a name of its own that providers accept:
+  `functions: { oauth: { callbackOrigin } }` in `src/config/serverOptions.ts`, which wins over both. From the callback
+  the visitor goes on to `returnTo` on the address they started from.
 - **Whose:** a signed-in visitor's own by default (`user:<id>`). `{ owner: 'space' }` makes one the whole space shares,
   and any key of the code's own (`{ owner: 'profile:ana' }`) one per whom the code serves. With nobody signed in and no
   owner named, the call is refused, saying so.
