@@ -1,5 +1,25 @@
 # @plitzi/sdk-server
 
+## 0.38.24
+
+### Patch Changes
+
+- 5858b9f: ## Server
+
+  - **`ctx.oauth.callbackUrl()`** (`@plitzi/sdk-server`) — PZ-161. The address providers send a visitor back to, as this
+    run's `connect` hands it to them: for a page that shows whoever sets up the app what to register, instead of
+    rebuilding the platform's rule. Refused in a run no visitor's request started when the deployment fixed no
+    `functions.oauth.callbackOrigin`.
+  - **In production the project's server fixes no OAuth callback** (`@plitzi/sdk-server`). 0.38.23's loopback default
+    applied wherever `PUBLIC_URL` was not HTTPS — a container behind a proxy sent providers to its own
+    `http://127.0.0.1:8080`. Now loopback is the default while developing only; in production the callback is on the
+    address each visitor's request came on (the site's domain, from `Host` and `X-Forwarded-Proto`), and the server says
+    to register that domain's `/fn/oauth/callback`.
+
+- Updated dependencies [5858b9f]
+  - @plitzi/plitzi-sdk@0.38.24
+  - @plitzi/sdk-shared@0.38.24
+
 ## 0.38.23
 
 ### Patch Changes
