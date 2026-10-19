@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { authorSpace } from '@plitzi/sdk-authoring';
 import { closeOnSignals, createJsonAdapters, createServer } from '@plitzi/sdk-server';
+import { PORTS } from '../launchConfig';
 
 import type { SpaceSpec } from '@plitzi/sdk-authoring';
 
@@ -18,7 +19,7 @@ import type { SpaceSpec } from '@plitzi/sdk-authoring';
  * the workspace's builds — the build it gets is what the CLI would hand anybody.
  */
 
-export const PORT = Number(process.env.PORT ?? 5208);
+export const PORT = Number(process.env.PORT ?? PORTS.plugin);
 /** Where the plugin is published: a CDN in miniature, on an origin of its own as a real one is. */
 export const PLUGIN_HOST_PORT = PORT + 100;
 

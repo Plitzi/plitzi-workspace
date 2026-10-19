@@ -1,18 +1,19 @@
 import { createServer } from '@plitzi/sdk-server';
 
 import { flagsSpace } from '../spaces';
+import { PORTS } from '../launchConfig';
 
 /**
  * The flags space as a published site, its flags decided by every layer a server sees. Two of them run, from this
  * one module:
  *
- * - `PORT` 5210, debugging authorized — a tester's forced flags (the dev tools' cookie) are honoured, on the server too;
- * - `PORT` 5211 with `E2E_FLAGS_NO_DEBUG`, the same site where nobody authorized debugging — the cookie means nothing,
+ * - `PORTS.flags`, debugging authorized — a tester's forced flags (the dev tools' cookie) are honoured, on the server too;
+ * - `PORTS.flagsNoDebug` with `E2E_FLAGS_NO_DEBUG`, the same site where nobody authorized debugging — the cookie means nothing,
  *   or any visitor could switch on a feature still behind a flag.
  *
  * Both turn `serverOnly` on (the `server` layer) and set one flag the space does not declare, which must be ignored.
  */
-export const PORT = Number(process.env.PORT ?? 5210);
+export const PORT = Number(process.env.PORT ?? (process.env.E2E_FLAGS_NO_DEBUG ? PORTS.flagsNoDebug : PORTS.flags));
 
 const debugMode = process.env.E2E_FLAGS_NO_DEBUG !== '1';
 

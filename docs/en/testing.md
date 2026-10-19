@@ -95,7 +95,7 @@ debugging on or in the canvas, so a check written against them passes there and 
 `e2e/harness` is a page that renders whatever `{ schema, style }` it is handed, with no backend and no account:
 
 ```bash
-yarn workspace @plitzi/e2e start    # http://127.0.0.1:5100
+yarn workspace @plitzi/e2e start    # http://127.0.0.1:47120
 ```
 
 Use it to reproduce a reported schema, or to look at a variant without changing an example — changing an example

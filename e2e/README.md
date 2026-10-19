@@ -53,7 +53,7 @@ It is a setup project rather than a `globalSetup` for one reason: only the setup
 | `desktop` | `@plitzi/plitzi-desktop` | `theme` | the renderer's Vite server on 5180 |
 | `server` | `@plitzi/sdk-server` | `ssr`, `rsc`, `preview`, `auth`, `actions`, `flags`, `workers`, `plugins`, `fromSpace` | e2e server + auth server + action server + mail sink + the CLI's projects |
 | `mcp` | `@plitzi/sdk-mcp` | `endpoint` | e2e server |
-| `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 8080 (mocked backend unless a token is exported) |
+| `builder` | `@plitzi/plitzi-builder` | `boot` | its own builder on 47180 (mocked backend unless a token is exported) |
 | `cross` | — more than one | `parity`, `agent`, `auth` | harness + both servers |
 | `examples` | — onboarding, on request only | one per example | the examples |
 
@@ -97,43 +97,43 @@ demonstrate.
   await renderSpace(page, minimalSpace({ heading: 'anything' }));
   ```
 
-  Open it by hand too: `yarn workspace @plitzi/e2e start` → <http://127.0.0.1:5100>. It is also the fastest way
+  Open it by hand too: `yarn workspace @plitzi/e2e start` → <http://127.0.0.1:47120>. It is also the fastest way
   to look at a reported schema without a backend, an account or a fixture file.
 
 - **`server/`** — a page server with everything on at once: pages, RSC (with its three probe elements), draft
-  preview and the MCP endpoint, on <http://127.0.0.1:5200>. Its space lives in memory, so a write through MCP is
+  preview and the MCP endpoint, on <http://127.0.0.1:47130>. Its space lives in memory, so a write through MCP is
   visible to the run and never touches anything on disk. `yarn workspace @plitzi/e2e start:server`.
 
-- **`server/authServer.ts`** — the same, with people in it, on <http://127.0.0.1:5201>: real password hashing, a
+- **`server/authServer.ts`** — the same, with people in it, on <http://127.0.0.1:47131>: real password hashing, a
   session per account, and a space carrying both ways a site keeps a visitor out — two pages sharing `/` that
   differ by `accessLevel`, and a protected `/account` that redirects a guest to `/login`.
   `yarn workspace @plitzi/e2e start:auth`.
 
 - **`server/actionServer.ts`** — a page server wired for **actions and nothing else**, on
-  <http://127.0.0.1:5202>: no connectors, no `getRscData` of its own, no plugins. Its own process precisely
+  <http://127.0.0.1:47132>: no connectors, no `getRscData` of its own, no plugins. Its own process precisely
   because what it is about is what it does NOT have — the one above supplies its own RSC adapter, which is the
   case where the server stops assembling one, so it can never show that a space with only actions still resolves
   its server elements. Its space also holds an SMTP credential, so `email.send` is checked the whole way out.
   `yarn workspace @plitzi/e2e start:actions`.
 
-- **`server/flagsServer.ts`** — a space switched by feature flags, served twice: on <http://127.0.0.1:5210> with
+- **`server/flagsServer.ts`** — a space switched by feature flags, served twice: on <http://127.0.0.1:47140> with
   debugging authorized, so a tester's forced flags (the `plitzi_flags_<port>` cookie, the dev tools' Flags tab) are
-  honored, and on <http://127.0.0.1:5211> without it, where the same cookie must change nothing. Both set the
+  honored, and on <http://127.0.0.1:47141> without it, where the same cookie must change nothing. Both set the
   deployment's own flag layer (`createServer({ flags })`), one of them undeclared on purpose.
   `yarn workspace @plitzi/e2e start:flags` / `start:flags-no-debug`.
 
 - **`server/pluginServer.ts`** — a plugin package exactly as `plitzi create --plugin` writes it, built by the CLI and
-  published on a host of its own, loaded by a page from its manifest. On <http://127.0.0.1:5208> (the plugin's host on
+  published on a host of its own, loaded by a page from its manifest. On <http://127.0.0.1:47138> (the plugin's host on
   5308). `yarn workspace @plitzi/e2e start:plugin`.
 
 - **`server/fromSpaceServer.ts`** — a space taken out with `plitzi create --from`: a small platform of its own on 5309
   answers the export (`server/fromSpace/source.ts` is the code it keeps), the built CLI writes the project into
   `.artifacts/from-space` — inside the workspace, so it runs on the workspace's packages — and the project's own
-  `src/main.ts` serves it on <http://127.0.0.1:5209>. `yarn workspace @plitzi/e2e start:from-space`.
+  `src/main.ts` serves it on <http://127.0.0.1:47139>. `yarn workspace @plitzi/e2e start:from-space`.
 
-- **`server/mailSink.ts`** — the SMTP server the suite's spaces send through: SMTP on `127.0.0.1:5204`, and what
-  it kept on <http://127.0.0.1:5203/messages?to=…>. A real server rather than a stubbed transport, so a spec reads the
-  message a mail client actually built; it keeps everything in memory and delivers nothing. 5204 and not 1025, so a
+- **`server/mailSink.ts`** — the SMTP server the suite's spaces send through: SMTP on `127.0.0.1:47134`, and what
+  it kept on <http://127.0.0.1:47133/messages?to=…>. A real server rather than a stubbed transport, so a spec reads the
+  message a mail client actually built; it keeps everything in memory and delivers nothing. 47134 and not 1025, so a
   Mailpit left running for development never stands in for it. Specs read it with `mailFor(uniqueRecipient(…))`
   from `helpers/mail.ts`. `yarn workspace @plitzi/e2e start:mail`.
 
@@ -277,15 +277,16 @@ Playwright's recorder needs a running target and nothing else, so it needs no sc
 
 ```bash
 yarn e2e --project=builder --ui     # or leave a target up, then:
-yarn playwright codegen http://127.0.0.1:8080
+yarn playwright codegen http://127.0.0.1:47180
 ```
 
 Click through the editor and Playwright writes the calls. Paste what it gives you into a spec under
 `tests/builder/` and keep the assertions that matter.
 
-> The suite runs **its own** builder on `127.0.0.1:8080`, over plain HTTP — never the one you are developing in.
-> 8080 rather than the 5xxx band for one reason: a space token is bound to the origins it was minted for, and
-> that is one the platform already trusts.
+> The suite runs **its own** builder on `127.0.0.1:47180`, over plain HTTP — never the one you are developing in.
+> Every port the suite opens is in its own 471xx band (`PORTS`, `launchConfig.ts`): the common ones — 3000, 5000,
+> 8080 — are where your own servers run. A live run's space token is bound to the origins it was minted for, and
+> `yarn token` in plitzi-sdk-server mints for this one.
 
 ## Which space a test renders
 

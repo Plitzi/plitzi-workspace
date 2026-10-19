@@ -10,6 +10,7 @@ import {
   SLOW_ACTION,
   UNREACHABLE_ACTION
 } from '../spaces';
+import { PORTS } from '../launchConfig';
 
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
@@ -20,16 +21,18 @@ import type { ActionEntry } from '@plitzi/sdk-shared';
  * Its own process because `devMode` is a property of the DEPLOYMENT, and what these specs are about is what a
  * published page is told about the flows behind it. Two of them run, from this one module:
  *
- * - `PORT` 5205, the space as published — nobody authorized debugging, and the page is told nothing: not the steps,
+ * - `PORTS.published`, the space as published — nobody authorized debugging, and the page is told nothing: not the steps,
  *   not the runs the render started, not even that a flow ran behind an empty section.
- * - `PORT` 5206 with `E2E_SPACE_DEBUG_MODE`, the same space with the owner's dev-tools setting switched on — the
+ * - `PORTS.publishedDevtools` with `E2E_SPACE_DEBUG_MODE`, the same space with the owner's dev-tools setting switched on — the
  *   page gets the OUTLINE of what its flows did, and still never what a step read or answered.
  *
  * Between them and the dev server, the three ways debugging can be authorized are each covered by a page somebody
  * can actually load.
  */
 
-export const PORT = Number(process.env.PORT ?? 5205);
+export const PORT = Number(
+  process.env.PORT ?? (process.env.E2E_SPACE_DEBUG_MODE ? PORTS.publishedDevtools : PORTS.published)
+);
 
 /** What the space's own settings say, which is the half of the answer a deployment leaves to the owner. */
 const spaceDebugMode = process.env.E2E_SPACE_DEBUG_MODE === '1';

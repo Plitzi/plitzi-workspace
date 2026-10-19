@@ -2,6 +2,7 @@ import { closeOnSignals, createServer } from '@plitzi/sdk-server';
 
 import { sampleSpace } from '../spaces';
 import { getRscData, plugins } from './sample';
+import { PORTS } from '../launchConfig';
 
 import type { SSRPageAdapters } from '@plitzi/sdk-shared';
 
@@ -13,7 +14,7 @@ import type { SSRPageAdapters } from '@plitzi/sdk-shared';
  * `?published` serves the space as published — cached, unlike `main` — and `/__invalidate` is the endpoint a
  * deployment puts behind its publish webhook: it lands on one process, and every process must forget the page.
  */
-export const PORT = Number(process.env.PORT ?? 5207);
+export const PORT = Number(process.env.PORT ?? PORTS.workers);
 
 const space = sampleSpace();
 

@@ -13,6 +13,7 @@ import {
   UNCONFIGURED_MAIL_ACTION,
   UNREACHABLE_ACTION
 } from '../spaces';
+import { PORTS } from '../launchConfig';
 
 import type { ActionEntry } from '@plitzi/sdk-shared';
 
@@ -29,7 +30,7 @@ import type { ActionEntry } from '@plitzi/sdk-shared';
  * while it rendered empty sections with nothing missing from its configuration.
  */
 
-export const PORT = Number(process.env.PORT ?? 5202);
+export const PORT = Number(process.env.PORT ?? PORTS.actionServer);
 
 const space = actionSpace();
 

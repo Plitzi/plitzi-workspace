@@ -96,7 +96,7 @@ una comprobación escrita contra ellos pasa en SSR y parece un renderer roto en 
 `e2e/harness` es una página que renderiza el `{ schema, style }` que se le pase, sin backend y sin cuenta:
 
 ```bash
-yarn workspace @plitzi/e2e start    # http://127.0.0.1:5100
+yarn workspace @plitzi/e2e start    # http://127.0.0.1:47120
 ```
 
 Úsalo para reproducir un schema reportado o para mirar una variante sin tocar un example — modificar un example

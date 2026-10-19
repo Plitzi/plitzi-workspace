@@ -16,6 +16,7 @@ import path from 'node:path';
 
 import { targetsForRun } from './categories';
 import { builderCredentials } from './credentials';
+import { BUILDER_ORIGIN, PORTS } from './launchConfig';
 
 /** Whether the MySQL the mysql example connects to answers — the one IT reads, not a variable of the suite's own.
  *
@@ -75,7 +76,7 @@ export const targets: Target[] = [
   {
     id: 'harness',
     workspace: '@plitzi/e2e',
-    origin: 'http://127.0.0.1:5100',
+    origin: `http://127.0.0.1:${String(PORTS.harness)}`,
     what: 'The browser harness — renders any schema handed to it, with no server behind it',
     warmUp: true
   },
@@ -93,88 +94,88 @@ export const targets: Target[] = [
     id: 'server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:server',
-    origin: 'http://127.0.0.1:5200',
+    origin: `http://127.0.0.1:${String(PORTS.server)}`,
     what: 'The page server this suite owns — pages, RSC, draft preview and MCP, all on at once'
   },
   {
     id: 'auth-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:auth',
-    origin: 'http://127.0.0.1:5201',
+    origin: `http://127.0.0.1:${String(PORTS.authServer)}`,
     what: 'The same server with people in it — guest and member pages, sessions, bindings onto the account'
   },
   {
     id: 'action-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:actions',
-    origin: 'http://127.0.0.1:5202',
+    origin: `http://127.0.0.1:${String(PORTS.actionServer)}`,
     what: 'A page server wired for actions ALONE — no connectors, no RSC adapter of its own'
   },
   {
     id: 'published-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:published',
-    origin: 'http://127.0.0.1:5205',
+    origin: `http://127.0.0.1:${String(PORTS.published)}`,
     what: 'The action space as a PUBLISHED site: nobody authorized debugging, so nothing about its flows leaves it'
   },
   {
     id: 'devtools-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:published-devtools',
-    origin: 'http://127.0.0.1:5206',
+    origin: `http://127.0.0.1:${String(PORTS.publishedDevtools)}`,
     what: 'The same published site with the space’s own dev-tools setting on — the outline, and never a step’s data'
   },
   {
     id: 'flags-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:flags',
-    origin: 'http://127.0.0.1:5210',
+    origin: `http://127.0.0.1:${String(PORTS.flags)}`,
     what: 'The flags space as a published site: the server turns one flag on, and debugging is authorized'
   },
   {
     id: 'flags-no-debug-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:flags-no-debug',
-    origin: 'http://127.0.0.1:5211',
+    origin: `http://127.0.0.1:${String(PORTS.flagsNoDebug)}`,
     what: 'The same site where nobody authorized debugging — a tester’s forced flags are ignored'
   },
   {
     id: 'workers-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:workers',
-    origin: 'http://127.0.0.1:5207',
+    origin: `http://127.0.0.1:${String(PORTS.workers)}`,
     what: 'The sample space served by two processes on one port, as production uses a machine with several cores'
   },
   {
     id: 'plugin-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:plugin',
-    origin: 'http://127.0.0.1:5208',
+    origin: `http://127.0.0.1:${String(PORTS.plugin)}`,
     what: 'A plugin as `plitzi create --plugin` writes it, built and published, loaded by a page from its manifest'
   },
   {
     id: 'from-space-server',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:from-space',
-    origin: 'http://127.0.0.1:5209',
+    origin: `http://127.0.0.1:${String(PORTS.fromSpace)}`,
     what: 'A space taken out of a platform with `plitzi create --from`, served by the project the CLI wrote alone'
   },
   {
     id: 'mail-sink',
     workspace: '@plitzi/e2e',
     command: 'yarn workspace @plitzi/e2e start:mail',
-    /** Readiness is this HTTP port; the SMTP side the spaces send to listens on `MAIL_SINK.smtpPort`, 5204. */
-    origin: 'http://127.0.0.1:5203',
+    /** Readiness is this HTTP port; the SMTP side the spaces send to listens on `MAIL_SINK.smtpPort`. */
+    origin: `http://127.0.0.1:${String(PORTS.mailSinkHttp)}`,
     what: 'The SMTP server the suite’s spaces send through — keeps every message, delivers none'
   },
   {
     id: 'no-build',
     workspace: '@plitzi/example-render-no-build',
-    /** 5009 and not 5000: on macOS, port 5000 belongs to ControlCenter's AirPlay Receiver. Readiness here is an
-     *  open socket, so a port somebody else already holds reads as "the server is up" — the example never starts,
-     *  and the spec fails against a stranger's empty response with a blank screenshot and nothing to explain it. */
-    command: 'PORT=5009 yarn workspace @plitzi/example-render-no-build start',
-    origin: 'http://127.0.0.1:5009',
+    /** Readiness here is an open socket, so a port somebody else already holds reads as "the server is up" — the
+     *  example never starts, and the spec fails against a stranger's empty response with a blank screenshot and
+     *  nothing to explain it. The suite's own band (`PORTS`) is what keeps that from happening. */
+    command: `PORT=${String(PORTS.renderNoBuild)} yarn workspace @plitzi/example-render-no-build start`,
+    origin: `http://127.0.0.1:${String(PORTS.renderNoBuild)}`,
     what: 'A plain HTML file: no bundler, no build step',
     gate: {
       open: () => existsSync(VENDOR_BUNDLE),
@@ -184,59 +185,59 @@ export const targets: Target[] = [
   {
     id: 'render',
     workspace: '@plitzi/example-render-offline',
-    command: 'yarn workspace @plitzi/example-render-offline start --port 5001',
-    origin: 'http://localhost:5001',
+    command: `yarn workspace @plitzi/example-render-offline start --port ${String(PORTS.renderOffline)}`,
+    origin: `http://localhost:${String(PORTS.renderOffline)}`,
     what: 'The same render() call from a bundled app',
     warmUp: true
   },
   {
     id: 'react-component',
     workspace: '@plitzi/example-react-component',
-    command: 'yarn workspace @plitzi/example-react-component start --port 5002',
-    origin: 'http://localhost:5002',
+    command: `yarn workspace @plitzi/example-react-component start --port ${String(PORTS.reactComponent)}`,
+    origin: `http://localhost:${String(PORTS.reactComponent)}`,
     what: '<PlitziSdk> inside your own React tree',
     warmUp: true
   },
   {
     id: 'server-rendered',
     workspace: '@plitzi/example-ssr-pages',
-    command: 'PORT=5003 yarn workspace @plitzi/example-ssr-pages start',
-    origin: 'http://127.0.0.1:5003',
+    command: `PORT=${String(PORTS.ssrPages)} yarn workspace @plitzi/example-ssr-pages start`,
+    origin: `http://127.0.0.1:${String(PORTS.ssrPages)}`,
     what: 'The same space, rendered by the server'
   },
   {
     id: 'server-components',
     workspace: '@plitzi/example-ssr-rsc',
-    command: 'PORT=5004 yarn workspace @plitzi/example-ssr-rsc start',
-    origin: 'http://127.0.0.1:5004',
+    command: `PORT=${String(PORTS.ssrRsc)} yarn workspace @plitzi/example-ssr-rsc start`,
+    origin: `http://127.0.0.1:${String(PORTS.ssrRsc)}`,
     what: 'Per-element server data via React Server Components'
   },
   {
     id: 'mcp-server',
     workspace: '@plitzi/example-mcp-server',
-    command: 'PORT=5005 yarn workspace @plitzi/example-mcp-server start',
-    origin: 'http://127.0.0.1:5005',
+    command: `PORT=${String(PORTS.mcpServer)} yarn workspace @plitzi/example-mcp-server start`,
+    origin: `http://127.0.0.1:${String(PORTS.mcpServer)}`,
     what: 'A dedicated MCP server an agent edits the space through'
   },
   {
     id: 'ssr-preview',
     workspace: '@plitzi/example-ssr-mcp-preview',
-    command: 'PORT=5006 yarn workspace @plitzi/example-ssr-mcp-preview start',
-    origin: 'http://127.0.0.1:5006',
+    command: `PORT=${String(PORTS.ssrMcpPreview)} yarn workspace @plitzi/example-ssr-mcp-preview start`,
+    origin: `http://127.0.0.1:${String(PORTS.ssrMcpPreview)}`,
     what: 'MCP and pages on one port, plus draft preview'
   },
   {
     id: 'sessions',
     workspace: '@plitzi/example-with-users',
-    command: 'PORT=5007 yarn workspace @plitzi/example-with-users start',
-    origin: 'http://127.0.0.1:5007',
+    command: `PORT=${String(PORTS.withUsers)} yarn workspace @plitzi/example-with-users start`,
+    origin: `http://127.0.0.1:${String(PORTS.withUsers)}`,
     what: 'Sign in, renew, sign out — over an account store you provide'
   },
   {
     id: 'mysql',
     workspace: '@plitzi/example-with-users-mysql',
-    command: 'PORT=5008 yarn workspace @plitzi/example-with-users-mysql start',
-    origin: 'http://127.0.0.1:5008',
+    command: `PORT=${String(PORTS.withUsersMysql)} yarn workspace @plitzi/example-with-users-mysql start`,
+    origin: `http://127.0.0.1:${String(PORTS.withUsersMysql)}`,
     what: 'The same sessions, over a MySQL account store',
     gate: {
       open: mysqlReachable,
@@ -246,9 +247,9 @@ export const targets: Target[] = [
   {
     id: 'server-actions-no-server',
     workspace: '@plitzi/example-server-actions-no-server',
-    command: 'yarn workspace @plitzi/example-server-actions-no-server start --port 5013',
+    command: `yarn workspace @plitzi/example-server-actions-no-server start --port ${String(PORTS.actionsNoServer)}`,
     /** Vite binds the NAME localhost, which resolves to ::1 first on macOS — see the note on `origin` above. */
-    origin: 'http://localhost:5013',
+    origin: `http://localhost:${String(PORTS.actionsNoServer)}`,
     what: 'The same space in the browser alone: every server-side step inert',
     warmUp: true
   },
@@ -257,15 +258,15 @@ export const targets: Target[] = [
     workspace: '@plitzi/example-server-actions-schedules',
     /** A queue file of its own for every run: the example keeps its jobs across restarts, which is the point of it
      *  and exactly wrong for a spec that counts them. */
-    command: 'PORT=5017 QUEUE_DB="$(mktemp -d)/queue.db" yarn workspace @plitzi/example-server-actions-schedules start',
-    origin: 'http://127.0.0.1:5017',
+    command: `PORT=${String(PORTS.schedules)} QUEUE_DB="$(mktemp -d)/queue.db" yarn workspace @plitzi/example-server-actions-schedules start`,
+    origin: `http://127.0.0.1:${String(PORTS.schedules)}`,
     what: 'Scheduled and delayed jobs over a durable queue the server keeps in SQLite'
   },
   {
     id: 'runtime',
     workspace: '@plitzi/example-runtime',
-    command: 'PORT=5018 PULSE_SECONDS=1 yarn workspace @plitzi/example-runtime start',
-    origin: 'http://127.0.0.1:5018',
+    command: `PORT=${String(PORTS.runtime)} PULSE_SECONDS=1 yarn workspace @plitzi/example-runtime start`,
+    origin: `http://127.0.0.1:${String(PORTS.runtime)}`,
     what: 'A space runtime self-hosted: its task, its route and its held-open stream, loaded with serveRuntime'
   },
   {
@@ -279,12 +280,10 @@ export const targets: Target[] = [
     get command() {
       const { webKey, userKey } = builderCredentials();
 
-      return `PLITZI_BUILDER_HTTP=1 PLITZI_BUILDER_PORT=8080 PLITZI_WEB_KEY=${webKey} PLITZI_USER_KEY=${userKey} yarn workspace @plitzi/plitzi-builder start`;
+      return `PLITZI_BUILDER_HTTP=1 PLITZI_BUILDER_PORT=${String(PORTS.builder)} PLITZI_WEB_KEY=${webKey} PLITZI_USER_KEY=${userKey} yarn workspace @plitzi/plitzi-builder start`;
     },
-    /** 8080 rather than the 5xxx band the rest of the suite uses, for one reason: a space token is bound to the
-     *  origins it was minted for, and this is one the platform already trusts. Anywhere else, a live run gets a
-     *  401 on its first call until somebody adds the origin to PLATFORM_ORIGINS. */
-    origin: 'http://127.0.0.1:8080',
+    /** A live run's space token is bound to the origins it was minted for: `yarn token` mints for this one. */
+    origin: BUILDER_ORIGIN,
     /** No gate: mocked it needs nothing, so it always runs. Exporting a token from `yarn token 1 --user admin`
      *  is what upgrades the same specs to a real server. */
     what: 'The visual builder — its own instance, never the one you are developing in',

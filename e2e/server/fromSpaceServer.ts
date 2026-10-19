@@ -7,6 +7,7 @@ import { authorSpace, defineAction, specFromSpace, specToSource } from '@plitzi/
 
 import { FUNCTION_FILES, SOURCE_FILES, TALLY_TYPE, tallyDeclaration } from './fromSpace/source';
 import { tallySpec } from '../spaces/fromSpace';
+import { PORTS } from '../launchConfig';
 
 import type { SpaceExport } from '@plitzi/sdk-shared/source';
 
@@ -21,7 +22,7 @@ import type { SpaceExport } from '@plitzi/sdk-shared/source';
  * project runs on the workspace's builds — what the next release hands anybody, never what npm has.
  */
 
-export const PORT = Number(process.env.PORT ?? 5209);
+export const PORT = Number(process.env.PORT ?? PORTS.fromSpace);
 /** The platform the space is taken out of. */
 export const PLATFORM_PORT = PORT + 100;
 

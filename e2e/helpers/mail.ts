@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto';
+import { PORTS } from '../launchConfig';
 
 /**
  * The suite's mail sink: an SMTP server that keeps every message it is handed, and an HTTP route answering what it
  * kept. See `server/mailSink.ts`.
  *
- * SMTP on 5204 rather than 1025, so a Mailpit left running for development is never mistaken for it.
+ * SMTP in the suite's own band rather than on 1025, so a Mailpit left running for development is never mistaken for it.
  */
-export const MAIL_SINK = { smtpPort: 5204, origin: 'http://127.0.0.1:5203' };
+export const MAIL_SINK = { smtpPort: PORTS.mailSinkSmtp, origin: `http://127.0.0.1:${String(PORTS.mailSinkHttp)}` };
 
 export type MailAddress = { name: string; address: string };
 

@@ -3,6 +3,7 @@ import { createServer } from '@plitzi/sdk-server';
 
 import { sampleSpace } from '../spaces';
 import { getRscData, plugins } from './sample';
+import { PORTS } from '../launchConfig';
 
 import type { OfflineDataRaw, Schema, SSRPageAdapters, Style } from '@plitzi/sdk-shared';
 
@@ -18,7 +19,7 @@ import type { OfflineDataRaw, Schema, SSRPageAdapters, Style } from '@plitzi/sdk
  *  Its space lives in memory: writes through MCP are visible to the run and never touch the fixture on disk. Specs
  *  that need a pristine space should prefer `/__preview`, which renders a draft without saving anything. */
 
-export const PORT = Number(process.env.PORT ?? 5200);
+export const PORT = Number(process.env.PORT ?? PORTS.server);
 export const PREVIEW_SECRET = 'e2e-preview-secret';
 
 let space: OfflineDataRaw = sampleSpace();

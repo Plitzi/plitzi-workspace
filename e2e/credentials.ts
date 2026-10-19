@@ -1,6 +1,7 @@
 import { createTokens } from '@plitzi/sdk-server/auth';
 
 import { liveCredentials } from './backend';
+import { BUILDER_ORIGIN } from './launchConfig';
 
 /** The two credentials the builder boots with, minted here instead of pasted in.
  *
@@ -12,7 +13,7 @@ import { liveCredentials } from './backend';
  *  A live run is the opposite: only the deployment's own secret produces a token its server will accept, so
  *  `PLITZI_WEB_KEY` / `PLITZI_USER_KEY` from `yarn token 1 --user admin` win whenever they are set. */
 
-const ORIGIN = 'http://127.0.0.1:8080';
+const ORIGIN = BUILDER_ORIGIN;
 
 const tokens = createTokens({
   secret: 'e2e-not-a-real-secret',

@@ -3,6 +3,7 @@ import { createAuth } from '@plitzi/sdk-server/auth';
 
 import { accounts, verifyPassword } from './accounts';
 import { authSpace, PROBE_PATH } from '../spaces/auth';
+import { PORTS } from '../launchConfig';
 
 import type { Stage } from '@plitzi/sdk-server/kernel';
 
@@ -12,7 +13,7 @@ import type { Stage } from '@plitzi/sdk-server/kernel';
  *  through those specs would make every one of them depend on auth. Here auth is the subject, so it is the only
  *  thing switched on beyond the pages. */
 
-export const PORT = Number(process.env.PORT ?? 5201);
+export const PORT = Number(process.env.PORT ?? PORTS.authServer);
 const COOKIE = 'e2e_session';
 
 /** Two things make this deployment its own: the signing secret and the issuer. Credentials minted here verify

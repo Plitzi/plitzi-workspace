@@ -4,6 +4,7 @@ import { boardJob, callAction } from '../../helpers/schedules';
 import { expectDevToolsAvailable, expectSampleSpaceContent, RSC_IDS, WITHOUT_RSC } from '../../helpers/space';
 import { expectVisuallyHealthy } from '../../helpers/visualHealth';
 import { sampleAuthored } from '../../spaces';
+import { PORTS } from '../../launchConfig';
 
 import type { APIRequestContext } from '@playwright/test';
 
@@ -239,7 +240,7 @@ describeTarget('server-actions-schedules', subject => {
 
     await expect
       .poll(async () => (await job(request, body.output.jobId))?.history, { timeout: 10_000 })
-      .toBe('#1 succeeded on replica-5017 · #2 succeeded on replica-5017');
+      .toBe(`#1 succeeded on replica-${String(PORTS.schedules)} · #2 succeeded on replica-${String(PORTS.schedules)}`);
   });
 
   // The README's claim about the queued actions: only a job can start them. A page naming one is refused.
