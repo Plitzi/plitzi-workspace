@@ -338,8 +338,10 @@ describe('the scaffold', () => {
 
     expect(spec).toContain('Object.values(handles.pages)');
     expect(spec).toContain('openPage(page, pageHandle.path');
-    // What a bare visit cannot show is not held against the page: a session, a route param, a condition.
-    expect(spec).toContain("pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0");
+    // What a bare visit cannot show is not held against the page: a session, a permission, a route param, a condition.
+    expect(spec).toContain(
+      "pageHandle.accessLevel !== 'authenticated' && pageHandle.access === undefined && pageHandle.params.length === 0"
+    );
     // The condition, the list row and the boxless provider are set aside by `inspectPage`, from what authoring knows.
     expect(spec).toContain('inspectPage(page, handles, { page: pageHandle.id })');
   });

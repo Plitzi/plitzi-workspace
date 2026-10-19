@@ -64,7 +64,7 @@ export const pushDataOf = async (
     ok?: boolean;
     version?: string;
     problems?: { file: string; message: string }[];
-    refusal?: { error?: string };
+    refusal?: { limit?: string; error?: string };
     error?: string;
   }>(connection, `/spaces/${String(space.id)}/data`, {
     method: 'PUT',
@@ -86,7 +86,8 @@ export const pushDataOf = async (
     return { outcome: 'failed' };
   }
 
-  if (status === 409 && base) {
+  // A 409 is also a space with nowhere to keep its data (`limit: 'storage'`): only `version` is another copy's push.
+  if (status === 409 && base && data.refusal?.limit === 'version') {
     fail(
       `${space.name}’s data changed since this project last had it — pushed from another copy.\n` +
         'Pull first (plitzi space pull) and push again, or pass --force to replace it with this project’s.'

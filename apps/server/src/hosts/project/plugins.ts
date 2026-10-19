@@ -161,16 +161,49 @@ export const projectPlugins = async (root: string): Promise<ProjectPlugins> => {
  */
 export const watchProjectPlugins = (root: string, server: SSRServer, plugins: ProjectPlugins): (() => void) => {
   const dir = path.join(root, PLUGINS_DIR);
-  if (!existsSync(dir)) {
+  if (existsSync(dir)) {
+    return watchPluginsFolder(root, dir, server, plugins, false);
+  }
+
+  // A project with no plugin yet — one taken out of a space that had none: `plitzi plugin add` makes the folder while
+  // the server runs, and the watch starts then, with what the folder already holds.
+  const parent = path.dirname(dir);
+  if (!existsSync(parent)) {
     return () => undefined;
   }
 
+  let stop: (() => void) | undefined;
+  const waiting = watch(parent, (_event, file) => {
+    if (stop || file !== path.basename(dir) || !existsSync(dir)) {
+      return;
+    }
+
+    waiting.close();
+    stop = watchPluginsFolder(root, dir, server, plugins, true);
+  });
+
+  return () => {
+    waiting.close();
+    stop?.();
+  };
+};
+
+/** `late`: the folder appeared after boot, so what it holds already is new — said and registered at once. */
+const watchPluginsFolder = (
+  root: string,
+  dir: string,
+  server: SSRServer,
+  plugins: ProjectPlugins,
+  late: boolean
+): (() => void) => {
   const { names, fromFolders } = plugins;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const reloading = new Map<string, ReturnType<typeof setTimeout>>();
   /** What was said of each folder last — at boot, by the layout check — so a save says only what changed. */
   const said = new Map(
-    foldersOf(dir).map(folder => [folder, checkPluginFolder(root, folder).map(layoutFindingText).join('\n')])
+    late
+      ? []
+      : foldersOf(dir).map(folder => [folder, checkPluginFolder(root, folder).map(layoutFindingText).join('\n')])
   );
   const sayOf = (folder: string): void => {
     const findings = checkPluginFolder(root, folder);
@@ -251,6 +284,9 @@ export const watchProjectPlugins = (root: string, server: SSRServer, plugins: Pr
     clearTimeout(timer);
     timer = setTimeout(sync, 300);
   });
+  if (late) {
+    timer = setTimeout(sync, 300);
+  }
 
   return () => {
     clearTimeout(timer);

@@ -337,6 +337,20 @@ describe('serveProject — a space held in the project', { timeout: PROJECT_TEST
     expect(await pageOf(running.url)).toContain('badge@1.0.0');
   });
 
+  // A project taken out of a space with no plugin has no src/plugins/ at all: the first `plitzi plugin add` makes it.
+  it('registers the first plugin of a project that started with no plugins folder', async () => {
+    await fs.rm(path.join(root, 'src/plugins'), { recursive: true });
+    const running = await serve({ space: () => titled('authored at boot') });
+    const reload = await listen(running.url);
+    await reload.heard('hello');
+
+    await write('src/plugins/Badge/index.ts', 'export default () => null;\n');
+    await reload.heard('reload');
+    await reload.stop();
+
+    expect(await pageOf(running.url)).toContain('badge@1.0.0');
+  });
+
   // A folder `plitzi plugin add` did not write — a component with no entry — says so where the server runs, and the
   // server goes on: the plugin is registered once it is whole.
   it('says a plugin folder added broken while it runs, goes on serving, and registers it once it is whole', async () => {

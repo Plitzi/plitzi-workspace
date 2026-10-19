@@ -130,6 +130,17 @@ describe('plitzi functions', () => {
     expect(process.exitCode).toBe(1);
   });
 
+  it('says what the space lacks when it has nowhere to keep the code, not that it moved on', async () => {
+    platform.noPrivateBucket = true;
+    await write('index.ts', 'export default {};');
+
+    await pushFunctions({ api: platform.api });
+
+    expect(said.err).toContain('This space has no private bucket');
+    expect(said.err).not.toContain('changed since your pull');
+    expect(process.exitCode).toBe(1);
+  });
+
   it('prints where the code is wrong', async () => {
     await write('index.ts', 'export default {\nBROKEN');
 

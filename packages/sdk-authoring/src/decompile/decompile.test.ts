@@ -104,6 +104,29 @@ describe('specFromSpace', () => {
     expect(compareSpaces(first, second)).toEqual([]);
   });
 
+  it('keeps the permissions a page is for, so an export does not publish it open', () => {
+    const space: SpaceSpec = {
+      name: 'Kept',
+      permanentUrl: 'kept',
+      pages: [
+        { id: 'home', name: 'Home', slug: '', body: [heading('Welcome', { id: 'welcome' })] },
+        {
+          id: 'staff',
+          name: 'Staff',
+          slug: 'staff',
+          access: { permissions: ['bookingsRead'] },
+          body: [heading('Bookings', { id: 'bookings' })]
+        }
+      ]
+    };
+    const first = authorSpace(space);
+    const { spec, corrections } = specFromSpace(first);
+
+    expect(corrections).toEqual([]);
+    expect(spec.pages.find(page => page.id === 'staff')?.access).toEqual({ permissions: ['bookingsRead'] });
+    expect(compareSpaces(first, authorSpace(spec))).toEqual([]);
+  });
+
   it('round-trips the blank space every account starts with', () => {
     const { first, second } = roundTrip(blankSpaceSpec);
 

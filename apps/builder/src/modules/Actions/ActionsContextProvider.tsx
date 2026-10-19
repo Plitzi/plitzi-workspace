@@ -4,6 +4,7 @@ import { actionTriggers, triggerInput } from '@plitzi/sdk-shared/actions';
 import { useCommonStoreSync } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
+import serverRendering from '@pmodules/Space/helpers/hasServerRendering';
 
 import ActionsContext from './ActionsContext';
 
@@ -65,11 +66,7 @@ const ActionsContextProvider = ({ children }: ActionsContextProviderProps) => {
       }),
     [data]
   );
-  // Unknown counts as true: deployments arrive after the panel mounts.
-  const hasServerRendering = useMemo(
-    () => deployments === undefined || deployments.some(deployment => deployment.credential?.provider === 'ssr'),
-    [deployments]
-  );
+  const hasServerRendering = useMemo(() => serverRendering(deployments), [deployments]);
 
   /** One per deployment, for building webhook URLs. */
   const origins = useMemo(

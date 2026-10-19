@@ -1,6 +1,7 @@
 import { isDocumentScroll } from '@plitzi/sdk-elements/elements/declarations';
 import { componentNamed, isInstance } from '@plitzi/sdk-schema';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { pageAccessOf } from '@plitzi/sdk-shared/schema';
 
 import {
   defaultAttributes,
@@ -174,6 +175,7 @@ const PAGE_ATTRIBUTES = new Set([
   'layout',
   'layoutContainer',
   'accessLevel',
+  'access',
   'unauthorizedBehaviour',
   'unauthorizedPageRedirect',
   'seoEnabled',
@@ -1123,6 +1125,9 @@ class SpecReader {
       attributes.accessLevel === 'public' || attributes.accessLevel === 'authenticated'
         ? attributes.accessLevel
         : undefined;
+    // The permissions a page is kept for, read as the server reads them: written back, or the export would publish it
+    // open.
+    const access = pageAccessOf(attributes);
     const redirect =
       attributes.unauthorizedBehaviour === 'redirect' && typeof attributes.unauthorizedPageRedirect === 'string'
         ? attributes.unauthorizedPageRedirect
@@ -1155,6 +1160,7 @@ class SpecReader {
       ...(folder ? { folder } : {}),
       ...(layout ? { layout } : {}),
       ...(accessLevel ? { accessLevel } : {}),
+      ...(access ? { access } : {}),
       ...(redirect ? { unauthorizedRedirect: redirect } : {}),
       ...this.pageStyle(page.definition.styleSelectors.base),
       ...this.readFlows(page),

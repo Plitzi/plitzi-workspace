@@ -73,6 +73,11 @@ export interface PageHandle extends ElementHandle {
   path: string;
   /** Who the page is for, as declared. An `authenticated` page answers a visitor with no session with a 403 or a redirect. */
   accessLevel?: 'public' | 'authenticated';
+  /**
+   * The permissions a visitor must hold to see it, as declared: the server withholds it from anybody else — a visit with
+   * no session included — so a test that opens it signs in as somebody who holds them.
+   */
+  access?: { permissions: string[] };
   /** The route params its slug declares (`post/{{slug}}` → `['slug']`). A path with any is not a URL until they are filled. */
   params: string[];
   /** The layout this page renders inside, by id — whose elements are on screen here too. */

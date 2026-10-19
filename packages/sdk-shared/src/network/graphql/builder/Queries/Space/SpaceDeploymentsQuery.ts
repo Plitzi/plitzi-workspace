@@ -14,6 +14,7 @@ const SpaceDeploymentsQuery = /* GraphQL */ `
         domain
         isVerified
         default
+        provider
         credential {
           identifier
           provider

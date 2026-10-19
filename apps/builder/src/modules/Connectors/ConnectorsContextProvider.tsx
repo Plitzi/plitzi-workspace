@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { useBuilderStoreSync } from '@plitzi/sdk-shared/store';
 import useBuilderNetwork from '@pmodules/Network/hooks/useBuilderNetwork';
 import useGraphQL from '@pmodules/Network/hooks/useGraphQL';
+import serverRendering from '@pmodules/Space/helpers/hasServerRendering';
 
 import ConnectorsContext from './ConnectorsContext';
 
@@ -44,12 +45,7 @@ const ConnectorsContextProvider = ({ children }: ConnectorsContextProviderProps)
   const { data: deployments } = useGraphQL('SpaceDeployments', data => data?.SpaceDeployments.edges);
 
   const connectors = useMemo(() => byIdentifier(data), [data]);
-  // Unknown counts as "has one": the deployments arrive a moment after the panel does, and a space that is correctly
-  // set up should not flash a warning telling its owner it is broken. A late warning beats a wrong one.
-  const hasServerRendering = useMemo(
-    () => deployments === undefined || deployments.some(deployment => deployment.credential?.provider === 'ssr'),
-    [deployments]
-  );
+  const hasServerRendering = useMemo(() => serverRendering(deployments), [deployments]);
 
   useBuilderStoreSync('connectors', connectors);
   useBuilderStoreSync('hasServerRendering', hasServerRendering);

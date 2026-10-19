@@ -79,7 +79,14 @@
   403 with a refusal drawn in the page's layout. Its content is withheld from everything that visitor is sent — the
   render, the hydration payload, the space document (and a document built for somebody with access is not handed to
   somebody without it by its name) and the page's server data. The builder's page settings take the permissions;
-  authoring refuses an `access` the server could not keep (`page-access`).
+  authoring refuses an `access` the server could not keep (`page-access`). A space read back as code — `plitzi create
+  --from`, the Export — keeps each page's `access`, so a protected page is never exported open. A page's handle carries
+  its `access` too, and a project's `visual/home.spec.ts` leaves such a page to a test that signs in, as it does a page
+  behind a session (`plitzi upgrade` rewrites an untouched one).
+- **A project's first plugin is picked up while it runs** (`@plitzi/sdk-server`): `start:dev` registers a plugin folder
+  added under `src/plugins/` and reloads the open pages — but only watched that folder when it existed at boot, so a
+  project with no plugin yet (one taken out of a space that had none) showed nothing of its first `plitzi plugin add`
+  until a restart. With no folder, the server waits for it to appear and takes what it holds then.
 
 ## Packaging
 
@@ -101,11 +108,23 @@
 
 ## CLI
 
+- **A refused push says why** (`@plitzi/cli`): `space push functions` and the data push read any 409 as "changed since
+  your pull" — and the platform also answers 409 when the space has no private bucket to keep its code or data in, so
+  a first push to a space with no storage sent its author to pull, which changed nothing. The CLI now names a conflict
+  only when the refusal says `version`, and prints the platform's own words otherwise (where to add the bucket).
 - **`create` points at the Academy** (`@plitzi/cli`): its last lines name the docs' Academy,
   `https://docs.plitzi.com/academy`, for whoever is new to Plitzi — and the README the docs themselves.
 
 ## Builder
 
+- **A space served by Plitzi has a server, and the builder says so** (`@plitzi/plitzi-builder`, `@plitzi/sdk-shared`):
+  whether a space can run its actions and resolve its connectors was read off an SSR *credential*, which only a space
+  deployed to a page server of its own has — so every space served at `<space>.plitzi.app` showed "No server-rendered
+  deployment" over Server and counted its actions unavailable, while they ran. The deployments now carry what serves
+  them (`provider`), and a deployment served by SSR — Plitzi's or the space's — counts.
+- **New Layout saves the layout** (`@plitzi/sdk-schema`): a layout is a root of the pages' tree, added with no anchor,
+  and `flatMapOf` found no tree for an empty anchor — so the server refused every new layout, saying it was "already
+  added". A root now goes into the pages' tree, and the refusal says which of the two it is.
 - **Settings → Realtime: a space's channels, declared by hand** (`@plitzi/plitzi-builder`): `settings.channels` was
   written only in code or by an agent over MCP, so a space made in the builder could not open a channel. The section
   lists the channels with who may join (anyone, signed-in visitors, visitors with permissions), who may speak (pages, or

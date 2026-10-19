@@ -39,6 +39,7 @@ const spec: SpaceSpec = {
       ]
     },
     { name: 'Account', slug: 'account', id: 'account', accessLevel: 'authenticated', body: [] },
+    { name: 'Staff', slug: 'staff', id: 'staff', access: { permissions: ['bookingsRead'] }, body: [] },
     { name: 'Post', slug: 'post/{{slug}}', id: 'post', body: [] }
   ]
 };
@@ -90,9 +91,11 @@ describe('schema/handles', () => {
    * What a suite that only OPENS pages can hold a space to. A page behind a session, or one whose route needs a
    * value, is not a URL a bare visit can load — so the handle says so rather than the suite finding out as a 403.
    */
-  it('says which pages need a session or a route value before they can be opened', () => {
+  it('says which pages need a session, a permission or a route value before they can be opened', () => {
     expect(handles.page('account').accessLevel).toBe('authenticated');
     expect(handles.page('pricing').accessLevel).toBeUndefined();
+    expect(handles.page('staff').access).toEqual({ permissions: ['bookingsRead'] });
+    expect(handles.page('pricing').access).toBeUndefined();
     expect(handles.page('post').params).toEqual(['slug']);
     expect(handles.page('pricing').params).toEqual([]);
   });

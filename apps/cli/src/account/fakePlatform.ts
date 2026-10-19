@@ -53,6 +53,8 @@ export interface FakePlatform {
   expiresIn: number;
   /** Space 3's functions draft: saved whole, a new version each time; a file containing `BROKEN` does not build. */
   functions: { files: Record<string, string>; version: string };
+  /** Space 3 has no private bucket: a functions push is refused for storage, as the platform does (409, `storage`). */
+  noPrivateBucket: boolean;
   /** Every task tried, with its params. */
   tried: { task: string; params: unknown }[];
   /** Space 3's data — its files' text by path — and which copy of it this is. */
@@ -206,6 +208,11 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
         const broken = Object.entries(sent.files).find(([, text]) => text.includes('BROKEN'));
         if (sent.base !== undefined && sent.base !== platform.functions.version) {
           json(res, 409, { ok: false, refusal: { status: 409, error: 'moved on', limit: 'version' } });
+        } else if (platform.noPrivateBucket) {
+          json(res, 409, {
+            ok: false,
+            refusal: { status: 409, error: 'This space has no private bucket', limit: 'storage' }
+          });
         } else if (broken) {
           json(res, 422, { ok: false, problems: [{ file: broken[0], line: 2, message: 'Expected ";"' }] });
         } else {
@@ -405,6 +412,7 @@ export const fakePlatform = async (): Promise<FakePlatform> => {
     renewable: new Set(),
     expiresIn: 3600,
     functions: { files: {}, version: 'v0' },
+    noPrivateBucket: false,
     data: { files: {}, version: 'd0' },
     assets: {},
     tried: [],

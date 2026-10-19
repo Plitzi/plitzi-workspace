@@ -73,13 +73,15 @@ import { authorProjectSpace } from '@plitzi/sdk-authoring/node';
  * Rename one and this fails at author time with a suggestion, rather than at test time with an empty locator.
  *
  * One test per page, so the second page you add is covered the moment it exists. What a bare visit cannot show is
- * left to tests of its own: a page behind a session or with a route param (\`post/{{slug}}\`). What shows only under a
- * condition, renders once per list row or has no box of its own, \`inspectPage\` sets aside by itself.
+ * left to tests of its own: a page behind a session or a permission (\`access\`), or with a route param
+ * (\`post/{{slug}}\`). What shows only under a condition, renders once per list row or has no box of its own,
+ * \`inspectPage\` sets aside by itself.
  */
 const { handles } = await authorProjectSpace();
 
 const openable = Object.values(handles.pages).filter(
-  pageHandle => pageHandle.accessLevel !== 'authenticated' && pageHandle.params.length === 0
+  pageHandle =>
+    pageHandle.accessLevel !== 'authenticated' && pageHandle.access === undefined && pageHandle.params.length === 0
 );
 
 for (const pageHandle of openable) {

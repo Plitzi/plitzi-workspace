@@ -61,7 +61,9 @@ export const documentIds = (schema: Pick<Schema, 'flat' | 'components'>): Set<El
  * of a space — the builder's reducer and the server's model — resolve the tree here and edit it as they always have.
  */
 export const flatMapOf = (schema: ElementDocument, id: Element['id'], mintId?: MintElementId): FlatMap | undefined => {
-  const tree = treeOf(schema, id);
+  // No anchor is a root of its own — a layout, placed with nothing above it — and a root is added to the pages' tree:
+  // a component's root comes with the component, never by itself.
+  const tree = id === '' ? treesOf(schema).find(candidate => candidate.componentId === undefined) : treeOf(schema, id);
   if (!tree) {
     return undefined;
   }

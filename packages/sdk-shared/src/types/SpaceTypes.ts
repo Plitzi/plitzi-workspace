@@ -113,6 +113,11 @@ export type SpaceDeployment = {
   domain: string;
   isVerified: boolean;
   default: boolean;
+  /**
+   * What serves it: `ssr` a page server — Plitzi's own when there is no `credential`, the space's when there is — or a
+   * static bucket (`s3`, `r2`).
+   */
+  provider: 'ssr' | 's3' | 'r2';
   credential: SpaceCredential | null;
   createdAt: number;
   updatedAt: number;

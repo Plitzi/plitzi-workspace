@@ -70,6 +70,21 @@ describe('the trees of a document', () => {
   });
 });
 
+describe('a root added on its own', () => {
+  // The builder's "New Layout": a layout is a root of the pages' tree with nothing above it, so it is added at ''.
+  it('goes into the pages’ tree, held to the ids of every other tree', () => {
+    const schema = document();
+    const layout = element('main', 'layoutContainer', 'main');
+    const map = flatMapOf(schema, '');
+
+    expect(map?.addElement(layout, '', 'custom')).toBe(true);
+    expect(schema.flat.main.definition.rootId).toBe('main');
+    expect(
+      flatMapOf(schema, '')?.addElement(element('badge-root', 'layoutContainer', 'badge-root'), '', 'custom')
+    ).toBe(false);
+  });
+});
+
 describe('addComponent', () => {
   it('makes a component of a subtree and leaves an instance where it was', () => {
     const schema = document();

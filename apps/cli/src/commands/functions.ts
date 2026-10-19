@@ -256,7 +256,7 @@ export const pushFunctionsOf = async (
     version?: string;
     manifest?: Draft['manifest'];
     problems?: Problem[];
-    refusal?: { error: string };
+    refusal?: { limit?: string; error: string };
     error?: string;
   }>(connection, `/spaces/${space.id}/functions`, {
     method: 'PUT',
@@ -276,7 +276,8 @@ export const pushFunctionsOf = async (
     return 'failed';
   }
 
-  if (reply.status === 409) {
+  // A 409 is also a space with no private bucket for its code (`limit: 'storage'`): only `version` is a newer copy.
+  if (reply.status === 409 && reply.data.refusal?.limit === 'version') {
     fail(
       `${space.name}’s functions changed since your pull — in the builder, or from another copy. ` +
         'Keep your changes aside, pull, and apply them again.'

@@ -205,6 +205,8 @@ const handlers: Record<string, ((space: OfflineDataRaw) => unknown) | undefined>
             domain: 'e2e.plitzi.app',
             isVerified: true,
             default: true,
+            // Served by the platform's own page server, as every `<space>.plitzi.app` is.
+            provider: 'ssr',
             credential: null,
             createdAt: 0,
             updatedAt: 0,

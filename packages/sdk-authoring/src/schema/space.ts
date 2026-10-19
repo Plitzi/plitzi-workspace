@@ -1577,6 +1577,7 @@ class SpaceAuthor {
       slug: page.slug,
       path: this.routeFor(page),
       ...(page.accessLevel ? { accessLevel: page.accessLevel } : {}),
+      ...(page.access ? { access: { permissions: [...page.access.permissions] } } : {}),
       params: getSlugParams(page.slug),
       ...(page.layout ? { layout: page.layout.id } : {}),
       elements: {}
