@@ -52,6 +52,8 @@ export interface RunPaths {
   log: string;
   /** The lead's summary of the run, for its report. */
   summary: string;
+  /** The lead's primer, as the run keeps it: every task's brief starts with it. */
+  primer: string;
   /** Messages between the lead and the tasks, one a file. */
   messages: string;
   /** Which of them the lead has read. */
@@ -91,6 +93,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     merges: path.join(dir, 'merges'),
     log: path.join(dir, 'log.jsonl'),
     summary: path.join(dir, 'summary.md'),
+    primer: path.join(dir, 'primer.md'),
     messages: path.join(dir, 'messages'),
     leadRead: path.join(dir, 'lead-read.json'),
     leadSeen: path.join(dir, 'lead-seen.json'),

@@ -33,7 +33,10 @@ export interface TaskLine {
   blockedBy?: { reason: string; needs: Needs };
   estimateMinutes: number;
   spentMinutes?: number;
+  /** Only while it is worked: a task in review, blocked or waiting has no agent on it to be heard from. */
   noSignal: boolean;
+  /** When its holder took it: a task done again after a revert is another review, though its round is the same. */
+  takenAt?: string;
   /** The tasks that start when this one is done. */
   unblocks: string[];
   milestone?: string;
@@ -102,7 +105,11 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[]): TaskLine => ({
   ...(view.state.blockedBy ? { blockedBy: view.state.blockedBy } : {}),
   estimateMinutes: view.task.estimateMinutes,
   ...(view.owner ? { spentMinutes: minutesBetween(view.owner.takenAt, now) } : {}),
-  noSignal: view.owner !== undefined && isDisconnected(view.task, view.signalAt, now),
+  noSignal:
+    view.owner !== undefined &&
+    (view.state.status === 'in-progress' || view.state.status === 'changes-requested') &&
+    isDisconnected(view.task, view.signalAt, now),
+  ...(view.owner ? { takenAt: view.owner.takenAt } : {}),
   unblocks,
   ...(view.task.milestone ? { milestone: view.task.milestone } : {})
 });
@@ -222,7 +229,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
           text:
             view.state.status === 'in-review'
               ? `${moved.join(', ')} changed in the project while ${view.task.id} worked on it: its review decides — --approve --merge when the two go together, --approve --overwrite, or --changes`
-              : `${moved.join(', ')} changed in the project while ${view.task.id} has it: take the project's version (plitzi task discard <file>) and go on from it — or its review decides`,
+              : `${moved.join(', ')} changed in the project while ${view.task.id} has it: its work is kept and its review decides (line by line when the two go together) — or it builds on the project's version: plitzi task discard <file>`,
           who: view.state.status === 'in-review' ? 'lead' : 'task'
         });
       }

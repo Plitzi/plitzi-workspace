@@ -16,6 +16,7 @@ import {
   pageFor,
   renderedRowsInPage,
   serverErrors,
+  meantOnPage,
   wrappedLabelsInPage
 } from './check';
 
@@ -301,5 +302,25 @@ describe('a short label the page breaks onto two lines', () => {
     } finally {
       Reflect.deleteProperty(Range.prototype, 'getClientRects');
     }
+  });
+});
+
+describe('an expected element that is not on the page', () => {
+  it('says the row id a per-row name meant, or the nearest id, or nothing', () => {
+    const onPage = ['summary-title', 'summary-trend', 'summary-trend', 'summary-trend', 'summary-lede'];
+
+    expect(meantOnPage('summary-trend-luna', onPage)).toBe(
+      ' — summary-trend is, 3 times: a list’s row has the same ids in every row, so none is named per row; --expect reads the first'
+    );
+    expect(meantOnPage('summary-titel', onPage)).toBe(' — did you mean summary-title?');
+    expect(meantOnPage('walks-filter', onPage)).toBe('');
+  });
+});
+
+describe('a list drawn in every row of another', () => {
+  it('says each copy is fed by its row when its source is the row’s', () => {
+    expect(listText('faq-questions', { rendered: 16, source: 0, copies: [4, 4, 4, 4] })).toBe(
+      'faq-questions 16 rows in 4 copies (4, 4, 4, 4), each fed by the row it is in'
+    );
   });
 });

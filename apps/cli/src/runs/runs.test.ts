@@ -1896,6 +1896,95 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     expect((await taskContext(menu.ctx, 'es-launch', 't-menu')).runNotes).toHaveLength(2);
   });
 
+  it('starts every task from the lead’s primer and the few references its files need — and amends the primer', async () => {
+    const plan = benchPlan();
+    plan.primer = 'primer.md';
+    await bench.write('primer.md', '# The bench\n\nPages are one file each; the tokens are shared.\n');
+    for (const skill of [
+      'plitzi-authoring/CHEATSHEET.md',
+      'plitzi-authoring/reference/layouts.md',
+      'plitzi-cli/reference/runs.md'
+    ]) {
+      await bench.write(`.claude/skills/${skill}`, '# skill\n');
+    }
+    await openRun(lead(), await bench.writePlan(plan), 4);
+    const home = await take('agent-1', 't-home');
+
+    const context = await taskContext(home.ctx, 'es-launch', 't-home');
+    expect(context.primer).toContain('Pages are one file each');
+    // A page: the cheatsheet and the run's protocol — not the layout's reference, which is no file of it.
+    expect(context.reading).toEqual([
+      '.claude/skills/plitzi-authoring/CHEATSHEET.md',
+      '.claude/skills/plitzi-cli/reference/runs.md'
+    ]);
+
+    await bench.write('primer.md', '# The bench\n\nPages are one file each; the tokens are shared; dates are UTC.\n');
+    expect(await amendRun(lead(), 'es-launch', await bench.writePlan(plan))).toMatchObject({ primer: true });
+    expect((await taskContext(home.ctx, 'es-launch', 't-home')).primer).toContain('dates are UTC');
+    expect((await reportProgress(home.ctx, 'es-launch', 't-home', {})).messages.map(each => each.text)).toEqual([
+      'The lead changed the run’s primer: read it again (plitzi task context)'
+    ]);
+  });
+
+  it('refuses a primer that is not there or too long to be read whole by every agent', async () => {
+    const plan = benchPlan();
+    plan.primer = 'nowhere.md';
+    expect((await refusal(openRun(lead(), await bench.writePlan(plan), 4))).message).toContain(
+      'primer nowhere.md is not there'
+    );
+    plan.primer = 'long.md';
+    await bench.write('long.md', 'x'.repeat(17 * 1024));
+    expect((await refusal(openRun(lead(), await bench.writePlan(plan), 4))).message).toContain('over 16');
+  });
+
+  it('paces a plan by how this project’s runs went: their done tasks’ minutes over their estimates', async () => {
+    const row = (task: string, minutes: number, estimate: number): string =>
+      `| ${task} | developer | done | dev-1 | ${String(minutes)} / ${String(estimate)} | 1 | 0 | src/a.ts |`;
+    await bench.write(
+      'tmp/plitzi-reports/old-run-20261020T000000Z.md',
+      [
+        '## Tasks',
+        '',
+        ...[row('a', 5, 20), row('b', 10, 20), row('c', 5, 20), row('d', 10, 20), row('e', 10, 20)]
+      ].join('\n')
+    );
+
+    const checked = await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), 2);
+    expect(checked.estimate.paced).toEqual({
+      ratio: 0.4,
+      runs: 1,
+      tasks: 5,
+      wallMinutes: expect.any(Number) as unknown
+    });
+    expect(checked.estimate.paced?.wallMinutes).toBeLessThan(checked.estimate.wallMinutes);
+  });
+
+  it('wakes the lead for a task done again after a revert, and never calls a task in review silent', async () => {
+    await open();
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(about.work, 'src/space/pages/about.ts', 'export const about = { es: true };\n');
+    await completeTask(about.ctx, 'es-launch', 't-about');
+    expect(
+      (await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh.map(item => item.key)
+    ).toEqual([expect.stringMatching(/^review:t-about:0:/)]);
+    // In review for hours, its agent long gone to other work: nothing to reassign.
+    bench.advance(3 * 60 * 60_000);
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-about')?.noSignal).toBe(false);
+
+    await reviewTask(lead(), 'es-launch', 't-about', 'approve', []);
+    await revertTask(lead(), 'es-launch', 't-about', 'Say it in the formal voice');
+    // The agent who did it hears it by name, wherever it is now.
+    expect((await nextTask(bench.agent('agent-1'), 'es-launch')).messages.map(each => each.text)).toEqual([
+      'Your work on t-about was reverted: Say it in the formal voice — out of the run; plitzi task next hands it on'
+    ]);
+    const again = await take('agent-2', 't-about');
+    await writeInCopy(again.work, 'src/space/pages/about.ts', 'export const about = { formal: true };\n');
+    await completeTask(again.ctx, 'es-launch', 't-about');
+    expect(
+      (await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh.map(item => item.text)
+    ).toContain('t-about is in review: plitzi task review t-about --approve | --changes "…"');
+  });
+
   it('takes the next task in the same breath, and tells an agent done with the run how its own work ended', async () => {
     await open(benchPlan(), { agents: 4 });
     const first = await takeNext(bench.agent('agent-1'), 'es-launch', undefined);

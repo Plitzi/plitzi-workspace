@@ -22,6 +22,9 @@ import type { ProjectFiles } from './types';
 
 const cliRequire = createRequire(import.meta.url);
 
+/** Where a project keeps its skills: what an agent's harness reads, and what a run points a task at. */
+export const SKILLS_ROOT = '.claude/skills';
+
 export const SKILL_NAMES = ['plitzi-authoring', 'plitzi-cli'] as const;
 
 export type SkillName = (typeof SKILL_NAMES)[number];
@@ -114,7 +117,7 @@ export const skillFiles = (names: readonly SkillName[] = SKILL_NAMES, root?: str
 
     const version = versionOf(resolvers, SKILLS[name]);
     for (const [path, content] of filesUnder(dirname(entry))) {
-      files[`.claude/skills/${name}/${path}`] =
+      files[`${SKILLS_ROOT}/${name}/${path}`] =
         path === 'SKILL.md' && version ? stampVersion(content, version) : content;
     }
   }

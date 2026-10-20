@@ -82,6 +82,11 @@ export interface RunPlan {
   contracts?: Contract[];
   /** What every task must know from the start — a known issue, a rule of this run: the run's first notes. */
   notes?: string[];
+  /**
+   * The lead's primer, a Markdown file beside the plan: what the project is and how it is built, written once by the
+   * lead who read it all — handed to every task with its brief, so an agent does not read the same ten files to start.
+   */
+  primer?: string;
 }
 
 /** A task as the run holds it (`task.json`): the plan's, with its files expanded — or one the CLI made to integrate. */
@@ -387,7 +392,8 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   Array.isArray(value.tasks) &&
   value.tasks.every(isPlannedTask) &&
   optional(value.contracts, contracts => Array.isArray(contracts) && contracts.every(isContract)) &&
-  optional(value.notes, isStrings);
+  optional(value.notes, isStrings) &&
+  optional(value.primer, isString);
 
 export const isRunTask = (value: unknown): value is RunTask =>
   isPlannedTask(value) &&

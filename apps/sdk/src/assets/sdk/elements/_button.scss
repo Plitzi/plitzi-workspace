@@ -10,6 +10,8 @@
     border-top-left-radius: 4px;
     // A ratio, landing on 24px at this size: a class that resizes the words keeps the proportion.
     line-height: 1.5;
+    // The page's type, not the system's button font a browser gives a <button>.
+    font-family: inherit;
     font-size: 16px;
     cursor: pointer;
 

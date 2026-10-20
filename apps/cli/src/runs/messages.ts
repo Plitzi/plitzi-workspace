@@ -19,7 +19,7 @@ import type { LoadedRun, RunContext } from './run';
 /** Who speaks: the lead, a task by its id — or, to reach an agent whichever task it holds, `@` and its name. */
 export const LEAD = 'lead';
 
-const AGENT = /^@[\w.-]{1,64}$/;
+export const AGENT = /^@[\w.-]{1,64}$/;
 
 /**
  * The run's memory: what the lead says to every task — the ones in hand, and the ones taken after it was said. A known

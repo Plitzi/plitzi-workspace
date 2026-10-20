@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { exists } from './files';
+import { readHistory } from './history';
 import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_COPIED_DIRS, under } from './paths';
@@ -36,6 +37,8 @@ export interface PlanEstimate {
   reviewRounds: number;
   needsConfirmation: boolean;
   why?: string;
+  /** At this project's pace — its past runs' minutes over their estimates — when it has enough of them to say. */
+  paced?: { wallMinutes: number; ratio: number; runs: number; tasks: number };
 }
 
 export interface CheckedPlan {
@@ -183,6 +186,22 @@ export const estimate = (tasks: readonly RunTask[], agentsAsked: number): PlanEs
     needsConfirmation: reasons.length > 0,
     ...(reasons.length > 0 ? { why: reasons.join(', ') } : {})
   };
+};
+
+/** Each task's estimate scaled to how this project's runs went: a task of no less than a minute. */
+export const atPace = (tasks: readonly RunTask[], ratio: number): RunTask[] =>
+  tasks.map(task => ({ ...task, estimateMinutes: Math.max(1, Math.round(task.estimateMinutes * ratio)) }));
+
+const pacedEstimate = async (
+  root: string,
+  tasks: readonly RunTask[],
+  agentsAsked: number
+): Promise<Pick<PlanEstimate, 'paced'>> => {
+  const history = await readHistory(root);
+
+  return history
+    ? { paced: { ...history, wallMinutes: estimate(atPace(tasks, history.ratio), agentsAsked).wallMinutes } }
+    : {};
 };
 
 const isOutsideSource = (file: string): boolean =>
@@ -526,7 +545,7 @@ export const checkPlan = async (
       .filter(file => !holder.has(file))
       .sort(),
     created: created.sort(),
-    estimate: estimate(tasks, agentsAsked),
+    estimate: { ...estimate(tasks, agentsAsked), ...(await pacedEstimate(root, tasks, agentsAsked)) },
     notices
   };
 };

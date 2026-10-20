@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
-import { createExclusive, fingerprint, readJson, readOptional, sizeOf, writeJson } from './files';
+import { createExclusive, fingerprint, readJson, readOptional, sizeOf, writeAtomic, writeJson } from './files';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { isApprovedManifest, isBaseManifest, isRunPlan, isRunRecord, isSharedManifest } from './model';
 import { readOwnership } from './ownership';
@@ -434,12 +434,41 @@ export const checkPlanFile = async (ctx: RunContext, file: string, agents: numbe
 };
 
 /** A plan file read and checked against the project as it is, with the ownership it was checked by — no run touched. */
+/** A primer is read whole by every agent: past this it no longer saves what it is for. */
+export const MAX_PRIMER_BYTES = 16 * 1024;
+
+/** The plan's primer, read beside the plan — refused, saying why, when it is not there or too long to be one. */
+export const readPrimer = async (plan: RunPlan, planFile: string): Promise<string | undefined> => {
+  if (plan.primer === undefined) {
+    return undefined;
+  }
+
+  const file = path.resolve(path.dirname(planFile), plan.primer);
+  const text = await fs.readFile(file, 'utf-8').catch(() => undefined);
+  if (text === undefined || text.trim() === '') {
+    throw new RunRefusal(
+      'invalid',
+      `The plan's primer ${plan.primer} is not there, or is empty (read beside the plan: ${file})`
+    );
+  }
+
+  if (Buffer.byteLength(text) > MAX_PRIMER_BYTES) {
+    throw new RunRefusal(
+      'invalid',
+      `The plan's primer is ${String(Math.round(Buffer.byteLength(text) / 1024))} KB, over ${String(MAX_PRIMER_BYTES / 1024)}: every agent reads it whole to start — keep what each task needs, and name the references for the rest`
+    );
+  }
+
+  return text;
+};
+
 export const readCheckedPlan = async (
   root: string,
   file: string,
   agents: number
 ): Promise<{ checked: CheckedPlan; ownership: Ownership }> => {
   const plan = await readPlanFile(file);
+  await readPrimer(plan, file);
   const ownership = await readOwnership(root);
   try {
     return { checked: await checkPlan(root, plan, ownership, agents), ownership };
@@ -515,6 +544,10 @@ export const openRun = async (
   await writeJson(paths.base, base);
   await writeJson(paths.approved, { files: {}, tasks: [] } satisfies ApprovedManifest);
   await writeJson(paths.shared, { files: checked.shared } satisfies SharedManifest);
+  const primer = await readPrimer(plan, file);
+  if (primer !== undefined) {
+    await writeAtomic(paths.primer, primer);
+  }
   for (const task of checked.tasks) {
     const taskFiles = taskPaths(paths, task.id);
     await writeJson(taskFiles.definition, task);

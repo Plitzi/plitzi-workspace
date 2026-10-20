@@ -110,6 +110,21 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect((await plitzi(bench.root, ['run', 'can-write', 'src/space/pages/about.ts'])).code).toBe(0);
   }, 120_000);
 
+  it('hands a task its files and the shape of the data they import with --files, in one answer', async () => {
+    await bench.write(
+      'src/space/pages/about.ts',
+      `import menu from ${JSON.stringify('../../data/menu.json')} with { type: ${JSON.stringify('json')} };\n\nexport const about = { menu };\n`
+    );
+    await plitzi(bench.root, ['run', 'open', await bench.writePlan(benchPlan())]);
+    const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'agent-1']);
+
+    const brief = await plitzi(String(taken.json.work), ['task', 'context', '--files'], {}, { json: false });
+    const said = String(brief.json.stdout);
+    expect(said).toContain('── src/space/pages/about.ts (4 lines)');
+    expect(said).toContain('../../data/menu.json');
+    expect(said).toContain('── src/data/menu.json, its shape');
+  }, 120_000);
+
   it('knows the task it runs in from its copy, reads a text written - from stdin, and answers JSON for PLITZI_JSON', async () => {
     await plitzi(bench.root, ['run', 'open', await bench.writePlan(benchPlan())]);
     const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'agent-1']);

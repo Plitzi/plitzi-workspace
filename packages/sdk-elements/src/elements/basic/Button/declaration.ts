@@ -14,6 +14,8 @@ const buttonStyle = {
   'padding-right': '12px',
   'padding-bottom': '6px',
   cursor: 'pointer',
+  // The page's type, not the system's button font a browser gives a <button>: a label read like the text around it.
+  'font-family': 'inherit',
   'font-size': '16px',
   // A ratio, not a length: 24px at the default 16px, and the same proportion for a class that resizes the text. A fixed
   // 24px left every small button — a chip, a row, a tab — a line taller than its text.

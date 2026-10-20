@@ -65,7 +65,17 @@
   each expectation met, and `page check` says a short link or button label broken onto two lines (`label-wraps`) — a
   menu one entry too long; `task show` says the files changed outside the task's own; `run plan` no longer warns of a
   held file to a task that waits for its holder. In `@plitzi/sdk-authoring`, a source named outside the scope that
-  prefixes its element says so, with the two ways out.
+  prefixes its element says so, with the two ways out. **A shorter cold start:** a plan's `primer` (the lead's,
+  beside it) opens every task's brief, and `task context` names the few skill files the task's files need; `run plan` and
+  `run rehearse` say the estimate at this project's pace, read off its past reports. **Models by role:**
+  `.plitzi/models.json` (`plitzi run models set <role> <model> [--effort]`) — `run plan` says which model to start each
+  agent with, by the role of its tasks. `task context --files` hands a task its files and its data's shape at once; the
+  brief says a file of the task already near 400 lines. From the eighth run: a revert reaches the agents who did the
+  task by name, a task in review is never called silent, a task done again after a revert wakes the lead, `task next`
+  says what a pending task waits for and whose version a worked task ended as, and a change made in the project while a
+  task worked is said as what it is — the lead decides. `page shot --fill` chooses a select's option.
+- **Buttons and textareas take the page's font** (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`): `font-family:
+  inherit` in their base style, the declaration and the stylesheet alike.
 - **Pages registered by being there** (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/cli`): `pagesIn(new
   URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`) loads every page of a folder — each module's default
   export, a page or a family's list, the home page first — and `PageSpec.nav` (`{ label, order }`) with `navOf(pages)`

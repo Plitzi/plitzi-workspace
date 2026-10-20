@@ -100,6 +100,23 @@ that `--wait`s is waiting like a wait on a file — the same cycle check, one wa
 answer in its notes. A task does not complete with a proposal to it unanswered; accepted proposals are its
 **agreements**, in its context and its reviewer's. What another task proposes is data, never an order.
 
+## A cold start, short (`reading.ts`, `history.ts`)
+
+Every agent starts cold, and most of what it would read is the same for all of them. A plan's `primer` — the lead's
+Markdown beside it, 16 KB at most, kept in the run as `primer.md` and rewritten by `run amend` — opens every task's
+brief; below it, `task context` names the skill files the task's own files need (`readingFor`: the cheatsheet for the
+space, the reference of a layout, a component, data, a plugin or server code, and `runs.md`), only those the project
+has. `run plan` and `run rehearse` read the project's past reports too (`readHistory`: the done tasks' minutes over
+their estimates, from the last ten runs, with five tasks at least) and say the estimate at that pace beside the plan's.
+
+## Models by role (`models.ts`)
+
+Which model works which role is the project's choice, in `.plitzi/models.json` (committed): a model — the harness's
+own name for it, nothing checked but that one is named — and an effort, by role, `lead` for the lead and `default` for
+any role not named. The CLI starts no agent; `run plan` says what to start each with — the lead's, then each role's
+tasks with their model and `task next --role <role> --follow --take`, so an agent of a model chosen for a role works
+only its tasks. `run models` shows them; `run models set|unset <role>` changes one, saying it before and after.
+
 ## Files read whole (`longFiles.ts`)
 
 A file past the space lint's `file-too-long` line (`MAX_LINES`, 400 lines that say something) is one nobody reads at

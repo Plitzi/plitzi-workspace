@@ -8,7 +8,9 @@ import chalk from 'chalk';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { describeData } from './data';
 import { findProject } from './existingProject';
+import { MAX_LINES } from '../lint/rules/fileTooLong';
 import { durationText } from '../options';
 import { proposalsOf } from '../runs/agreements';
 import { amendRun } from '../runs/amend';
@@ -17,9 +19,10 @@ import { waitForLead } from '../runs/leadWatch';
 import { crossed, longFileText } from '../runs/longFiles';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile, showVersion } from '../runs/merge';
 import { acceptanceText } from '../runs/model';
+import { MODELS_FILE, modelFor, modelText, readModels, setModel } from '../runs/models';
 import { expandFiles, impactOf, readOwnership } from '../runs/ownership';
 import { COPY_TASK_FILE, RUNS_DIR, runPaths, taskPaths } from '../runs/paths';
-import { DEFAULT_AGENTS } from '../runs/plan';
+import { atPace, DEFAULT_AGENTS } from '../runs/plan';
 import { startPreview, startTaskPreview } from '../runs/preview';
 import { answerProposal, proposeChange } from '../runs/proposals';
 import { isRunRefusal, RunRefusal } from '../runs/refusal';
@@ -71,6 +74,9 @@ import { CLI_VERSION } from '../scaffold/project';
 import type { CheckStep } from '../runs/checks';
 import type { Message } from '../runs/messages';
 import type { Needs } from '../runs/model';
+import type { RunTask } from '../runs/model';
+import type { ModelsConfig } from '../runs/models';
+import type { PlanEstimate } from '../runs/plan';
 import type { RemovedInputs, RunContext } from '../runs/run';
 import type { TaskShown } from '../runs/show';
 import type { NextTask, TakenTask, TaskContext } from '../runs/tasks';
@@ -295,9 +301,22 @@ const failedSteps = (steps: unknown): CheckStep[] =>
     ? steps.filter((step): step is CheckStep => isRecord(step) && typeof step.name === 'string')
     : [];
 
+/** How close to the line a file of the task already is, when what it adds would likely cross it. */
+const NEAR_LINE = 0.85;
+
+const nearLimit = (context: TaskContext): { file: string; lines: number }[] =>
+  context.files.flatMap(each => {
+    const lines = each.text?.split('\n').filter(line => line.trim() !== '').length ?? 0;
+
+    return lines >= MAX_LINES * NEAR_LINE ? [{ file: each.file, lines }] : [];
+  });
+
 /** A file it changed outside its own — a layout, the theme, the entry — changes every page that reads it: said so. */
 const outsideLines = (shown: TaskShown): string[] => {
-  const outside = shown.files.filter(each => !shown.task.files.includes(each.file)).map(each => each.file);
+  // One it made is its own: only what was there before reaches what other pages read.
+  const outside = shown.files
+    .filter(each => !shown.task.files.includes(each.file) && each.change !== 'added')
+    .map(each => each.file);
 
   return outside.length > 0
     ? [
@@ -344,10 +363,40 @@ export const runAllowFinish = (
         : `The lead of "${allowed.runId}" may no longer write it into the project: a person does (plitzi run finish --apply).`
   );
 
+/**
+ * Which model to start each agent with, from the project's `.plitzi/models.json`: the lead's, then each role's tasks
+ * with their model and the command its agents take them with — so a model chosen for designers works only their tasks.
+ */
+const startLines = (tasks: readonly RunTask[], models: ModelsConfig | undefined): string[] => {
+  if (!models) {
+    return ['Models: the project chose none — every agent the harness’s own (plitzi run models set <role> <model>)'];
+  }
+
+  const lead = modelFor(models, 'lead');
+  const byRole = new Map<string, string[]>();
+  tasks.forEach(task =>
+    byRole.set(task.role ?? 'developer', [...(byRole.get(task.role ?? 'developer') ?? []), task.id])
+  );
+
+  return [
+    `Start the agents with (${MODELS_FILE}):`,
+    `  lead: ${lead ? modelText(lead) : 'the harness’s own'}`,
+    ...[...byRole].map(([role, ids]) => {
+      const model = modelFor(models, role);
+
+      return `  ${role} (${ids.join(', ')}): ${model ? modelText(model) : 'the harness’s own'} — plitzi task next --role ${role} --follow --take`;
+    })
+  ];
+};
+
 export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
   act(
     options,
-    ctx => checkPlanFile(ctx, path.resolve(file), options.agents ?? DEFAULT_AGENTS),
+    async ctx => {
+      const checked = await checkPlanFile(ctx, path.resolve(file), options.agents ?? DEFAULT_AGENTS);
+
+      return { ...checked, models: await readModels(ctx.root) };
+    },
     checked =>
       [
         chalk.bold(`Plan "${checked.runId}": ${checked.goal}`),
@@ -358,6 +407,8 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         `Shared files these tasks reach — by turns or by request: ${list(checked.sharedReached)} (${String(checked.shared.length)} shared in the project: plitzi space overview)`,
         ...checked.notices.map(notice => `  · ${notice}`),
         `Estimate: ${String(checked.estimate.tasks)} tasks, ${String(checked.estimate.agents)} agents at once, about ${String(checked.estimate.wallMinutes)} min (critical path ${String(checked.estimate.criticalPathMinutes)}, all of it ${String(checked.estimate.totalMinutes)}), at least ${String(checked.estimate.reviewRounds)} reviews`,
+        ...(checked.estimate.paced ? [pacedText(checked.estimate.paced)] : []),
+        ...startLines(checked.tasks, checked.models),
         checked.estimate.needsConfirmation
           ? chalk.yellow(`A person confirms it when it opens: ${checked.estimate.why ?? ''}`)
           : 'Opens without confirmation.',
@@ -365,6 +416,40 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         // The one moment a person is asked, moved to the start when they want: ask before opening, never after.
         `Before opening, ask the person who writes it into the project at the end: they do (plitzi run finish --apply), or they let you — then they open it themselves, in their terminal: plitzi run open ${file} --lead-finishes`
       ].join('\n')
+  );
+
+/** The estimate at this project's pace, said with what it is read from. */
+const pacedText = (paced: NonNullable<PlanEstimate['paced']>): string =>
+  `At this project's pace — its last ${String(paced.runs)} runs' ${String(paced.tasks)} tasks took ${String(Math.round(paced.ratio * 100))}% of their estimates: about ${String(paced.wallMinutes)} min`;
+
+export const runModels = (options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => ({ file: MODELS_FILE, models: (await readModels(ctx.root)) ?? null }),
+    shown =>
+      shown.models === null
+        ? `No models chosen (${shown.file}): every agent is the harness's own. Choose one: plitzi run models set developer <model> [--effort high]`
+        : [
+            `The models of this project's runs (${shown.file}):`,
+            ...Object.entries(shown.models.roles).map(([role, model]) => `  ${role}: ${modelText(model)}`)
+          ].join('\n')
+  );
+
+export const runModelsSet = (
+  role: string,
+  model: string | undefined,
+  options: RunCommandOptions & { effort?: string }
+): Promise<void> =>
+  act(
+    options,
+    async ctx =>
+      setModel(
+        ctx.root,
+        role,
+        model === undefined ? undefined : { model, ...(options.effort ? { effort: options.effort } : {}) }
+      ),
+    changed =>
+      `${changed.role}: ${changed.before ? modelText(changed.before) : 'none'} → ${changed.after ? modelText(changed.after) : 'none (the default’s, or the harness’s own)'} (${changed.file})`
   );
 
 export const runRehearse = (
@@ -387,14 +472,27 @@ export const runRehearse = (
 
       const { checked, ownership } = await readCheckedPlan(ctx.root, path.resolve(file), agents);
       const reviewMinutes = Math.max(0, Math.round((options.review ?? 5 * 60_000) / 60_000));
+      const { paced } = checked.estimate;
+      const atThisPace = paced
+        ? rehearse(
+            atPace(checked.tasks, paced.ratio),
+            { agents, roles, reviewMinutes },
+            { ownership, created: checked.created }
+          )
+        : undefined;
 
       return {
         runId: checked.runId,
         reviewMinutes,
-        ...rehearse(checked.tasks, { agents, roles, reviewMinutes }, { ownership, created: checked.created })
+        ...rehearse(checked.tasks, { agents, roles, reviewMinutes }, { ownership, created: checked.created }),
+        ...(paced && atThisPace ? { paced: { ...paced, wallMinutes: atThisPace.wallMinutes } } : {})
       };
     },
-    rehearsed => rehearsalText(rehearsed.runId, rehearsed, rehearsed.reviewMinutes)
+    rehearsed =>
+      [
+        rehearsalText(rehearsed.runId, rehearsed, rehearsed.reviewMinutes),
+        ...(rehearsed.paced ? [`${pacedText(rehearsed.paced)} — the reviews' minutes as given`] : [])
+      ].join('\n')
   );
 
 export const runOpen = (file: string, options: PlanOptions): Promise<void> =>
@@ -739,7 +837,7 @@ const nextText = (next: NextTask): string =>
           String(next.why),
           ...(next.worked ?? []).map(
             each =>
-              `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}`
+              `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
           )
         ].join('\n')
   ].join('\n');
@@ -1012,7 +1110,7 @@ export const taskComplete = (options: RunCommandOptions & { knownFailure?: strin
         ...(completed.changedInProject.length > 0
           ? [
               chalk.yellow(
-                `  Changed in the project meanwhile: ${completed.changedInProject.join(', ')} — the project's version wins at the merge`
+                `  Changed in the project meanwhile: ${completed.changedInProject.join(', ')} — your work is kept; the lead decides at review (line by line when the two go together)`
               )
             ]
           : []),
@@ -1161,15 +1259,61 @@ export const taskShow = (taskId: string, options: RunCommandOptions): Promise<vo
     }
   );
 
-export const taskContextCommand = (taskId: string | undefined, options: RunCommandOptions): Promise<void> =>
+/** A JSON file a module imports (`import pets from '../../data/pets.json' with …`), by its project path. */
+const dataImports = (file: string, text: string): string[] =>
+  [...text.matchAll(/from\s+['"](\.{1,2}\/[^'"]+\.json)['"]/g)].map(match =>
+    path.posix.normalize(path.posix.join(path.posix.dirname(file), match[1]))
+  );
+
+/**
+ * With `--files`: what an agent reads before it writes, in the same answer — each of its files as it is, and the shape
+ * of each JSON file they import (as `plitzi data describe` says it): the cold start's `cat`s, in one call.
+ */
+const filesOf = async (root: string, context: TaskContext): Promise<{ file: string; shape: string }[]> => {
+  const data = [...new Set(context.files.flatMap(each => (each.text ? dataImports(each.file, each.text) : [])))].sort();
+  const shapes: { file: string; shape: string }[] = [];
+  for (const file of data) {
+    const text = await fs.readFile(path.join(root, file), 'utf-8').catch(() => undefined);
+    if (text !== undefined) {
+      try {
+        shapes.push({ file, shape: describeData(JSON.parse(text)).shape });
+      } catch {
+        shapes.push({ file, shape: 'not JSON this can read' });
+      }
+    }
+  }
+
+  return shapes;
+};
+
+export const taskContextCommand = (
+  taskId: string | undefined,
+  options: RunCommandOptions & { files?: boolean }
+): Promise<void> =>
   act(
     options,
     async ctx => {
       const target = await either(ctx, options, taskId);
+      const context = await taskContext(ctx, target.runId, target.taskId);
 
-      return taskContext(ctx, target.runId, target.taskId);
+      return options.files ? { ...context, data: await filesOf(ctx.root, context) } : context;
     },
-    context => briefOf(context)
+    context =>
+      [
+        briefOf(context),
+        ...('data' in context
+          ? [
+              ...context.files.flatMap(each =>
+                each.text === undefined
+                  ? each.toCreate
+                    ? [chalk.bold(`── ${each.file} — to create`)]
+                    : []
+                  : [chalk.bold(`── ${each.file} (${String(each.text.split('\n').length)} lines)`), each.text.trimEnd()]
+              ),
+              ...context.data.flatMap(each => [chalk.bold(`── ${each.file}, its shape`), each.shape])
+            ]
+          : [])
+      ].join('\n')
   );
 
 /**
@@ -1183,6 +1327,13 @@ const briefOf = (context: TaskContext): string => {
   const unanswered = context.proposals.incoming.filter(each => each.answer === undefined);
 
   return [
+    ...(context.primer === undefined
+      ? []
+      : [
+          chalk.bold('The run’s primer — the lead’s, for every task: read it before anything else'),
+          context.primer.trim(),
+          ''
+        ]),
     chalk.bold(`${task.id} — ${task.title}`),
     `  ${task.role ?? 'developer'} · ${state.status}${state.round > 0 ? `, round ${String(state.round)}` : ''}${context.holder ? ` · ${context.holder}` : ''}`,
     `Its files: ${files.join(', ')}${task.touches && task.touches.length > 0 ? ` · it will touch: ${task.touches.join(', ')}` : ''}`,
@@ -1218,6 +1369,15 @@ const briefOf = (context: TaskContext): string => {
     ...(context.related.length > 0
       ? [`Related: ${context.related.map(each => `${each.task} (${each.status})`).join(', ')}`]
       : []),
+    // A file near the line has little room: where the new part goes is decided before the first edit, not after.
+    ...nearLimit(context).map(each =>
+      chalk.yellow(
+        `  ⚠ ${each.file} is ${String(each.lines)} non-blank lines of ${String(MAX_LINES)}: what you add likely goes in a module of its own, beside it`
+      )
+    ),
+    ...(context.reading.length > 0
+      ? [`Read first, for these files — the rest of the skills when the work asks: ${context.reading.join(', ')}`]
+      : []),
     `${context.projectNotes ? 'The project’s notes: NOTES.md — read it. ' : ''}Every file's text and every related task's notes: --json.`
   ].join('\n');
 };
@@ -1238,7 +1398,8 @@ export const runAmend = (file: string, options: RunCommandOptions): Promise<void
         `Run "${amended.runId}" amended:`,
         ...amended.tasks.map(each => `  ${each.task}: ${each.changed.join(', ')} — told, with what it now asks`),
         ...(amended.notes.length > 0 ? [`  ${String(amended.notes.length)} new note(s), sent to every task`] : []),
-        ...(amended.goal === undefined ? [] : [`  the goal: ${amended.goal}`])
+        ...(amended.goal === undefined ? [] : [`  the goal: ${amended.goal}`]),
+        ...(amended.primer ? ['  the run’s primer, written again — every task told'] : [])
       ].join('\n')
   );
 

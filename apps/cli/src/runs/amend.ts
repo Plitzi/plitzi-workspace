@@ -1,10 +1,10 @@
-import { writeJson } from './files';
+import { readOptional, writeAtomic, writeJson } from './files';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { acceptanceText } from './model';
 import { taskPaths } from './paths';
 import { acceptanceProblems } from './plan';
 import { RunRefusal } from './refusal';
-import { assertStatus, loadRun, logRun, readPlanFile, requireNoTask } from './run';
+import { assertStatus, loadRun, logRun, readPlanFile, readPrimer, requireNoTask } from './run';
 import { viewTask } from './taskStore';
 
 import type { PlannedTask, RunPlan, RunTask } from './model';
@@ -29,6 +29,8 @@ export interface Amended {
   /** The plan's notes that are new, sent to every task. */
   notes: string[];
   goal?: string;
+  /** The plan's primer changed: written again, and every task told. */
+  primer?: true;
 }
 
 const SHAPE = ['files', 'dependsOn', 'role', 'touches'] as const;
@@ -95,7 +97,9 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const knownNotes = new Set(loaded.plan.notes ?? []);
   const notes = (next.notes ?? []).filter(note => !knownNotes.has(note));
   const goal = next.goal === loaded.plan.goal ? undefined : next.goal;
-  if (changes.length === 0 && notes.length === 0 && goal === undefined) {
+  const primer = await readPrimer(next, file);
+  const primerChanged = primer !== undefined && primer !== (await readOptional(loaded.paths.primer))?.toString('utf-8');
+  if (changes.length === 0 && notes.length === 0 && goal === undefined && !primerChanged) {
     throw new RunRefusal('invalid', `${file} asks nothing the run does not already: no task, note or goal changed`);
   }
 
@@ -131,11 +135,21 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     await sendMessage(ctx, loaded, { from: LEAD, to: EVERYONE, text: note });
   }
 
+  if (primerChanged) {
+    await writeAtomic(loaded.paths.primer, primer);
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: EVERYONE,
+      text: 'The lead changed the run’s primer: read it again (plitzi task context)'
+    });
+  }
+
   const amended: Amended = {
     runId,
     tasks: changes.map(({ task, changed }) => ({ task: task.id, changed })),
     notes,
-    ...(goal === undefined ? {} : { goal })
+    ...(goal === undefined ? {} : { goal }),
+    ...(primerChanged ? { primer: true as const } : {})
   };
   await logRun(ctx, loaded.paths, { action: 'amend', ...amended });
 

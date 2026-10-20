@@ -34,7 +34,7 @@ export const leadItems = (view: RunView): LeadItem[] => [
   ...view.tasks
     .filter(task => task.status === 'in-review')
     .map(task => ({
-      key: `review:${task.id}:${String(task.round)}`,
+      key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}`,
       text: `${task.id} is in review: plitzi task review ${task.id} --approve | --changes "…"`
     })),
   ...view.attention

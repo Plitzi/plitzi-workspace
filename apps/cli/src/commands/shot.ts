@@ -609,6 +609,25 @@ const playSteps = async (
           };
         }
 
+        // A select is chosen, not typed into — the element named, or the one select inside it (a `formControl` wraps it).
+        if (step.kind === 'type') {
+          const select = await page.evaluate((selector: string) => {
+            const node = document.querySelector(selector);
+
+            return node === null
+              ? undefined
+              : node.matches('select')
+                ? selector
+                : node.querySelectorAll('select').length === 1
+                  ? `${selector} select`
+                  : undefined;
+          }, read.selector);
+          if (select !== undefined) {
+            await page.locator(select).first().selectOption(step.text, { timeout: 3000 });
+            continue;
+          }
+        }
+
         await page.locator(read.selector).first().click({ timeout: 3000 });
         // Typed into what has the focus: a click that left it on no field sent the text to the page's own shortcuts.
         if (step.kind === 'type') {

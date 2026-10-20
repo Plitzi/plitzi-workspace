@@ -53,6 +53,8 @@ import {
   taskComplete,
   runAllowFinish,
   runAmend,
+  runModels,
+  runModelsSet,
   runNote,
   taskContextCommand,
   taskShow,
@@ -863,6 +865,32 @@ runGroup
   .option(...JSON_OPTION)
   .action((file: string, options: PlanOptions) => runPlan(file, options));
 
+const models = runGroup
+  .command('models')
+  .description(
+    'Which model works which role — .plitzi/models.json, the project’s: what the lead starts each agent with'
+  )
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions) => runModels(options));
+
+models
+  .command('set')
+  .description('Choose a role’s model: a task’s role, lead, or default for any role not named — said before and after')
+  .argument('<role>', 'developer, designer, reviewer, writer…, lead or default')
+  .argument('<model>', 'The harness’s own name for it: claude-sonnet-5-5')
+  .option('--effort <effort>', 'How hard it thinks, in the harness’s words: high')
+  .option(...JSON_OPTION)
+  .action((role: string, model: string, options: RunCommandOptions & { effort?: string }) =>
+    runModelsSet(role, model, options)
+  );
+
+models
+  .command('unset')
+  .description('Take a role’s own model out: it goes back to the default')
+  .argument('<role>', 'The role')
+  .option(...JSON_OPTION)
+  .action((role: string, options: RunCommandOptions) => runModelsSet(role, undefined, options));
+
 runGroup
   .command('rehearse')
   .description(
@@ -1385,10 +1413,13 @@ taskGroup
     'A task’s brief: what is asked, what holds for the whole run, what a review asked, what was agreed — --json for its files and diffs too'
   )
   .argument('[task]', 'The task — the token’s when left out')
+  .option('--files', 'Its files as they are, and the shape of the data they import, in the same answer')
   .option(...TOKEN_OPTION)
   .option(...RUN_OPTION)
   .option(...JSON_OPTION)
-  .action((task: string | undefined, options: RunCommandOptions) => taskContextCommand(task, options));
+  .action((task: string | undefined, options: RunCommandOptions & { files?: boolean }) =>
+    taskContextCommand(task, options)
+  );
 
 /** What was piped in, read once: the text a `-` stands for. */
 let piped: Promise<string> | undefined;

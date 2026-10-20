@@ -1,0 +1,59 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { SKILLS_ROOT } from '../scaffold/skills';
+
+/**
+ * What a task needs to read of the project's skills, by the files it writes (RFC 0028): the cheatsheet for any part of
+ * the space, the reference of the part it is — a layout, a component, data, a plugin, server code — and the run's
+ * protocol always. The rest it reads when its work asks: a cold start reads a handful of files, not every skill.
+ */
+
+const AUTHORING = `${SKILLS_ROOT}/plitzi-authoring`;
+const CLI = `${SKILLS_ROOT}/plitzi-cli`;
+
+/** By what a path is: the files its task should read first. In order, without repeats, once matched. */
+const READING: readonly { matches: (file: string) => boolean; read: readonly string[] }[] = [
+  { matches: file => file.startsWith('src/space/'), read: [`${AUTHORING}/CHEATSHEET.md`] },
+  {
+    matches: file => /^src\/space\/(layout|layouts\/)/.test(file),
+    read: [`${AUTHORING}/reference/layouts.md`]
+  },
+  { matches: file => file.startsWith('src/space/components/'), read: [`${AUTHORING}/reference/components.md`] },
+  {
+    matches: file => file.startsWith('src/data/') || file.startsWith('public/data/'),
+    read: [`${AUTHORING}/reference/data-and-visibility.md`, `${AUTHORING}/reference/typed-sources.md`]
+  },
+  {
+    matches: file => file.startsWith('src/plugins/'),
+    read: [`${AUTHORING}/reference/plugins.md`, `${CLI}/reference/plugins.md`]
+  },
+  {
+    matches: file => /^src\/(actions|functions|runtime)\//.test(file),
+    read: [`${CLI}/reference/functions.md`]
+  }
+];
+
+const exists = (file: string): Promise<boolean> =>
+  fs.stat(file).then(
+    stat => stat.isFile(),
+    () => false
+  );
+
+/** The skill files a task writing `files` reads first — only those the project has — then the run's protocol. */
+export const readingFor = async (root: string, files: readonly string[]): Promise<string[]> => {
+  const wanted = [
+    ...new Set([
+      ...READING.filter(entry => files.some(entry.matches)).flatMap(entry => entry.read),
+      `${CLI}/reference/runs.md`
+    ])
+  ];
+  const found: string[] = [];
+  for (const file of wanted) {
+    if (await exists(path.join(root, file))) {
+      found.push(file);
+    }
+  }
+
+  return found;
+};

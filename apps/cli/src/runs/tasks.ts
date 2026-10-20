@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { crossed, longFilesIn, longFileText } from './longFiles';
+import { readingFor } from './reading';
 import { durationText } from '../options';
 import { checkAcceptance } from './acceptance';
 import { agreementsOf, proposalsOf, unansweredTo } from './agreements';
@@ -19,7 +20,7 @@ import {
 } from './files';
 import { checkVersions } from './materialise';
 import { mergeLines } from './merge3';
-import { agentAddress, LEAD, messagesOf, runNotesOf, sendMessage, unreadFor, unreadForHolder } from './messages';
+import { AGENT, agentAddress, LEAD, messagesOf, runNotesOf, sendMessage, unreadFor, unreadForHolder } from './messages';
 import { entryOf } from './model';
 import { COPY_TASK_FILE, ID, lockFile, projectPath, runPaths, taskPaths, under } from './paths';
 import { dependenciesDone, PRIORITY_RANK, readyTasks } from './plan';
@@ -304,7 +305,7 @@ export interface NextTask {
   /** Nothing is ready, and nothing ever will be for this role: every task of it is done — the agent can stop. */
   finished?: boolean;
   /** Finished: the tasks the caller worked, and where each ended — approved, or still with the lead. */
-  worked?: { task: string; status: TaskStatus }[];
+  worked?: { task: string; status: TaskStatus; finishedBy?: string }[];
   /** What the lead said to the caller by name and it had not read. */
   messages: Message[];
   /** Tasks are ready, but the run's agents are all at work: the caller waits for a place. */
@@ -382,6 +383,10 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
               .map(
                 view =>
                   `${view.task.id} ${view.state.status}${
+                    view.state.status === 'pending'
+                      ? ` (waits for ${view.task.dependsOn.filter(dependency => states.get(dependency)?.status !== 'done').join(', ')})`
+                      : ''
+                  }${
                     view.owner
                       ? ` (${view.owner.agent}${isDisconnected(view.task, view.signalAt, ctx.now()) ? ', no signal — the lead may reassign it' : ''})`
                       : ''
@@ -393,7 +398,16 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   // An agent done with the run hears how its own work ended: its copies are gone, and the run may end before it asks.
   const worked = views
     .filter(view => view.state.notes.some(note => note.by === ctx.agent && note.text.startsWith('Taken')))
-    .map(view => ({ task: view.task.id, status: view.state.status }));
+    .map(view => {
+      // Reverted and redone, or cut and taken over: whose work it ends as is the last taker's, said so.
+      const last = view.state.notes.filter(note => note.text.startsWith('Taken')).at(-1)?.by;
+
+      return {
+        task: view.task.id,
+        status: view.state.status,
+        ...(last !== undefined && last !== ctx.agent ? { finishedBy: last } : {})
+      };
+    });
 
   return {
     why,
@@ -1502,7 +1516,7 @@ export const completeTask = async (
               {
                 at: at(ctx),
                 by: 'plitzi',
-                text: `Changed in the project meanwhile: ${changedInProject.join(', ')} — the project's version wins at the final merge; take it (plitzi task discard <file>) and adapt`
+                text: `Changed in the project meanwhile: ${changedInProject.join(', ')} — your work is kept: the lead decides at review, putting the two together line by line when they go together. To build on the project's version instead: plitzi task discard <file>, and redo your change on it`
               }
             ]
           : [])
@@ -2410,6 +2424,19 @@ export const revertTask = async (
       text: `This task was reverted and is to be done again: ${reason}`
     });
   }
+
+  // …and the agents who did it hear it by name: their work is out of the run, whoever redoes it.
+  const workedBy = [
+    ...new Set(view.state.notes.filter(note => note.text.startsWith('Taken')).map(note => note.by))
+  ].filter(agent => AGENT.test(agentAddress(agent)));
+  for (const agent of workedBy) {
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: agentAddress(agent),
+      text: `Your work on ${taskId} was reverted${reason ? `: ${reason}` : ''} — out of the run; plitzi task next hands it on`
+    });
+  }
+
   // What was built on it waits for it again: not started, it goes back to pending; in hand, its agent is told.
   const dependants = loaded.tasks.filter(each => each.dependsOn.includes(taskId));
   const waiting: string[] = [];
@@ -2464,6 +2491,10 @@ export interface TaskContext {
   projectNotes?: string;
   /** The run's notes to every task (`run note`, the plan's `notes`): what holds for the whole run. */
   runNotes: string[];
+  /** The lead's primer for every task, when the plan has one: what the project is, read once instead of its skills. */
+  primer?: string;
+  /** The skill files this task reads first, by the files it writes — the rest when its work asks. */
+  reading: string[];
   /** Each of the task's files — from its copy while it holds one, else the run's — as text when it is text and small. */
   /** `toCreate`: a file of the task's that does not exist yet — it is the task's to write. */
   files: { file: string; from: 'copy' | 'run'; text?: string; bytes?: number; toCreate?: boolean }[];
@@ -2566,6 +2597,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
   }
 
   const projectNotes = (await readOptional(under(ctx.root, PROJECT_NOTES)))?.toString('utf-8');
+  const primer = (await readOptional(loaded.paths.primer))?.toString('utf-8');
   const proposals = await proposalsOf(loaded);
 
   return {
@@ -2584,6 +2616,8 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
       agreements: agreementsOf(proposals, taskId)
     },
     ...(projectNotes !== undefined ? { projectNotes } : {}),
+    ...(primer !== undefined ? { primer } : {}),
+    reading: await readingFor(ctx.root, [...task.files, ...(task.touches ?? [])]),
     runNotes: (await runNotesOf(loaded)).map(note => note.text),
     files
   };
