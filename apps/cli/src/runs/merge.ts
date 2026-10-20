@@ -23,6 +23,7 @@ import {
   updateRecord
 } from './run';
 import { getBlob, placeVersion, putBlob, withLock } from './store';
+import { leftInTmp } from './strays';
 import { requestsOf } from './tasks';
 import { viewTask } from './taskStore';
 
@@ -226,6 +227,8 @@ export interface Finished {
   writtenBy?: string;
   /** Dry run: whether the lead may write it itself, a person having allowed it. */
   leadFinishes?: boolean;
+  /** What appeared in the project's `tmp/` during the run that is nobody's tool — left there, said (`strays.ts`). */
+  leftInTmp?: string[];
 }
 
 /**
@@ -348,8 +351,10 @@ export const finishRun = async (
     );
   }
 
+  const strays = await leftInTmp(ctx.root, loaded.record);
+  const leftThere = strays.length > 0 ? { leftInTmp: strays } : {};
   if (!apply) {
-    return { dryRun: true, plan, left, leadFinishes: loaded.record.leadFinishes !== undefined };
+    return { dryRun: true, plan, left, leadFinishes: loaded.record.leadFinishes !== undefined, ...leftThere };
   }
 
   // The lead closes the run: its report is written before the person writes the run into the project.
@@ -410,7 +415,7 @@ export const finishRun = async (
   // Its work is in the project: the run goes, backups and all, unless a person asked to keep them. Its report stays.
   const inputs = await removeRun(ctx, loaded.paths, runId);
 
-  return { dryRun: false, plan, left, report, inputs, writtenBy, ...(kept ? { backup: kept } : {}) };
+  return { dryRun: false, plan, left, report, inputs, writtenBy, ...(kept ? { backup: kept } : {}), ...leftThere };
 };
 
 /** `plitzi run resolve`: one file of a reconciliation settled by a person — the project's, the run's, or a file of theirs. */

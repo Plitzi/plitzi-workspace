@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import { proposalsOf } from './agreements';
 import { fingerprint } from './files';
 import { askingLeads } from './leads';
@@ -7,6 +9,7 @@ import { under } from './paths';
 import { chainMinutes } from './plan';
 import { previewPort } from './previewRecord';
 import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, runIds, samePinned } from './run';
+import { leftInTmp } from './strays';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
 
@@ -76,6 +79,7 @@ export interface Attention {
     | 'known-failure'
     | 'file-too-long'
     | 'version'
+    | 'left-in-tmp'
     | 'message';
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
@@ -174,6 +178,15 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       kind: 'version',
       text: `The Plitzi version changed under the run (${pinnedChanges(record.pinned, pinned).join(', ')}): the agents wait, their work kept in their copies — a person re-pins it in their terminal: plitzi run attach ${record.runId}`,
       who: 'person'
+    });
+  }
+
+  for (const file of await leftInTmp(ctx.root, record)) {
+    attention.push({
+      kind: 'left-in-tmp',
+      file,
+      text: `${file} appeared in the project's tmp/ while the run is open — what an agent writes beside its work goes in its copy's tmp/, or between tasks in the run's scratch (${path.relative(ctx.root, loaded.paths.scratch)}/<agent>/), both gone with the run. Tell the agent, and remove it once nobody needs it: the project's tmp/ is the person's, so the run leaves it be`,
+      who: 'lead'
     });
   }
 

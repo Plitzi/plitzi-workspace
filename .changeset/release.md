@@ -325,3 +325,10 @@
   in `include` out, so a new project includes `.plitzi/**/*` and `doctor` says (and `--fix` writes) a tsconfig naming
   `.plitzi` bare. The older `plitzi/` moved into `.plitzi/` keeps the scripts that run the CLI (`plitzi run preview`
   was rewritten `.plitzi run preview`), and its ignore files (`.prettierignore`, `.gitignore`) follow the move.
+- **A run leaves the project's `tmp/` as it found it** (`@plitzi/cli`): its review pictures (`task look`, a `page shot`
+  in a copy) are the run's and go with it; an agent's own files go in its copy's `tmp/` or the run's
+  `scratch/<agent>/`, which `task next` names and makes; what appears in the project's `tmp/` anyway is said to the
+  lead (`left-in-tmp`), at the finish, and to every agent by name with its next command — la-velada's agents left
+  `tmp/dev1/` and a preview log there.
+- **The Run tab lists the tasks once** (`@plitzi/sdk-dev-tools`): by where each stands — at work, in review, blocked, to
+  do, approved last — under their headings, eight rows tall and scrolled on its own, beside the agents.

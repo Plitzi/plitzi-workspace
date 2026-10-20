@@ -16,6 +16,7 @@ import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
 import { keepFiles, putBlob, withLock } from '../store';
+import { tellLeftInTmp } from '../strays';
 import {
   appendLog,
   lockedFiles,
@@ -150,6 +151,7 @@ export const completeTask = async (
 ): Promise<CompletedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'complete a task');
+  await tellLeftInTmp(ctx, loaded);
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
   if (!['in-progress', 'changes-requested'].includes(view.state.status)) {

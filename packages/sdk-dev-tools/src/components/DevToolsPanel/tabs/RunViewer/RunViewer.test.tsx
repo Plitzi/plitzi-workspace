@@ -57,7 +57,10 @@ describe('the Run tab', () => {
     expect(screen.getByText('t-fights waits for its review')).toBeTruthy();
     expect(screen.getByText('approved t-home')).toBeTruthy();
 
-    expect(screen.getByText('The home')).toBeTruthy();
+    // One list, by where each stands: what moves first, the approved last.
+    const titles = screen.getAllByText(/^The (home|fights)$/).map(node => node.textContent);
+    expect(titles).toEqual(['The fights', 'The home']);
+    expect(screen.getByText('Approved')).toBeTruthy();
 
     // Opened, a task says the files it writes.
     fireEvent.click(screen.getByText('The fights'));

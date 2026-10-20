@@ -6,7 +6,7 @@ import chalk from 'chalk';
 import { comparePictures, pageRegions } from '@plitzi/sdk-authoring';
 
 import { dataUrl, launchBrowser, projectOrigin } from '../../browser';
-import { copyOf } from '../../runs/paths';
+import { copyOf, runPaths } from '../../runs/paths';
 import { PROJECT_TMP } from '../../scaffold/paths';
 import { checkAccount, CHECK_PASSWORD_ENV } from '../check';
 import { projectHere } from '../existingProject';
@@ -224,15 +224,15 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     // Named by the theme the page was painted in, which is the space's default when none was asked for.
     const name = pathname === '/' ? 'home' : pathname.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
-    // Taken in a task's copy, a picture goes to the project's, by task: where the lead reads what the agent points at —
-    // the copy's own tmp/ is removed with it.
+    // Taken in a task's copy, a picture is the run's, by task: where the lead reads what the agent points at, outside
+    // the copy (rebuilt when the task is taken again) and gone with the run — never left in the project's tmp/.
     const copy = copyOf(project.root);
+    const file = `${name}-${String(view.width)}-${taken.scheme}.png`;
     const out = options.out
       ? path.resolve(project.root, options.out)
-      : path.resolve(
-          copy?.root ?? project.root,
-          `${PROJECT_TMP}/shots/${copy ? `${copy.task}/` : ''}${name}-${String(view.width)}-${taken.scheme}.png`
-        );
+      : copy
+        ? path.join(runPaths(copy.root, copy.run).shots, copy.task, file)
+        : path.resolve(project.root, `${PROJECT_TMP}/shots/${file}`);
     const base = out.replace(/\.png$/, '');
     await mkdir(path.dirname(out), { recursive: true });
     await writeFile(out, taken.png);

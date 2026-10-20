@@ -4,6 +4,7 @@ import {
   ACTIVE_RUN_FILE,
   BUILD_DIR,
   CLI_DIR,
+  DEV_SERVER_FILE,
   PROJECT_STATE,
   PROJECT_TMP,
   PUBLIC_DIR,
@@ -74,17 +75,41 @@ export interface RunPaths {
   leadSeen: string;
   /** When each lead that reviews last asked for a review (`task next --role lead`): which of them are running. */
   leadsAsking: string;
+  /** The pictures its reviews take (`task look`, a `page shot` in a copy): the run's, gone with it. */
+  shots: string;
+  /** Where each agent keeps what is its own between tasks — a script, a log — by name: gone with the run. */
+  scratch: string;
   cache: string;
   materialised: string;
 }
 
 export const runsDir = (root: string): string => path.join(root, RUNS_DIR);
 
+/** An agent's own folder in the run, for what it writes beside its work: never the project's `tmp/`, which is the person's. */
+export const agentScratch = (paths: RunPaths, agent: string): string => path.join(paths.scratch, agent);
+
 /** Where `--keep-backup` leaves what the final merge overwrote: out of the run, which goes, and out of git. */
 export const BACKUPS_DIR = `${PROJECT_TMP}/plitzi-backups`;
 
 /** Where a run's report is left when it ends: out of the run, which goes, and out of git. */
 export const REPORTS_DIR = `${PROJECT_TMP}/plitzi-reports`;
+
+/**
+ * What the CLI and the project's own server keep in the project's `tmp/`: anything else that appears there while a run
+ * is open was left by someone — said to the lead, never removed, since `tmp/` is the person's too.
+ */
+export const TOOL_TMP: readonly string[] = [
+  RUNS_DIR,
+  BACKUPS_DIR,
+  REPORTS_DIR,
+  DEV_SERVER_FILE,
+  `${PROJECT_TMP}/shots`,
+  `${PROJECT_TMP}/visual`,
+  `${PROJECT_TMP}/tls`,
+  `${PROJECT_TMP}/space.json`,
+  `${PROJECT_TMP}/.sdk-plugins`,
+  `${PROJECT_TMP}/logs`
+];
 
 /** The project's one run, named: created exclusively when a run opens, gone with it — so two never open at once. */
 export const activeRunFile = (root: string): string => path.join(root, ACTIVE_RUN_FILE);
@@ -113,6 +138,8 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     leadRead: path.join(dir, 'lead-read.json'),
     leadSeen: path.join(dir, 'lead-seen.json'),
     leadsAsking: path.join(dir, 'leads-asking.json'),
+    shots: path.join(dir, 'shots'),
+    scratch: path.join(dir, 'scratch'),
     cache,
     materialised: path.join(cache, 'run')
   };

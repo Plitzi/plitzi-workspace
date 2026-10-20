@@ -1,11 +1,15 @@
+import fs from 'node:fs/promises';
+
 import { durationText, FOLLOW_MS } from '../../options';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
 import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { pagesOf } from '../pagesOf';
+import { agentScratch, runPaths } from '../paths';
 import { readyTasks } from '../plan';
 import { isRunRefusal, RunRefusal } from '../refusal';
 import { assertStatus, loadRun } from '../run';
+import { tellLeftInTmp } from '../strays';
 import { isDisconnected, viewTask } from '../taskStore';
 import { DESIGNER, qualityRank } from '../team';
 import { findTask, roleOf } from './common';
@@ -24,6 +28,8 @@ import type { TakenTask } from './take';
 
 export interface NextTask {
   task?: RunTask;
+  /** The caller's own folder in the run, for what it writes beside its work — made, so it is there to write in. */
+  scratch: string;
   /**
    * The task is one the caller already holds and can go on with — a block lifted, changes requested: no take, its token
    * is still good.
@@ -78,6 +84,15 @@ export interface NextTask {
 export const nextTask = async (ctx: RunContext, runId: string, role?: string): Promise<NextTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open'], 'start a task');
+  // Told before the messages are read, so an agent that left something in the project's tmp/ hears it in this answer.
+  await tellLeftInTmp(ctx, loaded);
+  const scratch = agentScratch(loaded.paths, ctx.agent);
+  await fs.mkdir(scratch, { recursive: true });
+
+  return { ...(await nextOf(ctx, loaded, role)), scratch };
+};
+
+const nextOf = async (ctx: RunContext, loaded: LoadedRun, role?: string): Promise<Omit<NextTask, 'scratch'>> => {
   const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
   const states = new Map(views.map(view => [view.task.id, view.state]));
   const held = new Set(views.filter(view => view.owner).map(view => view.task.id));
@@ -239,7 +254,7 @@ const leadNext = async (
   loaded: LoadedRun,
   views: readonly TaskView[],
   messages: Message[]
-): Promise<NextTask> => {
+): Promise<Omit<NextTask, 'scratch'>> => {
   const { record } = loaded;
   if (!isCoLead(record, ctx.agent) && !isPrincipal(ctx.agent)) {
     throw new RunRefusal(
@@ -392,7 +407,13 @@ export const followNext = async (
         isRunRefusal(error) &&
         (error.code === 'stopping' || error.code === 'forced-stop' || error.code === 'version-mismatch')
       ) {
-        return { ready: [], messages: [], why: error.message, paused: error.message };
+        return {
+          ready: [],
+          messages: [],
+          why: error.message,
+          paused: error.message,
+          scratch: agentScratch(runPaths(ctx.root, runId), ctx.agent)
+        };
       }
 
       throw error;

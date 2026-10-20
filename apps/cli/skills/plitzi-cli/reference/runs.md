@@ -36,7 +36,9 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
 eslint .`). The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
   **Look at your page** with the copy's own server: `PORT=8201 npm start` in `work`, then `npx plitzi page check /pets
 --width 1440,390 --url http://127.0.0.1:8201` (no `--` with npx); stop it when done. The copy's `tmp/` and `state/`
-  never count at `complete`. Format what you write (`npx prettier --write <file>`). The copy stays where it is even
+  never count at `complete`, and are where what is yours beside the work goes — a script, a log, a picture; between
+  tasks, `tmp/plitzi-runs/<run>/scratch/<your name>/`. Never the project's `tmp/`: it is the person's, and what is
+  left there is said to the lead. Format what you write (`npx prettier --write <file>`). The copy stays where it is even
   when the task is cut, until it is taken again.
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
 <file>` puts it back (and brings the run's version of any file); propose the change to that task instead. **Name

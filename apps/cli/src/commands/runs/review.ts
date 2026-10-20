@@ -7,6 +7,7 @@ import { list, messageLines, outsideLines } from './text';
 import { answering, freePort } from '../../runs/acceptance';
 import { acceptanceText } from '../../runs/model';
 import { pagesOf } from '../../runs/pagesOf';
+import { runPaths } from '../../runs/paths';
 import { startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun } from '../../runs/run';
@@ -14,7 +15,6 @@ import { showTask } from '../../runs/show';
 import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reassignTask, revertTask, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
-import { PROJECT_TMP } from '../../scaffold/paths';
 
 import type { RunCommandOptions } from './shell';
 import type { RunContext } from '../../runs/run';
@@ -85,7 +85,7 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               ['390', 'dark']
             ] as const) {
               const name = `${taskId}${route === '/' ? '-home' : route.replaceAll('/', '-')}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
-              const out = path.join(ctx.root, PROJECT_TMP, 'shots', name);
+              const out = path.join(runPaths(ctx.root, runId).shots, name);
               const shot = await runSelf(preview.dir, [
                 'page',
                 'shot',

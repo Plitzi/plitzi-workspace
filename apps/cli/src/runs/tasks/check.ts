@@ -2,6 +2,7 @@ import { checkAcceptance } from '../acceptance';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
 import { unreadForHolder } from '../messages';
 import { assertStatus, loadRun, logRun } from '../run';
+import { tellLeftInTmp } from '../strays';
 import { findTask, holderOf, refreshCopy } from './common';
 
 import type { CheckResult } from '../checks';
@@ -36,6 +37,7 @@ export interface CheckedTask {
 export const checkTask = async (ctx: RunContext, runId: string, taskId: string): Promise<CheckedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'check a task');
+  await tellLeftInTmp(ctx, loaded);
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
   const messages = await unreadForHolder(loaded, taskId, view.owner?.agent ?? ctx.agent, true);

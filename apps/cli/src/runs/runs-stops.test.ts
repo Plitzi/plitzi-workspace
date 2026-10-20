@@ -176,6 +176,30 @@ describe('stopping, cuts and disconnects', () => {
   });
 });
 
+describe('what an agent leaves in the project', () => {
+  it('says what appeared in the project’s tmp/ while the run is open — never what the tools keep there', async () => {
+    const plan = await bench.writePlan(benchPlan());
+    await openWith(lead(), plan, 4);
+    await bench.write('tmp/dev1/s.mjs', 'console.log(1);\n');
+    await bench.write('tmp/lead2-preview.log', 'listening\n');
+    await bench.write('tmp/shots/home.png', 'png');
+    await bench.write('tmp/dev-server.json', '{}');
+
+    const left = (await viewRun(lead(), 'es-launch')).attention.filter(item => item.kind === 'left-in-tmp');
+    expect(left.map(item => item.file)).toEqual(['tmp/dev1/', 'tmp/lead2-preview.log']);
+    expect(left[0].text).toContain('scratch');
+
+    // Whoever left it hears it with its next command — once — and is handed a folder of its own in the run.
+    const next = await nextTask(bench.agent('agent-1'), 'es-launch');
+    expect(next.messages.map(message => message.text)).toEqual([
+      expect.stringContaining('tools: tmp/dev1/, tmp/lead2-preview.log. The project')
+    ]);
+    expect(next.scratch).toBe(path.join(bench.root, 'tmp/plitzi-runs/es-launch/scratch/agent-1'));
+    expect((await fs.stat(next.scratch)).isDirectory()).toBe(true);
+    expect((await nextTask(bench.agent('agent-1'), 'es-launch')).messages).toEqual([]);
+  });
+});
+
 describe('a gentle stop to upgrade', () => {
   it('says what is still being written — what run upgrade waits for — and why it stops', async () => {
     await open();

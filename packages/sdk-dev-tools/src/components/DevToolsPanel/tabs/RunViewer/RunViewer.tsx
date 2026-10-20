@@ -1,4 +1,5 @@
 import clsx from 'clsx';
+import { Fragment } from 'react';
 
 import RunTaskRow from './RunTaskRow';
 
@@ -7,13 +8,15 @@ import type { ReactNode } from 'react';
 
 const hhmm = (iso: string): string => `${iso.slice(11, 16)} UTC`;
 
-/** The tasks still moving, by where they stand, in the order a person reads a run. Approved ones go beside the agents. */
+/** The tasks by where they stand, in the order a person reads a run: what moves first, the approved — done — last. */
 const GROUPS: { label: string; statuses: string[] }[] = [
   { label: 'At work', statuses: ['in-progress', 'changes-requested', 'waiting'] },
   { label: 'In review', statuses: ['in-review'] },
   { label: 'Blocked', statuses: ['blocked', 'failed'] },
-  { label: 'To do', statuses: ['ready', 'pending'] }
+  { label: 'To do', statuses: ['ready', 'pending'] },
+  { label: 'Approved', statuses: ['done'] }
 ];
+const GROUPED = new Set(GROUPS.flatMap(group => group.statuses));
 
 const AGENT_TONE: Record<string, string> = {
   working: 'bg-sky-500',
@@ -66,11 +69,14 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
   }
 
   const percent = snapshot.total === 0 ? 0 : Math.round((snapshot.done / snapshot.total) * 100);
-  const byGroup = GROUPS.map(group => ({
-    ...group,
-    tasks: snapshot.tasks.filter((task: RunSnapshotTask) => group.statuses.includes(task.status))
-  })).filter(group => group.tasks.length > 0);
-  const approved = snapshot.tasks.filter(task => task.status === 'done');
+  // A status this tab does not know yet (a newer CLI's) is listed apart, never dropped.
+  const byGroup = [
+    ...GROUPS.map(group => ({
+      label: group.label,
+      tasks: snapshot.tasks.filter((task: RunSnapshotTask) => group.statuses.includes(task.status))
+    })),
+    { label: 'Other', tasks: snapshot.tasks.filter(task => !GROUPED.has(task.status)) }
+  ].filter(group => group.tasks.length > 0);
   const feed = snapshot.feed ?? [];
 
   return (
@@ -103,25 +109,23 @@ const RunViewer = ({ snapshot }: { snapshot?: RunSnapshot }) => {
         </span>
       </div>
 
-      {byGroup.map(group => (
-        <Section key={group.label} title={group.label} count={group.tasks.length}>
-          <Rows>
-            {group.tasks.map(task => (
-              <RunTaskRow key={task.id} task={task} />
-            ))}
-          </Rows>
-        </Section>
-      ))}
-
-      {/* Side by side when the panel is wide: the finished work, and who is at work. */}
+      {/* Side by side when the panel is wide: the tasks, and who is at work. */}
       <div className="grid grid-cols-1 items-start gap-3 @2xl:grid-cols-2">
-        {approved.length > 0 && (
-          <Section title="Approved" count={approved.length}>
-            <Rows>
-              {approved.map(task => (
-                <RunTaskRow key={task.id} task={task} />
+        {snapshot.tasks.length > 0 && (
+          <Section title="Tasks" count={snapshot.tasks.length}>
+            {/* Eight rows tall below its group's heading, scrolled on its own: a long run does not push the agents and the activity down. */}
+            <div className="max-h-62 w-full overflow-y-auto rounded border border-zinc-200 dark:border-zinc-700">
+              {byGroup.map(group => (
+                <Fragment key={group.label}>
+                  <div className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500">
+                    {group.label} <span className="font-normal">({group.tasks.length})</span>
+                  </div>
+                  {group.tasks.map(task => (
+                    <RunTaskRow key={task.id} task={task} />
+                  ))}
+                </Fragment>
               ))}
-            </Rows>
+            </div>
           </Section>
         )}
         {/* Who is at work, and below it what needs someone. */}

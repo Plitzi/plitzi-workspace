@@ -158,6 +158,15 @@ its. A whole page, layout or component of its own is pictured whole, as before. 
 serves (its `tmp/dev-server.json` answers) is looked at there and left running — a second server would not start on
 the copy's state, whose kv lock the first holds; `run preview --task` follows it the same way.
 
+Its pictures are the run's (`<run>/shots/`), and so is a `page shot` taken inside a task's copy (`<run>/shots/<task>/`):
+read by the lead while the run is open, gone with it — never left in the project's `tmp/`, which is the person's. An
+agent's own files beside its work — a script, a log — go in its copy's `tmp/`, or between tasks in the run's
+`scratch/<agent>/`. What appears in the project's `tmp/` while the run is open and is no tool's (`TOOL_TMP`: the runs,
+the reports and backups, the dev server's record, `shots/`, `visual/`…) nor an input the lead handed the run is said to
+the lead (`left-in-tmp`, `strays.ts`) and at the finish, and to every agent by name once, with its next command
+(`task next`, `progress`, `check`, `complete`): whoever left it hears it, whatever it holds. `task next` hands each
+agent its scratch, made. Never removed by the run.
+
 ## Who works the runs (`team.ts`)
 
 Who works a project's runs is its own choice, in `.plitzi/team.json` (committed: it holds no secret, so it needs no

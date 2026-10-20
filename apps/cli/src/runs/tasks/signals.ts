@@ -4,6 +4,7 @@ import { longFilesIn } from '../longFiles';
 import { LEAD, sendMessage, unreadForHolder } from '../messages';
 import { RunRefusal } from '../refusal';
 import { loadRun, logRun, requireNoTask } from '../run';
+import { tellLeftInTmp } from '../strays';
 import { DEFAULTS, noSignalAfter, updateState, viewTask } from '../taskStore';
 import { at, findTask, holderOf, holderOrCoordinator, refreshCopy } from './common';
 
@@ -43,6 +44,7 @@ export const reportProgress = async (
   const loaded = await loadRun(ctx, runId);
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
+  await tellLeftInTmp(ctx, loaded);
   if (progress.fraction !== undefined && (progress.fraction < 0 || progress.fraction > 1)) {
     throw new RunRefusal('invalid', 'A fraction is between 0 and 1: 0.6 is 60 %');
   }

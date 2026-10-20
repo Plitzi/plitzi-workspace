@@ -110,6 +110,13 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
             ]
           : []),
         ...(finished.left.length > 0 ? [`  Left in the plan: ${finished.left.join(', ')}`] : []),
+        ...(finished.leftInTmp
+          ? [
+              chalk.yellow(
+                `  Left in the project's tmp/ during the run, by nobody's tool: ${finished.leftInTmp.join(', ')} — an agent's, most likely; the run does not remove the person's tmp/: remove what nobody needs`
+              )
+            ]
+          : []),
         finished.dryRun
           ? finished.plan.conflicts.length > 0
             ? 'With --apply the run enters reconciliation: a person resolves each conflict.'

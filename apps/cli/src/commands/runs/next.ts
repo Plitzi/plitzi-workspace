@@ -97,7 +97,11 @@ const nextText = (next: NextTask, agent: string): string =>
                 each =>
                   `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
               )
-            ].join('\n')
+            ].join('\n'),
+    // Wherever the answer leaves an agent without a copy of a task in hand — between tasks, at a review.
+    ...(next.task && !next.leadReview && !next.designReview
+      ? []
+      : [chalk.dim(`  What is yours beside the work (a script, a log): ${next.scratch} — never the project's tmp/`)])
   ].join('\n');
 
 const takenText = (taken: TakenTask): string =>
@@ -107,7 +111,7 @@ const takenText = (taken: TakenTask): string =>
     ...taken.proposals.map(each =>
       chalk.cyan(`  ⇄ ${each.from} proposes (${each.id}): ${each.change} — plitzi task answer ${each.id}`)
     ),
-    `  Write only in its copy: ${taken.work}`,
+    `  Write only in its copy: ${taken.work} — what is yours beside the work (a script, a log, a picture) in its tmp/, never the project's`,
     `  Its files: ${taken.files.join(', ')}`,
     ...(taken.resumedFrom !== undefined ? [`  Resumed from the version review ${String(taken.resumedFrom)} saw`] : []),
     `  Run its commands in its copy — cd ${taken.work} — and they know the task: start with plitzi task context`,

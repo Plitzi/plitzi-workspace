@@ -65,7 +65,8 @@ What the lead — team lead and software architect — does; the agents' half, t
    the queue (`plitzi task next --role lead --take`), and `run watch --until lead` says when the reviews queue up (two
    waiting, the oldest five minutes) and which to start. Each takes the next review no other lead took, reviews it as you
    would — tell them how strict you are (a message to `@lead-2`) — and stops by itself once the queue is empty. The rest
-   is yours alone.
+   is yours alone. A lead's own files (a log) go in `tmp/plitzi-runs/<run>/scratch/<name>/`, gone with the run; what
+   appears in the project's `tmp/` is said to you (`left-in-tmp`): tell the agent, remove it once unneeded.
 
    **Keep a person's actions a person's in the harness**: an agent with a shell can give itself a terminal and type a
    run's name. Deny the agents — not yourself, unless the person said so — `plitzi run finish --apply`, `run abort`,
