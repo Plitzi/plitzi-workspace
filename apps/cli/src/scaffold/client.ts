@@ -1,4 +1,4 @@
-import { CLI_DIR, DEV_SERVER_FILE, MAIN_FILE, PROJECT_TMP } from './paths';
+import { CLI_DIR, DEV_SERVER_FILE, MAIN_FILE, SERVER_RECORD_ENV } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -26,6 +26,7 @@ const indexHtml = ({ name }: CreateAnswers): string => `<!doctype html>
 
 const viteConfig = (): string => `import { createReadStream, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { dirname } from 'node:path';
 
 import { defineConfig, loadEnv } from 'vite';
 
@@ -70,9 +71,11 @@ const recordServer = (): Plugin => ({
       }
 
       const scheme = server.config.server.https ? 'https' : 'http';
-      mkdirSync('${PROJECT_TMP}', { recursive: true });
+      // The visual suite's own server records itself apart (\`${SERVER_RECORD_ENV}\`): the record yours wrote stays.
+      const record = process.env.${SERVER_RECORD_ENV} || '${DEV_SERVER_FILE}';
+      mkdirSync(dirname(record), { recursive: true });
       writeFileSync(
-        '${DEV_SERVER_FILE}',
+        record,
         \`\${JSON.stringify({ port: address.port, url: \`\${scheme}://127.0.0.1:\${String(address.port)}\` }, null, 2)}\\n\`
       );
     });
@@ -95,7 +98,8 @@ export default defineConfig(({ mode }) => {
     plugins: [devToolsStylesheet(), recordServer()],
     server: {
       host: env.HOST || '127.0.0.1',
-      port: 5173,
+      // \`PORT\` for a server of the visual suite's own; 5173 otherwise, as Vite's.
+      port: Number(env.PORT) || 5173,
       ...(env.TLS_CERT && env.TLS_KEY
         ? { https: { cert: readFileSync(env.TLS_CERT), key: readFileSync(env.TLS_KEY) } }
         : {})

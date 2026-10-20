@@ -17,6 +17,7 @@ import {
   PUBLIC_DIR,
   RUNTIME_BUNDLE,
   RUNTIME_ENTRY,
+  SERVER_RECORD_ENV,
   projectModule,
   projectRoot
 } from '@plitzi/sdk-shared/project';
@@ -427,8 +428,11 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
   await server.listen(port, host);
   if (speaks) {
     mkdirSync(path.join(root, PROJECT_TMP), { recursive: true });
+    // The visual suite's own server records itself apart (`SERVER_RECORD_ENV`): the record a person's server wrote stays.
+    const record = process.env[SERVER_RECORD_ENV] || DEV_SERVER_FILE;
+    mkdirSync(path.dirname(path.join(root, record)), { recursive: true });
     writeFileSync(
-      path.join(root, DEV_SERVER_FILE),
+      path.join(root, record),
       `${JSON.stringify({ name, port, url: localUrl, network, publicUrl }, null, 2)}\n`
     );
     console.log(`pages on ${localUrl}/`);

@@ -211,4 +211,9 @@
   that it serves the project untouched until the finish and where the agents' work is; `run open` names the script and
   `run status` the preview's address — or how to start it. With no run open, `start:preview` says so and how the project
   is served.
+- **The visual suite runs on a server of its own** (`@plitzi/cli`, `@plitzi/sdk-server`, `@plitzi/sdk-shared`): a
+  project's `playwright.config.ts` starts the project on 8400 (a client project's on 5273) — a port none of its other
+  scripts take (`start` 8080 or 5173, `start:preview` 8300/8301, the inspector 9229) — over plain HTTP, its record kept
+  apart (`PLITZI_SERVER_RECORD`, `tmp/visual/server.json`) so `tmp/dev-server.json` stays the person's server's. It no
+  longer falls back to 8080 and reuses the server a person has open. `plitzi upgrade` brings it to every project.
 

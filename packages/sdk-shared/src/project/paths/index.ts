@@ -121,3 +121,9 @@ export const KV_FILE = `${PROJECT_STATE}/kv.json`;
 
 /** The port the server took and the name its `/health` answers with: what `check`, `shot` and `visual` find it by. */
 export const DEV_SERVER_FILE = `${PROJECT_TMP}/dev-server.json`;
+
+/**
+ * Where a project's server writes its record instead of \`DEV_SERVER_FILE\`, when this variable says: the visual suite's
+ * own server keeps its record apart, so the one a person runs is still what \`check\` and \`shot\` find.
+ */
+export const SERVER_RECORD_ENV = 'PLITZI_SERVER_RECORD';

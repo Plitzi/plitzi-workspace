@@ -26,9 +26,10 @@ What a project gives you, so you use it rather than rebuild it:
 | `typecheck`, `lint`, `format` | before calling a change done |
 
 **Which port.** `start` takes 8080, or the next free one — printed, and written to `tmp/dev-server.json` for `check`,
-`shot`, `verify` and `visual`, with the scheme it answers on (`https` once it serves a certificate; the local one is
-accepted on this machine only). `PORT` chooses one (a taken one is then an error). `/health` answers with the space's
-name.
+`shot` and `verify`, with the scheme it answers on (`https` once it serves a certificate; the local one is accepted on
+this machine only). `PORT` chooses one (a taken one is then an error). `/health` answers with the space's name.
+`visual` starts a server of its own on 8400 (5273 for a client project), plain HTTP, its record in `tmp/visual/`: never
+the server you have open. `start:preview` is 8300.
 
 **On a phone.** `HOST=0.0.0.0` in `.env` opens it to the network, and `plitzi cert` serves it over HTTPS (mkcert;
 `TLS_CERT`, `TLS_KEY`) — over http a phone's browser gives the page no microphone, camera or clipboard. Ask before

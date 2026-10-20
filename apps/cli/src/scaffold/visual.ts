@@ -1,5 +1,5 @@
 import { runCommand } from './packageManager';
-import { DEV_SERVER_FILE, VISUAL_OUTPUT } from './paths';
+import { DEV_SERVER_FILE, SERVER_RECORD_ENV, VISUAL_OUTPUT } from './paths';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -11,48 +11,33 @@ import type { CreateAnswers, ProjectFiles } from './types';
  * rather than as an exception, and nobody writes the first test for a project that already looks fine.
  */
 
-const RECORDED = `/** What \`npm start\` wrote down when it took a port: the port, where it answers and the name its \`/health\` answers with. */
-const recorded = (): { port?: number; url?: string; name?: string } => {
-  try {
-    const value: unknown = JSON.parse(readFileSync('${DEV_SERVER_FILE}', 'utf8'));
-    if (typeof value !== 'object' || value === null) {
-      return {};
-    }
+/**
+ * The port the suite's own server takes: none of the project's other scripts' — \`start\` (8080, Vite's 5173), the run's
+ * preview (8300, a task's 8301), the inspector (9229) — so \`visual\` never reuses, nor lands on, a server a person
+ * or a run is using.
+ */
+const TEST_PORT: Record<CreateAnswers['mode'], number> = { server: 8400, client: 5273 };
 
-    return {
-      ...('port' in value && typeof value.port === 'number' ? { port: value.port } : {}),
-      ...('url' in value && typeof value.url === 'string' ? { url: value.url } : {}),
-      ...('name' in value && typeof value.name === 'string' ? { name: value.name } : {})
-    };
-  } catch {
-    return {};
-  }
-};`;
+const playwrightConfig = ({
+  mode,
+  packageManager
+}: CreateAnswers): string => `import { defineConfig } from '@playwright/test';
 
-const playwrightConfig = ({ mode, packageManager }: CreateAnswers): string => `import { readFileSync } from 'node:fs';
-
-import { defineConfig } from '@playwright/test';
-
-${RECORDED}
-
-// \`PORT\` when set; otherwise the port \`npm start\` took; otherwise the default.
-const PORT = Number(process.env.PORT ?? recorded().port ?? ${mode === 'server' ? '8080' : '5173'});
-// Where \`npm start\` said it answers — \`https\` when the server has a certificate — on that port.
-const ORIGIN = new URL(recorded().url ?? 'http://127.0.0.1');
-ORIGIN.port = String(PORT);
+// \`PORT\` when set (a run's check sets it); otherwise the suite's own, which no other script of the project takes.
+const PORT = Number(process.env.PORT ?? ${String(TEST_PORT[mode])});
+const ORIGIN = \`http://127.0.0.1:\${String(PORT)}\`;
 
 export default defineConfig({
   testDir: './visual',
   outputDir: './${VISUAL_OUTPUT}',
-  // A local certificate (mkcert) is one this machine's browsers were told to trust, not Playwright's.
-  use: { baseURL: ORIGIN.origin, ignoreHTTPSErrors: true },
-  // Playwright starts the project itself, so \`${runCommand(packageManager, 'visual')}\` is one command from a
-  // cold checkout.
+  use: { baseURL: ORIGIN },
+  // Playwright starts the project itself, on a port of its own, so \`${runCommand(packageManager, 'visual')}\` is one
+  // command from a cold checkout and never runs against the server you have open. Plain HTTP whatever \`.env\` says
+  // (TLS_CERT is for a device on the Wi-Fi), and its record kept apart: \`${DEV_SERVER_FILE}\` stays yours.
   webServer: {
     command: '${runCommand(packageManager, 'start')}',
-    url: ORIGIN.origin,
-    ignoreHTTPSErrors: true,
-    env: { PORT: String(PORT) },
+    url: ORIGIN,
+    env: { PORT: String(PORT), TLS_CERT: '', TLS_KEY: '', ${SERVER_RECORD_ENV}: '${VISUAL_OUTPUT}/server.json' },
     reuseExistingServer: true,
     timeout: 120_000
   }

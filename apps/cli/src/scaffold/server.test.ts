@@ -122,11 +122,14 @@ describe('the server a project starts', () => {
 });
 
 describe('the scripts that look at it', () => {
-  it('find the port the server took', () => {
-    expect(visualFiles(answers())['playwright.config.ts']).toContain('process.env.PORT ?? recorded().port ?? 8080');
+  it('start on a port of their own — 8400, or PORT when a run’s check sets it', () => {
+    expect(visualFiles(answers())['playwright.config.ts']).toContain('process.env.PORT ?? 8400');
   });
 
-  it('find it by the name and port it wrote down', () => {
-    expect(visualFiles(answers())['playwright.config.ts']).toContain("'tmp/dev-server.json'");
+  it('start a server of their own — never the one a person or a run uses, nor its record', () => {
+    const config = visualFiles(answers())['playwright.config.ts'];
+    expect(config).toContain("TLS_CERT: ''");
+    expect(config).toContain("PLITZI_SERVER_RECORD: 'tmp/visual/server.json'");
+    expect(config).not.toContain('readFileSync');
   });
 });
