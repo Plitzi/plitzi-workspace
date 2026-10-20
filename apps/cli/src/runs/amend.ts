@@ -4,7 +4,18 @@ import { acceptanceText } from './model';
 import { taskPaths } from './paths';
 import { acceptanceProblems } from './plan';
 import { RunRefusal } from './refusal';
-import { assertStatus, loadRun, logRun, readPlanFile, readPrimer, requireNoTask } from './run';
+import {
+  assertStatus,
+  handedInputs,
+  loadRun,
+  logRun,
+  primerFile,
+  readPlanFile,
+  readPrimer,
+  requireNoTask,
+  updateRecord,
+  withInputs
+} from './run';
 import { viewTask } from './taskStore';
 
 import type { PlannedTask, RunPlan, RunTask } from './model';
@@ -172,6 +183,9 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     ...(primerChanged ? { primer: true as const } : {})
   };
   await logRun(ctx, loaded.paths, { action: 'amend', ...amended });
+  // The amendment and its primer are the run's now: removed with it, as the plan it opened with.
+  const handed = await handedInputs(ctx, [file, primerFile(next, file)]);
+  await updateRecord(ctx, loaded.paths, record => ({ ...record, inputs: withInputs(record.inputs, handed) }));
 
   return amended;
 };

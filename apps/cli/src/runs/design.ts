@@ -5,7 +5,7 @@ import { LEAD } from './messages';
 import { RunRefusal } from './refusal';
 import { logRun } from './run';
 import { updateState } from './taskStore';
-import { DESIGNER, DEVELOPER, TESTER } from './team';
+import { DESIGNER, DEVELOPER, readTeam, startedAgents, TESTER } from './team';
 
 import type { DesignReview, RunTask, TaskState } from './model';
 import type { LoadedRun, RunContext } from './run';
@@ -72,7 +72,7 @@ export const assertDesigner = (view: TaskView, agent: string): void => {
   if (workedBy(view, agent)) {
     throw new RunRefusal(
       'invalid',
-      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead (plitzi task review ${taskId} --approve --skip-design)`,
+      `${agent} worked ${taskId}: its UI is reviewed by another designer, or the lead approves it without that review, as itself (plitzi task review ${taskId} --approve --skip-design --agent lead)`,
       { task: taskId }
     );
   }
@@ -133,6 +133,18 @@ export const designAtComplete = async (
 ): Promise<{ design?: DesignReview; carried?: string }> => {
   if (loaded.record.designReview !== true || !hasDesignReview(view.task, changed)) {
     return {};
+  }
+
+  // A designer does not review its own work: with no other in the team, the review would wait for no one.
+  const team = await readTeam(loaded.paths.root);
+  const holder = view.owner?.agent;
+  const others = team
+    ? startedAgents(team).filter(each => each.roles.includes(DESIGNER) && each.agent !== holder)
+    : undefined;
+  if (others?.length === 0) {
+    return {
+      carried: `No designer of the team but ${holder ?? 'its own'} worked it: its UI is the lead's to review, with the rest`
+    };
   }
 
   const { design } = view.state;

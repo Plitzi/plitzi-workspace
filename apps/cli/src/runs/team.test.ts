@@ -104,7 +104,7 @@ describe('the team of a project’s runs', () => {
     ).toEqual([expect.stringContaining('Task "t-b" is a writer\'s, and nobody in the team')]);
   });
 
-  it('refuses a file that is not one, an agent with no roles, a name twice, and nothing to change', async () => {
+  it('refuses a file that is not one, an agent with no roles, a name twice — and says nothing to change', async () => {
     await fs.mkdir(path.join(root, '.plitzi'));
     await fs.writeFile(
       path.join(root, TEAM_FILE),
@@ -135,7 +135,7 @@ describe('the team of a project’s runs', () => {
     await fs.rm(path.join(root, TEAM_FILE));
     expect(await refusalOf(setTeamAgent(root, 'writer', {}))).toContain('is not in the team yet');
     await setTeamAgent(root, 'dev', { roles: ['developer'] });
-    expect(await refusalOf(setTeamAgent(root, 'dev', { roles: ['developer'] }))).toContain('nothing to change');
+    expect(await setTeamAgent(root, 'dev', { roles: ['developer'] })).toMatchObject({ unchanged: true });
     expect(await refusalOf(setTeamAgent(root, 'lead', { roles: ['developer'] }))).toContain('The lead is one');
     expect(await refusalOf(unsetTeamAgent(root, 'nobody'))).toContain('it has dev');
   });

@@ -102,10 +102,15 @@ const testChecks = (files: readonly string[], served: boolean): Acceptance[] => 
 };
 
 /** The plan with a task of tests after each developer task — as it is when the team has no tester, otherwise. */
-export const withTestTasks = (plan: RunPlan, setup: TestSetup | undefined): { plan: RunPlan; added: string[] } => {
+export const withTestTasks = (
+  plan: RunPlan,
+  setup: TestSetup | undefined
+): { plan: RunPlan; added: string[]; untested: { task: string; why: string }[] } => {
   if (!setup) {
-    return { plan, added: [] };
+    return { plan, added: [], untested: [] };
   }
+
+  const untested: { task: string; why: string }[] = [];
 
   const held = new Set(plan.tasks.flatMap(task => task.files));
   const tested = new Set(
@@ -119,8 +124,16 @@ export const withTestTasks = (plan: RunPlan, setup: TestSetup | undefined): { pl
       continue;
     }
 
-    const files = testFilesFor(task.files, setup).filter(file => !held.has(file));
+    const named = testFilesFor(task.files, setup);
+    const files = named.filter(file => !held.has(file));
     if (files.length === 0) {
+      untested.push({
+        task: task.id,
+        why:
+          named.length === 0
+            ? 'none of its files has a test file named for it — a component or a module no page owns'
+            : `its test files are another task's (${named.join(', ')})`
+      });
       continue;
     }
 
@@ -155,5 +168,5 @@ export const withTestTasks = (plan: RunPlan, setup: TestSetup | undefined): { pl
     };
   });
 
-  return { plan: { ...plan, tasks: [...plan.tasks, ...added] }, added: added.map(task => task.id) };
+  return { plan: { ...plan, tasks: [...plan.tasks, ...added] }, added: added.map(task => task.id), untested };
 };

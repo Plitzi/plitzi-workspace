@@ -226,7 +226,8 @@ export const runOpen = (file: string, options: PlanOptions): Promise<void> =>
         opened.leadFinishes
           ? 'The lead writes it into the project at the end, as you allowed — once its report is written and the checks pass on the whole result.'
           : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run allow-finish ${opened.runId}`,
-        `Start a task: plitzi task next --run ${opened.runId}`
+        `Start a task: plitzi task next --run ${opened.runId}`,
+        'Watch it in a browser as the tasks are approved: npm run start:preview (plitzi run preview, on 8300) — the project itself is untouched until the finish'
       ].join('\n')
   );
 

@@ -120,7 +120,10 @@ export interface RemovedInputs {
   kept: string[];
 }
 
-/** What the lead handed the run, removed with it when it is as the run read it: no plan is left lying in the project. */
+/**
+ * What the lead handed the run, removed with it when it is as the run read it — and the folders that held only them:
+ * no plan, primer or amendment is left lying in the project.
+ */
 const removeInputs = async (ctx: RunContext, inputs: RunRecord['inputs']): Promise<RemovedInputs> => {
   const removed: string[] = [];
   const kept: string[] = [];
@@ -129,6 +132,7 @@ const removeInputs = async (ctx: RunContext, inputs: RunRecord['inputs']): Promi
     if ((await fingerprint(file)) === input.digest) {
       await fs.rm(file, { force: true });
       removed.push(input.file);
+      await removeEmptyFolders(ctx.root, path.dirname(file));
     } else if ((await fingerprint(file)) !== null) {
       kept.push(input.file);
     }
@@ -136,6 +140,40 @@ const removeInputs = async (ctx: RunContext, inputs: RunRecord['inputs']): Promi
 
   return { removed, kept };
 };
+
+/** `folder` and the ones above it, while empty — never the project's root nor its `tmp/`. */
+const removeEmptyFolders = async (root: string, folder: string): Promise<void> => {
+  const stops = new Set([path.resolve(root), path.resolve(root, 'tmp')]);
+  for (
+    let at = path.resolve(folder);
+    !stops.has(at) && !path.relative(root, at).startsWith('..');
+    at = path.dirname(at)
+  ) {
+    if ((await fs.readdir(at).catch(() => ['?'])).length > 0) {
+      return;
+    }
+
+    await fs.rmdir(at).catch(() => undefined);
+  }
+};
+
+/**
+ * The files the lead hands the run — a plan, the primer beside it, an amendment, a stage — as inputs of its record: each
+ * by project path and fingerprint, removed with the run when it is still as the run read it.
+ */
+export const handedInputs = async (
+  ctx: RunContext,
+  files: readonly (string | undefined)[]
+): Promise<RunRecord['inputs']> =>
+  (await Promise.all(files.flatMap(file => (file ? [inputOf(ctx, path.resolve(file))] : [])))).filter(
+    (input): input is RunRecord['inputs'][number] => input !== undefined
+  );
+
+/** `inputs` with `added` in it — a file handed again is the version read last. */
+export const withInputs = (inputs: RunRecord['inputs'], added: RunRecord['inputs']): RunRecord['inputs'] => [
+  ...inputs.filter(each => !added.some(input => input.file === each.file)),
+  ...added
+];
 
 /** A file the lead hands the run, by project path when it is in the project: what `removeRun` takes away with it. */
 export const inputOf = async (ctx: RunContext, file: string): Promise<RunRecord['inputs'][number] | undefined> => {

@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { isSecretFile, NOT_COPIED_DIRS, SERVED_DIRS, under } from './paths';
+import { RunRefusal } from './refusal';
 import { digest } from '../commands/spaceOrigin';
 import { isTextFile } from '../scaffold/fromSpace';
 
@@ -107,15 +108,21 @@ export const readJson = async <T>(
     return undefined;
   }
 
+  // Written only by the CLI, a temp file renamed over it: a broken one was edited by hand — said, never guessed past.
+  const broken = (said: string): RunRefusal =>
+    new RunRefusal('invalid', `${file} ${said}: it was changed outside the CLI, and nothing is done on a guess`, {
+      file,
+      next: 'put back what was changed in it; if that cannot be, a person aborts the run (plitzi run abort) — the project is as it was, its files backed up when the run opened'
+    });
   let parsed: unknown;
   try {
     parsed = JSON.parse(bytes.toString('utf-8'));
   } catch {
-    throw new Error(`${file} is not JSON: it should hold ${what}. It was changed outside the CLI.`);
+    throw broken(`is not JSON — it should hold ${what}`);
   }
 
   if (!guard(parsed)) {
-    throw new Error(`${file} does not hold ${what}: it was changed outside the CLI.`);
+    throw broken(`does not hold ${what}`);
   }
 
   return parsed;

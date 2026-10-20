@@ -1,6 +1,14 @@
 import path from 'node:path';
 
-import { BUILD_DIR, PROJECT_STATE, PROJECT_TMP, PUBLIC_DIR, RUNS_DIR, VENDOR_PLUGINS_DIR } from '../scaffold/paths';
+import {
+  ACTIVE_RUN_FILE,
+  BUILD_DIR,
+  PROJECT_STATE,
+  PROJECT_TMP,
+  PUBLIC_DIR,
+  RUNS_DIR,
+  VENDOR_PLUGINS_DIR
+} from '../scaffold/paths';
 
 /**
  * Where a run keeps what it owns: under the project's `tmp/`, which the project already keeps out of git, the lint, the
@@ -44,6 +52,11 @@ export interface RunPaths {
   mergeLock: string;
   /** One take at a time: the run's agent limit is counted and kept under it. */
   takeLock: string;
+  /**
+   * One claim at a time: a file's locks live in each task's folder, so whether anyone holds it and taking it are one
+   * step only under this — two tasks completing at once never both take a shared file by turns.
+   */
+  claimLock: string;
   blobs: string;
   base: string;
   approved: string;
@@ -73,7 +86,7 @@ export const BACKUPS_DIR = `${PROJECT_TMP}/plitzi-backups`;
 export const REPORTS_DIR = `${PROJECT_TMP}/plitzi-reports`;
 
 /** The project's one run, named: created exclusively when a run opens, gone with it — so two never open at once. */
-export const activeRunFile = (root: string): string => path.join(runsDir(root), 'active.json');
+export const activeRunFile = (root: string): string => path.join(root, ACTIVE_RUN_FILE);
 
 export const runPaths = (root: string, runId: string): RunPaths => {
   const dir = path.join(runsDir(root), runId);
@@ -86,6 +99,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     record: path.join(dir, 'run.json'),
     mergeLock: path.join(dir, 'merge.lock'),
     takeLock: path.join(dir, 'take.lock'),
+    claimLock: path.join(dir, 'claim.lock'),
     blobs: path.join(dir, 'blobs'),
     base: path.join(dir, 'base.json'),
     approved: path.join(dir, 'approved.json'),
@@ -108,6 +122,8 @@ export interface TaskPaths {
   state: string;
   stateLock: string;
   owner: string;
+  /** The fingerprints of the tokens it was taken with and lost: a cut token is told apart from one never its. */
+  revoked: string;
   locks: string;
   requests: string;
   proposals: string;
@@ -135,6 +151,7 @@ export const taskPaths = (run: RunPaths, taskId: string): TaskPaths => {
     state: path.join(dir, 'state.json'),
     stateLock: path.join(dir, 'state.lock'),
     owner: path.join(dir, 'owner.json'),
+    revoked: path.join(dir, 'revoked.json'),
     locks: path.join(dir, 'locks'),
     requests: path.join(dir, 'requests'),
     proposals: path.join(dir, 'proposals'),

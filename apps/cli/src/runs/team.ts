@@ -289,6 +289,8 @@ export interface TeamChange {
   before?: TeamAgent | Model;
   after?: TeamAgent | Model;
   file: string;
+  /** It was already so: nothing written, and said. */
+  unchanged?: true;
 }
 
 /** What `run team set` is given: whatever of the agent it changes — the rest is kept as it was. */
@@ -349,8 +351,9 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
     throw new RunRefusal('invalid', `${TEAM_FILE}: ${problem}`);
   }
 
+  // Asked for what it already is: not an error — the team is as asked — and said, with nothing written.
   if (before && JSON.stringify(before) === JSON.stringify(after)) {
-    throw new RunRefusal('invalid', `"${name}" is already ${teamAgentText(after)}: nothing to change`);
+    return { name, before, after, file: TEAM_FILE, unchanged: true };
   }
 
   await writeTeam(root, {

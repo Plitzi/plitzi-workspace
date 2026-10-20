@@ -8,7 +8,8 @@ What the lead — team lead and software architect — does; the agents' half, t
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
    entry (`src/space/index.ts`). `plitzi space impact <file>` — what depends on a file.
-2. **Write the plan** (JSON, anywhere: the run removes it with itself when it ends unchanged):
+2. **Write the plan** (JSON, anywhere — best outside the project, or in its `tmp/`: the run removes it, its primer, an
+   amendment, a stage and the summary with itself when they are as it read them, and the folder that held only them):
 
    ```json
    { "version": 1, "runId": "es-launch", "goal": "Spanish version",
@@ -29,7 +30,14 @@ What the lead — team lead and software architect — does; the agents' half, t
    (`plitzi run team set dev --count 2 --model <model>`, `… set test --roles tester`): its size is how many work at once, a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
    developer task (`"tests": false` for none); a designer reviews the others' UI before you (`"designReview": false` in
    the plan turns it off). Theirs is the UI/UX, as a designer; yours is the complete and strict review — code,
-   acceptance, edge cases, the page — and the final word, after it (or before, with `--skip-design`).
+   acceptance, edge cases, the page — and the final word, after it (or before, with `--skip-design`, yours: as
+   yourself — no `--agent`, or `--agent lead`). A UI review counts only from a designer of the team, by the name it
+   is started with (`design-1`).
+
+   **Keep a person's actions a person's in the harness**: an agent with a shell can give itself a terminal and type a
+   run's name. Deny the agents — not yourself, unless the person said so — `plitzi run finish --apply`, `run abort`,
+   `run purge`, `run restore`, `run allow-finish`, `run stop --force` and `run attach --take-over` (Claude Code:
+   `permissions.deny` in `.claude/settings.json`).
 
    Ids: lowercase letters, digits, `-`, `_`. **Read what a task changes before you write it**: one asking for what is not
    there (a shadow to lighten, an id per row of a list) costs a round. **And what its data shows**: a case the project's
@@ -47,7 +55,8 @@ What the lead — team lead and software architect — does; the agents' half, t
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
    `plitzi run open plan.json` backs up every file it will touch; as many agents at once as the team has (above 5 a
-   person confirms). `plitzi run preview` serves the run's work.
+   person confirms). Tell the person how to watch it: `npm run start:preview` (`plitzi run preview`) serves the run's
+   approved work as it goes — their own `start:dev` shows the project untouched until the finish.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
@@ -59,8 +68,10 @@ What the lead — team lead and software architect — does; the agents' half, t
    contrast included; an open state, an element as the page has it) and pictures
    them light and dark — one command. What the acceptance asks and the data does not show, you test yourself
    (a module's function with the edge cases, as `node -e` from the copy) — or send it back for the test it needs. Then
-   `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds go to a
-   person. A `--known-failure` says why and which task fixes it — weigh that.
+   `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds of yours —
+   or three of the designer's, counted apart — go to a person. A `--known-failure` says why and which task fixes it — weigh that. The approval merges what went to review,
+   not the copy as it is: `look` and the approval warn of anything written in it since — ask why, or send it back.
+   Two tasks that made a file by one name are refused at the second approval: send it back to build on the run's.
 7. **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when
    the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into

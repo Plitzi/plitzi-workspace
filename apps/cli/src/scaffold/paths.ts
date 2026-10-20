@@ -9,6 +9,7 @@
 import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
 export {
+  ACTIVE_RUN_FILE,
   AUTHOR_FILE,
   BUILD_DIR,
   CLI_DIR,

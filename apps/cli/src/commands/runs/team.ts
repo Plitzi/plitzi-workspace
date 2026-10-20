@@ -58,7 +58,10 @@ export const runTeamSet = (
         ...(options.model ? { model: options.model } : {}),
         ...(options.effort ? { effort: options.effort } : {})
       }),
-    changed => `${changed.name}: ${memberText(changed.before)} → ${memberText(changed.after)} (${changed.file})`
+    changed =>
+      changed.unchanged
+        ? `${changed.name} is already ${memberText(changed.after)}: nothing to change (${changed.file})`
+        : `${changed.name}: ${memberText(changed.before)} → ${memberText(changed.after)} (${changed.file})`
   );
 
 export const runTeamUnset = (name: string, options: RunCommandOptions): Promise<void> =>

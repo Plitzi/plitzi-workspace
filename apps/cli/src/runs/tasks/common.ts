@@ -1,14 +1,14 @@
 import fs from 'node:fs/promises';
 
-import { fingerprint, readOptional, writeJson } from '../files';
+import { fingerprint, projectFiles, readOptional, writeJson } from '../files';
 import { entryOf } from '../model';
 import { projectPath, under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { readApproved } from '../run';
 import { placeVersion, putBlob } from '../store';
-import { isDisconnected, readStart, viewTask } from '../taskStore';
+import { isDisconnected, readStart, revokedTokens, tokenPrint, viewTask } from '../taskStore';
 
-import type { ApprovedManifest, RunTask } from '../model';
+import type { ApprovedManifest, RunTask, TaskStart } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
@@ -61,6 +61,17 @@ export const holderOf = async (ctx: RunContext, loaded: LoadedRun, task: RunTask
   }
 
   if (!view.owner || view.owner.token !== ctx.token) {
+    // Never this task's: a token of another — its secret under this task's name — is not one that was cut.
+    if (!(await revokedTokens(view.paths)).includes(tokenPrint(ctx.token))) {
+      throw new RunRefusal(
+        'invalid',
+        `That token is not one task "${task.id}" was taken with: plitzi task take answers its token`,
+        {
+          task: task.id
+        }
+      );
+    }
+
     const forced = loaded.record.forcedStopAt !== undefined && loaded.record.status === 'stopped';
     throw new RunRefusal(
       forced ? 'forced-stop' : 'reassigned',
@@ -155,3 +166,22 @@ export const roleOf = (task: RunTask): string => task.role ?? 'developer';
 /** Whether `task` holds a signal: for `plitzi run watch`'s "no signal" line. */
 export const withoutSignal = (view: TaskView, now: Date): boolean =>
   view.owner !== undefined && isDisconnected(view.task, view.signalAt, now);
+
+/** What a task's copy changed against where it started, by project path: what is not the source left out. */
+export const changedInCopy = async (view: TaskView, start: TaskStart): Promise<string[]> => {
+  const inCopy = await projectFiles(view.paths.work);
+  const changed = new Set<string>();
+  for (const file of inCopy) {
+    if ((await fingerprint(under(view.paths.work, file))) !== (start.files[file] ?? null)) {
+      changed.add(file);
+    }
+  }
+
+  for (const [file, digest] of Object.entries(start.files)) {
+    if (digest !== null && !inCopy.includes(file)) {
+      changed.add(file);
+    }
+  }
+
+  return [...changed].sort();
+};

@@ -19,6 +19,14 @@ export const runCanWrite = (file: string, options: RunCommandOptions & { task?: 
     async ctx => {
       const task = ctx.token ? taskOf(ctx) : options.task;
       const answer = await canWrite(ctx, file, task);
+      if (!answer.ok && 'plannedFor' in answer) {
+        throw new RunRefusal(
+          'claimed',
+          `${answer.file} is task "${answer.plannedFor.task}"'s (run "${answer.plannedFor.run}"), not taken yet: its agent writes it — propose your change to it (plitzi task propose ${answer.plannedFor.task} --change "…")`,
+          { file: answer.file, task: answer.plannedFor.task }
+        );
+      }
+
       if (!answer.ok) {
         throw new RunRefusal(
           'claimed',
@@ -34,7 +42,10 @@ export const runCanWrite = (file: string, options: RunCommandOptions & { task?: 
 
       return answer;
     },
-    answer => `Yes: ${answer.file} is not held by another task.`
+    answer =>
+      answer.plannedFor
+        ? `Yes: no task holds ${answer.file} now — task "${answer.plannedFor.task}" (run "${answer.plannedFor.run}") takes it when it starts, from the project as it is then.`
+        : `Yes: ${answer.file} is not held by another task.`
   );
 
 export const runStop = (runId: string | undefined, options: RunCommandOptions & { force?: boolean }): Promise<void> =>
@@ -88,7 +99,16 @@ export const runFinish = (runId: string | undefined, options: FinishOptions): Pr
         ),
         finished.plan.checks?.none
           ? chalk.yellow(`  Not checked: ${finished.plan.checks.none}`)
-          : `  The project's checks pass on the result (${list(finished.plan.checks?.steps.map(step => step.name) ?? [])})`,
+          : `  The project's checks pass on the result (${list(finished.plan.checks?.steps.map(step => step.name) ?? [])})${
+              finished.plan.checks?.reused
+                ? ` — as they did at ${finished.plan.checks.reused.slice(11, 16)} UTC on this same result, not run again`
+                : ''
+            }`,
+        ...((finished.plan.acceptance?.results.length ?? 0) > 0
+          ? [
+              `  Every done task's acceptance checks hold on the result too (${String(finished.plan.acceptance?.results.length ?? 0)})${finished.plan.acceptance?.reused ? ' — as on this same result before, not run again' : ''}`
+            ]
+          : []),
         ...(finished.left.length > 0 ? [`  Left in the plan: ${finished.left.join(', ')}`] : []),
         finished.dryRun
           ? finished.plan.conflicts.length > 0

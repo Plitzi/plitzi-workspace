@@ -226,9 +226,15 @@ export const registerTaskGroup = (program: Command): Command => {
       'Go to review although the checks fail — for a reason that weighs, said to the lead'
     )
     .option('--fixed-by <task>', 'With --known-failure: the task that fixes what fails')
+    .option(
+      '--note <text>',
+      'What the lead should know as it reviews — a choice you made, what to look at — told with it'
+    )
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
-    .action((options: RunCommandOptions & { knownFailure?: string; fixedBy?: string }) => taskComplete(options));
+    .action((options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string }) =>
+      taskComplete(options)
+    );
 
   taskGroup
     .command('tell')

@@ -23,6 +23,7 @@ import {
 import { EMPTY_SCHEMA } from '@plitzi/sdk-shared/schema';
 import { EMPTY_STYLE_SCHEMA } from '@plitzi/sdk-shared/style';
 
+import { watchAgentRuns } from './agentRuns';
 import { projectPlugins, watchProjectPlugins } from './plugins';
 import { createSpaceFailure } from './spaceFailure';
 import { watchSpace } from './watchSpace';
@@ -473,7 +474,9 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
               })
             ]
           : []),
-        watchProjectPlugins(root, server, plugins)
+        watchProjectPlugins(root, server, plugins),
+        // Said only by the process that speaks: a fleet's workers would each say it again.
+        ...(speaks ? [watchAgentRuns(root)] : [])
       ]
     : [];
   const close = async (): Promise<void> => {

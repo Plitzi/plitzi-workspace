@@ -5,7 +5,7 @@ import { entryOf } from '../model';
 import { under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { readApproved } from '../run';
-import { putBlob, withLock } from '../store';
+import { getBlob, putBlob, withLock } from '../store';
 import { at } from './common';
 import { textOf } from './context';
 
@@ -86,24 +86,38 @@ export const buildMergeIntoRun = async (
   loaded: LoadedRun,
   view: TaskView,
   start: TaskStart,
-  changed: readonly string[],
+  submitted: Readonly<Record<string, string | null>>,
   onProjectChange: ProjectChange,
   approved: ApprovedManifest
 ): Promise<Built> => {
   const conflicts: string[] = [];
+  const created: { file: string; by: string }[] = [];
   const outside: { file: string; mergeable: boolean }[] = [];
   const merged: string[] = [];
   const next: ApprovedManifest = { files: { ...approved.files }, tasks: [...approved.tasks, view.task.id] };
-  for (const file of changed) {
+  // What went to review, never the copy as it is now: its agent may have written in it since.
+  const ours = async (file: string): Promise<Buffer | undefined> => {
+    const digest = Object.hasOwn(submitted, file) ? submitted[file] : null;
+
+    return digest === null ? undefined : getBlob(loaded.paths, digest);
+  };
+  for (const file of Object.keys(submitted)) {
     const entry = entryOf(approved.files, file);
     const from = start.files[file] ?? null;
     // The run's version moved since this copy was made — approved by another meanwhile — and the two changes are put
     // together line by line; reverted, or the same lines, is a conflict.
     let mergedText: string | undefined;
+    // A file this task made where another task made one meanwhile: two files by one name, not two edits of one — the
+    // lead decides, never a merge of the two.
+    if (from === null && entry && entry.digest !== null && entry.task !== view.task.id) {
+      created.push({ file, by: entry.task });
+      continue;
+    }
+
     if (entry && entry.digest !== from && entry.digest !== null) {
       const result = mergeLines(
         from === null ? '' : await textOf(loaded, ctx, from, file),
-        (await readOptional(under(view.paths.work, file)))?.toString('utf-8') ?? '',
+        (await ours(file))?.toString('utf-8') ?? '',
         await textOf(loaded, ctx, entry.digest, file)
       );
       if (!result.ok) {
@@ -124,11 +138,11 @@ export const buildMergeIntoRun = async (
     let joined = false;
     if (project !== knew) {
       const theirs = await readOptional(under(ctx.root, file));
-      const ours = mergedText ?? (await readOptional(under(view.paths.work, file)))?.toString('utf-8');
+      const mine = mergedText ?? (await ours(file))?.toString('utf-8');
       const withProject =
-        theirs === undefined || ours === undefined
+        theirs === undefined || mine === undefined
           ? undefined
-          : mergeLines(knew === null ? '' : await textOf(loaded, ctx, knew, file), ours, theirs.toString('utf-8'));
+          : mergeLines(knew === null ? '' : await textOf(loaded, ctx, knew, file), mine, theirs.toString('utf-8'));
       if (onProjectChange === 'merge' && withProject?.ok) {
         mergedText = withProject.text;
         merged.push(file);
@@ -145,7 +159,7 @@ export const buildMergeIntoRun = async (
       }
     }
 
-    const bytes = mergedText === undefined ? await readOptional(under(view.paths.work, file)) : Buffer.from(mergedText);
+    const bytes = mergedText === undefined ? await ours(file) : Buffer.from(mergedText);
     const digest = bytes === undefined ? null : await putBlob(loaded.paths, bytes);
     const decided = { project, by: ctx.agent, at: at(ctx) };
     next.files[file] = {
@@ -156,6 +170,14 @@ export const buildMergeIntoRun = async (
       ...(project !== knew ? (joined ? { joined: decided } : { overrode: decided }) : {}),
       ...(entry ? { previous: entry } : {})
     };
+  }
+
+  if (created.length > 0) {
+    throw new RunRefusal(
+      'conflict',
+      `Task "${view.task.id}" made ${created.map(each => `${each.file} (task "${each.by}" made one by that name too, approved first)`).join(', ')}: nothing was merged — send it back (--changes) to take the run's version (plitzi task discard <file>) and build on it, or to give its own file another name`,
+      { task: view.task.id, files: created.map(each => each.file), madeBy: created.map(each => each.by) }
+    );
   }
 
   if (conflicts.length > 0) {

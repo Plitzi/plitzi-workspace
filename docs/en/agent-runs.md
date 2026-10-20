@@ -51,7 +51,10 @@ together line by line (`merge3.ts`: changes to different lines both go in; two a
 other, the run's first; the same edit to a line with different additions after it — a trailing comma, then each its own
 entry — joined, the separator carried; the same lines changed two ways, a conflict). A merge made at approval goes in
 only after the project's checks pass over the whole result. `run preview` serves the run's work in the run's cache with
-the project's dev server, and each approval writes into it; `run preview --task` serves a task's copy while it is in
+the project's dev server, and each approval writes into it — the project's `start:preview` script, which `plitzi create`
+writes and `plitzi upgrade` adds, so the person watches the agents' work in a browser while their own `start:dev` serves
+the project untouched; that server says so on its console while a run is open (`hosts/project/agentRuns.ts` in
+sdk-server, reading `ACTIVE_RUN_FILE`), `run open` names the script and `run status` the preview's address; `run preview --task` serves a task's copy while it is in
 review, so the lead looks at the pages before approving them, and `task show` (`show.ts`) gathers the rest of a review —
 acceptance, checks, agreements, notes, what was said, each file's diff against where the copy started, the commands that
 act on it.
@@ -213,6 +216,7 @@ active.json          (in tmp/plitzi-runs/) the project's one run, created exclus
 plan.json            the lead's, as written
 run.json             status, machine, agent limit, estimate, pinned versions, reconciliation, brake, merges — under merge.lock
 merge.lock take.lock one writer of run.json, approved.json and the project at a time; one take at a time
+claim.lock           one claim of a shared file by turns at a time
 blobs/<sha256>       every version the run keeps, by fingerprint, written once
 base.json            the backup when it opened: every file the plan touches and every shared one
 approved.json        the run's work: per file its version, the project's version it came from, its task, the previous,
@@ -222,10 +226,16 @@ summary.md           the lead's summary, for the report
 merges/merge_N.json  each write into the project: before and after per file; `complete: false` while it is written
 log.jsonl            the audit: who did what, every refusal, failed check and conflict — what the report counts
 tasks/<task>/
-  task.json  state.json (+ state.lock)  owner.json  review.json  reviewed.json
+  task.json  state.json (+ state.lock)  owner.json  revoked.json  review.json  reviewed.json
   locks/<path>.lock  requests/<id>.json  proposals/<id>.json  answers/<proposal>.json
   cache/work/  cache/start.json  cache/progress.json  cache/log.jsonl
+cache/checks/<tree>.json  a pass of the project's checks on one whole result, by its content: said again within the
+                     hour rather than run again (the dry run's at `finish --apply`)
 ```
+
+What the lead handed the run — the plan, the primer beside it, an amendment (`run amend`), a stage (`run extend`), the
+summary — is kept in `run.json` by path and fingerprint (`inputs`) and removed with the run while it is as the run read it,
+with the folder that held only them; one changed since is kept, and said.
 
 While the run goes, everything but `cache/` is essential — with no git it is the only way back — and `run prune` removes
 only caches (a run idle 8 hours; the oldest quiet ones above 1 GB). **When the run ends, it goes whole**, backups
@@ -234,7 +244,9 @@ included: a finished or aborted run leaves nothing for anyone to clean up but it
 files and a manifest; a file written over a change made outside the run is kept there whatever was asked.
 
 **One writer per file.** `plan.json` is the lead's; `run.json`, `approved.json` and the project are written under
-`merge.lock`; a task's `state.json` under its `state.lock`; `owner.json`, an answer and `active.json` are created
+`merge.lock`; a task's `state.json` under its `state.lock`; taking a shared file by turns — `task claim`, `complete`,
+a turn handed on — under `claim.lock`, since its locks live in each task's folder and two tasks completing at once
+would otherwise both take it; `owner.json`, an answer and `active.json` are created
 exclusively (`wx`). Every write is a temp file renamed over the target, retried on Windows' transient `EPERM`/`EBUSY`. A
 version is a blob named by its fingerprint and a manifest names it, so the manifest is the one commit point: a cut leaves
 an unnamed blob, never a named half-written file.
@@ -259,19 +271,30 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   the copy by walking up to the project's `node_modules`; a command run inside the copy works on the project it belongs
   to, and as its task: `take` writes the run, task, token and agent into the copy's `tmp/plitzi-task.json`, read when no
   token is said (a token said wins — the lead reviewing from inside a copy is the lead).
-- **Complete:** refused with a proposal to it unanswered. The copy against `start.json`: a change to another task's
-  file, or to one in no task, is refused (`claimed`) naming each; to a shared file not held, a request. Then the
-  project's checks — `verify`'s steps, each the project's script, run in the copy with the project's binaries, the
-  failing ones printed — then the acceptance's checks (`acceptance.ts`): each `{ said, check }` line's command run in
+- **Complete:** refused with a proposal to it unanswered, and with its copy gone (said as gone, with the take that
+  starts it again — not as every file removed). The copy against `start.json`: a change to another task's file is
+  refused (`claimed`) naming each; to a shared file, or one in no task, taken by turns when nobody holds it and a request
+  when someone does; a new file nobody names is the task's. A file of the task turned into a link is refused — what it
+  points at (the project's `.env`) would go to review as the file. Then the project's checks — `verify`'s steps, each
+  the project's script, run in the copy with the project's binaries: `author` first, alone, and the rest three at a
+  time once it passes, every failing one printed — then the acceptance's checks (`acceptance.ts`): each `{ said, check }` line's command run in
   the copy, passing on exit 0, with `plitzi` on the path as this CLI (a shim in the task's cache) and `$PLITZI_URL` the
   copy served by its own start script on a free port while they run; what each answered is kept in the state and shown
   by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to
-  review. `run plan` refuses a check it could not run: empty, reading `.env`, or naming `$PLITZI_URL` in a project with
-  no start script.
-- **Review:** changes go back to the same task, and after three rounds to a person. Approval keeps its reviewed version
-  and merges it into `approved.json` — and **before anything is written, each file is checked**: the run's version moved
-  since the copy was made (`conflict`: redo it on the run's), or someone changed the project's file while the task
-  worked on it. That one stops the approval, naming the file; the lead decides: `--overwrite` writes the task's
+  review, **its files kept as they are now** (`submitted`, by fingerprint): what the review keeps and the approval
+  merges, never the copy, which its agent may go on writing — `--note` tells the lead what to look at with it. A sign of
+  life of a task in review is answered as one in review. `run plan` refuses a check it could not run: empty,
+  reading `.env`, or naming `$PLITZI_URL` in a project with no start script — a lint of what the lead meant, not a
+  sandbox: what holds is that a copy has no `.env` and a check's environment none of it.
+- **Review:** changes go back to the same task, and after three rounds to a person — three of the lead's, or three of
+  the designer's on its UI: counted apart, so a task with a designer is not at a person after one round of the lead's. Approval keeps the version that
+  went to review and merges it into `approved.json`; what its copy holds otherwise — written after `complete` — is not
+  merged, and said (`notReviewed`, and `task look` warns that what it serves is not what an approval merges). A UI review
+  is a designer's of the team, by the name `team.json` starts it with (`design-1`); `--skip-design` is the lead's. A
+  designer's own work with no other designer in the team asks for none — the lead reviews its UI with the rest. **Before
+  anything is written, each file is checked**: the run's version moved since the copy was made (`conflict`: redo it on
+  the run's), a file it made where another task made one by that name first (two files, never put together), or someone
+  changed the project's file while the task worked on it. That one stops the approval, naming the file; the lead decides: `--overwrite` writes the task's
   version over the change at the finish — recorded as an override, said in `run status`, the finish and the report, and
   the other version kept — or `--changes` sends it back to take the project's version and redo. Approved, it lets its
   files go to whoever waits, makes ready what depended on it, and makes the integration tasks due.
@@ -287,7 +310,10 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
 
 `run finish` compares each approved file with the project: unchanged since the run knew it → written; already the same
 → left; changed since → a conflict. The whole result is materialised (project + run) and checked first — a dry run by
-default, listing what is written over a change made outside. `--apply` with conflicts writes nothing and puts the run
+default, listing what is written over a change made outside — and so is what each done task was accepted on: every
+`{ said, check }` line that passed at its review runs again on the whole result, so one a later task broke (the print of
+a page another task grew) stops the finish, naming both; a pass of either on the very same result is said again within
+the hour, not run again. `--apply` with conflicts writes nothing and puts the run
 into **reconciliation**: no task starts and no merge goes in until the lead resolves each file (`--take
 project|run|<file>`; the run's or a file of its own is an override, said and kept) and continues. Without conflicts, it
 needs the lead's summary, then a person's confirmation, and under `merge.lock` the merge's journal is written
@@ -314,8 +340,14 @@ A person's actions — the final merge, restore, a forced stop, abort, purge, ta
 one above the estimate's threshold — are refused with a task's token and in a shell with no terminal; a person confirms
 by typing the run's name. The lead's — opening, stopping, reviewing (and overwriting), reassigning, reverting,
 resolving a reconciliation and continuing, answering any proposal, the summary — are refused with a task's token. This
-is a guard rail, not security: what holds is that whatever is written outside the flow is caught by fingerprint before
-anything is merged.
+is a guard rail, not security: an agent with a shell can give itself a terminal (a pseudo-terminal) and type the run's
+name, and edit the run's records — `run.json` or a task's `state.json` broken by hand are refused by name, never read
+on a guess, but one rewritten whole is the agent's word. What holds is that whatever is written outside the flow is
+caught by fingerprint before anything is merged; **what keeps a person's actions a person's is the harness**: deny the
+agents `plitzi run finish --apply`, `run abort`, `run purge`, `run restore`, `run allow-finish`, `run stop --force` and
+`run attach --take-over` (in Claude Code, `permissions.deny` in the project's `.claude/settings.json`), and let them
+run the rest. A token is told apart: one a task was cut from is `reassigned`, one it was never taken with `invalid`
+(`revoked.json` keeps the fingerprints of those it lost).
 
 **The final merge can be the lead's**, when a person says so: `run open --lead-finishes`, or `run allow-finish` on an
 open run (`--revoke` takes it back), each confirmed by typing the run's name — the lead asks for it before opening, and
@@ -354,8 +386,9 @@ detail (`--json`).
 ## Tested
 
 The bench is `apps/cli/src/runs/runs-*.test.ts` (each a part of the run: plan, tasks, shared files, merge, stops,
-agreements, the team, the lead, acceptance, the first real runs, the primitives) with its steps in
-`src/tests/runSteps.ts`: a seeded project (`src/tests/runProject.ts`), scripted agents over one
-clock the test moves, a person who confirms or not, checks that fail on `BROKEN` — no model and no network, so every run
-is the same run. `apps/cli/src/commands/runs.test.ts` runs the CLI as processes: the exit codes, the token through the
-environment, a person's action from a shell with no terminal, and a command run from inside a task's copy.
+agreements, the team, the lead, acceptance, the first real runs, the primitives, and what an agent can do around the
+rules — a write after its review, a link, a token not its own, two completes at once on one shared file) with its steps
+in `src/tests/runSteps.ts`: a seeded project (`src/tests/runProject.ts`), scripted agents over one clock the test moves,
+a person who confirms or not, checks that fail on `BROKEN` — no model and no network, so every run is the same run.
+`apps/cli/src/commands/runs.test.ts` runs the CLI as processes: the exit codes, the token through the environment, a
+person's action from a shell with no terminal, and a command run from inside a task's copy.

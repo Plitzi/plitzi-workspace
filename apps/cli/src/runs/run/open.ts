@@ -3,14 +3,14 @@ import path from 'node:path';
 
 import { readOptional, writeAtomic, writeJson } from '../files';
 import { EVERYONE, LEAD, sendMessage } from '../messages';
-import { isRunPlan } from '../model';
+import { isRunPlan, runPlanProblems } from '../model';
 import { readOwnership } from '../ownership';
 import { runPaths, runsDir, taskPaths } from '../paths';
 import { checkPlan, PlanRefusal } from '../plan';
 import { RunRefusal } from '../refusal';
 import { keepFiles } from '../store';
 import { ensureTeam, reviewsDesign, teamSize } from '../team';
-import { assertNoOtherRun, claimProject, inputOf, releaseProject } from './claim';
+import { assertNoOtherRun, claimProject, handedInputs, releaseProject } from './claim';
 import { requireNoTask, requirePerson } from './context';
 import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
 
@@ -46,9 +46,13 @@ export const readPlanFile = async (file: string): Promise<RunPlan> => {
   }
 
   if (!isRunPlan(parsed)) {
+    const problems = runPlanProblems(parsed);
     throw new RunRefusal(
       'invalid',
-      `${file} is not a plan: { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }`
+      `${file} is not a plan — { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }${
+        problems.length > 0 ? `:\n${problems.map(each => `  - ${each}`).join('\n')}` : ''
+      }`,
+      { problems }
     );
   }
 
@@ -66,13 +70,17 @@ export const checkPlanFile = async (ctx: RunContext, file: string): Promise<Chec
 /** A primer is read whole by every agent: past this it no longer saves what it is for. */
 export const MAX_PRIMER_BYTES = 16 * 1024;
 
+/** Where the plan's primer is: beside the plan, as it names it. */
+export const primerFile = (plan: RunPlan, planFile: string): string | undefined =>
+  plan.primer === undefined ? undefined : path.resolve(path.dirname(planFile), plan.primer);
+
 /** The plan's primer, read beside the plan — refused, saying why, when it is not there or too long to be one. */
 export const readPrimer = async (plan: RunPlan, planFile: string): Promise<string | undefined> => {
-  if (plan.primer === undefined) {
+  const file = primerFile(plan, planFile);
+  if (file === undefined) {
     return undefined;
   }
 
-  const file = path.resolve(path.dirname(planFile), plan.primer);
   const text = await fs.readFile(file, 'utf-8').catch(() => undefined);
   if (text === undefined || text.trim() === '') {
     throw new RunRefusal(
@@ -208,7 +216,7 @@ export const openRun = async (
     ...(reviewsDesign(team, plan) ? { designReview: true as const } : {}),
     brake: [],
     merges: [],
-    inputs: [await inputOf(ctx, path.resolve(file))].filter(input => input !== undefined)
+    inputs: await handedInputs(ctx, [file, primerFile(plan, file)])
   };
   // The plan as its lead wrote it, last: a folder with a plan and a record is a run.
   await writeJson(paths.plan, plan);

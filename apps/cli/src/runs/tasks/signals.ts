@@ -21,6 +21,8 @@ export interface Signal {
   at: string;
   /** The run is stopping or stopped: said with every sign of life, so the agent knows before a refusal tells it. */
   run?: { status: string; reason?: string };
+  /** In review: nothing to keep alive — no one reassigns a task under review, and nothing written now is reviewed. */
+  inReview?: true;
   /** Without another sign of life by then, the lead may reassign it. */
   quietAfter: string;
   /** …and by then another agent may take it. */
@@ -54,6 +56,7 @@ export const reportProgress = async (
   return {
     task: taskId,
     at: at(ctx),
+    ...(view.state.status === 'in-review' ? { inReview: true as const } : {}),
     ...(loaded.record.status === 'open'
       ? {}
       : {

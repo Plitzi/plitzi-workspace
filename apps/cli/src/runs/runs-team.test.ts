@@ -141,7 +141,12 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
     const shown = await showTask(lead(), 'es-launch', 't-home');
     // What it told, read here, is not handed over again; the question waits for its answer.
     expect((await readInbox(lead(), 'es-launch')).map(message => message.text)).toEqual(['Formal or informal?']);
-    expect([shown.status, shown.from, shown.checks, shown.holder]).toEqual(['in-review', 'copy', 'passed', 'agent-1']);
+    expect([shown.status, shown.from, shown.checks, shown.holder]).toEqual([
+      'in-review',
+      'submitted',
+      'passed',
+      'agent-1'
+    ]);
     expect(shown.files).toMatchObject([{ file: 'src/space/pages/home/hero.ts', change: 'changed' }]);
     expect(shown.files[0].diff).toMatch(/^\+export const hero = \{"text":"Hola"\};$/m);
     expect(shown.messages.map(message => message.text)).toEqual(['Formal or informal?', 'The hero keeps its id']);

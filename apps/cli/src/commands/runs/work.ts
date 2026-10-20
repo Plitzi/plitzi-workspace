@@ -4,6 +4,7 @@ import { act, either, holder, runOf } from './shell';
 import { hhmm, list, messageLines } from './text';
 import { crossed, longFileText } from '../../runs/longFiles';
 import { RunRefusal } from '../../runs/refusal';
+import { tellLead } from '../../runs/talk';
 import { blockTask, completeTask, noteTask, reportProgress, unblockTask } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
@@ -32,7 +33,9 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
             `  ⚠ ${longFileText(long)}: split it by what changes together — a section or a part per file${crossed(long) ? '; complete refuses it past the line' : ''}`
           )
         ),
-        `${signal.task}: a sign of life at ${hhmm(signal.at)}. Without another, the lead may reassign it after ${hhmm(signal.quietAfter)}, and another agent take it after ${hhmm(signal.takenAfter)}.`
+        signal.inReview
+          ? `${signal.task} is in review: no sign of life is needed until it comes back to you — and what you write in its copy now is not reviewed. Take another task meanwhile: plitzi task next`
+          : `${signal.task}: a sign of life at ${hhmm(signal.at)}. Without another, the lead may reassign it after ${hhmm(signal.quietAfter)}, and another agent take it after ${hhmm(signal.takenAfter)}.`
       ].join('\n')
   );
 
@@ -76,7 +79,9 @@ export const taskNote = (taskId: string | undefined, text: string, options: RunC
     () => 'Noted: whoever takes it next reads it in plitzi task context.'
   );
 
-export const taskComplete = (options: RunCommandOptions & { knownFailure?: string; fixedBy?: string }): Promise<void> =>
+export const taskComplete = (
+  options: RunCommandOptions & { knownFailure?: string; fixedBy?: string; note?: string }
+): Promise<void> =>
   act(
     options,
     async ctx => {
@@ -85,11 +90,17 @@ export const taskComplete = (options: RunCommandOptions & { knownFailure?: strin
         throw new RunRefusal('invalid', '--fixed-by goes with --known-failure "why": the task that fixes what fails');
       }
 
-      return completeTask(ctx, runId, taskId, {
+      const completed = await completeTask(ctx, runId, taskId, {
         ...(options.knownFailure
           ? { knownFailure: { why: options.knownFailure, ...(options.fixedBy ? { fixedBy: options.fixedBy } : {}) } }
           : {})
       });
+      // Told once it is in review, never for a completion refused: the note goes with the work it is about.
+      if (options.note !== undefined && options.note.trim() !== '') {
+        await tellLead(ctx, runId, taskId, options.note);
+      }
+
+      return completed;
     },
     completed =>
       [

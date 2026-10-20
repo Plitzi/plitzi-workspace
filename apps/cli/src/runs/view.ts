@@ -4,6 +4,7 @@ import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { under } from './paths';
 import { chainMinutes } from './plan';
+import { previewPort } from './preview';
 import { loadRun, readApproved, readBase, runIds } from './run';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
@@ -11,6 +12,14 @@ import { isDisconnected, readStart, viewTask } from './taskStore';
 import type { DesignReview, Needs, RunRecord, TaskStatus, Waiting } from './model';
 import type { RunContext } from './run';
 import type { TaskView } from './taskStore';
+
+/** How much of a message the run's view shows: one too long to scan is cut, and says where it is whole. */
+const GLIMPSE = 400;
+
+const glimpse = (text: string): string =>
+  text.length <= GLIMPSE
+    ? text
+    : `${text.slice(0, GLIMPSE).trimEnd()}… (${String(text.length - GLIMPSE)} characters more in the inbox)`;
 
 /**
  * What a run looks like at a glance: the same for a person in the terminal and for a harness as JSON,
@@ -83,6 +92,8 @@ export interface RunView {
   attention: Attention[];
   merges: { id: string; kind: string; at: string; files: number }[];
   approvedFiles: number;
+  /** Where the run's approved work is served while a preview serves it (`run preview`, `npm run start:preview`). */
+  previewPort?: number;
 }
 
 /** What a wait is on: a file, or an answer to a proposal. */
@@ -261,8 +272,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
         kind: 'message',
         task: message.from,
         text: message.fyi
-          ? `${message.from} says (${message.id}), for you to know: ${message.text} — read: plitzi task inbox`
-          : `${message.from} asks (${message.id}): ${message.text} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
+          ? `${message.from} says (${message.id}), for you to know: ${glimpse(message.text)} — read: plitzi task inbox`
+          : `${message.from} asks (${message.id}): ${glimpse(message.text)} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
         who: 'lead'
       })
     );
@@ -310,6 +321,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   );
   const left = Math.max(0, ...chains.values());
 
+  const port = await previewPort(loaded);
+
   return {
     runId: record.runId,
     goal: loaded.plan.goal,
@@ -328,7 +341,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       at: merge.at,
       files: Object.keys(merge.files).length
     })),
-    approvedFiles: Object.keys(approved.files).length
+    approvedFiles: Object.keys(approved.files).length,
+    ...(port === undefined ? {} : { previewPort: port })
   };
 };
 
@@ -383,6 +397,14 @@ export const runText = (view: RunView): string => {
   if (view.attention.length > 0) {
     lines.push('Needs attention');
     view.attention.forEach(item => lines.push(`  ${item.who === 'person' ? '■' : '⚠'} ${item.text}`));
+  }
+
+  if (view.status === 'open' || view.status === 'stopping') {
+    lines.push(
+      view.previewPort === undefined
+        ? 'In a browser, as the tasks are approved: npm run start:preview (plitzi run preview) — the project itself is untouched until the finish'
+        : `In a browser, as the tasks are approved: http://127.0.0.1:${String(view.previewPort)} (the run's preview)`
+    );
   }
 
   if (view.merges.length > 0) {

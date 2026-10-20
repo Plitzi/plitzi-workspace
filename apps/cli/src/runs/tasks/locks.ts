@@ -4,7 +4,8 @@ import { createExclusive, fingerprint, writeJson } from '../files';
 import { lockFile, runPaths, taskPaths, under } from '../paths';
 import { PRIORITY_RANK } from '../plan';
 import { RunRefusal } from '../refusal';
-import { assertStatus, loadRun, readShared, runIds } from '../run';
+import { activeRuns, assertStatus, loadRun, readShared, runIds } from '../run';
+import { withLock } from '../store';
 import {
   appendLog,
   DEFAULTS,
@@ -72,15 +73,33 @@ export const locksOn = async (ctx: RunContext, file: string): Promise<HeldFile[]
   (await allLocks(ctx)).get(file) ?? [];
 
 /** `plitzi run can-write`: whether `file` may be written by the caller — for any hook or editor to ask. */
-export const canWrite = async (
-  ctx: RunContext,
-  file: string,
-  taskId?: string
-): Promise<{ ok: true; file: string } | { ok: false; file: string; holder: HeldFile }> => {
+export type CanWrite =
+  | { ok: true; file: string; plannedFor?: { run: string; task: string } }
+  | { ok: false; file: string; holder: HeldFile }
+  | { ok: false; file: string; plannedFor: { run: string; task: string } };
+
+/**
+ * `plitzi run can-write`: whether `file` may be written by the caller — for any hook or editor to ask. Held by a task's
+ * lock, no. In the plan of a task not taken yet: no for another task's agent — `complete` refuses it as that task's —
+ * and yes for a person, said with the task that will take it.
+ */
+export const canWrite = async (ctx: RunContext, file: string, taskId?: string): Promise<CanWrite> => {
   const clean = cleanPath(ctx.root, file);
   const holder = (await locksOn(ctx, clean)).find(held => held.live && held.task !== taskId);
+  if (holder) {
+    return { ok: false, file: clean, holder };
+  }
 
-  return holder ? { ok: false, file: clean, holder } : { ok: true, file: clean };
+  for (const run of await activeRuns(ctx.root)) {
+    const planned = await activeHolder(await loadRun(ctx, run, { anyMachine: true, anyVersion: true }), clean);
+    if (planned && planned.id !== taskId) {
+      const plannedFor = { run, task: planned.id };
+
+      return taskId === undefined ? { ok: true, file: clean, plannedFor } : { ok: false, file: clean, plannedFor };
+    }
+  }
+
+  return { ok: true, file: clean };
 };
 
 /** `plitzi task claims`: every live `.lock` of a run, by file. */
@@ -149,8 +168,8 @@ export const claimFile = async (
     });
   }
 
-  const holder = (await locksOn(ctx, clean)).find(held => held.live && !(held.run === runId && held.task === taskId));
-  if (holder) {
+  /** Who holds it otherwise, said with the turn: wait for it, or request the change through an integration. */
+  const refuseHeld = async (holder: Awaited<ReturnType<typeof locksOn>>[number]): Promise<never> => {
     const views = await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each)));
     const queued = views.filter(each => each.state.waitingFor?.file === clean).length;
     const turn = queued === 0 ? 'wait' : 'request';
@@ -164,7 +183,7 @@ export const claimFile = async (
           : `${clean} is held by task "${holder.task}", and ${String(queued)} more wait for it (turn: request): change it in your copy and say why (plitzi task request ${clean} --summary …) — your change goes in through one integration task that applies every request together`,
       { file: clean, holder: holder.task, turn, ...(holder.until ? { until: holder.until } : {}) }
     );
-  }
+  };
 
   const lock: FileLock = {
     runId,
@@ -174,7 +193,21 @@ export const claimFile = async (
     since: at(ctx),
     kind: 'turn'
   };
-  if (!(await createExclusive(lockFile(view.paths, clean), `${JSON.stringify(lock, null, 2)}\n`))) {
+  const created = await withLock(
+    loaded.paths.claimLock,
+    async () => {
+      const holder = (await locksOn(ctx, clean)).find(
+        held => held.live && !(held.run === runId && held.task === taskId)
+      );
+      if (holder) {
+        await refuseHeld(holder);
+      }
+
+      return createExclusive(lockFile(view.paths, clean), `${JSON.stringify(lock, null, 2)}\n`);
+    },
+    { now: ctx.now }
+  );
+  if (!created) {
     return { file: clean, granted: true };
   }
 
@@ -214,7 +247,27 @@ export const grantWaiters = async (ctx: RunContext, loaded: LoadedRun, files: re
       since: at(ctx),
       kind: 'turn'
     };
-    await writeJson(lockFile(next.paths, file), lock);
+    // Under the claim lock: a task that took the file by turns since it was let go keeps it, and this one waits on.
+    const handed = await withLock(
+      loaded.paths.claimLock,
+      async () => {
+        const holder = (await locksOn(ctx, file)).find(
+          held => held.live && !(held.run === loaded.record.runId && held.task === next.task.id)
+        );
+        if (holder) {
+          return false;
+        }
+
+        await writeJson(lockFile(next.paths, file), lock);
+
+        return true;
+      },
+      { now: ctx.now }
+    );
+    if (!handed) {
+      continue;
+    }
+
     const start = await readStart(next.paths);
     const inCopy = await fingerprint(under(next.paths.work, file));
     const untouched = start !== undefined && inCopy === (start.files[file] ?? null);

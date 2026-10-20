@@ -5,7 +5,18 @@ import { readOwnership } from './ownership';
 import { taskPaths } from './paths';
 import { checkPlan, PlanRefusal } from './plan';
 import { RunRefusal } from './refusal';
-import { assertStatus, loadRun, logRun, readPlanFile, readPrimer, requireNoTask, updateRecord } from './run';
+import {
+  assertStatus,
+  handedInputs,
+  loadRun,
+  logRun,
+  primerFile,
+  readPlanFile,
+  readPrimer,
+  requireNoTask,
+  updateRecord,
+  withInputs
+} from './run';
 import { keepFiles } from './store';
 import { viewTask } from './taskStore';
 import { ensureTeam, reviewsDesign, teamSize } from './team';
@@ -171,9 +182,12 @@ export const extendRun = async (
     await writeAtomic(loaded.paths.primer, primer);
   }
 
+  const handed = await handedInputs(ctx, [file, primerFile(next, file)]);
   await updateRecord(ctx, loaded.paths, record => ({
     ...record,
     agents: allowed,
+    // The stage's plan and its primer are the run's now: removed with it, as the plan it opened with.
+    inputs: withInputs(record.inputs, handed),
     ...(record.designReview === true || reviewsDesign(team, next) ? { designReview: true as const } : {}),
     estimate: {
       ...record.estimate,

@@ -229,6 +229,11 @@ export interface KnownFailure {
 export interface TaskState {
   status: TaskStatus;
   round: number;
+  /**
+   * Of its rounds of changes, the designer's: the limit before a person looks at it is counted apart for the designer's
+   * UI review and the lead's, so a task with a designer is not at a person after one round of the lead's.
+   */
+  designRounds?: number;
   /** What it waits for from another task: a file it holds, or its answer to a proposal. */
   waitingFor?: Waiting;
   /** `review`: sent to a person after the round limit — who may approve it as it is, or answer it (`task unblock`). */
@@ -237,6 +242,11 @@ export interface TaskState {
   notes: TaskNote[];
   /** What it changed, as of its last `complete`: by project path. */
   changed?: string[];
+  /**
+   * Those files as they went to review, by fingerprint (null: removed): what the review keeps and the approval merges —
+   * never the copy, which its agent may go on writing after `complete`.
+   */
+  submitted?: Record<string, string | null>;
   /** It went to review with failing checks, for a reason the lead weighs: what fails, why, and the task that fixes it. */
   knownFailure?: KnownFailure;
   /** Its acceptance's checks at its last `complete`: what passed, what did not. */
@@ -426,6 +436,69 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   optional(value.primer, isString) &&
   optional(value.designReview, flag => typeof flag === 'boolean');
 
+const shown = (value: unknown): string => (value === undefined ? 'nothing' : JSON.stringify(value));
+
+/** What keeps `value` from being a plan, field by field — each said with what it should hold. Empty for a plan. */
+export const runPlanProblems = (value: unknown): string[] => {
+  if (!isRecord(value)) {
+    return ['the file holds no object'];
+  }
+
+  const problems: string[] = [];
+  const field = (ok: boolean, name: string, should: string): void => {
+    if (!ok) {
+      problems.push(`${name}: ${should}, not ${shown(value[name])}`);
+    }
+  };
+  field(value.version === 1, 'version', '1');
+  field(isString(value.runId), 'runId', 'the run’s name');
+  field(isString(value.goal), 'goal', 'a line of what the run is for');
+  if (!Array.isArray(value.tasks)) {
+    problems.push('tasks: a list of tasks');
+
+    return problems;
+  }
+
+  value.tasks.forEach((each: unknown, index) => {
+    const at = `tasks[${String(index)}]${isRecord(each) && isString(each.id) ? ` ("${each.id}")` : ''}`;
+    if (!isRecord(each)) {
+      problems.push(`${at}: an object`);
+
+      return;
+    }
+
+    const check = (ok: boolean, name: string, should: string): void => {
+      if (!ok) {
+        problems.push(`${at}.${name}: ${should}, not ${shown(each[name])}`);
+      }
+    };
+    check(isString(each.id), 'id', 'its name');
+    check(isString(each.title), 'title', 'a line');
+    check(isStrings(each.files), 'files', 'the paths it writes');
+    check(isStrings(each.dependsOn), 'dependsOn', 'the ids it waits for ([] for none)');
+    check(isPriority(each.priority), 'priority', PRIORITIES.join(', '));
+    check(isNumber(each.estimateMinutes), 'estimateMinutes', 'minutes, a number');
+    check(
+      Array.isArray(each.acceptance) &&
+        each.acceptance.every(
+          (line: unknown) => isString(line) || (isRecord(line) && isString(line.said) && isString(line.check))
+        ),
+      'acceptance',
+      'lines, each a sentence or { said, check }'
+    );
+    check(optional(each.role, isString), 'role', 'a role’s name');
+    check(optional(each.milestone, isString), 'milestone', 'a name');
+    check(optional(each.touches, isStrings), 'touches', 'paths');
+    check(
+      optional(each.tests, flag => flag === false),
+      'tests',
+      'false, or left out'
+    );
+  });
+
+  return problems;
+};
+
 export const isRunTask = (value: unknown): value is RunTask =>
   isPlannedTask(value) &&
   isRecord(value) &&
@@ -502,6 +575,7 @@ export const isTaskState = (value: unknown): value is TaskState =>
   isRecord(value) &&
   isTaskStatus(value.status) &&
   isNumber(value.round) &&
+  optional(value.designRounds, isNumber) &&
   optional(
     value.waitingFor,
     waiting =>
@@ -523,6 +597,7 @@ export const isTaskState = (value: unknown): value is TaskState =>
   Array.isArray(value.notes) &&
   value.notes.every(isNote) &&
   optional(value.changed, isStrings) &&
+  optional(value.submitted, isDigests) &&
   optional(
     value.knownFailure,
     failure =>

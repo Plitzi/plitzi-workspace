@@ -1,23 +1,26 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { proposalsOf } from '../agreements';
 import { approveDesign, assertDesigner, designDue, isLead } from '../design';
-import { writeJson } from '../files';
-import { LEAD, messagesOf } from '../messages';
-import { taskPaths } from '../paths';
+import { exists, fingerprint, writeJson } from '../files';
+import { LEAD, messagesOf, sendMessage } from '../messages';
+import { taskPaths, under } from '../paths';
 import { dependenciesDone } from '../plan';
 import { syncPreview } from '../preview';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, recordBrake, requireNoTask, requirePerson } from '../run';
 import { keepFiles, withLock } from '../store';
 import { DEFAULTS, lockedFiles, readRequests, readStart, revokeOwner, updateState, viewTask } from '../taskStore';
+import { DESIGNER, readTeam, startedAgents, TEAM_FILE } from '../team';
 import { buildMergeIntoRun, buildRequestMerge, changeApproved } from './approve';
-import { at, findTask, refreshCopy } from './common';
+import { at, changedInCopy, findTask, refreshCopy } from './common';
 import { allLocks, grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 
-import type { ProjectChange, ReviewComment } from '../model';
+import type { ProjectChange, ReviewComment, TaskStart } from '../model';
 import type { RunContext } from '../run';
+import type { TaskView } from '../taskStore';
 
 /**
  * `plitzi task review`: the lead's verdict — or a designer's on a task's UI — on a task in review.
@@ -39,7 +42,60 @@ export interface ReviewedTask {
   joined?: string[];
   /** A designer approved its UI — it is the lead's now — or the lead approved it without that review. */
   design?: 'approved' | 'skipped';
+  /** Written in its copy after it went to review: not part of what was reviewed, so not merged. */
+  notReviewed?: string[];
 }
+
+/** A UI review is a designer's of the team, by the name it was started with — another agent's verdict is not one. */
+const assertTeamDesigner = async (ctx: RunContext, taskId: string): Promise<void> => {
+  const team = await readTeam(ctx.root);
+  if (!team) {
+    return;
+  }
+
+  const designers = startedAgents(team).filter(each => each.roles.includes(DESIGNER));
+  if (!designers.some(each => each.agent === ctx.agent)) {
+    throw new RunRefusal(
+      'invalid',
+      `${ctx.agent} is no designer of the team (${TEAM_FILE}): ${
+        designers.length > 0 ? designers.map(each => each.agent).join(', ') : 'none of its agents'
+      } or the lead review ${taskId}'s UI — the lead, as itself: plitzi task review ${taskId} --approve --agent lead`,
+      { task: taskId, designers: designers.map(each => each.agent) }
+    );
+  }
+};
+
+/** What `taskId`'s copy holds that did not go to review — what `task look` would serve the lead without it being so. */
+export const notReviewedIn = async (ctx: RunContext, runId: string, taskId: string): Promise<string[]> => {
+  const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
+  const view = await viewTask(loaded.paths, findTask(loaded, taskId));
+  const start = await readStart(view.paths);
+
+  return start && view.state.submitted ? writtenSince(view, start, view.state.submitted) : [];
+};
+
+/** The files its copy holds otherwise than it went to review — changed again, or changed for the first time since. */
+const writtenSince = async (
+  view: TaskView,
+  start: TaskStart,
+  submitted: Readonly<Record<string, string | null>>
+): Promise<string[]> => {
+  if (!(await exists(view.paths.work))) {
+    return [];
+  }
+
+  // A file it asked another to change went with it as the request's version: it counts as submitted at that one.
+  const asked = Object.fromEntries((await readRequests(view.paths)).map(request => [request.file, request.wanted]));
+  const sent = { ...asked, ...submitted };
+  const late = new Set((await changedInCopy(view, start)).filter(file => !Object.hasOwn(sent, file)));
+  for (const [file, digest] of Object.entries(sent)) {
+    if ((await fingerprint(under(view.paths.work, file))) !== digest) {
+      late.add(file);
+    }
+  }
+
+  return [...late].sort();
+};
 
 /**
  * `plitzi task review`: the lead's or a reviewer's verdict on a task in review. Changes go back to the same task
@@ -77,6 +133,15 @@ export const reviewTask = async (
   // Its UI waits for a designer: an agent's verdict is the designer's; the lead's approval waits for it, or says it skips.
   const byDesigner = designDue(view.state) && !isLead(ctx.agent);
   if (byDesigner) {
+    if (skipDesign) {
+      throw new RunRefusal(
+        'invalid',
+        `--skip-design is the lead's: ${ctx.agent} is not the lead. The lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design --agent lead`,
+        { task: taskId }
+      );
+    }
+
+    await assertTeamDesigner(ctx, taskId);
     assertDesigner(view, ctx.agent);
     if (verdict === 'approve') {
       await approveDesign(ctx, loaded, view, comments.map(comment => comment.note).join(' · ') || undefined);
@@ -118,15 +183,17 @@ export const reviewTask = async (
 
   const round = view.state.round + 1;
   const changed = view.state.changed ?? [];
-  await writeJson(view.paths.reviewed, {
-    round,
-    at: at(ctx),
-    files: await keepFiles(loaded.paths, view.paths.work, changed)
-  });
+  // What went to review is what is reviewed: written in the copy after `complete`, a change is not part of this round.
+  const submitted = view.state.submitted ?? (await keepFiles(loaded.paths, view.paths.work, changed));
+  const notReviewed = await writtenSince(view, start, submitted);
+  await writeJson(view.paths.reviewed, { round, at: at(ctx), files: submitted });
   await writeJson(view.paths.review, { round, verdict, comments, by: ctx.agent, at: at(ctx) });
 
   if (verdict === 'changes') {
-    const toPerson = round >= DEFAULTS.reviewRounds;
+    // Counted apart: the designer's rounds on its UI, and the lead's on the rest — each kind to its own limit.
+    const designRounds = (view.state.designRounds ?? 0) + (byDesigner ? 1 : 0);
+    const ofKind = byDesigner ? designRounds : round - designRounds;
+    const toPerson = ofKind >= DEFAULTS.reviewRounds;
     // It redoes its work on the run as it is now: what was approved while it was in review comes into its copy.
     const brought = toPerson ? [] : await refreshCopy(ctx, loaded, view);
     await updateState(
@@ -134,11 +201,12 @@ export const reviewTask = async (
       state => ({
         ...state,
         round,
+        ...(designRounds > 0 ? { designRounds } : {}),
         status: toPerson ? 'blocked' : 'changes-requested',
         ...(toPerson
           ? {
               blockedBy: {
-                reason: `${String(round)} rounds of changes: a person looks at it — approves it as it is (plitzi task review ${taskId} --approve), or answers it (plitzi task unblock ${taskId} --answer "…")`,
+                reason: `${String(ofKind)} rounds of ${byDesigner ? 'its UI review' : 'the lead’s'} changes: a person looks at it — approves it as it is (plitzi task review ${taskId} --approve), or answers it (plitzi task unblock ${taskId} --answer "…")`,
                 needs: 'person' as const,
                 review: true
               }
@@ -166,11 +234,11 @@ export const reviewTask = async (
     );
     await logRun(ctx, loaded.paths, { action: 'review', task: taskId, verdict, round });
 
-    return { verdict, round, toPerson };
+    return { verdict, round, toPerson, ...(notReviewed.length > 0 ? { notReviewed } : {}) };
   }
 
   const into = await changeApproved(ctx, loaded, approved =>
-    buildMergeIntoRun(ctx, loaded, view, start, changed, onProjectChange, approved)
+    buildMergeIntoRun(ctx, loaded, view, start, submitted, onProjectChange, approved)
   ).catch(async (error: unknown) => {
     if (error instanceof RunRefusal && error.code === 'conflict') {
       await recordBrake(ctx, loaded, 'conflict');
@@ -186,7 +254,7 @@ export const reviewTask = async (
     );
   }
 
-  const merged = [...changed];
+  const merged = Object.keys(submitted);
   // What it asked for on a file it then held and merged itself is done; what it asked for on a file now free goes in too
   // when it merges line by line with the run's version. Only what neither can do waits for an integration task.
   const locksNow = await allLocks(ctx);
@@ -237,6 +305,19 @@ export const reviewTask = async (
     }
   }
 
+  // What another task agreed with this one may wait on this one's work: it is in the run's now — said to each, so an
+  // agreement accepted before it could be applied is applied, not forgotten.
+  const agreed = (await proposalsOf(refreshed)).filter(
+    each => each.from === taskId && each.answer?.verdict === 'accept' && states.get(each.to)?.status !== 'done'
+  );
+  for (const each of agreed) {
+    await sendMessage(ctx, refreshed, {
+      from: taskId,
+      to: each.to,
+      text: `${taskId} is approved: what you agreed with it (${each.id}: ${each.change.slice(0, 160)}${each.change.length > 160 ? '…' : ''}) can be applied now — its files are in the run's work, and your copy brings them with your next complete or plitzi task discard <file>`
+    });
+  }
+
   // What is connected shows as it is approved: a running preview of the run takes the approved work in now.
   await syncPreview(refreshed, ctx.root);
   const integrations = await withLock(refreshed.paths.mergeLock, () => integrateWhenReady(ctx, refreshed), {
@@ -267,6 +348,7 @@ export const reviewTask = async (
     integrations,
     settled,
     ...(joined.length > 0 ? { joined } : {}),
-    ...(skipped ? { design: 'skipped' as const } : {})
+    ...(skipped ? { design: 'skipped' as const } : {}),
+    ...(notReviewed.length > 0 ? { notReviewed } : {})
   };
 };

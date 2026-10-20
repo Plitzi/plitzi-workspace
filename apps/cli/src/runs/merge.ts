@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { fingerprint, readJson, readOptional, writeJson } from './files';
-import { checkVersions } from './materialise';
+import { acceptanceOnResult, checkVersions } from './materialise';
 import { mergeLines } from './merge3';
 import { entryOf, isMergeManifest } from './model';
 import { BACKUPS_DIR, under } from './paths';
@@ -26,6 +26,7 @@ import { requestsOf } from './tasks';
 import { viewTask } from './taskStore';
 
 import type { CheckResult } from './checks';
+import type { AcceptanceAgain } from './materialise';
 import type { ApprovedManifest, MergeEntry, ReconciledFile, RunRecord } from './model';
 import type { LoadedRun, RemovedInputs, RunContext } from './run';
 
@@ -49,6 +50,8 @@ export interface FinishPlan {
   /** Files written over a change made outside the run, as the lead decided: said, and the other version kept. */
   overwrites: { file: string; task: string; by: string; at: string }[];
   checks?: CheckResult;
+  /** Every done task's acceptance checks, run again on the whole result: what a later task may have broken. */
+  acceptance?: { results: AcceptanceAgain[]; reused?: string };
 }
 
 const planFinish = async (ctx: RunContext, approved: ApprovedManifest): Promise<FinishPlan> => {
@@ -298,6 +301,38 @@ export const finishRun = async (
     throw new RunRefusal('checks-failed', 'The project’s checks fail on the run’s whole result: nothing is written', {
       steps: plan.checks.steps.filter(step => !step.ok)
     });
+  }
+
+  // What each task was accepted on, again on the whole result: a later task may have broken what one's review saw pass.
+  const versions = Object.fromEntries(plan.apply.map(each => [each.file, each.after]));
+  const lines = (
+    await Promise.all(
+      loaded.tasks.map(async task => {
+        const { state } = await viewTask(loaded.paths, task);
+
+        return state.status === 'done'
+          ? (state.accepted ?? [])
+              .filter(each => each.ok)
+              .map(each => ({ task: task.id, said: each.said, check: each.check }))
+          : [];
+      })
+    )
+  ).flat();
+  plan.acceptance = await acceptanceOnResult(ctx, loaded, versions, lines);
+  const broken = plan.acceptance.results.filter(each => !each.ok);
+  if (broken.length > 0) {
+    await recordBrake(ctx, loaded, 'checks-failed');
+    throw new RunRefusal(
+      'checks-failed',
+      `What ${[...new Set(broken.map(each => `"${each.task}"`))].join(', ')} ${broken.length === 1 ? 'was' : 'were'} accepted on no longer holds on the run's whole result — passed at its review, broken since by another task's work: ${broken.map(each => `${each.task}: ${each.said}`).join('; ')}. Nothing is written: a task of the run puts it right (plitzi run extend), or the lead reverts what broke it (plitzi task revert)`,
+      {
+        steps: broken.map(each => ({
+          name: `acceptance — ${each.task}: ${each.said}`,
+          ok: false,
+          said: [each.check, ...(each.output ?? [])]
+        }))
+      }
+    );
   }
 
   if (!apply) {

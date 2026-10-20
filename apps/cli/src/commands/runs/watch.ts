@@ -5,9 +5,9 @@ import { durationText } from '../../options';
 import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
 import { startPreview, startTaskPreview } from '../../runs/preview';
-import { isRunRefusal } from '../../runs/refusal';
+import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { buildReport, readSummary, reportText, writeSummary } from '../../runs/report';
-import { loadRun, pruneRuns } from '../../runs/run';
+import { activeRuns, loadRun, pruneRuns } from '../../runs/run';
 import { pendingRuns, runsState, runText, viewRun } from '../../runs/view';
 
 import type { RunCommandOptions } from './shell';
@@ -171,6 +171,15 @@ export const runPreview = async (
 ): Promise<void> => {
   try {
     const ctx = await contextFor(options);
+    // Run by `npm run start:preview` whenever one is wanted: with no run open, said as nothing to preview, and how the
+    // project itself is served.
+    if (runId === undefined && options.run === undefined && (await activeRuns(ctx.root)).length === 0) {
+      throw new RunRefusal(
+        'not-found',
+        'No run is open in this project: there is nothing of the agents’ to preview. The project as it is: npm run start:dev — start:preview serves an open run’s approved work, as the agents’ tasks are approved'
+      );
+    }
+
     const run = await runOf(ctx, options, runId);
     const { task } = options;
     const preview =

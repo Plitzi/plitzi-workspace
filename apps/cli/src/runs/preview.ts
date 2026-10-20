@@ -38,6 +38,13 @@ const alive = (pid: number): boolean => {
   }
 };
 
+/** The port of the run's preview while one serves it — none running, undefined. */
+export const previewPort = async (loaded: LoadedRun): Promise<number | undefined> => {
+  const running = await readJson(previewRecord(loaded), isPreview, 'a run’s preview').catch(() => undefined);
+
+  return running && alive(running.pid) ? running.port : undefined;
+};
+
 /** Puts the run's approved work into a running preview — none running, nothing done. Answers whether it did. */
 export const syncPreview = async (loaded: LoadedRun, root: string): Promise<boolean> => {
   const running = await readJson(previewRecord(loaded), isPreview, 'a run’s preview').catch(() => undefined);

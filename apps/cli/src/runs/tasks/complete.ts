@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { unifiedDiff } from '../../fix/diff';
@@ -5,7 +6,7 @@ import { checkAcceptance } from '../acceptance';
 import { proposalsOf, unansweredTo } from '../agreements';
 import { failsWithout } from '../checks';
 import { designAtComplete } from '../design';
-import { createExclusive, fingerprint, projectFiles, readOptional, writeAtomic, writeJson } from '../files';
+import { createExclusive, exists, fingerprint, readOptional, writeAtomic, writeJson } from '../files';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
 import { checkVersions } from '../materialise';
 import { mergeLines } from '../merge3';
@@ -14,7 +15,7 @@ import { entryOf } from '../model';
 import { lockFile, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
-import { putBlob } from '../store';
+import { keepFiles, putBlob, withLock } from '../store';
 import {
   appendLog,
   lockedFiles,
@@ -26,13 +27,13 @@ import {
   writeRequest
 } from '../taskStore';
 import { digestsOf, escapeRegExp } from './approve';
-import { at, cleanPath, findTask, holderOf, refreshCopy } from './common';
+import { at, changedInCopy, cleanPath, findTask, holderOf, refreshCopy } from './common';
 import { textOf } from './context';
 import { activeHolder, allLocks, sharedFiles } from './locks';
 
 import type { CheckResult } from '../checks';
 import type { Message } from '../messages';
-import type { AcceptanceResult, FileLock, SharedRequest, TaskStart } from '../model';
+import type { AcceptanceResult, FileLock, SharedRequest } from '../model';
 import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
@@ -40,25 +41,6 @@ import type { TaskView } from '../taskStore';
  * `plitzi task complete`: the copy compared by fingerprint, the checks and the acceptance run in it, and the task in
  * review — or refused, saying what to fix. `task discard` puts a file of the copy back.
  */
-
-/** What a task's copy changed against where it started, by project path: what is not the source left out. */
-const changedInCopy = async (view: TaskView, start: TaskStart): Promise<string[]> => {
-  const inCopy = await projectFiles(view.paths.work);
-  const changed = new Set<string>();
-  for (const file of inCopy) {
-    if ((await fingerprint(under(view.paths.work, file))) !== (start.files[file] ?? null)) {
-      changed.add(file);
-    }
-  }
-
-  for (const [file, digest] of Object.entries(start.files)) {
-    if (digest !== null && !inCopy.includes(file)) {
-      changed.add(file);
-    }
-  }
-
-  return [...changed].sort();
-};
 
 /**
  * Puts the task's change together with the run's, for each of `files` whose run version moved since the copy was made —
@@ -180,6 +162,15 @@ export const completeTask = async (
     throw new RunRefusal('invalid', `Task "${taskId}" has no copy: take it again (plitzi task take ${taskId})`);
   }
 
+  // Gone, every file of it would read as removed — and be refused as another task's: said as what it is.
+  if (!(await exists(view.paths.work))) {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}"'s copy is gone (${view.paths.work}): what was written in it is lost. Take the task again (plitzi task take ${taskId}) — it starts from its last reviewed version, or from the run's work`,
+      { task: taskId, work: view.paths.work, next: `plitzi task take ${taskId}` }
+    );
+  }
+
   const unanswered = unansweredTo(await proposalsOf(loaded), taskId);
   if (unanswered.length > 0) {
     throw new RunRefusal(
@@ -197,6 +188,21 @@ export const completeTask = async (
   }
 
   const changed = await changedInCopy(view, started);
+  // A link in the copy is read through: what it points at — the project's .env, a key — would go to review as the file.
+  const links: string[] = [];
+  for (const file of changed) {
+    if ((await fs.lstat(under(view.paths.work, file)).catch(() => undefined))?.isSymbolicLink()) {
+      links.push(file);
+    }
+  }
+
+  if (links.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}" turned ${links.join(', ')} into ${links.length === 1 ? 'a link' : 'links'}: a task writes files, never a link — what it points at would go to review as the file. Write the file itself in your copy, and complete again`,
+      { task: taskId, files: links }
+    );
+  }
   const held = await lockedFiles(view.paths);
   const shared = await sharedFiles(loaded);
   const outside: { file: string; holder: string }[] = [];
@@ -240,23 +246,33 @@ export const completeTask = async (
 
   // A shared file nobody else holds is taken by turns as the task completes: its change goes into the run when the task
   // is approved, so what it connects (a page in the entry) shows as the run goes — not only once an integration runs.
-  const locks = await allLocks(ctx);
-  const claimedNow: string[] = [];
-  for (const file of [...asRequests]) {
-    const other = (locks.get(file) ?? []).find(each => each.live && !(each.run === runId && each.task === taskId));
-    const lock: FileLock = {
-      runId,
-      taskId,
-      agent: view.owner?.agent ?? ctx.agent,
-      intent: `by turns, for ${task.title}`,
-      since: at(ctx),
-      kind: 'turn'
-    };
-    if (!other && (await createExclusive(lockFile(view.paths, file), `${JSON.stringify(lock, null, 2)}\n`))) {
-      claimedNow.push(file);
-      asRequests.splice(asRequests.indexOf(file), 1);
-    }
-  }
+  // Under the claim lock: whether another holds it and taking it are one step — two tasks completing at once never
+  // both take a shared file.
+  const claimedNow = await withLock(
+    loaded.paths.claimLock,
+    async () => {
+      const locks = await allLocks(ctx);
+      const taken: string[] = [];
+      for (const file of [...asRequests]) {
+        const other = (locks.get(file) ?? []).find(each => each.live && !(each.run === runId && each.task === taskId));
+        const lock: FileLock = {
+          runId,
+          taskId,
+          agent: view.owner?.agent ?? ctx.agent,
+          intent: `by turns, for ${task.title}`,
+          since: at(ctx),
+          kind: 'turn'
+        };
+        if (!other && (await createExclusive(lockFile(view.paths, file), `${JSON.stringify(lock, null, 2)}\n`))) {
+          taken.push(file);
+          asRequests.splice(asRequests.indexOf(file), 1);
+        }
+      }
+
+      return taken;
+    },
+    { now: ctx.now }
+  );
 
   // The run's version of a file it changed moved since its copy was made: the two changes are put together line by line.
   const mergedNow = await mergeMoved(ctx, loaded, view, [
@@ -383,17 +399,17 @@ export const completeTask = async (
     }
   }
 
-  const designed = await designAtComplete(
-    loaded,
-    view,
-    changed.filter(file => !asRequests.includes(file))
-  );
+  const toReview = changed.filter(file => !asRequests.includes(file));
+  const designed = await designAtComplete(loaded, view, toReview);
+  // What goes to review is kept now: the copy is the agent's to go on writing, and the lead approves what it looked at.
+  const submitted = await keepFiles(loaded.paths, view.paths.work, toReview);
   await updateState(
     view.paths,
     state => ({
       ...state,
       status: 'in-review',
-      changed: changed.filter(file => !asRequests.includes(file)),
+      changed: toReview,
+      submitted,
       // A designer looks at its UI before the lead, each round its UI changed: what it changed is what is looked at.
       design: designed.design,
       ...(accepted.length > 0 ? { accepted } : { accepted: undefined }),

@@ -35,10 +35,11 @@ export const requestShared = async (
   const clean = cleanPath(ctx.root, file);
   const planned = await activeHolder(loaded, clean);
   if (planned && planned.id !== taskId && !(await sharedFiles(loaded)).has(clean)) {
-    throw new RunRefusal('claimed', `${clean} is task "${planned.id}"'s, not shared: wait for it (plitzi task wait)`, {
-      file: clean,
-      holder: planned.id
-    });
+    throw new RunRefusal(
+      'claimed',
+      `${clean} is task "${planned.id}"'s own, not shared: a request is for a shared file. Ask ${planned.id} for the change (plitzi task propose ${planned.id} --change "…"), and put your copy's back (plitzi task discard ${clean}) — or wait for the file (plitzi task wait ${clean})`,
+      { file: clean, holder: planned.id, next: `plitzi task propose ${planned.id} --change "…"` }
+    );
   }
 
   const start = await readStart(view.paths);

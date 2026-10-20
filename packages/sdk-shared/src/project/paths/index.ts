@@ -17,6 +17,12 @@ export const PROJECT_TMP = 'tmp';
  */
 export const RUNS_DIR = `${PROJECT_TMP}/plitzi-runs`;
 
+/**
+ * The project's one open run, named (`{ runId, since, by }`): created when a run opens, gone with it. What the project's
+ * own server reads to say, while developing, that it serves the project as it is and not the agents' work.
+ */
+export const ACTIVE_RUN_FILE = `${RUNS_DIR}/active.json`;
+
 /** The project's own code — its space, plugins, data, functions and server — which the server watches while developing. */
 export const SOURCE_DIR = 'src';
 

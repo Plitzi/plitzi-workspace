@@ -20,7 +20,7 @@ export {
   updateRecord
 } from './record';
 export type { LoadOptions } from './record';
-export { assertNoOtherRun, inputOf, removeRun } from './claim';
+export { assertNoOtherRun, handedInputs, inputOf, removeRun, withInputs } from './claim';
 export type { RemovedInputs } from './claim';
 export {
   MAX_PRIMER_BYTES,
@@ -29,6 +29,7 @@ export {
   openRun,
   readCheckedPlan,
   readPlanFile,
+  primerFile,
   readPrimer
 } from './open';
 export type { OpenedRun } from './open';

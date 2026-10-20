@@ -11,7 +11,7 @@ import { startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun } from '../../runs/run';
 import { showTask } from '../../runs/show';
-import { reassignTask, revertTask, reviewTask, findTask } from '../../runs/tasks';
+import { findTask, notReviewedIn, reassignTask, revertTask, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
 import { PROJECT_TMP } from '../../scaffold/paths';
 
@@ -97,7 +97,16 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
           }
         }
 
-        return { task: taskId, url: preview.url, ok: check.code === 0, check: check.output.trim(), shots };
+        const notReviewed = await notReviewedIn(ctx, runId, taskId);
+
+        return {
+          task: taskId,
+          url: preview.url,
+          ok: check.code === 0,
+          check: check.output.trim(),
+          shots,
+          ...(notReviewed.length > 0 ? { notReviewed } : {})
+        };
       } finally {
         preview.stop();
       }
@@ -105,6 +114,13 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
     looked =>
       [
         chalk.bold(`${looked.task}, as it went to review (served from its copy, now stopped):`),
+        ...(looked.notReviewed
+          ? [
+              chalk.yellow(
+                `⚠ Its copy changed after it went to review: ${list(looked.notReviewed)} — what is served is not what an approval merges (that is what went to review). Ask it why (plitzi task message ${looked.task} "…"), or send it back (--changes) to complete again`
+              )
+            ]
+          : []),
         looked.check,
         ...(looked.shots.length > 0
           ? ['Pictures:', ...looked.shots.map(each => `  ${each}`)]
@@ -178,12 +194,28 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
                 ? [`  Put together with the change made in the project meanwhile: ${list(reviewed.joined ?? [])}`]
                 : []),
               ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
-              ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : [])
+              ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : []),
+              ...notReviewedText(reviewed.notReviewed, 'approve')
             ].join('\n')
-          : reviewed.toPerson
-            ? `${taskId}: ${String(reviewed.round)} rounds of changes — it goes to a person.`
-            : `${taskId}: changes requested (round ${String(reviewed.round)}); it goes back to the same task.`
+          : [
+              reviewed.toPerson
+                ? `${taskId}: ${String(reviewed.round)} rounds of changes — it goes to a person.`
+                : `${taskId}: changes requested (round ${String(reviewed.round)}); it goes back to the same task.`,
+              ...notReviewedText(reviewed.notReviewed, 'changes')
+            ].join('\n')
   );
+
+/** What its copy holds that the review did not see — written after `complete`: kept out, and said. */
+const notReviewedText = (files: readonly string[] | undefined, verdict: 'approve' | 'changes'): string[] =>
+  files && files.length > 0
+    ? [
+        `  ⚠ Written in its copy after it went to review, so not what you reviewed: ${list(files)} — ${
+          verdict === 'approve'
+            ? 'what went to review is what was merged; that went with its copy'
+            : 'it stays in its copy, and goes to review with its next complete'
+        }`
+      ]
+    : [];
 
 export const taskReassign = (taskId: string, options: RunCommandOptions): Promise<void> =>
   act(
@@ -256,7 +288,14 @@ export const taskShow = (taskId: string, options: RunCommandOptions): Promise<vo
         ...shown.requests.map(each => `  ↗ request on ${each.file}: ${each.summary}`),
         ...(shown.notes.length > 0 ? ['Notes', ...shown.notes.map(note => `  ${note.by}: ${note.text}`)] : []),
         ...(shown.messages.length > 0 ? ['Said', ...messageLines(shown.messages)] : []),
-        `Changed (${shown.from === 'copy' ? 'its copy' : shown.from === 'run' ? 'as approved' : 'nothing yet'}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,
+        `Changed (${shown.from === 'submitted' ? 'as it went to review' : shown.from === 'copy' ? 'its copy' : shown.from === 'run' ? 'as approved' : 'nothing yet'}): ${shown.files.length === 0 ? '—' : shown.files.map(each => `${each.file} (${each.change})`).join(', ')}`,
+        ...(shown.notReviewed
+          ? [
+              chalk.yellow(
+                `  ⚠ Its copy holds what did not go to review: ${list(shown.notReviewed)} — not shown, never merged`
+              )
+            ]
+          : []),
         ...outsideLines(shown),
         ...shown.files.flatMap(each =>
           each.binary

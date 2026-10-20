@@ -173,3 +173,42 @@
   and `specFromSpace` (their classes' methods now functions of the author and the reader), the auth API by flow, the
   schema validator by check, the MCP guide by section (its text unchanged), and the functions sandbox's guest a web API
   to a part, each printed into the isolate on its own. Only how the code is filed changed: the exports are the same.
+- **Runs held against what an agent can do around them** (`@plitzi/cli`), found by running the CLI against itself —
+  races, forged tokens and records, links, writes after a review, kills mid-step:
+  - what an approval merges is what went to review (kept at `complete`), never the copy as its agent left it after —
+    `task look` and the approval say what was written since;
+  - two tasks completing at once no longer both take one shared file by turns (one claim at a time, `claim.lock`), and
+    a file two tasks made by one name is the lead's to decide, never two put together;
+  - a plan refuses a pattern (`src/pages/*.ts`), a link, and two paths that differ only in case (one file on macOS and
+    Windows); a task with no acceptance is said; a plan that is not one says each wrong field;
+  - a file of a task turned into a link is refused at `complete`; a copy that is gone is said as gone;
+  - a UI review counts only from a designer of the team, and `--skip-design` is the lead's, said how;
+  - a token a task was never taken with is told apart from one it was cut from; a run's record broken by hand is a
+    refusal by name with what to do, not a crash;
+  - the docs say what is a guard rail: a person's actions are kept a person's by the harness's permissions;
+  - a message too long to scan is cut in `run status` and `run watch`, whole in the inbox; a developer task that gets no
+    task of tests is said, with why; `run team set` asked for what the team already is says so, and is no refusal;
+  - the rounds before a person looks at a task are counted apart for the designer's UI review and the lead's; `task
+    show` of a task in review shows what went to review; a task that accepted an agreement is told when the task it
+    agreed with is approved; `task look` of a shared file looks at the pages that use it;
+  - **the finish runs every done task's acceptance checks again on the whole result**: one a later task broke (in
+    pet-friends v12, the summary that grew past the printed sheet another task fitted it to) stops it, naming both;
+  - a designer's own work asks for no UI review when no other designer could give it; `task complete --note` tells the
+    lead what to look at; `run can-write` agrees with `complete` about a file of a task not taken yet; `task request` on
+    another task's own file points to `task propose`; a sign of life of a task in review says it is in review.
+- **Runs are faster** (`@plitzi/cli`): the project's checks run `author` first, then the rest three at a time — every
+  failure said at once; and a pass on one whole result is reused within the hour, so `finish --apply` after its dry run
+  does not run them again (a cycle of take, complete, review and finish: 13 s → 6.5 s on pet-friends).
+- **A run leaves nothing of the lead's behind** (`@plitzi/cli`): the plan's primer, an amendment (`run amend`) and a
+  stage (`run extend`) are removed with the run as its plan and summary were — the version read last of each — and so
+  is the folder that held only them (`tmp/v11/` stayed with its primer).
+- **The dev tools never print** (`@plitzi/plitzi-sdk`): their badge and panel (`data-plitzi-devtools`) are hidden in
+  print by the SDK's stylesheet, so a printed page is what its visitors see — the badge was on every printed page in
+  debug mode, where a project could not reach it inside its shadow root.
+- **Watch the agents' work while they work** (`@plitzi/cli`, `@plitzi/sdk-server`, `@plitzi/sdk-shared`): a project's
+  `start:preview` script (`plitzi run preview`, written by `plitzi create`, added by `plitzi upgrade`) serves the open
+  run's approved work as each task is approved; the project's own `start:dev` says on its console, while a run is open,
+  that it serves the project untouched until the finish and where the agents' work is; `run open` names the script and
+  `run status` the preview's address — or how to start it. With no run open, `start:preview` says so and how the project
+  is served.
+

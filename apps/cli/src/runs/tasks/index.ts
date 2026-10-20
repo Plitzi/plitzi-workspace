@@ -26,7 +26,7 @@ export type { Signal } from './signals';
 export { completeTask, discardFile } from './complete';
 export type { CompleteOptions, CompletedTask } from './complete';
 export { requestShared, requestsOf } from './requests';
-export { reviewTask } from './review';
+export { notReviewedIn, reviewTask } from './review';
 export type { ReviewedTask } from './review';
 export { reassignTask, revertTask } from './reassign';
 export { taskContext } from './context';

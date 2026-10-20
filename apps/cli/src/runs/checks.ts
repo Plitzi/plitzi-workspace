@@ -20,6 +20,8 @@ export interface CheckResult {
   steps: CheckStep[];
   /** Said when the project has none of the scripts: nothing was checked, and that is not a pass to keep quiet. */
   none?: string;
+  /** Not run again: the same tree passed them at this time (`checkVersions`). */
+  reused?: string;
 }
 
 /** How a run checks a folder: the project's scripts by default, something else under test. */
@@ -47,21 +49,24 @@ export const lintWarnings = (output: string): string[] => {
   return found;
 };
 
+/** How many of the project's steps run at once after `author`: several agents complete at once on one machine. */
+const AT_ONCE = 3;
+
 export const projectChecks: CheckRunner = async (dir, projectRoot) => {
   const steps = stepsOf(await scriptsOf(dir));
   if (steps.length === 0) {
     return { ok: true, steps: [], none: 'the project has no author, lint, typecheck, test or format script to run' };
   }
 
-  const results: CheckStep[] = [];
-  for (const step of steps) {
+  const run = async (step: (typeof steps)[number]): Promise<CheckStep> => {
     const { code, output } = await runScript(dir, step.command, projectRoot);
     // A task leaves the space as the project wants it: no warnings, and no suggestions either — a suggestion is the long
     // way to a page that has a short one, and a run's tasks are where it is written the short way (or said why not).
     const suggestions = step.name === 'author' ? output.split('\n').filter(line => line.startsWith('[suggest] ')) : [];
     const ok = code === 0 && !step.failsOn?.test(output) && suggestions.length === 0;
     const warnings = ok && step.name === 'lint:space' ? lintWarnings(output) : [];
-    results.push({
+
+    return {
       name: step.name,
       ok,
       ...(warnings.length > 0 ? { warnings } : {}),
@@ -76,11 +81,34 @@ export const projectChecks: CheckRunner = async (dir, projectRoot) => {
                   ]
                 : tail(output)
           })
-    });
-    if (!ok) {
-      break;
+    };
+  };
+
+  // The space is authored first — a space that does not author fails every step after it the same way. Past it, the
+  // steps read the source and none writes what another reads: they run at once, and each says what it found.
+  const first = steps[0].name === 'author' ? steps[0] : undefined;
+  const rest = first ? steps.slice(1) : steps;
+  const results: CheckStep[] = [];
+  if (first) {
+    const authored = await run(first);
+    results.push(authored);
+    if (!authored.ok) {
+      return { ok: false, steps: results };
     }
   }
+
+  const later: CheckStep[] = new Array<CheckStep>(rest.length);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(AT_ONCE, rest.length) }, async () => {
+      while (next < rest.length) {
+        const index = next;
+        next += 1;
+        later[index] = await run(rest[index]);
+      }
+    })
+  );
+  results.push(...later);
 
   return { ok: results.every(result => result.ok), steps: results };
 };

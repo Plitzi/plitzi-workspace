@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
@@ -108,7 +109,21 @@ export const readOwner = (task: TaskPaths): Promise<TaskOwner | undefined> =>
   readJson(task.owner, isTaskOwner, 'who holds a task (owner.json)');
 
 /** Takes a task's token away: whoever held it can no longer write as it. */
+export const tokenPrint = (token: string): string => createHash('sha256').update(token).digest('hex');
+
+const isPrints = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every(each => typeof each === 'string');
+
+/** The tokens `task` lost — cut, reassigned, stopped by force — by fingerprint. */
+export const revokedTokens = async (task: TaskPaths): Promise<string[]> =>
+  (await readJson(task.revoked, isPrints, 'the tokens a task lost (revoked.json)')) ?? [];
+
 export const revokeOwner = async (task: TaskPaths): Promise<void> => {
+  const owner = await readOwner(task);
+  if (owner) {
+    await writeJson(task.revoked, [...(await revokedTokens(task)), tokenPrint(owner.token)]);
+  }
+
   await fs.rm(task.owner, { force: true });
 };
 

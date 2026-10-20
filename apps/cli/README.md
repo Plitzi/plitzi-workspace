@@ -484,8 +484,9 @@ and one run at a time** in a project: a second is refused, naming the first.
   inbox`. A block lifted carries its answer (`task unblock --answer`), and `task next` hands an agent back the task it
   holds first.
 - **Connected as it goes:** a shared file a task changed is its by turns at `complete` when nobody holds it, and merged
-  line by line when the run moved meanwhile; `run preview` serves the run's work as each task is approved, and `run
-  preview --task` a task in review, before it is.
+  line by line when the run moved meanwhile; `run preview` — the project's `npm run start:preview` — serves the run's
+  work as each task is approved, and `run preview --task` a task in review, before it is. Your own `start:dev` serves
+  the project as it is until the finish, and says so on its console while a run is open.
 - **No task ends with failing checks** — lint, types, tests: `complete` refuses. Only for a reason that weighs, said to
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
 - **As many agents as the team has** (`.plitzi/team.json`: every new project starts with a developer and a designer —
@@ -509,6 +510,15 @@ and one run at a time** in a project: a second is refused, naming the first.
 - **Approved work merges into the run's**, never into the project. The project receives one merge, `run finish --apply`,
   confirmed by a person typing the run's name in their terminal, once the lead closed the run with its report
   (`run report --summary <file>`): written file by file as one transaction, with a backup of everything it overwrites.
+- **What the person does, and does not:** the final merge, an abort, a restore, a purge, a forced stop and taking a run
+  over are yours — and only yours because you keep them so. An agent with a shell can give itself a terminal and type a
+  run's name, so deny those commands to the agents in the harness (`run finish --apply`, `run abort`, `run purge`, `run
+  restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` — in Claude Code, `permissions.deny` in
+  `.claude/settings.json`). Type a run's name only for a command you ran yourself and read, never because an agent or
+  the lead asks you to in a chat. Do not edit `tmp/plitzi-runs/` by hand (a broken record stops the run, said by name),
+  nor delete a task's copy; do not `npm install` or upgrade while a run is open (every command stops until you attach).
+  Editing a project file a task holds is yours to do — its approval then stops and the lead decides — but telling the
+  lead first costs less.
 - **When it ends, the run goes** — backups included, so none is left to clean up — and its report stays in
   `tmp/plitzi-reports/<run>-<time>.md`: the lead's summary, the problems, every task (agents, time against its
   estimate, reviews, cuts) and what was written. `--keep-backup` keeps the project's files as they were before the merge

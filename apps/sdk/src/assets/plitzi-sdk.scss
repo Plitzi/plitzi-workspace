@@ -280,5 +280,13 @@
     outline-offset: 2px;
   }
 
+  // The dev tools' own chrome (`DEV_TOOLS_ATTRIBUTE` of @plitzi/sdk-shared/devTools) is never on a printed page: a page
+  // prints as its visitors see it. Important, as the badge and panel set their display themselves.
+  @media print {
+    [data-plitzi-devtools] {
+      display: none !important;
+    }
+  }
+
   @include sdkComponents.styles;
 }

@@ -66,6 +66,24 @@ export const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 } as cons
 /** Above either, a person confirms the estimate before the run opens. */
 export const CONFIRM_ABOVE = { agents: 5, wallMinutes: 120 } as const;
 
+/** Where `file` points, when it — or a folder on its way — is a link: undefined for a file, or for none yet. */
+const linkOf = async (root: string, file: string): Promise<string | undefined> => {
+  const parts = file.split('/');
+  for (let depth = 1; depth <= parts.length; depth += 1) {
+    const at = under(root, parts.slice(0, depth).join('/'));
+    const stat = await fs.lstat(at).catch(() => undefined);
+    if (stat === undefined) {
+      return undefined;
+    }
+
+    if (stat.isSymbolicLink()) {
+      return await fs.readlink(at).catch(() => 'somewhere it cannot read');
+    }
+  }
+
+  return undefined;
+};
+
 const normalised = (file: string): string | undefined => {
   if (path.isAbsolute(file) || file.includes('\\')) {
     return undefined;
@@ -291,7 +309,7 @@ export const checkPlan = async (
   const problems: string[] = roleProblems(written, team);
   const notices: string[] = [];
   // With a tester in the team, each developer task's tests are a task of their own, after it: checked as the lead's.
-  const { plan, added } = withTestTasks(
+  const { plan, added, untested } = withTestTasks(
     written,
     teamTakes(team, TESTER)
       ? {
@@ -305,6 +323,12 @@ export const checkPlan = async (
       `A tester writes the tests of the developer tasks: ${added.join(', ')} added, each after the task it tests (a task that says "tests": false gets none)`
     );
   }
+
+  untested.forEach(({ task, why }) =>
+    notices.push(
+      `"${task}" gets no task of tests: ${why}. Name a test file in a task of yours for it, or say "tests": false — so that none is said, not missed`
+    )
+  );
   if (!ID.test(plan.runId)) {
     problems.push(`runId "${plan.runId}": a run's name is lowercase letters, digits, - and _, up to 64`);
   }
@@ -339,6 +363,11 @@ export const checkPlan = async (
     }
 
     problems.push(...(await acceptanceProblems(root, task)));
+    if (task.acceptance.length === 0) {
+      notices.push(
+        `Task "${task.id}" says no acceptance: its agent has nothing to be done by, and your review nothing to hold it to — a line each of what makes it done, or { said, check } for one a command proves`
+      );
+    }
   }
 
   for (const task of plan.tasks) {
@@ -357,6 +386,8 @@ export const checkPlan = async (
   }
 
   const holder = new Map<string, string>();
+  // Two paths that differ only in case are one file where the project is cloned on macOS or Windows.
+  const byCase = new Map<string, { file: string; task: string }>();
   const created: string[] = [];
   const tasks: RunTask[] = [];
   for (const task of plan.tasks) {
@@ -365,6 +396,13 @@ export const checkPlan = async (
       const file = normalised(raw);
       if (file === undefined) {
         problems.push(`Task "${task.id}": "${raw}" is not a path inside the project (relative, with forward slashes)`);
+        continue;
+      }
+
+      if (/[*?[\]{}]/.test(file)) {
+        problems.push(
+          `Task "${task.id}": "${file}" is a pattern, and a task names its files — each one (plitzi space overview lists them)`
+        );
         continue;
       }
 
@@ -390,12 +428,28 @@ export const checkPlan = async (
         continue;
       }
 
+      const link = await linkOf(root, file);
+      if (link !== undefined) {
+        problems.push(
+          `Task "${task.id}": ${file} is a link (to ${link}): a task writes files, not what a link points at — name the file itself, inside the project`
+        );
+        continue;
+      }
+
       const other = holder.get(file);
       if (other !== undefined && other !== task.id) {
         problems.push(`${file} is in "${other}" and "${task.id}": one agent per file — give it to one of them`);
       }
 
+      const sameFile = byCase.get(file.toLowerCase());
+      if (sameFile && sameFile.file !== file) {
+        problems.push(
+          `${sameFile.file} ("${sameFile.task}") and ${file} ("${task.id}") differ only in case: one file on macOS and Windows — write it one way${sameFile.task === task.id ? '' : ', in one task'}`
+        );
+      }
+
       holder.set(file, task.id);
+      byCase.set(file.toLowerCase(), { file, task: task.id });
       if (!(await exists(under(root, file))) && !created.includes(file)) {
         created.push(file);
       }

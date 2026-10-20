@@ -174,6 +174,11 @@ export const projectScripts = (answers: CreateAnswers): Record<string, string> =
           build: 'vite build',
           preview: 'vite preview'
         }),
+    /**
+     * The open run's approved work, served as the project is by its own dev server, on 8300: what the agents' approved
+     * tasks make, in a browser, while they work — the project itself (`start:dev`) is untouched until the run's finish.
+     */
+    'start:preview': 'plitzi run preview',
     // A server project's with `.env` read, as its server has it when it authors the same space on a save.
     ...(source === 'local' ? { author: mode === 'server' ? nodeWithEnv(AUTHOR_FILE) : `node ${AUTHOR_FILE}` } : {}),
     // How the space's source is written — its files, data, tokens, repeats — eslint's way; `lint` is the code's.

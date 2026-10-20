@@ -5,6 +5,7 @@ import { under } from './paths';
 import { RunRefusal } from './refusal';
 import { loadRun, readApproved, readBase, requireNoTask } from './run';
 import { getBlob } from './store';
+import { notReviewedIn } from './tasks';
 import { readRequests, readStart, viewTask } from './taskStore';
 import { unifiedDiff } from '../fix/diff';
 
@@ -38,8 +39,13 @@ export interface TaskShown {
   status: TaskStatus;
   round: number;
   holder?: string;
-  /** Where its changes are read from: its copy while it has one, else what the run approved. */
-  from: 'copy' | 'run' | 'none';
+  /**
+   * Where its changes are read from: as it went to review while it is in review — what an approval merges — its copy
+   * while it otherwise has one, else what the run approved.
+   */
+  from: 'submitted' | 'copy' | 'run' | 'none';
+  /** In review, what its copy holds that did not go to review: shown as not part of it. */
+  notReviewed?: string[];
   files: ShownFile[];
   /** What `complete` found: passed, or a failure it went to review with and who fixes it. */
   checks: 'passed' | 'not-run' | { knownFailure: KnownFailure };
@@ -112,7 +118,8 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
   const start = view.owner ? await readStart(view.paths) : undefined;
   const approved = (await readApproved(loaded.paths)).files;
   const changed = view.state.changed ?? [];
-  const from: TaskShown['from'] = start ? 'copy' : changed.length > 0 ? 'run' : 'none';
+  const submitted = view.state.status === 'in-review' ? view.state.submitted : undefined;
+  const from: TaskShown['from'] = submitted ? 'submitted' : start ? 'copy' : changed.length > 0 ? 'run' : 'none';
   const files: ShownFile[] = [];
   // Without a copy, what it changed is read against what the run started from: the project as the run copied it.
   const base = start ? undefined : (await readBase(loaded.paths)).files;
@@ -123,8 +130,9 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
       file,
       start ? start.files[file] : base && Object.hasOwn(base, file) ? base[file] : undefined
     );
-    const after =
-      from === 'copy'
+    const after = submitted
+      ? await versionOf(loaded, ctx.root, file, Object.hasOwn(submitted, file) ? submitted[file] : undefined)
+      : from === 'copy'
         ? await readOptional(under(view.paths.work, file))
         : await versionOf(loaded, ctx.root, file, Object.hasOwn(approved, file) ? approved[file].digest : undefined);
     const change: ShownFile['change'] =
@@ -161,6 +169,8 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
       .map(each => each.id)
   );
 
+  const notReviewed = submitted ? await notReviewedIn(ctx, runId, taskId) : [];
+
   return {
     task,
     status: view.state.status,
@@ -168,6 +178,7 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
     ...(view.owner ? { holder: view.owner.agent } : {}),
     from,
     files,
+    ...(notReviewed.length > 0 ? { notReviewed } : {}),
     checks: knownFailure ? { knownFailure } : changed.length > 0 ? 'passed' : 'not-run',
     ...(view.state.accepted ? { accepted: view.state.accepted } : {}),
     ...(view.state.warnings ? { warnings: view.state.warnings } : {}),
