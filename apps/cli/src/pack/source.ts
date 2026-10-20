@@ -3,7 +3,7 @@ import { builtinModules } from 'node:module';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
-import { pageModulesIn } from '@plitzi/sdk-shared/project';
+import { pageModulesIn } from '@plitzi/sdk-shared/project/pages';
 import { readSourceSnapshot, SOURCE_SNAPSHOT_FORMAT } from '@plitzi/sdk-shared/source';
 
 import { nearestPackage, readPackageJson } from '../commands/existingProject';

@@ -5,8 +5,6 @@ export { hasValidToken } from './tokens/hasValidToken';
 export { inspectTemplate } from './inspectTemplate';
 export { templatePaths, templateRootNames } from './templateRoots';
 export { filters } from './filters/filters';
-export { FILTER_DOCS } from './filters/catalog';
-export type { FilterDoc } from './filters/catalog';
 export type { ASTNode, Expression } from './AST';
 export type { KeepEmptyTokens } from './Evaluator';
 export type { TemplateInspection } from './inspectTemplate';

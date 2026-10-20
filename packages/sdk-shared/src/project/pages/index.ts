@@ -10,7 +10,8 @@ const FOLDER_ENTRIES = ['index.ts', 'index.tsx', 'index.js'];
  * The modules a folder of pages holds, by convention (`@plitzi/sdk-authoring/node`'s `pagesIn`): each module directly in
  * it — `pets.ts` — and each folder's `index` — `home/index.ts`, whose other modules are its own. Absolute, in path order:
  * one rule for the authoring that imports them and for the CLI that follows a project's imports through them, so a page
- * is part of the space by being there, for both. None when the folder is not there.
+ * is part of the space by being there, for both. None when the folder is not there. An entry of its own: the server,
+ * which loads `@plitzi/sdk-shared/project`, never reads it.
  */
 export const pageModulesIn = (folder: string): string[] => {
   if (!existsSync(folder)) {

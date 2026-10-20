@@ -32,10 +32,10 @@ import {
   SPACE_ENTRY,
   VENDOR_PLUGINS_DIR,
   checkProjectRoot,
-  pageModulesIn,
   projectModule,
   projectRoot
 } from '@plitzi/sdk-shared/project';
+import { pageModulesIn } from '@plitzi/sdk-shared/project/pages';
 
 import { authorSpace } from './index';
 import { compactSvg } from './svg/compactSvg';

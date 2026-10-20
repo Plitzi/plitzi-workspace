@@ -3,7 +3,9 @@ import { scope } from '../elements/scope';
 
 import type { ElementSpec, LayoutRef, PageSpec } from './types';
 
-const FAMILY = Symbol('plitzi.pageFamily');
+// From the global registry: a page written with one copy of this package — the project's — is read by another — a CLI
+// that resolves its own — and a symbol of each copy's would be two, the family unseen.
+const FAMILY = Symbol.for('plitzi.pageFamily');
 
 /**
  * The family a page was written by, when it was: one object shared by its pages and no others. Carried unseen — a

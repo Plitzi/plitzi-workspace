@@ -54,7 +54,9 @@
   plan` refuses a `page check` whose text the shell would split. From the sixth real run: `task next` hands a task back
   with what was said to it meanwhile, `complete` says each acceptance check and what the space's lint still warns of
   (kept for `task show`), `task show` marks read what the task told the lead, `run preview --task` says to page check
-  from the copy, `task take` says to work inside the copy, and the report lists every file a task wrote.
+  from the copy, `task take` says to work inside the copy, and the report lists every file a task wrote. **A file a
+  task takes past 400 non-blank lines** is said to the lead while it works (`run watch --until lead`), to the agent with
+  its heartbeat, and refused at `complete` until it is split.
 - **Pages registered by being there** (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/cli`): `pagesIn(new
   URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`) loads every page of a folder — each module's default
   export, a page or a family's list, the home page first — and `PageSpec.nav` (`{ label, order }`) with `navOf(pages)`
@@ -64,6 +66,11 @@
   the rule both share (`pageModulesIn`, `@plitzi/sdk-shared/project`). For a project with a server: `plitzi doctor`
   says `node-in-browser` when a space authored in the browser imports `@plitzi/sdk-authoring/node`. `plitzi create`
   keeps listing the pages — one agent on a project needs no convention.
+- **The marks a spec carries are the global registry's** (`@plitzi/sdk-authoring`): a page family, where an element was
+  written and a source's path, made by the project's copy of the package and read by a CLI's — `plitzi space lint`
+  took a family's pages for `repeated-shape` copies when the two copies differed. And `@plitzi/sdk-server` loads its
+  budget again: the filters' catalogue is `@plitzi/sdk-shared/helpers/twigWrapper/filters/catalog`, and the pages'
+  rule `@plitzi/sdk-shared/project/pages`, entries the server never reads.
 - **`date` reads an epoch in seconds too** (`@plitzi/sdk-shared`), as the docs said and Twig's own does: below 10^11 a
   number (or a string of digits) is seconds — `1792454400|date('Y-m-d')` was 1970-01-21 — milliseconds above.
 - **`plitzi explain` knows the template filters** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `explain currency`, `--list

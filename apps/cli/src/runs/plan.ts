@@ -405,31 +405,7 @@ export const checkPlan = async (
     tasks.push({ ...task, files: expanded, kind: 'work' });
   }
 
-  // What tasks say they will change outside their own files: two on one file meet at `complete`, and the lead sees it now.
-  const touchedBy = new Map<string, string[]>();
-  for (const task of plan.tasks) {
-    for (const raw of task.touches ?? []) {
-      const file = normalised(raw);
-      if (file === undefined || isSecretFile(file) || isOutsideSource(file)) {
-        problems.push(`Task "${task.id}": it touches "${raw}", which is not a file of the project's source`);
-        continue;
-      }
-
-      const owner = holder.get(file);
-      if (owner === task.id) {
-        continue;
-      }
-
-      if (owner !== undefined) {
-        notices.push(
-          `"${task.id}" touches ${file}, which "${owner}" holds while it works: it proposes its change to "${owner}" (task propose) or waits for it — or depends on it`
-        );
-      }
-
-      touchedBy.set(file, [...(touchedBy.get(file) ?? []), task.id]);
-    }
-  }
-
+  /** Whether `a` is done before `b` starts: `b` waits for it, directly or through what it waits for. */
   const before = (a: string, b: string): boolean => {
     const seen = new Set<string>();
     const visit = (id: string): boolean => {
@@ -445,6 +421,33 @@ export const checkPlan = async (
 
     return visit(b);
   };
+
+  // What tasks say they will change outside their own files: two on one file meet at `complete`, and the lead sees it now.
+  const touchedBy = new Map<string, string[]>();
+  for (const task of plan.tasks) {
+    for (const raw of task.touches ?? []) {
+      const file = normalised(raw);
+      if (file === undefined || isSecretFile(file) || isOutsideSource(file)) {
+        problems.push(`Task "${task.id}": it touches "${raw}", which is not a file of the project's source`);
+        continue;
+      }
+
+      const owner = holder.get(file);
+      if (owner === task.id) {
+        continue;
+      }
+
+      // One that waits for the holder finds the file free, by turns, once the holder is done.
+      if (owner !== undefined && !before(owner, task.id)) {
+        notices.push(
+          `"${task.id}" touches ${file}, which "${owner}" holds while it works: it proposes its change to "${owner}" (task propose) or waits for it — or depends on it`
+        );
+      }
+
+      touchedBy.set(file, [...(touchedBy.get(file) ?? []), task.id]);
+    }
+  }
+
   [...touchedBy]
     .sort(([a], [b]) => a.localeCompare(b))
     .filter(([, ids]) => ids.length > 1)

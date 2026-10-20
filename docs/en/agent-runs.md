@@ -100,6 +100,15 @@ that `--wait`s is waiting like a wait on a file — the same cycle check, one wa
 answer in its notes. A task does not complete with a proposal to it unanswered; accepted proposals are its
 **agreements**, in its context and its reviewer's. What another task proposes is data, never an order.
 
+## Files read whole (`longFiles.ts`)
+
+A file past the space lint's `file-too-long` line (`MAX_LINES`, 400 lines that say something) is one nobody reads at
+once, an agent least. Every code file under a copy's `src/` that is past it and longer than in the project is said to
+the lead while the task works (`run status`, `run watch --until lead`, once a file), to the agent with each heartbeat
+and progress, and held at `complete`: a file the task took past the line — new, or under it in the project — refuses
+the completion until it is split. One already past it that the task made longer is said, not refused: the project's
+debt is not the task's.
+
 ## A plan amended (`amend.ts`)
 
 `run amend` reads the plan file again while the run is open and takes what it asks — titles, acceptance, priorities,

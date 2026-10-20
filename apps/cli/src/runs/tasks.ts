@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { crossed, longFilesIn, longFileText } from './longFiles';
 import { durationText } from '../options';
 import { checkAcceptance } from './acceptance';
 import { agreementsOf, proposalsOf, unansweredTo } from './agreements';
@@ -59,6 +60,7 @@ import { PROJECT_NOTES } from '../scaffold/paths';
 
 import type { ProposalView } from './agreements';
 import type { CheckResult } from './checks';
+import type { LongFile } from './longFiles';
 import type { Message } from './messages';
 import type {
   AcceptanceResult,
@@ -949,6 +951,8 @@ export interface Signal {
   takenAfter: string;
   /** What the lead said to it and it had not read: handed over with every sign of life. */
   messages: Message[];
+  /** The files of its copy it is making too long to read whole: split before `complete`, which holds the line. */
+  longFiles: LongFile[];
 }
 
 export const reportProgress = async (
@@ -984,7 +988,8 @@ export const reportProgress = async (
         }),
     quietAfter: new Date(now + noSignalAfter(task)).toISOString(),
     takenAfter: new Date(now + noSignalAfter(task) + DEFAULTS.lockAfterSignalMs).toISOString(),
-    messages: await unreadForHolder(loaded, taskId, ctx.agent, true)
+    messages: await unreadForHolder(loaded, taskId, ctx.agent, true),
+    longFiles: await longFilesIn(view.paths.work, ctx.root)
   };
 };
 
@@ -1373,6 +1378,21 @@ export const completeTask = async (
           said: [each.check, ...(each.output ?? [])]
         })),
         next: 'make the copy do what the acceptance asks — each check is a command, run it yourself in the copy — and complete again'
+      }
+    );
+  }
+
+  // A file it took past what is read whole is split before review: the lead never receives a 500-line file to approve.
+  const tooLong = (await longFilesIn(view.paths.work, ctx.root)).filter(crossed);
+  if (tooLong.length > 0 && !knownFailure) {
+    await recordBrake(ctx, loaded, 'checks-failed');
+    throw new RunRefusal(
+      'checks-failed',
+      `Task "${taskId}" leaves files too long to read whole: ${tooLong.map(longFileText).join('; ')}`,
+      {
+        task: taskId,
+        steps: tooLong.map(long => ({ name: `file length — ${long.file}`, ok: false, said: [longFileText(long)] })),
+        next: 'split each by what changes together — a section or a part per file, a block as a component or a function, its rows as data — and complete again'
       }
     );
   }

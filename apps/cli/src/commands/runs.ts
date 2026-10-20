@@ -14,6 +14,7 @@ import { proposalsOf } from '../runs/agreements';
 import { amendRun } from '../runs/amend';
 import { projectChecks } from '../runs/checks';
 import { waitForLead } from '../runs/leadWatch';
+import { crossed, longFileText } from '../runs/longFiles';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile, showVersion } from '../runs/merge';
 import { acceptanceText } from '../runs/model';
 import { expandFiles, impactOf, readOwnership } from '../runs/ownership';
@@ -805,6 +806,11 @@ export const taskProgress = (options: RunCommandOptions & { fraction?: number; s
     signal =>
       [
         ...messageLines(signal.messages),
+        ...signal.longFiles.map(long =>
+          chalk.yellow(
+            `  ⚠ ${longFileText(long)}: split it by what changes together — a section or a part per file${crossed(long) ? '; complete refuses it past the line' : ''}`
+          )
+        ),
         `${signal.task}: a sign of life at ${hhmm(signal.at)}. Without another, the lead may reassign it after ${hhmm(signal.quietAfter)}, and another agent take it after ${hhmm(signal.takenAfter)}.`
       ].join('\n')
   );

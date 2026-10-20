@@ -1,7 +1,7 @@
 /**
  * What each template filter is, for whoever writes one — `plitzi explain <filter>` and `--list filters` read it, so a
  * filter is asked for by name, never looked for in the source. One entry per filter of `filters`: `catalog.test.ts`
- * holds the two to each other.
+ * holds the two to each other. An entry of its own — words for an author, which a server running templates never reads.
  */
 
 export interface FilterDoc {

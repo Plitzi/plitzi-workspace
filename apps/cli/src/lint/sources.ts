@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { pageModulesIn } from '@plitzi/sdk-shared/project';
+import { pageModulesIn } from '@plitzi/sdk-shared/project/pages';
 
 import { pageFolderLoads } from '../pack/source';
 

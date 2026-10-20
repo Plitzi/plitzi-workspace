@@ -1,5 +1,6 @@
 import { proposalsOf } from './agreements';
 import { fingerprint } from './files';
+import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { under } from './paths';
 import { chainMinutes } from './plan';
@@ -52,8 +53,11 @@ export interface Attention {
     | 'proposal'
     | 'overwrite'
     | 'known-failure'
+    | 'file-too-long'
     | 'message';
   task?: string;
+  /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
+  file?: string;
   text: string;
   /** Who acts on it. */
   who: Needs;
@@ -183,6 +187,19 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
           kind: 'long-wait',
           task: view.task.id,
           text: `${view.task.id} has waited ${String(minutesBetween(waiting.since, now))} min for ${waiting.task} ${waitingText(waiting)}`,
+          who: 'lead'
+        });
+      }
+    }
+
+    // A file a task is making too long to read whole: the lead asks for the split while it is still cheap.
+    if (view.owner && (view.state.status === 'in-progress' || view.state.status === 'changes-requested')) {
+      for (const long of await longFilesIn(view.paths.work, ctx.root)) {
+        attention.push({
+          kind: 'file-too-long',
+          task: view.task.id,
+          file: long.file,
+          text: `${view.task.id}: ${longFileText(long)} — ask it to split it now, by what changes together (plitzi task message ${view.task.id} "…")`,
           who: 'lead'
         });
       }

@@ -151,9 +151,11 @@ describe('a plan held to the rules', () => {
 
     expect(read.sharedReached).toContain('src/space/theme.ts');
 
-    plan.tasks[1].dependsOn = ['t-home'];
+    plan.tasks[1].dependsOn = ['t-home', 't-about'];
     const ordered = await checkPlan(bench.root, plan, await readOwnership(bench.root), 3);
     expect(ordered.notices.some(notice => notice.includes('is changed by'))).toBe(false);
+    // Waiting for the holder, it finds the file free once the holder is done: nothing to propose.
+    expect(ordered.notices.some(notice => notice.includes('which "t-about" holds'))).toBe(false);
   });
 
   it('expands a root with what it owns, says what is shared, and estimates it', async () => {
@@ -1880,6 +1882,41 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     const menu = await take('agent-2', 't-menu');
     expect(menu.messages.map(message => message.text)).toEqual([plan.notes[0], 'Prices in euros, two decimals']);
     expect((await taskContext(menu.ctx, 'es-launch', 't-menu')).runNotes).toHaveLength(2);
+  });
+
+  it('watches a file a task makes too long: the lead told once, the agent with its heartbeat, the complete held', async () => {
+    const lines = (count: number): string =>
+      Array.from({ length: count }, (_, index) => `export const line${String(index)} = ${String(index)};`).join('\n');
+    await bench.write('src/space/pages/menu.ts', `${lines(410)}\n`);
+    await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', `${lines(420)}\n`);
+
+    const signal = await reportProgress(home.ctx, 'es-launch', 't-home', {});
+    expect(signal.longFiles).toEqual([{ file: 'src/space/pages/home/hero.ts', lines: 420, before: 1 }]);
+    const woken = await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 });
+    expect(woken.fresh.map(item => item.text)).toContain(
+      't-home: src/space/pages/home/hero.ts is 420 non-blank lines (more than 400; 1 in the project) — ask it to split it now, by what changes together (plitzi task message t-home "…")'
+    );
+    // Longer still, it is the same notice: the lead is not woken again for every line written.
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', `${lines(430)}\n`);
+    expect((await waitForLead(lead(), 'es-launch', { timeoutMs: 20, everyMs: 10 })).fresh).toEqual([]);
+
+    const refused = await refusal(completeTask(home.ctx, 'es-launch', 't-home'));
+    expect([refused.code, refused.message]).toEqual([
+      'checks-failed',
+      expect.stringContaining('leaves files too long to read whole: src/space/pages/home/hero.ts is 430') as unknown
+    ]);
+
+    // Split, it completes; a file already past the line that a task makes longer is said, not refused.
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    const menu = await take('agent-2', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', `${lines(415)}\n`);
+    expect((await reportProgress(menu.ctx, 'es-launch', 't-menu', {})).longFiles).toEqual([
+      { file: 'src/space/pages/menu.ts', lines: 415, before: 410 }
+    ]);
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
   });
 
   it('lets the lead amend what an open run asks — told to the task — but never its shape, nor a task done', async () => {

@@ -1,6 +1,6 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
 import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
-import { FILTER_DOCS } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { FILTER_DOCS } from '@plitzi/sdk-shared/helpers/twigWrapper/filters/catalog';
 
 import {
   elementAncestorTypes,

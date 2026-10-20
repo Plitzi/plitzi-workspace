@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { container, heading, paragraph, scope } from '../elements';
-import { pageFamily } from './pageFamily';
+import { familyOf, pageFamily } from './pageFamily';
 import { authorSpace } from './space';
 
 import type { PageFamilyEntry } from './pageFamily';
@@ -113,5 +113,16 @@ describe('pageFamily', () => {
   it('refuses two entries of one id, or of one slug, as it refuses any two pages', () => {
     expect(() => authorSpace(menu([...COURSES, { ...COURSES[0], slug: 'again' }]))).toThrow(/\[id-taken\]/);
     expect(() => authorSpace(menu([...COURSES, { ...COURSES[0], id: 'again' }]))).toThrow(/\[page-route-taken\]/);
+  });
+});
+
+describe('a page family written by another copy of the package', () => {
+  it('is the same family: its mark is the global registry’s, which every copy reads', () => {
+    const family = {};
+    const page = { name: 'Rex', slug: 'pets/rex', body: [] };
+    // As a project's own copy of the package marks it, apart from the copy that reads it here.
+    Reflect.set(page, Symbol.for('plitzi.pageFamily'), family);
+
+    expect(familyOf(page)).toBe(family);
   });
 });

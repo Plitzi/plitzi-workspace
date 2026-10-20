@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { pageModulesIn } from './pages';
+import { pageModulesIn } from '.';
 
 let folder: string;
 

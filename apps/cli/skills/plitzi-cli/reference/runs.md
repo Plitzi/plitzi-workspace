@@ -45,7 +45,7 @@ the next one, through a stop, handing back first a task you hold that can go on.
    work as it goes — each approval shows in it.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
-   notice — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
+   file a task takes past 400 lines (ask for the split) — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
    task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
    an agent by name, between tasks too. A mistake in the plan (a check that cannot pass): edit it and `plitzi run amend
    plan.json` — titles, acceptance, priorities, notes; each task changed is told. Its files and dependencies stay.
@@ -79,9 +79,8 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
   eslint .`). The copy has no `node_modules` (it resolves the project's) and no `.env` — a warning about it is expected.
   **Look at your page** with the copy's own server: `PORT=8201 npm start` in `work`, then `npx plitzi page check /pets
   --width 1440,390 --url http://127.0.0.1:8201` (no `--` with npx); stop it when done. The copy's `tmp/` and `state/`
-  never count at `complete`. Format what you write (`npx prettier --write <file>`): `complete` runs the project's
-  checks, format among them. Run its commands in the copy (`cd <work> && npm run author`): the folder stays where it is
-  even when the task is cut, until it is taken again.
+  never count at `complete`. Format what you write (`npx prettier --write <file>`). The copy stays where it is even
+  when the task is cut, until it is taken again.
 - **Only your files.** A file another task at work holds is refused at `complete`, naming it — `plitzi task discard
   <file>` puts it back (and brings the run's version of any file); propose the change to that task instead.
 - **Any other file** — shared (the entry, the theme, a layout), a done task's, or in no task: change it in your copy. At
@@ -100,14 +99,15 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
   says to you arrives with your next heartbeat, progress or completion — read it; `plitzi task inbox --all` shows
   everything said to you again.
 - **Report:** `plitzi task progress --fraction 0.6 --step "page 3 of 5"`; during a long think or test run,
-  `plitzi task heartbeat` at least every 2 minutes — each says when the task can be taken from you without another.
+  `plitzi task heartbeat` at least every 2 minutes.
 - **Blocked by something outside the plan** (a key, a decision): `plitzi task block --reason "…" --needs person|lead`,
   then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes. `agent-limit` (24) on `take`: hand back to the lead, which starts it when one goes to review.
 - **Done:** `plitzi task complete` — compared by fingerprint, the project's checks and the acceptance's checks run in
   the copy (run each check yourself first; serve the copy for one that names `$PLITZI_URL`). **A task never ends
-  with failing checks** — lint, types, tests: fix them. Only for a reason that weighs, said: `plitzi task complete
+  with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
+  heartbeat says so first): split it. Only for a reason that weighs, said: `plitzi task complete
   --known-failure "why" --fixed-by <task>`. A check that fails the same way without your change (a person's edit,
   another task's work) is not yours: it goes to review marked `preexisting`, and the lead is told. Changes requested
   come back with `task next`, and in `task context`.

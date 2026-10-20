@@ -5,7 +5,9 @@
  * does not travel with the spec through a spread, a clone or `JSON.stringify`, and the stack it carries is only
  * formatted when a refusal reads it. Off in production, where nobody reads a refusal at a terminal.
  */
-const WRITTEN_AT = Symbol('plitzi.writtenAt');
+// From the global registry, as every mark a spec carries: the project's copy of this package writes it, and a CLI's
+// copy may be the one that reads it.
+const WRITTEN_AT = Symbol.for('plitzi.writtenAt');
 
 const isProduction = (): boolean => typeof process !== 'undefined' && process.env.NODE_ENV === 'production';
 

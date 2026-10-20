@@ -40,7 +40,11 @@ export const leadItems = (view: RunView): LeadItem[] => [
   ...view.attention
     .filter(item => item.who !== 'task')
     .map(item => ({
-      key: TIMED.has(item.kind) ? `${item.kind}:${item.task ?? ''}` : `${item.kind}:${item.task ?? ''}:${item.text}`,
+      key: TIMED.has(item.kind)
+        ? `${item.kind}:${item.task ?? ''}`
+        : item.file === undefined
+          ? `${item.kind}:${item.task ?? ''}:${item.text}`
+          : `${item.kind}:${item.task ?? ''}:${item.file}`,
       text: item.text
     }))
 ];

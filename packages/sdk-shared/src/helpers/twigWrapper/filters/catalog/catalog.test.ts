@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { FILTER_DOCS } from './catalog';
-import { filters } from './filters';
+import { FILTER_DOCS } from '.';
+import { filters } from '../filters';
 
 describe('the template filters, documented', () => {
   it('documents every filter there is, and none there is not', () => {

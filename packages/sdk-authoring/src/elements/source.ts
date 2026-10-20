@@ -2,8 +2,9 @@ import { scoped } from './scope';
 import { AuthoringError } from '../schema/codes';
 import { didYouMean } from '../schema/suggest';
 
-const PATH = Symbol('plitzi.sourcePath');
-const SHAPE = Symbol('plitzi.sourceShape');
+// From the global registry: a source made with the project's copy of this package is read by whichever copy authors.
+const PATH: unique symbol = Symbol.for('plitzi.sourcePath');
+const SHAPE: unique symbol = Symbol.for('plitzi.sourceShape');
 
 /** What every path to a source's value is, whatever it leads to. */
 export interface SourceBrand {
