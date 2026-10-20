@@ -1,5 +1,9 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { isInventoryItem } from './inventory';
+
+import type { InventoryItem } from './inventory';
+
 /**
  * What each file of a run holds, with the guard every read is held to. Every time is ISO 8601 in UTC.
  * One writer per file: `plan.json` is the lead's; `run.json`, `approved/` and `merges/` are written under the
@@ -44,7 +48,8 @@ export type Needs = (typeof NEEDS)[number];
  * task's copy at `complete`, it passes on exit 0. `$PLITZI_URL` in it is the copy served, `plitzi` this CLI:
  * `plitzi page check /walks --url $PLITZI_URL --expect walks-title~October`.
  */
-export type Acceptance = string | { said: string; check: string };
+/** A line of acceptance: a sentence the review weighs, or one a command proves — and the inventory's pieces it proves. */
+export type Acceptance = string | { said: string; check: string; covers?: string[] };
 
 /** What a line of acceptance asks, said. */
 export const acceptanceText = (each: Acceptance): string => (typeof each === 'string' ? each : each.said);
@@ -118,6 +123,11 @@ export interface RunPlan {
    * plan` and `run open`, and in the report, so what a run leaves out is a choice made with them, never found after.
    */
   leftOut?: string[];
+  /**
+   * What the job asks, piece by piece: each covered by a task's checked acceptance (`covers`) or left out with its
+   * reason — `run plan` refuses a piece that is neither (`inventory.ts`).
+   */
+  inventory?: InventoryItem[];
 }
 
 /** A task as the run holds it (`task.json`): the plan's, with its files expanded — or one the CLI made to integrate. */
@@ -437,6 +447,9 @@ export const isTaskStatus = oneOf(TASK_STATUSES);
 const isRunStatus = oneOf(RUN_STATUSES);
 const isNeeds = oneOf(NEEDS);
 
+const isAcceptance = (line: unknown): line is Acceptance =>
+  isString(line) || (isRecord(line) && isString(line.said) && isString(line.check) && optional(line.covers, isStrings));
+
 export const isPlannedTask = (value: unknown): value is PlannedTask =>
   isRecord(value) &&
   isString(value.id) &&
@@ -446,9 +459,7 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   isPriority(value.priority) &&
   isNumber(value.estimateMinutes) &&
   Array.isArray(value.acceptance) &&
-  value.acceptance.every(
-    (each: unknown) => isString(each) || (isRecord(each) && isString(each.said) && isString(each.check))
-  ) &&
+  value.acceptance.every(isAcceptance) &&
   optional(value.milestone, isString) &&
   optional(value.role, isString) &&
   optional(value.quality, oneOf(QUALITIES)) &&
@@ -469,7 +480,8 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   optional(value.notes, isStrings) &&
   optional(value.primer, isString) &&
   optional(value.designReview, flag => typeof flag === 'boolean') &&
-  optional(value.leftOut, isStrings);
+  optional(value.leftOut, isStrings) &&
+  optional(value.inventory, items => Array.isArray(items) && items.every(isInventoryItem));
 
 const shown = (value: unknown): string => (value === undefined ? 'nothing' : JSON.stringify(value));
 
@@ -489,6 +501,11 @@ export const runPlanProblems = (value: unknown): string[] => {
   field(isString(value.runId), 'runId', 'the run’s name');
   field(isString(value.goal), 'goal', 'a line of what the run is for');
   field(optional(value.leftOut, isStrings), 'leftOut', 'lines of what the run does not do');
+  field(
+    optional(value.inventory, items => Array.isArray(items) && items.every(isInventoryItem)),
+    'inventory',
+    'pieces, each { id, piece, page?, leftOut? }'
+  );
   if (!Array.isArray(value.tasks)) {
     problems.push('tasks: a list of tasks');
 
@@ -515,12 +532,9 @@ export const runPlanProblems = (value: unknown): string[] => {
     check(isPriority(each.priority), 'priority', PRIORITIES.join(', '));
     check(isNumber(each.estimateMinutes), 'estimateMinutes', 'minutes, a number');
     check(
-      Array.isArray(each.acceptance) &&
-        each.acceptance.every(
-          (line: unknown) => isString(line) || (isRecord(line) && isString(line.said) && isString(line.check))
-        ),
+      Array.isArray(each.acceptance) && each.acceptance.every(isAcceptance),
       'acceptance',
-      'lines, each a sentence or { said, check }'
+      'lines, each a sentence or { said, check, covers? } — a line that covers a piece of the inventory is one a command checks'
     );
     check(optional(each.role, isString), 'role', 'a role’s name');
     check(optional(each.quality, oneOf(QUALITIES)), 'quality', 'light, standard or high');

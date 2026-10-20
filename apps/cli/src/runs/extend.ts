@@ -85,7 +85,8 @@ export const extendRun = async (
       ctx.root,
       { ...next, tasks: next.tasks.map(task => ({ ...task, dependsOn: task.dependsOn.filter(id => !known.has(id)) })) },
       await readOwnership(ctx.root),
-      team
+      team,
+      new Set((loaded.plan.inventory ?? []).map(item => item.id))
     );
   } catch (error) {
     if (error instanceof PlanRefusal) {
@@ -188,6 +189,9 @@ export const extendRun = async (
     notes: [...(loaded.plan.notes ?? []), ...(next.notes ?? [])],
     ...(loaded.plan.leftOut || next.leftOut
       ? { leftOut: [...(loaded.plan.leftOut ?? []), ...(next.leftOut ?? [])] }
+      : {}),
+    ...(loaded.plan.inventory || next.inventory
+      ? { inventory: [...(loaded.plan.inventory ?? []), ...(next.inventory ?? [])] }
       : {}),
     ...(next.contracts ? { contracts: [...(loaded.plan.contracts ?? []), ...next.contracts] } : {})
   };

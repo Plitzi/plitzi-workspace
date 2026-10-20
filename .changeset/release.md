@@ -334,3 +334,7 @@
   do, approved last — under their headings, eight rows tall and scrolled on its own, beside the agents.
 - **A run that ends stops its preview first** (`@plitzi/cli`): its record goes, the preview stops its server on it, and
   only then the run's folder — removed under it, the server's own watch restarted it in a folder gone (`uv_cwd`).
+- **A plan lists the job piece by piece** (`@plitzi/cli`): `inventory: [{ id, piece, page, leftOut? }]`, each piece
+  covered by a line of acceptance a command proves (`{ said, check, covers: [id] }`) or left out with its reason — `run
+  plan` refuses one that is neither, and the report says who covered each. The lead's coverage was a skill's advice:
+  la-velada's first run left the tier list, the live stream and a dozen pieces unsaid.

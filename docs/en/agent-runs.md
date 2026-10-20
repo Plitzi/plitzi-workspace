@@ -105,7 +105,12 @@ ownership is read off the imports, with the project's own TypeScript (`fileImpor
 A plan names units; `checkPlan` expands each with what it owns and refuses a file in two tasks, or a folder that is not
 a plugin's. What the job asks that the run does not do is the plan's `leftOut` — said at `run plan` (and that nothing
 is, when it says none), at `run open` and in the report — so the scope is a choice made with the person, never found
-after (la-velada's copy left the tier list and the hero's logo out, unsaid). It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
+after (la-velada's copy left the tier list and the hero's logo out, unsaid). The plan's `inventory` lists the job
+piece by piece (`inventory.ts`: `{ id, piece, page?, leftOut? }`): each piece is covered by a line of a task's acceptance
+a command proves (`{ said, check, covers: [id] }`) or waits with its reason, and `checkPlan` refuses one that is neither,
+a line covering a piece not listed, or an id twice — so coverage is checked at `run plan`, held at `complete` and on the
+whole result at the finish by the covering checks themselves, and listed in the report (who covered each piece, or why it
+waits). A stage's lines may cover the run's pieces. A plan with no inventory is said, not refused. It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
 change it compatibly, or say in the plan who follows it), and the tasks whose acceptance no command proves (they hold at
 their review only; a check runs at `complete` and again at the finish). A task holds its plan's files only until it is done: then a shared one among them (the entry a shell task
 split up) is requested like any other, and the rest are taken by turns. Shared files are taken **by turns** (`task

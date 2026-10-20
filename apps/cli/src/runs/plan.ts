@@ -5,6 +5,7 @@ import { namesServedCopy } from './acceptance';
 import { expectationNotices } from './expectations';
 import { exists } from './files';
 import { readHistory } from './history';
+import { inventoryLeftOut, inventoryProblems } from './inventory';
 import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
@@ -308,10 +309,12 @@ export const checkPlan = async (
   root: string,
   written: RunPlan,
   ownership: Ownership,
-  team: Team
+  team: Team,
+  /** A stage's: the pieces of the run's inventory, which its lines may cover. */
+  knownInventory: ReadonlySet<string> = new Set()
 ): Promise<CheckedPlan> => {
   const agentsAsked = teamSize(team);
-  const problems: string[] = roleProblems(written, team);
+  const problems: string[] = [...roleProblems(written, team), ...inventoryProblems(written, knownInventory)];
   const notices: string[] = [];
   // With a tester in the team, each developer task's tests are a task of their own, after it: checked as the lead's.
   const { plan, added, untested } = withTestTasks(
@@ -614,6 +617,13 @@ export const checkPlan = async (
     );
   }
 
+  const pieces = plan.inventory ?? [];
+  notices.push(
+    pieces.length > 0
+      ? `The inventory: ${String(pieces.length)} pieces — ${String(pieces.filter(item => item.leftOut === undefined).length)} covered by a task’s checked acceptance, ${String(pieces.filter(item => item.leftOut !== undefined).length)} left out`
+      : 'No inventory: what the job asks is not listed piece by piece, so nothing checks that the tasks cover it — for a copy, a design or a brief, list it ("inventory": [{ id, piece, page }]) and cover each with { said, check, covers }'
+  );
+
   // A task whose acceptance no command proves holds only at its review: a later task can undo it, and nothing says so —
   // v12's print fit one sheet when approved, and two at the finish.
   const unchecked = tasks.filter(
@@ -632,7 +642,7 @@ export const checkPlan = async (
   return {
     runId: plan.runId,
     goal: plan.goal,
-    leftOut: plan.leftOut ?? [],
+    leftOut: [...(plan.leftOut ?? []), ...inventoryLeftOut(plan)],
     tasks,
     shared,
     // What the tasks reach through their imports, and what they said they will touch: none of it held by one.

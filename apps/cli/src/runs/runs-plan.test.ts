@@ -7,7 +7,7 @@ import { abortRun } from './merge';
 import { runPlanProblems } from './model';
 import { readOwnership } from './ownership';
 import { RUNS_DIR, runPaths } from './paths';
-import { checkPlan, findCycle } from './plan';
+import { checkPlan, findCycle, PlanRefusal } from './plan';
 import { isRunRefusal } from './refusal';
 import { loadRun } from './run';
 import { completeTask, nextTask, takeTask } from './tasks';
@@ -63,6 +63,39 @@ export const about = { id: 'about', badge };
 });
 
 describe('a plan held to the rules', () => {
+  it('holds the job to its inventory: each piece covered by a checked line, or left out with its reason', async () => {
+    const plan = benchPlan();
+    plan.inventory = [
+      { id: 'home-hero', piece: 'the hero', page: '/' },
+      { id: 'tier-list', piece: 'the tier list builder', page: '/tier-list' },
+      { id: 'overlay', piece: 'the stream overlay', page: '/overlay', leftOut: 'for streamers, a second run' }
+    ];
+    const check = async () =>
+      checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 3)).then(
+        () => [],
+        (error: unknown) => (error instanceof PlanRefusal ? error.problems : [String(error)])
+      );
+
+    plan.tasks[0].acceptance = [{ said: 'The hero says Hola', check: 'true', covers: ['home-hero', 'tier-lst'] }];
+    expect(await check()).toEqual([
+      'Task "t-home" covers "tier-lst", which the inventory does not list',
+      expect.stringContaining('inventory "tier-list" (the tier list builder, /tier-list) is in no task')
+    ]);
+
+    plan.tasks[0].acceptance = [{ said: 'The hero says Hola', check: 'true', covers: ['home-hero', 'overlay'] }];
+    plan.tasks[1].acceptance = [{ said: 'The tier list drags', check: 'true', covers: ['tier-list'] }];
+    expect(await check()).toEqual([expect.stringContaining('inventory "overlay" is left out')]);
+
+    plan.tasks[0].acceptance = [{ said: 'The hero says Hola', check: 'true', covers: ['home-hero'] }];
+    const read = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 3));
+    expect(read.leftOut).toEqual(['the stream overlay (/overlay) — for streamers, a second run']);
+    expect(read.notices).toContain('The inventory: 3 pieces — 2 covered by a task’s checked acceptance, 1 left out');
+    // A covering line is one a command proves: a sentence covers nothing.
+    expect(
+      runPlanProblems({ ...plan, tasks: [{ ...plan.tasks[0], acceptance: [{ said: 'x', covers: ['home-hero'] }] }] })
+    ).toEqual([expect.stringContaining('a line that covers a piece of the inventory is one a command checks')]);
+  });
+
   it('says which tasks touch the same file outside their own, unless one waits for the other', async () => {
     const plan = benchPlan();
     plan.tasks[0].touches = ['src/space/theme.ts'];

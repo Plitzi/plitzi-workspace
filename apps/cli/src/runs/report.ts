@@ -5,6 +5,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { proposalsOf } from './agreements';
 import { readOptional, writeAtomic } from './files';
+import { coverage } from './inventory';
 import { requireLead } from './leads';
 import { REPORTS_DIR } from './paths';
 import { RunRefusal } from './refusal';
@@ -46,6 +47,8 @@ export interface RunReport {
   goal: string;
   /** What the plan said the run leaves out. */
   leftOut: string[];
+  /** The job, piece by piece, as the plan listed it: who covered each, or why it waits. */
+  inventory: { id: string; piece: string; page?: string; by: string[]; leftOut?: string }[];
   openedAt: string;
   at: string;
   minutes: number;
@@ -228,6 +231,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     runId: record.runId,
     goal: loaded.plan.goal,
     leftOut: loaded.plan.leftOut ?? [],
+    inventory: coverage(loaded.plan, loaded.tasks).map(({ item, by }) => ({ ...item, by })),
     openedAt: record.openedAt,
     at: now,
     minutes,
@@ -286,6 +290,17 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
     '',
     ...(report.leftOut.length > 0
       ? ['## Left out, as the plan said', '', ...report.leftOut.map(line => `- ${line}`), '']
+      : []),
+    ...(report.inventory.length > 0
+      ? [
+          '## The job, piece by piece',
+          '',
+          ...report.inventory.map(
+            item =>
+              `- ${item.piece}${item.page ? ` (${item.page})` : ''}: ${item.leftOut === undefined ? `covered by ${item.by.join(', ')}` : `left out — ${item.leftOut}`}`
+          ),
+          ''
+        ]
       : []),
     '## Problems',
     '',

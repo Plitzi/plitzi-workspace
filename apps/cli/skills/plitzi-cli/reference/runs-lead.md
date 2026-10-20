@@ -7,10 +7,10 @@ What the lead — team lead and software architect — does; the agents' half, t
 
 0. **Inventory what the job asks, before a line of the plan.** Built after something — a site to copy, a design, a
    brief — list every page and, on each, every section and every piece a visitor would miss: a hero's logo, a live
-   video, a countdown, an interactive tool (a tier list), a page linked from the footer. Each becomes acceptance a
-   command proves (`page check --expect "<id>~<text>"`), in the task that draws it. **What the run leaves out is said
-   in the plan (`leftOut`) and to the person before opening** — never decided in silence: "the tier list waits for a
-   second run" is a choice they make with you. Prepare what every task reads first — the data complete with every
+   video, a countdown, an interactive tool (a tier list), a page linked from the footer — as the plan's `inventory`
+   (`[{ id, piece, page }]`). Each is covered by a line a command proves, in the task that draws it (`{ said, check:
+   "page check … --expect …", covers: ["<id>"] }`), or waits with its reason (`"leftOut": "…"`): `run plan` refuses a
+   piece that is neither. **What waits is said to the person before opening**: a choice they make with you. Prepare what every task reads first — the data complete with every
    field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
@@ -126,8 +126,7 @@ plan.json` — titles, acceptance, priorities, notes; each task changed is told.
    iterate with `task check`, which it does not count. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
 status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
    purpose, the person runs `plitzi run upgrade` — never an install under the open run.
-8. **Before you close, check the coverage:** each item of the inventory is on the result (`plitzi run preview`, then
-   `page check` with its `--expect`s) — what is missing is a stage (`run extend`), or said in `leftOut`, never found
-   by the person afterwards. **Close it:** write the summary (done, wrong, left): `plitzi run report --summary summary.md`; then `plitzi run
+8. **Before you close, look at the coverage:** the finish runs each covering check on the result; look at what a
+   check cannot see (`plitzi run preview`) — what is missing is a stage (`run extend`), never found afterwards. **Close it:** write the summary (done, wrong, left): `plitzi run report --summary summary.md`; then `plitzi run
 finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
    `plitzi run extend <run> next.json` stacks it, one finish for both. `plitzi run pending` lists what awaits applying.
