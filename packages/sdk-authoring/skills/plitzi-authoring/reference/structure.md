@@ -17,7 +17,7 @@ src/space/
     layout.ts       the section shell, generated from nav.ts
     page.ts         docsPage(id, content) — the shape every page of the section shares
   pages/
-    home.ts         one file per page, or per page family
+    home.ts         one file per page, or per page family — `pagesIn` loads the folder (layouts.md, "The menu is data")
 ```
 
 ## Components are functions

@@ -10,7 +10,7 @@ import { unifiedDiff } from '../fix/diff';
 
 import type { ProposalView } from './agreements';
 import type { Message } from './messages';
-import type { KnownFailure, RunTask, TaskStatus } from './model';
+import type { AcceptanceResult, KnownFailure, RunTask, TaskStatus } from './model';
 import type { LoadedRun, RunContext } from './run';
 
 /**
@@ -43,6 +43,8 @@ export interface TaskShown {
   files: ShownFile[];
   /** What `complete` found: passed, or a failure it went to review with and who fixes it. */
   checks: 'passed' | 'not-run' | { knownFailure: KnownFailure };
+  /** Its acceptance's checks at its last `complete`. */
+  accepted?: AcceptanceResult[];
   notes: { at: string; by: string; text: string }[];
   agreements: ProposalView[];
   unanswered: ProposalView[];
@@ -148,6 +150,7 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
     from,
     files,
     checks: knownFailure ? { knownFailure } : changed.length > 0 ? 'passed' : 'not-run',
+    ...(view.state.accepted ? { accepted: view.state.accepted } : {}),
     notes: view.state.notes.slice(-6),
     agreements: mine.filter(each => each.answer?.verdict === 'accept'),
     unanswered: mine.filter(each => each.answer === undefined),

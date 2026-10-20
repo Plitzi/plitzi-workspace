@@ -4,5 +4,6 @@
  */
 export * from './layout';
 export * from './network';
+export * from './pages';
 export * from './paths';
 export * from './root';

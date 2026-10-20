@@ -42,6 +42,8 @@ import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
  */
 
 export interface CheckOptions {
+  /** `--expect <id>~<text>`: each element shows its text, or the check fails — what an acceptance can be checked by. */
+  expect?: Expectation[];
   /** Validated where the flag is declared (`widths` in options.ts). */
   width?: number[];
   scheme?: Scheme;
@@ -149,7 +151,8 @@ export interface CheckIssue {
     | 'not-server-rendered'
     | 'not-signed-in'
     | 'redirected'
-    | 'page-status';
+    | 'page-status'
+    | 'expected-text';
   message: string;
   /** The space's element it is about, by id — absent for one about the page as a whole. */
   elementId?: string;
@@ -262,6 +265,11 @@ export interface ContestedStyle {
 export interface ListRows {
   rendered: number | null;
   source: number | null;
+  /**
+   * A list drawn more than once — inside the row of another list, or of a component placed twice — its rows in each
+   * copy: `rendered` is then all of them, and each copy filters its own share of the source.
+   */
+  copies?: number[];
 }
 
 /**
@@ -661,6 +669,46 @@ export const momentChanges = (
  * What `--click` is asked: the element, and the fields filled before it. Without an element, the fields filled are the
  * interaction — a search box, a filter that answers to typing — and what they changed is said.
  */
+/** What `--expect <id>~<text>` asks: the element shows the text, as the page was left — a check an acceptance can run. */
+export interface Expectation {
+  element: string;
+  text: string;
+}
+
+/** What the first element `selector` names shows, as a visitor reads it — `null` when none is on the page. In the page. */
+export const shownTextInPage = (selector: string): string | null => {
+  const node = document.querySelector(selector);
+
+  return node instanceof HTMLElement ? node.innerText : node === null ? null : node.textContent;
+};
+
+/** Each expectation the page does not meet, as an issue: the element missing, or showing something else. */
+const missedExpectations = async (
+  page: BrowserPage,
+  authored: Authored | undefined,
+  expect: readonly Expectation[],
+  width: number
+): Promise<CheckIssue[]> => {
+  const missed: CheckIssue[] = [];
+  for (const { element, text } of expect) {
+    const found = await page.evaluate(shownTextInPage, selectorOf(authored, element));
+    const shown = found === null ? undefined : found.replace(/\s+/g, ' ').trim();
+    if (shown === undefined || !shown.toLowerCase().includes(text.toLowerCase())) {
+      missed.push({
+        code: 'expected-text',
+        message:
+          shown === undefined
+            ? `--expect ${element}~${text}: no element ${element} is on the page`
+            : `--expect ${element}~${text}: ${element} shows "${shown.length > 160 ? `${shown.slice(0, 160)}…` : shown}"`,
+        elementId: element,
+        width
+      });
+    }
+  }
+
+  return missed;
+};
+
 export interface ClickAsk {
   element?: string;
   fill: readonly FieldFill[];
@@ -856,15 +904,21 @@ const clickEffects = async (
 
 /**
  * How many rows each list draws: the copies of its row — the most of any of its children, one per row whatever a row
- * hides — inside the list's first node. Runs in the page, self-contained.
+ * hides — inside each of the list's nodes: one, or one per row of a list it is inside. Runs in the page,
+ * self-contained.
  */
 export const renderedRowsInPage = (
   lists: { id: string; selector: string; row: string[] }[]
-): [string, number | null][] =>
+): [string, number[] | null][] =>
   lists.map(({ id, selector, row }) => {
-    const node = document.querySelector(selector);
+    const nodes = Array.from(document.querySelectorAll(selector));
 
-    return [id, node ? Math.max(0, ...row.map(child => node.querySelectorAll(child).length)) : null];
+    return [
+      id,
+      nodes.length === 0
+        ? null
+        : nodes.map(node => Math.max(0, ...row.map(child => node.querySelectorAll(child).length)))
+    ];
   });
 
 /** The contested styles of the element asked for, by its handle's selector and the classes the space gives it. */
@@ -928,7 +982,18 @@ const listRows = async (
   return Object.fromEntries(
     Object.entries(all)
       .filter(([id]) => !Object.hasOwn(fixed, id) || (rendered.get(id) ?? null) !== null)
-      .map(([id, source]) => [id, { rendered: rendered.get(id) ?? null, source }])
+      .map(([id, source]) => {
+        const counts = rendered.get(id) ?? null;
+
+        return [
+          id,
+          {
+            rendered: counts === null ? null : counts.reduce((sum, count) => sum + count, 0),
+            source,
+            ...(counts !== null && counts.length > 1 ? { copies: counts } : {})
+          }
+        ];
+      })
   );
 };
 
@@ -974,7 +1039,8 @@ const checkAt = async (
   asked: DevToolsInput,
   ssr: boolean,
   account: Account | undefined,
-  click?: ClickAsk
+  click?: ClickAsk,
+  expect: readonly Expectation[] = []
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
   const page = await openProjectPage(browser, origin, { width, height: 900, ...view });
@@ -1068,6 +1134,7 @@ const checkAt = async (
   // What is said of the element and the state is the page as the visitor left it: after the fill and the click, when
   // there were any — the page's own checks still read it as it loaded.
   const shown = clicked === undefined ? devTools : await readDevTools(page, { ...asked, state: true });
+  const missed = await missedExpectations(page, authored, expect, width);
   const styled = asked.element === undefined ? undefined : await elementStyles(page, authored, asked.element);
   const data =
     authored && pageId && devTools.sources
@@ -1116,7 +1183,8 @@ const checkAt = async (
     ...report.issues.map((issue): CheckIssue => ({ ...issue, width })),
     ...(data?.issues ?? []).map((issue): CheckIssue => ({ ...issue, width })),
     ...(late?.issues ?? []),
-    ...failedFlows
+    ...failedFlows,
+    ...missed
   ];
 
   return {
@@ -1198,13 +1266,18 @@ const shapeOf = (value: unknown): string => {
 const rowsText = (count: number): string => `${String(count)} row${count === 1 ? '' : 's'}`;
 
 /** One list's rows in a few words: `plan-list 3 rows`, `feed 4 of 8 rows`, `hits not rendered (16 in its source)`. */
-export const listText = (id: string, { rendered, source }: ListRows): string => {
+export const listText = (id: string, { rendered, source, copies }: ListRows): string => {
   if (source === null) {
     return `${id} reads nothing`;
   }
 
   if (rendered === null) {
     return `${id} not rendered (${String(source)} in its source)`;
+  }
+
+  // Drawn once per row of the list it is in: each copy shows its own share, and together what they draw.
+  if (copies) {
+    return `${id} ${rowsText(rendered)} in ${String(copies.length)} copies (${copies.join(', ')}) of ${String(source)} in its source`;
   }
 
   return `${id} ${rendered === source ? rowsText(source) : `${String(rendered)} of ${rowsText(source)}`}`;
@@ -1338,6 +1411,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.click || options.fill
       ? { click: { ...(options.click ? { element: options.click } : {}), fill: options.fill ?? [] } }
       : {}),
+    ...(options.expect ? { expect: options.expect } : {}),
     ...(options.url ? { url: options.url } : {}),
     ...(options.space ? { space: options.space } : {})
   });
@@ -1370,6 +1444,7 @@ export const checkRoutes = async (
     presence?: boolean;
     account?: Account;
     click?: ClickAsk;
+    expect?: Expectation[];
     /** Where the project is served, when not by `npm start` here (`--url`). */
     url?: string;
     /** A space module to check the pages against instead of the project's (`--space`). */
@@ -1411,7 +1486,8 @@ export const checkRoutes = async (
             options.asked,
             options.ssr,
             options.account,
-            options.click
+            options.click,
+            options.expect
           );
         const first = await look();
         const failed = serverErrors(first);

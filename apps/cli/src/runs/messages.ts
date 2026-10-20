@@ -21,6 +21,12 @@ export const LEAD = 'lead';
 
 const AGENT = /^@[\w.-]{1,64}$/;
 
+/**
+ * The run's memory: what the lead says to every task — the ones in hand, and the ones taken after it was said. A known
+ * issue, a decision that holds for all, how something is done here: handed to each task with its take.
+ */
+export const EVERYONE = '*';
+
 /** The address of an agent by its name (`--agent`): what reaches it between tasks, and with whichever task it holds. */
 export const agentAddress = (name: string): string => `@${name}`;
 
@@ -72,7 +78,11 @@ const readFile = (loaded: LoadedRun, reader: string): string =>
 /** What `reader` has not read yet — the lead, or a task — marked read as it is handed over when `mark`. */
 export const unreadFor = async (loaded: LoadedRun, reader: string, mark: boolean): Promise<Message[]> => {
   const read = new Set((await readJson(readFile(loaded, reader), isRead, 'the messages read')) ?? []);
-  const unread = (await messagesOf(loaded)).filter(message => message.to === reader && !read.has(message.id));
+  // A task reads what was said to it, and the run's notes to every task (`EVERYONE`): each once.
+  const isTask = reader !== LEAD && !AGENT.test(reader);
+  const unread = (await messagesOf(loaded)).filter(
+    message => (message.to === reader || (isTask && message.to === EVERYONE)) && !read.has(message.id)
+  );
   if (mark && unread.length > 0) {
     await writeJson(readFile(loaded, reader), [...read, ...unread.map(message => message.id)]);
   }
@@ -106,7 +116,12 @@ export const sendMessage = async (
     throw new RunRefusal('invalid', 'A message says something: the text is empty');
   }
 
-  if (message.to !== LEAD && !AGENT.test(message.to) && !loaded.tasks.some(task => task.id === message.to)) {
+  if (
+    message.to !== LEAD &&
+    message.to !== EVERYONE &&
+    !AGENT.test(message.to) &&
+    !loaded.tasks.some(task => task.id === message.to)
+  ) {
     throw new RunRefusal('not-found', `Run "${loaded.record.runId}" has no task "${message.to}"`, { task: message.to });
   }
 
@@ -131,3 +146,7 @@ export const sendMessage = async (
 /** The answer to `question`, if one came: a message to its sender that replies to it. */
 export const replyTo = async (loaded: LoadedRun, question: Message): Promise<Message | undefined> =>
   (await messagesOf(loaded)).find(message => message.replyTo === question.id && message.to === question.from);
+
+/** The run's notes to every task, in the order they were said. */
+export const runNotesOf = async (loaded: LoadedRun): Promise<Message[]> =>
+  (await messagesOf(loaded)).filter(message => message.to === EVERYONE);

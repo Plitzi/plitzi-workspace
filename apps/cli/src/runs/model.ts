@@ -29,6 +29,25 @@ export type RunStatus = (typeof RUN_STATUSES)[number];
 export const NEEDS = ['person', 'lead', 'task'] as const;
 export type Needs = (typeof NEEDS)[number];
 
+/**
+ * A line of a task's acceptance: what is asked — and, when a command can tell, the command that checks it: run in the
+ * task's copy at `complete`, it passes on exit 0. `$PLITZI_URL` in it is the copy served, `plitzi` this CLI:
+ * `plitzi page check /walks --url $PLITZI_URL --expect walks-title~October`.
+ */
+export type Acceptance = string | { said: string; check: string };
+
+/** What a line of acceptance asks, said. */
+export const acceptanceText = (each: Acceptance): string => (typeof each === 'string' ? each : each.said);
+
+/** What a line's check answered at the task's last `complete`. */
+export interface AcceptanceResult {
+  said: string;
+  check: string;
+  ok: boolean;
+  /** The last lines it printed, when it failed. */
+  output?: string[];
+}
+
 export interface PlannedTask {
   id: string;
   title: string;
@@ -37,7 +56,7 @@ export interface PlannedTask {
   dependsOn: string[];
   priority: Priority;
   estimateMinutes: number;
-  acceptance: string[];
+  acceptance: Acceptance[];
   milestone?: string;
   /** Who in the team does it: developer (when left out), designer, reviewer, tester, writer… — `task next --role` picks by it. */
   role?: string;
@@ -61,6 +80,8 @@ export interface RunPlan {
   goal: string;
   tasks: PlannedTask[];
   contracts?: Contract[];
+  /** What every task must know from the start — a known issue, a rule of this run: the run's first notes. */
+  notes?: string[];
 }
 
 /** A task as the run holds it (`task.json`): the plan's, with its files expanded — or one the CLI made to integrate. */
@@ -193,6 +214,8 @@ export interface TaskState {
   changed?: string[];
   /** It went to review with failing checks, for a reason the lead weighs: what fails, why, and the task that fixes it. */
   knownFailure?: KnownFailure;
+  /** Its acceptance's checks at its last `complete`: what passed, what did not. */
+  accepted?: AcceptanceResult[];
   updatedAt: string;
 }
 
@@ -338,7 +361,10 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   isStrings(value.dependsOn) &&
   isPriority(value.priority) &&
   isNumber(value.estimateMinutes) &&
-  isStrings(value.acceptance) &&
+  Array.isArray(value.acceptance) &&
+  value.acceptance.every(
+    (each: unknown) => isString(each) || (isRecord(each) && isString(each.said) && isString(each.check))
+  ) &&
   optional(value.milestone, isString) &&
   optional(value.role, isString) &&
   optional(value.touches, isStrings);
@@ -353,7 +379,8 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   isString(value.goal) &&
   Array.isArray(value.tasks) &&
   value.tasks.every(isPlannedTask) &&
-  optional(value.contracts, contracts => Array.isArray(contracts) && contracts.every(isContract));
+  optional(value.contracts, contracts => Array.isArray(contracts) && contracts.every(isContract)) &&
+  optional(value.notes, isStrings);
 
 export const isRunTask = (value: unknown): value is RunTask =>
   isPlannedTask(value) &&
@@ -459,6 +486,19 @@ export const isTaskState = (value: unknown): value is TaskState =>
       optional(failure.fixedBy, isString) &&
       optional(failure.preexisting, (flag: unknown) => typeof flag === 'boolean') &&
       isString(failure.at)
+  ) &&
+  optional(
+    value.accepted,
+    results =>
+      Array.isArray(results) &&
+      results.every(
+        (result: unknown) =>
+          isRecord(result) &&
+          isString(result.said) &&
+          isString(result.check) &&
+          typeof result.ok === 'boolean' &&
+          optional(result.output, isStrings)
+      )
   ) &&
   isString(value.updatedAt);
 

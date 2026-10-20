@@ -3,6 +3,7 @@ import { builtinModules } from 'node:module';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 
+import { pageModulesIn } from '@plitzi/sdk-shared/project';
 import { readSourceSnapshot, SOURCE_SNAPSHOT_FORMAT } from '@plitzi/sdk-shared/source';
 
 import { nearestPackage, readPackageJson } from '../commands/existingProject';
@@ -81,9 +82,66 @@ const styleImports = (text: string): string[] =>
 const codeImports = (ts: typeof TypeScript, text: string): string[] =>
   ts.preProcessFile(text, true, true).importedFiles.map(file => file.fileName);
 
+/** `import.meta.url`, as written. */
+const isImportMetaUrl = (ts: typeof TypeScript, node: TypeScript.Node): boolean =>
+  ts.isPropertyAccessExpression(node) &&
+  node.name.text === 'url' &&
+  ts.isMetaProperty(node.expression) &&
+  node.expression.keywordToken === ts.SyntaxKind.ImportKeyword;
+
+/**
+ * The folders a module loads its pages from by convention — `pagesIn(new URL('./pages/', import.meta.url))`,
+ * `@plitzi/sdk-authoring/node` — absolute: each page module in them is imported though no `import` names it. A folder
+ * given any other way (a variable, a path from the working directory) cannot be read without running the module, and
+ * is not followed.
+ */
+export const pageFolderLoads = (ts: typeof TypeScript, file: string, text: string): string[] => {
+  if (!text.includes('pagesIn')) {
+    return [];
+  }
+
+  const folders: string[] = [];
+  const visit = (node: TypeScript.Node): void => {
+    if (ts.isCallExpression(node)) {
+      const callee = node.expression;
+      const name = ts.isIdentifier(callee)
+        ? callee.text
+        : ts.isPropertyAccessExpression(callee)
+          ? callee.name.text
+          : '';
+      const where = node.arguments.at(0);
+      if (
+        name === 'pagesIn' &&
+        where !== undefined &&
+        ts.isNewExpression(where) &&
+        ts.isIdentifier(where.expression) &&
+        where.expression.text === 'URL'
+      ) {
+        const relative = where.arguments?.at(0);
+        const base = where.arguments?.at(1);
+        if (
+          relative !== undefined &&
+          base !== undefined &&
+          ts.isStringLiteralLike(relative) &&
+          isImportMetaUrl(ts, base)
+        ) {
+          folders.push(path.resolve(path.dirname(file), relative.text));
+        }
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  };
+  visit(ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true));
+
+  return [...new Set(folders)];
+};
+
 export interface FileImports {
-  /** The project files it imports, absolute, as a bundler finds them. */
+  /** The project files it imports, absolute, as a bundler finds them — the page modules of a folder it loads too. */
   files: string[];
+  /** The folders it loads its pages from (`pagesIn`), absolute: a page made there is imported by being there. */
+  pageFolders: string[];
   /** What it imports that is not there, as written. */
   missing: string[];
   /** The packages it imports, by name — not Node's own. */
@@ -93,13 +151,19 @@ export interface FileImports {
 /** What one file imports — read with TypeScript for code, from `@import` and `url()` for a stylesheet. */
 export const fileImports = async (ts: typeof TypeScript, file: string, text: string): Promise<FileImports> => {
   let specifiers: string[] = [];
+  const pageFolders = CODE.test(file) ? pageFolderLoads(ts, file, text) : [];
   if (CODE.test(file)) {
     specifiers = codeImports(ts, text);
   } else if (STYLES.test(file)) {
     specifiers = styleImports(text);
   }
 
-  const imports: FileImports = { files: [], missing: [], packages: [] };
+  const imports: FileImports = {
+    files: pageFolders.flatMap(folder => pageModulesIn(folder)),
+    pageFolders,
+    missing: [],
+    packages: []
+  };
   for (const raw of specifiers) {
     // A bundler's query (`?raw`, `?url`) or a fragment says how to load a file, not which one.
     const specifier = raw.replace(/[?#].*$/, '');

@@ -2,8 +2,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { exists } from './files';
+import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_COPIED_DIRS, under } from './paths';
+import { scriptsOf } from '../commands/verify';
 
 import type { RunPlan, RunTask, TaskState } from './model';
 import type { Ownership } from './ownership';
@@ -186,6 +188,42 @@ export const estimate = (tasks: readonly RunTask[], agentsAsked: number): PlanEs
 const isOutsideSource = (file: string): boolean =>
   NOT_COPIED_DIRS.has(file.split('/')[0]) || file.split('/').includes('node_modules');
 
+/**
+ * What would make a task's acceptance unworkable, said before the run opens rather than at its `complete`: a line that
+ * says nothing, a check that is no command, one that reads the credentials no agent touches, or one that asks for the
+ * copy served (`$PLITZI_URL`) in a project with no start script to serve it.
+ */
+const acceptanceProblems = async (root: string, task: RunPlan['tasks'][number]): Promise<string[]> => {
+  const problems: string[] = [];
+  for (const each of task.acceptance) {
+    const said = acceptanceText(each).trim();
+    if (said === '') {
+      problems.push(`Task "${task.id}": a line of its acceptance says nothing — say what is asked`);
+      continue;
+    }
+
+    if (typeof each === 'string') {
+      continue;
+    }
+
+    const check = each.check.trim();
+    if (check === '') {
+      problems.push(`Task "${task.id}": "${said}" has an empty check — give the command, or leave the line as text`);
+    } else if (/(^|[\s'"/=<])\.env(\.[\w.-]+)?($|[\s'";|&>)])/.test(check) && !check.includes('.env.example')) {
+      problems.push(`Task "${task.id}": the check of "${said}" reads .env, the credentials no agent touches`);
+    } else if (check.includes('PLITZI_URL')) {
+      const scripts = await scriptsOf(root).catch(() => ({}));
+      if (!['start', 'start:dev'].some(name => Object.hasOwn(scripts, name))) {
+        problems.push(
+          `Task "${task.id}": the check of "${said}" names $PLITZI_URL, and the project has no start script to serve the copy with`
+        );
+      }
+    }
+  }
+
+  return problems;
+};
+
 export const checkPlan = async (
   root: string,
   plan: RunPlan,
@@ -226,6 +264,8 @@ export const checkPlan = async (
         `Task "${task.id}": its role "${task.role}" is a name — developer, designer, reviewer, tester, writer`
       );
     }
+
+    problems.push(...(await acceptanceProblems(root, task)));
   }
 
   for (const task of plan.tasks) {

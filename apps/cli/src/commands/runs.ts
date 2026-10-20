@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
@@ -8,16 +9,19 @@ import chalk from 'chalk';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { findProject } from './existingProject';
+import { durationText } from '../options';
 import { proposalsOf } from '../runs/agreements';
 import { projectChecks } from '../runs/checks';
 import { waitForLead } from '../runs/leadWatch';
 import { abortRun, continueRun, finishRun, resolveFile, restoreFile, showVersion } from '../runs/merge';
+import { acceptanceText } from '../runs/model';
 import { expandFiles, impactOf, readOwnership } from '../runs/ownership';
-import { RUNS_DIR, runPaths, taskPaths } from '../runs/paths';
+import { COPY_TASK_FILE, RUNS_DIR, runPaths, taskPaths } from '../runs/paths';
 import { DEFAULT_AGENTS } from '../runs/plan';
 import { startPreview, startTaskPreview } from '../runs/preview';
 import { answerProposal, proposeChange } from '../runs/proposals';
 import { isRunRefusal, RunRefusal } from '../runs/refusal';
+import { rehearsalText, rehearse } from '../runs/rehearse';
 import { buildReport, readSummary, reportText, writeSummary } from '../runs/report';
 import {
   activeRuns,
@@ -27,12 +31,13 @@ import {
   openRun,
   pruneRuns,
   purgeRun,
+  readCheckedPlan,
   releaseRun,
   resumeRun,
   stopRun
 } from '../runs/run';
 import { showTask } from '../runs/show';
-import { askLead, messageTasks, readInbox, tellLead } from '../runs/talk';
+import { askLead, messageTasks, noteRun, readInbox, tellLead } from '../runs/talk';
 import {
   blockTask,
   canWrite,
@@ -63,6 +68,7 @@ import type { CheckStep } from '../runs/checks';
 import type { Message } from '../runs/messages';
 import type { Needs } from '../runs/model';
 import type { RemovedInputs, RunContext } from '../runs/run';
+import type { TaskContext } from '../runs/tasks';
 
 /**
  * `plitzi run` and `plitzi task` (RFC 0028): several agents on one project, each in a copy of it, merged once by a
@@ -83,13 +89,30 @@ export interface RunCommandOptions {
 /** A task's token says its run and its task: `<run>.<task>.<secret>`, so a task's commands need nothing else. */
 const TOKEN = /^([a-z0-9][a-z0-9_-]*)\.([a-z0-9][a-z0-9_-]*)\.([0-9a-f]{48})$/;
 
-const tokenOf = (options: RunCommandOptions): string | undefined => options.token ?? process.env.PLITZI_TASK_TOKEN;
-
 /**
  * The project the command works on: the one it is run in — and, run from inside a task's copy (which has a package.json
  * of its own), the project that copy belongs to.
  */
-const projectRoot = async (): Promise<string> => {
+interface Where {
+  /** The project the runs are of — the project itself, also when the command runs in a task's copy. */
+  root: string;
+  /** Who the copy the command runs in is, as `task take` wrote it there: none outside a copy. */
+  copy?: { token: string; agent: string };
+}
+
+/** Who a task's copy is, as `task take` wrote it: what a command run inside it needs no flag for. */
+const copyTask = async (work: string): Promise<Where['copy']> => {
+  const read: unknown = await fs
+    .readFile(path.join(work, COPY_TASK_FILE), 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+
+  return isRecord(read) && typeof read.token === 'string' && typeof read.agent === 'string'
+    ? { token: read.token, agent: read.agent }
+    : undefined;
+};
+
+const whereAmI = async (): Promise<Where> => {
   const project = await findProject(process.cwd());
   if (!project) {
     throw new RunRefusal('not-found', 'There is no package.json here or above: run this in the project');
@@ -97,8 +120,13 @@ const projectRoot = async (): Promise<string> => {
 
   const marker = `${path.sep}${RUNS_DIR.split('/').join(path.sep)}${path.sep}`;
   const at = project.root.indexOf(marker);
+  if (at === -1) {
+    return { root: project.root };
+  }
 
-  return at === -1 ? project.root : project.root.slice(0, at);
+  const copy = await copyTask(project.root);
+
+  return { root: project.root.slice(0, at), ...(copy ? { copy } : {}) };
 };
 
 /** A person, at a terminal of their own, typing the run's name — never an agent's shell, which has none. */
@@ -132,13 +160,21 @@ const holderName = async (root: string, token: string): Promise<string | undefin
   return owner?.token === token ? owner.agent : undefined;
 };
 
+/**
+ * Who runs a command, and as which task: the token said (`--token`, `PLITZI_TASK_TOKEN`), or — run in a task's copy —
+ * the copy's own, so an agent at work in it says neither. A token said wins over the copy's: the lead reviewing from
+ * inside one is the lead.
+ */
 const contextFor = async (options: RunCommandOptions): Promise<RunContext> => {
-  const token = tokenOf(options);
-  const root = await projectRoot();
+  const { root, copy } = await whereAmI();
+  // An empty variable is none said: a shell that cleared it, not a token.
+  const said = options.token ?? (process.env.PLITZI_TASK_TOKEN === '' ? undefined : process.env.PLITZI_TASK_TOKEN);
+  const token = said ?? copy?.token;
   const agent =
     options.agent ??
     process.env.PLITZI_AGENT ??
-    (token ? ((await holderName(root, token)) ?? 'agent') : process.stdin.isTTY ? 'person' : 'lead');
+    (token ? ((await holderName(root, token)) ?? (said ? 'agent' : copy?.agent)) : undefined) ??
+    (process.stdin.isTTY ? 'person' : 'lead');
 
   return {
     root,
@@ -222,7 +258,10 @@ const act = async <T>(
       console.log(JSON.stringify(error.toJSON()));
     } else {
       console.error(`${chalk.red(`Refused (${error.code}):`)} ${error.message}\n  ${chalk.dim(`Next: ${error.next}`)}`);
-      error.detail.problems?.forEach(problem => console.error(`  - ${problem}`));
+      // A plan's refusal says its problems in its message already: each said once.
+      error.detail.problems
+        ?.filter(problem => !error.message.includes(problem))
+        .forEach(problem => console.error(`  - ${problem}`));
       failedSteps(error.detail.steps).forEach(step => {
         console.error(`  ${chalk.red('✗')} ${step.name}`);
         step.said?.forEach(line => console.error(`    ${line}`));
@@ -281,6 +320,36 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
       ].join('\n')
   );
 
+export const runRehearse = (
+  file: string,
+  options: PlanOptions & { roles?: Record<string, number>; review?: number }
+): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      const agents = options.agents ?? DEFAULT_AGENTS;
+      const roles = options.roles ?? {};
+      const held = Object.values(roles).reduce((sum, count) => sum + count, 0);
+      if (held > agents) {
+        throw new RunRefusal(
+          'invalid',
+          `--roles holds ${String(held)} agents to a role, and --agents is ${String(agents)}: give as many agents, or fewer roles`,
+          { agents, roles }
+        );
+      }
+
+      const { checked, ownership } = await readCheckedPlan(ctx.root, path.resolve(file), agents);
+      const reviewMinutes = Math.max(0, Math.round((options.review ?? 5 * 60_000) / 60_000));
+
+      return {
+        runId: checked.runId,
+        reviewMinutes,
+        ...rehearse(checked.tasks, { agents, roles, reviewMinutes }, { ownership, created: checked.created })
+      };
+    },
+    rehearsed => rehearsalText(rehearsed.runId, rehearsed, rehearsed.reviewMinutes)
+  );
+
 export const runOpen = (file: string, options: PlanOptions): Promise<void> =>
   act(
     options,
@@ -330,7 +399,7 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
     options,
     async ctx => {
       const news = await waitForLead(ctx, await runOf(ctx, options, runId), {
-        timeoutMs: (options.timeout ?? 25) * 60_000,
+        timeoutMs: options.timeout ?? 25 * 60_000,
         everyMs: Math.max(1, options.interval ?? 10) * 1000
       });
       const { view, ...rest } = news;
@@ -341,7 +410,7 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
       news.gone
         ? 'The run is gone: it finished, or a person aborted it.'
         : news.timedOut
-          ? `Nothing new for the lead in ${String(options.timeout ?? 25)} minutes (${String(news.done)} of ${String(news.total)} done): watch again.`
+          ? `Nothing new for the lead in ${durationText(options.timeout ?? 25 * 60_000)} (${String(news.done)} of ${String(news.total)} done): watch again.`
           : [
               chalk.bold(`For the lead (${String(news.done)} of ${String(news.total)} done):`),
               ...news.fresh.map(item => `  ⚠ ${item.text}`)
@@ -580,7 +649,7 @@ export const taskNext = (
     options,
     async ctx =>
       options.follow
-        ? followNext(ctx, await runOf(ctx, options), options.role, { timeoutMs: (options.timeout ?? 30) * 60_000 })
+        ? followNext(ctx, await runOf(ctx, options), options.role, { timeoutMs: options.timeout ?? 30 * 60_000 })
         : nextTask(ctx, await runOf(ctx, options), options.role),
     next =>
       [
@@ -684,11 +753,11 @@ export const taskWait = (
         return { ...waiting, followed: undefined };
       }
 
-      const followed = await followWait(ctx, runId, taskId, { timeoutMs: (options.timeout ?? 30) * 60_000 });
+      const followed = await followWait(ctx, runId, taskId, { timeoutMs: options.timeout ?? 30 * 60_000 });
       if (!followed.done) {
         throw new RunRefusal(
           'waiting',
-          `Still waiting for ${String(waiting.holder)} on ${waiting.file} after ${String(options.timeout ?? 30)} min`,
+          `Still waiting for ${String(waiting.holder)} on ${waiting.file} after ${durationText(options.timeout ?? 30 * 60_000)}`,
           {
             file: waiting.file,
             holder: waiting.holder
@@ -954,7 +1023,15 @@ export const taskShow = (taskId: string, options: RunCommandOptions): Promise<vo
         ),
         `  ${shown.task.role ?? 'developer'} · its files: ${shown.task.files.join(', ')}`,
         ...(shown.task.acceptance.length > 0
-          ? ['Acceptance', ...shown.task.acceptance.map(each => `  ${shown.status === 'done' ? '✓' : '☐'} ${each}`)]
+          ? [
+              'Acceptance',
+              ...shown.task.acceptance.map(each => {
+                const result = shown.accepted?.find(one => one.said === acceptanceText(each));
+                const mark = result ? (result.ok ? '✓' : '✗') : shown.status === 'done' ? '✓' : '☐';
+
+                return `  ${mark} ${acceptanceText(each)}${typeof each === 'string' ? '' : chalk.dim(`  [check: ${each.check}]`)}${result && !result.ok ? `\n${(result.output ?? []).map(line => `      ${line}`).join('\n')}` : ''}`;
+              })
+            ]
           : []),
         knownFailure
           ? chalk.yellow(
@@ -992,8 +1069,64 @@ export const taskContextCommand = (taskId: string | undefined, options: RunComma
 
       return taskContext(ctx, target.runId, target.taskId);
     },
-    context =>
-      `${context.task.id} — ${context.task.title} · ${context.state.status}${context.holder ? ` · ${context.holder}` : ''}: its acceptance, notes, requests, agreements and files, as JSON (the lead's review of it: plitzi task show ${context.task.id})`
+    context => briefOf(context)
+  );
+
+/**
+ * A task in a page an agent reads before it starts: what is asked, what holds for the whole run, what was decided with
+ * others, what a review asked — and only where the rest is (`--json`: every file's text, every related task's notes).
+ */
+const briefOf = (context: TaskContext): string => {
+  const { task, state } = context;
+  const files = context.files.map(file => `${file.file}${file.toCreate ? ' (to create)' : ''}`);
+  const comments = context.review?.verdict === 'changes' ? context.review.comments : [];
+  const unanswered = context.proposals.incoming.filter(each => each.answer === undefined);
+
+  return [
+    chalk.bold(`${task.id} — ${task.title}`),
+    `  ${task.role ?? 'developer'} · ${state.status}${state.round > 0 ? `, round ${String(state.round)}` : ''}${context.holder ? ` · ${context.holder}` : ''}`,
+    `Its files: ${files.join(', ')}${task.touches && task.touches.length > 0 ? ` · it will touch: ${task.touches.join(', ')}` : ''}`,
+    ...(task.acceptance.length > 0
+      ? [
+          'Acceptance — a line with a check is run at complete; run it yourself in your copy first',
+          ...task.acceptance.map(
+            each => `  ☐ ${acceptanceText(each)}${typeof each === 'string' ? '' : `\n      check: ${each.check}`}`
+          )
+        ]
+      : []),
+    ...(context.runNotes.length > 0
+      ? ['What holds for the whole run', ...context.runNotes.map(note => `  · ${note}`)]
+      : []),
+    ...(comments.length > 0
+      ? [
+          `Review ${String(context.review?.round ?? 0)} asked`,
+          ...comments.map(comment => `  ↺ ${comment.note}${comment.element ? ` (on ${comment.element})` : ''}`)
+        ]
+      : []),
+    ...(context.proposals.agreements.length > 0
+      ? [
+          'Agreed — keep to it',
+          ...context.proposals.agreements.map(each => `  ⇄ ${each.from} → ${each.to}: ${each.change}`)
+        ]
+      : []),
+    ...unanswered.map(each => chalk.yellow(`  ⇄ to answer first, ${each.id} from ${each.from}: ${each.change}`)),
+    ...context.contracts.map(each => `  contract on ${each.resource} (${each.owner}): ${each.note}`),
+    ...context.requests.map(each => `  ↗ request on ${each.file} from ${each.task}: ${each.summary}`),
+    ...(state.notes.length > 0
+      ? ['Its notes', ...state.notes.slice(-5).map(note => `  ${note.by}: ${note.text}`)]
+      : []),
+    ...(context.related.length > 0
+      ? [`Related: ${context.related.map(each => `${each.task} (${each.status})`).join(', ')}`]
+      : []),
+    `${context.projectNotes ? 'The project’s notes: NOTES.md — read it. ' : ''}Every file's text and every related task's notes: --json.`
+  ].join('\n');
+};
+
+export const runNote = (text: string, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => noteRun(ctx, await runOf(ctx, options), text),
+    note => `Noted for every task (${note.id}) — the ones in hand with their next command, the rest with their take.`
   );
 
 export const spaceOverview = (options: RunCommandOptions): Promise<void> =>
@@ -1163,14 +1296,14 @@ export const taskAsk = (
 
       return askLead(ctx, runId, taskId, text, {
         follow: options.follow ?? false,
-        timeoutMs: (options.timeout ?? 30) * 60_000
+        timeoutMs: options.timeout ?? 30 * 60_000
       });
     },
     asked =>
       asked.reply
         ? [`The lead answered (${asked.reply.id}): ${asked.reply.text}`, ...messageLines(asked.messages)].join('\n')
         : options.follow
-          ? `Asked (${asked.question.id}); no answer yet after ${String(options.timeout ?? 30)} min — go on with what you can, it comes with your next heartbeat.`
+          ? `Asked (${asked.question.id}); no answer yet after ${durationText(options.timeout ?? 30 * 60_000)} — go on with what you can, it comes with your next heartbeat.`
           : `Asked (${asked.question.id}): the answer comes with your next heartbeat, progress or completion — or stay for it with --follow.`
   );
 

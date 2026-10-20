@@ -34,6 +34,64 @@ export const positiveInteger = (value: string): number => {
   return parsed;
 };
 
+const UNITS = { s: 1000, m: 60_000, h: 3_600_000 } as const;
+
+const isUnit = (unit: string): unit is keyof typeof UNITS => Object.hasOwn(UNITS, unit);
+
+/**
+ * How long to wait, in milliseconds: `90s`, `8m`, `1h`, or a bare number as minutes — what every `--timeout` of a run
+ * has always taken. From a second to a day.
+ */
+export const duration = (value: string): number => {
+  const match = /^(\d+(?:\.\d+)?)\s*([smh]?)$/.exec(value.trim());
+  const unit = match?.[2] ?? '';
+  const ms = match ? Number(match[1]) * (isUnit(unit) ? UNITS[unit] : UNITS.m) : NaN;
+  if (!Number.isFinite(ms) || ms < 1000 || ms > 86_400_000) {
+    throw new InvalidArgumentError('It takes a duration from 1s to 24h: 90s, 8m, 1h, or a number of minutes.');
+  }
+
+  return Math.round(ms);
+};
+
+/** A duration as a person reads it: `45 s`, `1 min 30 s`, `8 min`, `1 h 30 min`. */
+export const durationText = (ms: number): string => {
+  const seconds = Math.round(ms / 1000);
+  if (seconds < 60) {
+    return `${String(seconds)} s`;
+  }
+
+  if (seconds < 600 && seconds % 60 !== 0) {
+    return `${String(Math.floor(seconds / 60))} min ${String(seconds % 60)} s`;
+  }
+
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  if (hours === 0) {
+    return `${String(minutes)} min`;
+  }
+
+  return minutes % 60 === 0 ? `${String(hours)} h` : `${String(hours)} h ${String(minutes % 60)} min`;
+};
+
+/** Agents held to a role, by role — `designer=1,writer=2` — as `run rehearse --roles` takes them. */
+export const roleCounts = (value: string): Record<string, number> => {
+  const counts: Record<string, number> = {};
+  for (const part of value
+    .split(',')
+    .map(each => each.trim())
+    .filter(Boolean)) {
+    const match = /^([a-z][a-z0-9_-]{0,63})=(\d+)$/.exec(part);
+    const count = match ? Number(match[2]) : 0;
+    if (!match?.[1] || count < 1) {
+      throw new InvalidArgumentError(`"${part}": it takes <role>=<agents>, comma-separated — designer=1,writer=2.`);
+    }
+
+    counts[match[1]] = (counts[match[1]] ?? 0) + count;
+  }
+
+  return counts;
+};
+
 /** A share between 0 and 1: how far along a task is. */
 export const fraction = (value: string): number => {
   const parsed = Number(value.trim());
@@ -69,4 +127,18 @@ export const fill = (value: string, previous: readonly FieldFill[] | undefined):
   }
 
   return [...(previous ?? []), { element, value: value.slice(at + 1) }];
+};
+
+/** `--expect <id>~<text>`, once per element: the element shows the text. */
+export const expectation = (
+  value: string,
+  previous: readonly { element: string; text: string }[] | undefined
+): { element: string; text: string }[] => {
+  const at = value.indexOf('~');
+  const element = at === -1 ? '' : value.slice(0, at).trim();
+  if (element === '' || value.slice(at + 1) === '') {
+    throw new InvalidArgumentError('What an element shows is expected as <id>~<text>: --expect walks-title~October.');
+  }
+
+  return [...(previous ?? []), { element, text: value.slice(at + 1) }];
 };

@@ -73,7 +73,8 @@ export const stepsOf = (scripts: Record<string, string>): Step[] => [
 export const runScript = (
   cwd: string,
   command: string,
-  binRoot: string = cwd
+  binRoot: string = cwd,
+  { env = {}, bin = [] }: { env?: Record<string, string>; bin?: readonly string[] } = {}
 ): Promise<{ code: number; output: string }> =>
   new Promise(resolve => {
     const child = spawn(command, {
@@ -81,9 +82,10 @@ export const runScript = (
       shell: true,
       env: {
         ...process.env,
+        ...env,
         FORCE_COLOR: '0',
         NO_COLOR: '1',
-        PATH: `${path.join(binRoot, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
+        PATH: [...bin, path.join(binRoot, 'node_modules', '.bin'), process.env.PATH ?? ''].join(path.delimiter)
       }
     });
     let output = '';

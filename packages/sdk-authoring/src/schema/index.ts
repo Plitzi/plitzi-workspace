@@ -15,6 +15,8 @@ export * from './flows';
 export * from './handles';
 export * from './ids';
 export * from './lint';
+export { navOf } from './nav';
+export type { NavEntry } from './nav';
 export * from './notifications';
 export * from './pageFamily';
 export * from './refusals';

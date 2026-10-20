@@ -43,7 +43,20 @@
   and the run's, line by line), `task revert --reason`, a plan's `touches` (the files a task will change outside its
   own, which `run plan` warns about when two would at once), an agent limit that counts agents, and `--known-failure` as
   the only way to review with failing checks — but a check that fails without the task too is marked `preexisting`, not
-  the task's.
+  the task's. **Acceptance a command can tell** (`{ said, check }`, run in the copy at `complete` with `plitzi` as this
+  CLI and `$PLITZI_URL` the copy served; `page check --expect <id>~<text>` to hold a page's text; `run plan` refuses a
+  check it could not run), **the run's notes** (a plan's `notes` and `run note`, to every task once) and `task context`
+  as a brief to start from; commands run inside a task's copy need no token, run or agent (`tmp/plitzi-task.json`),
+  `--timeout` takes `90s`/`8m`/`1h`, `PLITZI_JSON=1` answers every command as JSON, and a text written `-` is read from
+  stdin. **`run rehearse`** plays a plan out before any agent starts — the schedule by agent and role, the critical
+  path, the lead's review queue, the files several tasks change at once, and the run's length for each number of agents.
+- **Pages registered by being there** (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/cli`): `pagesIn(new
+  URL('./pages/', import.meta.url))` (`@plitzi/sdk-authoring/node`) loads every page of a folder — each module's default
+  export, a page or a family's list, the home page first — and `PageSpec.nav` (`{ label, order }`) with `navOf(pages)`
+  gives a layout its menu, `current: 'section'` for a page with others under it; `nav` is authoring only, and one it
+  cannot list is refused (`page-nav-invalid`). A new page is then a file of its own: no line in the entry, none in the
+  layout. The CLI follows the folder as imports (`space overview`, the runs' ownership, `space lint`'s unused files), by
+  the rule both share (`pageModulesIn`, `@plitzi/sdk-shared/project`).
 - **`plitzi explain` knows the template filters** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `explain currency`, `--list
   filters`, from a catalogue beside the filters that a test holds whole. **`'now'|date(…)`** is the moment the page is
   rendered, and **`<`, `>`, `<=`, `>=` order strings as text** — `r.date >= '2026-10-20'` was false for every row, as
@@ -71,3 +84,9 @@
   from the template. And **`--fill` works without `--click`**: what typing in a field changes, as a search box does; with a click, what
   the filling changed by itself is said apart. `--element` and `--state` read the page as the interaction left it, and a
   second `--element` is refused rather than replacing the first.
+- **`plitzi explain` knows a server action's steps** (`@plitzi/cli`, `@plitzi/sdk-server`): `explain list.put`, `--list
+  tasks` — what each does, what it answers and its params, read from the `@plitzi/sdk-server` the project installed, the
+  catalogue the builder draws them from. The twenty steps that had no description have one.
+- **`repeated-shape` tells forms apart by their fields** (`@plitzi/sdk-authoring`): an element's `subType` is part of
+  what it is — a date field is no number field, an `h2` no `h3` — so two forms asking for different fields are no longer
+  taken for one component (only fewer suggestions: copies alike in kind are still found).

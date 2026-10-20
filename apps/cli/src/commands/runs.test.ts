@@ -23,12 +23,17 @@ interface Answer {
   json: Record<string, unknown>;
 }
 
-const plitzi = (cwd: string, args: string[], env: Record<string, string> = {}): Promise<Answer> =>
+const plitzi = (
+  cwd: string,
+  args: string[],
+  env: Record<string, string> = {},
+  { input, json = true }: { input?: string; json?: boolean } = {}
+): Promise<Answer> =>
   new Promise(resolve => {
-    execFile(
+    const child = execFile(
       process.execPath,
-      ['--import', TSX, CLI, ...args, '--json'],
-      { cwd, env: { ...process.env, PLITZI_TASK_TOKEN: '', ...env }, timeout: 60_000 },
+      ['--import', TSX, CLI, ...args, ...(json ? ['--json'] : [])],
+      { cwd, env: { ...process.env, PLITZI_TASK_TOKEN: '', PLITZI_JSON: '', ...env }, timeout: 60_000 },
       (error, stdout) => {
         const last = stdout.trim().split('\n').at(-1) ?? '{}';
         let json: Record<string, unknown> = {};
@@ -41,6 +46,7 @@ const plitzi = (cwd: string, args: string[], env: Record<string, string> = {}): 
         resolve({ code: error && typeof error.code === 'number' ? error.code : 0, json });
       }
     );
+    child.stdin?.end(input ?? '');
   });
 
 let bench: Bench;
@@ -102,5 +108,31 @@ describe('plitzi run and plitzi task, as processes', () => {
     expect(held.code).toBe(REFUSAL_EXIT_CODES.claimed);
     expect(held.json).toMatchObject({ task: 't-home', holder: 'agent-1' });
     expect((await plitzi(bench.root, ['run', 'can-write', 'src/space/pages/about.ts'])).code).toBe(0);
+  }, 120_000);
+
+  it('knows the task it runs in from its copy, reads a text written - from stdin, and answers JSON for PLITZI_JSON', async () => {
+    await plitzi(bench.root, ['run', 'open', await bench.writePlan(benchPlan())]);
+    const taken = await plitzi(bench.root, ['task', 'take', 't-about', '--agent', 'agent-1']);
+    const work = String(taken.json.work);
+
+    // No token, no run, no agent said: the copy says who it is.
+    const context = await plitzi(work, ['task', 'context']);
+    expect(context).toMatchObject({ code: 0 });
+    expect(context.json).toMatchObject({ task: { id: 't-about' } });
+
+    const told = await plitzi(
+      work,
+      ['task', 'tell', '-'],
+      {},
+      { input: 'The "about" page keeps its "id": it is linked.' }
+    );
+    expect(told.code).toBe(0);
+    const inbox = await plitzi(bench.root, ['task', 'inbox'], { PLITZI_JSON: '1' }, { json: false });
+    expect(inbox.json).toMatchObject({
+      messages: [{ from: 't-about', text: 'The "about" page keeps its "id": it is linked.' }]
+    });
+
+    const asked = await plitzi(work, ['task', 'ask', 'Which title?', '--follow', '--timeout', '2s']);
+    expect(asked.json).toMatchObject({ said: expect.stringContaining('no answer yet after 2 s') as unknown });
   }, 120_000);
 });

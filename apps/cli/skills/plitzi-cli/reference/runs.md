@@ -1,14 +1,13 @@
 # A team of agents on one project: `plitzi run` and `plitzi task`
 
-Split a large job (a translated version, a new section) across a team of agents without any of them touching the
-person's project: each task works in a **copy**, the CLI checks and merges, and only **one final merge, approved by a
-person**, writes into the project. **One plan and one run at a time** per project. Every command takes `--json` — its
-answer carries `said`, the sentence a person would read — and every refusal has its own exit code (below).
+A large job split across a team of agents, none touching the person's project: each task works in a **copy**, the CLI
+checks and merges, and only **one final merge, approved by a person**, writes into it. One run at a time per project.
+`--json` on any command (or `PLITZI_JSON=1`) answers one object with `said`, the sentence a person reads; each refusal
+has its exit code (below). A text written `-` is read from stdin: no shell quoting.
 
-**The team.** The **lead** — team lead and software architect — plans, reviews, answers and closes the run. The tasks
-are worked by roles the plan names (`"role": "designer"`; a `developer` when left out): developers, designers,
-reviewers, testers, writers. `plitzi task next --role designer` picks the next task for a role; with `--follow` it waits
-(`--timeout` in minutes) for one, through a stop, and hands back first a task you hold that can go on.
+**The team.** The **lead** (team lead and architect) plans, reviews, answers and closes. Tasks name a role (`"role":
+"designer"`; `developer` when left out); `plitzi task next --role designer --follow` waits (`--timeout 90s|8m|1h`) for
+the next one, through a stop, handing back first a task you hold that can go on.
 
 ## The lead
 
@@ -20,40 +19,45 @@ reviewers, testers, writers. `plitzi task next --role designer` picks the next t
    ```json
    { "version": 1, "runId": "es-launch", "goal": "Spanish version",
      "tasks": [{ "id": "t-home", "title": "Translate home", "files": ["src/space/pages/home/index.ts"], "role": "writer",
-                 "dependsOn": [], "priority": "high", "estimateMinutes": 30, "acceptance": ["Reads in Spanish"] }] }
+                 "dependsOn": [], "priority": "high", "estimateMinutes": 30,
+                 "acceptance": ["Reads in Spanish",
+                   { "said": "The hero is in Spanish", "check": "plitzi page check / --url $PLITZI_URL --expect hero-title~Bienvenidos" }] }],
+     "notes": ["Dates are UTC: use lib/today.ts"] }
    ```
 
-   Ids: lowercase letters, digits, `-`, `_`. Something several tasks need (a component, tokens) is a task of its own the
-   others depend on. A new page is a file a task names that does not exist yet; it registers itself in the entry — with
-   `pages` one entry a line, two pages registered at once merge by themselves. A task that will change a file it does
-   not hold (the tokens, the layout) says so — `"touches": ["src/space/tokens.ts"]` — and `run plan` tells you which
-   tasks would change one file at once, before they meet at `complete`.
-3. `plitzi run plan plan.json --agents 3` — refused, every reason at once, for a repeated file, a cycle, an unknown task,
-   a path outside the source or another run going; otherwise expanded, what is shared and what imports a task's files
-   from outside the plan listed, estimated.
+   **Acceptance a command can tell** is `{ said, check }`: the check runs in the task's copy at `complete`, beside the
+   project's checks, and passes on exit 0 — `plitzi` in it is this CLI, `$PLITZI_URL` the copy served by its own start
+   script on a free port. `page check --expect <id>~<text>` fails when that element does not show the text. A line only a
+   reader can judge stays text. **`notes`** hold for the whole run — a trap, a convention — and reach every task with its
+   brief; `plitzi run note "…"` adds one while it runs.
+
+   Ids: lowercase letters, digits, `-`, `_`. What several tasks need (a component, tokens) is a task the others depend
+   on. A new page is a file that does not exist yet: where the space loads its pages by folder (`pagesIn`, with `nav`
+   for the menu) it touches nothing shared; otherwise it registers in the entry, one line each. A task that will change
+   a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
+3. `plitzi run plan plan.json --agents 3` — refused, every reason at once (a repeated file, a cycle, an unknown task, a
+   path outside the source, a check it cannot run, another run going); otherwise expanded, shared files and overlaps
+   listed, estimated. `plitzi run rehearse plan.json --agents 3 --roles designer=1` plays it out as `task next` would:
+   who works what when, the critical path, your review queue (`--review 5m`), files changed at once, and the length for
+   each number of agents. Nothing is opened.
 4. `plitzi run open plan.json --agents 3` — backs up every file it will touch; `--agents` is how many agents may work at
    once (usually 2–5; above 5 a person confirms) — one holding two tasks is one. `plitzi run preview` serves the run's
    work as it goes — each approval shows in it.
-5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port for its own server,
-   and follow: `plitzi run watch --until lead` in the background ends the moment something new needs you — a review, a
-   question, a block, a notice — each said once; run it again after acting (`plitzi run watch --json` follows every
-   change). **Talk to them:** a question an agent asks (`run status` shows it) is answered with `plitzi task message
-   t-home "…" --reply-to m3`; `plitzi task message all "…"` tells every task in hand, and `plitzi task message @dev-1
-   "…"` an agent by name — between tasks too: its `task next` hands it over, and `--follow` wakes for it.
-6. **Review** each task in review: `plitzi task show t-home` is all of it in one place — its acceptance, checks,
-   **agreements**, notes, what was said, each file's diff and what to run next; `plitzi run preview --task t-home`
-   serves its copy as it went to review, until it leaves review. A task that asked you something is approved once you
-   answer it. Then `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title` — its copy
-   brings what the run approved meanwhile. Three rounds go to a person, who approves it as it is (`task review
-   --approve`, confirmed in their own terminal) or answers it (`task unblock --answer`). A task that went to review with
-   failing checks (`--known-failure`) says why and which task fixes it — weigh that.
-7. **Someone changed a file while the agent worked on it** → its approval stops, naming the file. You decide: `--approve
-   --merge` when the two changes go together line by line (the refusal says when they do: both kept, the checks run on
-   the result), `--approve --overwrite` (its version wins at the finish, said in `run status` and the report, the other
-   kept) or `--changes` (the task redoes its change on the project's version). A change made after approval puts the
-   finish into **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run
-   continue`. **The brake** stops the run when completions keep being refused or checks keep failing: `run status` says
-   why; deal with it, then `plitzi run resume`.
+5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
+   `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
+   notice — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
+   task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
+   an agent by name, between tasks too.
+6. **Review:** `plitzi task show t-home` is all of it — acceptance and what its checks answered, checks, agreements,
+   notes, what was said, each file's diff; `plitzi run preview --task t-home` serves its copy. Answer what it asked,
+   then `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds go to
+   a person (`task review --approve` in their terminal, or `task unblock --answer`). A `--known-failure` says why and
+   which task fixes it — weigh that.
+7. **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when
+   the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
+   other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
+   **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
+   **The brake** stops the run when completions keep being refused: `run status` says why; then `plitzi run resume`.
 8. **Close it:** `plitzi run report` shows what the CLI saw; write the summary — what was done, what went wrong, what
    is left — and `plitzi run report --summary summary.md`. Then `plitzi run finish` (the whole diff, checked) and tell
    the person to run `plitzi run finish --apply` (`--keep-backup` keeps the files it overwrites). The run goes; its
@@ -63,8 +67,11 @@ reviewers, testers, writers. `plitzi task next --role designer` picks the next t
 
 ```bash
 plitzi task take t-home --run es-launch --agent writer-1 --role writer --json   # → token, work (its copy), files
-export PLITZI_TASK_TOKEN=<token>           # or --token on every command
+cd <work> && plitzi task context           # the brief: acceptance and its checks, run notes, review, agreements
 ```
+
+Run inside `work`, every command knows its task, run and agent — the copy says who it is (`tmp/plitzi-task.json`).
+Anywhere else, `export PLITZI_TASK_TOKEN=<token>` or `--token`.
 
 Name yourself on every command (`--agent writer-1`, or `PLITZI_AGENT`): `task next` and the agent limit know what is
 yours by it.
@@ -99,7 +106,8 @@ yours by it.
   then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes. `agent-limit` (24) on `take`: hand back to the lead, which starts it when one goes to review.
-- **Done:** `plitzi task complete` — compared by fingerprint, the project's checks run in the copy. **A task never ends
+- **Done:** `plitzi task complete` — compared by fingerprint, the project's checks and the acceptance's checks run in
+  the copy (run each check yourself first; serve the copy for one that names `$PLITZI_URL`). **A task never ends
   with failing checks** — lint, types, tests: fix them. Only for a reason that weighs, said: `plitzi task complete
   --known-failure "why" --fixed-by <task>`. A check that fails the same way without your change (a person's edit,
   another task's work) is not yours: it goes to review marked `preexisting`, and the lead is told. Changes requested

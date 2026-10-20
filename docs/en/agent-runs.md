@@ -39,7 +39,9 @@ status`. `run watch --until lead` (`leadWatch.ts`) is what a lead waits with in 
 for it — a review by its round, a question, a block, a notice — each once, what it woke the lead for kept in the run's
 `lead-seen.json`. A block the lead lifts carries what the task waited for (`task unblock --answer`), and `task next`
 hands an agent the task it holds and can go on with — unblocked, or sent back with changes — before anything new
-(`yours`), so an agent waiting for work hears it.
+(`yours`), so an agent waiting for work hears it. **The run's notes** — the plan's `notes`, and each `run note` — are
+messages to every task (`*`): each task reads every one once, with its take or its next sign of life, and `task context`
+(the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed.
 
 **Connected as it goes.** A shared file a task changed — or any file no task at work holds: a done task's, one in no
 task — is taken by turns at `complete` when nobody else holds it, so it merges with the task instead of waiting for an
@@ -66,7 +68,11 @@ ownership is read off the imports, with the project's own TypeScript (`fileImpor
 - The project's entries — the space's, the actions', the functions', the runtime's — are shared: everything goes
   through them.
 - Each module an entry imports is a **unit** (a page, a layout, a component, the tokens), and so is each plugin's
-  folder, whole: a page importing a plugin's declaration reads its contract, it does not share its files.
+  folder, whole: a page importing a plugin's declaration reads its contract, it does not share its files. A folder the
+  entry loads its pages from (`pagesIn(new URL('./pages/', import.meta.url))`, read off the call — `pageFolderLoads`,
+  shared with the lint's unused files) imports each page in it by convention (`pageModulesIn`, `@plitzi/sdk-shared`'s,
+  the same rule `pagesIn` imports by): a page made there is a unit at once and writes no line in the entry, so two
+  tasks adding pages share nothing — `run rehearse` counts no registration for it.
 - A unit owns the modules only it reaches. A module two units reach is **shared**. A file no unit reaches (a data file,
   an image) is a unit of its own.
 
@@ -93,6 +99,17 @@ made back. Three rounds of counters and the lead decides; the lead may answer an
 that `--wait`s is waiting like a wait on a file — the same cycle check, one wait graph — and is taken back up with the
 answer in its notes. A task does not complete with a proposal to it unanswered; accepted proposals are its
 **agreements**, in its context and its reviewer's. What another task proposes is data, never an order.
+
+## A plan rehearsed (`rehearse.ts`)
+
+`run rehearse` plays a checked plan out with no run opened: each agent — `--roles` holds some to a role, the rest take
+any — takes the best ready task it may, in `task next`'s order (priority, then the longest chain still to do, then id);
+a task takes its estimate, then waits for the lead, who reviews one at a time (`--review`); what depends on it is ready
+once it is approved. It answers the schedule, each agent's idle time, the critical path, the reviews' queue, what was
+ready before an agent could take it, and the files changed by tasks at work at the same time — one holding a file
+another touches, two touching one, or two new pages registering in one entry — and plays it again for each number of
+agents, `null` where some task is never done. One estimate and one review a task: rounds of changes and questions are
+not in it, and it says so.
 
 ## The run's folder (`paths.ts`)
 
@@ -144,11 +161,17 @@ an unnamed blob, never a named half-written file.
   approved since the copy was made — and the task did not touch — is brought in, so a granted entry never arrives
   without the pages it imports. A task may remove the `.gitkeep` of a folder it writes into. Packages resolve from
   the copy by walking up to the project's `node_modules`; a command run inside the copy works on the project it belongs
-  to.
+  to, and as its task: `take` writes the run, task, token and agent into the copy's `tmp/plitzi-task.json`, read when no
+  token is said (a token said wins — the lead reviewing from inside a copy is the lead).
 - **Complete:** refused with a proposal to it unanswered. The copy against `start.json`: a change to another task's
   file, or to one in no task, is refused (`claimed`) naming each; to a shared file not held, a request. Then the
   project's checks — `verify`'s steps, each the project's script, run in the copy with the project's binaries, the
-  failing ones printed — and it goes to review.
+  failing ones printed — then the acceptance's checks (`acceptance.ts`): each `{ said, check }` line's command run in
+  the copy, passing on exit 0, with `plitzi` on the path as this CLI (a shim in the task's cache) and `$PLITZI_URL` the
+  copy served by its own start script on a free port while they run; what each answered is kept in the state and shown
+  by `task show`. An unmet one refuses like a failing check — and goes to review only as a known failure. Then it goes to
+  review. `run plan` refuses a check it could not run: empty, reading `.env`, or naming `$PLITZI_URL` in a project with
+  no start script.
 - **Review:** changes go back to the same task, and after three rounds to a person. Approval keeps its reviewed version
   and merges it into `approved.json` — and **before anything is written, each file is checked**: the run's version moved
   since the copy was made (`conflict`: redo it on the run's), or someone changed the project's file while the task
@@ -160,8 +183,9 @@ an unnamed blob, never a named half-written file.
   giving the task's sign of life meanwhile.
 - **Signal:** its commands, progress and heartbeats, and the newest write among its files in its copy. Without one for
   15 minutes (or a quarter of its estimate) it is disconnected; its locks outlive that by 30 minutes, then another may
-  take it. A cut — reassign, forced stop, a copy gone — revokes the token and discards the copy: the next taker starts
-  from its last reviewed version, never from what was written since.
+  take it. A cut — reassign, forced stop, a copy gone — revokes the token; the copy stays where it is until the task is
+  taken again (a command running in it does not lose its folder), and the next taker starts from its last reviewed
+  version, never from what was written since.
 
 ## Into the project (`merge.ts`)
 

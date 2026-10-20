@@ -16,7 +16,7 @@ import { isRunRefusal } from './refusal';
 import { buildReport, writeSummary } from './report';
 import { attachRun, checkPlanFile, loadRun, openRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from './run';
 import { showTask } from './show';
-import { askLead, messageTasks, readInbox, tellLead } from './talk';
+import { askLead, messageTasks, noteRun, readInbox, tellLead } from './talk';
 import {
   blockTask,
   canWrite,
@@ -205,6 +205,28 @@ describe('a plan held to the rules', () => {
     expect(problems.some(problem => problem.includes('"t-nowhere", which is not in the plan'))).toBe(true);
     expect(problems.some(problem => problem.includes('.env holds credentials'))).toBe(true);
     expect(problems.some(problem => problem.includes('node_modules/x.js is not the project'))).toBe(true);
+  });
+
+  it('refuses an acceptance it could not hold: a line saying nothing, an empty check, .env read, nothing to serve', async () => {
+    const plan = benchPlan();
+    plan.tasks[0].acceptance = [
+      ' ',
+      { said: 'The hero says hello', check: '' },
+      { said: 'The key is set', check: 'grep PLITZI_SECRET .env' },
+      { said: 'The page answers', check: 'curl -sf "$PLITZI_URL/"' },
+      { said: 'The example lists the key', check: 'grep PLITZI_SECRET .env.example' }
+    ];
+
+    const refused = await checkPlan(bench.root, plan, await readOwnership(bench.root), 4).catch(
+      (error: unknown) => error
+    );
+    const problems = (refused as { problems: string[] }).problems.join('\n');
+
+    expect(problems).toContain('a line of its acceptance says nothing');
+    expect(problems).toContain('"The hero says hello" has an empty check');
+    expect(problems).toContain('the check of "The key is set" reads .env');
+    expect(problems).toContain('names $PLITZI_URL, and the project has no start script');
+    expect(problems).not.toContain('The example lists the key');
   });
 
   it('finds a cycle and names it', () => {
@@ -1839,6 +1861,73 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     await resumeRun(lead(), 'es-launch');
     expect((await again).task).toBeDefined();
   });
+
+  it('the run’s notes reach every task: in hand with its next sign of life, taken later with its take', async () => {
+    const plan = benchPlan();
+    plan.notes = ['A template’s now answers nothing in the published packages: use lib/today.ts'];
+    await open(plan);
+    const home = await take('agent-1', 't-home');
+    expect(home.messages.map(message => message.text)).toEqual([plan.notes[0]]);
+
+    await noteRun(lead(), 'es-launch', 'Prices in euros, two decimals');
+    expect((await reportProgress(home.ctx, 'es-launch', 't-home', {})).messages.map(message => message.text)).toEqual([
+      'Prices in euros, two decimals'
+    ]);
+    const menu = await take('agent-2', 't-menu');
+    expect(menu.messages.map(message => message.text)).toEqual([plan.notes[0], 'Prices in euros, two decimals']);
+    expect((await taskContext(menu.ctx, 'es-launch', 't-menu')).runNotes).toHaveLength(2);
+  });
+
+  it('holds a task to its acceptance by the checks its plan gives: unmet, the complete is refused; met, the lead sees it', async () => {
+    const plan = benchPlan();
+    plan.tasks[0].acceptance = [
+      'Home reads in Spanish',
+      { said: 'The hero says Hola', check: 'grep -q Hola src/space/pages/home/hero.ts' }
+    ];
+    await open(plan);
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+
+    const refused = await refusal(completeTask(home.ctx, 'es-launch', 't-home'));
+    expect([refused.code, refused.message]).toEqual([
+      'checks-failed',
+      expect.stringContaining('"The hero says Hola"') as unknown
+    ]);
+
+    await writeInCopy(
+      home.work,
+      'src/space/pages/home/hero.ts',
+      `export const hero = ${JSON.stringify({ text: 'Hola' })};\n`
+    );
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    expect((await showTask(lead(), 'es-launch', 't-home')).accepted).toEqual([
+      { said: 'The hero says Hola', check: 'grep -q Hola src/space/pages/home/hero.ts', ok: true }
+    ]);
+  });
+
+  it('serves the copy for a check that names $PLITZI_URL, and stops it after', async () => {
+    const answer = 'served copy';
+    await bench.write(
+      'serve.mjs',
+      `import http from 'node:http';\n\nhttp.createServer((q, r) => r.end('${answer}')).listen(process.env.PORT);\n`
+    );
+    await bench.write(
+      'package.json',
+      `${JSON.stringify({ name: 'bench', type: 'module', private: true, scripts: { start: 'node serve.mjs' } })}\n`
+    );
+    await bench.write(
+      'check.mjs',
+      `const text = await (await fetch(process.env.PLITZI_URL)).text();\nprocess.exit(text === '${answer}' ? 0 : 1);\n`
+    );
+    const plan = benchPlan();
+    plan.tasks[0].acceptance = [{ said: 'The copy answers', check: 'node check.mjs $PLITZI_URL' }];
+    await open(plan);
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    expect((await showTask(lead(), 'es-launch', 't-home')).accepted?.[0]?.ok).toBe(true);
+  }, 30_000);
 
   it('a check that fails without the task too is not the task’s: it goes to review, said to the lead', async () => {
     await open();

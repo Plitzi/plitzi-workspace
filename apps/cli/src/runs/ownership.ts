@@ -43,6 +43,11 @@ export interface Ownership {
   importedBy: Map<string, string[]>;
   /** Imports that name a file that is not there, said rather than dropped. */
   missing: string[];
+  /**
+   * The folders the project loads its pages from by convention (`pagesIn`): a page made in one is imported by being
+   * there, and writes no line in an entry.
+   */
+  pageFolders: string[];
 }
 
 const cliRequire = createRequire(import.meta.url);
@@ -92,6 +97,7 @@ export const readOwnership = async (root: string): Promise<Ownership> => {
   const ts = typeScriptFor(root);
   const edges = new Map<string, string[]>();
   const missing: string[] = [];
+  const pageFolders = new Set<string>();
 
   const importsOf = async (file: string): Promise<string[]> => {
     const known = edges.get(file);
@@ -111,6 +117,7 @@ export const readOwnership = async (root: string): Promise<Ownership> => {
       .map(found => projectPath(root, found))
       .filter(found => !found.startsWith('..') && !path.isAbsolute(found));
     missing.push(...imports.missing.map(raw => `${file} imports "${raw}", which is not there`));
+    imports.pageFolders.forEach(folder => pageFolders.add(projectPath(root, folder)));
     edges.set(file, inside);
 
     return inside;
@@ -205,8 +212,24 @@ export const readOwnership = async (root: string): Promise<Ownership> => {
       .sort()
   }));
 
-  return { units, entries, ownerOf, shared, importedBy, missing: [...new Set(missing)].sort() };
+  return {
+    units,
+    entries,
+    ownerOf,
+    shared,
+    importedBy,
+    missing: [...new Set(missing)].sort(),
+    pageFolders: [...pageFolders].sort()
+  };
 };
+
+/** Whether `file` is a page of a folder the project loads its pages from: itself in it, or a folder's index there. */
+export const inPageFolder = (ownership: Ownership, file: string): boolean =>
+  ownership.pageFolders.some(folder => {
+    const rest = file.startsWith(`${folder}/`) ? file.slice(folder.length + 1).split('/') : [];
+
+    return rest.length === 1 || (rest.length === 2 && /^index\.[cm]?[jt]sx?$/.test(rest[1]));
+  });
 
 /** The files a task writes when it names `files`: each unit it names brings what that unit owns. */
 export const expandFiles = (ownership: Ownership, files: readonly string[]): string[] => {

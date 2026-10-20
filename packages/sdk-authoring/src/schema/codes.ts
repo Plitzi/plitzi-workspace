@@ -137,6 +137,11 @@ export const AUTHORING_CODES = {
     means: 'a page, a layout or a folder filed in a folder the space does not declare',
     fix: "declare it on the space — `pageFolders: [{ id: 'docs', name: 'Docs' }]`, its slug starting its pages' addresses — or use the name it suggests"
   },
+  'page-nav-invalid': {
+    kind: 'refused',
+    means: "a page's `nav` without a label, with an order that is no number, or on a page with no one address to list",
+    fix: "`nav: { label: 'Pets', order: 3 }` on a page whose path takes no param — a page per record is reached from its list"
+  },
   'folder-cycle': {
     kind: 'refused',
     means: 'a page folder inside itself',

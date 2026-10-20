@@ -1,6 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { pageModulesIn } from '@plitzi/sdk-shared/project';
+
+import { pageFolderLoads } from '../pack/source';
+
 import type { SpaceSourceFile } from './types';
 import type TypeScript from 'typescript';
 
@@ -82,6 +86,9 @@ export const readSpaceSources = async (
         }
       }
     }
+
+    // A folder of pages it loads by convention: each page there is part of the space by being there.
+    queue.push(...pageFolderLoads(ts, next, text).flatMap(folder => pageModulesIn(folder)));
   }
 
   const unreached = (await filesUnder(path.join(root, spaceDir)))

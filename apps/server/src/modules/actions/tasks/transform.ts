@@ -12,6 +12,8 @@ const template: ActionTask<{ template: string }> = {
   namespace: 'transform',
   action: 'template',
   title: 'Template',
+  description:
+    "A template rendered against the run's input and the steps before it; answers `value` — text, or the JSON document it writes.",
   rawParams: true,
   params: {
     template: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Template' }
@@ -26,6 +28,7 @@ const json: ActionTask<{ value: string }> = {
   namespace: 'transform',
   action: 'json',
   title: 'Parse JSON',
+  description: 'Reads a JSON text into a value; answers `value`. A text that is not JSON fails the step.',
   params: {
     value: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Value' }
   },

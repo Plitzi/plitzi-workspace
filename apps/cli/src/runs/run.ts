@@ -4,6 +4,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { createExclusive, fingerprint, readJson, readOptional, sizeOf, writeJson } from './files';
+import { EVERYONE, LEAD, sendMessage } from './messages';
 import { isApprovedManifest, isBaseManifest, isRunPlan, isRunRecord, isSharedManifest } from './model';
 import { readOwnership } from './ownership';
 import { activeRunFile, ID, runPaths, runsDir, taskPaths } from './paths';
@@ -24,6 +25,7 @@ import type {
   SharedManifest,
   TaskState
 } from './model';
+import type { Ownership } from './ownership';
 import type { RunPaths } from './paths';
 import type { CheckedPlan } from './plan';
 
@@ -427,9 +429,20 @@ const readPlanFile = async (file: string): Promise<RunPlan> => {
 /** `plitzi run plan`: the plan held to the rules, expanded and estimated — nothing written. */
 export const checkPlanFile = async (ctx: RunContext, file: string, agents: number): Promise<CheckedPlan> => {
   await assertNoOtherRun(ctx);
+
+  return (await readCheckedPlan(ctx.root, file, agents)).checked;
+};
+
+/** A plan file read and checked against the project as it is, with the ownership it was checked by — no run touched. */
+export const readCheckedPlan = async (
+  root: string,
+  file: string,
+  agents: number
+): Promise<{ checked: CheckedPlan; ownership: Ownership }> => {
   const plan = await readPlanFile(file);
+  const ownership = await readOwnership(root);
   try {
-    return await checkPlan(ctx.root, plan, await readOwnership(ctx.root), agents);
+    return { checked: await checkPlan(root, plan, ownership, agents), ownership };
   } catch (error) {
     if (error instanceof PlanRefusal) {
       throw new RunRefusal('invalid', error.message, { problems: error.problems });
@@ -521,6 +534,12 @@ export const openRun = async (ctx: RunContext, file: string, agents: number): Pr
   // The plan as its lead wrote it, last: a folder with a plan and a record is a run.
   await writeJson(paths.plan, plan);
   await writeJson(paths.record, record);
+  // The notes the plan carries are the run's memory from its first take on.
+  const opened = await loadRun(ctx, plan.runId);
+  for (const text of plan.notes ?? []) {
+    await sendMessage(ctx, opened, { from: LEAD, to: EVERYONE, text });
+  }
+
   await logRun(ctx, paths, { action: 'open', tasks: checked.tasks.length, backedUp: touched.length });
 
   return { checked, paths, backedUp: touched.length };

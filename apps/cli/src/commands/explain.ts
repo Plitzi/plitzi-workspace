@@ -6,6 +6,7 @@ import { PROJECT_LAYOUT_CODES } from '@plitzi/sdk-shared/project';
 import { apiDeclarations, apiText } from './apiDeclarations';
 import { findProject } from './existingProject';
 import { pluginText, projectPlugins } from './projectPlugins';
+import { serverTasks, serverTaskText } from './serverTasks';
 import { fail } from './terminal';
 import { LINT_RULES } from '../lint/catalog';
 
@@ -83,10 +84,29 @@ const textOf = (explanation: AnyExplanation): string =>
 const kinds = Object.values(EXPLAIN_KINDS).join(', ');
 
 export const explainCommand = async (name: string | undefined, options: ExplainOptions): Promise<void> => {
+  // The steps a server action runs are the project's sdk-server's: read from the one installed, not a catalogue here.
+  if (options.list === 'tasks') {
+    const project = await findProject(process.cwd());
+    const read = await serverTasks(project?.root ?? process.cwd());
+    if ('problem' in read) {
+      fail(`No server steps to list: ${read.problem}.`);
+
+      return;
+    }
+
+    console.log(
+      options.json
+        ? JSON.stringify(read.tasks.map(task => ({ name: task.name, summary: task.description ?? task.title })))
+        : read.tasks.map(task => `${task.name.padEnd(32)} ${chalk.dim(task.description ?? task.title)}`).join('\n')
+    );
+
+    return;
+  }
+
   if (options.list !== undefined) {
     const kind = explainKindOf(options.list);
     if (!kind) {
-      fail(`--list takes ${kinds}, not "${options.list}".`);
+      fail(`--list takes ${kinds}, tasks (a server action's steps), not "${options.list}".`);
 
       return;
     }
@@ -116,6 +136,16 @@ export const explainCommand = async (name: string | undefined, options: ExplainO
 
   const explanations = explainName(name);
   if (explanations.length === 0) {
+    // A step of a server action (`list.put`): the project's sdk-server says what it is and what it takes.
+    const project = await findProject(process.cwd());
+    const read = await serverTasks(project?.root ?? process.cwd());
+    const step = 'tasks' in read ? read.tasks.find(task => task.name === name) : undefined;
+    if (step) {
+      console.log(options.json ? JSON.stringify([step]) : serverTaskText(step));
+
+      return;
+    }
+
     // Not a name the catalogues hold: an export of a @plitzi package, read from the types the project installed.
     const api = apiDeclarations(process.cwd(), name);
     if (api.length > 0) {
@@ -125,7 +155,6 @@ export const explainCommand = async (name: string | undefined, options: ExplainO
     }
 
     // An element of the project's own, by the type it is placed by: said as one the SDK ships is.
-    const project = await findProject(process.cwd());
     const own = project
       ? (await projectPlugins(project.root)).find(plugin => plugin.declaration.type === name)
       : undefined;
@@ -137,7 +166,7 @@ export const explainCommand = async (name: string | undefined, options: ExplainO
 
     fail(
       [
-        `"${name}" is no element, step, trigger, code, transformer, helper or template filter, nor an export of a @plitzi package installed here. See what there is: --list ${kinds}.`,
+        `"${name}" is no element, step, trigger, code, transformer, helper or template filter, no step of a server action, nor an export of a @plitzi package installed here. See what there is: --list ${kinds}, tasks.`,
         `A name of the project's own code is read where it is written: \`grep -rn "${name}" src/\`.`
       ].join('\n')
     );

@@ -81,6 +81,7 @@ export const PAGE_SPEC_KEYS = [
   'class',
   'flows',
   'flag',
+  'nav',
   'body'
 ] as const satisfies readonly (keyof PageSpec)[];
 

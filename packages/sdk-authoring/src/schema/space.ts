@@ -61,6 +61,7 @@ import { withKeyframesCss } from './keyframes';
 import { fixSpace, lintSpace } from './lint';
 import { CUSTOM_TYPE } from './lint/context';
 import { MAIN_ATTRIBUTES } from './mainAttributes';
+import { assertPageNav, folderPrefixes, routeOf } from './nav';
 import { withNotificationsCss } from './notifications';
 import { familyOf } from './pageFamily';
 import { refusalOf, SpaceRefusedError } from './refusals';
@@ -83,7 +84,6 @@ import type {
   ElementStyleSpec,
   LayoutRef,
   LayoutSpec,
-  PageFolderSpec,
   PageSpec,
   SpaceSpec,
   StepSpec
@@ -1442,15 +1442,8 @@ class SpaceAuthor {
       }
     }
 
-    for (const folder of declared) {
-      const segments: string[] = [];
-      let current: PageFolderSpec | undefined = folder;
-      while (current) {
-        segments.unshift(current.slug ?? current.id);
-        current = current.parent === undefined ? undefined : byId.get(current.parent);
-      }
-
-      this.folderPrefixes.set(folder.id, segments.filter(Boolean).join('/'));
+    for (const [id, prefix] of folderPrefixes(declared)) {
+      this.folderPrefixes.set(id, prefix);
     }
 
     return declared.map(folder => ({
@@ -1508,13 +1501,7 @@ class SpaceAuthor {
   }
 
   private routeFor(page: PageSpec): string {
-    if (page.isDefault) {
-      return '/';
-    }
-
-    const prefix = page.folder === undefined ? '' : (this.folderPrefixes.get(page.folder) ?? '');
-
-    return pathForSlug([prefix, page.slug].filter(Boolean).join('/'));
+    return routeOf(page, this.folderPrefixes);
   }
 
   private pathFor(page: PageSpec, index: number): string {
@@ -1529,6 +1516,7 @@ class SpaceAuthor {
     const path = this.pathFor(page, index);
     const id = page.id ?? this.nextId('page');
     this.assertFlowShapes(page.flows, `Page "${page.name}"`);
+    assertPageNav(page);
     if (page.folder !== undefined && !this.folderPrefixes.has(page.folder)) {
       throw new AuthoringError(
         'folder-undeclared',

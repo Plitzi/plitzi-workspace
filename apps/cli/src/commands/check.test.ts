@@ -33,18 +33,23 @@ describe('plitzi page check / a list’s rows', () => {
         <li data-plitzi-el="feed-row"></li>
         <li data-plitzi-el="feed-row"><span data-plitzi-el="feed-badge"></span></li>
       </ul>
-      <ul data-plitzi-el="empty"></ul>`;
+      <ul data-plitzi-el="empty"></ul>
+      <ol data-plitzi-el="dog-vaccines"><li data-plitzi-el="vaccine-row"></li><li data-plitzi-el="vaccine-row"></li></ol>
+      <ol data-plitzi-el="dog-vaccines"><li data-plitzi-el="vaccine-row"></li></ol>`;
 
     expect(
       renderedRowsInPage([
         { id: 'feed', selector: marked('feed'), row: [marked('feed-badge'), marked('feed-row')] },
         { id: 'empty', selector: marked('empty'), row: [marked('empty-row')] },
-        { id: 'hits', selector: marked('hits'), row: [marked('hits-row')] }
+        { id: 'hits', selector: marked('hits'), row: [marked('hits-row')] },
+        { id: 'dog-vaccines', selector: marked('dog-vaccines'), row: [marked('vaccine-row')] }
       ])
     ).toEqual([
-      ['feed', 3],
-      ['empty', 0],
-      ['hits', null]
+      ['feed', [3]],
+      ['empty', [0]],
+      ['hits', null],
+      // A list inside another's row: its rows in each copy, not only the first's.
+      ['dog-vaccines', [2, 1]]
     ]);
   });
 
@@ -53,6 +58,9 @@ describe('plitzi page check / a list’s rows', () => {
     expect(listText('home-writer-list', { rendered: 4, source: 8 })).toBe('home-writer-list 4 of 8 rows');
     expect(listText('search-hits', { rendered: null, source: 16 })).toBe('search-hits not rendered (16 in its source)');
     expect(listText('feed', { rendered: 0, source: null })).toBe('feed reads nothing');
+    expect(listText('vaccineRows', { rendered: 9, source: 9, copies: [2, 3, 4] })).toBe(
+      'vaccineRows 9 rows in 3 copies (2, 3, 4) of 9 in its source'
+    );
   });
 });
 

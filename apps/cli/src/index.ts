@@ -29,6 +29,7 @@ import {
   runFinish,
   runOpen,
   runPlan,
+  runRehearse,
   runPreview,
   runPrune,
   runReport,
@@ -50,6 +51,7 @@ import {
   taskClaim,
   taskClaims,
   taskComplete,
+  runNote,
   taskContextCommand,
   taskShow,
   taskTell,
@@ -88,7 +90,7 @@ import { where, WHERE_READINGS } from './commands/where';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
-import { count, fill, fraction, positiveInteger, widths } from './options';
+import { count, duration, expectation, fill, fraction, positiveInteger, roleCounts, widths } from './options';
 import { NEEDS } from './runs/model';
 import { DEFAULT_AGENTS } from './runs/plan';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
@@ -413,6 +415,12 @@ pageGroup
   .option('--click <id>', 'Click one element once the page settles, and say what it changed — or that nothing did')
   .addOption(
     new Option(
+      '--expect <id~text>',
+      'The element shows this text (any case), as the page was left — or the check fails: once per element'
+    ).argParser(expectation)
+  )
+  .addOption(
+    new Option(
       '--fill <id=value>',
       'Fill a field as a visitor types in it — before the --click, or alone, saying what typing in it changed (a search box); once per field, a box takes true or false'
     ).argParser(fill)
@@ -504,6 +512,12 @@ pageGroup
   .option(
     '--click <element...>',
     'Click these in order once the page settles — each its name or a CSS selector, inside a plugin too — picturing what each changed (--frames pictures --every ms apart after each)'
+  )
+  .addOption(
+    new Option(
+      '--fill <id=value>',
+      'Type into a field first, as page check --fill does — before each --click, or alone, then pictured: once per field'
+    ).argParser(fill)
   )
   .option('--sheet', 'Every picture taken — before, after each click, each frame — on one contact sheet')
   .option(
@@ -848,6 +862,20 @@ runGroup
   .action((file: string, options: PlanOptions) => runPlan(file, options));
 
 runGroup
+  .command('rehearse')
+  .description(
+    'Play a plan out before any agent starts: who works what when, the critical path, the lead’s reviews, the files several tasks change at once, and how many agents are worth it — nothing opened'
+  )
+  .argument('<file>', 'The plan, as plitzi run plan takes it')
+  .option('--agents <n>', 'How many agents at once', positiveInteger, DEFAULT_AGENTS)
+  .option('--roles <role=n,…>', 'Agents held to a role — designer=1,writer=2; the rest take any task', roleCounts)
+  .option('--review <duration>', 'How long the lead takes over one review (90s, 8m)', duration, 5 * 60_000)
+  .option(...JSON_OPTION)
+  .action((file: string, options: PlanOptions & { roles?: Record<string, number>; review?: number }) =>
+    runRehearse(file, options)
+  );
+
+runGroup
   .command('open')
   .description(
     'Open a run from a plan: its folder, every file it touches backed up — a person confirms above the threshold'
@@ -877,6 +905,16 @@ runGroup
   .action((run: string | undefined, options: RunCommandOptions) => runStatus(run, options));
 
 runGroup
+  .command('note')
+  .description(
+    'Tell every task what holds for the whole run — a known issue, a decision: the ones in hand and those taken later'
+  )
+  .argument('<text>', 'The note — or - to read it from stdin')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((text: string, options: RunCommandOptions) => runNote(text, options));
+
+runGroup
   .command('watch')
   .description(
     'Follow a run: printed again whenever it changes, until it finishes — one JSON object a line with --json'
@@ -889,7 +927,12 @@ runGroup
       'End the moment something new needs them — a review, a question, a block, a notice — each said once'
     ).choices(['lead'])
   )
-  .option('--timeout <minutes>', 'With --until: how long to wait before ending with nothing new', positiveInteger, 25)
+  .option(
+    '--timeout <duration>',
+    'With --until: how long to wait before ending with nothing new (90s, 8m, 1h; a number is minutes)',
+    duration,
+    25 * 60_000
+  )
   .option(...JSON_OPTION)
   .action((run: string | undefined, options: WatchRunOptions) => runWatch(run, options));
 
@@ -1047,7 +1090,7 @@ taskGroup
     'Only a task for these roles, separated by commas: developer, designer, reviewer, tester, writer…'
   )
   .option('--follow', 'Wait until one is ready — or every task of the role is done (finished: true)')
-  .option('--timeout <minutes>', 'With --follow: give up after this long, said', positiveInteger, 30)
+  .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, 30 * 60_000)
   .option(...RUN_OPTION)
   .option(...JSON_OPTION)
   .action((options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number }) => taskNext(options));
@@ -1092,7 +1135,12 @@ taskGroup
   )
   .argument('<file>', 'The project file')
   .option('--follow', 'Stay until the file is yours, giving the task’s sign of life meanwhile')
-  .option('--timeout <minutes>', 'With --follow: give up after this long, said (exit 11)', positiveInteger, 30)
+  .option(
+    '--timeout <duration>',
+    'With --follow: give up after this long, said, exit 11 (90s, 8m, 1h)',
+    duration,
+    30 * 60_000
+  )
   .option(...TOKEN_OPTION)
   .option(...JSON_OPTION)
   .action((file: string, options: RunCommandOptions & { follow?: boolean; timeout?: number }) =>
@@ -1225,7 +1273,7 @@ taskGroup
   .description('Ask the lead — stuck or unsure: the answer comes with your next command, or --follow for it')
   .argument('<text>', 'The question')
   .option('--follow', 'Stay until the lead answers, giving the task’s sign of life meanwhile')
-  .option('--timeout <minutes>', 'With --follow: give up after this long, said', positiveInteger, 30)
+  .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, 30 * 60_000)
   .option(...TOKEN_OPTION)
   .option(...JSON_OPTION)
   .action((text: string, options: RunCommandOptions & { follow?: boolean; timeout?: number }) =>
@@ -1304,18 +1352,55 @@ taskGroup
 
 taskGroup
   .command('context')
-  .description('What a task needs: requests and their diffs, related work and notes, contracts, the memory, its files')
+  .description(
+    'A task’s brief: what is asked, what holds for the whole run, what a review asked, what was agreed — --json for its files and diffs too'
+  )
   .argument('[task]', 'The task — the token’s when left out')
   .option(...TOKEN_OPTION)
   .option(...RUN_OPTION)
-  .option('--json', 'JSON — what it answers anyway; accepted as on every other command')
-  .action((task: string | undefined, options: RunCommandOptions) =>
-    taskContextCommand(task, { ...options, json: true })
-  );
+  .option(...JSON_OPTION)
+  .action((task: string | undefined, options: RunCommandOptions) => taskContextCommand(task, options));
+
+/** What was piped in, read once: the text a `-` stands for. */
+let piped: Promise<string> | undefined;
+const readPiped = (): Promise<string> =>
+  (piped ??= new Promise((resolve, reject) => {
+    if (process.stdin.isTTY) {
+      reject(new Error('"-" reads the text from stdin, and nothing is piped in: echo "…" | plitzi task ask -'));
+
+      return;
+    }
+
+    let text = '';
+    process.stdin.setEncoding('utf-8');
+    process.stdin.on('data', (chunk: string) => (text += chunk));
+    process.stdin.on('end', () => resolve(text.replace(/\n$/, '')));
+    process.stdin.on('error', reject);
+  }));
 
 // Every command of a run says who calls it, for the run's log: the same option everywhere. And one that names its run
 // as an optional argument takes `--run` as well, as every task command does: an agent writes it one way.
 for (const group of [runGroup, taskGroup]) {
+  // A text written as `-` — a question, a note, a reason — is read from stdin: no quoting of a shell to get right.
+  group.hook('preAction', async (_group, action) => {
+    // An agent that reads every answer as JSON says so once, for its whole shell, not on each command.
+    if (process.env.PLITZI_JSON === '1' && action.options.some(option => option.long === '--json')) {
+      action.setOptionValue('json', true);
+    }
+
+    if (!action.processedArgs.includes('-') && !Object.values(action.opts()).includes('-')) {
+      return;
+    }
+
+    const text = await readPiped();
+    action.processedArgs = action.processedArgs.map((arg: unknown) => (arg === '-' ? text : arg));
+    for (const [key, value] of Object.entries(action.opts())) {
+      if (value === '-') {
+        action.setOptionValue(key, text);
+      }
+    }
+  });
+
   for (const command of group.commands) {
     if (!command.options.some(option => option.long === '--agent')) {
       command.option(...AGENT_OPTION);
@@ -1357,4 +1442,4 @@ program.on('command:*', (operands: string[]) => {
   );
 });
 
-program.parse(process.argv);
+await program.parseAsync(process.argv);

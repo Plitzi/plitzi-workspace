@@ -63,6 +63,8 @@ const put: ActionTask<{
   namespace: 'list',
   action: 'put',
   title: 'Add To List',
+  description:
+    "Adds an entry to a list the space's actions keep — by id, with a score the list is ordered by and a value (a JSON document) — replacing the entry of the same id; `keep` drops the lowest beyond it. Answers `stored` and the ids `dropped`.",
   params: {
     list: nameParam,
     id: { type: 'text', canBind: true, defaultValue: '', label: 'Entry id' },
@@ -97,6 +99,7 @@ const range: ActionTask<{ list: string; offset: string | number; limit: string |
   namespace: 'list',
   action: 'range',
   title: 'Read List',
+  description: 'Reads a window of a list, by score: answers `entries`, each `id`, `score` and `value`.',
   params: {
     list: nameParam,
     offset: { type: 'text', canBind: true, defaultValue: '0', label: 'Skip' },
@@ -127,6 +130,7 @@ const remove: ActionTask<{ list: string; id: string }> = {
   namespace: 'list',
   action: 'remove',
   title: 'Remove From List',
+  description: 'Takes an entry out of a list by its id; answers `removed`.',
   params: { list: nameParam, id: { type: 'text', canBind: true, defaultValue: '', label: 'Entry id' } },
   run: async ({ list, id }, ctx) => ({ list, id, removed: await ctx.kv.listRemove(list, id) })
 };

@@ -194,6 +194,7 @@ plitzi page check /products --state --element catalog-count   # and what it hold
 plitzi page check / --ssr                       # and what the server's HTML lacks that the hydrated page has
 plitzi page check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
 plitzi page check / --click news-send --fill news-email=ana@example.com   # a form sent as a visitor fills it
+plitzi page check /expenses --fill expenses-search=kibble --element expenses-lede   # what typing changed, and what it shows
 plitzi page check /studio --as maya             # a page for signed-in visitors, signed in through /auth first
 plitzi page check / --url https://staging.example.com   # the project served elsewhere: a second server, staging, a deploy
 plitzi page check "/?__pt=weather" --url https://localhost:8091 --space tmp/pages/weather.ts   # a page not the project's
@@ -205,6 +206,7 @@ plitzi page shot / --compare https://example.com --width 1440   # beside another
 plitzi page shot /studio --width 390 --as maya   # a page for signed-in visitors: the picture is of it, not of the sign-in
 plitzi page shot / --viewport --frames 6 --every 200 --from load --sheet   # what plays as the page arrives
 plitzi page shot / --clip machine --sheet --steps "click .gm__knob; wait 300; frames 6 150; wait-for .gm__capsule; shot opened"   # an interaction, step by step
+plitzi page shot /expenses --fill expenses-search=kibble   # a picture before and after typing in a field
 ```
 
 Both run on the project's own Playwright against its running server (`npm start`), and refuse a port that answers as
@@ -243,8 +245,10 @@ fails the check (`--json`: `clicked: { element, filled?, changes, failed, proble
 `--fill <id>=<value>`, once per field, fills a field before the click as a visitor does — typed in, an option chosen, a
 box ticked with `true` or `false` — so a form's flow is run with what it is for, not only refused empty. The id is the
 field's element, or one that holds that one field (a `formControl`'s wrapper); one that holds several is refused with
-their ids, and a field filled inside another element says whose it is. Without `--click` it is refused: nothing filled
-is sent anywhere.
+their ids, and a field filled inside another element says whose it is. Without `--click` the filling is the
+interaction — a search box, a filter that answers to typing — and what it changed is said; with one, what the filling
+changed by itself is said apart from the click. `--element` and `--state` read the page as the interaction left it, and
+the element's report says the text it shows.
 
 `--scheme` is the space's own theme, set as a visitor's toggle sets it (the `theme` cookie); left out, the space's
 default, and `page shot` names the file by the theme it was painted in. The dev tools' badge is hidden from both. A
@@ -554,6 +558,7 @@ plitzi explain bindTemplate     # a helper: how it is written, what it is for, a
 plitzi explain motion           # the arrivals, triggers and loops the SDK plays
 plitzi explain pageFamily       # any other export of a @plitzi package installed — createServer is sdk-server's and sdk-mcp's
 plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers, filters
+plitzi explain list.put         # a server action's step, as the project's @plitzi/sdk-server declares it (--list tasks)
 ```
 
 What a name means when authoring, from the catalogues the checks themselves read — the answer to a question that would

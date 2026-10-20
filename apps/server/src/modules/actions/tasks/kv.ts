@@ -14,6 +14,7 @@ const get: ActionTask<{ key: string }> = {
   namespace: 'kv',
   action: 'get',
   title: 'Read Value',
+  description: "Reads a value the space's actions keep (its kv) by key; answers `value`, null when there is none.",
   params: { key: { type: 'text', canBind: true, defaultValue: '', label: 'Key' } },
   run: async ({ key }, ctx) => ({ value: (await ctx.kv.get(key)) ?? null })
 };
@@ -22,6 +23,7 @@ const set: ActionTask<{ key: string; value: string; ttlSeconds: string | number 
   namespace: 'kv',
   action: 'set',
   title: 'Write Value',
+  description: 'Keeps a value under a key, for a while when `ttlSeconds` is given; answers `stored`.',
   params: {
     key: { type: 'text', canBind: true, defaultValue: '', label: 'Key' },
     value: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Value' },
@@ -46,6 +48,7 @@ const increment: ActionTask<{ key: string; amount: string | number; ttlSeconds: 
   namespace: 'kv',
   action: 'increment',
   title: 'Increment Counter',
+  description: 'Adds to a counter under a key, from 0 when there is none; answers the new `value`.',
   params: {
     key: { type: 'text', canBind: true, defaultValue: '', label: 'Key' },
     amount: { type: 'text', canBind: true, defaultValue: '1', label: 'Amount' },
@@ -69,6 +72,8 @@ const setIf: ActionTask<{ key: string; expected: unknown; value: unknown; ttlSec
   namespace: 'kv',
   action: 'setIf',
   title: 'Write Value If Unchanged',
+  description:
+    'Writes a value only if the key still holds what was read before — or nothing, when `expected` is empty — so two runs at once cannot both write it; answers `written` and the `value` it holds.',
   params: {
     key: { type: 'text', canBind: true, defaultValue: '', label: 'Key' },
     expected: {
@@ -92,6 +97,7 @@ const remove: ActionTask<{ key: string }> = {
   namespace: 'kv',
   action: 'delete',
   title: 'Delete Value',
+  description: "Drops a key of the space's kv; answers `deleted`.",
   params: { key: { type: 'text', canBind: true, defaultValue: '', label: 'Key' } },
   run: async ({ key }, ctx) => {
     await ctx.kv.delete(key);

@@ -16,6 +16,7 @@ const delay: ActionTask<{ milliseconds: string | number }> = {
   namespace: 'flow',
   action: 'delay',
   title: 'Delay',
+  description: "Waits so many milliseconds before the next step, capped by the run's time budget; answers `waited`.",
   params: {
     milliseconds: { type: 'text', canBind: true, defaultValue: '1000', label: 'Milliseconds' }
   },
@@ -47,6 +48,8 @@ const fail: ActionTask<{ message: string; tellCaller: boolean | string }> = {
   namespace: 'flow',
   action: 'fail',
   title: 'Fail',
+  description:
+    "Ends the run as failed, with its message. `tellCaller` hands the message to whoever called — a form's refusal; otherwise the caller hears only that it failed.",
   params: {
     message: { type: 'text', canBind: true, defaultValue: '', label: 'Message' },
     tellCaller: { type: 'boolean', canBind: true, defaultValue: false, label: 'Tell the caller why' }
@@ -94,6 +97,8 @@ const output: ActionTask<{ values: string }> = {
   namespace: 'flow',
   action: 'output',
   title: 'Output',
+  description:
+    'What the run answers its caller: the values, a JSON object built from the steps before (`{{ step.value|json_encode }}`).',
   params: {
     values: { type: 'codemirror-json', canBind: true, defaultValue: '{}', label: 'Values' }
   },
@@ -120,6 +125,8 @@ const emit: ActionTask<{ chunk: string }> = {
   namespace: 'stream',
   action: 'emit',
   title: 'Report Progress',
+  description:
+    'Sends a chunk of progress to the caller while the run goes on — what a streaming answer is made of; answers `emitted`.',
   params: {
     chunk: { type: 'codemirror-text', canBind: true, defaultValue: '', label: 'Chunk' }
   },
@@ -148,6 +155,8 @@ const rateLimit: ActionTask<{
   namespace: 'flow',
   action: 'rateLimit',
   title: 'Rate Limit',
+  description:
+    'Lets a caller through at most `limit` times every `windowSeconds`, counted for each person or for everyone together; past it, the run fails with the refusal as its message. First in a public action that writes. Answers `count` and `remaining`.',
   params: {
     bucket: { type: 'text', canBind: true, defaultValue: '', label: 'Name (what is counted — "comments")' },
     limit: { type: 'text', canBind: true, defaultValue: '10', label: 'At most' },

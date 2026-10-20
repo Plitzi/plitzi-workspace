@@ -69,6 +69,8 @@ const read: ActionTask<ReadParams> = {
   namespace: 'connector',
   action: 'read',
   title: 'Connector Read',
+  description:
+    "Reads a resource through one of the space's connectors — a page of it, filtered; answers `records` and `pageInfo`.",
   params: {
     connector: { type: 'text', canBind: true, defaultValue: '', label: 'Connector' },
     endpoint: { type: 'text', canBind: true, defaultValue: 'list', label: 'Endpoint' },
@@ -118,6 +120,8 @@ const write: ActionTask<WriteParams> = {
   namespace: 'connector',
   action: 'write',
   title: 'Connector Write',
+  description:
+    "Creates, updates or deletes a record through one of the space's connectors (`endpoint`); answers the `record` written.",
   params: {
     connector: { type: 'text', canBind: true, defaultValue: '', label: 'Connector' },
     endpoint: { type: 'text', canBind: true, defaultValue: 'create', label: 'Endpoint' },

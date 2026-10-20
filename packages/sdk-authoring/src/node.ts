@@ -3,8 +3,9 @@
  * one stays what it is — data and functions over data, for a browser as much as a build script.
  *
  * ```ts
- * import { svgFile, svgFiles } from '@plitzi/sdk-authoring/node';
+ * import { pagesIn, svgFile, svgFiles } from '@plitzi/sdk-authoring/node';
  *
+ * const pages = await pagesIn(new URL('./pages/', import.meta.url));   // every page of the folder, by being there
  * const logos = svgFiles(new URL('./logos/', import.meta.url));   // { stripe: '<svg…>', shopify: '<svg…>' }
  * svg(logos.stripe, { label: 'Stripe' });
  * svg(svgFile(new URL('./icons/arrow.svg', import.meta.url)));
@@ -31,6 +32,7 @@ import {
   SPACE_ENTRY,
   VENDOR_PLUGINS_DIR,
   checkProjectRoot,
+  pageModulesIn,
   projectModule,
   projectRoot
 } from '@plitzi/sdk-shared/project';
@@ -38,7 +40,7 @@ import {
 import { authorSpace } from './index';
 import { compactSvg } from './svg/compactSvg';
 
-import type { AuthoredSpace, PluginDeclarationData, SpaceSpec } from './schema/types';
+import type { AuthoredSpace, PageSpec, PluginDeclarationData, SpaceSpec } from './schema/types';
 
 const pathOf = (where: string | URL): string => (where instanceof URL ? fileURLToPath(where) : where);
 
@@ -155,6 +157,49 @@ export const pluginFolders = async (folder: string | URL): Promise<PluginFolder[
       return { name, declaration: declaration as PluginDeclarationData };
     })
   );
+};
+
+/** What a page module's default export must at least be: a page — its name, slug and body — or a list of them. */
+const isPage = (value: unknown): value is PageSpec =>
+  isRecord(value) && typeof value.name === 'string' && typeof value.slug === 'string' && Array.isArray(value.body);
+
+/**
+ * Every page under `folder` — each module in it (`pets.ts`) and each folder's `index.ts` (`home/index.ts`), by its
+ * default export: a page, or the list of a page family (`pageFamily`, a page per record). Found by folder, as the
+ * plugins are, so a page is part of the space by being there: no list in the entry to forget one, nor one line that
+ * every new page writes. The CLI follows its imports through the same folder (`plitzi space overview`, the lint's
+ * unused files), so a page there is never taken for a stray file.
+ *
+ * In path order, but the home page first — the first page is the space's default unless one says `isDefault`. A module
+ * there that exports no page by default is refused, naming it: a helper belongs in a page's own folder, or beside it.
+ *
+ * ```ts
+ * const pages = await pagesIn(new URL('./pages/', import.meta.url));
+ * export const space: SpaceSpec = { …, pages: [...pages, notFound] };
+ * ```
+ */
+export const pagesIn = async (folder: string | URL): Promise<PageSpec[]> => {
+  const root = pathOf(folder);
+  const modules = await Promise.all(
+    pageModulesIn(root).map(async file => {
+      const loaded = await importProjectModule(file, root);
+      const exported: unknown = isRecord(loaded) ? loaded.default : undefined;
+      const pages: unknown[] = Array.isArray(exported) ? exported : [exported];
+      if (pages.length === 0 || !pages.every(isPage)) {
+        throw new Error(
+          `${file} exports no page by default: \`export default page\` (a PageSpec, or a page family's list). A module that is no page goes in a page's own folder.`
+        );
+      }
+
+      // Each held to what a page is made of: `authorSpace` holds every other field, and says which is wrong.
+      return pages;
+    })
+  );
+  const pages = modules.flat();
+  const home = pages.findIndex(page => page.isDefault === true);
+  const first = home === -1 ? pages.findIndex(page => page.slug === '') : home;
+
+  return first <= 0 ? pages : [pages[first], ...pages.filter((_, index) => index !== first)];
 };
 
 /** The declaration of every plugin under `folder`, for `authorSpace`'s `plugins`: what each fires, answers and reads. */

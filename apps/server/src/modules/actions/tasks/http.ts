@@ -49,6 +49,8 @@ const request: ActionTask<HttpRequestParams> = {
   namespace: 'http',
   action: 'request',
   title: 'HTTP Request',
+  description:
+    "Calls a URL — with one of the space's credentials when named, never written in the step — and answers `status`, `ok` and `data` (the body, read as JSON when it is).",
   // The params carry `{{credential.*}}` tokens that only this task can resolve, so it renders them itself.
   rawParams: true,
   params: {

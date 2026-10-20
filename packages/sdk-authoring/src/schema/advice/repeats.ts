@@ -193,10 +193,14 @@ const signaturesOf = (flat: Schema['flat'], declared: Set<string>): Map<string, 
     // A provider resolved on the server is found again in the browser by its own id (`data-rsc-id`): a component would
     // give every copy the first one's id, and each the first one's render. So it is no copy of anything.
     const serverRendered = element.definition.runtime === 'server' ? `|server:${id}` : '';
+    // What an element is, beside what it says: a date field is no number field, an h2 no h3 — no prop turns one into
+    // the other, so two forms asking for different fields are two forms, not one component.
+    const subType: unknown = element.attributes.subType;
+    const kind = typeof subType === 'string' && subType !== '' ? `:${subType}` : '';
     const signatures = {
       exact: `${body}|${classes}(${children.map(child => child.exact).join(',')})`,
       near: `${body}(${children.map(child => child.near).join(',')})`,
-      shape: `${type}|${classes}|${flows}|${binds}${serverRendered}(${children.map(child => child.shape).join(',')})`,
+      shape: `${type}${kind}|${classes}|${flows}|${binds}${serverRendered}(${children.map(child => child.shape).join(',')})`,
       outside,
       wiring: [...wired].sort().join('\n'),
       size: 1 + children.reduce((sum, child) => sum + child.size, 0)

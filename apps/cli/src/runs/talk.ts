@@ -1,5 +1,5 @@
 import { writeJson } from './files';
-import { agentAddress, LEAD, messagesOf, replyTo, sendMessage, unreadFor, unreadForHolder } from './messages';
+import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor, unreadForHolder } from './messages';
 import { assertStatus, loadRun, logRun, requireNoTask } from './run';
 import { findTask, holderOf } from './tasks';
 import { viewTask } from './taskStore';
@@ -57,6 +57,20 @@ export const askLead = async (
     await writeJson(view.paths.progress, { ...(view.progress ?? {}), heartbeatAt: ctx.now().toISOString() });
     await new Promise(resolve => setTimeout(resolve, everyMs));
   }
+};
+
+/**
+ * `plitzi run note`: the lead tells every task — in hand, and taken from now on — what holds for the whole run: a known
+ * issue, a decision, how something is done here. The run's memory; each task reads it once, with its take or its next
+ * sign of life.
+ */
+export const noteRun = async (ctx: RunContext, runId: string, text: string): Promise<Message> => {
+  requireNoTask(ctx, 'add a note to the run');
+  const loaded = await loadRun(ctx, runId);
+  const note = await sendMessage(ctx, loaded, { from: LEAD, to: EVERYONE, text });
+  await logRun(ctx, loaded.paths, { action: 'note', message: note.id });
+
+  return note;
 };
 
 /**

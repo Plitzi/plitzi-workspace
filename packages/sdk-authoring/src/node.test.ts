@@ -10,6 +10,7 @@ import { ProjectLayoutError } from '@plitzi/sdk-shared/project';
 import { authorSpace } from '.';
 import {
   authorProjectSpace,
+  pagesIn,
   pluginDeclarations,
   projectAuthoring,
   projectAuthoringAt,
@@ -82,6 +83,41 @@ describe('pluginDeclarations', () => {
     writeFileSync(path.join(plugins, 'Broken/declaration.ts'), 'export const type = 1;\n');
 
     await expect(pluginDeclarations(plugins)).rejects.toThrow(/Broken\/declaration\.ts exports no declaration/);
+  });
+});
+
+describe('pagesIn', () => {
+  const pages = path.join(root, 'src/space/pages');
+  mkdirSync(path.join(pages, 'home'), { recursive: true });
+  writeFileSync(path.join(pages, 'about.ts'), "export default { name: 'About', slug: 'about', body: [] };\n");
+  writeFileSync(
+    path.join(pages, 'pets.ts'),
+    "export default [{ name: 'Rex', slug: 'pets/rex', body: [] }, { name: 'Ada', slug: 'pets/ada', body: [] }];\n"
+  );
+  writeFileSync(
+    path.join(pages, 'home/index.ts'),
+    "import { hero } from './hero.ts';\nexport default { name: 'Home', slug: '', body: [hero] };\n"
+  );
+  writeFileSync(
+    path.join(pages, 'home/hero.ts'),
+    "export const hero = { type: 'heading', attributes: { content: 'Hi' } };\n"
+  );
+  writeFileSync(path.join(pages, 'about.test.ts'), 'throw new Error("never imported");\n');
+
+  it('is every page of the folder by its default export, a family’s list whole, the home page first', async () => {
+    const found = await pagesIn(pages);
+    const { schema } = authorSpace({ name: 'Found', permanentUrl: 'found', pages: found });
+
+    expect(found.map(page => page.slug)).toEqual(['', 'about', 'pets/rex', 'pets/ada']);
+    expect(Object.values(schema.flat).find(element => element.attributes.default === true)?.attributes.slug).toBe('');
+  });
+
+  it('refuses a module there that exports no page, naming it', async () => {
+    const strays = path.join(root, 'src/space/stray-pages');
+    mkdirSync(strays, { recursive: true });
+    writeFileSync(path.join(strays, 'helpers.ts'), 'export const format = (value: string) => value;\n');
+
+    await expect(pagesIn(strays)).rejects.toThrow(/helpers\.ts exports no page by default/);
   });
 });
 

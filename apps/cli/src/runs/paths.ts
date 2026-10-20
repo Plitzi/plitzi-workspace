@@ -156,3 +156,9 @@ export const projectPath = (root: string, file: string): string =>
 
 /** Where a project path is under another folder that mirrors the project (a copy, a backup). */
 export const under = (folder: string, file: string): string => path.join(folder, ...file.split('/'));
+
+/**
+ * Where a task's copy keeps who it is — its run, its task, its token, its agent — so a command run inside the copy needs
+ * none of them said. In the copy's `tmp/`, which never counts at `complete` and is never copied back.
+ */
+export const COPY_TASK_FILE = 'tmp/plitzi-task.json';

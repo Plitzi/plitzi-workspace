@@ -9,6 +9,7 @@ import {
   custom,
   defineElement,
   fontAwesome,
+  formControl,
   heading,
   link,
   list,
@@ -217,6 +218,40 @@ describe('suggestions', () => {
     );
 
     expect(codesOf(unlike)).not.toContain('repeated-shape');
+  });
+
+  it('does not take forms asking for different kinds of field for one component: a date field is no number field', () => {
+    const form = (fields: ('text' | 'date' | 'number' | 'select' | 'textarea')[]) =>
+      container({
+        class: 'tile',
+        children: fields.map((subType, n) => formControl({ subType, name: `field${String(n)}`, class: 'tile-value' }))
+      });
+    const forms = (...each: ElementSpec[]) =>
+      space([
+        page(
+          'home',
+          each.map(one => container({ children: [one] }))
+        )
+      ]);
+
+    expect(
+      codesOf(
+        forms(
+          form(['select', 'date', 'number', 'textarea']),
+          form(['select', 'date', 'number', 'textarea']),
+          form(['select', 'date', 'number', 'textarea'])
+        )
+      )
+    ).toContain('repeated-shape');
+    expect(
+      codesOf(
+        forms(
+          form(['select', 'date', 'number', 'textarea']),
+          form(['select', 'date', 'select', 'number']),
+          form(['text', 'text', 'number', 'textarea'])
+        )
+      )
+    ).not.toContain('repeated-shape');
   });
 
   it('does not take panels holding a provider resolved on the server for copies: each is found by its own id', () => {

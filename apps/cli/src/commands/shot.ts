@@ -30,6 +30,7 @@ import {
 } from '../browser';
 import { PROJECT_TMP } from '../scaffold/paths';
 
+import type { FieldFill } from '../options';
 import type { Account } from './check';
 import type { ShotStep } from './shotSteps';
 import type { Browser, BrowserPage, Scheme } from '../browser';
@@ -89,6 +90,8 @@ export interface ShotOptions {
   from?: ShotMoment;
   /** A script of steps played on the page (`shotSteps.ts`), or `@file` holding one. */
   steps?: string;
+  /** Fields typed into first, as `page check --fill` does: the steps `type`, before the clicks or alone, then a picture. */
+  fill?: FieldFill[];
   json?: boolean;
 }
 
@@ -702,10 +705,45 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  const clicks = options.click ?? [];
-  const script = options.steps?.startsWith('@')
-    ? await readFile(path.resolve(options.steps.slice(1)), 'utf-8').catch(() => undefined)
-    : options.steps;
+  if (options.fill && options.steps !== undefined) {
+    await browser.close();
+    fail('`--steps` is the whole interaction: write the fields in it (type <element> <text>) rather than --fill.');
+
+    return;
+  }
+
+  const split = options.fill?.find(field => /[;\n]/.test(field.value));
+  if (split) {
+    await browser.close();
+    fail(
+      `--fill ${split.element}: a value with ";" or a new line is written in --steps instead (type <element> <text>).`
+    );
+
+    return;
+  }
+
+  // `--fill` is said as page check says it, and played as the steps it is: each field typed into, then each click —
+  // or, with none, a picture of what the typing changed.
+  const filled = options.fill?.map(field => `type ${JSON.stringify(field.element)} ${field.value}`);
+  const asSteps = filled
+    ? [
+        'shot before',
+        ...filled,
+        ...((options.click ?? []).length > 0
+          ? (options.click ?? []).flatMap(click => [
+              `click ${JSON.stringify(click)}`,
+              'wait 600',
+              `shot after ${click}`
+            ])
+          : ['wait 600', 'shot filled'])
+      ].join('; ')
+    : undefined;
+  const clicks = asSteps === undefined ? (options.click ?? []) : [];
+  const script =
+    asSteps ??
+    (options.steps?.startsWith('@')
+      ? await readFile(path.resolve(options.steps.slice(1)), 'utf-8').catch(() => undefined)
+      : options.steps);
   if (options.steps !== undefined && script === undefined) {
     await browser.close();
     fail(`${options.steps.slice(1)} cannot be read: --steps @<file> names a file of steps.`);

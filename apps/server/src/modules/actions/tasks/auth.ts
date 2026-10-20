@@ -10,6 +10,8 @@ const currentUser: ActionTask<Record<string, never>> = {
   namespace: 'auth',
   action: 'currentUser',
   title: 'Current User',
+  description:
+    'Who is calling: answers `signedIn` and, when signed in, `id`, `username`, `email`, `verified`, `permissions` and `roles`.',
   params: {},
   run: (_params, ctx) => {
     const { user } = ctx;
@@ -33,6 +35,7 @@ const requireRole: ActionTask<{ permissions: string }> = {
   namespace: 'auth',
   action: 'requireRole',
   title: 'Require Permissions',
+  description: 'Fails the run unless the caller holds every permission named; answers `granted` when they do.',
   params: {
     permissions: { type: 'text', canBind: true, defaultValue: '', label: 'Permissions (comma separated)' }
   },

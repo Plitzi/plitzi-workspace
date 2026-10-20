@@ -1,7 +1,7 @@
 import { InvalidArgumentError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
-import { count, fill, positiveInteger, width, widths } from './options';
+import { count, duration, durationText, fill, positiveInteger, width, widths } from './options';
 
 describe('options', () => {
   it('reads widths in the order given, each once', () => {
@@ -41,5 +41,18 @@ describe('options', () => {
     expect(fill('note=', undefined)).toEqual([{ element: 'note', value: '' }]);
     expect(() => fill('news-email', undefined)).toThrow('<id>=<value>');
     expect(() => fill('=x', undefined)).toThrow(InvalidArgumentError);
+  });
+
+  it('reads a wait in seconds, minutes or hours — a bare number as minutes — and says it back', () => {
+    expect(duration('90s')).toBe(90_000);
+    expect(duration('8m')).toBe(480_000);
+    expect(duration('1.5h')).toBe(5_400_000);
+    expect(duration('25')).toBe(1_500_000);
+    expect(durationText(duration('90s'))).toBe('1 min 30 s');
+    expect(durationText(duration('45s'))).toBe('45 s');
+    expect(durationText(duration('90m'))).toBe('1 h 30 min');
+    expect(() => duration('0s')).toThrow('from 1s to 24h');
+    expect(() => duration('2d')).toThrow(InvalidArgumentError);
+    expect(() => duration('25h')).toThrow(InvalidArgumentError);
   });
 });

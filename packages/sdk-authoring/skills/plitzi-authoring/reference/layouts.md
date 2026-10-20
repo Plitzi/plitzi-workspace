@@ -83,6 +83,20 @@ const navGroup = (group: DocsGroup): ElementSpec =>
 
 Adding a page is one entry in the list: the menu, the index and the neighbours' "next" follow.
 
+**Or each page says it**, when pages are added apart — by several people, or a team of agents — and one list would be
+the file they all change. The page carries `nav: { label: 'Pets', order: 3 }`; `navOf(pages)` reads the links, lowest
+`order` first, `current: 'section'` for a page with others under it; with `pagesIn` (`@plitzi/sdk-authoring/node`) the
+entry loads every page of a folder, so a new page is a file of its own and nothing else:
+
+```ts
+const pages = await pagesIn(new URL('./pages/', import.meta.url));   // each module's default export: a page, or a family
+export const space: SpaceSpec = { …, layouts: [siteLayout(navOf(pages))], pages: [...pages, notFound] };
+// layout.ts: menu.map(entry => link({ href: entry.href, content: entry.label, current: entry.current, class: navLink }))
+```
+
+`nav` is authoring only: the layout's links are what the document keeps. A page with a param in its path has no one
+address to list (`page-nav-invalid`).
+
 ## The current entry
 
 A menu in a layout is the same nodes on every page, so it cannot have the right entry styled by hand — and does not

@@ -2,6 +2,8 @@ import { randomBytes } from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { durationText } from '../options';
+import { checkAcceptance } from './acceptance';
 import { agreementsOf, proposalsOf, unansweredTo } from './agreements';
 import { failsWithout } from './checks';
 import {
@@ -16,9 +18,9 @@ import {
 } from './files';
 import { checkVersions } from './materialise';
 import { mergeLines } from './merge3';
-import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor, unreadForHolder } from './messages';
+import { agentAddress, LEAD, messagesOf, runNotesOf, sendMessage, unreadFor, unreadForHolder } from './messages';
 import { entryOf } from './model';
-import { ID, lockFile, projectPath, runPaths, taskPaths, under } from './paths';
+import { COPY_TASK_FILE, ID, lockFile, projectPath, runPaths, taskPaths, under } from './paths';
 import { dependenciesDone, PRIORITY_RANK, readyTasks } from './plan';
 import { syncPreview } from './preview';
 import { isRunRefusal, RunRefusal } from './refusal';
@@ -411,7 +413,7 @@ export const followNext = async (
       return {
         ...next,
         timedOut: true,
-        why: `waited ${String(Math.round(timeoutMs / 60_000))} min and nothing came for you: ${next.why ?? 'nothing is ready'} — run it again to go on waiting`
+        why: `waited ${durationText(timeoutMs)} and nothing came for you: ${next.why ?? 'nothing is ready'} — run it again to go on waiting`
       };
     }
 
@@ -580,8 +582,10 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
       files: await cloneFiles(ctx.root, view.paths.work, files),
       overlaid: []
     };
-    // Never copied, never counted: there for what the agent writes aside (a server's log), as in the project.
+    // Never copied, never counted: there for what the agent writes aside (a server's log), as in the project — and for
+    // who the copy is, so a command run inside it needs no token, run or agent said.
     await fs.mkdir(path.join(view.paths.work, 'tmp'), { recursive: true });
+    await writeJson(path.join(view.paths.work, COPY_TASK_FILE), { run: runId, task: taskId, token, agent: ctx.agent });
     const approved = await readApproved(loaded.paths);
     for (const [file, entry] of Object.entries(approved.files)) {
       await placeVersion(loaded.paths, under(view.paths.work, file), entry.digest);
@@ -1336,6 +1340,28 @@ export const completeTask = async (
     }
   }
 
+  // What the task was asked, held by the commands its plan gives — once the project's checks pass, in the same copy.
+  const accepted = checks.ok
+    ? await checkAcceptance(task.acceptance, { work: view.paths.work, root: ctx.root, cache: view.paths.cache })
+    : [];
+  const unmet = accepted.filter(result => !result.ok);
+  if (unmet.length > 0 && !knownFailure) {
+    await recordBrake(ctx, loaded, 'checks-failed');
+    throw new RunRefusal(
+      'checks-failed',
+      `Task "${taskId}"'s acceptance is not met: ${unmet.map(each => `"${each.said}"`).join(', ')}`,
+      {
+        task: taskId,
+        steps: unmet.map(each => ({
+          name: `acceptance — ${each.said}`,
+          ok: false,
+          said: [each.check, ...(each.output ?? [])]
+        })),
+        next: 'make the copy do what the acceptance asks — each check is a command, run it yourself in the copy — and complete again'
+      }
+    );
+  }
+
   const existing = new Map((await readRequests(view.paths)).map(request => [request.file, request]));
   const requests: SharedRequest[] = [];
   for (const file of asRequests) {
@@ -1370,6 +1396,7 @@ export const completeTask = async (
       ...state,
       status: 'in-review',
       changed: changed.filter(file => !asRequests.includes(file)),
+      ...(accepted.length > 0 ? { accepted } : { accepted: undefined }),
       knownFailure: preexisting
         ? {
             why: `the run's work fails ${failing.map(step => step.name).join(', ')} the same way without this task: ${failing.flatMap(step => step.said ?? []).find(line => line.trim() !== '') ?? 'see the checks'}`,
@@ -2349,9 +2376,13 @@ export interface TaskContext {
   contracts: { resource: string; owner: string; note: string }[];
   /** What it was proposed and proposed, and what it agreed to with other tasks — what its review checks too. */
   proposals: { incoming: ProposalView[]; outgoing: ProposalView[]; agreements: ProposalView[] };
-  memory?: string;
+  /** The project's own notes (`NOTES.md`): how something is built here, what must not be undone. */
+  projectNotes?: string;
+  /** The run's notes to every task (`run note`, the plan's `notes`): what holds for the whole run. */
+  runNotes: string[];
   /** Each of the task's files — from its copy while it holds one, else the run's — as text when it is text and small. */
-  files: { file: string; from: 'copy' | 'run'; text?: string; bytes?: number; missing?: boolean }[];
+  /** `toCreate`: a file of the task's that does not exist yet — it is the task's to write. */
+  files: { file: string; from: 'copy' | 'run'; text?: string; bytes?: number; toCreate?: boolean }[];
 }
 
 const MAX_CONTEXT_FILE = 64 * 1024;
@@ -2380,7 +2411,7 @@ const textOf = async (loaded: LoadedRun, ctx: RunContext, digest: string | null,
 
 /**
  * `plitzi task context`: what a task needs and nothing more, so its context stays small — the requests and their
- * diffs (an integration's), what related tasks did and noted, the plan's contracts, the space's memory, and its files.
+ * diffs (an integration's), what related tasks did and noted, the plan's contracts, the project's and the run's notes, and its files.
  */
 export const taskContext = async (ctx: RunContext, runId: string, taskId: string): Promise<TaskContext> => {
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
@@ -2442,7 +2473,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
 
     const from = copy ? 'copy' : 'run';
     if (bytes === undefined) {
-      files.push({ file, from, missing: true });
+      files.push({ file, from, toCreate: true });
     } else if (bytes.length <= MAX_CONTEXT_FILE && !bytes.includes(0)) {
       files.push({ file, from, text: bytes.toString('utf-8') });
     } else {
@@ -2450,7 +2481,7 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
     }
   }
 
-  const memory = (await readOptional(under(ctx.root, PROJECT_NOTES)))?.toString('utf-8');
+  const projectNotes = (await readOptional(under(ctx.root, PROJECT_NOTES)))?.toString('utf-8');
   const proposals = await proposalsOf(loaded);
 
   return {
@@ -2468,7 +2499,8 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
       outgoing: proposals.filter(each => each.from === taskId),
       agreements: agreementsOf(proposals, taskId)
     },
-    ...(memory !== undefined ? { memory } : {}),
+    ...(projectNotes !== undefined ? { projectNotes } : {}),
+    runNotes: (await runNotesOf(loaded)).map(note => note.text),
     files
   };
 };

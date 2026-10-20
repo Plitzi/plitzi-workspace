@@ -250,6 +250,17 @@ export interface PageFolderSpec {
   parent?: string;
 }
 
+/**
+ * How a page is listed in the space's navigation, said by the page itself: `navOf(pages)` reads it into the links a
+ * layout draws, so a new page joins the menu without the layout or the entry being edited. Authoring only — never
+ * written into the document, where the layout's links are what is kept.
+ */
+export interface PageNav {
+  label: string;
+  /** Where it goes among the others, lowest first; those without one after them, by label. */
+  order?: number;
+}
+
 export interface PageSpec {
   name: string;
   /** As {@link ElementSpec.id} — a page is an element, and its flows are targeted the same way. */
@@ -321,6 +332,8 @@ export interface PageSpec {
   flows?: StepSpec[][];
   /** As {@link ElementSpec.flag}: a page whose flag says no is not found. */
   flag?: string;
+  /** How the space's navigation lists it: see {@link PageNav}. */
+  nav?: PageNav;
   body: ElementSpec[];
 }
 
