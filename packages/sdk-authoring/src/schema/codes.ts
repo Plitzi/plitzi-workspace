@@ -455,8 +455,9 @@ export const AUTHORING_CODES = {
   },
   'span-holds-block': {
     kind: 'warned',
-    means: "a `container` with `subType: 'span'` or `'p'` holding a heading, a paragraph, a list, a form or prose",
-    fix: 'a `div` (leave `subType` out), or words and inline elements: a `text`, a `link`'
+    means:
+      "a `container` with `subType: 'span'` holding a block, or with `'p'` holding anything that renders a `<div>` (a `text`, a plain `container`) — which the browser closes the paragraph before",
+    fix: 'a `div` (leave `subType` out), or words and inline elements: `paragraph(…)`, a `span` container, a `link`'
   },
   'part-missing': {
     kind: 'refused',

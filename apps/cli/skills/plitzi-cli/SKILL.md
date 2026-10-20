@@ -64,5 +64,5 @@ edited in the builder — is the Plitzi MCP's. Never both on one space.
 | An element of your own, a plugin package, packing and uploading one        | [plugins](reference/plugins.md)                 |
 | A space on Plitzi as a project, and back (`create --from`, `space pull`, `space push`) | [from-space](reference/from-space.md)           |
 | The space's own server code (`functions`, `runtime`)                       | [functions](reference/functions.md)             |
-| A team of agents on one project at once (`run`, `task`)                    | [runs](reference/runs.md)                       |
+| A team of agents on one project at once (`run`, `task`)                    | [runs](reference/runs.md) · lead: [runs-lead](reference/runs-lead.md) |
 | Something does not work                                                    | [troubleshooting](reference/troubleshooting.md) |

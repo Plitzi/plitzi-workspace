@@ -36,6 +36,8 @@ export interface TaskReport {
   cuts: number;
   blocked?: string;
   knownFailure?: string;
+  /** Its UI's review, in a run with a designer: who approved it, or that the lead approved without it. */
+  design?: string;
 }
 
 export interface RunReport {
@@ -120,6 +122,11 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
       status: view.state.status,
       agents: [...new Set(takes.map(line => line.by))],
       rounds: view.state.round,
+      ...(view.state.design?.status === 'approved'
+        ? { design: `UI by ${view.state.design.by ?? 'a designer'}` }
+        : view.state.design?.status === 'skipped'
+          ? { design: 'UI skipped' }
+          : {}),
       estimateMinutes: task.estimateMinutes,
       ...(first ? { minutes: minutesBetween(first.at, approval?.at ?? now) } : {}),
       // What it changed: what it completed with, and what the run holds of it — a shared file it took by turns and
@@ -283,7 +290,7 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
     '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ...report.tasks.map(
       task =>
-        `| ${task.id}${task.kind === 'integration' ? ' (integration)' : ''} | ${task.role} | ${task.status} | ${task.agents.join(', ') || '—'} | ${task.minutes === undefined ? '—' : String(task.minutes)} / ${String(task.estimateMinutes)} | ${String(task.rounds)} | ${String(task.cuts)} | ${task.files.join(', ') || '—'} |`
+        `| ${task.id}${task.kind === 'integration' ? ' (integration)' : ''} | ${task.role} | ${task.status} | ${task.agents.join(', ') || '—'} | ${task.minutes === undefined ? '—' : String(task.minutes)} / ${String(task.estimateMinutes)} | ${String(task.rounds)}${task.design ? ` · ${task.design}` : ''} | ${String(task.cuts)} | ${task.files.join(', ') || '—'} |`
     ),
     '',
     '## What happened',

@@ -53,7 +53,7 @@ export const elementAttributeNames = {
   carousel: ['autoplay', 'itemKey', 'items', 'label', 'loop', 'mode', 'pauseOnHover', 'speed', 'transition'],
   carouselTrack: [],
   channel: ['grant', 'keep', 'presence', 'subType', 'topic'],
-  container: ['decorative', 'label', 'live', 'subType', 'title'],
+  container: ['decorative', 'label', 'live', 'open', 'subType', 'title'],
   custom: null,
   dialogContainer: [
     'acceptButtonLabel',

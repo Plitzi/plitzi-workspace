@@ -31,8 +31,16 @@ const READING: readonly { matches: (file: string) => boolean; read: readonly str
   {
     matches: file => /^src\/(actions|functions|runtime)\//.test(file),
     read: [`${CLI}/reference/functions.md`]
-  }
+  },
+  { matches: file => /\.(test|spec)\.[cm]?ts$/.test(file), read: [`${AUTHORING}/reference/testing.md`] }
 ];
+
+/** What a designer reads once, before its first review of the others' UI: what a reviewer looks for, and why. */
+export const DESIGN_READING = [
+  `${AUTHORING}/reference/review-checklist.md`,
+  `${AUTHORING}/reference/colours-and-motion.md`,
+  `${AUTHORING}/reference/accessibility.md`
+] as const;
 
 const exists = (file: string): Promise<boolean> =>
   fs.stat(file).then(

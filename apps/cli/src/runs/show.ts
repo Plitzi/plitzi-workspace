@@ -10,7 +10,7 @@ import { unifiedDiff } from '../fix/diff';
 
 import type { ProposalView } from './agreements';
 import type { Message } from './messages';
-import type { AcceptanceResult, KnownFailure, RunTask, TaskStatus } from './model';
+import type { AcceptanceResult, DesignReview, KnownFailure, RunTask, TaskStatus } from './model';
 import type { LoadedRun, RunContext } from './run';
 
 /**
@@ -74,11 +74,16 @@ const versionOf = async (loaded: LoadedRun, root: string, file: string, digest: 
   });
 };
 
-const nextFor = (task: RunTask, status: TaskStatus): string[] => {
+const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): string[] => {
   switch (status) {
     case 'in-review':
       return [
-        `plitzi run preview --task ${task.id}   # its pages as it went to review — page check them from its copy`,
+        ...(design?.status === 'due'
+          ? [
+              `# its UI waits for ${design.by ?? 'a designer'}'s review: the lead approves after it, or now with --skip-design`
+            ]
+          : []),
+        `plitzi task look ${task.id}   # its pages as it went to review: checked at 1440 and 390, pictured light and dark`,
         `plitzi task review ${task.id} --approve`,
         `plitzi task review ${task.id} --changes "what to change" [--on <element>]`
       ];
@@ -171,6 +176,6 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
     unanswered: mine.filter(each => each.answer === undefined),
     requests: (await readRequests(view.paths)).map(each => ({ file: each.file, summary: each.summary })),
     messages: said.slice(-6),
-    next: nextFor(task, view.state.status)
+    next: nextFor(task, view.state.status, view.state.design)
   };
 };

@@ -188,6 +188,9 @@ const checkChildren = (ctx: LintContext, element: Element, where: string): void 
  */
 const BLOCK_TYPES = new Set(['heading', 'paragraph', 'list', 'form', 'markdown', 'richText']);
 
+/** What renders a `<div>` whatever it means: a block to the HTML parser inside a `<p>`, however it is styled. */
+const DIV_TYPES = new Set(['text', 'formControl']);
+
 /**
  * A `span` container is for a run of text — a dot before a title, a word dressed apart — and a `p` one for a sentence
  * made of parts, a link in the middle of it. A heading or a paragraph inside either breaks it: a span's line in two, and
@@ -199,18 +202,32 @@ const warnSpanHoldsBlock = (ctx: LintContext, element: Element, where: string): 
     return;
   }
 
-  const blocks = (element.definition.items ?? []).flatMap(id => {
-    const child = ctx.element(id);
+  // A `<p>` is closed by the HTML parser before ANY `<div>`, whatever it is styled: a `text`, a plain `container`,
+  // a form's control — the page the server sent and the one the browser builds then differ, and hydration fails. A
+  // span only breaks its line, which an inline style keeps whole: there, only what is a block by meaning counts.
+  const isBlock = (child: Element): boolean =>
+    BLOCK_TYPES.has(child.definition.type) ||
+    (tag === 'p' &&
+      (DIV_TYPES.has(child.definition.type) ||
+        (child.definition.type === 'container' && child.attributes.subType !== 'span')));
+  // A provider renders no DOM of its own: what it holds is the paragraph's to hold.
+  const childrenOf = (ids: readonly string[]): Element[] =>
+    ids.flatMap(id => {
+      const child = ctx.element(id);
+      if (!child) {
+        return [];
+      }
 
-    return child && BLOCK_TYPES.has(child.definition.type) ? [child] : [];
-  });
+      return child.definition.type === 'apiContainer' ? childrenOf(child.definition.items ?? []) : [child];
+    });
+  const blocks = childrenOf(element.definition.items ?? []).filter(isBlock);
   if (!blocks.length) {
     return;
   }
 
   ctx.warn(
     'span-holds-block',
-    `${where} is a \`${tag}\` but holds ${blocks.map(child => ctx.describe(child.id)).join(', ')}, which ${blocks.length === 1 ? 'is a block' : 'are blocks'}: ${tag === 'p' ? 'a browser closes a `<p>` before a block, so the page it builds is not the one written' : 'a span sits in a line of text, and a block breaks it in two'}. Make it a \`div\` (leave \`subType\` out), or put words there instead — a \`text\`, a \`link\`, inline.`,
+    `${where} is a \`${tag}\` but holds ${blocks.map(child => ctx.describe(child.id)).join(', ')}, which ${blocks.length === 1 ? 'is a block' : 'are blocks'}: ${tag === 'p' ? 'a browser closes a `<p>` before a `<div>` — a `text` and a plain `container` render one — so the page it builds is not the one the server sent, and hydration fails' : 'a span sits in a line of text, and a block breaks it in two'}. Make it a \`div\` (leave \`subType\` out)${tag === 'p' ? ', or write its words inline: `paragraph(…)` for the sentence, a `span` container or a `link` for its parts' : ', or put words there instead — a `text`, a `link`, inline'}.`,
     element.id
   );
 };

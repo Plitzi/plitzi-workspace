@@ -5,6 +5,7 @@ import path from 'node:path';
 import type { CheckResult, CheckRunner } from '../runs/checks';
 import type { RunPlan } from '../runs/model';
 import type { RunContext } from '../runs/run';
+import type { Team } from '../runs/team';
 
 /**
  * The bench of RFC 0028: a seeded project in a folder of its own, and scripted agents — contexts that call the run's
@@ -73,6 +74,8 @@ export interface Bench {
   write: (file: string, text: string) => Promise<void>;
   read: (file: string) => Promise<string | undefined>;
   writePlan: (plan: RunPlan) => Promise<string>;
+  /** The project's team, `.plitzi/team.json`: what every run is worked by. */
+  writeTeam: (team: Team) => Promise<void>;
   cleanup: () => Promise<void>;
 }
 
@@ -139,6 +142,10 @@ export const makeBench = async (files: Record<string, string> = PROJECT_FILES): 
       await fs.writeFile(path.join(root, file), text);
     },
     read: file => fs.readFile(path.join(root, file), 'utf-8').catch(() => undefined),
+    writeTeam: async team => {
+      await fs.mkdir(path.join(root, '.plitzi'), { recursive: true });
+      await fs.writeFile(path.join(root, '.plitzi', 'team.json'), JSON.stringify(team));
+    },
     writePlan: async plan => {
       const file = path.join(root, `${plan.runId}.plan.json`);
       await fs.writeFile(file, JSON.stringify(plan));
@@ -202,3 +209,15 @@ export const writeInCopy = async (work: string, file: string, text: string): Pro
 
 export const readInCopy = (work: string, file: string): Promise<string | undefined> =>
   fs.readFile(path.join(work, file), 'utf-8').catch(() => undefined);
+
+/** A team of `count` agents, each taking every role the plan's tasks name: a run held only by how many work at once. */
+export const teamFor = (plan: Pick<RunPlan, 'tasks'>, count: number): Team => ({
+  version: 1,
+  agents: [
+    {
+      name: 'agent',
+      roles: [...new Set(['developer', ...plan.tasks.map(task => task.role ?? 'developer')])],
+      count
+    }
+  ]
+});

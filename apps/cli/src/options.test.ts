@@ -1,7 +1,7 @@
 import { InvalidArgumentError } from 'commander';
 import { describe, expect, it } from 'vitest';
 
-import { count, duration, durationText, fill, positiveInteger, width, widths } from './options';
+import { count, duration, durationText, expectation, fill, positiveInteger, width, widths } from './options';
 
 describe('options', () => {
   it('reads widths in the order given, each once', () => {
@@ -54,5 +54,13 @@ describe('options', () => {
     expect(() => duration('0s')).toThrow('from 1s to 24h');
     expect(() => duration('2d')).toThrow(InvalidArgumentError);
     expect(() => duration('25h')).toThrow(InvalidArgumentError);
+  });
+
+  it('reads an expectation for every page, or for one named before it', () => {
+    expect(expectation('walks-title~October', undefined)).toEqual([{ element: 'walks-title', text: 'October' }]);
+    expect(expectation('/faq faq-title~Questions asked', undefined)).toEqual([
+      { element: 'faq-title', text: 'Questions asked', path: '/faq' }
+    ]);
+    expect(() => expectation('/faq', undefined)).toThrow(InvalidArgumentError);
   });
 });

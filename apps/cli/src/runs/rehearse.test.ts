@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { readOwnership } from './ownership';
 import { checkPlan } from './plan';
 import { rehearsalText, rehearse } from './rehearse';
-import { benchPlan, makeBench } from '../tests/runProject';
+import { benchPlan, makeBench, teamFor } from '../tests/runProject';
 
 import type { RunPlan } from './model';
 import type { RehearsalOptions } from './rehearse';
@@ -21,7 +21,7 @@ afterEach(async () => {
 
 const rehearsed = async (plan: RunPlan, options: RehearsalOptions): Promise<ReturnType<typeof rehearse>> => {
   const ownership = await readOwnership(bench.root);
-  const checked = await checkPlan(bench.root, plan, ownership, options.agents);
+  const checked = await checkPlan(bench.root, plan, ownership, teamFor(plan, options.agents));
 
   return rehearse(checked.tasks, options, { ownership, created: checked.created });
 };

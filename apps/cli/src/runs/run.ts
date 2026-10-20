@@ -12,6 +12,7 @@ import { checkPlan, PlanRefusal } from './plan';
 import { RunRefusal } from './refusal';
 import { keepFiles, withLock } from './store';
 import { appendLog, cutTask, DEFAULTS, readTasks, viewTask } from './taskStore';
+import { ensureTeam, reviewsDesign, teamSize } from './team';
 
 import type { CheckRunner } from './checks';
 import type {
@@ -28,6 +29,7 @@ import type {
 import type { Ownership } from './ownership';
 import type { RunPaths } from './paths';
 import type { CheckedPlan } from './plan';
+import type { Team } from './team';
 
 /**
  * A run (RFC 0028): its folder, its record, and what may be done to it by whom. Every command of `plitzi run` and
@@ -282,7 +284,7 @@ export const assertNoOtherRun = async (ctx: RunContext, except?: string): Promis
   const record = await readRecord(runPaths(ctx.root, other)).catch(() => undefined);
   throw new RunRefusal(
     'another-run',
-    `Run "${other}" is going in this project${record ? ` (${record.status}, opened ${record.openedAt})` : ''}: one plan and one run at a time — finish it (plitzi run finish ${other}), or a person aborts it (plitzi run abort ${other})`,
+    `Run "${other}" is going in this project${record ? ` (${record.status}, opened ${record.openedAt})` : ''}: one run at a time — stack the next plan on it (plitzi run extend ${other} <plan>: one finish for both), finish it (plitzi run finish ${other}), or a person aborts it (plitzi run abort ${other})`,
     { run: other }
   );
 };
@@ -427,10 +429,10 @@ export const readPlanFile = async (file: string): Promise<RunPlan> => {
 };
 
 /** `plitzi run plan`: the plan held to the rules, expanded and estimated — nothing written. */
-export const checkPlanFile = async (ctx: RunContext, file: string, agents: number): Promise<CheckedPlan> => {
+export const checkPlanFile = async (ctx: RunContext, file: string): Promise<CheckedPlan> => {
   await assertNoOtherRun(ctx);
 
-  return (await readCheckedPlan(ctx.root, file, agents)).checked;
+  return (await readCheckedPlan(ctx.root, file)).checked;
 };
 
 /** A plan file read and checked against the project as it is, with the ownership it was checked by — no run touched. */
@@ -464,14 +466,21 @@ export const readPrimer = async (plan: RunPlan, planFile: string): Promise<strin
 
 export const readCheckedPlan = async (
   root: string,
-  file: string,
-  agents: number
-): Promise<{ checked: CheckedPlan; ownership: Ownership }> => {
+  file: string
+): Promise<{ checked: CheckedPlan; ownership: Ownership; team: Team }> => {
   const plan = await readPlanFile(file);
   await readPrimer(plan, file);
   const ownership = await readOwnership(root);
+  // The team works the run, and says how many at once: a project's first run writes the one its plan needs.
+  const { team, created } = await ensureTeam(root, plan);
   try {
-    return { checked: await checkPlan(root, plan, ownership, agents), ownership };
+    const checked = await checkPlan(root, plan, ownership, team);
+
+    return {
+      checked: created ? { ...checked, notices: [created, ...checked.notices] } : checked,
+      ownership,
+      team
+    };
   } catch (error) {
     if (error instanceof PlanRefusal) {
       throw new RunRefusal('invalid', error.message, { problems: error.problems });
@@ -492,19 +501,13 @@ const LEAD_FINISHES =
 export const openRun = async (
   ctx: RunContext,
   file: string,
-  agents: number,
   { leadFinishes = false }: { leadFinishes?: boolean } = {}
 ): Promise<OpenedRun> => {
   requireNoTask(ctx, 'open a run');
-  if (!Number.isInteger(agents) || agents < 1) {
-    throw new RunRefusal(
-      'invalid',
-      `--agents is how many agents may work at once: a whole number from 1, not ${String(agents)}`
-    );
-  }
-
   const plan = await readPlanFile(file);
-  const checked = await checkPlanFile(ctx, file, agents);
+  await assertNoOtherRun(ctx);
+  const { checked, team } = await readCheckedPlan(ctx.root, file);
+  const agents = teamSize(team);
   const paths = runPaths(ctx.root, checked.runId);
   if (await readRecord(paths).catch(() => undefined)) {
     throw new RunRefusal(
@@ -575,6 +578,7 @@ export const openRun = async (
     },
     ...(confirmed ? { confirmed } : {}),
     ...(leadFinishes ? { leadFinishes: ctx.now().toISOString() } : {}),
+    ...(reviewsDesign(team, plan) ? { designReview: true as const } : {}),
     brake: [],
     merges: [],
     inputs: [await inputOf(ctx, path.resolve(file))].filter(input => input !== undefined)

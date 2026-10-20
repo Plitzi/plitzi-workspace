@@ -766,6 +766,27 @@ describe('lintSpace', () => {
       expect(warningsOf(holdsHeading)).toContain('span-holds-block');
     });
 
+    /** A `text` renders a `<div>`: inside a `<p>` the HTML parser closes the paragraph before it, styled inline or not. */
+    it('span-holds-block for a paragraph container holding a text, and not a span', () => {
+      const holding = (child: 'text' | 'span') =>
+        withChange(({ schema }) => {
+          schema.flat.box.attributes.subType = 'p';
+          addElement(schema, {
+            id: 'words',
+            type: child === 'text' ? 'text' : 'container',
+            attributes: child === 'text' ? { content: 'Hi' } : { subType: 'span' }
+          });
+          const home = homeId(schema);
+          schema.flat[home].definition.items = (schema.flat[home].definition.items ?? []).filter(id => id !== 'words');
+          schema.flat.words.definition.parentId = 'box';
+          // The fixture's box holds a text of its own: the child under test is its only one here.
+          schema.flat.box.definition.items = ['words'];
+        });
+
+      expect(warningsOf(holding('text'))).toContain('span-holds-block');
+      expect(warningsOf(holding('span'))).not.toContain('span-holds-block');
+    });
+
     it('loading-slot-unknown', () => {
       const providerWith = (loadingSlot: string) =>
         errorsOf(

@@ -3,7 +3,10 @@ import fs from 'node:fs/promises';
 import net from 'node:net';
 import path from 'node:path';
 
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
 import { runScript, scriptsOf, tail } from '../commands/verify';
+import { DEV_SERVER_FILE } from '../scaffold/paths';
 
 import type { Acceptance, AcceptanceResult } from './model';
 
@@ -16,7 +19,7 @@ import type { Acceptance, AcceptanceResult } from './model';
 
 const isChecked = (each: Acceptance): each is { said: string; check: string } => typeof each !== 'string';
 
-const freePort = (): Promise<number> =>
+export const freePort = (): Promise<number> =>
   new Promise((resolve, reject) => {
     const server = net.createServer();
     server.once('error', reject);
@@ -33,7 +36,7 @@ const freePort = (): Promise<number> =>
   });
 
 /** Until something answers on `url`, or `ms` pass: whether it did. */
-const answering = async (url: string, ms: number): Promise<boolean> => {
+export const answering = async (url: string, ms: number): Promise<boolean> => {
   const until = Date.now() + ms;
   while (Date.now() < until) {
     const ok = await fetch(url).then(
@@ -50,12 +53,36 @@ const answering = async (url: string, ms: number): Promise<boolean> => {
   return false;
 };
 
+/** Whether a check needs the copy served: it names `$PLITZI_URL`, or `$PLITZI_PORT` — its port, for a runner (Playwright) configured by `PORT`. */
+export const namesServedCopy = (check: string): boolean => /PLITZI_(?:URL|PORT)\b/.test(check);
+
+/**
+ * A server the agent started in its copy and left running: it holds the copy's state (its locks, its files) as the one
+ * `complete` starts would — said before starting that one, with its port, rather than met as a lock the two fight over.
+ */
+const ownServer = async (work: string): Promise<number | undefined> => {
+  const value: unknown = await fs
+    .readFile(path.join(work, DEV_SERVER_FILE), 'utf-8')
+    .then(text => JSON.parse(text) as unknown)
+    .catch(() => undefined);
+  const port = isRecord(value) && typeof value.port === 'number' ? value.port : undefined;
+
+  return port !== undefined && (await answering(`http://127.0.0.1:${String(port)}`, 1_000)) ? port : undefined;
+};
+
 /** The copy served by its own start script on a free port, quietly: what `$PLITZI_URL` names. */
 const serveCopy = async (
   work: string,
   root: string,
   cache: string
-): Promise<{ url: string; stop: () => void } | { problem: string }> => {
+): Promise<{ url: string; port: number; stop: () => void } | { problem: string }> => {
+  const running = await ownServer(work);
+  if (running !== undefined) {
+    return {
+      problem: `a server of your own is running in the copy, on :${String(running)} — stop it, and complete again: complete starts the copy itself, and two servers on one copy fight over its state`
+    };
+  }
+
   const scripts = await scriptsOf(work);
   const name = ['start', 'start:dev'].find(each => Object.hasOwn(scripts, each));
   const script = name === undefined ? undefined : scripts[name];
@@ -113,7 +140,7 @@ const serveCopy = async (
     };
   }
 
-  return { url, stop };
+  return { url, port, stop };
 };
 
 /** A `plitzi` on the path that is this CLI: a check runs the version the run is worked with, not another installed. */
@@ -136,9 +163,7 @@ export const checkAcceptance = async (
     return [];
   }
 
-  const served = checked.some(each => each.check.includes('PLITZI_URL'))
-    ? await serveCopy(work, root, cache)
-    : undefined;
+  const served = checked.some(each => namesServedCopy(each.check)) ? await serveCopy(work, root, cache) : undefined;
   if (served && 'problem' in served) {
     return checked.map(each => ({ said: each.said, check: each.check, ok: false, output: [served.problem] }));
   }
@@ -148,7 +173,7 @@ export const checkAcceptance = async (
     const results: AcceptanceResult[] = [];
     for (const each of checked) {
       const { code, output } = await runScript(work, each.check, root, {
-        env: served ? { PLITZI_URL: served.url } : {},
+        env: served ? { PLITZI_URL: served.url, PLITZI_PORT: String(served.port) } : {},
         bin: [bin]
       });
       results.push({

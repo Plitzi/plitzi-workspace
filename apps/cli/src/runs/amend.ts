@@ -15,6 +15,9 @@ import type { RunContext } from './run';
  * or estimate, the goal, a note more — from the plan file edited. What makes the run's shape — which tasks there are,
  * their files, what they wait for, their role, what they touch — stays as the run opened it: that is a new plan. A task
  * done is not asked again. Each task whose ask changed is told so, with what it now says; nothing is changed unsaid.
+ *
+ * A run with stages stacked on it (`run extend`) is amended from either: its own plan, or a stage's as it was stacked —
+ * the stage's tasks are the ones it changes, and the run's goal stays the run's.
  */
 
 export interface AmendedTask {
@@ -43,14 +46,21 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'amend the plan');
   const next: RunPlan = await readPlanFile(file);
-  if (next.runId !== runId) {
-    throw new RunRefusal('invalid', `${file} is the plan of "${next.runId}", not of run "${runId}"`);
+  const before = new Map(loaded.plan.tasks.map(task => [task.id, task]));
+  // A stage stacked on the run: its plan names its own tasks, all of them the run's.
+  const stage = next.runId !== runId;
+  if (stage && !next.tasks.some(task => before.has(task.id))) {
+    throw new RunRefusal(
+      'invalid',
+      `${file} is the plan of "${next.runId}", and none of its tasks is run "${runId}"'s: it is no stage stacked on it`
+    );
   }
 
-  const before = new Map(loaded.plan.tasks.map(task => [task.id, task]));
   const problems: string[] = [];
   const added = next.tasks.filter(task => !before.has(task.id)).map(task => task.id);
-  const removed = loaded.plan.tasks.filter(task => !next.tasks.some(each => each.id === task.id)).map(task => task.id);
+  const removed = stage
+    ? []
+    : loaded.plan.tasks.filter(task => !next.tasks.some(each => each.id === task.id)).map(task => task.id);
   if (added.length > 0 || removed.length > 0) {
     problems.push(
       `The run's tasks are the ones it opened with: ${[...added.map(id => `"${id}" added`), ...removed.map(id => `"${id}" removed`)].join(', ')}`
@@ -96,7 +106,7 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
 
   const knownNotes = new Set(loaded.plan.notes ?? []);
   const notes = (next.notes ?? []).filter(note => !knownNotes.has(note));
-  const goal = next.goal === loaded.plan.goal ? undefined : next.goal;
+  const goal = stage || next.goal === loaded.plan.goal ? undefined : next.goal;
   const primer = await readPrimer(next, file);
   const primerChanged = primer !== undefined && primer !== (await readOptional(loaded.paths.primer))?.toString('utf-8');
   if (changes.length === 0 && notes.length === 0 && goal === undefined && !primerChanged) {
@@ -119,8 +129,18 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);
   }
 
-  // What the run was opened with is kept as the plan, amended: the plan the report and `run status` read.
-  await writeJson(loaded.paths.plan, next);
+  // What the run was opened with is kept as the plan, amended: the plan the report and `run status` read. A stage's
+  // tasks take their place in it; the rest of the run's plan stays.
+  await writeJson(
+    loaded.paths.plan,
+    stage
+      ? {
+          ...loaded.plan,
+          tasks: loaded.plan.tasks.map(task => next.tasks.find(each => each.id === task.id) ?? task),
+          notes: [...(loaded.plan.notes ?? []), ...notes]
+        }
+      : { ...next, ...(loaded.plan.primer && next.primer === undefined ? { primer: loaded.plan.primer } : {}) }
+  );
   for (const { task, changed } of changes) {
     await sendMessage(ctx, loaded, {
       from: LEAD,

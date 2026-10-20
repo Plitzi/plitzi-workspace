@@ -40,6 +40,29 @@ describe('Container Tests', () => {
     expect(plain.hasAttribute('title')).toBe(false);
   });
 
+  it('opens and closes on its own as a details with its summary, shown open only when asked', () => {
+    const { container, rerender } = render(
+      <ElementContext value={skipHocEntry()}>
+        <Container subType="details">
+          <Container subType="summary">How often does a dog need walking?</Container>
+          Twice a day.
+        </Container>
+      </ElementContext>
+    );
+    const details = container.querySelector('details');
+
+    expect(details?.querySelector('summary')?.textContent).toBe('How often does a dog need walking?');
+    expect(details?.open).toBe(false);
+    rerender(
+      <ElementContext value={skipHocEntry()}>
+        <Container subType="details" open>
+          <Container subType="summary">How often?</Container>
+        </Container>
+      </ElementContext>
+    );
+    expect(container.querySelector('details')?.open).toBe(true);
+  });
+
   it('names a landmark by its label', () => {
     const { getByRole } = render(
       <ElementContext value={skipHocEntry()}>

@@ -449,8 +449,9 @@ It is the platform's `GET /spaces/:spaceId/activity?after=&wait=&limit=&mine=`, 
 
 ```bash
 plitzi space overview                      # who owns which file, read off the imports; what is shared
-plitzi run plan plan.json --agents 3       # a plan the lead wrote, held to the rules and estimated
-plitzi run open plan.json --agents 3       # its folder, every file it touches backed up; 3 agents at most at once
+plitzi run team                            # who works the runs: .plitzi/team.json, the agents, their roles and models
+plitzi run plan plan.json                  # a plan the lead wrote, held to the rules and estimated
+plitzi run open plan.json                  # its folder, every file it touches backed up; as many at once as the team
 plitzi task take t-home --json             # a subagent's: its files locked, its copy, its token
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
@@ -485,8 +486,8 @@ and one run at a time** in a project: a second is refused, naming the first.
   preview --task` a task in review, before it is.
 - **No task ends with failing checks** — lint, types, tests: `complete` refuses. Only for a reason that weighs, said to
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
-- **As many agents as the run allows** (`run open --agents`, 3 when left out, usually 2 to 5; above 5 a person
-  confirms): past it, `task take` waits for one to finish.
+- **As many agents as the team has** (`.plitzi/team.json`, written at the first run when there is none; above 5 a
+  person confirms): past it, `task take` waits for one to finish.
 - **Each task in a copy** of the project in `tmp/plitzi-runs/<run>/` — cloned copy-on-write where the disk can; never
   `.env` (its templates, `.env.example`, are), `node_modules` or the binaries of `public/`. Only the task's own files may
   change in it: `task complete` refuses anything else, naming it, and runs the project's checks (what `verify` runs) in

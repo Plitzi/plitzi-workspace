@@ -9,6 +9,16 @@ import { checkAcceptance } from './acceptance';
 import { agreementsOf, proposalsOf, unansweredTo } from './agreements';
 import { failsWithout } from './checks';
 import {
+  approveDesign,
+  assertDesigner,
+  designAtComplete,
+  designDue,
+  designReviewFor,
+  hasDesignReview,
+  isLead,
+  takeDesignReview
+} from './design';
+import {
   cloneFiles,
   createExclusive,
   fingerprint,
@@ -21,7 +31,8 @@ import {
 import { checkVersions } from './materialise';
 import { mergeLines } from './merge3';
 import { AGENT, agentAddress, LEAD, messagesOf, runNotesOf, sendMessage, unreadFor, unreadForHolder } from './messages';
-import { entryOf } from './model';
+import { acceptanceText, entryOf } from './model';
+import { pagesOf } from './pagesOf';
 import { COPY_TASK_FILE, ID, lockFile, projectPath, runPaths, taskPaths, under } from './paths';
 import { dependenciesDone, PRIORITY_RANK, readyTasks } from './plan';
 import { syncPreview } from './preview';
@@ -56,6 +67,7 @@ import {
   viewTask,
   writeRequest
 } from './taskStore';
+import { DESIGNER } from './team';
 import { unifiedDiff } from '../fix/diff';
 import { PROJECT_NOTES } from '../scaffold/paths';
 
@@ -299,6 +311,21 @@ export interface NextTask {
    * is still good.
    */
   yours?: 'in-progress' | 'changes-requested';
+  /** Handed back with changes requested: what its last review asked, by whom. */
+  asked?: string[];
+  /**
+   * A designer's, before any task: one whose UI waits for its review — looked at as it went to review (`task look`),
+   * then said (`task review --approve | --changes`). What it changed, for the look.
+   */
+  designReview?: {
+    task: RunTask;
+    round: number;
+    changed: string[];
+    /** Where its changes are drawn, to look at: the pages that own its files. */
+    pages: string[];
+    /** Sent back since a designer last looked: what the lead's reviews asked — what this round answers. */
+    asked: string[];
+  };
   /** Why nothing is ready, when nothing is. */
   why?: string;
   ready: string[];
@@ -339,13 +366,38 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
       // …with what was said to that task meanwhile — an amendment, a review's words — which it reads nowhere else first.
       const toTask = await unreadFor(loaded, view.task.id, true);
 
+      // Sent back: what its last review asked, said where it is handed back — not only in the brief.
+      const asked = view.state.notes
+        .filter(note => note.text.startsWith(`Review ${String(view.state.round)}: `))
+        .map(note => `${note.by}: ${note.text.slice(`Review ${String(view.state.round)}: `.length)}`);
+
       return {
         task: view.task,
         yours: status,
+        ...(status === 'changes-requested' && asked.length > 0 ? { asked } : {}),
         ready: [],
         messages: [...messages, ...toTask].sort((x, y) => x.at.localeCompare(y.at) || x.id.localeCompare(y.id))
       };
     }
+  }
+
+  // A review holds back a task already done, and the lead: a designer's comes before anything new.
+  const designer = loaded.record.designReview === true && roles?.includes(DESIGNER) === true;
+  const review = designer ? designReviewFor(views, ctx.agent) : undefined;
+  if (review) {
+    return {
+      designReview: {
+        task: review.task,
+        round: review.state.round,
+        changed: review.state.changed ?? [],
+        pages: await pagesOf(ctx.root, review.state.changed ?? []),
+        asked: review.state.notes
+          .filter(note => /^Review \d+: /.test(note.text))
+          .map(note => `${note.by}: ${note.text}`)
+      },
+      ready: [],
+      messages
+    };
   }
 
   const ready = readyTasks(loaded.tasks, states, held).filter(forRole);
@@ -372,29 +424,35 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   const open = views.filter(view => view.state.status !== 'done');
   const others = roles === undefined ? [] : readyTasks(loaded.tasks, states, held).filter(task => !forRole(task));
   const coming = views.filter(view => view.state.status !== 'done' && forRole(view.task));
+  // A designer is not done while a task whose UI it may review is still to be done.
+  const toReview = designer
+    ? views.filter(view => view.state.status !== 'done' && hasDesignReview(view.task, view.task.files))
+    : [];
   const why =
-    others.length > 0
-      ? `nothing ready for a ${String(role)}: ready for others — ${others.map(task => `${task.id} (${roleOf(task)})`).join(', ')}`
-      : roles !== undefined && coming.length === 0
-        ? `no task is left for a ${String(role)}: every one is done`
-        : open.length === 0
-          ? 'every task is done: the run is ready to finish (plitzi run finish)'
-          : `nothing is ready: ${open
-              .map(
-                view =>
-                  `${view.task.id} ${view.state.status}${
-                    view.state.status === 'pending'
-                      ? ` (waits for ${view.task.dependsOn.filter(dependency => states.get(dependency)?.status !== 'done').join(', ')})`
-                      : ''
-                  }${
-                    view.owner
-                      ? ` (${view.owner.agent}${isDisconnected(view.task, view.signalAt, ctx.now()) ? ', no signal — the lead may reassign it' : ''})`
-                      : ''
-                  }`
-              )
-              .join(', ')}`;
+    roles !== undefined && coming.length === 0 && toReview.length > 0
+      ? `no task is left for a ${String(role)} to work: the UI of ${toReview.map(view => `${view.task.id} (${view.state.status})`).join(', ')} is yours to review once it is in review — wait for it (--follow)`
+      : others.length > 0
+        ? `nothing ready for a ${String(role)}: ready for others — ${others.map(task => `${task.id} (${roleOf(task)})`).join(', ')}`
+        : roles !== undefined && coming.length === 0
+          ? `no task is left for a ${String(role)}: every one is done`
+          : open.length === 0
+            ? 'every task is done: the run is ready to finish (plitzi run finish)'
+            : `nothing is ready: ${open
+                .map(
+                  view =>
+                    `${view.task.id} ${view.state.status}${
+                      view.state.status === 'pending'
+                        ? ` (waits for ${view.task.dependsOn.filter(dependency => states.get(dependency)?.status !== 'done').join(', ')})`
+                        : ''
+                    }${
+                      view.owner
+                        ? ` (${view.owner.agent}${isDisconnected(view.task, view.signalAt, ctx.now()) ? ', no signal — the lead may reassign it' : ''})`
+                        : ''
+                    }`
+                )
+                .join(', ')}`;
 
-  const finished = open.length === 0 || (roles !== undefined && coming.length === 0);
+  const finished = open.length === 0 || (roles !== undefined && coming.length === 0 && toReview.length === 0);
   // An agent done with the run hears how its own work ended: its copies are gone, and the run may end before it asks.
   const worked = views
     .filter(view => view.state.notes.some(note => note.by === ctx.agent && note.text.startsWith('Taken')))
@@ -410,7 +468,11 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
     });
 
   return {
-    why,
+    // Finished, it says so: what is ready for other roles is no reason to wait.
+    why:
+      finished && roles !== undefined && open.length > 0
+        ? `${loaded.tasks.some(forRole) ? `no task is left for a ${String(role)}: every one is done` : `no task in this run is a ${String(role)}'s`} — what is left is for others (${others.map(task => task.id).join(', ') || 'in their hands'}). You can stop`
+        : why,
     ready: [],
     messages,
     ...(finished ? { finished: true, worked } : {})
@@ -442,6 +504,21 @@ export const takeNext = async (
           timeoutMs: Math.max(0, follow.timeoutMs - (Date.now() - started))
         })
       : await nextTask(ctx, runId, role);
+    // A review is taken as its own — another designer that took it first is no refusal: the next is offered.
+    if (next.designReview) {
+      const offered = next.designReview.task.id;
+      const loaded = await loadRun(ctx, runId);
+      if (
+        tried.has(offered) ||
+        (await takeDesignReview(ctx, await viewTask(loaded.paths, findTask(loaded, offered))))
+      ) {
+        return { next };
+      }
+
+      tried.add(offered);
+      continue;
+    }
+
     if (!next.task || next.yours) {
       return { next };
     }
@@ -477,7 +554,7 @@ export const followNext = async (
 
       throw error;
     });
-    if (next.task || next.finished || next.messages.length > 0) {
+    if (next.task || next.designReview || next.finished || next.messages.length > 0) {
       return next;
     }
 
@@ -1486,12 +1563,19 @@ export const completeTask = async (
     }
   }
 
+  const designed = await designAtComplete(
+    loaded,
+    view,
+    changed.filter(file => !asRequests.includes(file))
+  );
   await updateState(
     view.paths,
     state => ({
       ...state,
       status: 'in-review',
       changed: changed.filter(file => !asRequests.includes(file)),
+      // A designer looks at its UI before the lead, each round its UI changed: what it changed is what is looked at.
+      design: designed.design,
       ...(accepted.length > 0 ? { accepted } : { accepted: undefined }),
       warnings: warningsOf(checks).length > 0 ? warningsOf(checks) : undefined,
       knownFailure: preexisting
@@ -1511,6 +1595,7 @@ export const completeTask = async (
           : undefined,
       notes: [
         ...state.notes,
+        ...(designed.carried ? [{ at: at(ctx), by: 'plitzi', text: designed.carried }] : []),
         ...(changedInProject.length > 0
           ? [
               {
@@ -1867,6 +1952,8 @@ export interface ReviewedTask {
   toPerson?: boolean;
   /** Its files a person changed meanwhile, put together with its change (--merge). */
   joined?: string[];
+  /** A designer approved its UI — it is the lead's now — or the lead approved it without that review. */
+  design?: 'approved' | 'skipped';
 }
 
 interface Built {
@@ -2106,7 +2193,8 @@ export const reviewTask = async (
   taskId: string,
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
-  onProjectChange: ProjectChange = 'refuse'
+  onProjectChange: ProjectChange = 'refuse',
+  { skipDesign = false }: { skipDesign?: boolean } = {}
 ): Promise<ReviewedTask> => {
   requireNoTask(ctx, 'review a task');
   const loaded = await loadRun(ctx, runId);
@@ -2126,6 +2214,26 @@ export const reviewTask = async (
       { task: taskId }
     );
   }
+
+  // Its UI waits for a designer: an agent's verdict is the designer's; the lead's approval waits for it, or says it skips.
+  const byDesigner = designDue(view.state) && !isLead(ctx.agent);
+  if (byDesigner) {
+    assertDesigner(view, ctx.agent);
+    if (verdict === 'approve') {
+      await approveDesign(ctx, loaded, view, comments.map(comment => comment.note).join(' · ') || undefined);
+
+      return { verdict, round: view.state.round, design: 'approved' };
+    }
+  } else if (verdict === 'approve' && designDue(view.state) && !skipDesign) {
+    const by = view.state.design?.by;
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}"'s UI waits for ${by ?? 'a designer'}'s review${by ? '' : ' (none took it yet)'}: run watch --until lead wakes you once it is said — or approve it now without it: --skip-design`,
+      { task: taskId, ...(by ? { designer: by } : {}) }
+    );
+  }
+
+  const skipped = verdict === 'approve' && designDue(view.state);
 
   // A question it asked the lead and the lead has not answered: the answer may change the work, so it comes first.
   const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
@@ -2242,7 +2350,16 @@ export const reviewTask = async (
   const released = [...(await lockedFiles(view.paths)).keys()];
   await fs.rm(view.paths.locks, { recursive: true, force: true });
   await revokeOwner(view.paths);
-  await updateState(view.paths, state => ({ ...state, round, status: 'done' }), ctx.now);
+  await updateState(
+    view.paths,
+    state => ({
+      ...state,
+      round,
+      status: 'done',
+      ...(skipped ? { design: { status: 'skipped' as const, round: state.round, by: ctx.agent, at: at(ctx) } } : {})
+    }),
+    ctx.now
+  );
   await fs.rm(view.paths.cache, { recursive: true, force: true });
 
   const refreshed = await loadRun(ctx, runId);
@@ -2290,7 +2407,8 @@ export const reviewTask = async (
     ready: [...ready, ...integrations],
     integrations,
     settled,
-    ...(joined.length > 0 ? { joined } : {})
+    ...(joined.length > 0 ? { joined } : {}),
+    ...(skipped ? { design: 'skipped' as const } : {})
   };
 };
 
@@ -2483,7 +2601,15 @@ export interface TaskContext {
   review?: { round: number; verdict: string; comments: ReviewComment[] };
   /** For an integration task: each request with the requester's version against the run's now. */
   requests: { task: string; file: string; summary: string; usedIn: string[]; diff?: string; notes: string[] }[];
-  related: { task: string; title: string; status: string; changed: string[]; notes: string[] }[];
+  related: {
+    task: string;
+    title: string;
+    status: string;
+    changed: string[];
+    notes: string[];
+    /** A task it waits for: what it was asked, and what its reviews asked on top — what a tester writes its tests from. */
+    asked?: { acceptance: string[]; reviews: string[] };
+  }[];
   contracts: { resource: string; owner: string; note: string }[];
   /** What it was proposed and proposed, and what it agreed to with other tasks — what its review checks too. */
   proposals: { incoming: ProposalView[]; outgoing: ProposalView[]; agreements: ProposalView[] };
@@ -2568,7 +2694,15 @@ export const taskContext = async (ctx: RunContext, runId: string, taskId: string
       title: other.task.title,
       status: other.state.status,
       changed: other.state.changed ?? [],
-      notes: lastNotes(other)
+      notes: lastNotes(other),
+      ...(task.dependsOn.includes(id)
+        ? {
+            asked: {
+              acceptance: other.task.acceptance.map(each => acceptanceText(each)),
+              reviews: other.state.notes.filter(note => /^Review \d+: /.test(note.text)).map(note => note.text)
+            }
+          }
+        : {})
     });
   }
 

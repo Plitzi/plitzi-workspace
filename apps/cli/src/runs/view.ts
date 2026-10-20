@@ -8,7 +8,7 @@ import { loadRun, readApproved, readBase, runIds } from './run';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
 
-import type { Needs, RunRecord, TaskStatus, Waiting } from './model';
+import type { DesignReview, Needs, RunRecord, TaskStatus, Waiting } from './model';
 import type { RunContext } from './run';
 import type { TaskView } from './taskStore';
 
@@ -40,6 +40,8 @@ export interface TaskLine {
   /** The tasks that start when this one is done. */
   unblocks: string[];
   milestone?: string;
+  /** Its UI's review by a designer, in a run that has one. */
+  design?: DesignReview;
 }
 
 export interface Attention {
@@ -110,6 +112,7 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[]): TaskLine => ({
     (view.state.status === 'in-progress' || view.state.status === 'changes-requested') &&
     isDisconnected(view.task, view.signalAt, now),
   ...(view.owner ? { takenAt: view.owner.takenAt } : {}),
+  ...(view.state.design ? { design: view.state.design } : {}),
   unblocks,
   ...(view.task.milestone ? { milestone: view.task.milestone } : {})
 });
@@ -343,6 +346,14 @@ const ICON: Record<TaskStatus, string> = {
 
 const hhmm = (iso: string): string => `${iso.slice(11, 16)} UTC`;
 
+/** Where a task's UI review is, in a line. */
+const designText = (design: DesignReview): string =>
+  design.status === 'due'
+    ? `its UI with ${design.by ?? 'a designer, not taken yet'}`
+    : design.status === 'approved'
+      ? `UI approved by ${design.by ?? 'a designer'}`
+      : 'UI review skipped';
+
 /** A run as `plitzi run watch` prints it: the run, a line per task, then what needs attention. */
 export const runText = (view: RunView): string => {
   const head = `${view.goal} · ${view.status} · ${String(view.done)} of ${String(view.total)} tasks${view.expectedEnd ? ` · expected end ${hhmm(view.expectedEnd)}` : ''}`;
@@ -361,7 +372,9 @@ export const runText = (view: RunView): string => {
           ? ` · ${task.blockedBy.reason}`
           : task.status === 'changes-requested'
             ? ` · changes requested (round ${String(task.round)})`
-            : '';
+            : task.status === 'in-review' && task.design
+              ? ` · ${designText(task.design)}`
+              : '';
     lines.push(
       `  ${ICON[task.status]} ${task.id.padEnd(18)} ${task.role === 'developer' ? '' : `[${task.role}] `}${agent}${task.title}${step}${progress}${extra}${task.noSignal ? ' · no signal' : ''}`
     );
@@ -382,6 +395,48 @@ export const runText = (view: RunView): string => {
 };
 
 /** `plitzi run state`: every run of the project, with where it stands. */
+export interface PendingRun {
+  runId: string;
+  goal: string;
+  status: string;
+  done: number;
+  total: number;
+  /** Every task done and nothing in the way: the finish is all that is left. */
+  ready: boolean;
+  /** A person let the lead write it into the project itself. */
+  leadFinishes: boolean;
+  /** What writes it into the project — the person's to run, unless the lead may. */
+  apply: string;
+}
+
+/**
+ * `plitzi run pending`: the runs of this project not yet written into it — the ones ready to apply first, each with the
+ * command that applies it, so nobody keeps the list in their head.
+ */
+export const pendingRuns = async (ctx: RunContext): Promise<PendingRun[]> => {
+  const pending: PendingRun[] = [];
+  for (const runId of await runIds(ctx.root)) {
+    const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true }).catch(() => undefined);
+    const view = loaded ? await viewRun(ctx, runId).catch(() => undefined) : undefined;
+    if (!loaded || !view) {
+      continue;
+    }
+
+    pending.push({
+      runId,
+      goal: view.goal,
+      status: view.status,
+      done: view.done,
+      total: view.total,
+      ready: view.done === view.total && (view.status === 'open' || view.status === 'stopped'),
+      leadFinishes: loaded.record.leadFinishes !== undefined,
+      apply: `npx plitzi run finish ${runId} --apply`
+    });
+  }
+
+  return pending.sort((a, b) => Number(b.ready) - Number(a.ready) || a.runId.localeCompare(b.runId));
+};
+
 export const runsState = async (
   ctx: RunContext
 ): Promise<{ runId: string; status: string; done: number; total: number; activeOn: string; attention: number }[]> => {

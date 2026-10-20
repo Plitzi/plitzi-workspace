@@ -93,7 +93,8 @@ const serve = async (
   loaded: LoadedRun,
   dir: string,
   port: number,
-  ended: () => Promise<string | undefined> = () => Promise.resolve(undefined)
+  ended: () => Promise<string | undefined> = () => Promise.resolve(undefined),
+  { quiet = false }: { quiet?: boolean } = {}
 ): Promise<Omit<Preview, 'dir'>> => {
   const scripts = await scriptsOf(dir);
   const script = scripts['start:dev'] ? 'start:dev' : scripts.start ? 'start' : undefined;
@@ -105,7 +106,8 @@ const serve = async (
   const child = spawn(scripts[script], {
     cwd: dir,
     shell: true,
-    stdio: 'inherit',
+    // Quiet for a command that says its own findings (`task look`): the server's start lines are not its answer.
+    stdio: quiet ? 'ignore' : 'inherit',
     env: {
       ...process.env,
       ...(env ? parseEnv(env) : {}),
@@ -177,7 +179,8 @@ export const startTaskPreview = async (
   ctx: RunContext,
   runId: string,
   taskId: string,
-  port: number
+  port: number,
+  options: { quiet?: boolean } = {}
 ): Promise<Preview> => {
   requireNoTask(ctx, 'preview a task');
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
@@ -195,11 +198,18 @@ export const startTaskPreview = async (
     );
   }
 
-  const served = await serve(ctx, loaded, view.paths.work, port, async () => {
-    const now = (await viewTask(loaded.paths, task)).state.status;
+  const served = await serve(
+    ctx,
+    loaded,
+    view.paths.work,
+    port,
+    async () => {
+      const now = (await viewTask(loaded.paths, task)).state.status;
 
-    return now === 'in-review' ? undefined : `the preview stopped: ${taskId} is ${now} now`;
-  });
+      return now === 'in-review' ? undefined : `the preview stopped: ${taskId} is ${now} now`;
+    },
+    options
+  );
 
   return { ...served, dir: view.paths.work };
 };

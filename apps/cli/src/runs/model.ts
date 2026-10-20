@@ -65,6 +65,11 @@ export interface PlannedTask {
    * the lead sees two tasks on one file before they meet at `complete`.
    */
   touches?: string[];
+  /**
+   * `false`: no tests of its own, with a tester in the team — the CLI gives every developer task one that writes its
+   * tests (`<id>-tests`, after it) unless it says this, or the plan has a tester's task that waits for it already.
+   */
+  tests?: false;
 }
 
 export interface Contract {
@@ -87,6 +92,11 @@ export interface RunPlan {
    * lead who read it all — handed to every task with its brief, so an agent does not read the same ten files to start.
    */
   primer?: string;
+  /**
+   * Whether a designer reviews the UI of the others' tasks before the lead: on with a designer in the team, off with
+   * none — said here to turn it the other way for this run.
+   */
+  designReview?: boolean;
 }
 
 /** A task as the run holds it (`task.json`): the plan's, with its files expanded — or one the CLI made to integrate. */
@@ -152,6 +162,11 @@ export interface RunRecord {
    * confirmed by typing the run's name: `finish --apply` then needs no person, and still a report and green checks.
    */
   leadFinishes?: string;
+  /**
+   * A designer in the team, or the plan asked for it: the UI of the others' tasks — what they change under `src/space/` or a
+   * plugin — is reviewed by a designer before the lead approves it (`TaskState.design`).
+   */
+  designReview?: true;
   stopRequestedAt?: string;
   /** Why it is stopping: who stopped it, or what the brake saw. */
   stopReason?: string;
@@ -228,7 +243,21 @@ export interface TaskState {
   accepted?: AcceptanceResult[];
   /** What its checks passed with but still warned of at its last `complete` — the space's lint: weighed at review. */
   warnings?: string[];
+  /**
+   * Its UI's review by a designer, in a run that has one: `due` from its `complete` until a designer says — the agent
+   * who took it to review, once one did (`task next --take`) — and `approved` once it did: then it is the lead's.
+   */
+  design?: DesignReview;
   updatedAt: string;
+}
+
+export interface DesignReview {
+  status: 'due' | 'approved' | 'skipped';
+  /** The round of the work it reviews. */
+  round: number;
+  /** The designer who took it, or said it. */
+  by?: string;
+  at?: string;
 }
 
 /** `owner.json`: who holds the task. Created exclusively — the first take wins — and removed to revoke it. */
@@ -379,7 +408,8 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   ) &&
   optional(value.milestone, isString) &&
   optional(value.role, isString) &&
-  optional(value.touches, isStrings);
+  optional(value.touches, isStrings) &&
+  optional(value.tests, flag => flag === false);
 
 const isContract = (value: unknown): value is Contract =>
   isRecord(value) && isString(value.resource) && isString(value.owner) && isString(value.note);
@@ -393,7 +423,8 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   value.tasks.every(isPlannedTask) &&
   optional(value.contracts, contracts => Array.isArray(contracts) && contracts.every(isContract)) &&
   optional(value.notes, isStrings) &&
-  optional(value.primer, isString);
+  optional(value.primer, isString) &&
+  optional(value.designReview, flag => typeof flag === 'boolean');
 
 export const isRunTask = (value: unknown): value is RunTask =>
   isPlannedTask(value) &&
@@ -439,6 +470,7 @@ export const isRunRecord = (value: unknown): value is RunRecord =>
   isNumber(value.estimate.totalMinutes) &&
   optional(value.confirmed, isString) &&
   optional(value.leadFinishes, isString) &&
+  optional(value.designReview, flag => flag === true) &&
   optional(value.stopRequestedAt, isString) &&
   optional(value.stopReason, isString) &&
   optional(value.forcedStopAt, isString) &&
@@ -502,6 +534,15 @@ export const isTaskState = (value: unknown): value is TaskState =>
       isString(failure.at)
   ) &&
   optional(value.warnings, isStrings) &&
+  optional(
+    value.design,
+    design =>
+      isRecord(design) &&
+      oneOf(['due', 'approved', 'skipped'] as const)(design.status) &&
+      isNumber(design.round) &&
+      optional(design.by, isString) &&
+      optional(design.at, isString)
+  ) &&
   optional(
     value.accepted,
     results =>

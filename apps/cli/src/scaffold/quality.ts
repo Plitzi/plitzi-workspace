@@ -89,8 +89,9 @@ export default tsEslint.config(
     rules: reactHooks.configs.recommended.rules
   },
   {
-    // Playwright's specs run in Node and are not part of the app's own program.
-    files: ['visual/**/*.ts', '*.config.ts'],
+    // Playwright's specs run in Node and are not part of the app's own program; a module's own tests (\`node --test\`)
+    // hand \`describe\`/\`it\` to the runner, which awaits what they return.
+    files: ['visual/**/*.ts', '*.config.ts', '**/*.test.ts'],
     rules: { '@typescript-eslint/no-floating-promises': 'off' }
   },
   eslintConfigPrettier

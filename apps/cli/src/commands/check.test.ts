@@ -60,6 +60,8 @@ describe('plitzi page check / a list’s rows', () => {
     expect(listText('home-writer-list', { rendered: 4, source: 8 })).toBe('home-writer-list 4 of 8 rows');
     expect(listText('search-hits', { rendered: null, source: 16 })).toBe('search-hits not rendered (16 in its source)');
     expect(listText('feed', { rendered: 0, source: null })).toBe('feed reads nothing');
+    // A list inside another's row, one copy left after a search: fed by its row, with no whole to count.
+    expect(listText('faq-questions', { rendered: 1, source: 0 })).toBe('faq-questions 1 row, fed by the row it is in');
     expect(listText('vaccineRows', { rendered: 9, source: 9, copies: [2, 3, 4] })).toBe(
       'vaccineRows 9 rows in 3 copies (2, 3, 4) of 9 in its source'
     );

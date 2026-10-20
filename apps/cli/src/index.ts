@@ -53,14 +53,18 @@ import {
   taskComplete,
   runAllowFinish,
   runAmend,
-  runModels,
-  runModelsSet,
+  runExtend,
+  runTeam,
+  runPending,
+  runTeamSet,
+  runTeamUnset,
   runNote,
   taskContextCommand,
   taskShow,
   taskTell,
   taskDiscard,
   taskInbox,
+  taskLook,
   taskMessage,
   taskNext,
   taskNote,
@@ -94,9 +98,8 @@ import { where, WHERE_READINGS } from './commands/where';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
-import { count, duration, expectation, fill, fraction, positiveInteger, roleCounts, widths } from './options';
+import { count, duration, expectation, fill, fraction, names, positiveInteger, widths } from './options';
 import { NEEDS } from './runs/model';
-import { DEFAULT_AGENTS } from './runs/plan';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
@@ -420,8 +423,12 @@ pageGroup
   .addOption(
     new Option(
       '--expect <id~text>',
-      'The element shows this text (any case), as the page was left — or the check fails: once per element'
+      'The element shows this text (any case), as the page was left — or the check fails: once per element; "<path> <id~text>" for one page'
     ).argParser(expectation)
+  )
+  .option(
+    '--then <paths...>',
+    'Go on from the page as a visitor does — a click on its own link to each, no reload — and check each the same way'
   )
   .addOption(
     new Option(
@@ -856,40 +863,63 @@ runGroup
     '<file>',
     'The plan, JSON: { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }'
   )
-  .option(
-    '--agents <n>',
-    'How many agents may work at once — usually 2 to 5; above 5 a person confirms',
-    positiveInteger,
-    DEFAULT_AGENTS
-  )
   .option(...JSON_OPTION)
   .action((file: string, options: PlanOptions) => runPlan(file, options));
 
-const models = runGroup
-  .command('models')
+runGroup
+  .command('extend')
   .description(
-    'Which model works which role — .plitzi/models.json, the project’s: what the lead starts each agent with'
+    'Stack the next plan on an open run: its tasks begin from the run’s work, and one finish writes both into the project'
   )
+  .argument('<run-or-file>', 'The open run — or, alone, the next plan: the run is then the one open')
+  .argument('[file]', 'The next plan')
   .option(...JSON_OPTION)
-  .action((options: RunCommandOptions) => runModels(options));
-
-models
-  .command('set')
-  .description('Choose a role’s model: a task’s role, lead, or default for any role not named — said before and after')
-  .argument('<role>', 'developer, designer, reviewer, writer…, lead or default')
-  .argument('<model>', 'The harness’s own name for it: claude-sonnet-5-5')
-  .option('--effort <effort>', 'How hard it thinks, in the harness’s words: high')
-  .option(...JSON_OPTION)
-  .action((role: string, model: string, options: RunCommandOptions & { effort?: string }) =>
-    runModelsSet(role, model, options)
+  .action((first: string, file: string | undefined, options: PlanOptions) =>
+    file === undefined ? runExtend(undefined, first, options) : runExtend(first, file, options)
   );
 
-models
-  .command('unset')
-  .description('Take a role’s own model out: it goes back to the default')
-  .argument('<role>', 'The role')
+runGroup
+  .command('pending')
+  .description(
+    'The runs of this project not yet written into it — ready ones first, each with the command that applies it'
+  )
   .option(...JSON_OPTION)
-  .action((role: string, options: RunCommandOptions) => runModelsSet(role, undefined, options));
+  .action((options: RunCommandOptions) => runPending(options));
+
+const team = runGroup
+  .command('team')
+  .description(
+    'Who works this project’s runs — .plitzi/team.json, the project’s: the lead and each agent, its roles, how many and its model'
+  )
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions) => runTeam(options));
+
+team
+  .command('set')
+  .description('Add an agent to the team or change one — lead for the lead’s model — said before and after')
+  .argument('<name>', 'The agent: dev is dev-1, dev-2… — or lead')
+  .option(
+    '--roles <roles>',
+    'What it takes: developer, designer, reviewer, tester, writer… — several with commas',
+    names
+  )
+  .option('--count <n>', 'How many agents of it', positiveInteger)
+  .option('--model <model>', 'The harness’s own name for it: claude-sonnet-5-5')
+  .option('--effort <effort>', 'How hard it thinks, in the harness’s words: high')
+  .option(...JSON_OPTION)
+  .action(
+    (
+      name: string,
+      options: RunCommandOptions & { roles?: string[]; count?: number; model?: string; effort?: string }
+    ) => runTeamSet(name, options)
+  );
+
+team
+  .command('unset')
+  .description('Take an agent out of the team — or, for lead, the lead’s own model')
+  .argument('<name>', 'The agent, or lead')
+  .option(...JSON_OPTION)
+  .action((name: string, options: RunCommandOptions) => runTeamUnset(name, options));
 
 runGroup
   .command('rehearse')
@@ -897,13 +927,9 @@ runGroup
     'Play a plan out before any agent starts: who works what when, the critical path, the lead’s reviews, the files several tasks change at once, and how many agents are worth it — nothing opened'
   )
   .argument('<file>', 'The plan, as plitzi run plan takes it')
-  .option('--agents <n>', 'How many agents at once', positiveInteger, DEFAULT_AGENTS)
-  .option('--roles <role=n,…>', 'Agents held to a role — designer=1,writer=2; the rest take any task', roleCounts)
   .option('--review <duration>', 'How long the lead takes over one review (90s, 8m)', duration, 5 * 60_000)
   .option(...JSON_OPTION)
-  .action((file: string, options: PlanOptions & { roles?: Record<string, number>; review?: number }) =>
-    runRehearse(file, options)
-  );
+  .action((file: string, options: PlanOptions & { review?: number }) => runRehearse(file, options));
 
 runGroup
   .command('open')
@@ -911,12 +937,6 @@ runGroup
     'Open a run from a plan: its folder, every file it touches backed up — a person confirms above the threshold'
   )
   .argument('<file>', 'The plan')
-  .option(
-    '--agents <n>',
-    'How many agents may work at once — usually 2 to 5; above 5 a person confirms',
-    positiveInteger,
-    DEFAULT_AGENTS
-  )
   .option(
     '--lead-finishes',
     'Let the lead write the run into the project itself once its report is written and the checks pass — a person confirms it in their terminal'
@@ -963,10 +983,16 @@ runGroup
   .description(
     'Correct what the open run asks — a task’s title, acceptance, priority or estimate, the goal, a note more — from its plan file edited; each task changed is told'
   )
-  .argument('<file>', 'The plan, edited: the same tasks, files and dependencies')
+  .argument('<run-or-file>', 'The open run — or, alone, the plan: the run is then the one open')
+  .argument(
+    '[file]',
+    'The plan, edited — the run’s, or a stage’s as it was stacked: the same tasks, files and dependencies'
+  )
   .option(...RUN_OPTION)
   .option(...JSON_OPTION)
-  .action((file: string, options: RunCommandOptions) => runAmend(file, options));
+  .action((first: string, file: string | undefined, options: RunCommandOptions) =>
+    file === undefined ? runAmend(undefined, first, options) : runAmend(first, file, options)
+  );
 
 runGroup
   .command('watch')
@@ -1350,13 +1376,26 @@ taskGroup
   );
 
 taskGroup
+  .command('look')
+  .description(
+    'Look at a task in review in one go: its copy served, page check from it at 1440 and 390, a picture light and dark of each page — then stopped'
+  )
+  .argument('<task>', 'The task in review')
+  .argument('[paths...]', 'Its pages: / when left out')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, paths: string[], options: RunCommandOptions) => taskLook(task, paths, options));
+
+taskGroup
   .command('inbox')
   .description('What was said to you and you have not read: a task’s with its token, the lead’s without')
-  .option('--all', 'Every message to you and from you, read or not')
+  .option('--all', 'Every message to you and from you, read or not — ← to you, → from you')
+  .option('--follow', 'Stay until something is said to you')
+  .option('--timeout <duration>', 'With --follow: give up after this long (90s, 8m, 1h)', duration, 30 * 60_000)
   .option(...TOKEN_OPTION)
   .option(...RUN_OPTION)
   .option(...JSON_OPTION)
-  .action((options: RunCommandOptions & { all?: boolean }) => taskInbox(options));
+  .action((options: RunCommandOptions & { all?: boolean; follow?: boolean; timeout?: number }) => taskInbox(options));
 
 taskGroup
   .command('show')
@@ -1385,6 +1424,11 @@ taskGroup
   .option('--changes <note>', 'What to change')
   .option('--on <element>', 'The element the change is about')
   .option('--file <file>', 'The file the change is about')
+  .option(
+    '--skip-design',
+    'With --approve, a task whose UI waits for a designer’s review: approved without it, said so'
+  )
+  .option('--note <note>', 'With --approve, what you saw and do not ask to change — kept with the task, for the lead')
   .option(...RUN_OPTION)
   .option(...AGENT_OPTION)
   .option(...JSON_OPTION)

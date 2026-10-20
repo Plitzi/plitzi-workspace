@@ -83,6 +83,9 @@ An "active" variant is for the eyes. `ariaPressed` and `ariaExpanded` are for ev
 opens a panel also names it — `controls: 'menu-panel'`, the panel's id (authoring gives the panel the anchor
 `aria-controls` needs; [recipes/accordion.ts](../recipes/accordion.ts)). Words that change while somebody is on the page
 — a count, a total, a status — sit in `container({ live: 'polite', … })`, so a screen reader says them when they change.
+A part that opens and closes on its own — a question and its answer, many open at once — needs no state at all:
+`container({ subType: 'details', children: [container({ subType: 'summary', children: [text('Question')] }), …] })`
+(`open: true` to start open), the browser's own disclosure, announced as one. The accordion recipe is for one-at-a-time.
 
 ## The page has an outline
 

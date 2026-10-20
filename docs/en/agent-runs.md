@@ -2,7 +2,7 @@
 
 How `plitzi run` and `plitzi task` keep several agents — the subagents of one harness, or harnesses of different kinds —
 from stepping on each other on one project, and why nothing they do can leave it broken. How to use them is the CLI's
-README and the `plitzi-cli` skill (`reference/runs.md`); this page is for whoever changes them. The code is
+README and the `plitzi-cli` skill (`reference/runs.md`, every agent's; `reference/runs-lead.md`, the lead's); this page is for whoever changes them. The code is
 `apps/cli/src/runs/`, the commands `apps/cli/src/commands/runs.ts`.
 
 ## The line
@@ -23,7 +23,7 @@ fingerprint, and removed with the run when it ends if they are as it read them �
 plan` and `run open` refuse while another run is going (`another-run`), and `tmp/plitzi-runs/active.json`, created
 exclusively when a run opens, decides between two opening at once. A claim with no run behind it is a run still opening
 — its record is written last — unless it is more than two minutes old: then it was cut, and is taken over. A run limits
-how many agents work at once (`--agents`, 3 when left out, above 5 a person confirms): `task take` counts the agents
+how many agents work at once — its team's size, above 5 a person confirms: `task take` counts the agents
 holding a task in progress — one holding two is one, and a take by one of them adds none — and takes one under the run's
 `take.lock`, so two takes never pass the limit together (`agent-limit`).
 
@@ -109,13 +109,55 @@ space, the reference of a layout, a component, data, a plugin or server code, an
 has. `run plan` and `run rehearse` read the project's past reports too (`readHistory`: the done tasks' minutes over
 their estimates, from the last ten runs, with five tasks at least) and say the estimate at that pace beside the plan's.
 
-## Models by role (`models.ts`)
+## A run stacked on (`extend.ts`), and what awaits applying
 
-Which model works which role is the project's choice, in `.plitzi/models.json` (committed): a model — the harness's
-own name for it, nothing checked but that one is named — and an effort, by role, `lead` for the lead and `default` for
-any role not named. The CLI starts no agent; `run plan` says what to start each with — the lead's, then each role's
-tasks with their model and `task next --role <role> --follow --take`, so an agent of a model chosen for a role works
-only its tasks. `run models` shows them; `run models set|unset <role>` changes one, saying it before and after.
+`run extend <run> <plan>` adds the next plan's tasks to an open run: their copies start from what it approved, they may
+wait for its tasks (`dependsOn`), their files are backed up beside its own, and one `finish` writes the stages into the
+project as one diff with one report. An id the run has is refused, and so is a file a task still at work holds. `run
+open` with a run going says to stack on it. `run pending` lists the project's runs not yet written into it — the ready
+ones first, each with the command that applies it; read off the project's own `tmp/plitzi-runs/`, so every terminal on
+it sees the same, and no other project's runs.
+
+## Looking at a task in one command (`task look`)
+
+`task look <task> [paths…]` serves a task's copy as it went to review, runs this CLI's `page check` from the copy at
+1440 and 390 and `page shot` light at 1440 and dark at 390 for each path, each a child process, and stops the server:
+the review a lead made by hand in four or five commands, while every agent waited.
+
+## The team (`team.ts`)
+
+Who works a project's runs is its own choice, in `.plitzi/team.json` (committed): the lead's model and effort, and each
+agent — a name (`dev` is `dev-1`, `dev-2`…), the roles it takes, how many of it and the model to start it with, the
+harness's own name for it, nothing checked but that one is named. The CLI starts no agent; `run plan` says what to start
+each with — its roles, its model, the plan's tasks it takes and `task next --role <roles> --follow --take --agent
+<name>`. The team's size is how many agents work a run at once — no flag says otherwise; a project with no team gets one
+at its first run, the least its plan needs (two developers, one agent for each other role, the harness's own models),
+with `team.json.example` beside it, said; a team somebody emptied is refused. A task whose role nobody in the team takes
+is refused at `run plan`; an agent of one role is held to it in a rehearsal. `run team` shows it; `run team set|unset
+<name>` changes one agent, or the lead's model, saying it before and after.
+
+## The tester's tasks (`tests.ts`)
+
+A tester in the team gives every developer task a task of its tests, `<id>-tests`, a tester's, after it: tests written
+from the task's acceptance, not its code, by an agent that did not write it. Its files are where the project's tests are
+— a page's spec in `visual/<page>.spec.ts` when the project has Playwright, a module's test beside it (`<file>.test.ts`,
+`node --test`) — and its acceptance runs them against the copy served: `$PLITZI_PORT` is that copy's port, for a runner
+configured by `PORT`. Two developer tasks whose tests are one file share one task of them; one that says `"tests":
+false`, writes nothing a test is written for, or that a tester's task of the plan already waits for, gets none. A test
+the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it.
+
+## The designer's review (`design.ts`)
+
+With a designer in the team — or a plan that says `"designReview": true`; `false` turns it off — the UI another role's
+task changes (under `src/space/`, but its data, or a plugin) is looked at by a designer before the lead: at `complete`
+its state's `design` is `due`. A designer's `task next` offers it before any task of its own (`--take` makes it theirs:
+another designer is not offered it), with what it changed, the pages it is likely drawn at and what to look for; the
+designer runs `task look`, then `task review --approve` — the task stays in review, the lead's now — whose review is the complete and strict one, and the final word; the designer's is the UI/UX, as a
+designer — and `run watch
+--until lead` wakes the lead for it then, not before — or `--changes`, which go back to the task as the lead's would and
+count as a round. The lead's approval while it is due is refused, naming the designer, unless `--skip-design`: the state
+and the report say which. A designer does not review its own work, and is not finished while a task whose UI it may
+review is still to be done.
 
 ## Files read whole (`longFiles.ts`)
 

@@ -31,11 +31,15 @@ const TIMED = new Set<Attention['kind']>(['no-signal', 'long-wait', 'long-task',
 
 /** What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round. */
 export const leadItems = (view: RunView): LeadItem[] => [
+  // One a designer is still to look at is not the lead's yet: it wakes the lead once the designer said.
   ...view.tasks
-    .filter(task => task.status === 'in-review')
+    .filter(task => task.status === 'in-review' && task.design?.status !== 'due')
     .map(task => ({
-      key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}`,
-      text: `${task.id} is in review: plitzi task review ${task.id} --approve | --changes "…"`
+      key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
+      text:
+        task.design?.status === 'approved'
+          ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review: plitzi task look ${task.id} <page…>, then plitzi task review ${task.id} --approve | --changes "…"`
+          : `${task.id} is in review: plitzi task review ${task.id} --approve | --changes "…"`
     })),
   ...view.attention
     .filter(item => item.who !== 'task')

@@ -73,23 +73,20 @@ export const durationText = (ms: number): string => {
   return minutes % 60 === 0 ? `${String(hours)} h` : `${String(hours)} h ${String(minutes % 60)} min`;
 };
 
-/** Agents held to a role, by role — `designer=1,writer=2` — as `run rehearse --roles` takes them. */
-export const roleCounts = (value: string): Record<string, number> => {
-  const counts: Record<string, number> = {};
-  for (const part of value
+/** Names, comma-separated — `designer,reviewer` — each a role's: lowercase letters, digits, - and _. */
+export const names = (value: string): string[] => {
+  const each = value
     .split(',')
-    .map(each => each.trim())
-    .filter(Boolean)) {
-    const match = /^([a-z][a-z0-9_-]{0,63})=(\d+)$/.exec(part);
-    const count = match ? Number(match[2]) : 0;
-    if (!match?.[1] || count < 1) {
-      throw new InvalidArgumentError(`"${part}": it takes <role>=<agents>, comma-separated — designer=1,writer=2.`);
-    }
-
-    counts[match[1]] = (counts[match[1]] ?? 0) + count;
+    .map(part => part.trim())
+    .filter(Boolean);
+  const wrong = each.filter(part => !/^[a-z][a-z0-9_-]{0,63}$/.test(part));
+  if (each.length === 0 || wrong.length > 0) {
+    throw new InvalidArgumentError(
+      `"${value}": names, comma-separated — developer or designer,reviewer (lowercase letters, digits, - and _).`
+    );
   }
 
-  return counts;
+  return [...new Set(each)];
 };
 
 /** A share between 0 and 1: how far along a task is. */
@@ -130,15 +127,23 @@ export const fill = (value: string, previous: readonly FieldFill[] | undefined):
 };
 
 /** `--expect <id>~<text>`, once per element: the element shows the text. */
+/**
+ * What an element shows, expected: `<id>~<text>`, or `<path> <id>~<text>` for one page of several — the path its own
+ * word, a leading `/`: `--expect "/faq faq-title~Questions"`.
+ */
 export const expectation = (
   value: string,
-  previous: readonly { element: string; text: string }[] | undefined
-): { element: string; text: string }[] => {
-  const at = value.indexOf('~');
-  const element = at === -1 ? '' : value.slice(0, at).trim();
-  if (element === '' || value.slice(at + 1) === '') {
-    throw new InvalidArgumentError('What an element shows is expected as <id>~<text>: --expect walks-title~October.');
+  previous: readonly { element: string; text: string; path?: string }[] | undefined
+): { element: string; text: string; path?: string }[] => {
+  const scoped = /^(\/\S*)\s+(.*)$/s.exec(value);
+  const rest = scoped?.[2] ?? value;
+  const at = rest.indexOf('~');
+  const element = at === -1 ? '' : rest.slice(0, at).trim();
+  if (element === '' || rest.slice(at + 1) === '') {
+    throw new InvalidArgumentError(
+      'What an element shows is expected as <id>~<text>, or <path> <id>~<text> for one page: --expect "/walks walks-title~October".'
+    );
   }
 
-  return [...(previous ?? []), { element, text: value.slice(at + 1) }];
+  return [...(previous ?? []), { element, text: rest.slice(at + 1), ...(scoped?.[1] ? { path: scoped[1] } : {}) }];
 };

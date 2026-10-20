@@ -21,7 +21,7 @@
 ## CLI
 
 - **Several agents on one project: `plitzi run` and `plitzi task`** (`@plitzi/cli`) — RFC 0028. One plan and one run at
-  a time per project, with as many agents at once as it opens with (`--agents`, 3 by default). The lead's plan of tasks
+  a time per project, with as many agents at once as its team has (`.plitzi/team.json`, written at the first run when there is none). The lead's plan of tasks
   over disjoint files, held to the rules (`run plan`: no file in two tasks, no cycle, ownership read off the imports, an
   estimate) and opened with a backup of every file it touches (`run open`). Each task is taken with a token and works in
   its own copy of the project under `tmp/plitzi-runs/`; `task complete` refuses what it changed in another working
@@ -67,13 +67,34 @@
   held file to a task that waits for its holder. In `@plitzi/sdk-authoring`, a source named outside the scope that
   prefixes its element says so, with the two ways out. **A shorter cold start:** a plan's `primer` (the lead's,
   beside it) opens every task's brief, and `task context` names the few skill files the task's files need; `run plan` and
-  `run rehearse` say the estimate at this project's pace, read off its past reports. **Models by role:**
-  `.plitzi/models.json` (`plitzi run models set <role> <model> [--effort]`) — `run plan` says which model to start each
-  agent with, by the role of its tasks. `task context --files` hands a task its files and its data's shape at once; the
+  `run rehearse` say the estimate at this project's pace, read off its past reports. **The team:**
+  `.plitzi/team.json` (`plitzi run team set <name> --roles … --count … --model … [--effort]`) — the lead and each agent,
+  its roles, how many and its model; its size is how many work at once (no `--agents`), a role nobody takes is refused, and `run plan` says
+  how to start each agent. A **tester** in it gives each developer task `<id>-tests` after it (Playwright specs for its
+  pages, `node --test` beside its modules; `$PLITZI_PORT` names the copy served); a **designer** in it reviews the UI of
+  the others' tasks before the lead (`task next` offers it, `task review` by the designer hands it on; the lead's
+  `--skip-design` approves without it, said in the report). `task context --files` hands a task its files and its data's shape at once; the
   brief says a file of the task already near 400 lines. From the eighth run: a revert reaches the agents who did the
   task by name, a task in review is never called silent, a task done again after a revert wakes the lead, `task next`
   says what a pending task waits for and whose version a worked task ended as, and a change made in the project while a
   task worked is said as what it is — the lead decides. `page shot --fill` chooses a select's option.
+- **Runs stack, and say what awaits applying** (`@plitzi/cli`): `run extend <run> <plan>` puts the next plan on an open
+  run — begun from its work, one finish for both; `run pending` lists the project's runs not yet written into it, with
+  the command for each. `task look <task> [paths…]` looks at a task in review in one command: served, page checked,
+  pictured light and dark. `page check --then <paths…>` goes on by the page's own links, no reload, and checks each
+  page as a visitor reaches it (what a session keeps); `--expect "<path> <id>~<text>"` holds one page of several.
+- **The tenth run** (`@plitzi/cli`): `run plan` with a run open checks the plan as its next stage (nothing written)
+  and says the `run extend` that stacks it; `run amend` and `run extend` take `[run] <file>` alike, and amend takes a
+  stage's own plan; a page check's `--expect` naming an id the space does not have is said at `run plan`, with the page
+  family's id it meant; a designer's approval stands for a round that did not touch the UI, and carries a `--note` to
+  the lead; a review offered again says its round and what the lead asked; `task look` with no page looks at the pages
+  that own the task's files; an address the not-found page answers is no longer a passing check; a task sent back is
+  handed back with what its review asked; a tester's brief has the acceptance and reviews of the task it tests;
+  `complete` refuses to serve a copy the agent's own server still holds; a new project lints its `node --test` tests.
+- **A paragraph made of parts holds no block** (`@plitzi/sdk-authoring`): `span-holds-block` warns of a `p` container
+  holding a `text` or a plain `container` — `<div>`s the browser closes the paragraph before, which broke hydration.
+- **A disclosure, natively** (`@plitzi/sdk-elements`): `container({ subType: 'details' })` with a `summary` first, and
+  `open` to start open — the browser's own, no state, announced as one.
 - **Buttons and textareas take the page's font** (`@plitzi/sdk-elements`, `@plitzi/plitzi-sdk`): `font-family:
   inherit` in their base style, the declaration and the stylesheet alike.
 - **Pages registered by being there** (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`, `@plitzi/cli`): `pagesIn(new

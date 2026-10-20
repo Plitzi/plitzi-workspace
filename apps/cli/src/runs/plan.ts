@@ -1,15 +1,21 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { namesServedCopy } from './acceptance';
+import { expectationNotices } from './expectations';
 import { exists } from './files';
 import { readHistory } from './history';
 import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_COPIED_DIRS, under } from './paths';
+import { shellCommands } from './shell';
+import { roleProblems, teamSize, teamTakes, TESTER } from './team';
+import { testSetupOf, withTestTasks } from './tests';
 import { scriptsOf } from '../commands/verify';
 
 import type { RunPlan, RunTask, TaskState } from './model';
 import type { Ownership } from './ownership';
+import type { Team } from './team';
 
 /**
  * A plan, held to the rules (RFC 0028 §9.6): the lead writes it, the CLI never interprets a goal. Refused, every
@@ -59,9 +65,6 @@ export const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 } as cons
 
 /** Above either, a person confirms the estimate before the run opens (RFC 0028 §14). */
 export const CONFIRM_ABOVE = { agents: 5, wallMinutes: 120 } as const;
-
-/** How many agents a run lets work at once when it is not told: between the usual 2 and 5. */
-export const DEFAULT_AGENTS = 3;
 
 const normalised = (file: string): string | undefined => {
   if (path.isAbsolute(file) || file.includes('\\')) {
@@ -207,45 +210,6 @@ const pacedEstimate = async (
 const isOutsideSource = (file: string): boolean =>
   NOT_COPIED_DIRS.has(file.split('/')[0]) || file.split('/').includes('node_modules');
 
-/** A command line as a shell reads it: words split at unquoted spaces, each command of `&&`, `||`, `;` or `|` apart. */
-const shellCommands = (line: string): string[][] => {
-  const commands: string[][] = [[]];
-  let word: string | undefined;
-  let quote: string | undefined;
-  const end = (): void => {
-    if (word !== undefined) {
-      commands[commands.length - 1]?.push(word);
-      word = undefined;
-    }
-  };
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line.charAt(index);
-    if (quote !== undefined) {
-      if (char === quote) {
-        quote = undefined;
-      } else {
-        word = (word ?? '') + char;
-      }
-    } else if (char === '\x22' || char === '\x27') {
-      quote = char;
-      word = word ?? '';
-    } else if (/\s/.test(char)) {
-      end();
-    } else if (char === ';' || char === '|' || char === '&') {
-      end();
-      if (commands.at(-1)?.length !== 0) {
-        commands.push([]);
-      }
-    } else {
-      word = (word ?? '') + char;
-    }
-  }
-
-  end();
-
-  return commands.filter(command => command.length > 0);
-};
-
 /**
  * The words a `plitzi page check` (or `page shot`) in `check` reads as pages that are no path — `week` out of
  * `--expect digest-title~This week`, the shell having split an unquoted text: the page asked for is never there.
@@ -304,11 +268,11 @@ export const acceptanceProblems = async (root: string, task: RunPlan['tasks'][nu
       problems.push(
         `Task "${task.id}": the check of "${said}" hands page check ${stray.map(word => `"${word}"`).join(', ')} as a page — a text with a space split by the shell: quote it (--expect "id~Two words")`
       );
-    } else if (check.includes('PLITZI_URL')) {
+    } else if (namesServedCopy(check)) {
       const scripts = await scriptsOf(root).catch(() => ({}));
       if (!['start', 'start:dev'].some(name => Object.hasOwn(scripts, name))) {
         problems.push(
-          `Task "${task.id}": the check of "${said}" names $PLITZI_URL, and the project has no start script to serve the copy with`
+          `Task "${task.id}": the check of "${said}" names the copy served ($PLITZI_URL, $PLITZI_PORT), and the project has no start script to serve it with`
         );
       }
     }
@@ -319,12 +283,28 @@ export const acceptanceProblems = async (root: string, task: RunPlan['tasks'][nu
 
 export const checkPlan = async (
   root: string,
-  plan: RunPlan,
+  written: RunPlan,
   ownership: Ownership,
-  agentsAsked: number
+  team: Team
 ): Promise<CheckedPlan> => {
-  const problems: string[] = [];
+  const agentsAsked = teamSize(team);
+  const problems: string[] = roleProblems(written, team);
   const notices: string[] = [];
+  // With a tester in the team, each developer task's tests are a task of their own, after it: checked as the lead's.
+  const { plan, added } = withTestTasks(
+    written,
+    teamTakes(team, TESTER)
+      ? {
+          ...(await testSetupOf(root)),
+          unitOf: file => ownership.ownerOf.get(file) ?? (ownership.shared.has(file) ? undefined : file)
+        }
+      : undefined
+  );
+  if (added.length > 0) {
+    notices.push(
+      `A tester writes the tests of the developer tasks: ${added.join(', ')} added, each after the task it tests (a task that says "tests": false gets none)`
+    );
+  }
   if (!ID.test(plan.runId)) {
     problems.push(`runId "${plan.runId}": a run's name is lowercase letters, digits, - and _, up to 64`);
   }
@@ -506,6 +486,7 @@ export const checkPlan = async (
       )
     );
   created.forEach(file => notices.push(`${file} does not exist yet: the run makes it`));
+  notices.push(...(await expectationNotices(root, plan.tasks)));
   // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave.
   const planned = new Set(tasks.flatMap(task => task.files));
   const outsiders = new Map<string, Set<string>>();

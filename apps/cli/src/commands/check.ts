@@ -45,6 +45,8 @@ import type { Element as SchemaElement, Schema } from '@plitzi/sdk-shared';
 export interface CheckOptions {
   /** `--expect <id>~<text>`: each element shows its text, or the check fails — what an acceptance can be checked by. */
   expect?: Expectation[];
+  /** `--then <path…>`: on from the page by its own links, no reload — each next page checked as the visitor reaches it. */
+  then?: string[];
   /** Validated where the flag is declared (`widths` in options.ts). */
   width?: number[];
   scheme?: Scheme;
@@ -324,6 +326,18 @@ const noPageMessage = (handles: SpaceHandles, pathname: string): string =>
   `no page of the space answers at ${pathname}: its pages are ${Object.values(handles.pages)
     .map(page => page.path)
     .join(', ')}`;
+
+/** The page an address more likely meant, among the space's own: ` — did you mean /walks?`, or nothing. */
+const meantPage = (handles: SpaceHandles, pathname: string): string => {
+  const meant = closest(
+    pathname,
+    Object.values(handles.pages)
+      .filter(page => !isNotFoundPage(page))
+      .map(page => page.path)
+  );
+
+  return meant === undefined ? '' : ` — did you mean ${meant}?`;
+};
 
 /**
  * The space's "not found" page: a page whose slug is `*`, the page of every address under its folder that no other
@@ -677,6 +691,8 @@ export const momentChanges = (
 export interface Expectation {
   element: string;
   text: string;
+  /** The one page of those checked it is about; every one when left out. */
+  path?: string;
 }
 
 /** What the first element `selector` names shows, as a visitor reads it — `null` when none is on the page. In the page. */
@@ -730,6 +746,12 @@ export const wrappedLabelsInPage = (selector: string): { id: string; label: stri
  */
 export const meantOnPage = (element: string, onPage: readonly string[]): string => {
   const ids = [...new Set(onPage.filter(Boolean))];
+  // A page family (or a scope) names its elements by its page: `age-label` is `pet-luna-age-label` on Luna's.
+  const scoped = ids.filter(id => id.endsWith(`-${element}`));
+  if (scoped.length > 0) {
+    return ` — ${scoped.length > 1 ? `one a page: ${scoped.slice(0, 4).join(', ')}${scoped.length > 4 ? '…' : ''}` : `did you mean ${scoped.join('')}?`} (a page family or a scope puts its name before the ids it makes)`;
+  }
+
   const prefix = ids
     .filter(id => element.startsWith(`${id}-`))
     .sort((a, b) => b.length - a.length)
@@ -1102,101 +1124,67 @@ const lateElements = (
   return { issues, browserOnly };
 };
 
-const checkAt = async (
-  browser: Browser,
-  origin: string,
-  pathname: string,
-  width: number,
-  view: Pick<ProjectView, 'scheme' | 'presence'>,
-  authored: Authored | undefined,
-  asked: DevToolsInput,
-  ssr: boolean,
-  account: Account | undefined,
-  click?: ClickAsk,
-  expect: readonly Expectation[] = []
+/**
+ * Goes to `path` the way a visitor does: a click on a link of the page that goes there — `href` the path itself, or the
+ * page's own address for it — and the space's client navigation. What it could not do, said; nothing when it went.
+ */
+const followLink = async (page: BrowserPage, origin: string, path: string): Promise<string | undefined> => {
+  const selector = `a[href="${path}"], a[href="${origin}${path}"]`;
+  const link = page.locator(selector).first();
+  if ((await link.count()) === 0) {
+    return `--then ${path}: no link on the page goes there — a visitor could not get to it from here (check it on its own)`;
+  }
+
+  await link.click({ timeout: 3000 });
+  let arrived = false;
+  for (let waited = 0; waited < 10_000 && !arrived; waited += 200) {
+    arrived = (await page.evaluate(() => window.location.pathname, undefined)) === path;
+    if (!arrived) {
+      await page.waitForTimeout(200);
+    }
+  }
+
+  if (!arrived) {
+    return `--then ${path}: the link was clicked, and the page stayed at ${new URL(page.url()).pathname}`;
+  }
+
+  // Let what the next page reads arrive, as a load would: providers, then a paint.
+  await page.waitForTimeout(800);
+
+  return undefined;
+};
+
+/** What the page open in `page` is checked for, as it stands: what `checkAt` asks of its first page and `--then` of each next. */
+const inspectHere = async (
+  page: BrowserPage,
+  {
+    origin,
+    pathname,
+    width,
+    authored,
+    asked,
+    ssr,
+    click,
+    expect,
+    sentWith,
+    consoleErrors,
+    failedRequests
+  }: {
+    origin: string;
+    pathname: string;
+    width: number;
+    authored: Authored | undefined;
+    asked: DevToolsInput;
+    ssr: boolean;
+    click: ClickAsk | undefined;
+    expect: readonly Expectation[];
+    /** What the document was sent with — none for a page reached by a click, which no document was sent for. */
+    sentWith: number | undefined;
+    consoleErrors: string[];
+    failedRequests: string[];
+  }
 ): Promise<CheckReport> => {
   const handles = authored?.handles;
-  const page = await openProjectPage(browser, origin, { width, height: 900, ...view });
-  /** A report of a page that could not be looked at — nothing answered, no sign-in, sent elsewhere. */
-  const unchecked = (issue: CheckIssue): CheckReport => ({
-    path: pathname,
-    width,
-    ok: false,
-    checked: 0,
-    problems: [issue.message],
-    issues: [issue],
-    hiddenAtWidth: [],
-    consoleErrors: [],
-    failedRequests: [],
-    devTools: false,
-    lists: {}
-  });
-  const notSignedIn = account && (await signInAs(page, origin, account));
-  if (notSignedIn) {
-    return unchecked({ code: 'not-signed-in', message: notSignedIn, width });
-  }
-
-  const consoleErrors: string[] = [];
-  const failedRequests: string[] = [];
-  page.on('pageerror', error => consoleErrors.push(error.message));
-  const address = `${origin}${pathname}`;
-  page.on('console', message => {
-    // The browser's own line for the page's status — a 404 the page is sent with on purpose — is said apart, below.
-    if (message.type() === 'error' && message.location().url !== address) {
-      consoleErrors.push(message.text());
-    }
-  });
-  let sentWith: number | undefined;
-  page.on('response', response => {
-    // The page itself, answered with the status it is sent with: said apart from what it asked for once it loaded.
-    if (sentWith === undefined && response.url() === address) {
-      sentWith = response.status();
-
-      return;
-    }
-
-    if (response.status() >= 400 && response.url().startsWith(origin)) {
-      failedRequests.push(`${String(response.status())} ${response.url().slice(origin.length)}`);
-    }
-  });
-
-  // A path no page of the space answers is said as that, before the browser opens it: whatever the server does with
-  // it — a redirect home, a not-found — would otherwise be read as something the page did.
-  if (handles && !pageFor(handles, pathname)) {
-    return {
-      ...unchecked({ code: 'no-page', message: noPageMessage(handles, pathname), width }),
-      consoleErrors,
-      failedRequests
-    };
-  }
-
-  // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
-  const answered = await openPage(page, `${origin}${pathname}`);
-  if (!answered) {
-    return {
-      ...unchecked({ code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width }),
-      consoleErrors,
-      failedRequests
-    };
-  }
-
-  // A page that sent the browser elsewhere — a page for signed-in visitors, to the sign-in — is not the page asked for:
-  // every element of it would read as missing.
-  const landed = sentElsewhere(page, pathname);
-  if (landed) {
-    return {
-      ...unchecked({
-        code: 'redirected',
-        message: account
-          ? `${pathname} sent the browser to ${landed}, signed in as ${account.username}: that account may not see it`
-          : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env`,
-        width
-      }),
-      consoleErrors,
-      failedRequests
-    };
-  }
-
   // What is checked is the page: the dev tools' badge sits over it and is no part of it.
   await withoutDevTools(page);
   const pageId = handles ? pageFor(handles, pathname) : undefined;
@@ -1207,7 +1195,12 @@ const checkAt = async (
   // What is said of the element and the state is the page as the visitor left it: after the fill and the click, when
   // there were any — the page's own checks still read it as it loaded.
   const shown = clicked === undefined ? devTools : await readDevTools(page, { ...asked, state: true });
-  const { missed, met } = await missedExpectations(page, authored, expect, width);
+  const { missed, met } = await missedExpectations(
+    page,
+    authored,
+    expect.filter(each => each.path === undefined || each.path === pathname),
+    width
+  );
   const wrapped: CheckIssue[] = (
     await page.evaluate(wrappedLabelsInPage, 'a[data-plitzi-el], button[data-plitzi-el]')
   ).map(each => ({
@@ -1247,7 +1240,7 @@ const checkAt = async (
     }));
   const notFoundPage = handles && pageId ? isNotFoundPage(handles.pages[pageId]) : false;
   const statusIssues: CheckIssue[] =
-    notFoundPage && sentWith !== 404
+    notFoundPage && sentWith !== undefined && sentWith !== 404
       ? [
           {
             code: 'page-status',
@@ -1257,7 +1250,17 @@ const checkAt = async (
         ]
       : sentWith !== undefined && sentWith >= 400 && sentWith !== 404
         ? [{ code: 'page-status', message: `${pathname} was sent with status ${String(sentWith)}`, width }]
-        : [];
+        : // Asked for a page, the space's page for an address nothing answers came: no page of it is there. Only the
+          // address a whole-project check makes for it looks at that page on purpose.
+          notFoundPage && !pathname.endsWith(NOT_FOUND_PROBE)
+          ? [
+              {
+                code: 'no-page',
+                message: `no page of the space is at ${pathname}: its page for an address nothing answers came, with ${String(sentWith ?? 404)}${handles ? meantPage(handles, pathname) : ''}`,
+                width
+              }
+            ]
+          : [];
   const issues: CheckIssue[] = [
     ...noPage,
     ...statusIssues,
@@ -1296,6 +1299,154 @@ const checkAt = async (
     ...(clicked === undefined ? {} : { clicked }),
     ...(sentWith === 404 ? { notFound: true as const } : {})
   };
+};
+
+const checkAt = async (
+  browser: Browser,
+  origin: string,
+  pathname: string,
+  width: number,
+  view: Pick<ProjectView, 'scheme' | 'presence'>,
+  authored: Authored | undefined,
+  asked: DevToolsInput,
+  ssr: boolean,
+  account: Account | undefined,
+  click?: ClickAsk,
+  expect: readonly Expectation[] = [],
+  then: readonly string[] = []
+): Promise<CheckReport[]> => {
+  const handles = authored?.handles;
+  const page = await openProjectPage(browser, origin, { width, height: 900, ...view });
+  /** A report of a page that could not be looked at — nothing answered, no sign-in, sent elsewhere. */
+  const unchecked = (issue: CheckIssue): CheckReport => ({
+    path: pathname,
+    width,
+    ok: false,
+    checked: 0,
+    problems: [issue.message],
+    issues: [issue],
+    hiddenAtWidth: [],
+    consoleErrors: [],
+    failedRequests: [],
+    devTools: false,
+    lists: {}
+  });
+  const notSignedIn = account && (await signInAs(page, origin, account));
+  if (notSignedIn) {
+    return [unchecked({ code: 'not-signed-in', message: notSignedIn, width })];
+  }
+
+  const consoleErrors: string[] = [];
+  const failedRequests: string[] = [];
+  page.on('pageerror', error => consoleErrors.push(error.message));
+  const address = `${origin}${pathname}`;
+  page.on('console', message => {
+    // The browser's own line for the page's status — a 404 the page is sent with on purpose — is said apart, below.
+    if (message.type() === 'error' && message.location().url !== address) {
+      consoleErrors.push(message.text());
+    }
+  });
+  let sentWith: number | undefined;
+  page.on('response', response => {
+    // The page itself, answered with the status it is sent with: said apart from what it asked for once it loaded.
+    if (sentWith === undefined && response.url() === address) {
+      sentWith = response.status();
+
+      return;
+    }
+
+    if (response.status() >= 400 && response.url().startsWith(origin)) {
+      failedRequests.push(`${String(response.status())} ${response.url().slice(origin.length)}`);
+    }
+  });
+
+  // A path no page of the space answers is said as that, before the browser opens it: whatever the server does with
+  // it — a redirect home, a not-found — would otherwise be read as something the page did.
+  if (handles && !pageFor(handles, pathname)) {
+    return [
+      {
+        ...unchecked({ code: 'no-page', message: noPageMessage(handles, pathname), width }),
+        consoleErrors,
+        failedRequests
+      }
+    ];
+  }
+
+  // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles.
+  const answered = await openPage(page, `${origin}${pathname}`);
+  if (!answered) {
+    return [
+      {
+        ...unchecked({ code: 'no-answer', message: `nothing answers at ${origin}${pathname}`, width }),
+        consoleErrors,
+        failedRequests
+      }
+    ];
+  }
+
+  // A page that sent the browser elsewhere — a page for signed-in visitors, to the sign-in — is not the page asked for:
+  // every element of it would read as missing.
+  const landed = sentElsewhere(page, pathname);
+  if (landed) {
+    return [
+      {
+        ...unchecked({
+          code: 'redirected',
+          message: account
+            ? `${pathname} sent the browser to ${landed}, signed in as ${account.username}: that account may not see it`
+            : `${pathname} sent the browser to ${landed} — what a page for signed-in visitors does: \`plitzi page check ${pathname} --as <username>\` signs in first, the password in ${CHECK_PASSWORD_ENV} in .env`,
+          width
+        }),
+        consoleErrors,
+        failedRequests
+      }
+    ];
+  }
+
+  const reports = [
+    await inspectHere(page, {
+      origin,
+      pathname,
+      width,
+      authored,
+      asked,
+      ssr,
+      click,
+      expect,
+      sentWith,
+      consoleErrors,
+      failedRequests
+    })
+  ];
+  // On as a visitor goes on: a click on the page's own link to each next path, no reload — what the space keeps while
+  // somebody browses (a filter's choice, a session's state) is what the next page is checked with.
+  for (const next of then) {
+    const errorsBefore = consoleErrors.length;
+    const failedBefore = failedRequests.length;
+    const went = await followLink(page, origin, next);
+    reports.push(
+      went === undefined
+        ? await inspectHere(page, {
+            origin,
+            pathname: next,
+            width,
+            authored,
+            asked,
+            ssr: false,
+            click: undefined,
+            expect,
+            sentWith: undefined,
+            consoleErrors: consoleErrors.slice(errorsBefore),
+            failedRequests: failedRequests.slice(failedBefore)
+          })
+        : unchecked({ code: 'no-page', message: went, width })
+    );
+    if (went !== undefined) {
+      break;
+    }
+  }
+
+  return reports;
 };
 
 /** What the page holds, when it was asked for: one compact line each, the shape of a source rather than its rows. */
@@ -1364,6 +1515,11 @@ export const listText = (id: string, { rendered, source, copies }: ListRows): st
     return source === 0 && rendered > 0
       ? `${id} ${rowsText(rendered)} in ${String(copies.length)} copies (${copies.join(', ')}), each fed by the row it is in`
       : `${id} ${rowsText(rendered)} in ${String(copies.length)} copies (${copies.join(', ')}) of ${String(source)} in its source`;
+  }
+
+  // One copy left — the others hidden, a search that kept one group — is still fed by its row: there is no whole to count.
+  if (source === 0 && rendered > 0) {
+    return `${id} ${rowsText(rendered)}, fed by the row it is in`;
   }
 
   return `${id} ${rendered === source ? rowsText(source) : `${String(rendered)} of ${rowsText(source)}`}`;
@@ -1499,6 +1655,7 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
       ? { click: { ...(options.click ? { element: options.click } : {}), fill: options.fill ?? [] } }
       : {}),
     ...(options.expect ? { expect: options.expect } : {}),
+    ...(options.then ? { then: options.then } : {}),
     ...(options.url ? { url: options.url } : {}),
     ...(options.space ? { space: options.space } : {})
   });
@@ -1532,6 +1689,7 @@ export const checkRoutes = async (
     account?: Account;
     click?: ClickAsk;
     expect?: Expectation[];
+    then?: string[];
     /** Where the project is served, when not by `npm start` here (`--url`). */
     url?: string;
     /** A space module to check the pages against instead of the project's (`--space`). */
@@ -1574,13 +1732,14 @@ export const checkRoutes = async (
             options.ssr,
             options.account,
             options.click,
-            options.expect
+            options.expect,
+            options.then
           );
         const first = await look();
-        const failed = serverErrors(first);
+        const failed = first.flatMap(serverErrors);
         // Once, and said: a page red for a second of somebody else's outage is not one red for anything of its own.
-        const report = failed.length > 0 ? { ...(await look()), retriedAfter: failed } : first;
-        reports.push({ ...report, ...(options.scheme ? { scheme: options.scheme } : {}) });
+        const looked = failed.length > 0 ? (await look()).map(each => ({ ...each, retriedAfter: failed })) : first;
+        reports.push(...looked.map(each => ({ ...each, ...(options.scheme ? { scheme: options.scheme } : {}) })));
       }
     }
 

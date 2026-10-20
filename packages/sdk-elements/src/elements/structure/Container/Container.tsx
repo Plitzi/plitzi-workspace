@@ -37,7 +37,14 @@ export type ContainerProps = {
     // elements only: a block inside a `<p>` closes it early.
     | 'p'
     // Inline: a dot before a title, a word dressed apart — a container that sits in a line of text instead of breaking it.
-    | 'span';
+    | 'span'
+    // A part that opens and closes on its own — a question and its answer — with the browser's own disclosure: no state,
+    // no script, announced as one by a screen reader. Its first child is the `summary`, what is clicked; the rest shows
+    // once it is open.
+    | 'details'
+    | 'summary';
+  /** A `details` shown open from the start; closed when left out. Read by no other tag. */
+  open?: boolean;
   /**
    * The name of the part of the page this is — "Main navigation", "Search results", "Your cart" — for screen readers
    * and browser agents, which list the page by its landmarks and regions and jump between them.
@@ -74,12 +81,14 @@ const Container = ({
   decorative = false,
   live = '',
   title = '',
+  open = false,
   children
 }: ContainerProps) => {
   const named = !decorative && label && NAMEABLE_CONTAINER_TAGS.includes(subType);
   const name = named ? { 'aria-label': label, ...(subType === 'div' ? { role: 'group' } : {}) } : {};
   const hidden = decorative ? { 'aria-hidden': true } : {};
   const announced = live ? { 'aria-live': live } : {};
+  const shownOpen = subType === 'details' && open ? { open: true } : {};
 
   return (
     <RootElement
@@ -90,6 +99,7 @@ const Container = ({
       {...name}
       {...hidden}
       {...announced}
+      {...shownOpen}
     >
       {children}
     </RootElement>
