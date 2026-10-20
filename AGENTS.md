@@ -195,6 +195,10 @@ packages/
 - Type imports: always use `import type` when importing only types
 - Import order enforced alphabetically: builtin → external → internal (`@plitzi/sdk-*`, `@pmodules/*`, `@pcomponents/*`) → parent/sibling → type
 - Always a blank line between import groups (`newlines-between: always`)
+- `max-lines`: 600 lines of code a file (blank lines and comments not counted). Past it, the file becomes a folder of
+  modules by what changes together, its `index.ts` exporting what the file did — a class's methods become functions
+  that take the instance (`schema/space/`, `decompile/specFromSpace/`), a closure's flows functions of a shared context
+  (`core/auth/api/`), a test file one per `describe`, with its helpers in `tests/`
 
 ### TypeScript (base: `packages/sdk-shared/tsconfig.app.json`)
 
@@ -509,7 +513,7 @@ generated from it.
 
 | Surface | Reader | Owns | Where |
 | --- | --- | --- | --- |
-| The code | everyone | what is true: behaviour, defaults, names, messages | `AUTHORING_CODES` (`sdk-authoring/src/schema/codes.ts`), the `explain` catalogues, JSDoc, constants (`MOTION_*`, breakpoints) |
+| The code | everyone | what is true: behaviour, defaults, names, messages | `AUTHORING_CODES` (`sdk-authoring/src/schema/codes/`), the `explain` catalogues, JSDoc, constants (`MOTION_*`, breakpoints) |
 | Authoring skill | an agent writing a space in code | how to write a space | `packages/sdk-authoring/skills/plitzi-authoring/` — `SKILL.md` (rules), `CHEATSHEET.md`, `reference/*` (one subject each), `recipes/*` (whole tested files) |
 | CLI skill | an agent using the CLI | what each command is for, when to use it | `apps/cli/skills/plitzi-cli/` |
 | `AGENTS.md` of a generated project | an agent in a generated project | that project's port, data, checks — and the few rules that go wrong most, in a line each | `apps/cli/src/scaffold/project.ts` |

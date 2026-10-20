@@ -1,0 +1,360 @@
+import { describe, it, expect } from 'vitest';
+
+import processSelector, { processSelectors } from './processSelector';
+
+import type { StyleBlock } from '@plitzi/sdk-shared';
+
+describe('processSelector', () => {
+  describe('processSelector.processSelectors', () => {
+    it('functionality', () => {
+      const result = processSelectors([
+        {
+          name: 'page-1',
+          type: 'class',
+          attributes: {
+            base: {
+              default: {
+                'align-items': 'center',
+                'justify-content': 'space-around',
+                'row-gap': '32px',
+                'column-gap': '32px',
+                'flex-wrap': 'nowrap',
+                'flex-direction': 'column',
+                'padding-right': '10px'
+              }
+            }
+          },
+          variables: {
+            color: {
+              fancyVariable: {
+                light: '#111',
+                dark: '#000',
+                default: '#111'
+              }
+            }
+          },
+          cache: ''
+        },
+        {
+          name: 'page-2',
+          type: 'class',
+          attributes: {
+            base: {
+              default: {
+                'align-items': 'center',
+                'justify-content': 'space-around',
+                'row-gap': '32px',
+                'column-gap': '32px',
+                'flex-wrap': 'nowrap',
+                'flex-direction': 'column',
+                'padding-right': '10px'
+              }
+            }
+          },
+          variables: {
+            color: {
+              fancyVariable: {
+                light: '#111',
+                dark: '#000',
+                default: '#111'
+              }
+            }
+          },
+          cache: ''
+        }
+      ]);
+      expect(result).toEqual([
+        `.page-1 {
+  align-items: center;
+  justify-content: space-around;
+  row-gap: 32px;
+  column-gap: 32px;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  padding-right: 10px;
+  --fancyVariable: #111;
+}
+
+@media(prefers-color-scheme: light) {
+  .page-1 {
+    --fancyVariable: #111;
+  }
+}
+
+@media(prefers-color-scheme: dark) {
+  .page-1 {
+    --fancyVariable: #000;
+  }
+}`,
+        `.page-2 {
+  align-items: center;
+  justify-content: space-around;
+  row-gap: 32px;
+  column-gap: 32px;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  padding-right: 10px;
+  --fancyVariable: #111;
+}
+
+@media(prefers-color-scheme: light) {
+  .page-2 {
+    --fancyVariable: #111;
+  }
+}
+
+@media(prefers-color-scheme: dark) {
+  .page-2 {
+    --fancyVariable: #000;
+  }
+}`
+      ]);
+    });
+  });
+});
+describe('processSelector / the order states are written in', () => {
+  const cacheOf = (states: NonNullable<StyleBlock['states']>): string =>
+    processSelector({
+      name: 'btn',
+      type: 'class',
+      attributes: { base: { default: { color: 'black' }, states } },
+      cache: ''
+    });
+
+  it('writes them in the order they win in, not the order they were added in', () => {
+    const cache = cacheOf({
+      disabled: { color: 'gray' },
+      active: { color: 'red' },
+      hover: { color: 'blue' },
+      'focus-visible': { color: 'green' },
+      visited: { color: 'purple' }
+    });
+
+    expect(cache).toBe(
+      '.btn{color:black;&:visited{color:purple;}&:hover{color:blue;}&:focus-visible{color:green;}&:active{color:red;}&:disabled{color:gray;}}'
+    );
+  });
+
+  it('puts a press after a hover, so pressing a hovered button shows the press', () => {
+    const cache = cacheOf({ active: { color: 'red' }, hover: { color: 'blue' } });
+
+    expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf('&:active'));
+  });
+
+  it('orders the states of a variant the same way', () => {
+    const cache = processSelector({
+      name: 'btn',
+      type: 'class',
+      attributes: {
+        base: {
+          default: {},
+          variants: { primary: { default: {}, states: { active: { color: 'red' }, hover: { color: 'blue' } } } }
+        }
+      },
+      cache: ''
+    });
+
+    expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf('&:active'));
+  });
+});
+describe('processSelector / ancestor conditions', () => {
+  const cacheOf = (block: StyleBlock, name = 'icon'): string =>
+    processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
+
+  it('writes an ancestor state as a nested rule that weighs what the class alone does', () => {
+    const cache = cacheOf({
+      default: { transform: 'none' },
+      ancestors: { card: { states: { hover: { transform: 'translateX(3px)' } } } }
+    });
+
+    expect(cache).toBe('.icon{transform:none;:where(.card:hover) &{transform:translateX(3px);}}');
+  });
+
+  it('matches an ancestor variant by attribute and by modifier class, like the variant itself', () => {
+    const cache = cacheOf({
+      default: {},
+      ancestors: {
+        sidebar: {
+          variants: { collapsed: { default: { display: 'none' }, states: { hover: { display: 'block' } } } }
+        }
+      }
+    });
+
+    expect(cache).toBe(
+      '.icon{:where(.sidebar[data-variant="collapsed"],.sidebar--collapsed) &{display:none;}' +
+        ':where(.sidebar[data-variant="collapsed"]:hover,.sidebar--collapsed:hover) &{display:block;}}'
+    );
+  });
+
+  it('writes them after the class own states and variants, and the ancestor states in cascade order', () => {
+    const cache = cacheOf({
+      default: { color: 'black' },
+      states: { hover: { color: 'blue' } },
+      variants: { muted: { default: { color: 'gray' } } },
+      ancestors: { card: { states: { active: { color: 'red' }, hover: { color: 'green' } } } }
+    });
+
+    expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf(':where(.card:hover)'));
+    expect(cache.indexOf('.icon--muted')).toBeLessThan(cache.indexOf(':where(.card:hover)'));
+    expect(cache.indexOf(':where(.card:hover)')).toBeLessThan(cache.indexOf(':where(.card:active)'));
+  });
+
+  it('works on an element type and on its slots', () => {
+    const cache = processSelector({
+      name: 'text',
+      type: 'element',
+      componentType: 'text',
+      attributes: {
+        base: { default: {} },
+        label: { default: {}, ancestors: { card: { states: { hover: { color: 'red' } } } } }
+      },
+      cache: ''
+    });
+
+    expect(cache).toBe('.plitzi__text{.plitzi__text-label{:where(.card:hover) &{color:red;}}}');
+  });
+
+  it('writes the rules that hold inside an ancestor at all times before its states', () => {
+    const cache = cacheOf({
+      default: {},
+      ancestors: { toolbar: { default: { 'font-size': '12px' }, states: { hover: { 'font-size': '14px' } } } }
+    });
+
+    expect(cache).toBe('.icon{:where(.toolbar) &{font-size:12px;}:where(.toolbar:hover) &{font-size:14px;}}');
+  });
+
+  it('leaves out an ancestor with nothing under it', () => {
+    expect(cacheOf({ default: { color: 'black' }, ancestors: { card: { states: { hover: {} } } } })).toBe(
+      '.icon{color:black;}'
+    );
+  });
+});
+describe('processSelector / the hidden state', () => {
+  const cacheOf = (block: StyleBlock, name = 'panel'): string =>
+    processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
+
+  it('selects the class the SDK hides an element with, and starts the element from it as it appears', () => {
+    const cache = cacheOf({ default: { opacity: '1' }, states: { hidden: { opacity: '0' } } });
+
+    expect(cache).toBe('.panel{opacity:1;&.plitzi-component--hidden{opacity:0;}@starting-style{&{opacity:0;}}}');
+  });
+
+  it('writes it after every pseudo-class: an element on its way out is leaving, however it is pointed at', () => {
+    const cache = cacheOf({ default: {}, states: { hidden: { opacity: '0' }, hover: { opacity: '0.9' } } });
+
+    expect(cache.indexOf('&:hover')).toBeLessThan(cache.indexOf('&.plitzi-component--hidden'));
+  });
+
+  it('dresses what is inside a hidden ancestor, and starts it from there as the ancestor appears', () => {
+    const cache = cacheOf({ default: {}, ancestors: { menu: { states: { hidden: { opacity: '0' } } } } }, 'item');
+
+    expect(cache).toBe(
+      '.item{:where(.menu.plitzi-component--hidden) &{opacity:0;}@starting-style{:where(.menu) &{opacity:0;}}}'
+    );
+  });
+
+  it('does the same under an ancestor variant', () => {
+    const cache = cacheOf(
+      {
+        default: {},
+        ancestors: { menu: { variants: { wide: { default: {}, states: { hidden: { opacity: '0' } } } } } }
+      },
+      'item'
+    );
+
+    expect(cache).toBe(
+      '.item{:where(.menu[data-variant="wide"].plitzi-component--hidden,.menu--wide.plitzi-component--hidden) &{opacity:0;}' +
+        '@starting-style{:where(.menu[data-variant="wide"],.menu--wide) &{opacity:0;}}}'
+    );
+  });
+});
+describe('processSelector / the current state', () => {
+  const cacheOf = (block: StyleBlock, name = 'navLink'): string =>
+    processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
+
+  it('selects the chosen one of a set — the page shown, a pressed toggle, a selected tab, its panel — which a hover still answers', () => {
+    const cache = cacheOf({
+      default: { color: 'gray' },
+      states: { hover: { color: 'black' }, current: { color: 'red' } }
+    });
+
+    expect(cache).toBe(
+      '.navLink{color:gray;' +
+        '&:is([aria-current]:not([aria-current="false"]),[aria-pressed="true"],[aria-selected="true"],[role="tabpanel"]:not([hidden])){color:red;}' +
+        '&:hover{color:black;}}'
+    );
+  });
+});
+describe('processSelector / the style language', () => {
+  const cacheOf = (block: StyleBlock, name = 'card'): string =>
+    processSelector({ name, type: 'class', attributes: { base: block }, cache: '' });
+
+  it('writes the open trigger and where an element sits as the attribute and structural pseudo-classes', () => {
+    const cache = cacheOf({
+      states: {
+        hover: { color: 'black' },
+        expanded: { color: 'blue' },
+        last: { 'margin-bottom': '0px' },
+        first: { 'margin-top': '0px' },
+        even: { 'background-color': 'gray' },
+        odd: { 'background-color': 'white' }
+      }
+    });
+
+    expect(cache).toBe(
+      '.card{&:nth-child(odd){background-color:white;}&:nth-child(even){background-color:gray;}' +
+        '&:first-child{margin-top:0px;}&:last-child{margin-bottom:0px;}&[aria-expanded="true"]{color:blue;}' +
+        '&:hover{color:black;}}'
+    );
+  });
+
+  it('writes a pseudo-element last in its selector, after the state that shows it', () => {
+    const cache = cacheOf({
+      default: { position: 'relative' },
+      pseudos: { after: { default: { content: '"→"' }, states: { hover: { translate: '4px 0' } } } }
+    });
+
+    expect(cache).toBe('.card{position:relative;&::after{content:"→";}&:hover::after{translate:4px 0;}}');
+  });
+
+  it('writes the pseudo-elements of a variant inside it', () => {
+    const cache = cacheOf({
+      variants: { ghost: { default: {}, pseudos: { before: { default: { content: '""' } } } } }
+    });
+
+    expect(cache).toBe('.card{&[data-variant="ghost"],&.card--ghost{&::before{content:"";}}}');
+  });
+
+  it('writes the conditions last, as at-rules inside the class, with their states and pseudo-elements', () => {
+    const cache = cacheOf({
+      default: { transition: 'transform 200ms' },
+      states: { hover: { transform: 'translateY(-2px)' } },
+      conditions: {
+        'motion-reduce': { default: {}, states: { hover: { transform: 'none' } } },
+        'container sidebar (max-width: 30rem)': {
+          default: { 'flex-direction': 'column' },
+          pseudos: { before: { default: { display: 'none' } } }
+        }
+      }
+    });
+
+    expect(cache).toBe(
+      '.card{transition:transform 200ms;&:hover{transform:translateY(-2px);}' +
+        '@media (prefers-reduced-motion: reduce){&:hover{transform:none;}}' +
+        '@container sidebar (max-width: 30rem){flex-direction:column;&::before{display:none;}}}'
+    );
+  });
+
+  it('leaves out a condition it cannot read rather than writing an at-rule no browser knows', () => {
+    expect(cacheOf({ conditions: { print: { default: { color: 'black' } } } })).toBe('.card{}');
+  });
+
+  it('writes the parent by its state alone, one step up', () => {
+    const cache = cacheOf(
+      { ancestors: { '>': { states: { expanded: { rotate: '180deg' }, hover: { opacity: '1' } } } } },
+      'chevron'
+    );
+
+    expect(cache).toBe('.chevron{:where([aria-expanded="true"]) > &{rotate:180deg;}:where(:hover) > &{opacity:1;}}');
+  });
+});

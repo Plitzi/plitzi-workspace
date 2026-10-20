@@ -1,6 +1,7 @@
 import type { ActionAccess, ActionTriggerType } from './ActionTypes';
 import type { Environment } from './CommonTypes';
-import type { RunUser, SpaceRevision } from './ServerTypes';
+import type { SpaceRevision } from './ServerAdapterTypes';
+import type { RunUser } from './ServerTypes';
 
 /**
  * The durable queue the server's work waits in: a schedule's fires, the runs set for later, and the jobs of the spaces'

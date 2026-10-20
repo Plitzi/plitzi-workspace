@@ -1,7 +1,8 @@
 import type { User } from './AuthTypes';
 import type { RealtimeTransport } from './RealtimeTypes';
 import type { Schema } from './SchemaTypes';
-import type { SSRRenderResult, SSRRscData } from './ServerTypes';
+import type { SSRRscData } from './ServerAdapterTypes';
+import type { SSRRenderResult } from './ServerTypes';
 
 export type Environment = 'production' | 'staging' | 'development' | 'main';
 

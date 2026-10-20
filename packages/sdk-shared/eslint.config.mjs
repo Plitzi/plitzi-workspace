@@ -51,6 +51,9 @@ export default tsEslint.config({
     '@typescript-eslint/no-confusing-void-expression': 'off', // ['error', { ignoreArrowShorthand: true, ignoreVoidOperator: true }],
     'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     'no-var': 'error',
+    // A file is read whole — by a person, and by an agent before it changes it: past this, it is split by what changes
+    // together. A project's own files are held to the same idea by `plitzi lint` (`file-too-long`, `MAX_LINES`).
+    'max-lines': ['error', { max: 600, skipBlankLines: true, skipComments: true }],
     curly: 'error',
     // indent: ['warn', 2],
     'linebreak-style': ['error', 'unix'],

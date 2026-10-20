@@ -1,3 +1,4 @@
+/* eslint-disable quotes -- a step's description is prose, which reads best in the other quotes */
 import { processTwig } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import type { ActionTask } from '../types';

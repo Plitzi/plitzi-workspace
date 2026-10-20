@@ -20,7 +20,7 @@
 
 ## CLI
 
-- **Several agents on one project: `plitzi run` and `plitzi task`** (`@plitzi/cli`) — RFC 0028. One plan and one run at
+- **Several agents on one project: `plitzi run` and `plitzi task`** (`@plitzi/cli`; how it works, `docs/en/agent-runs.md`). One plan and one run at
   a time per project, with as many agents at once as its team has (`.plitzi/team.json`, written at the first run when there is none). The lead's plan of tasks
   over disjoint files, held to the rules (`run plan`: no file in two tasks, no cycle, ownership read off the imports, an
   estimate) and opened with a backup of every file it touches (`run open`). Each task is taken with a token and works in
@@ -112,8 +112,7 @@
   meet; an address a page answers by its own id (as the router does) is that page, not the not-found one.
 - **Runs on Windows** (`@plitzi/cli`): a check's `$PLITZI_URL` / `$PLITZI_PORT` are written into it for any shell, a
   served check gets `PORT` (and one running `playwright test` is served), `plitzi` has a `.cmd` beside it, and the copy's
-  server is stopped as a tree. The CLI's own files are split by what changes together, and its lint holds every file
-  under 600 lines of code.
+  server is stopped as a tree.
 - **A paragraph made of parts holds no block** (`@plitzi/sdk-authoring`): `span-holds-block` warns of a `p` container
   holding a `text` or a plain `container` — `<div>`s the browser closes the paragraph before, which broke hydration.
 - **A disclosure, natively** (`@plitzi/sdk-elements`): `container({ subType: 'details' })` with a `summary` first, and
@@ -161,11 +160,16 @@
 - **`page check --element` says what the element shows** (`@plitzi/sdk-dev-tools`, `@plitzi/cli`): its text as a
   visitor reads it, its bindings resolved — so a count that follows a filter is read after a `--click`, not worked out
   from the template. And **`--fill` works without `--click`**: what typing in a field changes, as a search box does; with a click, what
-  the filling changed by itself is said apart. `--element` and `--state` read the page as the interaction left it, and a
-  second `--element` is refused rather than replacing the first.
+  the filling changed by itself is said apart. `--element` and `--state` read the page as the interaction left it.
 - **`plitzi explain` knows a server action's steps** (`@plitzi/cli`, `@plitzi/sdk-server`): `explain list.put`, `--list
   tasks` — what each does, what it answers and its params, read from the `@plitzi/sdk-server` the project installed, the
   catalogue the builder draws them from. The twenty steps that had no description have one.
 - **`repeated-shape` tells forms apart by their fields** (`@plitzi/sdk-authoring`): an element's `subType` is part of
   what it is — a date field is no number field, an `h2` no `h3` — so two forms asking for different fields are no longer
   taken for one component (only fewer suggestions: copies alike in kind are still found).
+- **No file past 600 lines of code** (every package): the shared lint config holds each file to it (`max-lines`,
+  blank lines and comments not counted), and the files past it are folders of modules by what changes together — the
+  twig filters by kind, the project's layout check, the server's types, the authoring codes by subject, `authorSpace`
+  and `specFromSpace` (their classes' methods now functions of the author and the reader), the auth API by flow, the
+  schema validator by check, the MCP guide by section (its text unchanged), and the functions sandbox's guest a web API
+  to a part, each printed into the isolate on its own. Only how the code is filed changed: the exports are the same.

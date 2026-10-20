@@ -1,3 +1,4 @@
+/* eslint-disable quotes -- a step's description is prose, which reads best in the other quotes */
 import { MAX_LIST_ENTRIES } from '../runtime/kvList';
 
 import type { ActionTask } from '../types';

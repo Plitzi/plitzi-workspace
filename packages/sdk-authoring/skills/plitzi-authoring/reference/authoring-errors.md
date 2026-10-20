@@ -1,6 +1,6 @@
 # When `authorSpace` refuses, warns or suggests
 
-<!-- Generated from AUTHORING_CODES (src/schema/codes.ts) by `yarn generate:authoring-errors`. Do not edit. -->
+<!-- Generated from AUTHORING_CODES (src/schema/codes/) by `yarn generate:authoring-errors`. Do not edit. -->
 
 Search this page for the code in brackets — `[class-and-css]` — rather than reading it whole, or ask for one:
 `npx @plitzi/cli explain class-and-css`.

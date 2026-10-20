@@ -4,8 +4,8 @@ import { hasTemplateSyntax } from '@plitzi/sdk-shared/helpers/twigWrapper';
 import { boundAttribute } from '../bindings';
 import { closest } from '../suggest';
 import { LintContext } from './context';
-import { isPlainContainer } from './elements';
 import { STATE_PATH_PARAMS } from './flows';
+import { isPlainContainer } from './lists';
 
 import type { LintCatalogs } from './context';
 import type { Element, ElementBinding, ElementInteraction, Schema, Style } from '@plitzi/sdk-shared';

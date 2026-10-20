@@ -1,3 +1,4 @@
+/* eslint-disable quotes -- a step's description is prose, which reads best in the other quotes */
 import type { ActionTask } from '../types';
 
 const toNumber = (value: string | number | undefined, fallback: number): number => {

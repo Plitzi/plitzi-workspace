@@ -1,7 +1,7 @@
 import { createHash, createHmac, pbkdf2, randomBytes } from 'node:crypto';
 import { promisify } from 'node:util';
 
-import { installGuest } from './guest';
+import { guestBytes, guestCrypto, guestEvents, guestFetch, installGuest } from './guest';
 import { guestPrelude } from './prelude';
 import { changeKv } from '../../actions/runtime/kvChange';
 import { createFunctionsDriver, describeFunctions } from '../driver';
@@ -189,7 +189,8 @@ const cryptoAnswer = async (message: string, charge: (ms: number) => void): Prom
 
 /**
  * Sets the guest up in a fresh context: the runner's four calls, taken off the global the moment they are captured,
- * and the guest printed from its own source — with the platform's functions it runs as they are (`GuestShared`),
+ * and the guest printed from its own source, its web APIs first, a part at a time — with the platform's functions it runs
+ * as they are (`GuestShared`),
  * printed from theirs. Answers the driver.
  */
 const BOOTSTRAP = `(() => {
@@ -199,12 +200,21 @@ const BOOTSTRAP = `(() => {
   delete globalThis.__plitziRandom;
   delete globalThis.__plitziCrypto;
   const transfer = { arguments: { copy: true }, result: { promise: true, copy: true } };
-  return (${installGuest.toString()})(globalThis, {
+  const host = {
     call: message => refs.call.apply(undefined, [message], transfer),
     sleep: ms => refs.sleep.apply(undefined, [ms], transfer),
     random: length => refs.random(length),
     crypto: message => refs.crypto.apply(undefined, [message], transfer)
-  }, { changeKv: ${changeKv.toString()}, describeFunctions: ${describeFunctions.toString()}, createFunctionsDriver: ${createFunctionsDriver.toString()} });
+  };
+  const bytes = (${guestBytes.toString()})();
+  const events = (${guestEvents.toString()})(host);
+  const parts = {
+    bytes,
+    events,
+    fetch: (${guestFetch.toString()})(bytes, events),
+    crypto: (${guestCrypto.toString()})(host, bytes)
+  };
+  return (${installGuest.toString()})(globalThis, host, { changeKv: ${changeKv.toString()}, describeFunctions: ${describeFunctions.toString()}, createFunctionsDriver: ${createFunctionsDriver.toString()} }, parts);
 })()`;
 
 type Cached = { code: string; bytes: number; cachedData?: IsolatedVM.ExternalCopy<ArrayBuffer> };
