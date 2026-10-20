@@ -33,6 +33,45 @@ console.log(${JSON.stringify('ok · 1 pages · 0 warnings · 1 suggestions')});
     await fs.rm(dir, { recursive: true, force: true });
   });
 
+  it('say a thing declared and read by nothing yet, without failing — and fail it at the finish', async () => {
+    const unused = '[suggest] unused-component · fighter-card is declared and placed nowhere (saves 0)';
+    const dir = await projectWith(
+      `console.warn(${JSON.stringify(unused)});
+console.log(${JSON.stringify('ok · 1 pages · 0 warnings · 1 suggestions')});
+`
+    );
+
+    const task = await projectChecks(dir, dir);
+    expect(task.ok).toBe(true);
+    expect(task.steps[0].warnings?.[0]).toContain('unused-component · fighter-card');
+    expect((await projectChecks(dir, dir, { final: true })).ok).toBe(false);
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  it('still run the steps after an author that only suggests: a failing typecheck is never hidden behind it', async () => {
+    const dir = await projectWith(
+      `console.warn(${JSON.stringify(SUGGESTION)});
+console.log(${JSON.stringify('ok · 1 pages · 0 warnings · 1 suggestions')});
+`
+    );
+    await fs.writeFile(
+      path.join(dir, 'package.json'),
+      JSON.stringify({
+        name: 'checks',
+        type: 'module',
+        private: true,
+        scripts: { author: 'node author.mjs', typecheck: 'node -e "process.exit(2)"' }
+      })
+    );
+
+    const checked = await projectChecks(dir, dir);
+    expect(checked.steps.map(step => [step.name, step.ok])).toEqual([
+      ['author', false],
+      ['typecheck', false]
+    ]);
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
   it('pass it with none', async () => {
     const dir = await projectWith(`console.log(${JSON.stringify('ok · 1 pages · 0 warnings · 0 suggestions')});
 `);

@@ -23,7 +23,9 @@ const TABS = [
   // Own tab rather than a Logs filter: a run has input, output, progress and server steps — none is a log line.
   { id: 'actions', label: 'Actions', icon: 'fa-solid fa-bolt' },
   // The page itself, for whoever checks a build: the grid, outlines, motion, colour and the checks a tester runs.
-  { id: 'qa', label: 'QA', icon: 'fa-solid fa-ruler-combined' }
+  { id: 'qa', label: 'QA', icon: 'fa-solid fa-ruler-combined' },
+  // A run of agents behind a preview (`plitzi run preview`): what the page is being built by. Only where one is.
+  { id: 'run', label: 'Run', icon: 'fa-solid fa-people-group' }
 ] as const;
 
 export type DevToolsHeaderProps = {
@@ -35,6 +37,8 @@ export type DevToolsHeaderProps = {
   onTabSelect?: (tabIndex: string) => void;
   /** Whether the QA tab is offered. */
   qa?: boolean;
+  /** Whether the Run tab is offered: a run's preview serves the page. */
+  run?: boolean;
 };
 
 const DevToolsHeader = ({
@@ -43,9 +47,10 @@ const DevToolsHeader = ({
   onChangeOrientation,
   onCollapse,
   onTabSelect,
-  qa = false
+  qa = false,
+  run = false
 }: DevToolsHeaderProps) => {
-  const tabs = qa ? TABS : TABS.filter(tab => tab.id !== 'qa');
+  const tabs = TABS.filter(tab => (tab.id !== 'qa' || qa) && (tab.id !== 'run' || run));
   const { options: scopeOptions, value: scopeValue, onSelect: onSelectScope } = useScopeSelector();
 
   const handleClickOrientation = useCallback(() => {

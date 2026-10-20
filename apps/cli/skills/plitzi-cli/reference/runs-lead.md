@@ -35,10 +35,11 @@ What the lead — team lead and software architect — does; the agents' half, t
    acceptance, edge cases, the page — and the final word, after it (or before, with `--skip-design`, yours: as
    yourself — no `--agent`, or `--agent lead`). A UI review counts only from a designer of the team, by the name it
    is started with (`design-1`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you
-   (`plitzi run team set lead --count N` says another number). Start them as `run plan` says; each takes the next review
-   no other lead took and reviews it as you would — tell them how strict you are (the run's notes, or a message to
-   `@lead-2`). The rest is yours alone. `run watch --until lead` wakes you for a review only once it waited two minutes
-   with no lead taking it; you may review any.
+   (`plitzi run team set lead --count N` says another number) — **not at the start**: you review, taking each review from
+   the queue (`plitzi task next --role lead --take`), and `run watch --until lead` says when the reviews queue up (two
+   waiting, the oldest five minutes) and which to start. Each takes the next review no other lead took, reviews it as you
+   would — tell them how strict you are (a message to `@lead-2`) — and stops by itself once the queue is empty. The rest
+   is yours alone.
 
    **Keep a person's actions a person's in the harness**: an agent with a shell can give itself a terminal and type a
    run's name. Deny the agents — not yourself, unless the person said so — `plitzi run finish --apply`, `run abort`,
@@ -64,7 +65,8 @@ What the lead — team lead and software architect — does; the agents' half, t
    `--lead-finishes` (or `plitzi run allow-finish` later). Never you.
    `plitzi run open plan.json` backs up every file it will touch; as many agents at once as the team has (above 5 a
    person confirms). Tell the person how to watch it: `npm run start:preview` (`plitzi run preview`) serves the run's
-   approved work as it goes — their own `start:dev` shows the project untouched until the finish.
+   approved work as it goes, its dev tools' Run tab saying who builds what — their own `start:dev` shows the project
+   untouched until the finish — and `plitzi run monitor`, in a terminal of their own, follows the whole run live.
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
@@ -86,7 +88,8 @@ What the lead — team lead and software architect — does; the agents' half, t
    **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
    **The brake** stops a run whose completions keep being refused: `run status` says why; `plitzi run resume`. Agents
    iterate with `task check`, which it does not count. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
-   status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait.
+   status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
+   purpose, the person runs `plitzi run upgrade` — never an install under the open run.
 8. **Close it:** write the summary (done, wrong, left): `plitzi run report --summary summary.md`; then `plitzi run
    finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
    `plitzi run extend <run> next.json` stacks it, one finish for both. `plitzi run pending` lists what awaits applying.

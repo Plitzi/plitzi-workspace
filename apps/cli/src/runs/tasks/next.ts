@@ -1,6 +1,6 @@
 import { durationText } from '../../options';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
-import { isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, takeLeadReview } from '../leads';
+import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { pagesOf } from '../pagesOf';
 import { readyTasks } from '../plan';
@@ -12,8 +12,8 @@ import { findTask, roleOf } from './common';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
-import type { RunRecord, RunTask, TaskStatus } from '../model';
-import type { RunContext } from '../run';
+import type { RunTask, TaskStatus } from '../model';
+import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 import type { TakenTask } from './take';
 
@@ -114,7 +114,7 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
 
   // A lead that reviews is offered reviews, and nothing else: the queue of tasks in review no other lead took.
   if (roles?.includes(LEAD_ROLE) === true) {
-    return leadNext(ctx, loaded.record, views, messages);
+    return leadNext(ctx, loaded, views, messages);
   }
 
   // A review holds back a task already done, and the lead: a designer's comes before anything new.
@@ -224,15 +224,21 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
 /** `task next --role lead`: the review a lead takes next, why there is none, or that the run has none left for it. */
 const leadNext = async (
   ctx: RunContext,
-  record: RunRecord,
+  loaded: LoadedRun,
   views: readonly TaskView[],
   messages: Message[]
 ): Promise<NextTask> => {
+  const { record } = loaded;
   if (!isCoLead(record, ctx.agent) && !isPrincipal(ctx.agent)) {
     throw new RunRefusal(
       'invalid',
       `${ctx.agent} is no lead of this run: its leads are lead${(record.leads ?? []).map(each => `, ${each}`).join('')} — a lead that reviews waits with plitzi task next --role lead --agent <its name>`
     );
+  }
+
+  // Asking is running: while it is, `lead` leaves the reviews to it.
+  if (isCoLead(record, ctx.agent)) {
+    await markAsking(ctx, loaded);
   }
 
   const review = leadReviewFor(views, ctx.agent);
@@ -358,9 +364,14 @@ export const followNext = async (
   ctx: RunContext,
   runId: string,
   role: string | undefined,
-  { timeoutMs = 30 * 60_000, everyMs = 10_000 } = {}
+  { timeoutMs = 30 * 60_000, everyMs = 10_000, idleMs = IDLE_LEAD_MS } = {}
 ): Promise<NextTask> => {
   const started = Date.now();
+  const idleLead =
+    role
+      ?.split(',')
+      .map(each => each.trim())
+      .includes(LEAD_ROLE) === true && !isPrincipal(ctx.agent);
   for (;;) {
     // A run stopped — gently, by its brake, or by a person at once — goes on once resumed, and one whose Plitzi was
     // upgraded once a person re-pins it: an agent waiting for work waits through either.
@@ -376,6 +387,16 @@ export const followNext = async (
     });
     if (next.task || next.designReview || next.leadReview || next.finished || next.messages.length > 0) {
       return next;
+    }
+
+    // A lead that reviews handed nothing for a while: the queue is empty, and waiting on costs tokens — `lead` starts it
+    // again when the reviews queue up.
+    if (idleLead && Date.now() - started >= idleMs) {
+      return {
+        ...next,
+        finished: true,
+        why: `no review came for ${durationText(idleMs)}: you can stop — lead starts you again when the reviews queue up`
+      };
     }
 
     if (Date.now() - started >= timeoutMs) {

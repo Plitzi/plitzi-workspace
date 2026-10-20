@@ -4,17 +4,30 @@ import path from 'node:path';
 import { parseEnv } from 'node:util';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
+import { RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
 
-import { cloneFiles, fingerprint, isCopied, projectFiles, readJson, readOptional, writeJson } from './files';
+import {
+  cloneFiles,
+  fingerprint,
+  isCopied,
+  projectFiles,
+  readJson,
+  readOptional,
+  writeAtomic,
+  writeJson
+} from './files';
 import { under } from './paths';
 import { stopTree } from './processes';
 import { RunRefusal } from './refusal';
 import { loadRun, readApproved, readBase, readRecord, requireNoTask } from './run';
 import { placeVersion } from './store';
 import { viewTask } from './taskStore';
+import { viewRun } from './view';
 import { scriptsOf } from '../commands/verify';
 
 import type { LoadedRun, RunContext } from './run';
+import type { RunView } from './view';
+import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
 
 /**
  * The run's work as it goes: the project with every approved task over it, served by the project's own dev
@@ -25,6 +38,37 @@ import type { LoadedRun, RunContext } from './run';
 
 const previewDir = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview');
 const previewRecord = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview.json');
+/** The run as the preview's page shows it in its dev tools (`RUN_STATUS_PATH`), written as it goes. */
+const snapshotFile = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview-run.json');
+
+/** The run's view, as the dev tools read it (`RunSnapshot`): what a person looking at the page wants of the run. */
+export const snapshotOf = (view: RunView, at: Date): RunSnapshot => ({
+  runId: view.runId,
+  goal: view.goal,
+  status: view.status,
+  done: view.done,
+  total: view.total,
+  at: at.toISOString(),
+  ...(view.expectedEnd ? { expectedEnd: view.expectedEnd } : {}),
+  tasks: view.tasks.map(task => ({
+    id: task.id,
+    title: task.title,
+    role: task.role,
+    status: task.status,
+    ...(task.agent ? { agent: task.agent } : {}),
+    ...(task.reviewer ? { reviewer: task.reviewer } : {}),
+    round: task.round,
+    files: task.files,
+    ...(task.step ? { step: task.step } : {}),
+    ...(task.fraction !== undefined ? { fraction: task.fraction } : {})
+  })),
+  attention: view.attention.map(item => ({ text: item.text, who: item.who }))
+});
+
+const writeSnapshot = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
+  const view = await viewRun(ctx, loaded.record.runId);
+  await writeAtomic(snapshotFile(loaded), `${JSON.stringify(snapshotOf(view, ctx.now()))}\n`);
+};
 
 const isPreview = (value: unknown): value is { pid: number; port: number } =>
   isRecord(value) && typeof value.pid === 'number' && typeof value.port === 'number';
@@ -102,7 +146,7 @@ const serve = async (
   dir: string,
   port: number,
   ended: () => Promise<string | undefined> = () => Promise.resolve(undefined),
-  { quiet = false }: { quiet?: boolean } = {}
+  { quiet = false, snapshot = false }: { quiet?: boolean; snapshot?: boolean } = {}
 ): Promise<Omit<Preview, 'dir'>> => {
   const scripts = await scriptsOf(dir);
   const script = scripts['start:dev'] ? 'start:dev' : scripts.start ? 'start' : undefined;
@@ -120,6 +164,7 @@ const serve = async (
       ...process.env,
       ...(env ? parseEnv(env) : {}),
       PORT: String(port),
+      ...(snapshot ? { [RUN_STATUS_ENV]: snapshotFile(loaded) } : {}),
       PATH: `${path.join(ctx.root, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
     }
   });
@@ -134,6 +179,10 @@ const serve = async (
       void (async () => {
         const record = await readRecord(loaded.paths).catch(() => undefined);
         const reason = record ? await ended() : 'the preview stopped: the run ended';
+        // What the page's dev tools show of the run; one not written this round is written the next.
+        if (snapshot && record) {
+          await writeSnapshot(ctx, loaded).catch(() => undefined);
+        }
         if (reason !== undefined) {
           why ??= reason;
           stopTree(child);
@@ -172,7 +221,8 @@ export const startPreview = async (ctx: RunContext, runId: string, port: number)
     await fs.copyFile(under(ctx.root, file), under(dir, file), fs.constants.COPYFILE_FICLONE);
   }
 
-  const served = await serve(ctx, loaded, dir, port);
+  await writeSnapshot(ctx, loaded);
+  const served = await serve(ctx, loaded, dir, port, undefined, { snapshot: true });
   await writeJson(previewRecord(loaded), { pid: process.pid, port });
   void served.done.then(() => fs.rm(previewRecord(loaded), { force: true })).catch(() => undefined);
 

@@ -73,6 +73,8 @@ export interface RunPaths {
   leadRead: string;
   /** What `run watch --until lead` already woke the lead for. */
   leadSeen: string;
+  /** When each lead that reviews last asked for a review (`task next --role lead`): which of them are running. */
+  leadsAsking: string;
   cache: string;
   materialised: string;
 }
@@ -111,6 +113,7 @@ export const runPaths = (root: string, runId: string): RunPaths => {
     messages: path.join(dir, 'messages'),
     leadRead: path.join(dir, 'lead-read.json'),
     leadSeen: path.join(dir, 'lead-seen.json'),
+    leadsAsking: path.join(dir, 'leads-asking.json'),
     cache,
     materialised: path.join(cache, 'run')
   };

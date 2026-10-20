@@ -9,7 +9,7 @@ import { cloneFiles, fingerprint, isCopied, projectFiles, readOptional, writeJso
 import { under } from './paths';
 import { placeVersion } from './store';
 
-import type { CheckResult } from './checks';
+import type { CheckOptions, CheckResult } from './checks';
 import type { AcceptanceResult } from './model';
 import type { LoadedRun, RunContext } from './run';
 
@@ -77,9 +77,10 @@ const isKept = (value: unknown): value is { at: string; result: CheckResult } =>
 export const checkVersions = async (
   ctx: RunContext,
   loaded: LoadedRun,
-  versions: Record<string, string | null>
+  versions: Record<string, string | null>,
+  { final = false }: CheckOptions = {}
 ): Promise<CheckResult> => {
-  const key = await treeKey(ctx, versions);
+  const key = `${await treeKey(ctx, versions)}${final ? '-final' : ''}`;
   // In the run's cache: `run prune` may take it, and a pass not kept is only run again.
   const keptAt = path.join(loaded.paths.cache, 'checks', `${key}.json`);
   const kept = await readOptional(keptAt);
@@ -90,7 +91,7 @@ export const checkVersions = async (
 
   const dir = await materialise(ctx, loaded, versions);
   try {
-    const result = await ctx.checks(dir, ctx.root);
+    const result = await ctx.checks(dir, ctx.root, { final });
     if (result.ok && result.none === undefined) {
       await writeJson(keptAt, { at: ctx.now().toISOString(), result });
     }

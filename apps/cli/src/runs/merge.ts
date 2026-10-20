@@ -300,7 +300,9 @@ export const finishRun = async (
     );
   }
 
-  plan.checks = await checkVersions(ctx, loaded, Object.fromEntries(plan.apply.map(each => [each.file, each.after])));
+  plan.checks = await checkVersions(ctx, loaded, Object.fromEntries(plan.apply.map(each => [each.file, each.after])), {
+    final: true
+  });
   if (!plan.checks.ok) {
     await recordBrake(ctx, loaded, 'checks-failed');
     throw new RunRefusal('checks-failed', 'The project’s checks fail on the run’s whole result: nothing is written', {

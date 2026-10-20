@@ -6,7 +6,18 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { finishRun } from './merge';
 import { RUNS_DIR, runPaths } from './paths';
 import { isRunRefusal } from './refusal';
-import { attachRun, checkPlanFile, loadRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from './run';
+import {
+  attachRun,
+  checkPlanFile,
+  loadRun,
+  pruneRuns,
+  purgeRun,
+  releaseRun,
+  resumeRun,
+  stopRun,
+  writingTasks
+} from './run';
+import { messageTasks } from './talk';
 import { canWrite, checkTask, completeTask, nextTask, reportProgress, reviewTask, takeTask } from './tasks';
 import { brakeFailuresFor, DEFAULTS } from './taskStore';
 import { viewRun } from './view';
@@ -140,9 +151,33 @@ describe('stopping, cuts and disconnects', () => {
     }
 
     expect((await loadRun(lead(), 'es-launch')).record).toMatchObject({ status: 'open', brake: [] });
+    // What the lead says meanwhile reaches an agent that only checks.
+    await messageTasks(lead(), 'es-launch', 't-home', 'Use the formal voice');
+    expect((await checkTask(home.ctx, 'es-launch', 't-home')).messages.map(message => message.text)).toEqual([
+      'Use the formal voice'
+    ]);
     await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Bienvenidos" };\n');
     expect(await checkTask(home.ctx, 'es-launch', 't-home')).toMatchObject({ ok: true });
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('in-progress');
+  });
+});
+
+describe('a gentle stop to upgrade', () => {
+  it('says what is still being written — what run upgrade waits for — and why it stops', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await take('agent-2', 't-menu');
+    await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const home = { title: "Inicio" };\n');
+    await stopRun(lead(), 'es-launch', false, 'stopping to upgrade Plitzi');
+    expect((await loadRun(lead(), 'es-launch')).record).toMatchObject({
+      status: 'stopping',
+      stopReason: 'stopping to upgrade Plitzi'
+    });
+    expect((await writingTasks(lead(), 'es-launch')).sort()).toEqual(['t-home', 't-menu']);
+
+    // A task in review is finished work: nothing is written in it.
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    expect(await writingTasks(lead(), 'es-launch')).toEqual(['t-menu']);
   });
 });
 

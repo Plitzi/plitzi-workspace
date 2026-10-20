@@ -25,7 +25,18 @@ export interface CheckResult {
 }
 
 /** How a run checks a folder: the project's scripts by default, something else under test. */
-export type CheckRunner = (dir: string, projectRoot: string) => Promise<CheckResult>;
+/**
+ * `final`: the run's whole result, at its finish — held to everything. Otherwise a task's copy, or the run's work part
+ * way: what one task declares for the tasks after it (a component, a token) is read by none yet, and said, not failed.
+ */
+export interface CheckOptions {
+  final?: boolean;
+}
+
+export type CheckRunner = (dir: string, projectRoot: string, options?: CheckOptions) => Promise<CheckResult>;
+
+/** A suggestion that something is declared and read by nothing yet — a component, a token, a class: `unused-component`. */
+const UNUSED = /^\[suggest\] unused-/;
 
 /**
  * The warnings in what `plitzi space lint` printed, a line each: `src/space/pages/home.ts:1 file-too-long`. Read off
@@ -52,19 +63,33 @@ export const lintWarnings = (output: string): string[] => {
 /** How many of the project's steps run at once after `author`: several agents complete at once on one machine. */
 const AT_ONCE = 3;
 
-export const projectChecks: CheckRunner = async (dir, projectRoot) => {
+export const projectChecks: CheckRunner = async (dir, projectRoot, { final = false } = {}) => {
   const steps = stepsOf(await scriptsOf(dir));
   if (steps.length === 0) {
     return { ok: true, steps: [], none: 'the project has no author, lint, typecheck, test or format script to run' };
   }
 
+  // Whether the space authored, whatever author suggested: what the steps after it read is there.
+  const space = { authors: false };
   const run = async (step: (typeof steps)[number]): Promise<CheckStep> => {
     const { code, output } = await runScript(dir, step.command, projectRoot);
+    if (step.name === 'author') {
+      space.authors = code === 0;
+    }
+
     // A task leaves the space as the project wants it: no warnings, and no suggestions either — a suggestion is the long
     // way to a page that has a short one, and a run's tasks are where it is written the short way (or said why not).
-    const suggestions = step.name === 'author' ? output.split('\n').filter(line => line.startsWith('[suggest] ')) : [];
+    const said = step.name === 'author' ? output.split('\n').filter(line => line.startsWith('[suggest] ')) : [];
+    // Declared for a task after it, read by none yet: the lead sees it at review, the finish holds the whole to it.
+    const pending = final ? [] : said.filter(line => UNUSED.test(line));
+    const suggestions = said.filter(line => !pending.includes(line));
     const ok = code === 0 && !step.failsOn?.test(output) && suggestions.length === 0;
-    const warnings = ok && step.name === 'lint:space' ? lintWarnings(output) : [];
+    const warnings = ok
+      ? [
+          ...(step.name === 'lint:space' ? lintWarnings(output) : []),
+          ...pending.map(line => `${line.slice('[suggest] '.length)} — read by no task yet; the finish needs it read`)
+        ]
+      : [];
 
     return {
       name: step.name,
@@ -92,7 +117,9 @@ export const projectChecks: CheckRunner = async (dir, projectRoot) => {
   if (first) {
     const authored = await run(first);
     results.push(authored);
-    if (!authored.ok) {
+    // A space that does not author stops here; one that authors with suggestions to write the short way does not —
+    // the steps after it still say what they find, or a failing typecheck goes to review unseen behind them.
+    if (!authored.ok && !space.authors) {
       return { ok: false, steps: results };
     }
   }

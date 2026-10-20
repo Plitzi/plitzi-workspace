@@ -1,3 +1,6 @@
+import { isRecord } from '@plitzi/sdk-shared/helpers';
+
+import { readJson, writeJson } from './files';
 import { LEAD } from './messages';
 import { RunRefusal } from './refusal';
 import { updateState } from './taskStore';
@@ -8,9 +11,12 @@ import type { LoadedRun, RunContext } from './run/context';
 import type { TaskView } from './taskStore';
 
 /**
- * A run's leads: `lead`, who plans, answers, decides and finishes — and, past four agents, the others (`lead-2`…), who
- * review as it does and nothing else. A review is taken from one queue (`task next --role lead`), so two leads never
- * review one task; `lead` may review any, and is woken for one no other lead took.
+ * A run's leads: `lead`, who plans, answers, decides, finishes and reviews — and, past four agents, the others
+ * (`lead-2`…), who review as it does and nothing else, **started only when the reviews queue up**: a lead waiting for a
+ * review it is never handed spends tokens on nothing. `lead` reviews every task while none of them runs; once two wait
+ * and the oldest waited `REVIEW_BACKLOG_MS`, `run watch --until lead` says to start one. A review is taken from one queue
+ * (`task next --role lead`), so two leads never review one task; with one of them running, `lead` is woken only for a
+ * review none took within `UNTAKEN_REVIEW_MS`; and one handed nothing for `IDLE_LEAD_MS` is told to stop.
  */
 
 /** The `--role` a lead that reviews waits with: `task next --role lead`. */
@@ -18,6 +24,35 @@ export const LEAD_ROLE = 'lead';
 
 /** How long a review waits for another lead before `lead` is woken for it: a lead at `--follow` takes it in seconds. */
 export const UNTAKEN_REVIEW_MS = 2 * 60_000;
+
+/** How long the oldest of two reviews waits for `lead` before it is told to start a lead that reviews beside it. */
+export const REVIEW_BACKLOG_MS = 5 * 60_000;
+
+/** How long a lead that reviews waits with nothing handed to it before it is told to stop: the queue is empty. */
+export const IDLE_LEAD_MS = 10 * 60_000;
+
+/** A lead that reviews asked within this is running: at `--follow` it asks every few seconds. */
+const ASKING_MS = 60_000;
+
+const isAsking = (value: unknown): value is Record<string, string> =>
+  isRecord(value) && Object.values(value).every(each => typeof each === 'string');
+
+/** Records that `agent`, a lead that reviews, asked for a review now. */
+export const markAsking = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
+  const asking =
+    (await readJson(loaded.paths.leadsAsking, isAsking, 'when the leads asked').catch(() => undefined)) ?? {};
+  await writeJson(loaded.paths.leadsAsking, { ...asking, [ctx.agent]: ctx.now().toISOString() });
+};
+
+/** The leads that review and are running: each asked for a review within the last minute. */
+export const askingLeads = async (loaded: LoadedRun, now: Date): Promise<string[]> => {
+  const asking =
+    (await readJson(loaded.paths.leadsAsking, isAsking, 'when the leads asked').catch(() => undefined)) ?? {};
+
+  return coLeadsOf(loaded.record).filter(
+    lead => Object.hasOwn(asking, lead) && now.getTime() - Date.parse(asking[lead]) < ASKING_MS
+  );
+};
 
 /** The one who decides: `lead`, or a person at a terminal. */
 export const isPrincipal = (agent: string): boolean => agent === LEAD || agent === 'person';

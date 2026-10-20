@@ -21,12 +21,15 @@ import {
   runState,
   runStatus,
   runStop,
+  runMonitor,
+  runUpgrade,
   runWatch,
   runAllowFinish,
   runAmend,
   runExtend,
   runTeam,
   runPending,
+  runTeamCheck,
   runTeamSet,
   runTeamUnset,
   runNote
@@ -34,7 +37,7 @@ import {
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
 import { duration, names, positiveInteger } from '../../../options';
 
-import type { FinishOptions, PlanOptions, RunCommandOptions, WatchRunOptions } from '..';
+import type { FinishOptions, PlanOptions, RunCommandOptions, UpgradeRunOptions, WatchRunOptions } from '..';
 import type { Command } from 'commander';
 
 /** `plitzi run …`: its commands, registered on the program. */
@@ -109,6 +112,12 @@ export const registerRunGroup = (program: Command): Command => {
     .argument('<name>', 'The agent, or lead')
     .option(...JSON_OPTION)
     .action((name: string, options: RunCommandOptions) => runTeamUnset(name, options));
+
+  team
+    .command('check')
+    .description('Whether .plitzi/team.json is a team the runs read as written — every wrong or unknown field said')
+    .option(...JSON_OPTION)
+    .action((options: RunCommandOptions) => runTeamCheck(options));
 
   runGroup
     .command('rehearse')
@@ -186,6 +195,15 @@ export const registerRunGroup = (program: Command): Command => {
     );
 
   runGroup
+    .command('monitor')
+    .description(
+      'A run, live, for a person — in a terminal of its own, beside the harness: its tasks, its leads, what needs someone; it only reads'
+    )
+    .argument('[run]', 'The run — the only open one when left out')
+    .option('--interval <seconds>', 'How often to look (2)', positiveInteger)
+    .action((run: string | undefined, options: RunCommandOptions & { interval?: number }) => runMonitor(run, options));
+
+  runGroup
     .command('watch')
     .description(
       'Follow a run: printed again whenever it changes, until it finishes — one JSON object a line with --json'
@@ -229,6 +247,20 @@ export const registerRunGroup = (program: Command): Command => {
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action((run: string | undefined, options: RunCommandOptions & { force?: boolean }) => runStop(run, options));
+
+  runGroup
+    .command('upgrade')
+    .description(
+      'A person’s: upgrade Plitzi under an open run — stopped gently, upgraded once nothing is being written, re-pinned and resumed'
+    )
+    .argument('[run]', 'The run')
+    .option('--install <command>', 'What upgrades, run in the project (plitzi upgrade --write --with-open-runs)')
+    .option(
+      '--timeout <duration>',
+      'How long to wait for the tasks in hand (90s, 8m, 1h; a number is minutes)',
+      duration
+    )
+    .action((run: string | undefined, options: UpgradeRunOptions) => runUpgrade(run, options));
 
   runGroup
     .command('resume')

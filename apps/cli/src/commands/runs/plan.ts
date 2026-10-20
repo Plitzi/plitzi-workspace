@@ -72,10 +72,10 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
 
   return [
     `Start the team (${TEAM_FILE}):`,
-    `  lead — ${leadModelText(team.lead)} — you: plan, answer, decide and finish${coLeadNames(team).length > 0 ? '; review what no other lead takes' : ''}`,
+    `  lead — ${leadModelText(team.lead)} — you: plan, answer, decide, finish and review — take each review from the queue (plitzi task next --role lead --take)${coLeadNames(team).length > 0 ? ', so a lead started beside you does not take it too' : ''}`,
     ...coLeadNames(team).map(
       name =>
-        `  ${name} — a lead that reviews, as strictly as you, from one queue — ${leadModelText(team.lead)}: plitzi task next --role lead --follow --take --agent ${name}`
+        `  ${name} — a lead that reviews, as strictly as you, from one queue — ${leadModelText(team.lead)}: not at the start — when run watch --until lead says the reviews queue up: plitzi task next --role lead --follow --take --agent ${name} (it stops by itself once the queue is empty)`
     ),
     ...startedAgents(team).map(each => {
       const theirs = tasks.filter(task => each.roles.includes(roleOf(task))).map(task => task.id);

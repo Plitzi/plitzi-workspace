@@ -221,8 +221,11 @@
   or as many as `"lead": { "count" }` in `team.json` says (`plitzi run team set lead --count N`). They take reviews from
   one queue (`task next --role lead --follow --take`), a review another took refused to them, and do nothing else:
   planning, amending, stages, notes, unblocking, reassigning, reverting, reconciling, the summary and the finish are
-  `lead`'s, refused to them and to every agent of the team (`lead-only`, exit 25). `lead` may review any, and is woken
-  for one only after it waited two minutes untaken. Two verdicts on one task are given one at a time.
+  `lead`'s, refused to them and to every agent of the team (`lead-only`, exit 25). **They are started only when the
+  reviews queue up**: `lead` reviews every task until two wait and the oldest waited five minutes — then `run watch
+  --until lead` names the lead to start — and one handed nothing for ten minutes is told it can stop, so a lead never
+  waits on tokens for reviews it is not handed. While one runs, `lead` is woken for a review only after it waited two
+  minutes untaken. Two verdicts on one task are given one at a time.
 - **A verdict is a lead's** (`@plitzi/cli`): an agent of the team giving a review without its task's token — a developer,
   or a designer once the task's UI is said — is refused; before, any name without a token reviewed as the lead.
   `task revert` says it is the lead's before it asks for `--reason`.
@@ -234,7 +237,9 @@
   CLI wrote it, and a test reads, works and finishes each, so a change to a record that is not additive fails before it
   ships. `run plan` says when the project's skills are older than the CLI.
 - **`plitzi task check`** (`@plitzi/cli`): what `complete` holds a copy to — the project's checks, the acceptance's
-  commands, the files too long — run without completing, and counted by no brake. The brake allows one more failure for
+  commands, the files too long — run without completing, and counted by no brake; it hands over what the lead said
+  meanwhile (la-velada: three messages reached an agent only once it completed). A component or token one task declares
+  for the tasks after it, read by none yet, passes a task's checks as a warning and fails only the finish's. The brake allows one more failure for
   each agent past the first (five agents fixing at once stopped a run on five), and a preview's server is stopped with
   everything under it (on Windows, its tree).
 - **`run plan` says two more things** (`@plitzi/cli`): a file of a task that other tasks' files import — what it exports
@@ -246,3 +251,21 @@
 - **Words where a format goes are said as content** (`@plitzi/sdk-authoring`): `from` with `as: 'Pip has no weighing
   yet'` was refused as a format nobody declared, offering to declare one; it now says `as` is a format's name or a
   template, and that words an element always shows are its `content`, with no `from`.
+- **A link to a URL is never a page path** (`@plitzi/sdk-elements`, `@plitzi/sdk-authoring`): a link whose address
+  has a scheme — `https:`, `mailto:`, `tel:` — is followed as written in any mode; a bound `{{ item.url }}` left in
+  page mode resolved to `/https:/www.idealo.es/` (la-velada's sponsors). Authoring cannot know what a bound address
+  holds — a page's path from the data works in page mode — so the SDK decides it by the value.
+- **A run's checks are never hidden behind authoring's suggestions** (`@plitzi/cli`): a space that authors with
+  suggestions still has its typecheck, lint, tests and format run — before, every step after `author` was skipped, and
+  a task went to review with a type error unseen (la-velada: `class: { padding }` in a home part).
+- **Co-leads counted running while they review** (`@plitzi/cli`): `lead` is not woken for a review another lead took,
+  nor told to start a lead while one is at a review.
+- **Follow a run as a person** (`@plitzi/cli`, `@plitzi/sdk-dev-tools`, `@plitzi/sdk-server`, `@plitzi/sdk-shared`):
+  `plitzi run monitor` draws the run live in a terminal of its own, beside the harness's — every task, who has it and
+  who reviews it, the leads at work, what needs someone, one task opened (↑↓, enter) — and only reads, so the agents
+  never notice it; a shell with no terminal is refused and pointed at `run watch`. And the run's preview answers the run
+  at `/__plitzi/run` (`@plitzi/sdk-shared/runs`): the page's dev tools show it in a **Run** tab, offered only there.
+- **`plitzi run upgrade`** (`@plitzi/cli`): Plitzi upgraded under an open run without breaking it — a person's: the run
+  stops gently, waits until nothing is being written, is upgraded (`plitzi upgrade --write --with-open-runs`, or
+  `--install "<command>"`), re-pinned by the new CLI and resumed; an upgrade that fails leaves it as it was, open again
+  (la-velada: an install under the open run stopped the preview three times).

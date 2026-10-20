@@ -11,11 +11,13 @@ import HistoryViewer from './tabs/HistoryViewer';
 import Logs from './tabs/Logs';
 import PluginsViewer from './tabs/PluginsViewer/PluginsViewer';
 import QaViewer from './tabs/QaViewer';
+import RunViewer from './tabs/RunViewer';
 import StoreViewer from './tabs/StoreViewer';
 import TracingViewer from './tabs/TracingViewer';
 import VariablesViewer from './tabs/VariablesViewer';
 
 import type { LogType } from '@plitzi/sdk-shared';
+import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
 
 export type DevToolsBodyProps = {
   className?: string;
@@ -26,6 +28,8 @@ export type DevToolsBodyProps = {
   onSelectElement: (id?: string) => void;
   /** Whether the QA tab is offered. */
   qa?: boolean;
+  /** The run of agents a preview serves the page from, when one does. */
+  run?: RunSnapshot;
 };
 
 const DevToolsBody = ({
@@ -35,7 +39,8 @@ const DevToolsBody = ({
   logTypeFilter,
   elementSelected,
   onSelectElement,
-  qa = false
+  qa = false,
+  run
 }: DevToolsBodyProps) => {
   const { logs, clearLogs } = use(DevToolsContext);
 
@@ -57,6 +62,7 @@ const DevToolsBody = ({
         {tabSelected === 'tracing' && <TracingViewer />}
         {tabSelected === 'actions' && <ActionsViewer />}
         {qa && tabSelected === 'qa' && <QaViewer />}
+        {tabSelected === 'run' && <RunViewer snapshot={run} />}
       </div>
     </div>
   );

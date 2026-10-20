@@ -3,6 +3,9 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { ACTIVE_RUN_FILE } from '@plitzi/sdk-shared/project';
+import { RUN_STATUS_PATH } from '@plitzi/sdk-shared/runs';
+
+import type { Stage } from '../../core/http/types';
 
 /** How often the project is looked at for a run opening or ending: a stat, cheap enough to do while developing. */
 const EVERY_MS = 5000;
@@ -47,3 +50,34 @@ export const watchAgentRuns = (
 
   return () => clearInterval(timer);
 };
+
+/**
+ * The run a preview serves, answered at `RUN_STATUS_PATH` for the page's dev tools (their Run tab): the snapshot `plitzi
+ * run preview` keeps in `file` and names in `RUN_STATUS_ENV`. Read on each request — the CLI rewrites it as the run goes —
+ * and answered as it is: none yet (the preview just started) is a 404 that says so. Only on a preview's server.
+ */
+export const runStatusStage =
+  (file: string): Stage =>
+  ctx => {
+    if (ctx.req.path !== RUN_STATUS_PATH) {
+      return Promise.resolve(false);
+    }
+
+    let text: string | undefined;
+    try {
+      text = readFileSync(file, 'utf-8');
+    } catch {
+      text = undefined;
+    }
+
+    ctx.res.setHeader('Cache-Control', 'no-store');
+    ctx.res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    if (text === undefined) {
+      ctx.res.setStatus(404);
+      ctx.res.send(JSON.stringify({ error: 'The run has no snapshot yet: its preview writes one as it starts' }));
+    } else {
+      ctx.res.send(text);
+    }
+
+    return Promise.resolve(true);
+  };

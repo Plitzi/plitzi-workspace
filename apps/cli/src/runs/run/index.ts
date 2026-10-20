@@ -35,5 +35,5 @@ export {
   readPrimer
 } from './open';
 export type { OpenedRun } from './open';
-export { attachRun, pruneRuns, purgeRun, recordBrake, releaseRun, resumeRun, stopRun } from './control';
+export { attachRun, pruneRuns, purgeRun, recordBrake, releaseRun, resumeRun, stopRun, writingTasks } from './control';
 export type { Pruned } from './control';

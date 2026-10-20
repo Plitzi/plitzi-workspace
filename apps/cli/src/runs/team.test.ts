@@ -10,10 +10,12 @@ import {
   readTeam,
   refreshTeamAbout,
   roleProblems,
+  teamProblems,
   setTeamAgent,
   startedAgents,
   TEAM_ABOUT,
   TEAM_FILE,
+  TEAM_SCHEMA,
   teamSize,
   unsetTeamAgent
 } from './team';
@@ -151,12 +153,63 @@ describe('the team of a project’s runs', () => {
     expect(await refreshTeamAbout(root, false)).toBe(true);
     expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toMatchObject({ about: { lead: 'The lead is one' } });
     expect(await refreshTeamAbout(root, true)).toBe(true);
-    expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toEqual({ version: 1, agents, about: TEAM_ABOUT });
+    expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toEqual({
+      $schema: TEAM_SCHEMA,
+      version: 1,
+      agents,
+      about: TEAM_ABOUT
+    });
     expect(await refreshTeamAbout(root, true)).toBe(false);
 
     // Any write of the file says it as this CLI does.
     await fs.writeFile(file, JSON.stringify({ version: 1, agents, about: { lead: 'The lead is one' } }));
     await setTeamAgent(root, 'lead', { count: 2 });
     expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toMatchObject({ lead: { count: 2 }, about: TEAM_ABOUT });
+  });
+
+  it('says every wrong or unknown field at once, the one meant beside a typo', () => {
+    expect(
+      teamProblems({
+        version: 1,
+        lead: { modle: 'claude-opus-5-5' },
+        agents: [
+          { name: 'dev', roles: ['developer'], cuont: 2 },
+          { name: 'lead', roles: ['designer'] }
+        ],
+        extra: true
+      })
+    ).toEqual([
+      '"extra" is no field of it (it takes version, lead, agents, about)',
+      '"lead": "modle" is no field of it — did you mean "model"? (it takes model, effort, count)',
+      '"dev": "cuont" is no field of it — did you mean "count"? (it takes name, roles, count, model, effort)',
+      '"lead" is the lead’s: give the lead its model under "lead", and the agent another name'
+    ]);
+    expect(teamProblems({ $schema: TEAM_SCHEMA, version: 1, agents: [{ name: 'dev', roles: ['developer'] }] })).toEqual(
+      []
+    );
+  });
+
+  it('is described alike by the schema an editor checks it with', async () => {
+    const schema: unknown = JSON.parse(
+      await fs.readFile(new URL('../../schemas/team.schema.json', import.meta.url), 'utf-8')
+    );
+    const props = (value: unknown, ...keys: string[]): string[] => {
+      let at: unknown = value;
+      for (const key of keys) {
+        at = typeof at === 'object' && at !== null ? (at as Record<string, unknown>)[key] : undefined;
+      }
+
+      return typeof at === 'object' && at !== null ? Object.keys(at).sort() : [];
+    };
+
+    expect(props(schema, 'properties')).toEqual(['$schema', 'about', 'agents', 'lead', 'version']);
+    expect(props(schema, 'properties', 'lead', 'properties')).toEqual(['count', 'effort', 'model']);
+    expect(props(schema, 'properties', 'agents', 'items', 'properties')).toEqual([
+      'count',
+      'effort',
+      'model',
+      'name',
+      'roles'
+    ]);
   });
 });

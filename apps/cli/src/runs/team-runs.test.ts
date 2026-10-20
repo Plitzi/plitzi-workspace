@@ -222,7 +222,7 @@ describe('a designer’s review of the others’ UI', () => {
 
     // The lead does not approve before it — unless it says so — and is not woken for it.
     expect(await refusalOf(reviewTask(lead(), 'es-launch', 't-menu', 'approve', []))).toContain('--skip-design');
-    expect(leadItems(await viewRun(lead(), 'es-launch')).map(item => item.key)).not.toContainEqual(
+    expect(leadItems(await viewRun(lead(), 'es-launch'), bench.now()).map(item => item.key)).not.toContainEqual(
       expect.stringContaining('review:t-menu')
     );
 
@@ -240,7 +240,7 @@ describe('a designer’s review of the others’ UI', () => {
       round: 0,
       design: 'approved'
     });
-    expect(leadItems(await viewRun(lead(), 'es-launch'))).toContainEqual(
+    expect(leadItems(await viewRun(lead(), 'es-launch'), bench.now())).toContainEqual(
       expect.objectContaining({ text: expect.stringContaining('its UI approved by design-1') as unknown })
     );
     expect((await reviewTask(lead(), 'es-launch', 't-menu', 'approve', [])).merged).toEqual([

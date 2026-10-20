@@ -6,8 +6,9 @@ checks and merges, and only **one final merge, approved by a person**, writes in
 has its exit code (below). A text written `-` is read from stdin: no shell quoting.
 
 **The team.** The **lead** (team lead and architect) plans, reviews, answers and closes; past four agents, **leads that
-review** beside it (`lead-2`…) wait with `plitzi task next --role lead --follow --take --agent lead-2` and review what
-they are handed as the lead would, as strictly — nothing else is theirs (`lead-only`, 25). The project's team is
+review** beside it (`lead-2`…), started by the lead when the reviews queue up, wait with `plitzi task next --role lead
+--follow --take --agent lead-2`, review what they are handed as the lead would, as strictly, and stop when it says the
+queue is empty — nothing else is theirs (`lead-only`, 25). The project's team is
 `.plitzi/team.json` (`plitzi run team`): each agent's name, roles, count and model. Tasks name a role (`"role":
 "designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
 (`--timeout 8m`) for the next one and takes it, handing back first a task you hold that can go on.
@@ -61,7 +62,9 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
   for changes. `agent-limit` (24) on `take`: hand back to the lead, which starts it when one goes to review.
 - **Before done:** `plitzi task check` runs what `complete` holds the copy to — the project's checks, the acceptance's
   commands, long files — and changes nothing: iterate on it, not on `complete`, whose failures count toward the run's
-  brake (enough of them, across the team, stop the run).
+  brake (enough of them, across the team, stop the run). It hands you what the lead said meanwhile: run it between
+  steps, not only at the end. Something you declare for later tasks (a component, a token) that nothing reads yet is
+  a warning there, not a failure.
 - **Done:** `plitzi task complete [--note "what to look at"]` — the note goes to the lead with it — compared by
   fingerprint, the project's checks and the acceptance's checks run in
   the copy. **A task never ends

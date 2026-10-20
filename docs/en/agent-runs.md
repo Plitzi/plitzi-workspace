@@ -46,14 +46,17 @@ messages to every task (`*`): each task reads every one once, with its take or i
 **More leads for a larger team** (`leads.ts`). One lead reviews for four agents (`AGENTS_PER_LEAD`): past that, tasks
 waited for its review in v12. A team of five or more has `lead-2`, `lead-3`… beside `lead` — `"lead": { "count" }` in
 `team.json` says another number — recorded in `run.json` (`leads`) when the run opens or a stage raises them. Two levels
-and one queue, no lead with agents of its own: a lead that reviews waits with `task next --role lead --follow --take`,
+and one queue, no lead with agents of its own — **started only when the reviews queue up**, since one waiting for
+reviews it is never handed spends tokens on nothing: `lead` reviews every task, taking each from the queue (`task next
+--role lead --take`), until two wait and the oldest waited five minutes (`REVIEW_BACKLOG_MS`) — then `run watch --until
+lead` names the one to start; one handed nothing for ten minutes (`IDLE_LEAD_MS`) is told it can stop, and a lead that
+asked within the last minute (`leads-asking.json`) is running. A lead that reviews waits with `task next --role lead --follow --take`,
 which offers it a task in review no other lead took (`TaskState.reviewer`, for the round) — one it sent back first, then
 the one that waited longest — and reviews it as `lead` would, as strictly; a review another lead took is refused to it
 (`claimed`). Everything else — planning, amending, stacking a stage, answering, notes to every task, unblocking,
 reassigning, reverting, reconciling, the summary and the finish — is `lead`'s, refused to a lead that reviews and to an
-agent of the team (`lead-only`), so two never do it twice. `lead` may review any task, and `run watch --until lead` wakes
-it for one only after it waited two minutes with no lead taking it (`UNTAKEN_REVIEW_MS`): the others are not running, or
-all at a review. Two verdicts on one task are given one at a time (`review.lock`): the second reads it said.
+agent of the team (`lead-only`), so two never do it twice. `lead` may review any task; while one of them runs, `run watch
+--until lead` wakes it for a review only after it waited two minutes with no lead taking it (`UNTAKEN_REVIEW_MS`). Two verdicts on one task are given one at a time (`review.lock`): the second reads it said.
 
 **Connected as it goes.** A shared file a task changed — or any file no task at work holds: a done task's, one in no
 task — is taken by turns at `complete` when nobody else holds it, so it merges with the task instead of waiting for an
@@ -67,7 +70,12 @@ the project's dev server, and each approval writes into it — the project's `st
 writes and `plitzi upgrade` adds, so the person watches the agents' work in a browser while their own `start:dev` serves
 the project untouched; that server says so on its console while a run is open (`hosts/project/agentRuns.ts` in
 sdk-server, reading `ACTIVE_RUN_FILE`), `run open` names the script and `run status` the preview's address; `run preview --task` serves a task's copy while it is in
-review, so the lead looks at the pages before approving them, and `task show` (`show.ts`) gathers the rest of a review —
+review, so the lead looks at the pages before approving them; the run's preview keeps a snapshot of the run beside it
+(`preview-run.json`, the shape `@plitzi/sdk-shared/runs` names) and hands its path to the project's server
+(`RUN_STATUS_ENV`), which answers it at `/__plitzi/run` — the page's dev tools show it in their **Run** tab: each task,
+who has it and who reviews it, what needs someone; no other server answers it. `run monitor` is the same run, live, for
+a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
+refuses a shell with no terminal, an agent's, whose is `run watch`. `task show` (`show.ts`) gathers the rest of a review —
 acceptance, checks, agreements, notes, what was said, each file's diff against where the copy started, the commands that
 act on it.
 
@@ -287,7 +295,10 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   token is said (a token said wins — the lead reviewing from inside a copy is the lead).
 - **Check:** `task check` runs in the copy what `complete` would hold it to — the project's checks, the acceptance's
   commands, the files too long — and changes nothing: no review, no brake. An agent iterating on a fix checks with it,
-  and completes once it passes.
+  and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits
+  files would otherwise read only at `complete`. What a task declares for the tasks after it — a component, a token,
+  read by none yet (authoring's `unused-*` suggestions) — passes a task's checks as a warning the review sees, and fails
+  only the finish's, on the whole result (`CheckOptions.final`).
 - **Complete:** refused with a proposal to it unanswered, and with its copy gone (said as gone, with the take that
   starts it again — not as every file removed). The copy against `start.json`: a change to another task's file is
   refused (`claimed`) naming each; to a shared file, or one in no task, taken by turns when nobody holds it and a request
@@ -383,7 +394,11 @@ additive (`model.ts`): `src/tests/runRecords/<version>/` keeps a run as each CLI
 reads, works and finishes every one; one this CLI still cannot read is said as the other CLI's, with the command that
 goes on with it (`compat.ts`), never as a hand edit. `run plan` says when the skills the agents read are older than the
 CLI (`plitzi upgrade skills --write`). `plitzi upgrade --write` waits for an open run unless told
-`--with-open-runs`. A run is active on one machine; another attaches once it is released, or a person takes it over. The
+`--with-open-runs`; **`plitzi run upgrade`** is the way to upgrade under one, a person's: it stops the run gently,
+waits until nothing is being written (`writingTasks`: what an agent holds in progress, sent back or waiting — a task in
+review is finished work), upgrades (`plitzi upgrade --write --with-open-runs`, or `--install "<command>"`), has the new
+CLI re-pin the run (`run attach`, the person typing its name) and resume it — so `node_modules` never changes under an
+agent's command; an upgrade that fails resumes the run as it was. A run is active on one machine; another attaches once it is released, or a person takes it over. The
 brake: more than 5 failed checks or conflicts — and one more for each agent past the first, each failing on its own way to
 a fix (`brakeFailuresFor`) — or more than a fifth of completions refused (over 10 at least), within 30 minutes; `task
 check` counts toward none of it — and the run stops as a stop does, its reason in `run status` and the report. `run resume` clears what the brake

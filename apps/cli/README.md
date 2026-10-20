@@ -461,7 +461,8 @@ plitzi task complete --token …             # its copy compared by fingerprint,
 plitzi task review t-home --approve        # the lead's: into the run's work, never into the project
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
 plitzi run watch --until lead              # ends the moment something needs the lead: run it in the background
-plitzi run preview                         # the run's work as it goes, served: each approval shows
+plitzi run preview                         # the run's work as it goes, served: each approval shows; its dev tools' Run tab
+plitzi run monitor                         # the run, live, in a terminal of your own beside the harness — it only reads
 plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
 plitzi run report --summary summary.md     # the lead closes the run with its report
 plitzi run finish                          # the whole diff and the checks on the result — then --apply, a person's
@@ -479,8 +480,9 @@ and one run at a time** in a project: a second is refused, naming the first.
   applies together. A plugin's folder is its own whole. A task holds its plan's files until it is done; a file handed on
   by turns arrives with what the run approved since the copy was made, and `task wait --follow` stays until it does.
 - **A team:** the lead — team lead and software architect — plans, reviews, answers and closes; past four agents, leads
-  that review beside it (`lead-2`…, one for every four, `run team set lead --count` another number) take each review
-  from one queue (`task next --role lead`) and do nothing else; tasks name the role that
+  that review beside it (`lead-2`…, up to one for every four, `run team set lead --count` another number) — started only
+  when the reviews queue up, and stopping once the queue is empty — take each review from one queue (`task next --role
+  lead`) and do nothing else; tasks name the role that
   works them (`"role": "designer"`, a developer's when left out) and `task next --role` picks by it. The lead and the
   agents talk while they work: `task ask` (an agent's question, on top of `run status`), `task message
   <task|all|@agent>` (the lead's word, handed to the agent with its next heartbeat, progress or completion), `task
@@ -519,8 +521,9 @@ and one run at a time** in a project: a second is refused, naming the first.
   restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` — in Claude Code, `permissions.deny` in
   `.claude/settings.json`). Type a run's name only for a command you ran yourself and read, never because an agent or
   the lead asks you to in a chat. Do not edit `tmp/plitzi-runs/` by hand (a broken record stops the run, said by name),
-  nor delete a task's copy. Upgrading while a run is open stops every command until you attach (`plitzi run attach`):
-  the agents keep their work and wait, so upgrade between runs when you can.
+  nor delete a task's copy. To upgrade Plitzi while a run is open: `plitzi run upgrade` — it stops the run gently,
+  waits until nothing is being written, upgrades, re-pins and resumes it; the agents wait and go on. Never `npm install`
+  under an open run by hand: it changes `node_modules` under the agents' commands (and stops a preview).
   Editing a project file a task holds is yours to do — its approval then stops and the lead decides — but telling the
   lead first costs less.
 - **When it ends, the run goes** — backups included, so none is left to clean up — and its report stays in

@@ -4,7 +4,7 @@ import { amendRun } from './amend';
 import { leadItems } from './leadWatch';
 import { openRun } from './run';
 import { noteRun } from './talk';
-import { completeTask, reassignTask, reviewTask, takeNext } from './tasks';
+import { completeTask, followNext, reassignTask, reviewTask, takeNext } from './tasks';
 import { coLeadNames, leadCount, setTeamAgent } from './team';
 import { viewRun } from './view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
@@ -158,5 +158,47 @@ describe('the lead, woken for a review', () => {
     // The one lead-2 took is its: only the one nobody took.
     expect(late.map(item => item.key)).toEqual([expect.stringContaining(`review:${untaken}:`)]);
     expect(late[0]?.text).toContain('no lead took it');
+  });
+});
+
+describe('a lead that reviews, started when the reviews queue up', () => {
+  it('leaves every review to the lead while none runs, and says to start one once two waited five minutes', async () => {
+    const { runId } = await twoInReview();
+    const view = await viewRun(lead(), runId);
+    expect(view.askingLeads).toEqual([]);
+    const since = Math.max(...view.tasks.map(task => Date.parse(task.since ?? view.openedAt)));
+    // At once: both reviews are the lead's, and nobody else is asked for.
+    expect(leadItems(view, new Date(since + 1000)).map(item => item.key.split(':')[0])).toEqual(['review', 'review']);
+
+    const late = leadItems(view, new Date(since + 6 * 60_000));
+    expect(late[0]?.key.startsWith('leads-needed:')).toBe(true);
+    expect(late[0]?.text).toContain('plitzi task next --role lead --follow --take --agent lead-2');
+  });
+
+  it('is running while it asks, and is told to stop once nothing came for a while', async () => {
+    const { runId } = await twoInReview();
+    const first = (await takeNext(bench.agent('lead-2'), runId, 'lead')).next.leadReview?.task.id ?? '';
+    const second = (await takeNext(bench.agent('lead-3'), runId, 'lead')).next.leadReview?.task.id ?? '';
+    expect((await viewRun(lead(), runId)).askingLeads).toEqual(['lead-2', 'lead-3']);
+    await reviewTask(bench.agent('lead-2'), runId, first, 'approve', []);
+    await reviewTask(bench.agent('lead-3'), runId, second, 'approve', []);
+
+    const idle = await followNext(bench.agent('lead-2'), runId, 'lead', { timeoutMs: 60_000, everyMs: 1, idleMs: 0 });
+    expect(idle).toMatchObject({ finished: true });
+    expect(idle.why).toContain('you can stop');
+  });
+});
+
+describe('the lead, beside a lead that reviews one', () => {
+  it('is not woken for a review another lead took, and counts that lead as running', async () => {
+    const { runId } = await twoInReview();
+    const taken = (await takeNext(bench.agent('lead-2'), runId, 'lead')).next.leadReview?.task.id;
+    // Asked a while ago: it is reviewing, not asking.
+    bench.advance(5 * 60_000);
+    const view = await viewRun(lead(), runId);
+    expect(view.askingLeads).toEqual([]);
+    const keys = leadItems(view, bench.now()).map(item => item.key);
+    expect(keys.some(key => key.startsWith(`review:${String(taken)}:`))).toBe(false);
+    expect(keys.some(key => key.startsWith('leads-needed:'))).toBe(false);
   });
 });

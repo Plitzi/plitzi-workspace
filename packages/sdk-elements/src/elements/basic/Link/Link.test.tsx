@@ -180,6 +180,11 @@ describe('Link Tests', () => {
       expect(anchorHref({ mode: 'internal', href: '/arcade/' })).toBe('/arcade/');
       expect(anchorHref({ mode: 'external', href: 'https://plitzi.com/a//b' })).toBe('https://plitzi.com/a//b');
     });
+
+    it('follows a URL with a scheme as written, whatever the mode — never as /https:/…', () => {
+      expect(anchorHref({ mode: 'page', href: 'https://www.idealo.es/' })).toBe('https://www.idealo.es/');
+      expect(anchorHref({ mode: 'internal', href: 'mailto:hola@plitzi.com' })).toBe('mailto:hola@plitzi.com');
+    });
   });
 
   describe('where a click goes', () => {

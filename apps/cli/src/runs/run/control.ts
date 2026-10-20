@@ -74,8 +74,24 @@ export const recordBrake = async (
   return braked;
 };
 
+/** What a task being written is in: an agent at it — a task in review, or blocked, has none writing. */
+const WRITING: readonly string[] = ['in-progress', 'changes-requested', 'waiting'];
+
+/** The tasks an agent is writing now: what a gentle stop waits for (`run upgrade`). */
+export const writingTasks = async (ctx: RunContext, runId: string): Promise<string[]> => {
+  const loaded = await loadRun(ctx, runId, { anyVersion: true });
+  const views = await Promise.all(loaded.tasks.map(task => viewTask(loaded.paths, task)));
+
+  return views.filter(view => view.owner && WRITING.includes(view.state.status)).map(view => view.task.id);
+};
+
 /** `plitzi run stop`: the tasks in hand finish and go to review; none starts. `--force` is a person's: it cuts them now. */
-export const stopRun = async (ctx: RunContext, runId: string, force: boolean): Promise<{ cut: string[] }> => {
+export const stopRun = async (
+  ctx: RunContext,
+  runId: string,
+  force: boolean,
+  reason = `stopped by ${ctx.agent}`
+): Promise<{ cut: string[] }> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'stop');
   if (!force) {
@@ -84,7 +100,7 @@ export const stopRun = async (ctx: RunContext, runId: string, force: boolean): P
       ...record,
       status: 'stopping',
       stopRequestedAt: ctx.now().toISOString(),
-      stopReason: `stopped by ${ctx.agent}`
+      stopReason: reason
     }));
     await logRun(ctx, loaded.paths, { action: 'stop' });
 
@@ -103,7 +119,7 @@ export const stopRun = async (ctx: RunContext, runId: string, force: boolean): P
     const view = await viewTask(loaded.paths, task);
     // Only what is being written is cut: a task in review is finished work waiting for the lead, a blocked one waits
     // for an answer — neither has an agent writing, and cutting them would only throw finished work away.
-    const writing = ['in-progress', 'changes-requested', 'waiting'].includes(view.state.status);
+    const writing = WRITING.includes(view.state.status);
     if (view.owner && writing) {
       await cutTask(view, 'the run was stopped by force', ctx.now);
       cut.push(task.id);

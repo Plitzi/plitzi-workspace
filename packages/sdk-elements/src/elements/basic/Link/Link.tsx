@@ -56,6 +56,9 @@ export type LinkProps = {
   current?: 'page' | 'section';
 };
 
+/** A URL's scheme: `https:`, `mailto:`, `tel:`. */
+const SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+
 const Link = ({
   ref,
   children,
@@ -87,8 +90,12 @@ const Link = ({
     'navigation.href'
   ]);
 
+  // A value with a scheme — a URL the data hands a bound href, `mailto:`, `tel:` — is no page's path, whatever the mode
+  // says: it is followed as written, never resolved into `/https:/…`. Authoring refuses one written out in page mode
+  // (`page-target-url`); a bound one it cannot see — a page's path from the data is as likely — so it is decided here.
+  const external = mode === 'external' || SCHEME.test(href);
   const path = useMemo(() => {
-    if (mode === 'external') {
+    if (external) {
       return href;
     }
 
@@ -109,11 +116,11 @@ const Link = ({
     }
 
     return getPageFullPath(pageDefinitions, pageFolders, href, true);
-  }, [mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
-  const url = mode !== 'external' && hash ? `${path}#${hash}` : path;
+  }, [external, mode, href, pageDefinitions, pageFolders, queryParams, routeParams]);
+  const url = !external && hash ? `${path}#${hash}` : path;
   // The page being shown, said by the link that leads to it — or by its section's: what a screen reader announces, and
   // what the `current` style state selects. From the address the server rendered, so the first paint already marks it.
-  const currentAs = mode === 'external' ? undefined : ariaCurrent(path, location, current);
+  const currentAs = external ? undefined : ariaCurrent(path, location, current);
 
   const handleClick = (e: MouseEvent) => {
     if (!previewMode) {
@@ -124,7 +131,7 @@ const Link = ({
     // A page of the site is navigated to in place — unless the link, or the person, asked for somewhere else: a
     // `target` of its own, or a click held with ⌘, Ctrl or Shift, or not the main button. The browser opens those.
     const elsewhere = target !== 'self' || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
-    if ((mode === 'page' || mode === 'internal') && !elsewhere) {
+    if (!external && !elsewhere) {
       e.preventDefault();
       navigate(url);
     }

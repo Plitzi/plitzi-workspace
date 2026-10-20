@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { closest } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { RunRefusal } from './refusal';
@@ -33,6 +34,9 @@ import type { RunPlan } from './model';
 
 export const TEAM_FILE = path.join('.plitzi', 'team.json');
 
+/** The file's JSON Schema, shipped with the CLI, as `.plitzi/team.json` reaches it: the editor checks it as it is typed. */
+export const TEAM_SCHEMA = '../node_modules/@plitzi/cli/schemas/team.schema.json';
+
 /** The role of a task that says none. */
 export const DEVELOPER = 'developer';
 export const DESIGNER = 'designer';
@@ -62,6 +66,8 @@ export interface Lead {
 }
 
 export interface Team {
+  /** Where an editor finds what the file holds (`TEAM_SCHEMA`): it marks a wrong field as it is typed. */
+  $schema?: string;
   version: 1;
   lead?: Lead;
   agents: TeamAgent[];
@@ -149,6 +155,73 @@ const agentProblem = (value: unknown): string | undefined => {
 
 const isTeamAgent = (value: unknown): value is TeamAgent => agentProblem(value) === undefined;
 
+const TEAM_KEYS = ['$schema', 'version', 'lead', 'agents', 'about'];
+const LEAD_KEYS = ['model', 'effort', 'count'];
+const AGENT_KEYS = ['name', 'roles', 'count', 'model', 'effort'];
+
+/** A key the file does not know — a typo, most often — said with the one it likely meant: it would be read as nothing. */
+const unknownKeys = (value: Record<string, unknown>, known: readonly string[], where: string): string[] =>
+  Object.keys(value)
+    .filter(key => !known.includes(key))
+    .map(key => {
+      const near = closest(key, known);
+
+      return `${where}"${key}" is no field of it${near ? ` — did you mean "${near}"?` : ''} (it takes ${known.filter(each => each !== '$schema').join(', ')})`;
+    });
+
+/**
+ * Everything wrong with a team file, at once — what `run plan` refuses it for, and `plitzi doctor` and `run team check`
+ * say: a person edits it by hand, and a key misspelt would be read as nothing.
+ */
+export const teamProblems = (parsed: unknown): string[] => {
+  if (!isRecord(parsed) || parsed.version !== 1 || !Array.isArray(parsed.agents)) {
+    return ['it is { "version": 1, "lead"?: { "model": "…" }, "agents": [ … ] }'];
+  }
+
+  const problems = unknownKeys(parsed, TEAM_KEYS, '');
+  if (parsed.lead !== undefined) {
+    if (!isLeadEntry(parsed.lead)) {
+      problems.push(`"lead" is { "model"?: "…", "effort"?: "…", "count"?: 1 to ${String(MAX_LEADS)} }`);
+    } else {
+      problems.push(...unknownKeys(parsed.lead, LEAD_KEYS, '"lead": '));
+    }
+  }
+
+  for (const each of parsed.agents) {
+    const problem = agentProblem(each);
+    if (problem !== undefined) {
+      problems.push(problem);
+    } else if (isRecord(each)) {
+      problems.push(...unknownKeys(each, AGENT_KEYS, `"${String(each.name)}": `));
+    }
+  }
+
+  const names = parsed.agents.filter(isTeamAgent).map(agent => agent.name);
+  const repeated = names.filter((name, index) => names.indexOf(name) !== index);
+  if (repeated.length > 0) {
+    problems.push(`${[...new Set(repeated)].map(name => `"${name}"`).join(', ')} is in the team twice`);
+  }
+
+  return problems;
+};
+
+/**
+ * What is wrong with the project's team file, as `plitzi doctor` and `run team check` say it — `undefined` when there is
+ * no file (a project's first run writes one). Read as it is on disk: nothing is written.
+ */
+export const checkTeamFile = async (root: string): Promise<string[] | undefined> => {
+  const text = await fs.readFile(path.join(root, TEAM_FILE), 'utf-8').catch(() => undefined);
+  if (text === undefined) {
+    return undefined;
+  }
+
+  try {
+    return teamProblems(JSON.parse(text));
+  } catch {
+    return ['it is not JSON — a comma or a quote, most often: fix it, or remove the file to have no team'];
+  }
+};
+
 /** The project's team, or none when it has not said one — refused, saying what is wrong, when the file is not one. */
 export const readTeam = async (root: string): Promise<Team | undefined> => {
   const text = await fs.readFile(path.join(root, TEAM_FILE), 'utf-8').catch(() => undefined);
@@ -163,29 +236,13 @@ export const readTeam = async (root: string): Promise<Team | undefined> => {
     throw new RunRefusal('invalid', `${TEAM_FILE} is not JSON: fix it, or remove it to have no team`);
   }
 
-  if (!isRecord(parsed) || parsed.version !== 1 || !Array.isArray(parsed.agents)) {
-    throw new RunRefusal('invalid', `${TEAM_FILE} is not { "version": 1, "lead"?: { "model": "…" }, "agents": [ … ] }`);
-  }
-
-  if (parsed.lead !== undefined && !isLeadEntry(parsed.lead)) {
-    throw new RunRefusal(
-      'invalid',
-      `${TEAM_FILE}: "lead" is { "model"?: "…", "effort"?: "…", "count"?: 1 to ${String(MAX_LEADS)} }`
-    );
-  }
-
-  const problems = parsed.agents.flatMap(each => agentProblem(each) ?? []);
-  const names = parsed.agents.filter(isTeamAgent).map(agent => agent.name);
-  const repeated = names.filter((name, index) => names.indexOf(name) !== index);
-  if (repeated.length > 0) {
-    problems.push(`${[...new Set(repeated)].map(name => `"${name}"`).join(', ')} is in the team twice`);
-  }
-
-  if (problems.length > 0) {
+  const problems = teamProblems(parsed);
+  if (problems.length > 0 || !isRecord(parsed) || !Array.isArray(parsed.agents)) {
     throw new RunRefusal('invalid', `${TEAM_FILE}:\n${problems.map(each => `  - ${each}`).join('\n')}`, { problems });
   }
 
   return {
+    $schema: TEAM_SCHEMA,
     version: 1,
     ...(isLeadEntry(parsed.lead) ? { lead: parsed.lead } : {}),
     agents: parsed.agents.filter(isTeamAgent),
@@ -208,6 +265,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
 
 /** The team a project starts with: a developer and a designer — two agents, the harness's own models. */
 export const STARTER_TEAM: Team = {
+  $schema: TEAM_SCHEMA,
   version: 1,
   about: TEAM_ABOUT,
   agents: [
@@ -343,7 +401,7 @@ export interface TeamAgentChange {
 
 const writeTeam = async (root: string, team: Team): Promise<void> => {
   await fs.mkdir(path.join(root, path.dirname(TEAM_FILE)), { recursive: true });
-  await fs.writeFile(path.join(root, TEAM_FILE), formattedJson({ ...team, about: TEAM_ABOUT }));
+  await fs.writeFile(path.join(root, TEAM_FILE), formattedJson({ $schema: TEAM_SCHEMA, ...team, about: TEAM_ABOUT }));
 };
 
 /**
@@ -353,7 +411,8 @@ const writeTeam = async (root: string, team: Team): Promise<void> => {
  */
 export const refreshTeamAbout = async (root: string, write: boolean): Promise<boolean> => {
   const team = await readTeam(root).catch(() => undefined);
-  if (!team || JSON.stringify(team.about) === JSON.stringify(TEAM_ABOUT)) {
+  const text = await fs.readFile(path.join(root, TEAM_FILE), 'utf-8').catch(() => '');
+  if (!team || (JSON.stringify(team.about) === JSON.stringify(TEAM_ABOUT) && text.includes(TEAM_SCHEMA))) {
     return false;
   }
 

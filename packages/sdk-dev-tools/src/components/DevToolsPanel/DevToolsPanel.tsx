@@ -9,6 +9,7 @@ import { useCommonStore } from '@plitzi/sdk-shared/store';
 import DevToolsBody from './DevToolsBody';
 import DevToolsHeader from './DevToolsHeader';
 import DevToolsSubHeader from './DevToolsSubHeader';
+import { useRunSnapshot } from './tabs/RunViewer';
 
 import type { Orientation } from '../../DevToolsContainer';
 import type { ResizeHandle } from '@plitzi/plitzi-ui/ContainerResizable';
@@ -43,6 +44,7 @@ const DevToolsPanel = ({
   const [size, setSize] = useStorage('plitzi-sdk.dev-tools.size', { width: 500, height: 200 });
   const [currentPageId] = useCommonStore('navigation.currentPageId');
   const [elementSelected, setElementSelected] = useState<string | undefined>();
+  const run = useRunSnapshot();
   const resizeHandles = useMemo<ResizeHandle[]>(() => (orientation === 'vertical' ? ['w'] : ['n']), [orientation]);
   const parentRef = useRef(
     typeof document !== 'undefined' ? (document.querySelector('.plitzi-sdk') as HTMLElement) : null
@@ -87,6 +89,7 @@ const DevToolsPanel = ({
           onTabSelect={onTabSelect}
           tabSelected={tabSelected}
           qa={qa}
+          run={run !== undefined}
         />
         {['store', 'elements'].includes(tabSelected) && (
           <DevToolsSubHeader
@@ -102,6 +105,7 @@ const DevToolsPanel = ({
           elementSelected={elementSelected}
           onSelectElement={handleSelectElement}
           qa={qa}
+          run={run}
         />
       </div>
     </ContainerResizable>

@@ -89,6 +89,7 @@ export const taskCheck = (options: RunCommandOptions): Promise<void> =>
     },
     checked =>
       [
+        ...messageLines(checked.messages),
         checked.ok
           ? chalk.green('Your copy passes what complete holds it to: complete it when it is done')
           : chalk.yellow('Your copy does not pass yet — nothing was changed, and nothing counted against the run:'),

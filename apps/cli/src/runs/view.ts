@@ -1,5 +1,6 @@
 import { proposalsOf } from './agreements';
 import { fingerprint } from './files';
+import { askingLeads } from './leads';
 import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { under } from './paths';
@@ -53,6 +54,8 @@ export interface TaskLine {
   design?: DesignReview;
   /** In review: the lead that took this round's review, once one did. */
   reviewer?: string;
+  /** When its holder was last heard from — a command, a heartbeat, a write in its copy. */
+  signalAt?: string;
   /** In review: since when it is as it is — sent, or its UI said — what a review no lead takes has waited from. */
   since?: string;
 }
@@ -97,8 +100,10 @@ export interface RunView {
   attention: Attention[];
   merges: { id: string; kind: string; at: string; files: number }[];
   approvedFiles: number;
-  /** The leads besides `lead` that review (`lead-2`…): who takes the reviews, when the run has some. */
+  /** The leads besides `lead` that review (`lead-2`…): who may take the reviews, when the run has some. */
   leads: string[];
+  /** Those of them running now — each asked for a review within the last minute. */
+  askingLeads: string[];
   /** Where the run's approved work is served while a preview serves it (`run preview`, `npm run start:preview`). */
   previewPort?: number;
 }
@@ -135,6 +140,7 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[]): TaskLine => ({
     ? { reviewer: view.state.reviewer.by }
     : {}),
   ...(view.state.status === 'in-review' ? { since: view.state.updatedAt } : {}),
+  ...(view.owner && view.signalAt !== undefined ? { signalAt: new Date(view.signalAt).toISOString() } : {}),
   unblocks,
   ...(view.task.milestone ? { milestone: view.task.milestone } : {})
 });
@@ -364,6 +370,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     })),
     approvedFiles: Object.keys(approved.files).length,
     leads: record.leads ?? [],
+    askingLeads: await askingLeads(loaded, now),
     ...(port === undefined ? {} : { previewPort: port })
   };
 };

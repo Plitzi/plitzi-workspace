@@ -14,6 +14,7 @@ import { checkPackages } from './packages';
 import { checkPlugins } from './plugins';
 import { checkRecords, checkSkills } from './records';
 import { checkSources } from './sources';
+import { checkTeam } from './team';
 import { DOCTOR_AREAS, sayer } from './types';
 import { lockfileManager, projectHere } from '../commands/existingProject';
 import { readScaffoldRecord } from '../commands/scaffoldRecord';
@@ -116,7 +117,8 @@ const CHECKS: readonly [DoctorArea, Check][] = [
   ['data', checkData],
   ['functions', checkFunctions],
   ['records', checkRecords],
-  ['skills', checkSkills]
+  ['skills', checkSkills],
+  ['team', checkTeam]
 ];
 
 /**

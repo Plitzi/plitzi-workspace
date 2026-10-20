@@ -1,9 +1,11 @@
 import { checkAcceptance } from '../acceptance';
 import { crossed, longFilesIn, longFileText } from '../longFiles';
+import { unreadForHolder } from '../messages';
 import { assertStatus, loadRun, logRun } from '../run';
 import { findTask, holderOf } from './common';
 
 import type { CheckResult } from '../checks';
+import type { Message } from '../messages';
 import type { AcceptanceResult } from '../model';
 import type { RunContext } from '../run';
 
@@ -21,6 +23,11 @@ export interface CheckedTask {
   accepted: AcceptanceResult[];
   /** Files past what is read whole: `complete` refuses them. */
   tooLong: string[];
+  /**
+   * What was said to the task and its agent and not read: an agent iterating checks, and runs no other command until it
+   * completes — a change the lead asked meanwhile reaches it here, not after it went to review.
+   */
+  messages: Message[];
 }
 
 export const checkTask = async (ctx: RunContext, runId: string, taskId: string): Promise<CheckedTask> => {
@@ -28,6 +35,7 @@ export const checkTask = async (ctx: RunContext, runId: string, taskId: string):
   assertStatus(loaded, ['open', 'stopping'], 'check a task');
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
+  const messages = await unreadForHolder(loaded, taskId, view.owner?.agent ?? ctx.agent, true);
   const checks = await ctx.checks(view.paths.work, ctx.root);
   const accepted = checks.ok
     ? await checkAcceptance(task.acceptance, { work: view.paths.work, root: ctx.root, cache: view.paths.cache })
@@ -36,5 +44,5 @@ export const checkTask = async (ctx: RunContext, runId: string, taskId: string):
   const ok = checks.ok && accepted.every(each => each.ok) && tooLong.length === 0;
   await logRun(ctx, loaded.paths, { action: 'check', task: taskId, ok });
 
-  return { ok, checks, accepted, tooLong };
+  return { ok, checks, accepted, tooLong, messages };
 };
