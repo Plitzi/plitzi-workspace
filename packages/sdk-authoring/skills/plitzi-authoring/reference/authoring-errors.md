@@ -136,6 +136,7 @@ The space is not written until these are fixed.
 | `slot-not-class` | a `slots` entry that is not a class — rules written in place, or nothing — which a slot cannot wear | the rules as a `styles()` declaration, handed to the slot beside its other classes |
 | `slot-unknown` | a component slot that is not an element of its tree | the id of an element inside the component — usually an empty container |
 | `source-field-unknown` | a path into a typed source that its sample does not have | read a field the sample has, or add the field to the sample |
+| `source-name-missing` | a source named by nothing — most often a field read off a list row that has no types | write the row's field as text (`${r.item}.field`), or give the list `items` a typed source's path |
 | `state-key-list` | `settings.transientState` / `paintedState` that is not a list of top-level state keys | `transientState: ['demoStep']` — a dotted path names its top key |
 | `state-painted-and-transient` | a state key both painted (kept for the server) and transient (never kept) | remove it from one of the two |
 | `step-duplicate` | two steps with one name in a flow or an action | a name each |

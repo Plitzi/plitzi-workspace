@@ -19,6 +19,12 @@ apiContainer({ id: site.id, query: '/data/home.json', children: [
   one).
 - A list fed by a path hands its `row` the item typed: every field any item of the sample has — `p.item`, `p.index`,
   and `p.inTemplate` as an untyped row has it, so turning a list typed changes none of its templates.
+- **Only `items: <path>` types the row.** A list whose `items` are `from` + `as` (sorted, filtered — `as: '{{ source|sort(e
+  => e.date)|reverse }}'`) or written out (`items: CATEGORIES`) hands an untyped row: its names are text, so a field is
+  `` `${r.item}.date` ``, never `r.item.date` (undefined — refused `source-name-missing`). Need a sorted list typed? Sort
+  the data file, or keep the row's fields as text.
+- A helper of your own that takes a path takes a `SourceName` (`import type { SourceName } from '@plitzi/sdk-authoring'`):
+  a typed path or a name written by hand, both — `const dot = (colour: SourceName) => container({ bind: { … } })`.
 - An item of a list is read by position: `site.data.sections[1]`.
 - A provider fed by a server action publishes the action's output at its root: `actionSource('feed', sample)` types
   it — `feed.stories`, and `feed.data` is a type error — with a sample of what the action's last step answers.

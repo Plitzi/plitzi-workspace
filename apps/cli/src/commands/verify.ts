@@ -66,17 +66,24 @@ export const stepsOf = (scripts: Record<string, string>): Step[] => [
     : [])
 ];
 
-/** A script run the way a package manager runs one: in the project, with its installed binaries first on the path. */
-const run = (root: string, command: string): Promise<{ code: number; output: string }> =>
+/**
+ * A script run the way a package manager runs one: in `cwd`, with the binaries installed in `binRoot` first on the path —
+ * the project's own, also for a copy of it that has no `node_modules` of its own (a run's task, RFC 0028).
+ */
+export const runScript = (
+  cwd: string,
+  command: string,
+  binRoot: string = cwd
+): Promise<{ code: number; output: string }> =>
   new Promise(resolve => {
     const child = spawn(command, {
-      cwd: root,
+      cwd,
       shell: true,
       env: {
         ...process.env,
         FORCE_COLOR: '0',
         NO_COLOR: '1',
-        PATH: `${path.join(root, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
+        PATH: `${path.join(binRoot, 'node_modules', '.bin')}${path.delimiter}${process.env.PATH ?? ''}`
       }
     });
     let output = '';
@@ -87,14 +94,14 @@ const run = (root: string, command: string): Promise<{ code: number; output: str
   });
 
 /** A step's output, as much as says why it failed: its last lines that hold anything. */
-const tail = (output: string): string[] =>
+export const tail = (output: string): string[] =>
   output
     .split('\n')
     .map(line => line.trimEnd())
     .filter(line => line.trim() !== '')
     .slice(-TAIL);
 
-const scriptsOf = async (root: string): Promise<Record<string, string>> => {
+export const scriptsOf = async (root: string): Promise<Record<string, string>> => {
   const parsed: unknown = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf-8'));
   const scripts = isRecord(parsed) && isRecord(parsed.scripts) ? parsed.scripts : {};
 
@@ -120,7 +127,7 @@ export const verify = async (options: VerifyOptions): Promise<void> => {
   const steps = stepsOf(await scriptsOf(project.root));
   const waiting: string[] = [];
   for (const [index, step] of steps.entries()) {
-    const { code, output } = await run(project.root, step.command);
+    const { code, output } = await runScript(project.root, step.command);
     const ok = code === 0 && !step.failsOn?.test(output);
     // A fix offered only for what it fixes: a file the formatter cannot read is not one it would write.
     const fixes = step.fix !== undefined && !/\[error\]/.test(output);

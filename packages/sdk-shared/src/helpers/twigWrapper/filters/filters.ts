@@ -232,6 +232,11 @@ const toDate = (value: unknown): Date => {
   }
 
   const text = String(value).trim();
+  // Twig's: `'now'|date('F Y')` is the moment the page is rendered — on the server, then again in the browser, so a
+  // format finer than the minute can differ between the two.
+  if (text === 'now') {
+    return new Date();
+  }
 
   return /^-?\d+$/.test(text) ? new Date(Number(text)) : new Date(text);
 };
@@ -399,13 +404,28 @@ export const filters: Record<string, TwigFilter> = {
   },
 
   // ── String operations ────────────────────────────────────────────────────────────
-  // `| replace('search', 'replacement')` — replaces every occurrence of search with replacement.
+  // `| replace('search', 'replacement')` — replaces every occurrence of search with replacement. Twig's own form,
+  // `| replace({'search': 'replacement', …})`, replaces each key with its value in one pass, the longest key first where
+  // two start at one place (PHP's strtr): what is put in is never replaced again.
   replace: (value, args) => {
     if (typeof value !== 'string' || args.length === 0) {
       return value;
     }
 
-    return value.split(toStr(args[0])).join(toStr(args[1]));
+    const [first] = args;
+    if (typeof first === 'object' && first !== null && !Array.isArray(first)) {
+      const pairs = new Map(Object.entries(first).filter(([key]) => key !== ''));
+      if (pairs.size === 0) {
+        return value;
+      }
+
+      const keys = [...pairs.keys()].sort((a, b) => b.length - a.length);
+      const pattern = new RegExp(keys.map(key => key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+
+      return value.replace(pattern, found => toStr(pairs.get(found)));
+    }
+
+    return value.split(toStr(first)).join(toStr(args[1]));
   },
   // `| slice(2)` or `| slice(2, 5)` — substring or sub-array via start/length.
   slice: (value, args) => {

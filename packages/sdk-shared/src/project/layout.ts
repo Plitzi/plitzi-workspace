@@ -11,6 +11,7 @@ import {
   PLUGIN_MANIFEST_FILE,
   PLUGINS_DIR,
   PUBLIC_DIR,
+  RUNS_DIR,
   RUNTIME_DIR,
   SOURCE_DIR,
   SPACE_DIR,
@@ -826,9 +827,11 @@ const envFindings = (root: string): LayoutFinding[] => {
       movable ? { action: 'move', from: file, to: '.env' } : undefined
     )
   );
+  // A task's copy of the project, inside a run, holds no .env on purpose: its agent never reads credentials.
+  const inRunCopy = `${path.resolve(root).split(path.sep).join('/')}/`.includes(`/${RUNS_DIR}/`);
   // One misplaced is said as that: moved, it is the root's.
   const missing =
-    hasEnv || misplaced.length > 0
+    hasEnv || inRunCopy || misplaced.length > 0
       ? []
       : [
           finding(

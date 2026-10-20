@@ -133,8 +133,25 @@ const pathTo = (name: string, shape: Shape, own: Record<string, string> = {}): S
 export const isSourcePath = (value: unknown): value is SourceBrand =>
   typeof value === 'object' && value !== null && PATH in value;
 
-/** The name a source path stands for; a name written by hand is already one. */
-export const sourceName = (value: SourceName): string => (typeof value === 'string' ? value : value[PATH]);
+/**
+ * The name a source path stands for; a name written by hand is already one. Anything else — `undefined`, most often: a
+ * field read off a row that has no types, `r.item.petId` when the list's `items` are `from` + `as` or written out — is
+ * refused saying so, never read as a property of nothing.
+ */
+export const sourceName = (value: SourceName): string => {
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (isSourcePath(value)) {
+    return value[PATH];
+  }
+
+  throw new AuthoringError(
+    'source-name-missing',
+    `A source was named by ${String(value)}, not by a name: a field read off a row with no types (\`r.item.petId\`) is undefined. A list's row is typed only when its \`items\` is a typed source's path (\`items: site.data.rows\`); with \`from\` + \`as\` (a sorted or filtered list) or items written out, the row's names are text — write \`\${r.item}.petId\`.`
+  );
+};
 
 /**
  * The row of a list fed by a typed source: its item as the sample's item, its position as a number — both already the

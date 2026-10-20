@@ -34,6 +34,16 @@ export const positiveInteger = (value: string): number => {
   return parsed;
 };
 
+/** A share between 0 and 1: how far along a task is. */
+export const fraction = (value: string): number => {
+  const parsed = Number(value.trim());
+  if (value.trim() === '' || !Number.isFinite(parsed) || parsed < 0 || parsed > 1) {
+    throw new InvalidArgumentError('It takes a number between 0 and 1: 0.6 is 60 %.');
+  }
+
+  return parsed;
+};
+
 /** A whole number from 0: how many of something are allowed. */
 export const count = (value: string): number => {
   const parsed = Number(value.trim());

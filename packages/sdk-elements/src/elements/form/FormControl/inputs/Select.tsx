@@ -1,6 +1,8 @@
 import clsx from 'clsx';
 import { useCallback, useMemo, useRef } from 'react';
 
+import useFocusWhenShown from './useFocusWhenShown';
+
 import type { ChangeEvent, MouseEvent } from 'react';
 
 export type SelectProps = {
@@ -13,6 +15,10 @@ export type SelectProps = {
   className?: string;
   /** The `<select>` inside the box — the `field` slot. */
   fieldClassName?: string;
+  /** Takes the focus while true: as it becomes true, whether on mount or as the field is shown again. */
+  autoFocus?: boolean;
+  /** A required select left on its placeholder (the empty value) stops the submit, as any required field does. */
+  required?: boolean;
   disabled?: boolean;
   onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
   onValidate?: () => void;
@@ -31,12 +37,15 @@ const Select = ({
   value = '',
   className = '',
   fieldClassName,
+  autoFocus = false,
+  required = false,
   disabled = false,
   onChange,
   onValidate,
   errorId
 }: SelectProps) => {
   const inputRef = useRef<HTMLSelectElement>(null);
+  useFocusWhenShown(inputRef, autoFocus);
 
   const handleClickContainer = useCallback(() => {
     inputRef.current?.click();
@@ -86,6 +95,7 @@ const Select = ({
         onChange={onChange}
         value={value}
         className={clsx('select-container__select', fieldClassName)}
+        required={required}
         disabled={disabled}
         onClick={handleClickInput}
         onBlur={handleBlur}

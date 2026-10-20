@@ -128,4 +128,17 @@ describe('FormControl required', () => {
   it('is optional unless it says so, as an HTML field is', () => {
     expect(declaration.content.attributes.required).toBe(false);
   });
+
+  // A select without it was skipped by the browser's check: an empty submit stopped at the next field instead.
+  it('says so to the browser whatever field it draws: a select and a textarea as an input', () => {
+    for (const [subType, tag] of [
+      ['select', 'select'],
+      ['textarea', 'textarea'],
+      ['text', 'input']
+    ] as const) {
+      const { container, unmount } = renderControl(subType);
+      expect([subType, container.querySelector(tag)?.required]).toEqual([subType, true]);
+      unmount();
+    }
+  });
 });

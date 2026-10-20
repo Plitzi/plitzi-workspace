@@ -1,4 +1,4 @@
-import { isTruthy, valueIn, resolveCollection, resolveObjectEntries } from './helpers';
+import { isTruthy, order, valueIn, resolveCollection, resolveObjectEntries } from './helpers';
 import { ARROW_PARAMS, filters, isRawMarker, unwrapRaw } from '../filters/filters';
 import { serializeValue } from '../processTwig/helpers';
 
@@ -644,13 +644,13 @@ class Evaluator {
       case '!=':
         return left !== right && String(left) !== String(right);
       case '>':
-        return bothNum ? left > right : Number(left) > Number(right);
+        return bothNum ? left > right : order(left, right) > 0;
       case '<':
-        return bothNum ? left < right : Number(left) < Number(right);
+        return bothNum ? left < right : order(left, right) < 0;
       case '>=':
-        return bothNum ? left >= right : Number(left) >= Number(right);
+        return bothNum ? left >= right : order(left, right) >= 0;
       case '<=':
-        return bothNum ? left <= right : Number(left) <= Number(right);
+        return bothNum ? left <= right : order(left, right) <= 0;
       case 'in':
         return valueIn(left, right);
       case 'not in':

@@ -174,7 +174,7 @@ export interface CheckReport {
   failedRequests: string[];
   /** Whether the page had its dev tools on, which is what flows, state and elements are read from. */
   devTools: boolean;
-  /** Every list whose rows come from a provider, by id: how many rows it draws and how many its source holds. */
+  /** Every list, by id — fed by a provider, or its rows written out and on the page: how many it draws, how many it has. */
   lists: Record<string, ListRows>;
   /** With `--ssr`: the elements the page has once hydrated that the server's HTML did not — none of them in a server provider. */
   browserOnly?: string[];
@@ -855,7 +855,18 @@ const listRows = async (
 ): Promise<Record<string, ListRows>> => {
   const selectorOf = (id: string): string | undefined =>
     Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id].selector : undefined;
-  const lists = Object.keys(sources).flatMap(id => {
+  // A list whose rows are written out counts too: its source is the rows it was given, said only when it is on the page.
+  const fixed = Object.fromEntries(
+    Object.values(authored.schema.flat).flatMap(element => {
+      const items: unknown = element.attributes.items;
+
+      return element.definition.type === 'list' && Array.isArray(items) && !Object.hasOwn(sources, element.id)
+        ? [[element.id, items.length] as const]
+        : [];
+    })
+  );
+  const all = { ...sources, ...fixed };
+  const lists = Object.keys(all).flatMap(id => {
     const selector = selectorOf(id);
     const row = (authored.schema.flat[id].definition.items ?? []).flatMap(child => selectorOf(child) ?? []);
 
@@ -864,7 +875,9 @@ const listRows = async (
   const rendered = new Map(lists.length > 0 ? await page.evaluate(renderedRowsInPage, lists) : []);
 
   return Object.fromEntries(
-    Object.entries(sources).map(([id, source]) => [id, { rendered: rendered.get(id) ?? null, source }])
+    Object.entries(all)
+      .filter(([id]) => !Object.hasOwn(fixed, id) || (rendered.get(id) ?? null) !== null)
+      .map(([id, source]) => [id, { rendered: rendered.get(id) ?? null, source }])
   );
 };
 
@@ -1242,6 +1255,16 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
 
   if (options.fill && !options.click) {
     fail('--fill fills fields for a --click: with nothing clicked, nothing they hold is sent anywhere.');
+
+    return;
+  }
+
+  // A path is a page's address: one that reads as a flag is a flag cut off from its command (`npx … check -- /x --width`).
+  const flags = routes.filter(route => route.startsWith('-'));
+  if (flags.length > 0) {
+    fail(
+      `${flags.join(', ')} ${flags.length === 1 ? 'is' : 'are'} not a page's path: options after \`--\` are read as paths. Leave the \`--\` out (\`npx plitzi page check /x --width 1440,390\`); it belongs only after \`npm run check\`.`
+    );
 
     return;
   }

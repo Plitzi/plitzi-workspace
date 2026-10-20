@@ -276,6 +276,8 @@ const FormControl = ({
           className={styleSelectors.input}
           fieldClassName={styleSelectors.field}
           placeholder={placeholder}
+          autoFocus={focusWhenShown}
+          required={required}
           disabled={disabled}
           options={options}
         />

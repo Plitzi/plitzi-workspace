@@ -22,6 +22,54 @@ import packSourceCommand from './commands/packSource';
 import { pull } from './commands/pull';
 import { push, PUSH_PARTS } from './commands/push';
 import {
+  runAbort,
+  runAttach,
+  runCanWrite,
+  runContinue,
+  runFinish,
+  runOpen,
+  runPlan,
+  runPreview,
+  runPrune,
+  runReport,
+  runPurge,
+  runRelease,
+  runResolve,
+  runRestore,
+  runResume,
+  runShow,
+  runState,
+  runStatus,
+  runStop,
+  runWatch,
+  spaceImpact,
+  spaceOverview,
+  taskAnswer,
+  taskAsk,
+  taskBlock,
+  taskClaim,
+  taskClaims,
+  taskComplete,
+  taskContextCommand,
+  taskShow,
+  taskDiscard,
+  taskInbox,
+  taskMessage,
+  taskNext,
+  taskNote,
+  taskProgress,
+  taskPropose,
+  taskProposals,
+  taskReassign,
+  taskRelease,
+  taskRequest,
+  taskReview,
+  taskRevert,
+  taskTake,
+  taskUnblock,
+  taskWait
+} from './commands/runs';
+import {
   powerRuntime,
   pushRuntime,
   runtimeStatus,
@@ -29,7 +77,7 @@ import {
   setRuntimeVariable,
   unsetRuntimeVariable
 } from './commands/runtime';
-import { shot, SHOT_MOMENTS } from './commands/shot';
+import { shotEach, SHOT_MOMENTS } from './commands/shot';
 import { elements } from './commands/spaceReading';
 import { upgrade, UPGRADE_PARTS } from './commands/upgrade';
 import uploadPluginCommand from './commands/uploadPlugin';
@@ -39,7 +87,9 @@ import { where, WHERE_READINGS } from './commands/where';
 import { doctor } from './doctor';
 import { feedback } from './feedback';
 import { lint } from './lint';
-import { count, fill, positiveInteger, width, widths } from './options';
+import { count, fill, fraction, positiveInteger, widths } from './options';
+import { NEEDS } from './runs/model';
+import { DEFAULT_AGENTS } from './runs/plan';
 import { CREATE_TEMPLATES, PACKAGE_MANAGERS } from './scaffold';
 import { FUNCTIONS_DIR } from './scaffold/paths';
 import { CLI_VERSION } from './scaffold/project';
@@ -64,6 +114,15 @@ import type { PackPluginOptions } from './commands/packPlugin';
 import type { PackSourceOptions } from './commands/packSource';
 import type { PullOptions } from './commands/pull';
 import type { PushOptions } from './commands/push';
+import type {
+  AnswerOptions,
+  FinishOptions,
+  PlanOptions,
+  ProposeOptions,
+  ReviewOptions,
+  RunCommandOptions,
+  WatchRunOptions
+} from './commands/runs';
 import type { RuntimeOptions, RuntimeStatusOptions } from './commands/runtime';
 import type { ShotOptions } from './commands/shot';
 import type { UpgradeOptions } from './commands/upgrade';
@@ -395,7 +454,11 @@ pageGroup
   .command('shot')
   .argument('[path]', 'The page: /about. The home page when left out')
   .description('A picture of one page of the running project — and, asked, how it differs from another or what moves')
-  .addOption(new Option('--width <px>', 'The viewport width').argParser(width).default(1280))
+  .addOption(
+    new Option('--width <px,px>', 'The viewport width — or several, separated by commas: a picture each')
+      .argParser(widths)
+      .default([1280], '1280')
+  )
   .addOption(
     new Option(
       '--height <px>',
@@ -446,7 +509,9 @@ pageGroup
   )
   .option('--url <origin>', URL_OPTION)
   .option('--json', 'One object, for a tool or an agent')
-  .action((path: string | undefined, options: ShotOptions) => shot(path, options));
+  .action((path: string | undefined, options: Omit<ShotOptions, 'width'> & { width: number[] }) =>
+    shotEach(path, options)
+  );
 
 program
   .command('verify')
@@ -508,7 +573,7 @@ program
     'An element, a step, a trigger, a problem’s code, a transformer or a helper: container, navigate, class-and-css, bindTemplate, motion'
   )
   .description('What a name means when authoring a space — what it takes, fires, reads and how it is written')
-  .option('--list <kind>', 'Every name of a kind: elements, steps, triggers, codes, transformers, helpers')
+  .option('--list <kind>', 'Every name of a kind: elements, steps, triggers, codes, transformers, helpers, filters')
   .option('--json', 'One object, for a tool or an agent')
   .action((name: string | undefined, options: ExplainOptions) => explainCommand(name, options));
 
@@ -524,6 +589,7 @@ program
   )
   .option('--take <files...>', 'Replace these files of your own too (`all` for every one), after reading their diff')
   .option('--no-install', 'Write package.json and leave the install to you')
+  .option('--with-open-runs', 'Upgrade although runs of agents are open: a person attaches to each after')
   .option('--json', 'One object, for a tool or an agent')
   .action((parts: string[], options: UpgradeOptions) => upgrade(parts, options));
 
@@ -737,6 +803,512 @@ vars
   .option(...API_OPTION)
   .option(...DRY_RUN_OPTION)
   .action((name: string, options: RuntimeOptions) => unsetRuntimeVariable(name, options));
+
+// Several agents on one project (RFC 0028): each task in a copy of it, merged once, by a person.
+const JSON_OPTION = ['--json', 'One object, for a tool or an agent'] as const;
+const TOKEN_OPTION = ['--token <token>', 'The task’s token plitzi task take answered (or PLITZI_TASK_TOKEN)'] as const;
+const RUN_OPTION = [
+  '--run <run>',
+  'The run, when the token does not say it and more than one is open (or PLITZI_RUN)'
+] as const;
+const AGENT_OPTION = ['--agent <name>', 'Who is calling, for the run’s log (or PLITZI_AGENT)'] as const;
+
+const runGroup = program
+  .command('run')
+  .description(
+    'Several agents on one project: a plan of tasks over disjoint files, each in a copy, merged once by a person'
+  );
+
+runGroup
+  .command('plan')
+  .description('Hold a plan the lead wrote to the rules — disjoint files, no cycles — expand it and estimate it')
+  .argument(
+    '<file>',
+    'The plan, JSON: { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }'
+  )
+  .option(
+    '--agents <n>',
+    'How many agents may work at once — usually 2 to 5; above 5 a person confirms',
+    positiveInteger,
+    DEFAULT_AGENTS
+  )
+  .option(...JSON_OPTION)
+  .action((file: string, options: PlanOptions) => runPlan(file, options));
+
+runGroup
+  .command('open')
+  .description(
+    'Open a run from a plan: its folder, every file it touches backed up — a person confirms above the threshold'
+  )
+  .argument('<file>', 'The plan')
+  .option(
+    '--agents <n>',
+    'How many agents may work at once — usually 2 to 5; above 5 a person confirms',
+    positiveInteger,
+    DEFAULT_AGENTS
+  )
+  .option(...AGENT_OPTION)
+  .option(...JSON_OPTION)
+  .action((file: string, options: PlanOptions) => runOpen(file, options));
+
+runGroup
+  .command('state')
+  .description('Every run of the project, and where it stands')
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions) => runState(options));
+
+runGroup
+  .command('status')
+  .description('A run at a glance: a line per task, then what needs attention')
+  .argument('[run]', 'The run — the only open one when left out')
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: RunCommandOptions) => runStatus(run, options));
+
+runGroup
+  .command('watch')
+  .description(
+    'Follow a run: printed again whenever it changes, until it finishes — one JSON object a line with --json'
+  )
+  .argument('[run]', 'The run — the only open one when left out')
+  .option('--interval <seconds>', 'How often to look (2; 10 with --until lead)', positiveInteger)
+  .addOption(
+    new Option(
+      '--until <who>',
+      'End the moment something new needs them — a review, a question, a block, a notice — each said once'
+    ).choices(['lead'])
+  )
+  .option('--timeout <minutes>', 'With --until: how long to wait before ending with nothing new', positiveInteger, 25)
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: WatchRunOptions) => runWatch(run, options));
+
+runGroup
+  .command('can-write')
+  .description(
+    'Whether a file may be written: no — with the task and until when — if another task holds it. For any hook'
+  )
+  .argument('<file>', 'The project file')
+  .option('--task <task>', 'The task asking, when it has no token at hand')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((file: string, options: RunCommandOptions & { task?: string }) => runCanWrite(file, options));
+
+runGroup
+  .command('stop')
+  .description(
+    'Stop a run: the tasks in hand finish and go to review, none starts. --force is a person’s: it cuts them now'
+  )
+  .argument('[run]', 'The run')
+  .option('--force', 'Now: tokens revoked, what was written since the last review discarded')
+  .option(...AGENT_OPTION)
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: RunCommandOptions & { force?: boolean }) => runStop(run, options));
+
+runGroup
+  .command('resume')
+  .description('Open a stopped run again')
+  .argument('[run]', 'The run')
+  .option(...AGENT_OPTION)
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: RunCommandOptions) => runResume(run, options));
+
+runGroup
+  .command('finish')
+  .description(
+    'The whole run into the project: a dry run with the checks on the result; --apply, a person’s, writes it'
+  )
+  .argument('[run]', 'The run')
+  .option('--apply', 'Write it — a person, typing the run’s name')
+  .option('--leave-pending', 'Finish without the tasks not done, said as such')
+  .option(
+    '--keep-backup',
+    'Keep the project’s files as they were before the merge, in tmp/plitzi-backups/ — off by default'
+  )
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: FinishOptions) => runFinish(run, options));
+
+runGroup
+  .command('preview')
+  .description('The run’s work as it goes, served by the project’s dev server: each approval shows in it')
+  .argument('[run]', 'The run')
+  .option('--task <task>', 'A task in review instead: its copy as it went to review, to look at before approving it')
+  .option('--port <port>', 'Where to serve it (8300; 8301 with --task)', positiveInteger)
+  .action((run: string | undefined, options: RunCommandOptions & { port?: number; task?: string }) =>
+    runPreview(run, options)
+  );
+
+runGroup
+  .command('report')
+  .description('How the run went, as the CLI saw it — and, with --summary, the lead’s summary that closes it')
+  .argument('[run]', 'The run')
+  .option('--summary <file>', 'The lead’s summary: what the run did, what went wrong, what is left (Markdown)')
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: RunCommandOptions & { summary?: string }) => runReport(run, options));
+
+runGroup
+  .command('resolve')
+  .description('Settle one file of a reconciliation: the project’s version, the run’s, or a file of yours — a person’s')
+  .argument('<run>', 'The run')
+  .argument('<file>', 'The file under reconciliation')
+  .requiredOption('--take <version>', 'project, run, or the path of a file holding the version to keep')
+  .option(...JSON_OPTION)
+  .action((run: string, file: string, options: RunCommandOptions & { take: string }) => runResolve(run, file, options));
+
+runGroup
+  .command('continue')
+  .description('Every file resolved: the run goes on — a person’s')
+  .argument('[run]', 'The run')
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: RunCommandOptions) => runContinue(run, options));
+
+runGroup
+  .command('abort')
+  .description('End the run writing nothing into the project, and remove it with its agents’ work — a person’s')
+  .argument('[run]', 'The run')
+  .option(...JSON_OPTION)
+  .action((run: string | undefined, options: RunCommandOptions) => runAbort(run, options));
+
+runGroup
+  .command('restore')
+  .description('Put one project file back from a backup — a person’s')
+  .argument('<run>', 'The run')
+  .argument('<file>', 'The project file')
+  .option('--from <backup>', 'base (when the run opened) or a merge (before it)', 'base')
+  .option(...JSON_OPTION)
+  .action((run: string, file: string, options: RunCommandOptions & { from?: string }) =>
+    runRestore(run, file, options)
+  );
+
+runGroup
+  .command('show')
+  .description('A version of a file the run keeps: the run’s, the backup when it opened, or the project’s')
+  .argument('<run>', 'The run')
+  .argument('<file>', 'The project file')
+  .addOption(new Option('--version <which>', 'Which one').choices(['run', 'base', 'project']).default('run'))
+  .option(...JSON_OPTION)
+  .action((run: string, file: string, options: RunCommandOptions & { version?: 'run' | 'base' | 'project' }) =>
+    runShow(run, file, options)
+  );
+
+runGroup
+  .command('attach')
+  .description('Pick a run up: after the harness died, on another machine (--take-over, a person’s), after an upgrade')
+  .argument('<run>', 'The run')
+  .option('--take-over', 'Take it from the machine it is active on')
+  .option(...AGENT_OPTION)
+  .option(...JSON_OPTION)
+  .action((run: string, options: RunCommandOptions & { takeOver?: boolean }) => runAttach(run, options));
+
+runGroup
+  .command('release')
+  .description('Let a run go from this machine, so another can attach to it')
+  .argument('<run>', 'The run')
+  .option(...JSON_OPTION)
+  .action((run: string, options: RunCommandOptions) => runRelease(run, options));
+
+runGroup
+  .command('purge')
+  .description('Remove a run’s folder, backups included — a person’s')
+  .argument('<run>', 'The run')
+  .option(...JSON_OPTION)
+  .action((run: string, options: RunCommandOptions) => runPurge(run, options));
+
+runGroup
+  .command('prune')
+  .description('Remove the caches of a run idle for 8 hours — never its backups or its approved work')
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions) => runPrune(options));
+
+const taskGroup = program
+  .command('task')
+  .description('A task of a run: taken, worked in its copy, completed, reviewed — and what it shares with the others');
+
+taskGroup
+  .command('next')
+  .description('The ready task to take: highest priority, then the longest chain still to do')
+  .option(
+    '--role <roles>',
+    'Only a task for these roles, separated by commas: developer, designer, reviewer, tester, writer…'
+  )
+  .option('--follow', 'Wait until one is ready — or every task of the role is done (finished: true)')
+  .option('--timeout <minutes>', 'With --follow: give up after this long, said', positiveInteger, 30)
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number }) => taskNext(options));
+
+taskGroup
+  .command('take')
+  .description('Take a task: its files locked, its copy made, and its token answered')
+  .argument('<task>', 'The task')
+  .option('--role <role>', 'The role taking it: refused for another role’s task')
+  .option(...RUN_OPTION)
+  .option(...AGENT_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, options: RunCommandOptions & { role?: string }) => taskTake(task, options));
+
+taskGroup
+  .command('claims')
+  .description('Which files each task locks, why and since when')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions) => taskClaims(options));
+
+taskGroup
+  .command('claim')
+  .description('Take a shared file by turns')
+  .argument('<file>', 'The project file')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((file: string, options: RunCommandOptions) => taskClaim(file, options));
+
+taskGroup
+  .command('release')
+  .description('Let a file held by turns go to the next task waiting for it')
+  .argument('<file>', 'The project file')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((file: string, options: RunCommandOptions) => taskRelease(file, options));
+
+taskGroup
+  .command('wait')
+  .description(
+    'Wait for a file another task holds; it comes with the approved version. Exits 11, or with --follow stays until it is yours'
+  )
+  .argument('<file>', 'The project file')
+  .option('--follow', 'Stay until the file is yours, giving the task’s sign of life meanwhile')
+  .option('--timeout <minutes>', 'With --follow: give up after this long, said (exit 11)', positiveInteger, 30)
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((file: string, options: RunCommandOptions & { follow?: boolean; timeout?: number }) =>
+    taskWait(file, options)
+  );
+
+taskGroup
+  .command('discard')
+  .description('Put a file of your copy back to the run’s version now, and start from it')
+  .argument('<file>', 'The project file')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((file: string, options: RunCommandOptions) => taskDiscard(file, options));
+
+taskGroup
+  .command('progress')
+  .description('Where the task is: its fraction and step — a heartbeat too')
+  .option('--fraction <n>', 'Between 0 and 1', fraction)
+  .option('--step <step>', 'What it is on: "page 3 of 5"')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions & { fraction?: number; step?: string }) => taskProgress(options));
+
+taskGroup
+  .command('heartbeat')
+  .description('A sign of life, for a long think or test run with no write — at least every 2 minutes')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions) => taskProgress(options));
+
+taskGroup
+  .command('block')
+  .description('Something outside the plan stops it — said, never waited on silently')
+  .argument('[task]', 'The task — the token’s when left out')
+  .requiredOption('--reason <reason>', 'What stops it: "an API key is missing"')
+  .addOption(new Option('--needs <who>', 'Who unblocks it').choices(NEEDS).default('person'))
+  .option(...TOKEN_OPTION)
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string | undefined, options: RunCommandOptions & { reason: string; needs?: (typeof NEEDS)[number] }) =>
+    taskBlock(task, options)
+  );
+
+taskGroup
+  .command('unblock')
+  .description('Lift a block — the lead’s or a person’s')
+  .argument('<task>', 'The task')
+  .option('--answer <text>', 'What it waited for, said to the task: it reaches its agent with its next command')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, options: RunCommandOptions & { answer?: string }) => taskUnblock(task, options));
+
+taskGroup
+  .command('note')
+  .alias('handoff')
+  .description('What whoever comes next must know: a note, a handoff')
+  .argument('<text>', 'The note')
+  .option('--task <task>', 'The task — the token’s when left out')
+  .option(...TOKEN_OPTION)
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((text: string, options: RunCommandOptions & { task?: string }) => taskNote(options.task, text, options));
+
+taskGroup
+  .command('request')
+  .description('Ask for a change in a shared file: change it in your copy too; one integration task applies them all')
+  .argument('<file>', 'The shared file')
+  .requiredOption('--summary <text>', 'The change and why: "a language tag on cards"')
+  .option('--used-in <files>', 'Where you use it, comma-separated')
+  .option('--blocking', 'It cannot wait: its integration task is made now, and this task waits for it')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((file: string, options: RunCommandOptions & { summary: string; usedIn?: string; blocking?: boolean }) =>
+    taskRequest(file, options)
+  );
+
+taskGroup
+  .command('propose')
+  .description('Ask another task to agree to a change — to make it, or to accept it in its work; --wait for the answer')
+  .argument('<task>', 'The task asked')
+  .requiredOption('--change <change>', 'The change, specifically: "the card takes a `lang` prop"')
+  .option('--about <file>', 'The file it is about')
+  .option('--why <why>', 'Why this task needs it')
+  .option('--wait', 'Wait for the answer; go on with what does not need it')
+  .option('--follow', 'Stay until the answer comes, giving the task’s sign of life meanwhile')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, options: ProposeOptions) => taskPropose(task, options));
+
+taskGroup
+  .command('answer')
+  .description('Answer a proposal made to your task — or, as the lead, to any: accept, reject or counter it')
+  .argument('<proposal>', 'The proposal: t-home-p1')
+  .option('--accept', 'Agree: both tasks carry it into review')
+  .option('--reject <why>', 'Refuse it, saying why')
+  .option('--counter <change>', 'Propose a change instead — three rounds at most, then the lead decides')
+  .option('--note <note>', 'A note with an acceptance')
+  .option(...TOKEN_OPTION)
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((proposal: string, options: AnswerOptions) => taskAnswer(proposal, options));
+
+taskGroup
+  .command('proposals')
+  .description('The proposals between tasks and their answers — your task’s, with its token')
+  .option(...TOKEN_OPTION)
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions) => taskProposals(options));
+
+taskGroup
+  .command('complete')
+  .description('Finish the task: its copy compared by fingerprint, the project’s checks run in it, and to review')
+  .option('--known-failure <why>', 'Go to review although the checks fail — for a reason that weighs, said to the lead')
+  .option('--fixed-by <task>', 'With --known-failure: the task that fixes what fails')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions & { knownFailure?: string; fixedBy?: string }) => taskComplete(options));
+
+taskGroup
+  .command('ask')
+  .description(
+    'Ask the lead — stuck, unsure, or with news: the answer comes with your next command, or --follow for it'
+  )
+  .argument('<text>', 'The question')
+  .option('--follow', 'Stay until the lead answers, giving the task’s sign of life meanwhile')
+  .option('--timeout <minutes>', 'With --follow: give up after this long, said', positiveInteger, 30)
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((text: string, options: RunCommandOptions & { follow?: boolean; timeout?: number }) =>
+    taskAsk(text, options)
+  );
+
+taskGroup
+  .command('message')
+  .description('The lead tells a task — or every task in hand, or an agent by name — what it needs to know')
+  .argument('<task>', 'The task, all, or an agent as @name: it reaches it between tasks too (task next)')
+  .argument('<text>', 'What to say')
+  .option('--reply-to <message>', 'The question it answers: m3')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, text: string, options: RunCommandOptions & { replyTo?: string }) =>
+    taskMessage(task, text, options)
+  );
+
+taskGroup
+  .command('inbox')
+  .description('What was said to you and you have not read: a task’s with its token, the lead’s without')
+  .option('--all', 'Every message to you and from you, read or not')
+  .option(...TOKEN_OPTION)
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions & { all?: boolean }) => taskInbox(options));
+
+taskGroup
+  .command('show')
+  .description(
+    'A task as its lead reviews it: acceptance, checks, agreements, notes, what was said, each file’s diff, and what to run next'
+  )
+  .argument('<task>', 'The task')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, options: RunCommandOptions) => taskShow(task, options));
+
+taskGroup
+  .command('review')
+  .description('The lead’s or a reviewer’s verdict: --approve merges it into the run’s work; --changes sends it back')
+  .argument('<task>', 'The task in review')
+  .option('--approve', 'Approve it')
+  .option(
+    '--overwrite',
+    'With --approve, over a change someone made in the project while it worked: its version wins at the finish — said, the other kept'
+  )
+  .option('--changes <note>', 'What to change')
+  .option('--on <element>', 'The element the change is about')
+  .option('--file <file>', 'The file the change is about')
+  .option(...RUN_OPTION)
+  .option(...AGENT_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, options: ReviewOptions) => taskReview(task, options));
+
+taskGroup
+  .command('reassign')
+  .description('Cut a task — its holder’s token revoked — for another to take from its last reviewed version')
+  .argument('<task>', 'The task')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, options: RunCommandOptions) => taskReassign(task, options));
+
+taskGroup
+  .command('revert')
+  .description('Take an approved task’s work back out of the run’s, before the final merge — the others’ untouched')
+  .argument('<task>', 'The task')
+  .option(...RUN_OPTION)
+  .option(...JSON_OPTION)
+  .action((task: string, options: RunCommandOptions) => taskRevert(task, options));
+
+taskGroup
+  .command('context')
+  .description('What a task needs: requests and their diffs, related work and notes, contracts, the memory, its files')
+  .argument('[task]', 'The task — the token’s when left out')
+  .option(...TOKEN_OPTION)
+  .option(...RUN_OPTION)
+  .option('--json', 'JSON — what it answers anyway; accepted as on every other command')
+  .action((task: string | undefined, options: RunCommandOptions) =>
+    taskContextCommand(task, { ...options, json: true })
+  );
+
+// Every command of a run says who calls it, for the run's log: the same option everywhere.
+for (const group of [runGroup, taskGroup]) {
+  for (const command of group.commands) {
+    if (!command.options.some(option => option.long === '--agent')) {
+      command.option(...AGENT_OPTION);
+    }
+  }
+}
+
+spaceGroup
+  .command('overview')
+  .description(
+    'Who owns which file, read off the imports: each page, layout, component and plugin, and what they share'
+  )
+  .option(...JSON_OPTION)
+  .action((options: RunCommandOptions) => spaceOverview(options));
+
+spaceGroup
+  .command('impact')
+  .description('What depends on a file, all the way back: the files that import it and the units it touches')
+  .argument('<file>', 'The project file')
+  .option(...JSON_OPTION)
+  .action((file: string, options: RunCommandOptions) => spaceImpact(file, options));
 
 // A command asked for at the top that is one of a group's — `plitzi push` — answered with where it is, not only that it
 // is unknown: read off the commands themselves, so it says the truth of this CLI and nothing has to be kept in step.

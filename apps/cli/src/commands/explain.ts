@@ -137,7 +137,7 @@ export const explainCommand = async (name: string | undefined, options: ExplainO
 
     fail(
       [
-        `"${name}" is no element, step, trigger, code, transformer or helper, nor an export of a @plitzi package installed here. See what there is: --list ${kinds}.`,
+        `"${name}" is no element, step, trigger, code, transformer, helper or template filter, nor an export of a @plitzi package installed here. See what there is: --list ${kinds}.`,
         `A name of the project's own code is read where it is written: \`grep -rn "${name}" src/\`.`
       ].join('\n')
     );

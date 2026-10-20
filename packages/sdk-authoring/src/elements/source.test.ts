@@ -189,4 +189,12 @@ describe('a read of `.data` on an action’s provider', () => {
     );
     expect(warnings.filter(warning => warning.code === 'action-output-path')).toEqual([]);
   });
+
+  // A field read off a row with no types is undefined; naming a source by it said so, never a TypeError about a symbol.
+  it('refuses a source named by nothing, saying how a row gets its types', () => {
+    // As a template written with an untyped row's field calls it: with undefined, which its types do not allow.
+    expect(() => {
+      Reflect.apply(twig, undefined, [['{{ ', ' }}'], undefined]);
+    }).toThrow(/\[source-name-missing\].*typed source's path/s);
+  });
 });

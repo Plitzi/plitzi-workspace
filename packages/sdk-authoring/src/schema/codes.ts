@@ -483,6 +483,11 @@ export const AUTHORING_CODES = {
     means: '`row` on an element that is not a list',
     fix: 'a `list` around it'
   },
+  'source-name-missing': {
+    kind: 'refused',
+    means: 'a source named by nothing — most often a field read off a list row that has no types',
+    fix: "write the row's field as text (`${r.item}.field`), or give the list `items` a typed source's path"
+  },
   'source-field-unknown': {
     kind: 'refused',
     means: 'a path into a typed source that its sample does not have',

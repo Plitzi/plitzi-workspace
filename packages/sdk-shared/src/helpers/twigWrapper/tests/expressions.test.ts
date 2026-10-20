@@ -175,3 +175,27 @@ describe('AST processTwig — default coalescing edge cases', () => {
     expect(processTwig("{{ a ?? b ?? 'fallback' }}", { b: 'second' })).toBe('second');
   });
 });
+
+describe('AST processTwig — ordering', () => {
+  it('orders strings as text: ISO dates and names compare as written', () => {
+    expect(processTwig("{{ '2026-10-24' >= '2026-10-20' }}", {})).toBe('true');
+    expect(processTwig("{{ 'b' > 'a' }}", {})).toBe('true');
+    expect(processTwig("{{ d < '2026-10-20' }}", { d: '2026-10-24' })).toBe('false');
+    expect(
+      processTwig("{{ items|filter(r => r.date >= '2026-10-20')|length }}", {
+        items: [{ date: '2026-10-24' }, { date: '2026-10-01' }]
+      })
+    ).toBe('1');
+  });
+
+  it('orders numbers, and strings that are numbers, by their value', () => {
+    expect(processTwig("{{ '10' > '9' }}", {})).toBe('true');
+    expect(processTwig('{{ n >= 9 }}', { n: '10' })).toBe('true');
+    expect(processTwig('{{ 2 <= 10 }}', {})).toBe('true');
+  });
+
+  it('a missing side orders nothing: every comparison is false', () => {
+    expect(processTwig("{{ x >= '2026-10-20' }}", {})).toBe('false');
+    expect(processTwig("{{ x < '2026-10-20' }}", {})).toBe('false');
+  });
+});

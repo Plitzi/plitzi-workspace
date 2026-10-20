@@ -296,7 +296,13 @@ const declaration = elementDeclaration<FormControlAttributes>()({
         date: typed('Form Control Date', defaultInputStyle, withField),
         time: typed('Form Control Time', defaultInputStyle, withField),
         color: typed('Form Control Color', defaultInputStyle, withField),
-        textarea: typed('Form Control Textarea', { ...defaultInputStyle, color: 'inherit', resize: 'vertical' }),
+        // Its own box, with no `field` inside to inherit through: the browser's monospace would show otherwise.
+        textarea: typed('Form Control Textarea', {
+          ...defaultInputStyle,
+          color: 'inherit',
+          'font-family': 'inherit',
+          resize: 'vertical'
+        }),
         select: typed('Form Control Select', selectStyle, { field: selectFieldStyle }),
         checkbox: {
           name: 'Form Control Checkbox',

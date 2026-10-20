@@ -146,7 +146,7 @@ when an install fails the CLI says which setting names it.
 | `src/data/`       | Server mode: the project's own data — JSON its server reads for a provider (`query: '/data/<file>'`, `runtime: 'server'`) and never serves (`dataDir`). What a provider reads is in the page it renders: data a page must not carry is a server action's to read                                                               | yes    |
 | `src/functions/`  | Server mode: the project's own server code — tasks and `/fn/` routes (`defineFunctions`), built at boot                                                                                                                                                                                                                        | yes    |
 | `vendor/plugins/` | The plugins the project runs as they were built, with no source (a project made from a space gets them), each folder with its `plugin-manifest.json`. The server runs them, and `author`, `page check`, `space fix` and `space push` know every element type each provides                                                     | yes    |
-| `tmp/`            | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), screenshots and test output. Rebuilt when missing                                                                                                            | no     |
+| `tmp/`            | What the project writes for itself while it runs: the plugins the server builds (`tmp/.sdk-plugins`), resized pictures, the port it took (`tmp/dev-server.json`), screenshots and test output. Rebuilt when missing — but `tmp/plitzi-runs/`, the run of agents going (`plitzi run`): its backups and approved work, never rebuilt; removing it loses them, never the project. A run's report is left in `tmp/plitzi-reports/` | no     |
 | `state/`          | Server mode: what the server keeps for the space — its `kv` in `state/kv.json` (`createFileKv`): saved layouts, counters, cached answers. The deployment's state: kept across restarts, never rebuilt. `action.kv` in `src/config/serverOptions.ts` keeps it elsewhere (`createSqliteKv` for several processes, or a database) | no     |
 | `.plitzi/`        | What the CLI records about the project: the space it came from (`space.json`), the functions' working copy, the files `create` wrote — what `space pull`, `space push` and `upgrade` stand on                                                                                                                                  | yes    |
 
@@ -198,6 +198,7 @@ plitzi page check /studio --as maya             # a page for signed-in visitors,
 plitzi page check / --url https://staging.example.com   # the project served elsewhere: a second server, staging, a deploy
 plitzi page check "/?__pt=weather" --url https://localhost:8091 --space tmp/pages/weather.ts   # a page not the project's
 plitzi page shot /about --width 390 --scheme dark
+plitzi page shot / --width 1440,390                # a picture at each width, each named by it
 plitzi page shot / --frames 4 --every 500       # what moves: a marquee, an autoplay
 plitzi page shot / --viewport --click .knob open-button --frames 4 --every 250 --sheet   # an interaction, on one sheet
 plitzi page shot / --compare https://example.com --width 1440   # beside another site: what differs, and how
@@ -440,6 +441,78 @@ saying so. `--limit <n>` caps a page (100 at most).
 It is the platform's `GET /spaces/:spaceId/activity?after=&wait=&limit=&mine=`, under `spaceView` — what the MCP's
 `plitzi_activity` reads too.
 
+## `run` and `task`
+
+```bash
+plitzi space overview                      # who owns which file, read off the imports; what is shared
+plitzi run plan plan.json --agents 3       # a plan the lead wrote, held to the rules and estimated
+plitzi run open plan.json --agents 3       # its folder, every file it touches backed up; 3 agents at most at once
+plitzi task take t-home --json             # a subagent's: its files locked, its copy, its token
+plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
+plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
+plitzi task review t-home --approve        # the lead's: into the run's work, never into the project
+plitzi run watch --json                    # how the run goes: a line per task, what needs attention
+plitzi run watch --until lead              # ends the moment something needs the lead: run it in the background
+plitzi run preview                         # the run's work as it goes, served: each approval shows
+plitzi task show t-home                    # a task as its lead reviews it: checks, agreements, each file's diff
+plitzi run report --summary summary.md     # the lead closes the run with its report
+plitzi run finish                          # the whole diff and the checks on the result — then --apply, a person's
+```
+
+Several agents — subagents of one harness, or harnesses of different kinds — on one project at once, without stepping on
+each other and without any way to leave it broken (RFC 0028). The harness orchestrates: it splits the job, starts the
+subagents and pays for them; the CLI reserves files, isolates each task, checks, merges, keeps backups and shows the
+progress. Nothing reaches Plitzi: a space on Plitzi is pulled first and pushed once at the end, by a person. **One plan
+and one run at a time** in a project: a second is refused, naming the first.
+
+- **One agent per file**, the owners read off the imports: a page owns the modules only it imports; what several import
+  (tokens, classes, a layout, a component) and every entry are shared — taken by turns (`task claim`, `task wait`) or,
+  when several tasks want one at once, changed in each copy as a **request** that one integration task, made by the CLI,
+  applies together. A plugin's folder is its own whole. A task holds its plan's files until it is done; a file handed on
+  by turns arrives with what the run approved since the copy was made, and `task wait --follow` stays until it does.
+- **A team:** the lead — team lead and software architect — plans, reviews, answers and closes; tasks name the role that
+  works them (`"role": "designer"`, a developer's when left out) and `task next --role` picks by it. The lead and the
+  agents talk while they work: `task ask` (an agent's question, on top of `run status`), `task message
+  <task|all|@agent>` (the lead's word, handed to the agent with its next heartbeat, progress or completion), `task
+  inbox`. A block lifted carries its answer (`task unblock --answer`), and `task next` hands an agent back the task it
+  holds first.
+- **Connected as it goes:** a shared file a task changed is its by turns at `complete` when nobody holds it, and merged
+  line by line when the run moved meanwhile; `run preview` serves the run's work as each task is approved, and `run
+  preview --task` a task in review, before it is.
+- **No task ends with failing checks** — lint, types, tests: `complete` refuses. Only for a reason that weighs, said to
+  the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
+- **As many agents as the run allows** (`run open --agents`, 3 when left out, usually 2 to 5; above 5 a person
+  confirms): past it, `task take` waits for one to finish.
+- **Each task in a copy** of the project in `tmp/plitzi-runs/<run>/` — cloned copy-on-write where the disk can; never
+  `.env` (its templates, `.env.example`, are), `node_modules` or the binaries of `public/`. Only the task's own files may
+  change in it: `task complete` refuses anything else, naming it, and runs the project's checks (what `verify` runs) in
+  the copy. A `.lock` per file sits at the file's path under its task's `locks/`, and `run can-write <file>` answers any
+  hook or editor.
+- **Tasks agree with each other:** `task propose <task> --change "…" [--wait]` asks another task for a change in its
+  work; it answers `task answer <proposal> --accept | --reject "why" | --counter "…"` (three rounds, then the lead
+  decides). A task does not complete with a proposal to it unanswered; what was accepted is an agreement both reviews
+  check.
+- **Before anything is written, the file is checked:** a file someone changed in the project while an agent worked on
+  it refuses that task's approval, naming it. The lead decides — `task review --approve --overwrite` writes the
+  task's version over it at the finish, said in `run status` and the report, the other version kept in
+  `tmp/plitzi-backups/`; or `--changes` sends it back to redo on the project's version. A file changed after its
+  approval puts the finish into **reconciliation**, resolved file by file by the lead (`run resolve … --take
+  project|run|<file>`, then `run continue`).
+- **Approved work merges into the run's**, never into the project. The project receives one merge, `run finish --apply`,
+  confirmed by a person typing the run's name in their terminal, once the lead closed the run with its report
+  (`run report --summary <file>`): written file by file as one transaction, with a backup of everything it overwrites.
+- **When it ends, the run goes** — backups included, so none is left to clean up — and its report stays in
+  `tmp/plitzi-reports/<run>-<time>.md`: the lead's summary, the problems, every task (agents, time against its
+  estimate, reviews, cuts) and what was written. `--keep-backup` keeps the project's files as they were before the merge
+  in `tmp/plitzi-backups/`; `run abort` (a person's) writes nothing, discards the agents' work and leaves the report too.
+- **Cuts:** a task with no signal (15 minutes without a write, progress or heartbeat) can be reassigned; one taken again
+  starts from its last reviewed version — what was written since is never resumed. `run attach` picks a run up after
+  the harness died, on another machine, or after an upgrade. `run stop` lets the tasks in hand finish.
+- **No git needed:** the run keeps its own backups while it lasts, and the CLI never commits.
+- Every command answers `--json` and exits with a code per refusal: 10 claimed, 11 waiting, 12 reassigned, 13 version
+  mismatch, 14 stopping, 15 forced stop, 16 reconciliation, 17 a person's, 18 conflict, 19 checks failed, 20 invalid,
+  21 not found, 22 another machine, 23 another run, 24 the agent limit.
+
 ## `page import`
 
 ```bash
@@ -480,7 +553,7 @@ plitzi explain content-attribute # a suggestion's code: what is written the long
 plitzi explain bindTemplate     # a helper: how it is written, what it is for, an example
 plitzi explain motion           # the arrivals, triggers and loops the SDK plays
 plitzi explain pageFamily       # any other export of a @plitzi package installed — createServer is sdk-server's and sdk-mcp's
-plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers
+plitzi explain --list steps     # every one of a kind: elements, steps, triggers, codes, transformers, helpers, filters
 ```
 
 What a name means when authoring, from the catalogues the checks themselves read — the answer to a question that would
@@ -625,7 +698,10 @@ manager the files were written for — what a project not installed yet has no l
 a space, a file the space gave over one of the CLI's would be the space's, and `upgrade` would leave it to `plitzi space pull` —
 none does: `serveProject` runs whatever the space brought, from where it lands. `update` is the same
 command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
-older than the `@plitzi/sdk-authoring` installed.
+older than the `@plitzi/sdk-authoring` installed. With a run of agents open (`plitzi run state`), `--write` waits: the run
+pinned the Plitzi its copies were made with. `--with-open-runs` upgrades anyway, and each run then refuses its commands
+until a person attaches to it (`plitzi run attach`), which re-pins it and starts its tasks in hand again from their
+reviewed versions.
 
 ## `data describe`
 

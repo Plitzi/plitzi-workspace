@@ -14,6 +14,7 @@ import { readOrigin } from './spaceOrigin';
 import { fail, install, writeFiles } from './terminal';
 import { unifiedDiff } from '../fix/diff';
 import { MIGRATIONS, runMigrations } from '../migrations';
+import { activeRuns } from '../runs/run';
 import { detectManagerVersion, installCommand, machineryFiles, seedFiles } from '../scaffold';
 import { RETIRED_MACHINERY } from '../scaffold/machinery';
 import { CLI_VERSION, packageJson } from '../scaffold/project';
@@ -63,6 +64,8 @@ export interface UpgradeOptions {
    * package is installed locally, which an install would replace.
    */
   install?: boolean;
+  /** Upgrade although runs of agents are open (RFC 0028): each refuses its commands until a person attaches to it. */
+  withOpenRuns?: boolean;
 }
 
 // --- packages ------------------------------------------------------------------------------------------------------
@@ -563,6 +566,15 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
   const origin = await readOrigin(root);
   const write = Boolean(options.write);
   const report: UpgradeReport = { version: CLI_VERSION, write };
+  // A run pins the Plitzi it opened with: its copies were made by it. Upgrading under one is a person's choice.
+  const openRuns = write ? await activeRuns(root) : [];
+  if (openRuns.length > 0 && !options.withOpenRuns) {
+    fail(
+      `Runs of agents are open in this project (${openRuns.join(', ')}), pinned to the Plitzi installed now. Finish, abort or purge them first (plitzi run state) — or upgrade anyway with --with-open-runs, and a person attaches to each after (plitzi run attach <run>), which re-pins it and starts its tasks in hand again from their reviewed versions.`
+    );
+
+    return;
+  }
 
   // The machinery and package.json are what `create` would write, which takes knowing how it was made; the skills and
   // the renames are the same in any project.

@@ -81,6 +81,47 @@ const styleImports = (text: string): string[] =>
 const codeImports = (ts: typeof TypeScript, text: string): string[] =>
   ts.preProcessFile(text, true, true).importedFiles.map(file => file.fileName);
 
+export interface FileImports {
+  /** The project files it imports, absolute, as a bundler finds them. */
+  files: string[];
+  /** What it imports that is not there, as written. */
+  missing: string[];
+  /** The packages it imports, by name — not Node's own. */
+  packages: string[];
+}
+
+/** What one file imports — read with TypeScript for code, from `@import` and `url()` for a stylesheet. */
+export const fileImports = async (ts: typeof TypeScript, file: string, text: string): Promise<FileImports> => {
+  let specifiers: string[] = [];
+  if (CODE.test(file)) {
+    specifiers = codeImports(ts, text);
+  } else if (STYLES.test(file)) {
+    specifiers = styleImports(text);
+  }
+
+  const imports: FileImports = { files: [], missing: [], packages: [] };
+  for (const raw of specifiers) {
+    // A bundler's query (`?raw`, `?url`) or a fragment says how to load a file, not which one.
+    const specifier = raw.replace(/[?#].*$/, '');
+    if (specifier.startsWith('.') || specifier.startsWith('/')) {
+      const found = await resolveFile(file, specifier);
+      if (found) {
+        imports.files.push(found);
+      } else {
+        imports.missing.push(raw);
+      }
+
+      continue;
+    }
+
+    if (!specifier.startsWith('node:') && !BUILTINS.has(specifier)) {
+      imports.packages.push(packageOf(specifier));
+    }
+  }
+
+  return imports;
+};
+
 /** A file's path in the snapshot: relative to the root, with forward slashes whatever the system writes. */
 const projectPath = (root: string, file: string): string => path.relative(root, file).split(path.sep).join('/');
 
@@ -148,31 +189,10 @@ export const packSource = async ({
 
     const bytes = await fs.readFile(file);
     files[relative] = bytes.toString('base64');
-    let specifiers: string[] = [];
-    if (CODE.test(file)) {
-      specifiers = codeImports(ts, bytes.toString('utf-8'));
-    } else if (STYLES.test(file)) {
-      specifiers = styleImports(bytes.toString('utf-8'));
-    }
-
-    for (const raw of specifiers) {
-      // A bundler's query (`?raw`, `?url`) or a fragment says how to load a file, not which one.
-      const specifier = raw.replace(/[?#].*$/, '');
-      if (specifier.startsWith('.') || specifier.startsWith('/')) {
-        const found = await resolveFile(file, specifier);
-        if (found) {
-          queue.push(found);
-        } else {
-          problems.push(`${relative} imports "${raw}", which is not there`);
-        }
-
-        continue;
-      }
-
-      if (!specifier.startsWith('node:') && !BUILTINS.has(specifier)) {
-        packages.add(packageOf(specifier));
-      }
-    }
+    const imports = await fileImports(ts, file, bytes.toString('utf-8'));
+    queue.push(...imports.files);
+    problems.push(...imports.missing.map(raw => `${relative} imports "${raw}", which is not there`));
+    imports.packages.forEach(name => packages.add(name));
   }
 
   const dependencies: Record<string, string> = {};

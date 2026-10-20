@@ -65,6 +65,7 @@ outside the element that publishes it — each with the name it should have been
   not `'false'`, `0` or an unset value), `is divisible by(n)`, and their `is not` forms. `null` and `none` are literals.
 - Functions: `range`, `min`, `max`, `cycle`. `abs` is a filter (`x|abs`); floor and ceil are `x|round(0, 'floor')` and
   `x|round(0, 'ceil')`; a clamp is `min(max(x, low), high)`.
+- Filters: `npx @plitzi/cli explain --list filters` lists every one, `explain <filter>` its signature and an example.
 - **Not supported**: `matches` (no regular expressions are evaluated — use `starts with`, `ends with`, `in`), macros,
   `include`/`extends`, and any filter or function not listed here. `authorSpace` refuses them, and anything else the
   interpreter would read past, rather than letting a template render a value nobody wrote.
@@ -109,5 +110,8 @@ A lookup across two sources — a row joined to the stats around it:
   as it is (`\T`). **Always pass a zone** (`'UTC'`) and print it: with no zone the date is formatted in the local time
   of whoever renders it — the server's for the HTML, the visitor's after hydration — and the two disagree.
 - A timestamp can be seconds or milliseconds, a number or a string of digits — all read.
+- **Now** is `'now'`: `{{ 'now'|date('F Y', 'UTC') }}` is the month the page is rendered in — on the server, then again
+  in the browser, so keep it to the day or coarser (a minute can pass between the two). An age, a "this month", a
+  countdown reads it instead of a date written into the page.
 - For "3 minutes ago", the `dateConverter` transformer with `{ asAge: true }`; give it `isUnix: false` for an ISO
   string. Its checkbox params accept real booleans (and `'true'`/`'false'`).

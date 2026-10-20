@@ -1,5 +1,6 @@
 import { interactionBasicTriggers } from '@plitzi/sdk-elements/elements/declarations';
 import { BUILTIN_ELEMENT_CALLBACKS } from '@plitzi/sdk-shared/authoring';
+import { FILTER_DOCS } from '@plitzi/sdk-shared/helpers/twigWrapper';
 
 import {
   elementAncestorTypes,
@@ -89,7 +90,8 @@ export type Explanation =
     }
   | { kind: 'code'; name: string; codeKind: AuthoringCodeEntry['kind']; means: string; fix: string }
   | { kind: 'transformer'; name: string; title: string; description: string; params: ParamInfo[] }
-  | { kind: 'helper'; name: string; signature: string; summary: string; example: string };
+  | { kind: 'helper'; name: string; signature: string; summary: string; example: string }
+  | { kind: 'filter'; name: string; signature: string; summary: string; example: string };
 
 export type ExplainKind = Explanation['kind'];
 
@@ -100,7 +102,8 @@ export const EXPLAIN_KINDS: Record<ExplainKind, string> = {
   trigger: 'triggers',
   code: 'codes',
   transformer: 'transformers',
-  helper: 'helpers'
+  helper: 'helpers',
+  filter: 'filters'
 };
 
 const isExplainKind = (kind: string): kind is ExplainKind => Object.hasOwn(EXPLAIN_KINDS, kind);
@@ -322,6 +325,7 @@ export const explain = (name: string): Explanation[] => {
   const trigger = explainTrigger(name);
   const transformer = Object.hasOwn(BUILTIN_TRANSFORMERS, name) ? BUILTIN_TRANSFORMERS[name] : undefined;
   const helper = Object.hasOwn(HELPERS, name) ? HELPERS[name] : undefined;
+  const filter = Object.hasOwn(FILTER_DOCS, name) ? FILTER_DOCS[name] : undefined;
   // Asked by the name the code calls it: what `reloadApi(…)` writes is the `performQuery` step.
   const builtStep = stepOfBuilder(name);
 
@@ -342,7 +346,8 @@ export const explain = (name: string): Explanation[] => {
           }
         ]
       : []),
-    ...(helper ? [{ kind: 'helper' as const, name, ...helper }] : [])
+    ...(helper ? [{ kind: 'helper' as const, name, ...helper }] : []),
+    ...(filter ? [{ kind: 'filter' as const, name, ...filter }] : [])
   ];
 };
 
@@ -377,6 +382,8 @@ export const explainList = (kind: ExplainKind): { name: string; summary: string 
       return sorted(Object.entries(BUILTIN_TRANSFORMERS).map(([name, entry]) => ({ name, summary: entry.title })));
     case 'helper':
       return sorted(Object.entries(HELPERS).map(([name, entry]) => ({ name, summary: entry.summary })));
+    case 'filter':
+      return sorted(Object.entries(FILTER_DOCS).map(([name, entry]) => ({ name, summary: entry.summary })));
   }
 };
 
@@ -445,6 +452,12 @@ export const explanationText = (explanation: Explanation): string => {
       return [
         `${explanation.name} — helper: ${explanation.summary}`,
         `Written: ${explanation.signature}`,
+        `Example: ${explanation.example}`
+      ].join('\n');
+    case 'filter':
+      return [
+        `${explanation.name} — template filter: ${explanation.summary}`,
+        `Written: {{ value|${explanation.signature} }}`,
         `Example: ${explanation.example}`
       ].join('\n');
   }

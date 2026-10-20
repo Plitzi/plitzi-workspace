@@ -652,6 +652,24 @@ const playSteps = async (
   return { moments, changes };
 };
 
+/**
+ * `plitzi page shot --width 1440,390`: a picture at each width, one after another — each named by its width, `--out`
+ * too (`home.png` becomes `home-1440.png`, `home-390.png`) so one never writes over another.
+ */
+export const shotEach = async (
+  route: string | undefined,
+  options: Omit<ShotOptions, 'width'> & { width: number[] }
+): Promise<void> => {
+  const { width: all, ...rest } = options;
+  for (const each of all) {
+    const out = rest.out && all.length > 1 ? rest.out.replace(/(\.png)?$/, `-${String(each)}.png`) : rest.out;
+    await shot(route, { ...rest, width: each, ...(out ? { out } : {}) });
+    if (process.exitCode !== undefined && process.exitCode !== 0) {
+      return;
+    }
+  }
+};
+
 export const shot = async (route: string | undefined, options: ShotOptions): Promise<void> => {
   const project = await projectHere('whose page to picture');
   if (!project) {

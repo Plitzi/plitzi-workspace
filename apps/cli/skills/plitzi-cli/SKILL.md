@@ -5,7 +5,8 @@ description: >-
   generates: scaffold a project that renders a space, add plugins to it or build a plugin package, pack, upload and
   install one, edit a space's functions, take a space on Plitzi out as a self-hosted project and back (`create --from`,
   `space pull`, `space push`), check a project (`doctor`) or how its space's source is written (`space lint`), follow
-  what each save does (`space watch`) and what others do on the space (`space activity`), and
+  what each save does (`space watch`) and what others do on the space (`space activity`), split a job across subagents
+  in copies of the project merged once by a person (`run`, `task`), and
   write a report to Plitzi of what broke, misled or cost time (`feedback`). Use whenever the task is to start a Plitzi
   project, create or change a plugin, pack, upload or install one, pull/push/try a space's functions, move a space to a
   server of its own and back, work out which space the CLI is connected to — or when the person asks for a report,
@@ -63,4 +64,5 @@ edited in the builder — is the Plitzi MCP's. Never both on one space.
 | An element of your own, a plugin package, packing and uploading one        | [plugins](reference/plugins.md)                 |
 | A space on Plitzi as a project, and back (`create --from`, `space pull`, `space push`) | [from-space](reference/from-space.md)           |
 | The space's own server code (`functions`, `runtime`)                       | [functions](reference/functions.md)             |
+| A team of agents on one project at once (`run`, `task`)                    | [runs](reference/runs.md)                       |
 | Something does not work                                                    | [troubleshooting](reference/troubleshooting.md) |

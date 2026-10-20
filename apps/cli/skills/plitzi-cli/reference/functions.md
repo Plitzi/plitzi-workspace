@@ -11,7 +11,8 @@ A space's own server code — TypeScript tasks its actions run as steps, and rou
   saved — fix it and push again. `index.ts` must default-export `defineFunctions({ … })`; files import each other by
   relative path and `@plitzi/sdk-server/functions`, nothing else — a package (installed in the project) is bundled in with
   `functions add <package>`, as `./vendor/<package>.js`; one that needs Node is refused. `src/data/` is read with `ctx.data('x.json')`, never
-  imported (`dev` reads the project's).
+  imported (`dev` reads the project's). An action's built-in steps read no file: without a function task, `src/data/`
+  reaches an action only as rows imported where the action is written — fixed until the space is authored again.
 - **`try` runs the saved draft for real** (its fetches and writes happen). `dev` runs `src/functions/` on this machine with
   the project's own `@plitzi/sdk-server` — `npm install -D @plitzi/sdk-server isolated-vm core-js` first — and sends
   nothing to the space. Credentials are `PLITZI_CREDENTIALS={"stripe":{"apiKey":"…"}}` in `.env` — what `dev` and the

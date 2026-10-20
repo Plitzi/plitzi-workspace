@@ -508,3 +508,15 @@ describe('AST processTwig — array query filters', () => {
     expect(processTwig('{{ share|percent }}', { share: 0.5 })).toBe('50%');
   });
 });
+
+describe('replace — a map, as Twig writes it', () => {
+  it('replaces each key by its value, in one pass, the longest key first', () => {
+    expect(processTwig("{{ s|replace({' ': '', '-': ''}) }}", { s: '+34 912-345 601' })).toBe('+34912345601');
+    expect(processTwig("{{ 'ab a'|replace({'a': 'b', 'b': 'a'}) }}", {})).toBe('ba b');
+    expect(processTwig("{{ 'a.b'|replace({'.': ', ', 'a.b': 'whole'}) }}", {})).toBe('whole');
+  });
+
+  it('keeps the two-argument form', () => {
+    expect(processTwig("{{ 'a-b'|replace('-', ' ') }}", {})).toBe('a b');
+  });
+});

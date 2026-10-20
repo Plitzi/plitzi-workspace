@@ -1,7 +1,7 @@
 # Plitzi authoring — cheatsheet
 
 What most changes need, on one page. Everything is imported from `@plitzi/sdk-authoring`. For the rest, ask by name —
-`npx @plitzi/cli explain navigate` (an element, a step, a trigger, a problem's code), `--list steps` for every one of a
+`npx @plitzi/cli explain navigate` (an element, a step, a trigger, a code, a filter), `--list steps` for every one of a
 kind — rather than reading its `.d.ts`.
 
 ## The space

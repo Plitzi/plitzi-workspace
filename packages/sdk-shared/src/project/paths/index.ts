@@ -11,6 +11,12 @@
  */
 export const PROJECT_TMP = 'tmp';
 
+/**
+ * Where `plitzi run` keeps a run of agents (RFC 0028): each task's copy of the project lives below it. A copy holds no
+ * `.env` on purpose — an agent never reads credentials — so a check run inside one says nothing of a missing one.
+ */
+export const RUNS_DIR = `${PROJECT_TMP}/plitzi-runs`;
+
 /** The project's own code — its space, plugins, data, functions and server — which the server watches while developing. */
 export const SOURCE_DIR = 'src';
 
