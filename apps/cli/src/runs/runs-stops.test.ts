@@ -1,9 +1,10 @@
+import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { finishRun } from './merge';
+import { abortRun, finishRun } from './merge';
 import { RUNS_DIR, runPaths } from './paths';
 import { isRunRefusal } from './refusal';
 import {
@@ -197,6 +198,39 @@ describe('what an agent leaves in the project', () => {
     expect(next.scratch).toBe(path.join(bench.root, 'tmp/plitzi-runs/es-launch/scratch/agent-1'));
     expect((await fs.stat(next.scratch)).isDirectory()).toBe(true);
     expect((await nextTask(bench.agent('agent-1'), 'es-launch')).messages).toEqual([]);
+  });
+});
+
+describe('a run that ends under its preview', () => {
+  it('stops the preview before its folder goes — never a server left in a folder removed under it', async () => {
+    await openWith(lead(), await bench.writePlan(benchPlan()), 4);
+    const paths = runPaths(bench.root, 'es-launch');
+    const seen = path.join(bench.root, 'preview-saw.txt');
+    // A preview as `run preview` is: it looks for its run, and stops once the run is gone — saying whether its folder
+    // was still there when it did.
+    const preview = spawn(
+      process.execPath,
+      [
+        '-e',
+        `const fs = require('node:fs');
+         const tick = setInterval(() => {
+           if (!fs.existsSync(${JSON.stringify(paths.record)})) {
+             fs.writeFileSync(${JSON.stringify(seen)}, String(fs.existsSync(${JSON.stringify(paths.dir)})));
+             clearInterval(tick);
+           }
+         }, 50);`
+      ],
+      { stdio: 'ignore' }
+    );
+    await fs.mkdir(paths.cache, { recursive: true });
+    await fs.writeFile(path.join(paths.cache, 'preview.json'), JSON.stringify({ pid: preview.pid, port: 8300 }));
+
+    await abortRun(bench.person(true), 'es-launch');
+
+    expect(await fs.readFile(seen, 'utf-8')).toBe('true');
+    await expect(fs.access(paths.dir)).rejects.toThrow();
+    // The last run gone, the runs' folder goes with it: the project's tmp/ as the run found it.
+    await expect(fs.access(path.join(bench.root, RUNS_DIR))).rejects.toThrow();
   });
 });
 

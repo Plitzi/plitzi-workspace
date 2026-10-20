@@ -49,7 +49,7 @@ describe('the final merge', () => {
     expect(await bench.read('src/space/pages/about.ts')).toContain('Sobre nosotros');
     // Its work is in the project: the run is gone, backups and all, and nothing is left for anyone to clean up.
     expect(done.backup).toBeUndefined();
-    expect(await fs.readdir(path.join(bench.root, RUNS_DIR))).toEqual([]);
+    expect(await fs.stat(path.join(bench.root, RUNS_DIR)).catch(() => undefined)).toBeUndefined();
     expect(await fs.stat(path.join(bench.root, BACKUPS_DIR)).catch(() => undefined)).toBeUndefined();
   });
 
@@ -73,7 +73,7 @@ describe('the final merge', () => {
       created: string[];
     };
     expect(manifest).toMatchObject({ overwritten: ['src/space/pages/about.ts'], created: [] });
-    expect(await fs.readdir(path.join(bench.root, RUNS_DIR))).toEqual([]);
+    expect(await fs.stat(path.join(bench.root, RUNS_DIR)).catch(() => undefined)).toBeUndefined();
   });
 
   it('refuses the merge while tasks are in hand, and checks the whole result before writing', async () => {
@@ -150,7 +150,7 @@ describe('the final merge', () => {
 
     expect(aborted.discarded).toEqual(['src/space/pages/about.ts']);
     expect(await bench.read('src/space/pages/about.ts')).toMatch(/title: .About./);
-    expect(await fs.readdir(path.join(bench.root, RUNS_DIR))).toEqual([]);
+    expect(await fs.stat(path.join(bench.root, RUNS_DIR)).catch(() => undefined)).toBeUndefined();
   });
 });
 

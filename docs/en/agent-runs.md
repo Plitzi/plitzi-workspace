@@ -74,7 +74,9 @@ sdk-server, reading `ACTIVE_RUN_FILE`), `run open` names the script and `run sta
 review, so the lead looks at the pages before approving them; the run's preview keeps a snapshot of the run beside it
 (`preview-run.json`, the shape `@plitzi/sdk-shared/runs` names) and hands its path to the project's server
 (`RUN_STATUS_ENV`), which answers it at `/__plitzi/run` — the page's dev tools show it in their **Run** tab: each task,
-who has it and who reviews it, what needs someone; no other server answers it. `run monitor` is the same run, live, for
+who has it and who reviews it, what needs someone; no other server answers it. A run that ends (finished, aborted)
+stops its preview before its folder goes (`stopPreviewOf`): the record first, which the preview reads as the end, then
+the folder once it stopped — never a server left watching a folder removed under it. `run monitor` is the same run, live, for
 a person in a terminal of their own: it only reads (nothing marked read, nothing the lead is woken for touched) and
 refuses a shell with no terminal, an agent's, whose is `run watch`. `task show` (`show.ts`) gathers the rest of a review —
 acceptance, checks, agreements, notes, what was said, each file's diff against where the copy started, the commands that

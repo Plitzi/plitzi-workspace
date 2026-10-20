@@ -83,7 +83,7 @@ const writeSnapshot = async (ctx: RunContext, loaded: LoadedRun): Promise<void> 
 
 /** Puts the run's approved work into a running preview — none running, nothing done. Answers whether it did. */
 export const syncPreview = async (loaded: LoadedRun, root: string): Promise<boolean> => {
-  const running = await readJson(previewRecord(loaded), isPreview, 'a run’s preview').catch(() => undefined);
+  const running = await readJson(previewRecord(loaded.paths), isPreview, 'a run’s preview').catch(() => undefined);
   if (!running || !alive(running.pid)) {
     return false;
   }
@@ -246,8 +246,8 @@ export const startPreview = async (ctx: RunContext, runId: string, port: number)
 
   await writeSnapshot(ctx, loaded);
   const served = await serve(ctx, loaded, dir, port, undefined, { snapshot: true });
-  await writeJson(previewRecord(loaded), { pid: process.pid, port });
-  void served.done.then(() => fs.rm(previewRecord(loaded), { force: true })).catch(() => undefined);
+  await writeJson(previewRecord(loaded.paths), { pid: process.pid, port });
+  void served.done.then(() => fs.rm(previewRecord(loaded.paths), { force: true })).catch(() => undefined);
 
   return { ...served, dir };
 };

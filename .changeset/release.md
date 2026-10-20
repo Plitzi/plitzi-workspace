@@ -332,3 +332,5 @@
   `tmp/dev1/` and a preview log there.
 - **The Run tab lists the tasks once** (`@plitzi/sdk-dev-tools`): by where each stands — at work, in review, blocked, to
   do, approved last — under their headings, eight rows tall and scrolled on its own, beside the agents.
+- **A run that ends stops its preview first** (`@plitzi/cli`): its record goes, the preview stops its server on it, and
+  only then the run's folder — removed under it, the server's own watch restarted it in a folder gone (`uv_cwd`).

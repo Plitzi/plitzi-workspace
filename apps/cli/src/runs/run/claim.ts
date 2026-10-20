@@ -5,6 +5,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { createExclusive, fingerprint, readOptional } from '../files';
 import { activeRunFile, runPaths } from '../paths';
+import { stopPreviewOf } from '../previewRecord';
 import { RunRefusal } from '../refusal';
 import { activeRuns, readRecord } from './record';
 
@@ -107,8 +108,11 @@ export const releaseProject = async (root: string, runId: string): Promise<void>
  */
 export const removeRun = async (ctx: RunContext, paths: RunPaths, runId: string): Promise<RemovedInputs> => {
   const inputs = (await readRecord(paths).catch(() => undefined))?.inputs ?? [];
+  await stopPreviewOf(paths);
   await fs.rm(paths.dir, { recursive: true, force: true });
   await releaseProject(ctx.root, runId);
+  // The runs' folder with the last of them: the project's tmp/ as the run found it. Another run in it, it stays.
+  await fs.rmdir(path.dirname(paths.dir)).catch(() => undefined);
 
   return removeInputs(ctx, inputs);
 };
