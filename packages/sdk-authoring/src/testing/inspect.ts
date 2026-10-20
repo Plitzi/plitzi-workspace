@@ -1,6 +1,8 @@
+import { accessibilityInPage } from './accessibility';
 import { onScreen, onScreenIfChosen } from './onScreen';
 import { probePage } from './probe';
 
+import type { AccessibilityFindings } from './accessibility';
 import type { OnScreenOptions } from './onScreen';
 import type { ProbeFindings, ProbeInput } from './probe';
 import type { ElementHandle, SpaceHandles } from '../schema';
@@ -18,7 +20,7 @@ export interface InspectOptions extends OnScreenOptions {
   /** The page that is open, by id or slug. Defaults to the home page (`/`), or the first page there is. */
   page?: string;
   /** Checks to leave out, for a page that is known to break one of them on purpose. All are on by default. */
-  skip?: ('images' | 'overflow' | 'legibility')[];
+  skip?: ('images' | 'overflow' | 'legibility' | 'accessibility')[];
   /**
    * How long to keep looking before reporting, in milliseconds — 5000 by default, like an assertion's own retry.
    *
@@ -36,7 +38,9 @@ export type PageIssueCode =
   | 'image-not-loaded'
   | 'sideways-scroll'
   | 'cut-off'
-  | 'illegible-text';
+  | 'illegible-text'
+  | 'heading-skipped'
+  | 'control-unnamed';
 
 export interface PageIssue {
   code: PageIssueCode;
@@ -135,6 +139,23 @@ export const issuesOf = (expected: ElementHandle[], findings: ProbeFindings): Pa
   ];
 };
 
+/** What a screen reader would meet, as issues: a heading out of order, a control with no name. */
+export const accessibilityIssues = (found: AccessibilityFindings): PageIssue[] => [
+  ...found.skippedHeadings.map(({ text, level, after, elementId }): PageIssue => ({
+    code: 'heading-skipped',
+    message:
+      after === 0
+        ? `the page's headings start at h${String(level)} ("${text}"): its first is its h1 — the title a reader is told the page is`
+        : `heading h${String(level)} ("${text}") comes after an h${String(after)}: a level is skipped, and a reader moving by headings loses where it is — make it an h${String(after + 1)}, its look a class of its own`,
+    ...about(elementId)
+  })),
+  ...found.unnamed.map(({ what, elementId }): PageIssue => ({
+    code: 'control-unnamed',
+    message: `${what} has no name a screen reader can read — its words, an image's alt, or the element's \`label\` for one drawn as an icon`,
+    ...about(elementId)
+  }))
+];
+
 /** The findings as sentences — what `problems` holds. */
 export const describeFindings = (expected: ElementHandle[], findings: ProbeFindings): string[] =>
   issuesOf(expected, findings).map(issue => issue.message);
@@ -179,7 +200,10 @@ const inspect = async (
   const deadline = Date.now() + (options.timeout ?? 5000);
   for (;;) {
     const findings = await driver.evaluate(probePage, input);
-    const issues = issuesOf(expected, findings);
+    const issues = [
+      ...issuesOf(expected, findings),
+      ...(skip.has('accessibility') ? [] : accessibilityIssues(await driver.evaluate(accessibilityInPage, input)))
+    ];
     if (issues.length === 0 || Date.now() >= deadline) {
       return {
         page,

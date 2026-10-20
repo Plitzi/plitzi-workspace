@@ -180,20 +180,23 @@ describe('whether a run reviews design', () => {
 });
 
 describe('a project’s first run', () => {
-  it('writes the team its plan needs, and an example beside it, saying so', async () => {
+  it('writes the team its plan needs, with what each field and role means, saying so', async () => {
     const plan = benchPlan();
     plan.tasks[3].role = 'writer';
 
     const checked = await checkPlanFile(lead(), await bench.writePlan(plan));
     expect(checked.notices[0]).toContain('This project had no team: .plitzi/team.json written');
-    expect(await readTeam(bench.root)).toEqual({
+    const written = await readTeam(bench.root);
+    // It says what each field and role means: the file has no comments.
+    expect(written?.about).toMatchObject({ roles: { tester: expect.stringContaining('<task>-tests') as unknown } });
+    expect(written).toMatchObject({
       version: 1,
       agents: [
-        { name: 'dev', roles: ['developer'], count: 2 },
+        { name: 'dev', roles: ['developer'] },
+        { name: 'design', roles: ['designer'] },
         { name: 'writer', roles: ['writer'] }
       ]
     });
-    expect(await bench.read('.plitzi/team.json.example')).toContain('claude-opus-5-5');
     expect(checked.estimate.agents).toBe(3);
   });
 

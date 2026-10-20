@@ -91,6 +91,16 @@
   that own the task's files; an address the not-found page answers is no longer a passing check; a task sent back is
   handed back with what its review asked; a tester's brief has the acceptance and reviews of the task it tests;
   `complete` refuses to serve a copy the agent's own server still holds; a new project lints its `node --test` tests.
+- **A page a screen reader can follow** (`@plitzi/sdk-authoring`, `@plitzi/cli`): `inspectPage` and `page check` say
+  headings that do not start at an `h1` or skip a level as the page is drawn — layouts and components included
+  (`heading-skipped`) — and a link, button or field with no name a screen reader can read (`control-unnamed`), each
+  with its way out; `skip: ['accessibility']` for a page that breaks one on purpose.
+- **A team in every new project** (`@plitzi/cli`): `plitzi create` writes `.plitzi/team.json` — a developer and a
+  designer, two agents, the harness's own models — with an `about` that says what each field and role means (any other
+  name is a role of the project's own) and how to grow it; `run team` lists the roles, and the file is written as the
+  project's Prettier leaves it.
+  A case the project's data never shows is the lead's to plan how it is seen (the skill), the designer says one it could
+  not look at, and a tester's task holds one with a unit test.
 - **A paragraph made of parts holds no block** (`@plitzi/sdk-authoring`): `span-holds-block` warns of a `p` container
   holding a `text` or a plain `container` — `<div>`s the browser closes the paragraph before, which broke hydration.
 - **A disclosure, natively** (`@plitzi/sdk-elements`): `container({ subType: 'details' })` with a `summary` first, and

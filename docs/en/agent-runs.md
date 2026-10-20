@@ -27,10 +27,10 @@ how many agents work at once — its team's size, above 5 a person confirms: `ta
 holding a task in progress — one holding two is one, and a take by one of them adds none — and takes one under the run's
 `take.lock`, so two takes never pass the limit together (`agent-limit`).
 
-## The team
+## The lead and the agents
 
 The lead — team lead and software architect — is whoever runs the run without a task's token: it plans, starts the
-agents, answers them, reviews and closes. A task names the role that works it (`role`, a developer's when left out), and
+agents, answers them, reviews — the complete, strict review and the final word, whoever else reviewed — and closes. A task names the role that works it (`role`, a developer's when left out), and
 `task next --role` / `task take --role` hold each agent to its role. The lead and the agents talk through the run's
 `messages/` (`messages.ts`, `talk.ts`): an agent's question is on top of `run status`; what the lead says to a task — or
 to every task in hand, or to an agent by name (`@dev-1`), which `task next` hands over between tasks — is handed over
@@ -124,15 +124,19 @@ it sees the same, and no other project's runs.
 1440 and 390 and `page shot` light at 1440 and dark at 390 for each path, each a child process, and stops the server:
 the review a lead made by hand in four or five commands, while every agent waited.
 
-## The team (`team.ts`)
+## Who works the runs (`team.ts`)
 
-Who works a project's runs is its own choice, in `.plitzi/team.json` (committed): the lead's model and effort, and each
-agent — a name (`dev` is `dev-1`, `dev-2`…), the roles it takes, how many of it and the model to start it with, the
+Who works a project's runs is its own choice, in `.plitzi/team.json` (committed: it holds no secret, so it needs no
+`.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`): a developer and a designer — two
+agents, since each spends tokens; the person grows it when a job asks — the harness's own models, and an `about` that
+says what each field and each role the CLI knows means (`ROLES`: developer, designer, reviewer, tester, writer; any
+other name is a role of the project's own), since JSON has no comments; the CLI never reads `about` and keeps it when it
+writes the file, formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file
+holds the lead's model and effort, and each agent — a name (`dev` is `dev-1`, `dev-2`…), the roles it takes, how many of it and the model to start it with, the
 harness's own name for it, nothing checked but that one is named. The CLI starts no agent; `run plan` says what to start
 each with — its roles, its model, the plan's tasks it takes and `task next --role <roles> --follow --take --agent
-<name>`. The team's size is how many agents work a run at once — no flag says otherwise; a project with no team gets one
-at its first run, the least its plan needs (two developers, one agent for each other role, the harness's own models),
-with `team.json.example` beside it, said; a team somebody emptied is refused. A task whose role nobody in the team takes
+<name>`. The team's size is how many agents work a run at once — no flag says otherwise; a project made before the starter gets
+it at its first run, with an agent for each other role its plan names, said; a team somebody emptied is refused. A task whose role nobody in the team takes
 is refused at `run plan`; an agent of one role is held to it in a rehearsal. `run team` shows it; `run team set|unset
 <name>` changes one agent, or the lead's model, saying it before and after.
 
@@ -145,6 +149,15 @@ from the task's acceptance, not its code, by an agent that did not write it. Its
 configured by `PORT`. Two developer tasks whose tests are one file share one task of them; one that says `"tests":
 false`, writes nothing a test is written for, or that a tester's task of the plan already waits for, gets none. A test
 the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it.
+
+## What the data never shows
+
+A case the project's data never reaches — an age no dog in it has, an empty list, a failed answer — is seen by
+nobody: the designer's look, the tester's page specs and the lead's `task look` all show the data as it is. Finding it
+is the lead's, when it writes the tasks (the reason the lead is the strongest model): the plan says how such a case
+is seen — a row in the data when the demo should show it, or a unit test of the module that decides it, in whose task.
+The designer says one it could not look at (`--approve --note`); the tester's derived task holds one with a unit test
+and tells the lead; and the lead, reviewing, tests the module's edges itself or sends the task back for the test.
 
 ## The designer's review (`design.ts`)
 

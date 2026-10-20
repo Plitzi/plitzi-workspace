@@ -218,7 +218,9 @@ stream that stays open, so a page with a realtime `channel` is checked like any 
 that chooses its children (`choosesChildren`), each it draws and what is named inside it — broken
 images, sideways scroll, a link or words cut off at the screen's edge (an ancestor hiding them, nothing scrolling to
 them), words that cannot be told from what is behind them (under 2:1 — the space's elements and what a plugin draws
-inside one; `aria-hidden` words are a decoration), console errors, refused requests and failed flows — a page whose
+inside one; `aria-hidden` words are a decoration), headings that do not start at an `h1` or skip a level and a link,
+button or field with no name a screen reader can read (as the page is drawn, layouts included), an address no page
+of the space answers (its not-found page came: `no-page`), console errors, refused requests and failed flows — a page whose
 requests the server failed (`5xx`) is looked at once more, and the report is that second look, naming what failed the
 first time (`--json`: `retriedAfter`); a `4xx` is not retried — and the
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
@@ -486,8 +488,9 @@ and one run at a time** in a project: a second is refused, naming the first.
   preview --task` a task in review, before it is.
 - **No task ends with failing checks** — lint, types, tests: `complete` refuses. Only for a reason that weighs, said to
   the lead: `--known-failure "why" --fixed-by <task>`; the final merge still needs every check green.
-- **As many agents as the team has** (`.plitzi/team.json`, written at the first run when there is none; above 5 a
-  person confirms): past it, `task take` waits for one to finish.
+- **As many agents as the team has** (`.plitzi/team.json`: every new project starts with a developer and a designer —
+  two agents, few tokens — and what each role does is in it, and in `run team`; one made before it gets the team its
+  first plan needs; above 5 a person confirms): past it, `task take` waits for one to finish.
 - **Each task in a copy** of the project in `tmp/plitzi-runs/<run>/` — cloned copy-on-write where the disk can; never
   `.env` (its templates, `.env.example`, are), `node_modules` or the binaries of `public/`. Only the task's own files may
   change in it: `task complete` refuses anything else, naming it, and runs the project's checks (what `verify` runs) in

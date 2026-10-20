@@ -80,6 +80,25 @@ describe('the scaffold', () => {
     expect(files['src/plugins/StatCard/declaration.ts']).toBeDefined();
   });
 
+  /** Who works its runs of agents: a developer and a designer, the harness's models, every role the CLI knows, said. */
+  it('gives every project a .plitzi/team.json to start from, committed, that says each role', () => {
+    for (const mode of ['server', 'client'] as const) {
+      const files = scaffold(answers({ mode }));
+      const team: unknown = JSON.parse(files['.plitzi/team.json']);
+
+      expect(team).toMatchObject({
+        version: 1,
+        agents: [
+          { name: 'dev', roles: ['developer'] },
+          { name: 'design', roles: ['designer'] }
+        ],
+        about: { roles: { designer: expect.any(String) as unknown, tester: expect.any(String) as unknown } }
+      });
+      expect(team).not.toHaveProperty('lead');
+      expect(files['.gitignore'].split('\n')).not.toContain('.plitzi');
+    }
+  });
+
   /** `.env` is out of git; `.env.example` is how a clone learns what to put in it — the same keys, no secret. */
   it('gives every project a .env and, committed, a .env.example naming the same settings with no secret', () => {
     const keysOf = (env: string): string[] => env.match(/^[A-Z_]+(?==)/gm) ?? [];

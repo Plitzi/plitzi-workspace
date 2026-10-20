@@ -26,11 +26,13 @@ It checks the open page and returns EVERY problem at once, one sentence each, na
 - every image arrived — an image element that failed says so (`data-plitzi-failed`), though its fallback loads. A lazy
   image out of sight (below the fold, or beside the screen in a carousel's track) has not been asked for yet, and waits;
 - nothing scrolls sideways (`the page scrolls sideways by 37px — widest: "cards"`);
-- no text is drawn in the colour painted behind it.
+- no text is drawn in the colour painted behind it;
+- a screen reader can follow it: the headings start at an `h1` and skip no level, as the page is drawn — layouts and
+  components included (`heading-skipped`), and every link, button and field has a name (`control-unnamed`).
 
 It retries for up to 5 s like an assertion does (`timeout`), so a provider still answering is not a failure. Options:
 `page` (id or slug; the home page by default), `elements: 'all'` to owe the unnamed elements too, `ignore: ['id']` for
-what a test knows is not there yet (a typo is refused), `skip: ['images']` for a check a page breaks on purpose.
+what a test knows is not there yet (a typo is refused), `skip: ['images']` (or `'overflow'`, `'legibility'`, `'accessibility'`) for a check a page breaks on purpose.
 `inspectDocument(page)` runs the page checks alone, for a page whose space is not in hand.
 
 ## Handles

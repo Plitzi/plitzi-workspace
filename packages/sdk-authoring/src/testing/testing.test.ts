@@ -2,12 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { container, heading, list, text } from '../elements';
 import { authorSpace } from '../index';
+import { accessibilityInPage } from './accessibility';
 import { describeFindings, inspectDocument, inspectPage, issuesOf } from './inspect';
 import { onScreen } from './onScreen';
 import { singlePageSpace, withElement } from './variants';
 
 import type { PageEvaluator } from './inspect';
-import type { ProbeFindings } from './probe';
+import type { ProbeFindings, ProbeInput } from './probe';
 import type { SpaceSpec } from '../schema';
 
 /**
@@ -151,7 +152,12 @@ describe('testing/inspectPage', () => {
   const driver = (answers: ProbeFindings[]): PageEvaluator & { calls: number } => {
     const fake = {
       calls: 0,
-      evaluate: <R>(): Promise<R> => {
+      evaluate: <R>(fn: (input: ProbeInput) => R): Promise<R> => {
+        // The accessibility half answers clean here: what it finds is its own test's (accessibility.test.ts).
+        if (fn === (accessibilityInPage as unknown)) {
+          return Promise.resolve({ skippedHeadings: [], unnamed: [] } as R);
+        }
+
         const answer = answers[Math.min(fake.calls, answers.length - 1)];
         fake.calls += 1;
 

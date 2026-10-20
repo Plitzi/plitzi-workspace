@@ -4,6 +4,7 @@ import path from 'node:path';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { RunRefusal } from './refusal';
+import { formattedJson } from '../scaffold/formattedJson';
 
 import type { RunPlan } from './model';
 
@@ -53,7 +54,26 @@ export interface Team {
   version: 1;
   lead?: Model;
   agents: TeamAgent[];
+  /**
+   * What the file's fields and the roles mean, for the person who edits it (`TEAM_ABOUT`): JSON has no comments. Never
+   * read by the CLI, and kept as it was when it writes the file.
+   */
+  about?: Record<string, unknown>;
 }
+
+/**
+ * The roles the CLI knows, and what each does in a run: a task names one (`"role"`), an agent takes some. Any other
+ * name is a role of the project's own — a task names it and an agent of the team takes it, with nothing more to it.
+ */
+export const ROLES = {
+  developer: 'Writes the code of a task: the role of a task that names none.',
+  designer:
+    'Designs (tasks of its own), and reviews the UI/UX of the tasks of other roles before the lead, as a designer.',
+  reviewer: 'Reviews as a task of its own: an accessibility pass, a code audit — and fixes what it finds.',
+  tester:
+    'Writes the tests of each developer task, after it: <task>-tests, from what the task was asked, never bent to pass.',
+  writer: 'Writes the words: the copy of a page, the docs, the help.'
+} as const;
 
 /** One agent of the team, as it is started: its own name, its roles, its model. */
 export interface StartedAgent {
@@ -146,40 +166,52 @@ export const readTeam = async (root: string): Promise<Team | undefined> => {
   return {
     version: 1,
     ...(isModel(parsed.lead) ? { lead: parsed.lead } : {}),
-    agents: parsed.agents.filter(isTeamAgent)
+    agents: parsed.agents.filter(isTeamAgent),
+    ...(isRecord(parsed.about) ? { about: parsed.about } : {})
   };
 };
 
-export const TEAM_EXAMPLE_FILE = path.join('.plitzi', 'team.json.example');
+/**
+ * What the file's fields and the roles mean, kept in it for the person who edits it: JSON has no comments. Models are
+ * left to the harness — the file says how to choose one, in whichever harness runs the agents.
+ */
+export const TEAM_ABOUT: Record<string, unknown> = {
+  file: 'Who works the runs of several agents on this project (plitzi run). Edit it, or: plitzi run team set <name> --roles … --count … --model …',
+  lead: 'The lead plans, reviews every task — the complete, strict review, and the final word — answers and closes: the one you talk to. Give it your strongest model: "lead": { "model": "…", "effort": "high" } (plitzi run team set lead --model …).',
+  agents:
+    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. How many agents work at once is the sum of the counts.',
+  roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
+  more: 'It starts small — every agent spends tokens: one developer, and a designer who reviews the UI of every other task. Grow it when a job asks: more developers (plitzi run team set dev --count 3), a tester who writes the tests of each developer task (plitzi run team set test --roles tester), a writer.'
+};
 
-/** A team as a project might write it: a strong lead and designer, cheaper developers and tester. */
-export const TEAM_EXAMPLE: Team = {
+/** The team a project starts with: a developer and a designer — two agents, the harness's own models. */
+export const STARTER_TEAM: Team = {
   version: 1,
-  lead: { model: 'claude-opus-5-5', effort: 'high' },
+  about: TEAM_ABOUT,
   agents: [
-    { name: 'dev', roles: [DEVELOPER], count: 2, model: 'claude-sonnet-5-5' },
-    { name: 'design', roles: [DESIGNER, 'reviewer'], model: 'claude-opus-5-5' },
-    { name: 'test', roles: [TESTER], model: 'claude-sonnet-5-5' }
+    { name: 'dev', roles: [DEVELOPER] },
+    { name: 'design', roles: [DESIGNER] }
   ]
 };
 
-/** The team a plan needs at least: two developers when it has developer tasks, and one agent for each other role. */
-const starterTeam = (plan: Pick<RunPlan, 'tasks'>): Team => {
+/** The team a plan needs at least: the starter's, and one agent for each other role it names. */
+const teamFor = (plan: Pick<RunPlan, 'tasks'>): Team => {
   const roles = [...new Set(plan.tasks.map(task => task.role ?? DEVELOPER))];
 
   return {
-    version: 1,
+    ...STARTER_TEAM,
     agents: [
-      ...(roles.includes(DEVELOPER) ? [{ name: 'dev', roles: [DEVELOPER], count: 2 }] : []),
-      ...roles.filter(role => role !== DEVELOPER).map(role => ({ name: role, roles: [role] }))
+      ...STARTER_TEAM.agents,
+      ...roles.filter(role => !teamTakes(STARTER_TEAM, role)).map(role => ({ name: role, roles: [role] }))
     ]
   };
 };
 
 /**
  * The project's team, which every run is worked by: its size is how many agents work at once, its roles what a plan's
- * tasks may be. The first run of a project that has none writes one — the least the plan needs, the harness's own
- * models — and an example beside it, said with how to change it; one with no agents is refused, as somebody emptied it.
+ * tasks may be. `plitzi create` writes the starter; a project made before it gets one at its first run — the starter
+ * with an agent for each other role the plan names — said with how to change it. One with no agents is refused, as
+ * somebody emptied it.
  */
 export const ensureTeam = async (
   root: string,
@@ -197,15 +229,12 @@ export const ensureTeam = async (
     return { team: found };
   }
 
-  const team = starterTeam(plan);
+  const team = teamFor(plan);
   await writeTeam(root, team);
-  if (!(await fs.stat(path.join(root, TEAM_EXAMPLE_FILE)).catch(() => undefined))) {
-    await fs.writeFile(path.join(root, TEAM_EXAMPLE_FILE), `${JSON.stringify(TEAM_EXAMPLE, null, 2)}\n`);
-  }
 
   return {
     team,
-    created: `This project had no team: ${TEAM_FILE} written with what the plan needs — ${team.agents.map(teamAgentText).join('; ')} — each the harness's own model. Change it with plitzi run team set <name> --roles … --count … --model … (a lead model, a designer who reviews the UI, a tester who writes the tests: ${TEAM_EXAMPLE_FILE})`
+    created: `This project had no team: ${TEAM_FILE} written with what the plan needs — ${team.agents.map(teamAgentText).join('; ')} — each the harness's own model, and what each field and role means. Change it with plitzi run team set <name> --roles … --count … --model … (a lead model, a designer who reviews the UI, a tester who writes the tests)`
   };
 };
 
@@ -272,7 +301,7 @@ export interface TeamAgentChange {
 
 const writeTeam = async (root: string, team: Team): Promise<void> => {
   await fs.mkdir(path.join(root, path.dirname(TEAM_FILE)), { recursive: true });
-  await fs.writeFile(path.join(root, TEAM_FILE), `${JSON.stringify(team, null, 2)}\n`);
+  await fs.writeFile(path.join(root, TEAM_FILE), formattedJson(team));
 };
 
 /**

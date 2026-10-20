@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 
+import { formattedJson } from './formattedJson';
 import { installCommand, managerFiles, managerPackageFields, runCommand } from './packageManager';
 import {
   ACTIONS_DIR,
@@ -19,6 +20,7 @@ import {
   TLS_KEY_FILE,
   TSCONFIG_BASE
 } from './paths';
+import { STARTER_TEAM, TEAM_FILE } from '../runs/team';
 
 import type { CreateAnswers, ProjectFiles } from './types';
 
@@ -630,5 +632,8 @@ export const projectFiles = (answers: CreateAnswers): ProjectFiles => ({
   'CLAUDE.md': `@AGENTS.md\n@${PROJECT_NOTES}\n`,
   [PROJECT_NOTES]: projectNotes(answers),
   '.env': envFile(answers),
-  '.env.example': envExample(answers)
+  '.env.example': envExample(answers),
+  // Who works the project's runs of several agents (RFC 0028): a developer and a designer to start, what each field and
+  // role means inside. Committed — no secret in it — and read by runs alone: one agent at a time never reads it.
+  [TEAM_FILE]: formattedJson(STARTER_TEAM)
 });

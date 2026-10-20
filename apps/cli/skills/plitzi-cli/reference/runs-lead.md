@@ -25,14 +25,17 @@ What the lead — team lead and software architect — does; the agents' half, t
    page shows, not a file's text (a grep pins where the code is). Else, text. **`notes`** hold for the whole run;
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
    brief starts with it, and the few references its files need. **The team** is the project's,
-   `.plitzi/team.json` (`plitzi run team set dev --roles developer --count 2 --model <model>`; the first run writes one
-   the plan needs, with `team.json.example` beside it): its size is how many work at once, a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
+   `.plitzi/team.json` — a developer and a designer to start, what each role does inside; grow it when the job asks
+   (`plitzi run team set dev --count 2 --model <model>`, `… set test --roles tester`): its size is how many work at once, a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
    developer task (`"tests": false` for none); a designer reviews the others' UI before you (`"designReview": false` in
    the plan turns it off). Theirs is the UI/UX, as a designer; yours is the complete and strict review — code,
    acceptance, edge cases, the page — and the final word, after it (or before, with `--skip-design`).
 
    Ids: lowercase letters, digits, `-`, `_`. **Read what a task changes before you write it**: one asking for what is not
-   there (a shadow to lighten, an id per row of a list) costs a round. What several tasks need is a task they depend
+   there (a shadow to lighten, an id per row of a list) costs a round. **And what its data shows**: a case the project's
+   data never reaches (a dog under two, an empty list, a failed answer) is seen by nobody — not the designer, not a page
+   spec, not you. The plan says how it is seen: a row in the data when the demo should show it, or a unit test of the
+   module that decides it — in whose task. What several tasks need is a task they depend
    on. A new page is a file that does not exist yet: where the space loads its pages by folder (`pagesIn`, a project with
    a server, `nav` for the menu) it touches nothing shared; otherwise it registers in the entry, one line each. A task that will change
    a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
@@ -52,7 +55,9 @@ What the lead — team lead and software architect — does; the agents' half, t
    an agent by name, between tasks too. A mistake in the plan (a check that cannot pass): edit it and `plitzi run amend
    plan.json` — titles, acceptance, priorities, notes; each task changed is told. Its files and dependencies stay.
 6. **Review:** `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs);
-   `plitzi task look t-home /` serves its copy, page checks it and pictures it light and dark — one command. Then
+   `plitzi task look t-home` serves its copy, page checks its pages (headings, names, contrast included) and pictures
+   them light and dark — one command. What the acceptance asks and the data does not show, you test yourself
+   (a module's function with the edge cases, as `node -e` from the copy) — or send it back for the test it needs. Then
    `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds go to a
    person. A `--known-failure` says why and which task fixes it — weigh that.
 7. **Someone changed a file while the agent worked on it** → the approval stops, naming it: `--approve --merge` when

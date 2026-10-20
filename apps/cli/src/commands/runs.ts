@@ -79,8 +79,8 @@ import { readOwner, viewTask } from '../runs/taskStore';
 import {
   DESIGNER,
   heldRoles,
+  ROLES,
   ensureTeam,
-  TEAM_EXAMPLE_FILE,
   modelText,
   readTeam,
   reviewsDesign,
@@ -620,13 +620,24 @@ export const runTeam = (options: RunCommandOptions): Promise<void> =>
     async ctx => ({ file: TEAM_FILE, team: (await readTeam(ctx.root)) ?? null }),
     shown =>
       shown.team === null
-        ? `No team (${shown.file}): a project's first run writes the one its plan needs. Make it now: plitzi run team set dev --roles developer --count 2 --model <model> (an example: ${TEAM_EXAMPLE_FILE}, once a run wrote it)`
+        ? [
+            `No team (${shown.file}): a project's first run writes the one its plan needs. Make it now: plitzi run team set dev --roles developer --count 2 [--model <model>]`,
+            ...rolesText()
+          ].join('\n')
         : [
             `This project's team (${shown.file}), ${String(teamSize(shown.team))} agents and the lead:`,
             `  lead — ${shown.team.lead ? modelText(shown.team.lead) : 'the harness’s own model'}`,
-            ...shown.team.agents.map(each => `  ${teamAgentText(each)}`)
+            ...shown.team.agents.map(each => `  ${teamAgentText(each)}`),
+            ...rolesText()
           ].join('\n')
   );
+
+/** The roles the CLI knows, a line each — and that any other name is one of the project's own. */
+const rolesText = (): string[] => [
+  'Roles:',
+  ...Object.entries(ROLES).map(([role, does]) => `  ${role} — ${does}`),
+  '  any other name — a role of your own: a task names it, an agent takes it'
+];
 
 const memberText = (member: TeamChange['before']): string =>
   member === undefined ? 'none' : 'name' in member ? teamAgentText(member) : modelText(member);

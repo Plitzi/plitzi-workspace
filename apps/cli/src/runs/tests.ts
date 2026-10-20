@@ -149,6 +149,7 @@ export const withTestTasks = (plan: RunPlan, setup: TestSetup | undefined): { pl
       acceptance: [
         `Every line of ${named}'s acceptance has a test, both sides of each condition — empty and full, each choice, signed in and out where it applies — written from what was asked, not from the code`,
         'A test that fails because the work does not do what was asked is not bent to pass: it is told to the lead (task tell), naming the line',
+        'A case the project’s data never shows (an age the data has no dog of, an empty list) is held by a unit test of the module that decides it, and told to the lead: a page spec cannot see it',
         ...testChecks(files, setup.served)
       ]
     };
