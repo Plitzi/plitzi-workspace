@@ -1,0 +1,3 @@
+import { theme } from '../theme.ts';
+
+export const book = { id: 'book', title: 'Book', theme };

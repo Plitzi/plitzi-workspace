@@ -22,15 +22,18 @@ import {
 import { noteRun } from '../../runs/talk';
 import { roleOf } from '../../runs/tasks';
 import {
+  coLeadNames,
   DESIGNER,
   heldRoles,
   ensureTeam,
+  leadModelText,
   modelText,
   reviewsDesign,
   startedAgents,
   TEAM_FILE,
   teamSize
 } from '../../runs/team';
+import { planSkills } from '../upgrade';
 
 import type { RunCommandOptions } from './shell';
 import type { RunRecord, RunTask } from '../../runs/model';
@@ -69,7 +72,11 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
 
   return [
     `Start the team (${TEAM_FILE}):`,
-    `  lead — ${team.lead ? modelText(team.lead) : 'the harness’s own model'}`,
+    `  lead — ${leadModelText(team.lead)} — you: plan, answer, decide and finish${coLeadNames(team).length > 0 ? '; review what no other lead takes' : ''}`,
+    ...coLeadNames(team).map(
+      name =>
+        `  ${name} — a lead that reviews, as strictly as you, from one queue — ${leadModelText(team.lead)}: plitzi task next --role lead --follow --take --agent ${name}`
+    ),
     ...startedAgents(team).map(each => {
       const theirs = tasks.filter(task => each.roles.includes(roleOf(task))).map(task => task.id);
       const reviewing = each.roles.includes(DESIGNER) ? reviews.map(task => task.id) : [];
@@ -97,11 +104,15 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
       // Read after the check: a project's first plan writes the team it needs.
       const { team } = await ensureTeam(ctx.root, plan);
 
+      // The agents work by the skills the project carries: older than the CLI, they teach what it no longer does.
+      const staleSkills = (await planSkills(ctx.root).catch(() => ({ plans: [] }))).plans.map(each => each.name);
+
       return {
         ...checked,
         team,
         designReview: going?.record.designReview === true || reviewsDesign(team, plan),
-        ...(going ? { stackedOn: going.runId } : {})
+        ...(going ? { stackedOn: going.runId } : {}),
+        staleSkills
       };
     },
     checked =>
@@ -115,6 +126,13 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         ),
         `Shared files these tasks reach — by turns or by request: ${list(checked.sharedReached)} (${String(checked.shared.length)} shared in the project: plitzi space overview)`,
         ...checked.notices.map(notice => `  · ${notice}`),
+        ...(checked.staleSkills.length > 0
+          ? [
+              chalk.yellow(
+                `  · The skills the agents read are not what the Plitzi installed writes (${checked.staleSkills.join(', ')}): bring them up first — plitzi upgrade skills --write — an agent follows what they say`
+              )
+            ]
+          : []),
         `Estimate: ${String(checked.estimate.tasks)} tasks, ${String(checked.estimate.agents)} agents at once, about ${String(checked.estimate.wallMinutes)} min (critical path ${String(checked.estimate.criticalPathMinutes)}, all of it ${String(checked.estimate.totalMinutes)}), at least ${String(checked.estimate.reviewRounds)} reviews`,
         ...(checked.estimate.paced ? [pacedText(checked.estimate.paced)] : []),
         ...startLines(checked.tasks, checked.team, checked.designReview),
@@ -165,6 +183,11 @@ export const runExtend = (runId: string | undefined, file: string, options: Plan
         ...(extended.agents
           ? [
               `  ${String(extended.agents.after)} agents may work at once now (${String(extended.agents.before)} before)`
+            ]
+          : []),
+        ...(extended.newLeads
+          ? [
+              `  ${extended.newLeads.join(', ')} review beside you now: start each — plitzi task next --role lead --follow --take --agent <name>`
             ]
           : [])
       ].join('\n')

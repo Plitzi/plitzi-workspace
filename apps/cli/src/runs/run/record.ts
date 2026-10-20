@@ -41,7 +41,8 @@ export const pinnedNow = async (root: string, cli: string): Promise<Pinned> => {
 
 export const samePinned = (a: Pinned, b: Pinned): boolean => JSON.stringify(a) === JSON.stringify(b);
 
-const pinnedChanges = (was: Pinned, now: Pinned): string[] => {
+/** What changed between two pins, a line each: `@plitzi/cli 0.38.1 → 0.38.2`. */
+export const pinnedChanges = (was: Pinned, now: Pinned): string[] => {
   const changes = was.cli === now.cli ? [] : [`@plitzi/cli ${was.cli} → ${now.cli}`];
   const names = new Set([...Object.keys(was.packages), ...Object.keys(now.packages)]);
   for (const name of [...names].sort()) {

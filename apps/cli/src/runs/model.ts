@@ -4,6 +4,9 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
  * What each file of a run holds, with the guard every read is held to. Every time is ISO 8601 in UTC.
  * One writer per file: `plan.json` is the lead's; `run.json`, `approved/` and `merges/` are written under the
  * run's `merge.lock`; a task's `state.json` under its `state.lock`; `owner.json` is created exclusively.
+ *
+ * A run outlives the CLI that opened it — an upgrade while it is open — so every change to these is additive: a new
+ * field is optional, and an old one keeps its meaning. `runs-compat.test.ts` works a run each released CLI wrote.
  */
 
 export const PRIORITIES = ['critical', 'high', 'medium', 'low'] as const;
@@ -153,6 +156,11 @@ export interface RunRecord {
   pinned: Pinned;
   /** How many tasks may be worked at once — one an agent: `task take` refuses past it. */
   agents: number;
+  /**
+   * The leads besides `lead` (`lead-2`…), as the team had them when it opened or was extended: they review, from one
+   * queue (`TaskState.reviewer`); planning, answering and finishing stay `lead`'s.
+   */
+  leads?: string[];
   /** What it was estimated at when it opened: what its report compares against. */
   estimate: { tasks: number; agents: number; wallMinutes: number; totalMinutes: number };
   /** Above the threshold, who confirmed the estimate: a person, by typing the run's name. */
@@ -258,6 +266,8 @@ export interface TaskState {
    * who took it to review, once one did (`task next --take`) — and `approved` once it did: then it is the lead's.
    */
   design?: DesignReview;
+  /** The lead that took this round's review from the queue (`task next --role lead`): another lead is not offered it. */
+  reviewer?: { by: string; round: number; at: string };
   updatedAt: string;
 }
 
@@ -536,6 +546,7 @@ export const isRunRecord = (value: unknown): value is RunRecord =>
   isRecord(value.pinned.packages) &&
   Object.values(value.pinned.packages).every(isString) &&
   isNumber(value.agents) &&
+  optional(value.leads, isStrings) &&
   isRecord(value.estimate) &&
   isNumber(value.estimate.tasks) &&
   isNumber(value.estimate.agents) &&
@@ -617,6 +628,10 @@ export const isTaskState = (value: unknown): value is TaskState =>
       isNumber(design.round) &&
       optional(design.by, isString) &&
       optional(design.at, isString)
+  ) &&
+  optional(
+    value.reviewer,
+    reviewer => isRecord(reviewer) && isString(reviewer.by) && isNumber(reviewer.round) && isString(reviewer.at)
   ) &&
   optional(
     value.accepted,

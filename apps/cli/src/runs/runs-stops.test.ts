@@ -7,8 +7,8 @@ import { finishRun } from './merge';
 import { RUNS_DIR, runPaths } from './paths';
 import { isRunRefusal } from './refusal';
 import { attachRun, checkPlanFile, loadRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from './run';
-import { canWrite, completeTask, nextTask, reportProgress, reviewTask, takeTask } from './tasks';
-import { DEFAULTS } from './taskStore';
+import { canWrite, checkTask, completeTask, nextTask, reportProgress, reviewTask, takeTask } from './tasks';
+import { brakeFailuresFor, DEFAULTS } from './taskStore';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -116,29 +116,54 @@ describe('stopping, cuts and disconnects', () => {
     expect(await canWrite(bench.agent('other'), 'src/space/pages/home/hero.ts')).toMatchObject({ ok: false });
   });
 
-  it('the brake stops a run that keeps failing', async () => {
+  it('the brake stops a run that keeps failing — one more failure allowed for each agent', async () => {
     await open();
     const home = await take('agent-1', 't-home');
     await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'BROKEN\n');
-    for (let attempt = 0; attempt <= DEFAULTS.brakeFailures; attempt += 1) {
+    // Four agents: five, and three more.
+    expect(brakeFailuresFor(4)).toBe(8);
+    for (let attempt = 0; attempt < brakeFailuresFor(4); attempt += 1) {
       await refusal(completeTask(home.ctx, 'es-launch', 't-home'));
     }
 
+    expect((await loadRun(lead(), 'es-launch')).record.status).toBe('open');
+    await refusal(completeTask(home.ctx, 'es-launch', 't-home'));
     expect((await loadRun(lead(), 'es-launch')).record.status).toBe('stopping');
+  });
+
+  it('checks a copy without completing it — and counts nothing against the run', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'BROKEN\n');
+    for (let attempt = 0; attempt <= brakeFailuresFor(4); attempt += 1) {
+      expect(await checkTask(home.ctx, 'es-launch', 't-home')).toMatchObject({ ok: false, checks: { ok: false } });
+    }
+
+    expect((await loadRun(lead(), 'es-launch')).record).toMatchObject({ status: 'open', brake: [] });
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Bienvenidos" };\n');
+    expect(await checkTask(home.ctx, 'es-launch', 't-home')).toMatchObject({ ok: true });
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('in-progress');
   });
 });
 
 describe('versions, machines and caches', () => {
   it('refuses every command when the Plitzi version changed under the run; a person re-pins it by attaching', async () => {
     await open();
-    await take('agent-1', 't-home');
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const home = { title: "Inicio" };\n');
     const upgraded = bench.agent('agent-2', { cli: '0.0.1-bench' });
 
     expect((await refusal(nextTask(upgraded, 'es-launch'))).code).toBe('version-mismatch');
     expect((await refusal(attachRun(upgraded, 'es-launch', false))).code).toBe('person-only');
     const attached = await attachRun({ ...bench.person(true), cli: '0.0.1-bench' }, 'es-launch', false);
-    expect(attached).toMatchObject({ repinned: true, cut: ['t-home'] });
-    expect((await nextTask(upgraded, 'es-launch')).ready).toContain('t-home');
+    // An upgrade on this machine loses no work: the task in hand keeps its copy and its agent, and is told so.
+    expect(attached).toMatchObject({ repinned: true, cut: [], kept: ['t-home'] });
+    const back = await nextTask({ ...home.ctx, cli: '0.0.1-bench', token: undefined }, 'es-launch');
+    expect(back).toMatchObject({ task: { id: 't-home' }, yours: 'in-progress' });
+    expect(back.messages.map(message => message.text).join(' ')).toContain('your copy and your work are kept');
+    expect(await completeTask({ ...home.ctx, cli: '0.0.1-bench' }, 'es-launch', 't-home')).toMatchObject({
+      changed: ['src/space/pages/home/index.ts']
+    });
   });
 
   it('is active on one machine: another attaches once it is released, or a person takes it over', async () => {

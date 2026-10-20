@@ -1,4 +1,5 @@
 import { readJson, writeAtomic, writeJson } from './files';
+import { coLeadsOf, requireLead } from './leads';
 import { EVERYONE, LEAD, sendMessage } from './messages';
 import { isBaseManifest } from './model';
 import { readOwnership } from './ownership';
@@ -19,7 +20,7 @@ import {
 } from './run';
 import { keepFiles } from './store';
 import { viewTask } from './taskStore';
-import { ensureTeam, reviewsDesign, teamSize } from './team';
+import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from './team';
 
 import type { RunPlan, RunTask, TaskState } from './model';
 import type { CheckedPlan } from './plan';
@@ -41,6 +42,8 @@ export interface Extended {
   primer: boolean;
   /** The agents the run allows at once, when the stage raised them: what was asked, or the team's size. */
   agents?: { before: number; after: number };
+  /** The leads that review the stage adds, by name: start each (`plitzi run plan` says how). */
+  newLeads?: string[];
   /** `dryRun`: the stage as it would be stacked — its tasks with the CLI's, estimated — and nothing written. */
   checked?: CheckedPlan;
 }
@@ -53,11 +56,13 @@ export const extendRun = async (
 ): Promise<Extended> => {
   requireNoTask(ctx, 'extend a run');
   const loaded = await loadRun(ctx, runId);
+  await requireLead(ctx, loaded, 'stack a stage on the run');
   assertStatus(loaded, ['open'], 'extend');
   const next: RunPlan = await readPlanFile(file);
   const { team } = await ensureTeam(ctx.root, next);
   // A stage worked by a larger team lets them work: never fewer than the run had.
   const allowed = Math.max(loaded.record.agents, teamSize(team));
+  const leads = [...new Set([...coLeadsOf(loaded.record), ...coLeadNames(team)])];
   const known = new Set(loaded.tasks.map(task => task.id));
   const problems: string[] = [];
   const repeated = next.tasks.filter(task => known.has(task.id)).map(task => task.id);
@@ -186,6 +191,7 @@ export const extendRun = async (
   await updateRecord(ctx, loaded.paths, record => ({
     ...record,
     agents: allowed,
+    ...(leads.length > 0 ? { leads } : {}),
     // The stage's plan and its primer are the run's now: removed with it, as the plan it opened with.
     inputs: withInputs(record.inputs, handed),
     ...(record.designReview === true || reviewsDesign(team, next) ? { designReview: true as const } : {}),
@@ -208,6 +214,9 @@ export const extendRun = async (
     ready,
     notes: next.notes?.length ?? 0,
     primer: primer !== undefined,
-    ...(allowed > loaded.record.agents ? { agents: { before: loaded.record.agents, after: allowed } } : {})
+    ...(allowed > loaded.record.agents ? { agents: { before: loaded.record.agents, after: allowed } } : {}),
+    ...(leads.length > coLeadsOf(loaded.record).length
+      ? { newLeads: leads.filter(each => !coLeadsOf(loaded.record).includes(each)) }
+      : {})
   };
 };

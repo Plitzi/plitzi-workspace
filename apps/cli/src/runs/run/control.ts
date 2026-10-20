@@ -4,10 +4,21 @@ import path from 'node:path';
 import { sizeOf } from '../files';
 import { runPaths, taskPaths } from '../paths';
 import { RunRefusal } from '../refusal';
-import { cutTask, DEFAULTS, readTasks, viewTask } from '../taskStore';
+import { brakeFailuresFor, cutTask, DEFAULTS, readTasks, viewTask } from '../taskStore';
 import { removeRun } from './claim';
 import { requireNoTask, requirePerson } from './context';
-import { assertStatus, loadRun, logRun, pinnedNow, readRecord, runIds, samePinned, updateRecord } from './record';
+import { LEAD, sendMessage } from '../messages';
+import {
+  assertStatus,
+  loadRun,
+  logRun,
+  pinnedChanges,
+  pinnedNow,
+  readRecord,
+  runIds,
+  samePinned,
+  updateRecord
+} from './record';
 
 import type { BrakeEvent } from '../model';
 import type { RunPaths } from '../paths';
@@ -34,7 +45,7 @@ export const recordBrake = async (
     const failures = brake.filter(event => event.kind === 'checks-failed' || event.kind === 'conflict').length;
     const refused = brake.filter(event => event.kind === 'refused').length;
     const completes = brake.filter(event => event.kind === 'completed').length;
-    if (record.status === 'open' && failures > DEFAULTS.brakeFailures) {
+    if (record.status === 'open' && failures > brakeFailuresFor(record.agents)) {
       braked = `${String(failures)} failed checks or conflicts within 30 minutes`;
     } else if (
       record.status === 'open' &&
@@ -125,13 +136,15 @@ export const resumeRun = async (ctx: RunContext, runId: string): Promise<void> =
 /**
  * `plitzi run attach`: a lead, or a person, picks a run up — after the harness died, on another machine, or
  * after an upgrade. Tasks whose copy is gone (purged, or another machine's) start again from their reviewed version;
- * done tasks are never repeated. Another machine's run, or a changed version, is a person's to take.
+ * done tasks are never repeated. After an upgrade on this machine a task in hand keeps its copy and its agent: its
+ * work is source, and its next `complete` runs the checks with the Plitzi installed now — each is told so. Another
+ * machine's run, or a changed version, is a person's to take.
  */
 export const attachRun = async (
   ctx: RunContext,
   runId: string,
   takeOver: boolean
-): Promise<{ cut: string[]; repinned: boolean; tookOver: boolean }> => {
+): Promise<{ cut: string[]; kept: string[]; repinned: boolean; tookOver: boolean }> => {
   requireNoTask(ctx, 'attach to a run');
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const elsewhere = loaded.record.activeOn.machine !== '' && loaded.record.activeOn.machine !== ctx.machine;
@@ -156,12 +169,19 @@ export const attachRun = async (
   }
 
   const cut: string[] = [];
+  const kept: string[] = [];
   for (const task of loaded.tasks) {
     const view = await viewTask(loaded.paths, task);
+    if (!view.owner || view.state.status === 'done') {
+      continue;
+    }
+
     const copyGone = !(await fs.stat(view.paths.work).catch(() => undefined));
-    if (view.owner && view.state.status !== 'done' && (copyGone || elsewhere || repinned)) {
+    if (copyGone || elsewhere) {
       await cutTask(view, copyGone ? 'its copy was purged' : 'the run was attached to again', ctx.now);
       cut.push(task.id);
+    } else if (repinned) {
+      kept.push(task.id);
     }
   }
 
@@ -172,9 +192,18 @@ export const attachRun = async (
     activeOn: { machine: ctx.machine, since: at },
     pinned
   }));
-  await logRun(ctx, loaded.paths, { action: 'attach', cut, repinned, tookOver: elsewhere });
+  const changes = pinnedChanges(loaded.record.pinned, pinned).join(', ');
+  for (const taskId of kept) {
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: taskId,
+      text: `The run is re-pinned to the Plitzi installed now (${changes}): your copy and your work are kept — go on; your next complete runs the checks with it, and a check that answers otherwise now is said there`
+    });
+  }
 
-  return { cut, repinned, tookOver: elsewhere };
+  await logRun(ctx, loaded.paths, { action: 'attach', cut, kept, repinned, tookOver: elsewhere });
+
+  return { cut, kept, repinned, tookOver: elsewhere };
 };
 
 /** `plitzi run release`: this machine lets the run go, so another can attach to it. */

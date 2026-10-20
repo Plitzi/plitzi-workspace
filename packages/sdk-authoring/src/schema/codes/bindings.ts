@@ -21,7 +21,7 @@ export const BINDING_CODES = {
   'format-unknown': {
     kind: 'refused',
     means: "an `as` that names no format of the space's `formats`",
-    fix: 'declare it once — `formats: { price: "{{ source|currency(\'USD\') }}" }` — or write the template in its place'
+    fix: 'declare it once — `formats: { price: "{{ source|currency(\'USD\') }}" }` — or write the template in its place; words the element always shows are its `content`, with no `from`'
   },
   'binding-shape': {
     kind: 'refused',

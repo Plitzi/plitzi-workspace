@@ -1,0 +1,23 @@
+{
+  "copiedAt": "2026-10-20T19:47:33.843Z",
+  "files": {
+    ".env.example": "4fb57623e1bd6c8ae8234906bc000c0268ad96f22b7baf6decb32ce3351c0a91",
+    "es-launch.plan.json": "e7572c98cd0359be390d7b638e3b53e26d1da83ca475681ca1e4e26c4bdd7cd7",
+    "package.json": "1d3deffadf41abb47cc9b5e5d99f940e1cd81fd3b2defe96d1fc10b07bd0edc2",
+    "src/data/menu.json": "ec1e603b43180a77198c36b7ad99ebf6db1d70c02401e7f77f03a9285f64a384",
+    "src/plugins/Badge/declaration.ts": "74baf65c00024661cb687b2ec2cbbdbb84dc6ead14a5b4e4dede3d8164ca5400",
+    "src/plugins/Badge/index.ts": "e00c67554c3099930d93ddcde0481dbf62547bb316deee8916396a098de89480",
+    "src/space/index.ts": "5e17aaff90b6caf9be21d631d9038824dbab46d40b3bffb4bd1104b4808cf77e",
+    "src/space/pages/about.ts": "2583092d922fc3ad01ca4a976fbbeec25cdbfcd2bd9ff9de9c6c91913ed236f0",
+    "src/space/pages/book.ts": "964fc83871735475e760c07872d1d9d30ffcafcccce8e04cf6683a93775cfea1",
+    "src/space/pages/home/hero.ts": "616255351fd74e269d9b12cb9509d293675fe5309cf44ac6037b063e4a3e76f2",
+    "src/space/pages/home/index.ts": "6dd093b42cea740b225c94910519707da3a1bac19208672335e9cdd37eb5e977",
+    "src/space/pages/menu.ts": "2592174c14182e7dc3f0989350bb3af0b961daf5e072a5fbeff0e292737be2f4",
+    "src/space/theme.ts": "97791fd65768fe0a273e8fc8504b91a25b341ea5cf2a81d22f5e62fd4d189b58",
+    "src/space/tokens.ts": "7412b804354b2c8ca81c85decca5c1739286e90540fd626b59dad10fd0f197b1",
+    "summary.md": "1942e1f796447800f6927063f31d9c2987c10ce3531459e1ea2358585037411e"
+  },
+  "overlaid": [
+    "src/space/pages/about.ts"
+  ]
+}

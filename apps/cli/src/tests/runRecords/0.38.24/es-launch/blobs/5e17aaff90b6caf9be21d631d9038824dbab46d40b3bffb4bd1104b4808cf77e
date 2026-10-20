@@ -1,0 +1,8 @@
+import { tokens } from './tokens.ts';
+import { theme } from './theme.ts';
+import { home } from './pages/home/index.ts';
+import { menu } from './pages/menu.ts';
+import { book } from './pages/book.ts';
+import { about } from './pages/about.ts';
+
+export const space = { tokens, theme, pages: [home, menu, book, about] };

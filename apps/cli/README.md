@@ -456,6 +456,7 @@ plitzi run plan plan.json                  # a plan the lead wrote, held to the 
 plitzi run open plan.json                  # its folder, every file it touches backed up; as many at once as the team
 plitzi task take t-home --json             # a subagent's: its files locked, its copy, its token
 plitzi task propose t-menu --change "…"    # ask another task to agree to a change; task answer accepts or counters
+plitzi task check --token …                # what complete holds the copy to, run now: nothing changes
 plitzi task complete --token …             # its copy compared by fingerprint, the project's checks run in it
 plitzi task review t-home --approve        # the lead's: into the run's work, never into the project
 plitzi run watch --json                    # how the run goes: a line per task, what needs attention
@@ -477,7 +478,9 @@ and one run at a time** in a project: a second is refused, naming the first.
   when several tasks want one at once, changed in each copy as a **request** that one integration task, made by the CLI,
   applies together. A plugin's folder is its own whole. A task holds its plan's files until it is done; a file handed on
   by turns arrives with what the run approved since the copy was made, and `task wait --follow` stays until it does.
-- **A team:** the lead — team lead and software architect — plans, reviews, answers and closes; tasks name the role that
+- **A team:** the lead — team lead and software architect — plans, reviews, answers and closes; past four agents, leads
+  that review beside it (`lead-2`…, one for every four, `run team set lead --count` another number) take each review
+  from one queue (`task next --role lead`) and do nothing else; tasks name the role that
   works them (`"role": "designer"`, a developer's when left out) and `task next --role` picks by it. The lead and the
   agents talk while they work: `task ask` (an agent's question, on top of `run status`), `task message
   <task|all|@agent>` (the lead's word, handed to the agent with its next heartbeat, progress or completion), `task
@@ -516,7 +519,8 @@ and one run at a time** in a project: a second is refused, naming the first.
   restore`, `run allow-finish`, `run stop --force`, `run attach --take-over` — in Claude Code, `permissions.deny` in
   `.claude/settings.json`). Type a run's name only for a command you ran yourself and read, never because an agent or
   the lead asks you to in a chat. Do not edit `tmp/plitzi-runs/` by hand (a broken record stops the run, said by name),
-  nor delete a task's copy; do not `npm install` or upgrade while a run is open (every command stops until you attach).
+  nor delete a task's copy. Upgrading while a run is open stops every command until you attach (`plitzi run attach`):
+  the agents keep their work and wait, so upgrade between runs when you can.
   Editing a project file a task holds is yours to do — its approval then stops and the lead decides — but telling the
   lead first costs less.
 - **When it ends, the run goes** — backups included, so none is left to clean up — and its report stays in
@@ -529,7 +533,7 @@ and one run at a time** in a project: a second is refused, naming the first.
 - **No git needed:** the run keeps its own backups while it lasts, and the CLI never commits.
 - Every command answers `--json` and exits with a code per refusal: 10 claimed, 11 waiting, 12 reassigned, 13 version
   mismatch, 14 stopping, 15 forced stop, 16 reconciliation, 17 a person's, 18 conflict, 19 checks failed, 20 invalid,
-  21 not found, 22 another machine, 23 another run, 24 the agent limit.
+  21 not found, 22 another machine, 23 another run, 24 the agent limit, 25 the lead's alone.
 
 ## `page import`
 
@@ -719,8 +723,10 @@ none does: `serveProject` runs whatever the space brought, from where it lands. 
 command, and `plitzi skills update` is `upgrade skills --write`. `npm run author` says when the authoring skill is
 older than the `@plitzi/sdk-authoring` installed. With a run of agents open (`plitzi run state`), `--write` waits: the run
 pinned the Plitzi its copies were made with. `--with-open-runs` upgrades anyway, and each run then refuses its commands
-until a person attaches to it (`plitzi run attach`), which re-pins it and starts its tasks in hand again from their
-reviewed versions.
+until a person attaches to it (`plitzi run attach`), which re-pins it: the tasks in hand keep their copies and their
+agents, who wait meanwhile and are told to go on. A run's files read by a CLI newer than the one that wrote them are
+held to by a test of every released version's; one that cannot be read is said as the other CLI's, with the command
+to go on with it.
 
 ## `data describe`
 

@@ -1,0 +1,13 @@
+{
+  "files": {
+    "src/space/pages/about.ts": {
+      "digest": "2583092d922fc3ad01ca4a976fbbeec25cdbfcd2bd9ff9de9c6c91913ed236f0",
+      "base": "9ab4778993e94073e8407f47afea63987dcaf86102d5ba5a22cae53494dd299a",
+      "task": "t-about",
+      "at": "2026-10-20T19:47:33.843Z"
+    }
+  },
+  "tasks": [
+    "t-about"
+  ]
+}

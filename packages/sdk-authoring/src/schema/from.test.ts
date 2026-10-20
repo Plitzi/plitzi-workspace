@@ -65,6 +65,10 @@ describe('from', () => {
     expect(() =>
       authorSpace(space([text({ id: 't', from: 'state.x', as: 'prize' })], { price: '{{ source }}' }))
     ).toThrow(/\[format-unknown\].*did you mean "price"/s);
+    // Words where a format goes: the static text it meant is its content.
+    expect(() => authorSpace(space([text({ id: 't', from: 'state.x', as: 'Pip has no weighing yet' })]))).toThrow(
+      /\[format-unknown\].*is words, not a format.*content: 'Pip has no weighing yet'`, with no `from`/s
+    );
     expect(() => authorSpace(space([text({ id: 't', as: 'price' })]))).toThrow(/\[as-without-from\]/);
   });
 });

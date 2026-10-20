@@ -2,8 +2,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { proposalsOf } from '../agreements';
-import { approveDesign, assertDesigner, designDue, isLead } from '../design';
+import { approveDesign, assertDesigner, designDue } from '../design';
 import { exists, fingerprint, writeJson } from '../files';
+import { assertReviewingLead, isCoLead, isPrincipal } from '../leads';
 import { LEAD, messagesOf, sendMessage } from '../messages';
 import { taskPaths, under } from '../paths';
 import { dependenciesDone } from '../plan';
@@ -109,9 +110,27 @@ export const reviewTask = async (
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
   onProjectChange: ProjectChange = 'refuse',
-  { skipDesign = false }: { skipDesign?: boolean } = {}
+  options: { skipDesign?: boolean } = {}
 ): Promise<ReviewedTask> => {
   requireNoTask(ctx, 'review a task');
+  const loaded = await loadRun(ctx, runId);
+  // One verdict at a time on a task: two leads saying one at once, the second reads the first's — never both merged.
+  return withLock(
+    taskPaths(loaded.paths, findTask(loaded, taskId).id).reviewLock,
+    () => decide(ctx, runId, taskId, verdict, comments, onProjectChange, options),
+    { now: ctx.now, ttlMs: 15 * 60_000, waitMs: 5 * 60_000 }
+  );
+};
+
+const decide = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  verdict: 'approve' | 'changes',
+  comments: ReviewComment[],
+  onProjectChange: ProjectChange,
+  { skipDesign = false }: { skipDesign?: boolean }
+): Promise<ReviewedTask> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'review a task');
   const task = findTask(loaded, taskId);
@@ -131,12 +150,13 @@ export const reviewTask = async (
   }
 
   // Its UI waits for a designer: an agent's verdict is the designer's; the lead's approval waits for it, or says it skips.
-  const byDesigner = designDue(view.state) && !isLead(ctx.agent);
+  const asLead = isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent);
+  const byDesigner = designDue(view.state) && !asLead;
   if (byDesigner) {
     if (skipDesign) {
       throw new RunRefusal(
         'invalid',
-        `--skip-design is the lead's: ${ctx.agent} is not the lead. The lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design --agent lead`,
+        `--skip-design is a lead's: ${ctx.agent} is not one. A lead approves without the UI review as itself — plitzi task review ${taskId} --approve --skip-design --agent lead`,
         { task: taskId }
       );
     }
@@ -148,7 +168,11 @@ export const reviewTask = async (
 
       return { verdict, round: view.state.round, design: 'approved' };
     }
-  } else if (verdict === 'approve' && designDue(view.state) && !skipDesign) {
+  } else {
+    await assertReviewingLead(ctx, loaded, view);
+  }
+
+  if (!byDesigner && verdict === 'approve' && designDue(view.state) && !skipDesign) {
     const by = view.state.design?.by;
     throw new RunRefusal(
       'invalid',

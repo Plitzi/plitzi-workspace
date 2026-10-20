@@ -235,7 +235,7 @@ describe('acceptance, checks and what is left behind', () => {
     expect(await fs.readFile(path.join(dir, 'src/space/pages/about.ts'), 'utf-8')).toContain('Sobre');
 
     // Reverted, its file is the project's again in the preview.
-    await revertTask(lead(), 'es-launch', 't-about');
+    await revertTask(lead(), 'es-launch', 't-about', 'not wanted after all');
     expect(await fs.readFile(path.join(dir, 'src/space/pages/about.ts'), 'utf-8')).toBe(
       await bench.read('src/space/pages/about.ts')
     );

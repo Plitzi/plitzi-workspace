@@ -233,7 +233,7 @@ export const taskReassign = (taskId: string, options: RunCommandOptions): Promis
       }`
   );
 
-export const taskRevert = (taskId: string, options: RunCommandOptions & { reason: string }): Promise<void> =>
+export const taskRevert = (taskId: string, options: RunCommandOptions & { reason?: string }): Promise<void> =>
   act(
     options,
     async ctx => revertTask(ctx, await runOf(ctx, options), taskId, options.reason),

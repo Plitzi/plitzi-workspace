@@ -58,25 +58,42 @@ const designReviewText = (review: NonNullable<NextTask['designReview']>, agent: 
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "what you saw"] | --changes "what, where, and why" [--on <element>] --agent ${agent}`
   ].join('\n');
 
+/** A lead's review, as `task next --role lead` hands it: the whole review `lead` would make, by this lead. */
+const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: string): string =>
+  [
+    chalk.bold(
+      `Review ${review.task.id} — ${review.task.title}${review.round > 0 ? ` (round ${String(review.round + 1)}: sent back before)` : ''}: yours, no other lead takes it`
+    ),
+    ...(review.design ? [`  ✓ ${review.design}`] : []),
+    ...review.asked.map(line => `  ↺ ${line}`),
+    `  It changed: ${review.changed.join(', ') || 'nothing said'}`,
+    `  What went to review, against its acceptance: plitzi task show ${review.task.id}`,
+    `  Look at it as it went to review: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'}`,
+    `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why" --agent ${agent}`,
+    '  Its questions, the plan and the finish are lead’s: what you find beyond the task, tell lead'
+  ].join('\n');
+
 const nextText = (next: NextTask, agent: string): string =>
   [
     ...messageLines(next.messages),
-    next.designReview
-      ? designReviewText(next.designReview, agent)
-      : next.task
-        ? next.yours
-          ? [
-              `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
-              ...(next.asked ?? []).map(line => `  ↺ ${line}`)
+    next.leadReview
+      ? leadReviewText(next.leadReview, agent)
+      : next.designReview
+        ? designReviewText(next.designReview, agent)
+        : next.task
+          ? next.yours
+            ? [
+                `Yours to go on with: ${next.task.id} — ${next.task.title} (${next.yours === 'changes-requested' ? 'changes requested' : 'unblocked'}). Your token is still good: plitzi task context ${next.task.id}`,
+                ...(next.asked ?? []).map(line => `  ↺ ${line}`)
+              ].join('\n')
+            : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
+          : [
+              String(next.why),
+              ...(next.worked ?? []).map(
+                each =>
+                  `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
+              )
             ].join('\n')
-          : `Next: ${next.task.id} — ${next.task.title} (${next.task.priority}, ${next.task.role ?? 'developer'}). Take it: plitzi task take ${next.task.id}`
-        : [
-            String(next.why),
-            ...(next.worked ?? []).map(
-              each =>
-                `  ${each.task}: ${each.status === 'done' ? 'approved' : each.status === 'in-review' ? 'with the lead, in review' : each.status}${each.finishedBy ? ` — as ${each.finishedBy} last did it, not your version` : ''}`
-            )
-          ].join('\n')
   ].join('\n');
 
 const takenText = (taken: TakenTask): string =>

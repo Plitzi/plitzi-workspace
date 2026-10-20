@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { stopTree, TREE } from './processes';
 import { runScript, scriptsOf, tail } from '../commands/verify';
 import { DEV_SERVER_FILE } from '../scaffold/paths';
 
@@ -112,7 +113,7 @@ const serveCopy = async (
     cwd: work,
     shell: true,
     stdio: ['ignore', log.fd, log.fd],
-    detached: process.platform !== 'win32',
+    ...TREE,
     env: {
       ...process.env,
       ...Object.fromEntries(
@@ -127,17 +128,7 @@ const serveCopy = async (
     }
   });
   const stop = (): void => {
-    // The start script's whole process group: a shell and the server it started.
-    try {
-      if (child.pid !== undefined && process.platform !== 'win32') {
-        process.kill(-child.pid, 'SIGTERM');
-      } else if (child.pid !== undefined) {
-        // Windows has no process groups: the shell and the server under it, as a tree.
-        spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
-      }
-    } catch {
-      // Already gone.
-    }
+    stopTree(child, { group: true });
   };
   const url = `http://127.0.0.1:${String(port)}`;
   const answered = await answering(url, 60_000);

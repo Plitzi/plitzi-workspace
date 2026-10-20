@@ -5,6 +5,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { proposalsOf } from './agreements';
 import { readOptional, writeAtomic } from './files';
+import { requireLead } from './leads';
 import { REPORTS_DIR } from './paths';
 import { RunRefusal } from './refusal';
 import { inputOf, loadRun, readApproved, requireNoTask, updateRecord } from './run';
@@ -332,6 +333,7 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
 export const writeSummary = async (ctx: RunContext, runId: string, file: string): Promise<void> => {
   requireNoTask(ctx, 'write the run’s summary');
   const loaded = await loadRun(ctx, runId);
+  await requireLead(ctx, loaded, 'write the run’s summary');
   const text = (await readOptional(path.resolve(ctx.root, file)))?.toString('utf-8');
   if (text === undefined || text.trim() === '') {
     throw new RunRefusal(

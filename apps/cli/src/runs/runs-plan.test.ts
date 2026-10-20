@@ -84,6 +84,31 @@ describe('a plan held to the rules', () => {
     expect(ordered.notices.some(notice => notice.includes('which "t-about" holds'))).toBe(false);
   });
 
+  it('says a file other tasks import, and a task whose acceptance no command proves', async () => {
+    const plan = benchPlan();
+    plan.tasks.push({
+      id: 't-theme',
+      title: 'A warmer theme',
+      files: ['src/space/theme.ts'],
+      dependsOn: [],
+      priority: 'low',
+      estimateMinutes: 10,
+      acceptance: [{ said: 'The theme authors', check: 'plitzi space author' }]
+    });
+    const read = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 3));
+
+    expect(read.notices).toContainEqual(
+      expect.stringContaining(
+        'src/space/theme.ts (t-theme) is imported by the files of other tasks — src/space/pages/book.ts (t-book), src/space/pages/home/index.ts (t-home), src/space/pages/menu.ts (t-menu)'
+      )
+    );
+    // Said once for every task with no check — t-theme has one.
+    const unchecked = read.notices.filter(notice => notice.startsWith('No line of'));
+    expect(unchecked).toHaveLength(1);
+    expect(unchecked[0]).toContain('"t-home", "t-menu", "t-book", "t-about"');
+    expect(unchecked[0]).not.toContain('t-theme');
+  });
+
   it('expands a root with what it owns, says what is shared, and estimates it', async () => {
     const checked = await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), teamFor(benchPlan(), 4));
 

@@ -5,7 +5,7 @@ import { LEAD, messagesOf, unreadFor } from './messages';
 import { under } from './paths';
 import { chainMinutes } from './plan';
 import { previewPort } from './preview';
-import { loadRun, readApproved, readBase, runIds } from './run';
+import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, runIds, samePinned } from './run';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
 
@@ -51,6 +51,10 @@ export interface TaskLine {
   milestone?: string;
   /** Its UI's review by a designer, in a run that has one. */
   design?: DesignReview;
+  /** In review: the lead that took this round's review, once one did. */
+  reviewer?: string;
+  /** In review: since when it is as it is — sent, or its UI said — what a review no lead takes has waited from. */
+  since?: string;
 }
 
 export interface Attention {
@@ -68,6 +72,7 @@ export interface Attention {
     | 'overwrite'
     | 'known-failure'
     | 'file-too-long'
+    | 'version'
     | 'message';
   task?: string;
   /** The file it is about, when it is about one: what keeps it the same notice while its words change. */
@@ -92,6 +97,8 @@ export interface RunView {
   attention: Attention[];
   merges: { id: string; kind: string; at: string; files: number }[];
   approvedFiles: number;
+  /** The leads besides `lead` that review (`lead-2`…): who takes the reviews, when the run has some. */
+  leads: string[];
   /** Where the run's approved work is served while a preview serves it (`run preview`, `npm run start:preview`). */
   previewPort?: number;
 }
@@ -124,6 +131,10 @@ const lineOf = (view: TaskView, now: Date, unblocks: string[]): TaskLine => ({
     isDisconnected(view.task, view.signalAt, now),
   ...(view.owner ? { takenAt: view.owner.takenAt } : {}),
   ...(view.state.design ? { design: view.state.design } : {}),
+  ...(view.state.status === 'in-review' && view.state.reviewer?.round === view.state.round
+    ? { reviewer: view.state.reviewer.by }
+    : {}),
+  ...(view.state.status === 'in-review' ? { since: view.state.updatedAt } : {}),
   unblocks,
   ...(view.task.milestone ? { milestone: view.task.milestone } : {})
 });
@@ -146,6 +157,16 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
     attention.push({
       kind: 'reconciliation',
       text: `In reconciliation: ${record.reconciliation?.reason ?? ''} — ${record.reconciliation?.files.map(file => `${file.file}${file.resolved ? ` (${file.resolved})` : ''}`).join(', ') ?? ''}`,
+      who: 'person'
+    });
+  }
+
+  // Read with any version, so the lead sees it: until a person re-pins the run, every agent's command is refused.
+  const pinned = await pinnedNow(ctx.root, ctx.cli);
+  if (!samePinned(record.pinned, pinned)) {
+    attention.push({
+      kind: 'version',
+      text: `The Plitzi version changed under the run (${pinnedChanges(record.pinned, pinned).join(', ')}): the agents wait, their work kept in their copies — a person re-pins it in their terminal: plitzi run attach ${record.runId}`,
       who: 'person'
     });
   }
@@ -342,6 +363,7 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       files: Object.keys(merge.files).length
     })),
     approvedFiles: Object.keys(approved.files).length,
+    leads: record.leads ?? [],
     ...(port === undefined ? {} : { previewPort: port })
   };
 };
@@ -386,9 +408,11 @@ export const runText = (view: RunView): string => {
           ? ` · ${task.blockedBy.reason}`
           : task.status === 'changes-requested'
             ? ` · changes requested (round ${String(task.round)})`
-            : task.status === 'in-review' && task.design
+            : task.status === 'in-review' && task.design?.status === 'due'
               ? ` · ${designText(task.design)}`
-              : '';
+              : task.status === 'in-review'
+                ? `${task.design ? ` · ${designText(task.design)}` : ''}${task.reviewer ? ` · ${task.reviewer} reviews it` : view.leads.length > 0 ? ' · no lead took it yet' : ''}`
+                : '';
     lines.push(
       `  ${ICON[task.status]} ${task.id.padEnd(18)} ${task.role === 'developer' ? '' : `[${task.role}] `}${agent}${task.title}${step}${progress}${extra}${task.noSignal ? ' · no signal' : ''}`
     );

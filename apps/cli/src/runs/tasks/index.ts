@@ -23,6 +23,8 @@ export { takeTask } from './take';
 export type { TakenTask } from './take';
 export { blockTask, noteTask, reportProgress, unblockTask } from './signals';
 export type { Signal } from './signals';
+export { checkTask } from './check';
+export type { CheckedTask } from './check';
 export { completeTask, discardFile } from './complete';
 export type { CompleteOptions, CompletedTask } from './complete';
 export { requestShared, requestsOf } from './requests';

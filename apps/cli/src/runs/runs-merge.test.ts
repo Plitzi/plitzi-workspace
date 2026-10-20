@@ -173,7 +173,7 @@ describe('undoing', () => {
 export const menu = { title: 'Carta', theme };
 `
     );
-    const reverted = await revertTask(lead(), 'es-launch', 't-about');
+    const reverted = await revertTask(lead(), 'es-launch', 't-about', 'not wanted after all');
 
     expect(reverted.reverted).toEqual(['src/space/pages/about.ts']);
     const dry = await finishRun(bench.person(true), 'es-launch', { apply: false, leavePending: true });

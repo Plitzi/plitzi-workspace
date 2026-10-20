@@ -9,7 +9,7 @@ import { runPaths, runsDir, taskPaths } from '../paths';
 import { checkPlan, PlanRefusal } from '../plan';
 import { RunRefusal } from '../refusal';
 import { keepFiles } from '../store';
-import { ensureTeam, reviewsDesign, teamSize } from '../team';
+import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from '../team';
 import { assertNoOtherRun, claimProject, handedInputs, releaseProject } from './claim';
 import { requireNoTask, requirePerson } from './context';
 import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
@@ -205,6 +205,7 @@ export const openRun = async (
     activeOn: { machine: ctx.machine, since: at },
     pinned: await pinnedNow(ctx.root, ctx.cli),
     agents,
+    ...(coLeadNames(team).length > 0 ? { leads: coLeadNames(team) } : {}),
     estimate: {
       tasks: checked.estimate.tasks,
       agents: checked.estimate.agents,

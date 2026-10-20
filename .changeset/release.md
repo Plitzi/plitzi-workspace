@@ -217,3 +217,32 @@
   apart (`PLITZI_SERVER_RECORD`, `tmp/visual/server.json`) so `tmp/dev-server.json` stays the person's server's. It no
   longer falls back to 8080 and reuses the server a person has open. `plitzi upgrade` brings it to every project.
 
+- **More leads for a larger team** (`@plitzi/cli`): one lead for every four agents — `lead-2`, `lead-3`… beside `lead`,
+  or as many as `"lead": { "count" }` in `team.json` says (`plitzi run team set lead --count N`). They take reviews from
+  one queue (`task next --role lead --follow --take`), a review another took refused to them, and do nothing else:
+  planning, amending, stages, notes, unblocking, reassigning, reverting, reconciling, the summary and the finish are
+  `lead`'s, refused to them and to every agent of the team (`lead-only`, exit 25). `lead` may review any, and is woken
+  for one only after it waited two minutes untaken. Two verdicts on one task are given one at a time.
+- **A verdict is a lead's** (`@plitzi/cli`): an agent of the team giving a review without its task's token — a developer,
+  or a designer once the task's UI is said — is refused; before, any name without a token reviewed as the lead.
+  `task revert` says it is the lead's before it asks for `--reason`.
+- **Upgrading Plitzi mid-run loses no work** (`@plitzi/cli`): re-pinned by `run attach`, a task in hand on this machine
+  keeps its copy, its agent and its token, and is told to go on — before, it started over from its reviewed version.
+  `task next --follow` waits through the upgrade as through a stop, `run status` says what the person runs, and the
+  refusal's next step says the agent keeps its work. A run's file that this CLI cannot read is said as the CLI's that
+  wrote it, with the command to go on with it, not as a hand edit; `src/tests/runRecords/` keeps a run as each released
+  CLI wrote it, and a test reads, works and finishes each, so a change to a record that is not additive fails before it
+  ships. `run plan` says when the project's skills are older than the CLI.
+- **`plitzi task check`** (`@plitzi/cli`): what `complete` holds a copy to — the project's checks, the acceptance's
+  commands, the files too long — run without completing, and counted by no brake. The brake allows one more failure for
+  each agent past the first (five agents fixing at once stopped a run on five), and a preview's server is stopped with
+  everything under it (on Windows, its tree).
+- **`run plan` says two more things** (`@plitzi/cli`): a file of a task that other tasks' files import — what it exports
+  is their contract (v12: a component's params changed under three callers) — and the tasks whose acceptance no command
+  proves, which hold at their review only.
+- **`team.json` says what it means as the CLI installed does** (`@plitzi/cli`): its `about` is the CLI's — written fresh
+  whenever the CLI writes the file, and brought up by `plitzi upgrade` (files), the agents and leads left as the project
+  has them; before, a project kept the words of the CLI that created it (no lead count).
+- **Words where a format goes are said as content** (`@plitzi/sdk-authoring`): `from` with `as: 'Pip has no weighing
+  yet'` was refused as a format nobody declared, offering to declare one; it now says `as` is a format's name or a
+  template, and that words an element always shows are its `content`, with no `from`.

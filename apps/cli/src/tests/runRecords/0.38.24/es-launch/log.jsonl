@@ -1,0 +1,16 @@
+{"at":"2026-10-20T19:47:33.843Z","by":"lead","action":"open","tasks":4,"backedUp":8}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-1","action":"take","task":"t-about"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-1","action":"event","kind":"completed"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-1","action":"complete","task":"t-about","changed":1,"requests":[]}
+{"at":"2026-10-20T19:47:33.843Z","by":"lead","action":"review","task":"t-about","verdict":"approve","round":1,"merged":["src/space/pages/about.ts"],"fulfilled":[],"granted":[],"ready":[],"integrations":[]}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-2","action":"take","task":"t-menu"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-2","action":"event","kind":"completed"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-2","action":"complete","task":"t-menu","changed":2,"requests":[]}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-3","action":"take","task":"t-home"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-3","action":"propose","proposal":"t-home-p1","from":"t-home","to":"t-menu"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-3","action":"ask","task":"t-home","message":"m1"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-3","action":"tell","task":"t-home","message":"m2"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-3","action":"event","kind":"completed"}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-3","action":"complete","task":"t-home","changed":2,"requests":["src/space/index.ts"]}
+{"at":"2026-10-20T19:47:33.843Z","by":"lead","action":"review","task":"t-menu","verdict":"changes","round":1}
+{"at":"2026-10-20T19:47:33.843Z","by":"agent-2","action":"answer","proposal":"t-home-p1","verdict":"accept"}

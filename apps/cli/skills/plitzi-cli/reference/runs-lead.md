@@ -23,7 +23,9 @@ What the lead — team lead and software architect — does; the agents' half, t
    **Acceptance a command can tell** is `{ said, check }`: the check runs in the task's copy at `complete`, beside the
    project's checks, and passes on exit 0 — `plitzi` in it is this CLI, `$PLITZI_URL` the copy served by its own start
    script on a free port. `page check --expect "<id>~<text>"` fails when that element does not show the text — check what a
-   page shows, not a file's text (a grep pins where the code is). Else, text. **`notes`** hold for the whole run;
+   page shows, not a file's text (a grep pins where the code is). Else, text — and only text holds at your review alone:
+   a later task can undo it unseen (`run plan` names a task with no check). A check runs again on the whole result at
+   the finish. **`notes`** hold for the whole run;
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
    brief starts with it, and the few references its files need. **The team** is the project's,
    `.plitzi/team.json` — a developer and a designer to start, what each role does inside; grow it when the job asks
@@ -32,14 +34,20 @@ What the lead — team lead and software architect — does; the agents' half, t
    the plan turns it off). Theirs is the UI/UX, as a designer; yours is the complete and strict review — code,
    acceptance, edge cases, the page — and the final word, after it (or before, with `--skip-design`, yours: as
    yourself — no `--agent`, or `--agent lead`). A UI review counts only from a designer of the team, by the name it
-   is started with (`design-1`).
+   is started with (`design-1`). **One lead for every four agents**: a team of five or more has `lead-2`… beside you
+   (`plitzi run team set lead --count N` says another number). Start them as `run plan` says; each takes the next review
+   no other lead took and reviews it as you would — tell them how strict you are (the run's notes, or a message to
+   `@lead-2`). The rest is yours alone. `run watch --until lead` wakes you for a review only once it waited two minutes
+   with no lead taking it; you may review any.
 
    **Keep a person's actions a person's in the harness**: an agent with a shell can give itself a terminal and type a
    run's name. Deny the agents — not yourself, unless the person said so — `plitzi run finish --apply`, `run abort`,
    `run purge`, `run restore`, `run allow-finish`, `run stop --force` and `run attach --take-over` (Claude Code:
    `permissions.deny` in `.claude/settings.json`).
 
-   Ids: lowercase letters, digits, `-`, `_`. **Read what a task changes before you write it**: one asking for what is not
+   Ids: lowercase letters, digits, `-`, `_`. **A file other tasks import is their contract**: a task that changes what
+   it exports (a component's params) changes it compatibly — a new param optional — or the plan says who follows it
+   (`run plan` names each). **Read what a task changes before you write it**: one asking for what is not
    there (a shadow to lighten, an id per row of a list) costs a round. **And what its data shows**: a case the project's
    data never reaches (a dog under two, an empty list, a failed answer) is seen by nobody — not the designer, not a page
    spec, not you. The plan says how it is seen: a row in the data when the demo should show it, or a unit test of the
@@ -49,7 +57,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
 3. `plitzi run plan plan.json` — refused, every reason at once (a repeated file, a cycle, an unknown task, a
    path outside the source, a check it cannot run, another run going); otherwise expanded, shared files and overlaps
-   listed, estimated. `plitzi run rehearse plan.json` plays it out with the team as `task next` would:
+   listed, estimated — and the skills said when they are older than the CLI (`plitzi upgrade skills --write` first). `plitzi run rehearse plan.json` plays it out with the team as `task next` would:
    who works what when, the critical path, your review queue (`--review 5m`), files changed at once, and the length for
    each number of agents. Nothing is opened.
 4. **Ask the person first** who applies the run at the end — they, or you: then they open it in their terminal with
@@ -76,7 +84,9 @@ What the lead — team lead and software architect — does; the agents' half, t
    the changes go together line by line (the refusal says so), `--approve --overwrite` (its version wins, said, the
    other kept) or `--changes` (redo it on the project's version). A change after approval puts the finish into
    **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
-   **The brake** stops a run whose completions keep being refused: `run status` says why; `plitzi run resume`.
+   **The brake** stops a run whose completions keep being refused: `run status` says why; `plitzi run resume`. Agents
+   iterate with `task check`, which it does not count. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
+   status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait.
 8. **Close it:** write the summary (done, wrong, left): `plitzi run report --summary summary.md`; then `plitzi run
    finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
    `plitzi run extend <run> next.json` stacks it, one finish for both. `plitzi run pending` lists what awaits applying.

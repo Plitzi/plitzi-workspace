@@ -1,0 +1,14 @@
+{
+  "id": "t-about",
+  "title": "Translate about",
+  "files": [
+    "src/space/pages/about.ts"
+  ],
+  "dependsOn": [],
+  "priority": "low",
+  "estimateMinutes": 10,
+  "acceptance": [
+    "About reads in Spanish"
+  ],
+  "kind": "work"
+}

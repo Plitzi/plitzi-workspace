@@ -43,6 +43,18 @@ hands an agent the task it holds and can go on with — unblocked, or sent back 
 messages to every task (`*`): each task reads every one once, with its take or its next sign of life, and `task context`
 (the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed.
 
+**More leads for a larger team** (`leads.ts`). One lead reviews for four agents (`AGENTS_PER_LEAD`): past that, tasks
+waited for its review in v12. A team of five or more has `lead-2`, `lead-3`… beside `lead` — `"lead": { "count" }` in
+`team.json` says another number — recorded in `run.json` (`leads`) when the run opens or a stage raises them. Two levels
+and one queue, no lead with agents of its own: a lead that reviews waits with `task next --role lead --follow --take`,
+which offers it a task in review no other lead took (`TaskState.reviewer`, for the round) — one it sent back first, then
+the one that waited longest — and reviews it as `lead` would, as strictly; a review another lead took is refused to it
+(`claimed`). Everything else — planning, amending, stacking a stage, answering, notes to every task, unblocking,
+reassigning, reverting, reconciling, the summary and the finish — is `lead`'s, refused to a lead that reviews and to an
+agent of the team (`lead-only`), so two never do it twice. `lead` may review any task, and `run watch --until lead` wakes
+it for one only after it waited two minutes with no lead taking it (`UNTAKEN_REVIEW_MS`): the others are not running, or
+all at a review. Two verdicts on one task are given one at a time (`review.lock`): the second reads it said.
+
 **Connected as it goes.** A shared file a task changed — or any file no task at work holds: a done task's, one in no
 task — is taken by turns at `complete` when nobody else holds it, so it merges with the task instead of waiting for an
 integration task — an integration task holds its file only while it is worked, and there is one a file: what is
@@ -80,7 +92,9 @@ ownership is read off the imports, with the project's own TypeScript (`fileImpor
   an image) is a unit of its own.
 
 A plan names units; `checkPlan` expands each with what it owns and refuses a file in two tasks, or a folder that is not
-a plugin's. A task holds its plan's files only until it is done: then a shared one among them (the entry a shell task
+a plugin's. It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
+change it compatibly, or say in the plan who follows it), and the tasks whose acceptance no command proves (they hold at
+their review only; a check runs at `complete` and again at the finish). A task holds its plan's files only until it is done: then a shared one among them (the entry a shell task
 split up) is requested like any other, and the rest are taken by turns. Shared files are taken **by turns** (`task
 claim`, `task wait`: a `turn` lock, handed to the next waiter by priority when the holder is approved, with the approved
 version put into its copy) or, when several tasks want one at once, changed in each copy as a **request** — whatever a
@@ -133,15 +147,15 @@ Who works a project's runs is its own choice, in `.plitzi/team.json` (committed:
 `.example` as `.env` does). `plitzi create` writes the starter (`STARTER_TEAM`): a developer and a designer — two
 agents, since each spends tokens; the person grows it when a job asks — the harness's own models, and an `about` that
 says what each field and each role the CLI knows means (`ROLES`: developer, designer, reviewer, tester, writer; any
-other name is a role of the project's own), since JSON has no comments; the CLI never reads `about` and keeps it when it
-writes the file, formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file
-holds the lead's model and effort, and each agent — a name (`dev` is `dev-1`, `dev-2`…), the roles it takes, how many of it and the model to start it with, the
+other name is a role of the project's own), since JSON has no comments; `about` is the CLI's — never read, written as this CLI says it whenever it
+writes the file, and brought up by `plitzi upgrade` with the files, the agents left as they are. The file is formatted as the project's Prettier leaves it (`formattedJson`). `run team` lists the roles too. The file
+holds the leads' model, effort and count, and each agent — a name (`dev` is `dev-1`, `dev-2`…), the roles it takes, how many of it and the model to start it with, the
 harness's own name for it, nothing checked but that one is named. The CLI starts no agent; `run plan` says what to start
 each with — its roles, its model, the plan's tasks it takes and `task next --role <roles> --follow --take --agent
 <name>`. The team's size is how many agents work a run at once — no flag says otherwise; a project made before the starter gets
 it at its first run, with an agent for each other role its plan names, said; a team somebody emptied is refused. A task whose role nobody in the team takes
 is refused at `run plan`; an agent of one role is held to it in a rehearsal. `run team` shows it; `run team set|unset
-<name>` changes one agent, or the lead's model, saying it before and after.
+<name>` changes one agent, or the leads' model and count (`lead --count`), saying it before and after.
 
 ## The tester's tasks (`tests.ts`)
 
@@ -151,7 +165,7 @@ from the task's acceptance, not its code, by an agent that did not write it. Its
 `node --test`) — and its acceptance runs them against the copy served. A check that names `$PLITZI_URL` or `$PLITZI_PORT`, or runs
 `playwright test`, is run with the copy served: the two written into the check (any shell, `cmd.exe` included) and
 `PORT` set, which the project's Playwright config reads. The `plitzi` a check calls is this CLI (a `.cmd` too, on
-Windows), and the server is stopped as a tree there (`taskkill /T`), a process group elsewhere. Two developer tasks whose tests are one file share one task of them; one that says `"tests":
+Windows), and the server is stopped as a tree there (`taskkill /T`), a process group elsewhere — a preview's too (`processes.ts`). Two developer tasks whose tests are one file share one task of them; one that says `"tests":
 false`, writes nothing a test is written for, or that a tester's task of the plan already waits for, gets none. A test
 the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it.
 
@@ -271,6 +285,9 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
   the copy by walking up to the project's `node_modules`; a command run inside the copy works on the project it belongs
   to, and as its task: `take` writes the run, task, token and agent into the copy's `tmp/plitzi-task.json`, read when no
   token is said (a token said wins — the lead reviewing from inside a copy is the lead).
+- **Check:** `task check` runs in the copy what `complete` would hold it to — the project's checks, the acceptance's
+  commands, the files too long — and changes nothing: no review, no brake. An agent iterating on a fix checks with it,
+  and completes once it passes.
 - **Complete:** refused with a proposal to it unanswered, and with its copy gone (said as gone, with the take that
   starts it again — not as every file removed). The copy against `start.json`: a change to another task's file is
   refused (`claimed`) naming each; to a shared file, or one in no task, taken by turns when nobody holds it and a request
@@ -339,7 +356,9 @@ written or discarded and where a backup is.
 A person's actions — the final merge, restore, a forced stop, abort, purge, taking a run over, re-pinning it, opening
 one above the estimate's threshold — are refused with a task's token and in a shell with no terminal; a person confirms
 by typing the run's name. The lead's — opening, stopping, reviewing (and overwriting), reassigning, reverting,
-resolving a reconciliation and continuing, answering any proposal, the summary — are refused with a task's token. This
+resolving a reconciliation and continuing, answering any proposal, the summary — are refused with a task's token; a
+verdict is a lead's (`lead`, a lead that reviews, a person) or a designer's on a UI that waits for one, refused to any
+other agent of the team even without a token (`lead-only`). This
 is a guard rail, not security: an agent with a shell can give itself a terminal (a pseudo-terminal) and type the run's
 name, and edit the run's records — `run.json` or a task's `state.json` broken by hand are refused by name, never read
 on a guess, but one rewritten whole is the agent's word. What holds is that whatever is written outside the flow is
@@ -356,17 +375,25 @@ the lead's report, a dry run's checks green on the whole result and no conflict 
 wrote it.
 
 The run pins this CLI and every `@plitzi/*` installed; a change refuses every command (`version-mismatch`) until a person
-attaches, which re-pins it and cuts the tasks in hand. `plitzi upgrade --write` waits for an open run unless told
+attaches, which re-pins it. **An upgrade loses no work**: on this machine a task in hand keeps its copy, its agent and
+its token — its next `complete` runs the checks with what is installed now — and is told so; only a copy that is gone, or
+another machine's, starts over from its reviewed version. Meanwhile `task next --follow` waits through it as through a
+stop, and `run status` says what the person runs. A run outlives the CLI that opened it, so every change to its files is
+additive (`model.ts`): `src/tests/runRecords/<version>/` keeps a run as each CLI wrote it, and `runs-compat.test.ts`
+reads, works and finishes every one; one this CLI still cannot read is said as the other CLI's, with the command that
+goes on with it (`compat.ts`), never as a hand edit. `run plan` says when the skills the agents read are older than the
+CLI (`plitzi upgrade skills --write`). `plitzi upgrade --write` waits for an open run unless told
 `--with-open-runs`. A run is active on one machine; another attaches once it is released, or a person takes it over. The
-brake: more than 5 failed checks or conflicts, or more than a fifth of completions refused (over 10 at least), within 30
-minutes — and the run stops as a stop does, its reason in `run status` and the report. `run resume` clears what the brake
+brake: more than 5 failed checks or conflicts — and one more for each agent past the first, each failing on its own way to
+a fix (`brakeFailuresFor`) — or more than a fifth of completions refused (over 10 at least), within 30 minutes; `task
+check` counts toward none of it — and the run stops as a stop does, its reason in `run status` and the report. `run resume` clears what the brake
 saw: it judges what happens from there. A task's commands are logged under the name it was taken with.
 
 ## Exit codes (`refusal.ts`)
 
 10 `claimed`, 11 `waiting`, 12 `reassigned`, 13 `version-mismatch`, 14 `stopping`, 15 `forced-stop`, 16
 `reconciliation`, 17 `person-only`, 18 `conflict`, 19 `checks-failed`, 20 `invalid`, 21 `not-found`, 22
-`other-machine`, 23 `another-run`, 24 `agent-limit`. A refusal carries its code, the message, the next step and its
+`other-machine`, 23 `another-run`, 24 `agent-limit`, 25 `lead-only`. A refusal carries its code, the message, the next step and its
 detail (`--json`).
 
 ## Not built, and left out
@@ -386,8 +413,9 @@ detail (`--json`).
 ## Tested
 
 The bench is `apps/cli/src/runs/runs-*.test.ts` (each a part of the run: plan, tasks, shared files, merge, stops,
-agreements, the team, the lead, acceptance, the first real runs, the primitives, and what an agent can do around the
-rules — a write after its review, a link, a token not its own, two completes at once on one shared file) with its steps
+agreements, the team, the lead, the leads that review beside it, acceptance, the first real runs, the primitives, what
+an agent can do around the rules — a write after its review, a link, a token not its own, two completes at once on one
+shared file — and a run each released CLI wrote, read and finished by this one, `runs-compat`) with its steps
 in `src/tests/runSteps.ts`: a seeded project (`src/tests/runProject.ts`), scripted agents over one clock the test moves,
 a person who confirms or not, checks that fail on `BROKEN` — no model and no network, so every run is the same run.
 `apps/cli/src/commands/runs.test.ts` runs the CLI as processes: the exit codes, the token through the environment, a

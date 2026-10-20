@@ -9,7 +9,7 @@ import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
 import { ID, isSecretFile, NOT_COPIED_DIRS, under } from './paths';
 import { shellCommands } from './shell';
-import { roleProblems, teamSize, teamTakes, TESTER } from './team';
+import { DEVELOPER, roleProblems, teamSize, teamTakes, TESTER } from './team';
 import { testSetupOf, withTestTasks } from './tests';
 import { scriptsOf } from '../commands/verify';
 
@@ -547,7 +547,19 @@ export const checkPlan = async (
   const SHOWN_IMPORTERS = 6;
   for (const task of tasks) {
     for (const file of task.files) {
-      const outside = (ownership.importedBy.get(file) ?? [])
+      const importers = ownership.importedBy.get(file) ?? [];
+      // Imported by another task's files: what it exports is their contract — v12 changed a component's params, and
+      // its callers were three other tasks'.
+      const theirs = importers
+        .filter(importer => holder.get(importer) !== undefined && holder.get(importer) !== task.id)
+        .sort();
+      if (theirs.length > 0) {
+        notices.push(
+          `${file} (${task.id}) is imported by the files of other tasks — ${theirs.map(importer => `${importer} (${String(holder.get(importer))})`).join(', ')}: what it exports is theirs to use as it is. Change it compatibly (a new param optional), or say in the plan who follows it (a task after it, or a proposal)`
+        );
+      }
+
+      const outside = importers
         .filter(importer => !planned.has(importer) && !ownership.entries.includes(importer))
         .sort();
       if (outside.length > 0) {
@@ -558,6 +570,21 @@ export const checkPlan = async (
         );
       }
     }
+  }
+
+  // A task whose acceptance no command proves holds only at its review: a later task can undo it, and nothing says so —
+  // v12's print fit one sheet when approved, and two at the finish.
+  const unchecked = tasks.filter(
+    task =>
+      task.kind === 'work' &&
+      (task.role ?? DEVELOPER) !== TESTER &&
+      task.acceptance.length > 0 &&
+      task.acceptance.every(each => typeof each === 'string')
+  );
+  if (unchecked.length > 0) {
+    notices.push(
+      `No line of ${unchecked.map(task => `"${task.id}"`).join(', ')}'s acceptance has a check: what it asks holds at its review, and nothing tells when a later task undoes it — give the lines a command can prove { said, check } (a page check, a spec): they run at complete, and again on the whole result at the finish`
+    );
   }
 
   return {

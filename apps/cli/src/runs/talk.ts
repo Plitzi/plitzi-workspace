@@ -1,4 +1,5 @@
 import { writeJson } from './files';
+import { requireLead } from './leads';
 import { agentAddress, EVERYONE, LEAD, messagesOf, replyTo, sendMessage, unreadFor, unreadForHolder } from './messages';
 import { assertStatus, loadRun, logRun, requireNoTask } from './run';
 import { findTask, holderOf } from './tasks';
@@ -67,6 +68,7 @@ export const askLead = async (
 export const noteRun = async (ctx: RunContext, runId: string, text: string): Promise<Message> => {
   requireNoTask(ctx, 'add a note to the run');
   const loaded = await loadRun(ctx, runId);
+  await requireLead(ctx, loaded, 'add a note to every task');
   const note = await sendMessage(ctx, loaded, { from: LEAD, to: EVERYONE, text });
   await logRun(ctx, loaded.paths, { action: 'note', message: note.id });
 
@@ -128,6 +130,7 @@ export const readInbox = async (ctx: RunContext, runId: string, taskId?: string,
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   if (taskId === undefined) {
     requireNoTask(ctx, 'read the lead’s inbox');
+    await requireLead(ctx, loaded, 'read the lead’s inbox');
 
     return all
       ? (await messagesOf(loaded)).filter(message => message.to === LEAD || message.from === LEAD)

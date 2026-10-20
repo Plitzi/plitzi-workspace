@@ -11,6 +11,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { failedSteps } from './text';
 import { projectChecks } from '../../runs/checks';
+import { writtenByAnother } from '../../runs/compat';
 import { COPY_TASK_FILE, RUNS_DIR, runPaths, taskPaths } from '../../runs/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns } from '../../runs/run';
@@ -210,11 +211,16 @@ export const act = async <T>(
     if (code !== 0) {
       process.exitCode = code;
     }
-  } catch (error) {
-    if (!isRunRefusal(error)) {
-      throw error;
+  } catch (caught) {
+    if (!isRunRefusal(caught)) {
+      throw caught;
     }
 
+    // A run's file another CLI wrote, not read by this one: said as that, with the CLI to go on with.
+    const root = await whereAmI()
+      .then(where => where.root)
+      .catch(() => undefined);
+    const error = (root === undefined ? undefined : await writtenByAnother(caught, root, CLI_VERSION)) ?? caught;
     if (options.json) {
       console.log(JSON.stringify(error.toJSON()));
     } else {

@@ -17,7 +17,8 @@ export const REFUSAL_EXIT_CODES = {
   'not-found': 21,
   'other-machine': 22,
   'another-run': 23,
-  'agent-limit': 24
+  'agent-limit': 24,
+  'lead-only': 25
 } as const;
 
 export type RefusalCode = keyof typeof REFUSAL_EXIT_CODES;
@@ -27,7 +28,8 @@ const NEXT_STEP: Record<RefusalCode, string> = {
   claimed: 'take another ready task (plitzi task next), or wait for the file (plitzi task wait)',
   waiting: 'take another ready task meanwhile; the file comes to this task when its holder is approved',
   reassigned: 'stop working on this task: it is no longer yours',
-  'version-mismatch': 'the Plitzi version changed while the run is open: run plitzi run attach to re-read it',
+  'version-mismatch':
+    'the Plitzi version changed while the run is open: a person re-pins it in their terminal (plitzi run attach) — an agent keeps its work in its copy and waits (plitzi task next --follow waits through it); the lead tells the person',
   stopping: 'finish the task in hand and take no other',
   'forced-stop':
     'stop writing now: a task in hand was cut, and what it wrote since its last review is not kept (a task in review keeps its work); plitzi task next --follow waits for the lead to resume the run',
@@ -42,7 +44,8 @@ const NEXT_STEP: Record<RefusalCode, string> = {
     'the run is active on another machine: release it there (plitzi run release), or a person takes it over',
   'another-run': 'one run at a time: finish or abort the open one first (plitzi run status)',
   'agent-limit':
-    'hand back to the lead: this task waits until one of the agents at work has nothing in progress (plitzi run status)'
+    'hand back to the lead: this task waits until one of the agents at work has nothing in progress (plitzi run status)',
+  'lead-only': 'it is the lead’s (lead) to do: leave it to it, and go on with your own part'
 };
 
 export interface RefusalDetail {

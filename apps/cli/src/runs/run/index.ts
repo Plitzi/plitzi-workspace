@@ -11,12 +11,14 @@ export {
   assertStatus,
   loadRun,
   logRun,
+  pinnedChanges,
   pinnedNow,
   readApproved,
   readBase,
   readRecord,
   readShared,
   runIds,
+  samePinned,
   updateRecord
 } from './record';
 export type { LoadOptions } from './record';

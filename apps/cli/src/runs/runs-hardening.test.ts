@@ -234,7 +234,7 @@ describe('a UI review, by the team’s designers', () => {
     const refused = await refusal(
       reviewTask(bench.agent('design-1'), 'es-launch', 't-menu', 'approve', [], 'refuse', { skipDesign: true })
     );
-    expect(refused.message).toContain('--skip-design is the lead');
+    expect(refused.message).toContain('--skip-design is a lead');
     expect(refused.message).toContain('--agent lead');
 
     expect(

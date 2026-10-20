@@ -1,4 +1,5 @@
 import { writeJson } from '../files';
+import { requireLead } from '../leads';
 import { longFilesIn } from '../longFiles';
 import { LEAD, sendMessage, unreadForHolder } from '../messages';
 import { RunRefusal } from '../refusal';
@@ -108,6 +109,7 @@ export const unblockTask = async (
 ): Promise<TaskState> => {
   requireNoTask(ctx, 'unblock a task');
   const loaded = await loadRun(ctx, runId);
+  await requireLead(ctx, loaded, 'unblock a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
   if (view.state.status !== 'blocked') {

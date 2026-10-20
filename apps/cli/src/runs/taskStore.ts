@@ -41,13 +41,19 @@ export const DEFAULTS = {
   /** What every run's caches may hold together; the oldest go first, said. */
   cacheCapBytes: 1024 * 1024 * 1024,
   reviewRounds: 3,
-  /** The automatic brake: within this window, more than `failures` failed checks or conflicts, or this share refused. */
+  /**
+   * The automatic brake: within this window, more than `failures` failed checks or conflicts — and one more for each
+   * agent the run allows, as each fails on its own way to a fix (`brakeFailuresFor`) — or this share refused.
+   */
   brakeWindowMs: 30 * 60_000,
   brakeFailures: 5,
   brakeRefusedShare: 0.2,
   /** Completions and refusals the share is judged over, at least: two refusals among a handful say nothing yet. */
   brakeMinSample: 10
 } as const;
+
+/** How many failed checks or conflicts within the brake's window stop a run of `agents`: five, and one an agent. */
+export const brakeFailuresFor = (agents: number): number => DEFAULTS.brakeFailures + Math.max(0, agents - 1);
 
 export interface TaskView {
   task: RunTask;

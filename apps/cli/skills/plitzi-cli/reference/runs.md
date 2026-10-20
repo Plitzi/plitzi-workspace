@@ -5,7 +5,9 @@ checks and merges, and only **one final merge, approved by a person**, writes in
 `--json` on any command (or `PLITZI_JSON=1`) answers one object with `said`, the sentence a person reads; each refusal
 has its exit code (below). A text written `-` is read from stdin: no shell quoting.
 
-**The team.** The **lead** (team lead and architect) plans, reviews, answers and closes. The project's team is
+**The team.** The **lead** (team lead and architect) plans, reviews, answers and closes; past four agents, **leads that
+review** beside it (`lead-2`…) wait with `plitzi task next --role lead --follow --take --agent lead-2` and review what
+they are handed as the lead would, as strictly — nothing else is theirs (`lead-only`, 25). The project's team is
 `.plitzi/team.json` (`plitzi run team`): each agent's name, roles, count and model. Tasks name a role (`"role":
 "designer"`; `developer` when left out); `plitzi task next --role designer --follow --take --agent design-1` waits
 (`--timeout 8m`) for the next one and takes it, handing back first a task you hold that can go on.
@@ -57,9 +59,12 @@ Outside a copy, name yourself (`--agent writer-1`, or `PLITZI_AGENT`): `task nex
   then take another task. The lead lifts it with what you waited for (`plitzi task unblock t-home --answer "…"`), and
   your next `plitzi task next` hands it back first (`yours`: no take, your token still good) — so does a review that asks
   for changes. `agent-limit` (24) on `take`: hand back to the lead, which starts it when one goes to review.
+- **Before done:** `plitzi task check` runs what `complete` holds the copy to — the project's checks, the acceptance's
+  commands, long files — and changes nothing: iterate on it, not on `complete`, whose failures count toward the run's
+  brake (enough of them, across the team, stop the run).
 - **Done:** `plitzi task complete [--note "what to look at"]` — the note goes to the lead with it — compared by
   fingerprint, the project's checks and the acceptance's checks run in
-  the copy (run each check yourself first; serve the copy for one that names `$PLITZI_URL`). **A task never ends
+  the copy. **A task never ends
   with failing checks** — lint, types, tests: fix them — nor with a file it took past 400 non-blank lines (your
   heartbeat says so first): split it. Only for a reason that weighs, said: `plitzi task complete
   --known-failure "why" --fixed-by <task>`. A check that fails the same way without your change (a person's edit,
@@ -83,7 +88,7 @@ out (what was built on it waits again), and `plitzi run restore <run> <file>` pu
 | 10 | `claimed` — another task's file | wait, request it, or take another task |
 | 11 | `waiting` — queued for a file | go on with what does not need it |
 | 12 | `reassigned` — no longer yours | stop working on it |
-| 13 | `version-mismatch` | ask a person to `run attach` |
+| 13 | `version-mismatch` | Plitzi was upgraded: keep your work, `task next --follow` waits while a person runs `run attach` |
 | 14 / 15 | `stopping` / `forced-stop` | finish the task in hand / stop writing; `task next --follow` waits |
 | 16 | `reconciliation` | the lead resolves it |
 | 17 | `person-only` | ask the person to run it in their terminal |
@@ -91,5 +96,6 @@ out (what was built on it waits again), and `plitzi run restore <run> <file>` pu
 | 19 | `checks-failed` | fix what it names, complete again |
 | 23 / 24 | `another-run` / `agent-limit` | one run at a time / hand back to the lead |
 | 20 / 21 / 22 | `invalid` / `not-found` / `other-machine` | read the message |
+| 25 | `lead-only` | it is `lead`'s: tell it, and go on with your part |
 
 Any hook or editor can ask before writing: `plitzi run can-write <file>` (exit 10 with the holder).

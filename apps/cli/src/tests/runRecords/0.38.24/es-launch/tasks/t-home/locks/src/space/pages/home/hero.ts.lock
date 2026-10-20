@@ -1,0 +1,8 @@
+{
+  "runId": "es-launch",
+  "taskId": "t-home",
+  "agent": "agent-3",
+  "intent": "Translate home",
+  "since": "2026-10-20T19:47:33.843Z",
+  "kind": "own"
+}

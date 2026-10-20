@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 
 import { writeJson } from '../files';
+import { requireLead } from '../leads';
 import { AGENT, agentAddress, LEAD, sendMessage } from '../messages';
 import { syncPreview } from '../preview';
 import { RunRefusal } from '../refusal';
@@ -33,6 +34,7 @@ export const reassignTask = async (
 }> => {
   requireNoTask(ctx, 'reassign a task');
   const loaded = await loadRun(ctx, runId);
+  await requireLead(ctx, loaded, 'reassign a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
   if (view.state.status === 'done') {
@@ -81,6 +83,17 @@ export const revertTask = async (
 ): Promise<{ reverted: string[]; kept: string[]; dependants: string[]; waiting: string[] }> => {
   requireNoTask(ctx, 'revert a task');
   const loaded = await loadRun(ctx, runId);
+  await requireLead(ctx, loaded, 'revert a task');
+  if (reason === undefined || reason.trim() === '') {
+    throw new RunRefusal(
+      'invalid',
+      'A revert says why — kept in its notes, and said to whoever takes it again: --reason "…"',
+      {
+        task: taskId
+      }
+    );
+  }
+
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'revert a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);

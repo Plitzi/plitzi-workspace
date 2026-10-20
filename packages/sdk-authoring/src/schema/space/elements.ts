@@ -291,6 +291,9 @@ const boundFrom = (author: SpaceAuthor, spec: ElementSpec, where: string): Bindi
   ];
 };
 
+/** What a format's name looks like: `price`, `shortDate` — anything else written in `as` is words or a template. */
+const FORMAT_NAME = /^[A-Za-z_$][\w$-]*$/;
+
 /** A format by its name in the space's `formats`, or the template written in its place. */
 const templateFor = (author: SpaceAuthor, as: string, where: string): string => {
   if (hasTemplateSyntax(as)) {
@@ -298,6 +301,14 @@ const templateFor = (author: SpaceAuthor, as: string, where: string): string => 
   }
 
   const formats = author.spec.formats ?? {};
+  // Words, not a name: what an element always shows is its content — `as` shows the data `from` names.
+  if (!FORMAT_NAME.test(as) && !Object.hasOwn(formats, as)) {
+    throw new AuthoringError(
+      'format-unknown',
+      `${where} says \`as: '${as}'\`, which is words, not a format: \`as\` names a format of the space's \`formats\` (\`as: 'price'\`) or is a template that shows the data \`from\` names (\`as: '{{ source }} kg'\`). Words the element always shows are its content — \`content: '${as}'\`, with no \`from\`.`
+    );
+  }
+
   if (!Object.hasOwn(formats, as) || typeof formats[as] !== 'string') {
     throw new AuthoringError(
       'format-unknown',

@@ -170,7 +170,7 @@ export const runAttach = (runId: string, options: RunCommandOptions & { takeOver
     options,
     ctx => attachRun(ctx, runId, options.takeOver ?? false),
     attached =>
-      `Attached to "${runId}"${attached.tookOver ? ', taken over from the other machine' : ''}${attached.repinned ? ', re-pinned to the Plitzi installed now' : ''}. Cut: ${list(attached.cut)}.\nGo on: plitzi run status ${runId}`
+      `Attached to "${runId}"${attached.tookOver ? ', taken over from the other machine' : ''}${attached.repinned ? ', re-pinned to the Plitzi installed now' : ''}. Cut: ${list(attached.cut)}.${attached.kept.length > 0 ? ` Kept in their agents' hands, told to go on: ${attached.kept.join(', ')}.` : ''}\nGo on: plitzi run status ${runId}`
   );
 
 export const runRelease = (runId: string, options: RunCommandOptions): Promise<void> =>

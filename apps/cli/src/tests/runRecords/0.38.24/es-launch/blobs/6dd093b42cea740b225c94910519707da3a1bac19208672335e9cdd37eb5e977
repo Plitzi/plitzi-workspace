@@ -1,0 +1,4 @@
+import { hero } from './hero.ts';
+import { theme } from '../../theme.ts';
+
+export const home = { id: 'home', body: [hero], theme };

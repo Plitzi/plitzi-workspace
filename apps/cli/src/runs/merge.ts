@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { fingerprint, readJson, readOptional, writeJson } from './files';
+import { requireLead } from './leads';
 import { acceptanceOnResult, checkVersions } from './materialise';
 import { mergeLines } from './merge3';
 import { entryOf, isMergeManifest } from './model';
@@ -275,6 +276,10 @@ export const finishRun = async (
   }
 
   const loaded = await loadRun(ctx, runId);
+  if (apply) {
+    await requireLead(ctx, loaded, 'write the run into the project');
+  }
+
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'finish');
   const left = await assertFinishable(loaded, leavePending);
   const approved = await readApproved(loaded.paths);
@@ -420,6 +425,7 @@ export const resolveFile = async (
 
   // The lead decides, as a person may: whichever way, what is written over is kept and said.
   requireNoTask(ctx, 'resolve a reconciliation');
+  await requireLead(ctx, loaded, 'resolve a reconciliation');
   const resolved: ReconciledFile['resolved'] =
     take === 'project' ? 'project' : take === 'run' ? 'run' : take === 'merge' ? 'merged' : 'file';
   let chosen: Buffer | undefined;
@@ -507,6 +513,7 @@ export const continueRun = async (ctx: RunContext, runId: string): Promise<void>
   }
 
   requireNoTask(ctx, 'continue a run');
+  await requireLead(ctx, loaded, 'continue a run');
   await updateRecord(ctx, loaded.paths, record => ({ ...record, status: 'open', reconciliation: undefined }));
   await logRun(ctx, loaded.paths, { action: 'continue' });
 };

@@ -7,6 +7,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { cloneFiles, fingerprint, isCopied, projectFiles, readJson, readOptional, writeJson } from './files';
 import { under } from './paths';
+import { stopTree } from './processes';
 import { RunRefusal } from './refusal';
 import { loadRun, readApproved, readBase, readRecord, requireNoTask } from './run';
 import { placeVersion } from './store';
@@ -126,7 +127,7 @@ const serve = async (
   let why: string | undefined;
   const stop = (): void => {
     why ??= 'the preview stopped: it was asked to';
-    child.kill('SIGTERM');
+    stopTree(child);
   };
   const done = new Promise<{ code: number; why: string }>(resolve => {
     const watch = setInterval(() => {
@@ -135,7 +136,7 @@ const serve = async (
         const reason = record ? await ended() : 'the preview stopped: the run ended';
         if (reason !== undefined) {
           why ??= reason;
-          child.kill('SIGTERM');
+          stopTree(child);
         }
       })();
     }, 2000);

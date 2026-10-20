@@ -1,9 +1,10 @@
 import { durationText } from '../../options';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
+import { isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
 import { pagesOf } from '../pagesOf';
 import { readyTasks } from '../plan';
-import { isRunRefusal } from '../refusal';
+import { isRunRefusal, RunRefusal } from '../refusal';
 import { assertStatus, loadRun } from '../run';
 import { isDisconnected, viewTask } from '../taskStore';
 import { DESIGNER } from '../team';
@@ -11,8 +12,9 @@ import { findTask, roleOf } from './common';
 import { takeTask } from './take';
 
 import type { Message } from '../messages';
-import type { RunTask, TaskStatus } from '../model';
+import type { RunRecord, RunTask, TaskStatus } from '../model';
 import type { RunContext } from '../run';
+import type { TaskView } from '../taskStore';
 import type { TakenTask } from './take';
 
 /**
@@ -41,6 +43,19 @@ export interface NextTask {
     pages: string[];
     /** Sent back since a designer last looked: what the lead's reviews asked — what this round answers. */
     asked: string[];
+  };
+  /**
+   * A lead's that reviews (`--role lead`): a task in review no other lead took — what it changed, where it is drawn, and
+   * what its earlier reviews asked.
+   */
+  leadReview?: {
+    task: RunTask;
+    round: number;
+    changed: string[];
+    pages: string[];
+    asked: string[];
+    /** A designer approved its UI: what it said, when it said something. */
+    design?: string;
   };
   /** Why nothing is ready, when nothing is. */
   why?: string;
@@ -95,6 +110,11 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
         messages: [...messages, ...toTask].sort((x, y) => x.at.localeCompare(y.at) || x.id.localeCompare(y.id))
       };
     }
+  }
+
+  // A lead that reviews is offered reviews, and nothing else: the queue of tasks in review no other lead took.
+  if (roles?.includes(LEAD_ROLE) === true) {
+    return leadNext(ctx, loaded.record, views, messages);
   }
 
   // A review holds back a task already done, and the lead: a designer's comes before anything new.
@@ -201,6 +221,70 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   };
 };
 
+/** `task next --role lead`: the review a lead takes next, why there is none, or that the run has none left for it. */
+const leadNext = async (
+  ctx: RunContext,
+  record: RunRecord,
+  views: readonly TaskView[],
+  messages: Message[]
+): Promise<NextTask> => {
+  if (!isCoLead(record, ctx.agent) && !isPrincipal(ctx.agent)) {
+    throw new RunRefusal(
+      'invalid',
+      `${ctx.agent} is no lead of this run: its leads are lead${(record.leads ?? []).map(each => `, ${each}`).join('')} — a lead that reviews waits with plitzi task next --role lead --agent <its name>`
+    );
+  }
+
+  const review = leadReviewFor(views, ctx.agent);
+  if (review) {
+    const approvedUi = review.state.design?.status === 'approved' ? review.state.design : undefined;
+
+    return {
+      leadReview: {
+        task: review.task,
+        round: review.state.round,
+        changed: review.state.changed ?? [],
+        pages: await pagesOf(review.paths.work, review.state.changed ?? []),
+        asked: review.state.notes
+          .filter(note => /^Review \d+: /.test(note.text))
+          .map(note => `${note.by}: ${note.text}`),
+        ...(approvedUi
+          ? {
+              design:
+                review.state.notes.findLast(note => note.text.startsWith('Its UI approved by'))?.text ??
+                `its UI approved by ${approvedUi.by ?? 'a designer'}`
+            }
+          : {})
+      },
+      ready: [],
+      messages
+    };
+  }
+
+  const open = views.filter(view => view.state.status !== 'done');
+  if (open.length === 0) {
+    return { why: 'every task is done: no review is left — you can stop', ready: [], messages, finished: true };
+  }
+
+  const taken = views.filter(
+    view =>
+      view.state.status === 'in-review' &&
+      view.state.reviewer?.round === view.state.round &&
+      view.state.reviewer.by !== ctx.agent
+  );
+  const designs = views.filter(view => view.state.status === 'in-review' && view.state.design?.status === 'due');
+
+  return {
+    why: `no review waits for you: ${[
+      ...taken.map(view => `${view.task.id} is ${String(view.state.reviewer?.by)}'s`),
+      ...designs.map(view => `${view.task.id} waits for its UI review`),
+      `${String(open.length - taken.length - designs.length)} task(s) still being worked`
+    ].join(', ')} — wait for one (--follow)`,
+    ready: [],
+    messages
+  };
+};
+
 /**
  * `plitzi task next --follow`: waits until a task is ready for the role — another task approved, a block lifted — the
  * lead says something to the agent, or none ever will be (every task of it done), or `timeoutMs` passes. What an agent between tasks runs, rather than
@@ -241,6 +325,17 @@ export const takeNext = async (
       continue;
     }
 
+    if (next.leadReview) {
+      const offered = next.leadReview.task.id;
+      const loaded = await loadRun(ctx, runId);
+      if (tried.has(offered) || (await takeLeadReview(ctx, await viewTask(loaded.paths, findTask(loaded, offered))))) {
+        return { next };
+      }
+
+      tried.add(offered);
+      continue;
+    }
+
     if (!next.task || next.yours) {
       return { next };
     }
@@ -267,16 +362,19 @@ export const followNext = async (
 ): Promise<NextTask> => {
   const started = Date.now();
   for (;;) {
-    // A run stopped — gently, by its brake, or by a person at once — goes on once resumed: an agent waiting for work
-    // waits through it.
+    // A run stopped — gently, by its brake, or by a person at once — goes on once resumed, and one whose Plitzi was
+    // upgraded once a person re-pins it: an agent waiting for work waits through either.
     const next = await nextTask(ctx, runId, role).catch((error: unknown): NextTask => {
-      if (isRunRefusal(error) && (error.code === 'stopping' || error.code === 'forced-stop')) {
+      if (
+        isRunRefusal(error) &&
+        (error.code === 'stopping' || error.code === 'forced-stop' || error.code === 'version-mismatch')
+      ) {
         return { ready: [], messages: [], why: error.message, paused: error.message };
       }
 
       throw error;
     });
-    if (next.task || next.designReview || next.finished || next.messages.length > 0) {
+    if (next.task || next.designReview || next.leadReview || next.finished || next.messages.length > 0) {
       return next;
     }
 

@@ -5,7 +5,7 @@ import { hhmm, list, messageLines } from './text';
 import { crossed, longFileText } from '../../runs/longFiles';
 import { RunRefusal } from '../../runs/refusal';
 import { tellLead } from '../../runs/talk';
-import { blockTask, completeTask, noteTask, reportProgress, unblockTask } from '../../runs/tasks';
+import { blockTask, checkTask, completeTask, noteTask, reportProgress, unblockTask } from '../../runs/tasks';
 
 import type { RunCommandOptions } from './shell';
 import type { Needs } from '../../runs/model';
@@ -77,6 +77,35 @@ export const taskNote = (taskId: string | undefined, text: string, options: RunC
       return target;
     },
     () => 'Noted: whoever takes it next reads it in plitzi task context.'
+  );
+
+export const taskCheck = (options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      const { runId, taskId } = await holder(ctx, options);
+
+      return checkTask(ctx, runId, taskId);
+    },
+    checked =>
+      [
+        checked.ok
+          ? chalk.green('Your copy passes what complete holds it to: complete it when it is done')
+          : chalk.yellow('Your copy does not pass yet — nothing was changed, and nothing counted against the run:'),
+        ...checked.checks.steps.map(
+          step =>
+            `  ${step.ok ? '✓' : chalk.yellow('✗')} ${step.name}${step.ok ? '' : `\n${(step.said ?? []).map(line => `      ${line}`).join('\n')}`}`
+        ),
+        ...checked.checks.steps.flatMap(step =>
+          (step.warnings ?? []).map(warning => chalk.yellow(`  ⚠ ${step.name} warns: ${warning}`))
+        ),
+        ...checked.accepted.map(
+          each =>
+            `  ${each.ok ? '✓' : chalk.yellow('✗')} acceptance — ${each.said}  ${chalk.dim(`[${each.check}]`)}${each.ok || !each.output ? '' : `\n${each.output.map(line => `      ${line}`).join('\n')}`}`
+        ),
+        ...checked.tooLong.map(each => chalk.yellow(`  ✗ ${each}`))
+      ].join('\n'),
+    checked => (checked.ok ? 0 : 1)
   );
 
 export const taskComplete = (

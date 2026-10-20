@@ -1,0 +1,8 @@
+{
+  "runId": "es-launch",
+  "taskId": "t-menu",
+  "agent": "agent-2",
+  "intent": "Translate menu",
+  "since": "2026-10-20T19:47:33.843Z",
+  "kind": "own"
+}

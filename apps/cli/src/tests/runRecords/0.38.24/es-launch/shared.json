@@ -1,0 +1,27 @@
+{
+  "files": [
+    {
+      "file": "src/space/index.ts",
+      "reachedBy": []
+    },
+    {
+      "file": "src/space/theme.ts",
+      "reachedBy": [
+        "src/space/pages/book.ts",
+        "src/space/pages/home/index.ts",
+        "src/space/pages/menu.ts",
+        "src/space/theme.ts"
+      ]
+    },
+    {
+      "file": "src/space/tokens.ts",
+      "reachedBy": [
+        "src/space/pages/book.ts",
+        "src/space/pages/home/index.ts",
+        "src/space/pages/menu.ts",
+        "src/space/theme.ts",
+        "src/space/tokens.ts"
+      ]
+    }
+  ]
+}

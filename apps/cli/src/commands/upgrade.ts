@@ -15,6 +15,7 @@ import { fail, install, writeFiles } from './terminal';
 import { unifiedDiff } from '../fix/diff';
 import { MIGRATIONS, runMigrations } from '../migrations';
 import { activeRuns } from '../runs/run';
+import { refreshTeamAbout, TEAM_FILE } from '../runs/team';
 import { detectManagerVersion, installCommand, machineryFiles, seedFiles } from '../scaffold';
 import { RETIRED_MACHINERY } from '../scaffold/machinery';
 import { CLI_VERSION, packageJson } from '../scaffold/project';
@@ -446,6 +447,8 @@ interface UpgradeReport {
   };
   skills?: SkillPlan[];
   migrations?: MigrationFinding[];
+  /** `.plitzi/team.json`'s `about` — what its fields mean, the CLI's — out of date, and brought up with the files. */
+  teamAbout?: true;
 }
 
 const statusLine: Record<FileStatus, (file: string) => string> = {
@@ -466,12 +469,18 @@ const reportText = (report: UpgradeReport, install: string): string => {
   const lines = [chalk.bold(`plitzi upgrade → ${report.version}${report.write ? '' : ' (shown; --write makes it)'}`)];
   if (report.files) {
     const changed = report.files.filter(file => file.status !== 'current' && file.status !== 'space');
-    lines.push(changed.length === 0 ? chalk.green('files: up to date') : 'files:');
+    lines.push(changed.length === 0 && !report.teamAbout ? chalk.green('files: up to date') : 'files:');
     for (const file of changed) {
       lines.push(statusLine[file.status](file.file));
       if (file.diff) {
         lines.push(chalk.dim(file.diff));
       }
+    }
+
+    if (report.teamAbout) {
+      lines.push(
+        chalk.green(`  ~ ${TEAM_FILE} — what its fields mean, as this CLI says it; its agents and leads as they are`)
+      );
     }
 
     lines.push(...report.files.filter(file => file.status === 'space').map(file => statusLine.space(file.file)));
@@ -635,6 +644,10 @@ export const upgrade = async (parts: readonly string[], options: UpgradeOptions)
       }
 
       await writeScaffoldRecord(root, CLI_VERSION, { files: digests, packageManager: manager });
+    }
+
+    if (await refreshTeamAbout(root, write)) {
+      report.teamAbout = true;
     }
 
     report.files = [

@@ -8,9 +8,11 @@ import { isRunRefusal } from './refusal';
 import {
   heldRoles,
   readTeam,
+  refreshTeamAbout,
   roleProblems,
   setTeamAgent,
   startedAgents,
+  TEAM_ABOUT,
   TEAM_FILE,
   teamSize,
   unsetTeamAgent
@@ -136,7 +138,25 @@ describe('the team of a project’s runs', () => {
     expect(await refusalOf(setTeamAgent(root, 'writer', {}))).toContain('is not in the team yet');
     await setTeamAgent(root, 'dev', { roles: ['developer'] });
     expect(await setTeamAgent(root, 'dev', { roles: ['developer'] })).toMatchObject({ unchanged: true });
-    expect(await refusalOf(setTeamAgent(root, 'lead', { roles: ['developer'] }))).toContain('The lead is one');
+    expect(await refusalOf(setTeamAgent(root, 'lead', { roles: ['developer'] }))).toContain('The leads take no roles');
     expect(await refusalOf(unsetTeamAgent(root, 'nobody'))).toContain('it has dev');
+  });
+
+  it('writes what its fields mean as this CLI says it, and brings an older one up — its agents as they are', async () => {
+    const file = path.join(root, TEAM_FILE);
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    const agents = [{ name: 'dev', roles: ['developer'], count: 3 }];
+    await fs.writeFile(file, JSON.stringify({ version: 1, agents, about: { lead: 'The lead is one' } }));
+
+    expect(await refreshTeamAbout(root, false)).toBe(true);
+    expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toMatchObject({ about: { lead: 'The lead is one' } });
+    expect(await refreshTeamAbout(root, true)).toBe(true);
+    expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toEqual({ version: 1, agents, about: TEAM_ABOUT });
+    expect(await refreshTeamAbout(root, true)).toBe(false);
+
+    // Any write of the file says it as this CLI does.
+    await fs.writeFile(file, JSON.stringify({ version: 1, agents, about: { lead: 'The lead is one' } }));
+    await setTeamAgent(root, 'lead', { count: 2 });
+    expect(JSON.parse(await fs.readFile(file, 'utf-8'))).toMatchObject({ lead: { count: 2 }, about: TEAM_ABOUT });
   });
 });

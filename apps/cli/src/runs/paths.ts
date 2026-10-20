@@ -131,6 +131,8 @@ export interface TaskPaths {
   /** Which messages to it it has read. */
   read: string;
   review: string;
+  /** Held while a verdict is given: two leads saying one at once, one waits and reads it said. */
+  reviewLock: string;
   reviewed: string;
   cache: string;
   work: string;
@@ -158,6 +160,7 @@ export const taskPaths = (run: RunPaths, taskId: string): TaskPaths => {
     answers: path.join(dir, 'answers'),
     read: path.join(dir, 'read.json'),
     review: path.join(dir, 'review.json'),
+    reviewLock: path.join(dir, 'review.lock'),
     reviewed: path.join(dir, 'reviewed.json'),
     cache,
     work: path.join(cache, 'work'),

@@ -1,0 +1,14 @@
+{
+  "id": "t-menu",
+  "title": "Translate menu",
+  "files": [
+    "src/space/pages/menu.ts"
+  ],
+  "dependsOn": [],
+  "priority": "medium",
+  "estimateMinutes": 20,
+  "acceptance": [
+    "Menu reads in Spanish"
+  ],
+  "kind": "work"
+}

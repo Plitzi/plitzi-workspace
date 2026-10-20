@@ -1,0 +1,137 @@
+import { LEAD } from './messages';
+import { RunRefusal } from './refusal';
+import { updateState } from './taskStore';
+import { readTeam, startedAgents } from './team';
+
+import type { RunRecord } from './model';
+import type { LoadedRun, RunContext } from './run/context';
+import type { TaskView } from './taskStore';
+
+/**
+ * A run's leads: `lead`, who plans, answers, decides and finishes — and, past four agents, the others (`lead-2`…), who
+ * review as it does and nothing else. A review is taken from one queue (`task next --role lead`), so two leads never
+ * review one task; `lead` may review any, and is woken for one no other lead took.
+ */
+
+/** The `--role` a lead that reviews waits with: `task next --role lead`. */
+export const LEAD_ROLE = 'lead';
+
+/** How long a review waits for another lead before `lead` is woken for it: a lead at `--follow` takes it in seconds. */
+export const UNTAKEN_REVIEW_MS = 2 * 60_000;
+
+/** The one who decides: `lead`, or a person at a terminal. */
+export const isPrincipal = (agent: string): boolean => agent === LEAD || agent === 'person';
+
+/** The leads besides `lead` in this run. */
+export const coLeadsOf = (record: RunRecord): string[] => record.leads ?? [];
+
+export const isCoLead = (record: RunRecord, agent: string): boolean => coLeadsOf(record).includes(agent);
+
+/** The agents the team starts, by name: none of them is a lead. */
+const teamAgents = async (root: string): Promise<string[]> => {
+  const team = await readTeam(root).catch(() => undefined);
+
+  return team ? startedAgents(team).map(each => each.agent) : [];
+};
+
+/**
+ * `lead`'s, or a person's: refused to a lead that reviews and to an agent of the team — planning, answering, reassigning
+ * and finishing are one lead's, or two would do them twice.
+ */
+export const requireLead = async (ctx: RunContext, loaded: LoadedRun, action: string): Promise<void> => {
+  if (isCoLead(loaded.record, ctx.agent)) {
+    throw new RunRefusal(
+      'lead-only',
+      `${ctx.agent} reviews; to ${action} is lead's: tell it what you found, and go on with your reviews`,
+      { holder: LEAD }
+    );
+  }
+
+  if (!isPrincipal(ctx.agent) && (await teamAgents(ctx.root)).includes(ctx.agent)) {
+    throw new RunRefusal('lead-only', `${ctx.agent} is an agent of the team; to ${action} is the lead's`, {
+      holder: LEAD
+    });
+  }
+};
+
+/**
+ * A lead's verdict on a task — `lead`, a lead that reviews, a person: an agent of the team is refused, a designer
+ * included once the task's UI is said (its verdict is on the UI, and only while it waits for one).
+ */
+export const assertReviewingLead = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<void> => {
+  if (isPrincipal(ctx.agent) || isCoLead(loaded.record, ctx.agent)) {
+    const { reviewer } = view.state;
+    // A lead that reviews holds the review it took; `lead` has the last word and may give it on any.
+    if (
+      !isPrincipal(ctx.agent) &&
+      reviewer !== undefined &&
+      reviewer.round === view.state.round &&
+      reviewer.by !== ctx.agent
+    ) {
+      throw new RunRefusal('claimed', `${reviewer.by} reviews ${view.task.id}: it is theirs to say`, {
+        task: view.task.id,
+        holder: reviewer.by
+      });
+    }
+
+    return;
+  }
+
+  if ((await teamAgents(ctx.root)).includes(ctx.agent)) {
+    const leads = [LEAD, ...coLeadsOf(loaded.record)].join(', ');
+    throw new RunRefusal(
+      'lead-only',
+      `${ctx.agent} is an agent of the team: a lead says whether ${view.task.id} is done (${leads})${
+        view.state.design?.status === 'due' ? '' : ` — its UI review is ${view.state.design ? 'said' : 'not asked'}`
+      }`,
+      { task: view.task.id, holder: LEAD }
+    );
+  }
+};
+
+/** Who took a task's work, by the notes its takes leave. */
+const workedBy = (view: TaskView, agent: string): boolean =>
+  view.state.notes.some(note => note.by === agent && note.text.startsWith('Taken'));
+
+/** A review no lead took this round, or `agent` did. */
+const freeFor = (view: TaskView, agent: string): boolean =>
+  view.state.reviewer === undefined ||
+  view.state.reviewer.round !== view.state.round ||
+  view.state.reviewer.by === agent;
+
+/**
+ * The review `task next --role lead` offers a lead: a task in review whose UI is not waiting for a designer, no other
+ * lead took — the one this lead reviewed before first (it knows what it asked), then the one that waited longest.
+ */
+export const leadReviewFor = (views: readonly TaskView[], agent: string): TaskView | undefined =>
+  views
+    .filter(
+      view =>
+        view.state.status === 'in-review' &&
+        view.state.design?.status !== 'due' &&
+        !workedBy(view, agent) &&
+        freeFor(view, agent)
+    )
+    .sort((a, b) => {
+      const mine = (view: TaskView): number =>
+        view.state.notes.some(note => note.by === agent && /^Review \d+: /.test(note.text)) ? 0 : 1;
+
+      return mine(a) - mine(b) || a.state.updatedAt.localeCompare(b.state.updatedAt);
+    })
+    .at(0);
+
+/** Takes the review offered: false when another lead took it first. */
+export const takeLeadReview = async (ctx: RunContext, view: TaskView): Promise<boolean> => {
+  const at = ctx.now().toISOString();
+  const after = await updateState(
+    view.paths,
+    state =>
+      state.status === 'in-review' &&
+      (state.reviewer === undefined || state.reviewer.round !== state.round || state.reviewer.by === ctx.agent)
+        ? { ...state, reviewer: { by: ctx.agent, round: state.round, at } }
+        : state,
+    ctx.now
+  );
+
+  return after.reviewer?.by === ctx.agent && after.reviewer.round === after.round;
+};

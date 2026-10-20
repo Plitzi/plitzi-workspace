@@ -1,0 +1,162 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { amendRun } from './amend';
+import { leadItems } from './leadWatch';
+import { openRun } from './run';
+import { noteRun } from './talk';
+import { completeTask, reassignTask, reviewTask, takeNext } from './tasks';
+import { coLeadNames, leadCount, setTeamAgent } from './team';
+import { viewRun } from './view';
+import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
+import { runSteps } from '../tests/runSteps';
+
+import type { Team } from './team';
+import type { Bench } from '../tests/runProject';
+
+/** Leads beside the lead: one for every four agents, reviewing from one queue — and nothing that is the lead's. */
+
+let bench: Bench;
+
+beforeEach(async () => {
+  bench = await makeBench();
+});
+
+afterEach(async () => {
+  await bench.cleanup();
+});
+
+const { refusal, lead, take } = runSteps(() => bench);
+
+const team = (agents: number, count?: number): Team => ({
+  version: 1,
+  ...(count === undefined ? {} : { lead: { count } }),
+  agents: [{ name: 'agent', roles: ['developer'], count: agents }]
+});
+
+/** A run of four agents and three leads, as its team says, with t-menu, then t-home, sent to review. */
+const twoInReview = async (): Promise<{ runId: string; menu: Awaited<ReturnType<typeof take>> }> => {
+  const plan = { ...benchPlan(), designReview: false };
+  const file = await bench.writePlan(plan);
+  await bench.writeTeam({ ...teamFor(plan, 4), lead: { count: 3 } });
+  const { runId } = (await openRun(lead(), file)).checked;
+  const menu = await take('agent-1', 't-menu');
+  await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "Menú" };\n');
+  await completeTask(menu.ctx, runId, 't-menu');
+  const home = await take('agent-2', 't-home');
+  await writeInCopy(home.work, 'src/space/pages/home/index.ts', 'export const page = { title: "Inicio" };\n');
+  await completeTask(home.ctx, runId, 't-home');
+
+  return { runId, menu };
+};
+
+describe('how many leads', () => {
+  it('is one for every four agents, or as many as the team says', async () => {
+    expect(leadCount(team(2))).toBe(1);
+    expect(leadCount(team(4))).toBe(1);
+    expect(leadCount(team(5))).toBe(2);
+    expect(coLeadNames(team(9))).toEqual(['lead-2', 'lead-3']);
+    expect(coLeadNames(team(9, 1))).toEqual([]);
+
+    await bench.writeTeam(team(5));
+    expect(await setTeamAgent(bench.root, 'lead', { count: 1 })).toMatchObject({ after: { count: 1 } });
+    expect(await setTeamAgent(bench.root, 'lead', { model: 'claude-opus-5-5' })).toMatchObject({
+      after: { count: 1, model: 'claude-opus-5-5' }
+    });
+    expect((await refusal(setTeamAgent(bench.root, 'lead', { count: 9 }))).message).toContain('1 to 8');
+  });
+
+  it('records the leads that review when the run opens', async () => {
+    const { runId } = await twoInReview();
+    expect((await viewRun(lead(), runId)).leads).toEqual(['lead-2', 'lead-3']);
+  });
+});
+
+describe('a review, taken from one queue', () => {
+  it('offers each lead a review no other took, and holds it to the one that took it', async () => {
+    const { runId } = await twoInReview();
+    const first = (await takeNext(bench.agent('lead-2'), runId, 'lead')).next.leadReview?.task.id ?? '';
+    const second = (await takeNext(bench.agent('lead-3'), runId, 'lead')).next.leadReview?.task.id ?? '';
+    expect([first, second].sort()).toEqual(['t-home', 't-menu']);
+
+    const claimed = await refusal(reviewTask(bench.agent('lead-3'), runId, first, 'approve', []));
+    expect(claimed.code).toBe('claimed');
+    expect(claimed.message).toContain(`lead-2 reviews ${first}`);
+
+    expect(await reviewTask(bench.agent('lead-2'), runId, first, 'approve', [])).toMatchObject({ verdict: 'approve' });
+    // The lead has the last word on any: the one lead-3 took included.
+    expect(await reviewTask(lead(), runId, second, 'approve', [])).toMatchObject({ verdict: 'approve' });
+  });
+
+  it('gives the same lead the next round of a review it sent back', async () => {
+    const { runId, menu } = await twoInReview();
+    await reviewTask(bench.agent('lead-2'), runId, 't-menu', 'changes', [{ note: 'The title says nothing' }]);
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const page = { title: "La carta" };\n');
+    await completeTask(menu.ctx, runId, 't-menu');
+
+    // t-home waited longer now, but lead-2 knows what it asked of t-menu.
+    const next = await takeNext(bench.agent('lead-2'), runId, 'lead');
+    expect(next.next.leadReview).toMatchObject({ task: { id: 't-menu' }, round: 1 });
+    expect(next.next.leadReview?.asked.join(' ')).toContain('The title says nothing');
+  });
+
+  it('serialises two verdicts on one task: the second reads it said', async () => {
+    const { runId } = await twoInReview();
+    const both = await Promise.allSettled([
+      reviewTask(lead(), runId, 't-menu', 'approve', []),
+      reviewTask(bench.agent('lead-2'), runId, 't-menu', 'approve', [])
+    ]);
+    expect(both.filter(each => each.status === 'fulfilled')).toHaveLength(1);
+    const lost = both.find(each => each.status === 'rejected');
+    expect(String(lost?.status === 'rejected' ? lost.reason : '')).toContain('is done, not in review');
+  });
+
+  it('says why there is none, and that it can stop once every task is done', async () => {
+    const { runId } = await twoInReview();
+    await takeNext(bench.agent('lead-2'), runId, 'lead');
+    await takeNext(bench.agent('lead-3'), runId, 'lead');
+    const none = await takeNext(bench.agent('lead-4'), runId, 'lead').catch((error: unknown) => error);
+    expect(String(none)).toContain('no lead of this run');
+
+    const waiting = await takeNext(lead(), runId, 'lead');
+    expect(waiting.next.why).toMatch(/t-(home|menu) is lead-2's, t-(home|menu) is lead-3's/);
+    expect(waiting.next.finished).toBeUndefined();
+  });
+});
+
+describe('what stays the lead’s', () => {
+  it('refuses a lead that reviews the plan, the notes and a reassignment', async () => {
+    const { runId } = await twoInReview();
+    const file = await bench.writePlan({ ...benchPlan(), designReview: false });
+    for (const work of [
+      amendRun(bench.agent('lead-2'), runId, file),
+      noteRun(bench.agent('lead-2'), runId, 'Use the formal voice'),
+      reassignTask(bench.agent('lead-2'), runId, 't-book')
+    ]) {
+      const refused = await refusal(work);
+      expect(refused.code).toBe('lead-only');
+    }
+  });
+
+  it('refuses an agent of the team a lead’s verdict, without its task’s token too', async () => {
+    const { runId } = await twoInReview();
+    const refused = await refusal(reviewTask(bench.agent('agent-3'), runId, 't-menu', 'approve', []));
+    expect(refused.code).toBe('lead-only');
+    expect(refused.message).toContain('lead, lead-2, lead-3');
+  });
+});
+
+describe('the lead, woken for a review', () => {
+  it('only once one waited two minutes with no lead taking it', async () => {
+    const { runId } = await twoInReview();
+    const taken = (await takeNext(bench.agent('lead-2'), runId, 'lead')).next.leadReview?.task.id;
+    const untaken = taken === 't-menu' ? 't-home' : 't-menu';
+    const view = await viewRun(lead(), runId);
+    const since = Date.parse(view.tasks.find(task => task.id === untaken)?.since ?? '');
+    expect(leadItems(view, new Date(since + 60_000)).filter(item => item.key.startsWith('review:'))).toEqual([]);
+
+    const late = leadItems(view, new Date(since + 3 * 60_000)).filter(item => item.key.startsWith('review:'));
+    // The one lead-2 took is its: only the one nobody took.
+    expect(late.map(item => item.key)).toEqual([expect.stringContaining(`review:${untaken}:`)]);
+    expect(late[0]?.text).toContain('no lead took it');
+  });
+});

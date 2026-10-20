@@ -1,4 +1,5 @@
 import { readJson, writeJson } from './files';
+import { UNTAKEN_REVIEW_MS } from './leads';
 import { isRunRefusal } from './refusal';
 import { loadRun } from './run';
 import { viewRun } from './view';
@@ -29,17 +30,28 @@ export interface LeadNews {
 // What says how long something has lasted changes its words every minute: it is the same notice all the same.
 const TIMED = new Set<Attention['kind']>(['no-signal', 'long-wait', 'long-task', 'stopping']);
 
-/** What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round. */
-export const leadItems = (view: RunView): LeadItem[] => [
+/**
+ * What needs the lead in `view`, each by a key that stays while it is the same thing — a review by its round. With
+ * leads that review beside it, a task in review is theirs: the lead is woken for one only once it waited
+ * `UNTAKEN_REVIEW_MS` with no lead taking it — they are not running, or all busy.
+ */
+export const leadItems = (view: RunView, now: Date): LeadItem[] => [
   // One a designer is still to look at is not the lead's yet: it wakes the lead once the designer said.
   ...view.tasks
     .filter(task => task.status === 'in-review' && task.design?.status !== 'due')
+    .filter(
+      task =>
+        view.leads.length === 0 ||
+        (task.reviewer === undefined && now.getTime() - Date.parse(task.since ?? view.openedAt) >= UNTAKEN_REVIEW_MS)
+    )
     .map(task => ({
       key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
       text:
-        task.design?.status === 'approved'
-          ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review: plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
-          : `${task.id} is in review: plitzi task review ${task.id} --approve | --changes "…"`
+        view.leads.length > 0
+          ? `${task.id} has waited in review ${String(Math.round((now.getTime() - Date.parse(task.since ?? view.openedAt)) / 60_000))} min and no lead took it (${view.leads.join(', ')} — not started, or all at a review): review it yourself — plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…" — or start them (plitzi task next --role lead --follow --take --agent <name>)`
+          : task.design?.status === 'approved'
+            ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review: plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
+            : `${task.id} is in review: plitzi task review ${task.id} --approve | --changes "…"`
     })),
   ...view.attention
     .filter(item => item.who !== 'task')
@@ -77,7 +89,7 @@ export const waitForLead = async (
     }
 
     const seen = new Set((await readJson(seenFile, isKeys, 'what the lead was woken for')) ?? []);
-    const fresh = leadItems(view).filter(item => !seen.has(item.key));
+    const fresh = leadItems(view, ctx.now()).filter(item => !seen.has(item.key));
     if (fresh.length > 0) {
       await writeJson(seenFile, [...seen, ...fresh.map(item => item.key)]);
 

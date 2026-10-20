@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "runId": "es-launch",
+  "status": "open",
+  "openedAt": "2026-10-20T19:47:33.843Z",
+  "activeOn": {
+    "machine": "bench",
+    "since": "2026-10-20T19:47:33.843Z"
+  },
+  "pinned": {
+    "cli": "0.0.0-bench",
+    "packages": {}
+  },
+  "agents": 4,
+  "estimate": {
+    "tasks": 4,
+    "agents": 3,
+    "wallMinutes": 40,
+    "totalMinutes": 70
+  },
+  "brake": [
+    {
+      "kind": "completed",
+      "at": "2026-10-20T19:47:33.843Z"
+    },
+    {
+      "kind": "completed",
+      "at": "2026-10-20T19:47:33.843Z"
+    },
+    {
+      "kind": "completed",
+      "at": "2026-10-20T19:47:33.843Z"
+    }
+  ],
+  "merges": [],
+  "inputs": [
+    {
+      "file": "es-launch.plan.json",
+      "digest": "e7572c98cd0359be390d7b638e3b53e26d1da83ca475681ca1e4e26c4bdd7cd7"
+    },
+    {
+      "file": "summary.md",
+      "digest": "1942e1f796447800f6927063f31d9c2987c10ce3531459e1ea2358585037411e"
+    }
+  ]
+}

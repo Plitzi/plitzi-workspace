@@ -5,6 +5,7 @@ import {
   taskAsk,
   taskBlock,
   taskClaim,
+  taskCheck,
   taskClaims,
   taskComplete,
   taskContextCommand,
@@ -219,6 +220,15 @@ export const registerTaskGroup = (program: Command): Command => {
     .action((options: RunCommandOptions) => taskProposals(options));
 
   taskGroup
+    .command('check')
+    .description(
+      'What complete would hold your copy to — the checks, the acceptance’s commands, long files — run now; nothing changes'
+    )
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((options: RunCommandOptions) => taskCheck(options));
+
+  taskGroup
     .command('complete')
     .description('Finish the task: its copy compared by fingerprint, the project’s checks run in it, and to review')
     .option(
@@ -349,10 +359,11 @@ export const registerTaskGroup = (program: Command): Command => {
     .command('revert')
     .description('Take an approved task’s work back out of the run’s, before the final merge — the others’ untouched')
     .argument('<task>', 'The task')
-    .requiredOption('--reason <why>', 'Why: kept in its notes, and said to whoever takes it again')
+    // Not a required option: who may revert is said before what a revert needs.
+    .option('--reason <why>', 'Why (required): kept in its notes, and said to whoever takes it again')
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions & { reason: string }) => taskRevert(task, options));
+    .action((task: string, options: RunCommandOptions & { reason?: string }) => taskRevert(task, options));
 
   taskGroup
     .command('context')

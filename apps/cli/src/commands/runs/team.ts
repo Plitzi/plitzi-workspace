@@ -1,7 +1,8 @@
 import { act } from './shell';
 import {
+  coLeadNames,
+  leadText,
   ROLES,
-  modelText,
   readTeam,
   setTeamAgent,
   TEAM_FILE,
@@ -28,8 +29,8 @@ export const runTeam = (options: RunCommandOptions): Promise<void> =>
             ...rolesText()
           ].join('\n')
         : [
-            `This project's team (${shown.file}), ${String(teamSize(shown.team))} agents and the lead:`,
-            `  lead — ${shown.team.lead ? modelText(shown.team.lead) : 'the harness’s own model'}`,
+            `This project's team (${shown.file}), ${String(teamSize(shown.team))} agents and ${String(coLeadNames(shown.team).length + 1)} lead(s):`,
+            `  lead — ${leadText(shown.team.lead)}: plans, answers, decides, finishes${coLeadNames(shown.team).length > 0 ? ` — and ${coLeadNames(shown.team).join(', ')} review beside it` : ''}`,
             ...shown.team.agents.map(each => `  ${teamAgentText(each)}`),
             ...rolesText()
           ].join('\n')
@@ -43,7 +44,7 @@ const rolesText = (): string[] => [
 ];
 
 const memberText = (member: TeamChange['before']): string =>
-  member === undefined ? 'none' : 'name' in member ? teamAgentText(member) : modelText(member);
+  member === undefined ? 'none' : 'name' in member ? teamAgentText(member) : leadText(member);
 
 export const runTeamSet = (
   name: string,

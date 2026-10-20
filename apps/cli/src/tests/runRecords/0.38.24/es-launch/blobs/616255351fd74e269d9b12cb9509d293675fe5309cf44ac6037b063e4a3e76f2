@@ -1,0 +1,1 @@
+export const hero = { text: 'Welcome' };

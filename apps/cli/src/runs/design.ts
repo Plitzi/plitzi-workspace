@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import { fingerprint } from './files';
-import { LEAD } from './messages';
 import { RunRefusal } from './refusal';
 import { logRun } from './run';
 import { updateState } from './taskStore';
@@ -50,9 +49,6 @@ export const designReviewFor = (views: readonly TaskView[], agent: string): Task
 /** What a designer looks at, said once — the run's skill (`runs.md`) says it whole. */
 export const DESIGN_LOOK =
   'how it reads at 1440 and 390, in light and dark: hierarchy and spacing, the theme’s tokens rather than new values, every state (empty, long, loading, error, focus), labels and words a person understands, and that it looks like the rest of the space. A state the data never shows, you cannot look at: say it (--note), the lead decides how it is seen';
-
-/** Who says a task's last review: the lead, or a person at a terminal — any other name is an agent of the team. */
-export const isLead = (agent: string): boolean => agent === LEAD || agent === 'person';
 
 /** Who took a task's work, by the notes its takes leave: a designer does not review its own. */
 const workedBy = (view: TaskView, agent: string): boolean =>

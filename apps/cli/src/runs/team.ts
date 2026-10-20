@@ -15,6 +15,10 @@ import type { RunPlan } from './model';
  * the team's size; a task whose role nobody in the team takes is refused at `run plan`; a tester in the team gives every
  * developer task its tests (`tests.ts`); a designer in the team reviews the UI of the others' tasks before the lead.
  *
+ * The leads are one for every four agents (`AGENTS_PER_LEAD`), or as many as `"lead": { "count" }` says: the first, `lead`,
+ * plans, answers, decides and finishes; the others (`lead-2`, `lead-3`…) review tasks as it does, taking each from one
+ * queue — two levels, and no lead with agents of its own.
+ *
  * The CLI starts no agent: the lead's harness does, and reads here what to start each with — `run plan` says it agent by
  * agent. A model is the harness's own name for it (`claude-sonnet-5-5`, `openrouter/…`): nothing is checked but that one
  * is named.
@@ -50,13 +54,20 @@ export interface TeamAgent {
   effort?: string;
 }
 
+/** The leads' entry: their model, and how many — one for every `AGENTS_PER_LEAD` agents when not said. */
+export interface Lead {
+  model?: string;
+  effort?: string;
+  count?: number;
+}
+
 export interface Team {
   version: 1;
-  lead?: Model;
+  lead?: Lead;
   agents: TeamAgent[];
   /**
-   * What the file's fields and the roles mean, for the person who edits it (`TEAM_ABOUT`): JSON has no comments. Never
-   * read by the CLI, and kept as it was when it writes the file.
+   * What the file's fields and the roles mean, for the person who edits it (`TEAM_ABOUT`): JSON has no comments. The
+   * CLI's: never read, written as this CLI says it whenever the file is written, and brought up by `plitzi upgrade`.
    */
   about?: Record<string, unknown>;
 }
@@ -85,15 +96,23 @@ export interface StartedAgent {
 /** A role's or an agent's name, as a plan writes one. */
 const NAME = /^[a-z][a-z0-9_-]{0,63}$/;
 const MAX_COUNT = 16;
+const MAX_LEADS = 8;
+
+/**
+ * How many agents a lead reviews for: past it the reviews queue up behind one lead (v12: five agents, one lead, tasks
+ * waiting for it) — and below it a second lead costs more than it saves.
+ */
+export const AGENTS_PER_LEAD = 4;
 
 const isStrings = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');
 
-const isModel = (value: unknown): value is Model =>
+const isLeadEntry = (value: unknown): value is Lead =>
   isRecord(value) &&
-  typeof value.model === 'string' &&
-  value.model.trim() !== '' &&
-  (value.effort === undefined || typeof value.effort === 'string');
+  (value.model === undefined || (typeof value.model === 'string' && value.model.trim() !== '')) &&
+  (value.effort === undefined || typeof value.effort === 'string') &&
+  (value.count === undefined ||
+    (typeof value.count === 'number' && Number.isInteger(value.count) && value.count >= 1 && value.count <= MAX_LEADS));
 
 /** What is wrong with one agent of the file, said — none when it is one. */
 const agentProblem = (value: unknown): string | undefined => {
@@ -148,8 +167,11 @@ export const readTeam = async (root: string): Promise<Team | undefined> => {
     throw new RunRefusal('invalid', `${TEAM_FILE} is not { "version": 1, "lead"?: { "model": "…" }, "agents": [ … ] }`);
   }
 
-  if (parsed.lead !== undefined && !isModel(parsed.lead)) {
-    throw new RunRefusal('invalid', `${TEAM_FILE}: "lead" is { "model": "…", "effort"?: "…" }`);
+  if (parsed.lead !== undefined && !isLeadEntry(parsed.lead)) {
+    throw new RunRefusal(
+      'invalid',
+      `${TEAM_FILE}: "lead" is { "model"?: "…", "effort"?: "…", "count"?: 1 to ${String(MAX_LEADS)} }`
+    );
   }
 
   const problems = parsed.agents.flatMap(each => agentProblem(each) ?? []);
@@ -165,7 +187,7 @@ export const readTeam = async (root: string): Promise<Team | undefined> => {
 
   return {
     version: 1,
-    ...(isModel(parsed.lead) ? { lead: parsed.lead } : {}),
+    ...(isLeadEntry(parsed.lead) ? { lead: parsed.lead } : {}),
     agents: parsed.agents.filter(isTeamAgent),
     ...(isRecord(parsed.about) ? { about: parsed.about } : {})
   };
@@ -177,7 +199,7 @@ export const readTeam = async (root: string): Promise<Team | undefined> => {
  */
 export const TEAM_ABOUT: Record<string, unknown> = {
   file: 'Who works the runs of several agents on this project (plitzi run). Edit it, or: plitzi run team set <name> --roles … --count … --model …',
-  lead: 'The lead plans, reviews every task — the complete, strict review, and the final word — answers and closes: the one you talk to. Give it your strongest model: "lead": { "model": "…", "effort": "high" } (plitzi run team set lead --model …).',
+  lead: 'The lead plans, reviews every task — the complete, strict review, and the final word — answers and closes: the one you talk to. Give it your strongest model: "lead": { "model": "…", "effort": "high" } (plitzi run team set lead --model …). One lead for every 4 agents: lead plans and finishes, lead-2, lead-3… only review, as strictly — "count" says another number (plitzi run team set lead --count 1).',
   agents:
     'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. How many agents work at once is the sum of the counts.',
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
@@ -248,6 +270,14 @@ export const startedAgents = (team: Team): StartedAgent[] =>
     }))
   );
 
+/** How many leads the team has: as `"lead": { "count" }` says, or one for every `AGENTS_PER_LEAD` agents. */
+export const leadCount = (team: Team): number =>
+  team.lead?.count ?? Math.max(1, Math.ceil(teamSize(team) / AGENTS_PER_LEAD));
+
+/** The leads besides `lead`, by the names they are started with: `lead-2`, `lead-3`… — they review, nothing else. */
+export const coLeadNames = (team: Team): string[] =>
+  Array.from({ length: leadCount(team) - 1 }, (_, index) => `lead-${String(index + 2)}`);
+
 /** How many agents the team has: how many may work a run at once. */
 export const teamSize = (team: Team): number => team.agents.reduce((sum, each) => sum + (each.count ?? 1), 0);
 
@@ -280,14 +310,24 @@ export const roleProblems = (plan: Pick<RunPlan, 'tasks'>, team: Team): string[]
 
 export const modelText = (model: Model): string => `${model.model}${model.effort ? ` (${model.effort})` : ''}`;
 
+/** The model the leads are started with, said. */
+export const leadModelText = (lead: Lead | undefined): string =>
+  lead?.model
+    ? modelText({ model: lead.model, ...(lead.effort ? { effort: lead.effort } : {}) })
+    : 'the harness’s own model';
+
+/** The leads' entry, as `run team` says it: the model, and how many when it is said. */
+export const leadText = (lead: Lead | undefined): string =>
+  `${leadModelText(lead)}${lead?.count !== undefined ? ` × ${String(lead.count)}` : ''}`;
+
 /** One agent of the team, as `run team` says it. */
 export const teamAgentText = (each: TeamAgent): string =>
   `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${modelText({ model: each.model, ...(each.effort ? { effort: each.effort } : {}) })}` : ''}`;
 
 export interface TeamChange {
   name: string;
-  before?: TeamAgent | Model;
-  after?: TeamAgent | Model;
+  before?: TeamAgent | Lead;
+  after?: TeamAgent | Lead;
   file: string;
   /** It was already so: nothing written, and said. */
   unchanged?: true;
@@ -303,7 +343,25 @@ export interface TeamAgentChange {
 
 const writeTeam = async (root: string, team: Team): Promise<void> => {
   await fs.mkdir(path.join(root, path.dirname(TEAM_FILE)), { recursive: true });
-  await fs.writeFile(path.join(root, TEAM_FILE), formattedJson(team));
+  await fs.writeFile(path.join(root, TEAM_FILE), formattedJson({ ...team, about: TEAM_ABOUT }));
+};
+
+/**
+ * `plitzi upgrade`: the team file's `about` as this CLI says it — a lead count, a role it learnt — its agents and leads
+ * left as the project has them. Answers whether it was out of date; written only when `write`. No file, or one that is
+ * not a team (refused when a run reads it), nothing.
+ */
+export const refreshTeamAbout = async (root: string, write: boolean): Promise<boolean> => {
+  const team = await readTeam(root).catch(() => undefined);
+  if (!team || JSON.stringify(team.about) === JSON.stringify(TEAM_ABOUT)) {
+    return false;
+  }
+
+  if (write) {
+    await writeTeam(root, team);
+  }
+
+  return true;
 };
 
 /**
@@ -313,18 +371,34 @@ const writeTeam = async (root: string, team: Team): Promise<void> => {
 export const setTeamAgent = async (root: string, name: string, change: TeamAgentChange): Promise<TeamChange> => {
   const team = (await readTeam(root)) ?? { version: 1, agents: [] };
   if (name === 'lead') {
-    if (change.roles !== undefined || change.count !== undefined) {
+    if (change.roles !== undefined) {
       throw new RunRefusal(
         'invalid',
-        'The lead is one, and leads: give it a --model (and --effort), no roles or count'
+        'The leads take no roles — they plan and review: give them a --model (and --effort), or how many with --count'
       );
     }
 
-    if (change.model === undefined) {
-      throw new RunRefusal('invalid', 'The lead’s model is named: plitzi run team set lead --model claude-opus-5-5');
+    if (change.model === undefined && change.count === undefined && change.effort === undefined) {
+      throw new RunRefusal(
+        'invalid',
+        'Say what of the leads changes: plitzi run team set lead --model claude-opus-5-5 | --count 2'
+      );
     }
 
-    const lead: Model = { model: change.model, ...(change.effort ? { effort: change.effort } : {}) };
+    const lead: Lead = {
+      ...team.lead,
+      ...(change.model !== undefined ? { model: change.model } : {}),
+      ...(change.effort !== undefined ? { effort: change.effort } : {}),
+      ...(change.count !== undefined ? { count: change.count } : {})
+    };
+    if (!isLeadEntry(lead)) {
+      throw new RunRefusal('invalid', `The leads are 1 to ${String(MAX_LEADS)}, and their model a name: --count 2`);
+    }
+
+    if (team.lead && JSON.stringify(team.lead) === JSON.stringify(lead)) {
+      return { name, before: team.lead, after: lead, file: TEAM_FILE, unchanged: true };
+    }
+
     await writeTeam(root, { ...team, lead });
 
     return { name, ...(team.lead ? { before: team.lead } : {}), after: lead, file: TEAM_FILE };
@@ -364,12 +438,12 @@ export const setTeamAgent = async (root: string, name: string, change: TeamAgent
   return { name, ...(before ? { before } : {}), after, file: TEAM_FILE };
 };
 
-/** `plitzi run team unset <name>`: one agent out of the team — or the lead's model, for `lead`. */
+/** `plitzi run team unset <name>`: one agent out of the team — or, for `lead`, the leads' model and count. */
 export const unsetTeamAgent = async (root: string, name: string): Promise<TeamChange> => {
   const team = await readTeam(root);
   if (name === 'lead') {
     if (!team?.lead) {
-      throw new RunRefusal('invalid', `The lead has no model of its own to take out (${TEAM_FILE})`);
+      throw new RunRefusal('invalid', `The leads have nothing of their own to take out (${TEAM_FILE})`);
     }
 
     const { lead, ...rest } = team;
