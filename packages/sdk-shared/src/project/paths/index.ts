@@ -28,10 +28,13 @@ export const SOURCE_DIR = 'src';
 
 /**
  * The CLI's own part of a project — the script that authors the space, the types its plugins import besides code, the
- * page's base styles — apart from `src/`, which is the project's: `plitzi upgrade` keeps this folder current, and a
- * person reads `src/` without wading through it.
+ * page's base styles — beside what it records (`scaffold.json`, `space.json`, `team.json`), in one folder: apart from
+ * `src/`, which is the project's. `plitzi upgrade` keeps it current, and a person reads `src/` without wading through it.
  */
-export const CLI_DIR = 'plitzi';
+export const CLI_DIR = '.plitzi';
+
+/** Where an older CLI kept its part of the project: `plitzi doctor --fix` moves it into `CLI_DIR`. */
+export const LEGACY_CLI_DIR = 'plitzi';
 
 /**
  * What authors the space and says what it found: `npm run author`, and the server's re-authoring on a save, which runs

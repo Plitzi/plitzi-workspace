@@ -5,7 +5,7 @@ import { longFileText, longFilesIn } from './longFiles';
 import { LEAD, messagesOf, unreadFor } from './messages';
 import { under } from './paths';
 import { chainMinutes } from './plan';
-import { previewPort } from './preview';
+import { previewPort } from './previewRecord';
 import { loadRun, pinnedChanges, pinnedNow, readApproved, readBase, runIds, samePinned } from './run';
 import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
@@ -294,6 +294,8 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
   const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
   (await unreadFor(loaded, LEAD, false))
     .filter(message => !answered.has(message.id))
+    // Said for the lead to know by a task approved since: its history now, in the inbox — nothing to act on.
+    .filter(message => !(message.fyi === true && byId.get(message.from)?.state.status === 'done'))
     .forEach(message =>
       attention.push({
         kind: 'message',

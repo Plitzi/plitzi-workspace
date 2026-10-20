@@ -3,6 +3,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { createExclusive } from './files';
+import { copyOf, runPaths, taskPaths } from './paths';
 import { claimFile, releaseFile, waitForFile } from './tasks';
 import { makeBench } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -22,6 +23,16 @@ afterEach(async () => {
 });
 
 const { open, take } = runSteps(() => bench);
+
+describe('a folder of a task’s copy', () => {
+  it('is read off its path: the project it belongs to, its run and its task — and nothing else is one', () => {
+    const work = taskPaths(runPaths('/home/ana/shop', 'es-launch'), 't-home').work;
+    expect(copyOf(work)).toEqual({ root: '/home/ana/shop', run: 'es-launch', task: 't-home' });
+    expect(copyOf(path.join(work, 'src'))).toEqual({ root: '/home/ana/shop', run: 'es-launch', task: 't-home' });
+    expect(copyOf(runPaths('/home/ana/shop', 'es-launch').dir)).toBeUndefined();
+    expect(copyOf('/home/ana/shop')).toBeUndefined();
+  });
+});
 
 describe('turns let go', () => {
   it('releases a file held by turns to the next in line', async () => {

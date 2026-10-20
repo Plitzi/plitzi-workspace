@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import { authorSpace, component, container, lintSpace, list, listItem, text } from '../../index';
-import { authored, errorsOf, homeId, onClick, setFlow, step, warningsOf, withChange } from './tests/lintFixture';
+import {
+  addElement,
+  authored,
+  errorsOf,
+  homeId,
+  onClick,
+  setFlow,
+  step,
+  warningsOf,
+  withChange
+} from './tests/lintFixture';
 
 import type { Schema } from '@plitzi/sdk-shared';
 
@@ -379,6 +389,11 @@ describe('lintSpace', () => {
       Object.assign(documents.schema.flat.go.attributes, { href: 'faq', mode: 'page', hash: 'answer' });
 
       expect(errorsOf(documents)).toContain('anchor-in-row');
+
+      // One row's, by its key: reached, and neither refusal.
+      documents.schema.flat.go.attributes.hash = 'answer-a';
+      expect(errorsOf(documents)).not.toContain('anchor-in-row');
+      expect(errorsOf(documents)).not.toContain('anchor-missing');
     });
 
     it('anchor-duplicate', () => {
@@ -451,6 +466,14 @@ describe('lintSpace', () => {
       });
 
       expect(errorsOf(documents)).toContain('template-short-source');
+
+      // A list's row, named short: pointed at the name a row hands a template, not at its id written by hand.
+      const row = withChange(({ schema }) => {
+        addElement(schema, { id: 'rows', type: 'list', attributes: { source: 'controlled', items: [{ title: 'A' }] } });
+        schema.flat.hello.attributes.content = '{{ rows.item.title }}';
+      });
+      const refused = lintSpace(row).errors.find(issue => issue.code === 'template-short-source');
+      expect(refused?.message).toContain('r.inTemplate.item');
     });
 
     it('template-source-out-of-scope', () => {

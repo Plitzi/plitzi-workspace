@@ -189,6 +189,32 @@ export const cloneFiles = async (
   return fingerprints;
 };
 
+/**
+ * Clones `files` — served binaries a task does not own — from `from` into `to`, copy-on-write, unread: answers each by
+ * its size and time in the copy, what a change of it is told by.
+ */
+export const cloneServed = async (
+  from: string,
+  to: string,
+  files: readonly string[]
+): Promise<Record<string, { size: number; mtimeMs: number }>> => {
+  const cloned: Record<string, { size: number; mtimeMs: number }> = {};
+  for (const file of files) {
+    const target = under(to, file);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    const done = await fs.copyFile(under(from, file), target, fs.constants.COPYFILE_FICLONE).then(
+      () => true,
+      () => false
+    );
+    if (done) {
+      const stat = await fs.stat(target);
+      cloned[file] = { size: stat.size, mtimeMs: stat.mtimeMs };
+    }
+  }
+
+  return cloned;
+};
+
 /** Every file under `dir`, as paths relative to it with forward slashes. */
 export const filesUnder = async (dir: string): Promise<string[]> => {
   const found: string[] = [];

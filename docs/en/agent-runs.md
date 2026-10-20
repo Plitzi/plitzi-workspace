@@ -39,7 +39,8 @@ status`. `run watch --until lead` (`leadWatch.ts`) is what a lead waits with in 
 for it — a review by its round, a question, a block, a notice — each once, what it woke the lead for kept in the run's
 `lead-seen.json`. A block the lead lifts carries what the task waited for (`task unblock --answer`), and `task next`
 hands an agent the task it holds and can go on with — unblocked, or sent back with changes — before anything new
-(`yours`), so an agent waiting for work hears it. **The run's notes** — the plan's `notes`, and each `run note` — are
+(`yours`), so an agent waiting for work hears it. A task sent back that others wait on, while its agent is at another,
+tells that agent it goes first (`goesFirst`, to `@<agent>`): nothing else reaches it before the task in hand is done. **The run's notes** — the plan's `notes`, and each `run note` — are
 messages to every task (`*`): each task reads every one once, with its take or its next sign of life, and `task context`
 (the brief an agent starts from) lists them beside its acceptance, what a review asked and what was agreed.
 
@@ -100,7 +101,9 @@ ownership is read off the imports, with the project's own TypeScript (`fileImpor
   an image) is a unit of its own.
 
 A plan names units; `checkPlan` expands each with what it owns and refuses a file in two tasks, or a folder that is not
-a plugin's. It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
+a plugin's. What the job asks that the run does not do is the plan's `leftOut` — said at `run plan` (and that nothing
+is, when it says none), at `run open` and in the report — so the scope is a choice made with the person, never found
+after (la-velada's copy left the tier list and the hero's logo out, unsaid). It says — never refuses — a file of a task that other tasks' files import (what it exports is their contract:
 change it compatibly, or say in the plan who follows it), and the tasks whose acceptance no command proves (they hold at
 their review only; a check runs at `complete` and again at the finish). A task holds its plan's files only until it is done: then a shared one among them (the entry a shell task
 split up) is requested like any other, and the rest are taken by turns. Shared files are taken **by turns** (`task
@@ -147,7 +150,13 @@ it sees the same, and no other project's runs.
 
 `task look <task> [paths…]` serves a task's copy as it went to review, runs this CLI's `page check` from the copy at
 1440 and 390 and `page shot` light at 1440 and dark at 390 for each path, each a child process, and stops the server:
-the review a lead made by hand in four or five commands, while every agent waited.
+the review a lead made by hand in four or five commands, while every agent waited. A task that writes a part of a page
+others build too — a section of the home — is looked at as that part (`taskParts.ts`, off the copy's own authoring:
+the elements its files write): its pictures clipped to its outermost elements (a provider's children, as it draws no
+node), and the page check's findings on other tasks' parts set apart and counted — a stub of theirs is no finding of
+its. A whole page, layout or component of its own is pictured whole, as before. A copy its agent's own server still
+serves (its `tmp/dev-server.json` answers) is looked at there and left running — a second server would not start on
+the copy's state, whose kv lock the first holds; `run preview --task` follows it the same way.
 
 ## Who works the runs (`team.ts`)
 
@@ -164,6 +173,15 @@ each with — its roles, its model, the plan's tasks it takes and `task next --r
 it at its first run, with an agent for each other role its plan names, said; a team somebody emptied is refused. A task whose role nobody in the team takes
 is refused at `run plan`; an agent of one role is held to it in a rehearsal. `run team` shows it; `run team set|unset
 <name>` changes one agent, or the leads' model and count (`lead --count`), saying it before and after.
+
+**A model a quality level.** A task says what it asks of its model (`quality`: `light`, `standard`, `high`); where the
+plan says none, `run plan` sets one and says why — `high` for what three tasks or more build on, or what other tasks'
+files import; `light` for ten minutes on one file; `standard` the rest. An agent's `model` is one name, or one a level
+(`{ "standard": "…", "high": "…" }`, `run team set <name> --model standard=…,high=…`): each level is started apart
+(`design-1-high`), and `run plan` says which tasks are each one's. An agent started at a level (`task next --quality`,
+`PLITZI_QUALITY`) is handed tasks of it or below, never above — and told what waits above it, for the lead to start a
+stronger one. The strongest model works only what is worth it (la-velada: the designer, on the harness's own model for
+every task, spent the most).
 
 ## The tester's tasks (`tests.ts`)
 
@@ -188,7 +206,8 @@ and tells the lead; and the lead, reviewing, tests the module's edges itself or 
 
 ## The designer's review (`design.ts`)
 
-With a designer in the team — or a plan that says `"designReview": true`; `false` turns it off — the UI another role's
+With a designer in the team — or a plan that says `"designReview": true`; `false` turns it off; a stage stacked on
+the run keeps the run's choice, and may only turn it on — the UI another role's
 task changes (under `src/space/`, but its data, or a plugin) is looked at by a designer before the lead: at `complete`
 its state's `design` is `due`. A designer's `task next` offers it before any task of its own (`--take` makes it theirs:
 another designer is not offered it), with what it changed, the pages it is likely drawn at and what to look for; the
@@ -212,8 +231,9 @@ debt is not the task's.
 
 `run amend` reads the plan file again while the run is open and takes what it asks — titles, acceptance, priorities,
 estimates, milestones, the goal, and notes more (sent to every task) — into `plan.json` and each task's `task.json`,
-telling each task changed what it now asks. The run's shape — its tasks, their files, `dependsOn`, `role`, `touches` —
-is refused, as is a task already done, every reason at once; so is a plan that changes nothing. Its acceptance is held
+telling each task changed what it now asks. The run's shape — its tasks, their files, `dependsOn`, `touches` — is
+refused, as is a task already done, every reason at once; who a task is for — its `role` and `quality` — changes while
+it is pending or ready, and is refused once an agent took it; so is a plan that changes nothing. Its acceptance is held
 to `run plan`'s rules, among them a `page check` whose text the shell would split into a page.
 
 ## A plan rehearsed (`rehearse.ts`)
@@ -283,18 +303,23 @@ One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`
 - **Take:** under the agent limit, `owner.json` exclusively, with a token `<run>.<task>.<secret>`, so every command of
   the task needs only it. A `.lock` per file at the file's path under `locks/`, readable by any hook or editor;
   `run can-write` answers the same. The copy: the project's files — never `node_modules`, `tmp`, `dist`, `state`,
-  `.git`, `.plitzi`, `.yarn`, a `.env` (its templates — `.env.example`, `.sample`, `.template`, `.dist` — are), nor the
-  binaries of `public/` and `vendor/` it does not own — cloned copy-on-write where the disk can (`COPYFILE_FICLONE`,
+  `.git`, `.yarn`, a `.env` (its templates — `.env.example`, `.sample`, `.template`, `.dist` — are); `.plitzi/` comes,
+  what its checks author with, and no task writes it; the binaries of `public/` and `vendor/` it does not own come
+  unread (`served`: told changed by size and time, never read whole for a fingerprint), so its pages draw their
+  pictures — cloned copy-on-write where the disk can (`COPYFILE_FICLONE`,
   about 0.3 ms a file), then the run's approved work over it, then, for a task cut before, its last reviewed version.
   `start.json` keeps the fingerprint of every file it started from, and which came from the run. **A copy is kept up to
-  the run**: when a file is handed on by turns, on `task discard`, and before `complete`'s checks, every file the run
-  approved since the copy was made — and the task did not touch — is brought in, so a granted entry never arrives
-  without the pages it imports. A task may remove the `.gitkeep` of a folder it writes into. Packages resolve from
+  the run**: when a file is handed on by turns, on `task discard`, and before `task check`'s and `complete`'s checks,
+  every file the run approved since the copy was made — and the task did not touch — is brought in, so a granted entry
+  never arrives without the pages it imports; and so is a file a person changed in the project since, that no approval
+  holds and the task does not own (told by its time first, then its fingerprint) — an older copy checked against the
+  project's files as they were fails on a change it never made. A task may remove the `.gitkeep` of a folder it writes into. Packages resolve from
   the copy by walking up to the project's `node_modules`; a command run inside the copy works on the project it belongs
   to, and as its task: `take` writes the run, task, token and agent into the copy's `tmp/plitzi-task.json`, read when no
   token is said (a token said wins — the lead reviewing from inside a copy is the lead).
 - **Check:** `task check` runs in the copy what `complete` would hold it to — the project's checks, the acceptance's
-  commands, the files too long — and changes nothing: no review, no brake. An agent iterating on a fix checks with it,
+  commands, the files too long — and changes none of its work (the copy is brought up first, as for `complete`): no
+  review, no brake. An agent iterating on a fix checks with it,
   and completes once it passes; it hands over what was said to the task meanwhile, which an agent that only edits
   files would otherwise read only at `complete`. What a task declares for the tasks after it — a component, a token,
   read by none yet (authoring's `unused-*` suggestions) — passes a task's checks as a warning the review sees, and fails

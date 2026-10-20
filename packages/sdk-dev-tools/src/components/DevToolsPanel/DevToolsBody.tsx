@@ -45,8 +45,9 @@ const DevToolsBody = ({
   const { logs, clearLogs } = use(DevToolsContext);
 
   return (
-    <div className={clsx('flex h-full w-full grow overflow-auto bg-white dark:bg-zinc-900', className)}>
-      <div className="flex w-full flex-col">
+    // The room under the header, never more: a body as tall as the panel ran below it, its last rows out of reach.
+    <div className={clsx('flex min-h-0 w-full flex-1 overflow-auto bg-white dark:bg-zinc-900', className)}>
+      <div className="flex min-h-0 w-full flex-col">
         {tabSelected === 'logs' && (
           <Logs items={logs} orientation={orientation} logTypeFilter={logTypeFilter} onClear={clearLogs} />
         )}

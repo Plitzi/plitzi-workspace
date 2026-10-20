@@ -31,6 +31,10 @@ import type { AcceptanceAgain } from './materialise';
 import type { ApprovedManifest, MergeEntry, ReconciledFile, RunRecord } from './model';
 import type { LoadedRun, RemovedInputs, RunContext } from './run';
 
+/** No task is in hand at the finish: what fails is the run's, and the next step is a task of the run, or a revert. */
+const FINISH_AGAIN =
+  'a task of the run puts it right (plitzi run extend with a stage for it), or the lead reverts the task that broke it (plitzi task revert) — then finish again (plitzi run finish)';
+
 /**
  * The run into the project: the only write the project ever gets from a run — shown first as a
  * dry run with the project's checks over the whole result, approved by a person, written file by file as one
@@ -306,7 +310,8 @@ export const finishRun = async (
   if (!plan.checks.ok) {
     await recordBrake(ctx, loaded, 'checks-failed');
     throw new RunRefusal('checks-failed', 'The project’s checks fail on the run’s whole result: nothing is written', {
-      steps: plan.checks.steps.filter(step => !step.ok)
+      steps: plan.checks.steps.filter(step => !step.ok),
+      next: FINISH_AGAIN
     });
   }
 
@@ -337,7 +342,8 @@ export const finishRun = async (
           name: `acceptance — ${each.task}: ${each.said}`,
           ok: false,
           said: [each.check, ...(each.output ?? [])]
-        }))
+        })),
+        next: FINISH_AGAIN
       }
     );
   }

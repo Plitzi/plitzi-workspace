@@ -10,7 +10,7 @@ import { syncPreview } from './preview';
 import { loadRun } from './run';
 import { showTask } from './show';
 import { askLead, messageTasks, readInbox, tellLead } from './talk';
-import { completeTask, nextTask, reportProgress, revertTask, taskContext } from './tasks';
+import { completeTask, nextTask, reportProgress, revertTask, reviewTask, taskContext } from './tasks';
 import { viewRun } from './view';
 import { benchPlan, makeBench, teamFor, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -32,6 +32,19 @@ afterEach(async () => {
 const { refusal, lead, open, take, doTask } = runSteps(() => bench);
 
 describe('acceptance, checks and what is left behind', () => {
+  it('leaves a note of a task approved since out of what needs the lead: it is the inbox’s history', async () => {
+    const runId = await open();
+    const menu = await take('agent-1', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = { title: "Menú" };\n');
+    await tellLead(menu.ctx, runId, 't-menu', 'Prices come from menu.json');
+    await completeTask(menu.ctx, runId, 't-menu');
+    expect((await viewRun(lead(), runId)).attention.some(item => item.text.includes('for you to know'))).toBe(true);
+
+    await reviewTask(lead(), runId, 't-menu', 'approve', []);
+    expect((await viewRun(lead(), runId)).attention.some(item => item.text.includes('for you to know'))).toBe(false);
+    expect((await readInbox(lead(), runId)).map(message => message.text)).toContain('Prices come from menu.json');
+  });
+
   it('refuses a page check whose text the shell would split into a page', async () => {
     const plan = benchPlan();
     plan.tasks[0].acceptance = [
@@ -267,5 +280,11 @@ describe('acceptance, checks and what is left behind', () => {
           notice.startsWith('src/space/theme.ts (t-home) is read by') && notice.includes('src/space/pages/menu.ts')
       )
     ).toBe(true);
+
+    // A part of a page, read by the page's own index only: the index puts the parts together — no notice.
+    const part = benchPlan();
+    part.tasks = [{ ...part.tasks[0], files: ['src/space/pages/home/hero.ts'] }];
+    const assembled = await checkPlan(bench.root, part, await readOwnership(bench.root), teamFor(part, 3));
+    expect(assembled.notices.filter(notice => notice.startsWith('src/space/pages/home/hero.ts'))).toEqual([]);
   });
 });

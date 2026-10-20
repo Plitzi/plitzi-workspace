@@ -134,7 +134,7 @@ describe('a project made from a space', () => {
       to: 'vendor/plugins/oldChart/plugin-manifest.json'
     });
     expect(serverMain).toContain('space: authorProjectSpace');
-    expect(scaffold({ ...answers(), fromSpace: true })['plitzi/author.ts']).toContain('await projectSpace()');
+    expect(scaffold({ ...answers(), fromSpace: true })['.plitzi/author.ts']).toContain('await projectSpace()');
   });
 
   it('keeps a built plugin’s server half beside it, where its manifest names it', () => {
@@ -233,7 +233,7 @@ describe('the server a project made from a space runs', () => {
   it('keeps its actions and connectors in folders there from the start, which `start:dev` restarts on', () => {
     const written = scaffold({ ...answers(), fromSpace: true });
     expect(written['src/connectors/.gitkeep']).toBe('');
-    expect(written['plitzi/README.md']).toContain('## `src/actions/` and `src/connectors/`');
+    expect(written['.plitzi/README.md']).toContain('## `src/actions/` and `src/connectors/`');
     // The CLI's, so `upgrade` writes them into a project made before them, with the script that watches them.
     expect(machineryFiles({ ...answers(), fromSpace: true })).toHaveProperty(['src/connectors/.gitkeep']);
     const manifest: unknown = JSON.parse(scaffold({ ...answers(), fromSpace: true })['package.json']);

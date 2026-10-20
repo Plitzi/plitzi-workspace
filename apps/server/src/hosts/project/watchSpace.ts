@@ -29,7 +29,7 @@ const authored = (file: string): boolean =>
   (!/^plugins([\\/]|$)/.test(file) || path.basename(file) === 'declaration.ts');
 
 /**
- * A save to the space, while developing: re-authored by the project's `plitzi/author.ts` in a process of its own — the
+ * A save to the space, while developing: re-authored by the project's `.plitzi/author.ts` in a process of its own — the
  * only way to read every file of it again, which an import never does twice — and handed over IPC (`--ipc`), so
  * `onAuthored` swaps the documents the server serves. What it refuses is printed by the script, and the page keeps
  * the last space that authored. Saves in quick succession author once; one during a run, once more after it. Answers

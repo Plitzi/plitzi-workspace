@@ -7,15 +7,18 @@ import { exists } from './files';
 import { readHistory } from './history';
 import { acceptanceText } from './model';
 import { expandFiles, sharedReached } from './ownership';
-import { ID, isSecretFile, NOT_COPIED_DIRS, under } from './paths';
+import { ID, isSecretFile, NOT_TASK_DIRS, under } from './paths';
 import { shellCommands } from './shell';
 import { DEVELOPER, roleProblems, teamSize, teamTakes, TESTER } from './team';
 import { testSetupOf, withTestTasks } from './tests';
 import { scriptsOf } from '../commands/verify';
 
-import type { RunPlan, RunTask, TaskState } from './model';
+import type { Quality, RunPlan, RunTask, TaskState } from './model';
 import type { Ownership } from './ownership';
 import type { Team } from './team';
+
+const assemblesFolderOf = (importer: string, file: string): boolean =>
+  /^index\.[cm]?[jt]sx?$/.test(path.basename(importer)) && path.dirname(importer) === path.dirname(file);
 
 /**
  * A plan, held to the rules: the lead writes it, the CLI never interprets a goal. Refused, every
@@ -59,6 +62,8 @@ export interface CheckedPlan {
   created: string[];
   estimate: PlanEstimate;
   notices: string[];
+  /** What the plan says it leaves out: said to the person before opening. */
+  leftOut: string[];
 }
 
 export const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 } as const;
@@ -226,7 +231,7 @@ const pacedEstimate = async (
 };
 
 const isOutsideSource = (file: string): boolean =>
-  NOT_COPIED_DIRS.has(file.split('/')[0]) || file.split('/').includes('node_modules');
+  NOT_TASK_DIRS.has(file.split('/')[0]) || file.split('/').includes('node_modules');
 
 /**
  * The words a `plitzi page check` (or `page shot`) in `check` reads as pages that are no path — `week` out of
@@ -559,8 +564,13 @@ export const checkPlan = async (
         );
       }
 
+      // …but its own folder's index: it puts the folder's parts together, and a part's change reaches it only through
+      // a name it imports, which the task's typecheck says at complete — la-velada's page index was one notice a part.
       const outside = importers
-        .filter(importer => !planned.has(importer) && !ownership.entries.includes(importer))
+        .filter(
+          importer =>
+            !planned.has(importer) && !ownership.entries.includes(importer) && !assemblesFolderOf(importer, file)
+        )
         .sort();
       if (outside.length > 0) {
         const named = outside.slice(0, SHOWN_IMPORTERS).join(', ');
@@ -570,6 +580,38 @@ export const checkPlan = async (
         );
       }
     }
+  }
+
+  // How much each task asks of its model, where the plan says none: what many build on is worth the strongest; a
+  // one-file few minutes, the lightest — said, so the lead sets it otherwise in a line.
+  const suggested: string[] = [];
+  for (const task of tasks) {
+    if (task.quality !== undefined || task.kind !== 'work') {
+      continue;
+    }
+
+    const builtOn = tasks.filter(other => other.id !== task.id && before(task.id, other.id)).length;
+    const importedByOthers = task.files.some(file =>
+      (ownership.importedBy.get(file) ?? []).some(
+        importer => holder.get(importer) !== undefined && holder.get(importer) !== task.id
+      )
+    );
+    const [quality, why]: [Quality, string] =
+      builtOn >= 3 || importedByOthers
+        ? ['high', builtOn >= 3 ? `${String(builtOn)} tasks build on it` : 'other tasks import what it writes']
+        : task.estimateMinutes <= 10 && task.files.length <= 1
+          ? ['light', `${String(task.estimateMinutes)} minutes on one file`]
+          : ['standard', ''];
+    task.quality = quality;
+    if (quality !== 'standard') {
+      suggested.push(`${task.id} ${quality} (${why})`);
+    }
+  }
+
+  if (suggested.length > 0) {
+    notices.push(
+      `Quality where the plan said none: ${suggested.join(', ')}; the rest standard — an agent started at a level takes tasks of it or below ("quality" in a task sets it otherwise)`
+    );
   }
 
   // A task whose acceptance no command proves holds only at its review: a later task can undo it, and nothing says so —
@@ -590,6 +632,7 @@ export const checkPlan = async (
   return {
     runId: plan.runId,
     goal: plan.goal,
+    leftOut: plan.leftOut ?? [],
     tasks,
     shared,
     // What the tasks reach through their imports, and what they said they will touch: none of it held by one.

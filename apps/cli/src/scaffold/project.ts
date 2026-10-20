@@ -8,6 +8,7 @@ import {
   AUTHOR_FILE,
   BUILD_DIR,
   CLI_DIR,
+  CLI_DIR_INCLUDE,
   DATA_DIR,
   DEV_SERVER_FILE,
   FUNCTIONS_DIR,
@@ -283,7 +284,13 @@ export const tsconfigBase = ({ mode }: CreateAnswers): string =>
  * as the project's formatter writes it, since it is the project's to format.
  */
 export const tsconfig = ({ mode }: CreateAnswers): string => {
-  const include = [CLI_DIR, 'src', 'visual', 'playwright.config.ts', ...(mode === 'client' ? ['vite.config.ts'] : [])];
+  const include = [
+    CLI_DIR_INCLUDE,
+    'src',
+    'visual',
+    'playwright.config.ts',
+    ...(mode === 'client' ? ['vite.config.ts'] : [])
+  ];
 
   return `{\n  "extends": "./${TSCONFIG_BASE}",\n  "include": [${include.map(entry => JSON.stringify(entry)).join(', ')}]\n}\n`;
 };

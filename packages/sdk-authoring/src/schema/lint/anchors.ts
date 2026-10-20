@@ -126,10 +126,15 @@ const lintLinkHash = (
   if (!anchors.has(hash) && rows.has(hash)) {
     ctx.error(
       'anchor-in-row',
-      `${where} goes to "${pageId}#${hash}", an anchor a list draws in each of its rows — named after its row there (\`${hash}-<row>\`), so the link would land at the top. Link to the list's own anchor, or to one outside it.`,
+      `${where} goes to "${pageId}#${hash}", an anchor a list draws in each of its rows — named after its row there (\`${hash}-<row>\`), so the link would land at the top. Link to one row's (\`hash: '${hash}-<row key>'\`), to the list's own anchor, or to one outside it.`,
       link.id
     );
 
+    return;
+  }
+
+  // One row's: drawn from the data, so its name is not known here — only that a list's rows carry it.
+  if (!anchors.has(hash) && [...rows].some(row => hash.startsWith(`${row}-`))) {
     return;
   }
 

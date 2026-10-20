@@ -82,6 +82,8 @@ const styleConstants = {
   BORDER_TOP_RIGHT_RADIUS: 'border-top-right-radius',
   BORDER_BOTTOM_LEFT_RADIUS: 'border-bottom-left-radius',
   BORDER_BOTTOM_RIGHT_RADIUS: 'border-bottom-right-radius',
+  // A picture or a gradient drawn as the border, kept whole as `transition` is: its five parts are written together.
+  BORDER_IMAGE: 'border-image',
   // Table
   BORDER_COLLAPSE: 'border-collapse',
   BORDER_SPACING: 'border-spacing',
@@ -341,6 +343,7 @@ export const baseDefaultValue: Record<StyleCategory, StyleValue> = {
   // Table
   [styleConstants.BORDER_COLLAPSE]: 'separate',
   [styleConstants.BORDER_SPACING]: '0px',
+  [styleConstants.BORDER_IMAGE]: 'none',
   [styleConstants.TABLE_LAYOUT]: 'auto',
   // Effects
   [styleConstants.OPACITY]: '1',

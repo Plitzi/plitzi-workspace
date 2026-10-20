@@ -135,7 +135,7 @@ export const serverFiles = (answers: CreateAnswers): ProjectFiles => ({
     name: answers.name,
     actions: answers.source === 'local' || Boolean(answers.fromSpace)
   }),
-  // There from the start, for \`start:dev\` to watch: what it is, \`plitzi/README.md\` says.
+  // There from the start, for \`start:dev\` to watch: what it is, \`.plitzi/README.md\` says.
   [`${FUNCTIONS_DIR}/.gitkeep`]: '',
   // The project's own data: read by its server, never served.
   [`${DATA_DIR}/.gitkeep`]: '',

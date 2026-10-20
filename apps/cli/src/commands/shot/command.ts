@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { comparePictures, pageRegions } from '@plitzi/sdk-authoring';
 
 import { dataUrl, launchBrowser, projectOrigin } from '../../browser';
+import { copyOf } from '../../runs/paths';
 import { PROJECT_TMP } from '../../scaffold/paths';
 import { checkAccount, CHECK_PASSWORD_ENV } from '../check';
 import { projectHere } from '../existingProject';
@@ -47,11 +48,19 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  const where = await projectOrigin(
-    project.root,
-    project.plitzi?.kind === 'project' ? project.plitzi : undefined,
-    options.url
-  );
+  // Another site, named whole — the original a copy is made after: pictured as any visitor sees it, no server of ours.
+  const external = route !== undefined && /^https?:\/\//.test(route);
+  if (external && (options.as !== undefined || options.compare)) {
+    fail(
+      `${route} is another site: pictured as anyone sees it — leave out --as and --compare (compare from your page).`
+    );
+
+    return;
+  }
+
+  const where = external
+    ? { origin: undefined }
+    : await projectOrigin(project.root, project.plitzi?.kind === 'project' ? project.plitzi : undefined, options.url);
   if ('problem' in where) {
     fail(where.problem);
 
@@ -170,14 +179,19 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
     return;
   }
 
-  if (options.compare && (options.clip || options.scrollTo || options.viewport)) {
+  if (options.compare && (options.scrollTo || options.viewport)) {
     await browser.close();
     fail(
-      '`--compare` sets the whole page beside the other site, section by section: leave out --clip, --scroll-to and --viewport.'
+      '`--compare` sets the whole page beside the other site, section by section: leave out --scroll-to and --viewport (--clip <section> keeps one section of the report).'
     );
 
     return;
   }
+
+  // Beside another site, a clip is the section of the report kept: both pages are compared whole, section by section —
+  // the other site has none of this page's names to be clipped to.
+  const section = options.compare ? options.clip : undefined;
+  const clip = options.compare ? undefined : options.clip;
 
   try {
     const pathname = route ?? '/';
@@ -187,17 +201,19 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
       ...(options.scheme ? { scheme: options.scheme } : {}),
       reducedMotion: options.reducedMotion === true,
       ...(options.waitFor ? { waitFor: options.waitFor } : {}),
-      ...(options.clip ? { clip: options.clip } : {}),
+      ...(clip ? { clip } : {}),
       ...(options.scrollTo ? { scrollTo: options.scrollTo } : {}),
       ...(options.viewport ? { viewport: true } : {}),
       ...(options.presence ? { presence: true } : {}),
       ...(account ? { account } : {}),
       ...(fromLoad ? { fromLoad } : {}),
       // Frames are about what moves, so they are taken as the page plays.
-      still:
-        !options.clip && !options.scrollTo && !options.viewport && (options.frames ?? 0) <= 1 && clicks.length === 0
+      still: !clip && !options.scrollTo && !options.viewport && (options.frames ?? 0) <= 1 && clicks.length === 0
     };
-    const taken = await pictureOf(browser, `${where.origin}${pathname}`, view, where.origin);
+    const taken =
+      where.origin === undefined
+        ? await pictureOf(browser, pathname, view)
+        : await pictureOf(browser, `${where.origin}${pathname}`, view, where.origin);
     if ('problem' in taken) {
       fail(taken.problem);
 
@@ -208,10 +224,15 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
 
     // Named by the theme the page was painted in, which is the space's default when none was asked for.
     const name = pathname === '/' ? 'home' : pathname.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '');
-    const out = path.resolve(
-      project.root,
-      options.out ?? `${PROJECT_TMP}/shots/${name}-${String(view.width)}-${taken.scheme}.png`
-    );
+    // Taken in a task's copy, a picture goes to the project's, by task: where the lead reads what the agent points at —
+    // the copy's own tmp/ is removed with it.
+    const copy = copyOf(project.root);
+    const out = options.out
+      ? path.resolve(project.root, options.out)
+      : path.resolve(
+          copy?.root ?? project.root,
+          `${PROJECT_TMP}/shots/${copy ? `${copy.task}/` : ''}${name}-${String(view.width)}-${taken.scheme}.png`
+        );
     const base = out.replace(/\.png$/, '');
     await mkdir(path.dirname(out), { recursive: true });
     await writeFile(out, taken.png);
@@ -237,7 +258,20 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         return;
       }
 
-      report.compare = compared;
+      if (section === undefined) {
+        report.compare = compared;
+      } else {
+        const kept = compared.regions.filter(each => each.name === section || each.name.endsWith(`#${section}`));
+        if (kept.length === 0) {
+          fail(
+            `--clip ${section} is none of the sections compared: ${compared.regions.map(each => each.name).join(', ') || 'the page has no named section'} — name one of them`
+          );
+
+          return;
+        }
+
+        report.compare = { ...compared, regions: kept, section };
+      }
     }
 
     const frames = options.frames ?? 0;
@@ -282,7 +316,7 @@ export const shot = async (route: string | undefined, options: ShotOptions): Pro
         );
       }
 
-      const whole = how.kind === 'element' ? (options.clip ?? 'element') : 'viewport';
+      const whole = how.kind === 'element' ? (clip ?? 'element') : 'viewport';
       const moved =
         how.kind === 'page'
           ? framesMoved(diffs)

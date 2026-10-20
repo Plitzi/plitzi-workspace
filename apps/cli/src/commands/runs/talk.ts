@@ -1,6 +1,6 @@
 import { act, holder, runOf, taskOf } from './shell';
 import { exchangeLines, messageLines } from './text';
-import { durationText } from '../../options';
+import { durationText, FOLLOW_MS } from '../../options';
 import { proposalsOf } from '../../runs/agreements';
 import { answerProposal, proposeChange } from '../../runs/proposals';
 import { RunRefusal } from '../../runs/refusal';
@@ -115,14 +115,14 @@ export const taskAsk = (
 
       return askLead(ctx, runId, taskId, text, {
         follow: options.follow ?? false,
-        timeoutMs: options.timeout ?? 30 * 60_000
+        timeoutMs: options.timeout ?? FOLLOW_MS
       });
     },
     asked =>
       asked.reply
         ? [`The lead answered (${asked.reply.id}): ${asked.reply.text}`, ...messageLines(asked.messages)].join('\n')
         : options.follow
-          ? `Asked (${asked.question.id}); no answer yet after ${durationText(options.timeout ?? 30 * 60_000)} — go on with what you can, it comes with your next heartbeat.`
+          ? `Asked (${asked.question.id}); no answer yet after ${durationText(options.timeout ?? FOLLOW_MS)} — go on with what you can, it comes with your next heartbeat.`
           : `Asked (${asked.question.id}): the answer comes with your next heartbeat, progress or completion — or stay for it with --follow.`
   );
 
@@ -162,7 +162,7 @@ export const taskInbox = (
       const read = (): Promise<Message[]> => readInbox(ctx, runId, taskId, options.all ?? false);
       let messages = await read();
       // Stays until something is said to it — an answer to a question asked without --follow, an instruction.
-      const until = Date.now() + (options.timeout ?? 30 * 60_000);
+      const until = Date.now() + (options.timeout ?? FOLLOW_MS);
       while (options.follow && !options.all && messages.length === 0 && Date.now() < until) {
         await new Promise(resolve => setTimeout(resolve, 5000));
         messages = await read();

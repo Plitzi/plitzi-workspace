@@ -136,6 +136,12 @@ export const ELEMENT_CODES = {
       "a list's `itemKey` that some of its items lack, or two of them share — the rows fall back to `id`, then position",
     fix: 'a field every item has, once each'
   },
+  'list-items-outside-answer': {
+    kind: 'warned',
+    means:
+      "a list's `items` bound to a query provider outside its answer — the provider itself, or a field read at its root, where its state is: no list, so the rows render NaN or a placeholder",
+    fix: 'the list inside the answer: `catalog.data.games`, or `catalog.records` (paginated)'
+  },
   'list-items-ignored': {
     kind: 'refused',
     means: "a list whose items nothing reads — `source: 'none'` renders its children once",

@@ -3,6 +3,7 @@ import path from 'node:path';
 import {
   ACTIVE_RUN_FILE,
   BUILD_DIR,
+  CLI_DIR,
   PROJECT_STATE,
   PROJECT_TMP,
   PUBLIC_DIR,
@@ -25,15 +26,13 @@ export { RUNS_DIR };
 export const ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
 /** What a task's copy leaves out: what is not the project's source, and what an agent must never read. */
-export const NOT_COPIED_DIRS = new Set([
-  'node_modules',
-  '.git',
-  '.plitzi',
-  '.yarn',
-  PROJECT_TMP,
-  BUILD_DIR,
-  PROJECT_STATE
-]);
+export const NOT_COPIED_DIRS = new Set(['node_modules', '.git', '.yarn', PROJECT_TMP, BUILD_DIR, PROJECT_STATE]);
+
+/**
+ * What no task writes, though its copy holds it: the CLI's part of the project (`.plitzi/` — what authors the space,
+ * the compiler options, what it records), which `plitzi upgrade` keeps.
+ */
+export const NOT_TASK_DIRS = new Set([...NOT_COPIED_DIRS, CLI_DIR]);
 
 /** What a `.env` that holds no value is called: the committed list of what to fill in. */
 const ENV_TEMPLATE = /(^|\/)\.env\.(example|sample|template|dist)$/;
@@ -188,3 +187,18 @@ export const under = (folder: string, file: string): string => path.join(folder,
  * none of them said. In the copy's `tmp/`, which never counts at `complete` and is never copied back.
  */
 export const COPY_TASK_FILE = 'tmp/plitzi-task.json';
+
+/** A folder inside a task's copy, read off its path: the project it belongs to, its run and its task. */
+export const copyOf = (dir: string): { root: string; run: string; task: string } | undefined => {
+  const marker = `${path.sep}${RUNS_DIR.split('/').join(path.sep)}${path.sep}`;
+  const at = dir.indexOf(marker);
+  if (at === -1) {
+    return undefined;
+  }
+
+  const [run, tasks, task, cache, work] = dir.slice(at + marker.length).split(path.sep);
+
+  return run && tasks === 'tasks' && task && cache === 'cache' && work === 'work'
+    ? { root: dir.slice(0, at), run, task }
+    : undefined;
+};

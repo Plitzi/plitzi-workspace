@@ -8,6 +8,8 @@ import { isRunRefusal } from './refusal';
 import {
   heldRoles,
   readTeam,
+  modelFor,
+  parseModelChoice,
   refreshTeamAbout,
   roleProblems,
   teamProblems,
@@ -211,5 +213,29 @@ describe('the team of a project’s runs', () => {
       'name',
       'roles'
     ]);
+  });
+
+  it('starts an agent a level when the team names a model a level, each with its model', () => {
+    const team = {
+      version: 1 as const,
+      agents: [
+        { name: 'design', roles: ['designer'], model: { standard: 'claude-sonnet-5-5', high: 'claude-opus-5-5' } }
+      ]
+    };
+    expect(teamProblems(team)).toEqual([]);
+    expect(startedAgents(team)).toEqual([
+      { agent: 'design-1-standard', roles: ['designer'], model: { model: 'claude-sonnet-5-5' }, quality: 'standard' },
+      { agent: 'design-1-high', roles: ['designer'], model: { model: 'claude-opus-5-5' }, quality: 'high' }
+    ]);
+    // A level none was named for takes the next one up — a stronger model — else the strongest there is.
+    expect(modelFor(team.agents[0].model, 'light')).toBe('claude-sonnet-5-5');
+    expect(modelFor('claude-haiku-5-5', 'high')).toBe('claude-haiku-5-5');
+    expect(parseModelChoice('standard=claude-sonnet-5-5,high=claude-opus-5-5')).toEqual({
+      standard: 'claude-sonnet-5-5',
+      high: 'claude-opus-5-5'
+    });
+    expect(
+      teamProblems({ version: 1, agents: [{ name: 'dev', roles: ['developer'], model: { best: 'x' } }] })[0]
+    ).toContain('one a level');
   });
 });

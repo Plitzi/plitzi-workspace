@@ -25,8 +25,9 @@ import type { RunContext } from './run';
 /**
  * `plitzi run amend`: the lead corrects what a plan asks while the run is open — a task's title, acceptance, priority
  * or estimate, the goal, a note more — from the plan file edited. What makes the run's shape — which tasks there are,
- * their files, what they wait for, their role, what they touch — stays as the run opened it: that is a new plan. A task
- * done is not asked again. Each task whose ask changed is told so, with what it now says; nothing is changed unsaid.
+ * their files, what they wait for, what they touch — stays as the run opened it: that is a new plan. Who a task is for
+ * — its role and quality — changes until an agent takes it, and not after: it was taken as that. A task done is not
+ * asked again. Each task whose ask changed is told so, with what it now says; nothing is changed unsaid.
  *
  * A run with stages stacked on it (`run extend`) is amended from either: its own plan, or a stage's as it was stacked —
  * the stage's tasks are the ones it changes, and the run's goal stays the run's.
@@ -48,8 +49,10 @@ export interface Amended {
   primer?: true;
 }
 
-const SHAPE = ['files', 'dependsOn', 'role', 'touches'] as const;
+const SHAPE = ['files', 'dependsOn', 'touches'] as const;
 const ASK = ['title', 'acceptance', 'priority', 'estimateMinutes', 'milestone'] as const;
+const WHO = ['role', 'quality'] as const;
+const UNTAKEN: readonly string[] = ['pending', 'ready'];
 
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 
@@ -90,16 +93,25 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
 
     const shape = SHAPE.filter(field => !same(task[field], was[field]));
     if (shape.length > 0) {
-      problems.push(`Task "${task.id}": its ${shape.join(', ')} make the run's shape — that is a new plan`);
+      problems.push(`Task "${task.id}": its ${shape.join(' and ')} are the run's shape — that is a new plan`);
     }
 
-    const changed = ASK.filter(field => !same(task[field], was[field]));
+    const who = WHO.filter(field => !same(task[field], was[field]));
+    const changed = [...ASK.filter(field => !same(task[field], was[field])), ...who];
     if (changed.length === 0) {
       continue;
     }
 
-    if ((await viewTask(loaded.paths, defined)).state.status === 'done') {
+    const { status } = (await viewTask(loaded.paths, defined)).state;
+    if (status === 'done') {
       problems.push(`Task "${task.id}" is done: what it was asked was held already`);
+      continue;
+    }
+
+    if (who.length > 0 && !UNTAKEN.includes(status)) {
+      problems.push(
+        `Task "${task.id}" is ${status}: its ${who.join(' and ')} are what an agent took it as — they change only before it is taken`
+      );
       continue;
     }
 
@@ -127,17 +139,18 @@ export const amendRun = async (ctx: RunContext, runId: string, file: string): Pr
   }
 
   for (const { task, defined } of changes) {
+    // What the plan leaves out is dropped, not kept from before: the definition is the plan's, as amended.
+    const { milestone: _milestone, role: _role, quality: _quality, ...kept } = defined;
     const amended: RunTask = {
-      ...defined,
+      ...kept,
       title: task.title,
       acceptance: task.acceptance,
       priority: task.priority,
       estimateMinutes: task.estimateMinutes,
+      ...(task.role === undefined ? {} : { role: task.role }),
+      ...(task.quality === undefined ? {} : { quality: task.quality }),
       ...(task.milestone === undefined ? {} : { milestone: task.milestone })
     };
-    if (task.milestone === undefined) {
-      delete amended.milestone;
-    }
 
     await writeJson(taskPaths(loaded.paths, task.id).definition, amended);
   }

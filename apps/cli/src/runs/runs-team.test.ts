@@ -154,7 +154,7 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
     expect((await refusal(showTask(home.ctx, 'es-launch', 't-home'))).code).toBe('person-only');
   });
 
-  it('the lead looks at a task in review in its copy, served until it leaves review', async () => {
+  it('the lead looks at a task in review in its copy, served until it is neither worked nor in review', async () => {
     const answer = 'copy';
     await bench.write(
       'serve.mjs',
@@ -166,7 +166,8 @@ describe('a team: roles, waiting for work, and a lead who talks to the agents', 
     );
     await open();
     const home = await take('agent-1', 't-home');
-    expect((await refusal(startTaskPreview(lead(), 'es-launch', 't-home', 18_391))).code).toBe('invalid');
+    // A copy is served while it is worked or in review: one nobody took has none.
+    expect((await refusal(startTaskPreview(lead(), 'es-launch', 't-menu', 18_391))).code).toBe('invalid');
 
     await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
     await completeTask(home.ctx, 'es-launch', 't-home');

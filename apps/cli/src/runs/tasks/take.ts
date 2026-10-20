@@ -3,9 +3,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { proposalsOf, unansweredTo } from '../agreements';
-import { cloneFiles, createExclusive, isCopied, projectFiles, writeJson } from '../files';
+import { cloneFiles, cloneServed, createExclusive, isCopied, projectFiles, writeJson } from '../files';
 import { unreadForHolder } from '../messages';
-import { COPY_TASK_FILE, lockFile, under } from '../paths';
+import { COPY_TASK_FILE, isSecretFile, lockFile, under } from '../paths';
 import { dependenciesDone } from '../plan';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved } from '../run';
@@ -178,11 +178,20 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
     await keepFiles(loaded.paths, ctx.root, [...new Set([...task.files, ...(await sharedFiles(loaded))])]);
     await fs.rm(view.paths.cache, { recursive: true, force: true });
     const keep = new Set(task.files);
-    const files = (await projectFiles(ctx.root)).filter(file => isCopied(file, keep));
+    const all = await projectFiles(ctx.root);
+    const files = all.filter(file => isCopied(file, keep));
+    // The pictures it does not own come too, unread, so its pages draw them — a look at it is of the page a visitor sees.
+    const served = await cloneServed(
+      ctx.root,
+      view.paths.work,
+      // Never a secret: projectFiles leaves them out, and this is said again where binaries are let in.
+      all.filter(file => !isSecretFile(file) && !isCopied(file, keep))
+    );
     const start: TaskStart = {
       copiedAt: at(ctx),
       files: await cloneFiles(ctx.root, view.paths.work, files),
-      overlaid: []
+      overlaid: [],
+      ...(Object.keys(served).length > 0 ? { served } : {})
     };
     // Never copied, never counted: there for what the agent writes aside (a server's log), as in the project — and for
     // who the copy is, so a command run inside it needs no token, run or agent said.

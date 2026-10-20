@@ -47,7 +47,9 @@ const someOf = (texts: string[]): string => {
 /** What a comparison found, in the lines an agent reads before it opens a picture. */
 export const compareText = (compare: CompareReport): string[] => {
   const lines = [
-    `${chalk.bold(`${String(compare.changed)}% differs`)} from ${compare.url}${compare.regions.length > 0 ? ` — ${regionsText(compare.regions)}` : ''}`
+    compare.section === undefined
+      ? `${chalk.bold(`${String(compare.changed)}% differs`)} from ${compare.url}${compare.regions.length > 0 ? ` — ${regionsText(compare.regions)}` : ''}`
+      : `${chalk.bold(regionsText(compare.regions))} differs from ${compare.url} (the whole page ${String(compare.changed)}%; the rest below is the whole page’s)`
   ];
   const longer = compare.heights.there - compare.heights.here;
   const drift = compare.driftFrom;

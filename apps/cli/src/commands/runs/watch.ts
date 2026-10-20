@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 
 import { act, contextFor, runOf } from './shell';
-import { durationText } from '../../options';
+import { durationText, FOLLOW_MS } from '../../options';
 import { waitForLead } from '../../runs/leadWatch';
 import { showVersion } from '../../runs/merge';
 import { startPreview, startTaskPreview } from '../../runs/preview';
@@ -63,7 +63,7 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
     options,
     async ctx => {
       const news = await waitForLead(ctx, await runOf(ctx, options, runId), {
-        timeoutMs: options.timeout ?? 25 * 60_000,
+        timeoutMs: options.timeout ?? FOLLOW_MS,
         everyMs: Math.max(1, options.interval ?? 10) * 1000
       });
       const { view, ...rest } = news;
@@ -74,7 +74,7 @@ const watchForLead = (runId: string | undefined, options: WatchRunOptions): Prom
       news.gone
         ? 'The run is gone: it finished, or a person aborted it.'
         : news.timedOut
-          ? `Nothing new for the lead in ${durationText(options.timeout ?? 25 * 60_000)} (${String(news.done)} of ${String(news.total)} done): watch again.`
+          ? `Nothing new for the lead in ${durationText(options.timeout ?? FOLLOW_MS)} (${String(news.done)} of ${String(news.total)} done): watch again.`
           : [
               chalk.bold(`For the lead (${String(news.done)} of ${String(news.total)} done):`),
               ...news.fresh.map(item => `  ⚠ ${item.text}`)
@@ -190,7 +190,9 @@ export const runPreview = async (
       task === undefined
         ? `The run's work as it goes: ${preview.url} — served from ${preview.dir}; each approval shows in it. Ctrl-C stops it; it stops by itself when the run ends.`
         : [
-            `${task} as it went to review: ${preview.url} — served from its copy. Ctrl-C stops it; it stops by itself once the task leaves review.`,
+            preview.borrowed === undefined
+              ? `${task}'s copy: ${preview.url} — as it went to review, or as its agent writes it. Ctrl-C stops it; it stops by itself once the task is neither worked nor in review.`
+              : `${task}'s copy: ${preview.url} — its agent's own server, on :${String(preview.borrowed)}, serves it already (it holds the copy's state): followed there, never stopped from here.`,
             // `page check` holds a page to the space of the folder it runs in: from the project, a page this task made is
             // not there yet and reads as not found.
             `Check its pages from its copy, which holds them: cd ${preview.dir} && plitzi page check <path> --url ${preview.url}`

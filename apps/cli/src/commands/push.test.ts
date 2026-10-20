@@ -345,7 +345,7 @@ describe('plitzi space push', () => {
   });
 
   it('puts a project that never had the space on it only while the space holds nobody’s work — then pull follows it', async () => {
-    await fs.rm(path.join(project, '.plitzi'), { recursive: true });
+    await fs.rm(path.join(project, '.plitzi', 'space.json'));
 
     await push(['space'], {});
 

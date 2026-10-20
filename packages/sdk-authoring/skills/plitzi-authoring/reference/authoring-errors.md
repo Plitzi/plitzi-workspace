@@ -29,7 +29,7 @@ The space is not written until these are fixed.
 | `active-when-constant` | an `activeWhen` condition that reads nothing — always or never true | name what it depends on: `'{{ list_dots.index == state.slide }}'` |
 | `ancestor-not-class` | an ancestor condition keyed by something that is neither a class name nor `'>'` (the parent) | `[card.name]` for a `styles()` declaration, or `'>'` for the parent whatever it wears |
 | `anchor-duplicate` | one anchor on two elements of the same page (layouts included) | rename all but one |
-| `anchor-in-row` | a link to an anchor drawn in a list’s rows — each row’s is named after its row, so the link lands at the top | link to the list’s own anchor, or to one outside it |
+| `anchor-in-row` | a link to an anchor drawn in a list’s rows — each row’s is named after its row, so the link lands at the top | link to one row’s (`hash: 'answer-<row key>'`), the list’s own anchor, or one outside it |
 | `anchor-invalid` | an `anchor` or a link's `hash` that is not lowercase letters, digits and `-` | `anchor: 'plans'`, `hash: 'plans'` — no `#` |
 | `anchor-missing` | a link whose `hash` no element on the page it goes to carries — it would land at the top | the anchor the message lists, or give the section that `anchor` |
 | `anchor-no-tag` | an anchor on an element that renders no element of its own | the anchor on the element around it, or `subType: 'div'` on the provider |
@@ -153,7 +153,7 @@ The space is not written until these are fixed.
 | `style-state-unknown` | a state a selector does not react to | one of the states it lists (`hover`, `focus`, `active`…) |
 | `svg-not-svg` | an `svg` whose `content` is not one `<svg>…</svg>` — it draws nothing | the SVG markup alone; HTML around it goes in a `blockHtml` |
 | `template-in-value` | a `{{ }}` inside an attribute that is an object or a list — a provider's `input`, a list's `items`, a plugin's settings: only an attribute that is text is evaluated | a binding on the attribute (`bindTemplate(name, source, template, { returns: 'value' })`); for a provider's `input`, nothing for a route or query param — the action is already handed them as `input.<name>` |
-| `template-short-source` | a source named without its prefix inside a template or a step | the full name: `apiContainer_stats`, `list_rows` |
+| `template-short-source` | a source named without its prefix inside a template or a step | the full name: `apiContainer_stats`, `list_rows` — a list's row, `r.inTemplate.item` |
 | `template-source-out-of-scope` | a template reading the source of an element it is not inside | move the element inside it, or share the value through `state` |
 | `template-text-into-value` | a template, which renders text, feeding an attribute that holds a list or an object | `bindTemplate('items', source, '{{ … }}', { returns: 'value' })` |
 | `template-unknown-name` | a name in a template that is not a source, a variable or a route param | the full source name (`list_rows.item`), `navigation.queryParams.x`, or `source` for the bound value |
@@ -204,6 +204,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `label-ignored` | a `label` on a container whose tag is named by what it holds (`li`, a heading) | the words inside, or a landmark tag (`nav`, `section`…) |
 | `link-current-section` | `current: 'section'` on a link that is never current (an external one) or current everywhere (to `/`) | leave `current` out — `'section'` is for a link to a section's own page, `/automations/runs` |
 | `list-item-key-missing` | a list's `itemKey` that some of its items lack, or two of them share — the rows fall back to `id`, then position | a field every item has, once each |
+| `list-items-outside-answer` | a list's `items` bound to a query provider outside its answer — the provider itself, or a field read at its root, where its state is: no list, so the rows render NaN or a placeholder | the list inside the answer: `catalog.data.games`, or `catalog.records` (paginated) |
 | `list-row-not-li` | a row of a list with `items` that is not an `<li>` — that list is a `<ul>` (or `<ol>`), so the row is a box inside a list, no item to a screen reader | `container({ subType: 'li' })` — or the component's root one, or a wrapper for a link or a button |
 | `overlay-never-opened` | a modal or a dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |
 | `overlay-starts-open` | a modal or a dialog open when the page loads | `visible: false`, opened by `openModal` |

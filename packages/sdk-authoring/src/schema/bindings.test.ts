@@ -221,6 +221,8 @@ describe('activeWhen', () => {
       variantFrom(dot, 'state', { template: "{{ (list_dots.index == state.slide) ? 'active' : 'idle' }}" })
     );
     expect(activeWhen(dot, 'list_dots.index == 0').source).toBe('dots');
+    // Inside a component, what its instance hands in: read as variantFrom(dot, 'props', …) would be.
+    expect(activeWhen(dot, '{{ props.featured }}').source).toBe('props');
   });
 
   it('is refused a condition that reads nothing', () => {

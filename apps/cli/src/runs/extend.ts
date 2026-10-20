@@ -20,7 +20,7 @@ import {
 } from './run';
 import { keepFiles } from './store';
 import { viewTask } from './taskStore';
-import { coLeadNames, ensureTeam, reviewsDesign, teamSize } from './team';
+import { coLeadNames, ensureTeam, teamSize } from './team';
 
 import type { RunPlan, RunTask, TaskState } from './model';
 import type { CheckedPlan } from './plan';
@@ -68,6 +68,12 @@ export const extendRun = async (
   const repeated = next.tasks.filter(task => known.has(task.id)).map(task => task.id);
   if (repeated.length > 0) {
     problems.push(`${repeated.map(id => `"${id}"`).join(', ')} the run has already: a stage's tasks are new ones`);
+  }
+
+  if (next.designReview === false && loaded.record.designReview === true) {
+    problems.push(
+      'designReview: false — the run has a designer review its UI since it opened, and a stage keeps that (its tasks in review wait for theirs): leave designReview out'
+    );
   }
 
   // Checked as a plan of its own, a dependency on the run's tasks set aside — the run has them — and put back after.
@@ -180,6 +186,9 @@ export const extendRun = async (
     goal: `${loaded.plan.goal} · ${next.goal}`,
     tasks: [...loaded.plan.tasks, ...next.tasks],
     notes: [...(loaded.plan.notes ?? []), ...(next.notes ?? [])],
+    ...(loaded.plan.leftOut || next.leftOut
+      ? { leftOut: [...(loaded.plan.leftOut ?? []), ...(next.leftOut ?? [])] }
+      : {}),
     ...(next.contracts ? { contracts: [...(loaded.plan.contracts ?? []), ...next.contracts] } : {})
   };
   await writeJson(loaded.paths.plan, plan);
@@ -194,7 +203,8 @@ export const extendRun = async (
     ...(leads.length > 0 ? { leads } : {}),
     // The stage's plan and its primer are the run's now: removed with it, as the plan it opened with.
     inputs: withInputs(record.inputs, handed),
-    ...(record.designReview === true || reviewsDesign(team, next) ? { designReview: true as const } : {}),
+    // The run's choice, made when it opened: a stage turns it on when it says so, never because of who is in the team.
+    ...(record.designReview === true || next.designReview === true ? { designReview: true as const } : {}),
     estimate: {
       ...record.estimate,
       tasks: record.estimate.tasks + tasks.length,

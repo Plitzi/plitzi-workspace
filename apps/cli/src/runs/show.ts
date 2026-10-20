@@ -105,7 +105,12 @@ const nextFor = (task: RunTask, status: TaskStatus, design?: DesignReview): stri
   }
 };
 
-export const showTask = async (ctx: RunContext, runId: string, taskId: string): Promise<TaskShown> => {
+export const showTask = async (
+  ctx: RunContext,
+  runId: string,
+  taskId: string,
+  { full = false }: { full?: boolean } = {}
+): Promise<TaskShown> => {
   requireNoTask(ctx, 'show a task as its lead');
   const loaded = await loadRun(ctx, runId, { anyMachine: true, anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
@@ -148,8 +153,8 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
     files.push({
       file,
       change,
-      diff: lines.slice(0, DIFF_LINES).join('\n'),
-      ...(lines.length > DIFF_LINES ? { more: lines.length - DIFF_LINES } : {})
+      diff: (full ? lines : lines.slice(0, DIFF_LINES)).join('\n'),
+      ...(!full && lines.length > DIFF_LINES ? { more: lines.length - DIFF_LINES } : {})
     });
   }
 

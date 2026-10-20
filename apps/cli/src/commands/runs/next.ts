@@ -2,7 +2,9 @@ import chalk from 'chalk';
 
 import { act, runOf } from './shell';
 import { messageLines } from './text';
+import { FOLLOW_MS } from '../../options';
 import { DESIGN_LOOK } from '../../runs/design';
+import { isPrincipal } from '../../runs/leads';
 import { DESIGN_READING } from '../../runs/reading';
 import { nextTask, followNext, takeNext, takeTask } from '../../runs/tasks';
 
@@ -25,7 +27,7 @@ export const taskNext = (
             ctx,
             runId,
             options.role,
-            options.follow ? { timeoutMs: options.timeout ?? 30 * 60_000 } : undefined
+            options.follow ? { timeoutMs: options.timeout ?? FOLLOW_MS } : undefined
           );
 
           return { ...next, agent: ctx.agent, ...(taken ? { taken } : {}) };
@@ -37,7 +39,7 @@ export const taskNext = (
         async ctx => ({
           ...(options.follow
             ? await followNext(ctx, await runOf(ctx, options), options.role, {
-                timeoutMs: options.timeout ?? 30 * 60_000
+                timeoutMs: options.timeout ?? FOLLOW_MS
               })
             : await nextTask(ctx, await runOf(ctx, options), options.role)),
           agent: ctx.agent
@@ -70,7 +72,9 @@ const leadReviewText = (review: NonNullable<NextTask['leadReview']>, agent: stri
     `  What went to review, against its acceptance: plitzi task show ${review.task.id}`,
     `  Look at it as it went to review: plitzi task look ${review.task.id} ${review.pages.length > 0 ? review.pages.join(' ') : '<page…>'}`,
     `  Then say it: plitzi task review ${review.task.id} --approve [--note "…"] | --changes "what, where, and why" --agent ${agent}`,
-    '  Its questions, the plan and the finish are lead’s: what you find beyond the task, tell lead'
+    ...(isPrincipal(agent)
+      ? []
+      : ['  Its questions, the plan and the finish are lead’s: what you find beyond the task, tell lead'])
   ].join('\n');
 
 const nextText = (next: NextTask, agent: string): string =>

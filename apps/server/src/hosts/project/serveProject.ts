@@ -531,7 +531,7 @@ const startProject = async (options: ServeProjectOptions): Promise<ServedProject
  * - a signal closes it, finishing what runs.
  *
  * While developing (`NODE_ENV` other than `production`), a save to the space is authored again by the project's
- * `plitzi/author.ts`, in a process of its own, which hands the documents back over IPC: the server swaps them in memory
+ * `.plitzi/author.ts`, in a process of its own, which hands the documents back over IPC: the server swaps them in memory
  * and every open page loads again. A plugin folder added is registered, one removed turned off, and a plugin's
  * `functions/` loaded again; a folder it cannot build is said in the terminal, and the server goes on.
  */

@@ -5,7 +5,7 @@ import { proposalsOf } from '../agreements';
 import { approveDesign, assertDesigner, designDue } from '../design';
 import { exists, fingerprint, writeJson } from '../files';
 import { assertReviewingLead, isCoLead, isPrincipal } from '../leads';
-import { LEAD, messagesOf, sendMessage } from '../messages';
+import { agentAddress, LEAD, messagesOf, sendMessage } from '../messages';
 import { taskPaths, under } from '../paths';
 import { dependenciesDone } from '../plan';
 import { syncPreview } from '../preview';
@@ -20,7 +20,7 @@ import { allLocks, grantWaiters } from './locks';
 import { integrateWhenReady, settleRequests } from './requests';
 
 import type { ProjectChange, ReviewComment, TaskStart } from '../model';
-import type { RunContext } from '../run';
+import type { LoadedRun, RunContext } from '../run';
 import type { TaskView } from '../taskStore';
 
 /**
@@ -45,7 +45,46 @@ export interface ReviewedTask {
   design?: 'approved' | 'skipped';
   /** Written in its copy after it went to review: not part of what was reviewed, so not merged. */
   notReviewed?: string[];
+  /**
+   * Sent back while its agent is at another task: the tasks that wait on this one — that agent was told it goes first,
+   * since nothing else reaches it before it finishes the one in hand.
+   */
+  goesFirst?: string[];
 }
+
+/**
+ * A task sent back that others wait on, while its agent is at another: the agent hears it with its next heartbeat —
+ * otherwise it would finish the task in hand first, and every task behind this one would wait that long more.
+ */
+const tellItGoesFirst = async (ctx: RunContext, loaded: LoadedRun, view: TaskView): Promise<string[]> => {
+  const agent = view.owner?.agent;
+  if (agent === undefined) {
+    return [];
+  }
+
+  const views = await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each)));
+  const inHand = views.filter(
+    each => each.task.id !== view.task.id && each.owner?.agent === agent && each.state.status === 'in-progress'
+  );
+  const waiting = views
+    .filter(
+      each =>
+        each.state.status !== 'done' &&
+        (each.task.dependsOn.includes(view.task.id) || each.state.waitingFor?.task === view.task.id)
+    )
+    .map(each => each.task.id);
+  if (inHand.length === 0 || waiting.length === 0) {
+    return [];
+  }
+
+  await sendMessage(ctx, loaded, {
+    from: LEAD,
+    to: agentAddress(agent),
+    text: `${view.task.id} came back with changes (round ${String(view.state.round + 1)}), and ${waiting.join(', ')} ${waiting.length === 1 ? 'waits' : 'wait'} on it: it goes before ${inHand.map(each => each.task.id).join(', ')}. Bring what you are at to a point you can leave (plitzi task progress), then go back to it: plitzi task context ${view.task.id}`
+  });
+
+  return waiting;
+};
 
 /** A UI review is a designer's of the team, by the name it was started with — another agent's verdict is not one. */
 const assertTeamDesigner = async (ctx: RunContext, taskId: string): Promise<void> => {
@@ -257,8 +296,15 @@ const decide = async (
       ctx.now
     );
     await logRun(ctx, loaded.paths, { action: 'review', task: taskId, verdict, round });
+    const goesFirst = toPerson ? [] : await tellItGoesFirst(ctx, loaded, view);
 
-    return { verdict, round, toPerson, ...(notReviewed.length > 0 ? { notReviewed } : {}) };
+    return {
+      verdict,
+      round,
+      toPerson,
+      ...(notReviewed.length > 0 ? { notReviewed } : {}),
+      ...(goesFirst.length > 0 ? { goesFirst } : {})
+    };
   }
 
   const into = await changeApproved(ctx, loaded, approved =>

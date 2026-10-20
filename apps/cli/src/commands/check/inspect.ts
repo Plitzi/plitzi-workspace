@@ -147,7 +147,7 @@ const inspectHere = async (
     await page.evaluate(wrappedLabelsInPage, 'a[data-plitzi-el], button[data-plitzi-el]')
   ).map(each => ({
     code: 'label-wraps',
-    message: `${each.id}'s label "${each.label}" breaks onto ${String(each.lines)} lines at ${String(width)} px: it is squeezed — give its row room, or let the row wrap as a whole and keep the label on one line (white-space: nowrap)`,
+    message: `${each.id}'s label "${each.label}" breaks onto ${String(each.lines)} lines at ${String(width)} px: it is squeezed — give its row room, or let the row wrap as a whole and keep the label on one line (white-space: nowrap). A link or button of three words or fewer is read as a label, and its text's lines are counted where they are drawn`,
     elementId: each.id,
     width
   }));

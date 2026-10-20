@@ -166,7 +166,7 @@ beforeEach(async () => {
   await write('src/plugins/.gitkeep', '');
   await write('src/data/products.json', '{ "items": [] }\n');
   await write('public/hello.txt', 'hello from public\n');
-  await write('plitzi/author.ts', AUTHOR_SCRIPT);
+  await write('.plitzi/author.ts', AUTHOR_SCRIPT);
   await write('.env', 'PLITZI_SIGNING_SECRET=secret\n');
   await write('.env.example', 'PLITZI_SIGNING_SECRET=\n');
   process.env.PORT = String(await unusedPort());

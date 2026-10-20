@@ -30,6 +30,13 @@ export const RUN_STATUSES = ['open', 'stopping', 'stopped', 'reconciliation'] as
 export type RunStatus = (typeof RUN_STATUSES)[number];
 
 export const NEEDS = ['person', 'lead', 'task'] as const;
+
+/**
+ * How much a task asks of the model that works it: `light` — a mechanical change; `standard` — most work; `high` — what
+ * many tasks build on, or what is designed new. An agent started at a level takes tasks of it or below, never above.
+ */
+export const QUALITIES = ['light', 'standard', 'high'] as const;
+export type Quality = (typeof QUALITIES)[number];
 export type Needs = (typeof NEEDS)[number];
 
 /**
@@ -69,6 +76,11 @@ export interface PlannedTask {
    */
   touches?: string[];
   /**
+   * How much it asks of the model that works it (`light`, `standard`, `high`): an agent started at a level takes it
+   * at that level or above. Left out, `run plan` sets one and says why — what many tasks build on is `high`.
+   */
+  quality?: Quality;
+  /**
    * `false`: no tests of its own, with a tester in the team — the CLI gives every developer task one that writes its
    * tests (`<id>-tests`, after it) unless it says this, or the plan has a tester's task that waits for it already.
    */
@@ -97,9 +109,15 @@ export interface RunPlan {
   primer?: string;
   /**
    * Whether a designer reviews the UI of the others' tasks before the lead: on with a designer in the team, off with
-   * none — said here to turn it the other way for this run.
+   * none — said here to turn it the other way for this run. A stage's (`run extend`) keeps the run's choice: it may only
+   * turn it on.
    */
   designReview?: boolean;
+  /**
+   * What the job asks that this run does not do, a line each — a page, a section, a tool: said to the person at `run
+   * plan` and `run open`, and in the report, so what a run leaves out is a choice made with them, never found after.
+   */
+  leftOut?: string[];
 }
 
 /** A task as the run holds it (`task.json`): the plan's, with its files expanded — or one the CLI made to integrate. */
@@ -338,6 +356,11 @@ export interface TaskStart {
   files: Record<string, string | null>;
   /** The files whose version came from the run's approved work, not from the project. */
   overlaid: string[];
+  /**
+   * The served binaries it does not own (`public/`, `vendor/`), cloned so its pages draw them, by size and time rather
+   * than read whole for a fingerprint — what a change of one is told by at `complete`.
+   */
+  served?: Record<string, { size: number; mtimeMs: number }>;
 }
 
 export interface ApprovedFile {
@@ -428,6 +451,7 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   ) &&
   optional(value.milestone, isString) &&
   optional(value.role, isString) &&
+  optional(value.quality, oneOf(QUALITIES)) &&
   optional(value.touches, isStrings) &&
   optional(value.tests, flag => flag === false);
 
@@ -444,7 +468,8 @@ export const isRunPlan = (value: unknown): value is RunPlan =>
   optional(value.contracts, contracts => Array.isArray(contracts) && contracts.every(isContract)) &&
   optional(value.notes, isStrings) &&
   optional(value.primer, isString) &&
-  optional(value.designReview, flag => typeof flag === 'boolean');
+  optional(value.designReview, flag => typeof flag === 'boolean') &&
+  optional(value.leftOut, isStrings);
 
 const shown = (value: unknown): string => (value === undefined ? 'nothing' : JSON.stringify(value));
 
@@ -463,6 +488,7 @@ export const runPlanProblems = (value: unknown): string[] => {
   field(value.version === 1, 'version', '1');
   field(isString(value.runId), 'runId', 'the run’s name');
   field(isString(value.goal), 'goal', 'a line of what the run is for');
+  field(optional(value.leftOut, isStrings), 'leftOut', 'lines of what the run does not do');
   if (!Array.isArray(value.tasks)) {
     problems.push('tasks: a list of tasks');
 
@@ -497,6 +523,7 @@ export const runPlanProblems = (value: unknown): string[] => {
       'lines, each a sentence or { said, check }'
     );
     check(optional(each.role, isString), 'role', 'a role’s name');
+    check(optional(each.quality, oneOf(QUALITIES)), 'quality', 'light, standard or high');
     check(optional(each.milestone, isString), 'milestone', 'a name');
     check(optional(each.touches, isStrings), 'touches', 'paths');
     check(
@@ -697,7 +724,16 @@ export const isSharedRequest = (value: unknown): value is SharedRequest =>
   isDigest(value.wanted);
 
 export const isTaskStart = (value: unknown): value is TaskStart =>
-  isRecord(value) && isString(value.copiedAt) && isDigests(value.files) && isStrings(value.overlaid);
+  isRecord(value) &&
+  isString(value.copiedAt) &&
+  isDigests(value.files) &&
+  isStrings(value.overlaid) &&
+  optional(
+    value.served,
+    served =>
+      isRecord(served) &&
+      Object.values(served).every(stat => isRecord(stat) && isNumber(stat.size) && isNumber(stat.mtimeMs))
+  );
 
 const isApprovedFile = (value: unknown): value is ApprovedFile =>
   isRecord(value) &&

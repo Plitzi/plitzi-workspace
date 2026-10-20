@@ -32,7 +32,7 @@ export const ANCHOR_CODES = {
     kind: 'refused',
     means:
       'a link to an anchor drawn in a list’s rows — each row’s is named after its row, so the link lands at the top',
-    fix: 'link to the list’s own anchor, or to one outside it'
+    fix: "link to one row’s (`hash: 'answer-<row key>'`), the list’s own anchor, or one outside it"
   },
   'anchor-duplicate': {
     kind: 'refused',

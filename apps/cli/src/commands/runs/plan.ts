@@ -78,7 +78,14 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
         `  ${name} — a lead that reviews, as strictly as you, from one queue — ${leadModelText(team.lead)}: not at the start — when run watch --until lead says the reviews queue up: plitzi task next --role lead --follow --take --agent ${name} (it stops by itself once the queue is empty)`
     ),
     ...startedAgents(team).map(each => {
-      const theirs = tasks.filter(task => each.roles.includes(roleOf(task))).map(task => task.id);
+      // Started at a level, it works that level's tasks: the ones below go to the agent of theirs, when the team has one.
+      const theirs = tasks
+        .filter(
+          task =>
+            each.roles.includes(roleOf(task)) &&
+            (each.quality === undefined || (task.quality ?? 'standard') === each.quality)
+        )
+        .map(task => task.id);
       const reviewing = each.roles.includes(DESIGNER) ? reviews.map(task => task.id) : [];
       const work = [
         ...(theirs.length > 0 ? [theirs.join(', ')] : []),
@@ -87,7 +94,7 @@ const startLines = (tasks: readonly RunTask[], team: Team, designReview: boolean
 
       return work.length === 0
         ? `  ${each.agent} — nothing for its ${each.roles.join(', ')} in this plan: leave it out`
-        : `  ${each.agent} — ${each.roles.join(', ')} — ${each.model ? modelText(each.model) : 'the harness’s own model'} (${work.join('; ')}): plitzi task next --role ${each.roles.join(',')} --follow --take --agent ${each.agent}`;
+        : `  ${each.agent} — ${each.roles.join(', ')}${each.quality ? ` at ${each.quality}` : ''} — ${each.model ? modelText(each.model) : 'the harness’s own model'} (${work.join('; ')}): plitzi task next --role ${each.roles.join(',')}${each.quality ? ` --quality ${each.quality}` : ''} --follow --take --agent ${each.agent}`;
     })
   ];
 };
@@ -126,6 +133,11 @@ export const runPlan = (file: string, options: PlanOptions): Promise<void> =>
         ),
         `Shared files these tasks reach — by turns or by request: ${list(checked.sharedReached)} (${String(checked.shared.length)} shared in the project: plitzi space overview)`,
         ...checked.notices.map(notice => `  · ${notice}`),
+        checked.leftOut.length > 0
+          ? chalk.yellow(`Left out of this run — say it to the person before opening: ${checked.leftOut.join('; ')}`)
+          : chalk.yellow(
+              'Left out of this run: nothing said (leftOut) — if the job asks for more than these tasks, say what waits, to the person and in the plan'
+            ),
         ...(checked.staleSkills.length > 0
           ? [
               chalk.yellow(
@@ -240,12 +252,14 @@ export const runOpen = (file: string, options: PlanOptions): Promise<void> =>
         tasks: opened.checked.tasks.map(task => task.id),
         backedUp: opened.backedUp,
         estimate: opened.checked.estimate,
-        leadFinishes: options.leadFinishes ?? false
+        leadFinishes: options.leadFinishes ?? false,
+        leftOut: opened.checked.leftOut
       };
     },
     opened =>
       [
         `Run "${opened.runId}" is open: ${String(opened.tasks.length)} tasks, ${String(opened.backedUp)} files backed up in ${opened.folder}.`,
+        ...(opened.leftOut.length > 0 ? [`Left out of it, as the plan says: ${opened.leftOut.join('; ')}`] : []),
         opened.leadFinishes
           ? 'The lead writes it into the project at the end, as you allowed — once its report is written and the checks pass on the whole result.'
           : `A person writes it into the project at the end (plitzi run finish --apply) — or lets the lead, in their terminal: plitzi run allow-finish ${opened.runId}`,

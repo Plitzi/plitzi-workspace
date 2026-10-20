@@ -105,7 +105,9 @@ export const currentVersion = async (
 
 /**
  * Brings a task's copy up to the run: every file the run approved since the copy was made — or that `file` names — put
- * in, unless the task changed it itself. A file handed on by turns arrives with what it imports, approved after the copy
+ * in, unless the task changed it itself; and a file of the project a person changed since, that no task's approval
+ * holds and this task does not own (la-velada: the data formatted mid-run failed every older copy's checks, and braked
+ * the run twice). A changed file is told by its time first: the copy is not read whole at each call. A file handed on by turns arrives with what it imports, approved after the copy
  * was made. Answers what it brought.
  */
 export const refreshCopy = async (
@@ -123,7 +125,21 @@ export const refreshCopy = async (
   const files = { ...start.files };
   const overlaid = new Set(start.overlaid);
   const brought: string[] = [];
-  const candidates = new Set([...Object.keys(approved.files), ...(file ? [file] : [])]);
+  const copiedAt = Date.parse(start.copiedAt);
+  const own = new Set(view.task.files);
+  const editedInProject: string[] = [];
+  for (const [each, digest] of Object.entries(start.files)) {
+    if (own.has(each) || entryOf(approved.files, each)) {
+      continue;
+    }
+
+    const stat = await fs.stat(under(ctx.root, each)).catch(() => undefined);
+    if (stat ? stat.mtimeMs > copiedAt : digest !== null) {
+      editedInProject.push(each);
+    }
+  }
+
+  const candidates = new Set([...Object.keys(approved.files), ...editedInProject, ...(file ? [file] : [])]);
   for (const each of candidates) {
     const inCopy = await fingerprint(under(view.paths.work, each));
     const startedFrom = files[each] ?? null;
@@ -172,7 +188,24 @@ export const changedInCopy = async (view: TaskView, start: TaskStart): Promise<s
   const inCopy = await projectFiles(view.paths.work);
   const changed = new Set<string>();
   for (const file of inCopy) {
+    const served = start.served?.[file];
+    if (served) {
+      // Cloned unread: told changed by its size or its time, never read whole.
+      const stat = await fs.stat(under(view.paths.work, file));
+      if (stat.size !== served.size || stat.mtimeMs !== served.mtimeMs) {
+        changed.add(file);
+      }
+
+      continue;
+    }
+
     if ((await fingerprint(under(view.paths.work, file))) !== (start.files[file] ?? null)) {
+      changed.add(file);
+    }
+  }
+
+  for (const file of Object.keys(start.served ?? {})) {
+    if (!inCopy.includes(file)) {
       changed.add(file);
     }
   }

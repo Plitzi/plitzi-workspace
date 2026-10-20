@@ -202,7 +202,7 @@ a plugin with no `declaration.ts`, no `.env.example` — is printed while develo
 
 | Option | What it is |
 |---|---|
-| `space` | The space held in the project: a function that authors it — `authorProjectSpace` — called once the project's layout is checked (a save while developing is authored again by `plitzi/author.ts`, in a process of its own). Served from memory; its `warnings` are printed at boot. |
+| `space` | The space held in the project: a function that authors it — `authorProjectSpace` — called once the project's layout is checked (a save while developing is authored again by `.plitzi/author.ts`, in a process of its own). Served from memory; its `warnings` are printed at boot. |
 | `cloud` | Instead of `space`: `{ name }` — the space stays in Plitzi and is read with `createCloudAdapters`, from `PLITZI_HOST_KEY` (required), `PLITZI_ENVIRONMENT` (`main` by default), `PLITZI_REVISION` and `PLITZI_SERVER_URL`. `name` is what `/health` answers with. |
 | `actions`, `connectors` | The space's server actions, found by their id, and the connectors they call. Left out, the server runs no actions. |
 | `serverOptions` | The project's `src/config/serverOptions.ts`, typed `ProjectServerOptions`: what `createServer` takes but for what `serveProject` wires, spread before it — `logLevel` and `logger` (`warn`, to the console; `--verbose` on the command line: `info`), `auth`, `images`, `rsc`, `action.limits`, `action.kv` are the project's to set. |
@@ -237,7 +237,7 @@ What it wires from the project:
 
 While developing — `NODE_ENV` other than `production` — `devMode` and `livePages` are on, and:
 
-- **A save to the space is authored again** by the project's `plitzi/author.ts`, in a process of its own (an import is
+- **A save to the space is authored again** by the project's `.plitzi/author.ts`, in a process of its own (an import is
   never read twice in one process), run with `--ipc`: it hands the documents back over the IPC channel, the server
   swaps them in memory and hands them to every open page, which swaps the space where it stands — its state, scroll and
   focus kept (`updatePages`); a page with elements the server draws loads again instead. What the script refuses it

@@ -172,6 +172,53 @@ describe('whether a run reviews design', () => {
     expect((await loadRun(lead(), 'off')).record.designReview).toBeUndefined();
   });
 
+  it('stays the run’s choice when a stage is stacked on it — on only when the stage says so', async () => {
+    await setTeamAgent(bench.root, 'design', { roles: ['designer', 'developer'] });
+    await openRun(lead(), await bench.writePlan({ ...benchPlan('off'), designReview: false }));
+    const stage = {
+      version: 1 as const,
+      runId: 'off-2',
+      goal: 'The contact page',
+      tasks: [
+        {
+          id: 't-contact',
+          title: 'Contact',
+          files: ['src/space/pages/contact.ts'],
+          dependsOn: [],
+          priority: 'low' as const,
+          estimateMinutes: 10,
+          acceptance: ['It says how to reach us']
+        }
+      ]
+    };
+    await extendRun(lead(), 'off', await bench.writePlan(stage));
+    expect((await loadRun(lead(), 'off')).record.designReview).toBeUndefined();
+    await extendRun(
+      lead(),
+      'off',
+      await bench.writePlan({
+        ...stage,
+        runId: 'off-3',
+        designReview: true,
+        tasks: [{ ...stage.tasks[0], id: 't-legal', files: ['src/space/pages/legal.ts'] }]
+      })
+    );
+    expect((await loadRun(lead(), 'off')).record.designReview).toBe(true);
+    const off = await refusalOf(
+      extendRun(
+        lead(),
+        'off',
+        await bench.writePlan({
+          ...stage,
+          runId: 'off-4',
+          designReview: false,
+          tasks: [{ ...stage.tasks[0], id: 't-faq', files: ['src/space/pages/faq.ts'] }]
+        })
+      )
+    );
+    expect(off).toContain('a stage keeps that');
+  });
+
   it('is on for a run whose plan asks for it, with a team of no designer', async () => {
     await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
     await openRun(lead(), await bench.writePlan({ ...benchPlan('on'), designReview: true }));

@@ -5,6 +5,13 @@ What the lead — team lead and software architect — does; the agents' half, t
 
 ## The lead
 
+0. **Inventory what the job asks, before a line of the plan.** Built after something — a site to copy, a design, a
+   brief — list every page and, on each, every section and every piece a visitor would miss: a hero's logo, a live
+   video, a countdown, an interactive tool (a tier list), a page linked from the footer. Each becomes acceptance a
+   command proves (`page check --expect "<id>~<text>"`), in the task that draws it. **What the run leaves out is said
+   in the plan (`leftOut`) and to the person before opening** — never decided in silence: "the tier list waits for a
+   second run" is a choice they make with you. Prepare what every task reads first — the data complete with every
+   field the reference uses, formatted — and nothing declared before a task uses it.
 1. **Map the space:** `plitzi space overview` — who owns which file, read off the imports. A page owns the modules only
    it imports; what two pages import (the tokens, the classes, a layout, a component) is **shared**, and so is every
    entry (`src/space/index.ts`). `plitzi space impact <file>` — what depends on a file.
@@ -12,12 +19,31 @@ What the lead — team lead and software architect — does; the agents' half, t
    amendment, a stage and the summary with itself when they are as it read them, and the folder that held only them):
 
    ```json
-   { "version": 1, "runId": "es-launch", "goal": "Spanish version",
-     "tasks": [{ "id": "t-home", "title": "Translate home", "files": ["src/space/pages/home/index.ts"], "role": "writer",
-                 "dependsOn": [], "priority": "high", "estimateMinutes": 30,
-                 "acceptance": ["Reads in Spanish",
-                   { "said": "The hero is in Spanish", "check": "plitzi page check / --url $PLITZI_URL --expect hero-title~Bienvenidos" }] }],
-     "notes": ["Dates are UTC: use lib/today.ts"], "primer": "primer.md" }
+   {
+     "version": 1,
+     "runId": "es-launch",
+     "goal": "Spanish version",
+     "tasks": [
+       {
+         "id": "t-home",
+         "title": "Translate home",
+         "files": ["src/space/pages/home/index.ts"],
+         "role": "writer",
+         "dependsOn": [],
+         "priority": "high",
+         "estimateMinutes": 30,
+         "acceptance": [
+           "Reads in Spanish",
+           {
+             "said": "The hero is in Spanish",
+             "check": "plitzi page check / --url $PLITZI_URL --expect hero-title~Bienvenidos"
+           }
+         ]
+       }
+     ],
+     "notes": ["Dates are UTC: use lib/today.ts"],
+     "primer": "primer.md"
+   }
    ```
 
    **Acceptance a command can tell** is `{ said, check }`: the check runs in the task's copy at `complete`, beside the
@@ -28,7 +54,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    the finish. **`notes`** hold for the whole run;
    `plitzi run note "…"` adds one. **`primer`** (beside the plan, ≤ 16 KB): what you learnt reading the project — every
    brief starts with it, and the few references its files need. **The team** is the project's,
-   `.plitzi/team.json` — a developer and a designer to start, what each role does inside; grow it when the job asks
+   `.plitzi/team.json` (edited by hand: `plitzi run team check`) — a developer and a designer to start, what each role does inside; grow it when the job asks
    (`plitzi run team set dev --count 2 --model <model>`, `… set test --roles tester`): its size is how many work at once, a role nobody takes is refused, and `run plan` says how to start each agent. A tester in it adds `<id>-tests` after each
    developer task (`"tests": false` for none); a designer reviews the others' UI before you (`"designReview": false` in
    the plan turns it off). Theirs is the UI/UX, as a designer; yours is the complete and strict review — code,
@@ -46,7 +72,12 @@ What the lead — team lead and software architect — does; the agents' half, t
    `run purge`, `run restore`, `run allow-finish`, `run stop --force` and `run attach --take-over` (Claude Code:
    `permissions.deny` in `.claude/settings.json`).
 
-   Ids: lowercase letters, digits, `-`, `_`. **A file other tasks import is their contract**: a task that changes what
+   **Quality** (`"quality": "light" | "standard" | "high"`): `run plan` sets it where you say none — what many tasks build
+   on `high`, a one-file few minutes `light` — and, with a team model a level, says which agent starts at which. Give
+   your strongest model only to what is worth it. Ids: lowercase letters, digits, `-`, `_`; **classes and provider ids by area** (`pronosticos-card`, `topBoxers`):
+   two tasks that name one class differently meet only at the approval. **Foundations go to different agents**: the
+   shell and the components as two tasks two agents take at once — one role allowed to only one agent works them one
+   after the other while every page waits. **A file other tasks import is their contract**: a task that changes what
    it exports (a component's params) changes it compatibly — a new param optional — or the plan says who follows it
    (`run plan` names each). **Read what a task changes before you write it**: one asking for what is not
    there (a shadow to lighten, an id per row of a list) costs a round. **And what its data shows**: a case the project's
@@ -56,6 +87,7 @@ What the lead — team lead and software architect — does; the agents' half, t
    on. A new page is a file that does not exist yet: where the space loads its pages by folder (`pagesIn`, a project with
    a server, `nav` for the menu) it touches nothing shared; otherwise it registers in the entry, one line each. A task that will change
    a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
+
 3. `plitzi run plan plan.json` — refused, every reason at once (a repeated file, a cycle, an unknown task, a
    path outside the source, a check it cannot run, another run going); otherwise expanded, shared files and overlaps
    listed, estimated — and the skills said when they are older than the CLI (`plitzi upgrade skills --write` first). `plitzi run rehearse plan.json` plays it out with the team as `task next` would:
@@ -70,11 +102,14 @@ What the lead — team lead and software architect — does; the agents' half, t
 5. Start one agent per ready task (`plitzi task next --run es-launch --json`), each with a free port, and follow:
    `plitzi run watch --until lead` in the background ends when something needs you — a review, a question, a block, a
    file a task takes past 400 lines (ask for the split) — each said once; run it again after acting. **Talk:** answer a question (`run status` shows it) with `plitzi
-   task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
+task message t-home "…" --reply-to m3`; `task message all "…"` tells every task in hand, `task message @dev-1 "…"`
    an agent by name, between tasks too. A mistake in the plan (a check that cannot pass): edit it and `plitzi run amend
-   plan.json` — titles, acceptance, priorities, notes; each task changed is told. Its files and dependencies stay.
-6. **Review:** `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs);
-   `plitzi task look t-home [--click id] [--element id]` serves its copy, page checks its pages (headings, names,
+plan.json` — titles, acceptance, priorities, notes; each task changed is told. Its files and dependencies stay.
+6. **Review against the inventory, not only the picture:** every section and piece the task's acceptance names is
+   there, as the reference has it — a difference you accept is one you say (`--note`); one a visitor would see is sent
+   back. Judge the version that went to review (`task show` says its round), and on a page several tasks build, only
+   this task's part. `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs);
+   `plitzi task look t-home [--click id] [--element id]` (a part of a page others build: its part alone) serves its copy, page checks its pages (headings, names,
    contrast included; an open state, an element as the page has it) and pictures
    them light and dark — one command. What the acceptance asks and the data does not show, you test yourself
    (a module's function with the edge cases, as `node -e` from the copy) — or send it back for the test it needs. Then
@@ -88,8 +123,10 @@ What the lead — team lead and software architect — does; the agents' half, t
    **reconciliation**: `plitzi run resolve <run> <file> --take project|run|merge|<file>`, then `plitzi run continue`.
    **The brake** stops a run whose completions keep being refused: `run status` says why; `plitzi run resume`. Agents
    iterate with `task check`, which it does not count. **Plitzi upgraded mid-run** (`version-mismatch`, said in `run
-   status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
+status`): ask the person to run `plitzi run attach <run>` — the agents keep their work and wait. To upgrade on
    purpose, the person runs `plitzi run upgrade` — never an install under the open run.
-8. **Close it:** write the summary (done, wrong, left): `plitzi run report --summary summary.md`; then `plitzi run
-   finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
+8. **Before you close, check the coverage:** each item of the inventory is on the result (`plitzi run preview`, then
+   `page check` with its `--expect`s) — what is missing is a stage (`run extend`), or said in `leftOut`, never found
+   by the person afterwards. **Close it:** write the summary (done, wrong, left): `plitzi run report --summary summary.md`; then `plitzi run
+finish` (the diff, checked). `--apply` is the person's, or yours if they allowed it. The next plan need not wait:
    `plitzi run extend <run> next.json` stacks it, one finish for both. `plitzi run pending` lists what awaits applying.

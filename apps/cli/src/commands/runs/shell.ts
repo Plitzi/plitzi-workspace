@@ -12,10 +12,11 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { failedSteps } from './text';
 import { projectChecks } from '../../runs/checks';
 import { writtenByAnother } from '../../runs/compat';
-import { COPY_TASK_FILE, RUNS_DIR, runPaths, taskPaths } from '../../runs/paths';
+import { COPY_TASK_FILE, copyOf, runPaths, taskPaths } from '../../runs/paths';
 import { isRunRefusal, RunRefusal } from '../../runs/refusal';
 import { activeRuns } from '../../runs/run';
 import { readOwner } from '../../runs/taskStore';
+import { isQuality } from '../../runs/team';
 import { CLI_VERSION } from '../../scaffold/project';
 import { findProject } from '../existingProject';
 
@@ -34,6 +35,8 @@ export interface RunCommandOptions {
   agent?: string;
   /** The run, when the token does not say it and the project has more than one. `PLITZI_RUN` otherwise. */
   run?: string;
+  /** The level the agent was started at: handed tasks of it or below. `PLITZI_QUALITY` otherwise. */
+  quality?: string;
 }
 
 /** A task's token says its run and its task: `<run>.<task>.<secret>`, so a task's commands need nothing else. */
@@ -80,15 +83,14 @@ const whereAmI = async (): Promise<Where> => {
     throw new RunRefusal('not-found', 'There is no package.json here or above: run this in the project');
   }
 
-  const marker = `${path.sep}${RUNS_DIR.split('/').join(path.sep)}${path.sep}`;
-  const at = project.root.indexOf(marker);
-  if (at === -1) {
+  const inCopy = copyOf(project.root);
+  if (!inCopy) {
     return { root: project.root };
   }
 
   const copy = await copyTask(project.root);
 
-  return { root: project.root.slice(0, at), ...(copy ? { copy } : {}) };
+  return { root: inCopy.root, ...(copy ? { copy } : {}) };
 };
 
 /** A person, at a terminal of their own, typing the run's name — never an agent's shell, which has none. */
@@ -132,6 +134,11 @@ export const contextFor = async (options: RunCommandOptions): Promise<RunContext
   // An empty variable is none said: a shell that cleared it, not a token.
   const said = options.token ?? (process.env.PLITZI_TASK_TOKEN === '' ? undefined : process.env.PLITZI_TASK_TOKEN);
   const token = said ?? copy?.token;
+  const quality = options.quality ?? process.env.PLITZI_QUALITY;
+  if (quality !== undefined && quality !== '' && !isQuality(quality)) {
+    throw new RunRefusal('invalid', `"${quality}" is no quality: light, standard or high (--quality, PLITZI_QUALITY)`);
+  }
+
   const agent =
     options.agent ??
     process.env.PLITZI_AGENT ??
@@ -145,6 +152,7 @@ export const contextFor = async (options: RunCommandOptions): Promise<RunContext
     cli: CLI_VERSION,
     ...(token ? { token } : {}),
     agent,
+    ...(isQuality(quality) ? { quality } : {}),
     person: askPerson,
     checks: projectChecks
   };

@@ -8,7 +8,15 @@ import { projectModule } from './projectModules';
 import { editTsConfig, freshSecret, ignoreLines, unignore, writeFormatted } from './repairs';
 import { sayer } from './types';
 import { projectSettings } from '../commands/projectSettings';
-import { CLI_DIR, MAIN_FILE, PROJECT_NOTES, PROJECT_STATE, PROJECT_TMP, TSCONFIG_BASE } from '../scaffold/paths';
+import {
+  CLI_DIR,
+  CLI_DIR_INCLUDE,
+  MAIN_FILE,
+  PROJECT_NOTES,
+  PROJECT_STATE,
+  PROJECT_TMP,
+  TSCONFIG_BASE
+} from '../scaffold/paths';
 import { projectNotes, tsconfig, tsconfigBase } from '../scaffold/project';
 
 import type { Check, DoctorContext, Finding, Repair } from './types';
@@ -180,6 +188,9 @@ const tsconfigChecks = async ({ root, answers }: DoctorContext): Promise<Finding
     });
   const covers = (folder: string) =>
     config.include.length === 0 || config.include.some(entry => entry === folder || entry.startsWith(`${folder}/`));
+  // A dot folder named bare reads nothing: TypeScript leaves it out of the include unless its files are named.
+  const coversCli = config.include.length === 0 || config.include.some(entry => entry.startsWith(`${CLI_DIR}/`));
+  const bareCli = config.include.includes(CLI_DIR);
   if (!covers('src')) {
     findings.push(
       say.error('tsconfig-src-left-out', 'tsconfig.json leaves src/ out: the typecheck reads none of the project.', {
@@ -190,13 +201,27 @@ const tsconfigChecks = async ({ root, answers }: DoctorContext): Promise<Finding
     );
   }
 
-  if (!covers(CLI_DIR)) {
+  if (!coversCli) {
     findings.push(
-      say.warning('tsconfig-cli-left-out', `tsconfig.json leaves ${CLI_DIR}/ out: the typecheck reads none of it.`, {
-        file: 'tsconfig.json',
-        fix: `Add "${CLI_DIR}" to "include".`,
-        ...(await repairOf(included(CLI_DIR)))
-      })
+      say.warning(
+        'tsconfig-cli-left-out',
+        bareCli
+          ? `tsconfig.json includes "${CLI_DIR}" bare, which TypeScript reads as nothing — a folder whose name starts with a dot is left out unless its files are named: the typecheck and the lint read none of it.`
+          : `tsconfig.json leaves ${CLI_DIR}/ out: the typecheck reads none of it.`,
+        {
+          file: 'tsconfig.json',
+          fix: `${bareCli ? `Write "${CLI_DIR_INCLUDE}" for "${CLI_DIR}"` : `Add "${CLI_DIR_INCLUDE}"`} in "include".`,
+          ...(await repairOf(
+            editTsConfig(root, 'tsconfig.json', `includes "${CLI_DIR_INCLUDE}" in tsconfig.json`, json => {
+              const include: unknown = json.include;
+              const entries = Array.isArray(include) ? include.filter(entry => typeof entry === 'string') : [];
+              json.include = bareCli
+                ? entries.map(entry => (entry === CLI_DIR ? CLI_DIR_INCLUDE : entry))
+                : [...entries, CLI_DIR_INCLUDE];
+            })
+          ))
+        }
+      )
     );
   }
 

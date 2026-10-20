@@ -269,3 +269,59 @@
   stops gently, waits until nothing is being written, is upgraded (`plitzi upgrade --write --with-open-runs`, or
   `--install "<command>"`), re-pinned by the new CLI and resumed; an upgrade that fails leaves it as it was, open again
   (la-velada: an install under the open run stopped the preview three times).
+- **The dev tools scroll again** (`@plitzi/sdk-dev-tools`): the panel's body took the whole panel's height below its
+  header, its last rows out of reach in every tab; it takes the room under the header now. The Run tab reads at a
+  glance: progress, the tasks still moving by where they stand, the approved ones beside the agents (model, status,
+  what each is at), what needs someone under them, and the activity.
+- **One preview a run** (`@plitzi/cli`): a second `run preview` of one run rebuilt the folder the first served from
+  under it; it is refused now, naming the running one. A note of a task approved since no longer needs the lead.
+- **The CLI's part of a project is one folder, `.plitzi/`** (`@plitzi/cli`, `@plitzi/sdk-shared`, `@plitzi/sdk-server`):
+  what authors the space, the compiler options, the README and what the CLI records lived in `plitzi/` and `.plitzi/`;
+  they are `.plitzi/` now. A project laid out before is said by `plitzi doctor` (`older-layout`) and moved by `doctor
+  --fix`, its scripts and `tsconfig*.json` following; `upgrade` asks for it first. A run's copies carry `.plitzi/` now —
+  what a task's checks author with — and no task writes it: `complete` refuses a change there.
+- **Careful leads** (`@plitzi/cli`): a plan says what the run leaves out (`leftOut`), shown at `run plan` and `run open`
+  and kept in the report — and `run plan` says when it says nothing. The lead's skill starts with an inventory of what
+  the job asks (pages, sections, the pieces a visitor would miss, each a check), prepares the data whole, gives the
+  foundations to different agents, names classes and providers by area, reviews against the inventory and checks the
+  coverage before closing — what la-velada's copy missed.
+- **A model a quality level** (`@plitzi/cli`): a plan's task says `quality` (`light`, `standard`, `high`) — set by `run
+  plan` where it says none, with why: what many tasks build on is `high`, a one-file few minutes `light`. A team agent's
+  `model` may be one a level (`{ "standard": "…", "high": "…" }`, `team set --model standard=…,high=…`), each level
+  started apart and `run plan` saying whose tasks are whose; an agent started at a level (`task next --quality`) is
+  handed tasks of it or below and told what waits above. The schema and `run team check` know both forms.
+- **`team.json` is checked as a person writes it** (`@plitzi/cli`): every unknown field is said with the one it likely
+  meant (`"modle"` — did you mean `"model"`?), by `plitzi run team check`, `plitzi doctor` (team) and `run plan`; and the
+  file names its JSON Schema (`$schema`, shipped in `@plitzi/cli/schemas`), so an editor marks a wrong field as it is
+  typed.
+- **A look at a task's part of a page is of that part** (`@plitzi/cli`): `task look` of a task that writes a section of
+  a page others build pictures its own elements, clipped, and sets apart the page check's findings on the others'
+  parts — the home's stubs and missing h1 were each part's "failures"; fewer, smaller pictures for every reviewer.
+- **What the run's agents asked for** (`@plitzi/cli`): every command that waits waits 9 minutes when not told —
+  under the 10 a harness gives one command (`task next --follow` at 30 lost its answer to the background); `task show
+  --full` prints every line of each diff; `run preview --task` serves a task's copy while it is worked too, for its
+  agent to look at its own pages without a server of its own in the copy; `page shot https://…` pictures another site
+  as anyone sees it (the original a copy is made after), and one slow to wake is asked twice and said as slow, not as
+  nothing answering.
+- **A task's copy draws its pictures** (`@plitzi/cli`): the binaries of `public/` and `vendor/` a task does not own
+  are cloned into its copy unread — told changed by size and time, never read whole for a fingerprint — so its page
+  checks and every look at it see the images (la-velada: every review of the artists and the banners saw them 404).
+- **A run's agents lose fewer rounds** (`@plitzi/cli`): `run amend` changes a task's role and quality until an agent
+  takes it; a task sent back that others wait on tells its agent, at another task, that it goes first; `task check`
+  brings into the copy what the run approved and what a person changed in the project since it was made, as `complete`
+  does; `task look` and `run preview --task` use the agent's own server when it serves the copy already, instead of
+  failing on its lock; `run extend` keeps the run's choice of a designer's review; `run finish`'s refusals say what a
+  finish does next, not "complete again"; `run plan` no longer warns of a folder's own index, which only assembles its
+  parts; a co-lead alone is told to hand what is beyond a review to the lead.
+- **`page shot --compare --clip <section>`** (`@plitzi/cli`): compares both pages whole and keeps that section's
+  difference in the report — it was refused, and a task copying one section read the whole page's.
+- **Authoring says what rendered nothing** (`@plitzi/sdk-authoring`, `@plitzi/sdk-shared`): a list's `items` bound to
+  a query provider outside its answer — the provider itself, or a field read at its root — is warned
+  (`list-items-outside-answer`: no list there, its rows drew NaN); `activeWhen` on a component's `props` is taken, as
+  `variantFrom` was; `border-image` is in the style vocabulary; a link reaches one row's anchor (`hash: 'pick-<row>'`)
+  without `anchor-missing`, and the docs say a row's anchor is named after its row; `template-short-source` names
+  `r.inTemplate.item` for a list's row instead of its id written by hand.
+- **A project's `.plitzi/` is read by its typecheck and lint** (`@plitzi/cli`): TypeScript leaves a dot folder named bare
+  in `include` out, so a new project includes `.plitzi/**/*` and `doctor` says (and `--fix` writes) a tsconfig naming
+  `.plitzi` bare. The older `plitzi/` moved into `.plitzi/` keeps the scripts that run the CLI (`plitzi run preview`
+  was rewritten `.plitzi run preview`), and its ignore files (`.prettierignore`, `.gitignore`) follow the move.

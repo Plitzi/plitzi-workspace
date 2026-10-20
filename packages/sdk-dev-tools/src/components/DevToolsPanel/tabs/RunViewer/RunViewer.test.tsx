@@ -33,7 +33,17 @@ const snapshot: RunSnapshot = {
       files: ['src/space/pages/combates.ts']
     }
   ],
-  attention: [{ text: 't-fights asks (m3): which order?', who: 'lead' }]
+  attention: [{ text: 't-fights asks (m3): which order?', who: 'lead' }],
+  agents: [
+    {
+      agent: 'dev-2',
+      kind: 'agent',
+      status: 'in-review',
+      model: 'claude-sonnet-5-5',
+      doing: 't-fights waits for its review'
+    }
+  ],
+  feed: [{ at: '2026-10-20T21:29:00.000Z', by: 'lead-2', text: 'approved t-home', kind: 'review' }]
 };
 
 describe('the Run tab', () => {
@@ -43,6 +53,11 @@ describe('the Run tab', () => {
     expect(screen.getByText(/1 of 2 tasks approved/)).toBeTruthy();
     expect(screen.getByText('dev-2 · reviewed by lead-2')).toBeTruthy();
     expect(screen.getByText(/which order\?/)).toBeTruthy();
+    expect(screen.getByText('In review')).toBeTruthy();
+    expect(screen.getByText('t-fights waits for its review')).toBeTruthy();
+    expect(screen.getByText('approved t-home')).toBeTruthy();
+
+    expect(screen.getByText('The home')).toBeTruthy();
 
     // Opened, a task says the files it writes.
     fireEvent.click(screen.getByText('The fights'));

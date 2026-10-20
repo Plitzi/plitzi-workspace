@@ -44,6 +44,8 @@ export interface TaskReport {
 export interface RunReport {
   runId: string;
   goal: string;
+  /** What the plan said the run leaves out. */
+  leftOut: string[];
   openedAt: string;
   at: string;
   minutes: number;
@@ -225,6 +227,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
   return {
     runId: record.runId,
     goal: loaded.plan.goal,
+    leftOut: loaded.plan.leftOut ?? [],
     openedAt: record.openedAt,
     at: now,
     minutes,
@@ -281,6 +284,9 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
     '',
     summary?.trim() ?? '_None was written._',
     '',
+    ...(report.leftOut.length > 0
+      ? ['## Left out, as the plan said', '', ...report.leftOut.map(line => `- ${line}`), '']
+      : []),
     '## Problems',
     '',
     ...lines(report.problems, 'none found in what the CLI saw'),

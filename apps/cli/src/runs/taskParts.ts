@@ -1,0 +1,81 @@
+import path from 'node:path';
+
+import { locatedSpace } from '../commands/where';
+
+/**
+ * What of a page a task writes, read off its copy's space: the elements its files write, the outermost of them — what
+ * a look pictures, when the task writes a part of a page others build too — and whether it writes a whole page (or
+ * layout, or component). Undefined when the copy does not author: then the look shows the page whole, as before.
+ */
+export interface TaskParts {
+  /** Every element the task's files write. */
+  ids: Set<string>;
+  /** Every element the space has: an id in neither is not an element (a class, a text). */
+  all: Set<string>;
+  /** The task's outermost elements, in the space's order: its parts of a page. */
+  tops: string[];
+  /** It writes a page's, a layout's or a component's root: the whole of it is its own. */
+  ownsRoot: boolean;
+}
+
+/** The types that draw no node of their own — a data provider — whose children are what is on the page. */
+const TAGLESS = new Set(['apiContainer']);
+
+export const taskParts = async (copy: string, files: readonly string[]): Promise<TaskParts | undefined> => {
+  const located = await locatedSpace(copy);
+  if ('problem' in located) {
+    return undefined;
+  }
+
+  // Where each was written, as a project path of the copy: positions are said from the working directory.
+  const fileOf = (file: string): string =>
+    path.relative(copy, path.resolve(process.cwd(), file)).split(path.sep).join('/');
+  const mine = new Set(
+    located.flatMap(element =>
+      element.position && files.includes(fileOf(element.position.file)) ? [element.elementId] : []
+    )
+  );
+  const parentOf = new Map(
+    located.flatMap(element => element.children.map(child => [child, element.elementId] as const))
+  );
+  const byId = new Map(located.map(element => [element.elementId, element] as const));
+  // A provider draws no node of its own: a picture is clipped to what it holds.
+  const drawn = (id: string): string[] => {
+    const element = byId.get(id);
+
+    return element && TAGLESS.has(element.type) ? element.children.flatMap(drawn) : [id];
+  };
+  const tops = located
+    .filter(element => mine.has(element.elementId) && !mine.has(parentOf.get(element.elementId) ?? ''))
+    .flatMap(element => drawn(element.elementId));
+
+  return {
+    ids: mine,
+    all: new Set(located.map(element => element.elementId)),
+    tops,
+    ownsRoot: located.some(element => element.elementId === element.rootId && mine.has(element.elementId))
+  };
+};
+
+/**
+ * A page check's findings kept to the task's own elements: a line naming only elements of other tasks — a part still a
+ * stub, a heading another part holds — is theirs. Answers the lines kept, and how many were set apart.
+ */
+export const findingsOf = (check: string, parts: TaskParts): { text: string; apart: number } => {
+  let apart = 0;
+  const lines = check.split('\n').filter(line => {
+    if (!/^\s+- /.test(line)) {
+      return true;
+    }
+
+    const named = [...line.matchAll(/"([\w-]+)"/g)].map(match => match[1]).filter(id => parts.all.has(id));
+    const others = named.length > 0 && named.every(id => !parts.ids.has(id));
+    if (others) {
+      apart += 1;
+    }
+
+    return !others;
+  });
+
+  return { text: lines.join('\n'), apart };
+};

@@ -55,6 +55,59 @@ const checkWrittenInput = (ctx: LintContext, input: unknown, where: string, elem
   );
 };
 
+const PROVIDER_SOURCE = /^apiContainer_([\w-]+)(?:\.([\w-]+))?/;
+/** What a query provider publishes at its root besides its state: its answer, and its paginated rows. */
+const ANSWER_FIELDS = ['data', 'records'];
+
+/**
+ * A list's items bound to a query provider outside its answer: the provider publishes its answer beside its state
+ * (`data`, `records`, `isLoading`…), so the provider itself — or a field of the answer read at its root — is no list,
+ * and the rows draw nothing (NaN, the placeholder) without a word (la-velada: `source.fights`, `.data` left out). A
+ * provider fed by a server action publishes the output at its root: read as it is there.
+ */
+const warnItemsOutsideAnswer = (
+  ctx: LintContext,
+  element: Element,
+  where: string,
+  bindings: readonly ReturnType<typeof bindingsOf>[number]['binding'][]
+): void => {
+  for (const binding of bindings) {
+    const match = binding.to === 'items' && binding.enabled !== false ? PROVIDER_SOURCE.exec(binding.source) : null;
+    const id = match?.[1];
+    const provider = id === undefined ? undefined : ctx.element(id);
+    if (!match || id === undefined || provider?.definition.type !== 'apiContainer') {
+      continue;
+    }
+
+    if (typeof provider.attributes.action === 'string' && provider.attributes.action !== '') {
+      continue;
+    }
+
+    const templates = (binding.transformers ?? [])
+      .filter(transformer => transformer.action === 'twigTemplate')
+      .flatMap(transformer => stringsIn(transformer.params));
+    // What is read: the binding's own field, else the fields its template reads off `source`.
+    const read =
+      match[2] !== undefined
+        ? [match[2]]
+        : templates.flatMap(template => [...template.matchAll(/\bsource\s*\.\s*([\w-]+)/g)].map(each => each[1]));
+    if (read.some(field => ANSWER_FIELDS.includes(field))) {
+      continue;
+    }
+
+    const reads =
+      read.length > 0
+        ? ` and reads ${[...new Set(read)].map(field => `\`${field}\``).join(', ')} at its root`
+        : ' itself';
+    ctx.warn(
+      'list-items-outside-answer',
+      `${where} binds its items to the provider "${id}"${reads}, which publishes its answer beside its state (\`data\`, \`records\`, \`isLoading\`…): no list there, so its rows draw nothing. Bind the list inside the answer: \`${id}.data.${read[0] ?? '<rows>'}\`, or \`${id}.records\` (paginated).`,
+      element.id,
+      { source: binding.source }
+    );
+  }
+};
+
 /**
  * What renders, and renders something other than what it plainly means. Refused where there is no other reading — a
  * controlled list with nothing to render — and warned where there is a rare legitimate one.
@@ -77,6 +130,10 @@ export const checkIntent = (ctx: LintContext, element: Element, where: string): 
 
   if (type === 'list' && !bound('items')) {
     warnItemKey(ctx, element, where);
+  }
+
+  if (type === 'list') {
+    warnItemsOutsideAnswer(ctx, element, where, bindings);
   }
 
   if (type === 'list' && attributes.source === 'controlled') {

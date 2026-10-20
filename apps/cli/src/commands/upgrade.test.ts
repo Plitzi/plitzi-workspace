@@ -88,12 +88,12 @@ describe('plitzi upgrade', () => {
   it('replaces what the CLI wrote and nobody changed, adds what is missing, and only shows what is the project’s', async () => {
     const ours = machineryFiles(ANSWERS);
     // Written by an older CLI, untouched since: its digest is the one recorded.
-    await fs.writeFile(file('plitzi/author.ts'), '// the author script of an older CLI\n');
+    await fs.writeFile(file('.plitzi/author.ts'), '// the author script of an older CLI\n');
     // The project's own: no record says the CLI wrote it so.
     await fs.writeFile(file('playwright.config.ts'), '// tuned by hand\n');
     await fs.rm(file('eslint.config.mjs'));
     await writeScaffoldRecord(root, '0.37.9', {
-      files: { 'plitzi/author.ts': digestOf('// the author script of an older CLI\n') }
+      files: { '.plitzi/author.ts': digestOf('// the author script of an older CLI\n') }
     });
 
     const shown = await run(['files']);
@@ -101,22 +101,22 @@ describe('plitzi upgrade', () => {
       recordsIn(shown.files).map((entry): [string, unknown] => [String(entry.file), entry.status])
     );
     expect(statuses).toMatchObject({
-      'plitzi/author.ts': 'updated',
+      '.plitzi/author.ts': 'updated',
       'playwright.config.ts': 'yours',
       'eslint.config.mjs': 'added',
-      'plitzi/tsconfig.base.json': 'current'
+      '.plitzi/tsconfig.base.json': 'current'
     });
     // Shown is not written.
-    expect(await read('plitzi/author.ts')).toBe('// the author script of an older CLI\n');
+    expect(await read('.plitzi/author.ts')).toBe('// the author script of an older CLI\n');
 
     await run(['files'], { write: true });
 
-    expect(await read('plitzi/author.ts')).toBe(ours['plitzi/author.ts']);
+    expect(await read('.plitzi/author.ts')).toBe(ours['.plitzi/author.ts']);
     expect(await read('eslint.config.mjs')).toBe(ours['eslint.config.mjs']);
     expect(await read('playwright.config.ts')).toBe('// tuned by hand\n');
     const record = await readScaffoldRecord(root);
     expect(record?.cli).toBe(CLI_VERSION);
-    expect(record?.files['plitzi/author.ts']).toBe(digestOf(ours['plitzi/author.ts']));
+    expect(record?.files['.plitzi/author.ts']).toBe(digestOf(ours['.plitzi/author.ts']));
     expect(record?.files['playwright.config.ts']).toBeUndefined();
 
     await run(['files'], { write: true, take: ['playwright.config.ts'] });
@@ -137,20 +137,20 @@ describe('plitzi upgrade', () => {
     const ownOptions =
       "// SetByMain, as an older CLI typed it\nexport const serverOptions = { images: { domains: ['img.example.com'] } };\n";
     await fs.writeFile(file('src/main.ts'), olderMain);
-    await fs.writeFile(file('plitzi/author.ts'), olderAuthor);
+    await fs.writeFile(file('.plitzi/author.ts'), olderAuthor);
     await fs.writeFile(file('src/config/serverOptions.ts'), ownOptions);
     const space = await read('src/space/index.ts');
     const actions = await read('src/actions/index.ts');
     await writeScaffoldRecord(root, '0.38.5', {
-      files: { 'src/main.ts': digestOf(olderMain), 'plitzi/author.ts': digestOf(olderAuthor) }
+      files: { 'src/main.ts': digestOf(olderMain), '.plitzi/author.ts': digestOf(olderAuthor) }
     });
 
     await run(['files'], { write: true });
 
     expect(await read('src/main.ts')).toBe(ours['src/main.ts']);
     expect(await read('src/main.ts')).toContain('await serveProject({');
-    expect(await read('plitzi/author.ts')).toBe(ours['plitzi/author.ts']);
-    expect(await read('plitzi/author.ts')).not.toContain('--out');
+    expect(await read('.plitzi/author.ts')).toBe(ours['.plitzi/author.ts']);
+    expect(await read('.plitzi/author.ts')).not.toContain('--out');
     expect(await read('src/config/serverOptions.ts')).toBe(ownOptions);
     expect(await read('src/space/index.ts')).toBe(space);
     expect(await read('src/actions/index.ts')).toBe(actions);
@@ -164,7 +164,7 @@ describe('plitzi upgrade', () => {
       start: 'node src/main.ts',
       'start:dev': 'node --watch-path=./src/main.ts --watch-path=./src/config src/main.ts',
       'start:prod': 'node dist/main.js',
-      author: 'node plitzi/author.ts'
+      author: 'node .plitzi/author.ts'
     };
 
     /** The project as the CLI before this one wrote it, and recorded writing it. */

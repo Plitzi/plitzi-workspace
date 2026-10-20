@@ -58,16 +58,16 @@ describe('the server a project starts', () => {
       expect(files['src/main.ts']).not.toContain('entry');
     }
 
-    expect(scaffold(answers())['plitzi/author.ts']).toContain('  project = await projectSpace();');
+    expect(scaffold(answers())['.plitzi/author.ts']).toContain('  project = await projectSpace();');
     expect(scaffold(answers())['visual/home.spec.ts']).toContain('const { handles } = await authorProjectSpace();');
   });
 
   it('re-authors a saved space over IPC, writing nothing beside the source or in tmp/', () => {
     const files = scaffold(answers());
 
-    expect(files['plitzi/author.ts']).toContain("const ipc = process.argv.includes('--ipc');");
-    expect(files['plitzi/author.ts']).toContain('process.send?.({ schema, style }, () => process.disconnect?.());');
-    expect(files['plitzi/author.ts']).not.toContain('--out');
+    expect(files['.plitzi/author.ts']).toContain("const ipc = process.argv.includes('--ipc');");
+    expect(files['.plitzi/author.ts']).toContain('process.send?.({ schema, style }, () => process.disconnect?.());');
+    expect(files['.plitzi/author.ts']).not.toContain('--out');
     expect(Object.values(files).filter(text => text.includes('tmp/space.json'))).toEqual([]);
   });
 

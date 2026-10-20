@@ -74,7 +74,7 @@ export const withServedValues = (check: string, values: Readonly<Record<string, 
  * A server the agent started in its copy and left running: it holds the copy's state (its locks, its files) as the one
  * `complete` starts would — said before starting that one, with its port, rather than met as a lock the two fight over.
  */
-const ownServer = async (work: string): Promise<number | undefined> => {
+export const ownServer = async (work: string): Promise<number | undefined> => {
   const value: unknown = await fs
     .readFile(path.join(work, DEV_SERVER_FILE), 'utf-8')
     .then(text => JSON.parse(text) as unknown)

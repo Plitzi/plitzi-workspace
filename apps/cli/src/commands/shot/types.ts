@@ -68,6 +68,8 @@ export interface CompareReport {
   /** The first section the other page has somewhere else, and how far down. */
   driftFrom?: { name: string; shift: number };
   regions: RegionChange[];
+  /** `--clip` with `--compare`: the one section the regions were kept to — the rest of the report is the whole page's. */
+  section?: string;
   /** The words both pages have, and what each does differently there. */
   texts: TextComparison;
   /** Pictures the other page had not drawn when it was taken. */

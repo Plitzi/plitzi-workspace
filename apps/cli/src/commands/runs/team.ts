@@ -1,6 +1,7 @@
 import { act } from './shell';
 import {
   checkTeamFile,
+  parseModelChoice,
   coLeadNames,
   leadText,
   ROLES,
@@ -57,7 +58,7 @@ export const runTeamSet = (
       setTeamAgent(ctx.root, name, {
         ...(options.roles ? { roles: options.roles } : {}),
         ...(options.count !== undefined ? { count: options.count } : {}),
-        ...(options.model ? { model: options.model } : {}),
+        ...(options.model ? { model: parseModelChoice(options.model) } : {}),
         ...(options.effort ? { effort: options.effort } : {})
       }),
     changed =>

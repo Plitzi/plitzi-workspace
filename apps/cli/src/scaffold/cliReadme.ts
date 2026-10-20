@@ -3,7 +3,7 @@ import { AUTHOR_FILE, CLI_DIR, DATA_DIR, FUNCTIONS_DIR, MAIN_FILE, RUNTIME_DIR, 
 import type { CreateAnswers } from './types';
 
 /**
- * `plitzi/README.md`: what the CLI's folder holds, and what each folder of `src/` is — said once, here, rather than in a
+ * `.plitzi/README.md`: what the CLI's folder holds, and what each folder of `src/` is — said once, here, rather than in a
  * README inside every folder of the project's own, where it was one more file to wade past.
  */
 

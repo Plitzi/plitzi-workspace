@@ -35,7 +35,7 @@ import {
   runNote
 } from '..';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
-import { duration, names, positiveInteger } from '../../../options';
+import { duration, FOLLOW_MS, names, positiveInteger } from '../../../options';
 
 import type { FinishOptions, PlanOptions, RunCommandOptions, UpgradeRunOptions, WatchRunOptions } from '..';
 import type { Command } from 'commander';
@@ -220,7 +220,7 @@ export const registerRunGroup = (program: Command): Command => {
       '--timeout <duration>',
       'With --until: how long to wait before ending with nothing new (90s, 8m, 1h; a number is minutes)',
       duration,
-      25 * 60_000
+      FOLLOW_MS
     )
     .option(...JSON_OPTION)
     .action((run: string | undefined, options: WatchRunOptions) => runWatch(run, options));

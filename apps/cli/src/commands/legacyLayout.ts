@@ -6,6 +6,7 @@ import {
   AUTHOR_FILE,
   CLI_DIR,
   FUNCTIONS_DIR,
+  LEGACY_CLI_DIR,
   MAIN_FILE,
   PROJECT_TMP,
   SPACE_DIR,
@@ -84,6 +85,17 @@ export const legacyLayout = async (root: string): Promise<LegacyPlace[]> => {
       blocking: true,
       action: 'move',
       fix: `git mv functions ${FUNCTIONS_DIR}: functions pull and push, and the server, read them there`
+    });
+  }
+
+  // The CLI's part of the project beside what it records, in one folder: `plitzi/` and `.plitzi/` were two.
+  if (await exists(at(`${LEGACY_CLI_DIR}/author.ts`), 'file')) {
+    places.push({
+      found: `${LEGACY_CLI_DIR}/`,
+      now: `${CLI_DIR}/`,
+      blocking: true,
+      action: 'move',
+      fix: `move what ${LEGACY_CLI_DIR}/ holds into ${CLI_DIR}/, the scripts and tsconfig.json following`
     });
   }
 

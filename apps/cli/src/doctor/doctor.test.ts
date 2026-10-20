@@ -338,7 +338,7 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     const tsconfig: unknown = JSON.parse(await read('tsconfig.json'));
     await write(
       'tsconfig.json',
-      `// comments are allowed\n${JSON.stringify({ ...(isRecord(tsconfig) ? tsconfig : {}), include: ['plitzi'] }, null, 2)}`
+      `// comments are allowed\n${JSON.stringify({ ...(isRecord(tsconfig) ? tsconfig : {}), include: ['.plitzi'] }, null, 2)}`
     );
 
     const report = await run();
@@ -349,12 +349,12 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
   });
 
   it('makes a tsconfig.json from before the base extend it, keeping only what the project changed', async () => {
-    const base: unknown = JSON.parse(await read('plitzi/tsconfig.base.json'));
+    const base: unknown = JSON.parse(await read('.plitzi/tsconfig.base.json'));
     const options = isRecord(base) && isRecord(base.compilerOptions) ? base.compilerOptions : {};
     await write(
       'tsconfig.json',
       JSON.stringify(
-        { compilerOptions: { ...options, noUnusedLocals: true }, include: ['plitzi', 'src', 'scripts'] },
+        { compilerOptions: { ...options, noUnusedLocals: true }, include: ['.plitzi/**/*', 'src', 'scripts'] },
         null,
         2
       )
@@ -370,11 +370,11 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
 
     expect(JSON.parse(await read('tsconfig.json'))).toEqual({
       compilerOptions: { noUnusedLocals: true },
-      include: ['plitzi', 'src', 'scripts'],
-      extends: './plitzi/tsconfig.base.json'
+      include: ['.plitzi/**/*', 'src', 'scripts'],
+      extends: './.plitzi/tsconfig.base.json'
     });
     // Written by the project's own Prettier: what `verify`'s format step then finds nothing in.
-    expect(await read('tsconfig.json')).toContain('"include": ["plitzi", "src", "scripts"],');
+    expect(await read('tsconfig.json')).toContain('"include": [".plitzi/**/*", "src", "scripts"],');
     expect(findingOf(await run(), 'tsconfig-stands-alone')).toBeUndefined();
   });
 
@@ -413,13 +413,13 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
   it('says a script that starts Node on a file, or watches a folder, that is not there', async () => {
     await fs.rm(path.join(project, 'src/functions'), { recursive: true });
     const changed = await manifest();
-    const scripts = isRecord(changed.scripts) ? { ...changed.scripts, author: 'node plitzi/authoring.ts' } : {};
+    const scripts = isRecord(changed.scripts) ? { ...changed.scripts, author: 'node .plitzi/authoring.ts' } : {};
     await write('package.json', JSON.stringify({ ...changed, scripts }, null, 2));
 
     const report = await run();
 
     expect(findingOf(report, 'watch-path-missing')?.message).toContain('./src/functions');
-    expect(findingOf(report, 'script-target-missing')?.message).toContain('plitzi/authoring.ts');
+    expect(findingOf(report, 'script-target-missing')?.message).toContain('.plitzi/authoring.ts');
   });
 
   /** No file of the project reads `.env`: Node does, when the script that starts it says so. */
@@ -494,12 +494,12 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
   });
 
   it('says the CLI’s files that are gone or behind, and the records it cannot read', async () => {
-    await fs.rm(path.join(project, 'plitzi/author.ts'));
+    await fs.rm(path.join(project, '.plitzi/author.ts'));
     await write('.plitzi/scaffold.json', '{ "format": 2 }');
 
     const report = await run();
 
-    expect(findingOf(report, 'machinery-missing')).toMatchObject({ severity: 'error', file: 'plitzi/author.ts' });
+    expect(findingOf(report, 'machinery-missing')).toMatchObject({ severity: 'error', file: '.plitzi/author.ts' });
     expect(findingOf(report, 'record-unreadable')).toMatchObject({ file: '.plitzi/scaffold.json' });
   });
 
@@ -547,7 +547,7 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
         .replaceAll("from './", "from './site/")
         .replaceAll("from '../plugins/", "from './plugins/")
     );
-    await fs.rename(path.join(project, 'plitzi/author.ts'), path.join(project, 'src/author.ts'));
+    await fs.rename(path.join(project, '.plitzi/author.ts'), path.join(project, 'src/author.ts'));
     const changed = await manifest();
     const scripts = isRecord(changed.scripts)
       ? { ...changed.scripts, author: 'node --env-file-if-exists=.env src/author.ts' }
@@ -557,7 +557,7 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     // Recorded as that CLI wrote them, where it wrote them.
     const record = await readScaffoldRecord(project);
     const files = new Map(Object.entries(record?.files ?? {}));
-    files.delete('plitzi/author.ts');
+    files.delete('.plitzi/author.ts');
     files.set('src/author.ts', digestOf(await read('src/author.ts')));
     files.set('src/main.ts', digestOf(await read('src/main.ts')));
     await writeScaffoldRecord(project, record?.cli ?? '0.38.4', {
@@ -606,8 +606,8 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(report.ok).toBe(true);
     expect(await read('src/space/index.ts')).toContain("from './tokens.ts'");
     expect(await read('src/space/index.ts')).toContain("from '../plugins/StatCard/declaration.ts'");
-    expect(await read('plitzi/author.ts')).toContain('await projectSpace()');
-    expect(await manifest()).toHaveProperty(['scripts', 'author'], 'node --env-file-if-exists=.env plitzi/author.ts');
+    expect(await read('.plitzi/author.ts')).toContain('await projectSpace()');
+    expect(await manifest()).toHaveProperty(['scripts', 'author'], 'node --env-file-if-exists=.env .plitzi/author.ts');
     await expect(fs.access(path.join(project, '.sdk-plugins'))).rejects.toThrow();
     expect(await read('.gitignore')).toContain('.env');
     expect(report.repaired.repairs).toEqual(
@@ -619,7 +619,56 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     ).not.toEqual(expect.arrayContaining(['src/main.ts']));
     expect(
       report.findings.filter(finding => finding.code === 'machinery-yours').map(finding => finding.file)
-    ).not.toEqual(expect.arrayContaining(['plitzi/author.ts']));
+    ).not.toEqual(expect.arrayContaining(['.plitzi/author.ts']));
+  });
+
+  it('moves the CLI’s older plitzi/ into .plitzi/ — the scripts, tsconfig and ignore files following, the CLI kept', async () => {
+    for (const file of ['author.ts', 'tsconfig.base.json', 'assets.d.ts']) {
+      await write(`plitzi/${file}`, await read(`.plitzi/${file}`));
+      await fs.rm(path.join(project, '.plitzi', file));
+    }
+
+    await write(
+      'tsconfig.json',
+      `${JSON.stringify({ extends: './plitzi/tsconfig.base.json', include: ['plitzi', 'src'] }, null, 2)}\n`
+    );
+    await write('.prettierignore', 'node_modules\n\n# The CLI’s own files\nsrc/main.ts\nplitzi/author.ts\n');
+    const changed = await manifest();
+    const scripts = isRecord(changed.scripts)
+      ? {
+          ...changed.scripts,
+          author: 'node --env-file-if-exists=.env plitzi/author.ts',
+          check: 'plitzi page check',
+          'start:preview': 'npm run author && npx plitzi run preview'
+        }
+      : {};
+    await write('package.json', JSON.stringify({ ...changed, scripts }, null, 2));
+
+    await run({ fix: true });
+
+    expect(await manifest()).toMatchObject({
+      scripts: {
+        author: 'node --env-file-if-exists=.env .plitzi/author.ts',
+        check: 'plitzi page check',
+        'start:preview': 'npm run author && npx plitzi run preview'
+      }
+    });
+    // A dot folder named bare is no folder to TypeScript: its files are named.
+    expect(JSON.parse(await read('tsconfig.json'))).toMatchObject({
+      extends: './.plitzi/tsconfig.base.json',
+      include: ['.plitzi/**/*', 'src']
+    });
+    expect(await read('.prettierignore')).toContain('\n.plitzi/author.ts\n');
+    await expect(fs.access(path.join(project, 'plitzi'))).rejects.toThrow();
+  });
+
+  it('says a tsconfig that names .plitzi bare reads none of it, and names its files with --fix', async () => {
+    await write('tsconfig.json', (await read('tsconfig.json')).replace('".plitzi/**/*"', '".plitzi"'));
+
+    expect(findingOf(await run(), 'tsconfig-cli-left-out')?.message).toContain('reads as nothing');
+    await run({ fix: true });
+    expect(await read('tsconfig.json')).toContain('".plitzi/**/*"');
+    expect(findingOf(await run(), 'tsconfig-cli-left-out')).toBeUndefined();
   });
 
   /**

@@ -1,14 +1,28 @@
 import fs from 'node:fs/promises';
+import http from 'node:http';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { DEV_SERVER_FILE } from '@plitzi/sdk-shared/project';
+
+import { freePort } from './acceptance';
 import { finishRun } from './merge';
 import { runPaths, taskPaths } from './paths';
+import { startTaskPreview } from './preview';
 import { isRunRefusal } from './refusal';
 import { writeSummary } from './report';
 import { stopRun } from './run';
-import { canWrite, completeTask, discardFile, nextTask, reassignTask, reviewTask, takeTask } from './tasks';
+import {
+  canWrite,
+  completeTask,
+  discardFile,
+  nextTask,
+  reassignTask,
+  reportProgress,
+  reviewTask,
+  takeTask
+} from './tasks';
 import { viewRun } from './view';
 import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
 import { runSteps } from '../tests/runSteps';
@@ -30,6 +44,16 @@ afterEach(async () => {
 const { refusal, lead, openWith, open, take, doTask } = runSteps(() => bench);
 
 describe('taking a task', () => {
+  it('sees a picture it does not own changed in its copy, though it never read it whole', async () => {
+    const runId = await open();
+    const held = await take('agent-1', 't-home');
+    await writeInCopy(held.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Hola" };\n');
+    await fs.writeFile(path.join(held.work, 'public', 'logo.png'), '\u0089PNG-another-picture');
+
+    const completed = await completeTask(held.ctx, runId, 't-home');
+    expect(completed.changed).toContain('public/logo.png');
+  });
+
   it('locks its files and copies the project — never its credentials, never node_modules', async () => {
     await bench.write('node_modules/pkg/index.js', 'module.exports = 1;\n');
     const runId = await open();
@@ -39,7 +63,8 @@ describe('taking a task', () => {
     expect(await readInCopy(held.work, '.env')).toBeUndefined();
     expect(await readInCopy(held.work, '.env.example')).toContain('PLITZI_SECRET=');
     expect(await readInCopy(held.work, 'node_modules/pkg/index.js')).toBeUndefined();
-    expect(await readInCopy(held.work, 'public/logo.png')).toBeUndefined();
+    // The pictures it does not own come too, cloned unread, so its pages draw them.
+    expect(await readInCopy(held.work, 'public/logo.png')).toContain('PNG');
     expect(held.token.startsWith(`${runId}.t-home.`)).toBe(true);
     expect(
       await fs.readFile(
@@ -211,5 +236,34 @@ export const menu = { id: 'menu', title: 'Carta', theme };
     expect((await refusal(reviewTask(lead(), 'es-launch', 't-home', 'approve', []))).code).toBe('person-only');
     expect((await reviewTask(bench.person(true), 'es-launch', 't-home', 'approve', [])).verdict).toBe('approve');
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('done');
+  });
+
+  it('looks at a copy where its agent’s own server already serves it — never a second server fighting its state', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const own = http.createServer((_request, response) => response.end('ok'));
+    const port = await freePort();
+    await new Promise<void>(resolve => own.listen(port, '127.0.0.1', resolve));
+    try {
+      await writeInCopy(home.work, DEV_SERVER_FILE, JSON.stringify({ port }));
+      const preview = await startTaskPreview(lead(), 'es-launch', 't-home', await freePort(), { quiet: true });
+      expect(preview).toMatchObject({ borrowed: port, url: `http://127.0.0.1:${String(port)}` });
+      preview.stop();
+      expect((await preview.done).why).toContain('asked to');
+    } finally {
+      own.close();
+    }
+  });
+
+  it('tells an agent at another task that the one sent back goes first, when others wait on it', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Hola" };\n');
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    const menu = await take('agent-1', 't-menu');
+    const reviewed = await reviewTask(lead(), 'es-launch', 't-home', 'changes', [{ note: 'shorter' }]);
+    expect(reviewed.goesFirst).toEqual(['t-book']);
+    const told = (await reportProgress(menu.ctx, 'es-launch', 't-menu', {})).messages.map(message => message.text);
+    expect(told).toEqual([expect.stringContaining('t-book waits on it: it goes before t-menu')]);
   });
 });

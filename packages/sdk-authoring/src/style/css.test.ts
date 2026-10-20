@@ -40,7 +40,7 @@ describe('css', () => {
     });
   });
 
-  it('takes masks, the prefixed text clip and box-decoration-break', () => {
+  it('takes masks, the prefixed text clip, box-decoration-break and border-image', () => {
     const effects = {
       'mask-image': 'radial-gradient(black, transparent)',
       '-webkit-mask-image': 'radial-gradient(black, transparent)',
@@ -50,7 +50,8 @@ describe('css', () => {
       'mask-composite': 'intersect',
       '-webkit-background-clip': 'text',
       'box-decoration-break': 'clone',
-      '-webkit-box-decoration-break': 'clone'
+      '-webkit-box-decoration-break': 'clone',
+      'border-image': 'linear-gradient(90deg, #f00, #00f) 1'
     };
 
     expect(css(effects)).toEqual(effects);

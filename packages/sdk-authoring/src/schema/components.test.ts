@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
-import { authorSpace, button, component, container, heading, specFromSpace, specToSource, text } from '../index';
+import {
+  activeWhen,
+  authorSpace,
+  button,
+  component,
+  container,
+  heading,
+  specFromSpace,
+  specToSource,
+  styles,
+  text
+} from '../index';
 
 import type { ComponentSpec, SpaceSpec } from './types';
 
@@ -43,6 +54,25 @@ describe('authoring components', () => {
       title: 'Lamp'
     });
     expect(schema.components.card.flat['card-title'].definition.bindings?.attributes?.[0].source).toBe('props.title');
+  });
+
+  it('wears a class’s variant on what an instance hands in (activeWhen on props)', () => {
+    const highlight = styles('cardRoot', { css: { opacity: '0.8' }, variants: { active: { opacity: '1' } } });
+    const lit: ComponentSpec = {
+      ...card,
+      root: container({
+        id: 'card-root',
+        class: highlight,
+        bind: [activeWhen(highlight, '{{ props.wide }}')],
+        children: [container({ id: 'card-actions' })]
+      })
+    };
+    const { schema } = authorSpace({
+      ...space([component('card', { id: 'lamp', props: { title: 'Lamp', wide: true } })], [lit]),
+      classes: { cardRoot: highlight }
+    });
+
+    expect(schema.components.card.flat['card-root'].definition.bindings?.initialState?.[0].source).toBe('props');
   });
 
   it('refuses a component the space does not declare, naming the ones it does', () => {

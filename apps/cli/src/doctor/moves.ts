@@ -128,18 +128,73 @@ export const collisions = async (root: string, moves: Moves): Promise<string[]> 
   return taken.flat().filter(target => path.basename(target) !== '.gitkeep');
 };
 
-/** A script's words that are a moved path — `src/author.ts`, `./functions` — written as where it went. */
+/** Where a script's word is a program it runs: its first, after `&&`, `||`, `;`, `|`, or after `npx`. */
+const PROGRAM_AT = /(?:^|&&|\|\||;|\||\bnpx)\s*$/;
+
+/**
+ * A script's words that are a moved path — `src/author.ts`, `./functions` — written as where it went. A program it runs
+ * is never one: `plitzi run preview` stays the CLI when its old folder `plitzi/` moves.
+ */
 const scriptRewritten = (command: string, moves: Moves): string =>
   command.replace(
     /(^|[\s=])(\.\/)?([A-Za-z0-9_.@-][A-Za-z0-9_./@-]*)/g,
-    (whole, lead: string, dot = '', named: string) => {
+    (whole, lead: string, dot: string | undefined, named: string, offset: number) => {
+      if (!dot && PROGRAM_AT.test(command.slice(0, offset + lead.length))) {
+        return whole;
+      }
+
       const trailing = named.endsWith('/') ? '/' : '';
       const bare = named.replace(/\/$/, '');
       const now = movedTo(moves, bare);
 
-      return now === bare ? whole : `${lead}${dot}${now}${trailing}`;
+      return now === bare ? whole : `${lead}${dot ?? ''}${now}${trailing}`;
     }
   );
+
+/** The ignore files that name the project's paths: a line naming a moved one follows it. */
+const IGNORE_FILES = ['.prettierignore', '.gitignore', '.eslintignore'];
+
+/** An ignore file's lines that name a moved path — `plitzi/author.ts`, `/functions/` — written as where it went. */
+const ignoreRewritten = (text: string, moves: Moves): string =>
+  text
+    .split('\n')
+    .map(line => {
+      const [, negated = '', slash = '', named = ''] = /^(!?)(\/?)([^#\s*][^\s*]*)$/.exec(line.trim()) ?? [];
+      const bare = named.replace(/\/$/, '');
+      const now = bare === '' ? bare : movedTo(moves, bare);
+
+      return now === bare ? line : `${negated}${slash}${now}${named.endsWith('/') ? '/' : ''}`;
+    })
+    .join('\n');
+
+/**
+ * A tsconfig's paths — `extends`, `include`, `files` — written as where they went: each string that names a moved file or
+ * folder, the rest of the text (its comments) as it was. Plain JSON has its lists left without a path twice.
+ */
+const tsconfigRewritten = (text: string, moves: Moves): string => {
+  const next = text.replace(/"((?:[^"\\]|\\.)*)"/g, (whole, named: string) => {
+    const dot = named.startsWith('./') ? './' : '';
+    const bare = named.slice(dot.length).replace(/\/$/, '');
+    const now = movedTo(moves, bare);
+    // A folder moved to a dot folder is named by its files: TypeScript reads a dot folder named bare as nothing.
+    const files = moves.folders.has(bare) && now.split('/').some(part => part.startsWith('.')) ? '/**/*' : '';
+
+    return now === bare ? whole : `"${dot}${now}${files || (named.endsWith('/') ? '/' : '')}"`;
+  });
+  try {
+    const parsed: unknown = JSON.parse(next);
+    if (!isRecord(parsed)) {
+      return next;
+    }
+
+    const unique = (value: unknown): unknown => (Array.isArray(value) ? [...new Set(value)] : value);
+
+    return `${JSON.stringify({ ...parsed, ...('include' in parsed ? { include: unique(parsed.include) } : {}), ...('files' in parsed ? { files: unique(parsed.files) } : {}) }, null, 2)}\n`;
+  } catch {
+    // Comments in it, as tsconfig allows: the paths rewritten in place, nothing else touched.
+    return next;
+  }
+};
 
 /** What a move wrote: each file as it was and as it is, and each script changed — what a record of them follows. */
 export interface Moved {
@@ -179,6 +234,24 @@ export const moveFiles = async (root: string, moves: Moves): Promise<Moved> => {
 
   for (const folder of moves.folders.keys()) {
     await fs.rm(path.join(root, folder), { recursive: true, force: true });
+  }
+
+  for (const name of (await fs.readdir(root)).filter(file => /^tsconfig.*\.json$/.test(file))) {
+    const before = await fs.readFile(path.join(root, name), 'utf-8');
+    const after = tsconfigRewritten(before, moves);
+    if (after !== before) {
+      await writeFormatted(root, name, after);
+      moved.files.push({ was: name, is: name, before: Buffer.from(before), after });
+    }
+  }
+
+  for (const name of IGNORE_FILES) {
+    const before = await fs.readFile(path.join(root, name), 'utf-8').catch(() => undefined);
+    const after = before === undefined ? undefined : ignoreRewritten(before, moves);
+    if (before !== undefined && after !== undefined && after !== before) {
+      await fs.writeFile(path.join(root, name), after);
+      moved.files.push({ was: name, is: name, before: Buffer.from(before), after });
+    }
   }
 
   const manifestFile = path.join(root, 'package.json');

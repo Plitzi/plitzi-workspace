@@ -337,13 +337,15 @@ export const activeOn = (
 };
 
 /**
- * The source a condition is bound through: a global it reads, else the element whose source it reads first — by its
+ * The source a condition is bound through: a global it reads (a component's props among them), else the element whose source it reads first — by its
  * id, as a binding names one (`list_dots` is `dots`). The binding follows every name its template reads, so this
  * one only has to be one of them.
  */
 const conditionSource = (template: string): string | undefined => {
   const roots = templateRootNames(template);
-  const global = roots.find(root => GLOBAL_SOURCES.includes(root));
+  // A component's props are one of them: what an instance hands in is read as a global is, and is checked as one
+  // where the element is authored — outside a component, `props` is refused there.
+  const global = roots.find(root => COMPONENT_SOURCES.includes(root));
   if (global) {
     return global;
   }

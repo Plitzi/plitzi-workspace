@@ -8,6 +8,12 @@
  */
 import { CLI_DIR, PROJECT_TMP } from '@plitzi/sdk-shared/project';
 
+/**
+ * How a tsconfig's `include` reads the CLI's folder: TypeScript leaves a folder whose name starts with a dot out when it
+ * is named bare (`".plitzi"` reads nothing), so its files are named under it.
+ */
+export const CLI_DIR_INCLUDE = `${CLI_DIR}/**/*`;
+
 export {
   ACTIVE_RUN_FILE,
   AUTHOR_FILE,
@@ -17,6 +23,7 @@ export {
   DEV_SERVER_FILE,
   FUNCTIONS_DIR,
   KV_FILE,
+  LEGACY_CLI_DIR,
   PLUGIN_DECLARATION_FILE,
   PLUGIN_ENTRIES,
   PLUGIN_FUNCTIONS_DIR,

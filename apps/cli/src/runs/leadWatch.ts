@@ -1,4 +1,5 @@
 import { readJson, writeJson } from './files';
+import { FOLLOW_MS } from '../options';
 import { REVIEW_BACKLOG_MS, UNTAKEN_REVIEW_MS } from './leads';
 import { isRunRefusal } from './refusal';
 import { loadRun } from './run';
@@ -103,7 +104,7 @@ const isKeys = (value: unknown): value is string[] =>
 export const waitForLead = async (
   ctx: RunContext,
   runId: string,
-  { timeoutMs = 25 * 60_000, everyMs = 10_000 } = {}
+  { timeoutMs = FOLLOW_MS, everyMs = 10_000 } = {}
 ): Promise<LeadNews> => {
   const started = Date.now();
   for (;;) {

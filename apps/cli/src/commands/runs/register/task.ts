@@ -30,7 +30,7 @@ import {
   taskWait
 } from '..';
 import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
-import { duration, fraction } from '../../../options';
+import { duration, FOLLOW_MS, fraction } from '../../../options';
 import { NEEDS } from '../../../runs/model';
 
 import type { AnswerOptions, LookOptions, ProposeOptions, ReviewOptions, RunCommandOptions } from '..';
@@ -53,7 +53,13 @@ export const registerTaskGroup = (program: Command): Command => {
     )
     .option('--follow', 'Wait until one is ready — or every task of the role is done (finished: true)')
     .option('--take', 'Take it too, in the same breath: one another agent took meanwhile is passed for the next')
-    .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, 30 * 60_000)
+    .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, FOLLOW_MS)
+    .addOption(
+      new Option(
+        '--quality <level>',
+        'The level this agent was started at: only tasks of it or below (PLITZI_QUALITY otherwise)'
+      ).choices(['light', 'standard', 'high'])
+    )
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
     .action((options: RunCommandOptions & { role?: string; follow?: boolean; timeout?: number; take?: boolean }) =>
@@ -104,7 +110,7 @@ export const registerTaskGroup = (program: Command): Command => {
       '--timeout <duration>',
       'With --follow: give up after this long, said, exit 11 (90s, 8m, 1h)',
       duration,
-      30 * 60_000
+      FOLLOW_MS
     )
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
@@ -259,7 +265,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .description('Ask the lead — stuck or unsure: the answer comes with your next command, or --follow for it')
     .argument('<text>', 'The question')
     .option('--follow', 'Stay until the lead answers, giving the task’s sign of life meanwhile')
-    .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, 30 * 60_000)
+    .option('--timeout <duration>', 'With --follow: give up after this long, said (90s, 8m, 1h)', duration, FOLLOW_MS)
     .option(...TOKEN_OPTION)
     .option(...JSON_OPTION)
     .action((text: string, options: RunCommandOptions & { follow?: boolean; timeout?: number }) =>
@@ -300,7 +306,7 @@ export const registerTaskGroup = (program: Command): Command => {
     .description('What was said to you and you have not read: a task’s with its token, the lead’s without')
     .option('--all', 'Every message to you and from you, read or not — ← to you, → from you')
     .option('--follow', 'Stay until something is said to you')
-    .option('--timeout <duration>', 'With --follow: give up after this long (90s, 8m, 1h)', duration, 30 * 60_000)
+    .option('--timeout <duration>', 'With --follow: give up after this long (90s, 8m, 1h)', duration, FOLLOW_MS)
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
@@ -312,10 +318,11 @@ export const registerTaskGroup = (program: Command): Command => {
       'A task as its lead reviews it: acceptance, checks, agreements, notes, what was said, each file’s diff, and what to run next'
     )
     .argument('<task>', 'The task')
+    .option('--full', 'Every line of each diff — cut at 80 a file otherwise')
     .option(...TOKEN_OPTION)
     .option(...RUN_OPTION)
     .option(...JSON_OPTION)
-    .action((task: string, options: RunCommandOptions) => taskShow(task, options));
+    .action((task: string, options: RunCommandOptions & { full?: boolean }) => taskShow(task, options));
 
   taskGroup
     .command('review')

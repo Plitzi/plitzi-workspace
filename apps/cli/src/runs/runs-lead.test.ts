@@ -335,9 +335,27 @@ describe('the lead’s plan as the run goes', () => {
     reshaped.tasks[1].files = ['src/space/pages/book.ts'];
     reshaped.tasks[3].title = 'About, again';
     const refused = await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(reshaped)));
-    expect(refused.message).toContain('"t-menu": its files make the run');
+    expect(refused.message).toContain('"t-menu": its files are the run');
     expect(refused.message).toContain('"t-about" is done');
-    const again = await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(amended)));
+
+    // Who a task is for changes until it is taken.
+    const recast = benchPlan();
+    recast.tasks[0].role = 'designer';
+    const taken = await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(recast)));
+    expect(taken.message).toContain('"t-home" is in-progress: its role are what an agent took it as');
+    recast.tasks[0].role = amended.tasks[0].role;
+    recast.tasks[0].acceptance = amended.tasks[0].acceptance;
+    recast.tasks[1].role = 'designer';
+    recast.tasks[1].quality = 'high';
+    expect(await amendRun(lead(), 'es-launch', await bench.writePlan(recast))).toMatchObject({
+      tasks: [{ task: 't-menu', changed: ['role', 'quality'] }]
+    });
+    expect((await taskContext(lead(), 'es-launch', 't-menu')).task).toMatchObject({
+      role: 'designer',
+      quality: 'high'
+    });
+
+    const again = await refusal(amendRun(lead(), 'es-launch', await bench.writePlan(recast)));
     expect(again.message).toContain('asks nothing the run does not');
   });
 });

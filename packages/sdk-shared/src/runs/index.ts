@@ -29,6 +29,25 @@ export interface RunSnapshotTask {
   fraction?: number;
 }
 
+export interface RunSnapshotAgent {
+  agent: string;
+  kind: 'lead' | 'co-lead' | 'agent';
+  /** working, reviewing, in-review, blocked, idle, not-started, no-signal */
+  status: string;
+  model?: string;
+  /** What it is at, in a line. */
+  doing: string;
+  task?: string;
+}
+
+export interface RunSnapshotEvent {
+  at: string;
+  by: string;
+  text: string;
+  /** take, complete, review, message, run */
+  kind: string;
+}
+
 export interface RunSnapshot {
   runId: string;
   goal: string;
@@ -41,6 +60,10 @@ export interface RunSnapshot {
   tasks: RunSnapshotTask[];
   /** What needs someone: a block, a question, a notice — and who acts on it. */
   attention: { text: string; who: string }[];
+  /** Every agent and lead, and what each is at. */
+  agents?: RunSnapshotAgent[];
+  /** What happened last, newest first. */
+  feed?: RunSnapshotEvent[];
 }
 
 const isTask = (value: unknown): value is RunSnapshotTask =>

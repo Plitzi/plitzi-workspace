@@ -1,5 +1,5 @@
 import { act, holder, runOf } from './shell';
-import { durationText } from '../../options';
+import { durationText, FOLLOW_MS } from '../../options';
 import { RunRefusal } from '../../runs/refusal';
 import { claimFile, claims, discardFile, releaseFile, requestShared, followWait, waitForFile } from '../../runs/tasks';
 
@@ -61,11 +61,11 @@ export const taskWait = (
         return { ...waiting, followed: undefined };
       }
 
-      const followed = await followWait(ctx, runId, taskId, { timeoutMs: options.timeout ?? 30 * 60_000 });
+      const followed = await followWait(ctx, runId, taskId, { timeoutMs: options.timeout ?? FOLLOW_MS });
       if (!followed.done) {
         throw new RunRefusal(
           'waiting',
-          `Still waiting for ${String(waiting.holder)} on ${waiting.file} after ${durationText(options.timeout ?? 30 * 60_000)}`,
+          `Still waiting for ${String(waiting.holder)} on ${waiting.file} after ${durationText(options.timeout ?? FOLLOW_MS)}`,
           {
             file: waiting.file,
             holder: waiting.holder

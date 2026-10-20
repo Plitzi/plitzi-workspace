@@ -47,8 +47,8 @@ layout lights the right item everywhere.
 **An element's `id` is not its HTML id.** It reaches the DOM as `data-plitzi-el`. For a section a URL can land on, give it
 an `anchor` (`anchor: 'plans'` → `id="plans"`: lowercase, digits, `-`) and link to it with `hash`:
 `link({ href: 'home', hash: 'plans' })` goes to `/#plans` and scrolls there, waiting for a section that renders once
-its data arrives. One anchor per page, layouts included; never inside a list row or a component, which would repeat
-it — `authorSpace` refuses each, and a `hash` no element on that page carries (`anchor-missing`). Under a fixed
+its data arrives. One per page, layouts included; none in a component. In a list's row it is `<anchor>-<row key>`
+(`hash: 'pick-luna'`). `authorSpace` refuses the rest, and a `hash` no element there carries (`anchor-missing`). Under a fixed
 header, give the section `scroll-margin-top` (the header's height) so it does not land beneath it.
 
 **Some types hold no children.** A `heading`, `text`, `paragraph`, `image`, `formControl`… renders its own attributes

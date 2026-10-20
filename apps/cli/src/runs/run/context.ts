@@ -1,7 +1,7 @@
 import { RunRefusal } from '../refusal';
 
 import type { CheckRunner } from '../checks';
-import type { RunPlan, RunRecord, RunTask } from '../model';
+import type { Quality, RunPlan, RunRecord, RunTask } from '../model';
 import type { RunPaths } from '../paths';
 
 /**
@@ -20,6 +20,8 @@ export interface RunContext {
   token?: string;
   /** Who is calling, for the log: an agent's name, or `person`. */
   agent: string;
+  /** The level the caller was started at (`--quality`, `PLITZI_QUALITY`): it is handed tasks of it or below. */
+  quality?: Quality;
   person: PersonGate;
   checks: CheckRunner;
 }

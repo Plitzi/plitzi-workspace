@@ -117,7 +117,10 @@ export const registerPage = (pageGroup: Command): void => {
         .default('settled')
     )
     .option('--wait-for <element>', 'An element to wait for first: its name (data-plitzi-el) or a CSS selector')
-    .option('--clip <element>', 'Only this element — its name or a CSS selector — scrolled to wherever it is')
+    .option(
+      '--clip <element>',
+      'Only this element — its name or a CSS selector — scrolled to wherever it is; with --compare, the section of the report kept'
+    )
     .option('--scroll-to <element>', 'The page scrolled until this element is in view; the picture is the screen there')
     .option('--viewport', 'Only what fits the viewport, not the whole page')
     .option(

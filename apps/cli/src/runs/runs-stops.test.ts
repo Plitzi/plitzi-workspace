@@ -160,6 +160,20 @@ describe('stopping, cuts and disconnects', () => {
     expect(await checkTask(home.ctx, 'es-launch', 't-home')).toMatchObject({ ok: true });
     expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('in-progress');
   });
+
+  it('brings into a copy what a person changed in the project since it was made — never over the task’s own work', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: "Bienvenidos" };\n');
+    // A person formats a file no task holds, and one this task holds and changed.
+    await bench.write('src/space/theme.ts', 'export const theme = { tone: "formatted" };\n');
+    await bench.write('src/space/pages/home/hero.ts', 'export const hero = { text: "Hola" };\n');
+    const checked = await checkTask(home.ctx, 'es-launch', 't-home');
+    expect(checked.brought).toEqual(['src/space/theme.ts']);
+    expect(await readInCopy(home.work, 'src/space/theme.ts')).toContain('formatted');
+    expect(await readInCopy(home.work, 'src/space/pages/home/hero.ts')).toContain('Bienvenidos');
+    expect((await completeTask(home.ctx, 'es-launch', 't-home')).changed).toEqual(['src/space/pages/home/hero.ts']);
+  });
 });
 
 describe('a gentle stop to upgrade', () => {

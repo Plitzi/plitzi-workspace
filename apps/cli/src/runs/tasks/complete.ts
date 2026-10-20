@@ -12,7 +12,7 @@ import { checkVersions } from '../materialise';
 import { mergeLines } from '../merge3';
 import { unreadForHolder } from '../messages';
 import { entryOf } from '../model';
-import { lockFile, taskPaths, under } from '../paths';
+import { lockFile, NOT_TASK_DIRS, taskPaths, under } from '../paths';
 import { RunRefusal } from '../refusal';
 import { assertStatus, loadRun, logRun, readApproved, readBase, recordBrake } from '../run';
 import { keepFiles, putBlob, withLock } from '../store';
@@ -112,7 +112,7 @@ const mergeMoved = async (
 
 export interface CompletedTask {
   changed: string[];
-  /** Approved in the run since the copy was made, and brought into it before the checks. */
+  /** Approved in the run, or changed in the project by a person, since the copy was made: brought in before the checks. */
   brought: string[];
   /** Shared files nobody else held, taken by turns as it completed: they go into the run with it. */
   claimed: string[];
@@ -203,6 +203,17 @@ export const completeTask = async (
       { task: taskId, files: links }
     );
   }
+
+  // The CLI's part of the project: its copy holds it to author and check, and no task writes it.
+  const cliFiles = changed.filter(file => NOT_TASK_DIRS.has(file.split('/')[0]));
+  if (cliFiles.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}" changed ${cliFiles.join(', ')}: that is the CLI's part of the project, which plitzi upgrade keeps — put it back (plitzi task discard <file>) and complete again`,
+      { task: taskId, files: cliFiles }
+    );
+  }
+
   const held = await lockedFiles(view.paths);
   const shared = await sharedFiles(loaded);
   const outside: { file: string; holder: string }[] = [];

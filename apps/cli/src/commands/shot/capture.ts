@@ -87,11 +87,16 @@ export const pictureOf = async (
 
   // Settled, not `networkidle`: a page with a live channel keeps its stream open, and never idles. From the load, the
   // first picture is taken once the HTML is in — what plays as the page arrives has ended by the time it settles.
-  const answered = view.fromLoad
-    ? await page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => null)
-    : await openPage(page, url);
+  const open = (): Promise<unknown> =>
+    view.fromLoad ? page.goto(url, { waitUntil: 'domcontentloaded' }).catch(() => null) : openPage(page, url);
+  // Another site may be slow to wake (a cold CDN): asked again once before it is said not to answer.
+  const answered = (await open()) ?? (origin ? null : await open());
   if (!answered) {
-    return { problem: `Nothing answers at ${url}.${origin ? ' Start the project first: npm start' : ''}` };
+    return {
+      problem: origin
+        ? `Nothing answers at ${url}. Start the project first: npm start`
+        : `${url} did not answer — asked twice, 30 s each: a site warming up answers on the next try, run it again`
+    };
   }
 
   const sentTo = origin ? sentElsewhere(page, new URL(url).pathname) : undefined;

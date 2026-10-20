@@ -4,7 +4,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 import { LEAD, messagesOf } from './messages';
 import { loadRun, runIds } from './run';
-import { readTeam, startedAgents } from './team';
+import { choiceText, readTeam, startedAgents } from './team';
 import { viewRun } from './view';
 
 import type { RunContext } from './run';
@@ -89,7 +89,7 @@ const agentsOf = async (ctx: RunContext, view: RunView): Promise<AgentLine[]> =>
   }
 
   const reviewing = new Map(view.tasks.flatMap(task => (task.reviewer ? [[task.reviewer, task.id] as const] : [])));
-  const leadModel = team?.lead?.model;
+  const leadModel = team?.lead?.model === undefined ? undefined : choiceText(team.lead.model);
   const leads: AgentLine[] = [LEAD, ...view.leads].map(lead => {
     const at = reviewing.get(lead);
     const asking = view.askingLeads.includes(lead);
@@ -115,7 +115,7 @@ const agentsOf = async (ctx: RunContext, view: RunView): Promise<AgentLine[]> =>
     const task = held.get(agent);
     const member = started.get(agent);
     const about = {
-      ...(member?.model ? { model: member.model.model } : {}),
+      ...(member?.model ? { model: `${member.model.model}${member.quality ? ` (${member.quality})` : ''}` } : {}),
       roles: member?.roles ?? (task ? [task.role] : [])
     };
 

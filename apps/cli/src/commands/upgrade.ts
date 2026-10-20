@@ -48,7 +48,7 @@ import type { CreateAnswers } from '../scaffold';
  *
  *   plitzi upgrade                    # everything, as it would be
  *   plitzi upgrade skills --write     # only the skills
- *   plitzi upgrade --write --take plitzi/author.ts
+ *   plitzi upgrade --write --take .plitzi/author.ts
  */
 
 export const UPGRADE_PARTS = ['files', 'packages', 'skills', 'migrations'] as const;

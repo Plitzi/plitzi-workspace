@@ -11,6 +11,7 @@ import { startTaskPreview } from '../../runs/preview';
 import { RunRefusal } from '../../runs/refusal';
 import { loadRun } from '../../runs/run';
 import { showTask } from '../../runs/show';
+import { findingsOf, taskParts } from '../../runs/taskParts';
 import { findTask, notReviewedIn, reassignTask, revertTask, reviewTask } from '../../runs/tasks';
 import { viewTask } from '../../runs/taskStore';
 import { PROJECT_TMP } from '../../scaffold/paths';
@@ -41,6 +42,9 @@ export interface LookOptions extends RunCommandOptions {
   element?: string[];
 }
 
+/** How many of a task's parts of a page are pictured: a look is read by a model, and each picture costs it. */
+const PARTS_PICTURED = 3;
+
 export const taskLook = (taskId: string, paths: string[], options: LookOptions): Promise<void> =>
   act(
     options,
@@ -56,8 +60,11 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
 
         // No page named: the pages its changes are drawn at, by the files that changed — else the home page.
         // Read off the copy served: a page the task makes is one to look at too.
-        const owned =
-          paths.length > 0 ? [] : await pagesOf(preview.dir, (await viewTaskOf(ctx, runId, taskId)).changed);
+        const changed = (await viewTaskOf(ctx, runId, taskId)).changed;
+        const owned = paths.length > 0 ? [] : await pagesOf(preview.dir, changed);
+        // A part of a page others build too: its own elements pictured, its own findings kept — the rest is theirs.
+        const parts = await taskParts(preview.dir, changed);
+        const clips = parts && !parts.ownsRoot ? parts.tops.slice(0, PARTS_PICTURED) : [];
         const routes = paths.length > 0 ? paths : owned.length > 0 ? owned : ['/'];
         const check = await runSelf(preview.dir, [
           'page',
@@ -72,30 +79,35 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
         ]);
         const shots: string[] = [];
         for (const route of routes) {
-          for (const [width, scheme] of [
-            ['1440', 'light'],
-            ['390', 'dark']
-          ] as const) {
-            const name = `${taskId}${route === '/' ? '-home' : route.replaceAll('/', '-')}-${width}-${scheme}.png`;
-            const out = path.join(ctx.root, PROJECT_TMP, 'shots', name);
-            const shot = await runSelf(preview.dir, [
-              'page',
-              'shot',
-              route,
-              '--url',
-              preview.url,
-              '--width',
-              width,
-              '--scheme',
-              scheme,
-              '-o',
-              out
-            ]);
-            if (shot.code === 0) {
-              shots.push(out);
+          for (const clip of clips.length > 0 ? clips : [undefined]) {
+            for (const [width, scheme] of [
+              ['1440', 'light'],
+              ['390', 'dark']
+            ] as const) {
+              const name = `${taskId}${route === '/' ? '-home' : route.replaceAll('/', '-')}${clip ? `-${clip}` : ''}-${width}-${scheme}.png`;
+              const out = path.join(ctx.root, PROJECT_TMP, 'shots', name);
+              const shot = await runSelf(preview.dir, [
+                'page',
+                'shot',
+                route,
+                '--url',
+                preview.url,
+                '--width',
+                width,
+                '--scheme',
+                scheme,
+                ...(clip ? ['--clip', clip] : []),
+                '-o',
+                out
+              ]);
+              if (shot.code === 0) {
+                shots.push(out);
+              }
             }
           }
         }
+
+        const kept = parts && !parts.ownsRoot ? findingsOf(check.output.trim(), parts) : undefined;
 
         const notReviewed = await notReviewedIn(ctx, runId, taskId);
 
@@ -103,8 +115,11 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
           task: taskId,
           url: preview.url,
           ok: check.code === 0,
-          check: check.output.trim(),
+          check: kept?.text ?? check.output.trim(),
+          ...(kept && kept.apart > 0 ? { apart: kept.apart } : {}),
+          ...(clips.length > 0 ? { parts: clips } : {}),
           shots,
+          ...(preview.borrowed === undefined ? {} : { borrowed: preview.borrowed }),
           ...(notReviewed.length > 0 ? { notReviewed } : {})
         };
       } finally {
@@ -113,7 +128,11 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
     },
     looked =>
       [
-        chalk.bold(`${looked.task}, as it went to review (served from its copy, now stopped):`),
+        chalk.bold(
+          looked.borrowed === undefined
+            ? `${looked.task}, as it went to review (served from its copy, now stopped):`
+            : `${looked.task}, as its copy is now — served by its agent's own server on :${String(looked.borrowed)}, left running (it holds the copy's state):`
+        ),
         ...(looked.notReviewed
           ? [
               chalk.yellow(
@@ -121,7 +140,11 @@ export const taskLook = (taskId: string, paths: string[], options: LookOptions):
               )
             ]
           : []),
+        ...(looked.parts
+          ? [`Its part of the page, pictured alone: ${looked.parts.join(', ')} — the rest is other tasks'`]
+          : []),
         looked.check,
+        ...(looked.apart ? [chalk.dim(`  · ${String(looked.apart)} finding(s) on other tasks' parts left out`)] : []),
         ...(looked.shots.length > 0
           ? ['Pictures:', ...looked.shots.map(each => `  ${each}`)]
           : ['No picture could be taken.']),
@@ -201,6 +224,9 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
               reviewed.toPerson
                 ? `${taskId}: ${String(reviewed.round)} rounds of changes — it goes to a person.`
                 : `${taskId}: changes requested (round ${String(reviewed.round)}); it goes back to the same task.`,
+              ...(reviewed.goesFirst
+                ? [`  ${list(reviewed.goesFirst)} wait on it: its agent, at another task, was told it goes first`]
+                : []),
               ...notReviewedText(reviewed.notReviewed, 'changes')
             ].join('\n')
   );
@@ -247,10 +273,10 @@ export const taskRevert = (taskId: string, options: RunCommandOptions & { reason
       ].join('\n')
   );
 
-export const taskShow = (taskId: string, options: RunCommandOptions): Promise<void> =>
+export const taskShow = (taskId: string, options: RunCommandOptions & { full?: boolean }): Promise<void> =>
   act(
     options,
-    async ctx => showTask(ctx, await runOf(ctx, options), taskId),
+    async ctx => showTask(ctx, await runOf(ctx, options), taskId, { full: options.full ?? false }),
     shown => {
       const { knownFailure } = typeof shown.checks === 'object' ? shown.checks : { knownFailure: undefined };
 
@@ -300,7 +326,7 @@ export const taskShow = (taskId: string, options: RunCommandOptions): Promise<vo
         ...shown.files.flatMap(each =>
           each.binary
             ? [`  ${each.file}: not text — not shown`]
-            : [each.diff ?? '', ...(each.more ? [`  … ${String(each.more)} more lines`] : [])]
+            : [each.diff ?? '', ...(each.more ? [`  … ${String(each.more)} more lines (--full shows them)`] : [])]
         ),
         ...(shown.next.length > 0 ? ['Next', ...shown.next.map(each => `  ${each}`)] : [])
       ].join('\n');

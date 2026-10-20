@@ -92,7 +92,7 @@ typed sources (`source()`), `scope()` for helpers that run more than once — ea
 shortens and writes the same document. A compound element is written with its parts (`carousel()` writes its own
 track); one written without them is refused (`part-missing`).
 
-**Where each part lives is checked once, and said by three.** Nobody reads `plitzi/README.md` before writing a plugin
+**Where each part lives is checked once, and said by three.** Nobody reads `.plitzi/README.md` before writing a plugin
 folder: they make `src/plugin/Card/`, put the component in `Card.tsx` and no `index.ts`, drop `.env` into `src/`. Each
 of those used to be silent — the server registered a folder it could not build and failed later in esbuild's words, or
 read no folder at all — so the project half-worked. `checkProjectLayout` (`@plitzi/sdk-shared/project`, pure file

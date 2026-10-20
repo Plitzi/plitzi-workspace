@@ -1,4 +1,4 @@
-import { durationText } from '../../options';
+import { durationText, FOLLOW_MS } from '../../options';
 import { designReviewFor, hasDesignReview, takeDesignReview } from '../design';
 import { IDLE_LEAD_MS, isCoLead, isPrincipal, LEAD_ROLE, leadReviewFor, markAsking, takeLeadReview } from '../leads';
 import { agentAddress, unreadFor } from '../messages';
@@ -7,7 +7,7 @@ import { readyTasks } from '../plan';
 import { isRunRefusal, RunRefusal } from '../refusal';
 import { assertStatus, loadRun } from '../run';
 import { isDisconnected, viewTask } from '../taskStore';
-import { DESIGNER } from '../team';
+import { DESIGNER, qualityRank } from '../team';
 import { findTask, roleOf } from './common';
 import { takeTask } from './take';
 
@@ -137,7 +137,11 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
     };
   }
 
-  const ready = readyTasks(loaded.tasks, states, held).filter(forRole);
+  // Started at a level, an agent is handed tasks of it or below: a stronger model is for the tasks that ask for one.
+  const fits = (task: RunTask): boolean =>
+    ctx.quality === undefined || qualityRank(task.quality ?? 'standard') <= qualityRank(ctx.quality);
+  const above = readyTasks(loaded.tasks, states, held).filter(task => forRole(task) && !fits(task));
+  const ready = readyTasks(loaded.tasks, states, held).filter(task => forRole(task) && fits(task));
   // A task the limit would not let this agent take is not offered: it is said, and `--follow` waits for a place.
   const atWork = new Set(
     views
@@ -156,6 +160,14 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
 
   if (ready.length > 0) {
     return { task: ready[0], ready: ready.map(task => task.id), messages };
+  }
+
+  if (ready.length === 0 && above.length > 0) {
+    return {
+      why: `ready, but above the ${String(ctx.quality)} you were started at: ${above.map(task => `${task.id} (${task.quality ?? 'standard'})`).join(', ')} — the lead starts an agent at that level for it`,
+      ready: [],
+      messages
+    };
   }
 
   const open = views.filter(view => view.state.status !== 'done');
@@ -364,7 +376,7 @@ export const followNext = async (
   ctx: RunContext,
   runId: string,
   role: string | undefined,
-  { timeoutMs = 30 * 60_000, everyMs = 10_000, idleMs = IDLE_LEAD_MS } = {}
+  { timeoutMs = FOLLOW_MS, everyMs = 10_000, idleMs = IDLE_LEAD_MS } = {}
 ): Promise<NextTask> => {
   const started = Date.now();
   const idleLead =

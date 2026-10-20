@@ -90,9 +90,16 @@ export const taskCheck = (options: RunCommandOptions): Promise<void> =>
     checked =>
       [
         ...messageLines(checked.messages),
+        ...(checked.brought
+          ? [
+              `Brought into your copy first — approved by the run, or changed in the project, since it was made: ${checked.brought.join(', ')}`
+            ]
+          : []),
         checked.ok
           ? chalk.green('Your copy passes what complete holds it to: complete it when it is done')
-          : chalk.yellow('Your copy does not pass yet — nothing was changed, and nothing counted against the run:'),
+          : chalk.yellow(
+              'Your copy does not pass yet — none of your work was changed, and nothing counted against the run:'
+            ),
         ...checked.checks.steps.map(
           step =>
             `  ${step.ok ? '✓' : chalk.yellow('✗')} ${step.name}${step.ok ? '' : `\n${(step.said ?? []).map(line => `      ${line}`).join('\n')}`}`

@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { abortRun } from './merge';
+import { runPlanProblems } from './model';
 import { readOwnership } from './ownership';
 import { RUNS_DIR, runPaths } from './paths';
 import { checkPlan, findCycle } from './plan';
@@ -82,6 +83,58 @@ describe('a plan held to the rules', () => {
     expect(ordered.notices.some(notice => notice.includes('is changed by'))).toBe(false);
     // Waiting for the holder, it finds the file free once the holder is done: nothing to propose.
     expect(ordered.notices.some(notice => notice.includes('which "t-about" holds'))).toBe(false);
+  });
+
+  it('sets a quality where the plan says none — what many build on high, a one-file few minutes light — and keeps one said', async () => {
+    const plan = benchPlan();
+    plan.tasks = [
+      { ...plan.tasks[0], estimateMinutes: 30 },
+      ...['t-menu', 't-book', 't-about'].map(id => ({
+        ...(plan.tasks.find(task => task.id === id) ?? plan.tasks[0]),
+        dependsOn: ['t-home']
+      }))
+    ];
+    plan.tasks[3] = { ...plan.tasks[3], estimateMinutes: 10, quality: 'standard' as const };
+    plan.tasks[1] = { ...plan.tasks[1], estimateMinutes: 5 };
+    const read = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 3));
+    const quality = Object.fromEntries(read.tasks.map(task => [task.id, task.quality]));
+
+    expect(quality).toMatchObject({ 't-home': 'high', 't-menu': 'light', 't-about': 'standard' });
+    expect(read.notices.find(notice => notice.startsWith('Quality where the plan said none'))).toContain(
+      't-home high (3 tasks build on it)'
+    );
+  });
+
+  it('hands an agent started at a level tasks of it or below, and says what waits above it', async () => {
+    const plan = benchPlan();
+    plan.tasks = plan.tasks.map(task => ({
+      ...task,
+      dependsOn: [],
+      quality: task.id === 't-home' ? ('high' as const) : ('standard' as const)
+    }));
+    await openWith(lead(), await bench.writePlan({ ...plan, designReview: false }), 4);
+    const standard = bench.agent('agent-1', { quality: 'standard' });
+    const offered = new Set<string>();
+    for (const id of ['t-menu', 't-book', 't-about']) {
+      const next = await nextTask(standard, 'es-launch');
+      offered.add(next.task?.id ?? '');
+      await takeTask(bench.agent(`agent-${id}`), 'es-launch', next.task?.id ?? id);
+    }
+
+    expect(offered.has('t-home')).toBe(false);
+    expect((await nextTask(standard, 'es-launch')).why).toContain(
+      'above the standard you were started at: t-home (high)'
+    );
+    expect((await nextTask(bench.agent('agent-9', { quality: 'high' }), 'es-launch')).task?.id).toBe('t-home');
+  });
+
+  it('carries what the plan leaves out to the person and the report, and refuses a leftOut that is not lines', async () => {
+    const plan = { ...benchPlan(), leftOut: ['The tier list: a second run'] };
+    const read = await checkPlan(bench.root, plan, await readOwnership(bench.root), teamFor(plan, 3));
+    expect(read.leftOut).toEqual(['The tier list: a second run']);
+    expect(runPlanProblems({ ...benchPlan(), leftOut: 'the tier list' })).toContain(
+      'leftOut: lines of what the run does not do, not "the tier list"'
+    );
   });
 
   it('says a file other tasks import, and a task whose acceptance no command proves', async () => {

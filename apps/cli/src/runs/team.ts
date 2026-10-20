@@ -4,10 +4,11 @@ import path from 'node:path';
 import { closest } from '@plitzi/sdk-authoring';
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
+import { QUALITIES } from './model';
 import { RunRefusal } from './refusal';
 import { formattedJson } from '../scaffold/formattedJson';
 
-import type { RunPlan } from './model';
+import type { Quality, RunPlan } from './model';
 
 /**
  * Who works this project's runs: the project's own choice, in `.plitzi/team.json` — committed, so the team
@@ -42,6 +43,58 @@ export const DEVELOPER = 'developer';
 export const DESIGNER = 'designer';
 export const TESTER = 'tester';
 
+export { QUALITIES };
+export type { Quality };
+
+export const qualityRank = (quality: Quality): number => QUALITIES.indexOf(quality);
+
+export const isQuality = (value: unknown): value is Quality =>
+  typeof value === 'string' && (QUALITIES as readonly string[]).includes(value);
+
+/** The model to start with: one for every task, or one a level — `{ "standard": "…", "high": "…" }`. */
+export type ModelChoice = string | Partial<Record<Quality, string>>;
+
+const isModelChoice = (value: unknown): value is ModelChoice =>
+  (typeof value === 'string' && value.trim() !== '') ||
+  (isRecord(value) &&
+    Object.keys(value).length > 0 &&
+    Object.entries(value).every(
+      ([level, model]) => isQuality(level) && typeof model === 'string' && model.trim() !== ''
+    ));
+
+/**
+ * The model a choice starts a task of `quality` with: the one for its level — else the next level up, a stronger model
+ * for a task none was named for — else the strongest named. One model for all is that model.
+ */
+export const modelFor = (choice: ModelChoice | undefined, quality: Quality): string | undefined => {
+  if (choice === undefined || typeof choice === 'string') {
+    return choice;
+  }
+
+  const up = QUALITIES.slice(qualityRank(quality)).find(level => choice[level] !== undefined);
+  const down = [...QUALITIES].reverse().find(level => choice[level] !== undefined);
+
+  return choice[up ?? down ?? quality];
+};
+
+/** A choice, said: `claude-sonnet-5-5`, or `standard claude-sonnet-5-5 · high claude-opus-5-5`. */
+export const choiceText = (choice: ModelChoice): string =>
+  typeof choice === 'string'
+    ? choice
+    : QUALITIES.flatMap(level => (choice[level] ? [`${level} ${choice[level]}`] : [])).join(' · ');
+
+/** `--model`, as a person writes it: one name, or `standard=claude-sonnet-5-5,high=claude-opus-5-5`. */
+export const parseModelChoice = (text: string): ModelChoice =>
+  text.includes('=')
+    ? Object.fromEntries(
+        text.split(',').map(pair => {
+          const [level, model] = pair.split('=').map(each => each.trim());
+
+          return [level, model];
+        })
+      )
+    : text;
+
 export interface Model {
   model: string;
   /** How hard it thinks, in the harness's words (`high`) — left to it when not said. */
@@ -54,13 +107,13 @@ export interface TeamAgent {
   roles: string[];
   /** How many agents of it; one when not said. */
   count?: number;
-  model?: string;
+  model?: ModelChoice;
   effort?: string;
 }
 
 /** The leads' entry: their model, and how many — one for every `AGENTS_PER_LEAD` agents when not said. */
 export interface Lead {
-  model?: string;
+  model?: ModelChoice;
   effort?: string;
   count?: number;
 }
@@ -97,6 +150,11 @@ export interface StartedAgent {
   agent: string;
   roles: string[];
   model?: Model;
+  /**
+   * The level it is started at, when the team names a model a level: one started agent each (`design-1-high`), handed
+   * tasks of it or below (`task next --quality`).
+   */
+  quality?: Quality;
 }
 
 /** A role's or an agent's name, as a plan writes one. */
@@ -115,7 +173,7 @@ const isStrings = (value: unknown): value is string[] =>
 
 const isLeadEntry = (value: unknown): value is Lead =>
   isRecord(value) &&
-  (value.model === undefined || (typeof value.model === 'string' && value.model.trim() !== '')) &&
+  (value.model === undefined || isModelChoice(value.model)) &&
   (value.effort === undefined || typeof value.effort === 'string') &&
   (value.count === undefined ||
     (typeof value.count === 'number' && Number.isInteger(value.count) && value.count >= 1 && value.count <= MAX_LEADS));
@@ -142,8 +200,8 @@ const agentProblem = (value: unknown): string | undefined => {
     return `"${name}": its count is a whole number from 1 to ${String(MAX_COUNT)}`;
   }
 
-  if (value.model !== undefined && (typeof value.model !== 'string' || value.model.trim() === '')) {
-    return `"${name}": its model is the harness’s name for one — claude-sonnet-5-5`;
+  if (value.model !== undefined && !isModelChoice(value.model)) {
+    return `"${name}": its model is the harness’s name for one — "claude-sonnet-5-5" — or one a level: { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (${QUALITIES.join(', ')})`;
   }
 
   if (value.effort !== undefined && typeof value.effort !== 'string') {
@@ -160,7 +218,7 @@ const LEAD_KEYS = ['model', 'effort', 'count'];
 const AGENT_KEYS = ['name', 'roles', 'count', 'model', 'effort'];
 
 /** A key the file does not know — a typo, most often — said with the one it likely meant: it would be read as nothing. */
-const unknownKeys = (value: Record<string, unknown>, known: readonly string[], where: string): string[] =>
+const unknownKeys = (value: object, known: readonly string[], where: string): string[] =>
   Object.keys(value)
     .filter(key => !known.includes(key))
     .map(key => {
@@ -258,7 +316,7 @@ export const TEAM_ABOUT: Record<string, unknown> = {
   file: 'Who works the runs of several agents on this project (plitzi run). Edit it, or: plitzi run team set <name> --roles … --count … --model …',
   lead: 'The lead plans, reviews every task — the complete, strict review, and the final word — answers and closes: the one you talk to. Give it your strongest model: "lead": { "model": "…", "effort": "high" } (plitzi run team set lead --model …). One lead for every 4 agents: lead plans and finishes, lead-2, lead-3… only review, as strictly — "count" says another number (plitzi run team set lead --count 1).',
   agents:
-    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. How many agents work at once is the sum of the counts.',
+    'Each agent: a name (dev is dev-1, dev-2…), the roles it takes, how many of it (count), and the model to start it with, as the harness names it (claude-sonnet-5-5 in Claude Code; any model opencode or another harness takes); left out, the default of the harness. Or a model a quality level — "model": { "standard": "claude-sonnet-5-5", "high": "claude-opus-5-5" } (light, standard, high): each level is started apart (design-1-high) for the tasks of it, so the strongest model works only what many build on. How many agents work at once is the sum of the counts.',
   roles: { ...ROLES, '<any other>': 'A role of your own: a task names it, an agent takes it.' },
   more: 'It starts small — every agent spends tokens: one developer, and a designer who reviews the UI of every other task. Grow it when a job asks: more developers (plitzi run team set dev --count 3), a tester who writes the tests of each developer task (plitzi run team set test --roles tester), a writer.'
 };
@@ -321,11 +379,23 @@ export const ensureTeam = async (
 /** Each agent of the team as it is started — `dev-1`, `dev-2`… — in the file's order. */
 export const startedAgents = (team: Team): StartedAgent[] =>
   team.agents.flatMap(each =>
-    Array.from({ length: each.count ?? 1 }, (_, index) => ({
-      agent: `${each.name}-${String(index + 1)}`,
-      roles: each.roles,
-      ...(each.model ? { model: { model: each.model, ...(each.effort ? { effort: each.effort } : {}) } } : {})
-    }))
+    Array.from({ length: each.count ?? 1 }, (_, index): StartedAgent[] => {
+      const name = `${each.name}-${String(index + 1)}`;
+      const effort = each.effort ? { effort: each.effort } : {};
+      if (each.model === undefined || typeof each.model === 'string') {
+        return [{ agent: name, roles: each.roles, ...(each.model ? { model: { model: each.model, ...effort } } : {}) }];
+      }
+
+      const choice = each.model;
+
+      return QUALITIES.flatMap(level => {
+        const model = choice[level];
+
+        return model
+          ? [{ agent: `${name}-${level}`, roles: each.roles, model: { model, ...effort }, quality: level }]
+          : [];
+      });
+    }).flat()
   );
 
 /** How many leads the team has: as `"lead": { "count" }` says, or one for every `AGENTS_PER_LEAD` agents. */
@@ -370,9 +440,7 @@ export const modelText = (model: Model): string => `${model.model}${model.effort
 
 /** The model the leads are started with, said. */
 export const leadModelText = (lead: Lead | undefined): string =>
-  lead?.model
-    ? modelText({ model: lead.model, ...(lead.effort ? { effort: lead.effort } : {}) })
-    : 'the harness’s own model';
+  lead?.model ? `${choiceText(lead.model)}${lead.effort ? ` (${lead.effort})` : ''}` : 'the harness’s own model';
 
 /** The leads' entry, as `run team` says it: the model, and how many when it is said. */
 export const leadText = (lead: Lead | undefined): string =>
@@ -380,7 +448,7 @@ export const leadText = (lead: Lead | undefined): string =>
 
 /** One agent of the team, as `run team` says it. */
 export const teamAgentText = (each: TeamAgent): string =>
-  `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${modelText({ model: each.model, ...(each.effort ? { effort: each.effort } : {}) })}` : ''}`;
+  `${each.name}${(each.count ?? 1) > 1 ? ` × ${String(each.count)}` : ''} — ${each.roles.join(', ')}${each.model ? ` — ${choiceText(each.model)}${each.effort ? ` (${each.effort})` : ''}` : ''}`;
 
 export interface TeamChange {
   name: string;
@@ -395,7 +463,7 @@ export interface TeamChange {
 export interface TeamAgentChange {
   roles?: string[];
   count?: number;
-  model?: string;
+  model?: ModelChoice;
   effort?: string;
 }
 

@@ -286,6 +286,37 @@ describe('lintSpace', () => {
       expect(errorsOf(bound)).toContain('list-items-ignored');
     });
 
+    it('list-items-outside-answer', () => {
+      const list = (source: string, template?: string, action?: string) =>
+        withChange(({ schema }) => {
+          if (action) {
+            schema.flat.feed.attributes.action = action;
+          }
+
+          addElement(schema, { id: 'rows', type: 'list', attributes: { source: 'controlled' } });
+          schema.flat.rows.definition.bindings = {
+            attributes: [
+              {
+                id: 'b1',
+                to: 'items',
+                source,
+                ...(template ? { transformers: [{ action: 'twigTemplate', params: { template } }] } : {})
+              }
+            ]
+          };
+        });
+      const code = 'list-items-outside-answer';
+
+      expect(warningsOf(list('apiContainer_feed'))).toContain(code);
+      expect(warningsOf(list('apiContainer_feed', '{{ source.fights|raw }}'))).toContain(code);
+      expect(warningsOf(list('apiContainer_feed.fights'))).toContain(code);
+      expect(warningsOf(list('apiContainer_feed.data.rows'))).not.toContain(code);
+      expect(warningsOf(list('apiContainer_feed.records'))).not.toContain(code);
+      expect(warningsOf(list('apiContainer_feed', '{{ source.data.rows|raw }}'))).not.toContain(code);
+      // An action's output is the provider's root.
+      expect(warningsOf(list('apiContainer_feed.fights', undefined, 'listFights'))).not.toContain(code);
+    });
+
     it('overlay-starts-open', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.modal.definition.initialState = { visibility: true };

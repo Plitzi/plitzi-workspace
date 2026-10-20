@@ -3,9 +3,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { parseEnv } from 'node:util';
 
-import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { RUN_STATUS_ENV } from '@plitzi/sdk-shared/runs';
 
+import { answering, ownServer } from './acceptance';
 import {
   cloneFiles,
   fingerprint,
@@ -16,17 +16,18 @@ import {
   writeAtomic,
   writeJson
 } from './files';
+import { monitorRun } from './monitor';
 import { under } from './paths';
+import { alive, isPreview, previewPort, previewRecord } from './previewRecord';
 import { stopTree } from './processes';
 import { RunRefusal } from './refusal';
 import { loadRun, readApproved, readBase, readRecord, requireNoTask } from './run';
 import { placeVersion } from './store';
 import { viewTask } from './taskStore';
-import { viewRun } from './view';
 import { scriptsOf } from '../commands/verify';
 
+import type { Monitored } from './monitor';
 import type { LoadedRun, RunContext } from './run';
-import type { RunView } from './view';
 import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
 
 /**
@@ -37,12 +38,11 @@ import type { RunSnapshot } from '@plitzi/sdk-shared/runs';
  */
 
 const previewDir = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview');
-const previewRecord = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview.json');
 /** The run as the preview's page shows it in its dev tools (`RUN_STATUS_PATH`), written as it goes. */
 const snapshotFile = (loaded: LoadedRun): string => path.join(loaded.paths.cache, 'preview-run.json');
 
 /** The run's view, as the dev tools read it (`RunSnapshot`): what a person looking at the page wants of the run. */
-export const snapshotOf = (view: RunView, at: Date): RunSnapshot => ({
+export const snapshotOf = ({ view, agents, feed }: Monitored, at: Date): RunSnapshot => ({
   runId: view.runId,
   goal: view.goal,
   status: view.status,
@@ -62,32 +62,23 @@ export const snapshotOf = (view: RunView, at: Date): RunSnapshot => ({
     ...(task.step ? { step: task.step } : {}),
     ...(task.fraction !== undefined ? { fraction: task.fraction } : {})
   })),
-  attention: view.attention.map(item => ({ text: item.text, who: item.who }))
+  attention: view.attention.map(item => ({ text: item.text, who: item.who })),
+  agents: agents.map(each => ({
+    agent: each.agent,
+    kind: each.kind,
+    status: each.status,
+    ...(each.model ? { model: each.model } : {}),
+    doing: each.doing,
+    ...(each.task ? { task: each.task } : {})
+  })),
+  feed: feed.slice(0, 40).map(each => ({ at: each.at, by: each.by, text: each.text, kind: each.kind }))
 });
 
 const writeSnapshot = async (ctx: RunContext, loaded: LoadedRun): Promise<void> => {
-  const view = await viewRun(ctx, loaded.record.runId);
-  await writeAtomic(snapshotFile(loaded), `${JSON.stringify(snapshotOf(view, ctx.now()))}\n`);
-};
-
-const isPreview = (value: unknown): value is { pid: number; port: number } =>
-  isRecord(value) && typeof value.pid === 'number' && typeof value.port === 'number';
-
-const alive = (pid: number): boolean => {
-  try {
-    process.kill(pid, 0);
-
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-/** The port of the run's preview while one serves it — none running, undefined. */
-export const previewPort = async (loaded: LoadedRun): Promise<number | undefined> => {
-  const running = await readJson(previewRecord(loaded), isPreview, 'a run’s preview').catch(() => undefined);
-
-  return running && alive(running.pid) ? running.port : undefined;
+  await writeAtomic(
+    snapshotFile(loaded),
+    `${JSON.stringify(snapshotOf(await monitorRun(ctx, loaded.record.runId), ctx.now()))}\n`
+  );
 };
 
 /** Puts the run's approved work into a running preview — none running, nothing done. Answers whether it did. */
@@ -134,6 +125,8 @@ export interface Preview {
   /** Ends when the run ends, the server stops, or the caller stops it: what it ended with. */
   done: Promise<{ code: number; why: string }>;
   stop: () => void;
+  /** A task's copy already served by its agent's own server, on this port: looked at there, never started again. */
+  borrowed?: number;
 }
 
 /**
@@ -198,10 +191,40 @@ const serve = async (
   return { url: `http://127.0.0.1:${String(port)}`, done, stop };
 };
 
+/** A server someone else runs, followed until it stops answering or the caller is done with it: never stopped. */
+const borrow = (url: string): Omit<Preview, 'dir'> => {
+  let release: (why: string) => void = () => undefined;
+  const done = new Promise<{ code: number; why: string }>(resolve => {
+    const watch = setInterval(() => {
+      void answering(url, 1_000).then(up => {
+        if (!up) {
+          release('the server it was served by stopped');
+        }
+      });
+    }, 2000);
+    release = why => {
+      clearInterval(watch);
+      resolve({ code: 0, why });
+    };
+  });
+
+  return { url, done, stop: () => release('the preview stopped: it was asked to') };
+};
+
 /** `plitzi run preview`: the run's work served on `port`, kept up to date until the run ends. */
 export const startPreview = async (ctx: RunContext, runId: string, port: number): Promise<Preview> => {
   requireNoTask(ctx, 'preview the run');
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
+  // One preview a run: a second would rebuild the folder the first one serves from under it.
+  const running = await previewPort(loaded);
+  if (running !== undefined) {
+    throw new RunRefusal(
+      'invalid',
+      `Run "${runId}" is previewed already, on http://127.0.0.1:${String(running)}: open it there — a second preview would rebuild the folder that one serves from`,
+      { next: `open http://127.0.0.1:${String(running)}` }
+    );
+  }
+
   const dir = previewDir(loaded);
   await fs.rm(dir, { recursive: true, force: true });
   const approved = (await readApproved(loaded.paths)).files;
@@ -229,9 +252,13 @@ export const startPreview = async (ctx: RunContext, runId: string, port: number)
   return { ...served, dir };
 };
 
+/** Where a task's copy is worth serving: being worked — its agent looking at its own pages — or in review. */
+const SERVED_STATUSES: readonly string[] = ['in-progress', 'changes-requested', 'in-review'];
+
 /**
- * `plitzi run preview --task`: a task's copy as it went to review, served on `port` — what the lead looks at before
- * approving it, not only after. Ends when the task leaves review.
+ * `plitzi run preview --task`: a task's copy served on `port` — in review, as it went there, what the lead looks at
+ * before approving it; being worked, as its agent writes it, what it looks at as it goes (no `npm start` of its own in
+ * the copy, which holds the copy's kv and a port). Read only. Ends when the task is neither.
  */
 export const startTaskPreview = async (
   ctx: RunContext,
@@ -240,7 +267,6 @@ export const startTaskPreview = async (
   port: number,
   options: { quiet?: boolean } = {}
 ): Promise<Preview> => {
-  requireNoTask(ctx, 'preview a task');
   const loaded = await loadRun(ctx, runId, { anyVersion: true });
   const task = loaded.tasks.find(each => each.id === taskId);
   if (!task) {
@@ -248,12 +274,19 @@ export const startTaskPreview = async (
   }
 
   const view = await viewTask(loaded.paths, task);
-  if (view.state.status !== 'in-review') {
+  if (!SERVED_STATUSES.includes(view.state.status)) {
     throw new RunRefusal(
       'invalid',
-      `Task "${taskId}" is ${view.state.status}: a task's copy is previewed while it is in review (run preview shows what is approved)`,
+      `Task "${taskId}" is ${view.state.status}: a task's copy is previewed while it is worked or in review (run preview shows what is approved)`,
       { task: taskId }
     );
+  }
+
+  // Its agent's own server, left running: it holds the copy's state (its kv lock), so a second one would not start —
+  // looked at where it is, and left as it was.
+  const running = await ownServer(view.paths.work);
+  if (running !== undefined) {
+    return { ...borrow(`http://127.0.0.1:${String(running)}`), dir: view.paths.work, borrowed: running };
   }
 
   const served = await serve(
@@ -264,7 +297,7 @@ export const startTaskPreview = async (
     async () => {
       const now = (await viewTask(loaded.paths, task)).state.status;
 
-      return now === 'in-review' ? undefined : `the preview stopped: ${taskId} is ${now} now`;
+      return SERVED_STATUSES.includes(now) ? undefined : `the preview stopped: ${taskId} is ${now} now`;
     },
     options
   );
