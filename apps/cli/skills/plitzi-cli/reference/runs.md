@@ -32,8 +32,8 @@ the next one, through a stop, handing back first a task you hold that can go on.
    brief; `plitzi run note "…"` adds one while it runs.
 
    Ids: lowercase letters, digits, `-`, `_`. What several tasks need (a component, tokens) is a task the others depend
-   on. A new page is a file that does not exist yet: where the space loads its pages by folder (`pagesIn`, with `nav`
-   for the menu) it touches nothing shared; otherwise it registers in the entry, one line each. A task that will change
+   on. A new page is a file that does not exist yet: where the space loads its pages by folder (`pagesIn`, a project with
+   a server, `nav` for the menu) it touches nothing shared; otherwise it registers in the entry, one line each. A task that will change
    a file it does not hold says so (`"touches": ["src/space/tokens.ts"]`).
 3. `plitzi run plan plan.json --agents 3` — refused, every reason at once (a repeated file, a cycle, an unknown task, a
    path outside the source, a check it cannot run, another run going); otherwise expanded, shared files and overlaps

@@ -265,6 +265,38 @@ const EXPECTED: readonly { file: string; name: string; why: string }[] = [
   { file: RUNTIME_ENTRY, name: 'default', why: 'the runtime the server starts (`defineRuntime({ … })`)' }
 ];
 
+/** A module of code a space can be written in, never a test. */
+const SPACE_CODE = /\.(?:[cm]?[jt]sx?)$/;
+
+/**
+ * A project with no server authors its space in the browser, bundled by Vite: `@plitzi/sdk-authoring/node` — `pagesIn`,
+ * `svgFiles`, every helper that reads the disk — cannot run there, and the bundle fails with nothing that says why.
+ * Each file of the space that imports it, said with the way that works in the browser.
+ */
+const nodeInBrowser = async (root: string): Promise<Finding[]> => {
+  const spaceDir = path.join(root, path.dirname(SPACE_ENTRY));
+  const entries = await fs.readdir(spaceDir, { recursive: true, withFileTypes: true }).catch(() => []);
+  const found: Finding[] = [];
+  for (const entry of entries.filter(
+    each => each.isFile() && SPACE_CODE.test(each.name) && !/\.(?:test|spec)\./.test(each.name)
+  )) {
+    const file = path.join(entry.parentPath, entry.name);
+    const text = await fs.readFile(file, 'utf-8').catch(() => '');
+    if (/from\s+['"]@plitzi\/sdk-authoring\/node['"]/.test(text)) {
+      const relative = path.relative(root, file).split(path.sep).join('/');
+      found.push(
+        say.error(
+          'node-in-browser',
+          `${relative} imports @plitzi/sdk-authoring/node, which reads the disk, and this project authors its space in the browser: list its pages in the space and import what it reads (an SVG with \`?raw\`) — pagesIn is for a project with a server.`,
+          { file: relative }
+        )
+      );
+    }
+  }
+
+  return found;
+};
+
 export const checkSources: Check = async context => {
   const { root, answers } = context;
   const local = answers.source === 'local';
@@ -312,6 +344,10 @@ export const checkSources: Check = async context => {
         )
       );
     }
+  }
+
+  if (answers.mode === 'client' && local) {
+    unique.push(...(await nodeInBrowser(root)));
   }
 
   return unique;

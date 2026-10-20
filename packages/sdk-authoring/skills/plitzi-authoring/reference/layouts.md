@@ -86,7 +86,8 @@ Adding a page is one entry in the list: the menu, the index and the neighbours' 
 **Or each page says it**, when pages are added apart — by several people, or a team of agents — and one list would be
 the file they all change. The page carries `nav: { label: 'Pets', order: 3 }`; `navOf(pages)` reads the links, lowest
 `order` first, `current: 'section'` for a page with others under it; with `pagesIn` (`@plitzi/sdk-authoring/node`) the
-entry loads every page of a folder, so a new page is a file of its own and nothing else:
+entry loads every page of a folder, so a new page is a file of its own and nothing else. It reads the disk: a project
+with a server only — one that authors its space in the browser lists its pages (`plitzi doctor` says `node-in-browser`).
 
 ```ts
 const pages = await pagesIn(new URL('./pages/', import.meta.url));   // each module's default export: a page, or a family

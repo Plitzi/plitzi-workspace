@@ -181,6 +181,22 @@ describe('plitzi doctor', { timeout: 30_000 }, () => {
     expect(findingOf(report, 'export-missing')).toMatchObject({ file: 'src/runtime/index.ts' });
   });
 
+  it('says a space authored in the browser that imports what reads the disk, and not one with a server', async () => {
+    const pagesIn =
+      "import { pagesIn } from '@plitzi/sdk-authoring/node';\n\nexport const pages = await pagesIn(new URL('./pages/', import.meta.url));\n";
+    await write('src/space/pages.ts', pagesIn);
+
+    expect(findingOf(await run(), 'node-in-browser')).toBeUndefined();
+
+    await create(path.join(home, 'web'), { mode: 'client', source: 'local', packageManager: 'npm', install: false });
+    project = path.join(home, 'web');
+    vi.spyOn(process, 'cwd').mockReturnValue(project);
+    await install();
+    await write('src/space/pages.ts', pagesIn);
+
+    expect(findingOf(await run(), 'node-in-browser')).toMatchObject({ file: 'src/space/pages.ts', severity: 'error' });
+  });
+
   it('holds each plugin to its folder: an entry, a declaration of the same type, one folder a type', async () => {
     await write('src/plugins/StatCard/declaration.ts', "export default { type: 'statsCard' };\n");
     await write('src/plugins/Legend/declaration.ts', "export default { type: 'legend' };\n");

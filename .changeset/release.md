@@ -56,7 +56,9 @@
   gives a layout its menu, `current: 'section'` for a page with others under it; `nav` is authoring only, and one it
   cannot list is refused (`page-nav-invalid`). A new page is then a file of its own: no line in the entry, none in the
   layout. The CLI follows the folder as imports (`space overview`, the runs' ownership, `space lint`'s unused files), by
-  the rule both share (`pageModulesIn`, `@plitzi/sdk-shared/project`).
+  the rule both share (`pageModulesIn`, `@plitzi/sdk-shared/project`). For a project with a server: `plitzi doctor`
+  says `node-in-browser` when a space authored in the browser imports `@plitzi/sdk-authoring/node`. `plitzi create`
+  keeps listing the pages — one agent on a project needs no convention.
 - **`plitzi explain` knows the template filters** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `explain currency`, `--list
   filters`, from a catalogue beside the filters that a test holds whole. **`'now'|date(…)`** is the moment the page is
   rendered, and **`<`, `>`, `<=`, `>=` order strings as text** — `r.date >= '2026-10-20'` was false for every row, as
