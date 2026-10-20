@@ -71,7 +71,7 @@
   `.plitzi/team.json` (`plitzi run team set <name> --roles … --count … --model … [--effort]`) — the lead and each agent,
   its roles, how many and its model; its size is how many work at once (no `--agents`), a role nobody takes is refused, and `run plan` says
   how to start each agent. A **tester** in it gives each developer task `<id>-tests` after it (Playwright specs for its
-  pages, `node --test` beside its modules; `$PLITZI_PORT` names the copy served); a **designer** in it reviews the UI of
+  pages, `node --test` beside its modules, run against the copy served); a **designer** in it reviews the UI of
   the others' tasks before the lead (`task next` offers it, `task review` by the designer hands it on; the lead's
   `--skip-design` approves without it, said in the report). `task context --files` hands a task its files and its data's shape at once; the
   brief says a file of the task already near 400 lines. From the eighth run: a revert reaches the agents who did the
@@ -101,6 +101,19 @@
   project's Prettier leaves it.
   A case the project's data never shows is the lead's to plan how it is seen (the skill), the designer says one it could
   not look at, and a tester's task holds one with a unit test.
+- **An anchor in a list's row is the row's own** (`@plitzi/sdk-elements`, `@plitzi/sdk-authoring`): inside a list with
+  `items`, an element's anchor is drawn with its row's name (`faq-answer-luna`) — no longer refused as repeated — and a
+  button of the same row that `controls` it points at its own row's (`controlsInRow`, set by authoring); one outside the
+  row is refused (`controls-other-row`), and a link to a row's anchor too (`anchor-in-row`). `anchor-repeated` is now a
+  component's alone. A `container({ subType: 'ol' })` refused is told a list's rows can be written out as children.
+- **A toast's close button shows its focus** (`@plitzi/plitzi-sdk`): the library's own rule takes its outline off; the
+  SDK puts it back, and rings the notifications region in the space's colour.
+- **`page check`** (`@plitzi/cli`): `--element` once for each element, each with what it reads and how its classes
+  meet; an address a page answers by its own id (as the router does) is that page, not the not-found one.
+- **Runs on Windows** (`@plitzi/cli`): a check's `$PLITZI_URL` / `$PLITZI_PORT` are written into it for any shell, a
+  served check gets `PORT` (and one running `playwright test` is served), `plitzi` has a `.cmd` beside it, and the copy's
+  server is stopped as a tree. The CLI's own files are split by what changes together, and its lint holds every file
+  under 600 lines of code.
 - **A paragraph made of parts holds no block** (`@plitzi/sdk-authoring`): `span-holds-block` warns of a `p` container
   holding a `text` or a plain `container` — `<div>`s the browser closes the paragraph before, which broke hydration.
 - **A disclosure, natively** (`@plitzi/sdk-elements`): `container({ subType: 'details' })` with a `summary` first, and

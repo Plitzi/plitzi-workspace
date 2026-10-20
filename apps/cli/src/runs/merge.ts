@@ -30,7 +30,7 @@ import type { ApprovedManifest, MergeEntry, ReconciledFile, RunRecord } from './
 import type { LoadedRun, RemovedInputs, RunContext } from './run';
 
 /**
- * The run into the project (RFC 0028 §9.3, §9.10): the only write the project ever gets from a run — shown first as a
+ * The run into the project: the only write the project ever gets from a run — shown first as a
  * dry run with the project's checks over the whole result, approved by a person, written file by file as one
  * transaction with a backup of everything it overwrites, which puts it all back if it is cut. Once it is in, the run
  * goes — kept as plain files only with `--keep-backup`. A file changed on both sides is never written: the run enters

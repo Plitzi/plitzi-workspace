@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import clsx from 'clsx';
+import { use } from 'react';
 
 import { usePlitzi } from '@plitzi/sdk-shared/hooks';
 
@@ -7,6 +8,7 @@ import ElementWords from '../../../Element/ElementWords';
 import withElement from '../../../Element/hocs/withElement';
 import useElement from '../../../Element/hooks/useElement';
 import RootElement from '../../../Element/RootElement';
+import { anchorInRows, RowAnchorContext } from '../../../Element/RowAnchor';
 
 import type { IconPlacement } from '../../../Element/ElementWords';
 import type { ReactNode, RefObject } from 'react';
@@ -41,6 +43,11 @@ export type ButtonProps = {
    */
   controls?: string;
   /**
+   * `controls` names an element drawn in the same list's row as the button — each row's own (authoring says so, as it
+   * resolves `controls`): `aria-controls` is then that row's, as the element's anchor is drawn with the row's name.
+   */
+  controlsInRow?: boolean;
+  /**
    * What the button does, in words — shown as a tooltip on hover, and the button's accessible name when it has no text
    * of its own. An icon-only button without one is announced as nothing at all.
    *
@@ -70,9 +77,11 @@ const Button = ({
   ariaExpanded,
   ariaPressed,
   controls,
+  controlsInRow = false,
   title,
   label
 }: ButtonProps) => {
+  const rows = use(RowAnchorContext);
   const {
     settings: { previewMode }
   } = usePlitzi();
@@ -93,7 +102,7 @@ const Button = ({
       aria-label={label || undefined}
       aria-expanded={ariaExpanded}
       aria-pressed={ariaPressed}
-      aria-controls={controls || undefined}
+      aria-controls={(controls && controlsInRow ? anchorInRows(controls, rows) : controls) || undefined}
     >
       <ElementWords
         content={content}

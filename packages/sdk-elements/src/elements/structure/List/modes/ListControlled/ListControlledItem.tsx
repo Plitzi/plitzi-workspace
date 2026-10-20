@@ -1,10 +1,11 @@
 import clsx from 'clsx';
-import { useId, useMemo } from 'react';
+import { use, useId, useMemo } from 'react';
 
 import { StoreProvider } from '@plitzi/nexus/react';
 
 import sourceStore from '../../../../../dataSource/sourceStore';
 import ReplicaProvider from '../../../../../Element/ReplicaProvider';
+import { RowAnchorContext, rowAnchorName } from '../../../../../Element/RowAnchor';
 
 import type { ReactNode } from 'react';
 
@@ -14,6 +15,8 @@ export type ListControlledItemProps<T = unknown> = {
   isTemplate: boolean;
   /** The row's own position, from zero — what `index` publishes, and what indexes back into the bound array. */
   index: number;
+  /** What tells this row from the others (`rowKeys`): the name its anchors are drawn with. */
+  rowKey?: string | number;
   record: T;
   source: string;
 };
@@ -23,9 +26,12 @@ const ListControlledItem = ({
   className = '',
   isTemplate = false,
   index = 0,
+  rowKey,
   record,
   source = ''
 }: ListControlledItemProps) => {
+  const outerRows = use(RowAnchorContext);
+  const rows = useMemo(() => [...outerRows, rowAnchorName(rowKey ?? index)], [outerRows, rowKey, index]);
   // A per-row `segment` gives each replica scope a distinct `scopePath`, which `useElementState` folds into a sub-key
   // so duplicated element ids (every row renders the same template ids) keep isolated state in the shared store.
   // `useId` is a unique, stable identity per row instance — independent of the row index and free of any global
@@ -51,7 +57,7 @@ const ListControlledItem = ({
   const scopedRow = (
     <ReplicaProvider>
       <StoreProvider inherit="live" name={`Row:${source}`} segment={segment} value={storeContextValue}>
-        {children}
+        <RowAnchorContext value={rows}>{children}</RowAnchorContext>
       </StoreProvider>
     </ReplicaProvider>
   );

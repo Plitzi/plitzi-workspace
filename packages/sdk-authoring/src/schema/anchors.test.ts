@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { compareSpaces } from '../decompile/compareSpaces';
 import { specFromSpace } from '../decompile/specFromSpace';
-import { apiContainer, authorSpace, container, heading, link, list, markdown, text } from '../index';
+import { apiContainer, authorSpace, button, container, heading, link, list, markdown, text } from '../index';
 
 import type { ComponentSpec, ElementSpec, SpaceSpec } from './types';
 
@@ -59,9 +59,28 @@ describe('anchor', () => {
     );
   });
 
-  it('is refused where it would repeat: in a list row, or in a component', () => {
-    const row = list({ id: 'rows', source: 'controlled', children: [container({ id: 'row', anchor: 'row' })] });
-    expect(() => authorSpace(space([plans, row]))).toThrow(/\[anchor-repeated\][^]*list "rows"/);
+  it('is each row’s own in a list’s rows — a button of the row controls its own — and refused in a component', () => {
+    const rows = (controlsFrom: 'row' | 'page'): ElementSpec[] => [
+      plans,
+      list({
+        id: 'questions',
+        items: [{ id: 'luna' }, { id: 'kira' }],
+        children: [
+          container({
+            id: 'question',
+            children: [
+              ...(controlsFrom === 'row' ? [button({ id: 'toggle', content: 'Show', controls: 'answer' })] : []),
+              container({ id: 'answer', children: [text('Because')] })
+            ]
+          })
+        ]
+      }),
+      ...(controlsFrom === 'page' ? [button({ id: 'toggle', content: 'Show', controls: 'answer' })] : [])
+    ];
+    const { schema } = authorSpace(space(rows('row')));
+    expect(schema.flat.answer.definition.anchor).toBe('answer');
+    expect(schema.flat.toggle.attributes).toMatchObject({ controls: 'answer', controlsInRow: true });
+    expect(() => authorSpace(space(rows('page')))).toThrow(/\[controls-other-row\][^]*"questions" draws once per row/);
 
     const card: ComponentSpec = { id: 'card', root: container({ id: 'card-root', anchor: 'card' }) };
     expect(() => authorSpace(space([plans], { components: [card] }))).toThrow(

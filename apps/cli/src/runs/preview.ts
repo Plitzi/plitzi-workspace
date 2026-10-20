@@ -16,7 +16,7 @@ import { scriptsOf } from '../commands/verify';
 import type { LoadedRun, RunContext } from './run';
 
 /**
- * The run's work as it goes (RFC 0028): the project with every approved task over it, served by the project's own dev
+ * The run's work as it goes: the project with every approved task over it, served by the project's own dev
  * server in the run's cache — what is connected shows the moment it is approved, not only at the final merge. Each
  * approval puts its files into it, and the dev server swaps them in. Never the project itself: its files stay as they
  * are until the final merge. The `.env` is read from the project and handed to the server, never copied into the run.

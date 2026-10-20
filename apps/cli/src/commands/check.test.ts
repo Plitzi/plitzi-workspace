@@ -248,6 +248,13 @@ describe('the page an address is answered by', () => {
     expect(pageFor(handles, '/spaces/7/update/pages/home')).toBe('editor');
   });
 
+  /** The router answers every page at its own id too: `/post` is the post page, whatever its route says. */
+  it('is a page by its own id before a "not found" page, after every route', () => {
+    expect(pageFor(handles, '/post')).toBe('post');
+    expect(pageFor(handles, '/home')).toBe('home');
+    expect(pageFor(handles, '/nope')).toBe('lost');
+  });
+
   it('is the deepest folder’s "not found" page, then the space’s', () => {
     expect(pageFor(handles, '/docs/nope')).toBe('docsLost');
     expect(pageFor(handles, '/nope/at/all')).toBe('lost');

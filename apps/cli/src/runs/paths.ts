@@ -4,7 +4,7 @@ import { BUILD_DIR, PROJECT_STATE, PROJECT_TMP, PUBLIC_DIR, RUNS_DIR, VENDOR_PLU
 
 /**
  * Where a run keeps what it owns: under the project's `tmp/`, which the project already keeps out of git, the lint, the
- * formatter and the server's watch — so no copy of a task is ever linted, committed or served (RFC 0028 §7.1).
+ * formatter and the server's watch — so no copy of a task is ever linted, committed or served.
  *
  * Two halves. The essentials — the plan, the run's record, every version it keeps (`blobs/`, by fingerprint: the
  * backups, the approved work, each reviewed version and request) and each task's state — are never purged while the run

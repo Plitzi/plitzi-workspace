@@ -181,8 +181,14 @@ export const AUTHORING_CODES = {
   },
   'anchor-repeated': {
     kind: 'refused',
-    means: 'an anchor inside a list row or a component — it would be in the page once per row or instance',
-    fix: 'the anchor on the list, or on the element around the instance'
+    means: 'an anchor inside a component — it would be in the page once per instance',
+    fix: 'the anchor on the element around the instance (in a list row, an anchor is the row’s own: that one is fine)'
+  },
+  'anchor-in-row': {
+    kind: 'refused',
+    means:
+      'a link to an anchor drawn in a list’s rows — each row’s is named after its row, so the link lands at the top',
+    fix: 'link to the list’s own anchor, or to one outside it'
   },
   'anchor-duplicate': {
     kind: 'refused',
@@ -220,6 +226,11 @@ export const AUTHORING_CODES = {
     kind: 'refused',
     means: "a button's `controls` naming no element of the space",
     fix: "the id of the element it shows and hides: `controls: 'faq-answer'`"
+  },
+  'controls-other-row': {
+    kind: 'refused',
+    means: "a button's `controls` naming an element a list draws in its rows, from outside that row",
+    fix: 'the button in the same row as what it shows and hides, or `controls` naming an element outside the list'
   },
   'id-taken': {
     kind: 'refused',

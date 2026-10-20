@@ -8,7 +8,7 @@ import { DEVELOPER, TESTER } from './team';
 import type { Acceptance, PlannedTask, RunPlan } from './model';
 
 /**
- * A tester in the team (RFC 0028): every developer task gets a task of its tests, after it — `<id>-tests`, a tester's —
+ * A tester in the team: every developer task gets a task of its tests, after it — `<id>-tests`, a tester's —
  * so what a developer wrote is held by tests somebody else wrote from its acceptance, not from its code. Its files are
  * where this project's tests are: a page's in `visual/<page>.spec.ts` (Playwright, against the copy served), a module's
  * beside it (`<file>.test.ts`, `node --test`). A task that says `tests: false`, writes nothing a test is written for, or
@@ -93,7 +93,7 @@ const testChecks = (files: readonly string[], served: boolean): Acceptance[] => 
     ...(specs.length > 0
       ? [
           served
-            ? { said, check: `PORT=$PLITZI_PORT npx playwright test ${specs.join(' ')} --reporter=line` }
+            ? { said, check: `npx playwright test ${specs.join(' ')} --reporter=line` }
             : `${said} — npx playwright test ${specs.join(' ')}, with the copy started by hand: the project has no start script`
         ]
       : []),

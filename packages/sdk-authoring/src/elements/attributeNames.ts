@@ -43,6 +43,7 @@ export const elementAttributeNames = {
     'content',
     'contentPlacement',
     'controls',
+    'controlsInRow',
     'disabled',
     'icon',
     'iconPlacement',

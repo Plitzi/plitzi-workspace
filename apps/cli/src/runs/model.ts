@@ -1,7 +1,7 @@
 import { isRecord } from '@plitzi/sdk-shared/helpers';
 
 /**
- * What each file of a run holds (RFC 0028 §9.12), with the guard every read is held to. Every time is ISO 8601 in UTC.
+ * What each file of a run holds, with the guard every read is held to. Every time is ISO 8601 in UTC.
  * One writer per file: `plan.json` is the lead's; `run.json`, `approved/` and `merges/` are written under the
  * run's `merge.lock`; a task's `state.json` under its `state.lock`; `owner.json` is created exclusively.
  */

@@ -8,6 +8,7 @@ import parseStyle from './helpers/parseStyle';
 import renderStaticTag from './helpers/renderStaticTag';
 import useElement from './hooks/useElement';
 import useRootElementInteractions from './hooks/useRootElementInteractions';
+import { anchorInRows, RowAnchorContext } from './RowAnchor';
 
 import type { InteractionCallback } from '@plitzi/sdk-shared';
 import type { CSSProperties, JSX, ReactNode, RefObject } from 'react';
@@ -64,6 +65,9 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     plitziElementLayout,
     definition: { type, label, runtime, anchor, parentId, motion: declaredMotion }
   } = elementContext;
+  // Inside a list's row, an anchor is the row's own: drawn with the row's name, so each row's is one in the page.
+  const rows = use(RowAnchorContext);
+  const rowAnchor = anchor ? anchorInRows(anchor, rows) : anchor;
   // After the early return above, so not a hook: two small objects, rebuilt with the style object they join.
   const motion = motionAttributes(declaredMotion);
   const serverMarker = runtime === 'server' ? { 'data-rsc-id': id } : undefined;
@@ -104,7 +108,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
       style: { ...style, ...styleParsed, ...motion.style },
       className,
       otherProps,
-      anchor,
+      anchor: rowAnchor,
       params,
       serverMarker,
       motion: motion.attributes,
@@ -132,7 +136,7 @@ const RootElement = <T extends keyof JSX.IntrinsicElements = 'div'>({
     style: { ...style, ...styleParsed, ...motion.style },
     className: interactions.className,
     otherProps,
-    anchor,
+    anchor: rowAnchor,
     params,
     serverMarker,
     motion: motion.attributes,

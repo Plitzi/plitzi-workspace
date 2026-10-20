@@ -15,6 +15,11 @@ import { checkPropsRead, checkTemplate } from './templates';
 import type { LintContext } from './context';
 import type { Element, ElementBinding } from '@plitzi/sdk-shared';
 
+/** What an author is missing after "write that element instead", by the element: how its parts are written. */
+const OWNER_HINT: Partial<Record<string, string>> = {
+  list: ' — its rows written out, as children (`listItem({ children: [ … ] })` each), or drawn from data with `items`.'
+};
+
 /** Types whose content is prose, where a `{{ }}` is far more often a sample of code than a template. */
 const PROSE_TYPES = new Set(['markdown', 'richText', 'blockHtml', 'blockJsx', 'nodeHtml']);
 
@@ -124,7 +129,7 @@ const checkAttributes = (ctx: LintContext, element: Element, where: string): voi
       const hint =
         owner === undefined || tag === undefined
           ? `${(typeof value === 'string' && didYouMean(value, enums[name])) || '.'} It is one of ${enums[name].map(item => `'${item}'`).join(', ')}.`
-          : `, which is what a "${owner}" renders: write \`${owner}({ subType: '${tag}' })\`.`;
+          : `, which is what a "${owner}" renders: write \`${owner}({ subType: '${tag}' })\`${OWNER_HINT[owner] ?? '.'}`;
       ctx.error('attribute-value', `${where}: \`${name}\` is ${JSON.stringify(value)}${hint}`, element.id);
       continue;
     }

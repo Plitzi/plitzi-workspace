@@ -13,6 +13,9 @@ export default tsEslint.config({
   },
   plugins: { import: importPlugin },
   rules: {
+    // A file is read whole — by a person, and by an agent before it changes it: past this, it is split by what changes
+    // together (the CLI holds a project's own files to the same, `MAX_LINES`).
+    'max-lines': ['error', { max: 600, skipBlankLines: true, skipComments: true }],
     'import/order': [
       'error',
       {

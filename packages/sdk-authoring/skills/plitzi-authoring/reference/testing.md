@@ -129,6 +129,8 @@ expect(await page.evaluate(() => (window as unknown as { __painted: string[] }).
 
 - **Both sides of every condition.** An account that has done everything must not see "get started"; a new one must.
   An empty list shows its empty state; a full one does not.
+- **Hidden is not gone.** An element its `visible` hides stays in the page, its id kept, hidden by a class: assert
+  `toBeHidden()` / `:visible`, never a count of nodes — an open answer and a closed one are both in the DOM.
 - **Navigation lands on the new page's content.** After `waitForURL`, wait for an element of the NEW page before typing:
   for a frame the previous page is still mounted, and a form field with the same name there takes the keystrokes.
 - **Console errors are failures.** Collect them and assert the list is empty.

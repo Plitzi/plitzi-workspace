@@ -265,11 +265,18 @@
     --toastify-font-family: inherit;
   }
 
-  // The region a keyboard reaches the notifications by is seen where it is: the library takes its outline off, and a
-  // keyboard then lands on nothing it can see.
+  // The region a keyboard reaches the notifications by (Alt+T) is ringed as the SDK's other focused parts are: in the
+  // space's colour, where the browser's own ring is its own.
   .Toastify:focus-visible,
   .Toastify__toast-container.plitzi-sdk-toasts:focus-visible {
     outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  // A toast's close button: the library takes its outline off in a rule outside every layer, which a rule in one never
+  // beats — but an important one does. Without it a keyboard closes a toast on a button it cannot see.
+  .Toastify__close-button:focus-visible {
+    outline: 2px solid currentColor !important;
     outline-offset: 2px;
   }
 

@@ -11,6 +11,7 @@ list({ id: 'games', class: gameGrid, items: 'catalog.data.games', row: 'game-car
 list({ id: 'games', items: 'catalog.data.games', row: r => listItem({ children: [text({ from: `${r.item}.title` })] }) })
 // typed by a sample (`items: catalog.data.games`): `r.item` is a path — `from: r.item.title`, never `${r.item}.title`
 list({ id: 'plans', items: ['Free', 'Pro'], children: [listItem({ children: [text({ from: 'plans.item' })] })] })  // fixed
+list({ id: 'steps', subType: 'ol', children: [listItem({ children: [text('Mix')] }), listItem({ children: [text('Bake')] })] })  // written out
 ```
 
 `items` (or `from`) makes a list controlled: an array of its own, or the source its rows come from. `row` is what it renders once

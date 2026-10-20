@@ -97,6 +97,7 @@ const ListControlled = ({
           return (
             <ListControlledItem
               key={keys[i]}
+              rowKey={keys[i]}
               index={i}
               isTemplate={i !== 0 && !previewMode}
               record={item}

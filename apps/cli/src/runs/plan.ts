@@ -18,7 +18,7 @@ import type { Ownership } from './ownership';
 import type { Team } from './team';
 
 /**
- * A plan, held to the rules (RFC 0028 §9.6): the lead writes it, the CLI never interprets a goal. Refused, every
+ * A plan, held to the rules: the lead writes it, the CLI never interprets a goal. Refused, every
  * reason at once, when it repeats a file across tasks, has a cycle, names a task that is not in it, or a file outside
  * the project's source; then each task's files are expanded with what its units own, what is shared is said, and the
  * whole is estimated.
@@ -63,7 +63,7 @@ export interface CheckedPlan {
 
 export const PRIORITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 } as const;
 
-/** Above either, a person confirms the estimate before the run opens (RFC 0028 §14). */
+/** Above either, a person confirms the estimate before the run opens. */
 export const CONFIRM_ABOVE = { agents: 5, wallMinutes: 120 } as const;
 
 const normalised = (file: string): string | undefined => {
@@ -489,24 +489,22 @@ export const checkPlan = async (
   notices.push(...(await expectationNotices(root, plan.tasks)));
   // What reads a task's file and is in no task: changed under it, never by it — the lead's to plan, or to leave.
   const planned = new Set(tasks.flatMap(task => task.files));
-  const outsiders = new Map<string, Set<string>>();
+  // One line a file a task changes — a data file read by every page is one notice, not one an importer.
+  const SHOWN_IMPORTERS = 6;
   for (const task of tasks) {
     for (const file of task.files) {
-      for (const importer of ownership.importedBy.get(file) ?? []) {
-        if (!planned.has(importer) && !ownership.entries.includes(importer)) {
-          outsiders.set(importer, (outsiders.get(importer) ?? new Set<string>()).add(`${file} (${task.id})`));
-        }
+      const outside = (ownership.importedBy.get(file) ?? [])
+        .filter(importer => !planned.has(importer) && !ownership.entries.includes(importer))
+        .sort();
+      if (outside.length > 0) {
+        const named = outside.slice(0, SHOWN_IMPORTERS).join(', ');
+        const more = outside.length > SHOWN_IMPORTERS ? ` and ${String(outside.length - SHOWN_IMPORTERS)} more` : '';
+        notices.push(
+          `${file} (${task.id}) is read by ${String(outside.length)} file${outside.length === 1 ? '' : 's'} no task holds — ${named}${more}: they change with it, as written — give one to a task if it must follow`
+        );
       }
     }
   }
-
-  [...outsiders]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .forEach(([importer, files]) =>
-      notices.push(
-        `${importer} imports ${[...files].join(', ')}, and no task holds it: it changes under them — give it to a task if it must follow`
-      )
-    );
 
   return {
     runId: plan.runId,

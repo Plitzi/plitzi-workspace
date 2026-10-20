@@ -38,7 +38,7 @@ export const leadItems = (view: RunView): LeadItem[] => [
       key: `review:${task.id}:${String(task.round)}:${task.takenAt ?? ''}:${task.design?.status ?? ''}`,
       text:
         task.design?.status === 'approved'
-          ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review: plitzi task look ${task.id} <page…>, then plitzi task review ${task.id} --approve | --changes "…"`
+          ? `${task.id} is in review, its UI approved by ${task.design.by ?? 'a designer'} — yours is the final review: plitzi task look ${task.id}, then plitzi task review ${task.id} --approve | --changes "…"`
           : `${task.id} is in review: plitzi task review ${task.id} --approve | --changes "…"`
     })),
   ...view.attention

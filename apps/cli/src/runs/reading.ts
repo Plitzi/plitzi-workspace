@@ -4,7 +4,7 @@ import path from 'node:path';
 import { SKILLS_ROOT } from '../scaffold/skills';
 
 /**
- * What a task needs to read of the project's skills, by the files it writes (RFC 0028): the cheatsheet for any part of
+ * What a task needs to read of the project's skills, by the files it writes: the cheatsheet for any part of
  * the space, the reference of the part it is — a layout, a component, data, a plugin, server code — and the run's
  * protocol always. The rest it reads when its work asks: a cold start reads a handful of files, not every skill.
  */

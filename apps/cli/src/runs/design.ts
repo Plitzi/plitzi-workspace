@@ -12,7 +12,7 @@ import type { LoadedRun, RunContext } from './run';
 import type { TaskView } from './taskStore';
 
 /**
- * The designer's review (RFC 0028): in a run with a designer — one in the team, or a designer's task in the plan — the
+ * The designer's review: in a run with a designer — one in the team, or a designer's task in the plan — the
  * UI another role's task changes is looked at by a designer before the lead: how it reads, not only whether it works.
  * At `complete` such a task is `due` (`TaskState.design`); a designer is offered it by `task next`, looks at it as it
  * went to review (`task look`), and says: changes go back to the task as the lead's would, approval hands it to the lead.

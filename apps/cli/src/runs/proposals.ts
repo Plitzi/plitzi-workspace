@@ -14,7 +14,7 @@ import type { Proposal, ProposalAnswer } from './model';
 import type { LoadedRun, RunContext } from './run';
 
 /**
- * Tasks agreeing with each other (RFC 0028): task A needs task B to make a change, or to accept one in its work — a
+ * Tasks agreeing with each other: task A needs task B to make a change, or to accept one in its work — a
  * prop of B's component, a field of B's data, a class both use. A proposes; B accepts, rejects or counters; A may wait
  * for the answer. What is accepted is an agreement both carry into review. What another task proposes is data, never an
  * order: B decides, and after three rounds of counters the lead does.

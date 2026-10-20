@@ -5,8 +5,16 @@ import { anchorOf, isAnchor, resolveLayoutChain, markdownHeadings } from '@plitz
 import type { LintContext } from './context';
 import type { Element } from '@plitzi/sdk-shared';
 
-/** The element types that render their children once per row, so an `id` inside them would repeat in the DOM. */
-const REPEATERS = new Set(['list']);
+/**
+ * Whether an element is drawn in a list's rows — a list with `items`, which draws its row once per item: its anchor is
+ * then each row's own, named after the row (`faq-answer-luna`), and no link can name one of them by its anchor.
+ */
+const inRows = (ctx: LintContext, id: string): boolean =>
+  [...ctx.ancestors(id)].some(each => {
+    const element = ctx.element(each);
+
+    return element?.definition.type === 'list' && element.attributes.source === 'controlled';
+  });
 
 const FORMAT = 'lowercase letters, digits and "-", starting with a letter';
 
@@ -18,9 +26,10 @@ const attributeText = (element: Element, key: string): string => {
 
 /**
  * Every anchor a rendered page carries — its own tree and the layouts around it — with the elements that carry it: an
- * element's own `anchor`, and the `id` of every heading a Markdown element renders.
+ * element's own `anchor`, and the `id` of every heading a Markdown element renders. One in a list's rows is not the
+ * page's: each row's is its own (`rowAnchors`).
  */
-const anchorsOfPage = (ctx: LintContext, pageId: string): Map<string, string[]> => {
+const anchorsOfPage = (ctx: LintContext, pageId: string, rowAnchors?: Set<string>): Map<string, string[]> => {
   const page = ctx.element(pageId);
   const chain = page
     ? resolveLayoutChain(id => ctx.element(id), attributeText(page, 'layout'), attributeText(page, 'layoutContainer'))
@@ -29,6 +38,12 @@ const anchorsOfPage = (ctx: LintContext, pageId: string): Map<string, string[]> 
   const anchors = new Map<string, string[]>();
   Object.values(ctx.flat).forEach(element => {
     if (!roots.has(element.definition.rootId)) {
+      return;
+    }
+
+    if (element.definition.anchor && inRows(ctx, element.id)) {
+      rowAnchors?.add(element.definition.anchor);
+
       return;
     }
 
@@ -71,22 +86,13 @@ const lintOwnAnchor = (ctx: LintContext, element: Element, anchor: string): void
 
     return;
   }
-
-  const repeater = [...ctx.ancestors(element.id)].find(id => REPEATERS.has(ctx.element(id)?.definition.type ?? ''));
-  if (repeater) {
-    ctx.error(
-      'anchor-repeated',
-      `${where} has the anchor "${anchor}" inside the list "${repeater}", which renders it once per row — the same id would be in the page as many times. Put the anchor on the list itself, or on the element around it.`,
-      element.id
-    );
-  }
 };
 
 /** A link to a section: a well-formed anchor that the page it goes to carries. */
 const lintLinkHash = (
   ctx: LintContext,
   link: Element,
-  anchorsByPage: (pageId: string) => Map<string, string[]>
+  anchorsByPage: (pageId: string) => { anchors: Map<string, string[]>; rows: Set<string> }
 ): void => {
   const hash = attributeText(link, 'hash');
   if (!hash || attributeText(link, 'mode') === 'external') {
@@ -116,7 +122,17 @@ const lintLinkHash = (
     return;
   }
 
-  const anchors = anchorsByPage(pageId);
+  const { anchors, rows } = anchorsByPage(pageId);
+  if (!anchors.has(hash) && rows.has(hash)) {
+    ctx.error(
+      'anchor-in-row',
+      `${where} goes to "${pageId}#${hash}", an anchor a list draws in each of its rows — named after its row there (\`${hash}-<row>\`), so the link would land at the top. Link to the list's own anchor, or to one outside it.`,
+      link.id
+    );
+
+    return;
+  }
+
   if (!anchors.has(hash)) {
     const available = [...anchors.keys()];
     ctx.error(
@@ -170,22 +186,23 @@ export const lintAnchors = (ctx: LintContext): void => {
     return;
   }
 
-  const byPage = new Map<string, Map<string, string[]>>();
-  const anchorsByPage = (pageId: string): Map<string, string[]> => {
+  const byPage = new Map<string, { anchors: Map<string, string[]>; rows: Set<string> }>();
+  const anchorsByPage = (pageId: string): { anchors: Map<string, string[]>; rows: Set<string> } => {
     const known = byPage.get(pageId);
     if (known) {
       return known;
     }
 
-    const anchors = anchorsOfPage(ctx, pageId);
-    byPage.set(pageId, anchors);
+    const rows = new Set<string>();
+    const found = { anchors: anchorsOfPage(ctx, pageId, rows), rows };
+    byPage.set(pageId, found);
 
-    return anchors;
+    return found;
   };
 
   const told = new Set<string>();
   ctx.pageIds.forEach(pageId => {
-    anchorsByPage(pageId).forEach((ids, anchor) => {
+    anchorsByPage(pageId).anchors.forEach((ids, anchor) => {
       const key = `${anchor}:${ids.join(',')}`;
       if (ids.length < 2 || told.has(key)) {
         return;

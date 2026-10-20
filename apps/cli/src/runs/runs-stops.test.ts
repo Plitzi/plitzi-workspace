@@ -1,0 +1,216 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { finishRun } from './merge';
+import { RUNS_DIR, runPaths } from './paths';
+import { isRunRefusal } from './refusal';
+import { attachRun, checkPlanFile, loadRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from './run';
+import { canWrite, completeTask, nextTask, reportProgress, reviewTask, takeTask } from './tasks';
+import { DEFAULTS } from './taskStore';
+import { viewRun } from './view';
+import { benchPlan, makeBench, readInCopy, writeInCopy } from '../tests/runProject';
+import { runSteps } from '../tests/runSteps';
+
+import type { Bench } from '../tests/runProject';
+
+/** A run stopped, cut and disconnected — and attached again on another machine or version. */
+
+let bench: Bench;
+
+beforeEach(async () => {
+  bench = await makeBench();
+});
+
+afterEach(async () => {
+  await bench.cleanup();
+});
+
+const { refusal, lead, openWith, open, take, doTask } = runSteps(() => bench);
+
+describe('stopping, cuts and disconnects', () => {
+  it('a stop lets the tasks in hand finish and starts none', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await stopRun(lead(), 'es-launch', false);
+
+    expect((await refusal(takeTask(bench.agent('agent-2'), 'es-launch', 't-menu'))).code).toBe('stopping');
+    await writeInCopy(
+      home.work,
+      'src/space/pages/home/hero.ts',
+      `export const hero = { text: 'Hola' };
+`
+    );
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
+    await resumeRun(lead(), 'es-launch');
+    expect((await nextTask(lead(), 'es-launch')).task?.id).toBe('t-menu');
+  });
+
+  it('a forced stop is a person’s: what is being written is cut, what is in review kept, no copy pulled away', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const menu = await take('agent-2', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = {};\n');
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
+    const stopped = await stopRun(bench.person(true), 'es-launch', true);
+
+    expect(stopped.cut).toEqual(['t-home']);
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-menu')?.status).toBe('in-review');
+    // An agent mid-command in its copy keeps a folder to stand in: the copy is left, its token revoked.
+    await expect(fs.stat(home.work)).resolves.toBeDefined();
+    const refused = await refusal(completeTask(home.ctx, 'es-launch', 't-home'));
+    expect(refused.code).toBe('forced-stop');
+    expect(refused.message).toContain('those in review keep their work');
+  });
+
+  it('every sign of life says when the run is stopping, before a refusal does', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    expect((await reportProgress(home.ctx, 'es-launch', 't-home', {})).run).toBeUndefined();
+    await stopRun(lead(), 'es-launch', false);
+    expect((await reportProgress(home.ctx, 'es-launch', 't-home', {})).run).toMatchObject({ status: 'stopping' });
+  });
+
+  it('a task whose agent lost its signal: told, then taken over from its last reviewed version', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(
+      home.work,
+      'src/space/pages/home/hero.ts',
+      `export const hero = { text: 'reviewed once' };
+`
+    );
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    await reviewTask(lead(), 'es-launch', 't-home', 'changes', [{ note: 'shorter' }]);
+    await writeInCopy(
+      home.work,
+      'src/space/pages/home/hero.ts',
+      `export const hero = { text: 'half written' };
+`
+    );
+
+    bench.advance(DEFAULTS.noSignalMs + 60_000);
+    const view = await viewRun(lead(), 'es-launch');
+    expect(view.attention.some(item => item.kind === 'no-signal' && item.task === 't-home')).toBe(true);
+    expect((await refusal(takeTask(bench.agent('agent-2'), 'es-launch', 't-home'))).code).toBe('claimed');
+
+    bench.advance(DEFAULTS.lockAfterSignalMs);
+    const replaced = await take('agent-2', 't-home');
+    expect(replaced.replaced).toBe('agent-1');
+    expect(replaced.resumedFrom).toBe(1);
+    expect(await readInCopy(replaced.work, 'src/space/pages/home/hero.ts')).toContain('reviewed once');
+    expect((await refusal(reportProgress(home.ctx, 'es-launch', 't-home', { step: 'back' }))).code).toBe('reassigned');
+  });
+
+  it('a heartbeat keeps a long task alive and its locks held', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    for (let minute = 0; minute < 40; minute += 2) {
+      bench.advance(2 * 60_000);
+      await reportProgress(home.ctx, 'es-launch', 't-home', { fraction: minute / 40 });
+    }
+
+    expect((await viewRun(lead(), 'es-launch')).attention.some(item => item.kind === 'no-signal')).toBe(false);
+    expect(await canWrite(bench.agent('other'), 'src/space/pages/home/hero.ts')).toMatchObject({ ok: false });
+  });
+
+  it('the brake stops a run that keeps failing', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'BROKEN\n');
+    for (let attempt = 0; attempt <= DEFAULTS.brakeFailures; attempt += 1) {
+      await refusal(completeTask(home.ctx, 'es-launch', 't-home'));
+    }
+
+    expect((await loadRun(lead(), 'es-launch')).record.status).toBe('stopping');
+  });
+});
+
+describe('versions, machines and caches', () => {
+  it('refuses every command when the Plitzi version changed under the run; a person re-pins it by attaching', async () => {
+    await open();
+    await take('agent-1', 't-home');
+    const upgraded = bench.agent('agent-2', { cli: '0.0.1-bench' });
+
+    expect((await refusal(nextTask(upgraded, 'es-launch'))).code).toBe('version-mismatch');
+    expect((await refusal(attachRun(upgraded, 'es-launch', false))).code).toBe('person-only');
+    const attached = await attachRun({ ...bench.person(true), cli: '0.0.1-bench' }, 'es-launch', false);
+    expect(attached).toMatchObject({ repinned: true, cut: ['t-home'] });
+    expect((await nextTask(upgraded, 'es-launch')).ready).toContain('t-home');
+  });
+
+  it('is active on one machine: another attaches once it is released, or a person takes it over', async () => {
+    await open();
+    const elsewhere = bench.agent('coordinator-2', { machine: 'laptop' });
+
+    expect((await refusal(nextTask(elsewhere, 'es-launch'))).code).toBe('other-machine');
+    expect((await refusal(attachRun(elsewhere, 'es-launch', false))).code).toBe('other-machine');
+    await releaseRun(lead(), 'es-launch');
+    await attachRun(elsewhere, 'es-launch', false);
+    expect((await nextTask(elsewhere, 'es-launch')).ready.length).toBeGreaterThan(0);
+  });
+
+  it('prunes the caches of a run idle for 8 hours — never what undoes it — and the run resumes from its essentials', async () => {
+    await open();
+    await doTask(
+      'agent-1',
+      't-about',
+      'src/space/pages/about.ts',
+      `export const about = { title: 'Sobre' };
+`
+    );
+    await take('agent-2', 't-home');
+    bench.advance(DEFAULTS.cacheIdleMs + 60_000);
+    const pruned = await pruneRuns(lead());
+
+    expect(pruned.map(each => each.run)).toEqual(['es-launch']);
+    expect((await attachRun(lead(), 'es-launch', false)).cut).toEqual(['t-home']);
+    const dry = await finishRun(bench.person(true), 'es-launch', { apply: false, leavePending: true });
+    expect(dry.plan.apply.map(each => each.file)).toEqual(['src/space/pages/about.ts']);
+  });
+
+  it('one plan and one run at a time: a second is refused, whatever files it names', async () => {
+    await open();
+    const second = benchPlan('second');
+    second.tasks = [{ ...second.tasks[3], files: ['src/data/menu.json'] }];
+    const file = await bench.writePlan(second);
+
+    expect((await refusal(checkPlanFile(lead(), file))).code).toBe('another-run');
+    const refused = await refusal(openWith(lead(), file, 1));
+    expect(refused.code).toBe('another-run');
+    expect(refused.message).toContain('Run "es-launch" is going');
+  });
+
+  it('a run cut while it opened leaves a claim that is taken over once it is old', async () => {
+    await fs.mkdir(path.join(bench.root, RUNS_DIR), { recursive: true });
+    await fs.writeFile(
+      path.join(bench.root, RUNS_DIR, 'active.json'),
+      JSON.stringify({ runId: 'cut', since: bench.now().toISOString(), by: 'lead' })
+    );
+    const file = await bench.writePlan(benchPlan());
+
+    expect((await refusal(openWith(lead(), file, 3))).message).toContain('"cut" is opening');
+    bench.advance(3 * 60_000);
+    await openWith(lead(), file, 3);
+    expect((await loadRun(lead(), 'es-launch')).record.agents).toBe(3);
+  });
+
+  it('of two runs opening at once, one opens', async () => {
+    const first = await bench.writePlan(benchPlan('first'));
+    const second = await bench.writePlan(benchPlan('second'));
+    const results = await Promise.allSettled([openWith(lead(), first, 4), openWith(lead(), second, 4)]);
+
+    expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+    const lost = results.find(result => result.status === 'rejected');
+    expect(lost && isRunRefusal(lost.reason) ? lost.reason.code : undefined).toBe('another-run');
+  });
+
+  it('a purge is a person’s and takes the whole folder', async () => {
+    await open();
+    expect((await refusal(purgeRun(lead(), 'es-launch'))).code).toBe('person-only');
+    await purgeRun(bench.person(true), 'es-launch');
+    expect(await fs.stat(runPaths(bench.root, 'es-launch').dir).catch(() => undefined)).toBeUndefined();
+  });
+});

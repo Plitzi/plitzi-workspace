@@ -13,7 +13,7 @@ import type { RunContext } from './run';
 import type { TaskView } from './taskStore';
 
 /**
- * What a run looks like at a glance (RFC 0028 §9.11): the same for a person in the terminal and for a harness as JSON,
+ * What a run looks like at a glance: the same for a person in the terminal and for a harness as JSON,
  * whatever harness started it. Gathered by reading only — following a run writes nothing.
  */
 

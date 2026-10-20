@@ -64,7 +64,7 @@ export interface UpgradeOptions {
    * package is installed locally, which an install would replace.
    */
   install?: boolean;
-  /** Upgrade although runs of agents are open (RFC 0028): each refuses its commands until a person attaches to it. */
+  /** Upgrade although runs of agents are open: each refuses its commands until a person attaches to it. */
   withOpenRuns?: boolean;
 }
 

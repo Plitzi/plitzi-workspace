@@ -1,0 +1,110 @@
+import chalk from 'chalk';
+
+import type { Authored } from './space';
+import type { CheckReport, ListRows } from './types';
+import type { BrowserPage } from '../../browser';
+
+/**
+ * Each list's rows, drawn and in its source — so an empty one is seen, not inferred from a box.
+ */
+
+/**
+ * How many rows each list draws: the copies of its row — the most of any of its children, one per row whatever a row
+ * hides — inside each of the list's nodes: one, or one per row of a list it is inside. Runs in the page,
+ * self-contained.
+ */
+export const renderedRowsInPage = (
+  lists: { id: string; selector: string; row: string[] }[]
+): [string, number[] | null][] =>
+  lists.map(({ id, selector, row }) => {
+    const nodes = Array.from(document.querySelectorAll(selector));
+
+    return [
+      id,
+      nodes.length === 0
+        ? null
+        : nodes.map(node => Math.max(0, ...row.map(child => node.querySelectorAll(child).length)))
+    ];
+  });
+
+export const listRows = async (
+  page: BrowserPage,
+  authored: Authored,
+  sources: Record<string, number | null>
+): Promise<Record<string, ListRows>> => {
+  const selectorOf = (id: string): string | undefined =>
+    Object.hasOwn(authored.handles.elements, id) ? authored.handles.elements[id].selector : undefined;
+  // A list whose rows are written out counts too: its source is the rows it was given, said only when it is on the page.
+  const fixed = Object.fromEntries(
+    Object.values(authored.schema.flat).flatMap(element => {
+      const items: unknown = element.attributes.items;
+
+      return element.definition.type === 'list' && Array.isArray(items) && !Object.hasOwn(sources, element.id)
+        ? [[element.id, items.length] as const]
+        : [];
+    })
+  );
+  const all = { ...sources, ...fixed };
+  const lists = Object.keys(all).flatMap(id => {
+    const selector = selectorOf(id);
+    const row = (authored.schema.flat[id].definition.items ?? []).flatMap(child => selectorOf(child) ?? []);
+
+    return selector ? [{ id, selector, row }] : [];
+  });
+  const rendered = new Map(lists.length > 0 ? await page.evaluate(renderedRowsInPage, lists) : []);
+
+  return Object.fromEntries(
+    Object.entries(all)
+      .filter(([id]) => !Object.hasOwn(fixed, id) || (rendered.get(id) ?? null) !== null)
+      .map(([id, source]) => {
+        const counts = rendered.get(id) ?? null;
+
+        return [
+          id,
+          {
+            rendered: counts === null ? null : counts.reduce((sum, count) => sum + count, 0),
+            source,
+            ...(counts !== null && counts.length > 1 ? { copies: counts } : {})
+          }
+        ];
+      })
+  );
+};
+
+const rowsText = (count: number): string => `${String(count)} row${count === 1 ? '' : 's'}`;
+
+/** One list's rows in a few words: `plan-list 3 rows`, `feed 4 of 8 rows`, `hits not rendered (16 in its source)`. */
+export const listText = (id: string, { rendered, source, copies }: ListRows): string => {
+  if (source === null) {
+    return `${id} reads nothing`;
+  }
+
+  if (rendered === null) {
+    return `${id} not rendered (${String(source)} in its source)`;
+  }
+
+  // Drawn once per row of the list it is in: each copy shows its own share, and together what they draw.
+  if (copies) {
+    // Fed by the row it sits in (`group.item.questions`), its source is no list the page has whole: none to count.
+    return source === 0 && rendered > 0
+      ? `${id} ${rowsText(rendered)} in ${String(copies.length)} copies (${copies.join(', ')}), each fed by the row it is in`
+      : `${id} ${rowsText(rendered)} in ${String(copies.length)} copies (${copies.join(', ')}) of ${String(source)} in its source`;
+  }
+
+  // One copy left — the others hidden, a search that kept one group — is still fed by its row: there is no whole to count.
+  if (source === 0 && rendered > 0) {
+    return `${id} ${rowsText(rendered)}, fed by the row it is in`;
+  }
+
+  return `${id} ${rendered === source ? rowsText(source) : `${String(rendered)} of ${rowsText(source)}`}`;
+};
+
+/** Each list's rows, drawn and in its source — so an empty one is seen, not inferred from a box. */
+export const listsText = (lists: CheckReport['lists']): string[] => {
+  const entries = Object.entries(lists);
+  if (entries.length === 0) {
+    return [];
+  }
+
+  return [chalk.dim(`  · lists: ${entries.map(([id, rows]) => listText(id, rows)).join(', ')}`)];
+};

@@ -1,0 +1,359 @@
+import { Option } from 'commander';
+
+import {
+  runAbort,
+  runAttach,
+  runCanWrite,
+  runContinue,
+  runFinish,
+  runOpen,
+  runPlan,
+  runRehearse,
+  runPreview,
+  runPrune,
+  runReport,
+  runPurge,
+  runRelease,
+  runResolve,
+  runRestore,
+  runResume,
+  runShow,
+  runState,
+  runStatus,
+  runStop,
+  runWatch,
+  runAllowFinish,
+  runAmend,
+  runExtend,
+  runTeam,
+  runPending,
+  runTeamSet,
+  runTeamUnset,
+  runNote
+} from '..';
+import { JSON_OPTION, TOKEN_OPTION, RUN_OPTION, AGENT_OPTION } from './options';
+import { duration, names, positiveInteger } from '../../../options';
+
+import type { FinishOptions, PlanOptions, RunCommandOptions, WatchRunOptions } from '..';
+import type { Command } from 'commander';
+
+/** `plitzi run …`: its commands, registered on the program. */
+export const registerRunGroup = (program: Command): Command => {
+  const runGroup = program
+    .command('run')
+    .description(
+      'Several agents on one project: a plan of tasks over disjoint files, each in a copy, merged once by a person'
+    );
+
+  runGroup
+    .command('plan')
+    .description('Hold a plan the lead wrote to the rules — disjoint files, no cycles — expand it and estimate it')
+    .argument(
+      '<file>',
+      'The plan, JSON: { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }'
+    )
+    .option(...JSON_OPTION)
+    .action((file: string, options: PlanOptions) => runPlan(file, options));
+
+  runGroup
+    .command('extend')
+    .description(
+      'Stack the next plan on an open run: its tasks begin from the run’s work, and one finish writes both into the project'
+    )
+    .argument('<run-or-file>', 'The open run — or, alone, the next plan: the run is then the one open')
+    .argument('[file]', 'The next plan')
+    .option(...JSON_OPTION)
+    .action((first: string, file: string | undefined, options: PlanOptions) =>
+      file === undefined ? runExtend(undefined, first, options) : runExtend(first, file, options)
+    );
+
+  runGroup
+    .command('pending')
+    .description(
+      'The runs of this project not yet written into it — ready ones first, each with the command that applies it'
+    )
+    .option(...JSON_OPTION)
+    .action((options: RunCommandOptions) => runPending(options));
+
+  const team = runGroup
+    .command('team')
+    .description(
+      'Who works this project’s runs — .plitzi/team.json, the project’s: the lead and each agent, its roles, how many and its model'
+    )
+    .option(...JSON_OPTION)
+    .action((options: RunCommandOptions) => runTeam(options));
+
+  team
+    .command('set')
+    .description('Add an agent to the team or change one — lead for the lead’s model — said before and after')
+    .argument('<name>', 'The agent: dev is dev-1, dev-2… — or lead')
+    .option(
+      '--roles <roles>',
+      'What it takes: developer, designer, reviewer, tester, writer… — several with commas',
+      names
+    )
+    .option('--count <n>', 'How many agents of it', positiveInteger)
+    .option('--model <model>', 'The harness’s own name for it: claude-sonnet-5-5')
+    .option('--effort <effort>', 'How hard it thinks, in the harness’s words: high')
+    .option(...JSON_OPTION)
+    .action(
+      (
+        name: string,
+        options: RunCommandOptions & { roles?: string[]; count?: number; model?: string; effort?: string }
+      ) => runTeamSet(name, options)
+    );
+
+  team
+    .command('unset')
+    .description('Take an agent out of the team — or, for lead, the lead’s own model')
+    .argument('<name>', 'The agent, or lead')
+    .option(...JSON_OPTION)
+    .action((name: string, options: RunCommandOptions) => runTeamUnset(name, options));
+
+  runGroup
+    .command('rehearse')
+    .description(
+      'Play a plan out before any agent starts: who works what when, the critical path, the lead’s reviews, the files several tasks change at once, and how many agents are worth it — nothing opened'
+    )
+    .argument('<file>', 'The plan, as plitzi run plan takes it')
+    .option('--review <duration>', 'How long the lead takes over one review (90s, 8m)', duration, 5 * 60_000)
+    .option(...JSON_OPTION)
+    .action((file: string, options: PlanOptions & { review?: number }) => runRehearse(file, options));
+
+  runGroup
+    .command('open')
+    .description(
+      'Open a run from a plan: its folder, every file it touches backed up — a person confirms above the threshold'
+    )
+    .argument('<file>', 'The plan')
+    .option(
+      '--lead-finishes',
+      'Let the lead write the run into the project itself once its report is written and the checks pass — a person confirms it in their terminal'
+    )
+    .option(...AGENT_OPTION)
+    .option(...JSON_OPTION)
+    .action((file: string, options: PlanOptions) => runOpen(file, options));
+
+  runGroup
+    .command('allow-finish')
+    .description(
+      'A person lets the lead of an open run write it into the project itself (finish --apply), once its report is written and the checks pass — --revoke takes it back'
+    )
+    .argument('[run]', 'The run — the only open one when left out')
+    .option('--revoke', 'Take it back: a person writes the run into the project')
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions & { revoke?: boolean }) =>
+      runAllowFinish(run, options)
+    );
+
+  runGroup
+    .command('state')
+    .description('Every run of the project, and where it stands')
+    .option(...JSON_OPTION)
+    .action((options: RunCommandOptions) => runState(options));
+
+  runGroup
+    .command('status')
+    .description('A run at a glance: a line per task, then what needs attention')
+    .argument('[run]', 'The run — the only open one when left out')
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions) => runStatus(run, options));
+
+  runGroup
+    .command('note')
+    .description(
+      'Tell every task what holds for the whole run — a known issue, a decision: the ones in hand and those taken later'
+    )
+    .argument('<text>', 'The note — or - to read it from stdin')
+    .option(...RUN_OPTION)
+    .option(...JSON_OPTION)
+    .action((text: string, options: RunCommandOptions) => runNote(text, options));
+
+  runGroup
+    .command('amend')
+    .description(
+      'Correct what the open run asks — a task’s title, acceptance, priority or estimate, the goal, a note more — from its plan file edited; each task changed is told'
+    )
+    .argument('<run-or-file>', 'The open run — or, alone, the plan: the run is then the one open')
+    .argument(
+      '[file]',
+      'The plan, edited — the run’s, or a stage’s as it was stacked: the same tasks, files and dependencies'
+    )
+    .option(...RUN_OPTION)
+    .option(...JSON_OPTION)
+    .action((first: string, file: string | undefined, options: RunCommandOptions) =>
+      file === undefined ? runAmend(undefined, first, options) : runAmend(first, file, options)
+    );
+
+  runGroup
+    .command('watch')
+    .description(
+      'Follow a run: printed again whenever it changes, until it finishes — one JSON object a line with --json'
+    )
+    .argument('[run]', 'The run — the only open one when left out')
+    .option('--interval <seconds>', 'How often to look (2; 10 with --until lead)', positiveInteger)
+    .addOption(
+      new Option(
+        '--until <who>',
+        'End the moment something new needs them — a review, a question, a block, a notice — each said once'
+      ).choices(['lead'])
+    )
+    .option(
+      '--timeout <duration>',
+      'With --until: how long to wait before ending with nothing new (90s, 8m, 1h; a number is minutes)',
+      duration,
+      25 * 60_000
+    )
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: WatchRunOptions) => runWatch(run, options));
+
+  runGroup
+    .command('can-write')
+    .description(
+      'Whether a file may be written: no — with the task and until when — if a task of any open run holds it. For any hook'
+    )
+    .argument('<file>', 'The project file')
+    .option('--task <task>', 'The task asking, when it has no token at hand')
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((file: string, options: RunCommandOptions & { task?: string }) => runCanWrite(file, options));
+
+  runGroup
+    .command('stop')
+    .description(
+      'Stop a run: the tasks in hand finish and go to review, none starts. --force is a person’s: it cuts them now'
+    )
+    .argument('[run]', 'The run')
+    .option('--force', 'Now: tokens revoked, what was written since the last review discarded')
+    .option(...AGENT_OPTION)
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions & { force?: boolean }) => runStop(run, options));
+
+  runGroup
+    .command('resume')
+    .description('Open a stopped run again')
+    .argument('[run]', 'The run')
+    .option(...AGENT_OPTION)
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions) => runResume(run, options));
+
+  runGroup
+    .command('finish')
+    .description(
+      'The whole run into the project: a dry run with the checks on the result; --apply, a person’s, writes it'
+    )
+    .argument('[run]', 'The run')
+    .option('--apply', 'Write it — a person, typing the run’s name')
+    .option('--leave-pending', 'Finish without the tasks not done, said as such')
+    .option(
+      '--keep-backup',
+      'Keep the project’s files as they were before the merge, in tmp/plitzi-backups/ — off by default'
+    )
+    .option(...TOKEN_OPTION)
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: FinishOptions) => runFinish(run, options));
+
+  runGroup
+    .command('preview')
+    .description('The run’s work as it goes, served by the project’s dev server: each approval shows in it')
+    .argument('[run]', 'The run')
+    .option('--task <task>', 'A task in review instead: its copy as it went to review, to look at before approving it')
+    .option('--port <port>', 'Where to serve it (8300; 8301 with --task)', positiveInteger)
+    .action((run: string | undefined, options: RunCommandOptions & { port?: number; task?: string }) =>
+      runPreview(run, options)
+    );
+
+  runGroup
+    .command('report')
+    .description('How the run went, as the CLI saw it — and, with --summary, the lead’s summary that closes it')
+    .argument('[run]', 'The run')
+    .option('--summary <file>', 'The lead’s summary: what the run did, what went wrong, what is left (Markdown)')
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions & { summary?: string }) => runReport(run, options));
+
+  runGroup
+    .command('resolve')
+    .description(
+      'Settle one file of a reconciliation: the project’s version, the run’s, both merged, or a file of yours'
+    )
+    .argument('<run>', 'The run')
+    .argument('<file>', 'The file under reconciliation')
+    .requiredOption(
+      '--take <version>',
+      'project, run, merge (both changes line by line, when they touch different lines), or the path of a file holding the version to keep'
+    )
+    .option(...JSON_OPTION)
+    .action((run: string, file: string, options: RunCommandOptions & { take: string }) =>
+      runResolve(run, file, options)
+    );
+
+  runGroup
+    .command('continue')
+    .description('Every file resolved: the run goes on — a person’s')
+    .argument('[run]', 'The run')
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions) => runContinue(run, options));
+
+  runGroup
+    .command('abort')
+    .description('End the run writing nothing into the project, and remove it with its agents’ work — a person’s')
+    .argument('[run]', 'The run')
+    .option(...JSON_OPTION)
+    .action((run: string | undefined, options: RunCommandOptions) => runAbort(run, options));
+
+  runGroup
+    .command('restore')
+    .description('Put one project file back from a backup — a person’s')
+    .argument('<run>', 'The run')
+    .argument('<file>', 'The project file')
+    .option('--from <backup>', 'base (when the run opened) or a merge (before it)', 'base')
+    .option(...JSON_OPTION)
+    .action((run: string, file: string, options: RunCommandOptions & { from?: string }) =>
+      runRestore(run, file, options)
+    );
+
+  runGroup
+    .command('show')
+    .description('A version of a file the run keeps: the run’s, the backup when it opened, or the project’s')
+    .argument('<run>', 'The run')
+    .argument('<file>', 'The project file')
+    .addOption(new Option('--version <which>', 'Which one').choices(['run', 'base', 'project']).default('run'))
+    .option(...JSON_OPTION)
+    .action((run: string, file: string, options: RunCommandOptions & { version?: 'run' | 'base' | 'project' }) =>
+      runShow(run, file, options)
+    );
+
+  runGroup
+    .command('attach')
+    .description(
+      'Pick a run up: after the harness died, on another machine (--take-over, a person’s), after an upgrade'
+    )
+    .argument('<run>', 'The run')
+    .option('--take-over', 'Take it from the machine it is active on')
+    .option(...AGENT_OPTION)
+    .option(...JSON_OPTION)
+    .action((run: string, options: RunCommandOptions & { takeOver?: boolean }) => runAttach(run, options));
+
+  runGroup
+    .command('release')
+    .description('Let a run go from this machine, so another can attach to it')
+    .argument('<run>', 'The run')
+    .option(...JSON_OPTION)
+    .action((run: string, options: RunCommandOptions) => runRelease(run, options));
+
+  runGroup
+    .command('purge')
+    .description('Remove a run’s folder, backups included — a person’s')
+    .argument('<run>', 'The run')
+    .option(...JSON_OPTION)
+    .action((run: string, options: RunCommandOptions) => runPurge(run, options));
+
+  runGroup
+    .command('prune')
+    .description('Remove the caches of a run idle for 8 hours — never its backups or its approved work')
+    .option(...JSON_OPTION)
+    .action((options: RunCommandOptions) => runPrune(options));
+
+  return runGroup;
+};

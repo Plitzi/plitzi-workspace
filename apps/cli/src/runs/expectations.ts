@@ -9,7 +9,7 @@ import type { PlannedTask } from './model';
 import type { SpaceHandles } from '@plitzi/sdk-authoring';
 
 /**
- * What a plan's `page check --expect` names, held to the space as it is (RFC 0028): an id it has no element of is said
+ * What a plan's `page check --expect` names, held to the space as it is: an id it has no element of is said
  * at `run plan` — the task may make it, so it is a notice, not a refusal — with the id it more likely meant: a page
  * family's (`pet-luna-age-label` for `age-label`), or the nearest. A check that expects what is not there costs an
  * agent a round, and the lead the blocked task that asks why.

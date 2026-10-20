@@ -1,5 +1,5 @@
 import { act, render } from '@testing-library/react';
-import { useEffect } from 'react';
+import { use, useEffect } from 'react';
 import { describe, it, expect, vi } from 'vitest';
 
 import { StoreProvider } from '@plitzi/nexus/react';
@@ -7,6 +7,7 @@ import { StoreProvider } from '@plitzi/nexus/react';
 import ListControlled from './ListControlled';
 import useElementDataSource from '../../../../../Element/hooks/useElementDataSource';
 import useElementState from '../../../../../Element/hooks/useElementState';
+import { anchorInRows, RowAnchorContext, rowAnchorName } from '../../../../../Element/RowAnchor';
 
 import type { ReactNode } from 'react';
 
@@ -175,5 +176,23 @@ describe('ListControlled', () => {
     );
 
     expect(indexes).toEqual(expect.arrayContaining([0, 1]));
+  });
+
+  /** An anchor in a row is the row's own: each row gives its anchors its name, nested rows each theirs. */
+  it('names each row for the anchors drawn in it — by its key, nested lists one after the other', () => {
+    const Anchored = () => <span data-testid="answer" id={anchorInRows('faq-answer', use(RowAnchorContext))} />;
+    const { getAllByTestId } = render(
+      <StoreProvider value={{}}>
+        <ListControlled className="" items={[{ id: 'luna' }, { id: 'Kira Two' }]}>
+          <Anchored />
+        </ListControlled>
+      </StoreProvider>
+    );
+
+    expect(getAllByTestId('answer').map(node => node.id)).toEqual(['faq-answer-luna', 'faq-answer-kira-two']);
+    expect(rowAnchorName(3)).toBe('3');
+    expect(rowAnchorName('slug:Field Notes')).toBe('field-notes');
+    expect(anchorInRows('faq-answer', [])).toBe('faq-answer');
+    expect(anchorInRows('note', ['luna', '2'])).toBe('note-luna-2');
   });
 });

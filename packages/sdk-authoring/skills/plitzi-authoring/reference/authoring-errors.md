@@ -29,10 +29,11 @@ The space is not written until these are fixed.
 | `active-when-constant` | an `activeWhen` condition that reads nothing — always or never true | name what it depends on: `'{{ list_dots.index == state.slide }}'` |
 | `ancestor-not-class` | an ancestor condition keyed by something that is neither a class name nor `'>'` (the parent) | `[card.name]` for a `styles()` declaration, or `'>'` for the parent whatever it wears |
 | `anchor-duplicate` | one anchor on two elements of the same page (layouts included) | rename all but one |
+| `anchor-in-row` | a link to an anchor drawn in a list’s rows — each row’s is named after its row, so the link lands at the top | link to the list’s own anchor, or to one outside it |
 | `anchor-invalid` | an `anchor` or a link's `hash` that is not lowercase letters, digits and `-` | `anchor: 'plans'`, `hash: 'plans'` — no `#` |
 | `anchor-missing` | a link whose `hash` no element on the page it goes to carries — it would land at the top | the anchor the message lists, or give the section that `anchor` |
 | `anchor-no-tag` | an anchor on an element that renders no element of its own | the anchor on the element around it, or `subType: 'div'` on the provider |
-| `anchor-repeated` | an anchor inside a list row or a component — it would be in the page once per row or instance | the anchor on the list, or on the element around the instance |
+| `anchor-repeated` | an anchor inside a component — it would be in the page once per instance | the anchor on the element around the instance (in a list row, an anchor is the row’s own: that one is fine) |
 | `as-without-from` | `as` with no `from` — `as` is how the source `from` names is shown | `from: 'products.item.price', as: 'price'` |
 | `attribute-kind` | text where a flag or a list is read | `disabled: true`, not `'true'`; `items: [ … ]` |
 | `attribute-value` | a value outside the attribute's list (`subType: 'h7'`) | one of the listed values |
@@ -60,6 +61,7 @@ The space is not written until these are fixed.
 | `computed-reads-element` | a computed value reading an element's source — no element is around the whole space | compute it from the globals and the variables, or bind it on the element |
 | `computed-unknown` | a computed value read before it is declared, or never declared | declare it in `computed`, above the one that reads it |
 | `condition-field-unpublished` | a `when` asking a step of its flow for a key it never publishes — `whenSucceeded` / `whenFailed` on anything but `runServerAction` | a key the step publishes (`explain <step>`): after `authLogin`, `when({ field: 'signedIn.ok', operator: '=', value: true }, …)` |
+| `controls-other-row` | a button's `controls` naming an element a list draws in its rows, from outside that row | the button in the same row as what it shows and hides, or `controls` naming an element outside the list |
 | `controls-unknown` | a button's `controls` naming no element of the space | the id of the element it shows and hides: `controls: 'faq-answer'` |
 | `css-property-twice` | one property written twice in a rule set — `paddingTop` beside `'padding-top'` — so one would silently win | keep one |
 | `css-property-unknown` | a CSS property that does not exist | the property it suggests; a custom property starts with `--` |

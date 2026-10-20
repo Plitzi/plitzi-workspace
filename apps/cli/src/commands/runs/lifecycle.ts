@@ -1,0 +1,178 @@
+import chalk from 'chalk';
+
+import { act, runOf, taskOf } from './shell';
+import { inputLines, list } from './text';
+import { abortRun, continueRun, finishRun, resolveFile, restoreFile } from '../../runs/merge';
+import { RunRefusal } from '../../runs/refusal';
+import { attachRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from '../../runs/run';
+import { canWrite } from '../../runs/tasks';
+
+import type { RunCommandOptions } from './shell';
+
+/**
+ * A run stopped, resumed, finished into the project — or not — attached, released, purged.
+ */
+
+export const runCanWrite = (file: string, options: RunCommandOptions & { task?: string }): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      const task = ctx.token ? taskOf(ctx) : options.task;
+      const answer = await canWrite(ctx, file, task);
+      if (!answer.ok) {
+        throw new RunRefusal(
+          'claimed',
+          `${answer.file} is task "${answer.holder.task}"'s (run "${answer.holder.run}", ${answer.holder.lock.agent}: ${answer.holder.lock.intent})${answer.holder.until ? `; if it gives no sign of life, its lock runs out at ${answer.holder.until}` : ''}`,
+          {
+            file: answer.file,
+            task: answer.holder.task,
+            holder: answer.holder.lock.agent,
+            ...(answer.holder.until ? { until: answer.holder.until } : {})
+          }
+        );
+      }
+
+      return answer;
+    },
+    answer => `Yes: ${answer.file} is not held by another task.`
+  );
+
+export const runStop = (runId: string | undefined, options: RunCommandOptions & { force?: boolean }): Promise<void> =>
+  act(
+    options,
+    async ctx => stopRun(ctx, await runOf(ctx, options, runId), options.force ?? false),
+    stopped =>
+      options.force
+        ? `Stopped now. Cut: ${list(stopped.cut)} — each starts again from its last reviewed version, or from scratch if it never had one; what their agents started in the copies (their servers) is theirs to stop.`
+        : 'Stopping: the tasks in hand finish and go to review; none starts. What is pending stays in the plan.'
+  );
+
+export const runResume = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => resumeRun(ctx, await runOf(ctx, options, runId)),
+    () => 'Open again: tasks can be taken.'
+  );
+
+export interface FinishOptions extends RunCommandOptions {
+  apply?: boolean;
+  leavePending?: boolean;
+  keepBackup?: boolean;
+}
+
+export const runFinish = (runId: string | undefined, options: FinishOptions): Promise<void> =>
+  act(
+    options,
+    async ctx =>
+      finishRun(ctx, await runOf(ctx, options, runId), {
+        apply: options.apply ?? false,
+        leavePending: options.leavePending ?? false,
+        backup: options.keepBackup ?? false
+      }),
+    finished =>
+      [
+        chalk.bold(
+          finished.dryRun
+            ? 'The run into the project — dry run, nothing written:'
+            : 'Written into the project, and the run removed:'
+        ),
+        ...finished.plan.apply.map(
+          each => `  ${each.before === null ? '+' : each.after === null ? '-' : '~'} ${each.file}`
+        ),
+        ...(finished.plan.same.length > 0 ? [`  already as the run has them: ${finished.plan.same.join(', ')}`] : []),
+        ...finished.plan.conflicts.map(each => chalk.yellow(`  ! ${each.file}: changed in the project and in the run`)),
+        ...finished.plan.overwrites.map(each =>
+          chalk.yellow(
+            `  ⚠ ${each.file}: written over a change made outside the run — ${each.task}'s version, decided by ${each.by}; the other is kept`
+          )
+        ),
+        finished.plan.checks?.none
+          ? chalk.yellow(`  Not checked: ${finished.plan.checks.none}`)
+          : `  The project's checks pass on the result (${list(finished.plan.checks?.steps.map(step => step.name) ?? [])})`,
+        ...(finished.left.length > 0 ? [`  Left in the plan: ${finished.left.join(', ')}`] : []),
+        finished.dryRun
+          ? finished.plan.conflicts.length > 0
+            ? 'With --apply the run enters reconciliation: a person resolves each conflict.'
+            : finished.leadFinishes
+              ? 'A person let the lead write it: plitzi run finish --apply (--keep-backup keeps the files it overwrites)'
+              : 'A person writes it: plitzi run finish --apply (--keep-backup keeps the files it overwrites) — or lets the lead, once: plitzi run allow-finish'
+          : [
+              finished.backup
+                ? `The files as they were before it: ${finished.backup} (copy one back to undo it)`
+                : 'No backup was kept: --keep-backup keeps one next time.',
+              `Written by ${String(finished.writtenBy)}. The run's report: ${String(finished.report)}`,
+              ...inputLines(finished.inputs)
+            ].join('\n')
+      ].join('\n')
+  );
+
+export const runResolve = (runId: string, file: string, options: RunCommandOptions & { take: string }): Promise<void> =>
+  act(
+    options,
+    ctx => resolveFile(ctx, runId, file, options.take),
+    resolved =>
+      `${resolved.file}: resolved with ${resolved.resolved ?? ''}. Continue when every file is: plitzi run continue ${runId}`
+  );
+
+export const runContinue = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => continueRun(ctx, await runOf(ctx, options, runId)),
+    () => 'Reconciliation resolved: the run goes on. The next finish checks the project again.'
+  );
+
+export const runAbort = (runId: string | undefined, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => abortRun(ctx, await runOf(ctx, options, runId)),
+    aborted =>
+      [
+        `Aborted and removed: nothing was written into the project. Discarded: ${list(aborted.discarded)}`,
+        `The run's report: ${aborted.report}`,
+        ...inputLines(aborted.inputs)
+      ].join('\n')
+  );
+
+export const runRestore = (
+  runId: string,
+  file: string,
+  options: RunCommandOptions & { from?: string }
+): Promise<void> =>
+  act(
+    options,
+    ctx => restoreFile(ctx, runId, file, options.from ?? 'base'),
+    restored =>
+      `${restored.file} put back (${restored.merge}); undo it: plitzi run restore ${runId} ${restored.file} --from ${restored.merge}`
+  );
+
+export const runAttach = (runId: string, options: RunCommandOptions & { takeOver?: boolean }): Promise<void> =>
+  act(
+    options,
+    ctx => attachRun(ctx, runId, options.takeOver ?? false),
+    attached =>
+      `Attached to "${runId}"${attached.tookOver ? ', taken over from the other machine' : ''}${attached.repinned ? ', re-pinned to the Plitzi installed now' : ''}. Cut: ${list(attached.cut)}.\nGo on: plitzi run status ${runId}`
+  );
+
+export const runRelease = (runId: string, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    ctx => releaseRun(ctx, runId),
+    () => `Released: another machine can attach to "${runId}".`
+  );
+
+export const runPurge = (runId: string, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    ctx => purgeRun(ctx, runId),
+    inputs => [`Run "${runId}" removed, with its backups.`, ...inputLines(inputs)].join('\n')
+  );
+
+export const runPrune = (options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    ctx => pruneRuns(ctx),
+    pruned =>
+      pruned.length === 0
+        ? 'No cache to prune.'
+        : pruned.map(each => `${each.run}: ${(each.freed / 1e6).toFixed(1)} MB freed (${each.why})`).join('\n')
+  );

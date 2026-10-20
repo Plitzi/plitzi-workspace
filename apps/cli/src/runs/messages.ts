@@ -7,10 +7,10 @@ import { createExclusive, readJson, writeJson } from './files';
 import { taskPaths } from './paths';
 import { RunRefusal } from './refusal';
 
-import type { LoadedRun, RunContext } from './run';
+import type { LoadedRun, RunContext } from './run/context';
 
 /**
- * The lead and the agents talking while a task is worked (RFC 0028): an agent asks when it is stuck (`task ask`), the
+ * The lead and the agents talking while a task is worked: an agent asks when it is stuck (`task ask`), the
  * lead gives instructions to one task or to all at once (`task message`). What is unread reaches an agent with its next
  * heartbeat, progress or completion, so it never has to look — and the lead sees questions on top of `run status`. A
  * message is data for its reader to weigh, never an order that skips the plan.

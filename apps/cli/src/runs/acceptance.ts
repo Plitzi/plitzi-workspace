@@ -11,7 +11,7 @@ import { DEV_SERVER_FILE } from '../scaffold/paths';
 import type { Acceptance, AcceptanceResult } from './model';
 
 /**
- * A task's acceptance, checked by the commands its plan gives (RFC 0028): each run in the task's copy as `complete` runs
+ * A task's acceptance, checked by the commands its plan gives: each run in the task's copy as `complete` runs
  * the project's checks, passing on exit 0 — so what is asked is held by the CLI, not only read by the lead at review.
  * `plitzi` in a check is this CLI, the one the run is worked with; `$PLITZI_URL`, the copy served by its own start
  * script on a free port, for as long as the checks take.
@@ -53,8 +53,21 @@ export const answering = async (url: string, ms: number): Promise<boolean> => {
   return false;
 };
 
-/** Whether a check needs the copy served: it names `$PLITZI_URL`, or `$PLITZI_PORT` — its port, for a runner (Playwright) configured by `PORT`. */
-export const namesServedCopy = (check: string): boolean => /PLITZI_(?:URL|PORT)\b/.test(check);
+/**
+ * Whether a check needs the copy served: it names `$PLITZI_URL` or `$PLITZI_PORT`, or it runs the project's Playwright
+ * specs — configured by `PORT`, which a served check is given.
+ */
+export const namesServedCopy = (check: string): boolean =>
+  /PLITZI_(?:URL|PORT)\b/.test(check) || /\bplaywright\s+test\b/.test(check);
+
+/**
+ * The check as any shell runs it: `$PLITZI_URL` and `$PLITZI_PORT` (or `${…}`) written in as their values — a POSIX
+ * shell would expand them, Windows' `cmd.exe` would not.
+ */
+export const withServedValues = (check: string, values: Readonly<Record<string, string>>): string =>
+  check.replace(/\$\{?(PLITZI_(?:URL|PORT))\}?/g, (written, name: string) =>
+    Object.hasOwn(values, name) ? values[name] : written
+  );
 
 /**
  * A server the agent started in its copy and left running: it holds the copy's state (its locks, its files) as the one
@@ -118,8 +131,9 @@ const serveCopy = async (
     try {
       if (child.pid !== undefined && process.platform !== 'win32') {
         process.kill(-child.pid, 'SIGTERM');
-      } else {
-        child.kill('SIGTERM');
+      } else if (child.pid !== undefined) {
+        // Windows has no process groups: the shell and the server under it, as a tree.
+        spawn('taskkill', ['/pid', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
       }
     } catch {
       // Already gone.
@@ -149,6 +163,10 @@ const cliShim = async (cache: string): Promise<string> => {
   await fs.mkdir(dir, { recursive: true });
   const shim = path.join(dir, 'plitzi');
   await fs.writeFile(shim, `#!/bin/sh\nexec "${process.execPath}" "${process.argv[1]}" "$@"\n`, { mode: 0o755 });
+  // Windows runs a `.cmd` where a POSIX shell runs the script above.
+  if (process.platform === 'win32') {
+    await fs.writeFile(`${shim}.cmd`, `@"${process.execPath}" "${process.argv[1]}" %*\r\n`);
+  }
 
   return dir;
 };
@@ -172,8 +190,11 @@ export const checkAcceptance = async (
   try {
     const results: AcceptanceResult[] = [];
     for (const each of checked) {
-      const { code, output } = await runScript(work, each.check, root, {
-        env: served ? { PLITZI_URL: served.url, PLITZI_PORT: String(served.port) } : {},
+      const values: Record<string, string> = served
+        ? { PLITZI_URL: served.url, PLITZI_PORT: String(served.port), PORT: String(served.port) }
+        : {};
+      const { code, output } = await runScript(work, withServedValues(each.check, values), root, {
+        env: values,
         bin: [bin]
       });
       results.push({

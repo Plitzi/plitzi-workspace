@@ -29,7 +29,7 @@ import type {
 } from './model';
 import type { RunPaths, TaskPaths } from './paths';
 
-/** The defaults of RFC 0028 §14: few subagents, long tasks — a slow task is not a dead one, and no timer cuts one alive. */
+/** The run's defaults: few subagents, long tasks — a slow task is not a dead one, and no timer cuts one alive. */
 export const DEFAULTS = {
   /** Without a write, progress, heartbeat or command for this long — or 25 % of its estimate, if longer — a task has no signal. */
   noSignalMs: 15 * 60_000,

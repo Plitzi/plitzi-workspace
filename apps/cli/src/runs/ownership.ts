@@ -11,7 +11,7 @@ import { ACTIONS_ENTRY, FUNCTIONS_DIR, PLUGINS_DIR, RUNTIME_ENTRY, SPACE_ENTRY }
 import type TypeScript from 'typescript';
 
 /**
- * Who owns which file of a project, read off its imports (RFC 0028 §2): one agent per file, and a page is rarely one
+ * Who owns which file of a project, read off its imports: one agent per file, and a page is rarely one
  * file — a folder of modules, importing others every page imports.
  *
  * The project's entries (the space's, the actions', the functions', the runtime's) are shared: everything goes through

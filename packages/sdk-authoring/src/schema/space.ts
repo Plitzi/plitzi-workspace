@@ -253,6 +253,21 @@ export const PAGE_SPEC_FIELDS: Readonly<Record<string, keyof PageSpec>> = {
 const layoutAttributes = (layout: LayoutRef | undefined): Record<string, string> =>
   layout ? { layout: layout.id, layoutContainer: layout.slot } : {};
 
+/** The lists an element is drawn in once per row — a list with `items`, innermost first: what its anchors are named by. */
+const rowsOf = (flat: Record<string, Element>, id: string): string[] => {
+  const rows: string[] = [];
+  const parentOf = (of: string): string | undefined =>
+    Object.hasOwn(flat, of) ? (flat[of].definition.parentId ?? undefined) : undefined;
+  for (let at = parentOf(id); at && Object.hasOwn(flat, at); at = parentOf(at)) {
+    const element = flat[at];
+    if (element.definition.type === 'list' && element.attributes.source === 'controlled') {
+      rows.push(at);
+    }
+  }
+
+  return rows;
+};
+
 class SpaceAuthor {
   private readonly flatMap = new FlatMap({ flat: {}, variables: [] });
 
@@ -1117,6 +1132,20 @@ class SpaceAuthor {
       const anchor = target.definition.anchor ?? anchorOf(target.id);
       target.definition.anchor = anchor;
       element.attributes.controls = anchor;
+
+      // Drawn in a list's rows, its anchor is each row's own: the button points at its own row's, and only one of the
+      // same rows can — from anywhere else there is no one element it would name.
+      const targetRows = rowsOf(flat, target.id);
+      if (targetRows.length > 0) {
+        if (rowsOf(flat, element.id).join(' ') !== targetRows.join(' ')) {
+          throw new AuthoringError(
+            'controls-other-row',
+            `Button "${element.id}" controls "${target.id}", which the list "${targetRows.join('" in "')}" draws once per row — from outside that row there is no one of them it could name. Put the button in the same row, or have it control an element outside the list.`
+          );
+        }
+
+        element.attributes.controlsInRow = true;
+      }
     }
   }
 

@@ -102,7 +102,7 @@ describe('the tests of a developer task, with a tester in the team', () => {
     ]);
     expect(tests[0]?.acceptance.at(-1)).toEqual({
       said: 'Its pages’ tests pass against the copy served',
-      check: 'PORT=$PLITZI_PORT npx playwright test visual/home.spec.ts --reporter=line'
+      check: 'npx playwright test visual/home.spec.ts --reporter=line'
     });
     expect(checked.notices).toContainEqual(expect.stringContaining('A tester writes the tests'));
     expect(checked.estimate.agents).toBe(3);
@@ -360,5 +360,43 @@ describe('a stage’s plan, and what its checks expect', () => {
       'one a page: pet-luna-age-label, pet-kira-age-label'
     );
     expect(meantOnPage('age-label', ['pet-luna-age-label'])).toContain('did you mean pet-luna-age-label?');
+  });
+});
+
+describe('a check as any shell runs it', () => {
+  it('has the copy served written in, and knows a Playwright spec needs it served', async () => {
+    const { namesServedCopy, withServedValues } = await import('./acceptance');
+    const values = { PLITZI_URL: 'http://127.0.0.1:8211', PLITZI_PORT: '8211' };
+
+    expect(withServedValues('plitzi page check / --url $PLITZI_URL && echo ${PLITZI_PORT} $HOME', values)).toBe(
+      'plitzi page check / --url http://127.0.0.1:8211 && echo 8211 $HOME'
+    );
+    expect(namesServedCopy('npx playwright test visual/walks.spec.ts')).toBe(true);
+    expect(namesServedCopy('node --test src/space/lib/age.test.ts')).toBe(false);
+  });
+});
+
+describe('a designer, once it sent a task back', () => {
+  it('keeps a designer waiting for a task it sent back whose files are data, but whose changes reached a page', async () => {
+    await setTeamAgent(bench.root, 'dev', { roles: ['developer'] });
+    await setTeamAgent(bench.root, 'design', { roles: ['designer'] });
+    const plan = benchPlan('data-run');
+    plan.tasks = [{ ...plan.tasks[3], id: 't-data', files: ['src/data/menu.json'] }];
+    await openRun(lead(), await bench.writePlan(plan));
+    const taken = await takeTask(bench.agent('dev-1'), 'data-run', 't-data');
+    await writeInCopy(taken.work, 'src/data/menu.json', '{ "items": [{ "id": "tea" }] }\n');
+    // A page it reads changed too, taken by turns at complete: what a person sees changed.
+    await writeInCopy(
+      taken.work,
+      'src/space/pages/about.ts',
+      `export const about = { title: ${JSON.stringify('Tea')} };\n`
+    );
+    await completeTask(bench.agent('dev-1', { token: taken.token }), 'data-run', 't-data');
+    await takeNext(bench.agent('design-1'), 'data-run', 'designer');
+    await reviewTask(bench.agent('design-1'), 'data-run', 't-data', 'changes', [{ note: 'The tea has no price' }]);
+
+    const after = await nextTask(bench.agent('design-1'), 'data-run', 'designer');
+    expect(after.finished).toBeUndefined();
+    expect(after.why).toContain('t-data');
   });
 });

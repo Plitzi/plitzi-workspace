@@ -14,7 +14,7 @@ import { viewTask } from './taskStore';
 import type { LoadedRun, RunContext } from './run';
 
 /**
- * A run's report (RFC 0028): how the whole run went. The CLI gathers what it knows — each task's agents, time against
+ * A run's report: how the whole run went. The CLI gathers what it knows — each task's agents, time against
  * its estimate, review rounds and cuts; every refusal, failed check and conflict; what was written over a change made
  * outside the run; requests and agreements — and the lead, who closes the run, writes the summary and the
  * problems on top (`plitzi run report --summary <file>`). The final merge does not go in without it. When the run ends,

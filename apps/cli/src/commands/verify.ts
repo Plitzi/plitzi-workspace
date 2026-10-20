@@ -68,7 +68,7 @@ export const stepsOf = (scripts: Record<string, string>): Step[] => [
 
 /**
  * A script run the way a package manager runs one: in `cwd`, with the binaries installed in `binRoot` first on the path —
- * the project's own, also for a copy of it that has no `node_modules` of its own (a run's task, RFC 0028).
+ * the project's own, also for a copy of it that has no `node_modules` of its own (a run's task).
  */
 export const runScript = (
   cwd: string,
@@ -193,7 +193,7 @@ const pagesChecked = async (project: ExistingProject): Promise<PagesChecked | { 
     for (const scheme of schemes) {
       const reports = await checkRoutes(project, routes, {
         widths: WIDTHS,
-        asked: { state: false },
+        asked: { state: false, elements: [] },
         ssr: false,
         scheme,
         ...(account ? { account } : {})
@@ -293,7 +293,7 @@ export const verifyText = (
                 : chalk.red(
                     `✗ pages — ${String(pages.failing.length)} of ${String(pages.passing + pages.failing.length)} checks`
                   ),
-              ...pages.failing.map(report => reportText(report, { state: false })),
+              ...pages.failing.map(report => reportText(report, { state: false, elements: [] })),
               ...(pages.unchecked.length > 0 ? [chalk.yellow(uncheckedText(pages))] : [])
             ])
   ].join('\n');

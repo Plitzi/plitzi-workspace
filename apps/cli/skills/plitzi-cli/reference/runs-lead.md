@@ -55,7 +55,8 @@ What the lead — team lead and software architect — does; the agents' half, t
    an agent by name, between tasks too. A mistake in the plan (a check that cannot pass): edit it and `plitzi run amend
    plan.json` — titles, acceptance, priorities, notes; each task changed is told. Its files and dependencies stay.
 6. **Review:** `plitzi task show t-home` is all of it (acceptance, checks, agreements, what was said, diffs);
-   `plitzi task look t-home` serves its copy, page checks its pages (headings, names, contrast included) and pictures
+   `plitzi task look t-home [--click id] [--element id]` serves its copy, page checks its pages (headings, names,
+   contrast included; an open state, an element as the page has it) and pictures
    them light and dark — one command. What the acceptance asks and the data does not show, you test yourself
    (a module's function with the edge cases, as `node -e` from the copy) — or send it back for the test it needs. Then
    `plitzi task review t-home --approve`, or `--changes "doesn't fit at 390" --on hero-title`. Three rounds go to a

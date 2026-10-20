@@ -1,0 +1,69 @@
+import { act } from './shell';
+import {
+  ROLES,
+  modelText,
+  readTeam,
+  setTeamAgent,
+  TEAM_FILE,
+  teamAgentText,
+  teamSize,
+  unsetTeamAgent
+} from '../../runs/team';
+
+import type { RunCommandOptions } from './shell';
+import type { TeamChange } from '../../runs/team';
+
+/**
+ * `plitzi run team`: who works this project's runs, shown and changed.
+ */
+
+export const runTeam = (options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => ({ file: TEAM_FILE, team: (await readTeam(ctx.root)) ?? null }),
+    shown =>
+      shown.team === null
+        ? [
+            `No team (${shown.file}): a project's first run writes the one its plan needs. Make it now: plitzi run team set dev --roles developer --count 2 [--model <model>]`,
+            ...rolesText()
+          ].join('\n')
+        : [
+            `This project's team (${shown.file}), ${String(teamSize(shown.team))} agents and the lead:`,
+            `  lead — ${shown.team.lead ? modelText(shown.team.lead) : 'the harness’s own model'}`,
+            ...shown.team.agents.map(each => `  ${teamAgentText(each)}`),
+            ...rolesText()
+          ].join('\n')
+  );
+
+/** The roles the CLI knows, a line each — and that any other name is one of the project's own. */
+const rolesText = (): string[] => [
+  'Roles:',
+  ...Object.entries(ROLES).map(([role, does]) => `  ${role} — ${does}`),
+  '  any other name — a role of your own: a task names it, an agent takes it'
+];
+
+const memberText = (member: TeamChange['before']): string =>
+  member === undefined ? 'none' : 'name' in member ? teamAgentText(member) : modelText(member);
+
+export const runTeamSet = (
+  name: string,
+  options: RunCommandOptions & { roles?: string[]; count?: number; model?: string; effort?: string }
+): Promise<void> =>
+  act(
+    options,
+    async ctx =>
+      setTeamAgent(ctx.root, name, {
+        ...(options.roles ? { roles: options.roles } : {}),
+        ...(options.count !== undefined ? { count: options.count } : {}),
+        ...(options.model ? { model: options.model } : {}),
+        ...(options.effort ? { effort: options.effort } : {})
+      }),
+    changed => `${changed.name}: ${memberText(changed.before)} → ${memberText(changed.after)} (${changed.file})`
+  );
+
+export const runTeamUnset = (name: string, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => unsetTeamAgent(ctx.root, name),
+    changed => `${changed.name}: ${memberText(changed.before)} → out of the team (${changed.file})`
+  );

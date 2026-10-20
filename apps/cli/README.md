@@ -190,7 +190,7 @@ with `--source local`.
 ```bash
 plitzi page check / --width 1440,390            # is the page whole? in text, per width; --json for a tool
 plitzi page check /about /writers               # several pages, in one browser
-plitzi page check /products --state --element catalog-count   # and what it holds: state, sources, one element
+plitzi page check /products --state --element catalog-count --element catalog-grid   # and what it holds: state, sources, elements
 plitzi page check / --ssr                       # and what the server's HTML lacks that the hydrated page has
 plitzi page check /enterprise --click site-footer-top   # click one element: what it changed, or that nothing did
 plitzi page check / --click news-send --fill news-email=ana@example.com   # a form sent as a visitor fills it
@@ -226,7 +226,7 @@ first time (`--json`: `retriedAfter`); a `4xx` is not retried — and the
 page's data: a binding that reads a path its provider's answer lacks (with the keys it has) — none inside an element
 the page is not showing, which is not mounted — a provider that failed, and each list's rows, drawn and in its source
 (`feed 4 of 8 rows`, `hits not rendered (16 in its source)`; `--json`: `lists: { id: { rendered, source } }`). A page's state in a few hundred tokens, where a screenshot costs thousands.
-`--element` adds, at rest, each property more than one of the element's classes sets: the value shown, the class it
+`--element` (once for each element) adds, at rest, each property more than one of the element's classes sets: the value shown, the class it
 comes from and what the others say — `border-radius: 999px, from ent-cta-pill (button-primary says 12px)` — or that
 they all set it alike, so it stays without any one of them. That is said of the property alone: a class that shares
 one may set others. A class is said to change nothing on the element only when every property it sets stays without
@@ -467,7 +467,7 @@ plitzi run finish                          # the whole diff and the checks on th
 ```
 
 Several agents — subagents of one harness, or harnesses of different kinds — on one project at once, without stepping on
-each other and without any way to leave it broken (RFC 0028). The harness orchestrates: it splits the job, starts the
+each other and without any way to leave it broken. The harness orchestrates: it splits the job, starts the
 subagents and pays for them; the CLI reserves files, isolates each task, checks, merges, keeps backups and shows the
 progress. Nothing reaches Plitzi: a space on Plitzi is pulled first and pushed once at the end, by a person. **One plan
 and one run at a time** in a project: a second is refused, naming the first.

@@ -1,6 +1,6 @@
 /**
  * Why a run or a task command did not do what it was asked, as one code a harness branches on — and the exit code it
- * leaves, distinct per reason, so a script that reads no output still knows what to do next (RFC 0028 §9.12).
+ * leaves, distinct per reason, so a script that reads no output still knows what to do next.
  */
 export const REFUSAL_EXIT_CODES = {
   claimed: 10,

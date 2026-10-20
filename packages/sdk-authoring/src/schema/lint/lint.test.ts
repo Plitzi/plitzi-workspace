@@ -380,12 +380,43 @@ describe('lintSpace', () => {
     });
 
     it('anchor-repeated', () => {
-      const documents = withChange(({ schema }) => {
-        schema.flat.box.definition.type = 'list';
-        schema.flat.hello.definition.anchor = 'hello';
+      // A component draws its tree once per instance: two cards would put the same id in the page twice.
+      const documents = authorSpace({
+        name: 'Cards',
+        permanentUrl: 'cards',
+        components: [{ id: 'card', root: container({ id: 'card-root', children: [text('Lamp')] }) }],
+        pages: [{ name: 'Home', slug: '', body: [component('card', { id: 'card-1' })] }]
       });
+      documents.schema.components.card.flat['card-root'].definition.anchor = 'card';
 
       expect(errorsOf(documents)).toContain('anchor-repeated');
+    });
+
+    it('anchor-in-row', () => {
+      // In a list's rows an anchor is each row's own (`answer-<row>`): a link naming it would land at the top.
+      const documents = authorSpace({
+        name: 'Questions',
+        permanentUrl: 'questions',
+        pages: [
+          {
+            id: 'faq',
+            name: 'FAQ',
+            slug: '',
+            body: [
+              list({
+                id: 'questions',
+                items: [{ id: 'a', q: 'Why?' }],
+                children: [container({ id: 'answer', anchor: 'answer', children: [text('Because')] })]
+              })
+            ]
+          },
+          { id: 'other', name: 'Other', slug: 'other', body: [container({ id: 'go', children: [text('Go')] })] }
+        ]
+      });
+      documents.schema.flat.go.definition.type = 'link';
+      Object.assign(documents.schema.flat.go.attributes, { href: 'faq', mode: 'page', hash: 'answer' });
+
+      expect(errorsOf(documents)).toContain('anchor-in-row');
     });
 
     it('anchor-duplicate', () => {
@@ -718,7 +749,7 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('attribute-value');
     });
 
-    /** An `ol` is a list's tag, not a container's typo of `dl`. */
+    /** An `ol` is a list's tag, not a container's typo of `dl` — and a list's rows can be written out, with no data. */
     it('attribute-value names the element a tag belongs to', () => {
       const documents = withChange(({ schema }) => {
         schema.flat.box.attributes.subType = 'ol';
@@ -728,7 +759,7 @@ describe('lintSpace', () => {
         expect.objectContaining({
           code: 'attribute-value',
           message: expect.stringMatching(
-            /which is what a "list" renders: write `list\(\{ subType: 'ol' \}\)`/
+            /which is what a "list" renders: write `list\(\{ subType: 'ol' \}\)` — its rows written out, as children/
           ) as string
         })
       ]);

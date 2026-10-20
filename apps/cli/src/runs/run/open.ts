@@ -1,0 +1,268 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+import { readOptional, writeAtomic, writeJson } from '../files';
+import { EVERYONE, LEAD, sendMessage } from '../messages';
+import { isRunPlan } from '../model';
+import { readOwnership } from '../ownership';
+import { runPaths, runsDir, taskPaths } from '../paths';
+import { checkPlan, PlanRefusal } from '../plan';
+import { RunRefusal } from '../refusal';
+import { keepFiles } from '../store';
+import { ensureTeam, reviewsDesign, teamSize } from '../team';
+import { assertNoOtherRun, claimProject, inputOf, releaseProject } from './claim';
+import { requireNoTask, requirePerson } from './context';
+import { assertStatus, loadRun, logRun, pinnedNow, readRecord, updateRecord } from './record';
+
+import type { ApprovedManifest, BaseManifest, RunPlan, RunRecord, SharedManifest, TaskState } from '../model';
+import type { Ownership } from '../ownership';
+import type { RunPaths } from '../paths';
+import type { CheckedPlan } from '../plan';
+import type { Team } from '../team';
+import type { RunContext } from './context';
+
+/**
+ * `plitzi run plan` and `run open`: a plan read and held to the rules, with its primer and the team that works it — and
+ * opened, every file it touches backed up first.
+ */
+
+export interface OpenedRun {
+  checked: CheckedPlan;
+  paths: RunPaths;
+  backedUp: number;
+}
+
+export const readPlanFile = async (file: string): Promise<RunPlan> => {
+  const bytes = await readOptional(file);
+  if (bytes === undefined) {
+    throw new RunRefusal('not-found', `There is no plan at ${file}`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(bytes.toString('utf-8'));
+  } catch {
+    throw new RunRefusal('invalid', `${file} is not JSON`);
+  }
+
+  if (!isRunPlan(parsed)) {
+    throw new RunRefusal(
+      'invalid',
+      `${file} is not a plan: { version: 1, runId, goal, tasks: [{ id, title, files, dependsOn, priority, estimateMinutes, acceptance }] }`
+    );
+  }
+
+  return parsed;
+};
+
+/** `plitzi run plan`: the plan held to the rules, expanded and estimated — nothing written. */
+export const checkPlanFile = async (ctx: RunContext, file: string): Promise<CheckedPlan> => {
+  await assertNoOtherRun(ctx);
+
+  return (await readCheckedPlan(ctx.root, file)).checked;
+};
+
+/** A plan file read and checked against the project as it is, with the ownership it was checked by — no run touched. */
+/** A primer is read whole by every agent: past this it no longer saves what it is for. */
+export const MAX_PRIMER_BYTES = 16 * 1024;
+
+/** The plan's primer, read beside the plan — refused, saying why, when it is not there or too long to be one. */
+export const readPrimer = async (plan: RunPlan, planFile: string): Promise<string | undefined> => {
+  if (plan.primer === undefined) {
+    return undefined;
+  }
+
+  const file = path.resolve(path.dirname(planFile), plan.primer);
+  const text = await fs.readFile(file, 'utf-8').catch(() => undefined);
+  if (text === undefined || text.trim() === '') {
+    throw new RunRefusal(
+      'invalid',
+      `The plan's primer ${plan.primer} is not there, or is empty (read beside the plan: ${file})`
+    );
+  }
+
+  if (Buffer.byteLength(text) > MAX_PRIMER_BYTES) {
+    throw new RunRefusal(
+      'invalid',
+      `The plan's primer is ${String(Math.round(Buffer.byteLength(text) / 1024))} KB, over ${String(MAX_PRIMER_BYTES / 1024)}: every agent reads it whole to start — keep what each task needs, and name the references for the rest`
+    );
+  }
+
+  return text;
+};
+
+export const readCheckedPlan = async (
+  root: string,
+  file: string
+): Promise<{ checked: CheckedPlan; ownership: Ownership; team: Team }> => {
+  const plan = await readPlanFile(file);
+  await readPrimer(plan, file);
+  const ownership = await readOwnership(root);
+  // The team works the run, and says how many at once: a project's first run writes the one its plan needs.
+  const { team, created } = await ensureTeam(root, plan);
+  try {
+    const checked = await checkPlan(root, plan, ownership, team);
+
+    return {
+      checked: created ? { ...checked, notices: [created, ...checked.notices] } : checked,
+      ownership,
+      team
+    };
+  } catch (error) {
+    if (error instanceof PlanRefusal) {
+      throw new RunRefusal('invalid', error.message, { problems: error.problems });
+    }
+
+    throw error;
+  }
+};
+
+/**
+ * `plitzi run open`: the plan checked, its folder made, and every file it will touch backed up before anything is
+ * touched. Above the threshold of §14, a person confirms the estimate first.
+ */
+/** What a person grants when the lead may write the run into the project: said in the words they confirm. */
+const LEAD_FINISHES =
+  'let the lead write it into the project itself, once its report is written and the checks pass on the whole result';
+
+export const openRun = async (
+  ctx: RunContext,
+  file: string,
+  { leadFinishes = false }: { leadFinishes?: boolean } = {}
+): Promise<OpenedRun> => {
+  requireNoTask(ctx, 'open a run');
+  const plan = await readPlanFile(file);
+  await assertNoOtherRun(ctx);
+  const { checked, team } = await readCheckedPlan(ctx.root, file);
+  const agents = teamSize(team);
+  const paths = runPaths(ctx.root, checked.runId);
+  if (await readRecord(paths).catch(() => undefined)) {
+    throw new RunRefusal(
+      'invalid',
+      `There is a run "${checked.runId}" already: attach to it (plitzi run attach ${checked.runId}), or a person purges it`,
+      { run: checked.runId }
+    );
+  }
+
+  let confirmed: string | undefined;
+  if (checked.estimate.needsConfirmation) {
+    await requirePerson(ctx, checked.runId, `open a run of ${checked.estimate.why ?? 'this size'}`);
+    confirmed = ctx.now().toISOString();
+  }
+
+  // Asked before anything is made: a refusal here leaves no run half-opened.
+  if (leadFinishes) {
+    await requirePerson(ctx, checked.runId, `open run "${checked.runId}" and ${LEAD_FINISHES}`);
+  }
+
+  await fs.mkdir(runsDir(ctx.root), { recursive: true });
+  await claimProject(ctx, checked.runId);
+  try {
+    await fs.mkdir(paths.dir);
+  } catch {
+    await releaseProject(ctx.root, checked.runId);
+    throw new RunRefusal('another-run', `Run "${checked.runId}" was opened meanwhile by someone else`, {
+      run: checked.runId
+    });
+  }
+
+  const at = ctx.now().toISOString();
+  const touched = [
+    ...new Set([...checked.tasks.flatMap(task => task.files), ...checked.shared.map(shared => shared.file)])
+  ].sort();
+  const base: BaseManifest = { at, files: await keepFiles(paths, ctx.root, touched) };
+  await writeJson(paths.base, base);
+  await writeJson(paths.approved, { files: {}, tasks: [] } satisfies ApprovedManifest);
+  await writeJson(paths.shared, { files: checked.shared } satisfies SharedManifest);
+  const primer = await readPrimer(plan, file);
+  if (primer !== undefined) {
+    await writeAtomic(paths.primer, primer);
+  }
+  for (const task of checked.tasks) {
+    const taskFiles = taskPaths(paths, task.id);
+    await writeJson(taskFiles.definition, task);
+    await writeJson(taskFiles.state, {
+      status: task.dependsOn.length === 0 ? 'ready' : 'pending',
+      round: 0,
+      notes: [],
+      updatedAt: at
+    } satisfies TaskState);
+  }
+
+  const record: RunRecord = {
+    version: 1,
+    runId: checked.runId,
+    status: 'open',
+    openedAt: at,
+    activeOn: { machine: ctx.machine, since: at },
+    pinned: await pinnedNow(ctx.root, ctx.cli),
+    agents,
+    estimate: {
+      tasks: checked.estimate.tasks,
+      agents: checked.estimate.agents,
+      wallMinutes: checked.estimate.wallMinutes,
+      totalMinutes: checked.estimate.totalMinutes
+    },
+    ...(confirmed ? { confirmed } : {}),
+    ...(leadFinishes ? { leadFinishes: ctx.now().toISOString() } : {}),
+    ...(reviewsDesign(team, plan) ? { designReview: true as const } : {}),
+    brake: [],
+    merges: [],
+    inputs: [await inputOf(ctx, path.resolve(file))].filter(input => input !== undefined)
+  };
+  // The plan as its lead wrote it, last: a folder with a plan and a record is a run.
+  await writeJson(paths.plan, plan);
+  await writeJson(paths.record, record);
+  // The notes the plan carries are the run's memory from its first take on.
+  const opened = await loadRun(ctx, plan.runId);
+  for (const text of plan.notes ?? []) {
+    await sendMessage(ctx, opened, { from: LEAD, to: EVERYONE, text });
+  }
+
+  await logRun(ctx, paths, { action: 'open', tasks: checked.tasks.length, backedUp: touched.length });
+
+  return { checked, paths, backedUp: touched.length };
+};
+
+/**
+ * `plitzi run allow-finish`: a person lets the lead of an open run write it into the project itself — or, `--revoke`,
+ * takes that back. A person's, confirmed by typing the run's name: an agent never grants itself the project.
+ */
+export const allowLeadFinish = async (
+  ctx: RunContext,
+  runId: string,
+  { revoke = false }: { revoke?: boolean } = {}
+): Promise<{ runId: string; leadFinishes: boolean; was: boolean }> => {
+  const loaded = await loadRun(ctx, runId);
+  assertStatus(loaded, ['open', 'stopping', 'stopped'], revoke ? 'take back the lead’s finish' : 'let the lead finish');
+  const was = loaded.record.leadFinishes !== undefined;
+  if (was === !revoke) {
+    throw new RunRefusal(
+      'invalid',
+      revoke
+        ? `The lead of "${runId}" may not write it into the project already: a person does (plitzi run finish --apply)`
+        : `The lead of "${runId}" may write it into the project already, since ${String(loaded.record.leadFinishes)}`,
+      { run: runId }
+    );
+  }
+
+  await requirePerson(
+    ctx,
+    runId,
+    revoke ? `take back the lead's finish of run "${runId}"` : `${LEAD_FINISHES} (run "${runId}")`
+  );
+  const at = ctx.now().toISOString();
+  await updateRecord(ctx, loaded.paths, record => {
+    const next = { ...record };
+    if (revoke) {
+      delete next.leadFinishes;
+    } else {
+      next.leadFinishes = at;
+    }
+
+    return next;
+  });
+  await logRun(ctx, loaded.paths, { action: revoke ? 'revoke-lead-finish' : 'allow-lead-finish' });
+
+  return { runId, leadFinishes: !revoke, was };
+};

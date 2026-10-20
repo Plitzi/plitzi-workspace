@@ -3,7 +3,7 @@
 How `plitzi run` and `plitzi task` keep several agents — the subagents of one harness, or harnesses of different kinds —
 from stepping on each other on one project, and why nothing they do can leave it broken. How to use them is the CLI's
 README and the `plitzi-cli` skill (`reference/runs.md`, every agent's; `reference/runs-lead.md`, the lead's); this page is for whoever changes them. The code is
-`apps/cli/src/runs/`, the commands `apps/cli/src/commands/runs.ts`.
+`apps/cli/src/runs/`, the commands `apps/cli/src/commands/runs/` (registered in `commands/runs/register/`).
 
 ## The line
 
@@ -145,8 +145,10 @@ is refused at `run plan`; an agent of one role is held to it in a rehearsal. `ru
 A tester in the team gives every developer task a task of its tests, `<id>-tests`, a tester's, after it: tests written
 from the task's acceptance, not its code, by an agent that did not write it. Its files are where the project's tests are
 — a page's spec in `visual/<page>.spec.ts` when the project has Playwright, a module's test beside it (`<file>.test.ts`,
-`node --test`) — and its acceptance runs them against the copy served: `$PLITZI_PORT` is that copy's port, for a runner
-configured by `PORT`. Two developer tasks whose tests are one file share one task of them; one that says `"tests":
+`node --test`) — and its acceptance runs them against the copy served. A check that names `$PLITZI_URL` or `$PLITZI_PORT`, or runs
+`playwright test`, is run with the copy served: the two written into the check (any shell, `cmd.exe` included) and
+`PORT` set, which the project's Playwright config reads. The `plitzi` a check calls is this CLI (a `.cmd` too, on
+Windows), and the server is stopped as a tree there (`taskkill /T`), a process group elsewhere. Two developer tasks whose tests are one file share one task of them; one that says `"tests":
 false`, writes nothing a test is written for, or that a tester's task of the plan already waits for, gets none. A test
 the work fails is told to the lead, not bent: `complete` with `--known-failure` says why and which task fixes it.
 
@@ -237,7 +239,12 @@ exclusively (`wx`). Every write is a temp file renamed over the target, retried 
 version is a blob named by its fingerprint and a manifest names it, so the manifest is the one commit point: a cut leaves
 an unnamed blob, never a named half-written file.
 
-## A task's life (`tasks.ts`)
+## A task's life (`tasks/`)
+
+One module a step: taking it (`take.ts`), what `task next` hands over (`next.ts`), its files and turns
+(`locks.ts`), signs of life and blocks (`signals.ts`), `complete` (`complete.ts`), requests and integration tasks
+(`requests.ts`), what an approval writes (`approve.ts`), the review (`review.ts`), reassign and revert
+(`reassign.ts`), the brief (`context.ts`), and what they all read (`common.ts`).
 
 - **Take:** under the agent limit, `owner.json` exclusively, with a token `<run>.<task>.<secret>`, so every command of
   the task needs only it. A `.lock` per file at the file's path under `locks/`, readable by any hook or editor;
@@ -301,7 +308,7 @@ failed checks, refusals, conflicts, overrides, unanswered proposals, the run ove
 run ends — finished, or aborted by a person — the report is left in `tmp/plitzi-reports/<run>-<time>.md`, with what was
 written or discarded and where a backup is.
 
-## Who may do what (`run.ts`)
+## Who may do what (`run/`)
 
 A person's actions — the final merge, restore, a forced stop, abort, purge, taking a run over, re-pinning it, opening
 one above the estimate's threshold — are refused with a task's token and in a shell with no terminal; a person confirms
@@ -330,9 +337,25 @@ saw: it judges what happens from there. A task's commands are logged under the n
 `other-machine`, 23 `another-run`, 24 `agent-limit`. A refusal carries its code, the message, the next step and its
 detail (`--json`).
 
+## Not built, and left out
+
+- **`run replay`** — a run played again step by step on a copy, to debug a failure: the run's `log.jsonl`, each task's
+  log and the report say what happened, and the run is gone once applied.
+- **Memory from reviews** — the space's memory is the project's `NOTES.md`, handed by `task context`; proposing entries
+  from what reviews kept asking is not built.
+- **Windows** is held to by the code — renames retried on `EPERM`/`EBUSY`, `$PLITZI_URL`/`$PLITZI_PORT` written into a
+  check for any shell, a `plitzi.cmd` beside the shim, the copy's server stopped as a tree (`taskkill /T`) — and not run
+  on it yet.
+- **Several agents on a space in the cloud**, at once — MCP tools for it, seeing them in the builder, a mode that makes
+  an area read-only for people, the run kept on the server: left out because it loads the server with many small writes
+  and is the most expensive part to build. A space on Plitzi is pulled, worked by a run as a project and pushed once (the
+  line, above); the mechanism here could move to the server without being redesigned.
+
 ## Tested
 
-`apps/cli/src/runs/runs.test.ts` is the bench: a seeded project (`src/tests/runProject.ts`), scripted agents over one
+The bench is `apps/cli/src/runs/runs-*.test.ts` (each a part of the run: plan, tasks, shared files, merge, stops,
+agreements, the team, the lead, acceptance, the first real runs, the primitives) with its steps in
+`src/tests/runSteps.ts`: a seeded project (`src/tests/runProject.ts`), scripted agents over one
 clock the test moves, a person who confirms or not, checks that fail on `BROKEN` — no model and no network, so every run
 is the same run. `apps/cli/src/commands/runs.test.ts` runs the CLI as processes: the exit codes, the token through the
 environment, a person's action from a shell with no terminal, and a command run from inside a task's copy.

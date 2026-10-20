@@ -81,7 +81,8 @@ button({ content: 'Menu', bind: { ariaExpanded: 'state.menuOpen' }, flows: [[onC
 
 An "active" variant is for the eyes. `ariaPressed` and `ariaExpanded` are for everyone else. Use both. A button that
 opens a panel also names it — `controls: 'menu-panel'`, the panel's id (authoring gives the panel the anchor
-`aria-controls` needs; [recipes/accordion.ts](../recipes/accordion.ts)). Words that change while somebody is on the page
+`aria-controls` needs; [recipes/accordion.ts](../recipes/accordion.ts)). In a list's row, both are the row's own: each
+row's panel is drawn as `<id>-<row>`, and the row's button points at its own. Words that change while somebody is on the page
 — a count, a total, a status — sit in `container({ live: 'polite', … })`, so a screen reader says them when they change.
 A part that opens and closes on its own — a question and its answer, many open at once — needs no state at all:
 `container({ subType: 'details', children: [container({ subType: 'summary', children: [text('Question')] }), …] })`

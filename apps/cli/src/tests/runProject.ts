@@ -8,7 +8,7 @@ import type { RunContext } from '../runs/run';
 import type { Team } from '../runs/team';
 
 /**
- * The bench of RFC 0028: a seeded project in a folder of its own, and scripted agents — contexts that call the run's
+ * The bench of the runs of several agents: a seeded project in a folder of its own, and scripted agents — contexts that call the run's
  * commands as a harness would, each with its own name and token — over one clock the test moves. No model, no network:
  * every run is the same run.
  */
@@ -156,7 +156,7 @@ export const makeBench = async (files: Record<string, string> = PROJECT_FILES): 
   };
 };
 
-/** A plan over the bench's pages: one task a page, a fourth that depends on two, as RFC 0028 §9.6 draws it. */
+/** A plan over the bench's pages: one task a page, a fourth that depends on two. */
 export const benchPlan = (runId = 'es-launch'): RunPlan => ({
   version: 1,
   runId,

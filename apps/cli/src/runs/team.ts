@@ -9,7 +9,7 @@ import { formattedJson } from '../scaffold/formattedJson';
 import type { RunPlan } from './model';
 
 /**
- * Who works this project's runs (RFC 0028): the project's own choice, in `.plitzi/team.json` — committed, so the team
+ * Who works this project's runs: the project's own choice, in `.plitzi/team.json` — committed, so the team
  * shares it — that a person edits, or asks an agent to change with `plitzi run team set`. The lead, and the agents it
  * starts: each with the roles it takes, how many of it, and the model to start it with. How many agents a run has is
  * the team's size; a task whose role nobody in the team takes is refused at `run plan`; a tester in the team gives every

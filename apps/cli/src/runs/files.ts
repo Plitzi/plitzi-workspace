@@ -9,7 +9,7 @@ import { isTextFile } from '../scaffold/fromSpace';
 /**
  * The run's file primitives: every write atomic (a temp file beside it, then a rename), every claim exclusive (`wx`, the
  * first wins), every read of a run's file checked against what it must hold. Exclusive creation and the rename are
- * atomic on macOS and Linux (RFC 0028 §7.1); on Windows a rename over a file another process holds open fails with
+ * atomic on macOS and Linux; on Windows a rename over a file another process holds open fails with
  * EPERM/EBUSY for a moment, so it is tried again before it fails.
  */
 
