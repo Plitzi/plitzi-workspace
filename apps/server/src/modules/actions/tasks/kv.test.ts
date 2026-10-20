@@ -159,6 +159,27 @@ describe('list tasks', () => {
       { id: 'p12', score: 12, value: { points: 12 } }
     ]);
   });
+
+  it('refuses a value written as JSON that does not read, rather than keep it as a string', async () => {
+    const module = createActionsModule({ lookups: { getAction: () => Promise.resolve(undefined) } });
+    const broken = listAction('7');
+    broken.document.nodes.put.params = { list: 'leaderboard', id: 'p7', score: '7', value: '{"points": }' };
+    const result = await module.runAction({
+      entry: broken,
+      input: {},
+      callerId: 'ip:198.51.100.7',
+      spaceId: 1,
+      environment: 'main',
+      trigger: 'call',
+      runId: 'run-broken'
+    });
+
+    expect(result.status).toBe('failed');
+    expect(result.steps.find(step => step.id === 'put')).toMatchObject({
+      status: 'failed',
+      error: expect.stringContaining('|json_encode') as unknown
+    });
+  });
 });
 
 describe('flow.rateLimit', () => {

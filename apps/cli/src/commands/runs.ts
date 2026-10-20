@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
+import { stripVTControlCharacters } from 'node:util';
 
 import chalk from 'chalk';
 
@@ -31,7 +32,7 @@ import {
   stopRun
 } from '../runs/run';
 import { showTask } from '../runs/show';
-import { askLead, messageTasks, readInbox } from '../runs/talk';
+import { askLead, messageTasks, readInbox, tellLead } from '../runs/talk';
 import {
   blockTask,
   canWrite,
@@ -197,14 +198,20 @@ const act = async <T>(
   options: RunCommandOptions,
   work: (ctx: RunContext) => Promise<T>,
   text: (result: T) => string,
-  exitCode = 0
+  exitCode: number | ((result: T) => number) = 0
 ): Promise<void> => {
   try {
     const ctx = await contextFor(options);
     const result = await work(ctx);
-    console.log(options.json ? JSON.stringify(result) : text(result));
-    if (exitCode !== 0) {
-      process.exitCode = exitCode;
+    // With --json an agent reads the data, and the sentence a person would read with it: what it means, what is next.
+    console.log(
+      options.json
+        ? JSON.stringify(isRecord(result) ? { ...result, said: stripVTControlCharacters(text(result)) } : result)
+        : text(result)
+    );
+    const code = typeof exitCode === 'number' ? exitCode : exitCode(result);
+    if (code !== 0) {
+      process.exitCode = code;
     }
   } catch (error) {
     if (!isRunRefusal(error)) {
@@ -658,9 +665,10 @@ export const taskRelease = (file: string, options: RunCommandOptions): Promise<v
     async ctx => {
       const { runId, taskId } = await holder(ctx, options);
 
-      return releaseFile(ctx, runId, taskId, file);
+      return { file, granted: await releaseFile(ctx, runId, taskId, file) };
     },
-    granted => `Let go.${granted.length > 0 ? ` Now: ${granted.join(', ')}` : ''}`
+    ({ file: released, granted }) =>
+      `Let go of ${released}.${granted.length > 0 ? ` Now: ${granted.join(', ')}` : ' Nobody was waiting for it.'}`
   );
 
 export const taskWait = (
@@ -672,7 +680,7 @@ export const taskWait = (
     async ctx => {
       const { runId, taskId } = await holder(ctx, options);
       const waiting = await waitForFile(ctx, runId, taskId, file);
-      if (!options.follow) {
+      if (waiting.granted || !options.follow) {
         return { ...waiting, followed: undefined };
       }
 
@@ -680,7 +688,7 @@ export const taskWait = (
       if (!followed.done) {
         throw new RunRefusal(
           'waiting',
-          `Still waiting for ${waiting.holder} on ${waiting.file} after ${String(options.timeout ?? 30)} min`,
+          `Still waiting for ${String(waiting.holder)} on ${waiting.file} after ${String(options.timeout ?? 30)} min`,
           {
             file: waiting.file,
             holder: waiting.holder
@@ -691,10 +699,13 @@ export const taskWait = (
       return { ...waiting, followed };
     },
     waited =>
-      waited.followed
-        ? `${waited.file} is yours now. ${waited.followed.note ?? ''}`
-        : `Waiting for ${waited.holder} on ${waited.file}: it comes to this task when ${waited.holder} is approved, with the run's version. Go on with what of your task does not need it; \`plitzi task wait ${waited.file} --follow\` waits until it is yours.`,
-    options.follow ? 0 : 11
+      waited.granted
+        ? `Nobody held ${waited.file} any more: it is yours now, by turns.`
+        : waited.followed
+          ? `${waited.file} is yours now. ${waited.followed.note ?? ''}`
+          : `Waiting for ${waited.holder} on ${waited.file}: it comes to this task when ${waited.holder} is approved, with the run's version. Go on with what of your task does not need it; \`plitzi task wait ${waited.file} --follow\` waits until it is yours.`,
+    // Waiting, without --follow: exit 11 says so to a script. Given at once, or followed until given: 0.
+    waited => (waited.granted || options.follow ? 0 : 11)
   );
 
 export const taskDiscard = (file: string, options: RunCommandOptions): Promise<void> =>
@@ -846,6 +857,8 @@ export interface ReviewOptions extends RunCommandOptions {
   approve?: boolean;
   /** Approve over a change made in the project while the task worked: its version wins, said and the other kept. */
   overwrite?: boolean;
+  /** Approve with a change made in the project while the task worked: the two put together line by line. */
+  merge?: boolean;
   changes?: string;
   on?: string;
   file?: string;
@@ -857,6 +870,13 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
     async ctx => {
       if (options.approve === (options.changes !== undefined)) {
         throw new RunRefusal('invalid', 'Review with --approve, or with --changes "what to change" — one of them');
+      }
+
+      if (options.overwrite && options.merge) {
+        throw new RunRefusal(
+          'invalid',
+          'A change in the project is merged (--merge) or written over (--overwrite): one of them'
+        );
       }
 
       return reviewTask(
@@ -873,13 +893,16 @@ export const taskReview = (taskId: string, options: ReviewOptions): Promise<void
                 ...(options.file ? { file: options.file } : {})
               }
             ],
-        options.overwrite ?? false
+        options.merge ? 'merge' : options.overwrite ? 'overwrite' : 'refuse'
       );
     },
     reviewed =>
       reviewed.verdict === 'approve'
         ? [
             `${taskId} approved: ${list(reviewed.merged ?? [])} in the run's work.`,
+            ...((reviewed.joined ?? []).length > 0
+              ? [`  Put together with the change made in the project meanwhile: ${list(reviewed.joined ?? [])}`]
+              : []),
             ...((reviewed.granted ?? []).length > 0 ? [`  Handed on: ${list(reviewed.granted ?? [])}`] : []),
             ...((reviewed.ready ?? []).length > 0 ? [`  Ready now: ${list(reviewed.ready ?? [])}`] : [])
           ].join('\n')
@@ -897,13 +920,17 @@ export const taskReassign = (taskId: string, options: RunCommandOptions): Promis
         reassigned.reviewedRound === undefined
           ? 'It was never reviewed: it starts from scratch.'
           : `It starts again from the version its review ${String(reassigned.reviewedRound)} saw.`
-      } What its agent started in the copy — its own server — is not the CLI's to stop: stop it.`
+      } What its agent started in the copy — its own server — is not the CLI's to stop: stop it.${
+        reassigned.released.length > 0
+          ? ` Let go of what it held by turns: ${reassigned.released.join(', ')}${reassigned.granted.length > 0 ? ` — to ${reassigned.granted.join(', ')}` : ''}${reassigned.settled.length > 0 ? `; merged: ${reassigned.settled.join(', ')}` : ''}${reassigned.integrations.length > 0 ? `; to integrate: ${reassigned.integrations.join(', ')}` : ''}.`
+          : ''
+      }`
   );
 
-export const taskRevert = (taskId: string, options: RunCommandOptions): Promise<void> =>
+export const taskRevert = (taskId: string, options: RunCommandOptions & { reason: string }): Promise<void> =>
   act(
     options,
-    async ctx => revertTask(ctx, await runOf(ctx, options), taskId),
+    async ctx => revertTask(ctx, await runOf(ctx, options), taskId, options.reason),
     reverted =>
       [
         `${taskId} reverted in the run's work: ${list(reverted.reverted)}.`,
@@ -927,7 +954,7 @@ export const taskShow = (taskId: string, options: RunCommandOptions): Promise<vo
         ),
         `  ${shown.task.role ?? 'developer'} · its files: ${shown.task.files.join(', ')}`,
         ...(shown.task.acceptance.length > 0
-          ? ['Acceptance', ...shown.task.acceptance.map(each => `  ☐ ${each}`)]
+          ? ['Acceptance', ...shown.task.acceptance.map(each => `  ${shown.status === 'done' ? '✓' : '☐'} ${each}`)]
           : []),
         knownFailure
           ? chalk.yellow(
@@ -965,7 +992,8 @@ export const taskContextCommand = (taskId: string | undefined, options: RunComma
 
       return taskContext(ctx, target.runId, target.taskId);
     },
-    context => JSON.stringify(context, null, 2)
+    context =>
+      `${context.task.id} — ${context.task.title} · ${context.state.status}${context.holder ? ` · ${context.holder}` : ''}: its acceptance, notes, requests, agreements and files, as JSON (the lead's review of it: plitzi task show ${context.task.id})`
   );
 
 export const spaceOverview = (options: RunCommandOptions): Promise<void> =>
@@ -1146,6 +1174,17 @@ export const taskAsk = (
           : `Asked (${asked.question.id}): the answer comes with your next heartbeat, progress or completion — or stay for it with --follow.`
   );
 
+export const taskTell = (text: string, options: RunCommandOptions): Promise<void> =>
+  act(
+    options,
+    async ctx => {
+      const runId = await runOf(ctx, options);
+
+      return tellLead(ctx, runId, taskOf(ctx), text);
+    },
+    told => `Told the lead (${told.id}): no answer is waited for — task ask when you need one.`
+  );
+
 export const taskMessage = (
   to: string,
   text: string,
@@ -1163,8 +1202,15 @@ export const taskMessage = (
 export const taskInbox = (options: RunCommandOptions & { all?: boolean }): Promise<void> =>
   act(
     options,
-    async ctx => readInbox(ctx, await runOf(ctx, options), ctx.token ? taskOf(ctx) : undefined, options.all ?? false),
-    messages =>
+    async ctx => ({
+      messages: await readInbox(
+        ctx,
+        await runOf(ctx, options),
+        ctx.token ? taskOf(ctx) : undefined,
+        options.all ?? false
+      )
+    }),
+    ({ messages }) =>
       messages.length === 0
         ? options.all
           ? 'Nothing was said yet.'

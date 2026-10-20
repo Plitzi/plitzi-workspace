@@ -291,6 +291,58 @@ export const checkPlan = async (
     tasks.push({ ...task, files: expanded, kind: 'work' });
   }
 
+  // What tasks say they will change outside their own files: two on one file meet at `complete`, and the lead sees it now.
+  const touchedBy = new Map<string, string[]>();
+  for (const task of plan.tasks) {
+    for (const raw of task.touches ?? []) {
+      const file = normalised(raw);
+      if (file === undefined || isSecretFile(file) || isOutsideSource(file)) {
+        problems.push(`Task "${task.id}": it touches "${raw}", which is not a file of the project's source`);
+        continue;
+      }
+
+      const owner = holder.get(file);
+      if (owner === task.id) {
+        continue;
+      }
+
+      if (owner !== undefined) {
+        notices.push(
+          `"${task.id}" touches ${file}, which "${owner}" holds while it works: it proposes its change to "${owner}" (task propose) or waits for it — or depends on it`
+        );
+      }
+
+      touchedBy.set(file, [...(touchedBy.get(file) ?? []), task.id]);
+    }
+  }
+
+  const before = (a: string, b: string): boolean => {
+    const seen = new Set<string>();
+    const visit = (id: string): boolean => {
+      if (seen.has(id)) {
+        return false;
+      }
+
+      seen.add(id);
+      const task = plan.tasks.find(each => each.id === id);
+
+      return task !== undefined && (task.dependsOn.includes(a) || task.dependsOn.some(visit));
+    };
+
+    return visit(b);
+  };
+  [...touchedBy]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .filter(([, ids]) => ids.length > 1)
+    .forEach(([file, ids]) => {
+      const together = ids.filter(id => !ids.some(other => other !== id && (before(id, other) || before(other, id))));
+      if (together.length > 1) {
+        notices.push(
+          `${file} is changed by ${together.map(id => `"${id}"`).join(' and ')} at once: at complete, changes to different lines merge by themselves; the same lines conflict, and one redoes its change — order them (dependsOn) if they change the same thing`
+        );
+      }
+    });
+
   for (const contract of plan.contracts ?? []) {
     if (!ids.has(contract.owner)) {
       problems.push(
@@ -344,10 +396,18 @@ export const checkPlan = async (
     goal: plan.goal,
     tasks,
     shared,
-    sharedReached: sharedReached(
-      ownership,
-      plan.tasks.flatMap(task => task.files)
-    ).filter(file => !holder.has(file)),
+    // What the tasks reach through their imports, and what they said they will touch: none of it held by one.
+    sharedReached: [
+      ...new Set([
+        ...sharedReached(
+          ownership,
+          plan.tasks.flatMap(task => task.files)
+        ),
+        ...touchedBy.keys()
+      ])
+    ]
+      .filter(file => !holder.has(file))
+      .sort(),
     created: created.sort(),
     estimate: estimate(tasks, agentsAsked),
     notices

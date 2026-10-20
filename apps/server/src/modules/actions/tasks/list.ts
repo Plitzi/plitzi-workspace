@@ -12,7 +12,11 @@ const toNumber = (value: string | number | undefined, fallback: number | undefin
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-/** What a typed value means: JSON when it reads as JSON, the text itself when it does not. A bound value as it is. */
+/**
+ * What a typed value means: JSON when it reads as JSON, the text itself when it does not. A bound value as it is. A
+ * value written as an object or a list that does not read — a quote in a field put in by a template without
+ * `json_encode` — is refused, never kept as a string the readers of the list would then fail on.
+ */
 const valueOf = (value: unknown): unknown => {
   if (typeof value !== 'string') {
     return value ?? null;
@@ -24,7 +28,15 @@ const valueOf = (value: unknown): unknown => {
 
   try {
     return JSON.parse(value) as unknown;
-  } catch {
+  } catch (error) {
+    const start = value.trimStart()[0];
+    if (start === '{' || start === '[') {
+      throw new Error(
+        `The value is written as JSON but does not read as JSON (${error instanceof Error ? error.message : String(error)}): a value put in by a template outside quotes — a number, a list, one that may be empty — is written with |json_encode ("amount": {{ input.amount|json_encode }}); inside quotes it is escaped already`,
+        { cause: error }
+      );
+    }
+
     return value;
   }
 };

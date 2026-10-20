@@ -60,6 +60,20 @@ export const askLead = async (
 };
 
 /**
+ * `plitzi task tell`: the holder of a task tells the lead something it should know — a finding, a choice it made, a
+ * risk — without asking: nothing waits for an answer. It is on top of `run status` until the lead reads its inbox.
+ */
+export const tellLead = async (ctx: RunContext, runId: string, taskId: string, text: string): Promise<Message> => {
+  const loaded = await loadRun(ctx, runId);
+  assertStatus(loaded, ['open', 'stopping', 'reconciliation'], 'tell the lead');
+  await holderOf(ctx, loaded, findTask(loaded, taskId));
+  const told = await sendMessage(ctx, loaded, { from: taskId, to: LEAD, text, fyi: true });
+  await logRun(ctx, loaded.paths, { action: 'tell', task: taskId, message: told.id });
+
+  return told;
+};
+
+/**
  * `plitzi task message`: the lead tells a task — or every task in hand, with `all`, or an agent by name, `@dev-1`,
  * whichever task it holds or none — what it needs to know: an instruction, an answer, a change of plan. It reaches the
  * agent with its next command; an agent between tasks, with `task next`.

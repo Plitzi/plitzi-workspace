@@ -220,6 +220,8 @@ export interface ClickReport {
   element: string;
   /** The fields filled before it, each with what was put in it. */
   filled?: string[];
+  /** What filling them changed by itself, before the click: a field that acts as it is typed in. */
+  fillChanges?: string[];
   /** The element could not be clicked: not on the page, hidden, covered. */
   problem?: string;
   changes: string[];
@@ -655,9 +657,12 @@ export const momentChanges = (
   ];
 };
 
-/** What `--click` is asked: the element, and the fields filled before it. */
+/**
+ * What `--click` is asked: the element, and the fields filled before it. Without an element, the fields filled are the
+ * interaction — a search box, a filter that answers to typing — and what they changed is said.
+ */
 export interface ClickAsk {
-  element: string;
+  element?: string;
   fill: readonly FieldFill[];
 }
 
@@ -746,37 +751,82 @@ const clickEffects = async (
   authored: Authored | undefined,
   { element: id, fill }: ClickAsk
 ): Promise<ClickReport> => {
-  const target = page.locator(selectorOf(authored, id)).first();
-  if ((await target.count()) === 0) {
-    return { element: id, problem: `no element ${id} is on this page`, changes: [], failed: [] };
+  const label = id ?? 'the fields filled';
+  const target = id === undefined ? undefined : page.locator(selectorOf(authored, id)).first();
+  if (target && (await target.count()) === 0) {
+    return { element: label, problem: `no element ${label} is on this page`, changes: [], failed: [] };
   }
 
-  const filled: string[] = [];
-  for (const field of fill) {
-    const result = await fillField(page, authored, field);
-    if ('problem' in result) {
-      return { element: id, problem: result.problem, changes: [], failed: [] };
+  const fillAll = async (): Promise<string[] | { problem: string }> => {
+    const filled: string[] = [];
+    for (const field of fill) {
+      const result = await fillField(page, authored, field);
+      if ('problem' in result) {
+        return { problem: result.problem };
+      }
+
+      filled.push(result.filled);
     }
 
-    filled.push(result.filled);
-  }
+    return filled;
+  };
 
-  try {
-    await target.scrollIntoViewIfNeeded({ timeout: 3000 });
-  } catch {
-    return { element: id, problem: `${id} could not be brought into view`, changes: [], failed: [] };
+  // With a click, the fields are what it sends: filled first, then the page is looked at. Without, the filling is the
+  // interaction itself, and the page is looked at before it.
+  let filled: string[] = [];
+  let fillChanges: string[] = [];
+  if (target) {
+    // What typing in the fields did by itself — a search box filters as it is typed in — is said apart from the click.
+    const toolsBeforeFill = await readDevTools(page, { state: true });
+    const beforeFill = await page.evaluate(pageMomentInPage, undefined);
+    const ranBeforeFill = new Set(toolsBeforeFill.flows.map(flow => `${flow.at}|${flow.trigger}|${String(flow.on)}`));
+    const done = await fillAll();
+    if (!Array.isArray(done)) {
+      return { element: label, problem: done.problem, changes: [], failed: [] };
+    }
+
+    filled = done;
+    if (fill.length > 0) {
+      await page.waitForTimeout(600);
+      const toolsAfterFill = await readDevTools(page, { state: true });
+      const afterFill = await page.evaluate(pageMomentInPage, undefined);
+      fillChanges = [
+        ...toolsAfterFill.flows
+          .filter(flow => !ranBeforeFill.has(`${flow.at}|${flow.trigger}|${String(flow.on)}`))
+          .map(
+            flow =>
+              `ran ${flow.trigger}${flow.on ? ` of ${flow.on}` : ''}: ${flow.steps.map(step => `${step.action} ${step.status}`).join(', ') || 'no steps'}`
+          ),
+        ...momentChanges(beforeFill, afterFill, { before: toolsBeforeFill.state, after: toolsAfterFill.state })
+      ];
+    }
+
+    try {
+      await target.scrollIntoViewIfNeeded({ timeout: 3000 });
+    } catch {
+      return { element: label, problem: `${label} could not be brought into view`, changes: [], failed: [] };
+    }
   }
 
   const tools = await readDevTools(page, { state: true });
   const before = await page.evaluate(pageMomentInPage, undefined);
   await page.evaluate(listenForRefusedFieldsInPage, undefined);
   const ran = new Set(tools.flows.map(flow => `${flow.at}|${flow.trigger}|${String(flow.on)}`));
-  try {
-    await target.click({ timeout: 3000 });
-  } catch (error) {
-    const reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
+  if (target) {
+    try {
+      await target.click({ timeout: 3000 });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message.split('\n')[0] : String(error);
 
-    return { element: id, problem: `${id} could not be clicked: ${reason}`, changes: [], failed: [] };
+      return { element: label, problem: `${label} could not be clicked: ${reason}`, changes: [], failed: [] };
+    }
+  } else {
+    const done = await fillAll();
+    if (!Array.isArray(done)) {
+      return { element: label, problem: done.problem, changes: [], failed: [] };
+    }
+
+    filled = done;
   }
 
   // Time for what it set off to land: a flow's steps, a smooth scroll, a page it went to.
@@ -787,8 +837,9 @@ const clickEffects = async (
   const flows = toolsAfter.flows.filter(flow => !ran.has(`${flow.at}|${flow.trigger}|${String(flow.on)}`));
 
   return {
-    element: id,
+    element: label,
     ...(filled.length > 0 ? { filled } : {}),
+    ...(fillChanges.length > 0 ? { fillChanges } : {}),
     changes: [
       ...flows.map(
         flow =>
@@ -1013,8 +1064,11 @@ const checkAt = async (
   const report = handles && pageId ? await inspectPage(page, handles, { page: pageId }) : await inspectDocument(page);
   // The sources always: what the bindings read is held against them. Printed only when asked.
   const devTools = await readDevTools(page, { ...asked, state: true });
-  const styled = asked.element === undefined ? undefined : await elementStyles(page, authored, asked.element);
   const clicked = click === undefined ? undefined : await clickEffects(page, authored, click);
+  // What is said of the element and the state is the page as the visitor left it: after the fill and the click, when
+  // there were any — the page's own checks still read it as it loaded.
+  const shown = clicked === undefined ? devTools : await readDevTools(page, { ...asked, state: true });
+  const styled = asked.element === undefined ? undefined : await elementStyles(page, authored, asked.element);
   const data =
     authored && pageId && devTools.sources
       ? dataIssues(authored.schema, pageId, devTools.sources, { hidden: await notShown(page, authored) })
@@ -1084,9 +1138,9 @@ const checkAt = async (
     devTools: devTools.available,
     lists,
     ...(late ? { browserOnly: late.browserOnly } : {}),
-    ...(!asked.state || devTools.state === undefined ? {} : { state: devTools.state }),
-    ...(!asked.state || devTools.sources === undefined ? {} : { sources: devTools.sources }),
-    ...(devTools.element === undefined ? {} : { element: devTools.element }),
+    ...(!asked.state || shown.state === undefined ? {} : { state: shown.state }),
+    ...(!asked.state || shown.sources === undefined ? {} : { sources: shown.sources }),
+    ...(shown.element === undefined ? {} : { element: shown.element }),
     ...(styled === undefined ? {} : { styles: styled }),
     ...(clicked === undefined ? {} : { clicked }),
     ...(sentWith === 404 ? { notFound: true as const } : {})
@@ -1188,12 +1242,13 @@ export const clickedText = (clicked: ClickReport | undefined): string[] => {
 
   return [
     ...(clicked.filled ? [`  · filled ${clicked.filled.join(', ')}`] : []),
+    ...(clicked.fillChanges ? ['  · filling them:', ...clicked.fillChanges.map(change => `      ${change}`)] : []),
     ...(clicked.changes.length === 0
       ? [
-          `  · clicking ${clicked.element} changed nothing: no flow ran, the page went nowhere, nothing scrolled, appeared or went, nothing was said, and the state is as it was`
+          `  · ${clicked.element === 'the fields filled' ? 'filling them' : `clicking ${clicked.element}`} changed nothing${clicked.fillChanges ? ' more than the filling did' : ': no flow ran, the page went nowhere, nothing scrolled, appeared or went, nothing was said, and the state is as it was'}`
         ]
       : [
-          `  · clicking ${clicked.element}:`,
+          `  · ${clicked.element === 'the fields filled' ? 'filling them' : `clicking ${clicked.element}`}:`,
           ...clicked.changes.map(change => `      ${change}`),
           // A flow that ran and succeeded is not a page that changed: when only flows are said, that is said too.
           ...(clicked.changes.every(change => change.startsWith('ran '))
@@ -1253,12 +1308,6 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     return;
   }
 
-  if (options.fill && !options.click) {
-    fail('--fill fills fields for a --click: with nothing clicked, nothing they hold is sent anywhere.');
-
-    return;
-  }
-
   // A path is a page's address: one that reads as a flag is a flag cut off from its command (`npx … check -- /x --width`).
   const flags = routes.filter(route => route.startsWith('-'));
   if (flags.length > 0) {
@@ -1286,7 +1335,9 @@ export const check = async (routes: string[], options: CheckOptions): Promise<vo
     ...(options.scheme ? { scheme: options.scheme } : {}),
     presence: options.presence === true,
     ...(account ? { account } : {}),
-    ...(options.click ? { click: { element: options.click, fill: options.fill ?? [] } } : {}),
+    ...(options.click || options.fill
+      ? { click: { ...(options.click ? { element: options.click } : {}), fill: options.fill ?? [] } }
+      : {}),
     ...(options.url ? { url: options.url } : {}),
     ...(options.space ? { space: options.space } : {})
   });

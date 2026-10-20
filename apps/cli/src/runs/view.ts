@@ -4,7 +4,7 @@ import { LEAD, messagesOf, unreadFor } from './messages';
 import { under } from './paths';
 import { chainMinutes } from './plan';
 import { loadRun, readApproved, readBase, runIds } from './run';
-import { requestsOf } from './tasks';
+import { allLocks, requestsOf } from './tasks';
 import { isDisconnected, readStart, viewTask } from './taskStore';
 
 import type { Needs, RunRecord, TaskStatus, Waiting } from './model';
@@ -149,7 +149,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       attention.push({
         kind: 'known-failure',
         task: view.task.id,
-        text: `${view.task.id} went to review with failing checks (${view.state.knownFailure.failing.join(', ')}): ${view.state.knownFailure.why}${view.state.knownFailure.fixedBy ? ` — ${view.state.knownFailure.fixedBy} fixes it` : ''}`,
+        text: view.state.knownFailure.preexisting
+          ? `${view.task.id} went to review with failing checks (${view.state.knownFailure.failing.join(', ')}) that are not its own — ${view.state.knownFailure.why}. The finish needs them green: whoever owns what fails fixes it`
+          : `${view.task.id} went to review with failing checks (${view.state.knownFailure.failing.join(', ')}): ${view.state.knownFailure.why}${view.state.knownFailure.fixedBy ? ` — ${view.state.knownFailure.fixedBy} fixes it` : ''}`,
         who: 'lead'
       });
     }
@@ -200,8 +202,11 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
         attention.push({
           kind: 'changed-in-project',
           task: view.task.id,
-          text: `${moved.join(', ')} changed in the project while ${view.task.id} has it: the project's version wins at the merge — take it (plitzi task discard <file>)`,
-          who: 'task'
+          text:
+            view.state.status === 'in-review'
+              ? `${moved.join(', ')} changed in the project while ${view.task.id} worked on it: its review decides — --approve --merge when the two go together, --approve --overwrite, or --changes`
+              : `${moved.join(', ')} changed in the project while ${view.task.id} has it: take the project's version (plitzi task discard <file>) and go on from it — or its review decides`,
+          who: view.state.status === 'in-review' ? 'lead' : 'task'
         });
       }
     }
@@ -213,7 +218,9 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       attention.push({
         kind: 'proposal',
         task: each.to,
-        text: `${each.from} proposes to ${each.to} (${each.id}): ${each.change}`,
+        text: `${each.from} proposes to ${each.to} (${each.id}): ${each.change}${
+          byId.get(each.to)?.owner ? '' : ` — nobody holds ${each.to} now: it is answered once it is taken`
+        }`,
         who: 'task'
       })
     );
@@ -226,20 +233,29 @@ export const viewRun = async (ctx: RunContext, runId: string): Promise<RunView> 
       attention.push({
         kind: 'message',
         task: message.from,
-        text: `${message.from} asks (${message.id}): ${message.text} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
+        text: message.fyi
+          ? `${message.from} says (${message.id}), for you to know: ${message.text} — read: plitzi task inbox`
+          : `${message.from} asks (${message.id}): ${message.text} — answer: plitzi task message ${message.from} "…" --reply-to ${message.id}`,
         who: 'lead'
       })
     );
 
   const pending = (await requestsOf(loaded)).filter(each => !each.integrated && each.integratedBy === undefined);
-  pending.forEach(each =>
+  // What a request waits for: the task holding its file by turns — merged once that one lets go — or nothing yet.
+  const locks = await allLocks(ctx);
+  pending.forEach(each => {
+    const holder = (locks.get(each.request.file) ?? []).find(
+      held => held.live && held.run === runId && held.task !== each.task
+    );
     attention.push({
       kind: 'request',
       task: each.task,
-      text: `Request on ${each.request.file} from ${each.task}: ${each.request.summary}`,
+      text: `Request on ${each.request.file} from ${each.task}: ${each.request.summary}${
+        holder ? ` — waits for "${holder.task}", which holds it by turns: merged once it lets go of it` : ''
+      }`,
       who: 'lead'
-    })
-  );
+    });
+  });
 
   const approved = await readApproved(loaded.paths);
   Object.entries(approved.files)

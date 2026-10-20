@@ -101,6 +101,24 @@ describe('lintSpace', () => {
       expect(errorsOf(documents)).toContain('page-target-unknown');
     });
 
+    it('page-path-unknown', () => {
+      const typo = withChange(({ schema }) => {
+        schema.flat['to-about'].attributes.href = '/abuot';
+      });
+      const file = withChange(({ schema }) => {
+        schema.flat['to-about'].attributes.href = '/data/menu.json';
+      });
+
+      const bound = withChange(({ schema }) => {
+        schema.flat['to-about'].attributes.href = '/c/';
+        schema.flat['to-about'].definition.bindings = { attributes: [{ id: 'b1', to: 'href', source: 'state.slug' }] };
+      });
+
+      expect(warningsOf(typo)).toContain('page-path-unknown');
+      expect(warningsOf(file)).not.toContain('page-path-unknown');
+      expect(warningsOf(bound)).not.toContain('page-path-unknown');
+    });
+
     it('page-target-url', () => {
       const documents = withChange(({ schema }) => {
         schema.flat['to-about'].attributes.href = 'mailto:hello@example.com';

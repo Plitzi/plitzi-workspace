@@ -8,7 +8,7 @@ import { isRecord } from '@plitzi/sdk-shared/helpers';
 import { cloneFiles, fingerprint, isCopied, projectFiles, readJson, readOptional, writeJson } from './files';
 import { under } from './paths';
 import { RunRefusal } from './refusal';
-import { loadRun, readApproved, readRecord, requireNoTask } from './run';
+import { loadRun, readApproved, readBase, readRecord, requireNoTask } from './run';
 import { placeVersion } from './store';
 import { viewTask } from './taskStore';
 import { scriptsOf } from '../commands/verify';
@@ -39,17 +39,37 @@ const alive = (pid: number): boolean => {
 };
 
 /** Puts the run's approved work into a running preview — none running, nothing done. Answers whether it did. */
-export const syncPreview = async (loaded: LoadedRun): Promise<boolean> => {
+export const syncPreview = async (loaded: LoadedRun, root: string): Promise<boolean> => {
   const running = await readJson(previewRecord(loaded), isPreview, 'a run’s preview').catch(() => undefined);
   if (!running || !alive(running.pid)) {
     return false;
   }
 
   const dir = previewDir(loaded);
-  for (const [file, entry] of Object.entries((await readApproved(loaded.paths)).files)) {
+  const approved = (await readApproved(loaded.paths)).files;
+  for (const [file, entry] of Object.entries(approved)) {
     // Only what changed is written: every write is a reload in the open page.
     if ((await fingerprint(under(dir, file))) !== entry.digest) {
       await placeVersion(loaded.paths, under(dir, file), entry.digest);
+    }
+  }
+
+  // A file the run touches and no longer approves — its task reverted — is the project's again.
+  for (const file of Object.keys((await readBase(loaded.paths)).files)) {
+    if (Object.hasOwn(approved, file)) {
+      continue;
+    }
+
+    const project = await fingerprint(under(root, file));
+    if ((await fingerprint(under(dir, file))) === project) {
+      continue;
+    }
+
+    if (project === null) {
+      await fs.rm(under(dir, file), { force: true });
+    } else {
+      await fs.mkdir(path.dirname(under(dir, file)), { recursive: true });
+      await fs.copyFile(under(root, file), under(dir, file));
     }
   }
 

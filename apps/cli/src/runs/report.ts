@@ -48,6 +48,8 @@ export interface RunReport {
   tasks: TaskReport[];
   events: { completed: number; refused: number; checksFailed: number; conflicts: number };
   overwrites: { file: string; task: string; by: string; at: string }[];
+  /** Files a person changed while their task worked on them, put together with the task's change line by line. */
+  joined: { file: string; task: string; by: string; at: string }[];
   requests: { file: string; task: string; summary: string; integratedBy?: string; integrated: boolean }[];
   proposals: { id: string; from: string; to: string; change: string; answer?: string }[];
   reconciliation?: { reason: string; files: { file: string; resolved?: string }[] };
@@ -142,6 +144,9 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
   const overwrites = Object.entries(approved.files).flatMap(([file, entry]) =>
     entry.overrode ? [{ file, task: entry.task, by: entry.overrode.by, at: entry.overrode.at }] : []
   );
+  const joined = Object.entries(approved.files).flatMap(([file, entry]) =>
+    entry.joined ? [{ file, task: entry.task, by: entry.joined.by, at: entry.joined.at }] : []
+  );
   const requests = (await requestsOf(loaded)).map(each => ({
     file: each.request.file,
     task: each.task,
@@ -190,6 +195,9 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
       : []),
     ...(events.conflicts > 0 ? [`${String(events.conflicts)} conflict(s)`] : []),
     ...overwrites.map(each => `${each.file} was written over a change made outside the run (decided by ${each.by})`),
+    ...joined.map(
+      each => `${each.file} was changed outside the run too: both changes kept, line by line (decided by ${each.by})`
+    ),
     ...stops.map(
       stop =>
         `The run stopped at ${stop.at} (${stop.reason})${stop.resumedAt ? `, resumed by ${String(stop.by)} at ${stop.resumedAt}` : ''}`
@@ -215,6 +223,7 @@ export const buildReport = async (ctx: RunContext, loaded: LoadedRun): Promise<R
     events,
     stops,
     overwrites,
+    joined,
     requests,
     proposals,
     ...(record.reconciliation
@@ -274,6 +283,9 @@ export const reportText = (report: RunReport, summary: string | undefined, closi
     `- Completions: ${String(report.events.completed)}; refused: ${String(report.events.refused)}; checks failed: ${String(report.events.checksFailed)}; conflicts: ${String(report.events.conflicts)}`,
     ...report.overwrites.map(
       each => `- Written over a change made outside the run: ${each.file} (${each.task}, decided by ${each.by})`
+    ),
+    ...report.joined.map(
+      each => `- Merged with a change made outside the run: ${each.file} (${each.task}, decided by ${each.by})`
     ),
     ...report.requests.map(
       each =>

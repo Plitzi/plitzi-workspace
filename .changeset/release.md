@@ -35,11 +35,15 @@
   reassign and attach after a cut from the last reviewed version, and a distinct exit code per refusal. With `space
   overview` and `space impact`, and the skill's `reference/runs.md`. A team: the lead and roles per task (`task next
   --role`, which hands an agent back its own unblocked task first), the lead and the agents talking (`task ask`, `task
-  message` to a task, all, or an agent by name, `task inbox`, `task unblock --answer`, and `run watch --until lead`,
-  which wakes the lead once for each thing that needs it), shared files connected as each task is approved (taken by
-  turns when free, merged line by line), `run preview` of the run's work as it goes (`--task`: a task in review, before
-  approving it), `task show` (a task as its lead reviews it, each file's diff and what to run next), and
-  `--known-failure` as the only way to review with failing checks.
+  message` to a task, all, or an agent by name, `task inbox`, `task tell` (for the lead to know, no answer waited for),
+  `task unblock --answer`, and `run watch --until lead`, which wakes the lead once for each thing that needs it), shared
+  files connected as each task is approved (taken by turns when free, merged line by line), `run preview` of the run's
+  work as it goes (`--task`: a task in review, before approving it), `task show` (a task as its lead reviews it, each
+  file's diff and what to run next), `task review --approve --merge` and `run resolve --take merge` (a person's change
+  and the run's, line by line), `task revert --reason`, a plan's `touches` (the files a task will change outside its
+  own, which `run plan` warns about when two would at once), an agent limit that counts agents, and `--known-failure` as
+  the only way to review with failing checks — but a check that fails without the task too is marked `preexisting`, not
+  the task's.
 - **`plitzi explain` knows the template filters** (`@plitzi/cli`, `@plitzi/sdk-authoring`): `explain currency`, `--list
   filters`, from a catalogue beside the filters that a test holds whole. **`'now'|date(…)`** is the moment the page is
   rendered, and **`<`, `>`, `<=`, `>=` order strings as text** — `r.date >= '2026-10-20'` was false for every row, as
@@ -54,3 +58,16 @@
 - **A required select is required** (`@plitzi/sdk-elements`): the `<select>` of a form control never carried
   `required`, so the browser's own check skipped it and an empty submit stopped at the next field; it now does, and
   takes the focus when shown, as an input does. A textarea is optional unless it says so.
+- **A link to a path no page answers is warned** (`@plitzi/sdk-authoring`, `page-path-unknown`): a page not made yet, or
+  a typo, followed in-app to the 404 page. Files, the platform's own paths (`/_…`), the space's functions and a bound
+  `href` (where it starts, not where it leads) are not checked.
+- **A run's task completes with no authoring suggestions** (`@plitzi/cli`): a suggestion fails the author step at
+  `complete`, as a warning does — one that was there before the task is `preexisting`, not its.
+- **`list.put` refuses a value written as JSON that does not read** (`@plitzi/sdk-server`): one put together by a
+  template with a value outside quotes left empty (`"amount": }`) was kept as a string, and the list's readers failed
+  on it later. The step now fails, saying how to write it.
+- **`page check --element` says what the element shows** (`@plitzi/sdk-dev-tools`, `@plitzi/cli`): its text as a
+  visitor reads it, its bindings resolved — so a count that follows a filter is read after a `--click`, not worked out
+  from the template. And **`--fill` works without `--click`**: what typing in a field changes, as a search box does; with a click, what
+  the filling changed by itself is said apart. `--element` and `--state` read the page as the interaction left it, and a
+  second `--element` is refused rather than replacing the first.

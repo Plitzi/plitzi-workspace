@@ -32,6 +32,8 @@ export interface Message {
   at: string;
   /** The message it answers. */
   replyTo?: string;
+  /** Said for the lead to know, not asked: no answer is waited for. */
+  fyi?: boolean;
 }
 
 const isMessage = (value: unknown): value is Message =>
@@ -41,7 +43,8 @@ const isMessage = (value: unknown): value is Message =>
   typeof value.to === 'string' &&
   typeof value.text === 'string' &&
   typeof value.at === 'string' &&
-  (value.replyTo === undefined || typeof value.replyTo === 'string');
+  (value.replyTo === undefined || typeof value.replyTo === 'string') &&
+  (value.fyi === undefined || typeof value.fyi === 'boolean');
 
 const isRead = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(each => typeof each === 'string');

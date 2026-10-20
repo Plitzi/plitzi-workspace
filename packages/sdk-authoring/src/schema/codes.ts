@@ -105,6 +105,11 @@ export const AUTHORING_CODES = {
     means: 'a link or `navigate` to a page id that does not exist',
     fix: "an existing page id, or a path with its slash (`'/about'`)"
   },
+  'page-path-unknown': {
+    kind: 'warned',
+    means: 'a link or `navigate` to a path no page of the space answers — a page not made yet, or a typo',
+    fix: "a path a page answers (its folder and slug), the page's id, or `mode: 'external'` for one the server answers itself"
+  },
   'page-target-url': {
     kind: 'refused',
     means: 'a URL, `mailto:` or `tel:` in a link left in page mode',

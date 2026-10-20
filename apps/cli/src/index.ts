@@ -1,4 +1,4 @@
-import { Option, program } from 'commander';
+import { InvalidArgumentError, Option, program } from 'commander';
 
 import { SCHEMES } from './browser';
 import { login, logout, space, whoami } from './commands/account';
@@ -52,6 +52,7 @@ import {
   taskComplete,
   taskContextCommand,
   taskShow,
+  taskTell,
   taskDiscard,
   taskInbox,
   taskMessage,
@@ -396,13 +397,24 @@ pageGroup
   .addOption(widthsOption('The widths to check it at, separated by commas', [1440, 390]))
   .addOption(schemeOption())
   .option('--state', 'Also what the page holds: its state, and every source by name')
-  .option('--element <id>', 'Also one element: what it reads, its own state, whether it is on screen')
+  .option(
+    '--element <id>',
+    'Also one element: what it reads, what it shows, its own state, whether it is on screen — one per check',
+    (id: string, before?: string) => {
+      // A second one would replace the first without a word: said instead.
+      if (before !== undefined) {
+        throw new InvalidArgumentError(`one --element per check: ${before} and ${id} are two checks`);
+      }
+
+      return id;
+    }
+  )
   .option('--ssr', 'Also the HTML the server sent against the hydrated page: what a server provider sent late')
   .option('--click <id>', 'Click one element once the page settles, and say what it changed — or that nothing did')
   .addOption(
     new Option(
       '--fill <id=value>',
-      'Fill a field before the click, as a visitor types in it — once per field; a box takes true or false'
+      'Fill a field as a visitor types in it — before the --click, or alone, saying what typing in it changed (a search box); once per field, a box takes true or false'
     ).argParser(fill)
   )
   .option(
@@ -884,7 +896,7 @@ runGroup
 runGroup
   .command('can-write')
   .description(
-    'Whether a file may be written: no — with the task and until when — if another task holds it. For any hook'
+    'Whether a file may be written: no — with the task and until when — if a task of any open run holds it. For any hook'
   )
   .argument('<file>', 'The project file')
   .option('--task <task>', 'The task asking, when it has no token at hand')
@@ -948,10 +960,13 @@ runGroup
 
 runGroup
   .command('resolve')
-  .description('Settle one file of a reconciliation: the project’s version, the run’s, or a file of yours — a person’s')
+  .description('Settle one file of a reconciliation: the project’s version, the run’s, both merged, or a file of yours')
   .argument('<run>', 'The run')
   .argument('<file>', 'The file under reconciliation')
-  .requiredOption('--take <version>', 'project, run, or the path of a file holding the version to keep')
+  .requiredOption(
+    '--take <version>',
+    'project, run, merge (both changes line by line, when they touch different lines), or the path of a file holding the version to keep'
+  )
   .option(...JSON_OPTION)
   .action((run: string, file: string, options: RunCommandOptions & { take: string }) => runResolve(run, file, options));
 
@@ -1198,10 +1213,16 @@ taskGroup
   .action((options: RunCommandOptions & { knownFailure?: string; fixedBy?: string }) => taskComplete(options));
 
 taskGroup
+  .command('tell')
+  .description('Tell the lead what it should know — a finding, a choice you made, a risk — when no answer is needed')
+  .argument('<text>', 'What to tell')
+  .option(...TOKEN_OPTION)
+  .option(...JSON_OPTION)
+  .action((text: string, options: RunCommandOptions) => taskTell(text, options));
+
+taskGroup
   .command('ask')
-  .description(
-    'Ask the lead — stuck, unsure, or with news: the answer comes with your next command, or --follow for it'
-  )
+  .description('Ask the lead — stuck or unsure: the answer comes with your next command, or --follow for it')
   .argument('<text>', 'The question')
   .option('--follow', 'Stay until the lead answers, giving the task’s sign of life meanwhile')
   .option('--timeout <minutes>', 'With --follow: give up after this long, said', positiveInteger, 30)
@@ -1238,6 +1259,7 @@ taskGroup
     'A task as its lead reviews it: acceptance, checks, agreements, notes, what was said, each file’s diff, and what to run next'
   )
   .argument('<task>', 'The task')
+  .option(...TOKEN_OPTION)
   .option(...RUN_OPTION)
   .option(...JSON_OPTION)
   .action((task: string, options: RunCommandOptions) => taskShow(task, options));
@@ -1250,6 +1272,10 @@ taskGroup
   .option(
     '--overwrite',
     'With --approve, over a change someone made in the project while it worked: its version wins at the finish — said, the other kept'
+  )
+  .option(
+    '--merge',
+    'With --approve, with a change someone made in the project while it worked: both put together line by line, the checks run on the result'
   )
   .option('--changes <note>', 'What to change')
   .option('--on <element>', 'The element the change is about')
@@ -1271,9 +1297,10 @@ taskGroup
   .command('revert')
   .description('Take an approved task’s work back out of the run’s, before the final merge — the others’ untouched')
   .argument('<task>', 'The task')
+  .requiredOption('--reason <why>', 'Why: kept in its notes, and said to whoever takes it again')
   .option(...RUN_OPTION)
   .option(...JSON_OPTION)
-  .action((task: string, options: RunCommandOptions) => taskRevert(task, options));
+  .action((task: string, options: RunCommandOptions & { reason: string }) => taskRevert(task, options));
 
 taskGroup
   .command('context')
@@ -1286,11 +1313,17 @@ taskGroup
     taskContextCommand(task, { ...options, json: true })
   );
 
-// Every command of a run says who calls it, for the run's log: the same option everywhere.
+// Every command of a run says who calls it, for the run's log: the same option everywhere. And one that names its run
+// as an optional argument takes `--run` as well, as every task command does: an agent writes it one way.
 for (const group of [runGroup, taskGroup]) {
   for (const command of group.commands) {
     if (!command.options.some(option => option.long === '--agent')) {
       command.option(...AGENT_OPTION);
+    }
+
+    const first = command.registeredArguments.at(0);
+    if (first?.name() === 'run' && !first.required && !command.options.some(option => option.long === '--run')) {
+      command.option(...RUN_OPTION);
     }
   }
 }

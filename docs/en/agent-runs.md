@@ -23,8 +23,9 @@ fingerprint, and removed with the run when it ends if they are as it read them �
 plan` and `run open` refuse while another run is going (`another-run`), and `tmp/plitzi-runs/active.json`, created
 exclusively when a run opens, decides between two opening at once. A claim with no run behind it is a run still opening
 — its record is written last — unless it is more than two minutes old: then it was cut, and is taken over. A run limits
-how many tasks are worked at once (`--agents`, 3 when left out, above 5 a person confirms): `task take` counts the tasks
-in progress and takes one under the run's `take.lock`, so two takes never pass the limit together (`agent-limit`).
+how many agents work at once (`--agents`, 3 when left out, above 5 a person confirms): `task take` counts the agents
+holding a task in progress — one holding two is one, and a take by one of them adds none — and takes one under the run's
+`take.lock`, so two takes never pass the limit together (`agent-limit`).
 
 ## The team
 

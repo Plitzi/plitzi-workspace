@@ -204,6 +204,7 @@ The space renders, and renders something you probably did not mean. Fix every on
 | `list-row-not-li` | a row of a list with `items` that is not an `<li>` — that list is a `<ul>` (or `<ol>`), so the row is a box inside a list, no item to a screen reader | `container({ subType: 'li' })` — or the component's root one, or a wrapper for a link or a button |
 | `overlay-never-opened` | a modal or a dialog that starts hidden and that no step opens | a flow with `openModal('id')` / `openDialog('id')` |
 | `overlay-starts-open` | a modal or a dialog open when the page loads | `visible: false`, opened by `openModal` |
+| `page-path-unknown` | a link or `navigate` to a path no page of the space answers — a page not made yet, or a typo | a path a page answers (its folder and slug), the page's id, or `mode: 'external'` for one the server answers itself |
 | `painted-state-without-keep-state` | `paintedState` without `keepState` — nothing is kept for the server to draw with | `settings.keepState: true`, or remove `paintedState` |
 | `path-not-in-data` | a binding onto a provider whose answer the author could read (`data`), through a path that answer does not have | the path the message lists the keys for — `p.data.plans`, not `p.data.landing.plans` |
 | `plugin-attribute-reserved` | a plugin attribute named as one of the element’s own fields — a factory never hands it to the plugin | rename it in the plugin (`variant` → `kind`) |

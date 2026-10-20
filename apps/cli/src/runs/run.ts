@@ -217,14 +217,24 @@ export const assertStatus = (loaded: LoadedRun, allowed: readonly RunRecord['sta
     );
   }
 
+  const why = loaded.record.stopReason ? ` (${loaded.record.stopReason})` : '';
   if (status === 'stopping') {
-    throw new RunRefusal('stopping', `Run "${runId}" is stopping: it cannot ${action}`, { run: runId });
+    throw new RunRefusal(
+      'stopping',
+      `Run "${runId}" is stopping${why}: it cannot ${action} — the tasks in hand finish, and nothing starts until it is resumed (plitzi run resume ${runId})`,
+      {
+        run: runId,
+        next: 'finish the task in hand; then wait for the resume (plitzi task next --follow waits through it)'
+      }
+    );
   }
 
   if (status === 'stopped') {
     throw new RunRefusal(
       loaded.record.forcedStopAt ? 'forced-stop' : 'stopping',
-      `Run "${runId}" is stopped: it cannot ${action} until it is resumed (plitzi run resume ${runId})`,
+      loaded.record.forcedStopAt
+        ? `Run "${runId}" was stopped at once${why}: it cannot ${action}. The tasks being written were cut; those in review keep their work. It goes on when the lead resumes it`
+        : `Run "${runId}" is stopped${why}: it cannot ${action} until the lead resumes it`,
       { run: runId }
     );
   }
@@ -581,12 +591,16 @@ export const stopRun = async (ctx: RunContext, runId: string, force: boolean): P
   await updateRecord(ctx, loaded.paths, record => ({
     ...record,
     status: 'stopped',
-    forcedStopAt: ctx.now().toISOString()
+    forcedStopAt: ctx.now().toISOString(),
+    stopReason: `stopped at once by ${ctx.agent}`
   }));
   const cut: string[] = [];
   for (const task of loaded.tasks) {
     const view = await viewTask(loaded.paths, task);
-    if (view.owner && view.state.status !== 'done') {
+    // Only what is being written is cut: a task in review is finished work waiting for the lead, a blocked one waits
+    // for an answer — neither has an agent writing, and cutting them would only throw finished work away.
+    const writing = ['in-progress', 'changes-requested', 'waiting'].includes(view.state.status);
+    if (view.owner && writing) {
       await cutTask(view, 'the run was stopped by force', ctx.now);
       cut.push(task.id);
     }

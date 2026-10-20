@@ -41,6 +41,11 @@ export interface PlannedTask {
   milestone?: string;
   /** Who in the team does it: developer (when left out), designer, reviewer, tester, writer… — `task next --role` picks by it. */
   role?: string;
+  /**
+   * Files outside its own it means to change — a shared one, a done task's: not held by it, but said by `run plan`, so
+   * the lead sees two tasks on one file before they meet at `complete`.
+   */
+  touches?: string[];
 }
 
 export interface Contract {
@@ -77,7 +82,7 @@ export interface ReconciledFile {
   base: string | null;
   project: string | null;
   run: string | null;
-  resolved?: 'project' | 'run' | 'file';
+  resolved?: 'project' | 'run' | 'file' | 'merged';
 }
 
 export interface Reconciliation {
@@ -169,6 +174,8 @@ export interface KnownFailure {
   why: string;
   failing: string[];
   fixedBy?: string;
+  /** The run's work fails the same way without this task: not its doing, and nothing it can fix in its files. */
+  preexisting?: boolean;
   at: string;
 }
 
@@ -178,7 +185,8 @@ export interface TaskState {
   round: number;
   /** What it waits for from another task: a file it holds, or its answer to a proposal. */
   waitingFor?: Waiting;
-  blockedBy?: { reason: string; needs: Needs };
+  /** `review`: sent to a person after the round limit — who may approve it as it is, or answer it (`task unblock`). */
+  blockedBy?: { reason: string; needs: Needs; review?: boolean };
   cutAt?: { step: string; reason: string; at: string };
   notes: TaskNote[];
   /** What it changed, as of its last `complete`: by project path. */
@@ -259,7 +267,15 @@ export interface ApprovedFile {
   previous?: ApprovedFile;
   /** Someone changed the project's file while the task worked on it, and this version is written over that change. */
   overrode?: Override;
+  /** Someone changed the project's file while the task worked on it, and the two changes were put together line by line. */
+  joined?: Override;
 }
+
+/**
+ * What the lead decides when a file changed in the project while its task worked on it: refuse (the default — it says
+ * what can be done), write the task's version over it, or put the two changes together line by line.
+ */
+export type ProjectChange = 'refuse' | 'overwrite' | 'merge';
 
 /** A change made outside the run that the run's version is written over: decided by the lead, and said. */
 export interface Override {
@@ -324,7 +340,8 @@ export const isPlannedTask = (value: unknown): value is PlannedTask =>
   isNumber(value.estimateMinutes) &&
   isStrings(value.acceptance) &&
   optional(value.milestone, isString) &&
-  optional(value.role, isString);
+  optional(value.role, isString) &&
+  optional(value.touches, isStrings);
 
 const isContract = (value: unknown): value is Contract =>
   isRecord(value) && isString(value.resource) && isString(value.owner) && isString(value.note);
@@ -350,7 +367,7 @@ const isReconciledFile = (value: unknown): value is ReconciledFile =>
   isDigest(value.base) &&
   isDigest(value.project) &&
   isDigest(value.run) &&
-  optional(value.resolved, oneOf(['project', 'run', 'file'] as const));
+  optional(value.resolved, oneOf(['project', 'run', 'file', 'merged'] as const));
 
 const isMergeEntry = (value: unknown): value is MergeEntry =>
   isRecord(value) &&
@@ -421,7 +438,14 @@ export const isTaskState = (value: unknown): value is TaskState =>
       optional(waiting.file, isString) &&
       optional(waiting.proposal, isString)
   ) &&
-  optional(value.blockedBy, blocked => isRecord(blocked) && isString(blocked.reason) && isNeeds(blocked.needs)) &&
+  optional(
+    value.blockedBy,
+    blocked =>
+      isRecord(blocked) &&
+      isString(blocked.reason) &&
+      isNeeds(blocked.needs) &&
+      optional(blocked.review, (flag: unknown) => typeof flag === 'boolean')
+  ) &&
   optional(value.cutAt, cut => isRecord(cut) && isString(cut.step) && isString(cut.reason) && isString(cut.at)) &&
   Array.isArray(value.notes) &&
   value.notes.every(isNote) &&
@@ -433,6 +457,7 @@ export const isTaskState = (value: unknown): value is TaskState =>
       isString(failure.why) &&
       isStrings(failure.failing) &&
       optional(failure.fixedBy, isString) &&
+      optional(failure.preexisting, (flag: unknown) => typeof flag === 'boolean') &&
       isString(failure.at)
   ) &&
   isString(value.updatedAt);
@@ -498,6 +523,10 @@ const isApprovedFile = (value: unknown): value is ApprovedFile =>
   optional(
     value.overrode,
     overrode => isRecord(overrode) && isDigest(overrode.project) && isString(overrode.by) && isString(overrode.at)
+  ) &&
+  optional(
+    value.joined,
+    joined => isRecord(joined) && isDigest(joined.project) && isString(joined.by) && isString(joined.at)
   );
 
 export const isApprovedManifest = (value: unknown): value is ApprovedManifest =>

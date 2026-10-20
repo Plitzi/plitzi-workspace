@@ -3,7 +3,7 @@ import { fingerprint, readOptional } from './files';
 import { messagesOf } from './messages';
 import { under } from './paths';
 import { RunRefusal } from './refusal';
-import { loadRun, readApproved, requireNoTask } from './run';
+import { loadRun, readApproved, readBase, requireNoTask } from './run';
 import { getBlob } from './store';
 import { readRequests, readStart, viewTask } from './taskStore';
 import { unifiedDiff } from '../fix/diff';
@@ -99,13 +99,21 @@ export const showTask = async (ctx: RunContext, runId: string, taskId: string): 
   }
 
   const view = await viewTask(loaded.paths, task);
-  const start = await readStart(view.paths);
+  // A copy is read only while someone holds the task: a cut task's is left behind, never to be merged.
+  const start = view.owner ? await readStart(view.paths) : undefined;
   const approved = (await readApproved(loaded.paths)).files;
   const changed = view.state.changed ?? [];
   const from: TaskShown['from'] = start ? 'copy' : changed.length > 0 ? 'run' : 'none';
   const files: ShownFile[] = [];
+  // Without a copy, what it changed is read against what the run started from: the project as the run copied it.
+  const base = start ? undefined : (await readBase(loaded.paths)).files;
   for (const file of changed) {
-    const before = await versionOf(loaded, ctx.root, file, start?.files[file]);
+    const before = await versionOf(
+      loaded,
+      ctx.root,
+      file,
+      start ? start.files[file] : base && Object.hasOwn(base, file) ? base[file] : undefined
+    );
     const after =
       from === 'copy'
         ? await readOptional(under(view.paths.work, file))

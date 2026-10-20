@@ -15,8 +15,22 @@ export type ElementReport = {
   state?: unknown;
   /** How many copies are on the page: a list row's elements are one per row, a component's one per instance. */
   copies: number;
+  /**
+   * What its first copy shows, as a visitor reads it — its bindings resolved — so a count that follows a filter is
+   * read, not worked out from the template. Cut at 300 characters.
+   */
+  text?: string;
   visible: boolean;
   box?: { x: number; y: number; width: number; height: number };
+};
+
+const TEXT_MAX = 300;
+
+/** The text as it is shown — `innerText` in a browser; a DOM without layout (a test's) has only `textContent`. */
+const textOf = (node: HTMLElement): string => {
+  const rendered: unknown = Reflect.get(node, 'innerText');
+
+  return typeof rendered === 'string' ? rendered : node.textContent;
 };
 
 /**
@@ -122,6 +136,7 @@ export const elementReport = (state: unknown, id: string, document: Document): E
       ? attributes.referenceId
       : undefined;
   const ownState = recordAt(state, 'runtime', 'elements')[id];
+  const shown = node instanceof HTMLElement ? textOf(node).replace(/\s+/g, ' ').trim() : '';
 
   return {
     id,
@@ -131,6 +146,7 @@ export const elementReport = (state: unknown, id: string, document: Document): E
     ...(isRecord(element) ? { attributes: recordAt(plain(element), 'attributes'), bindings: bindingsOf(element) } : {}),
     ...(ownState === undefined ? {} : { state: plain(ownState) }),
     copies: nodes.length,
+    ...(shown ? { text: shown.length > TEXT_MAX ? `${shown.slice(0, TEXT_MAX)}…` : shown } : {}),
     visible,
     ...(rect
       ? {

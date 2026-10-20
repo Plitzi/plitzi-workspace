@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import { agreementsOf, proposalsOf, unansweredTo } from './agreements';
+import { failsWithout } from './checks';
 import {
   cloneFiles,
   createExclusive,
@@ -15,12 +16,12 @@ import {
 } from './files';
 import { checkVersions } from './materialise';
 import { mergeLines } from './merge3';
-import { agentAddress, LEAD, sendMessage, unreadFor, unreadForHolder } from './messages';
+import { agentAddress, LEAD, messagesOf, sendMessage, unreadFor, unreadForHolder } from './messages';
 import { entryOf } from './model';
 import { ID, lockFile, projectPath, runPaths, taskPaths, under } from './paths';
 import { dependenciesDone, PRIORITY_RANK, readyTasks } from './plan';
 import { syncPreview } from './preview';
-import { RunRefusal } from './refusal';
+import { isRunRefusal, RunRefusal } from './refusal';
 import {
   assertStatus,
   loadRun,
@@ -30,6 +31,7 @@ import {
   readShared,
   recordBrake,
   requireNoTask,
+  requirePerson,
   runIds
 } from './run';
 import { getBlob, keepFiles, placeVersion, putBlob, withLock } from './store';
@@ -61,6 +63,7 @@ import type {
   ApprovedManifest,
   FileLock,
   Needs,
+  ProjectChange,
   ReviewComment,
   RunTask,
   SharedRequest,
@@ -107,6 +110,15 @@ export const holderOf = async (ctx: RunContext, loaded: LoadedRun, task: RunTask
       'invalid',
       `This is the command of whoever holds task "${task.id}": pass its token (--token, or PLITZI_TASK_TOKEN)`,
       { task: task.id }
+    );
+  }
+
+  // Approved, the task is over and its token with it: said as that, not as a task taken away.
+  if (view.state.status === 'done') {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${task.id}" is done — approved: its token closed with it. What was said on it: plitzi task show ${task.id} (the lead's)`,
+      { task: task.id, next: 'take the next one: plitzi task next' }
     );
   }
 
@@ -287,6 +299,12 @@ export interface NextTask {
   finished?: boolean;
   /** What the lead said to the caller by name and it had not read. */
   messages: Message[];
+  /** Tasks are ready, but the run's agents are all at work: the caller waits for a place. */
+  full?: true;
+  /** The run is stopping or stopped: nothing starts until it is resumed. */
+  paused?: string;
+  /** `--follow` gave up after its timeout, with nothing for the caller. */
+  timedOut?: true;
 }
 
 /** `plitzi task next`: the ready task to take — highest priority, then the longest chain still to do. */
@@ -314,6 +332,22 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
   }
 
   const ready = readyTasks(loaded.tasks, states, held).filter(forRole);
+  // A task the limit would not let this agent take is not offered: it is said, and `--follow` waits for a place.
+  const atWork = new Set(
+    views
+      .filter(view => view.owner && (view.state.status === 'in-progress' || view.state.status === 'changes-requested'))
+      .map(view => view.owner?.agent)
+  );
+  const full = !atWork.has(ctx.agent) && atWork.size >= loaded.record.agents;
+  if (ready.length > 0 && full) {
+    return {
+      why: `${ready.map(task => task.id).join(', ')} ready, but ${String(atWork.size)} of the ${String(loaded.record.agents)} agents the run allows are at work: it is taken when one of them has nothing in progress`,
+      ready: ready.map(task => task.id),
+      full: true,
+      messages
+    };
+  }
+
   if (ready.length > 0) {
     return { task: ready[0], ready: ready.map(task => task.id), messages };
   }
@@ -329,7 +363,14 @@ export const nextTask = async (ctx: RunContext, runId: string, role?: string): P
         : open.length === 0
           ? 'every task is done: the run is ready to finish (plitzi run finish)'
           : `nothing is ready: ${open
-              .map(view => `${view.task.id} ${view.state.status}${view.owner ? ` (${view.owner.agent})` : ''}`)
+              .map(
+                view =>
+                  `${view.task.id} ${view.state.status}${
+                    view.owner
+                      ? ` (${view.owner.agent}${isDisconnected(view.task, view.signalAt, ctx.now()) ? ', no signal — the lead may reassign it' : ''})`
+                      : ''
+                  }`
+              )
               .join(', ')}`;
 
   return {
@@ -353,9 +394,25 @@ export const followNext = async (
 ): Promise<NextTask> => {
   const started = Date.now();
   for (;;) {
-    const next = await nextTask(ctx, runId, role);
-    if (next.task || next.finished || next.messages.length > 0 || Date.now() - started >= timeoutMs) {
+    // A run stopped — gently, by its brake, or by a person at once — goes on once resumed: an agent waiting for work
+    // waits through it.
+    const next = await nextTask(ctx, runId, role).catch((error: unknown): NextTask => {
+      if (isRunRefusal(error) && (error.code === 'stopping' || error.code === 'forced-stop')) {
+        return { ready: [], messages: [], why: error.message, paused: error.message };
+      }
+
+      throw error;
+    });
+    if (next.task || next.finished || next.messages.length > 0) {
       return next;
+    }
+
+    if (Date.now() - started >= timeoutMs) {
+      return {
+        ...next,
+        timedOut: true,
+        why: `waited ${String(Math.round(timeoutMs / 60_000))} min and nothing came for you: ${next.why ?? 'nothing is ready'} — run it again to go on waiting`
+      };
     }
 
     await new Promise(resolve => setTimeout(resolve, everyMs));
@@ -441,7 +498,8 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
 
       throw new RunRefusal('claimed', `Task "${taskId}" is ${view.owner.agent}'s`, {
         task: taskId,
-        holder: view.owner.agent
+        holder: view.owner.agent,
+        next: 'take the next one: plitzi task next'
       });
     }
 
@@ -463,24 +521,14 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
           each.owner !== undefined &&
           (each.state.status === 'in-progress' || each.state.status === 'changes-requested')
       );
-      if (working.length >= loaded.record.agents) {
-        // The caller may be one of them without knowing: a block of its lifted, or changes asked, while it looked away.
-        const yours = working.filter(each => each.owner?.agent === ctx.agent).map(each => each.task.id);
+      // The limit is on agents, not tasks: one that holds two — its own sent back while it works another — is one, and
+      // taking one more adds no agent.
+      const agents = new Set(working.map(each => each.owner?.agent));
+      if (!agents.has(ctx.agent) && agents.size >= loaded.record.agents) {
         throw new RunRefusal(
           'agent-limit',
-          `${String(working.length)} of the ${String(loaded.record.agents)} agents run "${runId}" allows are at work (${working.map(each => `${each.task.id}: ${String(each.owner?.agent)}`).join(', ')}): ${
-            yours.length > 0
-              ? `${yours.join(', ')} ${yours.length === 1 ? 'is' : 'are'} yours to go on with — plitzi task context ${yours[0]}`
-              : `take "${taskId}" when one finishes`
-          }`,
-          {
-            task: taskId,
-            working: working.map(each => each.task.id),
-            limit: loaded.record.agents,
-            ...(yours.length > 0
-              ? { yours, next: `go on with ${yours.join(', ')}: plitzi task context ${yours[0]}` }
-              : {})
-          }
+          `${String(agents.size)} of the ${String(loaded.record.agents)} agents run "${runId}" allows are at work (${working.map(each => `${each.task.id}: ${String(each.owner?.agent)}`).join(', ')}): take "${taskId}" when one of them finishes`,
+          { task: taskId, working: working.map(each => each.task.id), limit: loaded.record.agents }
         );
       }
 
@@ -488,7 +536,8 @@ export const takeTask = async (ctx: RunContext, runId: string, taskId: string, r
         const holder = await readOwner(view.paths);
         throw new RunRefusal('claimed', `Task "${taskId}" was taken meanwhile${holder ? ` by ${holder.agent}` : ''}`, {
           task: taskId,
-          ...(holder ? { holder: holder.agent } : {})
+          ...(holder ? { holder: holder.agent } : {}),
+          next: 'take the next one: plitzi task next'
         });
       }
 
@@ -638,11 +687,14 @@ export const claimFile = async (
     const views = await Promise.all(loaded.tasks.map(each => viewTask(loaded.paths, each)));
     const queued = views.filter(each => each.state.waitingFor?.file === clean).length;
     const turn = queued === 0 ? 'wait' : 'request';
+    const mine = holder.run === runId && holder.lock.agent === (view.owner?.agent ?? ctx.agent);
     throw new RunRefusal(
       'claimed',
-      turn === 'wait'
-        ? `${clean} is held by task "${holder.task}" by turns (turn: wait): wait for it (plitzi task wait ${clean}) and go on with the rest of your task meanwhile`
-        : `${clean} is held by task "${holder.task}", and ${String(queued)} more wait for it (turn: request): change it in your copy and say why (plitzi task request ${clean} --summary …) — your change goes in through one integration task that applies every request together`,
+      mine
+        ? `${clean} is held by "${holder.task}", your own other task: it is yours to change there — finish that one and its turn passes here (plitzi task wait ${clean})`
+        : turn === 'wait'
+          ? `${clean} is held by task "${holder.task}" by turns (turn: wait): wait for it (plitzi task wait ${clean}) and go on with the rest of your task meanwhile`
+          : `${clean} is held by task "${holder.task}", and ${String(queued)} more wait for it (turn: request): change it in your copy and say why (plitzi task request ${clean} --summary …) — your change goes in through one integration task that applies every request together`,
       { file: clean, holder: holder.task, turn, ...(holder.until ? { until: holder.until } : {}) }
     );
   }
@@ -803,15 +855,18 @@ export const waitForFile = async (
   runId: string,
   taskId: string,
   file: string
-): Promise<{ file: string; holder: string }> => {
+): Promise<{ file: string; holder?: string; granted?: true }> => {
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'wait for a file');
   const task = findTask(loaded, taskId);
   const view = await holderOf(ctx, loaded, task);
   const clean = cleanPath(ctx.root, file);
   const holder = await holderTaskOf(ctx, loaded, clean, taskId);
+  // Let go of before the wait came — its holder approved meanwhile: nothing to wait for, it is taken by turns now.
   if (!holder) {
-    throw new RunRefusal('invalid', `Nobody holds ${clean}: claim it (plitzi task claim ${clean})`, { file: clean });
+    await claimFile(ctx, runId, taskId, clean);
+
+    return { file: clean, granted: true };
   }
 
   await assertNoWaitCycle(loaded, taskId, holder);
@@ -873,6 +928,8 @@ export const followWait = async (
 export interface Signal {
   task: string;
   at: string;
+  /** The run is stopping or stopped: said with every sign of life, so the agent knows before a refusal tells it. */
+  run?: { status: string; reason?: string };
   /** Without another sign of life by then, the lead may reassign it. */
   quietAfter: string;
   /** …and by then another agent may take it. */
@@ -904,6 +961,14 @@ export const reportProgress = async (
   return {
     task: taskId,
     at: at(ctx),
+    ...(loaded.record.status === 'open'
+      ? {}
+      : {
+          run: {
+            status: loaded.record.status,
+            ...(loaded.record.stopReason ? { reason: loaded.record.stopReason } : {})
+          }
+        }),
     quietAfter: new Date(now + noSignalAfter(task)).toISOString(),
     takenAfter: new Date(now + noSignalAfter(task) + DEFAULTS.lockAfterSignalMs).toISOString(),
     messages: await unreadForHolder(loaded, taskId, ctx.agent, true)
@@ -1064,14 +1129,22 @@ const mergeMoved = async (
 
   await writeJson(view.paths.start, { ...start, files: next, overlaid: [...overlaid].sort() });
   if (conflicts.length > 0) {
+    // Counted as the conflicts at approval are: in the run's report, and by its brake.
+    await recordBrake(ctx, loaded, 'conflict');
+    // Who changed those lines in the run: what the agent weighs before it redoes anything over approved work.
+    const by = conflicts.map(each => {
+      const entry = entryOf(approved.files, each.file);
+
+      return `${each.file}${entry ? ` (by "${entry.task}", approved)` : ''}`;
+    });
     throw new RunRefusal(
       'conflict',
-      `The run changed ${conflicts.map(each => each.file).join(', ')} since task "${view.task.id}"'s copy was made, on the same lines this task changed: take the run's version (plitzi task discard <file>), redo the change on it — what this task changed is in this answer — and complete again`,
+      `The run changed ${by.join(', ')} since task "${view.task.id}"'s copy was made, on the same lines this task changed. If your change still fits beside it, take the run's version (plitzi task discard <file>), redo your change on it — what this task changed is in this answer — and complete again. If your acceptance contradicts what was approved, do not undo it: ask the lead (plitzi task ask "…")`,
       {
         task: view.task.id,
         files: conflicts.map(each => each.file),
         yours: conflicts,
-        next: 'plitzi task discard <file>, redo your change (the `yours` diff) on the run’s version, complete again'
+        next: 'redo your change (the `yours` diff) on the run’s version (plitzi task discard <file>) — or, if it contradicts the approved one, ask the lead'
       }
     );
   }
@@ -1222,9 +1295,21 @@ export const completeTask = async (
 
   const checks = await ctx.checks(view.paths.work, ctx.root);
   const failing = checks.steps.filter(step => !step.ok);
+  // What fails in the copy may not be the task's: a person's edit in the project, or another task's approved work, that
+  // fails the checks reaches every copy. Checked against the run's work without this task before it is refused.
+  const preexisting =
+    !checks.ok && !knownFailure
+      ? failsWithout(checks, await checkVersions(ctx, loaded, digestsOf(await readApproved(loaded.paths))), [
+          `${view.paths.work}${path.sep}`,
+          new RegExp(`${escapeRegExp(path.join(loaded.paths.cache, 'check-'))}[0-9a-f]+${escapeRegExp(path.sep)}`, 'g')
+        ])
+      : false;
   if (!checks.ok) {
-    await recordBrake(ctx, loaded, 'checks-failed');
-    if (!knownFailure) {
+    if (!preexisting) {
+      await recordBrake(ctx, loaded, 'checks-failed');
+    }
+
+    if (!knownFailure && !preexisting) {
       throw new RunRefusal('checks-failed', `The project's checks fail in task "${taskId}"'s copy`, {
         task: taskId,
         steps: failing,
@@ -1232,7 +1317,7 @@ export const completeTask = async (
       });
     }
 
-    if (fixer) {
+    if (fixer && knownFailure) {
       await updateState(
         taskPaths(loaded.paths, fixer.id),
         state => ({
@@ -1285,8 +1370,14 @@ export const completeTask = async (
       ...state,
       status: 'in-review',
       changed: changed.filter(file => !asRequests.includes(file)),
-      knownFailure:
-        !checks.ok && knownFailure
+      knownFailure: preexisting
+        ? {
+            why: `the run's work fails ${failing.map(step => step.name).join(', ')} the same way without this task: ${failing.flatMap(step => step.said ?? []).find(line => line.trim() !== '') ?? 'see the checks'}`,
+            failing: failing.map(step => step.name),
+            preexisting: true,
+            at: at(ctx)
+          }
+        : !checks.ok && knownFailure
           ? {
               why: knownFailure.why,
               failing: failing.map(step => step.name),
@@ -1649,6 +1740,8 @@ export interface ReviewedTask {
   settled?: string[];
   /** Sent to a person after the round limit. */
   toPerson?: boolean;
+  /** Its files a person changed meanwhile, put together with its change (--merge). */
+  joined?: string[];
 }
 
 interface Built {
@@ -1656,6 +1749,8 @@ interface Built {
   /** Files put together line by line with the run's newer version: what the checks look at before it goes in. */
   merged: string[];
 }
+
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const digestsOf = (manifest: ApprovedManifest): Record<string, string | null> =>
   Object.fromEntries(Object.entries(manifest.files).map(([file, entry]) => [file, entry.digest]));
@@ -1717,11 +1812,11 @@ const buildMergeIntoRun = async (
   view: TaskView,
   start: TaskStart,
   changed: readonly string[],
-  overwrite: boolean,
+  onProjectChange: ProjectChange,
   approved: ApprovedManifest
 ): Promise<Built> => {
   const conflicts: string[] = [];
-  const outside: string[] = [];
+  const outside: { file: string; mergeable: boolean }[] = [];
   const merged: string[] = [];
   const next: ApprovedManifest = { files: { ...approved.files }, tasks: [...approved.tasks, view.task.id] };
   for (const file of changed) {
@@ -1751,26 +1846,39 @@ const buildMergeIntoRun = async (
     // Before anything is written: the project's file as the task found it, or changed by someone while it worked.
     const knew = entry ? entry.base : from;
     const project = await fingerprint(under(ctx.root, file));
+    let joined = false;
     if (project !== knew) {
-      outside.push(file);
-      if (!overwrite) {
-        continue;
-      }
-
       const theirs = await readOptional(under(ctx.root, file));
-      if (theirs !== undefined) {
-        await putBlob(loaded.paths, theirs);
+      const ours = mergedText ?? (await readOptional(under(view.paths.work, file)))?.toString('utf-8');
+      const withProject =
+        theirs === undefined || ours === undefined
+          ? undefined
+          : mergeLines(knew === null ? '' : await textOf(loaded, ctx, knew, file), ours, theirs.toString('utf-8'));
+      if (onProjectChange === 'merge' && withProject?.ok) {
+        mergedText = withProject.text;
+        merged.push(file);
+        joined = true;
+      } else {
+        outside.push({ file, mergeable: withProject?.ok === true });
+        if (onProjectChange !== 'overwrite') {
+          continue;
+        }
+
+        if (theirs !== undefined) {
+          await putBlob(loaded.paths, theirs);
+        }
       }
     }
 
     const bytes = mergedText === undefined ? await readOptional(under(view.paths.work, file)) : Buffer.from(mergedText);
     const digest = bytes === undefined ? null : await putBlob(loaded.paths, bytes);
+    const decided = { project, by: ctx.agent, at: at(ctx) };
     next.files[file] = {
       digest,
       base: project,
       task: view.task.id,
       at: at(ctx),
-      ...(project !== knew ? { overrode: { project, by: ctx.agent, at: at(ctx) } } : {}),
+      ...(project !== knew ? (joined ? { joined: decided } : { overrode: decided }) : {}),
       ...(entry ? { previous: entry } : {})
     };
   }
@@ -1783,11 +1891,29 @@ const buildMergeIntoRun = async (
     );
   }
 
-  if (outside.length > 0 && !overwrite) {
+  if (outside.length > 0 && onProjectChange !== 'overwrite') {
+    const files = outside.map(each => each.file);
+    const mergeable = outside.every(each => each.mergeable);
     throw new RunRefusal(
       'conflict',
-      `${outside.join(', ')} changed in the project while task "${view.task.id}" worked on ${outside.length === 1 ? 'it' : 'them'}: nothing was merged. The lead decides — approve with --overwrite (the task's version is written over that change at the finish, with a notice, and the other version kept), or send it back (--changes) to take the project's version (plitzi task discard <file>) and redo the change on it`,
-      { task: view.task.id, files: outside, decide: ['--overwrite', '--changes'] }
+      `${files.join(', ')} changed in the project while task "${view.task.id}" worked on ${files.length === 1 ? 'it' : 'them'}: nothing was merged. The lead decides — ${
+        mergeable
+          ? onProjectChange === 'merge'
+            ? ''
+            : 'the two changes go together line by line: approve with --merge (both kept, the checks run on the result), or '
+          : onProjectChange === 'merge'
+            ? `they touch the same lines (${outside
+                .filter(each => !each.mergeable)
+                .map(each => each.file)
+                .join(', ')}), so --merge cannot put them together: `
+            : ''
+      }approve with --overwrite (the task's version is written over that change at the finish, with a notice, and the other version kept), or send it back (--changes) to take the project's version (plitzi task discard <file>) and redo the change on it`,
+      {
+        task: view.task.id,
+        files,
+        decide: [...(mergeable ? ['--merge'] : []), '--overwrite', '--changes'],
+        next: `the lead decides: ${[...(mergeable ? ['--approve --merge'] : []), '--approve --overwrite', '--changes "…"'].join(', or ')}`
+      }
     );
   }
 
@@ -1855,15 +1981,38 @@ export const reviewTask = async (
   taskId: string,
   verdict: 'approve' | 'changes',
   comments: ReviewComment[],
-  overwrite = false
+  onProjectChange: ProjectChange = 'refuse'
 ): Promise<ReviewedTask> => {
   requireNoTask(ctx, 'review a task');
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping'], 'review a task');
   const task = findTask(loaded, taskId);
   const view = await viewTask(loaded.paths, task);
-  if (view.state.status !== 'in-review') {
-    throw new RunRefusal('invalid', `Task "${taskId}" is ${view.state.status}, not in review`, { task: taskId });
+  // After the round limit it went to a person, who looks at it and may approve it as it is — confirming, as a person.
+  const atPerson = view.state.status === 'blocked' && view.state.blockedBy?.review === true;
+  if (atPerson && verdict === 'approve') {
+    await requirePerson(ctx, runId, `approve task "${taskId}" after its review rounds`);
+  } else if (view.state.status !== 'in-review') {
+    throw new RunRefusal(
+      'invalid',
+      atPerson
+        ? `Task "${taskId}" went to a person after its review rounds: a person approves it as it is, or answers it (plitzi task unblock ${taskId} --answer "…")`
+        : `Task "${taskId}" is ${view.state.status}, not in review`,
+      { task: taskId }
+    );
+  }
+
+  // A question it asked the lead and the lead has not answered: the answer may change the work, so it comes first.
+  const answered = new Set((await messagesOf(loaded)).flatMap(message => (message.replyTo ? [message.replyTo] : [])));
+  const open = (await messagesOf(loaded)).filter(
+    message => message.from === taskId && message.to === LEAD && !message.fyi && !answered.has(message.id)
+  );
+  if (verdict === 'approve' && open.length > 0) {
+    throw new RunRefusal(
+      'invalid',
+      `Task "${taskId}" asked ${open.map(message => `${message.id} ("${message.text.slice(0, 80)}${message.text.length > 80 ? '…' : ''}")`).join(', ')} and it is not answered: answer it first (plitzi task message ${taskId} "…" --reply-to ${open[0].id}) — if the answer changes the work, send it back (--changes) with it`,
+      { task: taskId, questions: open.map(message => message.id) }
+    );
   }
 
   if (verdict === 'changes' && comments.length === 0) {
@@ -1897,8 +2046,9 @@ export const reviewTask = async (
         ...(toPerson
           ? {
               blockedBy: {
-                reason: `${String(round)} rounds of changes: a person looks at it`,
-                needs: 'person' as const
+                reason: `${String(round)} rounds of changes: a person looks at it — approves it as it is (plitzi task review ${taskId} --approve), or answers it (plitzi task unblock ${taskId} --answer "…")`,
+                needs: 'person' as const,
+                review: true
               }
             }
           : {}),
@@ -1928,7 +2078,7 @@ export const reviewTask = async (
   }
 
   const into = await changeApproved(ctx, loaded, approved =>
-    buildMergeIntoRun(ctx, loaded, view, start, changed, overwrite, approved)
+    buildMergeIntoRun(ctx, loaded, view, start, changed, onProjectChange, approved)
   ).catch(async (error: unknown) => {
     if (error instanceof RunRefusal && error.code === 'conflict') {
       await recordBrake(ctx, loaded, 'conflict');
@@ -1987,7 +2137,7 @@ export const reviewTask = async (
   }
 
   // What is connected shows as it is approved: a running preview of the run takes the approved work in now.
-  await syncPreview(refreshed);
+  await syncPreview(refreshed, ctx.root);
   const integrations = await withLock(refreshed.paths.mergeLock, () => integrateWhenReady(ctx, refreshed), {
     now: ctx.now
   });
@@ -2003,7 +2153,20 @@ export const reviewTask = async (
     integrations
   });
 
-  return { verdict, round, merged, granted, ready: [...ready, ...integrations], integrations, settled };
+  const joined = Object.entries((await readApproved(loaded.paths)).files)
+    .filter(([, entry]) => entry.task === taskId && entry.joined !== undefined)
+    .map(([file]) => file);
+
+  return {
+    verdict,
+    round,
+    merged,
+    granted,
+    ready: [...ready, ...integrations],
+    integrations,
+    settled,
+    ...(joined.length > 0 ? { joined } : {})
+  };
 };
 
 /** `plitzi task reassign`: the lead or a person cuts a task — its holder's token revoked — for another to take. */
@@ -2011,7 +2174,14 @@ export const reassignTask = async (
   ctx: RunContext,
   runId: string,
   taskId: string
-): Promise<{ from?: string; reviewedRound?: number }> => {
+): Promise<{
+  from?: string;
+  reviewedRound?: number;
+  released: string[];
+  granted: string[];
+  settled: string[];
+  integrations: string[];
+}> => {
   requireNoTask(ctx, 'reassign a task');
   const loaded = await loadRun(ctx, runId);
   const task = findTask(loaded, taskId);
@@ -2020,12 +2190,33 @@ export const reassignTask = async (
     throw new RunRefusal('invalid', `Task "${taskId}" is done: revert it instead (plitzi task revert ${taskId})`);
   }
 
+  // What it held by turns is let go with it — handed to whoever waits, its requests merged — not left until its locks
+  // run out half an hour after its agent went quiet.
+  const turns = [...(await lockedFiles(view.paths))].filter(([, lock]) => lock.kind === 'turn').map(([file]) => file);
   await cutTask(view, `reassigned by ${ctx.agent}`, ctx.now);
-  await logRun(ctx, loaded.paths, { action: 'reassign', task: taskId, from: view.owner?.agent });
+  const refreshed = await loadRun(ctx, runId);
+  const granted = await grantWaiters(ctx, refreshed, turns);
+  const settled = await settleRequests(ctx, refreshed, turns);
+  const integrations = await withLock(refreshed.paths.mergeLock, () => integrateWhenReady(ctx, refreshed), {
+    now: ctx.now
+  });
+  await logRun(ctx, loaded.paths, {
+    action: 'reassign',
+    task: taskId,
+    from: view.owner?.agent,
+    released: turns,
+    granted,
+    settled,
+    integrations
+  });
 
   return {
     ...(view.owner ? { from: view.owner.agent } : {}),
-    ...(view.reviewed ? { reviewedRound: view.reviewed.round } : {})
+    ...(view.reviewed ? { reviewedRound: view.reviewed.round } : {}),
+    released: turns,
+    granted,
+    settled,
+    integrations
   };
 };
 
@@ -2036,8 +2227,9 @@ export const reassignTask = async (
 export const revertTask = async (
   ctx: RunContext,
   runId: string,
-  taskId: string
-): Promise<{ reverted: string[]; kept: string[]; dependants: string[] }> => {
+  taskId: string,
+  reason?: string
+): Promise<{ reverted: string[]; kept: string[]; dependants: string[]; waiting: string[] }> => {
   requireNoTask(ctx, 'revert a task');
   const loaded = await loadRun(ctx, runId);
   assertStatus(loaded, ['open', 'stopping', 'stopped'], 'revert a task');
@@ -2088,14 +2280,62 @@ export const revertTask = async (
       ...state,
       status: 'ready',
       round: 0,
-      notes: [...state.notes, { at: at(ctx), by: ctx.agent, text: `Reverted: ${reverted.join(', ') || 'nothing'}` }]
+      notes: [
+        ...state.notes,
+        {
+          at: at(ctx),
+          by: ctx.agent,
+          text: `Reverted${reason ? ` — ${reason}` : ''}: ${reverted.join(', ') || 'nothing'}`
+        }
+      ]
     }),
     ctx.now
   );
-  const dependants = loaded.tasks.filter(each => each.dependsOn.includes(taskId)).map(each => each.id);
-  await logRun(ctx, loaded.paths, { action: 'revert', task: taskId, reverted, kept });
+  // Whoever takes it again hears why, with its take: what to redo, not only that it is to be redone.
+  if (reason) {
+    await sendMessage(ctx, loaded, {
+      from: LEAD,
+      to: taskId,
+      text: `This task was reverted and is to be done again: ${reason}`
+    });
+  }
+  // What was built on it waits for it again: not started, it goes back to pending; in hand, its agent is told.
+  const dependants = loaded.tasks.filter(each => each.dependsOn.includes(taskId));
+  const waiting: string[] = [];
+  for (const dependant of dependants) {
+    const dependantView = await viewTask(loaded.paths, dependant);
+    if (dependantView.state.status === 'done') {
+      continue;
+    }
 
-  return { reverted, kept, dependants };
+    const notStarted = !dependantView.owner && dependantView.state.status === 'ready';
+    await updateState(
+      dependantView.paths,
+      state => ({
+        ...state,
+        ...(notStarted ? { status: 'pending' as const } : {}),
+        notes: [
+          ...state.notes,
+          {
+            at: at(ctx),
+            by: 'plitzi',
+            text: notStarted
+              ? `"${taskId}", which it depends on, was reverted: it waits for it again`
+              : `"${taskId}", which it depends on, was reverted (${reverted.join(', ') || 'nothing'}): what it builds on is not in the run any more`
+          }
+        ]
+      }),
+      ctx.now
+    );
+    if (notStarted) {
+      waiting.push(dependant.id);
+    }
+  }
+
+  await syncPreview(await loadRun(ctx, runId), ctx.root);
+  await logRun(ctx, loaded.paths, { action: 'revert', task: taskId, reverted, kept, waiting });
+
+  return { reverted, kept, dependants: dependants.map(each => each.id), waiting };
 };
 
 export interface TaskContext {

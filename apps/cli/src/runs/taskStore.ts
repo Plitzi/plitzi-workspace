@@ -230,7 +230,9 @@ export const appendLog = async (file: string, entry: Record<string, unknown>): P
 export const cutTask = async (view: TaskView, reason: string, now: () => Date): Promise<void> => {
   await revokeOwner(view.paths);
   await fs.rm(view.paths.locks, { recursive: true, force: true });
-  await fs.rm(view.paths.cache, { recursive: true, force: true });
+  // Its copy is left where it is, not removed under an agent that may be mid-command in it: a `cd` into a folder gone
+  // would run the rest of the command wherever the shell was. Its token is revoked, so nothing of it is ever merged, and
+  // the next take makes a new copy in its place.
   const step = view.progress?.step ?? view.state.status;
   await updateState(
     view.paths,

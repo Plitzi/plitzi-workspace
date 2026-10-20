@@ -178,7 +178,7 @@ describe('window.__plitzi', () => {
   });
 
   it('describes an element: what it is, its own state, and whether it is on screen', () => {
-    document.body.innerHTML = '<span data-id="cart">2</span>';
+    document.body.innerHTML = '<span data-id="cart">2  items</span>';
 
     expect(inspector.element('cart')).toMatchObject({
       id: 'cart',
@@ -187,6 +187,8 @@ describe('window.__plitzi', () => {
       bindings: [{ category: 'attributes', to: 'content', source: 'state.count', template: '{{ source }} items' }],
       state: { open: true },
       copies: 1,
+      // What it shows, its template resolved: the count read, not worked out.
+      text: '2 items',
       visible: false
     });
     expect(inspector.element('nowhere')).toBeUndefined();

@@ -2,6 +2,7 @@ import { DOCUMENT_SCROLLS, isDocumentScroll } from '@plitzi/sdk-elements/element
 import { FUNCTION_ROUTES_PREFIX, isFunctionRoutePath } from '@plitzi/sdk-shared/actions';
 import { getSourceName } from '@plitzi/sdk-shared/dataSource/helpers';
 import { hasTemplateSyntax, inspectTemplate } from '@plitzi/sdk-shared/helpers/twigWrapper';
+import { matchPath } from '@plitzi/sdk-shared/navigation';
 import { collectServerElements } from '@plitzi/sdk-shared/schema';
 
 import { ACCESS_LEVELS } from '../guard';
@@ -20,9 +21,18 @@ export const checkPageTarget = (
   target: string,
   where: string,
   field: 'mode' | 'urlType',
-  id: string
+  id: string,
+  { bound = false }: { bound?: boolean } = {}
 ): void => {
-  if (target === '' || target.startsWith('#') || target.startsWith('/') || hasTemplateSyntax(target)) {
+  if (target.startsWith('/') && !hasTemplateSyntax(target)) {
+    if (!bound) {
+      checkPagePath(ctx, target, where, field, id);
+    }
+
+    return;
+  }
+
+  if (target === '' || target.startsWith('#') || hasTemplateSyntax(target)) {
     return;
   }
 
@@ -44,6 +54,48 @@ export const checkPageTarget = (
       id
     );
   }
+};
+
+/** The path a page answers at: its folders' slugs, then its own. */
+const pagePath = (ctx: LintContext, pageId: string): string | undefined => {
+  const page = ctx.element(pageId);
+  if (!page) {
+    return undefined;
+  }
+
+  const { slug, folder } = page.attributes;
+
+  return `/${[typeof folder === 'string' && folder ? folderPath(ctx, folder) : '', textOf(slug)].filter(Boolean).join('/')}`;
+};
+
+/**
+ * A path in page mode that no page answers — a page not written yet, or a typo — is followed in-app to the 404 page.
+ * Not checked: what is not a page's to answer — a file (`/logo.png`, `/data/x.json`), the platform's own (`/_…`), the
+ * space's functions (`/fn/…`) — nor anything when a page answers every path but the 404's.
+ */
+const checkPagePath = (
+  ctx: LintContext,
+  target: string,
+  where: string,
+  field: 'mode' | 'urlType',
+  id: string
+): void => {
+  const [pathname = '/'] = target.split(/[?#]/);
+  const last = pathname.split('/').at(-1) ?? '';
+  if (pathname.startsWith('/_') || isFunctionRoutePath(pathname) || /\.[a-z0-9]+$/i.test(last)) {
+    return;
+  }
+
+  const routes = [...ctx.pageIds].flatMap(pageId => pagePath(ctx, pageId) ?? []).filter(path => path !== '/*');
+  if (routes.length === 0 || routes.some(route => matchPath(route, pathname))) {
+    return;
+  }
+
+  ctx.warn(
+    'page-path-unknown',
+    `${where} is "${target}", and no page answers at ${pathname}: a click lands on the 404 page${didYouMean(pathname, new Set(routes)) || '.'} Link to a path a page answers, or write \`${field}: 'external'\` for one the server answers itself.`,
+    id
+  );
 };
 
 /** The route prefix a folder contributes, through its parents. */
@@ -139,7 +191,7 @@ export const lintPages = (ctx: LintContext): void => {
 
     const where = ctx.describe(pageId);
     checkPageTemplates(ctx, pageId, where);
-    const { accessLevel, documentScroll, slug, folder } = page.attributes;
+    const { accessLevel, documentScroll } = page.attributes;
     if (accessLevel !== undefined && accessLevel !== '' && !ACCESS_LEVELS.includes(accessLevel as 'public')) {
       ctx.error(
         'page-access-level',
@@ -171,7 +223,7 @@ export const lintPages = (ctx: LintContext): void => {
     }
 
     // Every page answers at its own slug — the default one at `/` as well, which the structural validator watches.
-    const path = `/${[typeof folder === 'string' && folder ? folderPath(ctx, folder) : '', textOf(slug)].filter(Boolean).join('/')}`;
+    const path = pagePath(ctx, pageId) ?? '/';
     if (isFunctionRoutePath(path)) {
       ctx.error(
         'page-route-reserved',

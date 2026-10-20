@@ -29,11 +29,12 @@ const NEXT_STEP: Record<RefusalCode, string> = {
   reassigned: 'stop working on this task: it is no longer yours',
   'version-mismatch': 'the Plitzi version changed while the run is open: run plitzi run attach to re-read it',
   stopping: 'finish the task in hand and take no other',
-  'forced-stop': 'stop now: what was written since the last review is discarded',
+  'forced-stop':
+    'stop writing now: a task in hand was cut, and what it wrote since its last review is not kept (a task in review keeps its work); plitzi task next --follow waits for the lead to resume the run',
   reconciliation: 'wait: the lead resolves each file (plitzi run resolve), then continues the run',
   'person-only': 'ask a person to run it in their own terminal',
   conflict:
-    'the lead decides (--overwrite, or --changes to redo it on the project’s version); never write conflict markers',
+    'the lead decides, from what the message offers; a task takes the run’s version (plitzi task discard <file>) and redoes its change on it; never write conflict markers',
   'checks-failed': 'fix what the output names, then complete again',
   invalid: 'fix what the output names',
   'not-found': 'check the name: plitzi run state lists the runs and their tasks',
@@ -41,7 +42,7 @@ const NEXT_STEP: Record<RefusalCode, string> = {
     'the run is active on another machine: release it there (plitzi run release), or a person takes it over',
   'another-run': 'one run at a time: finish or abort the open one first (plitzi run status)',
   'agent-limit':
-    'hand back to the lead: it starts this task when one of the tasks at work goes to review (plitzi run status)'
+    'hand back to the lead: this task waits until one of the agents at work has nothing in progress (plitzi run status)'
 };
 
 export interface RefusalDetail {

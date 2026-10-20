@@ -16,7 +16,7 @@ import { isRunRefusal } from './refusal';
 import { buildReport, writeSummary } from './report';
 import { attachRun, checkPlanFile, loadRun, openRun, pruneRuns, purgeRun, releaseRun, resumeRun, stopRun } from './run';
 import { showTask } from './show';
-import { askLead, messageTasks, readInbox } from './talk';
+import { askLead, messageTasks, readInbox, tellLead } from './talk';
 import {
   blockTask,
   canWrite,
@@ -135,6 +135,26 @@ export const about = { id: 'about', badge };
 });
 
 describe('a plan held to the rules', () => {
+  it('says which tasks touch the same file outside their own, unless one waits for the other', async () => {
+    const plan = benchPlan();
+    plan.tasks[0].touches = ['src/space/theme.ts'];
+    plan.tasks[1].touches = ['src/space/theme.ts', 'src/space/pages/about.ts'];
+    const read = await checkPlan(bench.root, plan, await readOwnership(bench.root), 3);
+
+    expect(read.notices.some(notice => notice.includes('src/space/theme.ts is changed by "t-home" and "t-menu"'))).toBe(
+      true
+    );
+    expect(
+      read.notices.some(notice => notice.includes('"t-menu" touches src/space/pages/about.ts, which "t-about"'))
+    ).toBe(true);
+
+    expect(read.sharedReached).toContain('src/space/theme.ts');
+
+    plan.tasks[1].dependsOn = ['t-home'];
+    const ordered = await checkPlan(bench.root, plan, await readOwnership(bench.root), 3);
+    expect(ordered.notices.some(notice => notice.includes('is changed by'))).toBe(false);
+  });
+
   it('expands a root with what it owns, says what is shared, and estimates it', async () => {
     const checked = await checkPlan(bench.root, benchPlan(), await readOwnership(bench.root), 4);
 
@@ -401,6 +421,11 @@ export const menu = { id: 'menu', title: 'Carta', theme };
     const view = await viewRun(lead(), 'es-launch');
     expect(view.tasks.find(task => task.id === 't-home')?.status).toBe('blocked');
     expect(view.attention.some(item => item.kind === 'person')).toBe(true);
+
+    // The person looks at it and takes it as it is: a person's, confirmed.
+    expect((await refusal(reviewTask(lead(), 'es-launch', 't-home', 'approve', []))).code).toBe('person-only');
+    expect((await reviewTask(bench.person(true), 'es-launch', 't-home', 'approve', [])).verdict).toBe('approve');
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-home')?.status).toBe('done');
   });
 });
 
@@ -577,6 +602,24 @@ export const theme = { card: { color: tokens.ink }, ${key}: {} };
     await writeInCopy(menu.work, 'src/space/pages/home/hero.ts', 'export const hero = { text: 1 };\n');
     const refused = await refusal(completeTask(menu.ctx, 'es-launch', 't-menu'));
     expect(refused.message).toContain('src/space/pages/home/hero.ts (task "t-home"');
+  });
+
+  it('a task reassigned lets go of what it held by turns: the request waiting on it is merged then', async () => {
+    await open();
+    const ghost = await take('agent-ghost', 't-home');
+    await claimFile(ghost.ctx, 'es-launch', 't-home', 'src/space/theme.ts');
+    const menu = await take('agent-2', 't-menu');
+    const theme = (await readInCopy(menu.work, 'src/space/theme.ts')) ?? '';
+    await writeInCopy(menu.work, 'src/space/theme.ts', `${theme}export const price = {};\n`);
+    expect((await completeTask(menu.ctx, 'es-launch', 't-menu')).requests.map(each => each.file)).toEqual([
+      'src/space/theme.ts'
+    ]);
+    await reviewTask(lead(), 'es-launch', 't-menu', 'approve', []);
+
+    const cut = await reassignTask(lead(), 'es-launch', 't-home');
+    expect(cut).toMatchObject({ released: ['src/space/theme.ts'], settled: ['t-menu/src-space-theme-ts'] });
+    const dry = await finishRun(bench.person(true), 'es-launch', { apply: false, leavePending: true });
+    expect(dry.plan.apply.map(each => each.file)).toContain('src/space/theme.ts');
   });
 
   it('a blocking request makes its integration task at once, and the task waits only for it', async () => {
@@ -817,13 +860,29 @@ describe('stopping, cuts and disconnects', () => {
     expect((await nextTask(lead(), 'es-launch')).task?.id).toBe('t-menu');
   });
 
-  it('a forced stop is a person’s: tokens revoked at once, nothing merged', async () => {
+  it('a forced stop is a person’s: what is being written is cut, what is in review kept, no copy pulled away', async () => {
     await open();
     const home = await take('agent-1', 't-home');
+    const menu = await take('agent-2', 't-menu');
+    await writeInCopy(menu.work, 'src/space/pages/menu.ts', 'export const menu = {};\n');
+    await completeTask(menu.ctx, 'es-launch', 't-menu');
     const stopped = await stopRun(bench.person(true), 'es-launch', true);
 
     expect(stopped.cut).toEqual(['t-home']);
-    expect((await refusal(completeTask(home.ctx, 'es-launch', 't-home'))).code).toBe('forced-stop');
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-menu')?.status).toBe('in-review');
+    // An agent mid-command in its copy keeps a folder to stand in: the copy is left, its token revoked.
+    await expect(fs.stat(home.work)).resolves.toBeDefined();
+    const refused = await refusal(completeTask(home.ctx, 'es-launch', 't-home'));
+    expect(refused.code).toBe('forced-stop');
+    expect(refused.message).toContain('those in review keep their work');
+  });
+
+  it('every sign of life says when the run is stopping, before a refusal does', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    expect((await reportProgress(home.ctx, 'es-launch', 't-home', {})).run).toBeUndefined();
+    await stopRun(lead(), 'es-launch', false);
+    expect((await reportProgress(home.ctx, 'es-launch', 't-home', {})).run).toMatchObject({ status: 'stopping' });
   });
 
   it('a task whose agent lost its signal: told, then taken over from its last reviewed version', async () => {
@@ -1068,7 +1127,7 @@ describe('before writing: the file as the agent found it', () => {
     expect(refused.message).toContain('changed in the project while task "t-about" worked on it');
     expect(refused.message).toContain('--overwrite');
 
-    await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], true);
+    await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'overwrite');
     const view = await viewRun(lead(), 'es-launch');
     expect(view.attention.some(item => item.kind === 'overwrite')).toBe(true);
 
@@ -1077,6 +1136,63 @@ describe('before writing: the file as the agent found it', () => {
     expect(await bench.read('src/space/pages/about.ts')).toContain('Sobre nosotros');
     expect(await fs.readFile(path.join(String(done.backup), 'files/src/space/pages/about.ts'), 'utf-8')).toContain(
       'a person, meanwhile'
+    );
+  });
+
+  it('a change made in the project meanwhile that merges line by line is offered, and --merge keeps both', async () => {
+    await open();
+    await bench.write(
+      'src/space/pages/about.ts',
+      'export const title = 1;\nexport const body = 1;\nexport const foot = 1;\n'
+    );
+    const about = await take('agent-1', 't-about');
+    await writeInCopy(
+      about.work,
+      'src/space/pages/about.ts',
+      'export const title = 2;\nexport const body = 1;\nexport const foot = 1;\n'
+    );
+    await completeTask(about.ctx, 'es-launch', 't-about');
+    await bench.write(
+      'src/space/pages/about.ts',
+      'export const title = 1;\nexport const body = 1;\nexport const foot = 3;\n'
+    );
+
+    const refused = await refusal(reviewTask(lead(), 'es-launch', 't-about', 'approve', []));
+    expect(refused.message).toContain('--merge');
+    expect(refused.detail).toMatchObject({ decide: ['--merge', '--overwrite', '--changes'] });
+
+    const approved = await reviewTask(lead(), 'es-launch', 't-about', 'approve', [], 'merge');
+    expect(approved.joined).toEqual(['src/space/pages/about.ts']);
+    const done = await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
+    expect(done.plan.overwrites).toEqual([]);
+    expect(await bench.read('src/space/pages/about.ts')).toBe(
+      'export const title = 2;\nexport const body = 1;\nexport const foot = 3;\n'
+    );
+  });
+
+  it('a reconciliation whose two changes touch different lines is resolved with both', async () => {
+    await bench.write(
+      'src/space/pages/about.ts',
+      'export const title = 1;\nexport const body = 1;\nexport const foot = 1;\n'
+    );
+    await open();
+    await doTask(
+      'agent-1',
+      't-about',
+      'src/space/pages/about.ts',
+      'export const title = 2;\nexport const body = 1;\nexport const foot = 1;\n'
+    );
+    await bench.write(
+      'src/space/pages/about.ts',
+      'export const title = 1;\nexport const body = 1;\nexport const foot = 3;\n'
+    );
+    await refusal(finishRun(lead(), 'es-launch', { apply: false, leavePending: true }));
+
+    expect((await resolveFile(lead(), 'es-launch', 'src/space/pages/about.ts', 'merge')).resolved).toBe('merged');
+    await continueRun(lead(), 'es-launch');
+    await finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true });
+    expect(await bench.read('src/space/pages/about.ts')).toBe(
+      'export const title = 2;\nexport const body = 1;\nexport const foot = 3;\n'
     );
   });
 
@@ -1094,7 +1210,10 @@ describe('before writing: the file as the agent found it', () => {
       `export const about = { title: 'edited after approval' };
 `
     );
-    await refusal(finishRun(bench.person(true), 'es-launch', { apply: true, leavePending: true }));
+    // The dry run already says it, before any check runs over a mix of the two that would never exist.
+    expect((await refusal(finishRun(lead(), 'es-launch', { apply: false, leavePending: true }))).code).toBe(
+      'reconciliation'
+    );
     await resolveFile(lead(), 'es-launch', 'src/space/pages/about.ts', 'run');
     await continueRun(lead(), 'es-launch');
 
@@ -1547,6 +1666,40 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     });
   });
 
+  it('is not finished while a task of its roles is in review or in another agent’s hands', async () => {
+    const plan = benchPlan();
+    plan.tasks.forEach(task => {
+      task.role = 'writer';
+      task.dependsOn = [];
+    });
+    plan.tasks[0].role = 'designer';
+    await open(plan);
+    const home = await take('agent-1', 't-home');
+    expect((await nextTask(bench.agent('agent-2'), 'es-launch', 'designer')).finished).toBeUndefined();
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    expect((await nextTask(bench.agent('agent-2'), 'es-launch', 'designer')).finished).toBeUndefined();
+    await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
+    expect((await nextTask(bench.agent('agent-2'), 'es-launch', 'designer')).finished).toBe(true);
+  });
+
+  it('a task is not approved over a question it asked the lead that is not answered; done, its token says so', async () => {
+    await open();
+    const home = await take('agent-1', 't-home');
+    const asked = await askLead(home.ctx, 'es-launch', 't-home', 'Overdue mark too?');
+    await tellLead(home.ctx, 'es-launch', 't-home', 'Kept the old title for the hero');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+    await completeTask(home.ctx, 'es-launch', 't-home');
+
+    const refused = await refusal(reviewTask(lead(), 'es-launch', 't-home', 'approve', []));
+    expect(refused.message).toContain(`asked ${asked.question.id}`);
+    await messageTasks(lead(), 'es-launch', 't-home', 'Not this time', asked.question.id);
+    await reviewTask(lead(), 'es-launch', 't-home', 'approve', []);
+
+    const after = await refusal(readInbox(home.ctx, 'es-launch', 't-home'));
+    expect([after.code, after.message]).toEqual(['invalid', expect.stringContaining('is done') as unknown]);
+  });
+
   it('shows a task as its lead reviews it: each file’s diff, its checks, what was said, what to run next', async () => {
     await open();
     const home = await take('agent-1', 't-home');
@@ -1656,16 +1809,50 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     expect((await refusal(messageTasks(lead(), 'es-launch', '@no such', 'Hi'))).code).toBe('not-found');
   });
 
-  it('an agent refused by the limit is told when one of the tasks at work is its own to go on with', async () => {
+  it('the limit counts agents, not tasks: one holding two is one, and another agent waits', async () => {
     await open(benchPlan(), { agents: 1 });
     const home = await take('agent-1', 't-home');
     await blockTask(home.ctx, 'es-launch', 't-home', 'Which opening hours?', 'lead');
     await unblockTask(lead(), 'es-launch', 't-home', 'Nine to five');
 
-    const refused = await refusal(takeTask(bench.agent('agent-1'), 'es-launch', 't-menu'));
-    expect(refused).toMatchObject({ code: 'agent-limit', detail: { yours: ['t-home'] } });
-    expect(refused.message).toContain('t-home is yours to go on with');
-    expect((await refusal(takeTask(bench.agent('agent-2'), 'es-launch', 't-menu'))).detail).not.toHaveProperty('yours');
+    expect((await takeTask(bench.agent('agent-1'), 'es-launch', 't-menu')).task.id).toBe('t-menu');
+    const refused = await refusal(takeTask(bench.agent('agent-2'), 'es-launch', 't-about'));
+    expect(refused).toMatchObject({ code: 'agent-limit', detail: { working: ['t-home', 't-menu'], limit: 1 } });
+    expect(refused.message).toContain('1 of the 1 agents');
+    // `next` offers what its caller can take: the limit full, it says so, and --follow waits for a place.
+    expect(await nextTask(bench.agent('agent-2'), 'es-launch')).toMatchObject({ full: true });
+    expect((await nextTask(bench.agent('agent-2'), 'es-launch')).task).toBeUndefined();
+  });
+
+  it('an agent waiting for work waits through a gentle stop, and gets its task once the run is resumed', async () => {
+    await open();
+    await stopRun(lead(), 'es-launch', false);
+    const waiting = followNext(bench.agent('agent-1'), 'es-launch', undefined, { timeoutMs: 2000, everyMs: 10 });
+    await new Promise(resolve => setTimeout(resolve, 40));
+    await resumeRun(lead(), 'es-launch');
+    expect((await waiting).task?.id).toBe('t-home');
+
+    // And through one a person forces: what is in hand is cut, and the agent between tasks waits for the resume.
+    await stopRun(bench.person(true), 'es-launch', true);
+    const again = followNext(bench.agent('agent-2'), 'es-launch', undefined, { timeoutMs: 2000, everyMs: 10 });
+    await new Promise(resolve => setTimeout(resolve, 40));
+    await resumeRun(lead(), 'es-launch');
+    expect((await again).task).toBeDefined();
+  });
+
+  it('a check that fails without the task too is not the task’s: it goes to review, said to the lead', async () => {
+    await open();
+    // A person's edit in the project that fails the checks reaches every copy made after it.
+    await bench.write('src/space/pages/about.ts', 'export const about = BROKEN;\n');
+    const home = await take('agent-1', 't-home');
+    await writeInCopy(home.work, 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+
+    await completeTask(home.ctx, 'es-launch', 't-home');
+    const view = await viewRun(lead(), 'es-launch');
+    expect(view.tasks.find(task => task.id === 't-home')?.status).toBe('in-review');
+    const shown = await showTask(lead(), 'es-launch', 't-home');
+    expect(shown.checks).toMatchObject({ knownFailure: { preexisting: true, failing: ['author'] } });
+    expect(view.attention.some(item => item.kind === 'known-failure' && item.task === 't-home')).toBe(true);
   });
 
   it('a task completes over failing checks only with a reason and the task that fixes it — said to both and the lead', async () => {
@@ -1715,6 +1902,17 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     await messageTasks(lead(), 'es-launch', 't-menu', 'Yes', unread.question.id);
     expect((await viewRun(lead(), 'es-launch')).attention.some(item => item.kind === 'message')).toBe(false);
 
+    // Told, not asked: on top of the run until the lead reads it, and never waiting for an answer.
+    await tellLead(menu.ctx, 'es-launch', 't-menu', 'The menu prices come from menu.json, not the page');
+    expect(
+      (await viewRun(lead(), 'es-launch')).attention.find(item => item.kind === 'message' && item.text.includes('says'))
+        ?.text
+    ).toContain('for you to know');
+    await readInbox(lead(), 'es-launch');
+    expect((await viewRun(lead(), 'es-launch')).attention.some(item => item.text.includes('for you to know'))).toBe(
+      false
+    );
+
     // What ask --follow marks read on the way to its answer reaches the agent with it, and --all shows it again.
     await messageTasks(lead(), 'es-launch', 't-menu', 'Euros, two decimals');
     const asking = askLead(menu.ctx, 'es-launch', 't-menu', 'Anything else?', {
@@ -1763,7 +1961,7 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
     const loaded = await loadRun(lead(), 'es-launch');
     const dir = path.join(loaded.paths.cache, 'preview');
     await fs.mkdir(dir, { recursive: true });
-    expect(await syncPreview(loaded)).toBe(false);
+    expect(await syncPreview(loaded, bench.root)).toBe(false);
 
     await fs.writeFile(path.join(loaded.paths.cache, 'preview.json'), JSON.stringify({ pid: process.pid, port: 8300 }));
     await doTask(
@@ -1774,6 +1972,27 @@ describe('a team: roles, a lead who talks to the agents, and nothing left behind
 `
     );
     expect(await fs.readFile(path.join(dir, 'src/space/pages/about.ts'), 'utf-8')).toContain('Sobre');
+
+    // Reverted, its file is the project's again in the preview.
+    await revertTask(lead(), 'es-launch', 't-about');
+    expect(await fs.readFile(path.join(dir, 'src/space/pages/about.ts'), 'utf-8')).toBe(
+      await bench.read('src/space/pages/about.ts')
+    );
+  });
+
+  it('what was built on a reverted task waits for it again', async () => {
+    await open();
+    await doTask('agent-1', 't-home', 'src/space/pages/home/hero.ts', 'export const hero = {};\n');
+    await doTask('agent-2', 't-menu', 'src/space/pages/menu.ts', 'export const menu = {};\n');
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-book')?.status).toBe('ready');
+
+    const reverted = await revertTask(lead(), 'es-launch', 't-home', 'the hero lost its subtitle');
+    expect(reverted.waiting).toEqual(['t-book']);
+    expect((await viewRun(lead(), 'es-launch')).tasks.find(task => task.id === 't-book')?.status).toBe('pending');
+    expect((await nextTask(bench.agent('agent-3'), 'es-launch')).task?.id).toBe('t-home');
+    expect((await take('agent-3', 't-home')).messages.map(message => message.text)).toEqual([
+      'This task was reverted and is to be done again: the hero lost its subtitle'
+    ]);
   });
 
   it('says which files outside the plan import what a task changes', async () => {

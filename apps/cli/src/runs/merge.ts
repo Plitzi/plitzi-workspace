@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { fingerprint, readJson, readOptional, writeJson } from './files';
 import { checkVersions } from './materialise';
+import { mergeLines } from './merge3';
 import { entryOf, isMergeManifest } from './model';
 import { BACKUPS_DIR, under } from './paths';
 import { RunRefusal } from './refusal';
@@ -271,6 +272,22 @@ export const finishRun = async (
   const left = await assertFinishable(loaded, leavePending);
   const approved = await readApproved(loaded.paths);
   const plan = await planFinish(ctx, approved);
+  // A file changed on both sides is resolved first, dry run or not: checking the project's version of one file beside
+  // the run's of the others checks a result that will never exist.
+  if (plan.conflicts.length > 0) {
+    await enterReconciliation(
+      ctx,
+      loaded,
+      'files changed in the project and in the run since the run copied them',
+      plan.conflicts
+    );
+    throw new RunRefusal(
+      'reconciliation',
+      `Run "${runId}" is in reconciliation: ${plan.conflicts.map(each => each.file).join(', ')} changed on both sides. Nothing was written. The lead resolves each (plitzi run resolve ${runId} <file> --take project|run|merge|<file>), then continues (plitzi run continue ${runId}) or aborts (plitzi run abort ${runId})`,
+      { run: runId, files: plan.conflicts.map(each => each.file) }
+    );
+  }
+
   plan.checks = await checkVersions(ctx, loaded, Object.fromEntries(plan.apply.map(each => [each.file, each.after])));
   if (!plan.checks.ok) {
     await recordBrake(ctx, loaded, 'checks-failed');
@@ -281,20 +298,6 @@ export const finishRun = async (
 
   if (!apply) {
     return { dryRun: true, plan, left };
-  }
-
-  if (plan.conflicts.length > 0) {
-    await enterReconciliation(
-      ctx,
-      loaded,
-      'files changed in the project and in the run since the run copied them',
-      plan.conflicts
-    );
-    throw new RunRefusal(
-      'reconciliation',
-      `Run "${runId}" is in reconciliation: ${plan.conflicts.map(each => each.file).join(', ')} changed on both sides. Nothing was written. The lead resolves each (plitzi run resolve ${runId} <file> --take project|run|<file>), then continues (plitzi run continue ${runId}) or aborts (plitzi run abort ${runId})`,
-      { run: runId, files: plan.conflicts.map(each => each.file) }
-    );
   }
 
   // The lead closes the run: its report is written before the person writes the run into the project.
@@ -368,8 +371,29 @@ export const resolveFile = async (
 
   // The lead decides, as a person may: whichever way, what is written over is kept and said.
   requireNoTask(ctx, 'resolve a reconciliation');
-  const resolved: ReconciledFile['resolved'] = take === 'project' ? 'project' : take === 'run' ? 'run' : 'file';
+  const resolved: ReconciledFile['resolved'] =
+    take === 'project' ? 'project' : take === 'run' ? 'run' : take === 'merge' ? 'merged' : 'file';
   let chosen: Buffer | undefined;
+  if (resolved === 'merged') {
+    // Both changes, line by line, from the version the run copied: the checks of the finish run over the result.
+    const textOf = async (digest: string | null): Promise<string> =>
+      digest === null ? '' : (await getBlob(loaded.paths, digest)).toString('utf-8');
+    const result = mergeLines(
+      await textOf(conflict.base),
+      await textOf(conflict.run),
+      (await readOptional(under(ctx.root, file)))?.toString('utf-8') ?? ''
+    );
+    if (!result.ok) {
+      throw new RunRefusal(
+        'conflict',
+        `${file}: the project's change and the run's touch the same lines, so they cannot be put together by themselves — take project, run, or a file you wrote with both (--take <path>)`,
+        { file, next: `plitzi run resolve ${runId} ${file} --take project|run|<path>` }
+      );
+    }
+
+    chosen = Buffer.from(result.text);
+  }
+
   if (resolved === 'file') {
     chosen = await readOptional(path.resolve(ctx.root, take));
     if (chosen === undefined) {
@@ -392,7 +416,13 @@ export const resolveFile = async (
       if (resolved === 'run') {
         files[file] = { ...entry, base: project, overrode };
       } else if (chosen) {
-        files[file] = { ...entry, digest: await putBlob(loaded.paths, chosen), base: project, at: at(ctx), overrode };
+        files[file] = {
+          ...entry,
+          digest: await putBlob(loaded.paths, chosen),
+          base: project,
+          at: at(ctx),
+          ...(resolved === 'merged' ? { joined: overrode } : { overrode })
+        };
       }
 
       await writeJson(loaded.paths.approved, { ...approved, files });

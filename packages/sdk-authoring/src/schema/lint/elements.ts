@@ -672,7 +672,10 @@ const checkIntent = (ctx: LintContext, element: Element, where: string): void =>
 
   const { href, mode } = attributes;
   if (type === 'link' && (mode ?? 'page') === 'page' && typeof href === 'string') {
-    checkPageTarget(ctx, href, `${where}: its \`href\``, 'mode', element.id);
+    // A bound href is where it starts, not where it leads: the binding writes the path it goes to.
+    checkPageTarget(ctx, href, `${where}: its \`href\``, 'mode', element.id, {
+      bound: bound('href')
+    });
   }
 };
 
